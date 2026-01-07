@@ -11,7 +11,7 @@ from src.utils import get_logger, setup_logging
 
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
-from .routes import customers, dashboard, demo_auth, health, orders, products, quotes
+from .routes import demo_auth, demo_dashboard, demo_lists, health
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -49,11 +49,8 @@ app.add_middleware(AuthMiddleware)
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(demo_auth.router, tags=["Authentication"])
-app.include_router(products.router, tags=["Products"])
-app.include_router(customers.router, tags=["Customers"])
-app.include_router(orders.router, tags=["Orders"])
-app.include_router(quotes.router, tags=["Quotes"])
-app.include_router(dashboard.router, tags=["Dashboard"])
+app.include_router(demo_lists.router, tags=["Demo Lists"])
+app.include_router(demo_dashboard.router, tags=["Dashboard"])
 
 
 @app.get("/")
