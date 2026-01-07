@@ -71,6 +71,40 @@ jobs:
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
 
+      - name: Run database migrations
+        working-directory: apps/backend
+        run: uv run alembic upgrade head
+        env:
+          DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
+
+      - name: Seed test data
+        working-directory: apps/backend
+        run: uv run python -m src.db.seed_demo
+        env:
+          DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
+
+      - name: Start API server
+        working-directory: apps/backend
+        run: |
+          uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+        env:
+          DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
+
+      - name: Run ERP bug fix integration tests
+        working-directory: apps/backend
+        run: uv run pytest tests/api/test_erp_bugfixes_integration.py -v --tb=short
+        env:
+          DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
+
+      - name: Upload ERP bug fix test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: erp-bugfix-test-results
+          path: apps/backend/.pytest_cache/
+          retention-days: 30
+
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
