@@ -6,15 +6,14 @@ Login endpoint for overnight demo.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.jwt import create_access_token, verify_password, decode_access_token
+from src.auth.jwt import create_access_token, decode_access_token, verify_password
 from src.config.database import get_async_db
 from src.db.models import User
-
 
 router = APIRouter(prefix="/api/auth", tags=["Demo Auth"])
 

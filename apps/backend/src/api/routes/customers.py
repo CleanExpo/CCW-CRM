@@ -1,9 +1,10 @@
 """Customers API routes."""
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.config.database import get_db
 from src.db.erp_models import Customer as CustomerModel
 from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
@@ -15,8 +16,8 @@ router = APIRouter(prefix="/api/customers", tags=["customers"])
 async def list_customers(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    search: Optional[str] = None,
-    is_active: Optional[bool] = None,
+    search: str | None = None,
+    is_active: bool | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """List customers with pagination and filters."""

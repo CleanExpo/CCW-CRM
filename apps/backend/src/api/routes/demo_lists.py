@@ -11,7 +11,6 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.config.database import get_async_db
 from src.db.demo_models import (
@@ -22,7 +21,6 @@ from src.db.demo_models import (
     Quote,
     QuoteItem,
 )
-
 
 router = APIRouter(prefix="/api", tags=["Demo Lists"])
 

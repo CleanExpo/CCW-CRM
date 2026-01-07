@@ -4,7 +4,6 @@ FastAPI Dependencies
 Provides reusable dependencies for authentication, database sessions, etc.
 """
 
-from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -15,13 +14,12 @@ from src.auth.jwt import extract_user_email
 from src.config.database import get_async_db
 from src.db.models import User
 
-
 # HTTP Bearer token scheme
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_async_db),
 ) -> User:
     """
@@ -120,9 +118,9 @@ async def get_current_admin_user(
 
 
 async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_async_db),
-) -> Optional[User]:
+) -> User | None:
     """
     Get current user if authenticated, None otherwise (optional auth).
 

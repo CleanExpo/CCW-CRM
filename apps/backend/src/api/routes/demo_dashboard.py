@@ -4,7 +4,7 @@ Demo dashboard endpoints.
 Provides metrics, charts, and activity feed for the overnight demo.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated
 
@@ -20,11 +20,9 @@ from src.db.demo_models import (
     OrderItem,
     OrderStatus,
     Product,
-    ProductCategory,
     Quote,
     QuoteStatus,
 )
-
 
 router = APIRouter(prefix="/api/dashboard", tags=["Demo Dashboard"])
 
@@ -87,7 +85,7 @@ async def get_dashboard_metrics(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> DashboardMetrics:
     """Get dashboard metrics."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # Total revenue this month (delivered orders only)
@@ -101,21 +99,34 @@ async def get_dashboard_metrics(
     # Active orders (not delivered or cancelled)
     active_orders_result = await db.execute(
         select(func.count(Order.id)).where(
-            Order.status.in_([OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.PROCESSING, OrderStatus.SHIPPED])
+            Order.status.in_([
+                OrderStatus.PENDING,
+                OrderStatus.CONFIRMED,
+                OrderStatus.PROCESSING,
+                OrderStatus.SHIPPED
+            ])
         )
     )
     active_orders = active_orders_result.scalar() or 0
 
     # Total products
-    total_products_result = await db.execute(select(func.count(Product.id)).where(Product.is_active == True))
+    total_products_result = await db.execute(
+        select(func.count(Product.id)).where(Product.is_active)
+    )
     total_products = total_products_result.scalar() or 0
 
     # Total customers
-    total_customers_result = await db.execute(select(func.count(Customer.id)).where(Customer.is_active == True))
+    total_customers_result = await db.execute(
+        select(func.count(Customer.id)).where(Customer.is_active)
+    )
     total_customers = total_customers_result.scalar() or 0
 
     # Low stock alerts (stock <= 10)
-    low_stock_result = await db.execute(select(func.count(Product.id)).where(Product.stock <= 10).where(Product.is_active == True))
+    low_stock_result = await db.execute(
+        select(func.count(Product.id))
+        .where(Product.stock <= 10)
+        .where(Product.is_active)
+    )
     low_stock_alerts = low_stock_result.scalar() or 0
 
     # Pending quotes
@@ -141,7 +152,7 @@ async def get_revenue_chart(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[RevenueDataPoint]:
     """Get revenue trend for last 6 months."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     revenue_data = []
 
     for i in range(5, -1, -1):
@@ -255,7 +266,7 @@ async def get_inventory_status(
             select(func.count(Product.id))
             .where(Product.warehouse_location == warehouse)
             .where(Product.stock > 10)
-            .where(Product.is_active == True)
+            .where(Product.is_active)
         )
         in_stock = in_stock_result.scalar() or 0
 
@@ -265,7 +276,7 @@ async def get_inventory_status(
             .where(Product.warehouse_location == warehouse)
             .where(Product.stock > 0)
             .where(Product.stock <= 10)
-            .where(Product.is_active == True)
+            .where(Product.is_active)
         )
         low_stock = low_stock_result.scalar() or 0
 
@@ -274,7 +285,7 @@ async def get_inventory_status(
             select(func.count(Product.id))
             .where(Product.warehouse_location == warehouse)
             .where(Product.stock == 0)
-            .where(Product.is_active == True)
+            .where(Product.is_active)
         )
         out_of_stock = out_of_stock_result.scalar() or 0
 

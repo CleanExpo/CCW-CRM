@@ -9,22 +9,22 @@ Australian-first API for managing contractor schedules with:
 - Supabase PostgreSQL database
 """
 
-from datetime import datetime
-from typing import Annotated, Optional
-from fastapi import APIRouter, HTTPException, Query, status
+from typing import Annotated
 from uuid import uuid4
 
+from fastapi import APIRouter, HTTPException, Query, status
+
 from src.models.contractor import (
-    Contractor,
-    ContractorCreate,
-    ContractorUpdate,
-    ContractorList,
+    AustralianState,
     AvailabilitySlot,
     AvailabilitySlotCreate,
     AvailabilityStatus,
-    Location,
-    AustralianState,
+    Contractor,
+    ContractorCreate,
+    ContractorList,
+    ContractorUpdate,
     ErrorResponse,
+    Location,
 )
 from src.utils.supabase_client import supabase
 
@@ -58,11 +58,11 @@ router = APIRouter(
 async def list_contractors(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
-    state: Optional[AustralianState] = Query(
+    state: AustralianState | None = Query(
         None,
         description="Filter by Australian state (e.g., QLD, NSW)"
     ),
-    specialisation: Optional[str] = Query(
+    specialisation: str | None = Query(
         None,
         description="Filter by specialisation"
     ),
@@ -369,7 +369,7 @@ async def add_availability_slot(
 )
 async def get_contractor_availability(
     contractor_id: str,
-    status_filter: Optional[AvailabilityStatus] = Query(
+    status_filter: AvailabilityStatus | None = Query(
         None,
         alias="status",
         description="Filter by status (available, booked, tentative)"

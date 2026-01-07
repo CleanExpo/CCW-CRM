@@ -4,7 +4,7 @@ Database configuration and session management.
 Provides SQLAlchemy connection setup for local PostgreSQL.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from sqlalchemy import create_engine

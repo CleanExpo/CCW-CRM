@@ -1,15 +1,15 @@
 """Pydantic schemas for ERP API."""
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field
+
+from pydantic import BaseModel, EmailStr
 
 
 # Organization schemas
 class OrganizationBase(BaseModel):
     name: str
-    subdomain: Optional[str] = None
+    subdomain: str | None = None
     is_active: bool = True
 
 
@@ -29,7 +29,7 @@ class Organization(OrganizationBase):
 # User schemas
 class UserBase(BaseModel):
     email: EmailStr
-    full_name: Optional[str] = None
+    full_name: str | None = None
     role: str = "employee"
     is_admin: bool = False
     is_active: bool = True
@@ -41,7 +41,7 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: UUID
-    organization_id: Optional[UUID] = None
+    organization_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -53,12 +53,12 @@ class User(UserBase):
 class ProductBase(BaseModel):
     sku: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     category: str
     price: Decimal
-    cost: Optional[Decimal] = None
+    cost: Decimal | None = None
     stock: int = 0
-    warehouse_location: Optional[str] = None
+    warehouse_location: str | None = None
     is_active: bool = True
 
 
@@ -67,19 +67,19 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    price: Optional[Decimal] = None
-    cost: Optional[Decimal] = None
-    stock: Optional[int] = None
-    warehouse_location: Optional[str] = None
-    is_active: Optional[bool] = None
+    name: str | None = None
+    description: str | None = None
+    category: str | None = None
+    price: Decimal | None = None
+    cost: Decimal | None = None
+    stock: int | None = None
+    warehouse_location: str | None = None
+    is_active: bool | None = None
 
 
 class Product(ProductBase):
     id: UUID
-    organization_id: Optional[UUID] = None
+    organization_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -91,13 +91,13 @@ class Product(ProductBase):
 class CustomerBase(BaseModel):
     customer_number: str
     company_name: str
-    contact_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    postcode: Optional[str] = None
+    contact_name: str | None = None
+    email: EmailStr | None = None
+    phone: str | None = None
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    postcode: str | None = None
     is_active: bool = True
 
 
@@ -106,20 +106,20 @@ class CustomerCreate(CustomerBase):
 
 
 class CustomerUpdate(BaseModel):
-    company_name: Optional[str] = None
-    contact_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    postcode: Optional[str] = None
-    is_active: Optional[bool] = None
+    company_name: str | None = None
+    contact_name: str | None = None
+    email: EmailStr | None = None
+    phone: str | None = None
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    postcode: str | None = None
+    is_active: bool | None = None
 
 
 class Customer(CustomerBase):
     id: UUID
-    organization_id: Optional[UUID] = None
+    organization_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -153,7 +153,7 @@ class OrderItem(OrderItemBase):
 class OrderBase(BaseModel):
     customer_id: UUID
     status: str = "draft"
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class OrderCreate(OrderBase):
@@ -161,18 +161,18 @@ class OrderCreate(OrderBase):
 
 
 class OrderUpdate(BaseModel):
-    customer_id: Optional[UUID] = None
-    status: Optional[str] = None
-    notes: Optional[str] = None
-    items: Optional[list[OrderItemCreate]] = None
-    subtotal: Optional[Decimal] = None
-    tax: Optional[Decimal] = None
-    total: Optional[Decimal] = None
+    customer_id: UUID | None = None
+    status: str | None = None
+    notes: str | None = None
+    items: list[OrderItemCreate] | None = None
+    subtotal: Decimal | None = None
+    tax: Decimal | None = None
+    total: Decimal | None = None
 
 
 class Order(OrderBase):
     id: UUID
-    organization_id: Optional[UUID] = None
+    organization_id: UUID | None = None
     order_number: str
     total: Decimal
     order_date: datetime
@@ -210,8 +210,8 @@ class QuoteItem(QuoteItemBase):
 class QuoteBase(BaseModel):
     customer_id: UUID
     status: str = "draft"
-    valid_until: Optional[datetime] = None
-    notes: Optional[str] = None
+    valid_until: datetime | None = None
+    notes: str | None = None
 
 
 class QuoteCreate(QuoteBase):
@@ -219,15 +219,15 @@ class QuoteCreate(QuoteBase):
 
 
 class QuoteUpdate(BaseModel):
-    customer_id: Optional[UUID] = None
-    status: Optional[str] = None
-    valid_until: Optional[datetime] = None
-    notes: Optional[str] = None
+    customer_id: UUID | None = None
+    status: str | None = None
+    valid_until: datetime | None = None
+    notes: str | None = None
 
 
 class Quote(QuoteBase):
     id: UUID
-    organization_id: Optional[UUID] = None
+    organization_id: UUID | None = None
     quote_number: str
     total: Decimal
     quote_date: datetime

@@ -7,8 +7,8 @@ Handles database connections with Australian context:
 - Type-safe queries with Pydantic models
 """
 
-from typing import Optional
-from supabase import create_client, Client
+from supabase import Client, create_client
+
 from src.config.settings import get_settings
 
 settings = get_settings()

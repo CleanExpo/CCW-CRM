@@ -5,9 +5,8 @@ These models are optimized for quick demo setup with essential fields only.
 """
 
 import enum
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -71,7 +70,7 @@ class Product(Base):
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     sku: str = Column(String(50), unique=True, nullable=False, index=True)
     name: str = Column(String(255), nullable=False)
-    description: Optional[str] = Column(Text, nullable=True)
+    description: str | None = Column(Text, nullable=True)
     category: ProductCategory = Column(
         Enum(ProductCategory, name="product_category"),
         nullable=False,
@@ -81,15 +80,15 @@ class Product(Base):
     price: Decimal = Column(Numeric(10, 2), nullable=False)
     cost: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     stock: int = Column(Integer, nullable=False, default=0)
-    warehouse_location: Optional[str] = Column(String(100), nullable=True)
+    warehouse_location: str | None = Column(String(100), nullable=True)
     is_active: bool = Column(Boolean, default=True, nullable=False)
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -111,19 +110,19 @@ class Customer(Base):
     company_name: str = Column(String(255), nullable=False)
     contact_name: str = Column(String(255), nullable=False)
     email: str = Column(String(255), nullable=False, index=True)
-    phone: Optional[str] = Column(String(20), nullable=True)
-    address: Optional[str] = Column(Text, nullable=True)
-    city: Optional[str] = Column(String(100), nullable=True)
-    state: Optional[str] = Column(String(50), nullable=True)
-    postcode: Optional[str] = Column(String(10), nullable=True)
+    phone: str | None = Column(String(20), nullable=True)
+    address: str | None = Column(Text, nullable=True)
+    city: str | None = Column(String(100), nullable=True)
+    state: str | None = Column(String(50), nullable=True)
+    postcode: str | None = Column(String(10), nullable=True)
     is_active: bool = Column(Boolean, default=True, nullable=False)
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -157,17 +156,17 @@ class Order(Base):
     subtotal: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     tax: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     total: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
-    notes: Optional[str] = Column(Text, nullable=True)
+    notes: str | None = Column(Text, nullable=True)
     order_date: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False, index=True
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False, index=True
     )
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -201,7 +200,7 @@ class OrderItem(Base):
     unit_price: Decimal = Column(Numeric(10, 2), nullable=False)
     line_total: Decimal = Column(Numeric(10, 2), nullable=False)
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     # Relationships
@@ -234,18 +233,18 @@ class Quote(Base):
     subtotal: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     tax: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     total: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
-    notes: Optional[str] = Column(Text, nullable=True)
-    valid_until: Optional[datetime] = Column(DateTime(timezone=True), nullable=True)
+    notes: str | None = Column(Text, nullable=True)
+    valid_until: datetime | None = Column(DateTime(timezone=True), nullable=True)
     quote_date: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False, index=True
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False, index=True
     )
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -279,7 +278,7 @@ class QuoteItem(Base):
     unit_price: Decimal = Column(Numeric(10, 2), nullable=False)
     line_total: Decimal = Column(Numeric(10, 2), nullable=False)
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     # Relationships

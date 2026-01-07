@@ -1,12 +1,18 @@
 """Dashboard API routes."""
-from decimal import Decimal
 from datetime import datetime, timedelta
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.config.database import get_db
-from src.db.erp_models import Product as ProductModel, Customer as CustomerModel, Order as OrderModel, Quote as QuoteModel, OrderItem as OrderItemModel
-from src.db.schemas import DashboardMetrics, RevenueDataPoint, CategorySales, TopProduct
+from src.db.erp_models import Customer as CustomerModel
+from src.db.erp_models import Order as OrderModel
+from src.db.erp_models import OrderItem as OrderItemModel
+from src.db.erp_models import Product as ProductModel
+from src.db.erp_models import Quote as QuoteModel
+from src.db.schemas import CategorySales, DashboardMetrics, RevenueDataPoint, TopProduct
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -29,18 +35,18 @@ async def get_dashboard_metrics(db: AsyncSession = Depends(get_db)):
     active_orders = active_orders_result.scalar_one()
 
     # Total products
-    products_query = select(func.count()).where(ProductModel.is_active == True)
+    products_query = select(func.count()).where(ProductModel.is_active)
     products_result = await db.execute(products_query)
     total_products = products_result.scalar_one()
 
     # Total customers
-    customers_query = select(func.count()).where(CustomerModel.is_active == True)
+    customers_query = select(func.count()).where(CustomerModel.is_active)
     customers_result = await db.execute(customers_query)
     total_customers = customers_result.scalar_one()
 
     # Low stock alerts (stock < 10)
     low_stock_query = select(func.count()).where(
-        (ProductModel.stock < 10) & (ProductModel.is_active == True)
+        (ProductModel.stock < 10) & ProductModel.is_active
     )
     low_stock_result = await db.execute(low_stock_query)
     low_stock_alerts = low_stock_result.scalar_one()

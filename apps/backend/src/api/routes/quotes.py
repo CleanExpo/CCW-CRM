@@ -1,21 +1,30 @@
 """Quotes API routes."""
-from typing import Optional
-from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from src.config.database import get_db
 from src.db.erp_models import (
-    Quote as QuoteModel,
-    QuoteItem as QuoteItemModel,
     Order as OrderModel,
+)
+from src.db.erp_models import (
     OrderItem as OrderItemModel,
+)
+from src.db.erp_models import (
     Product as ProductModel,
 )
-from src.db.schemas import Quote, QuoteCreate, QuoteUpdate, Order, PaginatedResponse
+from src.db.erp_models import (
+    Quote as QuoteModel,
+)
+from src.db.erp_models import (
+    QuoteItem as QuoteItemModel,
+)
+from src.db.schemas import Order, PaginatedResponse, Quote, QuoteCreate, QuoteUpdate
 
 router = APIRouter(prefix="/api/quotes", tags=["quotes"])
 
@@ -43,9 +52,9 @@ async def generate_order_number(db: AsyncSession) -> str:
 async def list_quotes(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    search: Optional[str] = None,
-    status: Optional[str] = None,
-    customer_id: Optional[UUID] = None,
+    search: str | None = None,
+    status: str | None = None,
+    customer_id: UUID | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """List quotes with pagination and filters."""

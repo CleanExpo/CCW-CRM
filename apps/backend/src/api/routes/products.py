@@ -1,12 +1,13 @@
 """Products API routes."""
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.config.database import get_db
 from src.db.erp_models import Product as ProductModel
-from src.db.schemas import Product, ProductCreate, ProductUpdate, PaginatedResponse
+from src.db.schemas import PaginatedResponse, Product, ProductCreate, ProductUpdate
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
@@ -15,9 +16,9 @@ router = APIRouter(prefix="/api/products", tags=["products"])
 async def list_products(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    search: Optional[str] = None,
-    category: Optional[str] = None,
-    is_active: Optional[bool] = None,
+    search: str | None = None,
+    category: str | None = None,
+    is_active: bool | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """List products with pagination and filters."""

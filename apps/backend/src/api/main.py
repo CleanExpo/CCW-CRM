@@ -1,17 +1,17 @@
 """FastAPI application entry point."""
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import get_settings
-from src.utils import setup_logging, get_logger
+from src.utils import get_logger, setup_logging
 
-from .routes import health, products, customers, orders, quotes, dashboard, demo_auth
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
+from .routes import customers, dashboard, demo_auth, health, orders, products, quotes
 
 settings = get_settings()
 logger = get_logger(__name__)

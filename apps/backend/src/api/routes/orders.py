@@ -1,14 +1,17 @@
 """Orders API routes."""
-from typing import Optional
-from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from src.config.database import get_db
-from src.db.erp_models import Order as OrderModel, OrderItem as OrderItemModel, Product as ProductModel
+from src.db.erp_models import Order as OrderModel
+from src.db.erp_models import OrderItem as OrderItemModel
+from src.db.erp_models import Product as ProductModel
 from src.db.schemas import Order, OrderCreate, OrderUpdate, PaginatedResponse
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -28,9 +31,9 @@ async def generate_order_number(db: AsyncSession) -> str:
 async def list_orders(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    search: Optional[str] = None,
-    status: Optional[str] = None,
-    customer_id: Optional[UUID] = None,
+    search: str | None = None,
+    status: str | None = None,
+    customer_id: UUID | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """List orders with pagination and filters."""

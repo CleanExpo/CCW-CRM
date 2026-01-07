@@ -1,7 +1,7 @@
 """SQLAlchemy models for ERP system."""
 from datetime import datetime
-from decimal import Decimal
-from uuid import UUID, uuid4
+from uuid import uuid4
+
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import DeclarativeBase, relationship

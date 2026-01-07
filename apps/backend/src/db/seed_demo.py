@@ -9,17 +9,18 @@ Generates realistic sample data for overnight demo:
 - Demo admin user
 - 6 months of sales history
 """
+# ruff: noqa: E501
 
 import asyncio
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # from src.auth.jwt import get_password_hash  # Temporarily disabled due to bcrypt compatibility issue
-from src.config.database import AsyncSessionLocal
+from src.config.database import AsyncSessionLocal, async_engine
 from src.db.demo_models import (
     Customer,
     Order,
@@ -32,8 +33,6 @@ from src.db.demo_models import (
     QuoteStatus,
 )
 from src.db.models import Base, User
-from src.config.database import async_engine
-
 
 # Sample data pools
 EQUIPMENT_NAMES = {
@@ -212,7 +211,7 @@ async def create_orders(
     """Create sales orders with line items (past 6 months)."""
     orders = []
     order_number = 10000
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Generate orders across 6 months
     for i in range(count):
@@ -287,7 +286,7 @@ async def create_quotes(
     """Create quotes (mix of statuses)."""
     quotes = []
     quote_number = 20000
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     for i in range(count):
         # Random date within past 3 months
@@ -384,7 +383,7 @@ async def seed_demo_data() -> None:
 
     print("[SEED] Demo data seeding complete!\n")
     print("Summary:")
-    print(f"   - 1 admin user (admin@demo.com / demo123)")
+    print("   - 1 admin user (admin@demo.com / demo123)")
     print(f"   - {len(products)} products across {len(WAREHOUSES)} warehouses")
     print(f"   - {len(customers)} customers")
     print(f"   - {len(orders)} orders (past 6 months)")

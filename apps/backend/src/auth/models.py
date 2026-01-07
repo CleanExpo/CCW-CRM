@@ -3,8 +3,7 @@ User Authentication Models
 SQLAlchemy models for JWT-based authentication
 """
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, Column, DateTime, String
@@ -27,19 +26,19 @@ class User(Base):
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     email: str = Column(String(255), unique=True, nullable=False, index=True)
     password_hash: str = Column(String(255), nullable=False)
-    full_name: Optional[str] = Column(String(255), nullable=True)
+    full_name: str | None = Column(String(255), nullable=True)
     is_active: bool = Column(Boolean, default=True, nullable=False, index=True)
     is_admin: bool = Column(Boolean, default=False, nullable=False)
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
-    last_login_at: Optional[datetime] = Column(DateTime(timezone=True), nullable=True)
+    last_login_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
 
     def set_password(self, password: str) -> None:
         """Hash and set the user's password."""
