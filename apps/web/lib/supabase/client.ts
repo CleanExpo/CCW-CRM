@@ -1,8 +1,12 @@
-import { createBrowserClient } from "@supabase/ssr";
+/**
+ * Supabase client stub - replaced with FastAPI client
+ *
+ * This file exports our custom apiClient to maintain compatibility
+ * with code that still imports from @/lib/supabase/client
+ */
+
+import { apiClient } from "@/lib/api/client";
 
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  return apiClient;
 }

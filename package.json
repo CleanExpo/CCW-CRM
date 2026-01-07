@@ -1,9 +1,9 @@
 {
-  "name": "claude-agent-orchestration-template",
+  "name": "ccw-online-erp",
   "version": "1.0.0",
   "private": true,
-  "description": "Production-ready monorepo for AI-powered applications with Next.js, LangGraph, and Claude",
-  "author": "Your Name",
+  "description": "Equipment Supplier ERP System built with Next.js and FastAPI",
+  "author": "CCW",
   "license": "MIT",
   "scripts": {
     "setup": "bash scripts/setup.sh",

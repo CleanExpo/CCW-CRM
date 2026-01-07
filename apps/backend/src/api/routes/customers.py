@@ -1,0 +1,144 @@
+"""Customers API routes."""
+from typing import Optional
+from uuid import UUID
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.config.database import get_db
+from src.db.erp_models import Customer as CustomerModel
+from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
+
+router = APIRouter(prefix="/api/customers", tags=["customers"])
+
+
+@router.get("", response_model=PaginatedResponse)
+async def list_customers(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    search: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """List customers with pagination and filters."""
+    # Build query
+    query = select(CustomerModel)
+
+    # Apply filters
+    if search:
+        search_filter = f"%{search}%"
+        query = query.where(
+            (CustomerModel.company_name.ilike(search_filter)) |
+            (CustomerModel.customer_number.ilike(search_filter)) |
+            (CustomerModel.contact_name.ilike(search_filter)) |
+            (CustomerModel.email.ilike(search_filter))
+        )
+
+    if is_active is not None:
+        query = query.where(CustomerModel.is_active == is_active)
+
+    # Get total count
+    count_query = select(func.count()).select_from(query.subquery())
+    result = await db.execute(count_query)
+    total = result.scalar_one()
+
+    # Apply pagination
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    query = query.order_by(CustomerModel.created_at.desc())
+
+    # Execute query
+    result = await db.execute(query)
+    customers = result.scalars().all()
+
+    return {
+        "items": [Customer.model_validate(c) for c in customers],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
+
+
+@router.get("/{customer_id}", response_model=Customer)
+async def get_customer(
+    customer_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a single customer by ID."""
+    query = select(CustomerModel).where(CustomerModel.id == customer_id)
+    result = await db.execute(query)
+    customer = result.scalar_one_or_none()
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    return Customer.model_validate(customer)
+
+
+@router.post("", response_model=Customer, status_code=201)
+async def create_customer(
+    customer_data: CustomerCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a new customer."""
+    # Check if customer number already exists
+    existing_query = select(CustomerModel).where(
+        CustomerModel.customer_number == customer_data.customer_number
+    )
+    result = await db.execute(existing_query)
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Customer number already exists")
+
+    # Create customer
+    customer = CustomerModel(**customer_data.model_dump())
+    db.add(customer)
+    await db.commit()
+    await db.refresh(customer)
+
+    return Customer.model_validate(customer)
+
+
+@router.put("/{customer_id}", response_model=Customer)
+async def update_customer(
+    customer_id: UUID,
+    customer_data: CustomerUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a customer."""
+    # Get existing customer
+    query = select(CustomerModel).where(CustomerModel.id == customer_id)
+    result = await db.execute(query)
+    customer = result.scalar_one_or_none()
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Update fields
+    update_data = customer_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(customer, field, value)
+
+    await db.commit()
+    await db.refresh(customer)
+
+    return Customer.model_validate(customer)
+
+
+@router.delete("/{customer_id}", status_code=204)
+async def delete_customer(
+    customer_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Soft delete a customer (set is_active to False)."""
+    # Get existing customer
+    query = select(CustomerModel).where(CustomerModel.id == customer_id)
+    result = await db.execute(query)
+    customer = result.scalar_one_or_none()
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Soft delete
+    customer.is_active = False
+    await db.commit()
+
+    return None

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.config import get_settings
 from src.utils import setup_logging, get_logger
 
-from .routes import agents, chat, health, webhooks, prd, workflows, rag, analytics, agent_dashboard, task_queue, contractors
+from .routes import health, products, customers, orders, quotes, dashboard, demo_auth
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
 
@@ -28,8 +28,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(
     title=settings.project_name,
-    description="LangGraph Agent Orchestration Backend",
-    version="0.1.0",
+    description="CCW Equipment Supplier ERP System API",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -48,19 +48,15 @@ app.add_middleware(AuthMiddleware)
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
-app.include_router(agents.router, prefix="/api", tags=["Agents"])
-app.include_router(chat.router, prefix="/api", tags=["Chat"])
-app.include_router(webhooks.router, prefix="/api", tags=["Webhooks"])
-app.include_router(prd.router, tags=["PRD Generation"])
-app.include_router(workflows.router, prefix="/api", tags=["Workflows"])
-app.include_router(rag.router, prefix="/api", tags=["RAG Pipeline"])
-app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
-app.include_router(agent_dashboard.router, tags=["Agent Dashboard"])
-app.include_router(task_queue.router, tags=["Task Queue"])
-app.include_router(contractors.router, prefix="/api", tags=["Contractors"])
+app.include_router(demo_auth.router, tags=["Authentication"])
+app.include_router(products.router, tags=["Products"])
+app.include_router(customers.router, tags=["Customers"])
+app.include_router(orders.router, tags=["Orders"])
+app.include_router(quotes.router, tags=["Quotes"])
+app.include_router(dashboard.router, tags=["Dashboard"])
 
 
 @app.get("/")
 async def root() -> dict[str, str]:
     """Root endpoint."""
-    return {"message": "AI Agent Orchestration API", "version": "0.1.0"}
+    return {"message": "CCW Equipment Supplier ERP API", "version": "1.0.0"}

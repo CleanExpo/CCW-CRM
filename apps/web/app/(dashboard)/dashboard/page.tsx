@@ -1,72 +1,270 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChatInterface } from "@/components/chat/chat-interface";
+import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText } from "lucide-react";
+
+interface DashboardMetrics {
+  total_revenue: number;
+  active_orders: number;
+  total_products: number;
+  total_customers: number;
+  low_stock_alerts: number;
+  pending_quotes: number;
+}
+
+interface RevenueDataPoint {
+  month: string;
+  revenue: number;
+}
+
+interface CategorySales {
+  category: string;
+  total: number;
+}
+
+interface TopProduct {
+  name: string;
+  revenue: number;
+  quantity_sold: number;
+}
+
+interface ActivityItem {
+  type: string;
+  id: string;
+  number: string;
+  status: string;
+  total: number;
+  date: string;
+}
 
 export default function DashboardPage() {
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
+  const [categorySales, setCategorySales] = useState<CategorySales[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+        const [metricsRes, revenueRes, categoryRes, topProductsRes, activityRes] = await Promise.all([
+          fetch(`${API_BASE}/api/dashboard/metrics`),
+          fetch(`${API_BASE}/api/dashboard/charts/revenue`),
+          fetch(`${API_BASE}/api/dashboard/charts/sales-by-category`),
+          fetch(`${API_BASE}/api/dashboard/charts/top-products`),
+          fetch(`${API_BASE}/api/dashboard/recent-activity`),
+        ]);
+
+        const [metricsData, revenueData, categoryData, topProductsData, activityData] = await Promise.all([
+          metricsRes.json(),
+          revenueRes.json(),
+          categoryRes.json(),
+          topProductsRes.json(),
+          activityRes.json(),
+        ]);
+
+        setMetrics(metricsData);
+        setRevenueData(revenueData);
+        setCategorySales(categoryData);
+        setTopProducts(topProductsData);
+        setActivity(activityData);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-AU", {
+      style: "currency",
+      currency: "AUD",
+    }).format(value);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to your AI Agent Orchestration dashboard.
-        </p>
+        <p className="text-muted-foreground">Equipment Supplier ERP - Overview</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Metrics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              No tasks yet
-            </p>
+            <div className="text-2xl font-bold">{formatCurrency(metrics?.total_revenue || 0)}</div>
+            <p className="text-xs text-muted-foreground">From delivered orders</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              No completed tasks
-            </p>
+            <div className="text-2xl font-bold">{metrics?.active_orders || 0}</div>
+            <p className="text-xs text-muted-foreground">In progress</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              No tasks in progress
-            </p>
+            <div className="text-2xl font-bold">{metrics?.total_products || 0}</div>
+            <p className="text-xs text-muted-foreground">Active catalog items</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              No failed tasks
-            </p>
+            <div className="text-2xl font-bold">{metrics?.total_customers || 0}</div>
+            <p className="text-xs text-muted-foreground">Active customers</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{metrics?.low_stock_alerts || 0}</div>
+            <p className="text-xs text-muted-foreground">Items with stock ≤ 10</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.pending_quotes || 0}</div>
+            <p className="text-xs text-muted-foreground">Awaiting response</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Data Summaries */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue Trend</CardTitle>
+            <CardDescription>Last 6 months</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {revenueData.map((point) => (
+                <div key={point.month} className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">{point.month}</span>
+                  <span className="text-sm font-medium">{formatCurrency(point.revenue)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Sales by Category</CardTitle>
+            <CardDescription>Total sales distribution</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {categorySales.map((category) => (
+                <div key={category.category} className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {category.category.replace(/_/g, " ")}
+                  </span>
+                  <span className="text-sm font-medium">{formatCurrency(category.total)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Products */}
       <Card>
         <CardHeader>
-          <CardTitle>AI Chat</CardTitle>
-          <CardDescription>
-            Interact with the AI agent orchestrator
-          </CardDescription>
+          <CardTitle>Top 5 Products</CardTitle>
+          <CardDescription>By revenue</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChatInterface />
+          <div className="space-y-4">
+            {topProducts.map((product, index) => (
+              <div key={product.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{product.name}</p>
+                    <p className="text-xs text-muted-foreground">{product.quantity_sold} units sold</p>
+                  </div>
+                </div>
+                <span className="text-sm font-medium">{formatCurrency(product.revenue)}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>Latest orders and quotes</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {activity.map((item) => (
+              <div key={item.id} className="flex items-start justify-between border-b pb-3 last:border-0">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">
+                      {item.type === "order" ? "Order" : "Quote"} {item.number}
+                    </span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-secondary capitalize">
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {formatCurrency(item.total)}
+                  </p>
+                </div>
+                <div className="text-xs text-muted-foreground whitespace-nowrap ml-4">
+                  {new Date(item.date).toLocaleDateString()}
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

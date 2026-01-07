@@ -1,7 +1,7 @@
 [project]
-name = "backend"
-version = "0.1.0"
-description = "LangGraph Agent Backend"
+name = "ccw-erp-backend"
+version = "1.0.0"
+description = "CCW Equipment Supplier ERP Backend API"
 requires-python = ">=3.12"
 
 dependencies = [
@@ -19,12 +19,6 @@ dependencies = [
     # Authentication
     "python-jose[cryptography]>=3.3.0",  # JWT tokens
     "passlib[bcrypt]>=1.7.0",  # Password hashing
-
-    # AI Models (All Optional - Ollama used by default via HTTP)
-    "anthropic>=0.40.0",  # Optional - Claude API
-    "google-generativeai>=0.8.0",  # Optional - Gemini API
-    "openai>=1.50.0",  # Optional - OpenAI API
-    # Note: Ollama provider uses httpx (already included) for local AI
 
     # Core
     "pydantic>=2.9.0",

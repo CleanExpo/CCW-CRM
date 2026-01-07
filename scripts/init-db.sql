@@ -6,7 +6,7 @@
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgvector";
+-- CREATE EXTENSION IF NOT EXISTS "pgvector";  -- Temporarily disabled - can be enabled later if AI embeddings are needed
 
 -- =============================================================================
 -- SECTION 1: Authentication Schema (Simple JWT-based auth)
@@ -126,14 +126,14 @@ CREATE TABLE IF NOT EXISTS documents (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    embedding VECTOR(1536),  -- OpenAI/Anthropic embedding dimension
+    -- embedding VECTOR(1536),  -- Temporarily disabled - requires pgvector extension
     metadata JSONB DEFAULT '{}'::JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Indexes for vector similarity search
-CREATE INDEX IF NOT EXISTS idx_documents_embedding ON documents USING ivfflat (embedding vector_cosine_ops);
+-- CREATE INDEX IF NOT EXISTS idx_documents_embedding ON documents USING ivfflat (embedding vector_cosine_ops);  -- Temporarily disabled - requires pgvector
 CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
 CREATE INDEX IF NOT EXISTS idx_documents_metadata ON documents USING GIN (metadata);
 

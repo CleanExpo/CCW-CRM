@@ -16,8 +16,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/client";
-import { OAuthProviders } from "./oauth-providers";
+import { authApi } from "@/lib/api/auth";
+// import { OAuthProviders } from "./oauth-providers";  // Disabled for demo
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -43,20 +43,18 @@ export function LoginForm() {
     setIsLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
+    try {
+      await authApi.login({
+        email: values.email,
+        password: values.password,
+      });
 
-    if (error) {
-      setError(error.message);
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error: any) {
+      setError(error.message || "Login failed. Please check your credentials.");
       setIsLoading(false);
-      return;
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
@@ -92,10 +90,10 @@ export function LoginForm() {
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
+        <p className="text-sm text-muted-foreground text-center mt-2">
+          Demo: admin@demo.com / demo123
+        </p>
       </form>
-
-      {/* OAuth Providers */}
-      <OAuthProviders redirectTo="/dashboard" />
     </Form>
   );
 }

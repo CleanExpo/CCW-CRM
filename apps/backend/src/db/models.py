@@ -22,7 +22,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, relationship
-from pgvector.sqlalchemy import Vector
+# from pgvector.sqlalchemy import Vector  # Temporarily disabled for demo
 
 
 class Base(DeclarativeBase):
@@ -79,9 +79,9 @@ class User(Base):
     )
     last_login_at: Optional[datetime] = Column(DateTime(timezone=True), nullable=True)
 
-    # Relationships
-    contractors = relationship("Contractor", back_populates="user")
-    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+    # Relationships - Disabled for ERP demo
+    # contractors = relationship("Contractor", back_populates="user")
+    # documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email})>"
@@ -115,8 +115,8 @@ class Contractor(Base):
         nullable=False,
     )
 
-    # Relationships
-    user = relationship("User", back_populates="contractors")
+    # Relationships - Disabled for ERP demo
+    # user = relationship("User", back_populates="contractors")
     availability_slots = relationship(
         "AvailabilitySlot", back_populates="contractor", cascade="all, delete-orphan"
     )
@@ -190,8 +190,8 @@ class Document(Base):
     )
     title: str = Column(String(255), nullable=False)
     content: str = Column(Text, nullable=False)
-    embedding: Optional[list[float]] = Column(Vector(1536), nullable=True)  # OpenAI/Anthropic dimension
-    metadata: dict = Column(JSONB, default=dict, nullable=False)
+    # embedding: Optional[list[float]] = Column(Vector(1536), nullable=True)  # Temporarily disabled for demo
+    metadata_: dict = Column("metadata", JSONB, default=dict, nullable=False)  # Renamed to avoid SQLAlchemy conflict
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
@@ -202,8 +202,8 @@ class Document(Base):
         nullable=False,
     )
 
-    # Relationships
-    user = relationship("User", back_populates="documents")
+    # Relationships - Disabled for ERP demo
+    # user = relationship("User", back_populates="documents")
 
     def __repr__(self) -> str:
         return f"<Document(id={self.id}, title={self.title})>"

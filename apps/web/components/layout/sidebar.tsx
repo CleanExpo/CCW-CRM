@@ -5,15 +5,19 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  MessageSquare,
+  Package,
+  Users,
+  ShoppingCart,
+  FileText,
   Settings,
-  Activity,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Chat", href: "/dashboard/chat", icon: MessageSquare },
-  { name: "Activity", href: "/dashboard/activity", icon: Activity },
+  { name: "Products", href: "/products", icon: Package },
+  { name: "Customers", href: "/customers", icon: Users },
+  { name: "Orders", href: "/orders", icon: ShoppingCart },
+  { name: "Quotes", href: "/quotes", icon: FileText },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -24,7 +28,7 @@ export function Sidebar() {
     <aside className="w-64 border-r bg-muted/40">
       <div className="flex h-14 items-center border-b px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span>Agent Orchestrator</span>
+          <span>Equipment ERP</span>
         </Link>
       </div>
       <nav className="flex flex-col gap-1 p-4">

@@ -1,464 +1,610 @@
-# CLAUDE.md - NodeJS-Starter-V1 Architecture
+# CCW-Online-ERP - Architecture Guide for Development
 
-> **Self-Contained AI Starter Template**: Next.js 15 + FastAPI/LangGraph + PostgreSQL
+## Project Overview
+This is a **full-stack Equipment Supplier ERP** built for CCW's internal business operations, based on the NodeJS-Starter-V1 template.
 
-## 🎯 Quick Overview
+**Current Status**: Working MVP with read-only views. The task is to add full CRUD operations (Create, Read, Update, Delete) to all modules.
 
-This is a **self-contained AI application template** designed to work completely offline without API keys or cloud dependencies. Everything runs locally in Docker.
+**Tech Stack**:
+- **Frontend**: Next.js 15, React 19, TypeScript 5.7, Tailwind CSS v4, shadcn/ui
+- **Backend**: FastAPI (Python 3.12), SQLAlchemy 2.0, Pydantic v2
+- **Database**: PostgreSQL 15 (via Docker)
+- **Package Manager**: pnpm
+- **Build Tool**: Turbo (monorepo orchestration)
+- **State Management**: React hooks (no Redux/Zustand needed for MVP)
+- **Form Validation**: Zod (frontend) + Pydantic (backend)
+- **Forms**: React Hook Form
 
-## 📋 Quick Commands
+---
 
-```bash
-# Setup (one-time)
-pnpm run setup              # Unix/macOS
-pnpm run setup:windows      # Windows
+## Architecture Overview
 
-# Development
-pnpm dev                    # Start all services
-pnpm run verify             # Health check
-
-# Docker Management
-pnpm run docker:up          # Start PostgreSQL + Redis
-pnpm run docker:down        # Stop services
-pnpm run docker:reset       # Reset database
-
-# Testing & Quality
-pnpm turbo run test         # All tests
-pnpm turbo run lint         # Linting
-pnpm turbo run type-check   # Type checking
+### Monorepo Structure
 ```
-
-## 🏗️ Architecture Overview
-
-### Frontend (Next.js 15)
-**Location**: `apps/web/`
-- Next.js 15 with App Router
-- React 19 with Server Components
-- Tailwind CSS v4 + design tokens
-- shadcn/ui components
-- JWT authentication (cookie-based)
-
-**Key Files**:
-- `apps/web/lib/api/client.ts` - API client (fetch wrapper)
-- `apps/web/lib/api/auth.ts` - Authentication API
-- `apps/web/middleware.ts` - JWT auth middleware
-- `apps/web/app/` - App Router pages
-
-### Backend (FastAPI + LangGraph)
-**Location**: `apps/backend/`
-- FastAPI async framework
-- LangGraph agent orchestration
-- SQLAlchemy 2.0 ORM
-- JWT authentication with bcrypt
-- Dual AI providers (Ollama + Claude)
-
-**Key Directories**:
-- `src/agents/` - AI agent implementations
-- `src/api/` - FastAPI routes and dependencies
-- `src/auth/` - JWT token management
-- `src/config/` - Database and settings
-- `src/db/` - SQLAlchemy models
-- `src/models/` - AI provider abstraction layer
-
-### Database (PostgreSQL 15)
-**Location**: Docker Compose
-- PostgreSQL 15 with pgvector extension
-- Redis 7 for caching
-- Auto-migrations on startup
-- Persistent volumes
-
-**Schema Location**: `scripts/init-db.sql`
-
-**Key Tables**:
-- `users` - Authentication with bcrypt passwords
-- `documents` - Document storage with vector embeddings
-- `contractors` - Contractor profiles
-- `availability_slots` - Scheduling system
-
-### AI Integration
-**Default**: Ollama (local, free)
-**Optional**: Claude API (cloud, paid)
-
-**Provider Files**:
-- `apps/backend/src/models/base_provider.py` - Abstract interface
-- `apps/backend/src/models/ollama_provider.py` - Local AI
-- `apps/backend/src/models/anthropic.py` - Cloud AI
-- `apps/backend/src/models/selector.py` - Auto-detection
-
-## 📂 Project Structure
-
-```
-NodeJS-Starter-V1/
+C:\CCW-Online-ERP/
 ├── apps/
-│   ├── web/                    # Next.js Frontend
-│   │   ├── app/                # App Router
-│   │   ├── components/         # React components
-│   │   ├── lib/api/            # API client
-│   │   └── middleware.ts       # JWT auth
-│   └── backend/                # Python Backend
+│   ├── web/                              # Next.js 15 Frontend
+│   │   ├── app/
+│   │   │   ├── (auth)/                   # Authentication pages
+│   │   │   │   └── login/page.tsx        # Login page
+│   │   │   └── (dashboard)/              # Protected dashboard routes
+│   │   │       ├── layout.tsx            # Dashboard layout with sidebar
+│   │   │       ├── dashboard/page.tsx    # Main dashboard with metrics
+│   │   │       ├── products/page.tsx     # Products list (read-only)
+│   │   │       ├── customers/page.tsx    # Customers list (read-only)
+│   │   │       ├── orders/page.tsx       # Orders list (read-only)
+│   │   │       └── quotes/page.tsx       # Quotes list (read-only)
+│   │   ├── components/
+│   │   │   ├── auth/
+│   │   │   │   └── login-form.tsx        # ⭐ REFERENCE PATTERN FOR FORMS
+│   │   │   ├── layout/
+│   │   │   │   └── sidebar.tsx           # Navigation sidebar
+│   │   │   └── ui/                       # shadcn/ui components (installed)
+│   │   ├── lib/
+│   │   │   └── api/
+│   │   │       ├── client.ts             # ⭐ API client for all requests
+│   │   │       └── auth.ts               # Auth API methods
+│   │   └── middleware.ts                 # 🚨 DO NOT MODIFY - JWT auth
+│   └── backend/                          # FastAPI Backend
 │       ├── src/
-│       │   ├── agents/         # AI agents
-│       │   ├── api/            # FastAPI routes
-│       │   ├── auth/           # JWT authentication
-│       │   ├── config/         # Configuration
-│       │   ├── db/             # Database models
-│       │   └── models/         # AI providers
-│       └── tests/              # Pytest tests
-├── scripts/                    # Setup scripts
-│   ├── setup.sh               # Unix/macOS setup
-│   ├── setup.ps1              # Windows setup
-│   ├── verify.sh              # Health checks
-│   └── init-db.sql            # Database schema
-├── docs/                       # Documentation
-│   ├── LOCAL_SETUP.md         # Setup guide
-│   ├── AI_PROVIDERS.md        # Ollama vs Claude
-│   └── OPTIONAL_SERVICES.md   # Deployment guides
-├── docker-compose.yml         # PostgreSQL + Redis
-└── .env.example               # Environment template
+│       │   ├── api/routes/
+│       │   │   ├── demo_lists.py         # ⭐ Products, Customers, Orders, Quotes list endpoints
+│       │   │   ├── demo_dashboard.py     # Dashboard metrics and charts
+│       │   │   └── demo_auth.py          # 🚨 DO NOT MODIFY - Authentication endpoints
+│       │   ├── db/
+│       │   │   ├── demo_models.py        # 🚨 DO NOT MODIFY - SQLAlchemy models
+│       │   │   └── seed_demo.py          # Seed data script
+│       │   └── config/
+│       │       └── database.py           # DB connection
+│       └── tests/                        # Pytest tests
+├── docker-compose.yml                    # PostgreSQL container
+├── package.json                          # Root package.json with scripts
+└── pnpm-workspace.yaml                   # pnpm workspace config
 ```
 
-## 🔄 Development Workflow
+---
 
-### 1. Initial Setup
-```bash
-# Clone and setup
-git clone https://github.com/CleanExpo/NodeJS-Starter-V1.git
-cd NodeJS-Starter-V1
-pnpm run setup
+## 🚨 Critical Development Guardrails
 
-# Start development
-pnpm dev
+### NEVER DO THESE (Breaking Changes):
+
+#### 1. **Database Schema Changes**
+- ❌ **DO NOT** modify `apps/backend/src/db/demo_models.py` (SQLAlchemy models)
+- ❌ **DO NOT** add, remove, or rename database columns
+- ❌ **DO NOT** change table names
+- ❌ **DO NOT** create new Alembic migrations
+- ❌ **DO NOT** modify enum types (OrderStatus, QuoteStatus, ProductCategory)
+
+**Why**: Database is shared with production-like data. Schema changes require careful planning, approval, and migration strategy. Making schema changes without approval could corrupt data or break the existing system.
+
+**Exception**: Only with explicit user approval and migration strategy.
+
+#### 2. **Authentication & Security**
+- ❌ **DO NOT** modify `apps/web/middleware.ts` (JWT auth middleware)
+- ❌ **DO NOT** change `apps/backend/src/api/routes/demo_auth.py` (auth endpoints)
+- ❌ **DO NOT** modify password hashing logic (passlib/bcrypt)
+- ❌ **DO NOT** change token generation or validation
+- ❌ **DO NOT** disable authentication checks or bypass security
+
+**Why**: Security-critical code. Any changes could expose vulnerabilities, allow unauthorized access, or leak sensitive user data.
+
+#### 3. **API Contracts (Existing Endpoints)**
+- ❌ **DO NOT** change response structure of existing endpoints
+- ❌ **DO NOT** rename existing API routes (e.g., `/api/products` → `/api/items`)
+- ❌ **DO NOT** change required request parameters to optional or vice versa
+- ❌ **DO NOT** remove fields from API responses
+
+**Why**: Frontend depends on specific API contracts. Breaking changes will crash the UI, cause data display errors, or break pagination.
+
+**Exception**: You CAN add optional parameters or new fields to responses. You CAN create entirely new endpoints.
+
+#### 4. **Dependencies & Package Versions**
+- ❌ **DO NOT** upgrade Next.js, React, FastAPI, or other major frameworks without approval
+- ❌ **DO NOT** add large dependencies (>5MB) without justification
+- ❌ **DO NOT** remove existing dependencies that are in use
+- ❌ **DO NOT** change Python or Node.js version requirements
+
+**Why**: Version upgrades can introduce breaking changes, require code refactoring, or cause build failures. Large dependencies slow down builds and increase bundle size.
+
+---
+
+### ✅ ENCOURAGED CHANGES (Safe to Make):
+
+1. **Frontend Components**
+   - ✅ Add new components in `apps/web/components/`
+   - ✅ Add new page components in `apps/web/app/(dashboard)/[module]/components/`
+   - ✅ Use existing shadcn/ui components (Button, Dialog, Form, Input, etc.)
+   - ✅ Follow existing component patterns (see `login-form.tsx`)
+
+2. **API Calls**
+   - ✅ Add new API client methods in `apps/web/lib/api/`
+   - ✅ Use `apiClient.get()`, `apiClient.post()`, `apiClient.put()`, `apiClient.delete()` from `client.ts`
+   - ✅ Add proper TypeScript types for requests and responses
+
+3. **Styling**
+   - ✅ Use Tailwind utility classes
+   - ✅ Use CSS variables from design system (e.g., `bg-primary`, `text-muted-foreground`)
+   - ✅ Follow spacing scale: `space-y-4`, `gap-6`, `p-4`, etc.
+   - ✅ Use responsive breakpoints: `md:grid-cols-2`, `lg:flex-row`, etc.
+
+4. **Testing**
+   - ✅ Add Vitest tests for new components in `apps/web/__tests__/`
+   - ✅ Add Pytest tests for new backend logic in `apps/backend/tests/`
+   - ✅ Test critical paths (form submission, API calls, delete confirmations)
+
+---
+
+## Code Patterns & Conventions
+
+### Frontend Component Pattern
+
+**Location**: `apps/web/app/(dashboard)/[module]/components/[ModuleName]Form.tsx`
+
+**Pattern** (based on `login-form.tsx`):
+```typescript
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { apiClient } from "@/lib/api/client";
+import { useToast } from "@/hooks/use-toast";
+
+// 1. Define Zod schema for validation
+const formSchema = z.object({
+  field1: z.string().min(1, "Field is required"),
+  field2: z.string().email("Invalid email format"),
+  field3: z.number().positive("Must be positive"),
+  // ... more fields
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+// 2. Component with proper TypeScript types
+interface ModuleFormProps {
+  mode: "create" | "edit";
+  initialData?: FormData;
+  onSuccess?: () => void;
+}
+
+export function ModuleForm({ mode, initialData, onSuccess }: ModuleFormProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 3. React Hook Form setup
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialData || {
+      field1: "",
+      field2: "",
+      field3: 0,
+    },
+  });
+
+  // 4. Submit handler with error handling
+  async function onSubmit(values: FormData) {
+    setIsLoading(true);
+    try {
+      if (mode === "create") {
+        await apiClient.post("/api/endpoint", values);
+        toast({
+          title: "Success",
+          description: "Created successfully",
+        });
+      } else {
+        await apiClient.put(`/api/endpoint/${initialData?.id}`, values);
+        toast({
+          title: "Success",
+          description: "Updated successfully",
+        });
+      }
+      onSuccess?.();
+      router.refresh(); // Refresh server components to show new data
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Operation failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // 5. Render form with shadcn/ui components
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="field1"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Field Label</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter value" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* More fields... */}
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Saving..." : mode === "create" ? "Create" : "Update"}
+        </Button>
+      </form>
+    </Form>
+  );
+}
 ```
 
-### 2. Development Cycle
-```bash
-# Make changes to code
-# Hot reload works automatically
+### API Client Pattern
 
-# Run tests before committing
-pnpm turbo run test
+**Location**: `apps/web/lib/api/client.ts`
 
-# Check code quality
-pnpm turbo run lint type-check
+**Usage**:
+```typescript
+import { apiClient } from "@/lib/api/client";
+
+// GET request
+const products = await apiClient.get<Product[]>("/api/products");
+
+// GET with query parameters
+const filteredProducts = await apiClient.get<PaginatedResponse>(
+  "/api/products?page=1&page_size=50&search=drill"
+);
+
+// POST request
+const newProduct = await apiClient.post("/api/products", {
+  sku: "SKU-001",
+  name: "Product Name",
+  price: 99.99,
+  stock: 100,
+});
+
+// PUT request
+const updated = await apiClient.put(`/api/products/${id}`, data);
+
+// DELETE request
+await apiClient.delete(`/api/products/${id}`);
 ```
 
-### 3. Database Changes
-```bash
-# If you modify database schema:
-cd apps/backend
+**Important Notes**:
+- `apiClient` automatically handles JWT token from cookies
+- `apiClient` automatically handles JSON serialization/deserialization
+- `apiClient` throws `ApiClientError` on failure (catch it and show user-friendly message)
+- Base URL comes from `process.env.NEXT_PUBLIC_BACKEND_URL` (defaults to http://localhost:8000)
 
-# Create migration
-uv run alembic revision --autogenerate -m "description"
+### Backend Endpoint Pattern
 
-# Apply migration
-uv run alembic upgrade head
-
-# Or reset completely (destroys data)
-pnpm run docker:reset
-```
-
-## 🔐 Authentication Flow
-
-### JWT-Based (No External Auth Service)
-
-1. **Login**: `POST /api/auth/login`
-   - User submits email/password
-   - Backend verifies with bcrypt
-   - Returns JWT token
-   - Frontend stores in cookie
-
-2. **Protected Routes**:
-   - Frontend middleware checks cookie
-   - Redirects to login if missing
-   - Backend validates JWT on API requests
-
-3. **Logout**: `POST /api/auth/logout`
-   - Frontend clears cookie
-   - Backend invalidates session
-
-**Implementation**:
-- Backend: `apps/backend/src/auth/jwt.py`
-- Frontend: `apps/web/lib/api/auth.ts`
-- Middleware: `apps/web/middleware.ts`
-
-## 🤖 AI Provider System
-
-### How It Works
-
-The template uses a **provider abstraction layer** that allows switching between local and cloud AI:
-
+**Existing Endpoints** (in `apps/backend/src/api/routes/demo_lists.py`):
 ```python
-# apps/backend/src/models/selector.py
+from typing import Annotated
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select, or_, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.config.database import get_async_db
+from src.db.demo_models import Product
 
-# Automatically selects provider based on:
-1. AI_PROVIDER environment variable
-2. Availability of API keys
-3. Fallback to Ollama if no key
+router = APIRouter(prefix="/api", tags=["Demo Lists"])
+
+@router.get("/products")
+async def list_products(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    search: str | None = None,
+    category: str | None = None,
+) -> PaginatedResponse:
+    """List products with pagination and search."""
+    query = select(Product)
+
+    # Apply filters
+    if search:
+        query = query.where(
+            or_(
+                Product.name.ilike(f"%{search}%"),
+                Product.sku.ilike(f"%{search}%"),
+            )
+        )
+
+    if category:
+        query = query.where(Product.category == category)
+
+    # Count total
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar() or 0
+
+    # Apply pagination
+    query = query.order_by(Product.name).limit(page_size).offset((page - 1) * page_size)
+
+    # Execute and return
+    result = await db.execute(query)
+    products = result.scalars().all()
+
+    return PaginatedResponse(
+        data=products,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
+
+# Similar patterns for POST, PUT, DELETE...
 ```
 
-### Default: Ollama (Local)
+**If adding new endpoints** (generally not needed, existing ones should work):
+- Use async/await pattern throughout
+- Use Pydantic models for request validation and response serialization
+- Use SQLAlchemy async session (`get_async_db` dependency)
+- Return proper HTTP status codes (201 for create, 204 for delete, 200 for get/update)
+- Add comprehensive error handling
+
+---
+
+## Database Schema Reference
+
+**Tables** (in `demo_models.py` - **DO NOT MODIFY**):
+
+1. **organizations** - Organization/tenant data
+   - id (UUID, primary key), name, slug, is_active, created_at, updated_at
+
+2. **users** - User accounts
+   - id (UUID), email (unique), hashed_password, full_name, organization_id (FK to organizations), is_active, created_at, updated_at
+
+3. **products** - Product catalog
+   - id (UUID), sku (unique), name, description, category (enum: ProductCategory), price (decimal), cost (decimal), stock (integer), warehouse_location, is_active, created_at, updated_at
+
+4. **customers** - Customer directory
+   - id (UUID), customer_number (unique), company_name, contact_name, email, phone, address, city, state, postal_code, country, is_active, created_at, updated_at
+
+5. **orders** - Sales orders
+   - id (UUID), order_number (unique, format: ORD-YYYY-NNN), customer_id (FK to customers), order_date, status (enum: OrderStatus), notes, total (calculated from items), created_at, updated_at
+
+6. **order_items** - Order line items
+   - id (UUID), order_id (FK to orders, cascade delete), product_id (FK to products), quantity, unit_price, subtotal (calculated: quantity × unit_price), created_at, updated_at
+
+7. **quotes** - Customer quotes
+   - id (UUID), quote_number (unique, format: Q-YYYY-NNN), customer_id (FK to customers), quote_date, valid_until, status (enum: QuoteStatus), notes, total (calculated from items), created_at, updated_at
+
+8. **quote_items** - Quote line items
+   - id (UUID), quote_id (FK to quotes, cascade delete), product_id (FK to products), quantity, unit_price, subtotal (calculated: quantity × unit_price), created_at, updated_at
+
+**Enums**:
+- **OrderStatus**: draft, pending, confirmed, processing, shipped, delivered, cancelled
+- **QuoteStatus**: draft, pending, sent, accepted, rejected, expired
+- **ProductCategory**: heavy_machinery, hand_tools, power_tools, safety_equipment, building_materials, electrical, plumbing, accessories
+
+**Key Relationships**:
+- Orders → Customer (many-to-one)
+- Order Items → Order (many-to-one, cascade delete)
+- Order Items → Product (many-to-one)
+- Quotes → Customer (many-to-one)
+- Quote Items → Quote (many-to-one, cascade delete)
+- Quote Items → Product (many-to-one)
+
+---
+
+## Testing Requirements
+
+### When to Run Tests
+
+**Before marking task complete** (MANDATORY):
 ```bash
-# .env
-AI_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1:8b
-OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+# From project root
+pnpm turbo run type-check    # MUST PASS - no TypeScript errors
+pnpm turbo run lint          # MUST PASS - no ESLint errors
+pnpm turbo run test          # MUST PASS - all Vitest + Pytest tests passing
 ```
 
-### Optional: Claude (Cloud)
+**During development** (optional but recommended):
 ```bash
-# .env
-AI_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-xxx
-```
-
-### Provider Interface
-
-All providers implement:
-- `complete()` - Single completion
-- `chat()` - Chat messages
-- `generate_embeddings()` - Vector embeddings
-
-## 📊 Database Architecture
-
-### Connection Strategy
-
-**Dual Engine Pattern**:
-- **Async Engine**: For API requests (asyncpg driver)
-- **Sync Engine**: For migrations (psycopg2 driver)
-
-```python
-# apps/backend/src/config/database.py
-
-# API usage
-async with AsyncSessionLocal() as session:
-    result = await session.execute(query)
-
-# Migrations
-# Alembic uses sync engine automatically
-```
-
-### Key Models
-
-**User** (`users` table):
-- Email/password authentication
-- JWT-based sessions
-- Admin flag
-
-**Document** (`documents` table):
-- Title, content, metadata
-- Vector embeddings (pgvector)
-- Full-text search ready
-
-**Contractor** (`contractors` table):
-- Profile information
-- Availability tracking
-- Document associations
-
-## 🧪 Testing Strategy
-
-### Backend Tests (Pytest)
-```bash
-cd apps/backend
-
-# All tests
-uv run pytest
-
-# With coverage
-uv run pytest --cov
-
-# Specific test file
-uv run pytest tests/test_auth.py
-```
-
-### Frontend Tests (Vitest)
-```bash
-# All tests
-pnpm test --filter=web
-
-# Watch mode
+# Watch mode for frontend tests
 pnpm test:watch --filter=web
 
-# E2E tests
-pnpm test:e2e --filter=web
+# Watch mode for backend tests (if you have pytest-watch installed)
+cd apps/backend && pytest-watch
 ```
 
-### CI/CD
+### Test Coverage Expectations
 
-GitHub Actions runs:
-- All tests (no external services needed)
-- Linting (ESLint + Ruff)
-- Type checking (TypeScript + mypy)
-- Security scans (NPM Audit + Trivy)
+**Minimum Coverage** (for MVP):
+- **Critical paths**: Form submissions work, API calls succeed, Delete confirmations prevent accidental deletion
+- **Edge cases**: Validation errors display properly, Network errors show user-friendly messages, Empty states render correctly
+- **No need for 100% coverage**, but all user-facing features should be tested
 
-**No secrets required!** The CI works out of the box.
+**Test Location**:
+- Frontend: `apps/web/__tests__/components/[module]/`
+  - Example: `apps/web/__tests__/components/products/ProductForm.test.tsx`
+- Backend: `apps/backend/tests/`
+  - Example: `apps/backend/tests/api/test_products.py`
 
-## 🚀 Optional Upgrades
+**Example Test** (Vitest):
+```typescript
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { ProductForm } from "@/app/(dashboard)/products/components/ProductForm";
 
-### When You're Ready for Production
+describe("ProductForm", () => {
+  test("shows validation error for empty SKU", async () => {
+    render(<ProductForm mode="create" />);
 
-See [`docs/OPTIONAL_SERVICES.md`](docs/OPTIONAL_SERVICES.md) for:
+    const submitButton = screen.getByRole("button", { name: /create/i });
+    fireEvent.click(submitButton);
 
-**Frontend Hosting**:
-- Vercel (recommended)
-- Netlify
-- Cloudflare Pages
+    await waitFor(() => {
+      expect(screen.getByText(/sku is required/i)).toBeInTheDocument();
+    });
+  });
 
-**Backend Hosting**:
-- DigitalOcean App Platform
-- Railway
-- Fly.io
-- Render
+  test("creates product successfully", async () => {
+    render(<ProductForm mode="create" />);
 
-**Database Hosting**:
-- Keep Docker (works fine)
-- Upgrade to managed PostgreSQL
+    // Fill in form fields
+    fireEvent.change(screen.getByLabelText(/sku/i), { target: { value: "TEST-001" } });
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "Test Product" } });
 
-**Cloud AI**:
-- Claude API ($3-75/1M tokens)
-- Better quality than local
+    // Submit
+    fireEvent.click(screen.getByRole("button", { name: /create/i }));
 
-**External Services**:
-- Codecov (coverage tracking)
-- Snyk (security scanning)
-- Sentry (error monitoring)
-- PostHog (analytics)
-
-## 🎯 Key Principles
-
-### 1. Local-First
-Everything runs on your machine. No cloud required for development.
-
-### 2. Zero Barriers
-No API keys, accounts, or configuration needed to start.
-
-### 3. Production Ready
-Real authentication, testing, CI/CD included.
-
-### 4. Optional Upgrades
-Easy path to cloud services when ready.
-
-## 📚 Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [`README.md`](README.md) | Overview and quick start |
-| [`docs/LOCAL_SETUP.md`](docs/LOCAL_SETUP.md) | Complete setup guide |
-| [`docs/AI_PROVIDERS.md`](docs/AI_PROVIDERS.md) | Ollama vs Claude |
-| [`docs/OPTIONAL_SERVICES.md`](docs/OPTIONAL_SERVICES.md) | Deployment guides |
-| [`docs/new-project-checklist.md`](docs/new-project-checklist.md) | 3-step setup |
-
-## 🔧 Troubleshooting
-
-### Docker Services Not Starting
-```bash
-# Check Docker is running
-docker ps
-
-# Restart services
-docker compose down && docker compose up -d
-
-# View logs
-docker compose logs -f postgres
+    await waitFor(() => {
+      expect(screen.getByText(/created successfully/i)).toBeInTheDocument();
+    });
+  });
+});
 ```
-
-### Ollama Not Working
-```bash
-# Install Ollama
-curl -fsSL https://ollama.com/install.sh | sh
-
-# Pull models
-ollama pull llama3.1:8b
-ollama pull nomic-embed-text
-
-# Start Ollama
-ollama serve
-```
-
-### Port Conflicts
-```bash
-# Check what's using ports
-lsof -i :3000  # Frontend
-lsof -i :8000  # Backend
-lsof -i :5432  # PostgreSQL
-
-# Change ports in .env if needed
-```
-
-### Dependencies Not Installing
-```bash
-# Clear and reinstall
-rm -rf node_modules apps/*/node_modules
-pnpm install
-
-# Backend
-cd apps/backend && rm -rf .venv && uv sync
-```
-
-## 📝 Environment Variables
-
-### Required (All Have Defaults)
-```bash
-# Database
-DATABASE_URL=postgresql://starter_user:local_dev_password@localhost:5432/starter_db
-
-# JWT
-JWT_SECRET_KEY=your-secret-key-change-in-production
-JWT_EXPIRE_MINUTES=60
-
-# AI Provider
-AI_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1:8b
-
-# API
-BACKEND_URL=http://localhost:8000
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-### Optional (Cloud Upgrades)
-```bash
-# Anthropic Claude
-AI_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-xxx
-
-# Other AI Providers
-OPENAI_API_KEY=sk-xxx
-GOOGLE_AI_API_KEY=xxx
-
-# External Services
-SENTRY_DSN=xxx
-POSTHOG_API_KEY=xxx
-```
-
-## 🎓 Learning Resources
-
-**Frameworks**:
-- [Next.js Docs](https://nextjs.org/docs) - Frontend
-- [FastAPI Docs](https://fastapi.tiangolo.com/) - Backend
-- [LangGraph Docs](https://langchain-ai.github.io/langgraph/) - Agents
-
-**Tools**:
-- [Ollama Docs](https://ollama.com/) - Local AI
-- [PostgreSQL Docs](https://www.postgresql.org/docs/) - Database
-- [shadcn/ui](https://ui.shadcn.com/) - UI Components
-
-**Concepts**:
-- [JWT Authentication](https://jwt.io/introduction)
-- [RAG (Retrieval Augmented Generation)](https://www.pinecone.io/learn/retrieval-augmented-generation/)
-- [Vector Embeddings](https://www.pinecone.io/learn/vector-embeddings/)
 
 ---
 
-## 🚀 Quick Reference
+## Common Pitfalls & How to Avoid Them
 
-**Start Development**: `pnpm dev`
-**Run Tests**: `pnpm turbo run test`
-**Check Health**: `pnpm run verify`
-**Reset Database**: `pnpm run docker:reset`
+### 1. Forgetting Loading States
+**Problem**: Form submits but no visual feedback, user clicks submit button multiple times, causes duplicate API calls
 
-**Default Credentials**: admin@local.dev / admin123
+**Solution**: Always set `isLoading` state, disable button during submission
+```typescript
+const [isLoading, setIsLoading] = useState(false);
+
+async function onSubmit(data) {
+  setIsLoading(true);
+  try {
+    await apiClient.post("/api/products", data);
+  } finally {
+    setIsLoading(false);
+  }
+}
+
+// In JSX:
+<Button type="submit" disabled={isLoading}>
+  {isLoading ? "Saving..." : "Save"}
+</Button>
+```
+
+### 2. Not Handling Errors Properly
+**Problem**: API error occurs, page crashes or shows cryptic error message, user doesn't know what went wrong
+
+**Solution**: Wrap API calls in try-catch, show user-friendly error messages via toast
+```typescript
+try {
+  await apiClient.post("/api/products", data);
+  toast({ title: "Success", description: "Product created" });
+} catch (error: any) {
+  toast({
+    title: "Error",
+    description: error.message || "Something went wrong. Please try again.",
+    variant: "destructive",
+  });
+}
+```
+
+### 3. Missing Confirmation Dialogs for Delete
+**Problem**: User accidentally clicks delete button, data is immediately deleted, no way to undo
+
+**Solution**: Always use AlertDialog for destructive actions
+```typescript
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+<AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button variant="destructive">Delete</Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone. This will permanently delete {productName}.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+### 4. Not Refreshing Data After Mutations
+**Problem**: Create/Update/Delete succeeds on backend, but list page doesn't update
+
+**Solution**: Use `router.refresh()` or manually re-fetch
+```typescript
+import { useRouter } from "next/navigation";
+
+const router = useRouter();
+
+async function onSubmit(data) {
+  await apiClient.post("/api/products", data);
+  router.refresh(); // Re-fetches server components
+}
+```
+
+### 5. Hardcoding Colors
+**Problem**: Inconsistent styling, doesn't respect dark mode
+
+**Solution**: Use design tokens
+```typescript
+// ❌ Bad
+<div className="bg-blue-500 text-white">
+
+// ✅ Good
+<div className="bg-primary text-primary-foreground">
+```
 
 ---
 
-**Built for developers who want to build AI apps without barriers** ❤️
+## Environment Setup
+
+### Start Services
+```bash
+docker compose up -d                    # PostgreSQL
+cd apps/backend && uvicorn src.api.main:app --reload
+cd apps/web && pnpm dev
+# OR: pnpm dev (starts all)
+```
+
+### Login Credentials
+- **admin@demo.com** / **demo123**
+- sales@demo.com / demo123
+- warehouse@demo.com / demo123
+
+---
+
+## Success Criteria
+
+Complete when:
+1. Products: Full CRUD with validation
+2. Customers: Full CRUD
+3. Orders: CRUD + line items + status
+4. Quotes: CRUD + line items + status + convert-to-order
+5. All deletes have confirmations
+6. All forms have loading/error states
+7. All pages have empty states
+8. Type-check passes
+9. Lint passes
+10. Tests pass
+11. Manual testing verified
+12. Completion marker added to PROMPT.md
+
+**Focus**: Working MVP, not perfection. Functional CRUD, good UX, code quality.
