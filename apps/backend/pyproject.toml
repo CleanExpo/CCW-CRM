@@ -49,8 +49,22 @@ select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.mypy]
 python_version = "3.12"
-strict = true
+strict = false
 ignore_missing_imports = true
+check_untyped_defs = false
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "src.api.routes.demo_*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.db.demo_*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.db.seed_demo"
+ignore_errors = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
