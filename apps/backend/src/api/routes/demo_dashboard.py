@@ -350,7 +350,9 @@ async def get_recent_activity(
         )
 
     # Recent customers
-    customers_result = await db.execute(select(Customer).order_by(Customer.created_at.desc()).limit(limit // 3))
+    customers_result = await db.execute(
+        select(Customer).order_by(Customer.created_at.desc()).limit(limit // 3)
+    )
     customers = customers_result.scalars().all()
 
     for customer in customers:

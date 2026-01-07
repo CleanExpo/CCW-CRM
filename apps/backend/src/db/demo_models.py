@@ -3,6 +3,7 @@ Simplified SQLAlchemy models for overnight demo.
 
 These models are optimized for quick demo setup with essential fields only.
 """
+# ruff: noqa: E501
 
 import enum
 from datetime import UTC, datetime

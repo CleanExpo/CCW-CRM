@@ -4,6 +4,7 @@ SQLAlchemy ORM Models
 Database models matching the PostgreSQL schema from init-db.sql.
 These are separate from Pydantic models (used for API validation).
 """
+# ruff: noqa: E501
 
 import enum
 from datetime import UTC, datetime

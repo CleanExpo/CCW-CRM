@@ -257,9 +257,15 @@ async def update_order_status(
         raise HTTPException(status_code=404, detail="Order not found")
 
     # Validate status
-    valid_statuses = ["draft", "pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]
+    valid_statuses = [
+        "draft", "pending", "confirmed", "processing",
+        "shipped", "delivered", "cancelled"
+    ]
     if status not in valid_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+        )
 
     order.status = status
     await db.commit()

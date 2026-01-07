@@ -9,7 +9,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
@@ -334,7 +334,3 @@ async def list_quotes(
         page_size=page_size,
         total_pages=(total + page_size - 1) // page_size,
     )
-
-
-# Import func for count queries
-from sqlalchemy import func

@@ -1,4 +1,5 @@
 """SQLAlchemy models for ERP system."""
+# ruff: noqa: E501, N811
 from datetime import datetime
 from uuid import uuid4
 
