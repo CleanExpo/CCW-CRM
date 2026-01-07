@@ -6,7 +6,7 @@ Simple, self-contained JWT token generation and validation
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
-import jwt
+from jose import jwt
 
 from src.config.settings import get_settings
 
