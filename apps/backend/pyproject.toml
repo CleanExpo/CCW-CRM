@@ -23,6 +23,7 @@ dependencies = [
     # Core
     "pydantic>=2.9.0",
     "pydantic-settings>=2.6.0",
+    "email-validator>=2.0.0",  # For pydantic email validation
     "python-dotenv>=1.0.0",
     "httpx>=0.27.0",
     "pyyaml>=6.0.0",
