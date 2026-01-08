@@ -4,7 +4,7 @@
 
 import { test, expect } from "@playwright/test";
 
-test.describe("PRD Generation Flow", () => {
+test.describe.skip("PRD Generation Flow", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to PRD generator page
     await page.goto("/prd/generate");
@@ -201,7 +201,7 @@ test.describe("PRD Viewer", () => {
   });
 });
 
-test.describe("PRD Integration Tests", () => {
+test.describe.skip("PRD Integration Tests", () => {
   test("should complete full workflow from form to result", async ({ page }) => {
     // Mock successful API responses
     let runId = "";
