@@ -31,8 +31,8 @@ import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   customer_number: z.string().min(1, "Customer number is required"),
   company_name: z.string().min(1, "Company name is required"),
-  contact_name: z.string().min(1, "Contact name is required"),
-  email: z.string().email("Invalid email format"),
+  contact_name: z.string().optional(),
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -47,8 +47,8 @@ interface Customer {
   id: string;
   customer_number: string;
   company_name: string;
-  contact_name: string;
-  email: string;
+  contact_name?: string | null;
+  email?: string | null;
   phone?: string | null;
   address?: string | null;
   city?: string | null;
@@ -91,8 +91,8 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       form.reset({
         customer_number: customer.customer_number,
         company_name: customer.company_name,
-        contact_name: customer.contact_name,
-        email: customer.email,
+        contact_name: customer.contact_name || "",
+        email: customer.email || "",
         phone: customer.phone || "",
         address: customer.address || "",
         city: customer.city || "",
@@ -123,8 +123,8 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       const payload = {
         customer_number: values.customer_number,
         company_name: values.company_name,
-        contact_name: values.contact_name,
-        email: values.email,
+        contact_name: values.contact_name || null,
+        email: values.email || null,
         phone: values.phone || null,
         address: values.address || null,
         city: values.city || null,
