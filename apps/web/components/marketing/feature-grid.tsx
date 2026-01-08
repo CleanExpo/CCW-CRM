@@ -87,7 +87,7 @@ export interface Feature {
 }
 
 export interface FeatureGridProps
-  extends React.HTMLAttributes<HTMLElement>,
+  extends Omit<React.HTMLAttributes<HTMLElement>, 'title'>,
     VariantProps<typeof featureGridVariants> {
   title?: string | React.ReactNode;
   titleHighlight?: string;

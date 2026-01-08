@@ -60,7 +60,7 @@ interface HeroAction {
 }
 
 export interface HeroSectionProps
-  extends React.HTMLAttributes<HTMLElement>,
+  extends Omit<React.HTMLAttributes<HTMLElement>, 'title'>,
     VariantProps<typeof heroVariants> {
   badge?: string | React.ReactNode;
   title: string | React.ReactNode;
