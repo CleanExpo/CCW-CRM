@@ -38,6 +38,7 @@ export default [
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
+      'react/no-unescaped-entities': 'off',
     },
   },
 ];
