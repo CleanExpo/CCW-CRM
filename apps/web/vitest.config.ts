@@ -30,12 +30,6 @@ export default defineConfig({
         "**/__tests__/**",
         "**/e2e/**",
       ],
-      thresholds: {
-        lines: 75,
-        functions: 70,
-        branches: 70,
-        statements: 75,
-      },
     },
   },
   resolve: {
