@@ -8,7 +8,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
           AI Agent Orchestration
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl">
+        <p className="text-lg text-foreground/80 max-w-2xl">
           Production-ready monorepo for building AI-powered applications with
           Next.js, LangGraph, and Claude.
         </p>
