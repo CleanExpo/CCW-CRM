@@ -234,7 +234,7 @@ jobs:
 
       - name: Run accessibility tests
         working-directory: apps/web
-        run: pnpm exec playwright test tests/accessibility/
+        run: pnpm exec playwright test --config=playwright.a11y.config.ts
         env:
           CI: true
 
