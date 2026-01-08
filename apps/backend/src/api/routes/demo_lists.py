@@ -22,7 +22,7 @@ from src.db.demo_models import (
     QuoteItem,
 )
 
-router = APIRouter(prefix="/api", tags=["Demo Lists"])
+router = APIRouter(prefix="/api/demo", tags=["Demo Lists"])
 
 
 # Pydantic models for responses
