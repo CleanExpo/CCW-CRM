@@ -17,19 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { OrderForm } from "./components/OrderForm";
 import { DeleteOrderDialog } from "./components/DeleteOrderDialog";
 import { Pencil, Trash2, Plus } from "lucide-react";
-
-interface Order {
-  id: string;
-  order_number: string;
-  customer_name: string;
-  customer_id?: string;
-  status: string;
-  total: string;
-  order_date: string;
-  item_count: number;
-  notes?: string;
-  order_items?: any[];
-}
+import { Order } from "./types";
 
 interface PaginatedResponse {
   items: Order[];

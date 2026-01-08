@@ -34,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteLineItems, LineItem } from "./QuoteLineItems";
+import { Quote, Customer } from "../types";
 
 const QUOTE_STATUSES = [
   { value: "draft", label: "Draft" },
@@ -54,24 +55,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-interface Customer {
-  id: string;
-  customer_number: string;
-  company_name: string;
-}
-
-interface Quote {
-  id: string;
-  quote_number: string;
-  customer_id: string;
-  status: string;
-  quote_date: string;
-  valid_until?: string | null;
-  notes?: string;
-  items?: LineItem[];
-}
-
-interface QuoteFormProps {
+interface QuoteFormProps{
   quote?: Quote | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;

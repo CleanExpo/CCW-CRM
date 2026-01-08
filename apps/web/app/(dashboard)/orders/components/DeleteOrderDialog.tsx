@@ -12,12 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
-
-interface Order {
-  id: string;
-  order_number: string;
-  status: string;
-}
+import { Order } from "../types";
 
 interface DeleteOrderDialogProps {
   order: Order | null;

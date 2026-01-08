@@ -12,12 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
-
-interface Quote {
-  id: string;
-  quote_number: string;
-  status: string;
-}
+import { Quote } from "../types";
 
 interface DeleteQuoteDialogProps {
   quote: Quote | null;

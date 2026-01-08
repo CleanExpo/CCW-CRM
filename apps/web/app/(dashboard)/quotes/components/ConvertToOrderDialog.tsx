@@ -13,16 +13,9 @@ import {
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Quote } from "../types";
 
-interface Quote {
-  id: string;
-  quote_number: string;
-  customer_name: string;
-  status: string;
-  total: string;
-}
-
-interface ConvertToOrderDialogProps {
+interface ConvertToOrderDialogProps{
   quote: Quote | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;

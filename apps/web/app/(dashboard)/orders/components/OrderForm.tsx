@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { OrderLineItems, LineItem } from "./OrderLineItems";
+import { Order, Customer } from "../types";
 
 const ORDER_STATUSES = [
   { value: "draft", label: "Draft" },
@@ -51,22 +52,6 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
-
-interface Customer {
-  id: string;
-  customer_number: string;
-  company_name: string;
-}
-
-interface Order {
-  id: string;
-  order_number: string;
-  customer_id: string;
-  status: string;
-  notes?: string;
-  items?: LineItem[];
-  order_items?: LineItem[];
-}
 
 interface OrderFormProps {
   order?: Order | null;

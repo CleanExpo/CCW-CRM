@@ -18,20 +18,7 @@ import { QuoteForm } from "./components/QuoteForm";
 import { DeleteQuoteDialog } from "./components/DeleteQuoteDialog";
 import { ConvertToOrderDialog } from "./components/ConvertToOrderDialog";
 import { Pencil, Trash2, Plus, ArrowRight } from "lucide-react";
-
-interface Quote {
-  id: string;
-  quote_number: string;
-  customer_name: string;
-  customer_id?: string;
-  status: string;
-  total: string;
-  quote_date: string;
-  valid_until: string | null;
-  item_count: number;
-  notes?: string;
-  quote_items?: any[];
-}
+import { Quote } from "./types";
 
 interface PaginatedResponse {
   items: Quote[];
