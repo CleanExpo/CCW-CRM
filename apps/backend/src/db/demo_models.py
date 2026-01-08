@@ -288,3 +288,68 @@ class QuoteItem(Base):
 
     def __repr__(self) -> str:
         return f"<QuoteItem(quote_id={self.quote_id}, product_id={self.product_id}, quantity={self.quantity})>"
+
+
+# AI-Related Models
+
+
+class ConversationHistory(Base):
+    """Conversation history for AI chat assistant."""
+
+    __tablename__ = "conversation_history"
+
+    id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    conversation_id: UUID = Column(PGUUID(as_uuid=True), nullable=False, index=True)
+    role: str = Column(String(50), nullable=False)  # 'user' or 'assistant'
+    content: str = Column(Text, nullable=False)
+    user_id: UUID | None = Column(PGUUID(as_uuid=True), nullable=True, index=True)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<ConversationHistory(id={self.id}, role={self.role})>"
+
+
+class AgentExecution(Base):
+    """Audit trail for AI agent executions."""
+
+    __tablename__ = "agent_executions"
+
+    id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    agent_id: str = Column(String(100), nullable=False, index=True)
+    agent_name: str = Column(String(255), nullable=False)
+    task: str = Column(Text, nullable=False)
+    status: str = Column(String(50), nullable=False)  # 'success', 'failed', 'in_progress'
+    result: str | None = Column(Text, nullable=True)
+    error: str | None = Column(Text, nullable=True)
+    execution_time_ms: int | None = Column(Integer, nullable=True)
+    user_id: UUID | None = Column(PGUUID(as_uuid=True), nullable=True, index=True)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    completed_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<AgentExecution(id={self.id}, agent={self.agent_name}, status={self.status})>"
+
+
+class AIGeneratedContent(Base):
+    """Storage for AI-generated content."""
+
+    __tablename__ = "ai_generated_content"
+
+    id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    content_type: str = Column(String(50), nullable=False, index=True)  # 'quote', 'email', 'summary', 'report'
+    title: str | None = Column(String(255), nullable=True)
+    content: str = Column(Text, nullable=False)
+    metadata: str | None = Column(Text, nullable=True)  # JSON string for additional data
+    entity_type: str | None = Column(String(50), nullable=True)  # 'customer', 'order', 'quote', etc.
+    entity_id: UUID | None = Column(PGUUID(as_uuid=True), nullable=True, index=True)
+    user_id: UUID | None = Column(PGUUID(as_uuid=True), nullable=True, index=True)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<AIGeneratedContent(id={self.id}, type={self.content_type})>"

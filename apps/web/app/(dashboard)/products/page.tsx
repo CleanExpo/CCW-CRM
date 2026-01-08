@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProductForm } from "./components/ProductForm";
 import { DeleteProductDialog } from "./components/DeleteProductDialog";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { apiClient } from "@/lib/api/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Product {
   id: string;
@@ -39,6 +41,7 @@ interface PaginatedResponse {
 }
 
 export default function ProductsPage() {
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -48,16 +51,22 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   async function loadProducts() {
+    setLoading(true);
     try {
-      const API_BASE = "http://localhost:8000";
-      const response = await fetch(
-        `${API_BASE}/api/products?page=1&page_size=50${search ? `&search=${search}` : ""}`
+      const data = await apiClient.get<PaginatedResponse>(
+        `/api/products?page=1&page_size=50${search ? `&search=${search}` : ""}`
       );
-      const data: PaginatedResponse = await response.json();
       setProducts(data.items);
       setTotal(data.total);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load products:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load products",
+      });
+      setProducts([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -91,7 +100,6 @@ export default function ProductsPage() {
   };
 
   const handleSuccess = () => {
-    setLoading(true);
     loadProducts();
   };
 

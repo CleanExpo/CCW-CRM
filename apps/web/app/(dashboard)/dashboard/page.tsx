@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText } from "lucide-react";
+import { apiClient } from "@/lib/api/client";
 
 interface DashboardMetrics {
-  total_revenue: number;
+  total_revenue_this_month: string;
   active_orders: number;
   total_products: number;
   total_customers: number;
@@ -15,27 +16,27 @@ interface DashboardMetrics {
 
 interface RevenueDataPoint {
   month: string;
-  revenue: number;
+  revenue: string;
 }
 
 interface CategorySales {
   category: string;
-  total: number;
+  value: string;
+  percentage: number;
 }
 
 interface TopProduct {
   name: string;
-  revenue: number;
+  revenue: string;
   quantity_sold: number;
 }
 
 interface ActivityItem {
   type: string;
-  id: string;
-  number: string;
-  status: string;
-  total: number;
-  date: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  status: string | null;
 }
 
 export default function DashboardPage() {
@@ -49,22 +50,12 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-        const [metricsRes, revenueRes, categoryRes, topProductsRes, activityRes] = await Promise.all([
-          fetch(`${API_BASE}/api/dashboard/metrics`),
-          fetch(`${API_BASE}/api/dashboard/charts/revenue`),
-          fetch(`${API_BASE}/api/dashboard/charts/sales-by-category`),
-          fetch(`${API_BASE}/api/dashboard/charts/top-products`),
-          fetch(`${API_BASE}/api/dashboard/recent-activity`),
-        ]);
-
         const [metricsData, revenueData, categoryData, topProductsData, activityData] = await Promise.all([
-          metricsRes.json(),
-          revenueRes.json(),
-          categoryRes.json(),
-          topProductsRes.json(),
-          activityRes.json(),
+          apiClient.get<DashboardMetrics>("/api/dashboard/metrics"),
+          apiClient.get<RevenueDataPoint[]>("/api/dashboard/charts/revenue"),
+          apiClient.get<CategorySales[]>("/api/dashboard/charts/categories"),
+          apiClient.get<TopProduct[]>("/api/dashboard/charts/top-products"),
+          apiClient.get<ActivityItem[]>("/api/dashboard/activity"),
         ]);
 
         setMetrics(metricsData);
@@ -74,6 +65,12 @@ export default function DashboardPage() {
         setActivity(activityData);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
+        // Set empty defaults on error to prevent rendering issues
+        setMetrics(null);
+        setRevenueData([]);
+        setCategorySales([]);
+        setTopProducts([]);
+        setActivity([]);
       } finally {
         setLoading(false);
       }
@@ -115,8 +112,8 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(metrics?.total_revenue || 0)}</div>
-            <p className="text-xs text-muted-foreground">From delivered orders</p>
+            <div className="text-2xl font-bold">{formatCurrency(parseFloat(metrics?.total_revenue_this_month || "0"))}</div>
+            <p className="text-xs text-muted-foreground">This month from delivered orders</p>
           </CardContent>
         </Card>
         <Card>
@@ -180,10 +177,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {revenueData.map((point) => (
+              {Array.isArray(revenueData) && revenueData.map((point) => (
                 <div key={point.month} className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{point.month}</span>
-                  <span className="text-sm font-medium">{formatCurrency(point.revenue)}</span>
+                  <span className="text-sm font-medium">{formatCurrency(parseFloat(point.revenue))}</span>
                 </div>
               ))}
             </div>
@@ -197,12 +194,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {categorySales.map((category) => (
+              {Array.isArray(categorySales) && categorySales.map((category) => (
                 <div key={category.category} className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
                     {category.category.replace(/_/g, " ")}
                   </span>
-                  <span className="text-sm font-medium">{formatCurrency(category.total)}</span>
+                  <span className="text-sm font-medium">{formatCurrency(parseFloat(category.value))}</span>
                 </div>
               ))}
             </div>
@@ -218,7 +215,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {topProducts.map((product, index) => (
+            {Array.isArray(topProducts) && topProducts.map((product, index) => (
               <div key={product.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
@@ -229,7 +226,7 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">{product.quantity_sold} units sold</p>
                   </div>
                 </div>
-                <span className="text-sm font-medium">{formatCurrency(product.revenue)}</span>
+                <span className="text-sm font-medium">{formatCurrency(parseFloat(product.revenue))}</span>
               </div>
             ))}
           </div>
@@ -244,23 +241,25 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {activity.map((item) => (
-              <div key={item.id} className="flex items-start justify-between border-b pb-3 last:border-0">
+            {Array.isArray(activity) && activity.map((item, index) => (
+              <div key={`${item.type}-${index}`} className="flex items-start justify-between border-b pb-3 last:border-0">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">
-                      {item.type === "order" ? "Order" : "Quote"} {item.number}
+                      {item.title}
                     </span>
-                    <span className="text-xs px-2 py-1 rounded-full bg-secondary capitalize">
-                      {item.status}
-                    </span>
+                    {item.status && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-secondary capitalize">
+                        {item.status}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {formatCurrency(item.total)}
+                    {item.description}
                   </p>
                 </div>
                 <div className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                  {new Date(item.date).toLocaleDateString()}
+                  {new Date(item.timestamp).toLocaleDateString()}
                 </div>
               </div>
             ))}

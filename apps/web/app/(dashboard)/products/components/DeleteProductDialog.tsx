@@ -1,21 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { apiClient } from "@/lib/api/client";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api/client";
 
 interface Product {
   id: string;
+  sku: string;
   name: string;
+  description?: string | null;
+  category: string;
+  price: number;
+  cost: number;
+  stock: number;
+  warehouse_location?: string | null;
+  is_active: boolean;
 }
 
 interface DeleteProductDialogProps {
@@ -31,19 +40,18 @@ export function DeleteProductDialog({
   onOpenChange,
   onSuccess,
 }: DeleteProductDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
     if (!product) return;
 
-    setIsLoading(true);
-
+    setIsDeleting(true);
     try {
       await apiClient.delete(`/api/products/${product.id}`);
       toast({
         title: "Success",
-        description: "Product deleted successfully",
+        description: `Product "${product.name}" has been deleted`,
       });
       onOpenChange(false);
       onSuccess();
@@ -51,44 +59,35 @@ export function DeleteProductDialog({
       toast({
         variant: "destructive",
         title: "Error",
-        description:
-          error.message ||
-          "Failed to delete product. It may be referenced in orders or quotes.",
+        description: error.message || "Failed to delete product",
       });
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete Product</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete <strong>{product?.name}</strong>? This action cannot
-            be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action will deactivate the product <strong>{product?.name}</strong> (
+            {product?.sku}). The product will be marked as inactive and will no longer appear
+            in active listings.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
             onClick={handleDelete}
-            disabled={isLoading}
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isLoading ? "Deleting..." : "Delete"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {isDeleting ? "Deleting..." : "Delete Product"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
