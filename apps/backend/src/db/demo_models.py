@@ -343,7 +343,7 @@ class AIGeneratedContent(Base):
     content_type: str = Column(String(50), nullable=False, index=True)  # 'quote', 'email', 'summary', 'report'
     title: str | None = Column(String(255), nullable=True)
     content: str = Column(Text, nullable=False)
-    metadata: str | None = Column(Text, nullable=True)  # JSON string for additional data
+    content_metadata: str | None = Column(Text, nullable=True)  # JSON string for additional data
     entity_type: str | None = Column(String(50), nullable=True)  # 'customer', 'order', 'quote', etc.
     entity_id: UUID | None = Column(PGUUID(as_uuid=True), nullable=True, index=True)
     user_id: UUID | None = Column(PGUUID(as_uuid=True), nullable=True, index=True)

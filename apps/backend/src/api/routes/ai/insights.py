@@ -173,7 +173,7 @@ async def get_dashboard_insights(
         for record in records:
             try:
                 insight_data = json.loads(record.content)
-                metadata = json.loads(record.metadata) if record.metadata else {}
+                metadata = json.loads(record.content_metadata) if record.content_metadata else {}
 
                 insight = {
                     "id": str(record.id),
@@ -234,13 +234,13 @@ async def get_insight_history(
         if category:
             # Filter by metadata JSON field
             query = query.where(
-                AIGeneratedContent.metadata.like(f'%"category": "{category}"%')
+                AIGeneratedContent.content_metadata.like(f'%"category": "{category}"%')
             )
 
         if priority:
             # Filter by metadata JSON field
             query = query.where(
-                AIGeneratedContent.metadata.like(f'%"priority": "{priority}"%')
+                AIGeneratedContent.content_metadata.like(f'%"priority": "{priority}"%')
             )
 
         # Order and paginate
@@ -259,7 +259,7 @@ async def get_insight_history(
         for record in records:
             try:
                 insight_data = json.loads(record.content)
-                metadata = json.loads(record.metadata) if record.metadata else {}
+                metadata = json.loads(record.content_metadata) if record.content_metadata else {}
 
                 insight = {
                     "id": str(record.id),

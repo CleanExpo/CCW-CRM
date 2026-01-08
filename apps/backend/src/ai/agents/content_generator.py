@@ -292,7 +292,7 @@ class ContentGenerator(BaseAgent):
                     content_type=content_type,
                     title=title,
                     content=json.dumps(structured_output),
-                    metadata=json.dumps(state.get("metadata", {})),
+                    content_metadata=json.dumps(state.get("metadata", {})),
                     entity_type=content_type,
                     user_id=state.get("user_id"),
                 )

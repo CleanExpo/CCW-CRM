@@ -549,7 +549,7 @@ Generate 3-5 key insights with specific recommendations. Format each insight as:
                         content_type="insight",
                         title=insight.get("title", "Untitled Insight"),
                         content=json.dumps(insight),
-                        metadata=json.dumps(
+                        content_metadata=json.dumps(
                             {
                                 "category": state["category"],
                                 "priority": insight.get("priority", "medium"),

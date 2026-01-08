@@ -4,7 +4,11 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import structlog
+from langchain_core.tools import BaseTool as LangChainBaseTool
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.config.database import get_async_db
 
 logger = structlog.get_logger(__name__)
 
@@ -94,3 +98,43 @@ class BaseTool(ABC):
     def __repr__(self) -> str:
         """String representation of the tool."""
         return f"{self.__class__.__name__}(name={self.name})"
+
+
+class BaseDatabaseTool(LangChainBaseTool):
+    """Base tool class with database access for analytics tools."""
+
+    name: str = ""
+    description: str = ""
+
+    async def _execute(self, db: AsyncSession, **kwargs: Any) -> dict[str, Any]:
+        """Execute the tool with database access.
+
+        Args:
+            db: Database session
+            **kwargs: Tool-specific parameters
+
+        Returns:
+            Tool result as dictionary
+        """
+        raise NotImplementedError("Subclasses must implement _execute")
+
+    async def _run(self, **kwargs: Any) -> dict[str, Any]:
+        """Run the tool (LangChain compatibility).
+
+        Args:
+            **kwargs: Tool parameters
+
+        Returns:
+            Tool result
+        """
+        async for db in get_async_db():
+            try:
+                result = await self._execute(db, **kwargs)
+                return result
+            except Exception as e:
+                logger.error(f"Tool execution failed", tool=self.name, error=str(e))
+                return {"error": str(e)}
+            finally:
+                await db.close()
+
+        return {"error": "Database session not available"}
