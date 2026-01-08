@@ -13,7 +13,7 @@ from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import customers, demo_auth, demo_dashboard, demo_lists, health, orders, products, quotes
-from .routes.ai import chat
+from .routes.ai import chat, insights
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -61,6 +61,7 @@ app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
 # AI routers
 app.include_router(chat.router, tags=["AI Chat"])
+app.include_router(insights.router, tags=["AI Insights"])
 
 
 @app.get("/")

@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   FileText,
   Bot,
+  TrendingUp,
   Settings,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "Quotes", href: "/quotes", icon: FileText },
   { name: "AI Assistant", href: "/ai-assistant", icon: Bot },
+  { name: "Insights", href: "/insights", icon: TrendingUp },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

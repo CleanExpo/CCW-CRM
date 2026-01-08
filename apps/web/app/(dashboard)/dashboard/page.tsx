@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText, Sparkles, ArrowRight } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
+import { getDashboardInsights, type Insight } from "@/lib/api/ai-insights";
+import { InsightCard } from "@/components/insights/insight-card";
 
 interface DashboardMetrics {
   total_revenue_this_month: string;
@@ -45,17 +49,19 @@ export default function DashboardPage() {
   const [categorySales, setCategorySales] = useState<CategorySales[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const [metricsData, revenueData, categoryData, topProductsData, activityData] = await Promise.all([
+        const [metricsData, revenueData, categoryData, topProductsData, activityData, insightsData] = await Promise.all([
           apiClient.get<DashboardMetrics>("/api/dashboard/metrics"),
           apiClient.get<RevenueDataPoint[]>("/api/dashboard/charts/revenue"),
           apiClient.get<CategorySales[]>("/api/dashboard/charts/categories"),
           apiClient.get<TopProduct[]>("/api/dashboard/charts/top-products"),
           apiClient.get<ActivityItem[]>("/api/dashboard/activity"),
+          getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
         ]);
 
         setMetrics(metricsData);
@@ -63,6 +69,7 @@ export default function DashboardPage() {
         setCategorySales(categoryData);
         setTopProducts(topProductsData);
         setActivity(activityData);
+        setInsights(insightsData.insights.filter((i) => i.priority === "high").slice(0, 3));
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
         // Set empty defaults on error to prevent rendering issues
@@ -71,6 +78,7 @@ export default function DashboardPage() {
         setCategorySales([]);
         setTopProducts([]);
         setActivity([]);
+        setInsights([]);
       } finally {
         setLoading(false);
       }
@@ -167,6 +175,36 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Insights Widget */}
+      {insights.length > 0 && (
+        <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <CardTitle>AI-Powered Insights</CardTitle>
+              </div>
+              <Link href="/insights">
+                <Button variant="outline" size="sm">
+                  View All
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+            <CardDescription>
+              Top priority recommendations from your business data
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {insights.map((insight) => (
+                <InsightCard key={insight.id} insight={insight} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Data Summaries */}
       <div className="grid gap-4 md:grid-cols-2">
