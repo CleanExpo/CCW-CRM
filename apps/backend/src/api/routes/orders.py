@@ -9,9 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.config.database import get_db
-from src.db.erp_models import Order as OrderModel
-from src.db.erp_models import OrderItem as OrderItemModel
-from src.db.erp_models import Product as ProductModel
+from src.db.demo_models import Order as OrderModel
+from src.db.demo_models import OrderItem as OrderItemModel
+from src.db.demo_models import Product as ProductModel
 from src.db.schemas import Order, OrderCreate, OrderUpdate, PaginatedResponse
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])

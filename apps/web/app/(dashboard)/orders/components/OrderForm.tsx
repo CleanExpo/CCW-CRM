@@ -143,17 +143,10 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     setLineItemErrors([]);
 
     try {
-      const subtotal = lineItems.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
-      const tax = subtotal * 0.1; // 10% GST
-      const total = subtotal + tax;
-
       const payload = {
         customer_id: values.customer_id,
         status: values.status,
         notes: values.notes || null,
-        subtotal,
-        tax,
-        total,
         items: lineItems.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,

@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { OrderForm } from "./components/OrderForm";
 import { DeleteOrderDialog } from "./components/DeleteOrderDialog";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Order } from "./types";
 
 interface PaginatedResponse {
@@ -38,6 +39,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 };
 
 export default function OrdersPage() {
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,7 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   async function loadOrders() {
+    setLoading(true);
     try {
       const response = await apiClient.get<any>(
         "/api/orders?page=1&page_size=50"
@@ -60,8 +63,15 @@ export default function OrdersPage() {
 
       setOrders(mappedOrders);
       setTotal(response.total);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load orders:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load orders",
+      });
+      setOrders([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -82,8 +92,13 @@ export default function OrdersPage() {
       const fullOrder = await apiClient.get<any>(`/api/orders/${order.id}`);
       setSelectedOrder(fullOrder);
       setFormOpen(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load order details:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load order details",
+      });
     }
   };
 
@@ -93,7 +108,6 @@ export default function OrdersPage() {
   };
 
   const handleSuccess = () => {
-    setLoading(true);
     loadOrders();
   };
 

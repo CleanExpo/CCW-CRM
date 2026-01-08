@@ -223,6 +223,7 @@ class QuoteUpdate(BaseModel):
     status: str | None = None
     valid_until: datetime | None = None
     notes: str | None = None
+    items: list[QuoteItemCreate] | None = None
 
 
 class Quote(QuoteBase):

@@ -18,6 +18,7 @@ import { QuoteForm } from "./components/QuoteForm";
 import { DeleteQuoteDialog } from "./components/DeleteQuoteDialog";
 import { ConvertToOrderDialog } from "./components/ConvertToOrderDialog";
 import { Pencil, Trash2, Plus, ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Quote } from "./types";
 
 interface PaginatedResponse {
@@ -38,6 +39,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 };
 
 export default function QuotesPage() {
+  const { toast } = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -47,14 +49,22 @@ export default function QuotesPage() {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
 
   async function loadQuotes() {
+    setLoading(true);
     try {
       const response = await apiClient.get<PaginatedResponse>(
         "/api/quotes?page=1&page_size=50"
       );
       setQuotes(response.items);
       setTotal(response.total);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load quotes:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load quotes",
+      });
+      setQuotes([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -75,8 +85,13 @@ export default function QuotesPage() {
       const fullQuote = await apiClient.get<any>(`/api/quotes/${quote.id}`);
       setSelectedQuote(fullQuote);
       setFormOpen(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load quote details:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load quote details",
+      });
     }
   };
 
@@ -91,7 +106,6 @@ export default function QuotesPage() {
   };
 
   const handleSuccess = () => {
-    setLoading(true);
     loadQuotes();
   };
 

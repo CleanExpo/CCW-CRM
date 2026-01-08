@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,24 +20,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api/client";
 
 const formSchema = z.object({
-  customer_number: z.string().min(1, "Customer number is required"),
-  company_name: z.string().min(1, "Company name is required"),
-  contact_name: z.string().optional(),
-  email: z.string().email("Invalid email format").optional().or(z.literal("")),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  postcode: z.string().optional(),
-  is_active: z.boolean().default(true),
+  customer_number: z.string().min(1, "Customer number is required").max(50),
+  company_name: z.string().min(1, "Company name is required").max(255),
+  contact_name: z.string().max(255).optional(),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  phone: z.string().max(50).optional(),
+  address: z.string().max(255).optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().max(100).optional(),
+  postcode: z.string().max(20).optional(),
+  is_active: z.boolean(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -47,27 +47,27 @@ interface Customer {
   id: string;
   customer_number: string;
   company_name: string;
-  contact_name?: string | null;
-  email?: string | null;
-  phone?: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
   address?: string | null;
-  city?: string | null;
-  state?: string | null;
+  city: string | null;
+  state: string | null;
   postcode?: string | null;
   is_active: boolean;
 }
 
 interface CustomerFormProps {
-  customer?: Customer | null;
+  customer: Customer | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
 
 export function CustomerForm({ customer, open, onOpenChange, onSuccess }: CustomerFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const isEdit = !!customer;
+  const [isLoading, setIsLoading] = useState(false);
+  const isEditMode = !!customer;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -85,9 +85,9 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
     },
   });
 
-  // Reset form when customer changes or dialog opens
+  // Reset form when dialog opens with customer data
   useEffect(() => {
-    if (customer) {
+    if (open && customer) {
       form.reset({
         customer_number: customer.customer_number,
         company_name: customer.company_name,
@@ -100,7 +100,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
         postcode: customer.postcode || "",
         is_active: customer.is_active,
       });
-    } else {
+    } else if (open && !customer) {
       form.reset({
         customer_number: "",
         company_name: "",
@@ -114,11 +114,10 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
         is_active: true,
       });
     }
-  }, [customer, form, open]);
+  }, [open, customer, form]);
 
   async function onSubmit(values: FormData) {
     setIsLoading(true);
-
     try {
       const payload = {
         customer_number: values.customer_number,
@@ -133,17 +132,17 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
         is_active: values.is_active,
       };
 
-      if (isEdit && customer) {
+      if (isEditMode) {
         await apiClient.put(`/api/customers/${customer.id}`, payload);
         toast({
           title: "Success",
-          description: "Customer updated successfully",
+          description: `Customer "${values.company_name}" updated successfully`,
         });
       } else {
         await apiClient.post("/api/customers", payload);
         toast({
           title: "Success",
-          description: "Customer created successfully",
+          description: `Customer "${values.company_name}" created successfully`,
         });
       }
 
@@ -153,7 +152,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || `Failed to ${isEdit ? "update" : "create"} customer`,
+        description: error.message || `Failed to ${isEditMode ? "update" : "create"} customer`,
       });
     } finally {
       setIsLoading(false);
@@ -164,14 +163,13 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Customer" : "Add Customer"}</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Customer" : "Create Customer"}</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Update the customer information below."
-              : "Fill in the customer details to add them to your database."}
+            {isEditMode
+              ? "Update the customer details below."
+              : "Add a new customer to your database."}
           </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -180,9 +178,13 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 name="customer_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Customer Number</FormLabel>
+                    <FormLabel>Customer Number *</FormLabel>
                     <FormControl>
-                      <Input placeholder="CUST-001" {...field} />
+                      <Input
+                        placeholder="CUST-001"
+                        {...field}
+                        disabled={isEditMode}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -191,32 +193,18 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
 
               <FormField
                 control={form.control}
-                name="email"
+                name="company_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Company Name *</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="contact@company.com" {...field} />
+                      <Input placeholder="Acme Corporation" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="company_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ABC Construction Ltd" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -235,18 +223,36 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
 
               <FormField
                 control={form.control}
-                name="phone"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="+61 400 000 000" {...field} />
+                      <Input
+                        type="email"
+                        placeholder="john@acme.com"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+61 2 1234 5678" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -257,7 +263,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                   <FormControl>
                     <Textarea
                       placeholder="123 Main Street"
-                      className="resize-none"
+                      rows={2}
                       {...field}
                     />
                   </FormControl>
@@ -316,13 +322,16 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Active Status</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Inactive customers won't appear in order forms
-                    </div>
+                    <FormLabel className="text-base">Active</FormLabel>
+                    <FormDescription>
+                      Customer is active and can place orders
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -338,7 +347,13 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : isEdit ? "Update Customer" : "Create Customer"}
+                {isLoading
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditMode
+                  ? "Update Customer"
+                  : "Create Customer"}
               </Button>
             </DialogFooter>
           </form>

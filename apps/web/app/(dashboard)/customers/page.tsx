@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerForm } from "./components/CustomerForm";
 import { DeleteCustomerDialog } from "./components/DeleteCustomerDialog";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Customer {
   id: string;
@@ -40,6 +41,7 @@ interface PaginatedResponse {
 }
 
 export default function CustomersPage() {
+  const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -49,14 +51,22 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   async function loadCustomers() {
+    setLoading(true);
     try {
       const response = await apiClient.get<PaginatedResponse>(
         `/api/customers?page=1&page_size=50${search ? `&search=${search}` : ""}`
       );
       setCustomers(response.items);
       setTotal(response.total);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load customers:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load customers",
+      });
+      setCustomers([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -83,7 +93,6 @@ export default function CustomersPage() {
   };
 
   const handleSuccess = () => {
-    setLoading(true);
     loadCustomers();
   };
 

@@ -166,20 +166,14 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
     setLineItemErrors([]);
 
     try {
-      const total = lineItems.reduce((sum, item) => sum + item.line_total, 0);
-
       const payload = {
         customer_id: values.customer_id,
         status: values.status,
-        quote_date: values.quote_date,
         valid_until: values.valid_until || null,
         notes: values.notes || null,
-        total,
         items: lineItems.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
-          unit_price: item.unit_price,
-          line_total: item.line_total,
         })),
       };
 

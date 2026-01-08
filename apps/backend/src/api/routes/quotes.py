@@ -9,21 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.config.database import get_db
-from src.db.erp_models import (
-    Order as OrderModel,
-)
-from src.db.erp_models import (
-    OrderItem as OrderItemModel,
-)
-from src.db.erp_models import (
-    Product as ProductModel,
-)
-from src.db.erp_models import (
-    Quote as QuoteModel,
-)
-from src.db.erp_models import (
-    QuoteItem as QuoteItemModel,
-)
+from src.db.demo_models import Order as OrderModel
+from src.db.demo_models import OrderItem as OrderItemModel
+from src.db.demo_models import Product as ProductModel
+from src.db.demo_models import Quote as QuoteModel
+from src.db.demo_models import QuoteItem as QuoteItemModel
 from src.db.schemas import Order, PaginatedResponse, Quote, QuoteCreate, QuoteUpdate
 
 router = APIRouter(prefix="/api/quotes", tags=["quotes"])
@@ -196,10 +186,54 @@ async def update_quote(
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
 
-    # Update fields
-    update_data = quote_data.model_dump(exclude_unset=True)
+    # Update fields (excluding items which we'll handle separately)
+    update_data = quote_data.model_dump(exclude_unset=True, exclude={"items"})
     for field, value in update_data.items():
         setattr(quote, field, value)
+
+    # Handle line items update if provided
+    if quote_data.items is not None:
+        # Delete existing items
+        delete_query = select(QuoteItemModel).where(QuoteItemModel.quote_id == quote_id)
+        delete_result = await db.execute(delete_query)
+        existing_items = delete_result.scalars().all()
+        for item in existing_items:
+            await db.delete(item)
+        await db.flush()
+
+        # Calculate new total and create items
+        total = Decimal("0.00")
+        quote_items = []
+
+        for item_data in quote_data.items:
+            # Get product to get price
+            product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
+            product_result = await db.execute(product_query)
+            product = product_result.scalar_one_or_none()
+
+            if not product:
+                raise HTTPException(
+                    status_code=400, detail=f"Product {item_data.product_id} not found"
+                )
+
+            unit_price = product.price
+            line_total = unit_price * item_data.quantity
+            total += line_total
+
+            quote_items.append({
+                "product_id": item_data.product_id,
+                "quantity": item_data.quantity,
+                "unit_price": unit_price,
+                "line_total": line_total,
+            })
+
+        # Create new quote items
+        for item_data in quote_items:
+            item = QuoteItemModel(quote_id=quote.id, **item_data)
+            db.add(item)
+
+        # Update quote total
+        quote.total = total
 
     await db.commit()
     await db.refresh(quote)
