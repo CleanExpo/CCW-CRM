@@ -73,7 +73,7 @@ export interface Testimonial {
 }
 
 export interface TestimonialsProps
-  extends React.HTMLAttributes<HTMLElement>,
+  extends Omit<React.HTMLAttributes<HTMLElement>, 'title'>,
     VariantProps<typeof testimonialsVariants> {
   title?: string | React.ReactNode;
   titleHighlight?: string;
