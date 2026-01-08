@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import globals from 'globals';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -21,6 +22,10 @@ export default [
         sourceType: 'module',
         project: './tsconfig.json',
         tsconfigRootDir: __dirname,
+      },
+      globals: {
+        ...globals.node,
+        ...globals.es2021,
       },
     },
     plugins: {
