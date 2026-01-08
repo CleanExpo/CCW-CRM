@@ -11,6 +11,7 @@ from src.utils import get_logger, setup_logging
 
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
+from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import demo_auth, demo_dashboard, demo_lists, health
 
 settings = get_settings()
@@ -45,6 +46,7 @@ app.add_middleware(
 # Custom middleware
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(AuthMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
