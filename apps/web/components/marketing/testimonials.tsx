@@ -199,7 +199,7 @@ TestimonialCard.displayName = "TestimonialCard";
    ---------------------------------------- */
 const TestimonialsHeader = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
+  Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> & {
     badge?: string;
     title: string | React.ReactNode;
     titleHighlight?: string;
