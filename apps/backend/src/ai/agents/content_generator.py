@@ -2,7 +2,7 @@
 
 import json
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, AsyncGenerator
 
 from langgraph.graph import END, StateGraph
 
@@ -370,6 +370,32 @@ class ContentGenerator(BaseAgent):
                 "error": f"Failed to generate content: {str(e)}",
                 "content_type": context.get("content_type", "unknown"),
             }
+
+    async def stream(
+        self, task: str, context: dict[str, Any] | None = None
+    ) -> AsyncGenerator[str, None]:
+        """Stream content generation (not implemented - content is batch generated).
+
+        Args:
+            task: Task description
+            context: Execution context
+
+        Yields:
+            Status updates
+        """
+        context = context or {}
+        content_type = context.get("content_type", "quote")
+
+        yield f"Generating {content_type}...\n"
+
+        result = await self.execute(task, context)
+
+        if "error" in result:
+            yield f"Error: {result['error']}\n"
+        else:
+            yield f"✓ {content_type.title()} generated successfully\n"
+            if result.get("requires_review"):
+                yield "⚠ Review required before sending\n"
 
 
 # Dependency for FastAPI

@@ -2,7 +2,7 @@
 
 import json
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, AsyncGenerator
 
 from langgraph.graph import END, StateGraph
 
@@ -580,6 +580,31 @@ Generate 3-5 key insights with specific recommendations. Format each insight as:
 
         except Exception as e:
             logger.error(f"Error saving insights", error=str(e))
+
+    async def stream(
+        self, task: str, context: dict[str, Any] | None = None
+    ) -> AsyncGenerator[str, None]:
+        """Stream insights generation (not implemented - insights are batch generated).
+
+        Args:
+            task: Task description
+            context: Execution context
+
+        Yields:
+            Status updates
+        """
+        yield "Generating insights...\n"
+
+        result = await self.execute(task, context)
+
+        if "error" in result:
+            yield f"Error: {result['error']}\n"
+        else:
+            insights = result.get("insights", [])
+            yield f"Generated {len(insights)} insights\n"
+
+            for insight in insights[:3]:  # Show first 3
+                yield f"- {insight.get('title', 'Untitled')}\n"
 
 
 # Dependency for FastAPI

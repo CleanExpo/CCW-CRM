@@ -236,10 +236,11 @@ class BaseAgent(ABC):
 
             # Check 2: Agent can access database (if needed)
             try:
-                async with self.get_db_session() as db:
-                    # Simple connectivity check
-                    pass
-                checks_passed.append("database_accessible")
+                db = await self.get_db_session()
+                if db:
+                    checks_passed.append("database_accessible")
+                else:
+                    checks_failed.append("database_check: session is None")
             except Exception as e:
                 checks_failed.append(f"database_check: {str(e)}")
 
