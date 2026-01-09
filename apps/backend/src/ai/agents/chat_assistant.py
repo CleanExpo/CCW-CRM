@@ -40,7 +40,14 @@ class ChatAssistant(BaseAgent):
         super().__init__(
             agent_id="chat_assistant",
             name="Chat Assistant",
+            auto_register=False  # Register manually after setting capabilities
         )
+
+        # Set capabilities for agent registry
+        self.capabilities = ["chat", "customer_support", "data_query", "conversation"]
+        self.description = "Natural language chat assistant for ERP data queries"
+        self.estimated_execution_time = 5  # seconds
+        self.requires_verification = False
 
         # Initialize Ollama client
         self.ollama = get_ollama_client()
@@ -53,6 +60,9 @@ class ChatAssistant(BaseAgent):
 
         # Build LangGraph state graph
         self.graph = self._build_graph()
+
+        # Now register with agent registry after full initialization
+        self._schedule_registration()
 
     def _build_graph(self) -> StateGraph:
         """

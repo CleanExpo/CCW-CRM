@@ -34,7 +34,18 @@ class InsightsAgent(BaseAgent):
     """
 
     def __init__(self):
-        super().__init__()
+        super().__init__(
+            agent_id="insights_agent",
+            name="Insights Agent",
+            auto_register=False
+        )
+
+        # Set capabilities for agent registry
+        self.capabilities = ["data_analysis", "insights_generation", "analytics", "business_intelligence"]
+        self.description = "Automated business intelligence and data analysis for ERP metrics"
+        self.estimated_execution_time = 15  # seconds
+        self.requires_verification = False
+
         self.ollama = get_ollama_client()
 
         # Register analytics tools
@@ -44,6 +55,9 @@ class InsightsAgent(BaseAgent):
         self.graph = self._build_graph()
 
         logger.info("InsightsAgent initialized with analytics tools")
+
+        # Register with agent registry after full initialization
+        self._schedule_registration()
 
     def _register_tools(self) -> None:
         """Register analytics tools."""

@@ -320,13 +320,18 @@ class AgentExecution(Base):
     agent_id: str = Column(String(100), nullable=False, index=True)
     agent_name: str = Column(String(255), nullable=False)
     task: str = Column(Text, nullable=False)
-    status: str = Column(String(50), nullable=False)  # 'success', 'failed', 'in_progress'
-    result: str | None = Column(Text, nullable=True)
+    context_snapshot: str | None = Column(Text, nullable=True)  # JSON string for execution context
+    status: str = Column(String(50), nullable=False)  # 'completed', 'failed', 'timeout'
+    result: str | None = Column(Text, nullable=True)  # JSON string for result data
     error: str | None = Column(Text, nullable=True)
     execution_time_ms: int | None = Column(Integer, nullable=True)
+    tokens_used: int | None = Column(Integer, nullable=True)  # LLM tokens consumed
+    estimated_cost_usd: Decimal | None = Column(Numeric(10, 6), nullable=True)  # Estimated cost
+    initiated_by: str = Column(String(50), nullable=False, default="api")  # workflow, api, supervisor
+    parent_execution_id: UUID | None = Column(PGUUID(as_uuid=True), nullable=True, index=True)  # For chaining
     user_id: UUID | None = Column(PGUUID(as_uuid=True), nullable=True, index=True)
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False, index=True
     )
     completed_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
 

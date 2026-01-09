@@ -26,7 +26,18 @@ class ContentGenerator(BaseAgent):
     """
 
     def __init__(self):
-        super().__init__()
+        super().__init__(
+            agent_id="content_generator",
+            name="Content Generator",
+            auto_register=False
+        )
+
+        # Set capabilities for agent registry
+        self.capabilities = ["content_generation", "quote_generation", "email_generation", "report_generation"]
+        self.description = "Generates business content including quotes, emails, and reports"
+        self.estimated_execution_time = 10  # seconds
+        self.requires_verification = True  # Content should be reviewed before sending
+
         self.quote_generator = QuoteGenerator()
         self.email_generator = EmailGenerator()
 
@@ -34,6 +45,9 @@ class ContentGenerator(BaseAgent):
         self.graph = self._build_graph()
 
         logger.info("ContentGenerator initialized")
+
+        # Register with agent registry after full initialization
+        self._schedule_registration()
 
     def _build_graph(self) -> StateGraph:
         """Build LangGraph state graph for content generation."""
