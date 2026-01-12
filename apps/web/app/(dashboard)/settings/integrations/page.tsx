@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { XeroConnectionCard } from "./components/XeroConnectionCard";
 import { XeroSyncControls } from "./components/XeroSyncControls";
@@ -13,7 +13,7 @@ import { getShopifyStatus, type ShopifyConnectionStatus } from "@/lib/api/shopif
 import { getSendGridStatus, type SendGridConnectionStatus } from "@/lib/api/sendgrid";
 import { Settings, AlertCircle } from "lucide-react";
 
-export default function IntegrationsPage() {
+function IntegrationsContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [xeroStatus, setXeroStatus] = useState<XeroConnectionStatus | null>(null);
@@ -219,5 +219,29 @@ export default function IntegrationsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-1 flex-col gap-6 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Settings className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+              <p className="text-sm text-muted-foreground">
+                Loading integration status...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <IntegrationsContent />
+    </Suspense>
   );
 }
