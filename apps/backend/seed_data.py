@@ -50,21 +50,21 @@ async def seed_database():
         hashed_password = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5lZJ.UpL7mqWy"
 
         admin_id = await conn.fetchval("""
-            INSERT INTO users (organization_id, email, hashed_password, full_name, role, is_admin, is_active)
+            INSERT INTO users (organization_id, email, password_hash, full_name, role, is_admin, is_active)
             VALUES ($1, 'admin@ccw.com', $2, 'Admin User', 'admin', true, true)
             RETURNING id
         """, org_id, hashed_password)
         print(f"   Created admin user: admin@ccw.com")
 
         manager_id = await conn.fetchval("""
-            INSERT INTO users (organization_id, email, hashed_password, full_name, role, is_admin, is_active)
+            INSERT INTO users (organization_id, email, password_hash, full_name, role, is_admin, is_active)
             VALUES ($1, 'manager@ccw.com', $2, 'Sales Manager', 'manager', false, true)
             RETURNING id
         """, org_id, hashed_password)
         print(f"   Created manager user: manager@ccw.com")
 
         employee_id = await conn.fetchval("""
-            INSERT INTO users (organization_id, email, hashed_password, full_name, role, is_admin, is_active)
+            INSERT INTO users (organization_id, email, password_hash, full_name, role, is_admin, is_active)
             VALUES ($1, 'employee@ccw.com', $2, 'John Smith', 'employee', false, true)
             RETURNING id
         """, org_id, hashed_password)

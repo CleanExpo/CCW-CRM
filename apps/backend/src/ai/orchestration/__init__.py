@@ -7,6 +7,8 @@ from .agent_registry import (
     AgentStatus,
     get_agent_registry,
 )
+from .supervisor_agent import SupervisorAgent, get_supervisor_agent
+from .supervisor_state import SupervisorState
 
 __all__ = [
     "AgentRegistry",
@@ -14,4 +16,7 @@ __all__ = [
     "AgentHealthReport",
     "AgentStatus",
     "get_agent_registry",
+    "SupervisorAgent",
+    "get_supervisor_agent",
+    "SupervisorState",
 ]

@@ -5,8 +5,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from src.agents.orchestrator import OrchestratorAgent
-from src.tools.registry import get_registry
+from src.ai.orchestration.supervisor_agent import get_supervisor_agent
 from src.utils import get_logger
 from src.workflow.models import (
     EdgeType,
@@ -26,8 +25,8 @@ class WorkflowEngine:
 
     def __init__(self) -> None:
         self.storage = WorkflowStorage()
-        self.orchestrator = OrchestratorAgent()
-        self.tool_registry = get_registry()
+        self.supervisor = get_supervisor_agent()
+        self.tool_registry = None  # TODO: Implement tool registry if needed
 
     async def start_execution(
         self,
@@ -143,9 +142,18 @@ class WorkflowEngine:
 
             # Store outputs
             context.node_outputs[node.id] = result
-            for output_name, output_var in node.outputs.items():
-                if output_name in result:
-                    context.variables[output_var] = result[output_name]
+
+            # Map outputs to workflow variables (supports nested paths)
+            for output_path, output_var in node.outputs.items():
+                output_value = self._extract_nested_value(result, output_path)
+                if output_value is not None:
+                    context.variables[output_var] = output_value
+                    logger.debug(
+                        "Mapped output variable",
+                        output_path=output_path,
+                        output_var=output_var,
+                        value_type=type(output_value).__name__,
+                    )
 
             context.completed_nodes.add(node.id)
             await self._add_log(context, node.id, "Completed successfully")
@@ -196,22 +204,76 @@ class WorkflowEngine:
         node: NodeConfig,
         inputs: dict[str, Any],
     ) -> dict[str, Any]:
-        """Execute an agent node using existing orchestrator."""
-        agent_name = node.config.get("agent_name")
-        _task_description = node.config.get("task_description", "")
+        """Execute an agent node using SupervisorAgent.
 
-        # Use existing orchestrator
-        # This is a simplified version - full integration would be more complex
+        The SupervisorAgent will route the task to the appropriate specialized agent
+        based on intent classification.
+
+        Args:
+            node: Agent node configuration
+            inputs: Resolved input variables from workflow context
+
+        Returns:
+            dict containing agent execution results and metadata
+        """
+        task_description = node.config.get("task_description", "")
+        agent_name = node.config.get("agent_name", "auto")  # auto = supervisor routes
+
+        if not task_description:
+            raise ValueError("Agent node missing task_description in config")
+
         logger.info(
-            "Agent node execution",
+            "Executing agent node via supervisor",
             node_id=node.id,
             agent_name=agent_name,
+            task_preview=task_description[:100],
         )
 
-        return {
-            "result": f"Agent {agent_name} executed task",
-            "status": "completed",
-        }
+        try:
+            # Build context from inputs
+            context = {
+                "workflow_variables": inputs,
+                "node_config": node.config,
+            }
+
+            # Route task through supervisor (which selects the right specialized agent)
+            agent_result = await self.supervisor.execute(
+                task=task_description,
+                context=context,
+            )
+
+            # Extract key fields from agent result
+            status = agent_result.get("status", "completed")
+            selected_agent = agent_result.get("selected_agent", "unknown")
+            agent_output = agent_result.get("final_result", {})
+
+            logger.info(
+                "Agent node completed",
+                node_id=node.id,
+                selected_agent=selected_agent,
+                status=status,
+            )
+
+            # Return structured output for workflow
+            return {
+                "agent": selected_agent,
+                "status": status,
+                "result": agent_output,
+                "raw_output": agent_result,  # Full agent result for debugging
+            }
+
+        except Exception as e:
+            logger.error(
+                "Agent node execution failed",
+                node_id=node.id,
+                error=str(e),
+            )
+            return {
+                "agent": agent_name,
+                "status": "failed",
+                "error": str(e),
+                "result": {},
+            }
 
     async def _execute_tool_node(
         self,
@@ -224,17 +286,13 @@ class WorkflowEngine:
         if not tool_name:
             raise ValueError("Tool node missing tool_name in config")
 
-        tool = self.tool_registry.get(tool_name)
-        if not tool or not tool.handler:
-            raise ValueError(f"Tool not found or has no handler: {tool_name}")
+        # TODO: Implement tool registry or route through agents
+        logger.warning("Tool node execution not yet implemented", tool_name=tool_name)
 
-        parameters = node.config.get("parameters", {})
-        resolved_params = self._resolve_variables(parameters, inputs)
-
-        # Call tool handler
-        result = await tool.handler(**resolved_params)
-
-        return {"results": result}
+        return {
+            "results": f"Tool {tool_name} execution placeholder",
+            "status": "not_implemented",
+        }
 
     async def _execute_conditional_node(
         self,
@@ -300,6 +358,38 @@ class WorkflowEngine:
             text = text.replace(f"{{{{{match}}}}}", str(resolved))
 
         return text
+
+    def _extract_nested_value(
+        self,
+        data: dict[str, Any],
+        path: str,
+    ) -> Any:
+        """Extract value from nested dict using dot notation.
+
+        Examples:
+            data = {"result": {"price": 100}}
+            _extract_nested_value(data, "result.price") -> 100
+
+            data = {"agent": "pricing", "status": "completed"}
+            _extract_nested_value(data, "status") -> "completed"
+
+        Args:
+            data: Dictionary to extract from
+            path: Dot-separated path (e.g., "result.recommendation.price")
+
+        Returns:
+            Extracted value or None if path not found
+        """
+        path_parts = path.split(".")
+        current = data
+
+        for part in path_parts:
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
+                return None
+
+        return current
 
     def _find_outgoing_edges(
         self,

@@ -53,14 +53,14 @@ class QuoteStatus(str, enum.Enum):
 class ProductCategory(str, enum.Enum):
     """Product category enum for equipment supplier."""
 
-    HEAVY_MACHINERY = "heavy_machinery"
-    HAND_TOOLS = "hand_tools"
-    POWER_TOOLS = "power_tools"
-    SAFETY_EQUIPMENT = "safety_equipment"
-    BUILDING_MATERIALS = "building_materials"
-    ELECTRICAL = "electrical"
-    PLUMBING = "plumbing"
-    ACCESSORIES = "accessories"
+    HEAVY_MACHINERY = "HEAVY_MACHINERY"
+    HAND_TOOLS = "HAND_TOOLS"
+    POWER_TOOLS = "POWER_TOOLS"
+    SAFETY_EQUIPMENT = "SAFETY_EQUIPMENT"
+    BUILDING_MATERIALS = "BUILDING_MATERIALS"
+    ELECTRICAL = "ELECTRICAL"
+    PLUMBING = "PLUMBING"
+    ACCESSORIES = "ACCESSORIES"
 
 
 class Product(Base):
@@ -69,11 +69,12 @@ class Product(Base):
     __tablename__ = "products"
 
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     sku: str = Column(String(50), unique=True, nullable=False, index=True)
     name: str = Column(String(255), nullable=False)
     description: str | None = Column(Text, nullable=True)
     category: ProductCategory = Column(
-        Enum(ProductCategory, name="product_category"),
+        Enum(ProductCategory, name="product_category", native_enum=True, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=ProductCategory.ACCESSORIES,
         index=True,
@@ -107,6 +108,7 @@ class Customer(Base):
     __tablename__ = "customers"
 
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     customer_number: str = Column(String(50), unique=True, nullable=False, index=True)
     company_name: str = Column(String(255), nullable=False)
     contact_name: str = Column(String(255), nullable=False)
@@ -116,6 +118,11 @@ class Customer(Base):
     city: str | None = Column(String(100), nullable=True)
     state: str | None = Column(String(50), nullable=True)
     postcode: str | None = Column(String(10), nullable=True)
+
+    # Xero integration fields
+    xero_contact_id: str | None = Column(String(255), nullable=True)
+    xero_synced_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+
     is_active: bool = Column(Boolean, default=True, nullable=False)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
@@ -141,6 +148,7 @@ class Order(Base):
     __tablename__ = "orders"
 
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     order_number: str = Column(String(50), unique=True, nullable=False, index=True)
     customer_id: UUID = Column(
         PGUUID(as_uuid=True),
@@ -149,7 +157,7 @@ class Order(Base):
         index=True,
     )
     status: OrderStatus = Column(
-        Enum(OrderStatus, name="order_status"),
+        Enum(OrderStatus, name="order_status", native_enum=True, values_callable=lambda x: [e.value for e in x]),
         default=OrderStatus.PENDING,
         nullable=False,
         index=True,
@@ -158,6 +166,12 @@ class Order(Base):
     tax: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     total: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     notes: str | None = Column(Text, nullable=True)
+
+    # Xero integration fields
+    xero_invoice_id: str | None = Column(String(255), nullable=True)
+    xero_synced_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    xero_sync_status: str | None = Column(String(50), nullable=True)
+
     order_date: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False, index=True
     )
@@ -218,6 +232,7 @@ class Quote(Base):
     __tablename__ = "quotes"
 
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     quote_number: str = Column(String(50), unique=True, nullable=False, index=True)
     customer_id: UUID = Column(
         PGUUID(as_uuid=True),
@@ -226,7 +241,7 @@ class Quote(Base):
         index=True,
     )
     status: QuoteStatus = Column(
-        Enum(QuoteStatus, name="quote_status"),
+        Enum(QuoteStatus, name="quote_status", native_enum=True, values_callable=lambda x: [e.value for e in x]),
         default=QuoteStatus.DRAFT,
         nullable=False,
         index=True,

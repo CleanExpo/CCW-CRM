@@ -68,3 +68,4 @@ supabase/.temp
 *.tsbuildinfo
 .vercel
 .cache
+nul

@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
@@ -45,11 +45,11 @@ async def list_quotes(
     search: str | None = None,
     status: str | None = None,
     customer_id: UUID | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List quotes with pagination and filters."""
     # Build query
-    query = select(QuoteModel).options(selectinload(QuoteModel.items))
+    query = select(QuoteModel).options(selectinload(QuoteModel.quote_items))
 
     # Apply filters
     if search:
@@ -87,12 +87,12 @@ async def list_quotes(
 @router.get("/{quote_id}", response_model=Quote)
 async def get_quote(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single quote by ID."""
     query = (
         select(QuoteModel)
-        .options(selectinload(QuoteModel.items))
+        .options(selectinload(QuoteModel.quote_items))
         .where(QuoteModel.id == quote_id)
     )
     result = await db.execute(query)
@@ -107,7 +107,7 @@ async def get_quote(
 @router.post("", response_model=Quote, status_code=201)
 async def create_quote(
     quote_data: QuoteCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Create a new quote with items."""
     # Generate quote number
@@ -175,7 +175,7 @@ async def create_quote(
 async def update_quote(
     quote_id: UUID,
     quote_data: QuoteUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Update a quote."""
     # Get existing quote
@@ -253,7 +253,7 @@ async def update_quote(
 @router.delete("/{quote_id}", status_code=204)
 async def delete_quote(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Delete a quote and its items."""
     # Get existing quote
@@ -274,13 +274,13 @@ async def delete_quote(
 @router.post("/{quote_id}/convert-to-order", response_model=Order, status_code=201)
 async def convert_quote_to_order(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Convert a quote to an order."""
     # Get existing quote with items
     query = (
         select(QuoteModel)
-        .options(selectinload(QuoteModel.items))
+        .options(selectinload(QuoteModel.quote_items))
         .where(QuoteModel.id == quote_id)
     )
     result = await db.execute(query)
@@ -309,7 +309,7 @@ async def convert_quote_to_order(
     await db.flush()
 
     # Create order items from quote items
-    for quote_item in quote.items:
+    for quote_item in quote.quote_items:
         order_item = OrderItemModel(
             order_id=order.id,
             product_id=quote_item.product_id,
@@ -328,7 +328,7 @@ async def convert_quote_to_order(
     # Reload with items
     query = (
         select(OrderModel)
-        .options(selectinload(OrderModel.items))
+        .options(selectinload(OrderModel.order_items))
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)

@@ -38,7 +38,7 @@ async def list_orders(
 ):
     """List orders with pagination and filters."""
     # Build query
-    query = select(OrderModel).options(selectinload(OrderModel.items))
+    query = select(OrderModel).options(selectinload(OrderModel.order_items))
 
     # Apply filters
     if search:
@@ -81,7 +81,7 @@ async def get_order(
     """Get a single order by ID."""
     query = (
         select(OrderModel)
-        .options(selectinload(OrderModel.items))
+        .options(selectinload(OrderModel.order_items))
         .where(OrderModel.id == order_id)
     )
     result = await db.execute(query)
