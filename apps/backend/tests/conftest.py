@@ -1,5 +1,10 @@
 """Pytest configuration and fixtures."""
 
+import os
+
+# CRITICAL: Set environment variables BEFORE any imports
+os.environ["RATE_LIMIT_ENABLED"] = "false"
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession

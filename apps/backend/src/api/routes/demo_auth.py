@@ -26,7 +26,7 @@ from src.auth.password_reset import (
 from src.config.database import get_async_db
 from src.config.settings import get_settings
 from src.db.models import User
-from src.middleware.rate_limit import RateLimits, limiter
+from src.api.middleware.rate_limit import RateLimits, limiter
 
 router = APIRouter(prefix="/api/auth", tags=["Demo Auth"])
 settings = get_settings()
