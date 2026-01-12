@@ -25,14 +25,19 @@ class Settings(BaseSettings):
 
     # API
     backend_api_key: str = Field(default="")
-    cors_origins: list[str] = Field(default=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002",
-        "http://localhost:3003",
-        "http://localhost:3004",
-        "http://localhost:3005",
-    ])
+    cors_origins: list[str] = Field(
+        default=[
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002",
+            "http://localhost:3003",
+            "http://localhost:3004",
+            "http://localhost:3005",
+        ],
+        description="Allowed CORS origins (override in production with your domain)"
+    )
+    # Production domains should be added via environment variable:
+    # CORS_ORIGINS='["https://your-domain.com","https://www.your-domain.com"]'
 
     # Database (PostgreSQL)
     database_url: str = Field(
@@ -86,6 +91,11 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(default="", description="Anthropic API key (optional)")
     google_ai_api_key: str = Field(default="", description="Google AI API key (optional)")
     openrouter_api_key: str = Field(default="", description="OpenRouter API key (optional)")
+
+    # Email (SendGrid for password reset, etc.)
+    sendgrid_api_key: str = Field(default="", description="SendGrid API key for transactional emails")
+    sendgrid_from_email: str = Field(default="noreply@ccw-erp.com", description="From email address")
+    sendgrid_from_name: str = Field(default="CCW ERP", description="From name for emails")
 
     # MCP Tools
     exa_api_key: str = Field(default="")

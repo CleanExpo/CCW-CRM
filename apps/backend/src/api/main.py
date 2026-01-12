@@ -3,14 +3,16 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from src.config import get_settings
 from src.utils import get_logger, setup_logging
 
 from .middleware.auth import AuthMiddleware
-from .middleware.rate_limit import RateLimitMiddleware
+from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, products, quotes, service_requests, test_data_gen
 from .routes.ai import ai_router, chat, generate, insights, learning
@@ -98,6 +100,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Rate limiter state (for SlowAPI)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -108,9 +114,8 @@ app.add_middleware(
 )
 
 # Custom middleware
-app.add_middleware(RateLimitMiddleware)
-app.add_middleware(AuthMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(AuthMiddleware)
 
 # Include routers
 app.include_router(health.router, tags=["Health"])

@@ -7,7 +7,7 @@ Login endpoint for overnight demo.
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,11 +16,17 @@ from src.auth.jwt import (
     create_refresh_token,
     decode_access_token,
     decode_refresh_token,
+    get_password_hash,
     verify_password,
+)
+from src.auth.password_reset import (
+    create_password_reset_token,
+    decode_password_reset_token,
 )
 from src.config.database import get_async_db
 from src.config.settings import get_settings
 from src.db.models import User
+from src.middleware.rate_limit import RateLimits, limiter
 
 router = APIRouter(prefix="/api/auth", tags=["Demo Auth"])
 settings = get_settings()
@@ -41,8 +47,23 @@ class LoginResponse(BaseModel):
     user: dict
 
 
+class ForgotPasswordRequest(BaseModel):
+    """Forgot password request model."""
+
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password request model."""
+
+    token: str
+    new_password: str = Field(min_length=8, description="New password (min 8 characters)")
+
+
 @router.post("/login", response_model=LoginResponse)
+@limiter.limit(RateLimits.LOGIN)
 async def login(
+    request: Request,
     credentials: LoginRequest,
     response: Response,
     db: Annotated[AsyncSession, Depends(get_async_db)],
@@ -180,6 +201,7 @@ async def get_current_user(
 
 
 @router.post("/refresh", response_model=LoginResponse)
+@limiter.limit(RateLimits.REFRESH)
 async def refresh_access_token(
     request: Request,
     response: Response,
@@ -268,4 +290,95 @@ async def logout(response: Response) -> dict:
     response.delete_cookie(key="refresh_token", path="/api/auth/refresh")
 
     return {"message": "Successfully logged out"}
+
+
+@router.post("/forgot-password")
+@limiter.limit(RateLimits.PASSWORD_RESET)
+async def forgot_password(
+    request: Request,
+    data: ForgotPasswordRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """
+    Request a password reset email.
+
+    Generates a password reset token and sends it via email.
+    Rate limited to 3 requests per hour per IP.
+
+    Note: Always returns success even if email doesn't exist (prevents user enumeration).
+    """
+    # Find user by email
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+
+    if user and user.is_active:
+        # Generate reset token (1 hour expiration)
+        reset_token = create_password_reset_token(user.email)
+
+        # TODO: Send email with reset link
+        # In production, use SendGrid to send email:
+        # reset_url = f"{settings.frontend_url}/reset-password?token={reset_token}"
+        # await send_password_reset_email(user.email, user.full_name, reset_url)
+
+        # For now, log the token (DEVELOPMENT ONLY - REMOVE IN PRODUCTION)
+        import structlog
+        logger = structlog.get_logger()
+        logger.info(
+            "Password reset requested",
+            email=user.email,
+            token=reset_token,
+            message="In production, this would be sent via email"
+        )
+
+    # Always return success (prevents user enumeration attacks)
+    return {
+        "message": "If an account exists with that email, a password reset link has been sent."
+    }
+
+
+@router.post("/reset-password")
+@limiter.limit(RateLimits.PASSWORD_RESET)
+async def reset_password(
+    request: Request,
+    data: ResetPasswordRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """
+    Reset password using a valid reset token.
+
+    The token must be valid and not expired (1 hour expiration).
+    """
+    # Decode and validate reset token
+    payload = decode_password_reset_token(data.token)
+
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
+
+    # Get user from database
+    email = payload.get("sub")
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is disabled",
+        )
+
+    # Hash new password and update
+    user.password_hash = get_password_hash(data.new_password)
+
+    # Commit changes
+    await db.commit()
+
+    return {"message": "Password has been reset successfully"}
 
