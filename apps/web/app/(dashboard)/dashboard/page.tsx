@@ -8,6 +8,10 @@ import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText, Spar
 import { apiClient } from "@/lib/api/client";
 import { getDashboardInsights, type Insight } from "@/lib/api/ai-insights";
 import { InsightCard } from "@/components/insights/insight-card";
+import { RevenueChart } from "@/components/charts/RevenueChart";
+import { CategorySalesChart } from "@/components/charts/CategorySalesChart";
+import { StaggerChildren, StaggerItem } from "@/components/transitions/StaggerChildren";
+import { FadeIn } from "@/components/transitions/FadeIn";
 
 interface DashboardMetrics {
   total_revenue_this_month: string;
@@ -113,72 +117,85 @@ export default function DashboardPage() {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(parseFloat(metrics?.total_revenue_this_month || "0"))}</div>
-            <p className="text-xs text-muted-foreground">This month from delivered orders</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics?.active_orders || 0}</div>
-            <p className="text-xs text-muted-foreground">In progress</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics?.total_products || 0}</div>
-            <p className="text-xs text-muted-foreground">Active catalog items</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics?.total_customers || 0}</div>
-            <p className="text-xs text-muted-foreground">Active customers</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{metrics?.low_stock_alerts || 0}</div>
-            <p className="text-xs text-muted-foreground">Items with stock ≤ 10</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics?.pending_quotes || 0}</div>
-            <p className="text-xs text-muted-foreground">Awaiting response</p>
-          </CardContent>
-        </Card>
-      </div>
+      <StaggerChildren className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <StaggerItem>
+          <Card className="card-interactive">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(parseFloat(metrics?.total_revenue_this_month || "0"))}</div>
+              <p className="text-xs text-muted-foreground">This month from delivered orders</p>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+        <StaggerItem>
+          <Card className="card-interactive">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics?.active_orders || 0}</div>
+              <p className="text-xs text-muted-foreground">In progress</p>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+        <StaggerItem>
+          <Card className="card-interactive">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics?.total_products || 0}</div>
+              <p className="text-xs text-muted-foreground">Active catalog items</p>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+        <StaggerItem>
+          <Card className="card-interactive">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics?.total_customers || 0}</div>
+              <p className="text-xs text-muted-foreground">Active customers</p>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+        <StaggerItem>
+          <Card className="card-interactive">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-destructive">{metrics?.low_stock_alerts || 0}</div>
+              <p className="text-xs text-muted-foreground">Items with stock ≤ 10</p>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+        <StaggerItem>
+          <Card className="card-interactive">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics?.pending_quotes || 0}</div>
+              <p className="text-xs text-muted-foreground">Awaiting response</p>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+      </StaggerChildren>
 
       {/* AI Insights Widget */}
       {insights.length > 0 && (
-        <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
+        <FadeIn delay={0.4}>
+          <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -204,49 +221,20 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+        </FadeIn>
       )}
 
-      {/* Data Summaries */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Trend</CardTitle>
-            <CardDescription>Last 6 months</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Array.isArray(revenueData) && revenueData.map((point) => (
-                <div key={point.month} className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{point.month}</span>
-                  <span className="text-sm font-medium">{formatCurrency(parseFloat(point.revenue))}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Sales by Category</CardTitle>
-            <CardDescription>Total sales distribution</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Array.isArray(categorySales) && categorySales.map((category) => (
-                <div key={category.category} className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {category.category.replace(/_/g, " ")}
-                  </span>
-                  <span className="text-sm font-medium">{formatCurrency(parseFloat(category.value))}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Data Visualizations */}
+      <FadeIn delay={0.5}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <RevenueChart data={revenueData} />
+          <CategorySalesChart data={categorySales} />
+        </div>
+      </FadeIn>
 
       {/* Top Products */}
-      <Card>
+      <FadeIn delay={0.6}>
+        <Card>
         <CardHeader>
           <CardTitle>Top 5 Products</CardTitle>
           <CardDescription>By revenue</CardDescription>
@@ -270,9 +258,11 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      </FadeIn>
 
       {/* Recent Activity */}
-      <Card>
+      <FadeIn delay={0.7}>
+        <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
           <CardDescription>Latest orders and quotes</CardDescription>
@@ -304,6 +294,7 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      </FadeIn>
     </div>
   );
 }

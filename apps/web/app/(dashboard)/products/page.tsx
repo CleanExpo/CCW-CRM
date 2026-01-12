@@ -4,14 +4,6 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductForm } from "./components/ProductForm";
@@ -19,6 +11,7 @@ import { DeleteProductDialog } from "./components/DeleteProductDialog";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
+import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 
 interface Product {
   id: string;
@@ -160,61 +153,92 @@ export default function ProductsPage() {
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Warehouse</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{product.category.replace(/_/g, " ")}</Badge>
-                    </TableCell>
-                    <TableCell>{formatCurrency(product.price)}</TableCell>
-                    <TableCell>
-                      <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
-                        {product.stock}
-                      </span>
-                    </TableCell>
-                    <TableCell>{product.warehouse_location || "N/A"}</TableCell>
-                    <TableCell>
-                      <Badge variant={product.is_active ? "default" : "secondary"}>
-                        {product.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditProduct(product)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ResponsiveTable
+              data={products}
+              keyExtractor={(product) => product.id}
+              columns={[
+                {
+                  key: "sku",
+                  label: "SKU",
+                  className: "font-mono text-sm",
+                  render: (product) => product.sku,
+                },
+                {
+                  key: "name",
+                  label: "Name",
+                  className: "font-medium",
+                  render: (product) => product.name,
+                },
+                {
+                  key: "category",
+                  label: "Category",
+                  render: (product) => (
+                    <Badge variant="outline" className="capitalize">
+                      {product.category.replace(/_/g, " ")}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "price",
+                  label: "Price",
+                  render: (product) => formatCurrency(product.price),
+                },
+                {
+                  key: "stock",
+                  label: "Stock",
+                  render: (product) => (
+                    <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
+                      {product.stock}
+                    </span>
+                  ),
+                },
+                {
+                  key: "warehouse",
+                  label: "Warehouse",
+                  hideOnMobile: true,
+                  render: (product) => product.warehouse_location || "N/A",
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (product) => (
+                    <Badge variant={product.is_active ? "default" : "secondary"}>
+                      {product.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "actions",
+                  label: "Actions",
+                  className: "text-right",
+                  mobileLabel: "",
+                  render: (product) => (
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditProduct(product);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteProduct(product);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>

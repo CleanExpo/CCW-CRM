@@ -4,14 +4,6 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QuoteForm } from "./components/QuoteForm";
@@ -20,6 +12,7 @@ import { ConvertToOrderDialog } from "./components/ConvertToOrderDialog";
 import { Pencil, Trash2, Plus, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Quote } from "./types";
+import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 
 interface PaginatedResponse {
   items: Quote[];
@@ -159,81 +152,117 @@ export default function QuotesPage() {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Quote #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Quote Date</TableHead>
-                  <TableHead>Valid Until</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {quotes.map((quote) => {
-                  const expired = isExpired(quote.valid_until);
-                  return (
-                    <TableRow key={quote.id}>
-                      <TableCell className="font-mono text-sm font-medium">
-                        {quote.quote_number}
-                      </TableCell>
-                      <TableCell>{quote.customer_name}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={statusColors[quote.status] || "outline"}>
-                            {quote.status}
-                          </Badge>
-                          {expired && quote.status !== "expired" && (
-                            <Badge variant="destructive">Expired</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{quote.item_count}</TableCell>
-                      <TableCell className="font-semibold">${quote.total}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {new Date(quote.quote_date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className={`text-sm ${expired ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+            <ResponsiveTable
+              data={quotes}
+              keyExtractor={(quote) => quote.id}
+              columns={[
+                {
+                  key: "quote_number",
+                  label: "Quote #",
+                  className: "font-mono text-sm font-medium",
+                  render: (quote) => quote.quote_number,
+                },
+                {
+                  key: "customer",
+                  label: "Customer",
+                  render: (quote) => quote.customer_name,
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (quote) => {
+                    const expired = isExpired(quote.valid_until);
+                    return (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={statusColors[quote.status] || "outline"} className="capitalize">
+                          {quote.status}
+                        </Badge>
+                        {expired && quote.status !== "expired" && (
+                          <Badge variant="destructive">Expired</Badge>
+                        )}
+                      </div>
+                    );
+                  },
+                },
+                {
+                  key: "items",
+                  label: "Items",
+                  hideOnMobile: true,
+                  render: (quote) => quote.item_count,
+                },
+                {
+                  key: "total",
+                  label: "Total",
+                  className: "font-semibold",
+                  render: (quote) => `$${quote.total}`,
+                },
+                {
+                  key: "quote_date",
+                  label: "Quote Date",
+                  className: "text-sm text-muted-foreground",
+                  hideOnMobile: true,
+                  render: (quote) => new Date(quote.quote_date).toLocaleDateString(),
+                },
+                {
+                  key: "valid_until",
+                  label: "Valid Until",
+                  hideOnMobile: true,
+                  render: (quote) => {
+                    const expired = isExpired(quote.valid_until);
+                    return (
+                      <span className={`text-sm ${expired ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                         {quote.valid_until
                           ? new Date(quote.valid_until).toLocaleDateString()
                           : "N/A"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {quote.status.toLowerCase() === "accepted" && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleConvertToOrder(quote)}
-                            >
-                              <ArrowRight className="mr-1 h-3 w-3" />
-                              Convert
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditQuote(quote)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteQuote(quote)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                      </span>
+                    );
+                  },
+                },
+                {
+                  key: "actions",
+                  label: "Actions",
+                  className: "text-right",
+                  mobileLabel: "",
+                  render: (quote) => (
+                    <div className="flex justify-end gap-2 flex-wrap">
+                      {quote.status.toLowerCase() === "accepted" && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleConvertToOrder(quote);
+                          }}
+                        >
+                          <ArrowRight className="mr-1 h-3 w-3" />
+                          Convert
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditQuote(quote);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteQuote(quote);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>
