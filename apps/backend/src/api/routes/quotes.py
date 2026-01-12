@@ -84,7 +84,7 @@ async def list_quotes(
     }
 
 
-@router.get("/{quote_id}", response_model=Quote)
+@router.get("/{quote_id}")
 async def get_quote(
     quote_id: UUID,
     db: AsyncSession = Depends(get_async_db),
@@ -101,7 +101,35 @@ async def get_quote(
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
 
-    return Quote.model_validate(quote)
+    # Manually build response dict from SQLAlchemy model
+    response = {
+        "id": str(quote.id),
+        "organization_id": str(quote.organization_id) if quote.organization_id else None,
+        "quote_number": quote.quote_number,
+        "customer_id": str(quote.customer_id),
+        "status": quote.status.value if hasattr(quote.status, 'value') else quote.status,
+        "valid_until": quote.valid_until.isoformat() if quote.valid_until else None,
+        "notes": quote.notes,
+        "total": str(quote.total),
+        "quote_date": quote.quote_date.isoformat(),
+        "created_at": quote.created_at.isoformat(),
+        "updated_at": quote.updated_at.isoformat(),
+        # Manually serialize quote_items
+        "items": [
+            {
+                "id": str(item.id),
+                "quote_id": str(item.quote_id),
+                "product_id": str(item.product_id),
+                "quantity": item.quantity,
+                "unit_price": str(item.unit_price),
+                "line_total": str(item.line_total),
+                "created_at": item.created_at.isoformat(),
+            }
+            for item in quote.quote_items
+        ],
+    }
+
+    return response
 
 
 @router.post("", response_model=Quote, status_code=201)
@@ -162,7 +190,7 @@ async def create_quote(
     # Reload with items
     query = (
         select(QuoteModel)
-        .options(selectinload(QuoteModel.items))
+        .options(selectinload(QuoteModel.quote_items))
         .where(QuoteModel.id == quote.id)
     )
     result = await db.execute(query)
@@ -241,7 +269,7 @@ async def update_quote(
     # Reload with items
     query = (
         select(QuoteModel)
-        .options(selectinload(QuoteModel.items))
+        .options(selectinload(QuoteModel.quote_items))
         .where(QuoteModel.id == quote.id)
     )
     result = await db.execute(query)
@@ -288,11 +316,6 @@ async def convert_quote_to_order(
 
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
-
-    if quote.status == "accepted":
-        raise HTTPException(
-            status_code=400, detail="Quote has already been converted to an order"
-        )
 
     # Generate order number
     order_number = await generate_order_number(db)
