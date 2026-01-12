@@ -14,7 +14,7 @@ from src.utils import get_logger, setup_logging
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
-from .routes import customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, products, quotes, service_requests, test_data_gen
+from .routes import customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, portal_auth, products, purchase_orders, quotes, service_requests, shipments, suppliers, test_data_gen
 from .routes.ai import ai_router, chat, generate, insights, learning
 from .routes.integrations import elevenlabs, sendgrid, shopify, xero
 
@@ -131,6 +131,14 @@ app.include_router(quotes.router, tags=["Quotes"])
 app.include_router(inventory.router, tags=["Multi-Store Inventory"])
 # Service requests router
 app.include_router(service_requests.router, tags=["Service Requests"])
+# Customer portal authentication
+app.include_router(portal_auth.router, tags=["Portal Auth"])
+# Supplier management router
+app.include_router(suppliers.router, tags=["Suppliers"])
+# Purchase order router
+app.include_router(purchase_orders.router, tags=["Purchase Orders"])
+# Shipment tracking router
+app.include_router(shipments.router, tags=["Shipment Tracking"])
 # AI routers
 app.include_router(ai_router)  # Main AI agent orchestration routes (includes learning router)
 app.include_router(chat.router, tags=["AI Chat"])

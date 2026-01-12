@@ -27,12 +27,22 @@ async def seed_database():
             print("   Clearing existing seed data to re-seed...")
 
             # Delete in reverse order of dependencies
+            await conn.execute("DELETE FROM product_stock_by_location")
+            await conn.execute("DELETE FROM stock_reservations")
+            await conn.execute("DELETE FROM stock_adjustments")
+            await conn.execute("DELETE FROM stock_transfers")
+            await conn.execute("DELETE FROM inbound_shipments")
+            await conn.execute("DELETE FROM outbound_shipments")
+            await conn.execute("DELETE FROM purchase_order_items")
+            await conn.execute("DELETE FROM purchase_orders")
             await conn.execute("DELETE FROM order_items")
             await conn.execute("DELETE FROM orders")
             await conn.execute("DELETE FROM quote_items")
             await conn.execute("DELETE FROM quotes")
+            await conn.execute("DELETE FROM service_requests")
             await conn.execute("DELETE FROM products")
             await conn.execute("DELETE FROM customers")
+            await conn.execute("DELETE FROM suppliers")
             await conn.execute("DELETE FROM users WHERE organization_id = $1", org_id)
             print("   Cleared existing data")
         else:
@@ -219,7 +229,117 @@ async def seed_database():
 
         print(f"   Created {order_count} orders")
 
-        print("\nDatabase seeding completed successfully!")
+        # Create multi-location inventory
+        print("\n7. Creating multi-location inventory...")
+
+        # Clear existing multi-location data
+        await conn.execute("DELETE FROM product_stock_by_location")
+
+        # Define stock by location for each product
+        # Format: (sku, brisbane_stock, sydney_stock, melbourne_stock, reserved_brisbane, reserved_sydney, reserved_melbourne)
+        multi_location_stock = [
+            # Critical - Industrial Ladder (out of stock everywhere)
+            ('SKU-201', 0, 0, 0, 0, 0, 0),
+
+            # Low stock - Safety Helmet (total = 22, distributed)
+            ('HELMET-001', 15, 8, 5, 3, 2, 1),
+
+            # Location imbalance - Extension Cord (Brisbane out, others have stock)
+            ('SKU-105', 0, 18, 22, 0, 5, 0),
+
+            # High priority transfer candidates
+            ('DRILL-001', 45, 6, 12, 0, 0, 0),  # Brisbane surplus, Sydney low
+            ('GLOVES-001', 8, 50, 12, 2, 5, 3),  # Sydney surplus, Brisbane low
+            ('SAW-001', 22, 4, 25, 0, 1, 0),  # Melbourne surplus, Sydney low
+
+            # Medium priority transfers
+            ('DRILL-002', 12, 4, 16, 0, 0, 0),  # Moderate imbalance
+            ('WRENCH-001', 25, 8, 30, 0, 2, 0),  # Sydney slightly low
+
+            # Good distribution (no transfers needed)
+            ('EXC-001', 1, 1, 0, 0, 0, 0),  # Expensive items, low stock normal
+            ('EXC-002', 2, 2, 1, 0, 0, 0),
+            ('HAMMER-001', 40, 45, 35, 0, 0, 0),  # Well distributed
+            ('VEST-001', 120, 115, 115, 5, 5, 5),  # High stock, well distributed
+        ]
+
+        stock_count = 0
+        for sku, brisbane, sydney, melbourne, res_bris, res_syd, res_melb in multi_location_stock:
+            # Check if product exists with this SKU
+            product_id = await conn.fetchval("SELECT id FROM products WHERE sku = $1", sku)
+
+            if not product_id:
+                print(f"   Warning: Product {sku} not found, skipping...")
+                continue
+
+            # Insert Brisbane location
+            await conn.execute("""
+                INSERT INTO product_stock_by_location
+                (id, product_id, location, stock, reserved, reorder_point, reorder_quantity, created_at, updated_at)
+                VALUES (gen_random_uuid(), $1, 'brisbane', $2, $3, 10, 20, NOW(), NOW())
+            """, product_id, brisbane, res_bris)
+
+            # Insert Sydney location
+            await conn.execute("""
+                INSERT INTO product_stock_by_location
+                (id, product_id, location, stock, reserved, reorder_point, reorder_quantity, created_at, updated_at)
+                VALUES (gen_random_uuid(), $1, 'sydney', $2, $3, 10, 20, NOW(), NOW())
+            """, product_id, sydney, res_syd)
+
+            # Insert Melbourne location
+            await conn.execute("""
+                INSERT INTO product_stock_by_location
+                (id, product_id, location, stock, reserved, reorder_point, reorder_quantity, created_at, updated_at)
+                VALUES (gen_random_uuid(), $1, 'melbourne', $2, $3, 10, 20, NOW(), NOW())
+            """, product_id, melbourne, res_melb)
+
+            stock_count += 1
+
+        print(f"   Created multi-location inventory for {stock_count} products")
+        print(f"   Stock distributed across Brisbane, Sydney, and Melbourne")
+
+        # Add a few products that need to be created for the demo
+        print("\n8. Creating additional demo products...")
+
+        # Industrial Ladder (out of stock - critical)
+        ladder_id = await conn.fetchval("""
+            INSERT INTO products (organization_id, sku, name, description, category, price, cost, stock, warehouse_location, is_active)
+            VALUES ($1, 'SKU-201', 'Industrial Ladder 3m', 'Heavy-duty aluminum ladder', 'SAFETY_EQUIPMENT', 299.99, 180.00, 0, 'Warehouse D-1', true)
+            RETURNING id
+        """, org_id)
+
+        # Add multi-location stock (all zero)
+        for location in ['brisbane', 'sydney', 'melbourne']:
+            await conn.execute("""
+                INSERT INTO product_stock_by_location
+                (id, product_id, location, stock, reserved, reorder_point, reorder_quantity, created_at, updated_at)
+                VALUES (gen_random_uuid(), $1, $2, 0, 0, 10, 20, NOW(), NOW())
+            """, ladder_id, location)
+
+        # Extension Cord (location imbalance)
+        cord_id = await conn.fetchval("""
+            INSERT INTO products (organization_id, sku, name, description, category, price, cost, stock, warehouse_location, is_active)
+            VALUES ($1, 'SKU-105', 'Extension Cord 20m', 'Heavy duty extension cord', 'ELECTRICAL', 89.99, 45.00, 40, 'Warehouse E-2', true)
+            RETURNING id
+        """, org_id)
+
+        # Add multi-location stock (Brisbane zero, others have stock)
+        await conn.execute("""
+            INSERT INTO product_stock_by_location
+            (id, product_id, location, stock, reserved, reorder_point, reorder_quantity, created_at, updated_at)
+            VALUES (gen_random_uuid(), $1, 'brisbane', 0, 0, 10, 20, NOW(), NOW()),
+                   (gen_random_uuid(), $1, 'sydney', 18, 5, 10, 20, NOW(), NOW()),
+                   (gen_random_uuid(), $1, 'melbourne', 22, 0, 10, 20, NOW(), NOW())
+        """, cord_id)
+
+        print(f"   Created 2 additional products with multi-location stock")
+
+        print("\n=== Database seeding completed successfully! ===")
+        print("\nMulti-location inventory seeded:")
+        print("   - Critical items: Products out of stock at all locations")
+        print("   - Low stock items: Products with total stock < 20 units")
+        print("   - Location imbalances: Products out at one location but available elsewhere")
+        print("   - Transfer candidates: Products with significant stock imbalances")
         print("\nTest user credentials:")
         print("  Email: admin@ccw.com | Password: password123 | Role: Admin")
         print("  Email: manager@ccw.com | Password: password123 | Role: Manager")

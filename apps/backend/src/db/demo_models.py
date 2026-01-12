@@ -63,6 +63,29 @@ class ProductCategory(str, enum.Enum):
     ACCESSORIES = "ACCESSORIES"
 
 
+class Organization(Base):
+    """Organization model for multi-tenant support."""
+
+    __tablename__ = "organizations"
+
+    id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    name: str = Column(String(255), nullable=False, unique=True, index=True)
+    slug: str = Column(String(100), nullable=False, unique=True, index=True)
+    is_active: bool = Column(Boolean, default=True, nullable=False)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<Organization(name={self.name}, slug={self.slug})>"
+
+
 class Product(Base):
     """Product model for equipment catalog."""
 
@@ -185,9 +208,17 @@ class Order(Base):
         nullable=False,
     )
 
+    # Fulfillment and tracking fields
+    fulfillment_location: str | None = Column(String(50), nullable=True, index=True)
+    tracking_number: str | None = Column(String(100), nullable=True, index=True)
+    carrier_name: str | None = Column(String(100), nullable=True)
+    shipped_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    estimated_delivery_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
+
     # Relationships
     customer = relationship("Customer", back_populates="orders")
     order_items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    shipments = relationship("OutboundShipment", back_populates="order")
 
     def __repr__(self) -> str:
         return f"<Order(number={self.order_number}, total={self.total})>"

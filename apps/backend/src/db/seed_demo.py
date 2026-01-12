@@ -116,10 +116,11 @@ async def create_demo_user(db: AsyncSession) -> None:
         print("[OK] Demo admin user already exists")
         return
 
-    # Use pre-hashed password for "demo123" (bcrypt hash from init-db.sql)
+    # Use pre-hashed password for "demo123"
+    # Generated with: bcrypt.hashpw(b"demo123", bcrypt.gensalt(rounds=12))
     user = User(
         email="admin@demo.com",
-        password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5Y7R.PZCjJxWe",
+        password_hash="$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe",
         full_name="Demo Administrator",
         is_admin=True,
         is_active=True,

@@ -146,11 +146,19 @@ class TestProcurementAgent:
         agent = ProcurementAgent()
         tools = agent.get_tools()
 
-        assert len(tools) == 3
+        # Agent now has 8 tools (3 core + 5 inventory intelligence tools)
+        assert len(tools) == 8
         tool_names = [tool.name for tool in tools]
+        # Verify core tools are present
         assert "analyze_inventory" in tool_names
         assert "calculate_reorder_quantity" in tool_names
         assert "suggest_suppliers" in tool_names
+        # Additional inventory intelligence tools
+        assert "check_stock_across_locations" in tool_names
+        assert "suggest_alternative_products" in tool_names
+        assert "calculate_backorder_eta" in tool_names
+        assert "recommend_nearest_store" in tool_names
+        assert "predict_stockout" in tool_names
 
     @pytest.mark.asyncio
     async def test_inventory_analysis_with_products(self, sample_product):

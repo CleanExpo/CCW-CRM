@@ -31,14 +31,33 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response: Response = await call_next(request)
 
         # Content Security Policy - Prevents XSS and injection attacks
-        # Allow Next.js app to work properly
+        # Build connect-src dynamically based on environment
+        connect_src_origins = ["'self'"]
+
+        # Add CORS origins to CSP connect-src (for API calls from frontend)
+        if settings.cors_origins:
+            for origin in settings.cors_origins:
+                # Extract domain from origin URL
+                if origin.startswith("http"):
+                    connect_src_origins.append(origin)
+
+        # Add Supabase for legacy support
+        connect_src_origins.extend([
+            "https://*.supabase.co",
+            "wss://*.supabase.co",
+        ])
+
+        # Add localhost for development
+        if not settings.is_production:
+            connect_src_origins.append("http://localhost:8000")
+
         csp_directives = [
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data: https: blob:",
-            "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:8000",
+            f"connect-src {' '.join(connect_src_origins)}",
             "frame-ancestors 'none'",
         ]
         response.headers["Content-Security-Policy"] = "; ".join(csp_directives)

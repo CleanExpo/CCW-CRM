@@ -3,15 +3,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { X, Plus } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
+import { LocationAwareProductSelect } from "@/components/inventory/LocationAwareProductSelect";
 
 interface Product {
   id: string;
@@ -34,9 +28,10 @@ interface QuoteLineItemsProps {
   items: LineItem[];
   onChange: (items: LineItem[]) => void;
   errors?: string[];
+  selectedLocation?: string;
 }
 
-export function QuoteLineItems({ items, onChange, errors }: QuoteLineItemsProps) {
+export function QuoteLineItems({ items, onChange, errors, selectedLocation = "brisbane" }: QuoteLineItemsProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
@@ -154,27 +149,11 @@ export function QuoteLineItems({ items, onChange, errors }: QuoteLineItemsProps)
               >
                 <div className="col-span-5">
                   <label className="text-xs text-muted-foreground mb-1 block">Product</label>
-                  <Select
+                  <LocationAwareProductSelect
+                    selectedLocation={selectedLocation}
                     value={item.product_id}
-                    onValueChange={(value) => handleProductChange(index, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select product" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingProducts ? (
-                        <SelectItem value="loading" disabled>
-                          Loading...
-                        </SelectItem>
-                      ) : (
-                        products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.sku} - {product.name} (Stock: {product.stock})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                    onSelect={(product) => handleProductChange(index, product.id)}
+                  />
                 </div>
 
                 <div className="col-span-2">

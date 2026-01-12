@@ -47,6 +47,7 @@ const QUOTE_STATUSES = [
 
 const formSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
+  fulfillment_location: z.string().min(1, "Fulfillment location is required"),
   status: z.string().min(1, "Status is required"),
   quote_date: z.string().min(1, "Quote date is required"),
   valid_until: z.string().optional(),
@@ -67,6 +68,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("brisbane");
   const { toast } = useToast();
   const isEdit = !!quote;
 
@@ -74,6 +76,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
     resolver: zodResolver(formSchema),
     defaultValues: {
       customer_id: "",
+      fulfillment_location: "brisbane",
       status: "draft",
       quote_date: new Date().toISOString().split("T")[0],
       valid_until: "",
@@ -97,8 +100,11 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   // Reset form when quote changes or dialog opens
   useEffect(() => {
     if (quote) {
+      const location = (quote as any).fulfillment_location || "brisbane";
+      setSelectedLocation(location);
       form.reset({
         customer_id: quote.customer_id,
+        fulfillment_location: location,
         status: quote.status,
         quote_date: quote.quote_date ? new Date(quote.quote_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
         valid_until: quote.valid_until ? new Date(quote.valid_until).toISOString().split("T")[0] : "",
@@ -118,8 +124,10 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       futureDate.setDate(futureDate.getDate() + 30);
       const validUntilDefault = futureDate.toISOString().split("T")[0];
 
+      setSelectedLocation("brisbane");
       form.reset({
         customer_id: "",
+        fulfillment_location: "brisbane",
         status: "draft",
         quote_date: new Date().toISOString().split("T")[0],
         valid_until: validUntilDefault,
@@ -220,6 +228,36 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Fulfillment Location Selection */}
+            <FormField
+              control={form.control}
+              name="fulfillment_location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fulfillment Location</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedLocation(value);
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="brisbane">Brisbane</SelectItem>
+                      <SelectItem value="sydney">Sydney</SelectItem>
+                      <SelectItem value="melbourne">Melbourne</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -324,6 +362,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
               items={lineItems}
               onChange={setLineItems}
               errors={lineItemErrors}
+              selectedLocation={selectedLocation}
             />
 
             {lineItems.length > 0 && (

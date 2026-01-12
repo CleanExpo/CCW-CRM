@@ -8,10 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductForm } from "./components/ProductForm";
 import { DeleteProductDialog } from "./components/DeleteProductDialog";
+import { MultiLocationStockCell } from "@/components/inventory/MultiLocationStockCell";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+
+interface StockByLocation {
+  location: string;
+  stock: number;
+  reserved: number;
+  available: number;
+}
 
 interface Product {
   id: string;
@@ -23,6 +31,7 @@ interface Product {
   stock: number;
   warehouse_location: string | null;
   is_active: boolean;
+  stock_by_location?: StockByLocation[];
 }
 
 interface PaginatedResponse {
@@ -49,7 +58,30 @@ export default function ProductsPage() {
       const data = await apiClient.get<PaginatedResponse>(
         `/api/products?page=1&page_size=50${search ? `&search=${search}` : ""}`
       );
-      setProducts(data.items);
+
+      // Fetch multi-location stock data for each product
+      const productsWithStock = await Promise.all(
+        data.items.map(async (product) => {
+          try {
+            const stockResponse = await apiClient.get<{ locations: StockByLocation[] }>(
+              `/api/inventory/product/${product.id}/locations`
+            );
+            const stockData = stockResponse.locations || [];
+            return {
+              ...product,
+              stock_by_location: Array.isArray(stockData) ? stockData : [],
+            };
+          } catch (err) {
+            console.error(`Failed to load stock for product ${product.id}:`, err);
+            return {
+              ...product,
+              stock_by_location: [],
+            };
+          }
+        })
+      );
+
+      setProducts(productsWithStock);
       setTotal(data.total);
     } catch (error: any) {
       console.error("Failed to load products:", error);
@@ -185,11 +217,18 @@ export default function ProductsPage() {
                 },
                 {
                   key: "stock",
-                  label: "Stock",
+                  label: "Stock by Location",
                   render: (product) => (
-                    <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
-                      {product.stock}
-                    </span>
+                    product.stock_by_location && product.stock_by_location.length > 0 ? (
+                      <MultiLocationStockCell
+                        productId={product.id}
+                        locations={product.stock_by_location}
+                      />
+                    ) : (
+                      <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
+                        {product.stock}
+                      </span>
+                    )
                   ),
                 },
                 {
