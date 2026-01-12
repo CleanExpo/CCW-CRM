@@ -82,7 +82,12 @@ export default function OrdersPage() {
   const handleEditOrder = async (order: Order) => {
     // Fetch full order details including line items
     try {
+      console.log('[handleEditOrder] Fetching order:', order.id);
       const fullOrder = await apiClient.get<any>(`/api/orders/${order.id}`);
+      console.log('[handleEditOrder] API response:', JSON.stringify(fullOrder, null, 2));
+      console.log('[handleEditOrder] Has items?', !!fullOrder.items, 'Length:', fullOrder.items?.length);
+      console.log('[handleEditOrder] Has order_items?', !!fullOrder.order_items, 'Length:', fullOrder.order_items?.length);
+
       setSelectedOrder(fullOrder);
       setFormOpen(true);
     } catch (error: any) {

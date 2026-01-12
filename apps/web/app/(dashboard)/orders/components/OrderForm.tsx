@@ -47,6 +47,7 @@ const ORDER_STATUSES = [
 
 const formSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
+  fulfillment_location: z.string().min(1, "Fulfillment location is required"),
   status: z.string().min(1, "Status is required"),
   notes: z.string().optional(),
 });
@@ -65,6 +66,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("brisbane");
   const { toast } = useToast();
   const isEdit = !!order;
 
@@ -72,6 +74,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     resolver: zodResolver(formSchema),
     defaultValues: {
       customer_id: "",
+      fulfillment_location: "brisbane",
       status: "draft",
       notes: "",
     },
@@ -92,9 +95,23 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
   // Reset form when order changes or dialog opens
   useEffect(() => {
+    console.log('[OrderForm] useEffect triggered', {
+      hasOrder: !!order,
+      orderId: order?.id,
+      hasItems: !!(order as any)?.items,
+      hasOrderItems: !!(order as any)?.order_items,
+      itemsLength: ((order as any)?.items || []).length,
+      orderItemsLength: ((order as any)?.order_items || []).length,
+    });
+
     if (order) {
+      console.log('[OrderForm] Full order object:', JSON.stringify(order, null, 2));
+
+      const location = (order as any).fulfillment_location || "brisbane";
+      setSelectedLocation(location);
       form.reset({
         customer_id: order.customer_id,
+        fulfillment_location: location,
         status: order.status,
         notes: order.notes || "",
       });
@@ -105,10 +122,14 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         unit_price: Number(item.unit_price),
         line_total: Number(item.line_total),
       }));
+
+      console.log('[OrderForm] Setting line items:', items);
       setLineItems(items);
     } else {
+      setSelectedLocation("brisbane");
       form.reset({
         customer_id: "",
+        fulfillment_location: "brisbane",
         status: "draft",
         notes: "",
       });
@@ -145,6 +166,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     try {
       const payload = {
         customer_id: values.customer_id,
+        fulfillment_location: values.fulfillment_location,
         status: values.status,
         notes: values.notes || null,
         items: lineItems.map((item) => ({
@@ -198,6 +220,36 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Fulfillment Location Selection */}
+            <FormField
+              control={form.control}
+              name="fulfillment_location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fulfillment Location</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedLocation(value);
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="brisbane">Brisbane</SelectItem>
+                      <SelectItem value="sydney">Sydney</SelectItem>
+                      <SelectItem value="melbourne">Melbourne</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -272,6 +324,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
               items={lineItems}
               onChange={setLineItems}
               errors={lineItemErrors}
+              selectedLocation={selectedLocation}
             />
 
             {lineItems.length > 0 && (

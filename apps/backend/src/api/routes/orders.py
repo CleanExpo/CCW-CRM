@@ -6,13 +6,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from src.config.database import get_db
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
-from src.db.schemas import Order, OrderCreate, OrderUpdate, PaginatedResponse
+from src.db.demo_models import Customer as CustomerModel
+from src.db.schemas import Order, OrderCreate, OrderUpdate, OrderItem, PaginatedResponse
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
@@ -38,7 +39,10 @@ async def list_orders(
 ):
     """List orders with pagination and filters."""
     # Build query
-    query = select(OrderModel).options(selectinload(OrderModel.order_items))
+    query = select(OrderModel).options(
+        selectinload(OrderModel.order_items),
+        joinedload(OrderModel.customer)
+    )
 
     # Apply filters
     if search:
@@ -64,8 +68,30 @@ async def list_orders(
     result = await db.execute(query)
     orders = result.scalars().all()
 
+    # Build response with customer_name and items included
+    items = []
+    for o in orders:
+        # Access relationships BEFORE converting to Pydantic to ensure they are loaded
+        customer_name = "Unknown Customer"
+        if hasattr(o, 'customer') and o.customer:
+            customer_name = o.customer.company_name
+
+        # Access order_items before Pydantic conversion
+        order_items_list = []
+        if hasattr(o, 'order_items') and o.order_items:
+            order_items_list = [OrderItem.model_validate(item).model_dump() for item in o.order_items]
+
+        # Convert order to dict
+        order_dict = Order.model_validate(o).model_dump()
+
+        # Override with accessed values
+        order_dict["customer_name"] = customer_name
+        order_dict["items"] = order_items_list
+
+        items.append(order_dict)
+
     return {
-        "items": [Order.model_validate(o) for o in orders],
+        "items": items,
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -73,7 +99,7 @@ async def list_orders(
     }
 
 
-@router.get("/{order_id}", response_model=Order)
+@router.get("/{order_id}")
 async def get_order(
     order_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -90,7 +116,49 @@ async def get_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    return Order.model_validate(order)
+    # Manually build response dict from SQLAlchemy model
+    from src.db.schemas import OrderItem as OrderItemSchema
+
+    response = {
+        "id": str(order.id),
+        "organization_id": str(order.organization_id) if order.organization_id else None,
+        "order_number": order.order_number,
+        "customer_id": str(order.customer_id),
+        "status": order.status.value if hasattr(order.status, 'value') else order.status,
+        "notes": order.notes,
+        "total": str(order.total),
+        "order_date": order.order_date.isoformat(),
+        "created_at": order.created_at.isoformat(),
+        "updated_at": order.updated_at.isoformat(),
+        # Manually serialize order_items
+        "order_items": [
+            {
+                "id": str(item.id),
+                "order_id": str(item.order_id),
+                "product_id": str(item.product_id),
+                "quantity": item.quantity,
+                "unit_price": str(item.unit_price),
+                "line_total": str(item.line_total),
+                "created_at": item.created_at.isoformat(),
+            }
+            for item in order.order_items
+        ],
+        # Also provide 'items' for frontend compatibility
+        "items": [
+            {
+                "id": str(item.id),
+                "order_id": str(item.order_id),
+                "product_id": str(item.product_id),
+                "quantity": item.quantity,
+                "unit_price": str(item.unit_price),
+                "line_total": str(item.line_total),
+                "created_at": item.created_at.isoformat(),
+            }
+            for item in order.order_items
+        ],
+    }
+
+    return response
 
 
 @router.post("", response_model=Order, status_code=201)
@@ -150,7 +218,7 @@ async def create_order(
     # Reload with items
     query = (
         select(OrderModel)
-        .options(selectinload(OrderModel.items))
+        .options(selectinload(OrderModel.order_items))
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
@@ -232,7 +300,7 @@ async def update_order(
     # Reload with items
     query = (
         select(OrderModel)
-        .options(selectinload(OrderModel.items))
+        .options(selectinload(OrderModel.order_items))
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
@@ -274,7 +342,7 @@ async def update_order_status(
     # Reload with items
     query = (
         select(OrderModel)
-        .options(selectinload(OrderModel.items))
+        .options(selectinload(OrderModel.order_items))
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
