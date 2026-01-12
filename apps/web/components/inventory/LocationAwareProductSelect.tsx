@@ -165,7 +165,7 @@ export function LocationAwareProductSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[600px] p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search products..."
             value={search}
