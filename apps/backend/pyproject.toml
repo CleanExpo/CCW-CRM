@@ -29,6 +29,7 @@ dependencies = [
     "pyyaml>=6.0.0",
     "structlog>=24.4.0",
     "python-multipart>=0.0.12",
+    "slowapi>=0.1.9",  # Rate limiting
 
     # AI/LLM (LangChain + Ollama)
     "langchain>=0.1.0",

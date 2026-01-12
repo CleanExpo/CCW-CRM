@@ -45,7 +45,16 @@ class Settings(BaseSettings):
         default="your-secret-key-change-in-production",
         description="Secret key for JWT token signing"
     )
-    jwt_expire_minutes: int = Field(default=60, description="JWT token expiration in minutes")
+    jwt_expire_minutes: int = Field(default=480, description="JWT access token expiration in minutes (8 hours)")
+    jwt_refresh_expire_days: int = Field(default=30, description="JWT refresh token expiration in days")
+
+    # Security
+    secure_cookies: bool = Field(
+        default=False,
+        description="Enable secure flag on cookies (requires HTTPS, auto-enabled in production)"
+    )
+    rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
+    rate_limit_per_minute: int = Field(default=60, description="API rate limit per minute per user")
 
     # Legacy Supabase (deprecated - kept for migration compatibility)
     supabase_url: str = Field(default="", alias="NEXT_PUBLIC_SUPABASE_URL")
@@ -86,6 +95,16 @@ class Settings(BaseSettings):
     default_model: str = Field(default="claude-sonnet-4-5-20250929")
     max_tokens: int = Field(default=4096)
     temperature: float = Field(default=0.7)
+
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production environment."""
+        return self.environment == "production"
+
+    @property
+    def should_use_secure_cookies(self) -> bool:
+        """Determine if secure cookies should be used (True in production or if explicitly enabled)."""
+        return self.is_production or self.secure_cookies
 
 
 @lru_cache

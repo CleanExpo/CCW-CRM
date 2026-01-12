@@ -11,11 +11,19 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.jwt import create_access_token, decode_access_token, verify_password
+from src.auth.jwt import (
+    create_access_token,
+    create_refresh_token,
+    decode_access_token,
+    decode_refresh_token,
+    verify_password,
+)
 from src.config.database import get_async_db
+from src.config.settings import get_settings
 from src.db.models import User
 
 router = APIRouter(prefix="/api/auth", tags=["Demo Auth"])
+settings = get_settings()
 
 
 class LoginRequest(BaseModel):
@@ -70,7 +78,7 @@ async def login(
             detail="User account is disabled",
         )
 
-    # Create JWT token
+    # Create JWT access token (8 hours)
     access_token = create_access_token(
         data={
             "sub": user.email,
@@ -79,14 +87,33 @@ async def login(
         }
     )
 
-    # Set cookie with JWT token
+    # Create JWT refresh token (30 days)
+    refresh_token = create_refresh_token(
+        data={
+            "sub": user.email,
+            "user_id": str(user.id),
+        }
+    )
+
+    # Set access token cookie (secure flag auto-enabled in production)
     response.set_cookie(
         key="auth_token",
         value=access_token,
         httponly=True,
-        max_age=28800,  # 8 hours (480 minutes)
+        max_age=settings.jwt_expire_minutes * 60,  # Convert minutes to seconds
         samesite="lax",
-        secure=False,  # Set to True in production with HTTPS
+        secure=settings.should_use_secure_cookies,  # Auto-enabled in production
+    )
+
+    # Set refresh token cookie (30 days)
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        max_age=settings.jwt_refresh_expire_days * 24 * 60 * 60,  # Convert days to seconds
+        samesite="lax",
+        secure=settings.should_use_secure_cookies,  # Auto-enabled in production
+        path="/api/auth/refresh",  # Only send to refresh endpoint
     )
 
     return LoginResponse(
@@ -150,4 +177,95 @@ async def get_current_user(
         "full_name": user.full_name,
         "is_admin": user.is_admin,
     }
+
+
+@router.post("/refresh", response_model=LoginResponse)
+async def refresh_access_token(
+    request: Request,
+    response: Response,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> LoginResponse:
+    """
+    Refresh access token using a valid refresh token.
+
+    The refresh token must be provided in the refresh_token cookie.
+    Returns a new access token with updated expiration.
+    """
+    # Get refresh token from cookie
+    refresh_token = request.cookies.get("refresh_token")
+
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No refresh token provided",
+        )
+
+    # Decode and validate refresh token
+    payload = decode_refresh_token(refresh_token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    # Get user from database
+    email = payload.get("sub")
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    # Check if user is still active
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is disabled",
+        )
+
+    # Create new access token
+    access_token = create_access_token(
+        data={
+            "sub": user.email,
+            "user_id": str(user.id),
+            "is_admin": user.is_admin,
+        }
+    )
+
+    # Set new access token cookie
+    response.set_cookie(
+        key="auth_token",
+        value=access_token,
+        httponly=True,
+        max_age=settings.jwt_expire_minutes * 60,
+        samesite="lax",
+        secure=settings.should_use_secure_cookies,
+    )
+
+    return LoginResponse(
+        access_token=access_token,
+        user={
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "is_admin": user.is_admin,
+        },
+    )
+
+
+@router.post("/logout")
+async def logout(response: Response) -> dict:
+    """
+    Logout user by clearing auth cookies.
+    """
+    # Clear access token cookie
+    response.delete_cookie(key="auth_token")
+
+    # Clear refresh token cookie
+    response.delete_cookie(key="refresh_token", path="/api/auth/refresh")
+
+    return {"message": "Successfully logged out"}
 

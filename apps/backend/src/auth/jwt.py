@@ -93,3 +93,52 @@ def extract_user_email(token: str) -> str | None:
         return None
 
     return payload.get("sub")
+
+
+def create_refresh_token(data: dict) -> str:
+    """
+    Create a JWT refresh token with longer expiration (30 days).
+
+    Args:
+        data: Dictionary containing claims (e.g., {"sub": user_email, "user_id": str})
+
+    Returns:
+        Encoded JWT refresh token string
+    """
+    to_encode = data.copy()
+    settings = get_settings()
+
+    # Refresh tokens last 30 days
+    expire = datetime.now(UTC) + timedelta(days=settings.jwt_refresh_expire_days)
+
+    to_encode.update({
+        "exp": expire,
+        "type": "refresh"  # Mark as refresh token
+    })
+
+    encoded_jwt = jwt.encode(to_encode, _get_secret_key(), algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def decode_refresh_token(token: str) -> dict | None:
+    """
+    Decode and validate a JWT refresh token.
+
+    Args:
+        token: JWT refresh token string
+
+    Returns:
+        Decoded payload dict if valid and is a refresh token, None otherwise
+    """
+    try:
+        payload = jwt.decode(token, _get_secret_key(), algorithms=[ALGORITHM])
+
+        # Verify it's a refresh token
+        if payload.get("type") != "refresh":
+            return None
+
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.JWTError:
+        return None
