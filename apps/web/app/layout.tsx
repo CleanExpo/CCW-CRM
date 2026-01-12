@@ -2,12 +2,17 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toast";
+import { RouteProgressBar } from "@/components/transitions/RouteProgressBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AI Agent Orchestration",
-  description: "Production-ready AI-powered application",
+  title: "CCW ERP - Equipment Supplier",
+  description: "Premium ERP system for equipment suppliers",
+  other: {
+    'grammarly': 'false',
+    'grammarly-extension': 'off',
+  },
 };
 
 export default function RootLayout({
@@ -18,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        <RouteProgressBar />
         {children}
         <Toaster />
       </body>

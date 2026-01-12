@@ -10,7 +10,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
@@ -92,18 +92,18 @@ async def get_dashboard_metrics(
     revenue_result = await db.execute(
         select(func.sum(Order.total))
         .where(Order.order_date >= month_start)
-        .where(Order.status == OrderStatus.DELIVERED)
+        .where(func.cast(Order.status, String) == "DELIVERED")
     )
     total_revenue = revenue_result.scalar() or Decimal(0)
 
     # Active orders (not delivered or cancelled)
     active_orders_result = await db.execute(
         select(func.count(Order.id)).where(
-            Order.status.in_([
-                OrderStatus.PENDING,
-                OrderStatus.CONFIRMED,
-                OrderStatus.PROCESSING,
-                OrderStatus.SHIPPED
+            func.cast(Order.status, String).in_([
+                "PENDING",
+                "CONFIRMED",
+                "PROCESSING",
+                "SHIPPED"
             ])
         )
     )
@@ -132,7 +132,7 @@ async def get_dashboard_metrics(
     # Pending quotes
     pending_quotes_result = await db.execute(
         select(func.count(Quote.id)).where(
-            Quote.status.in_([QuoteStatus.DRAFT, QuoteStatus.PENDING, QuoteStatus.SENT])
+            func.cast(Quote.status, String).in_(["DRAFT", "PENDING", "SENT"])
         )
     )
     pending_quotes = pending_quotes_result.scalar() or 0
@@ -170,7 +170,7 @@ async def get_revenue_chart(
             select(func.sum(Order.total))
             .where(Order.order_date >= month_start)
             .where(Order.order_date < month_end)
-            .where(Order.status == OrderStatus.DELIVERED)
+            .where(func.cast(Order.status, String) == "DELIVERED")
         )
         revenue = result.scalar() or Decimal(0)
 
@@ -194,7 +194,7 @@ async def get_category_distribution(
         select(Product.category, func.sum(OrderItem.line_total))
         .join(OrderItem, Product.id == OrderItem.product_id)
         .join(Order, OrderItem.order_id == Order.id)
-        .where(Order.status == OrderStatus.DELIVERED)
+        .where(func.cast(Order.status, String) == "DELIVERED")
         .group_by(Product.category)
         .order_by(func.sum(OrderItem.line_total).desc())
     )
@@ -233,7 +233,7 @@ async def get_top_products(
         )
         .join(OrderItem, Product.id == OrderItem.product_id)
         .join(Order, OrderItem.order_id == Order.id)
-        .where(Order.status == OrderStatus.DELIVERED)
+        .where(func.cast(Order.status, String) == "DELIVERED")
         .group_by(Product.id, Product.name)
         .order_by(func.sum(OrderItem.line_total).desc())
         .limit(10)

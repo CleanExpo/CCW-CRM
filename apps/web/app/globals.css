@@ -426,12 +426,133 @@
   /* Interactive Card */
   .card-interactive {
     transition: transform var(--duration-normal) var(--ease-smooth),
-                box-shadow var(--duration-normal) var(--ease-smooth);
+                box-shadow var(--duration-normal) var(--ease-smooth),
+                border-color var(--duration-normal) var(--ease-smooth);
+    cursor: pointer;
   }
 
   .card-interactive:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-xl);
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  .card-interactive:active {
+    transform: translateY(-2px) scale(0.99);
+    transition-duration: 50ms;
+  }
+
+  /* Enhanced Button Hover */
+  .btn-enhanced {
+    position: relative;
+    overflow: hidden;
+    transition: all var(--duration-normal) var(--ease-smooth);
+  }
+
+  .btn-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width var(--duration-slow) var(--ease-out-expo),
+                height var(--duration-slow) var(--ease-out-expo);
+  }
+
+  .btn-enhanced:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .btn-enhanced:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
+  }
+
+  .btn-enhanced:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Badge Hover Effect */
+  .badge-interactive {
+    transition: all var(--duration-fast) var(--ease-smooth);
+    cursor: pointer;
+  }
+
+  .badge-interactive:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px hsl(var(--background)), 0 0 0 4px currentColor;
+  }
+
+  /* Input Focus Enhancement */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    transform: scale(1.01);
+    transition: transform var(--duration-fast) var(--ease-spring);
+  }
+
+  /* Icon Hover Rotation */
+  .icon-hover-rotate {
+    transition: transform var(--duration-normal) var(--ease-spring);
+  }
+
+  .icon-hover-rotate:hover {
+    transform: rotate(15deg) scale(1.1);
+  }
+
+  /* Icon Hover Scale */
+  .icon-hover-scale {
+    transition: transform var(--duration-fast) var(--ease-spring);
+  }
+
+  .icon-hover-scale:hover {
+    transform: scale(1.2);
+  }
+
+  /* Link Hover Underline */
+  .link-hover-underline {
+    position: relative;
+    text-decoration: none;
+  }
+
+  .link-hover-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: currentColor;
+    transition: width var(--duration-normal) var(--ease-out-expo);
+  }
+
+  .link-hover-underline:hover::after {
+    width: 100%;
+  }
+
+  /* Pulse Effect */
+  .pulse-on-hover {
+    animation: none;
+    transition: all var(--duration-normal) var(--ease-smooth);
+  }
+
+  .pulse-on-hover:hover {
+    animation: pulse-soft 1.5s var(--ease-smooth) infinite;
+  }
+
+  /* Glow on Hover */
+  .glow-on-hover {
+    transition: box-shadow var(--duration-normal) var(--ease-smooth);
+  }
+
+  .glow-on-hover:hover {
+    box-shadow: var(--shadow-glow);
   }
 
   /* Shimmer Effect for Loading */

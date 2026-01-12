@@ -25,7 +25,14 @@ class Settings(BaseSettings):
 
     # API
     backend_api_key: str = Field(default="")
-    cors_origins: list[str] = Field(default=["http://localhost:3000"])
+    cors_origins: list[str] = Field(default=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://localhost:3005",
+    ])
 
     # Database (PostgreSQL)
     database_url: str = Field(

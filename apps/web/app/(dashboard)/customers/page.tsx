@@ -5,20 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerForm } from "./components/CustomerForm";
 import { DeleteCustomerDialog } from "./components/DeleteCustomerDialog";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 
 interface Customer {
   id: string;
@@ -153,57 +146,88 @@ export default function CustomersPage() {
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer #</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell className="font-mono text-sm">{customer.customer_number}</TableCell>
-                    <TableCell className="font-medium">{customer.company_name}</TableCell>
-                    <TableCell>{customer.contact_name}</TableCell>
-                    <TableCell className="text-sm">{customer.email}</TableCell>
-                    <TableCell className="text-sm">{customer.phone || "N/A"}</TableCell>
-                    <TableCell>
-                      {customer.city && customer.state ? `${customer.city}, ${customer.state}` : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={customer.is_active ? "default" : "secondary"}>
-                        {customer.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditCustomer(customer)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteCustomer(customer)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ResponsiveTable
+              data={customers}
+              keyExtractor={(customer) => customer.id}
+              columns={[
+                {
+                  key: "customer_number",
+                  label: "Customer #",
+                  className: "font-mono text-sm",
+                  render: (customer) => customer.customer_number,
+                },
+                {
+                  key: "company",
+                  label: "Company",
+                  className: "font-medium",
+                  render: (customer) => customer.company_name,
+                },
+                {
+                  key: "contact",
+                  label: "Contact",
+                  render: (customer) => customer.contact_name,
+                },
+                {
+                  key: "email",
+                  label: "Email",
+                  className: "text-sm",
+                  render: (customer) => customer.email,
+                },
+                {
+                  key: "phone",
+                  label: "Phone",
+                  className: "text-sm",
+                  hideOnMobile: true,
+                  render: (customer) => customer.phone || "N/A",
+                },
+                {
+                  key: "location",
+                  label: "Location",
+                  hideOnMobile: true,
+                  render: (customer) =>
+                    customer.city && customer.state ? `${customer.city}, ${customer.state}` : "N/A",
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (customer) => (
+                    <Badge variant={customer.is_active ? "default" : "secondary"}>
+                      {customer.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "actions",
+                  label: "Actions",
+                  className: "text-right",
+                  mobileLabel: "",
+                  render: (customer) => (
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditCustomer(customer);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCustomer(customer);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>
