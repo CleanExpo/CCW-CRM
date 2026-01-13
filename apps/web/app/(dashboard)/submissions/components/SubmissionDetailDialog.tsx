@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -109,7 +108,7 @@ export function SubmissionDetailDialog({
       const endpoint = submissionType === "contact"
         ? `/api/contact-submissions/${submissionId}`
         : `/api/demo-requests/${submissionId}`;
-      const data = await apiClient.get(endpoint);
+      const data = await apiClient.get<ContactSubmission | DemoRequest>(endpoint);
       setSubmission(data);
     } catch (error: any) {
       toast.error("Failed to load submission details");
@@ -118,7 +117,7 @@ export function SubmissionDetailDialog({
 
   async function loadNotes() {
     try {
-      const data = await apiClient.get(`/api/submissions/${submissionType}/${submissionId}/notes`);
+      const data = await apiClient.get<Note[]>(`/api/submissions/${submissionType}/${submissionId}/notes`);
       setNotes(data);
     } catch (error: any) {
       toast.error("Failed to load notes");
@@ -201,14 +200,14 @@ export function SubmissionDetailDialog({
               </SelectContent>
             </Select>
           </DialogTitle>
-          <DialogDescription>
+          <div className="flex items-center gap-2 pt-2">
             <Badge className={getStatusBadgeColor(submission.status)}>
               {submission.status}
             </Badge>
-            <span className="ml-2 text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               Submitted {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}
             </span>
-          </DialogDescription>
+          </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-4">
