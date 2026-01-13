@@ -53,7 +53,13 @@ const statusColors = {
   cancelled: "bg-red-100 text-red-800",
 };
 
-export function DemoRequestsTable() {
+interface DemoRequestsTableProps {
+  searchQuery?: string;
+  statusFilter?: string;
+  onDataChange?: () => void;
+}
+
+export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: DemoRequestsTableProps) {
   const [data, setData] = useState<PaginatedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,15 +69,20 @@ export function DemoRequestsTable() {
 
   useEffect(() => {
     fetchDemoRequests();
-  }, [page]);
+  }, [page, searchQuery, statusFilter]);
 
   async function fetchDemoRequests() {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get<PaginatedResponse>(
-        `/api/demo-requests?page=${page}&page_size=10`
-      );
+      let url = `/api/demo-requests?page=${page}&page_size=10`;
+      if (statusFilter) {
+        url += `&status_filter=${statusFilter}`;
+      }
+      if (searchQuery) {
+        url += `&search=${encodeURIComponent(searchQuery)}`;
+      }
+      const response = await apiClient.get<PaginatedResponse>(url);
       setData(response);
     } catch (err: any) {
       setError(err.message || "Failed to load demo requests");
@@ -87,6 +98,7 @@ export function DemoRequestsTable() {
       });
       toast.success("Status updated");
       fetchDemoRequests();
+      onDataChange?.(); // Notify parent to refresh statistics
     } catch (error: any) {
       toast.error(error.message || "Failed to update status");
     }

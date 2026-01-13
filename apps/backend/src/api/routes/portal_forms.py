@@ -155,12 +155,24 @@ async def list_contact_submissions(
     page: int = 1,
     page_size: int = 50,
     status_filter: ContactStatus | None = None,
+    search: str | None = None,
 ):
     """List contact submissions (admin endpoint)."""
     query = select(ContactSubmission)
 
     if status_filter:
         query = query.where(ContactSubmission.status == status_filter)
+
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            or_(
+                ContactSubmission.name.ilike(search_pattern),
+                ContactSubmission.email.ilike(search_pattern),
+                ContactSubmission.message.ilike(search_pattern),
+                ContactSubmission.subject.ilike(search_pattern),
+            )
+        )
 
     # Count total
     count_result = await db.execute(select(func.count()).select_from(query.subquery()))
@@ -229,12 +241,24 @@ async def list_demo_requests(
     page: int = 1,
     page_size: int = 50,
     status_filter: DemoRequestStatus | None = None,
+    search: str | None = None,
 ):
     """List demo requests (admin endpoint)."""
     query = select(DemoRequest)
 
     if status_filter:
         query = query.where(DemoRequest.status == status_filter)
+
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            or_(
+                DemoRequest.company_name.ilike(search_pattern),
+                DemoRequest.contact_name.ilike(search_pattern),
+                DemoRequest.email.ilike(search_pattern),
+                DemoRequest.product_interest.ilike(search_pattern),
+            )
+        )
 
     # Count total
     count_result = await db.execute(select(func.count()).select_from(query.subquery()))
@@ -369,6 +393,58 @@ async def update_demo_request_status(
     await db.refresh(demo_request)
 
     return DemoRequestResponse.model_validate(demo_request)
+
+
+# Statistics Endpoint (must be before parameterized routes)
+@router.get("/submissions/statistics")
+async def get_submissions_statistics(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+):
+    """Get statistics about submissions for admin dashboard."""
+    from datetime import timedelta
+
+    # Contact submissions by status
+    contact_stats = {}
+    for status_value in ["new", "read", "responded", "closed"]:
+        result = await db.execute(
+            select(func.count()).where(ContactSubmission.status == status_value)
+        )
+        contact_stats[status_value] = result.scalar() or 0
+
+    # Total contact submissions
+    result = await db.execute(select(func.count()).select_from(ContactSubmission))
+    contact_stats["total"] = result.scalar() or 0
+
+    # Demo requests by status
+    demo_stats = {}
+    for status_value in ["pending", "scheduled", "completed", "cancelled"]:
+        result = await db.execute(
+            select(func.count()).where(DemoRequest.status == status_value)
+        )
+        demo_stats[status_value] = result.scalar() or 0
+
+    # Total demo requests
+    result = await db.execute(select(func.count()).select_from(DemoRequest))
+    demo_stats["total"] = result.scalar() or 0
+
+    # Recent submissions (last 24 hours)
+    yesterday = datetime.utcnow() - timedelta(days=1)
+
+    result = await db.execute(
+        select(func.count()).where(ContactSubmission.created_at >= yesterday)
+    )
+    contact_stats["recent_24h"] = result.scalar() or 0
+
+    result = await db.execute(
+        select(func.count()).where(DemoRequest.created_at >= yesterday)
+    )
+    demo_stats["recent_24h"] = result.scalar() or 0
+
+    return {
+        "contact_submissions": contact_stats,
+        "demo_requests": demo_stats,
+        "total_submissions": contact_stats["total"] + demo_stats["total"],
+    }
 
 
 # Notes Endpoints

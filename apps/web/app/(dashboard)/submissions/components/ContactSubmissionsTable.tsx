@@ -52,7 +52,13 @@ const statusColors = {
   closed: "bg-gray-100 text-gray-800",
 };
 
-export function ContactSubmissionsTable() {
+interface ContactSubmissionsTableProps {
+  searchQuery?: string;
+  statusFilter?: string;
+  onDataChange?: () => void;
+}
+
+export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChange }: ContactSubmissionsTableProps) {
   const [data, setData] = useState<PaginatedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,15 +68,20 @@ export function ContactSubmissionsTable() {
 
   useEffect(() => {
     fetchSubmissions();
-  }, [page]);
+  }, [page, searchQuery, statusFilter]);
 
   async function fetchSubmissions() {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get<PaginatedResponse>(
-        `/api/contact-submissions?page=${page}&page_size=10`
-      );
+      let url = `/api/contact-submissions?page=${page}&page_size=10`;
+      if (statusFilter) {
+        url += `&status_filter=${statusFilter}`;
+      }
+      if (searchQuery) {
+        url += `&search=${encodeURIComponent(searchQuery)}`;
+      }
+      const response = await apiClient.get<PaginatedResponse>(url);
       setData(response);
     } catch (err: any) {
       setError(err.message || "Failed to load submissions");
@@ -86,6 +97,7 @@ export function ContactSubmissionsTable() {
       });
       toast.success("Status updated");
       fetchSubmissions();
+      onDataChange?.(); // Notify parent to refresh statistics
     } catch (error: any) {
       toast.error(error.message || "Failed to update status");
     }
