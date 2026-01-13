@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -9,7 +9,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -22,6 +21,8 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -29,22 +30,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api/client";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  sku: z.string().min(1, "SKU is required").max(50),
-  name: z.string().min(1, "Name is required").max(255),
+  sku: z.string().min(1, "SKU is required").max(50, "SKU must be 50 characters or less"),
+  name: z.string().min(1, "Name is required").max(255, "Name must be 255 characters or less"),
   description: z.string().optional(),
-  category: z.string().min(1, "Category is required"),
-  price: z.coerce.number().positive("Price must be greater than 0"),
-  cost: z.coerce.number().nonnegative("Cost must be 0 or greater").optional(),
-  stock: z.coerce.number().int().nonnegative("Stock must be 0 or greater"),
-  warehouse_location: z.string().max(100).optional(),
-  is_active: z.boolean(),
+  category: z.enum([
+    "heavy_machinery",
+    "hand_tools",
+    "power_tools",
+    "safety_equipment",
+    "building_materials",
+    "electrical",
+    "plumbing",
+    "accessories",
+  ], {
+    required_error: "Please select a category",
+  }),
+  price: z.coerce.number().min(0, "Price must be 0 or greater"),
+  cost: z.coerce.number().min(0, "Cost must be 0 or greater"),
+  stock: z.coerce.number().int().min(0, "Stock must be 0 or greater"),
+  warehouse_location: z.string().optional(),
+  is_active: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -53,12 +64,12 @@ interface Product {
   id: string;
   sku: string;
   name: string;
-  description?: string | null;
+  description?: string;
   category: string;
   price: number;
   cost: number;
   stock: number;
-  warehouse_location?: string | null;
+  warehouse_location: string | null;
   is_active: boolean;
 }
 
@@ -69,21 +80,21 @@ interface ProductFormProps {
   onSuccess: () => void;
 }
 
-const CATEGORIES = [
-  { value: "heavy_machinery", label: "Heavy Machinery" },
-  { value: "hand_tools", label: "Hand Tools" },
-  { value: "power_tools", label: "Power Tools" },
-  { value: "safety_equipment", label: "Safety Equipment" },
-  { value: "building_materials", label: "Building Materials" },
-  { value: "electrical", label: "Electrical" },
-  { value: "plumbing", label: "Plumbing" },
-  { value: "accessories", label: "Accessories" },
-];
+const categoryLabels = {
+  heavy_machinery: "Heavy Machinery",
+  hand_tools: "Hand Tools",
+  power_tools: "Power Tools",
+  safety_equipment: "Safety Equipment",
+  building_materials: "Building Materials",
+  electrical: "Electrical",
+  plumbing: "Plumbing",
+  accessories: "Accessories",
+};
 
 export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const isEditMode = !!product;
+  const isEdit = !!product;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -91,7 +102,7 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
       sku: "",
       name: "",
       description: "",
-      category: "",
+      category: "power_tools",
       price: 0,
       cost: 0,
       stock: 0,
@@ -100,71 +111,60 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
     },
   });
 
-  // Reset form when dialog opens with product data
+  // Reset form when product changes or dialog opens/closes
   useEffect(() => {
-    if (open && product) {
-      form.reset({
-        sku: product.sku,
-        name: product.name,
-        description: product.description || "",
-        category: product.category,
-        price: product.price,
-        cost: product.cost,
-        stock: product.stock,
-        warehouse_location: product.warehouse_location || "",
-        is_active: product.is_active,
-      });
-    } else if (open && !product) {
-      form.reset({
-        sku: "",
-        name: "",
-        description: "",
-        category: "",
-        price: 0,
-        cost: 0,
-        stock: 0,
-        warehouse_location: "",
-        is_active: true,
-      });
+    if (open) {
+      if (product) {
+        form.reset({
+          sku: product.sku,
+          name: product.name,
+          description: product.description || "",
+          category: product.category as any,
+          price: product.price,
+          cost: product.cost,
+          stock: product.stock,
+          warehouse_location: product.warehouse_location || "",
+          is_active: product.is_active,
+        });
+      } else {
+        form.reset({
+          sku: "",
+          name: "",
+          description: "",
+          category: "power_tools",
+          price: 0,
+          cost: 0,
+          stock: 0,
+          warehouse_location: "",
+          is_active: true,
+        });
+      }
     }
   }, [open, product, form]);
 
   async function onSubmit(values: FormData) {
     setIsLoading(true);
     try {
-      const payload = {
-        sku: values.sku,
-        name: values.name,
-        description: values.description || null,
-        category: values.category,
-        price: values.price,
-        cost: values.cost || 0,
-        stock: values.stock,
-        warehouse_location: values.warehouse_location || null,
-        is_active: values.is_active,
-      };
-
-      if (isEditMode) {
-        await apiClient.put(`/api/products/${product.id}`, payload);
+      if (isEdit) {
+        await apiClient.put(`/api/products/${product.id}`, values);
         toast({
           title: "Success",
-          description: `Product "${values.name}" updated successfully`,
+          description: "Product updated successfully",
         });
       } else {
-        await apiClient.post("/api/products", payload);
+        await apiClient.post("/api/products", values);
         toast({
           title: "Success",
-          description: `Product "${values.name}" created successfully`,
+          description: "Product created successfully",
         });
       }
-
-      onOpenChange(false);
       onSuccess();
+      onOpenChange(false);
     } catch (error: any) {
       toast({
-        variant: "destructive",
         title: "Error",
-        description: error.message || `Failed to ${isEditMode ? "update" : "create"} product`,
+        description: error.message || `Failed to ${isEdit ? "update" : "create"} product`,
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -173,15 +173,16 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? "Edit Product" : "Create Product"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Product" : "Create Product"}</DialogTitle>
           <DialogDescription>
-            {isEditMode
-              ? "Update the product details below."
+            {isEdit
+              ? "Update the product information below."
               : "Add a new product to your catalog."}
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -192,12 +193,11 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                   <FormItem>
                     <FormLabel>SKU *</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="EQ-001"
-                        {...field}
-                        disabled={isEditMode}
-                      />
+                      <Input placeholder="CCW-PT-001" {...field} disabled={isEdit} />
                     </FormControl>
+                    {isEdit && (
+                      <FormDescription>SKU cannot be changed after creation</FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -212,13 +212,13 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            {cat.label}
+                        {Object.entries(categoryLabels).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -236,7 +236,7 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                 <FormItem>
                   <FormLabel>Product Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Heavy Duty Drill" {...field} />
+                    <Input placeholder="Makita Cordless Drill Driver 18V" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -252,7 +252,7 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                   <FormControl>
                     <Textarea
                       placeholder="Product description..."
-                      rows={3}
+                      className="min-h-[80px]"
                       {...field}
                     />
                   </FormControl>
@@ -261,7 +261,7 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
               )}
             />
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="price"
@@ -273,7 +273,7 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="99.99"
+                        placeholder="0.00"
                         {...field}
                       />
                     </FormControl>
@@ -287,33 +287,13 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                 name="cost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cost (AUD)</FormLabel>
+                    <FormLabel>Cost (AUD) *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="49.99"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="stock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stock *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="1"
-                        min="0"
-                        placeholder="100"
+                        placeholder="0.00"
                         {...field}
                       />
                     </FormControl>
@@ -323,19 +303,35 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="warehouse_location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Warehouse Location</FormLabel>
-                  <FormControl>
-                    <Input placeholder="A1-B2" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="stock"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock Quantity *</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" placeholder="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="warehouse_location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Warehouse Location</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Bay A-09" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -343,9 +339,9 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Active</FormLabel>
+                    <FormLabel className="text-base">Active Status</FormLabel>
                     <FormDescription>
-                      Product is available for sale
+                      Inactive products won&apos;t appear in catalogs and orders
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -358,7 +354,7 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
               )}
             />
 
-            <DialogFooter>
+            <div className="flex justify-end gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -368,15 +364,10 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading
-                  ? isEditMode
-                    ? "Updating..."
-                    : "Creating..."
-                  : isEditMode
-                  ? "Update Product"
-                  : "Create Product"}
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading ? "Saving..." : isEdit ? "Update Product" : "Create Product"}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>

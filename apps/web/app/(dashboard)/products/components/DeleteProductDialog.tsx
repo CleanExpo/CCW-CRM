@@ -11,20 +11,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api/client";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface Product {
   id: string;
   sku: string;
   name: string;
-  description?: string | null;
-  category: string;
-  price: number;
-  cost: number;
-  stock: number;
-  warehouse_location?: string | null;
-  is_active: boolean;
 }
 
 interface DeleteProductDialogProps {
@@ -41,30 +35,32 @@ export function DeleteProductDialog({
   onSuccess,
 }: DeleteProductDialogProps) {
   const { toast } = useToast();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleDelete() {
     if (!product) return;
 
-    setIsDeleting(true);
+    setIsLoading(true);
     try {
       await apiClient.delete(`/api/products/${product.id}`);
       toast({
         title: "Success",
-        description: `Product "${product.name}" has been deleted`,
+        description: "Product deleted successfully",
       });
-      onOpenChange(false);
       onSuccess();
+      onOpenChange(false);
     } catch (error: any) {
       toast({
-        variant: "destructive",
         title: "Error",
         description: error.message || "Failed to delete product",
+        variant: "destructive",
       });
     } finally {
-      setIsDeleting(false);
+      setIsLoading(false);
     }
   }
+
+  if (!product) return null;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -72,19 +68,22 @@ export function DeleteProductDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action will deactivate the product <strong>{product?.name}</strong> (
-            {product?.sku}). The product will be marked as inactive and will no longer appear
-            in active listings.
+            This action cannot be undone. This will permanently delete the product{" "}
+            <span className="font-semibold text-foreground">
+              {product.name}
+            </span>{" "}
+            (SKU: {product.sku}).
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            disabled={isDeleting}
+            disabled={isLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? "Deleting..." : "Delete Product"}
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? "Deleting..." : "Delete Product"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

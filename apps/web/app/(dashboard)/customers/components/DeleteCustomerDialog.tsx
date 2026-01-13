@@ -11,19 +11,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api/client";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface Customer {
   id: string;
   customer_number: string;
   company_name: string;
-  contact_name: string | null;
-  email: string | null;
-  phone: string | null;
-  city: string | null;
-  state: string | null;
-  is_active: boolean;
 }
 
 interface DeleteCustomerDialogProps {
@@ -40,30 +35,32 @@ export function DeleteCustomerDialog({
   onSuccess,
 }: DeleteCustomerDialogProps) {
   const { toast } = useToast();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleDelete() {
     if (!customer) return;
 
-    setIsDeleting(true);
+    setIsLoading(true);
     try {
       await apiClient.delete(`/api/customers/${customer.id}`);
       toast({
         title: "Success",
-        description: `Customer "${customer.company_name}" has been deleted`,
+        description: "Customer deleted successfully",
       });
-      onOpenChange(false);
       onSuccess();
+      onOpenChange(false);
     } catch (error: any) {
       toast({
-        variant: "destructive",
         title: "Error",
         description: error.message || "Failed to delete customer",
+        variant: "destructive",
       });
     } finally {
-      setIsDeleting(false);
+      setIsLoading(false);
     }
   }
+
+  if (!customer) return null;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -71,19 +68,22 @@ export function DeleteCustomerDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action will deactivate the customer <strong>{customer?.company_name}</strong> (
-            {customer?.customer_number}). The customer will be marked as inactive and will no
-            longer appear in active listings.
+            This action cannot be undone. This will permanently delete the customer{" "}
+            <span className="font-semibold text-foreground">
+              {customer.company_name}
+            </span>{" "}
+            (Customer #: {customer.customer_number}).
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            disabled={isDeleting}
+            disabled={isLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? "Deleting..." : "Delete Customer"}
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? "Deleting..." : "Delete Customer"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

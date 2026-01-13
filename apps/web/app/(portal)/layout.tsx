@@ -14,7 +14,6 @@ export default function PortalLayout({
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold">CCW Equipment</h1>
           </div>
-          {/* @ts-expect-error Server Component */}
           <PortalNav />
         </div>
       </header>

@@ -17,11 +17,13 @@ interface Customer {
   id: string;
   customer_number: string;
   company_name: string;
-  contact_name: string;
-  email: string;
+  contact_name: string | null;
+  email: string | null;
   phone: string | null;
+  address: string | null;
   city: string | null;
   state: string | null;
+  postcode: string | null;
   is_active: boolean;
 }
 
