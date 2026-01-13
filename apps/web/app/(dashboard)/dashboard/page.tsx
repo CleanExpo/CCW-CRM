@@ -14,6 +14,9 @@ import { StaggerChildren, StaggerItem } from "@/components/transitions/StaggerCh
 import { FadeIn } from "@/components/transitions/FadeIn";
 import { StockHealthWidget } from "@/components/dashboard/StockHealthWidget";
 import { TransferSuggestionsWidget } from "@/components/dashboard/TransferSuggestionsWidget";
+import { OrderStatusBreakdownWidget } from "@/components/dashboard/OrderStatusBreakdownWidget";
+import { QuoteConversionWidget } from "@/components/dashboard/QuoteConversionWidget";
+import { RevenueByLocationWidget } from "@/components/dashboard/RevenueByLocationWidget";
 import { format } from "date-fns";
 
 interface DashboardMetrics {
@@ -240,6 +243,15 @@ export default function DashboardPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           <StockHealthWidget />
           <TransferSuggestionsWidget />
+        </div>
+      </FadeIn>
+
+      {/* Analytics Widgets */}
+      <FadeIn delay={0.65}>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <OrderStatusBreakdownWidget />
+          <QuoteConversionWidget />
+          <RevenueByLocationWidget />
         </div>
       </FadeIn>
 
