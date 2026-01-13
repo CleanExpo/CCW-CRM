@@ -14,7 +14,7 @@ from src.utils import get_logger, setup_logging
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
-from .routes import customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, portal_auth, products, purchase_orders, quotes, service_requests, shipments, suppliers, test_data_gen
+from .routes import config, customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, portal_auth, portal_forms, products, purchase_orders, quotes, service_requests, shipments, suppliers, test_data_gen, webhooks
 from .routes.ai import ai_router, chat, generate, insights, learning
 from .routes.integrations import elevenlabs, sendgrid, shopify, xero
 
@@ -119,6 +119,7 @@ app.add_middleware(AuthMiddleware)
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
+app.include_router(config.router, tags=["Configuration"])
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
@@ -133,6 +134,10 @@ app.include_router(inventory.router, tags=["Multi-Store Inventory"])
 app.include_router(service_requests.router, tags=["Service Requests"])
 # Customer portal authentication
 app.include_router(portal_auth.router, tags=["Portal Auth"])
+# Portal forms (contact submissions, demo requests)
+app.include_router(portal_forms.router, tags=["Portal Forms"])
+# Webhooks
+app.include_router(webhooks.router, tags=["Webhooks"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])
 # Purchase order router

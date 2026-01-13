@@ -97,6 +97,34 @@ class Settings(BaseSettings):
     sendgrid_from_email: str = Field(default="noreply@ccw-erp.com", description="From email address")
     sendgrid_from_name: str = Field(default="CCW ERP", description="From name for emails")
 
+    # Business Configuration
+    tax_rate: str = Field(default="0.10", description="Tax rate (GST) as decimal (e.g., 0.10 for 10%)")
+    tax_name: str = Field(default="GST", description="Tax name displayed in UI")
+    quote_validity_days: int = Field(default=30, description="Default quote validity period in days")
+
+    # Stocktrim Integration
+    stocktrim_api_url: str = Field(default="https://api.stocktrim.com", description="Stocktrim API base URL")
+    stocktrim_api_key: str = Field(default="", description="Stocktrim API key for stock management")
+    stocktrim_enabled: bool = Field(default=True, description="Enable Stocktrim integration")
+    stocktrim_fallback_to_local: bool = Field(
+        default=True,
+        description="Fallback to local stock check if Stocktrim unavailable"
+    )
+
+    # Webhook Configuration
+    webhook_secret: str = Field(
+        default="change-this-webhook-secret-in-production",
+        description="Secret key for webhook signature verification"
+    )
+    webhook_contact_form_url: str | None = Field(
+        default=None,
+        description="External URL to POST contact form events"
+    )
+    webhook_demo_request_url: str | None = Field(
+        default=None,
+        description="External URL to POST demo request events"
+    )
+
     # MCP Tools
     exa_api_key: str = Field(default="")
     ref_tools_api_key: str = Field(default="")
@@ -115,6 +143,12 @@ class Settings(BaseSettings):
     def should_use_secure_cookies(self) -> bool:
         """Determine if secure cookies should be used (True in production or if explicitly enabled)."""
         return self.is_production or self.secure_cookies
+
+    @property
+    def tax_rate_decimal(self) -> "Decimal":
+        """Get tax rate as Decimal for precise calculations."""
+        from decimal import Decimal
+        return Decimal(self.tax_rate)
 
 
 @lru_cache

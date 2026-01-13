@@ -1,4 +1,7 @@
 import { ChatWidget } from "@/components/chat/ChatWidget";
+import { DemoRequestForm } from "@/components/portal/DemoRequestForm";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "lucide-react";
 
 export default function PortalLayout({
   children,
@@ -38,6 +41,14 @@ export default function PortalLayout({
             >
               Service
             </a>
+            <DemoRequestForm
+              triggerButton={
+                <Button variant="default" size="sm">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Request Demo
+                </Button>
+              }
+            />
           </nav>
         </div>
       </header>

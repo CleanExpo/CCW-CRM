@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ProductSearch } from "@/components/portal/ProductSearch";
 import { CartManager } from "@/components/portal/CartManager";
+import { ContactForm } from "@/components/portal/ContactForm";
 import { apiClient } from "@/lib/api/client";
 import { toast } from "sonner";
 
@@ -290,6 +291,11 @@ export default function WalkInPage() {
             </Card>
           )}
         </div>
+      </div>
+
+      {/* Contact Form - Floating Action Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <ContactForm source="walk-in" />
       </div>
     </div>
   );
