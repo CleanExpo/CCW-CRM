@@ -9,11 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
 from src.config.database import get_db
+from src.config.settings import Settings, get_settings
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
 from src.db.demo_models import Customer as CustomerModel
 from src.db.schemas import Order, OrderCreate, OrderUpdate, OrderItem, PaginatedResponse
+from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
@@ -165,14 +167,15 @@ async def get_order(
 async def create_order(
     order_data: OrderCreate,
     db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
 ):
     """Create a new order with items."""
     # Generate order number
     order_number = await generate_order_number(db)
 
-    # Calculate total from items
-    total = Decimal("0.00")
+    # Calculate totals using shared calculation utilities
     order_items = []
+    line_items_for_calc = []
 
     for item_data in order_data.items:
         # Get product to get price
@@ -186,8 +189,8 @@ async def create_order(
             )
 
         unit_price = product.price
-        line_total = unit_price * item_data.quantity
-        total += line_total
+        # Use shared calculation utility for line total
+        line_total = calculate_line_total(item_data.quantity, unit_price)
 
         order_items.append({
             "product_id": item_data.product_id,
@@ -195,6 +198,12 @@ async def create_order(
             "unit_price": unit_price,
             "line_total": line_total,
         })
+
+        line_items_for_calc.append((item_data.quantity, unit_price))
+
+    # Calculate totals with tax using shared utility
+    totals = calculate_totals(line_items_for_calc, settings.tax_rate_decimal, tax_enabled=True)
+    total = totals["total"]
 
     # Create order
     order = OrderModel(

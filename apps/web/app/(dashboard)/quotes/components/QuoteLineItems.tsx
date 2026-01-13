@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { X, Plus } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { LocationAwareProductSelect } from "@/components/inventory/LocationAwareProductSelect";
+import { useLineItemCalculations } from "@/hooks/use-line-item-calculations";
+import { formatCurrency } from "@/lib/utils/calculations";
 
 interface Product {
   id: string;
@@ -34,6 +36,7 @@ interface QuoteLineItemsProps {
 export function QuoteLineItems({ items, onChange, errors, selectedLocation = "brisbane" }: QuoteLineItemsProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const { updateQuantity, updateUnitPrice } = useLineItemCalculations();
 
   useEffect(() => {
     async function loadProducts() {
@@ -82,30 +85,15 @@ export function QuoteLineItems({ items, onChange, errors, selectedLocation = "br
   const handleQuantityChange = (index: number, quantity: string) => {
     const qty = parseInt(quantity) || 0;
     const newItems = [...items];
-    newItems[index] = {
-      ...newItems[index],
-      quantity: qty,
-      line_total: qty * newItems[index].unit_price,
-    };
+    newItems[index] = updateQuantity(newItems[index], qty);
     onChange(newItems);
   };
 
   const handleUnitPriceChange = (index: number, price: string) => {
     const unitPrice = parseFloat(price) || 0;
     const newItems = [...items];
-    newItems[index] = {
-      ...newItems[index],
-      unit_price: unitPrice,
-      line_total: newItems[index].quantity * unitPrice,
-    };
+    newItems[index] = updateUnitPrice(newItems[index], unitPrice);
     onChange(newItems);
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
-    }).format(value);
   };
 
   const total = items.reduce((sum, item) => sum + item.line_total, 0);

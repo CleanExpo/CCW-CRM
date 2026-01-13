@@ -9,12 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.config.database import get_async_db
+from src.config.settings import Settings, get_settings
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
 from src.db.demo_models import Quote as QuoteModel
 from src.db.demo_models import QuoteItem as QuoteItemModel
 from src.db.schemas import Order, PaginatedResponse, Quote, QuoteCreate, QuoteUpdate
+from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/quotes", tags=["quotes"])
 
@@ -136,14 +138,15 @@ async def get_quote(
 async def create_quote(
     quote_data: QuoteCreate,
     db: AsyncSession = Depends(get_async_db),
+    settings: Settings = Depends(get_settings),
 ):
     """Create a new quote with items."""
     # Generate quote number
     quote_number = await generate_quote_number(db)
 
-    # Calculate total from items
-    total = Decimal("0.00")
+    # Calculate totals using shared calculation utilities
     quote_items = []
+    line_items_for_calc = []
 
     for item_data in quote_data.items:
         # Get product to get price
@@ -157,8 +160,8 @@ async def create_quote(
             )
 
         unit_price = product.price
-        line_total = unit_price * item_data.quantity
-        total += line_total
+        # Use shared calculation utility for line total
+        line_total = calculate_line_total(item_data.quantity, unit_price)
 
         quote_items.append({
             "product_id": item_data.product_id,
@@ -166,6 +169,12 @@ async def create_quote(
             "unit_price": unit_price,
             "line_total": line_total,
         })
+
+        line_items_for_calc.append((item_data.quantity, unit_price))
+
+    # Calculate totals with tax using shared utility
+    totals = calculate_totals(line_items_for_calc, settings.tax_rate_decimal, tax_enabled=True)
+    total = totals["total"]
 
     # Create quote
     quote = QuoteModel(

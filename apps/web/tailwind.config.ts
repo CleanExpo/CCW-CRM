@@ -12,6 +12,10 @@ export default {
          COLORS
          ---------------------------------------- */
       colors: {
+        // User requested overrides
+        "background-light": "#f8f9fa",
+        "background-dark": "#121212",
+
         // Base shadcn tokens
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
