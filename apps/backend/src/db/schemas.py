@@ -153,6 +153,7 @@ class OrderItem(OrderItemBase):
 class OrderBase(BaseModel):
     customer_id: UUID
     status: str = "draft"
+    fulfillment_location: str = "brisbane"  # brisbane, sydney, or melbourne
     notes: str | None = None
 
 
@@ -163,6 +164,7 @@ class OrderCreate(OrderBase):
 class OrderUpdate(BaseModel):
     customer_id: UUID | None = None
     status: str | None = None
+    fulfillment_location: str | None = None
     notes: str | None = None
     items: list[OrderItemCreate] | None = None
     subtotal: Decimal | None = None

@@ -4,7 +4,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
@@ -14,6 +14,7 @@ from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
 from src.db.demo_models import Customer as CustomerModel
+from src.db.inventory_models import ProductStockByLocation, StockAdjustment
 from src.db.schemas import Order, OrderCreate, OrderUpdate, OrderItem, PaginatedResponse
 from src.utils.calculations import calculate_line_total, calculate_totals
 
@@ -28,6 +29,95 @@ async def generate_order_number(db: AsyncSession) -> str:
     result = await db.execute(query)
     count = result.scalar_one()
     return f"ORD-{year}-{count + 1:03d}"
+
+
+async def deduct_stock_for_order(
+    db: AsyncSession,
+    order_items: list[dict],
+    location: str,
+    order_id: UUID,
+) -> None:
+    """Deduct stock from inventory when order is confirmed.
+
+    Args:
+        db: Database session
+        order_items: List of order items with product_id and quantity
+        location: Fulfillment location (brisbane, sydney, melbourne)
+        order_id: Order ID for reference
+
+    Raises:
+        HTTPException: If insufficient stock available
+    """
+    # First, check all products have sufficient stock
+    insufficient_stock = []
+
+    for item in order_items:
+        product_id = item["product_id"]
+        quantity = item["quantity"]
+
+        # Check stock availability
+        stmt = select(ProductStockByLocation, ProductModel).join(
+            ProductModel, ProductStockByLocation.product_id == ProductModel.id
+        ).where(
+            and_(
+                ProductStockByLocation.product_id == product_id,
+                ProductStockByLocation.location == location,
+            )
+        )
+        result = await db.execute(stmt)
+        row = result.first()
+
+        if not row or row[0].available < quantity:
+            stock_available = row[0].available if row else 0
+            product_name = row[1].name if row else "Unknown Product"
+            insufficient_stock.append({
+                "product_name": product_name,
+                "product_id": str(product_id),
+                "requested": quantity,
+                "available": stock_available,
+            })
+
+    # If any product has insufficient stock, raise error
+    if insufficient_stock:
+        error_details = [
+            f"{item['product_name']}: requested {item['requested']}, available {item['available']}"
+            for item in insufficient_stock
+        ]
+        raise HTTPException(
+            status_code=400,
+            detail=f"Insufficient stock at {location}. " + "; ".join(error_details)
+        )
+
+    # Deduct stock for each item
+    for item in order_items:
+        product_id = item["product_id"]
+        quantity = item["quantity"]
+
+        # Get stock record
+        stmt = select(ProductStockByLocation).where(
+            and_(
+                ProductStockByLocation.product_id == product_id,
+                ProductStockByLocation.location == location,
+            )
+        )
+        result = await db.execute(stmt)
+        stock = result.scalar_one()
+
+        previous_qty = stock.stock
+        stock.stock -= quantity
+
+        # Log stock adjustment
+        adjustment = StockAdjustment(
+            product_id=product_id,
+            location=location,
+            quantity_change=-quantity,
+            previous_quantity=previous_qty,
+            new_quantity=stock.stock,
+            adjustment_type="order_fulfillment",
+            reason=f"Order {str(order_id)[:8]} confirmed",
+            reference_id=order_id,
+        )
+        db.add(adjustment)
 
 
 @router.get("", response_model=PaginatedResponse)
@@ -221,6 +311,15 @@ async def create_order(
         item = OrderItemModel(order_id=order.id, **item_data)
         db.add(item)
 
+    # Deduct stock if order is confirmed
+    if order_data.status == "confirmed":
+        await deduct_stock_for_order(
+            db=db,
+            order_items=order_items,
+            location=order_data.fulfillment_location,
+            order_id=order.id,
+        )
+
     await db.commit()
     await db.refresh(order)
 
@@ -322,11 +421,14 @@ async def update_order(
 async def update_order_status(
     order_id: UUID,
     status: str = Query(..., description="New status"),
+    fulfillment_location: str = Query("brisbane", description="Fulfillment location"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update order status."""
-    # Get existing order
-    query = select(OrderModel).where(OrderModel.id == order_id)
+    """Update order status and deduct stock when confirming."""
+    # Get existing order with items
+    query = select(OrderModel).options(
+        selectinload(OrderModel.order_items)
+    ).where(OrderModel.id == order_id)
     result = await db.execute(query)
     order = result.scalar_one_or_none()
 
@@ -342,6 +444,28 @@ async def update_order_status(
         raise HTTPException(
             status_code=400,
             detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+        )
+
+    # Check if changing TO confirmed status (and not already confirmed)
+    old_status = order.status.value if hasattr(order.status, 'value') else order.status
+    is_confirming = status == "confirmed" and old_status != "confirmed"
+
+    # Deduct stock if confirming order
+    if is_confirming:
+        # Prepare order items for stock deduction
+        order_items = [
+            {
+                "product_id": item.product_id,
+                "quantity": item.quantity,
+            }
+            for item in order.order_items
+        ]
+
+        await deduct_stock_for_order(
+            db=db,
+            order_items=order_items,
+            location=fulfillment_location,
+            order_id=order.id,
         )
 
     order.status = status
