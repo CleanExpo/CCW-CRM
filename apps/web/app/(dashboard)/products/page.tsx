@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProductForm } from "./components/ProductForm";
 import { DeleteProductDialog } from "./components/DeleteProductDialog";
 import { MultiLocationStockCell } from "@/components/inventory/MultiLocationStockCell";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { StockTransferDialog } from "@/app/(dashboard)/inventory/components/StockTransferDialog";
+import { Pencil, Trash2, Plus, ArrowLeftRight } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
@@ -50,6 +51,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   async function loadProducts() {
@@ -122,6 +124,11 @@ export default function ProductsPage() {
   const handleDeleteProduct = (product: Product) => {
     setSelectedProduct(product);
     setDeleteDialogOpen(true);
+  };
+
+  const handleTransferStock = (product: Product) => {
+    setSelectedProduct(product);
+    setTransferDialogOpen(true);
   };
 
   const handleSuccess = () => {
@@ -258,8 +265,20 @@ export default function ProductsPage() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleTransferStock(product);
+                        }}
+                        title="Transfer Stock"
+                      >
+                        <ArrowLeftRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleEditProduct(product);
                         }}
+                        title="Edit Product"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -270,6 +289,7 @@ export default function ProductsPage() {
                           e.stopPropagation();
                           handleDeleteProduct(product);
                         }}
+                        title="Delete Product"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -295,6 +315,17 @@ export default function ProductsPage() {
         onOpenChange={setDeleteDialogOpen}
         onSuccess={handleSuccess}
       />
+
+      {selectedProduct && (
+        <StockTransferDialog
+          open={transferDialogOpen}
+          onOpenChange={setTransferDialogOpen}
+          productId={selectedProduct.id}
+          productName={selectedProduct.name}
+          productSku={selectedProduct.sku}
+          onSuccess={handleSuccess}
+        />
+      )}
     </div>
   );
 }
