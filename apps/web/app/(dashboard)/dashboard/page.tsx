@@ -14,6 +14,7 @@ import { StaggerChildren, StaggerItem } from "@/components/transitions/StaggerCh
 import { FadeIn } from "@/components/transitions/FadeIn";
 import { StockHealthWidget } from "@/components/dashboard/StockHealthWidget";
 import { TransferSuggestionsWidget } from "@/components/dashboard/TransferSuggestionsWidget";
+import { format } from "date-fns";
 
 interface DashboardMetrics {
   total_revenue_this_month: string;
@@ -297,7 +298,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                  {new Date(item.timestamp).toLocaleDateString()}
+                  {format(new Date(item.timestamp), "MMM dd, yyyy")}
                 </div>
               </div>
             ))}

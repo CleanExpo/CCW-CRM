@@ -12,6 +12,7 @@ import { Pencil, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { format } from "date-fns";
 
 interface PaginatedResponse {
   items: Order[];
@@ -195,7 +196,7 @@ export default function OrdersPage() {
                   label: "Order Date",
                   className: "text-sm text-muted-foreground",
                   hideOnMobile: true,
-                  render: (order) => new Date(order.order_date).toLocaleDateString(),
+                  render: (order) => format(new Date(order.order_date), "MMM dd, yyyy"),
                 },
                 {
                   key: "actions",
