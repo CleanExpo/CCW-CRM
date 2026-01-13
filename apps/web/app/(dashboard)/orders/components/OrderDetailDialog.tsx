@@ -9,12 +9,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Order } from "../types";
 import { OrderStatusTimeline } from "./OrderStatusTimeline";
 import { OrderStatusActions } from "./OrderStatusActions";
+import { OrderPrintView } from "./OrderPrintView";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils/calculations";
+import { Printer, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface OrderDetailDialogProps {
   order: Order | null;
@@ -29,6 +33,9 @@ export function OrderDetailDialog({
   onOpenChange,
   onOrderUpdate,
 }: OrderDetailDialogProps) {
+  const router = useRouter();
+  const [showPrintView, setShowPrintView] = useState(false);
+
   if (!order) return null;
 
   const handleStatusChange = () => {
@@ -36,31 +43,57 @@ export function OrderDetailDialog({
     onOpenChange(false);
   };
 
+  const handlePrint = () => {
+    setShowPrintView(true);
+    // Wait for print view to render
+    setTimeout(() => {
+      window.print();
+      setShowPrintView(false);
+    }, 100);
+  };
+
+  const handleGenerateInvoice = () => {
+    router.push(`/orders/${order.id}/invoice`);
+  };
+
   const items = order.items || order.order_items || [];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl">Order {order.order_number}</DialogTitle>
-            <Badge
-              variant={
-                order.status === "cancelled"
-                  ? "destructive"
-                  : order.status === "delivered"
-                  ? "default"
-                  : "outline"
-              }
-              className="capitalize"
-            >
-              {order.status}
-            </Badge>
-          </div>
-          <DialogDescription>
-            Created {format(new Date(order.order_date), "MMMM dd, yyyy 'at' h:mm a")}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <DialogTitle className="text-2xl">Order {order.order_number}</DialogTitle>
+                <DialogDescription>
+                  Created {format(new Date(order.order_date), "MMMM dd, yyyy 'at' h:mm a")}
+                </DialogDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={
+                    order.status === "cancelled"
+                      ? "destructive"
+                      : order.status === "delivered"
+                      ? "default"
+                      : "outline"
+                  }
+                  className="capitalize"
+                >
+                  {order.status}
+                </Badge>
+                <Button variant="outline" size="sm" onClick={handlePrint}>
+                  <Printer className="h-4 w-4 mr-1" />
+                  Print
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleGenerateInvoice}>
+                  <FileText className="h-4 w-4 mr-1" />
+                  Invoice
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
 
         <div className="space-y-6">
           {/* Status Timeline */}
@@ -162,5 +195,9 @@ export function OrderDetailDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+      {/* Print View (Hidden, shown only during print) */}
+      {showPrintView && <OrderPrintView order={order} />}
+    </>
   );
 }

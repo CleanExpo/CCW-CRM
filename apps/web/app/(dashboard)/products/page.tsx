@@ -10,10 +10,11 @@ import { ProductForm } from "./components/ProductForm";
 import { DeleteProductDialog } from "./components/DeleteProductDialog";
 import { MultiLocationStockCell } from "@/components/inventory/MultiLocationStockCell";
 import { StockTransferDialog } from "@/app/(dashboard)/inventory/components/StockTransferDialog";
-import { Pencil, Trash2, Plus, ArrowLeftRight } from "lucide-react";
+import { Pencil, Trash2, Plus, ArrowLeftRight, Download } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { exportProductsToCSV } from "@/lib/utils/csv-export";
 
 interface StockByLocation {
   location: string;
@@ -131,6 +132,14 @@ export default function ProductsPage() {
     setTransferDialogOpen(true);
   };
 
+  const handleExport = () => {
+    exportProductsToCSV(products);
+    toast({
+      title: "Export Successful",
+      description: `Exported ${products.length} products to CSV`,
+    });
+  };
+
   const handleSuccess = () => {
     loadProducts();
   };
@@ -142,10 +151,16 @@ export default function ProductsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
-        <Button onClick={handleAddProduct}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={products.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button onClick={handleAddProduct}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
       <Card>

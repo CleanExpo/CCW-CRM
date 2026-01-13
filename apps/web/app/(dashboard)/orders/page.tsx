@@ -9,11 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { OrderForm } from "./components/OrderForm";
 import { DeleteOrderDialog } from "./components/DeleteOrderDialog";
 import { OrderDetailDialog } from "./components/OrderDetailDialog";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 import { format } from "date-fns";
+import { exportOrdersToCSV } from "@/lib/utils/csv-export";
 
 interface PaginatedResponse {
   items: Order[];
@@ -117,6 +118,14 @@ export default function OrdersPage() {
     }
   };
 
+  const handleExport = () => {
+    exportOrdersToCSV(orders);
+    toast({
+      title: "Export Successful",
+      description: `Exported ${orders.length} orders to CSV`,
+    });
+  };
+
   const handleSuccess = () => {
     loadOrders();
   };
@@ -128,10 +137,16 @@ export default function OrdersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
           <p className="text-muted-foreground">Manage sales orders and fulfillment</p>
         </div>
-        <Button onClick={handleAddOrder}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Order
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={orders.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button onClick={handleAddOrder}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Order
+          </Button>
+        </div>
       </div>
 
       <Card>

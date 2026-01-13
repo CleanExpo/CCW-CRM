@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerForm } from "./components/CustomerForm";
 import { DeleteCustomerDialog } from "./components/DeleteCustomerDialog";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { exportCustomersToCSV } from "@/lib/utils/csv-export";
 
 interface Customer {
   id: string;
@@ -93,6 +94,14 @@ export default function CustomersPage() {
     router.push(`/customers/${customer.id}`);
   };
 
+  const handleExport = () => {
+    exportCustomersToCSV(customers);
+    toast({
+      title: "Export Successful",
+      description: `Exported ${customers.length} customers to CSV`,
+    });
+  };
+
   const handleSuccess = () => {
     loadCustomers();
   };
@@ -104,10 +113,16 @@ export default function CustomersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
           <p className="text-muted-foreground">Manage your customer relationships</p>
         </div>
-        <Button onClick={handleAddCustomer}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Customer
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={customers.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button onClick={handleAddCustomer}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Customer
+          </Button>
+        </div>
       </div>
 
       <Card>
