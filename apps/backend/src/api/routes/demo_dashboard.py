@@ -370,3 +370,225 @@ async def get_recent_activity(
     activity_items.sort(key=lambda x: x.timestamp, reverse=True)
 
     return activity_items[:limit]
+
+
+# New Analytics Endpoints
+
+
+class OrderStatusCount(BaseModel):
+    """Order status count with percentage."""
+
+    status: str
+    count: int
+    percentage: float
+
+
+class OrderStatusBreakdown(BaseModel):
+    """Order status breakdown response."""
+
+    total_active_orders: int
+    by_status: list[OrderStatusCount]
+
+
+@router.get("/order-status-breakdown", response_model=OrderStatusBreakdown)
+async def get_order_status_breakdown(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> OrderStatusBreakdown:
+    """Get order fulfillment status breakdown."""
+    # Get active orders (not delivered or cancelled)
+    active_statuses = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED"]
+
+    # Total active orders
+    total_result = await db.execute(
+        select(func.count(Order.id)).where(
+            func.cast(Order.status, String).in_(active_statuses)
+        )
+    )
+    total_active = total_result.scalar() or 0
+
+    # Count by status
+    status_result = await db.execute(
+        select(Order.status, func.count(Order.id))
+        .where(func.cast(Order.status, String).in_(active_statuses))
+        .group_by(Order.status)
+    )
+    status_counts = status_result.all()
+
+    # Calculate percentages
+    by_status = []
+    for status, count in status_counts:
+        percentage = (count / total_active * 100) if total_active > 0 else 0
+        by_status.append(
+            OrderStatusCount(
+                status=status.value,
+                count=count,
+                percentage=round(percentage, 1),
+            )
+        )
+
+    # Sort by order status progression
+    status_order = {"pending": 0, "confirmed": 1, "processing": 2, "shipped": 3}
+    by_status.sort(key=lambda x: status_order.get(x.status, 99))
+
+    return OrderStatusBreakdown(
+        total_active_orders=total_active,
+        by_status=by_status,
+    )
+
+
+class QuoteConversionData(BaseModel):
+    """Quote conversion metrics response."""
+
+    total_quotes: int
+    accepted: int
+    rejected: int
+    pending: int
+    expired: int
+    conversion_rate: float
+    average_quote_value: str
+    total_converted_revenue: str
+
+
+@router.get("/quote-conversion", response_model=QuoteConversionData)
+async def get_quote_conversion(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> QuoteConversionData:
+    """Get quote conversion metrics."""
+    # Get counts by status
+    status_result = await db.execute(
+        select(Quote.status, func.count(Quote.id))
+        .group_by(Quote.status)
+    )
+    status_counts = dict(status_result.all())
+
+    # Extract counts
+    total_quotes = sum(status_counts.values())
+    accepted = status_counts.get(QuoteStatus.ACCEPTED, 0)
+    rejected = status_counts.get(QuoteStatus.REJECTED, 0)
+    pending = sum(
+        status_counts.get(s, 0)
+        for s in [QuoteStatus.DRAFT, QuoteStatus.PENDING, QuoteStatus.SENT]
+    )
+    expired = status_counts.get(QuoteStatus.EXPIRED, 0)
+
+    # Conversion rate
+    conversion_rate = (accepted / total_quotes * 100) if total_quotes > 0 else 0
+
+    # Average quote value
+    avg_result = await db.execute(select(func.avg(Quote.total)))
+    avg_quote_value = avg_result.scalar() or Decimal(0)
+
+    # Total converted revenue (accepted quotes)
+    revenue_result = await db.execute(
+        select(func.sum(Quote.total)).where(
+            func.cast(Quote.status, String) == "ACCEPTED"
+        )
+    )
+    total_converted_revenue = revenue_result.scalar() or Decimal(0)
+
+    return QuoteConversionData(
+        total_quotes=total_quotes,
+        accepted=accepted,
+        rejected=rejected,
+        pending=pending,
+        expired=expired,
+        conversion_rate=round(conversion_rate, 1),
+        average_quote_value=str(avg_quote_value),
+        total_converted_revenue=str(total_converted_revenue),
+    )
+
+
+class LocationRevenue(BaseModel):
+    """Revenue data for a single location."""
+
+    location: str
+    revenue: str
+    percentage: float
+    order_count: int
+    average_order_value: str
+    growth_percentage: float | None
+
+
+class RevenueByLocationData(BaseModel):
+    """Revenue breakdown by fulfillment location."""
+
+    locations: list[LocationRevenue]
+    total_revenue: str
+    period: str
+
+
+@router.get("/revenue-by-location", response_model=RevenueByLocationData)
+async def get_revenue_by_location(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> RevenueByLocationData:
+    """Get revenue breakdown by fulfillment location (last 30 days)."""
+    now = datetime.now(UTC)
+    period_start = now - timedelta(days=30)
+    prev_period_start = period_start - timedelta(days=30)
+
+    # Get revenue by location for current period
+    current_result = await db.execute(
+        select(
+            Order.fulfillment_location,
+            func.sum(Order.total).label("revenue"),
+            func.count(Order.id).label("order_count"),
+        )
+        .where(Order.order_date >= period_start)
+        .where(func.cast(Order.status, String) == "DELIVERED")
+        .where(Order.fulfillment_location.isnot(None))
+        .group_by(Order.fulfillment_location)
+    )
+    current_data = current_result.all()
+
+    # Get revenue by location for previous period (for growth calculation)
+    prev_result = await db.execute(
+        select(
+            Order.fulfillment_location,
+            func.sum(Order.total).label("revenue"),
+        )
+        .where(Order.order_date >= prev_period_start)
+        .where(Order.order_date < period_start)
+        .where(func.cast(Order.status, String) == "DELIVERED")
+        .where(Order.fulfillment_location.isnot(None))
+        .group_by(Order.fulfillment_location)
+    )
+    prev_data = dict(prev_result.all())
+
+    # Calculate total revenue
+    total_revenue = sum(Decimal(str(revenue)) for _, revenue, _ in current_data)
+
+    # Build location revenue data
+    locations = []
+    for location, revenue, order_count in current_data:
+        revenue_decimal = Decimal(str(revenue))
+        percentage = (
+            float((revenue_decimal / total_revenue) * 100) if total_revenue > 0 else 0
+        )
+        avg_order_value = revenue_decimal / order_count if order_count > 0 else Decimal(0)
+
+        # Calculate growth percentage
+        prev_revenue = prev_data.get(location, Decimal(0))
+        if prev_revenue > 0:
+            growth = float(((revenue_decimal - prev_revenue) / prev_revenue) * 100)
+        else:
+            growth = None
+
+        locations.append(
+            LocationRevenue(
+                location=location,
+                revenue=str(revenue_decimal),
+                percentage=round(percentage, 1),
+                order_count=order_count,
+                average_order_value=str(avg_order_value),
+                growth_percentage=round(growth, 1) if growth is not None else None,
+            )
+        )
+
+    # Sort by revenue descending
+    locations.sort(key=lambda x: Decimal(x.revenue), reverse=True)
+
+    return RevenueByLocationData(
+        locations=locations,
+        total_revenue=str(total_revenue),
+        period="Last 30 days",
+    )
