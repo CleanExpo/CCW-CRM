@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { apiClient } from "@/lib/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OrderForm } from "./components/OrderForm";
 import { DeleteOrderDialog } from "./components/DeleteOrderDialog";
+import { BulkDeleteOrdersDialog } from "./components/BulkDeleteOrdersDialog";
 import { OrderDetailDialog } from "./components/OrderDetailDialog";
 import { Pencil, Trash2, Plus, Eye, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -41,8 +43,10 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
   async function loadOrders() {
     setLoading(true);
@@ -126,8 +130,29 @@ export default function OrdersPage() {
     });
   };
 
+  const handleToggleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedOrderIds.length === orders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(orders.map((o) => o.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setBulkDeleteDialogOpen(true);
+  };
+
   const handleSuccess = () => {
     loadOrders();
+    setSelectedOrderIds([]);
   };
 
   return (
@@ -135,9 +160,22 @@ export default function OrdersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-          <p className="text-muted-foreground">Manage sales orders and fulfillment</p>
+          <p className="text-muted-foreground">
+            {selectedOrderIds.length > 0
+              ? `${selectedOrderIds.length} selected`
+              : "Manage sales orders and fulfillment"}
+          </p>
         </div>
         <div className="flex gap-2">
+          {selectedOrderIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Selected ({selectedOrderIds.length})
+            </Button>
+          )}
           <Button variant="outline" onClick={handleExport} disabled={orders.length === 0}>
             <Download className="mr-2 h-4 w-4" />
             Export CSV
@@ -185,6 +223,28 @@ export default function OrdersPage() {
               data={orders}
               keyExtractor={(order) => order.id}
               columns={[
+                {
+                  key: "select",
+                  label: (
+                    <Checkbox
+                      checked={
+                        orders.length > 0 &&
+                        selectedOrderIds.length === orders.length
+                      }
+                      onCheckedChange={handleToggleSelectAll}
+                      aria-label="Select all orders"
+                    />
+                  ),
+                  className: "w-12",
+                  render: (order) => (
+                    <Checkbox
+                      checked={selectedOrderIds.includes(order.id)}
+                      onCheckedChange={() => handleToggleSelectOrder(order.id)}
+                      aria-label={`Select order ${order.order_number}`}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ),
+                },
                 {
                   key: "order_number",
                   label: "Order #",
@@ -291,6 +351,13 @@ export default function OrdersPage() {
         order={selectedOrder}
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
+        onSuccess={handleSuccess}
+      />
+
+      <BulkDeleteOrdersDialog
+        orderIds={selectedOrderIds}
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
         onSuccess={handleSuccess}
       />
     </div>

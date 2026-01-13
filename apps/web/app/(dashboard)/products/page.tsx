@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ProductForm } from "./components/ProductForm";
 import { DeleteProductDialog } from "./components/DeleteProductDialog";
+import { BulkDeleteProductsDialog } from "./components/BulkDeleteProductsDialog";
 import { MultiLocationStockCell } from "@/components/inventory/MultiLocationStockCell";
 import { StockTransferDialog } from "@/app/(dashboard)/inventory/components/StockTransferDialog";
 import { Pencil, Trash2, Plus, ArrowLeftRight, Download } from "lucide-react";
@@ -52,8 +54,10 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   async function loadProducts() {
     setLoading(true);
@@ -140,8 +144,29 @@ export default function ProductsPage() {
     });
   };
 
+  const handleToggleSelectProduct = (productId: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedProductIds.length === products.length) {
+      setSelectedProductIds([]);
+    } else {
+      setSelectedProductIds(products.map((p) => p.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setBulkDeleteDialogOpen(true);
+  };
+
   const handleSuccess = () => {
     loadProducts();
+    setSelectedProductIds([]);
   };
 
   return (
@@ -149,9 +174,22 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+          <p className="text-muted-foreground">
+            {selectedProductIds.length > 0
+              ? `${selectedProductIds.length} selected`
+              : "Manage your product catalog"}
+          </p>
         </div>
         <div className="flex gap-2">
+          {selectedProductIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Selected ({selectedProductIds.length})
+            </Button>
+          )}
           <Button variant="outline" onClick={handleExport} disabled={products.length === 0}>
             <Download className="mr-2 h-4 w-4" />
             Export CSV
@@ -211,6 +249,28 @@ export default function ProductsPage() {
               data={products}
               keyExtractor={(product) => product.id}
               columns={[
+                {
+                  key: "select",
+                  label: (
+                    <Checkbox
+                      checked={
+                        products.length > 0 &&
+                        selectedProductIds.length === products.length
+                      }
+                      onCheckedChange={handleToggleSelectAll}
+                      aria-label="Select all products"
+                    />
+                  ),
+                  className: "w-12",
+                  render: (product) => (
+                    <Checkbox
+                      checked={selectedProductIds.includes(product.id)}
+                      onCheckedChange={() => handleToggleSelectProduct(product.id)}
+                      aria-label={`Select ${product.name}`}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ),
+                },
                 {
                   key: "sku",
                   label: "SKU",
@@ -328,6 +388,13 @@ export default function ProductsPage() {
         product={selectedProduct}
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
+        onSuccess={handleSuccess}
+      />
+
+      <BulkDeleteProductsDialog
+        productIds={selectedProductIds}
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
         onSuccess={handleSuccess}
       />
 

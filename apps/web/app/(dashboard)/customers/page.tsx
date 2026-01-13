@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { apiClient } from "@/lib/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerForm } from "./components/CustomerForm";
 import { DeleteCustomerDialog } from "./components/DeleteCustomerDialog";
+import { BulkDeleteCustomersDialog } from "./components/BulkDeleteCustomersDialog";
 import { Pencil, Trash2, Plus, Eye, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
@@ -46,7 +48,9 @@ export default function CustomersPage() {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
 
   async function loadCustomers() {
     setLoading(true);
@@ -102,8 +106,29 @@ export default function CustomersPage() {
     });
   };
 
+  const handleToggleSelectCustomer = (customerId: string) => {
+    setSelectedCustomerIds((prev) =>
+      prev.includes(customerId)
+        ? prev.filter((id) => id !== customerId)
+        : [...prev, customerId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedCustomerIds.length === customers.length) {
+      setSelectedCustomerIds([]);
+    } else {
+      setSelectedCustomerIds(customers.map((c) => c.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setBulkDeleteDialogOpen(true);
+  };
+
   const handleSuccess = () => {
     loadCustomers();
+    setSelectedCustomerIds([]);
   };
 
   return (
@@ -111,9 +136,22 @@ export default function CustomersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-          <p className="text-muted-foreground">Manage your customer relationships</p>
+          <p className="text-muted-foreground">
+            {selectedCustomerIds.length > 0
+              ? `${selectedCustomerIds.length} selected`
+              : "Manage your customer relationships"}
+          </p>
         </div>
         <div className="flex gap-2">
+          {selectedCustomerIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Selected ({selectedCustomerIds.length})
+            </Button>
+          )}
           <Button variant="outline" onClick={handleExport} disabled={customers.length === 0}>
             <Download className="mr-2 h-4 w-4" />
             Export CSV
@@ -173,6 +211,28 @@ export default function CustomersPage() {
               data={customers}
               keyExtractor={(customer) => customer.id}
               columns={[
+                {
+                  key: "select",
+                  label: (
+                    <Checkbox
+                      checked={
+                        customers.length > 0 &&
+                        selectedCustomerIds.length === customers.length
+                      }
+                      onCheckedChange={handleToggleSelectAll}
+                      aria-label="Select all customers"
+                    />
+                  ),
+                  className: "w-12",
+                  render: (customer) => (
+                    <Checkbox
+                      checked={selectedCustomerIds.includes(customer.id)}
+                      onCheckedChange={() => handleToggleSelectCustomer(customer.id)}
+                      aria-label={`Select ${customer.company_name}`}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ),
+                },
                 {
                   key: "customer_number",
                   label: "Customer #",
@@ -279,6 +339,13 @@ export default function CustomersPage() {
         customer={selectedCustomer}
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
+        onSuccess={handleSuccess}
+      />
+
+      <BulkDeleteCustomersDialog
+        customerIds={selectedCustomerIds}
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
         onSuccess={handleSuccess}
       />
     </div>

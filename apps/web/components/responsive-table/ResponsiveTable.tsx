@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 interface Column<T> {
   key: string;
-  label: string;
+  label: string | ReactNode;
   render: (item: T) => ReactNode;
   mobileLabel?: string; // Optional different label for mobile
   hideOnMobile?: boolean; // Hide this column on mobile cards
