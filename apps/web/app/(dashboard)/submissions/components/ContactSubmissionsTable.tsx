@@ -13,15 +13,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Mail, Phone, Calendar, Eye } from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Mail, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { SubmissionDetailDialog } from "./SubmissionDetailDialog";
+import { toast } from "sonner";
 
 interface ContactSubmission {
   id: string;
@@ -45,10 +46,10 @@ interface PaginatedResponse {
 }
 
 const statusColors = {
-  new: "bg-blue-500",
-  read: "bg-yellow-500",
-  responded: "bg-green-500",
-  closed: "bg-gray-500",
+  new: "bg-blue-100 text-blue-800",
+  read: "bg-yellow-100 text-yellow-800",
+  responded: "bg-green-100 text-green-800",
+  closed: "bg-gray-100 text-gray-800",
 };
 
 export function ContactSubmissionsTable() {
@@ -56,6 +57,8 @@ export function ContactSubmissionsTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchSubmissions();
@@ -74,6 +77,23 @@ export function ContactSubmissionsTable() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleStatusChange(submissionId: string, newStatus: string) {
+    try {
+      await apiClient.patch(`/api/contact-submissions/${submissionId}/status`, {
+        status: newStatus,
+      });
+      toast.success("Status updated");
+      fetchSubmissions();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update status");
+    }
+  }
+
+  function handleRowClick(submissionId: string) {
+    setSelectedSubmissionId(submissionId);
+    setDetailDialogOpen(true);
   }
 
   if (loading && !data) {
@@ -102,136 +122,105 @@ export function ContactSubmissionsTable() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.items.map((submission) => (
-              <TableRow key={submission.id}>
-                <TableCell className="font-medium">{submission.name}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    {submission.email}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{submission.source}</Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={statusColors[submission.status]}>
-                    {submission.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {format(new Date(submission.created_at), "MMM d, yyyy")}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>Contact Submission Details</DialogTitle>
-                        <DialogDescription>
-                          Submitted on {format(new Date(submission.created_at), "MMMM d, yyyy 'at' h:mm a")}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="text-sm font-medium">Name</label>
-                          <p className="text-sm text-muted-foreground">{submission.name}</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Email</label>
-                            <p className="text-sm text-muted-foreground">{submission.email}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Phone</label>
-                            <p className="text-sm text-muted-foreground">
-                              {submission.phone || "Not provided"}
-                            </p>
-                          </div>
-                        </div>
-                        {submission.subject && (
-                          <div>
-                            <label className="text-sm font-medium">Subject</label>
-                            <p className="text-sm text-muted-foreground">{submission.subject}</p>
-                          </div>
-                        )}
-                        <div>
-                          <label className="text-sm font-medium">Message</label>
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                            {submission.message}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Source</label>
-                            <p className="text-sm text-muted-foreground">{submission.source}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Status</label>
-                            <Badge className={statusColors[submission.status]}>
-                              {submission.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </TableCell>
+    <>
+      <div className="space-y-4">
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {data.items.map((submission) => (
+                <TableRow
+                  key={submission.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleRowClick(submission.id)}
+                >
+                  <TableCell className="font-medium">{submission.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      {submission.email}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{submission.source}</Badge>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={submission.status}
+                      onValueChange={(value) => handleStatusChange(submission.id, value)}
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <Badge className={statusColors[submission.status]}>
+                          {submission.status}
+                        </Badge>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="read">Read</SelectItem>
+                        <SelectItem value="responded">Responded</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      {format(new Date(submission.created_at), "MMM d, yyyy")}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination */}
+        {data.total_pages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {(page - 1) * data.page_size + 1} to{" "}
+              {Math.min(page * data.page_size, data.total)} of {data.total} submissions
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page + 1)}
+                disabled={page === data.total_pages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Pagination */}
-      {data.total_pages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * data.page_size + 1} to{" "}
-            {Math.min(page * data.page_size, data.total)} of {data.total} submissions
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page + 1)}
-              disabled={page === data.total_pages}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+      {/* Detail Dialog */}
+      {selectedSubmissionId && (
+        <SubmissionDetailDialog
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          submissionId={selectedSubmissionId}
+          submissionType="contact"
+          onStatusUpdate={fetchSubmissions}
+        />
       )}
-    </div>
+    </>
   );
 }

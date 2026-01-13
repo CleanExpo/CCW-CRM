@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api/client";
 import {
   Table,
@@ -13,15 +13,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Building2, Mail, Phone, Calendar, Eye } from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Building2, Mail, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { SubmissionDetailDialog } from "./SubmissionDetailDialog";
+import { toast } from "sonner";
 
 interface DemoRequest {
   id: string;
@@ -46,10 +47,10 @@ interface PaginatedResponse {
 }
 
 const statusColors = {
-  pending: "bg-yellow-500",
-  scheduled: "bg-blue-500",
-  completed: "bg-green-500",
-  cancelled: "bg-gray-500",
+  pending: "bg-yellow-100 text-yellow-800",
+  scheduled: "bg-blue-100 text-blue-800",
+  completed: "bg-green-100 text-green-800",
+  cancelled: "bg-red-100 text-red-800",
 };
 
 export function DemoRequestsTable() {
@@ -57,6 +58,8 @@ export function DemoRequestsTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchDemoRequests();
@@ -75,6 +78,23 @@ export function DemoRequestsTable() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleStatusChange(submissionId: string, newStatus: string) {
+    try {
+      await apiClient.patch(`/api/demo-requests/${submissionId}/status`, {
+        status: newStatus,
+      });
+      toast.success("Status updated");
+      fetchDemoRequests();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update status");
+    }
+  }
+
+  function handleRowClick(submissionId: string) {
+    setSelectedSubmissionId(submissionId);
+    setDetailDialogOpen(true);
   }
 
   if (loading && !data) {
@@ -103,147 +123,108 @@ export function DemoRequestsTable() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Company</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.items.map((request) => (
-              <TableRow key={request.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    {request.company_name}
-                  </div>
-                </TableCell>
-                <TableCell>{request.contact_name}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    {request.email}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={statusColors[request.status]}>
-                    {request.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {format(new Date(request.created_at), "MMM d, yyyy")}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>Demo Request Details</DialogTitle>
-                        <DialogDescription>
-                          Requested on {format(new Date(request.created_at), "MMMM d, yyyy 'at' h:mm a")}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Company Name</label>
-                            <p className="text-sm text-muted-foreground">{request.company_name}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Contact Name</label>
-                            <p className="text-sm text-muted-foreground">{request.contact_name}</p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Email</label>
-                            <p className="text-sm text-muted-foreground">{request.email}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Phone</label>
-                            <p className="text-sm text-muted-foreground">{request.phone}</p>
-                          </div>
-                        </div>
-                        {request.product_interest && (
-                          <div>
-                            <label className="text-sm font-medium">Product Interest</label>
-                            <p className="text-sm text-muted-foreground">{request.product_interest}</p>
-                          </div>
-                        )}
-                        {request.preferred_date && (
-                          <div>
-                            <label className="text-sm font-medium">Preferred Demo Date</label>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(request.preferred_date), "MMMM d, yyyy")}
-                            </p>
-                          </div>
-                        )}
-                        {request.notes && (
-                          <div>
-                            <label className="text-sm font-medium">Notes</label>
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                              {request.notes}
-                            </p>
-                          </div>
-                        )}
-                        <div>
-                          <label className="text-sm font-medium">Status</label>
-                          <Badge className={statusColors[request.status]}>
-                            {request.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </TableCell>
+    <>
+      <div className="space-y-4">
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Company</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {data.items.map((request) => (
+                <TableRow
+                  key={request.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleRowClick(request.id)}
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      {request.company_name}
+                    </div>
+                  </TableCell>
+                  <TableCell>{request.contact_name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      {request.email}
+                    </div>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={request.status}
+                      onValueChange={(value) => handleStatusChange(request.id, value)}
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <Badge className={statusColors[request.status]}>
+                          {request.status}
+                        </Badge>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      {format(new Date(request.created_at), "MMM d, yyyy")}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination */}
+        {data.total_pages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {(page - 1) * data.page_size + 1} to{" "}
+              {Math.min(page * data.page_size, data.total)} of {data.total} requests
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page + 1)}
+                disabled={page === data.total_pages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Pagination */}
-      {data.total_pages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * data.page_size + 1} to{" "}
-            {Math.min(page * data.page_size, data.total)} of {data.total} requests
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page + 1)}
-              disabled={page === data.total_pages}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+      {/* Detail Dialog */}
+      {selectedSubmissionId && (
+        <SubmissionDetailDialog
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          submissionId={selectedSubmissionId}
+          submissionType="demo"
+          onStatusUpdate={fetchDemoRequests}
+        />
       )}
-    </div>
+    </>
   );
 }
