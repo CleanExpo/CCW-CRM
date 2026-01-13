@@ -16,6 +16,7 @@ import { Pencil, Trash2, Plus, ArrowLeftRight, Download } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { exportProductsToCSV } from "@/lib/utils/csv-export";
 
 interface StockByLocation {
@@ -50,8 +51,11 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
@@ -63,7 +67,7 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const data = await apiClient.get<PaginatedResponse>(
-        `/api/products?page=1&page_size=50${search ? `&search=${search}` : ""}`
+        `/api/products?page=${page}&page_size=${pageSize}${search ? `&search=${search}` : ""}`
       );
 
       // Fetch multi-location stock data for each product
@@ -90,6 +94,7 @@ export default function ProductsPage() {
 
       setProducts(productsWithStock);
       setTotal(data.total);
+      setTotalPages(data.total_pages);
     } catch (error: any) {
       console.error("Failed to load products:", error);
       toast({
@@ -105,9 +110,20 @@ export default function ProductsPage() {
   }
 
   useEffect(() => {
-    const debounce = setTimeout(loadProducts, 300);
+    const debounce = setTimeout(() => {
+      // Reset to page 1 when search changes
+      if (page !== 1) {
+        setPage(1);
+      } else {
+        loadProducts();
+      }
+    }, 300);
     return () => clearTimeout(debounce);
   }, [search]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [page, pageSize]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-AU", {
@@ -372,6 +388,20 @@ export default function ProductsPage() {
                   ),
                 },
               ]}
+            />
+          )}
+
+          {!loading && products.length > 0 && (
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={total}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1); // Reset to first page when changing page size
+              }}
             />
           )}
         </CardContent>
