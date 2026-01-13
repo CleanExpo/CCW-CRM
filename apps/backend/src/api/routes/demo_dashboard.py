@@ -92,7 +92,7 @@ async def get_dashboard_metrics(
     revenue_result = await db.execute(
         select(func.sum(Order.total))
         .where(Order.order_date >= month_start)
-        .where(func.cast(Order.status, String) == "DELIVERED")
+        .where(func.cast(Order.status, String) == "delivered")
     )
     total_revenue = revenue_result.scalar() or Decimal(0)
 
@@ -170,7 +170,7 @@ async def get_revenue_chart(
             select(func.sum(Order.total))
             .where(Order.order_date >= month_start)
             .where(Order.order_date < month_end)
-            .where(func.cast(Order.status, String) == "DELIVERED")
+            .where(func.cast(Order.status, String) == "delivered")
         )
         revenue = result.scalar() or Decimal(0)
 
@@ -194,7 +194,7 @@ async def get_category_distribution(
         select(Product.category, func.sum(OrderItem.line_total))
         .join(OrderItem, Product.id == OrderItem.product_id)
         .join(Order, OrderItem.order_id == Order.id)
-        .where(func.cast(Order.status, String) == "DELIVERED")
+        .where(func.cast(Order.status, String) == "delivered")
         .group_by(Product.category)
         .order_by(func.sum(OrderItem.line_total).desc())
     )
@@ -233,7 +233,7 @@ async def get_top_products(
         )
         .join(OrderItem, Product.id == OrderItem.product_id)
         .join(Order, OrderItem.order_id == Order.id)
-        .where(func.cast(Order.status, String) == "DELIVERED")
+        .where(func.cast(Order.status, String) == "delivered")
         .group_by(Product.id, Product.name)
         .order_by(func.sum(OrderItem.line_total).desc())
         .limit(10)
@@ -396,7 +396,7 @@ async def get_order_status_breakdown(
 ) -> OrderStatusBreakdown:
     """Get order fulfillment status breakdown."""
     # Get active orders (not delivered or cancelled)
-    active_statuses = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED"]
+    active_statuses = ["pending", "confirmed", "processing", "shipped"]
 
     # Total active orders
     total_result = await db.execute(
@@ -481,7 +481,7 @@ async def get_quote_conversion(
     # Total converted revenue (accepted quotes)
     revenue_result = await db.execute(
         select(func.sum(Quote.total)).where(
-            func.cast(Quote.status, String) == "ACCEPTED"
+            func.cast(Quote.status, String) == "accepted"
         )
     )
     total_converted_revenue = revenue_result.scalar() or Decimal(0)
@@ -534,7 +534,7 @@ async def get_revenue_by_location(
             func.count(Order.id).label("order_count"),
         )
         .where(Order.order_date >= period_start)
-        .where(func.cast(Order.status, String) == "DELIVERED")
+        .where(func.cast(Order.status, String) == "delivered")
         .where(Order.fulfillment_location.isnot(None))
         .group_by(Order.fulfillment_location)
     )
@@ -548,7 +548,7 @@ async def get_revenue_by_location(
         )
         .where(Order.order_date >= prev_period_start)
         .where(Order.order_date < period_start)
-        .where(func.cast(Order.status, String) == "DELIVERED")
+        .where(func.cast(Order.status, String) == "delivered")
         .where(Order.fulfillment_location.isnot(None))
         .group_by(Order.fulfillment_location)
     )
