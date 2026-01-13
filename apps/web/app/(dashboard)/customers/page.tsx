@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerForm } from "./components/CustomerForm";
 import { DeleteCustomerDialog } from "./components/DeleteCustomerDialog";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 
@@ -36,6 +37,7 @@ interface PaginatedResponse {
 }
 
 export default function CustomersPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [total, setTotal] = useState(0);
@@ -85,6 +87,10 @@ export default function CustomersPage() {
   const handleDeleteCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     setDeleteDialogOpen(true);
+  };
+
+  const handleViewDetails = (customer: Customer) => {
+    router.push(`/customers/${customer.id}`);
   };
 
   const handleSuccess = () => {
@@ -210,8 +216,20 @@ export default function CustomersPage() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleViewDetails(customer);
+                        }}
+                        title="View Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleEditCustomer(customer);
                         }}
+                        title="Edit Customer"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -222,6 +240,7 @@ export default function CustomersPage() {
                           e.stopPropagation();
                           handleDeleteCustomer(customer);
                         }}
+                        title="Delete Customer"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

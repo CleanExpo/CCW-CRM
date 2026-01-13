@@ -33,7 +33,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { OrderLineItems, LineItem } from "./OrderLineItems";
+import { QuickCustomerAdd } from "./QuickCustomerAdd";
 import { Order, Customer } from "../types";
+import { Plus } from "lucide-react";
 
 const ORDER_STATUSES = [
   { value: "draft", label: "Draft" },
@@ -67,6 +69,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("brisbane");
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const { toast } = useToast();
   const isEdit = !!order;
 
@@ -82,16 +85,28 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
   // Load customers
   useEffect(() => {
-    async function loadCustomers() {
-      try {
-        const response = await apiClient.get<any>("/api/customers?page=1&page_size=100");
-        setCustomers(response.items || []);
-      } catch (error) {
-        console.error("Failed to load customers:", error);
-      }
-    }
     loadCustomers();
   }, []);
+
+  async function loadCustomers() {
+    try {
+      const response = await apiClient.get<any>("/api/customers?page=1&page_size=100");
+      setCustomers(response.items || []);
+    } catch (error) {
+      console.error("Failed to load customers:", error);
+    }
+  }
+
+  function handleCustomerCreated(customer: { id: string; company_name: string }) {
+    // Reload customers list
+    loadCustomers();
+    // Auto-select the newly created customer
+    form.setValue("customer_id", customer.id);
+    toast({
+      title: "Customer Added",
+      description: `${customer.company_name} has been selected for this order.`,
+    });
+  }
 
   // Reset form when order changes or dialog opens
   useEffect(() => {
@@ -244,7 +259,19 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                 name="customer_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Customer</FormLabel>
+                    <div className="flex items-center justify-between mb-2">
+                      <FormLabel>Customer</FormLabel>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setQuickAddOpen(true)}
+                        className="h-6 px-2"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Quick Add
+                      </Button>
+                    </div>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -350,6 +377,13 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
           </form>
         </Form>
       </DialogContent>
+
+      {/* Quick Customer Add Dialog */}
+      <QuickCustomerAdd
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        onCustomerCreated={handleCustomerCreated}
+      />
     </Dialog>
   );
 }
