@@ -27,7 +27,7 @@ const navigation = [
   { name: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
   { name: "Submissions", href: "/submissions", icon: ClipboardCheck },
   { name: "Emails", href: "/emails", icon: Mail },
-  { name: "AI Assistant", href: "/ai-assistant", icon: Bot },
+  // { name: "AI Assistant", href: "/ai-assistant", icon: Bot }, // Hidden for demo - incomplete implementation
   { name: "Insights", href: "/insights", icon: TrendingUp },
   { name: "Settings", href: "/settings/integrations", icon: Settings },
 ];

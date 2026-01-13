@@ -72,7 +72,7 @@ export default function ProductsPage() {
               stock_by_location: Array.isArray(stockData) ? stockData : [],
             };
           } catch (err) {
-            console.error(`Failed to load stock for product ${product.id}:`, err);
+            // Stock data unavailable for this product, return empty array
             return {
               ...product,
               stock_by_location: [],

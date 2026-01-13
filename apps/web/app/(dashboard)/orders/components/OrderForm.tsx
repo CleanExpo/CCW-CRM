@@ -95,18 +95,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
   // Reset form when order changes or dialog opens
   useEffect(() => {
-    console.log('[OrderForm] useEffect triggered', {
-      hasOrder: !!order,
-      orderId: order?.id,
-      hasItems: !!(order as any)?.items,
-      hasOrderItems: !!(order as any)?.order_items,
-      itemsLength: ((order as any)?.items || []).length,
-      orderItemsLength: ((order as any)?.order_items || []).length,
-    });
-
     if (order) {
-      console.log('[OrderForm] Full order object:', JSON.stringify(order, null, 2));
-
       const location = (order as any).fulfillment_location || "brisbane";
       setSelectedLocation(location);
       form.reset({
@@ -123,7 +112,6 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         line_total: Number(item.line_total),
       }));
 
-      console.log('[OrderForm] Setting line items:', items);
       setLineItems(items);
     } else {
       setSelectedLocation("brisbane");
