@@ -16,11 +16,13 @@ import {
   TrendingUp,
   Mail,
   Settings,
+  Warehouse,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Products", href: "/products", icon: Package },
+  { name: "Inventory", href: "/inventory", icon: Warehouse },
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "Quotes", href: "/quotes", icon: FileText },
