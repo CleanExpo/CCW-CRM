@@ -15,6 +15,7 @@ import { Pencil, Trash2, Plus, Eye, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { format } from "date-fns";
 import { exportOrdersToCSV } from "@/lib/utils/csv-export";
 
@@ -40,6 +41,9 @@ export default function OrdersPage() {
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -52,7 +56,7 @@ export default function OrdersPage() {
     setLoading(true);
     try {
       const response = await apiClient.get<any>(
-        "/api/orders?page=1&page_size=50"
+        `/api/orders?page=${page}&page_size=${pageSize}`
       );
 
       // Map API response to frontend format
@@ -64,6 +68,7 @@ export default function OrdersPage() {
 
       setOrders(mappedOrders);
       setTotal(response.total);
+      setTotalPages(response.total_pages);
     } catch (error: any) {
       console.error("Failed to load orders:", error);
       toast({
@@ -80,7 +85,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     loadOrders();
-  }, []);
+  }, [page, pageSize]);
 
   const handleAddOrder = () => {
     setSelectedOrder(null);
@@ -328,6 +333,20 @@ export default function OrdersPage() {
                   ),
                 },
               ]}
+            />
+          )}
+
+          {!loading && orders.length > 0 && (
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={total}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
             />
           )}
         </CardContent>

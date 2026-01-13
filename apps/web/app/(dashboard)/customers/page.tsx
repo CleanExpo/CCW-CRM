@@ -15,6 +15,7 @@ import { BulkDeleteCustomersDialog } from "./components/BulkDeleteCustomersDialo
 import { Pencil, Trash2, Plus, Eye, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { exportCustomersToCSV } from "@/lib/utils/csv-export";
 
 interface Customer {
@@ -44,8 +45,11 @@ export default function CustomersPage() {
   const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
@@ -56,10 +60,11 @@ export default function CustomersPage() {
     setLoading(true);
     try {
       const response = await apiClient.get<PaginatedResponse>(
-        `/api/customers?page=1&page_size=50${search ? `&search=${search}` : ""}`
+        `/api/customers?page=${page}&page_size=${pageSize}${search ? `&search=${search}` : ""}`
       );
       setCustomers(response.items);
       setTotal(response.total);
+      setTotalPages(response.total_pages);
     } catch (error: any) {
       console.error("Failed to load customers:", error);
       toast({
@@ -75,9 +80,20 @@ export default function CustomersPage() {
   }
 
   useEffect(() => {
-    const debounce = setTimeout(loadCustomers, 300);
+    const debounce = setTimeout(() => {
+      // Reset to page 1 when search changes
+      if (page !== 1) {
+        setPage(1);
+      } else {
+        loadCustomers();
+      }
+    }, 300);
     return () => clearTimeout(debounce);
   }, [search]);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [page, pageSize]);
 
   const handleAddCustomer = () => {
     setSelectedCustomer(null);
@@ -323,6 +339,20 @@ export default function CustomersPage() {
                   ),
                 },
               ]}
+            />
+          )}
+
+          {!loading && customers.length > 0 && (
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={total}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
             />
           )}
         </CardContent>
