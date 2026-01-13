@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OrderForm } from "./components/OrderForm";
 import { DeleteOrderDialog } from "./components/DeleteOrderDialog";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { OrderDetailDialog } from "./components/OrderDetailDialog";
+import { Pencil, Trash2, Plus, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
@@ -39,6 +40,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   async function loadOrders() {
@@ -98,6 +100,21 @@ export default function OrdersPage() {
   const handleDeleteOrder = (order: Order) => {
     setSelectedOrder(order);
     setDeleteDialogOpen(true);
+  };
+
+  const handleViewDetails = async (order: Order) => {
+    // Fetch full order details including line items
+    try {
+      const fullOrder = await apiClient.get<any>(`/api/orders/${order.id}`);
+      setSelectedOrder(fullOrder);
+      setDetailDialogOpen(true);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load order details",
+      });
+    }
   };
 
   const handleSuccess = () => {
@@ -204,8 +221,20 @@ export default function OrdersPage() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleViewDetails(order);
+                        }}
+                        title="View Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleEditOrder(order);
                         }}
+                        title="Edit Order"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -216,6 +245,7 @@ export default function OrdersPage() {
                           e.stopPropagation();
                           handleDeleteOrder(order);
                         }}
+                        title="Delete Order"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -233,6 +263,13 @@ export default function OrdersPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         onSuccess={handleSuccess}
+      />
+
+      <OrderDetailDialog
+        order={selectedOrder}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        onOrderUpdate={handleSuccess}
       />
 
       <DeleteOrderDialog
