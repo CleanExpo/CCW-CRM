@@ -16,6 +16,7 @@ from src.db.portal_forms_models import (
     DemoRequest,
     DemoRequestStatus,
 )
+from src.services.email_notifications import email_service
 
 router = APIRouter(prefix="/api", tags=["Portal Forms"])
 
@@ -102,6 +103,22 @@ async def create_contact_submission(
     await db.commit()
     await db.refresh(submission)
 
+    # Send email notification (non-blocking, failures are logged but don't prevent response)
+    try:
+        email_service.send_contact_submission_notification(
+            submission_id=str(submission.id),
+            name=submission.name,
+            email=submission.email,
+            phone=submission.phone,
+            subject=submission.subject,
+            message=submission.message,
+            source=submission.source,
+            created_at=submission.created_at,
+        )
+    except Exception:
+        # Log error but don't fail the request
+        pass
+
     return ContactSubmissionResponse.model_validate(submission)
 
 
@@ -158,6 +175,23 @@ async def create_demo_request(
     db.add(demo_request)
     await db.commit()
     await db.refresh(demo_request)
+
+    # Send email notification (non-blocking, failures are logged but don't prevent response)
+    try:
+        email_service.send_demo_request_notification(
+            request_id=str(demo_request.id),
+            company_name=demo_request.company_name,
+            contact_name=demo_request.contact_name,
+            email=demo_request.email,
+            phone=demo_request.phone,
+            product_interest=demo_request.product_interest,
+            preferred_date=demo_request.preferred_date,
+            notes=demo_request.notes,
+            created_at=demo_request.created_at,
+        )
+    except Exception:
+        # Log error but don't fail the request
+        pass
 
     return DemoRequestResponse.model_validate(demo_request)
 
