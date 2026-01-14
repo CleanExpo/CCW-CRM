@@ -3,9 +3,35 @@
  *
  * Replaces Supabase client with direct fetch calls to FastAPI.
  * Handles JWT authentication via cookies.
+ * Includes simple TTL-based caching for GET requests.
  */
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+// Simple in-memory cache with TTL
+const CACHE_TTL_MS = 30000; // 30 seconds
+const cache = new Map<string, { data: unknown; timestamp: number }>();
+
+function getCachedData<T>(key: string): T | null {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data as T;
+  }
+  // Clean up expired entry
+  if (cached) {
+    cache.delete(key);
+  }
+  return null;
+}
+
+function setCachedData<T>(key: string, data: T): void {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+// Clear cache for mutations (POST, PUT, PATCH, DELETE)
+function invalidateCache(): void {
+  cache.clear();
+}
 
 export interface ApiError {
   detail: string;
@@ -87,49 +113,85 @@ async function fetchApi<T>(
 
 /**
  * API Client - Browser-side
+ * Includes caching for GET requests with automatic invalidation on mutations
  */
 export const apiClient = {
   /**
-   * GET request
+   * GET request with caching
+   * Uses TTL-based cache to avoid redundant requests
    */
-  get: <T>(endpoint: string, options?: RequestInit) =>
-    fetchApi<T>(endpoint, { ...options, method: "GET" }),
+  get: async <T>(endpoint: string, options?: RequestInit & { skipCache?: boolean }): Promise<T> => {
+    const { skipCache, ...fetchOptions } = options || {};
+
+    // Check cache first (unless explicitly skipped)
+    if (!skipCache) {
+      const cached = getCachedData<T>(endpoint);
+      if (cached !== null) {
+        return cached;
+      }
+    }
+
+    // Fetch from server
+    const data = await fetchApi<T>(endpoint, { ...fetchOptions, method: "GET" });
+
+    // Cache the result
+    setCachedData(endpoint, data);
+
+    return data;
+  },
 
   /**
-   * POST request
+   * POST request - invalidates cache
    */
-  post: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
-    fetchApi<T>(endpoint, {
+  post: async <T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> => {
+    const result = await fetchApi<T>(endpoint, {
       ...options,
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,
-    }),
+    });
+    invalidateCache(); // Clear cache after mutation
+    return result;
+  },
 
   /**
-   * PUT request
+   * PUT request - invalidates cache
    */
-  put: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
-    fetchApi<T>(endpoint, {
+  put: async <T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> => {
+    const result = await fetchApi<T>(endpoint, {
       ...options,
       method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
-    }),
+    });
+    invalidateCache(); // Clear cache after mutation
+    return result;
+  },
 
   /**
-   * PATCH request
+   * PATCH request - invalidates cache
    */
-  patch: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
-    fetchApi<T>(endpoint, {
+  patch: async <T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> => {
+    const result = await fetchApi<T>(endpoint, {
       ...options,
       method: "PATCH",
       body: data ? JSON.stringify(data) : undefined,
-    }),
+    });
+    invalidateCache(); // Clear cache after mutation
+    return result;
+  },
 
   /**
-   * DELETE request
+   * DELETE request - invalidates cache
    */
-  delete: <T>(endpoint: string, options?: RequestInit) =>
-    fetchApi<T>(endpoint, { ...options, method: "DELETE" }),
+  delete: async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
+    const result = await fetchApi<T>(endpoint, { ...options, method: "DELETE" });
+    invalidateCache(); // Clear cache after mutation
+    return result;
+  },
+
+  /**
+   * Manually invalidate cache (useful after external changes)
+   */
+  invalidateCache,
 };
 
 /**

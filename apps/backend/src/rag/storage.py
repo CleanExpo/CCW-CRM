@@ -1,5 +1,6 @@
 """RAG storage layer for document chunks."""
 
+import asyncio
 from datetime import datetime
 from typing import Any
 
@@ -125,14 +126,25 @@ class RAGStore:
         chunks: list[dict[str, Any]],
     ) -> list[DocumentChunk]:
         """Batch create chunks for efficiency."""
-        # Generate embeddings
+        # Generate embeddings in parallel (avoid sequential N+1)
         if self.embedding_provider:
-            for chunk in chunks:
-                if chunk.get("generate_embedding", True):
-                    embedding = await self.embedding_provider.get_embedding(
-                        chunk["content"]
-                    )
-                    chunk["embedding"] = embedding
+            # Identify chunks that need embeddings
+            chunks_needing_embedding = [
+                (i, chunk) for i, chunk in enumerate(chunks)
+                if chunk.get("generate_embedding", True)
+            ]
+
+            if chunks_needing_embedding:
+                # Generate all embeddings in parallel
+                embedding_tasks = [
+                    self.embedding_provider.get_embedding(chunk["content"])
+                    for _, chunk in chunks_needing_embedding
+                ]
+                embeddings = await asyncio.gather(*embedding_tasks)
+
+                # Assign embeddings back to chunks
+                for (i, chunk), embedding in zip(chunks_needing_embedding, embeddings):
+                    chunks[i]["embedding"] = embedding
 
         # Remove generate_embedding flag before insert
         for chunk in chunks:

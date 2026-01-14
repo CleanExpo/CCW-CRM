@@ -4,7 +4,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -102,21 +102,26 @@ async def create_order(
     # Generate order number
     order_number = await generate_order_number(db)
 
+    # Batch fetch all products at once (avoid N+1 queries)
+    product_ids = [item.product_id for item in order_data.items]
+    products_result = await db.execute(
+        select(ProductModel).where(ProductModel.id.in_(product_ids))
+    )
+    products_map = {p.id: p for p in products_result.scalars().all()}
+
+    # Validate all products exist
+    missing_products = [pid for pid in product_ids if pid not in products_map]
+    if missing_products:
+        raise HTTPException(
+            status_code=400, detail=f"Products not found: {missing_products}"
+        )
+
     # Calculate total from items
     total = Decimal("0.00")
     order_items = []
 
     for item_data in order_data.items:
-        # Get product to get price
-        product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
-        product_result = await db.execute(product_query)
-        product = product_result.scalar_one_or_none()
-
-        if not product:
-            raise HTTPException(
-                status_code=400, detail=f"Product {item_data.product_id} not found"
-            )
-
+        product = products_map[item_data.product_id]
         unit_price = product.price
         line_total = unit_price * item_data.quantity
         total += line_total
@@ -145,9 +150,8 @@ async def create_order(
         db.add(item)
 
     await db.commit()
-    await db.refresh(order)
 
-    # Reload with items
+    # Reload with items (single query, no redundant refresh)
     query = (
         select(OrderModel)
         .options(selectinload(OrderModel.items))
@@ -184,29 +188,30 @@ async def update_order(
 
     # Handle line items update if provided
     if order_data.items is not None:
-        # Delete existing items
-        delete_query = select(OrderItemModel).where(OrderItemModel.order_id == order_id)
-        delete_result = await db.execute(delete_query)
-        existing_items = delete_result.scalars().all()
-        for item in existing_items:
-            await db.delete(item)
+        # Bulk delete existing items (avoid N+1)
+        await db.execute(delete(OrderItemModel).where(OrderItemModel.order_id == order_id))
         await db.flush()
+
+        # Batch fetch all products at once (avoid N+1 queries)
+        product_ids = [item.product_id for item in order_data.items]
+        products_result = await db.execute(
+            select(ProductModel).where(ProductModel.id.in_(product_ids))
+        )
+        products_map = {p.id: p for p in products_result.scalars().all()}
+
+        # Validate all products exist
+        missing_products = [pid for pid in product_ids if pid not in products_map]
+        if missing_products:
+            raise HTTPException(
+                status_code=400, detail=f"Products not found: {missing_products}"
+            )
 
         # Calculate new total and create items
         total = Decimal("0.00")
         order_items = []
 
         for item_data in order_data.items:
-            # Get product to get price
-            product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
-            product_result = await db.execute(product_query)
-            product = product_result.scalar_one_or_none()
-
-            if not product:
-                raise HTTPException(
-                    status_code=400, detail=f"Product {item_data.product_id} not found"
-                )
-
+            product = products_map[item_data.product_id]
             unit_price = product.price
             line_total = unit_price * item_data.quantity
             total += line_total
@@ -227,9 +232,8 @@ async def update_order(
         order.total = total
 
     await db.commit()
-    await db.refresh(order)
 
-    # Reload with items
+    # Reload with items (single query, no redundant refresh)
     query = (
         select(OrderModel)
         .options(selectinload(OrderModel.items))
@@ -269,9 +273,8 @@ async def update_order_status(
 
     order.status = status
     await db.commit()
-    await db.refresh(order)
 
-    # Reload with items
+    # Reload with items (single query, no redundant refresh)
     query = (
         select(OrderModel)
         .options(selectinload(OrderModel.items))
@@ -297,12 +300,8 @@ async def delete_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    # Delete order items first
-    delete_items_query = select(OrderItemModel).where(OrderItemModel.order_id == order_id)
-    items_result = await db.execute(delete_items_query)
-    items = items_result.scalars().all()
-    for item in items:
-        await db.delete(item)
+    # Bulk delete order items first (avoid N+1)
+    await db.execute(delete(OrderItemModel).where(OrderItemModel.order_id == order_id))
 
     # Delete the order
     await db.delete(order)

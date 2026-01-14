@@ -10,7 +10,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlalchemy import String, func, select
+from sqlalchemy import String, and_, case, extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
@@ -153,31 +153,32 @@ async def get_revenue_chart(
 ) -> list[RevenueDataPoint]:
     """Get revenue trend for last 6 months."""
     now = datetime.now(UTC)
-    revenue_data = []
+    six_months_ago = (now - timedelta(days=180)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    for i in range(5, -1, -1):
-        # Calculate month start/end
-        month_date = now - timedelta(days=i * 30)
-        month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        if i == 0:
-            month_end = now
-        else:
-            next_month = month_start + timedelta(days=32)
-            month_end = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        # Get revenue for month
-        result = await db.execute(
-            select(func.sum(Order.total))
-            .where(Order.order_date >= month_start)
-            .where(Order.order_date < month_end)
-            .where(func.cast(Order.status, String) == "DELIVERED")
+    # Single query with date grouping (avoid N+1 loop)
+    result = await db.execute(
+        select(
+            extract("year", Order.order_date).label("year"),
+            extract("month", Order.order_date).label("month"),
+            func.sum(Order.total).label("revenue"),
         )
-        revenue = result.scalar() or Decimal(0)
+        .where(Order.order_date >= six_months_ago)
+        .where(Order.status == OrderStatus.DELIVERED)
+        .group_by(extract("year", Order.order_date), extract("month", Order.order_date))
+        .order_by(extract("year", Order.order_date), extract("month", Order.order_date))
+    )
+    monthly_revenue = {(int(row.year), int(row.month)): row.revenue for row in result.all()}
 
+    # Build response for last 6 months (fill in zeros for missing months)
+    revenue_data = []
+    for i in range(5, -1, -1):
+        month_date = now - timedelta(days=i * 30)
+        year, month = month_date.year, month_date.month
+        revenue = monthly_revenue.get((year, month), Decimal(0))
         revenue_data.append(
             RevenueDataPoint(
-                month=month_start.strftime("%b %Y"),
-                revenue=str(revenue),
+                month=month_date.strftime("%b %Y"),
+                revenue=str(revenue or Decimal(0)),
             )
         )
 
@@ -255,50 +256,29 @@ async def get_inventory_status(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[InventoryDataPoint]:
     """Get inventory status by warehouse."""
-    # Get unique warehouses
-    warehouses_result = await db.execute(select(Product.warehouse_location).distinct())
-    warehouses = [w[0] for w in warehouses_result.all() if w[0]]
-
-    inventory_data = []
-    for warehouse in warehouses:
-        # In stock (> 10)
-        in_stock_result = await db.execute(
-            select(func.count(Product.id))
-            .where(Product.warehouse_location == warehouse)
-            .where(Product.stock > 10)
-            .where(Product.is_active)
+    # Single query with CASE statements (avoid N+1 warehouse loop)
+    result = await db.execute(
+        select(
+            Product.warehouse_location,
+            func.sum(case((Product.stock > 10, 1), else_=0)).label("in_stock"),
+            func.sum(case((and_(Product.stock > 0, Product.stock <= 10), 1), else_=0)).label("low_stock"),
+            func.sum(case((Product.stock == 0, 1), else_=0)).label("out_of_stock"),
         )
-        in_stock = in_stock_result.scalar() or 0
+        .where(Product.is_active)
+        .where(Product.warehouse_location.isnot(None))
+        .group_by(Product.warehouse_location)
+    )
+    warehouse_stats = result.all()
 
-        # Low stock (1-10)
-        low_stock_result = await db.execute(
-            select(func.count(Product.id))
-            .where(Product.warehouse_location == warehouse)
-            .where(Product.stock > 0)
-            .where(Product.stock <= 10)
-            .where(Product.is_active)
+    return [
+        InventoryDataPoint(
+            warehouse=row.warehouse_location,
+            in_stock=int(row.in_stock or 0),
+            low_stock=int(row.low_stock or 0),
+            out_of_stock=int(row.out_of_stock or 0),
         )
-        low_stock = low_stock_result.scalar() or 0
-
-        # Out of stock (0)
-        out_of_stock_result = await db.execute(
-            select(func.count(Product.id))
-            .where(Product.warehouse_location == warehouse)
-            .where(Product.stock == 0)
-            .where(Product.is_active)
-        )
-        out_of_stock = out_of_stock_result.scalar() or 0
-
-        inventory_data.append(
-            InventoryDataPoint(
-                warehouse=warehouse,
-                in_stock=in_stock,
-                low_stock=low_stock,
-                out_of_stock=out_of_stock,
-            )
-        )
-
-    return inventory_data
+        for row in warehouse_stats
+    ]
 
 
 @router.get("/activity", response_model=list[ActivityItem])

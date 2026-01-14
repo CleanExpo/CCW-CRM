@@ -72,6 +72,7 @@ class AgentRegistry:
         self._agents: dict[str, Any] = {}  # agent_id -> agent instance
         self._metadata: dict[str, AgentMetadata] = {}  # agent_id -> metadata
         self._capability_index: dict[str, list[str]] = {}  # capability -> [agent_ids]
+        self._name_index: dict[str, str] = {}  # lowercase name -> agent_id (for O(1) lookup)
         self._health_checks: dict[str, AgentHealthReport] = {}  # agent_id -> health report
         self._accepting_requests = True
         self._consecutive_failures: dict[str, int] = {}  # agent_id -> failure count
@@ -124,6 +125,7 @@ class AgentRegistry:
         self._agents[agent_id] = agent
         self._metadata[agent_id] = metadata
         self._consecutive_failures[agent_id] = 0
+        self._name_index[name.lower()] = agent_id  # Index by name for O(1) lookup
 
         # Index by capabilities
         for capability in capabilities:
@@ -159,9 +161,10 @@ class AgentRegistry:
         Returns:
             Agent instance or None
         """
-        for agent_id, metadata in self._metadata.items():
-            if metadata.name.lower() == name.lower():
-                return self._agents.get(agent_id)
+        # Use name index for O(1) lookup instead of linear search
+        agent_id = self._name_index.get(name.lower())
+        if agent_id:
+            return self._agents.get(agent_id)
         return None
 
     def get_metadata(self, agent_id: str) -> AgentMetadata | None:
@@ -395,14 +398,30 @@ class AgentRegistry:
         Returns:
             Dictionary with statistics
         """
+        # Single pass through metadata (avoid 6 separate iterations)
         total_agents = len(self._agents)
-        active_count = sum(1 for m in self._metadata.values() if m.status == AgentStatus.ACTIVE)
-        degraded_count = sum(1 for m in self._metadata.values() if m.status == AgentStatus.DEGRADED)
-        offline_count = sum(1 for m in self._metadata.values() if m.status == AgentStatus.OFFLINE)
-        disabled_count = sum(1 for m in self._metadata.values() if m.status == AgentStatus.DISABLED)
+        active_count = 0
+        degraded_count = 0
+        offline_count = 0
+        disabled_count = 0
+        total_executions = 0
+        total_failures = 0
 
-        total_executions = sum(m.total_executions for m in self._metadata.values())
-        total_failures = sum(m.failed_executions for m in self._metadata.values())
+        for m in self._metadata.values():
+            # Count by status
+            if m.status == AgentStatus.ACTIVE:
+                active_count += 1
+            elif m.status == AgentStatus.DEGRADED:
+                degraded_count += 1
+            elif m.status == AgentStatus.OFFLINE:
+                offline_count += 1
+            elif m.status == AgentStatus.DISABLED:
+                disabled_count += 1
+
+            # Sum executions
+            total_executions += m.total_executions
+            total_failures += m.failed_executions
+
         success_rate = (
             (total_executions - total_failures) / total_executions if total_executions > 0 else 1.0
         )

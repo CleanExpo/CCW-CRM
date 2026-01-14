@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
@@ -74,12 +74,13 @@ export default function OrdersPage() {
     loadOrders();
   }, []);
 
-  const handleAddOrder = () => {
+  // Memoized handlers to prevent unnecessary re-renders
+  const handleAddOrder = useCallback(() => {
     setSelectedOrder(null);
     setFormOpen(true);
-  };
+  }, []);
 
-  const handleEditOrder = async (order: Order) => {
+  const handleEditOrder = useCallback(async (order: Order) => {
     // Fetch full order details including line items
     try {
       const fullOrder = await apiClient.get<any>(`/api/orders/${order.id}`);
@@ -93,16 +94,16 @@ export default function OrdersPage() {
         description: error.message || "Failed to load order details",
       });
     }
-  };
+  }, [toast]);
 
-  const handleDeleteOrder = (order: Order) => {
+  const handleDeleteOrder = useCallback((order: Order) => {
     setSelectedOrder(order);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     loadOrders();
-  };
+  }, []);
 
   return (
     <div className="space-y-6">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText, Sparkles, ArrowRight } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText, Sparkles, ArrowRight, RefreshCw, XCircle } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { getDashboardInsights, type Insight } from "@/lib/api/ai-insights";
 import { InsightCard } from "@/components/insights/insight-card";
@@ -12,6 +12,7 @@ import { RevenueChart } from "@/components/charts/RevenueChart";
 import { CategorySalesChart } from "@/components/charts/CategorySalesChart";
 import { StaggerChildren, StaggerItem } from "@/components/transitions/StaggerChildren";
 import { FadeIn } from "@/components/transitions/FadeIn";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface DashboardMetrics {
   total_revenue_this_month: string;
@@ -55,39 +56,43 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadDashboardData() {
+    setLoading(true);
+    setError(null);
+    try {
+      const [metricsData, revenueData, categoryData, topProductsData, activityData, insightsData] = await Promise.all([
+        apiClient.get<DashboardMetrics>("/api/dashboard/metrics"),
+        apiClient.get<RevenueDataPoint[]>("/api/dashboard/charts/revenue"),
+        apiClient.get<CategorySales[]>("/api/dashboard/charts/categories"),
+        apiClient.get<TopProduct[]>("/api/dashboard/charts/top-products"),
+        apiClient.get<ActivityItem[]>("/api/dashboard/activity"),
+        getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
+      ]);
+
+      setMetrics(metricsData);
+      setRevenueData(revenueData);
+      setCategorySales(categoryData);
+      setTopProducts(topProductsData);
+      setActivity(activityData);
+      setInsights(insightsData.insights.filter((i) => i.priority === "high").slice(0, 3));
+    } catch (err: any) {
+      console.error("Failed to load dashboard data:", err);
+      setError(err.message || "Failed to load dashboard data. Please try again.");
+      // Set empty defaults on error to prevent rendering issues
+      setMetrics(null);
+      setRevenueData([]);
+      setCategorySales([]);
+      setTopProducts([]);
+      setActivity([]);
+      setInsights([]);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        const [metricsData, revenueData, categoryData, topProductsData, activityData, insightsData] = await Promise.all([
-          apiClient.get<DashboardMetrics>("/api/dashboard/metrics"),
-          apiClient.get<RevenueDataPoint[]>("/api/dashboard/charts/revenue"),
-          apiClient.get<CategorySales[]>("/api/dashboard/charts/categories"),
-          apiClient.get<TopProduct[]>("/api/dashboard/charts/top-products"),
-          apiClient.get<ActivityItem[]>("/api/dashboard/activity"),
-          getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
-        ]);
-
-        setMetrics(metricsData);
-        setRevenueData(revenueData);
-        setCategorySales(categoryData);
-        setTopProducts(topProductsData);
-        setActivity(activityData);
-        setInsights(insightsData.insights.filter((i) => i.priority === "high").slice(0, 3));
-      } catch (error) {
-        console.error("Failed to load dashboard data:", error);
-        // Set empty defaults on error to prevent rendering issues
-        setMetrics(null);
-        setRevenueData([]);
-        setCategorySales([]);
-        setTopProducts([]);
-        setActivity([]);
-        setInsights([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadDashboardData();
   }, []);
 
@@ -102,12 +107,31 @@ export default function DashboardPage() {
     );
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
-    }).format(value);
-  };
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Equipment Supplier ERP - Overview</p>
+        </div>
+        <Card className="border-destructive">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              <CardTitle className="text-destructive">Failed to load dashboard</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between">
+            <p className="text-muted-foreground">{error}</p>
+            <Button variant="outline" size="sm" onClick={loadDashboardData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -70,18 +70,19 @@ class WorkflowEngine:
         context.status = ExecutionStatus.RUNNING
         await self.storage.update_execution(execution_id, context)
 
+        # Build node index for O(1) lookups (avoid linear searches)
+        node_index = {n.id: n for n in workflow.nodes}
+
         try:
-            # Find start node
-            start_node = next(
-                (n for n in workflow.nodes if n.type == NodeType.START),
-                None,
-            )
+            # Find start node using list comprehension (single pass)
+            start_nodes = [n for n in workflow.nodes if n.type == NodeType.START]
+            start_node = start_nodes[0] if start_nodes else None
 
             if not start_node:
                 raise ValueError("Workflow has no start node")
 
-            # Execute from start node
-            await self._execute_node(start_node, workflow, context)
+            # Execute from start node (pass node_index for O(1) lookups)
+            await self._execute_node(start_node, workflow, context, node_index)
 
             context.status = ExecutionStatus.COMPLETED
             context.completed_at = datetime.now().isoformat()
@@ -102,6 +103,7 @@ class WorkflowEngine:
         node: NodeConfig,
         workflow: WorkflowDefinition,
         context: ExecutionContext,
+        node_index: dict[str, NodeConfig] | None = None,
     ) -> Any:
         """Execute a single node."""
         context.current_node_id = node.id
@@ -162,12 +164,16 @@ class WorkflowEngine:
                     should_execute = not result.get("condition", False)
 
                 if should_execute:
-                    next_node = next(
-                        (n for n in workflow.nodes if n.id == edge.target_node_id),
-                        None,
-                    )
+                    # Use node_index for O(1) lookup instead of linear search
+                    if node_index:
+                        next_node = node_index.get(edge.target_node_id)
+                    else:
+                        next_node = next(
+                            (n for n in workflow.nodes if n.id == edge.target_node_id),
+                            None,
+                        )
                     if next_node:
-                        await self._execute_node(next_node, workflow, context)
+                        await self._execute_node(next_node, workflow, context, node_index)
 
             return result
 

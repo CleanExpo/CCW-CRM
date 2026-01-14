@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
@@ -13,6 +13,7 @@ import { Pencil, Trash2, Plus, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Quote } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { isExpired } from "@/lib/utils/format";
 
 interface PaginatedResponse {
   items: Quote[];
@@ -67,12 +68,13 @@ export default function QuotesPage() {
     loadQuotes();
   }, []);
 
-  const handleAddQuote = () => {
+  // Memoized handlers to prevent unnecessary re-renders
+  const handleAddQuote = useCallback(() => {
     setSelectedQuote(null);
     setFormOpen(true);
-  };
+  }, []);
 
-  const handleEditQuote = async (quote: Quote) => {
+  const handleEditQuote = useCallback(async (quote: Quote) => {
     // Fetch full quote details including line items
     try {
       const fullQuote = await apiClient.get<any>(`/api/quotes/${quote.id}`);
@@ -86,26 +88,21 @@ export default function QuotesPage() {
         description: error.message || "Failed to load quote details",
       });
     }
-  };
+  }, [toast]);
 
-  const handleDeleteQuote = (quote: Quote) => {
+  const handleDeleteQuote = useCallback((quote: Quote) => {
     setSelectedQuote(quote);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleConvertToOrder = (quote: Quote) => {
+  const handleConvertToOrder = useCallback((quote: Quote) => {
     setSelectedQuote(quote);
     setConvertDialogOpen(true);
-  };
+  }, []);
 
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     loadQuotes();
-  };
-
-  const isExpired = (validUntil: string | null) => {
-    if (!validUntil) return false;
-    return new Date(validUntil) < new Date();
-  };
+  }, []);
 
   return (
     <div className="space-y-6">

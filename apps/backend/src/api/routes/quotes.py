@@ -4,7 +4,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -113,21 +113,26 @@ async def create_quote(
     # Generate quote number
     quote_number = await generate_quote_number(db)
 
+    # Batch fetch all products at once (avoid N+1 queries)
+    product_ids = [item.product_id for item in quote_data.items]
+    products_result = await db.execute(
+        select(ProductModel).where(ProductModel.id.in_(product_ids))
+    )
+    products_map = {p.id: p for p in products_result.scalars().all()}
+
+    # Validate all products exist
+    missing_products = [pid for pid in product_ids if pid not in products_map]
+    if missing_products:
+        raise HTTPException(
+            status_code=400, detail=f"Products not found: {missing_products}"
+        )
+
     # Calculate total from items
     total = Decimal("0.00")
     quote_items = []
 
     for item_data in quote_data.items:
-        # Get product to get price
-        product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
-        product_result = await db.execute(product_query)
-        product = product_result.scalar_one_or_none()
-
-        if not product:
-            raise HTTPException(
-                status_code=400, detail=f"Product {item_data.product_id} not found"
-            )
-
+        product = products_map[item_data.product_id]
         unit_price = product.price
         line_total = unit_price * item_data.quantity
         total += line_total
@@ -157,9 +162,8 @@ async def create_quote(
         db.add(item)
 
     await db.commit()
-    await db.refresh(quote)
 
-    # Reload with items
+    # Reload with items (single query, no redundant refresh)
     query = (
         select(QuoteModel)
         .options(selectinload(QuoteModel.items))
@@ -193,29 +197,30 @@ async def update_quote(
 
     # Handle line items update if provided
     if quote_data.items is not None:
-        # Delete existing items
-        delete_query = select(QuoteItemModel).where(QuoteItemModel.quote_id == quote_id)
-        delete_result = await db.execute(delete_query)
-        existing_items = delete_result.scalars().all()
-        for item in existing_items:
-            await db.delete(item)
+        # Bulk delete existing items (avoid N+1)
+        await db.execute(delete(QuoteItemModel).where(QuoteItemModel.quote_id == quote_id))
         await db.flush()
+
+        # Batch fetch all products at once (avoid N+1 queries)
+        product_ids = [item.product_id for item in quote_data.items]
+        products_result = await db.execute(
+            select(ProductModel).where(ProductModel.id.in_(product_ids))
+        )
+        products_map = {p.id: p for p in products_result.scalars().all()}
+
+        # Validate all products exist
+        missing_products = [pid for pid in product_ids if pid not in products_map]
+        if missing_products:
+            raise HTTPException(
+                status_code=400, detail=f"Products not found: {missing_products}"
+            )
 
         # Calculate new total and create items
         total = Decimal("0.00")
         quote_items = []
 
         for item_data in quote_data.items:
-            # Get product to get price
-            product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
-            product_result = await db.execute(product_query)
-            product = product_result.scalar_one_or_none()
-
-            if not product:
-                raise HTTPException(
-                    status_code=400, detail=f"Product {item_data.product_id} not found"
-                )
-
+            product = products_map[item_data.product_id]
             unit_price = product.price
             line_total = unit_price * item_data.quantity
             total += line_total
@@ -236,9 +241,8 @@ async def update_quote(
         quote.total = total
 
     await db.commit()
-    await db.refresh(quote)
 
-    # Reload with items
+    # Reload with items (single query, no redundant refresh)
     query = (
         select(QuoteModel)
         .options(selectinload(QuoteModel.items))

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -70,24 +70,25 @@ export default function CustomersPage() {
     return () => clearTimeout(debounce);
   }, [search]);
 
-  const handleAddCustomer = () => {
+  // Memoized handlers to prevent unnecessary re-renders
+  const handleAddCustomer = useCallback(() => {
     setSelectedCustomer(null);
     setFormOpen(true);
-  };
+  }, []);
 
-  const handleEditCustomer = (customer: Customer) => {
+  const handleEditCustomer = useCallback((customer: Customer) => {
     setSelectedCustomer(customer);
     setFormOpen(true);
-  };
+  }, []);
 
-  const handleDeleteCustomer = (customer: Customer) => {
+  const handleDeleteCustomer = useCallback((customer: Customer) => {
     setSelectedCustomer(customer);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     loadCustomers();
-  };
+  }, []);
 
   return (
     <div className="space-y-6">

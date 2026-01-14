@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Pencil, Trash2, Plus } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface Product {
   id: string;
@@ -70,31 +71,25 @@ export default function ProductsPage() {
     return () => clearTimeout(debounce);
   }, [search]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
-    }).format(value);
-  };
-
-  const handleAddProduct = () => {
+  // Memoized handlers to prevent unnecessary re-renders
+  const handleAddProduct = useCallback(() => {
     setSelectedProduct(null);
     setFormOpen(true);
-  };
+  }, []);
 
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = useCallback((product: Product) => {
     setSelectedProduct(product);
     setFormOpen(true);
-  };
+  }, []);
 
-  const handleDeleteProduct = (product: Product) => {
+  const handleDeleteProduct = useCallback((product: Product) => {
     setSelectedProduct(product);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     loadProducts();
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
