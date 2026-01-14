@@ -1,0 +1,28 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/backend/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_API_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          doctl registry login
+          docker build -t registry.digitalocean.com/${{ secrets.DO_REGISTRY }}/backend:${{ github.sha }} apps/backend
+          docker push registry.digitalocean.com/${{ secrets.DO_REGISTRY }}/backend:${{ github.sha }}
+
+      - name: Deploy to DigitalOcean App Platform
+        run: |
+          doctl apps create-deployment ${{ secrets.DO_APP_ID }} --wait

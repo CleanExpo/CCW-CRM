@@ -1,0 +1,10 @@
+{
+  "supplier_code": "SUP-001",
+  "company_name": "ABC Suppliers Pty Ltd",
+  "contact_name": "John Smith",
+  "email": "john@abcsuppliers.com.au",
+  "phone": "0412 345 678",
+  "abn": "12 345 678 901",
+  "payment_terms": "Net 30",
+  "preferred_carrier": "Australia Post"
+}

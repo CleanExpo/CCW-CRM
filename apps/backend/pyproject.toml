@@ -1,0 +1,118 @@
+[project]
+name = "ccw-erp-backend"
+version = "1.0.0"
+description = "CCW Equipment Supplier ERP Backend API"
+requires-python = ">=3.12"
+
+dependencies = [
+    # Web Framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+
+    # Database (PostgreSQL + SQLAlchemy)
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0",  # Async PostgreSQL driver
+    "psycopg2-binary>=2.9.0",  # Sync PostgreSQL driver (for migrations)
+    "pgvector>=0.3.0",  # Vector similarity search
+    "alembic>=1.13.0",  # Database migrations
+
+    # Authentication
+    "python-jose[cryptography]>=3.3.0",  # JWT tokens
+    "passlib[bcrypt]>=1.7.0",  # Password hashing
+
+    # Core
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "email-validator>=2.0.0",  # For pydantic email validation
+    "python-dotenv>=1.0.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0.0",
+    "structlog>=24.4.0",
+    "python-multipart>=0.0.12",
+    "slowapi>=0.1.9",  # Rate limiting
+    "sendgrid>=6.11.0",  # Email notifications
+
+    # AI/LLM (LangChain + Ollama)
+    "langchain>=0.1.0",
+    "langchain-community>=0.0.20",
+    "langchain-core>=0.1.0",
+    "langgraph>=0.0.20",
+    "ollama>=0.1.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=5.0.0",
+    "mypy>=1.13.0",
+    "ruff>=0.7.0",
+    "httpx>=0.27.0",
+    "requests>=2.31.0",  # For integration tests
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true
+check_untyped_defs = false
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "src.api.routes.demo_*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.db.demo_*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.db.seed_demo"
+ignore_errors = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "asyncio: mark test as async",
+    "integration: mark test as integration test",
+    "unit: mark test as unit test",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"

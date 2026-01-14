@@ -1,0 +1,151 @@
+# Psychology Foundation - Layer 1
+# Research-backed principles for behavior change
+
+version: "1.0"
+description: "Cialdini's principles, Fogg model, cognitive psychology"
+
+cialdini_principles:
+  reciprocity:
+    definition: "Give value first, ask later"
+    application: "Free trials, helpful content, value before paywall"
+    ui_patterns:
+      - free_tier_features
+      - educational_content
+      - helpful_onboarding
+    triggers: ["after receiving value", "gratitude moment"]
+
+  commitment_consistency:
+    definition: "Small yeses lead to big yeses"
+    application: "Progressive disclosure, micro-commitments"
+    ui_patterns:
+      - multi_step_forms
+      - save_progress
+      - preference_questions
+    triggers: ["after small action", "building momentum"]
+
+  social_proof:
+    definition: "People follow similar others"
+    application: "Reviews, testimonials, usage stats"
+    ui_patterns:
+      - testimonials
+      - user_counts
+      - activity_feeds
+      - similar_user_choices
+    triggers: ["uncertainty", "decision point"]
+
+  authority:
+    definition: "Expertise builds trust"
+    application: "Credentials, certifications, expert endorsements"
+    ui_patterns:
+      - trust_badges
+      - expert_quotes
+      - certifications
+      - media_mentions
+    triggers: ["trust evaluation", "high-stakes decision"]
+
+  liking:
+    definition: "We buy from people like us"
+    application: "Relatable language, shared values, friendly tone"
+    ui_patterns:
+      - conversational_copy
+      - relatable_imagery
+      - shared_values
+    triggers: ["first impression", "relationship building"]
+
+  scarcity:
+    definition: "Limited = valuable"
+    application: "Time limits, stock counters, exclusive access"
+    ui_patterns:
+      - countdown_timers
+      - limited_availability
+      - exclusive_features
+    triggers: ["decision hesitation", "near conversion"]
+    caution: "Use ethically - fake scarcity destroys trust"
+
+  unity:
+    definition: "Shared identity = belonging"
+    application: "Community, shared mission, insider language"
+    ui_patterns:
+      - community_features
+      - member_benefits
+      - shared_terminology
+    triggers: ["identity alignment", "belonging need"]
+
+fogg_behavior_model:
+  formula: "B = M × A × P"
+  description: "Behavior happens when Motivation, Ability, and Prompt converge"
+
+  motivation:
+    high:
+      description: "User can do hard things"
+      design: "Can require effort, multi-step processes"
+      examples: ["emergency situations", "high reward"]
+    low:
+      description: "User needs easy things"
+      design: "Reduce friction, one-click actions"
+      examples: ["casual browsing", "low stakes"]
+
+  ability:
+    factors:
+      - time: "How long does it take?"
+      - money: "What's the financial cost?"
+      - physical_effort: "How hard is it physically?"
+      - mental_effort: "How hard is it to think through?"
+      - social_deviance: "Does it go against norms?"
+      - non_routine: "How different from habits?"
+    design_principle: "Make the target behavior easier than alternatives"
+
+  prompts:
+    spark:
+      when: "High ability, low motivation"
+      design: "Inspire and motivate"
+      examples: ["success stories", "benefits highlight"]
+    facilitator:
+      when: "High motivation, low ability"
+      design: "Make it easier"
+      examples: ["one-click actions", "pre-filled forms"]
+    signal:
+      when: "High motivation, high ability"
+      design: "Just remind them"
+      examples: ["simple notification", "subtle cue"]
+
+cognitive_psychology:
+  cognitive_load:
+    definition: "Mental effort required to process"
+    design: "Minimize unnecessary decisions"
+    patterns:
+      - progressive_disclosure
+      - smart_defaults
+      - chunking_information
+      - visual_hierarchy
+
+  loss_aversion:
+    definition: "Losses feel 2x worse than equivalent gains"
+    design: "Frame as avoiding loss, not gaining"
+    examples:
+      - "Don't lose your progress"
+      - "Keep your streak alive"
+      - "Your cart is waiting"
+
+  anchoring:
+    definition: "First number influences perception"
+    design: "Present high anchor first"
+    examples:
+      - "Was $199, now $99"
+      - "Most popular: Pro plan"
+
+  choice_paradox:
+    definition: "Too many options = paralysis"
+    design: "Limit choices, recommend one"
+    patterns:
+      - max_3_options
+      - recommended_highlight
+      - comparison_tables
+
+  peak_end_rule:
+    definition: "Remember peaks and endings most"
+    design: "End experiences on high note"
+    patterns:
+      - celebration_moments
+      - positive_confirmations
+      - memorable_last_step

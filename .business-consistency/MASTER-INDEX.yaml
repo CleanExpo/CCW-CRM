@@ -1,0 +1,115 @@
+# Business Consistency Framework - Master Index
+# Research-backed system for NAP consistency and local SEO
+
+version: "1.0"
+description: "Complete business consistency system for local search visibility"
+
+core_principle: "Consistent NAP = 40% more likely to appear in local pack"
+
+research_sources:
+  - "Whitespark Local Search Ranking Factors Survey 2024/2025"
+  - "BrightLocal Research"
+  - "Google Business Profile Guidelines"
+  - "Bing Places for Business"
+
+key_statistics:
+  gbp_ranking_impact: "32% of local pack ranking"
+  nap_consistency_benefit: "40% more likely to appear in local pack"
+  bing_click_increase: "23% more clicks with complete listings"
+  bing_conversion_increase: "10% higher conversion"
+  search_decline_2026: "25% traditional search volume drop predicted"
+  search_decline_2028: "50% traditional search volume drop predicted"
+
+layers:
+  1_nap:
+    name: "NAP Consistency"
+    files:
+      - nap/consistency-rules.yaml
+      - nap/format-standards.yaml
+      - nap/common-mistakes.yaml
+    provides:
+      - tier_1_critical_elements
+      - tier_2_essential_elements
+      - format_standards
+      - anti_patterns
+    principle: "EXACTLY identical across ALL platforms"
+
+  2_platforms:
+    name: "Platform Listings"
+    files:
+      - platforms/tier-1-mandatory.yaml
+      - platforms/tier-2-australia.yaml
+      - platforms/tier-3-social.yaml
+      - platforms/tier-4-directories.yaml
+      - platforms/tier-5-industry.yaml
+    provides:
+      - platform_priority
+      - listing_requirements
+      - verification_methods
+    principle: "Start with highest-impact platforms"
+
+  3_schema:
+    name: "Schema Markup"
+    files:
+      - schema/localbusiness-schema.yaml
+      - schema/organization-schema.yaml
+      - schema/examples/
+    provides:
+      - json_ld_templates
+      - required_fields
+      - recommended_fields
+    principle: "Machine-readable business data"
+
+  4_geo:
+    name: "GEO Optimization"
+    files:
+      - geo/ai-optimization.yaml
+      - geo/entity-consistency.yaml
+      - geo/content-structure.yaml
+    provides:
+      - ai_platform_requirements
+      - entity_recognition
+      - content_formatting
+    principle: "Optimize for AI-driven search"
+
+  5_audit:
+    name: "Audit & Monitoring"
+    files:
+      - audit/checklist.yaml
+      - audit/monitoring-schedule.yaml
+      - audit/success-metrics.yaml
+    provides:
+      - audit_process
+      - monitoring_schedule
+      - success_criteria
+    principle: "Regular verification and maintenance"
+
+  6_implementation:
+    name: "Implementation Guide"
+    files:
+      - implementation/week-1-foundation.yaml
+      - implementation/week-2-expansion.yaml
+      - implementation/ongoing-maintenance.yaml
+    provides:
+      - step_by_step_guide
+      - timeline
+      - priorities
+    principle: "Systematic rollout"
+
+integration:
+  copywriting:
+    - "NAP data accurate in all copy"
+    - "Schema supports copy claims"
+    - "Consistent messaging across platforms"
+
+  foundation_first:
+    - "Personas: Business profile supports target personas"
+    - "Journeys: Consistent experience at all touchpoints"
+
+  visual_content:
+    - "Same logo across all platforms"
+    - "Consistent brand imagery"
+
+validation:
+  master_document: "master-document/consistency-template.yaml"
+  single_source_of_truth: "All listings reference this document"

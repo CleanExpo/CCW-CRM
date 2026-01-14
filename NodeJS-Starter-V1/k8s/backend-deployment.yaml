@@ -1,0 +1,221 @@
+---
+# Backend API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ccw-erp
+  labels:
+    app: ccw-online-erp
+    component: backend
+spec:
+  replicas: 2  # Will be managed by HPA
+  selector:
+    matchLabels:
+      app: ccw-online-erp
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: ccw-online-erp
+        component: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: backend
+          image: ccw-erp-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          env:
+            # Database Configuration
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+
+            # Redis Configuration
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: REDIS_PORT
+            - name: REDIS_URL
+              value: "redis://$(REDIS_HOST):$(REDIS_PORT)"
+
+            # Celery Configuration
+            - name: CELERY_BROKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: CELERY_BROKER_URL
+            - name: CELERY_RESULT_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: CELERY_RESULT_BACKEND
+
+            # Application Settings
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: ENVIRONMENT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: LOG_LEVEL
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: CORS_ORIGINS
+
+            # WebSocket
+            - name: WEBSOCKET_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: ccw-erp-config
+                  key: WEBSOCKET_ENABLED
+
+            # AI Provider (from secrets)
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: ANTHROPIC_API_KEY
+                  optional: true
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: OPENAI_API_KEY
+                  optional: true
+
+            # Integration API Keys (from secrets)
+            - name: XERO_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: XERO_CLIENT_ID
+                  optional: true
+            - name: XERO_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: XERO_CLIENT_SECRET
+                  optional: true
+            - name: SHOPIFY_STORE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: SHOPIFY_STORE_URL
+                  optional: true
+            - name: SHOPIFY_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: SHOPIFY_ACCESS_TOKEN
+                  optional: true
+            - name: SENDGRID_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: SENDGRID_API_KEY
+                  optional: true
+            - name: ELEVENLABS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ccw-erp-secrets
+                  key: ELEVENLABS_API_KEY
+                  optional: true
+
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /health/startup
+              port: 8000
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30  # 5 minutes to start
+
+---
+# Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: ccw-erp
+  labels:
+    app: ccw-online-erp
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: ccw-online-erp
+    component: backend

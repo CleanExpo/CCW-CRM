@@ -1,0 +1,174 @@
+# Missing States Checklist - Structural Layer
+# The 8 states developers forget
+
+version: "1.0"
+description: "Every component needs these 8 states. No exceptions."
+
+# ===== THE 8 STATES =====
+states:
+  1_empty:
+    name: "Empty State"
+    description: "No data/content exists yet"
+    question: "What does the user see when there's nothing?"
+    requirements:
+      - clear_message: "Explain why it's empty"
+      - helpful_action: "Show how to add content"
+      - not_broken: "Don't look like an error"
+    examples:
+      - "No messages yet. Start a conversation!"
+      - "Your cart is empty. Browse products →"
+    anti_patterns:
+      - blank_screen
+      - generic_no_data
+      - broken_looking_ui
+
+  2_loading:
+    name: "Loading State"
+    description: "Data is being fetched"
+    question: "What does the user see while waiting?"
+    requirements:
+      - immediate_feedback: "Show within 100ms"
+      - progress_indication: "Skeleton, spinner, or progress"
+      - interruptible: "User can cancel if possible"
+    types:
+      - skeleton: "For known content shape"
+      - spinner: "For unknown content"
+      - progress_bar: "For uploads/downloads"
+    anti_patterns:
+      - frozen_ui
+      - no_feedback
+      - blocking_spinners
+
+  3_error:
+    name: "Error State"
+    description: "Something went wrong"
+    question: "What does the user see when it fails?"
+    requirements:
+      - clear_message: "What happened (in plain language)"
+      - helpful_solution: "How to fix it"
+      - recovery_action: "Retry, report, or alternative"
+      - no_blame: "Never make user feel stupid"
+    components:
+      - error_message
+      - solution_hint
+      - retry_button
+      - support_link
+    anti_patterns:
+      - technical_jargon
+      - blame_language
+      - dead_ends
+
+  4_success:
+    name: "Success State"
+    description: "Action completed successfully"
+    question: "How do we confirm and celebrate?"
+    requirements:
+      - confirmation: "Clearly state what succeeded"
+      - next_steps: "What can they do now?"
+      - celebration: "Match importance to action"
+    celebration_levels:
+      - subtle: "Toast notification for minor actions"
+      - moderate: "Inline confirmation for standard actions"
+      - major: "Full celebration for milestones"
+    anti_patterns:
+      - no_confirmation
+      - silent_success
+      - over_celebration
+
+  5_partial:
+    name: "Partial State"
+    description: "Some data loaded, some didn't"
+    question: "What if only part works?"
+    requirements:
+      - show_available: "Display what loaded"
+      - indicate_missing: "Show what's unavailable"
+      - allow_retry: "Let user refresh failed parts"
+    examples:
+      - "Profile loaded, but posts unavailable"
+      - "3 of 5 items loaded"
+    anti_patterns:
+      - all_or_nothing
+      - hiding_partial_data
+      - silent_failures
+
+  6_offline:
+    name: "Offline State"
+    description: "No network connection"
+    question: "What works without internet?"
+    requirements:
+      - detect_offline: "Know when connection lost"
+      - show_cached: "Display available offline data"
+      - queue_actions: "Save actions for later"
+      - indicate_status: "Show offline mode"
+    features:
+      - offline_banner
+      - cached_content
+      - action_queue
+      - sync_indicator
+    anti_patterns:
+      - complete_failure
+      - lost_user_input
+      - no_indication
+
+  7_permission:
+    name: "Permission State"
+    description: "Access is restricted"
+    question: "What if they can't access this?"
+    requirements:
+      - clear_reason: "Why access is denied"
+      - path_forward: "How to get access"
+      - graceful_fallback: "Show what they CAN access"
+    types:
+      - not_authenticated: "Login required"
+      - not_authorized: "Role/permission required"
+      - feature_gated: "Upgrade required"
+    anti_patterns:
+      - cryptic_403
+      - blank_page
+      - no_upgrade_path
+
+  8_confirmation:
+    name: "Confirmation State"
+    description: "Destructive/important action pending"
+    question: "Are they sure?"
+    requirements:
+      - clear_consequence: "What will happen"
+      - reversibility: "Can this be undone?"
+      - escape_hatch: "Easy way to cancel"
+    when_required:
+      - delete_actions
+      - payment_actions
+      - irreversible_changes
+      - bulk_operations
+    anti_patterns:
+      - no_confirmation
+      - unclear_consequences
+      - hidden_cancel
+
+# ===== COMPONENT CHECKLIST =====
+component_checklist:
+  template:
+    component_name: "ComponentName"
+    states_implemented:
+      empty: false
+      loading: false
+      error: false
+      success: false
+      partial: false
+      offline: false
+      permission: false
+      confirmation: false  # if applicable
+    notes: ""
+
+# ===== VALIDATION =====
+validation:
+  required_states:
+    - empty
+    - loading
+    - error
+    - success
+  conditional_states:
+    partial: "If component fetches multiple resources"
+    offline: "If component requires network"
+    permission: "If component has access control"
+    confirmation: "If component has destructive actions"

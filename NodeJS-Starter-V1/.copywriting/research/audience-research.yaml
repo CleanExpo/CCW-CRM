@@ -1,0 +1,144 @@
+# Audience Research Framework - Voice of Customer (VOC)
+# Capture exact customer language for authentic copy
+
+version: "1.0"
+principle: "Find exact words, not summaries. Quote directly."
+
+voc_categories:
+  pain_points:
+    description: "Their problems and frustrations"
+    what_to_capture:
+      - "Specific complaints about current situation"
+      - "Emotional language around the problem"
+      - "Consequences of the problem"
+    example_quotes:
+      - "I'm so sick of calling plumbers who never show up on time"
+      - "Every morning I have to jiggle the handle just to flush"
+      - "I've been putting this off for months because I don't trust anyone"
+    gold_signal: "Same complaint from 3+ different sources"
+    use_in_copy: "Problem section, hero subhead, empathy statements"
+
+  symptoms:
+    description: "How problems show up day-to-day"
+    what_to_capture:
+      - "Observable behaviors caused by the problem"
+      - "Daily workarounds they've created"
+      - "Time/money/stress impacts"
+    example_quotes:
+      - "I keep a bucket under the sink just in case"
+      - "I've started showering at the gym because our water pressure is so bad"
+      - "My wife won't stop reminding me about the leak"
+    gold_signal: "Vivid, specific details"
+    use_in_copy: "Problem agitation, relatable scenarios"
+
+  dream_outcomes:
+    description: "What they want most - the transformation"
+    what_to_capture:
+      - "Desired end state (emotional)"
+      - "What life looks like after"
+      - "How they want to feel"
+    example_quotes:
+      - "I just want to know it's fixed and I don't have to think about it"
+      - "I want a plumber I can actually trust to show up"
+      - "Peace of mind knowing my family is safe"
+    gold_signal: "Emotional, aspirational language"
+    use_in_copy: "Hero headline, value props, closing CTA"
+
+  failed_solutions:
+    description: "What they've tried that didn't work"
+    what_to_capture:
+      - "Previous products/services that failed"
+      - "DIY attempts that didn't last"
+      - "Why they gave up on alternatives"
+    example_quotes:
+      - "I tried those YouTube fixes but it just made it worse"
+      - "The last guy said he fixed it but a week later it was leaking again"
+      - "I bought the part from Bunnings but couldn't figure it out"
+    gold_signal: "Specific products, services, or methods mentioned"
+    use_in_copy: "Overcome objections, differentiation"
+
+  buying_decisions:
+    description: "How they decide to purchase"
+    what_to_capture:
+      - "What triggers them to finally act"
+      - "How they compare options"
+      - "What builds or breaks trust"
+    example_quotes:
+      - "I always check Google reviews first"
+      - "If they can't give me a time window, I'm not interested"
+      - "I only call someone my neighbor recommends"
+    gold_signal: "Decision criteria, trust signals"
+    use_in_copy: "Social proof placement, CTA messaging, trust badges"
+
+research_sources:
+  high_value:
+    reddit:
+      where: "Relevant subreddits for your industry"
+      what_to_search: "Keywords + 'help', 'advice', 'recommendation'"
+      value: "Raw, unfiltered frustrations"
+
+    google_reviews:
+      where: "Your reviews AND competitor reviews"
+      focus: "3-star reviews (most balanced feedback)"
+      value: "Decision language, expectations"
+
+    facebook_groups:
+      where: "Community groups, local groups, interest groups"
+      what_to_search: "Questions, complaints, recommendations"
+      value: "Casual, conversational language"
+
+  medium_value:
+    industry_forums:
+      where: "Niche forums, trade-specific communities"
+      value: "Technical issues, specific problems"
+
+    youtube_comments:
+      where: "How-to videos in your industry"
+      value: "DIY frustrations, what people tried"
+
+    twitter_x:
+      where: "Search complaints about your industry"
+      value: "Real-time frustrations, trending issues"
+
+  low_value:
+    competitor_websites:
+      where: "Testimonials, case studies"
+      value: "Already polished, less authentic"
+      note: "Use for structure, not language"
+
+pattern_detection:
+  frequency_rules:
+    3_plus_mentions:
+      meaning: "Common concern - use in headlines"
+      action: "Flag as primary messaging"
+
+    5_plus_mentions:
+      meaning: "Core pain point - make it central"
+      action: "Build entire sections around it"
+
+    10_plus_mentions:
+      meaning: "Industry-wide issue"
+      action: "Lead with this in all marketing"
+
+  language_patterns:
+    emotional_adjectives:
+      examples: ["frustrated", "scared", "overwhelmed", "relieved"]
+      action: "Match tone in copy"
+
+    specific_numbers:
+      examples: ["3 times", "$500", "2 weeks"]
+      action: "Use similar specificity"
+
+    comparison_phrases:
+      examples: ["unlike", "compared to", "finally"]
+      action: "Position against alternatives"
+
+capture_template:
+  quote: ""
+  source: ""
+  source_url: ""
+  category: ""
+  frequency: 1
+  emotional_intensity: "low|medium|high"
+  tags: []
+  use_for: ""

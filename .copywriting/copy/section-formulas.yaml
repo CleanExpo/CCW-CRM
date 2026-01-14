@@ -1,0 +1,145 @@
+# Section Formulas
+# Copy templates for each page section
+
+version: "1.0"
+principle: "Start with formula, customize with research"
+
+hero_section:
+  formula_1_dream_outcome:
+    structure:
+      headline: "[Dream outcome] Without [Pain point]"
+      subhead: "[Empathy] + [How you help]"
+      cta: "[Action verb] + [What they get]"
+    example:
+      headline: "A Plumber Who Actually Shows Up On Time"
+      subhead: "Tired of waiting around all day? We give you a 2-hour arrival window and call when we're on our way."
+      cta: "Book Your Appointment"
+
+  formula_2_problem_agitation:
+    structure:
+      headline: "Tired of [Biggest frustration]?"
+      subhead: "[You're not alone] + [We're different]"
+      cta: "[Get relief] + [Action]"
+    example:
+      headline: "Tired of Plumbers Who Don't Return Calls?"
+      subhead: "We answer 7 days a week. Real humans, not voicemail."
+      cta: "Talk to Someone Now"
+
+  formula_3_identity:
+    structure:
+      headline: "For [Target customer] Who Want [Outcome]"
+      subhead: "[What you do] + [How you're different]"
+      cta: "[Join/Get started]"
+    example:
+      headline: "For Homeowners Who Want It Done Right the First Time"
+      subhead: "Licensed plumbers with 20+ years experience. Fixed price quotes before we start."
+      cta: "Get Your Free Quote"
+
+problem_section:
+  formula:
+    opening: "[Empathy statement using their words]"
+    pain_list:
+      - "[Pain point 1 - their exact words]"
+      - "[Pain point 2 - their exact words]"
+      - "[Pain point 3 - their exact words]"
+    consequence: "[What happens if not addressed]"
+    transition: "[There's a better way]"
+
+  example:
+    opening: "We get it. Finding a reliable plumber feels impossible."
+    pain_list:
+      - "You call, leave a message, and never hear back"
+      - "They give you a 4-hour window and show up whenever"
+      - "The quote doubles after they 'find something else'"
+    consequence: "Meanwhile, that small leak is getting worse."
+    transition: "It doesn't have to be this way."
+
+value_props_section:
+  formula: "[Benefit] Because [Reason/Proof]"
+
+  structure:
+    intro: "[Why we're different - one sentence]"
+    props:
+      - benefit: "[What they get]"
+        because: "[Why/How you deliver it]"
+        proof: "[Quick evidence]"
+
+  example:
+    intro: "Here's what makes working with us different:"
+    props:
+      - benefit: "2-Hour Arrival Windows"
+        because: "We plan our routes the night before"
+        proof: "97% on-time arrival rate"
+
+      - benefit: "Fixed Price Quotes"
+        because: "We diagnose first, quote second, work third"
+        proof: "No surprise bills, ever"
+
+      - benefit: "Same-Day Response"
+        because: "Real people answer our phones 7 days a week"
+        proof: "Call us now, talk to someone in 30 seconds"
+
+social_proof_section:
+  testimonial_formula:
+    structure:
+      - "[Situation before]"
+      - "[Experience with you]"
+      - "[Result/feeling after]"
+
+  video_is_best:
+    why: "Face + voice = highest trust"
+    length: "30-90 seconds"
+    prompt_questions:
+      - "What was your situation before?"
+      - "What was it like working with us?"
+      - "What would you tell someone considering us?"
+
+  written_formula:
+    structure: "[Problem I had] → [What they did] → [How I feel now]"
+    length: "2-4 sentences"
+    attribution: "First name, Suburb"
+
+process_section:
+  formula:
+    headline: "How It Works"
+    subhead: "[It's easier than you think]"
+    steps: "3-5 maximum"
+    focus: "What THEY experience, not what you do"
+
+  step_formula: "[Number]. [Action verb] + [Their experience]"
+
+  example:
+    headline: "Getting Your Plumbing Fixed is Easy"
+    subhead: "Just 3 simple steps"
+    steps:
+      - "1. Call or Book Online → Talk to a real person who listens"
+      - "2. We Come to You → 2-hour window, call when on the way"
+      - "3. Problem Solved → Fixed price, no surprises, guaranteed"
+
+faq_section:
+  formula:
+    source: "Real questions from research"
+    tone: "Helpful, not defensive"
+    length: "2-4 sentences per answer"
+
+  answer_structure:
+    - "Direct answer to question"
+    - "Brief explanation if needed"
+    - "Reassurance or next step"
+
+  example:
+    question: "How much will it cost?"
+    answer: "We give you a fixed price quote before any work starts. No hidden fees, no surprises. The price we quote is the price you pay."
+
+cta_section:
+  formula:
+    headline: "[Reminder of transformation]"
+    subhead: "[Make it easy / reduce risk]"
+    button: "[Action verb] + [What they get]"
+    support: "[Phone number] or [Alternative action]"
+
+  example:
+    headline: "Ready for a Plumber You Can Actually Count On?"
+    subhead: "Free quotes. Fixed prices. Real people."
+    button: "Book Your Appointment"
+    support: "Or call now: (07) 3XXX XXXX"

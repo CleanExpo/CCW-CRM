@@ -1,0 +1,140 @@
+# Nielsen's 10 Usability Heuristics - Layer 6
+# Quality standards reference
+
+version: "1.0"
+source: "Nielsen Norman Group"
+
+heuristics:
+  1_visibility:
+    name: "Visibility of System Status"
+    principle: "Keep users informed about what's happening"
+    check_questions:
+      - "Does the user know what's happening?"
+      - "Is there feedback for every action?"
+      - "Are loading states shown?"
+    implementations:
+      - progress_indicators
+      - loading_states
+      - confirmation_messages
+      - status_badges
+
+  2_match:
+    name: "Match Between System and Real World"
+    principle: "Speak the user's language"
+    check_questions:
+      - "Is terminology familiar to users?"
+      - "Do icons match expectations?"
+      - "Is information in logical order?"
+    implementations:
+      - user_language_copy
+      - familiar_icons
+      - natural_ordering
+
+  3_control:
+    name: "User Control and Freedom"
+    principle: "Provide emergency exits"
+    check_questions:
+      - "Can users undo actions?"
+      - "Is there a clear way to go back?"
+      - "Can users cancel mid-process?"
+    implementations:
+      - undo_functionality
+      - back_buttons
+      - cancel_options
+      - clear_navigation
+
+  4_consistency:
+    name: "Consistency and Standards"
+    principle: "Follow platform conventions"
+    check_questions:
+      - "Are similar things done similarly?"
+      - "Do we follow platform standards?"
+      - "Is terminology consistent?"
+    implementations:
+      - design_system
+      - consistent_patterns
+      - standard_controls
+
+  5_error_prevention:
+    name: "Error Prevention"
+    principle: "Prevent problems before they occur"
+    check_questions:
+      - "Do we prevent errors before they happen?"
+      - "Are destructive actions confirmed?"
+      - "Do we validate inline?"
+    implementations:
+      - inline_validation
+      - confirmation_dialogs
+      - smart_defaults
+      - constraints
+
+  6_recognition:
+    name: "Recognition Rather Than Recall"
+    principle: "Minimize memory load"
+    check_questions:
+      - "Is information visible when needed?"
+      - "Do we show options rather than require memory?"
+      - "Is help contextual?"
+    implementations:
+      - visible_options
+      - contextual_help
+      - recent_items
+      - search_suggestions
+
+  7_flexibility:
+    name: "Flexibility and Efficiency"
+    principle: "Cater to both novice and expert"
+    check_questions:
+      - "Are there shortcuts for experts?"
+      - "Can users customize?"
+      - "Are common tasks efficient?"
+    implementations:
+      - keyboard_shortcuts
+      - customization
+      - frequent_actions_prominent
+
+  8_aesthetic:
+    name: "Aesthetic and Minimalist Design"
+    principle: "Remove irrelevant information"
+    check_questions:
+      - "Is every element necessary?"
+      - "Is the design clean?"
+      - "Does visual hierarchy guide attention?"
+    implementations:
+      - minimal_design
+      - clear_hierarchy
+      - purposeful_elements
+
+  9_recovery:
+    name: "Help Users Recognize and Recover from Errors"
+    principle: "Express errors in plain language with solutions"
+    check_questions:
+      - "Are error messages clear?"
+      - "Do errors explain how to fix?"
+      - "Is the tone helpful, not blaming?"
+    implementations:
+      - clear_error_messages
+      - solution_suggestions
+      - friendly_tone
+
+  10_help:
+    name: "Help and Documentation"
+    principle: "Provide help when needed"
+    check_questions:
+      - "Is help easy to find?"
+      - "Is help contextual?"
+      - "Are instructions task-focused?"
+    implementations:
+      - contextual_help
+      - searchable_docs
+      - task_focused_guides
+
+# ===== SCORING TEMPLATE =====
+scoring:
+  scale: "1-5"
+  levels:
+    1: "Major violations"
+    2: "Minor violations"
+    3: "Partially meets"
+    4: "Mostly meets"
+    5: "Fully meets"
