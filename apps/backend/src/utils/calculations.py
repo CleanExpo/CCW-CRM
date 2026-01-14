@@ -101,14 +101,15 @@ def calculate_totals(
         raise ValueError("Tax rate must be >= 0")
 
     subtotal = sum(
-        calculate_line_total(qty, price)
-        for qty, price in line_items
+        (calculate_line_total(qty, price) for qty, price in line_items),
+        start=Decimal("0.00")
     )
 
-    if tax_enabled:
-        tax = (subtotal * tax_rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    else:
-        tax = Decimal("0.00")
+    tax = (
+        (subtotal * tax_rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if tax_enabled
+        else Decimal("0.00")
+    )
 
     total = subtotal + tax
 

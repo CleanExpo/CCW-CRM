@@ -1,0 +1,143 @@
+# Business Consistency Success Metrics
+# How to measure and track consistency performance
+
+version: "1.0"
+principle: "What gets measured gets managed"
+
+primary_metrics:
+  nap_consistency_score:
+    description: "Percentage of platforms with exact NAP match"
+    formula: "(Platforms with exact match / Total platforms) x 100"
+    target: "95%+"
+    measurement: "Monthly audit"
+
+    scoring:
+      100: "Perfect - all platforms match exactly"
+      95_99: "Excellent - minor issues only"
+      85_94: "Good - some corrections needed"
+      70_84: "Fair - significant work required"
+      below_70: "Poor - urgent attention needed"
+
+  citation_accuracy:
+    description: "Accuracy of information across all citations"
+    components:
+      - "Business name accuracy"
+      - "Address accuracy"
+      - "Phone accuracy"
+      - "Website URL accuracy"
+      - "Hours accuracy"
+    target: "98%+ accuracy"
+
+  schema_validity:
+    description: "Schema markup passes validation"
+    tool: "Google Rich Results Test"
+    target: "Zero errors, minimal warnings"
+
+secondary_metrics:
+  platform_coverage:
+    description: "Presence on priority platforms"
+    tiers:
+      tier_1: "100% required"
+      tier_2: "100% required"
+      tier_3: "90%+ recommended"
+      tier_4: "80%+ recommended"
+      tier_5: "As relevant"
+
+  listing_completeness:
+    description: "How complete each listing is"
+    scoring:
+      complete: "All available fields filled"
+      mostly: "80%+ fields filled"
+      partial: "50-79% fields filled"
+      minimal: "Below 50%"
+    target: "Complete for Tier 1-2, Mostly for Tier 3+"
+
+  response_time:
+    description: "Time to identify and fix issues"
+    targets:
+      critical_error: "24 hours"
+      tier_1_issue: "1 week"
+      tier_2_3_issue: "2 weeks"
+      tier_4_5_issue: "1 month"
+
+ai_visibility_metrics:
+  chatgpt_mentions:
+    test: "Ask about services in your area"
+    track: "Mentioned? Accurate? Recommended?"
+    frequency: "Monthly"
+
+  perplexity_citations:
+    test: "Search for local service recommendations"
+    track: "Cited? Source accurate?"
+    frequency: "Monthly"
+
+  google_ai_overviews:
+    test: "Search service queries"
+    track: "Appear in AI overview?"
+    frequency: "Monthly"
+
+  voice_search:
+    test: "Siri, Alexa, Google Assistant"
+    track: "Correct business returned?"
+    frequency: "Quarterly"
+
+ranking_indicators:
+  local_pack_position:
+    description: "Position in Google Local Pack"
+    track: "Top 3 for primary keywords"
+    correlation: "40% consistency impact"
+
+  maps_ranking:
+    description: "Position in Google/Apple Maps"
+    track: "Ranking for service + location"
+
+  organic_local:
+    description: "Organic ranking for local queries"
+    track: "Position for [service] [suburb]"
+
+audit_deliverables:
+  monthly_report:
+    include:
+      - "NAP consistency score"
+      - "Platforms audited"
+      - "Issues found"
+      - "Issues resolved"
+      - "AI visibility test results"
+    format: "Summary dashboard"
+
+  quarterly_report:
+    include:
+      - "Full platform audit results"
+      - "Trend analysis"
+      - "Competitor comparison"
+      - "Recommendations"
+      - "Action items"
+    format: "Detailed report"
+
+benchmarks:
+  industry_average:
+    consistency_score: "72%"
+    source: "BrightLocal Local SEO Industry Report"
+
+  top_performers:
+    consistency_score: "95%+"
+    characteristics:
+      - "Single source of truth document"
+      - "Regular monitoring schedule"
+      - "Immediate correction process"
+      - "Complete schema implementation"
+
+  your_targets:
+    month_1: "Achieve 85% consistency"
+    month_3: "Achieve 95% consistency"
+    ongoing: "Maintain 95%+ consistency"
+
+tracking_template:
+  columns:
+    - "Date"
+    - "NAP Score"
+    - "Platforms Audited"
+    - "Issues Found"
+    - "Issues Fixed"
+    - "AI Visibility Score"
+    - "Notes"

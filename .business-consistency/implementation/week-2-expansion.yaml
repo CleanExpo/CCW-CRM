@@ -1,0 +1,168 @@
+# Week 2: Citation Expansion
+# Building citation profile across Tier 2-4 platforms
+
+version: "1.0"
+goal: "Expand presence to Australian and industry directories"
+
+day_8_9_tier_2_australian:
+  objective: "Establish presence on high-authority Australian directories"
+
+  yellow_pages:
+    url: "https://www.yellowpages.com.au"
+    tasks:
+      - "Claim or create listing"
+      - "Complete all fields from master document"
+      - "Select correct categories"
+      - "Add business description"
+      - "Add photos if supported"
+    notes: "May require phone verification"
+
+  true_local:
+    url: "https://www.truelocal.com.au"
+    tasks:
+      - "Create account"
+      - "Add business listing"
+      - "Complete NAP exactly"
+      - "Add services"
+      - "Encourage reviews"
+
+  yelp_australia:
+    url: "https://biz.yelp.com.au"
+    tasks:
+      - "Claim business page"
+      - "Update all information"
+      - "Add photos"
+      - "Respond to any reviews"
+
+  hotfrog:
+    url: "https://www.hotfrog.com.au"
+    tasks:
+      - "Create listing"
+      - "Complete profile"
+      - "Add keywords/services"
+
+  deliverables:
+    - "All Tier 2 platforms claimed"
+    - "NAP consistent across all"
+
+day_10_11_tier_3_social:
+  objective: "Optimize social profiles for consistency"
+
+  linkedin_company:
+    tasks:
+      - "Create or update company page"
+      - "Add location with exact address"
+      - "Complete About section"
+      - "Add services"
+      - "Link to website"
+
+  instagram_business:
+    tasks:
+      - "Convert to business account if needed"
+      - "Update bio with location"
+      - "Add contact button"
+      - "Include website link"
+
+  youtube_channel:
+    tasks:
+      - "Create brand channel if needed"
+      - "Complete About section"
+      - "Add business details"
+      - "Include location"
+      - "Link to website"
+
+  nextdoor_business:
+    tasks:
+      - "Claim business page"
+      - "Verify location"
+      - "Complete profile"
+    importance: "Local neighborhood recommendations"
+
+  deliverables:
+    - "All social profiles consistent"
+    - "sameAs links updated in schema"
+
+day_12_13_tier_4_directories:
+  objective: "Build broader citation profile"
+
+  general_directories:
+    - platform: "StartLocal"
+      url: "https://www.startlocal.com.au"
+    - platform: "dLook"
+      url: "https://www.dlook.com.au"
+    - platform: "Word of Mouth Online"
+      url: "https://www.wordofmouth.com.au"
+    - platform: "Australian Business Directory"
+      url: "https://www.australianbusinessdirectory.com.au"
+    - platform: "Local Business Guide"
+      url: "https://www.localbusinessguide.com.au"
+
+  for_each_directory:
+    - "Create account"
+    - "Add business listing"
+    - "Copy NAP exactly from master document"
+    - "Select appropriate categories"
+    - "Add description"
+    - "Link to website"
+
+  deliverables:
+    - "5+ Tier 4 directories completed"
+    - "All NAP consistent"
+
+day_14_tier_5_industry:
+  objective: "Target industry-specific platforms"
+
+  trade_directories:
+    relevant_to:
+      - platform: "hipages"
+        url: "https://www.hipages.com.au"
+        for: "All trades"
+      - platform: "Oneflare"
+        url: "https://www.oneflare.com.au"
+        for: "All trades"
+      - platform: "ServiceSeeking"
+        url: "https://www.serviceseeking.com.au"
+        for: "All trades"
+
+  industry_specific:
+    plumbing:
+      - "Master Plumbers Association directory"
+      - "Local plumbing directories"
+
+    electrical:
+      - "Electrical contractor associations"
+      - "Energy Safe Victoria (if applicable)"
+
+    construction:
+      - "HIA member directory"
+      - "MBA member directory"
+      - "QBCC contractor search"
+
+  for_each_platform:
+    - "Check if relevant to your trade"
+    - "Create profile if applicable"
+    - "Ensure NAP matches exactly"
+    - "Complete all available fields"
+
+  deliverables:
+    - "Relevant industry directories completed"
+    - "NAP consistent"
+
+week_2_checklist:
+  must_complete:
+    - "All Tier 2 Australian directories"
+    - "Social profiles updated"
+    - "Schema sameAs links updated"
+    - "5+ Tier 4 directories"
+    - "Relevant Tier 5 directories"
+
+  total_new_citations: "15-20 new citations"
+
+  verification:
+    - "Spot check 5 random citations"
+    - "All match master document"
+
+success_criteria:
+  - "25+ total citations"
+  - "95%+ consistency score"
+  - "All priority platforms complete"

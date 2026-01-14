@@ -1,0 +1,54 @@
+# Personal Project Settings (CLAUDE.local.md)
+
+> **Copy this file to `CLAUDE.local.md` and customize for your personal preferences.**
+> 
+> This file is automatically added to .gitignore and won't be committed.
+
+## Personal Development Preferences
+
+```bash
+# Your preferred commands
+# Example: alias for quick testing
+# pnpm test:watch --filter=web
+```
+
+## Local Environment Notes
+
+```env
+# Your local URLs or test data
+# BACKEND_URL=http://localhost:3001  # If you prefer different port
+# TEST_DATABASE_URL=...              # Your test database
+```
+
+## Personal Shortcuts
+
+```bash
+# Your custom scripts or shortcuts
+# ./scripts/my-custom-setup.sh
+```
+
+## IDE-Specific Settings
+
+```json
+// Your VS Code settings, extensions, or configurations
+// "editor.tabSize": 2
+```
+
+## Testing Preferences
+
+```bash
+# Your preferred test commands
+# uv run pytest -xvs  # Stop on first failure, verbose
+# pnpm test --coverage --watch
+```
+
+## Notes & Reminders
+
+- Your personal notes about this project
+- Links to relevant documentation
+- Common debugging steps you use
+- Project-specific setup instructions for your environment
+
+---
+
+**Remember**: This file is private to you and won't be shared with the team.
