@@ -1,0 +1,95 @@
+# Journey Template - Layer 3
+# Map the complete user journey
+
+id: journey-id
+name: "Journey Name"
+version: "1.0"
+
+# ===== CONTEXT =====
+context:
+  persona_id: "persona-reference"
+  aarrr_stage: "activation"  # acquisition, activation, retention, revenue, referral
+  trigger: "What initiates this journey"
+  goal: "What success looks like"
+  frequency: "once"  # once, daily, weekly, monthly
+
+# ===== STAGES =====
+stages:
+  - id: awareness
+    name: "Awareness"
+    description: "User becomes aware of solution"
+    entry_points:
+      - "search"
+      - "referral"
+      - "ad"
+
+  - id: consideration
+    name: "Consideration"
+    description: "User evaluates if this is right for them"
+    psychology_focus: ["social_proof", "authority"]
+
+  - id: decision
+    name: "Decision"
+    description: "User commits to action"
+    psychology_focus: ["commitment", "scarcity"]
+
+  - id: action
+    name: "Action"
+    description: "User completes the target behavior"
+    psychology_focus: ["facilitator", "peak_end"]
+
+# ===== STEPS =====
+steps:
+  - id: step-1
+    stage: awareness
+    name: "Landing Page View"
+    route: "/landing"
+    components:
+      - hero_section
+      - value_proposition
+      - social_proof_strip
+    emotional_target: "curious_hopeful"
+    success_criteria:
+      - "Scroll past fold"
+      - "Time on page > 30s"
+    next_step: step-2
+    exit_points:
+      - "bounce"
+
+  - id: step-2
+    stage: consideration
+    name: "Feature Exploration"
+    route: "/features"
+    components:
+      - feature_grid
+      - comparison_table
+      - testimonials
+    emotional_target: "informed_confident"
+    success_criteria:
+      - "View 3+ features"
+      - "Click testimonial"
+    next_step: step-3
+    exit_points:
+      - "back_to_landing"
+      - "leave_site"
+
+  # Add more steps...
+
+# ===== SUCCESS CRITERIA =====
+success_criteria:
+  journey_complete:
+    - "User reaches final step"
+    - "Target action completed"
+  metrics:
+    conversion_rate_target: 0.15
+    average_time_target: "5 minutes"
+    drop_off_acceptable: 0.30
+
+# ===== ROUTES SUMMARY =====
+routes:
+  - path: "/landing"
+    step: step-1
+    auth_required: false
+  - path: "/features"
+    step: step-2
+    auth_required: false

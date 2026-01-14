@@ -1,0 +1,81 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Plumber",
+  "name": "Dave's Premium Plumbing Pty Ltd",
+  "image": "https://www.davesplumbing.com.au/images/logo.jpg",
+  "url": "https://www.davesplumbing.com.au",
+  "telephone": "+61 7 3123 4567",
+  "email": "info@davesplumbing.com.au",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Unit 5, 123 Smith Street",
+    "addressLocality": "Brisbane",
+    "addressRegion": "QLD",
+    "postalCode": "4000",
+    "addressCountry": "AU"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": -27.4698,
+    "longitude": 153.0251
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      "opens": "07:00",
+      "closes": "17:00"
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Saturday"],
+      "opens": "08:00",
+      "closes": "12:00"
+    }
+  ],
+  "priceRange": "$$",
+  "areaServed": {
+    "@type": "GeoCircle",
+    "geoMidpoint": {
+      "@type": "GeoCoordinates",
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "geoRadius": "50000"
+  },
+  "sameAs": [
+    "https://www.facebook.com/davesplumbing",
+    "https://www.instagram.com/davesplumbing",
+    "https://www.linkedin.com/company/davesplumbing"
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Plumbing Services",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Emergency Plumbing",
+          "description": "24/7 emergency plumbing repairs"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Hot Water Repairs",
+          "description": "Hot water system repairs and replacement"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Blocked Drains",
+          "description": "Drain clearing and repairs"
+        }
+      }
+    ]
+  }
+}

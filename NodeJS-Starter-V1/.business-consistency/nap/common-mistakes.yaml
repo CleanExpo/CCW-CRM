@@ -1,0 +1,176 @@
+# Common NAP Consistency Mistakes
+# What to avoid and how to fix
+
+version: "1.0"
+principle: "Learn from others' mistakes"
+
+nap_mistakes:
+  adding_keywords_to_name:
+    description: "Adding location or service keywords to business name"
+    examples:
+      wrong:
+        - "Dave's Plumbing Brisbane"
+        - "Dave's 24/7 Emergency Plumbing"
+        - "Dave's Plumbing - Best Prices"
+      correct: "Dave's Premium Plumbing Pty Ltd"
+    consequence: "Google suspension risk, violates guidelines"
+    fix: "Use only your legal business name"
+    google_guideline: "Don't include taglines, store codes, or unnecessary information"
+
+  inconsistent_phone_formats:
+    description: "Different phone number formats across platforms"
+    examples:
+      wrong:
+        platform_1: "0412345678"
+        platform_2: "0412 345 678"
+        platform_3: "+61412345678"
+      correct: "0412 345 678 (everywhere)"
+    consequence: "Search engines may see these as different businesses"
+    fix: "Choose one format, use everywhere"
+
+  different_phone_numbers:
+    description: "Using different phone numbers on different platforms"
+    examples:
+      wrong:
+        website: "07 3123 4567"
+        facebook: "0412 345 678"
+        google: "1800 123 456"
+    consequence: "Splits citation equity, confuses customers and search engines"
+    fix: "Use one primary phone number everywhere"
+
+  street_abbreviation_inconsistency:
+    description: "Mixing 'Street' and 'St' across platforms"
+    examples:
+      wrong:
+        platform_1: "123 Smith Street"
+        platform_2: "123 Smith St"
+    consequence: "Search engines may see as different addresses"
+    fix: "Pick one format, use consistently"
+
+  unit_format_inconsistency:
+    description: "Different unit/suite formats"
+    examples:
+      wrong:
+        - "Unit 5, 123 Smith Street"
+        - "5/123 Smith Street"
+        - "Suite 5, 123 Smith Street"
+    consequence: "Appears as different locations"
+    fix: "Use identical format (recommend 'Unit X,')"
+
+  missing_or_inconsistent_pty_ltd:
+    description: "Sometimes including Pty Ltd, sometimes not"
+    examples:
+      wrong:
+        platform_1: "Dave's Plumbing Pty Ltd"
+        platform_2: "Dave's Plumbing"
+        platform_3: "Daves Plumbing PTY LTD"
+    consequence: "Different business entities to search engines"
+    fix: "Include or exclude consistently based on your preference"
+
+  apostrophe_inconsistency:
+    description: "Missing or inconsistent apostrophes"
+    examples:
+      wrong:
+        - "Dave's Plumbing" vs "Daves Plumbing"
+        - "Dave's" vs "Dave's" (different apostrophe characters)
+    consequence: "Different business names"
+    fix: "Use standard apostrophe consistently"
+
+  outdated_information:
+    description: "Not updating all platforms after changes"
+    examples:
+      - "Changed phone number but forgot Yellow Pages"
+      - "Moved premises but old address on Yelp"
+      - "Changed hours but GBP not updated"
+    consequence: "Inconsistency, customer confusion, lost leads"
+    fix: "Update ALL platforms immediately when info changes"
+
+platform_mistakes:
+  duplicate_listings:
+    description: "Multiple listings for same business on one platform"
+    examples:
+      - "Two Google Business Profiles"
+      - "Multiple Facebook pages"
+    consequence: "Confuses Google, may harm rankings, reviews split"
+    fix: "Claim and merge duplicate listings"
+
+  ignoring_bing_places:
+    description: "Only focusing on Google, ignoring Bing"
+    examples:
+      - "Optimized GBP, no Bing Places listing"
+    consequence: "Missing voice search traffic (Cortana, Alexa)"
+    fix: "Set up and maintain Bing Places listing"
+
+  incomplete_social_profiles:
+    description: "Social profiles missing NAP information"
+    examples:
+      - "Facebook page with no phone number"
+      - "LinkedIn with wrong address"
+    consequence: "Missing citation opportunities, inconsistent signals"
+    fix: "Complete all profile fields with consistent NAP"
+
+  claimed_but_unmanaged:
+    description: "Claimed listings but not monitoring"
+    examples:
+      - "GBP not checking suggested edits"
+      - "Not responding to reviews"
+    consequence: "Google may change your info, reviews hurt reputation"
+    fix: "Regular monitoring schedule"
+
+schema_mistakes:
+  schema_mismatch:
+    description: "Schema NAP doesn't match visible website NAP"
+    examples:
+      wrong:
+        visible: "(07) 3123 4567"
+        schema: "+61731234567"
+    consequence: "Conflicting signals to search engines"
+    fix: "Schema data must match visible website content exactly"
+
+  generic_business_type:
+    description: "Using generic LocalBusiness instead of specific subtype"
+    examples:
+      wrong: "@type: LocalBusiness"
+      correct: "@type: Plumber"
+    consequence: "Less relevance for specific searches"
+    fix: "Use most specific type (Plumber, Electrician, etc.)"
+
+  missing_geo_coordinates:
+    description: "Schema without latitude/longitude"
+    consequence: "Less accurate proximity matching"
+    fix: "Include latitude and longitude in schema"
+
+website_mistakes:
+  nap_only_in_footer:
+    description: "NAP only appears in footer"
+    consequence: "May not be picked up by crawlers"
+    fix: "NAP on contact page AND footer"
+
+  nap_as_image:
+    description: "NAP displayed as image, not text"
+    consequence: "Search engines can't read it"
+    fix: "Use text for NAP, styled with CSS"
+
+  inconsistent_across_pages:
+    description: "Different NAP on different website pages"
+    examples:
+      - "Homepage: Old phone number"
+      - "Contact page: New phone number"
+    consequence: "Internal inconsistency"
+    fix: "Use same NAP on all pages"
+
+prevention_checklist:
+  before_launching:
+    - "Create master business document"
+    - "Verify all info is correct"
+    - "Choose and document exact formats"
+
+  before_updating_any_platform:
+    - "Reference master document"
+    - "Copy-paste, don't retype"
+    - "Verify after update"
+
+  regular_maintenance:
+    - "Monthly spot-check top platforms"
+    - "Quarterly full audit"
+    - "Immediate update when info changes"

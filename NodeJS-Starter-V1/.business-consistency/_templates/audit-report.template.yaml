@@ -1,0 +1,133 @@
+# Consistency Audit Report Template
+# Document audit findings and actions
+
+audit_info:
+  date: ""
+  auditor: ""
+  type: "" # weekly, monthly, quarterly, annual
+  scope: "" # Tier 1 only, Full audit, etc.
+
+business_reference:
+  master_document: "" # Path to master consistency doc
+  canonical_nap:
+    name: ""
+    address: ""
+    phone: ""
+    website: ""
+
+executive_summary:
+  overall_score: "" # Percentage
+  platforms_audited: 0
+  platforms_consistent: 0
+  issues_found: 0
+  critical_issues: 0
+
+score_breakdown:
+  tier_1:
+    platforms: 0
+    consistent: 0
+    score: ""
+  tier_2:
+    platforms: 0
+    consistent: 0
+    score: ""
+  tier_3:
+    platforms: 0
+    consistent: 0
+    score: ""
+  tier_4:
+    platforms: 0
+    consistent: 0
+    score: ""
+  tier_5:
+    platforms: 0
+    consistent: 0
+    score: ""
+
+platform_details:
+  # Repeat for each platform audited
+  - platform: ""
+    tier: ""
+    url: ""
+    findings:
+      name_status: "" # match, mismatch, missing
+      address_status: ""
+      phone_status: ""
+      website_status: ""
+      hours_status: ""
+    issues:
+      - field: ""
+        expected: ""
+        found: ""
+        severity: "" # critical, high, medium, low
+    action_required: ""
+    action_taken: ""
+    verified_fixed: false
+
+issues_summary:
+  critical:
+    count: 0
+    items: []
+  high:
+    count: 0
+    items: []
+  medium:
+    count: 0
+    items: []
+  low:
+    count: 0
+    items: []
+
+actions_taken:
+  - platform: ""
+    action: ""
+    date: ""
+    status: "" # completed, pending, blocked
+
+ai_visibility_test:
+  chatgpt:
+    query_used: ""
+    mentioned: false
+    accurate: false
+    notes: ""
+  perplexity:
+    query_used: ""
+    mentioned: false
+    accurate: false
+    notes: ""
+  google_ai:
+    query_used: ""
+    in_overview: false
+    accurate: false
+    notes: ""
+
+schema_validation:
+  tested: false
+  tool_used: ""
+  errors: 0
+  warnings: 0
+  issues: []
+
+recommendations:
+  immediate:
+    - ""
+  short_term:
+    - ""
+  ongoing:
+    - ""
+
+comparison_to_previous:
+  previous_score: ""
+  current_score: ""
+  trend: "" # improving, stable, declining
+  notes: ""
+
+next_audit:
+  scheduled_date: ""
+  scope: ""
+  focus_areas: []
+
+sign_off:
+  auditor: ""
+  date: ""
+  approved_by: ""
