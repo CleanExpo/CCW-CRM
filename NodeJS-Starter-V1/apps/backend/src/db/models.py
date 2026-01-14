@@ -66,7 +66,7 @@ class User(Base):
 
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     email: str = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash: str = Column(String(255), nullable=False)
+    password_hash: str = Column("hashed_password", String(255), nullable=False)
     full_name: str | None = Column(String(255), nullable=True)
     role: str = Column(String(50), nullable=False, default="employee", index=True)
     is_active: bool = Column(Boolean, default=True, nullable=False, index=True)
@@ -80,7 +80,7 @@ class User(Base):
         onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
-    last_login_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    # last_login_at: datetime | None = Column(DateTime(timezone=True), nullable=True)  # Column doesn't exist in DB
 
     # Relationships - Disabled for ERP demo
     # contractors = relationship("Contractor", back_populates="user")

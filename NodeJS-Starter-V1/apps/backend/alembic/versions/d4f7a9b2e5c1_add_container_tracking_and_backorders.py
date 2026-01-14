@@ -25,7 +25,7 @@ def upgrade() -> None:
         'booked', 'in_transit', 'at_port', 'customs_clearance',
         'cleared', 'out_for_delivery', 'delivered', 'cancelled',
         name='container_status',
-        create_type=True
+        create_type=False  # Don't auto-create since we're creating it explicitly below
     )
     container_status_enum.create(op.get_bind(), checkfirst=True)
 
@@ -33,7 +33,7 @@ def upgrade() -> None:
     backorder_status_enum = postgresql.ENUM(
         'pending', 'allocated', 'ready', 'fulfilled', 'cancelled',
         name='backorder_status',
-        create_type=True
+        create_type=False  # Don't auto-create since we're creating it explicitly below
     )
     backorder_status_enum.create(op.get_bind(), checkfirst=True)
 

@@ -35,7 +35,7 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Removed init-db.sql - using Alembic migrations instead
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ccw_user} -d ${POSTGRES_DB:-ccw_erp_db}"]
       interval: 10s
@@ -122,7 +122,7 @@ services:
       # Application Settings
       ENVIRONMENT: production
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:8000"]'
 
       # WebSocket
       WEBSOCKET_ENABLED: "true"

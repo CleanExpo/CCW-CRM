@@ -10,6 +10,8 @@
 
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from "react";
 import { ContractorAvailabilityLive } from "@/components/contractor-availability-live";
 import { contractorAPI } from "@/lib/api/contractors";

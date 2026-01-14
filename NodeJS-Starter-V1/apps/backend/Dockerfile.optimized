@@ -50,7 +50,8 @@ RUN pip install --no-cache-dir uv
 COPY pyproject.toml uv.lock* ./
 
 # Install Python dependencies
-RUN uv sync --frozen --no-dev
+# Note: Not using --frozen for staging. For production, run `uv lock` first.
+RUN uv sync --no-dev
 
 # ============================================
 # Stage 3: Runtime - Final production image
@@ -65,6 +66,10 @@ COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
 # Copy application source code
 COPY --chown=appuser:appuser src/ ./src/
+
+# Copy Alembic migration files
+COPY --chown=appuser:appuser alembic/ ./alembic/
+COPY --chown=appuser:appuser alembic.ini ./
 
 # Set PATH to use virtual environment
 ENV PATH="/app/.venv/bin:$PATH"
@@ -88,10 +93,15 @@ CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 FROM builder AS development
 
 # Install development dependencies
-RUN uv sync --frozen
+# Note: Not using --frozen for staging. For production, run `uv lock` first.
+RUN uv sync
 
 # Copy source code
 COPY src/ ./src/
+
+# Copy Alembic migration files for development
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 
 # Expose port
 EXPOSE 8000

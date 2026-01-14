@@ -5,6 +5,8 @@
  * Built with Next.js 15 Server Components for optimal performance.
  */
 
+export const dynamic = 'force-dynamic';
+
 import { Suspense } from 'react'
 import { AgentStats } from './components/AgentStats'
 import { AgentList } from './components/AgentList'

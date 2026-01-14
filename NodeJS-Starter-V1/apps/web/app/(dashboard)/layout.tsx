@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering for all dashboard pages
+export const dynamic = 'force-dynamic';
+
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ChatWidget } from "@/components/chat/ChatWidget";

@@ -6,6 +6,9 @@ import { RouteProgressBar } from "@/components/transitions/RouteProgressBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// Force all pages to render dynamically at runtime
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "CCW ERP - Equipment Supplier",
   description: "Premium ERP system for equipment suppliers",
