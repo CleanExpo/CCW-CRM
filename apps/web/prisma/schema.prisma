@@ -1,0 +1,66 @@
+// Prisma Schema for CCW Digital Operations Hub
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// CCW Equipment Models
+enum EquipmentModel {
+  Truckmount
+  Portable
+  AirMovers
+  Dehumidifier
+}
+
+// CCW Branch Locations
+enum Branch {
+  Boondall    // QLD - Brisbane
+  SevenHills  // NSW - Sydney
+  Bayswater   // VIC - Melbourne
+}
+
+// Service Status for Kanban
+enum ServiceStatus {
+  InQueue
+  Diagnosing
+  WaitingParts
+  Testing
+  Ready
+}
+
+// Equipment Table
+model Equipment {
+  id            String          @id @default(uuid())
+  serialNumber  String          @unique @map("serial_number") @db.VarChar(50)
+  model         EquipmentModel
+  brand         String          // e.g., Razorback, Sapphire
+  currentBranch Branch          @map("current_branch")
+  status        ServiceStatus   @default(InQueue)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  serviceLogs   ServiceLog[]
+
+  @@map("equipment")
+}
+
+// Service Logs Table
+model ServiceLog {
+  id              String    @id @default(uuid())
+  equipmentId     String    @map("equipment_id")
+  technicianNotes String?   @map("technician_notes") @db.Text
+  partsReplaced   Json?     @map("parts_replaced") @db.JsonB
+  timestamp       DateTime  @default(now())
+
+  // Relations
+  equipment       Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@map("service_logs")
+}

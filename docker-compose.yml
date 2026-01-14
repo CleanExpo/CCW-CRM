@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ccw-postgres
+    environment:
+      POSTGRES_USER: ccw_user
+      POSTGRES_PASSWORD: ccw_secure_password
+      POSTGRES_DB: ccw_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - ccw_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ccw_user -d ccw_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ccw_postgres_data:

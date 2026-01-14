@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+psycopg2-binary
+asyncpg
+python-jose[cryptography]
+passlib[bcrypt]
+langchain
+langchain-community
+langchain-ollama
