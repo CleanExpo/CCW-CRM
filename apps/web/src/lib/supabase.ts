@@ -27,6 +27,73 @@ export interface ServiceLog {
     timestamp: string;
 }
 
+// Social Media Types
+export type SocialPlatform = 'Facebook' | 'Instagram' | 'LinkedIn' | 'Reddit';
+export type PostStatus = 'Draft' | 'PendingApproval' | 'Approved' | 'Scheduled' | 'Publishing' | 'Published' | 'Failed';
+
+export interface SocialConnection {
+    id: string;
+    platform: SocialPlatform;
+    account_name: string;
+    account_id: string;
+    access_token: string;
+    refresh_token: string | null;
+    token_expiry: string | null;
+    page_id: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SocialPost {
+    id: string;
+    connection_id: string;
+    calendar_entry_id: string | null;
+    content: string;
+    media_urls: Record<string, unknown> | null;
+    hashtags: string[];
+    target_community: string | null;
+    status: PostStatus;
+    scheduled_for: string | null;
+    published_at: string | null;
+    platform_post_id: string | null;
+    likes: number | null;
+    comments: number | null;
+    shares: number | null;
+    impressions: number | null;
+    error_message: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TargetCommunity {
+    id: string;
+    platform: SocialPlatform;
+    community_id: string;
+    name: string;
+    description: string | null;
+    is_active: boolean;
+    post_rules: Record<string, unknown> | null;
+    last_posted: string | null;
+    created_at: string;
+}
+
+export interface ContentCalendar {
+    id: string;
+    title: string;
+    description: string | null;
+    cadence: string;
+    scheduled_date: string;
+    content_type: string;
+    status: string;
+    platforms: string[];
+    content: string | null;
+    media_asset_ids: string[];
+    tags: string[];
+    created_at: string;
+    updated_at: string;
+}
+
 // Database interface for type-safe queries
 export interface Database {
     public: {
@@ -40,6 +107,26 @@ export interface Database {
                 Row: ServiceLog;
                 Insert: Omit<ServiceLog, 'id' | 'timestamp'>;
                 Update: Partial<Omit<ServiceLog, 'id'>>;
+            };
+            social_connections: {
+                Row: SocialConnection;
+                Insert: Omit<SocialConnection, 'id' | 'created_at' | 'updated_at'>;
+                Update: Partial<Omit<SocialConnection, 'id' | 'created_at'>>;
+            };
+            social_posts: {
+                Row: SocialPost;
+                Insert: Omit<SocialPost, 'id' | 'created_at' | 'updated_at'>;
+                Update: Partial<Omit<SocialPost, 'id' | 'created_at'>>;
+            };
+            target_communities: {
+                Row: TargetCommunity;
+                Insert: Omit<TargetCommunity, 'id' | 'created_at'>;
+                Update: Partial<Omit<TargetCommunity, 'id' | 'created_at'>>;
+            };
+            content_calendar: {
+                Row: ContentCalendar;
+                Insert: Omit<ContentCalendar, 'id' | 'created_at' | 'updated_at'>;
+                Update: Partial<Omit<ContentCalendar, 'id' | 'created_at'>>;
             };
         };
     };

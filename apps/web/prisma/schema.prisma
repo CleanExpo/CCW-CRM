@@ -64,3 +64,114 @@ model ServiceLog {
 
   @@map("service_logs")
 }
+
+// ============================================
+// SOCIAL MEDIA INTEGRATION
+// ============================================
+
+// Social Media Platforms
+enum SocialPlatform {
+  Facebook
+  Instagram
+  LinkedIn
+  Reddit
+}
+
+// Post Status
+enum PostStatus {
+  Draft
+  PendingApproval
+  Approved
+  Scheduled
+  Publishing
+  Published
+  Failed
+}
+
+// Social Media Connections (OAuth tokens)
+model SocialConnection {
+  id            String         @id @default(uuid())
+  platform      SocialPlatform
+  accountName   String         @map("account_name")
+  accountId     String         @map("account_id")
+  accessToken   String         @map("access_token") @db.Text
+  refreshToken  String?        @map("refresh_token") @db.Text
+  tokenExpiry   DateTime?      @map("token_expiry")
+  pageId        String?        @map("page_id") // For Facebook/Instagram Page
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  posts         SocialPost[]
+
+  @@unique([platform, accountId])
+  @@map("social_connections")
+}
+
+// Scheduled/Published Social Posts
+model SocialPost {
+  id              String         @id @default(uuid())
+  connectionId    String         @map("connection_id")
+  calendarEntryId String?        @map("calendar_entry_id")
+
+  content         String         @db.Text
+  mediaUrls       Json?          @map("media_urls") @db.JsonB
+  hashtags        String[]
+  targetCommunity String?        @map("target_community") // subreddit name or group
+
+  status          PostStatus     @default(Draft)
+  scheduledFor    DateTime?      @map("scheduled_for")
+  publishedAt     DateTime?      @map("published_at")
+  platformPostId  String?        @map("platform_post_id")
+
+  // Engagement metrics (updated periodically)
+  likes           Int?
+  comments        Int?
+  shares          Int?
+  impressions     Int?
+
+  errorMessage    String?        @map("error_message") @db.Text
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  connection      SocialConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@map("social_posts")
+}
+
+// Target Communities (Subreddits, Groups to post to)
+model TargetCommunity {
+  id          String         @id @default(uuid())
+  platform    SocialPlatform
+  communityId String         @map("community_id")
+  name        String
+  description String?        @db.Text
+  isActive    Boolean        @default(true)
+  postRules   Json?          @map("post_rules") @db.JsonB
+  lastPosted  DateTime?      @map("last_posted")
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  @@unique([platform, communityId])
+  @@map("target_communities")
+}
+
+// Content Calendar Entry (for scheduling)
+model ContentCalendar {
+  id              String    @id @default(uuid())
+  title           String
+  description     String?   @db.Text
+  cadence         String    // Weekly, Monthly, Quarterly, Yearly
+  scheduledDate   DateTime  @map("scheduled_date")
+  contentType     String    @map("content_type") // SocialMedia, WebSpecial, Newsletter
+  status          String    @default("Draft")
+  platforms       String[]  // Target platforms
+  content         String?   @db.Text
+  mediaAssetIds   String[]  @map("media_asset_ids")
+  tags            String[]
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("content_calendar")
+}
