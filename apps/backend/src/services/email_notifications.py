@@ -251,6 +251,144 @@ class EmailNotificationService:
             )
             return False
 
+    def send_backorder_notification(
+        self,
+        backorder_id: str,
+        customer_email: str,
+        customer_name: str,
+        product_name: str,
+        product_sku: str,
+        quantity: int,
+        order_number: str,
+        expected_date: Optional[datetime],
+        container_number: Optional[str],
+        priority: int,
+    ) -> bool:
+        """
+        Send email notification to customer about backorder status.
+
+        Args:
+            backorder_id: Unique ID of the backorder
+            customer_email: Customer's email address
+            customer_name: Customer's name
+            product_name: Name of the backordered product
+            product_sku: SKU of the product
+            quantity: Quantity backordered
+            order_number: Order number
+            expected_date: Expected availability date (optional)
+            container_number: Container number if allocated (optional)
+            priority: Backorder priority level
+
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        if not self.client:
+            logger.warning("Email notification skipped - SendGrid not configured")
+            return False
+
+        try:
+            # Format expected date
+            if expected_date:
+                eta_text = f"<strong>Expected Availability:</strong> {expected_date.strftime('%B %d, %Y')}"
+                eta_style = "color: #16a34a;"
+            else:
+                eta_text = "<strong>Expected Availability:</strong> To be confirmed"
+                eta_style = "color: #ea580c;"
+
+            # Container info
+            container_info = ""
+            if container_number:
+                container_info = f"""
+                <div style="margin-bottom: 15px; padding: 10px; background-color: #dbeafe; border-left: 4px solid #2563eb; border-radius: 4px;">
+                    <p style="margin: 0; color: #1e40af;"><strong>📦 Allocated to Container:</strong> {container_number}</p>
+                </div>
+                """
+
+            # Build email content
+            html_content = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h2 style="color: #2563eb; margin-bottom: 20px;">📋 Backorder Status Update</h2>
+
+                        <p style="font-size: 16px;">Dear {customer_name},</p>
+
+                        <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
+                            This is an update regarding your backordered item. We're working to fulfill your order as quickly as possible.
+                        </p>
+
+                        <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                            <h3 style="color: #1e40af; margin-top: 0;">Order Details</h3>
+                            <p style="margin: 5px 0;"><strong>Order Number:</strong> {order_number}</p>
+                            <p style="margin: 5px 0;"><strong>Product:</strong> {product_name}</p>
+                            <p style="margin: 5px 0;"><strong>SKU:</strong> {product_sku}</p>
+                            <p style="margin: 5px 0;"><strong>Quantity:</strong> {quantity} units</p>
+                            <p style="margin: 5px 0; {eta_style}">{eta_text}</p>
+                        </div>
+
+                        {container_info}
+
+                        <div style="margin: 20px 0; padding: 15px; background-color: #fef3c7; border-radius: 6px;">
+                            <p style="margin: 0; font-size: 14px; color: #92400e;">
+                                <strong>ℹ️ What happens next?</strong><br>
+                                We'll notify you as soon as your item is ready for shipment. You can contact us anytime for updates.
+                            </p>
+                        </div>
+
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 5px 0; font-size: 14px; color: #64748b;">
+                                Thank you for your patience and understanding.
+                            </p>
+                            <p style="margin: 5px 0; font-size: 14px; color: #64748b;">
+                                <strong>CCW Equipment</strong><br>
+                                Questions? Reply to this email or call us.
+                            </p>
+                        </div>
+
+                        <div style="margin-top: 20px; padding: 10px; background-color: #f1f5f9; border-radius: 4px; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                                This is an automated notification. Backorder ID: {backorder_id}
+                            </p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+            """
+
+            # Create and send email
+            message = Mail(
+                from_email=Email(self.from_email),
+                to_emails=To(customer_email),
+                subject=f"Backorder Update - Order {order_number} ({product_name})",
+                html_content=Content("text/html", html_content),
+            )
+
+            response = self.client.send(message)
+
+            if response.status_code in (200, 201, 202):
+                logger.info(
+                    "Backorder notification sent",
+                    backorder_id=backorder_id,
+                    to_email=customer_email,
+                    status_code=response.status_code,
+                )
+                return True
+            else:
+                logger.error(
+                    "Failed to send backorder notification",
+                    backorder_id=backorder_id,
+                    status_code=response.status_code,
+                )
+                return False
+
+        except Exception as e:
+            logger.error(
+                "Error sending backorder notification",
+                backorder_id=backorder_id,
+                error=str(e),
+            )
+            return False
+
 
 # Global instance
 email_service = EmailNotificationService()

@@ -17,6 +17,7 @@ from src.db.erp_models import Customer, Order, Product
 from src.db.models import User
 from src.events.event_bus import get_event_bus
 from src.services.alert_manager import get_alert_manager
+from src.services.email_notifications import email_service
 
 router = APIRouter(prefix="/api/backorders", tags=["Backorder Management"])
 
@@ -691,6 +692,8 @@ async def notify_customer(
         .options(
             selectinload(Backorder.product),
             selectinload(Backorder.customer),
+            selectinload(Backorder.order),
+            selectinload(Backorder.container),
         )
         .where(Backorder.id == backorder_id)
     )
@@ -702,9 +705,24 @@ async def notify_customer(
     if not backorder.customer:
         raise HTTPException(status_code=400, detail="No customer associated with backorder")
 
-    # TODO: Send email via SendGrid integration
-    # For now, just update notification tracking
+    if not backorder.customer.email:
+        raise HTTPException(status_code=400, detail="Customer has no email address")
 
+    # Send email notification
+    email_sent = email_service.send_backorder_notification(
+        backorder_id=str(backorder.id),
+        customer_email=backorder.customer.email,
+        customer_name=backorder.customer.company_name or backorder.customer.contact_name,
+        product_name=backorder.product.name if backorder.product else "Unknown Product",
+        product_sku=backorder.product.sku if backorder.product else "N/A",
+        quantity=backorder.quantity_remaining,
+        order_number=backorder.order.order_number if backorder.order else "N/A",
+        expected_date=backorder.expected_availability_date,
+        container_number=backorder.container.container_number if backorder.container else None,
+        priority=backorder.priority,
+    )
+
+    # Update notification tracking
     backorder.customer_notified = True
     backorder.last_notification_date = datetime.now(UTC)
     backorder.notification_count += 1
@@ -712,17 +730,18 @@ async def notify_customer(
 
     await db.commit()
 
-    # Publish event
-    event_bus = get_event_bus()
-    await event_bus.publish(
-        "backorder.customer_notified",
-        payload={
-            "backorder_id": str(backorder.id),
-            "customer_id": str(backorder.customer_id),
-            "notification_type": notify_data.notification_type,
-        },
-        source="api",
-    )
+    # TODO: Publish event when event bus is initialized
+    # event_bus = get_event_bus()
+    # await event_bus.publish(
+    #     "backorder.customer_notified",
+    #     payload={
+    #         "backorder_id": str(backorder.id),
+    #         "customer_id": str(backorder.customer_id),
+    #         "notification_type": notify_data.notification_type,
+    #         "email_sent": email_sent,
+    #     },
+    #     source="api",
+    # )
 
 
 @router.delete("/{backorder_id}", status_code=204)
