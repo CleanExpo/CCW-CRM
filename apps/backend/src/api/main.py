@@ -14,7 +14,7 @@ from src.utils import get_logger, setup_logging
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
-from .routes import config, customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, portal_auth, portal_forms, products, purchase_orders, quotes, service_requests, shipments, suppliers, test_data_gen, webhooks
+from .routes import approvals, backorders, config, containers, customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, portal_auth, portal_forms, products, purchase_orders, quotes, service_requests, shipments, suppliers, test_data_gen, webhooks
 from .routes.ai import ai_router, chat, generate, insights, learning
 from .routes.integrations import elevenlabs, sendgrid, shopify, xero
 
@@ -120,6 +120,7 @@ app.add_middleware(AuthMiddleware)
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(config.router, tags=["Configuration"])
+app.include_router(approvals.router, tags=["Approvals"])
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
@@ -144,6 +145,9 @@ app.include_router(suppliers.router, tags=["Suppliers"])
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 # Shipment tracking router
 app.include_router(shipments.router, tags=["Shipment Tracking"])
+# Container tracking and backorder management
+app.include_router(containers.router, tags=["Container Tracking"])
+app.include_router(backorders.router, tags=["Backorder Management"])
 # AI routers
 app.include_router(ai_router)  # Main AI agent orchestration routes (includes learning router)
 app.include_router(chat.router, tags=["AI Chat"])

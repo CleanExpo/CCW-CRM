@@ -17,12 +17,18 @@ import {
   Mail,
   Settings,
   Warehouse,
+  Ship,
+  AlertCircle,
+  Bell,
+  CheckCircle,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Products", href: "/products", icon: Package },
   { name: "Inventory", href: "/inventory", icon: Warehouse },
+  { name: "Containers", href: "/containers", icon: Ship },
+  { name: "Backorders", href: "/backorders", icon: AlertCircle },
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "Quotes", href: "/quotes", icon: FileText },
@@ -31,6 +37,8 @@ const navigation = [
   { name: "Emails", href: "/emails", icon: Mail },
   // { name: "AI Assistant", href: "/ai-assistant", icon: Bot }, // Hidden for demo - incomplete implementation
   { name: "Insights", href: "/insights", icon: TrendingUp },
+  { name: "Alerts", href: "/alerts", icon: Bell },
+  { name: "Approvals", href: "/approvals", icon: CheckCircle },
   { name: "Settings", href: "/settings/integrations", icon: Settings },
 ];
 
