@@ -94,3 +94,7 @@ supabase/.temp
 # Example/test projects (if not needed)
 my-app/
 shopify-scraper/
+
+# Backups (contain sensitive data)
+backups/
+**/backups/
