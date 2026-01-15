@@ -13,6 +13,7 @@ import { Pencil, Trash2, Plus, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Quote } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { format } from "date-fns";
 
 interface PaginatedResponse {
   items: Quote[];
@@ -201,7 +202,7 @@ export default function QuotesPage() {
                   label: "Quote Date",
                   className: "text-sm text-muted-foreground",
                   hideOnMobile: true,
-                  render: (quote) => new Date(quote.quote_date).toLocaleDateString(),
+                  render: (quote) => format(new Date(quote.quote_date), "MMM dd, yyyy"),
                 },
                 {
                   key: "valid_until",
@@ -212,7 +213,7 @@ export default function QuotesPage() {
                     return (
                       <span className={`text-sm ${expired ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                         {quote.valid_until
-                          ? new Date(quote.valid_until).toLocaleDateString()
+                          ? format(new Date(quote.valid_until), "MMM dd, yyyy")
                           : "N/A"}
                       </span>
                     );

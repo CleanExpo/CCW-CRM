@@ -1,0 +1,198 @@
+# LocalBusiness Schema Markup
+# JSON-LD structured data for local businesses
+
+version: "1.0"
+format: "JSON-LD"
+standard: "schema.org"
+
+overview:
+  purpose: "Help search engines and AI understand your business"
+  placement: "Homepage (required), all pages (recommended)"
+  format: "JSON-LD in <script> tag"
+  google_guidance: "JSON-LD is the preferred format"
+
+business_types:
+  general:
+    type: "LocalBusiness"
+    use_when: "No more specific type available"
+
+  trades:
+    plumber: "Plumber"
+    electrician: "Electrician"
+    hvac: "HVACBusiness"
+    locksmith: "Locksmith"
+    roofer: "RoofingContractor"
+    general_contractor: "GeneralContractor"
+    house_painter: "HousePainter"
+    moving_company: "MovingCompany"
+
+  professional_services:
+    accountant: "AccountingService"
+    lawyer: "Attorney"
+    real_estate: "RealEstateAgent"
+    insurance: "InsuranceAgency"
+    financial: "FinancialService"
+
+  healthcare:
+    dentist: "Dentist"
+    physician: "Physician"
+    medical_clinic: "MedicalClinic"
+    optician: "Optician"
+    pharmacy: "Pharmacy"
+
+  recommendation: "Use most specific type available for your business"
+
+required_fields:
+  type:
+    field: "@type"
+    description: "Most specific business type"
+    example: "Plumber"
+
+  name:
+    field: "name"
+    description: "Business name - MUST match NAP exactly"
+    example: "Dave's Premium Plumbing Pty Ltd"
+    rule: "Exact match to master document"
+
+  address:
+    field: "address"
+    type: "PostalAddress"
+    subfields:
+      streetAddress:
+        description: "Street address"
+        example: "Unit 5, 123 Smith Street"
+      addressLocality:
+        description: "City/Suburb"
+        example: "Brisbane"
+      addressRegion:
+        description: "State"
+        example: "QLD"
+      postalCode:
+        description: "Postcode"
+        example: "4000"
+      addressCountry:
+        description: "Country code"
+        example: "AU"
+    rule: "Must match visible NAP on website"
+
+  telephone:
+    field: "telephone"
+    description: "Phone number - MUST match NAP exactly"
+    example: "+61 7 3123 4567"
+    rule: "Use international format for consistency"
+
+  url:
+    field: "url"
+    description: "Website URL"
+    example: "https://www.davesplumbing.com.au"
+
+recommended_fields:
+  image:
+    field: "image"
+    description: "Business logo or representative image"
+    example: "https://www.davesplumbing.com.au/images/logo.jpg"
+
+  email:
+    field: "email"
+    description: "Contact email"
+    example: "info@davesplumbing.com.au"
+
+  geo:
+    field: "geo"
+    type: "GeoCoordinates"
+    importance: "HIGH - helps proximity matching"
+    subfields:
+      latitude:
+        description: "Latitude coordinate"
+        example: -27.4698
+      longitude:
+        description: "Longitude coordinate"
+        example: 153.0251
+    how_to_get: "Google Maps > Right-click location > What's here?"
+
+  openingHoursSpecification:
+    field: "openingHoursSpecification"
+    type: "OpeningHoursSpecification array"
+    description: "Business hours"
+    subfields:
+      dayOfWeek:
+        description: "Days (array)"
+        example: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+      opens:
+        description: "Opening time (24hr)"
+        example: "07:00"
+      closes:
+        description: "Closing time (24hr)"
+        example: "17:00"
+
+  priceRange:
+    field: "priceRange"
+    description: "Price range indicator"
+    options: ["$", "$$", "$$$", "$$$$"]
+
+  areaServed:
+    field: "areaServed"
+    description: "Service area"
+    options:
+      geo_circle:
+        type: "GeoCircle"
+        use: "Radius from location"
+      geo_shape:
+        type: "GeoShape"
+        use: "Specific area"
+      place:
+        type: "Place"
+        use: "Named location"
+
+  sameAs:
+    field: "sameAs"
+    description: "Links to social profiles"
+    importance: "Creates entity connections"
+    example:
+      - "https://www.facebook.com/davesplumbing"
+      - "https://www.instagram.com/davesplumbing"
+      - "https://www.linkedin.com/company/davesplumbing"
+
+  aggregateRating:
+    field: "aggregateRating"
+    type: "AggregateRating"
+    description: "Overall review rating"
+    subfields:
+      ratingValue: "Average rating (e.g., 4.9)"
+      reviewCount: "Number of reviews"
+    warning: "Only include if you have reviews on your website"
+
+template:
+  description: "Complete LocalBusiness schema template"
+  note: "See examples/ folder for industry-specific examples"
+
+implementation:
+  step_1:
+    action: "Choose correct @type"
+    guidance: "Most specific business type"
+
+  step_2:
+    action: "Fill in required fields from master document"
+    guidance: "Copy-paste, don't retype"
+
+  step_3:
+    action: "Add recommended fields"
+    guidance: "More complete = better"
+
+  step_4:
+    action: "Validate schema"
+    tools:
+      - "Google Rich Results Test: https://search.google.com/test/rich-results"
+      - "Schema Markup Validator: https://validator.schema.org"
+
+  step_5:
+    action: "Add to website"
+    placement: "<script type='application/ld+json'> in <head>"
+
+validation_checklist:
+  - "Schema validates without errors"
+  - "NAP matches visible website content exactly"
+  - "Phone in international format"
+  - "Coordinates accurate"
+  - "sameAs links to correct profiles"
+  - "Hours match GBP and website"

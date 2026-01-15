@@ -1,0 +1,157 @@
+# Tier 2 Platforms - High Authority Australian Directories
+# Significant local impact for Australian businesses
+
+version: "1.0"
+tier: 2
+priority: "HIGH"
+description: "High-authority Australian directories with strong SEO value"
+
+platforms:
+  yellow_pages:
+    name: "Yellow Pages Australia"
+    url: "https://www.yellowpages.com.au"
+    importance: "HIGH"
+    domain_authority: "Very High"
+    monthly_visitors: "2+ million"
+
+    history: "140+ year brand recognition in Australia"
+    ownership: "Owns True Local"
+
+    listing_type: "Free basic, paid enhanced"
+    free_includes:
+      - "Basic business listing"
+      - "Contact information"
+      - "Business category"
+      - "Hours of operation"
+
+    optimization_checklist:
+      - "Claim existing listing or create new"
+      - "Verify NAP matches master document"
+      - "Select accurate categories"
+      - "Add business description"
+      - "Upload logo"
+      - "Add business hours"
+      - "Include website URL"
+
+    paid_options:
+      - "Enhanced listing"
+      - "Priority placement"
+      - "Additional categories"
+    note: "Free listing is sufficient for citation purposes"
+
+  true_local:
+    name: "True Local"
+    url: "https://www.truelocal.com.au"
+    importance: "HIGH"
+    domain_authority: 79
+    backlinks: "10.65 million"
+    monthly_visitors: "946,780"
+
+    ownership: "Owned by Yellow Pages (Sensis)"
+    note: "Separate listing from Yellow Pages"
+
+    listing_type: "Free"
+    free_includes:
+      - "Business listing"
+      - "Customer reviews"
+      - "Photos"
+      - "Business description"
+
+    optimization_checklist:
+      - "Create free listing"
+      - "Verify NAP matches exactly"
+      - "Add detailed business description"
+      - "Upload quality photos"
+      - "Encourage customer reviews"
+      - "Respond to reviews"
+
+    review_focus:
+      - "Active review platform"
+      - "Reviews visible to searchers"
+      - "Encourage satisfied customers to review"
+
+  yelp_australia:
+    name: "Yelp Australia"
+    url: "https://www.yelp.com.au"
+    importance: "HIGH"
+    domain_authority: "Very High"
+    global_presence: true
+
+    key_feature: "Review-centric platform"
+    audience: "Active reviewers, serious researchers"
+
+    listing_type: "Free basic, paid advertising"
+
+    optimization_checklist:
+      - "Claim business listing"
+      - "Verify NAP accuracy"
+      - "Complete all business information"
+      - "Upload high-quality photos (10+)"
+      - "Write compelling business description"
+      - "Add specialties"
+      - "Set business hours"
+      - "Enable messaging"
+
+    review_management:
+      - "Reviews heavily weighted"
+      - "Respond to all reviews professionally"
+      - "Do NOT ask for reviews (violates Yelp policy)"
+      - "Focus on great service, reviews follow"
+
+    yelp_filter:
+      note: "Yelp filters some reviews"
+      guidance: "Provide great service, reviews accumulate over time"
+
+  white_pages:
+    name: "White Pages Australia"
+    url: "https://www.whitepages.com.au"
+    importance: "MEDIUM-HIGH"
+    domain_authority: "High"
+
+    traditional_authority: "Long-standing directory trust"
+    listing_type: "Free"
+
+    optimization_checklist:
+      - "Create or claim listing"
+      - "Verify NAP accuracy"
+      - "Add business category"
+      - "Include website URL"
+
+  hotfrog:
+    name: "Hotfrog Australia"
+    url: "https://www.hotfrog.com.au"
+    importance: "MEDIUM-HIGH"
+    domain_authority: 51
+    monthly_visitors: "2+ million"
+    total_listings: "16+ million globally"
+
+    listing_type: "Free"
+
+    optimization_checklist:
+      - "Create free listing"
+      - "Verify NAP accuracy"
+      - "Add business description"
+      - "Select relevant categories"
+      - "Upload photos"
+      - "Add products/services"
+
+setup_priority:
+  order:
+    1: "Yellow Pages"
+    2: "True Local"
+    3: "Yelp Australia"
+    4: "White Pages"
+    5: "Hotfrog"
+
+  timing:
+    - "Complete after Tier 1"
+    - "Allow 1-2 days for this tier"
+    - "Verify listings after 1 week"
+
+success_criteria:
+  all_tier_2_complete:
+    - "All 5 platforms claimed"
+    - "NAP identical across all"
+    - "Business descriptions added"
+    - "Photos uploaded where supported"
+    - "Reviews monitored monthly"

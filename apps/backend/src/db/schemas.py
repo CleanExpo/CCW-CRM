@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, computed_field, model_validator
 
 
 # Organization schemas
@@ -153,6 +153,7 @@ class OrderItem(OrderItemBase):
 class OrderBase(BaseModel):
     customer_id: UUID
     status: str = "draft"
+    fulfillment_location: str = "brisbane"  # brisbane, sydney, or melbourne
     notes: str | None = None
 
 
@@ -163,6 +164,7 @@ class OrderCreate(OrderBase):
 class OrderUpdate(BaseModel):
     customer_id: UUID | None = None
     status: str | None = None
+    fulfillment_location: str | None = None
     notes: str | None = None
     items: list[OrderItemCreate] | None = None
     subtotal: Decimal | None = None
@@ -178,7 +180,8 @@ class Order(OrderBase):
     order_date: datetime
     created_at: datetime
     updated_at: datetime
-    items: list[OrderItem] = []
+    # Relationship loaded from SQLAlchemy - frontend handles both 'items' and 'order_items'
+    order_items: list[OrderItem]
 
     class Config:
         from_attributes = True

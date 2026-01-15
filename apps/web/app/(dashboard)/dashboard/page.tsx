@@ -12,6 +12,12 @@ import { RevenueChart } from "@/components/charts/RevenueChart";
 import { CategorySalesChart } from "@/components/charts/CategorySalesChart";
 import { StaggerChildren, StaggerItem } from "@/components/transitions/StaggerChildren";
 import { FadeIn } from "@/components/transitions/FadeIn";
+import { StockHealthWidget } from "@/components/dashboard/StockHealthWidget";
+import { TransferSuggestionsWidget } from "@/components/dashboard/TransferSuggestionsWidget";
+import { OrderStatusBreakdownWidget } from "@/components/dashboard/OrderStatusBreakdownWidget";
+import { QuoteConversionWidget } from "@/components/dashboard/QuoteConversionWidget";
+import { RevenueByLocationWidget } from "@/components/dashboard/RevenueByLocationWidget";
+import { format } from "date-fns";
 
 interface DashboardMetrics {
   total_revenue_this_month: string;
@@ -232,8 +238,25 @@ export default function DashboardPage() {
         </div>
       </FadeIn>
 
-      {/* Top Products */}
+      {/* Inventory Management Widgets */}
       <FadeIn delay={0.6}>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <StockHealthWidget />
+          <TransferSuggestionsWidget />
+        </div>
+      </FadeIn>
+
+      {/* Analytics Widgets */}
+      <FadeIn delay={0.65}>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <OrderStatusBreakdownWidget />
+          <QuoteConversionWidget />
+          <RevenueByLocationWidget />
+        </div>
+      </FadeIn>
+
+      {/* Top Products */}
+      <FadeIn delay={0.7}>
         <Card>
         <CardHeader>
           <CardTitle>Top 5 Products</CardTitle>
@@ -261,7 +284,7 @@ export default function DashboardPage() {
       </FadeIn>
 
       {/* Recent Activity */}
-      <FadeIn delay={0.7}>
+      <FadeIn delay={0.8}>
         <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
@@ -287,7 +310,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                  {new Date(item.timestamp).toLocaleDateString()}
+                  {format(new Date(item.timestamp), "MMM dd, yyyy")}
                 </div>
               </div>
             ))}

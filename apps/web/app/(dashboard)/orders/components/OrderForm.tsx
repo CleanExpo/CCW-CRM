@@ -33,7 +33,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { OrderLineItems, LineItem } from "./OrderLineItems";
+import { QuickCustomerAdd } from "./QuickCustomerAdd";
 import { Order, Customer } from "../types";
+import { Plus } from "lucide-react";
 
 const ORDER_STATUSES = [
   { value: "draft", label: "Draft" },
@@ -47,6 +49,7 @@ const ORDER_STATUSES = [
 
 const formSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
+  fulfillment_location: z.string().min(1, "Fulfillment location is required"),
   status: z.string().min(1, "Status is required"),
   notes: z.string().optional(),
 });
@@ -65,6 +68,8 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("brisbane");
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const { toast } = useToast();
   const isEdit = !!order;
 
@@ -72,6 +77,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     resolver: zodResolver(formSchema),
     defaultValues: {
       customer_id: "",
+      fulfillment_location: "brisbane",
       status: "draft",
       notes: "",
     },
@@ -79,22 +85,37 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
   // Load customers
   useEffect(() => {
-    async function loadCustomers() {
-      try {
-        const response = await apiClient.get<any>("/api/customers?page=1&page_size=100");
-        setCustomers(response.items || []);
-      } catch (error) {
-        console.error("Failed to load customers:", error);
-      }
-    }
     loadCustomers();
   }, []);
+
+  async function loadCustomers() {
+    try {
+      const response = await apiClient.get<any>("/api/customers?page=1&page_size=100");
+      setCustomers(response.items || []);
+    } catch (error) {
+      console.error("Failed to load customers:", error);
+    }
+  }
+
+  function handleCustomerCreated(customer: { id: string; company_name: string }) {
+    // Reload customers list
+    loadCustomers();
+    // Auto-select the newly created customer
+    form.setValue("customer_id", customer.id);
+    toast({
+      title: "Customer Added",
+      description: `${customer.company_name} has been selected for this order.`,
+    });
+  }
 
   // Reset form when order changes or dialog opens
   useEffect(() => {
     if (order) {
+      const location = (order as any).fulfillment_location || "brisbane";
+      setSelectedLocation(location);
       form.reset({
         customer_id: order.customer_id,
+        fulfillment_location: location,
         status: order.status,
         notes: order.notes || "",
       });
@@ -105,10 +126,13 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         unit_price: Number(item.unit_price),
         line_total: Number(item.line_total),
       }));
+
       setLineItems(items);
     } else {
+      setSelectedLocation("brisbane");
       form.reset({
         customer_id: "",
+        fulfillment_location: "brisbane",
         status: "draft",
         notes: "",
       });
@@ -145,6 +169,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     try {
       const payload = {
         customer_id: values.customer_id,
+        fulfillment_location: values.fulfillment_location,
         status: values.status,
         notes: values.notes || null,
         items: lineItems.map((item) => ({
@@ -198,13 +223,55 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Fulfillment Location Selection */}
+            <FormField
+              control={form.control}
+              name="fulfillment_location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fulfillment Location</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedLocation(value);
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="brisbane">Brisbane</SelectItem>
+                      <SelectItem value="sydney">Sydney</SelectItem>
+                      <SelectItem value="melbourne">Melbourne</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="customer_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Customer</FormLabel>
+                    <div className="flex items-center justify-between mb-2">
+                      <FormLabel>Customer</FormLabel>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setQuickAddOpen(true)}
+                        className="h-6 px-2"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Quick Add
+                      </Button>
+                    </div>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -272,6 +339,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
               items={lineItems}
               onChange={setLineItems}
               errors={lineItemErrors}
+              selectedLocation={selectedLocation}
             />
 
             {lineItems.length > 0 && (
@@ -309,6 +377,13 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
           </form>
         </Form>
       </DialogContent>
+
+      {/* Quick Customer Add Dialog */}
+      <QuickCustomerAdd
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        onCustomerCreated={handleCustomerCreated}
+      />
     </Dialog>
   );
 }
