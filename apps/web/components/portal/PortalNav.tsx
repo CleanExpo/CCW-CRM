@@ -10,6 +10,12 @@ export function PortalNav() {
     <div className="flex items-center gap-6">
       <nav className="flex items-center gap-6">
         <a
+          href="/portal/showroom"
+          className="text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          Showroom
+        </a>
+        <a
           href="/portal/walk-in"
           className="text-sm font-medium text-muted-foreground hover:text-foreground"
         >

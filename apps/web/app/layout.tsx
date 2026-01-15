@@ -9,6 +9,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "CCW ERP - Equipment Supplier",
   description: "Premium ERP system for equipment suppliers",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+  },
   other: {
     'grammarly': 'false',
     'grammarly-extension': 'off',

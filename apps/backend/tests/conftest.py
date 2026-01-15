@@ -1,10 +1,16 @@
 """Pytest configuration and fixtures."""
 
+import asyncio
 import os
+import sys
 from typing import AsyncGenerator
 
 # CRITICAL: Set environment variables BEFORE any imports
 os.environ["RATE_LIMIT_ENABLED"] = "false"
+
+# Windows asyncpg compatibility: ensure selector event loop in tests.
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 import pytest
 import pytest_asyncio
@@ -22,6 +28,14 @@ pytest_plugins = ["tests.fixtures.data"]
 def anyio_backend() -> str:
     """Use asyncio backend for async tests."""
     return "asyncio"
+
+
+@pytest.fixture(scope="session")
+def event_loop() -> asyncio.AbstractEventLoop:
+    """Create a single event loop for async tests to avoid cross-loop DB errors."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest_asyncio.fixture(scope="function")

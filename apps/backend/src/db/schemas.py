@@ -98,6 +98,8 @@ class CustomerBase(BaseModel):
     city: str | None = None
     state: str | None = None
     postcode: str | None = None
+    xero_contact_id: str | None = None
+    xero_synced_at: datetime | None = None
     is_active: bool = True
 
 
@@ -114,6 +116,8 @@ class CustomerUpdate(BaseModel):
     city: str | None = None
     state: str | None = None
     postcode: str | None = None
+    xero_contact_id: str | None = None
+    xero_synced_at: datetime | None = None
     is_active: bool | None = None
 
 
@@ -153,7 +157,7 @@ class OrderItem(OrderItemBase):
 class OrderBase(BaseModel):
     customer_id: UUID
     status: str = "draft"
-    fulfillment_location: str = "brisbane"  # brisbane, sydney, or melbourne
+    fulfillment_location: str | None = "brisbane"  # brisbane, sydney, or melbourne
     notes: str | None = None
 
 
@@ -276,3 +280,44 @@ class PaginatedResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+# Error response schemas
+class ErrorDetail(BaseModel):
+    """Detailed error information for validation errors."""
+    field: str | None = None
+    message: str
+    type: str | None = None
+
+
+class ErrorResponse(BaseModel):
+    """Standardized error response format."""
+    error: str  # Human-readable error message
+    detail: str | None = None
+    status_code: int
+    errors: list[ErrorDetail] | None = None
+
+
+# Background Job schemas
+class JobCreate(BaseModel):
+    """Schema for creating a new background job."""
+    job_type: str
+    input_data: dict | None = None
+
+
+class Job(BaseModel):
+    """Schema for background job response."""
+    id: UUID
+    job_type: str
+    status: str  # pending, processing, completed, failed, cancelled
+    input_data: dict | None = None
+    output_data: dict | None = None
+    progress: int  # 0-100
+    error_message: str | None = None
+    created_at: datetime
+    updated_at: datetime
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+
+    class Config:
+        from_attributes = True

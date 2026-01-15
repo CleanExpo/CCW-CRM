@@ -90,6 +90,8 @@ class Customer(Base):
     city = Column(String(100))
     state = Column(String(50))
     postcode = Column(String(20))
+    xero_contact_id = Column(String(255), nullable=True)
+    xero_synced_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

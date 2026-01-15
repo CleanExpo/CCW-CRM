@@ -5,6 +5,7 @@ Tests all CRUD operations, validation, pagination, and edge cases.
 """
 
 import pytest
+from uuid import uuid4
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,13 +86,14 @@ class TestCustomerCreate:
 
     async def test_create_customer_success(self, client: AsyncClient, auth_token: str):
         """Test creating a new customer."""
+        identifier = uuid4().hex[:6]
         # NOTE: Current API requires customer_number to be provided (not auto-generated)
         # TODO: Implement auto-generation like orders/quotes if needed
         new_customer = {
-            "customer_number": "CUST-TEST-001",
+            "customer_number": f"CUST-TEST-{identifier}",
             "company_name": "Test Company Pty Ltd",
             "contact_name": "John Smith",
-            "email": "john@testcompany.com.au",
+            "email": f"john+{identifier}@testcompany.com.au",
             "phone": "0412 345 678",
             "address": "123 Test Street",
             "city": "Brisbane",
@@ -121,13 +123,14 @@ class TestCustomerCreate:
 
     async def test_create_customer_auto_generates_number(self, client: AsyncClient, auth_token: str):
         """Test that customer number follows expected format."""
+        identifier = str(uuid4().int % 1000).zfill(3)
         # NOTE: Currently customer_number must be provided (not auto-generated)
         # Test name is historical - verifies format validation instead
         new_customer = {
-            "customer_number": "CUST-2026-002",
+            "customer_number": f"CUST-2026-{identifier}",
             "company_name": "Auto Number Test Pty Ltd",
             "contact_name": "Jane Doe",
-            "email": "jane@autonumbertest.com.au",
+            "email": f"jane+{identifier}@autonumbertest.com.au",
             "phone": "0413 456 789",
             "address": "456 Test Avenue",
             "city": "Sydney",
@@ -146,7 +149,7 @@ class TestCustomerCreate:
 
         # Verify customer number exists and follows format
         assert "customer_number" in data
-        assert data["customer_number"] == "CUST-2026-002"
+        assert data["customer_number"] == new_customer["customer_number"]
         # Format: CUST-YYYY-NNN where NNN is 3+ digits
         parts = data["customer_number"].split("-")
         assert len(parts) == 3
@@ -213,10 +216,11 @@ class TestCustomerCreate:
 
     async def test_create_customer_xero_integration_fields(self, client: AsyncClient, auth_token: str):
         """Test creating customer with Xero integration fields."""
+        identifier = uuid4().hex[:6]
         new_customer = {
-            "customer_number": "CUST-TEST-XERO-001",
+            "customer_number": f"CUST-TEST-XERO-{identifier}",
             "company_name": "Xero Integration Test",
-            "email": "xero@integrationtest.com.au",
+            "email": f"xero+{identifier}@integrationtest.com.au",
             "phone": "0416 789 012",
             "address": "999 Xero Street",
             "city": "Perth",
@@ -285,10 +289,11 @@ class TestCustomerDelete:
     async def test_delete_customer_success(self, client: AsyncClient, auth_token: str):
         """Test deleting a customer."""
         # First create a test customer
+        identifier = uuid4().hex[:6]
         new_customer = {
-            "customer_number": "CUST-TEST-DELETE-001",
+            "customer_number": f"CUST-TEST-DELETE-{identifier}",
             "company_name": "Customer to Delete Pty Ltd",
-            "email": "delete@testcustomer.com.au",
+            "email": f"delete+{identifier}@testcustomer.com.au",
             "phone": "0418 901 234",
             "address": "123 Delete Street",
             "city": "Adelaide",
@@ -312,13 +317,15 @@ class TestCustomerDelete:
 
         assert response.status_code == 204
 
-        # Verify it's deleted (should return 404)
+        # Verify it's deactivated (soft delete)
         get_response = await client.get(
             f"/api/customers/{customer_id}",
             cookies={"auth_token": auth_token},
         )
 
-        assert get_response.status_code == 404
+        assert get_response.status_code == 200
+        customer_data = get_response.json()
+        assert customer_data["is_active"] is False
 
     async def test_delete_customer_not_found(self, client: AsyncClient, auth_token: str):
         """Test deleting non-existent customer."""
