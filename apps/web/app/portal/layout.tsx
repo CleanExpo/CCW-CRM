@@ -1,4 +1,5 @@
 import { ChatWidget } from "@/components/chat/ChatWidget";
+import { PortalNav } from "@/components/portal/PortalNav";
 
 export default function PortalLayout({
   children,
@@ -13,32 +14,7 @@ export default function PortalLayout({
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold">CCW Equipment</h1>
           </div>
-          <nav className="flex items-center gap-4">
-            <a
-              href="/portal/walk-in"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Walk-In
-            </a>
-            <a
-              href="/portal/phone"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Phone Orders
-            </a>
-            <a
-              href="/portal/internet"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Internet
-            </a>
-            <a
-              href="/portal/service"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Service
-            </a>
-          </nav>
+          <PortalNav />
         </div>
       </header>
 

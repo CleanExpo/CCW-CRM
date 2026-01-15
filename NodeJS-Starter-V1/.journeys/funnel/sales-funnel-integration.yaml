@@ -1,0 +1,106 @@
+# Sales Funnel Integration - Layer 7
+# Connect marketing campaigns to product journeys
+
+version: "1.0"
+
+# ===== CAMPAIGN → JOURNEY MAPPING =====
+campaign_mapping:
+  description: "How marketing campaigns feed into product journeys"
+
+  template:
+    campaign_id: "campaign-identifier"
+    campaign_type: "paid_search"  # paid_search, social, email, content, referral
+    target_persona: "persona-id"
+    entry_journey: "journey-id"
+    entry_step: "step-1"
+    utm_parameters:
+      source: "google"
+      medium: "cpc"
+      campaign: "campaign-name"
+    landing_page: "/landing"
+    expected_conversion: 0.05
+    budget_monthly: 0
+
+# ===== FUNNEL STAGES =====
+funnel_stages:
+  top:
+    name: "Top of Funnel (TOFU)"
+    goal: "Awareness and interest"
+    content_types:
+      - blog_posts
+      - social_content
+      - videos
+      - infographics
+    aarrr_stage: "acquisition"
+    success_metric: "traffic"
+
+  middle:
+    name: "Middle of Funnel (MOFU)"
+    goal: "Consideration and evaluation"
+    content_types:
+      - case_studies
+      - webinars
+      - comparison_guides
+      - free_tools
+    aarrr_stage: "activation"
+    success_metric: "signups"
+
+  bottom:
+    name: "Bottom of Funnel (BOFU)"
+    goal: "Decision and purchase"
+    content_types:
+      - demos
+      - free_trials
+      - pricing_pages
+      - testimonials
+    aarrr_stage: "revenue"
+    success_metric: "conversions"
+
+# ===== HANDOFF POINTS =====
+handoffs:
+  marketing_to_product:
+    - from: "ad_click"
+      to: "landing_page"
+      data_passed:
+        - utm_parameters
+        - referrer
+        - persona_signals
+
+    - from: "email_click"
+      to: "feature_page"
+      data_passed:
+        - email_campaign_id
+        - subscriber_segment
+        - engagement_score
+
+  product_to_sales:
+    - trigger: "high_intent_signal"
+      signals:
+        - pricing_page_visit
+        - demo_request
+        - enterprise_features_view
+      handoff_data:
+        - user_profile
+        - feature_usage
+        - journey_progress
+
+# ===== ATTRIBUTION =====
+attribution:
+  model: "first_touch"  # first_touch, last_touch, linear, position_based
+  window_days: 30
+
+  touchpoints:
+    - type: "first_visit"
+      weight: 0.4
+    - type: "signup"
+      weight: 0.3
+    - type: "conversion"
+      weight: 0.3
+
+# ===== ALIGNMENT CHECKLIST =====
+alignment_checklist:
+  - "All campaigns have defined entry journeys"
+  - "UTM parameters are tracked through signup"
+  - "Persona signals inform product personalization"
+  - "High-intent users are flagged for sales"
+  - "Attribution data feeds back to marketing"

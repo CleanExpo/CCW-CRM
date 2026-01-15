@@ -6,12 +6,25 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ProductForm } from "./components/ProductForm";
 import { DeleteProductDialog } from "./components/DeleteProductDialog";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { BulkDeleteProductsDialog } from "./components/BulkDeleteProductsDialog";
+import { MultiLocationStockCell } from "@/components/inventory/MultiLocationStockCell";
+import { StockTransferDialog } from "@/app/(dashboard)/inventory/components/StockTransferDialog";
+import { Pencil, Trash2, Plus, ArrowLeftRight, Download } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { exportProductsToCSV } from "@/lib/utils/csv-export";
+
+interface StockByLocation {
+  location: string;
+  stock: number;
+  reserved: number;
+  available: number;
+}
 
 interface Product {
   id: string;
@@ -23,6 +36,7 @@ interface Product {
   stock: number;
   warehouse_location: string | null;
   is_active: boolean;
+  stock_by_location?: StockByLocation[];
 }
 
 interface PaginatedResponse {
@@ -37,20 +51,50 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   async function loadProducts() {
     setLoading(true);
     try {
       const data = await apiClient.get<PaginatedResponse>(
-        `/api/products?page=1&page_size=50${search ? `&search=${search}` : ""}`
+        `/api/products?page=${page}&page_size=${pageSize}${search ? `&search=${search}` : ""}`
       );
-      setProducts(data.items);
+
+      // Fetch multi-location stock data for each product
+      const productsWithStock = await Promise.all(
+        data.items.map(async (product) => {
+          try {
+            const stockResponse = await apiClient.get<{ locations: StockByLocation[] }>(
+              `/api/inventory/product/${product.id}/locations`
+            );
+            const stockData = stockResponse.locations || [];
+            return {
+              ...product,
+              stock_by_location: Array.isArray(stockData) ? stockData : [],
+            };
+          } catch (err) {
+            // Stock data unavailable for this product, return empty array
+            return {
+              ...product,
+              stock_by_location: [],
+            };
+          }
+        })
+      );
+
+      setProducts(productsWithStock);
       setTotal(data.total);
+      setTotalPages(data.total_pages);
     } catch (error: any) {
       console.error("Failed to load products:", error);
       toast({
@@ -66,9 +110,20 @@ export default function ProductsPage() {
   }
 
   useEffect(() => {
-    const debounce = setTimeout(loadProducts, 300);
+    const debounce = setTimeout(() => {
+      // Reset to page 1 when search changes
+      if (page !== 1) {
+        setPage(1);
+      } else {
+        loadProducts();
+      }
+    }, 300);
     return () => clearTimeout(debounce);
   }, [search]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [page, pageSize]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-AU", {
@@ -92,8 +147,42 @@ export default function ProductsPage() {
     setDeleteDialogOpen(true);
   };
 
+  const handleTransferStock = (product: Product) => {
+    setSelectedProduct(product);
+    setTransferDialogOpen(true);
+  };
+
+  const handleExport = () => {
+    exportProductsToCSV(products);
+    toast({
+      title: "Export Successful",
+      description: `Exported ${products.length} products to CSV`,
+    });
+  };
+
+  const handleToggleSelectProduct = (productId: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedProductIds.length === products.length) {
+      setSelectedProductIds([]);
+    } else {
+      setSelectedProductIds(products.map((p) => p.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setBulkDeleteDialogOpen(true);
+  };
+
   const handleSuccess = () => {
     loadProducts();
+    setSelectedProductIds([]);
   };
 
   return (
@@ -101,12 +190,31 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+          <p className="text-muted-foreground">
+            {selectedProductIds.length > 0
+              ? `${selectedProductIds.length} selected`
+              : "Manage your product catalog"}
+          </p>
         </div>
-        <Button onClick={handleAddProduct}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        <div className="flex gap-2">
+          {selectedProductIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Selected ({selectedProductIds.length})
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleExport} disabled={products.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button onClick={handleAddProduct}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -158,6 +266,28 @@ export default function ProductsPage() {
               keyExtractor={(product) => product.id}
               columns={[
                 {
+                  key: "select",
+                  label: (
+                    <Checkbox
+                      checked={
+                        products.length > 0 &&
+                        selectedProductIds.length === products.length
+                      }
+                      onCheckedChange={handleToggleSelectAll}
+                      aria-label="Select all products"
+                    />
+                  ),
+                  className: "w-12",
+                  render: (product) => (
+                    <Checkbox
+                      checked={selectedProductIds.includes(product.id)}
+                      onCheckedChange={() => handleToggleSelectProduct(product.id)}
+                      aria-label={`Select ${product.name}`}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ),
+                },
+                {
                   key: "sku",
                   label: "SKU",
                   className: "font-mono text-sm",
@@ -185,11 +315,18 @@ export default function ProductsPage() {
                 },
                 {
                   key: "stock",
-                  label: "Stock",
+                  label: "Stock by Location",
                   render: (product) => (
-                    <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
-                      {product.stock}
-                    </span>
+                    product.stock_by_location && product.stock_by_location.length > 0 ? (
+                      <MultiLocationStockCell
+                        productId={product.id}
+                        locations={product.stock_by_location}
+                      />
+                    ) : (
+                      <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
+                        {product.stock}
+                      </span>
+                    )
                   ),
                 },
                 {
@@ -219,8 +356,20 @@ export default function ProductsPage() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleTransferStock(product);
+                        }}
+                        title="Transfer Stock"
+                      >
+                        <ArrowLeftRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleEditProduct(product);
                         }}
+                        title="Edit Product"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -231,6 +380,7 @@ export default function ProductsPage() {
                           e.stopPropagation();
                           handleDeleteProduct(product);
                         }}
+                        title="Delete Product"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -238,6 +388,20 @@ export default function ProductsPage() {
                   ),
                 },
               ]}
+            />
+          )}
+
+          {!loading && products.length > 0 && (
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={total}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1); // Reset to first page when changing page size
+              }}
             />
           )}
         </CardContent>
@@ -256,6 +420,24 @@ export default function ProductsPage() {
         onOpenChange={setDeleteDialogOpen}
         onSuccess={handleSuccess}
       />
+
+      <BulkDeleteProductsDialog
+        productIds={selectedProductIds}
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        onSuccess={handleSuccess}
+      />
+
+      {selectedProduct && (
+        <StockTransferDialog
+          open={transferDialogOpen}
+          onOpenChange={setTransferDialogOpen}
+          productId={selectedProduct.id}
+          productName={selectedProduct.name}
+          productSku={selectedProduct.sku}
+          onSuccess={handleSuccess}
+        />
+      )}
     </div>
   );
 }

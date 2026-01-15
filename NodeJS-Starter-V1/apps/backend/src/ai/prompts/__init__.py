@@ -1,0 +1,13 @@
+"""Prompt templates for AI agents."""
+
+from .system_prompts import (
+    CHAT_ASSISTANT_SYSTEM_PROMPT,
+    CONTENT_GENERATOR_SYSTEM_PROMPT,
+    INSIGHTS_AGENT_SYSTEM_PROMPT,
+)
+
+__all__ = [
+    "CHAT_ASSISTANT_SYSTEM_PROMPT",
+    "INSIGHTS_AGENT_SYSTEM_PROMPT",
+    "CONTENT_GENERATOR_SYSTEM_PROMPT",
+]

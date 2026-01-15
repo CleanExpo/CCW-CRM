@@ -1,0 +1,164 @@
+# Competitor Analysis Framework
+# Learn from top-performing websites in your niche
+
+version: "1.0"
+principle: "Study what's already tested and working. Don't reinvent."
+
+analysis_scope:
+  who_to_analyze:
+    description: "Top companies nationwide, not just local"
+    criteria:
+      - "Dominant in search rankings"
+      - "High review counts and ratings"
+      - "Professional, modern website"
+      - "Clear market leader positioning"
+    quantity: "5-10 competitors minimum"
+
+  what_to_analyze:
+    pages:
+      - homepage
+      - about
+      - services
+      - contact
+      - pricing (if applicable)
+      - case_studies (if applicable)
+    elements:
+      - section_order
+      - section_content
+      - cta_placement
+      - trust_signals
+      - unique_features
+
+page_analysis_template:
+  competitor_name: ""
+  competitor_url: ""
+  analysis_date: ""
+
+  homepage:
+    hero_section:
+      headline_type: "benefit|problem|identity|question"
+      headline_text: ""
+      subhead_text: ""
+      cta_text: ""
+      image_type: "real_work|stock|illustration|video"
+      trust_badges: []
+
+    section_order:
+      - section_name: ""
+        section_type: ""
+        position: 1
+        notes: ""
+
+    key_messages: []
+    trust_signals: []
+    ctas_count: 0
+    form_placement: ""
+
+  about_page:
+    story_type: "founder|company|values|mission"
+    team_shown: true/false
+    credentials_displayed: []
+    unique_angle: ""
+
+  services_page:
+    structure: "single_page|multiple_pages|hybrid"
+    service_presentation: "cards|list|detailed"
+    pricing_shown: true/false
+    process_explained: true/false
+
+  contact_page:
+    form_fields: []
+    phone_prominent: true/false
+    hours_shown: true/false
+    map_included: true/false
+
+section_types:
+  hero:
+    description: "First impression section"
+    analyze:
+      - "Headline approach (benefit/problem/identity)"
+      - "CTA type and placement"
+      - "Visual treatment"
+
+  problem_agitation:
+    description: "Highlighting customer pain"
+    analyze:
+      - "How they describe the problem"
+      - "Emotional language used"
+      - "Symptoms mentioned"
+
+  solution_value:
+    description: "Benefits and value props"
+    analyze:
+      - "Number of value props"
+      - "Format (icons, cards, list)"
+      - "Benefit vs feature focus"
+
+  social_proof:
+    description: "Trust and credibility"
+    analyze:
+      - "Testimonial format (text/video)"
+      - "Review count displayed"
+      - "Logos or badges"
+
+  process:
+    description: "How it works"
+    analyze:
+      - "Number of steps"
+      - "Customer-focused vs company-focused"
+      - "Visual treatment"
+
+  pricing:
+    description: "Cost communication"
+    analyze:
+      - "Shown or hidden"
+      - "Package structure"
+      - "Value justification"
+
+  faq:
+    description: "Objection handling"
+    analyze:
+      - "Questions addressed"
+      - "Tone (formal/casual)"
+      - "Length of answers"
+
+  cta_sections:
+    description: "Conversion points"
+    analyze:
+      - "Placement frequency"
+      - "CTA text variations"
+      - "Urgency tactics"
+
+pattern_identification:
+  common_patterns:
+    description: "What 3+ competitors do the same"
+    significance: "Industry standard - consider adopting"
+
+  differentiators:
+    description: "What only 1-2 competitors do"
+    significance: "Potential unique positioning"
+
+  gaps:
+    description: "What no competitor addresses"
+    significance: "Opportunity for differentiation"
+
+output_format:
+  summary_table:
+    columns:
+      - competitor
+      - hero_approach
+      - section_count
+      - trust_signals
+      - unique_element
+
+  pattern_report:
+    sections:
+      - "Common approaches (do this)"
+      - "Unique approaches (consider this)"
+      - "Missing elements (opportunity)"
+
+  recommendations:
+    sections:
+      - "Must include (industry standard)"
+      - "Should include (differentiator)"
+      - "Could include (nice-to-have)"

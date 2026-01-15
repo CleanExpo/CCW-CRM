@@ -1,0 +1,221 @@
+# Anti-Patterns in Copywriting
+# What to avoid in your copy
+
+version: "1.0"
+principle: "Knowing what NOT to do is as important as knowing what to do"
+
+# CRITICAL INTEGRITY REQUIREMENTS
+# These are non-negotiable - see validation/integrity.yaml for full framework
+
+integrity_mandates:
+  uniqueness:
+    requirement: "100% ORIGINAL"
+    rule: "Every sentence must be freshly written"
+    never:
+      - "Copy from competitors"
+      - "Use template phrases"
+      - "Paraphrase sources too closely"
+      - "Recycle generic industry language"
+    verify: "Run plagiarism check before publish"
+
+  non_plagiarism:
+    requirement: "ZERO TOLERANCE"
+    includes:
+      - "Direct copying (obvious)"
+      - "Close paraphrasing (sneaky)"
+      - "Structure copying (same flow)"
+      - "Idea theft without transformation"
+    consequence: "Full rewrite required"
+
+  verifiability:
+    requirement: "100% PROVABLE"
+    rule: "If you can't prove it, delete it"
+    every_claim_needs:
+      - "Evidence documented"
+      - "Source traceable"
+      - "Date verified"
+      - "Location recorded"
+
+content_anti_patterns:
+  unverified_claims:
+    description: "Making claims you can't prove"
+    examples:
+      bad:
+        - "We're the best plumbers in Brisbane"
+        - "100% satisfaction guaranteed"
+        - "Thousands of happy customers"
+      better:
+        - "4.9 stars from 247 Google reviews"
+        - "We'll make it right or refund your money"
+        - "Serving Brisbane since 2008"
+    rule: "Every claim needs evidence"
+
+  feature_dumping:
+    description: "Listing features without benefits"
+    examples:
+      bad:
+        - "Licensed and insured"
+        - "Same-day service available"
+        - "Free quotes"
+      better:
+        - "Licensed and insured, so you're protected if anything goes wrong"
+        - "Same-day service because that leak won't wait until Monday"
+        - "Free quotes so you know exactly what you're paying before we start"
+    rule: "Feature + Because + Benefit"
+
+  self_focused_copy:
+    description: "Talking about yourself instead of the customer"
+    examples:
+      bad:
+        - "We are proud to offer..."
+        - "Our team has 50 years combined experience"
+        - "We utilize the latest technology"
+      better:
+        - "You get..."
+        - "Your problem fixed right because our team has 50 years experience"
+        - "Faster diagnosis means you're back to normal sooner"
+    rule: "Make them the hero, not you"
+
+  vague_language:
+    description: "Generic statements that could apply to anyone"
+    examples:
+      bad:
+        - "Quality service"
+        - "Professional team"
+        - "Competitive prices"
+      better:
+        - "Fixed price quotes - the price we say is the price you pay"
+        - "Background-checked technicians who explain what they're doing"
+        - "$99 call-out fee includes first 30 minutes of work"
+    rule: "Be specific or don't say it"
+
+  artificial_urgency:
+    description: "Fake scarcity or pressure tactics"
+    examples:
+      bad:
+        - "Limited time offer!"
+        - "Only 3 spots left!"
+        - "Act now or miss out!"
+      better:
+        - (Only use urgency if it's real)
+        - "Emergency? We have a technician available today"
+        - "Book this week for weekend availability"
+    rule: "Fake urgency destroys trust"
+
+structure_anti_patterns:
+  wall_of_text:
+    description: "Long paragraphs with no breaks"
+    problem: "People don't read, they scan"
+    fix:
+      - "2-3 sentences per paragraph max"
+      - "Use subheadings every 2-3 paragraphs"
+      - "Use bullet points for lists"
+
+  buried_cta:
+    description: "Only one CTA at the bottom"
+    problem: "People decide at different times"
+    fix:
+      - "CTA in hero section"
+      - "CTA after social proof"
+      - "CTA at the end"
+      - "Sticky phone button on mobile"
+
+  missing_hierarchy:
+    description: "All text looks the same"
+    problem: "No visual guidance for scanning"
+    fix:
+      - "Clear heading levels (H1, H2, H3)"
+      - "Bold key phrases"
+      - "Icons for visual breaks"
+
+  too_many_choices:
+    description: "Multiple CTAs competing"
+    problem: "Confusion leads to no action"
+    fix:
+      - "One primary CTA per section"
+      - "Secondary CTAs clearly de-emphasized"
+      - "Maximum 2 options at any point"
+
+tone_anti_patterns:
+  corporate_speak:
+    examples:
+      - "We leverage best-in-class solutions"
+      - "Our innovative approach optimizes outcomes"
+    sounds_like: "A press release"
+    should_sound_like: "A conversation"
+
+  desperate:
+    examples:
+      - "Please give us a call!"
+      - "We'd really appreciate your business!"
+    problem: "Undermines confidence"
+    better: "Confident and helpful"
+
+  arrogant:
+    examples:
+      - "Unlike our competitors..."
+      - "We're simply the best"
+    problem: "Puts customers off"
+    better: "Show, don't tell"
+
+  robotic:
+    examples:
+      - "Thank you for your inquiry regarding our services"
+      - "Please do not hesitate to contact us"
+    problem: "Sounds automated"
+    better: "Write like a human talks"
+
+common_mistakes:
+  about_page:
+    mistake: "Starting with founding year and company history"
+    better: "Start with what you do for customers"
+
+  services_page:
+    mistake: "Listing services without explaining value"
+    better: "Each service includes benefit and process"
+
+  testimonials:
+    mistake: "Fake-sounding or overly polished"
+    better: "Real quotes with some imperfection"
+
+  contact_page:
+    mistake: "Just a form with no context"
+    better: "Tell them what happens after they submit"
+
+  faq:
+    mistake: "Defensive or lawyer-like answers"
+    better: "Helpful, direct, honest answers"
+
+pre_publish_checklist:
+  # INTEGRITY FIRST (Non-negotiable)
+  integrity:
+    - "[ ] Plagiarism check passed"
+    - "[ ] Every claim has documented evidence"
+    - "[ ] No copied competitor language"
+    - "[ ] All statistics verified and sourced"
+    - "[ ] Structure is original (not mimicked)"
+    - "[ ] Evidence file updated with claim sources"
+
+  content:
+    - "[ ] Every claim is verifiable"
+    - "[ ] Customer language INSPIRED copy (not copied)"
+    - "[ ] Benefits explained, not just features"
+    - "[ ] Focused on customer, not company"
+
+  tone:
+    - "[ ] No banned words/phrases"
+    - "[ ] Would say this out loud"
+    - "[ ] No AI-sounding language"
+    - "[ ] Consistent voice throughout"
+
+  structure:
+    - "[ ] Short paragraphs (2-3 sentences)"
+    - "[ ] Clear headings hierarchy"
+    - "[ ] CTAs in multiple places"
+    - "[ ] Easy to scan"
+
+  final_verification:
+    - "[ ] Read entire page aloud"
+    - "[ ] Every number/statistic traceable"
+    - "[ ] Would stake reputation on every word"
+    - "[ ] Legal review if needed"

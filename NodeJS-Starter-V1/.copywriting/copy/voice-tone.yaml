@@ -1,0 +1,155 @@
+# Voice and Tone Guidelines
+# How to write copy that sounds human
+
+version: "1.0"
+principle: "Write like you talk. Simple beats clever."
+
+voice_characteristics:
+  conversational:
+    description: "Like talking to a friend who happens to be an expert"
+    examples:
+      good: "Here's the thing about leaky taps..."
+      bad: "Leaking faucets can present numerous challenges..."
+
+  clear:
+    description: "Simple words, short sentences, obvious meaning"
+    examples:
+      good: "We fix it right the first time."
+      bad: "Our commitment to quality ensures optimal resolution of your plumbing issues."
+
+  confident:
+    description: "Know your stuff, say it directly"
+    examples:
+      good: "We'll be there in 2 hours."
+      bad: "We strive to potentially arrive within a reasonable timeframe."
+
+  helpful:
+    description: "Focused on their problem, not your greatness"
+    examples:
+      good: "That weird noise means your water heater needs attention."
+      bad: "Our award-winning technicians utilize cutting-edge diagnostics."
+
+  human:
+    description: "Real people, real situations, real language"
+    examples:
+      good: "Nobody wants to deal with this on a Sunday morning."
+      bad: "We understand the inconvenience of unexpected plumbing issues."
+
+writing_rules:
+  sentences:
+    max_length: "15-20 words ideal"
+    structure: "One idea per sentence"
+    tip: "If you need a comma, consider a new sentence"
+
+  paragraphs:
+    max_length: "3-4 sentences"
+    web_rule: "1-2 sentences often better"
+    tip: "White space is your friend"
+
+  words:
+    prefer: "Short, common words"
+    avoid: "Industry jargon, formal language"
+    tip: "If your grandmother wouldn't understand it, simplify"
+
+  contractions:
+    use: "We'll, you're, don't, can't, it's"
+    why: "Sounds more natural and approachable"
+
+word_swaps:
+  formal_to_casual:
+    utilize: "use"
+    purchase: "buy"
+    commence: "start"
+    terminate: "end"
+    facilitate: "help"
+    endeavor: "try"
+    subsequently: "then"
+    regarding: "about"
+    numerous: "many"
+    sufficient: "enough"
+    obtain: "get"
+    require: "need"
+    assist: "help"
+    inquire: "ask"
+    provide: "give"
+    ensure: "make sure"
+    prior_to: "before"
+    in_order_to: "to"
+
+banned_phrases:
+  marketing_speak:
+    - "leverage"
+    - "synergy"
+    - "optimize"
+    - "solutions"
+    - "cutting-edge"
+    - "best-in-class"
+    - "world-class"
+    - "industry-leading"
+    - "innovative"
+    - "revolutionary"
+
+  empty_claims:
+    - "We pride ourselves on..."
+    - "We are committed to..."
+    - "Our goal is to..."
+    - "We strive to..."
+    - "At [Company], we believe..."
+    - "Quality is our top priority"
+    - "Customer satisfaction is #1"
+
+  corporate_filler:
+    - "In today's fast-paced world"
+    - "At the end of the day"
+    - "Going forward"
+    - "Moving the needle"
+    - "Low-hanging fruit"
+    - "Think outside the box"
+
+  ai_tells:
+    - "I'd be happy to..."
+    - "Absolutely!"
+    - "Great question!"
+    - "Let me explain..."
+    - "It's important to note that..."
+    - "In conclusion..."
+
+tone_by_section:
+  hero:
+    tone: "Confident, direct, promising"
+    energy: "High"
+    example: "No more waiting around. We show up when we say we will."
+
+  problem:
+    tone: "Empathetic, understanding"
+    energy: "Medium"
+    example: "We know how frustrating it is when..."
+
+  solution:
+    tone: "Helpful, reassuring"
+    energy: "Medium-high"
+    example: "Here's how we make it easy..."
+
+  testimonials:
+    tone: "Authentic (their voice, not yours)"
+    energy: "Varies by customer"
+    example: "Let them speak in their own words"
+
+  faq:
+    tone: "Helpful, direct, honest"
+    energy: "Low-medium"
+    example: "Straight answers. No runaround."
+
+  cta:
+    tone: "Clear, action-oriented"
+    energy: "Medium-high"
+    example: "Book now. We'll take it from here."
+
+self_check:
+  before_publishing:
+    - "Would I say this out loud?"
+    - "Does my grandmother understand it?"
+    - "Did I use customer language?"
+    - "Are there any banned phrases?"
+    - "Is every claim verifiable?"
+    - "Does it sound like a human wrote it?"
