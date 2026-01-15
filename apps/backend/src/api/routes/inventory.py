@@ -29,6 +29,20 @@ router = APIRouter(prefix="/api/inventory", tags=["Multi-Store Inventory"])
 
 
 # ============================================
+# Request/Response Models
+# ============================================
+
+
+class InventoryListResponse(BaseModel):
+    """List of inventory items with pagination."""
+
+    items: list[dict]
+    total: int
+    page: int
+    page_size: int
+
+
+# ============================================
 # Root Endpoints
 # ============================================
 
@@ -109,20 +123,6 @@ async def list_all_inventory(
         "page": page,
         "page_size": page_size,
     }
-
-
-# ============================================
-# Request/Response Models
-# ============================================
-
-
-class InventoryListResponse(BaseModel):
-    """List of inventory items with pagination."""
-
-    items: list[dict]
-    total: int
-    page: int
-    page_size: int
 
 
 class StockByLocationResponse(BaseModel):
