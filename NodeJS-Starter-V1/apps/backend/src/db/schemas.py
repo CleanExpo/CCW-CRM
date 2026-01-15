@@ -101,8 +101,23 @@ class CustomerBase(BaseModel):
     is_active: bool = True
 
 
-class CustomerCreate(CustomerBase):
-    pass
+class CustomerCreate(BaseModel):
+    """Customer creation schema - customer_number is auto-generated."""
+    customer_number: str | None = None  # Auto-generated if not provided
+    company_name: str | None = Field(None, max_length=255)  # Optional, will use name if provided
+    name: str | None = Field(None, max_length=255)  # Alias for company_name
+    contact_name: str | None = Field(None, max_length=255)
+    email: EmailStr | None = None
+    phone: str | None = Field(None, max_length=50)
+    address: str | None = Field(None, max_length=500)
+    city: str | None = Field(None, max_length=100)
+    state: str | None = Field(None, max_length=100)
+    postcode: str | None = Field(None, max_length=20)
+    country: str | None = Field(None, max_length=100)  # Additional field for international customers
+    postal_code: str | None = Field(None, max_length=20)  # Alias for postcode
+    customer_type: str | None = Field(None, max_length=50)  # retail, wholesale, etc.
+    credit_limit: Decimal | None = None  # Credit limit for the customer
+    is_active: bool = True
 
 
 class CustomerUpdate(BaseModel):
@@ -137,7 +152,8 @@ class OrderItemBase(BaseModel):
 
 class OrderItemCreate(BaseModel):
     product_id: UUID
-    quantity: int
+    quantity: int = Field(gt=0, le=100000, description="Quantity must be between 1 and 100,000")
+    unit_price: Decimal | None = None  # Optional, will be fetched from product if not provided
 
 
 class OrderItem(OrderItemBase):

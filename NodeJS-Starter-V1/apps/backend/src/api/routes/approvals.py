@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
-from src.db.models import Alert, AlertStatus, User
+from src.db.models import User  # Alert, AlertStatus not yet implemented
 from src.services.alert_manager import get_alert_manager
 
 logger = logging.getLogger(__name__)

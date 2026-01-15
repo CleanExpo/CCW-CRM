@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_db
-from src.db.erp_models import Product as ProductModel
+from src.db.demo_models import Product as ProductModel
 from src.db.schemas import PaginatedResponse, Product, ProductCreate, ProductUpdate
 
 router = APIRouter(prefix="/api/products", tags=["products"])
@@ -16,18 +16,21 @@ router = APIRouter(prefix="/api/products", tags=["products"])
 async def list_products(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    search: str | None = None,
-    category: str | None = None,
-    is_active: bool | None = None,
+    search: str | None = Query(None, max_length=200),
+    category: str | None = Query(None, max_length=100),
+    is_active: bool | None = Query(True),  # Default to active products only
     db: AsyncSession = Depends(get_db),
 ):
     """List products with pagination and filters."""
     # Build query
     query = select(ProductModel)
 
-    # Apply filters
+    # Apply filters with input validation
     if search:
-        search_filter = f"%{search}%"
+        # Sanitize search input - SQLAlchemy parameterization prevents SQL injection
+        # but we add length limits for performance
+        search_term = search.strip()[:200]  # Limit length
+        search_filter = f"%{search_term}%"
         query = query.where(
             (ProductModel.name.ilike(search_filter)) |
             (ProductModel.sku.ilike(search_filter)) |
@@ -37,6 +40,7 @@ async def list_products(
     if category:
         query = query.where(ProductModel.category == category)
 
+    # Filter by is_active (defaults to True to exclude soft-deleted items)
     if is_active is not None:
         query = query.where(ProductModel.is_active == is_active)
 
