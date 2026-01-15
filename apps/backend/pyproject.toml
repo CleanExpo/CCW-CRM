@@ -16,6 +16,9 @@ dependencies = [
     "pgvector>=0.3.0",  # Vector similarity search
     "alembic>=1.13.0",  # Database migrations
 
+    # Caching
+    "redis>=5.0.0",  # Redis async client for caching
+
     # Authentication
     "python-jose[cryptography]>=3.3.0",  # JWT tokens
     "passlib[bcrypt]>=1.7.0",  # Password hashing

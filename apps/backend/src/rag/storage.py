@@ -3,6 +3,8 @@
 from datetime import datetime
 from typing import Any
 
+from supabase import Client
+
 from src.memory.embeddings import get_embedding_provider
 from src.rag.models import DocumentChunk, DocumentSource, ProcessingStatus
 from src.state.supabase import SupabaseStateStore
@@ -16,8 +18,18 @@ class RAGStore:
 
     def __init__(self) -> None:
         self.supabase = SupabaseStateStore()
-        self.client = self.supabase.client
+        self._client: Client | None = None
         self.embedding_provider = None
+
+    def _get_client(self) -> Client:
+        """Return configured Supabase client or raise with a clear message."""
+        if self._client is None:
+            if not self.supabase.is_configured:
+                raise RuntimeError(
+                    "Supabase credentials not configured for RAG storage."
+                )
+            self._client = self.supabase.client
+        return self._client
 
     async def initialize(self) -> None:
         """Initialize store and embedding provider."""
@@ -37,6 +49,7 @@ class RAGStore:
         **kwargs: Any,
     ) -> DocumentSource:
         """Create a document source record."""
+        client = self._get_client()
         data = {
             "project_id": project_id,
             "source_type": source_type,
@@ -46,7 +59,7 @@ class RAGStore:
             **kwargs,
         }
 
-        result = self.client.table("document_sources").insert(data).execute()
+        result = client.table("document_sources").insert(data).execute()
 
         if not result.data:
             raise Exception("Failed to create document source")
@@ -62,13 +75,14 @@ class RAGStore:
         error_message: str | None = None,
     ) -> None:
         """Update source processing status."""
+        client = self._get_client()
         data = {"status": status.value, "updated_at": datetime.now().isoformat()}
         if error_message:
             data["error_message"] = error_message
         if status == ProcessingStatus.COMPLETED:
             data["processed_at"] = datetime.now().isoformat()
 
-        self.client.table("document_sources").update(data).eq("id", source_id).execute()
+        client.table("document_sources").update(data).eq("id", source_id).execute()
 
     # Document Chunks
 
@@ -86,6 +100,7 @@ class RAGStore:
         generate_embedding: bool = True,
     ) -> DocumentChunk:
         """Create a document chunk."""
+        client = self._get_client()
         # Generate embedding
         embedding = None
         if generate_embedding and self.embedding_provider:
@@ -105,7 +120,7 @@ class RAGStore:
             "token_count": len(content) // 4,
         }
 
-        result = self.client.table("document_chunks").insert(data).execute()
+        result = client.table("document_chunks").insert(data).execute()
 
         if not result.data:
             raise Exception("Failed to create document chunk")
@@ -125,6 +140,7 @@ class RAGStore:
         chunks: list[dict[str, Any]],
     ) -> list[DocumentChunk]:
         """Batch create chunks for efficiency."""
+        client = self._get_client()
         # Generate embeddings
         if self.embedding_provider:
             for chunk in chunks:
@@ -139,7 +155,7 @@ class RAGStore:
             chunk.pop("generate_embedding", None)
 
         # Batch insert
-        result = self.client.table("document_chunks").insert(chunks).execute()
+        result = client.table("document_chunks").insert(chunks).execute()
 
         if not result.data:
             raise Exception("Failed to batch create chunks")
@@ -151,8 +167,9 @@ class RAGStore:
 
     async def get_chunk(self, chunk_id: str) -> DocumentChunk | None:
         """Get a chunk by ID."""
+        client = self._get_client()
         result = (
-            self.client.table("document_chunks")
+            client.table("document_chunks")
             .select("*")
             .eq("id", chunk_id)
             .execute()
@@ -174,6 +191,7 @@ class RAGStore:
         threshold: float = 0.5,
     ) -> list[dict[str, Any]]:
         """Hybrid vector + keyword search."""
+        client = self._get_client()
         if not self.embedding_provider:
             raise Exception("Embedding provider not initialized")
 
@@ -181,7 +199,7 @@ class RAGStore:
         query_embedding = await self.embedding_provider.get_embedding(query)
 
         # Call hybrid search function
-        result = self.client.rpc(
+        result = client.rpc(
             "hybrid_search",
             {
                 "query_text": query,
@@ -204,6 +222,7 @@ class RAGStore:
         threshold: float = 0.7,
     ) -> list[dict[str, Any]]:
         """Vector similarity search only."""
+        client = self._get_client()
         if not self.embedding_provider:
             raise Exception("Embedding provider not initialized")
 
@@ -213,7 +232,7 @@ class RAGStore:
         # Vector search using cosine similarity
         # Note: For full vector search, use hybrid_search or custom RPC function
         result = (
-            self.client.table("document_chunks")
+            client.table("document_chunks")
             .select("id, source_id, content, metadata, heading_hierarchy, summary")
             .match({"project_id": project_id})
             .order("embedding", desc=False)

@@ -50,6 +50,13 @@ class Settings(BaseSettings):
         description="PostgreSQL connection URL"
     )
 
+    # Redis Cache
+    redis_host: str = Field(default="localhost", description="Redis host")
+    redis_port: int = Field(default=6379, description="Redis port")
+    redis_db: int = Field(default=0, description="Redis database number")
+    cache_enabled: bool = Field(default=True, description="Enable Redis caching")
+    cache_ttl: int = Field(default=300, description="Default cache TTL in seconds (5 minutes)")
+
     # JWT Authentication
     jwt_secret_key: str = Field(
         default="your-secret-key-change-in-production",

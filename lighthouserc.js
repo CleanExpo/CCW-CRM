@@ -23,15 +23,15 @@ module.exports = {
   ci: {
     collect: {
       // Build the application before running Lighthouse
-      startServerCommand: 'pnpm run build && pnpm run start',
+      startServerCommand: 'pnpm -C apps/web build && pnpm -C apps/web start -- -p 3005',
       startServerReadyPattern: 'Ready',
       startServerReadyTimeout: 30000,
 
       // URLs to audit (relative to the server)
       url: [
-        'http://localhost:3000/',
-        'http://localhost:3000/dashboard',
-        'http://localhost:3000/prd/generate',
+        'http://localhost:3005/',
+        'http://localhost:3005/dashboard',
+        'http://localhost:3005/prd/generate',
       ],
 
       // Number of runs per URL (more runs = more reliable averages)

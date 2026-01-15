@@ -4,13 +4,24 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy.exc import DatabaseError, IntegrityError, OperationalError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.config import get_settings
 from src.utils import get_logger, setup_logging
 
+from .exceptions import (
+    database_error_handler,
+    generic_exception_handler,
+    http_exception_handler,
+    integrity_error_handler,
+    operational_error_handler,
+    validation_exception_handler,
+)
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
@@ -25,6 +36,7 @@ from .routes import (
     demo_lists,
     health,
     inventory,
+    jobs,
     orders,
     portal_auth,
     portal_forms,
@@ -102,6 +114,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Don't fail startup, but log the error
         pass
 
+    # Initialize Redis cache connection
+    if settings.cache_enabled:
+        from src.cache.redis_client import get_cache
+
+        cache = get_cache()
+        try:
+            await cache.connect()
+            logger.info(
+                "Redis cache connected",
+                host=settings.redis_host,
+                port=settings.redis_port,
+                db=settings.redis_db,
+            )
+        except Exception as cache_error:
+            logger.warning("Redis connection failed, caching disabled", error=str(cache_error))
+
     yield
 
     # Shutdown: Stop health monitor
@@ -115,6 +143,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.error("Error stopping health monitor", error=str(e))
 
+    # Shutdown: Disconnect Redis cache
+    if settings.cache_enabled:
+        try:
+            from src.cache.redis_client import get_cache
+
+            cache = get_cache()
+            await cache.disconnect()
+            logger.info("Redis cache disconnected")
+        except Exception as cache_error:
+            logger.error("Error disconnecting Redis cache", error=str(cache_error))
+
 
 app = FastAPI(
     title=settings.project_name,
@@ -126,6 +165,15 @@ app = FastAPI(
 # Rate limiter state (for SlowAPI)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Global exception handlers (order matters - most specific first, generic last)
+# These ensure ALL errors return JSON, preventing HTML error pages that cause JSONDecodeError
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(IntegrityError, integrity_error_handler)
+app.add_exception_handler(OperationalError, operational_error_handler)
+app.add_exception_handler(DatabaseError, database_error_handler)
+app.add_exception_handler(Exception, generic_exception_handler)  # MUST BE LAST - catch-all
 
 # CORS middleware
 app.add_middleware(
@@ -152,6 +200,8 @@ app.include_router(products.router, tags=["Products"])
 app.include_router(customers.router, tags=["Customers"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+# Background jobs router
+app.include_router(jobs.router, tags=["Background Jobs"])
 # Multi-store inventory router
 app.include_router(inventory.router, tags=["Multi-Store Inventory"])
 # Service requests router

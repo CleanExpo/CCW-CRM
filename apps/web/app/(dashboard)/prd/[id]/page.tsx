@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PRDDetailView } from "@/components/prd/prd-detail-view";
 import { apiClient } from "@/lib/api/client";
+import type { PRDDetail } from "@/types/prd";
 
 export const metadata: Metadata = {
   title: "PRD Details | CCW ERP",
@@ -10,8 +11,8 @@ export const metadata: Metadata = {
 
 async function getPRD(id: string) {
   try {
-    const response = await apiClient.get(`/api/prd/${id}`);
-    return response.data;
+    const response = await apiClient.get<PRDDetail>(`/api/prd/${id}`);
+    return response;
   } catch (error) {
     return null;
   }

@@ -193,6 +193,34 @@ export interface CompletePRD {
   completed_at?: string;
 }
 
+export interface PRDDetail {
+  id: string;
+  requirements: string;
+  executive_summary?: string | null;
+  problem_statement?: string | null;
+  prd_analysis?: Record<string, unknown> | null;
+  feature_decomposition?: Record<string, unknown> | null;
+  technical_spec?: Record<string, unknown> | null;
+  test_plan?: Record<string, unknown> | null;
+  roadmap?: Record<string, unknown> | null;
+  documents_generated?: string[] | null;
+  total_user_stories: number;
+  total_api_endpoints: number;
+  total_test_scenarios: number;
+  total_sprints: number;
+  estimated_duration_weeks: number;
+  status: string;
+  error_message?: string | null;
+  created_at: string;
+  completed_at?: string | null;
+}
+
+export interface PRDGenerateResponse {
+  id: string;
+  status: string;
+  message: string;
+}
+
 // ============================================================================
 // Agent Run Types
 // ============================================================================

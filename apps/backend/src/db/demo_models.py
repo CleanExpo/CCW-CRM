@@ -21,7 +21,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSON, UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from .models import Base  # Use existing Base class
@@ -61,6 +61,16 @@ class ProductCategory(str, enum.Enum):
     ELECTRICAL = "ELECTRICAL"
     PLUMBING = "PLUMBING"
     ACCESSORIES = "ACCESSORIES"
+
+
+class JobStatus(str, enum.Enum):
+    """Background job status enum."""
+
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class Organization(Base):
@@ -404,3 +414,36 @@ class AIGeneratedContent(Base):
 
     def __repr__(self) -> str:
         return f"<AIGeneratedContent(id={self.id}, type={self.content_type})>"
+
+
+class BackgroundJob(Base):
+    """Background job for async processing (AI generation, long-running tasks)."""
+
+    __tablename__ = "background_jobs"
+
+    id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    job_type: str = Column(String(100), nullable=False, index=True)  # 'ai_quote_generation', 'ai_order_insights', etc.
+    status: JobStatus = Column(
+        Enum(JobStatus, name="job_status", native_enum=False, values_callable=lambda x: [e.value for e in x]),
+        default=JobStatus.PENDING,
+        nullable=False,
+        index=True,
+    )
+    input_data: dict | None = Column(JSON, nullable=True)  # JSON data for input parameters
+    output_data: dict | None = Column(JSON, nullable=True)  # JSON data for results
+    progress: int = Column(Integer, nullable=False, default=0)  # 0-100 percentage
+    error_message: str | None = Column(Text, nullable=True)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+    started_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    completed_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<BackgroundJob(id={self.id}, type={self.job_type}, status={self.status})>"

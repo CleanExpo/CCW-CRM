@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
 from src.db.erp_models import Product as ProductModel
 from src.db.schemas import PaginatedResponse, Product, ProductCreate, ProductUpdate
@@ -96,6 +97,9 @@ async def create_product(
     await db.commit()
     await db.refresh(product)
 
+    # Invalidate product list cache
+    await invalidate_cache("products")
+
     return Product.model_validate(product)
 
 
@@ -122,6 +126,9 @@ async def update_product(
     await db.commit()
     await db.refresh(product)
 
+    # Invalidate product list cache
+    await invalidate_cache("products")
+
     return Product.model_validate(product)
 
 
@@ -142,5 +149,8 @@ async def delete_product(
     # Soft delete
     product.is_active = False
     await db.commit()
+
+    # Invalidate product list cache
+    await invalidate_cache("products")
 
     return None

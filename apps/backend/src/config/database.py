@@ -44,8 +44,10 @@ sync_engine = create_engine(
     get_database_url(async_mode=False),
     echo=get_settings().debug,
     pool_pre_ping=True,  # Verify connections before using
-    pool_size=5,
-    max_overflow=10,
+    pool_size=20,  # Support 20 concurrent requests
+    max_overflow=30,  # Burst up to 50 total connections
+    pool_timeout=30,  # Wait 30s before failing connection request
+    pool_recycle=3600,  # Recycle connections after 1 hour
 )
 
 # Synchronous session factory
@@ -61,8 +63,10 @@ async_engine = create_async_engine(
     get_database_url(async_mode=True),
     echo=get_settings().debug,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
+    pool_size=20,  # Support 20 concurrent requests
+    max_overflow=30,  # Burst up to 50 total connections
+    pool_timeout=30,  # Wait 30s before failing connection request
+    pool_recycle=3600,  # Recycle connections after 1 hour
 )
 
 # Asynchronous session factory

@@ -491,11 +491,11 @@ async def update_order_status(
     return Order.model_validate(order)
 
 
-@router.delete("/{order_id}")
+@router.delete("/{order_id}", status_code=204)
 async def delete_order(
     order_id: UUID,
     db: AsyncSession = Depends(get_db),
-):
+) -> None:
     """Delete an order and its items."""
     # Get existing order
     query = select(OrderModel).where(OrderModel.id == order_id)
@@ -516,4 +516,5 @@ async def delete_order(
     await db.delete(order)
     await db.commit()
 
-    return {"message": "Order deleted successfully", "order_id": str(order_id)}
+    # Return None for 204 No Content - proper REST standard
+    return None

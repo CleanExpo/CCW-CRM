@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { apiClient } from "@/lib/api/client";
+import { ApiClientError, apiClient } from "@/lib/api/client";
+import type { PRDDetail, PRDGenerateResponse } from "@/types/prd";
 
 export type PRDGenerationRequest = {
   requirements: string;
@@ -42,8 +43,7 @@ export function usePRDGenerationWithProgress() {
 
   const pollPRDStatus = useCallback(async (id: string) => {
     try {
-      const response = await apiClient.get(`/api/prd/${id}`);
-      const data = response.data;
+      const data = await apiClient.get<PRDDetail>(`/api/prd/${id}`);
 
       if (data.status === "completed") {
         setResult({
@@ -98,8 +98,7 @@ export function usePRDGenerationWithProgress() {
       setPrdId(null);
 
       // Start PRD generation
-      const response = await apiClient.post("/api/prd/generate", request);
-      const data = response.data;
+      const data = await apiClient.post<PRDGenerateResponse>("/api/prd/generate", request);
 
       if (data.id) {
         setPrdId(data.id);
@@ -114,8 +113,14 @@ export function usePRDGenerationWithProgress() {
       } else {
         throw new Error("No PRD ID returned from server");
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || "Failed to start PRD generation");
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to start PRD generation");
+      }
       setIsGenerating(false);
       stopPolling();
     }

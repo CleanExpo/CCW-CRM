@@ -19,6 +19,9 @@ class WorkflowStorage:
 
     def __init__(self) -> None:
         self.supabase = SupabaseStateStore()
+        self._use_supabase = self.supabase.is_configured
+        self._workflows: dict[str, WorkflowDefinition] = {}
+        self._executions: dict[str, ExecutionContext] = {}
 
     async def create_workflow(
         self,
@@ -26,6 +29,15 @@ class WorkflowStorage:
         user_id: str | None = None,
     ) -> WorkflowDefinition:
         """Create a new workflow."""
+        if not self._use_supabase:
+            self._workflows[workflow.id] = workflow
+            logger.info(
+                "Created workflow (memory)",
+                workflow_id=workflow.id,
+                name=workflow.name,
+            )
+            return workflow
+
         try:
             data = {
                 "id": workflow.id,
@@ -60,6 +72,9 @@ class WorkflowStorage:
 
     async def get_workflow(self, workflow_id: str) -> WorkflowDefinition | None:
         """Get workflow by ID."""
+        if not self._use_supabase:
+            return self._workflows.get(workflow_id)
+
         try:
             result = (
                 self.supabase.client.table("workflows")
@@ -103,6 +118,13 @@ class WorkflowStorage:
         workflow: WorkflowDefinition,
     ) -> WorkflowDefinition | None:
         """Update an existing workflow."""
+        if not self._use_supabase:
+            if workflow_id not in self._workflows:
+                return None
+            self._workflows[workflow_id] = workflow
+            logger.info("Updated workflow (memory)", workflow_id=workflow_id)
+            return workflow
+
         try:
             data = {
                 "name": workflow.name,
@@ -138,6 +160,12 @@ class WorkflowStorage:
 
     async def delete_workflow(self, workflow_id: str) -> bool:
         """Delete a workflow."""
+        if not self._use_supabase:
+            if workflow_id in self._workflows:
+                del self._workflows[workflow_id]
+            logger.info("Deleted workflow (memory)", workflow_id=workflow_id)
+            return True
+
         try:
             self.supabase.client.table("workflows").delete().eq(
                 "id", workflow_id
@@ -158,6 +186,14 @@ class WorkflowStorage:
         offset: int = 0,
     ) -> list[WorkflowDefinition]:
         """List workflows with optional filters."""
+        if not self._use_supabase:
+            workflows = list(self._workflows.values())
+            if user_id:
+                workflows = [w for w in workflows if w.created_by == user_id]
+            if is_published is not None:
+                workflows = [w for w in workflows if w.is_published == is_published]
+            return workflows[offset:offset + limit]
+
         try:
             query = self.supabase.client.table("workflows").select("*")
 
@@ -204,6 +240,15 @@ class WorkflowStorage:
         context: ExecutionContext,
     ) -> ExecutionContext:
         """Create a new workflow execution."""
+        if not self._use_supabase:
+            self._executions[context.execution_id] = context
+            logger.info(
+                "Created execution (memory)",
+                execution_id=context.execution_id,
+                workflow_id=context.workflow_id,
+            )
+            return context
+
         try:
             data = {
                 "id": context.execution_id,
@@ -241,6 +286,15 @@ class WorkflowStorage:
         context: ExecutionContext,
     ) -> None:
         """Update workflow execution state."""
+        if not self._use_supabase:
+            self._executions[execution_id] = context
+            logger.debug(
+                "Updated execution (memory)",
+                execution_id=execution_id,
+                status=context.status.value,
+            )
+            return
+
         try:
             data = {
                 "status": context.status.value,
@@ -275,6 +329,9 @@ class WorkflowStorage:
         execution_id: str,
     ) -> ExecutionContext | None:
         """Get execution context by ID."""
+        if not self._use_supabase:
+            return self._executions.get(execution_id)
+
         try:
             result = (
                 self.supabase.client.table("workflow_executions")

@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.cache.decorators import cached
 from src.config.database import get_async_db
 from src.db.demo_models import (
     Customer,
@@ -90,6 +91,7 @@ class PaginatedResponse(BaseModel):
 
 
 @router.get("/products")
+@cached(ttl=300, key_prefix="products")
 async def list_products(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
@@ -97,7 +99,7 @@ async def list_products(
     search: str | None = None,
     category: str | None = None,
 ) -> PaginatedResponse:
-    """List products with pagination and filters."""
+    """List products with pagination and filters. Cached for 5 minutes."""
     # Build query
     query = select(Product)
 
@@ -150,13 +152,14 @@ async def list_products(
 
 
 @router.get("/customers")
+@cached(ttl=300, key_prefix="customers")
 async def list_customers(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     search: str | None = None,
 ) -> PaginatedResponse:
-    """List customers with pagination and search."""
+    """List customers with pagination and search. Cached for 5 minutes."""
     # Build query
     query = select(Customer)
 
@@ -214,9 +217,30 @@ async def list_orders(
     page_size: int = Query(50, ge=1, le=100),
     status: str | None = None,
 ) -> PaginatedResponse:
-    """List orders with pagination and filters."""
-    # Build query
-    query = select(Order, Customer.company_name).join(Customer, Order.customer_id == Customer.id)
+    """List orders with pagination and filters.
+
+    Optimized with subquery to eliminate N+1 query pattern.
+    """
+    # Create subquery for item counts
+    item_count_subquery = (
+        select(
+            OrderItem.order_id,
+            func.count(OrderItem.id).label("item_count")
+        )
+        .group_by(OrderItem.order_id)
+        .subquery()
+    )
+
+    # Build main query with item counts in single query (eliminates N+1)
+    query = (
+        select(
+            Order,
+            Customer.company_name,
+            func.coalesce(item_count_subquery.c.item_count, 0).label("item_count")
+        )
+        .join(Customer, Order.customer_id == Customer.id)
+        .outerjoin(item_count_subquery, Order.id == item_count_subquery.c.order_id)
+    )
 
     # Apply filters
     if status:
@@ -235,18 +259,9 @@ async def list_orders(
     # Apply pagination
     query = query.order_by(Order.order_date.desc()).limit(page_size).offset((page - 1) * page_size)
 
-    # Execute query
+    # Execute single optimized query
     result = await db.execute(query)
-    orders_with_customers = result.all()
-
-    # Get item counts for each order
-    order_ids = [order.id for order, _ in orders_with_customers]
-    item_counts_result = await db.execute(
-        select(OrderItem.order_id, func.count(OrderItem.id))
-        .where(OrderItem.order_id.in_(order_ids))
-        .group_by(OrderItem.order_id)
-    )
-    item_counts = {order_id: count for order_id, count in item_counts_result.all()}
+    orders_data = result.all()
 
     # Convert to response model
     order_items = [
@@ -257,9 +272,9 @@ async def list_orders(
             status=order.status.value,
             total=str(order.total),
             order_date=order.order_date,
-            item_count=item_counts.get(order.id, 0),
+            item_count=item_count,  # Already fetched in single query
         )
-        for order, customer_name in orders_with_customers
+        for order, customer_name, item_count in orders_data
     ]
 
     return PaginatedResponse(
@@ -278,9 +293,30 @@ async def list_quotes(
     page_size: int = Query(50, ge=1, le=100),
     status: str | None = None,
 ) -> PaginatedResponse:
-    """List quotes with pagination and filters."""
-    # Build query
-    query = select(Quote, Customer.company_name).join(Customer, Quote.customer_id == Customer.id)
+    """List quotes with pagination and filters.
+
+    Optimized with subquery to eliminate N+1 query pattern.
+    """
+    # Create subquery for item counts
+    item_count_subquery = (
+        select(
+            QuoteItem.quote_id,
+            func.count(QuoteItem.id).label("item_count")
+        )
+        .group_by(QuoteItem.quote_id)
+        .subquery()
+    )
+
+    # Build main query with item counts in single query (eliminates N+1)
+    query = (
+        select(
+            Quote,
+            Customer.company_name,
+            func.coalesce(item_count_subquery.c.item_count, 0).label("item_count")
+        )
+        .join(Customer, Quote.customer_id == Customer.id)
+        .outerjoin(item_count_subquery, Quote.id == item_count_subquery.c.quote_id)
+    )
 
     # Apply filters
     if status:
@@ -299,18 +335,9 @@ async def list_quotes(
     # Apply pagination
     query = query.order_by(Quote.quote_date.desc()).limit(page_size).offset((page - 1) * page_size)
 
-    # Execute query
+    # Execute single optimized query
     result = await db.execute(query)
-    quotes_with_customers = result.all()
-
-    # Get item counts for each quote
-    quote_ids = [quote.id for quote, _ in quotes_with_customers]
-    item_counts_result = await db.execute(
-        select(QuoteItem.quote_id, func.count(QuoteItem.id))
-        .where(QuoteItem.quote_id.in_(quote_ids))
-        .group_by(QuoteItem.quote_id)
-    )
-    item_counts = {quote_id: count for quote_id, count in item_counts_result.all()}
+    quotes_data = result.all()
 
     # Convert to response model
     quote_items = [
@@ -322,9 +349,9 @@ async def list_quotes(
             total=str(quote.total),
             quote_date=quote.quote_date,
             valid_until=quote.valid_until,
-            item_count=item_counts.get(quote.id, 0),
+            item_count=item_count,  # Already fetched in single query
         )
-        for quote, customer_name in quotes_with_customers
+        for quote, customer_name, item_count in quotes_data
     ]
 
     return PaginatedResponse(

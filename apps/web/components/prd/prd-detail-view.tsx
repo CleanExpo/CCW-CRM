@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import type { PRDDetail } from "@/types/prd";
 import {
   ArrowLeft,
   Download,
@@ -19,28 +20,8 @@ import {
   Clock
 } from "lucide-react";
 
-interface PRD {
-  id: string;
-  requirements: string;
-  executive_summary?: string;
-  problem_statement?: string;
-  prd_analysis?: any;
-  feature_decomposition?: any;
-  technical_spec?: any;
-  test_plan?: any;
-  roadmap?: any;
-  total_user_stories: number;
-  total_api_endpoints: number;
-  total_test_scenarios: number;
-  total_sprints: number;
-  estimated_duration_weeks: number;
-  status: string;
-  created_at: string;
-  completed_at?: string;
-}
-
 interface PRDDetailViewProps {
-  prd: PRD;
+  prd: PRDDetail;
 }
 
 export function PRDDetailView({ prd }: PRDDetailViewProps) {

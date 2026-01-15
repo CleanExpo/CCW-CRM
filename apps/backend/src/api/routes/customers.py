@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
 from src.db.erp_models import Customer as CustomerModel
 from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
@@ -95,6 +96,9 @@ async def create_customer(
     await db.commit()
     await db.refresh(customer)
 
+    # Invalidate customer list cache
+    await invalidate_cache("customers")
+
     return Customer.model_validate(customer)
 
 
@@ -121,6 +125,9 @@ async def update_customer(
     await db.commit()
     await db.refresh(customer)
 
+    # Invalidate customer list cache
+    await invalidate_cache("customers")
+
     return Customer.model_validate(customer)
 
 
@@ -141,5 +148,8 @@ async def delete_customer(
     # Soft delete
     customer.is_active = False
     await db.commit()
+
+    # Invalidate customer list cache
+    await invalidate_cache("customers")
 
     return None

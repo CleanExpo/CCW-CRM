@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -506,7 +507,7 @@ function BackordersList({ backorders, loading, onNotify }: BackordersListProps) 
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/orders/${backorder.order_id}`)}
+                  onClick={() => router.push(`/orders/${backorder.order_id}` as Route)}
                 >
                   <Eye className="mr-2 h-3 w-3" />
                   View Order

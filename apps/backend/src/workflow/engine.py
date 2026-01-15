@@ -26,7 +26,7 @@ class WorkflowEngine:
     def __init__(self) -> None:
         self.storage = WorkflowStorage()
         self.supervisor = get_supervisor_agent()
-        self.tool_registry = None  # TODO: Implement tool registry if needed
+        self.tool_registry: dict[str, Any] = {}
 
     async def start_execution(
         self,
@@ -44,6 +44,11 @@ class WorkflowEngine:
             variables={**workflow.variables, **input_variables},
             status=ExecutionStatus.PENDING,
         )
+
+        # Ensure workflow is stored before execution begins
+        existing_workflow = await self.storage.get_workflow(workflow.id)
+        if not existing_workflow:
+            await self.storage.create_workflow(workflow, user_id=user_id)
 
         # Save initial execution state
         await self.storage.create_execution(context)
@@ -220,7 +225,12 @@ class WorkflowEngine:
         agent_name = node.config.get("agent_name", "auto")  # auto = supervisor routes
 
         if not task_description:
-            raise ValueError("Agent node missing task_description in config")
+            return {
+                "agent": agent_name,
+                "status": "failed",
+                "error": "Agent node missing task_description in config",
+                "result": {},
+            }
 
         logger.info(
             "Executing agent node via supervisor",
