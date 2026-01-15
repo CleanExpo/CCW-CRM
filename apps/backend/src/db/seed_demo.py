@@ -120,7 +120,7 @@ async def create_demo_user(db: AsyncSession) -> None:
     # Generated with: bcrypt.hashpw(b"demo123", bcrypt.gensalt(rounds=12))
     user = User(
         email="admin@demo.com",
-        password_hash="$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe",
+        hashed_password="$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe",
         full_name="Demo Administrator",
         is_admin=True,
         is_active=True,

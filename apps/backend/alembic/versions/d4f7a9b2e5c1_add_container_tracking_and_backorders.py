@@ -20,22 +20,27 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Create container_status enum
-    container_status_enum = postgresql.ENUM(
-        'booked', 'in_transit', 'at_port', 'customs_clearance',
-        'cleared', 'out_for_delivery', 'delivered', 'cancelled',
-        name='container_status',
-        create_type=True
-    )
-    container_status_enum.create(op.get_bind(), checkfirst=True)
+    # Create enums using raw SQL with IF NOT EXISTS to avoid duplicates
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE container_status AS ENUM (
+                'booked', 'in_transit', 'at_port', 'customs_clearance',
+                'cleared', 'out_for_delivery', 'delivered', 'cancelled'
+            );
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    # Create backorder_status enum
-    backorder_status_enum = postgresql.ENUM(
-        'pending', 'allocated', 'ready', 'fulfilled', 'cancelled',
-        name='backorder_status',
-        create_type=True
-    )
-    backorder_status_enum.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE backorder_status AS ENUM (
+                'pending', 'allocated', 'ready', 'fulfilled', 'cancelled'
+            );
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
     # Create containers table
     op.create_table('containers',
@@ -54,7 +59,7 @@ def upgrade() -> None:
         sa.Column('actual_arrival_date', sa.DateTime(timezone=True), nullable=True),
         sa.Column('customs_clearance_date', sa.DateTime(timezone=True), nullable=True),
         sa.Column('delivered_date', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('status', container_status_enum, nullable=False, server_default='booked'),
+        sa.Column('status', sa.Enum('booked', 'in_transit', 'at_port', 'customs_clearance', 'cleared', 'out_for_delivery', 'delivered', 'cancelled', name='container_status', create_type=False, native_enum=False), nullable=False, server_default='booked'),
         sa.Column('tracking_number', sa.String(length=100), nullable=True),
         sa.Column('carrier', sa.String(length=100), nullable=True),
         sa.Column('tracking_url', sa.String(length=500), nullable=True),
@@ -113,7 +118,7 @@ def upgrade() -> None:
         sa.Column('container_id', postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column('expected_availability_date', sa.DateTime(timezone=True), nullable=True),
         sa.Column('original_order_date', sa.DateTime(timezone=True), nullable=False),
-        sa.Column('status', backorder_status_enum, nullable=False, server_default='pending'),
+        sa.Column('status', sa.Enum('pending', 'allocated', 'ready', 'fulfilled', 'cancelled', name='backorder_status', create_type=False, native_enum=False), nullable=False, server_default='pending'),
         sa.Column('customer_notified', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('last_notification_date', sa.DateTime(timezone=True), nullable=True),
         sa.Column('notification_count', sa.Integer(), nullable=False, server_default='0'),

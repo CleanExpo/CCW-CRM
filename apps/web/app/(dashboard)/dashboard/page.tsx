@@ -4,20 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BentoGrid, BentoCard, BentoCardHeader, BentoCardTitle, BentoCardDescription, BentoCardContent } from "@/components/ui/bento-grid";
+import { BorderBeam } from "@/components/ui/border-beam";
 import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText, Sparkles, ArrowRight } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { getDashboardInsights, type Insight } from "@/lib/api/ai-insights";
 import { InsightCard } from "@/components/insights/insight-card";
 import { RevenueChart } from "@/components/charts/RevenueChart";
 import { CategorySalesChart } from "@/components/charts/CategorySalesChart";
-import { StaggerChildren, StaggerItem } from "@/components/transitions/StaggerChildren";
-import { FadeIn } from "@/components/transitions/FadeIn";
 import { StockHealthWidget } from "@/components/dashboard/StockHealthWidget";
 import { TransferSuggestionsWidget } from "@/components/dashboard/TransferSuggestionsWidget";
 import { OrderStatusBreakdownWidget } from "@/components/dashboard/OrderStatusBreakdownWidget";
 import { QuoteConversionWidget } from "@/components/dashboard/QuoteConversionWidget";
 import { RevenueByLocationWidget } from "@/components/dashboard/RevenueByLocationWidget";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
 
 interface DashboardMetrics {
   total_revenue_this_month: string;
@@ -82,7 +83,6 @@ export default function DashboardPage() {
         setInsights(insightsData.insights.filter((i) => i.priority === "high").slice(0, 3));
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
-        // Set empty defaults on error to prevent rendering issues
         setMetrics(null);
         setRevenueData([]);
         setCategorySales([]);
@@ -97,6 +97,13 @@ export default function DashboardPage() {
     loadDashboardData();
   }, []);
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-AU", {
+      style: "currency",
+      currency: "AUD",
+    }).format(value);
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -108,216 +115,220 @@ export default function DashboardPage() {
     );
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
-    }).format(value);
-  };
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Equipment Supplier ERP - Overview</p>
-      </div>
+    <div className="space-y-8 pb-12">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground text-lg mt-2">iBaaS ERP - Real-time business overview</p>
+      </motion.div>
 
-      {/* Metrics Cards */}
-      <StaggerChildren className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StaggerItem>
-          <Card className="card-interactive">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(parseFloat(metrics?.total_revenue_this_month || "0"))}</div>
-              <p className="text-xs text-muted-foreground">This month from delivered orders</p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-        <StaggerItem>
-          <Card className="card-interactive">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics?.active_orders || 0}</div>
-              <p className="text-xs text-muted-foreground">In progress</p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-        <StaggerItem>
-          <Card className="card-interactive">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics?.total_products || 0}</div>
-              <p className="text-xs text-muted-foreground">Active catalog items</p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-        <StaggerItem>
-          <Card className="card-interactive">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics?.total_customers || 0}</div>
-              <p className="text-xs text-muted-foreground">Active customers</p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-        <StaggerItem>
-          <Card className="card-interactive">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">{metrics?.low_stock_alerts || 0}</div>
-              <p className="text-xs text-muted-foreground">Items with stock ≤ 10</p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-        <StaggerItem>
-          <Card className="card-interactive">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics?.pending_quotes || 0}</div>
-              <p className="text-xs text-muted-foreground">Awaiting response</p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-      </StaggerChildren>
-
-      {/* AI Insights Widget */}
-      {insights.length > 0 && (
-        <FadeIn delay={0.4}>
-          <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <CardTitle>AI-Powered Insights</CardTitle>
+      {/* Bento Grid Dashboard */}
+      <BentoGrid columns={3} gap="lg">
+        {/* Metrics Overview - Spans 3 columns */}
+        <BentoCard variant="glass" span={3}>
+          <BentoCardHeader>
+            <BentoCardTitle className="text-2xl">Key Metrics</BentoCardTitle>
+            <BentoCardDescription>Real-time business performance indicators</BentoCardDescription>
+          </BentoCardHeader>
+          <BentoCardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {/* Revenue */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <DollarSign className="w-4 h-4" />
+                  <span className="text-sm font-medium">Total Revenue</span>
+                </div>
+                <div className="text-3xl font-bold text-brand-primary">
+                  {formatCurrency(parseFloat(metrics?.total_revenue_this_month || "0"))}
+                </div>
+                <p className="text-xs text-muted-foreground">This month from delivered orders</p>
               </div>
-              <Link href="/insights">
-                <Button variant="outline" size="sm">
-                  View All
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
+
+              {/* Active Orders */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <ShoppingCart className="w-4 h-4" />
+                  <span className="text-sm font-medium">Active Orders</span>
+                </div>
+                <div className="text-3xl font-bold">{metrics?.active_orders || 0}</div>
+                <p className="text-xs text-muted-foreground">In progress</p>
+              </div>
+
+              {/* Products */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Package className="w-4 h-4" />
+                  <span className="text-sm font-medium">Total Products</span>
+                </div>
+                <div className="text-3xl font-bold">{metrics?.total_products || 0}</div>
+                <p className="text-xs text-muted-foreground">Active catalog items</p>
+              </div>
+
+              {/* Customers */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Users className="w-4 h-4" />
+                  <span className="text-sm font-medium">Total Customers</span>
+                </div>
+                <div className="text-3xl font-bold">{metrics?.total_customers || 0}</div>
+                <p className="text-xs text-muted-foreground">Active customers</p>
+              </div>
+
+              {/* Low Stock */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span className="text-sm font-medium">Low Stock Alerts</span>
+                </div>
+                <div className="text-3xl font-bold text-destructive">{metrics?.low_stock_alerts || 0}</div>
+                <p className="text-xs text-muted-foreground">Items with stock ≤ 10</p>
+              </div>
+
+              {/* Pending Quotes */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <FileText className="w-4 h-4" />
+                  <span className="text-sm font-medium">Pending Quotes</span>
+                </div>
+                <div className="text-3xl font-bold">{metrics?.pending_quotes || 0}</div>
+                <p className="text-xs text-muted-foreground">Awaiting response</p>
+              </div>
             </div>
-            <CardDescription>
-              Top priority recommendations from your business data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          </BentoCardContent>
+        </BentoCard>
+
+        {/* Revenue Chart - Spans 2 columns */}
+        <BentoCard variant="glass" span={2} className="min-h-[400px]">
+          <RevenueChart data={revenueData} />
+        </BentoCard>
+
+        {/* Stock Health Widget - 1 column */}
+        <BentoCard variant="gradient" span={1} className="min-h-[400px]">
+          <StockHealthWidget />
+        </BentoCard>
+
+        {/* Category Sales Chart - 1 column */}
+        <BentoCard variant="glass" span={1} className="min-h-[350px]">
+          <CategorySalesChart data={categorySales} />
+        </BentoCard>
+
+        {/* Order Status Breakdown - 1 column */}
+        <BentoCard variant="elevated" span={1} className="min-h-[350px]">
+          <OrderStatusBreakdownWidget />
+        </BentoCard>
+
+        {/* Quote Conversion - 1 column */}
+        <BentoCard variant="glass" span={1} className="min-h-[350px]">
+          <QuoteConversionWidget />
+        </BentoCard>
+
+        {/* AI Insights - Spans 2 columns with Border Beam */}
+        {insights.length > 0 && (
+          <BorderBeam>
+            <BentoCard variant="glass" span={2} glowOnHover className="min-h-[350px]">
+              <BentoCardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-gradient-brand/10 border border-white/10">
+                      <Sparkles className="w-5 h-5 text-brand-primary" />
+                    </div>
+                    <BentoCardTitle className="text-2xl">AI-Powered Insights</BentoCardTitle>
+                  </div>
+                  <Link href="/insights">
+                    <Button variant="outline" size="sm">
+                      View All
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+                <BentoCardDescription>
+                  Top priority recommendations from your business data
+                </BentoCardDescription>
+              </BentoCardHeader>
+              <BentoCardContent>
+                <div className="space-y-4">
+                  {insights.map((insight) => (
+                    <InsightCard key={insight.id} insight={insight} />
+                  ))}
+                </div>
+              </BentoCardContent>
+            </BentoCard>
+          </BorderBeam>
+        )}
+
+        {/* Transfer Suggestions - 1 column */}
+        <BentoCard variant="glass" span={1} className="min-h-[350px]">
+          <TransferSuggestionsWidget />
+        </BentoCard>
+
+        {/* Revenue by Location - Spans 2 columns */}
+        <BentoCard variant="glass" span={2} className="min-h-[350px]">
+          <RevenueByLocationWidget />
+        </BentoCard>
+
+        {/* Top Products - 1 column */}
+        <BentoCard variant="elevated" span={1} className="min-h-[350px]">
+          <BentoCardHeader>
+            <BentoCardTitle>Top 5 Products</BentoCardTitle>
+            <BentoCardDescription>By revenue</BentoCardDescription>
+          </BentoCardHeader>
+          <BentoCardContent>
             <div className="space-y-4">
-              {insights.map((insight) => (
-                <InsightCard key={insight.id} insight={insight} />
+              {Array.isArray(topProducts) && topProducts.map((product, index) => (
+                <div key={product.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-brand/20 text-sm font-semibold text-brand-primary border border-brand-primary/20">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{product.name}</p>
+                      <p className="text-xs text-muted-foreground">{product.quantity_sold} units sold</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold">{formatCurrency(parseFloat(product.revenue))}</span>
+                </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-        </FadeIn>
-      )}
+          </BentoCardContent>
+        </BentoCard>
 
-      {/* Data Visualizations */}
-      <FadeIn delay={0.5}>
-        <div className="grid gap-4 md:grid-cols-2">
-          <RevenueChart data={revenueData} />
-          <CategorySalesChart data={categorySales} />
-        </div>
-      </FadeIn>
-
-      {/* Inventory Management Widgets */}
-      <FadeIn delay={0.6}>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <StockHealthWidget />
-          <TransferSuggestionsWidget />
-        </div>
-      </FadeIn>
-
-      {/* Analytics Widgets */}
-      <FadeIn delay={0.65}>
-        <div className="grid gap-4 lg:grid-cols-3">
-          <OrderStatusBreakdownWidget />
-          <QuoteConversionWidget />
-          <RevenueByLocationWidget />
-        </div>
-      </FadeIn>
-
-      {/* Top Products */}
-      <FadeIn delay={0.7}>
-        <Card>
-        <CardHeader>
-          <CardTitle>Top 5 Products</CardTitle>
-          <CardDescription>By revenue</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Array.isArray(topProducts) && topProducts.map((product, index) => (
-              <div key={product.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{product.name}</p>
-                    <p className="text-xs text-muted-foreground">{product.quantity_sold} units sold</p>
+        {/* Recent Activity - Spans 3 columns */}
+        <BentoCard variant="glass" span={3}>
+          <BentoCardHeader>
+            <BentoCardTitle className="text-2xl">Recent Activity</BentoCardTitle>
+            <BentoCardDescription>Latest orders and quotes</BentoCardDescription>
+          </BentoCardHeader>
+          <BentoCardContent>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.isArray(activity) && activity.slice(0, 6).map((item, index) => (
+                <div key={`${item.type}-${index}`} className="p-4 rounded-lg border border-white/10 bg-card/50 hover:bg-card/80 transition-colors">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{item.title}</span>
+                      {item.status && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-secondary capitalize">
+                          {item.status}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {item.description}
+                    </p>
+                    <div className="text-xs text-muted-foreground">
+                      {format(new Date(item.timestamp), "MMM dd, yyyy")}
+                    </div>
                   </div>
                 </div>
-                <span className="text-sm font-medium">{formatCurrency(parseFloat(product.revenue))}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      </FadeIn>
-
-      {/* Recent Activity */}
-      <FadeIn delay={0.8}>
-        <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest orders and quotes</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Array.isArray(activity) && activity.map((item, index) => (
-              <div key={`${item.type}-${index}`} className="flex items-start justify-between border-b pb-3 last:border-0">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">
-                      {item.title}
-                    </span>
-                    {item.status && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-secondary capitalize">
-                        {item.status}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {item.description}
-                  </p>
-                </div>
-                <div className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                  {format(new Date(item.timestamp), "MMM dd, yyyy")}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      </FadeIn>
+              ))}
+            </div>
+          </BentoCardContent>
+        </BentoCard>
+      </BentoGrid>
     </div>
   );
 }
