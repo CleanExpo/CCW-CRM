@@ -26,6 +26,10 @@ class Settings(BaseSettings):
 
     # API
     backend_api_key: str = Field(default="")
+    skip_auth_enforcement: bool = Field(
+        default=False,
+        description="Skip authentication enforcement (ONLY for local testing, NEVER in production)"
+    )
     cors_origins: list[str] = Field(
         default=[
             "http://localhost:3000",

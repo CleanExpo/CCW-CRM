@@ -58,9 +58,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
             request.state.auth_type = "user"
             return await call_next(request)
 
-        # In development, allow unauthenticated requests
-        if settings.environment == "development":
-            logger.warning("Unauthenticated request allowed in development mode")
+        # Only skip auth if explicitly enabled via environment variable
+        if settings.skip_auth_enforcement:
+            logger.warning(
+                "⚠️  Authentication enforcement DISABLED via SKIP_AUTH_ENFORCEMENT flag. "
+                "This should ONLY be used for local testing."
+            )
             return await call_next(request)
 
         # In production, reject unauthenticated requests

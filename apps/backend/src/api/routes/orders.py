@@ -141,7 +141,16 @@ async def list_orders(
         query = query.where(OrderModel.order_number.ilike(search_filter))
 
     if status:
-        query = query.where(OrderModel.status == status)
+        try:
+            # Convert string to OrderStatus enum
+            from src.db.demo_models import OrderStatus
+            status_enum = OrderStatus(status)
+            query = query.where(OrderModel.status == status_enum)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status: {status}. Valid values: {[s.value for s in OrderStatus]}"
+            )
 
     if customer_id:
         query = query.where(OrderModel.customer_id == customer_id)

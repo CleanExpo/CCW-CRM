@@ -1,0 +1,5 @@
+====================================
+CCW-Online ERP Comprehensive Tests
+Started: Thu, Jan 15, 2026  5:34:32 PM
+====================================
+[0;31m✗ FAIL[0m: Backend Server Running - Cannot connect to http://localhost:8000

@@ -15,7 +15,7 @@ from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
-    approvals,
+    # approvals,  # TODO: Implement approvals workflow
     backorders,
     config,
     containers,
@@ -28,7 +28,7 @@ from .routes import (
     orders,
     portal_auth,
     portal_forms,
-    prd,
+    # prd,  # TODO: Fix PRD dependencies
     products,
     purchase_orders,
     quotes,
@@ -143,7 +143,7 @@ app.add_middleware(AuthMiddleware)
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(config.router, tags=["Configuration"])
-app.include_router(approvals.router, tags=["Approvals"])
+# app.include_router(approvals.router, tags=["Approvals"])  # TODO: Implement approvals
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
@@ -186,7 +186,7 @@ app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
 
 # PRD Generation router
-app.include_router(prd.router, tags=["PRD Generation"])
+# app.include_router(prd.router, tags=["PRD Generation"])  # TODO: Fix PRD dependencies
 
 
 @app.get("/")
