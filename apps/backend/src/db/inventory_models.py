@@ -4,26 +4,26 @@ Database models for tracking stock across multiple locations.
 """
 
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    JSON,
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
+    ForeignKey,
     Integer,
     Numeric,
     String,
     Text,
     UniqueConstraint,
-    CheckConstraint,
-    ForeignKey,
-    JSON,
 )
-from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID  # noqa: N811
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from decimal import Decimal
 
 from .models import Base
 
@@ -95,7 +95,7 @@ class ProductStockByLocation(Base):
         return max(0, self.stock - self.reserved)
 
     def __repr__(self) -> str:
-        return f"<ProductStockByLocation(product_id={self.product_id}, location={self.location}, stock={self.stock})>"
+        return f"<ProductStockByLocation(product_id={self.product_id}, location={self.location}, stock={self.stock})>"  # noqa: E501
 
 
 class StockTransfer(Base):
@@ -150,7 +150,7 @@ class StockTransfer(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<StockTransfer(product_id={self.product_id}, {self.from_location}→{self.to_location}, qty={self.quantity})>"
+        return f"<StockTransfer(product_id={self.product_id}, {self.from_location}→{self.to_location}, qty={self.quantity})>"  # noqa: E501
 
 
 class StockReservation(Base):
@@ -207,7 +207,7 @@ class StockReservation(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<StockReservation(product_id={self.product_id}, order_id={self.order_id}, qty={self.quantity})>"
+        return f"<StockReservation(product_id={self.product_id}, order_id={self.order_id}, qty={self.quantity})>"  # noqa: E501
 
 
 class StockAdjustment(Base):
@@ -255,7 +255,7 @@ class StockAdjustment(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<StockAdjustment(product_id={self.product_id}, location={self.location}, change={self.quantity_change})>"
+        return f"<StockAdjustment(product_id={self.product_id}, location={self.location}, change={self.quantity_change})>"  # noqa: E501
 
 
 class Supplier(Base):
@@ -305,7 +305,7 @@ class PurchaseOrder(Base):
     supplier_id: UUID = Column(
         PostgresUUID(as_uuid=True), ForeignKey("suppliers.id"), nullable=False, index=True
     )
-    delivery_location: str = Column(String(50), nullable=False, index=True)  # brisbane, sydney, melbourne
+    delivery_location: str = Column(String(50), nullable=False, index=True)  # brisbane, sydney, melbourne  # noqa: E501
     status: str = Column(String(50), default="draft", nullable=False, index=True)
     # Status: draft, pending_approval, approved, ordered, in_transit, received, cancelled
 
@@ -334,11 +334,11 @@ class PurchaseOrder(Base):
 
     # Relationships
     supplier = relationship("Supplier", back_populates="purchase_orders")
-    items = relationship("PurchaseOrderItem", back_populates="purchase_order", cascade="all, delete-orphan")
+    items = relationship("PurchaseOrderItem", back_populates="purchase_order", cascade="all, delete-orphan")  # noqa: E501
     inbound_shipments = relationship("InboundShipment", back_populates="purchase_order")
 
     def __repr__(self) -> str:
-        return f"<PurchaseOrder(po_number={self.po_number}, supplier_id={self.supplier_id}, total={self.total})>"
+        return f"<PurchaseOrder(po_number={self.po_number}, supplier_id={self.supplier_id}, total={self.total})>"  # noqa: E501
 
 
 class PurchaseOrderItem(Base):
@@ -374,7 +374,7 @@ class PurchaseOrderItem(Base):
     product = relationship("Product")
 
     def __repr__(self) -> str:
-        return f"<PurchaseOrderItem(po_id={self.purchase_order_id}, product_id={self.product_id}, qty={self.quantity})>"
+        return f"<PurchaseOrderItem(po_id={self.purchase_order_id}, product_id={self.product_id}, qty={self.quantity})>"  # noqa: E501
 
 
 class InboundShipment(Base):
@@ -396,7 +396,7 @@ class InboundShipment(Base):
     tracking_number: str | None = Column(String(100), nullable=True, index=True)
 
     origin_address: str | None = Column(Text, nullable=True)
-    destination_location: str = Column(String(50), nullable=False, index=True)  # brisbane, sydney, melbourne
+    destination_location: str = Column(String(50), nullable=False, index=True)  # brisbane, sydney, melbourne  # noqa: E501
 
     status: str = Column(String(50), default="pending", nullable=False, index=True)
     # Status: pending, in_transit, out_for_delivery, delivered, exception, cancelled
@@ -421,7 +421,7 @@ class InboundShipment(Base):
     supplier = relationship("Supplier")
 
     def __repr__(self) -> str:
-        return f"<InboundShipment(number={self.shipment_number}, tracking={self.tracking_number}, status={self.status})>"
+        return f"<InboundShipment(number={self.shipment_number}, tracking={self.tracking_number}, status={self.status})>"  # noqa: E501
 
 
 class OutboundShipment(Base):
@@ -439,7 +439,7 @@ class OutboundShipment(Base):
     carrier_service: str | None = Column(String(100), nullable=True)
     tracking_number: str | None = Column(String(100), nullable=True, index=True)
 
-    origin_location: str = Column(String(50), nullable=False, index=True)  # brisbane, sydney, melbourne
+    origin_location: str = Column(String(50), nullable=False, index=True)  # brisbane, sydney, melbourne  # noqa: E501
     destination_address: str | None = Column(Text, nullable=True)
 
     status: str = Column(String(50), default="pending", nullable=False, index=True)
@@ -464,7 +464,7 @@ class OutboundShipment(Base):
     order = relationship("Order", back_populates="shipments")
 
     def __repr__(self) -> str:
-        return f"<OutboundShipment(number={self.shipment_number}, order_id={self.order_id}, status={self.status})>"
+        return f"<OutboundShipment(number={self.shipment_number}, order_id={self.order_id}, status={self.status})>"  # noqa: E501
 
 
 class CarrierConfiguration(Base):

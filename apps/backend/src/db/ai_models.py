@@ -52,7 +52,7 @@ class LearningPattern(Base):
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     pattern_id = Column(String(100), unique=True, nullable=False, index=True)
     agent_id = Column(String(100), nullable=False, index=True)
-    pattern_type = Column(Enum(PatternType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)
+    pattern_type = Column(Enum(PatternType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)  # noqa: E501
     task_category = Column(String(200), nullable=False)
     observed_count = Column(Integer, nullable=False, default=1)
     success_rate = Column(Float, nullable=False)
@@ -69,7 +69,7 @@ class LearningPattern(Base):
     first_observed = Column(DateTime(timezone=True), nullable=False)
     last_observed = Column(DateTime(timezone=True), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
-    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))  # noqa: E501
 
     def __repr__(self) -> str:
         """String representation."""
@@ -83,9 +83,9 @@ class LearningInsight(Base):
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     insight_id = Column(String(100), unique=True, nullable=False, index=True)
-    insight_type = Column(Enum(InsightType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)
+    insight_type = Column(Enum(InsightType, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)  # noqa: E501
     agent_id = Column(String(100), nullable=False, index=True)
-    priority = Column(Enum(InsightPriority, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)
+    priority = Column(Enum(InsightPriority, values_callable=lambda obj: [e.value for e in obj]), nullable=False, index=True)  # noqa: E501
     title = Column(String(500), nullable=False)
     description = Column(Text, nullable=False)
     recommended_action = Column(Text, nullable=False)

@@ -1,6 +1,7 @@
 """ElevenLabs client wrapper that switches between demo and live modes."""
 
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import structlog
 

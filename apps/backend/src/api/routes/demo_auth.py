@@ -11,6 +11,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.middleware.rate_limit import RateLimits, limiter
 from src.auth.jwt import (
     create_access_token,
     create_refresh_token,
@@ -26,7 +27,6 @@ from src.auth.password_reset import (
 from src.config.database import get_async_db
 from src.config.settings import get_settings
 from src.db.models import User
-from src.api.middleware.rate_limit import RateLimits, limiter
 
 router = APIRouter(prefix="/api/auth", tags=["Demo Auth"])
 settings = get_settings()

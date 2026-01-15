@@ -3,7 +3,6 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,7 +48,7 @@ class AnalyzeTrendsInput(BaseModel):
 class CustomerSegmentationInput(BaseModel):
     """Input for customer segmentation (RFM analysis)."""
 
-    days: int = Field(default=90, description="Number of days for recency calculation", ge=30, le=365)
+    days: int = Field(default=90, description="Number of days for recency calculation", ge=30, le=365)  # noqa: E501
 
 
 class InventoryAnalysisInput(BaseModel):

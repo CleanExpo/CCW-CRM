@@ -5,7 +5,6 @@ supporting bidirectional updates.
 """
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 import structlog
@@ -306,8 +305,8 @@ class XeroCustomerSync:
         # Find unsynced customers (active customers without xero_contact_id)
         stmt = (
             select(Customer)
-            .where(Customer.is_active == True)
-            .where(Customer.xero_contact_id == None)
+            .where(Customer.is_active)
+            .where(Customer.xero_contact_id is None)
             .limit(max_customers)
         )
         result = await db.execute(stmt)

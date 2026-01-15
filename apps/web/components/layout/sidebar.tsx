@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Bell,
   CheckCircle,
+  Sparkles,
 } from "lucide-react";
 
 const navigation = [
@@ -36,6 +37,7 @@ const navigation = [
   { name: "Submissions", href: "/submissions", icon: ClipboardCheck },
   { name: "Emails", href: "/emails", icon: Mail },
   // { name: "AI Assistant", href: "/ai-assistant", icon: Bot }, // Hidden for demo - incomplete implementation
+  { name: "PRD Generator", href: "/prd/generate", icon: Sparkles },
   { name: "Insights", href: "/insights", icon: TrendingUp },
   { name: "Alerts", href: "/alerts", icon: Bell },
   { name: "Approvals", href: "/approvals", icon: CheckCircle },

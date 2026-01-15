@@ -5,7 +5,6 @@ including contact creation and line item mapping.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 import structlog
@@ -13,11 +12,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.db.demo_models import Customer, Order, OrderItem, OrderStatus
-from src.db.xero_models import XeroConnection
+from src.db.demo_models import Customer, Order, OrderStatus
+from src.integrations.xero import get_xero_client
 from src.integrations.xero.auth import XeroAuth
 from src.integrations.xero.client import XeroAPIError, XeroClient
-from src.integrations.xero import get_xero_client
 
 logger = structlog.get_logger(__name__)
 
@@ -333,7 +331,7 @@ class XeroInvoiceSync:
         db: AsyncSession,
         organization_id: UUID,
         order_id: UUID,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get Xero invoice details for an order.
 
         Args:

@@ -6,6 +6,7 @@ Prevents brute force attacks and abuse by limiting request rates.
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+
 from src.config.settings import get_settings
 
 settings = get_settings()

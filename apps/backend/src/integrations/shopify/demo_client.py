@@ -69,7 +69,7 @@ class ShopifyDemoClient:
                 "customer": {
                     "id": 100 + i,
                     "email": f"customer{i}@demo.com",
-                    "first_name": f"Customer",
+                    "first_name": "Customer",
                     "last_name": f"{i}",
                     "phone": f"+61 412 345 {i:03d}",
                 },
@@ -95,7 +95,7 @@ class ShopifyDemoClient:
                 "total_price": f"{219.98 + (i * 22):.2f}",
                 "currency": "AUD",
                 "shipping_address": {
-                    "first_name": f"Customer",
+                    "first_name": "Customer",
                     "last_name": f"{i}",
                     "address1": f"{10 + i} Demo Street",
                     "city": "Brisbane",
@@ -105,7 +105,7 @@ class ShopifyDemoClient:
                     "phone": f"+61 412 345 {i:03d}",
                 },
                 "billing_address": {
-                    "first_name": f"Customer",
+                    "first_name": "Customer",
                     "last_name": f"{i}",
                     "address1": f"{10 + i} Demo Street",
                     "city": "Brisbane",

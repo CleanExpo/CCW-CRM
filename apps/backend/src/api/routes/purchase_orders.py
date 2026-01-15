@@ -15,13 +15,18 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import or_, select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.config.database import get_async_db
-from src.db.inventory_models import PurchaseOrder, PurchaseOrderItem, Supplier, ProductStockByLocation
 from src.db.demo_models import Product
+from src.db.inventory_models import (
+    ProductStockByLocation,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    Supplier,
+)
 
 router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"])
 
@@ -60,10 +65,10 @@ class PurchaseOrderCreate(BaseModel):
     """Schema for creating a purchase order."""
 
     supplier_id: UUID
-    delivery_location: str = Field(..., pattern="^(brisbane|sydney|melbourne)$", description="Warehouse location")
+    delivery_location: str = Field(..., pattern="^(brisbane|sydney|melbourne)$", description="Warehouse location")  # noqa: E501
     expected_delivery_date: datetime | None = None
     notes: str | None = None
-    items: list[PurchaseOrderItemCreate] = Field(..., min_length=1, description="At least one item required")
+    items: list[PurchaseOrderItemCreate] = Field(..., min_length=1, description="At least one item required")  # noqa: E501
 
 
 class PurchaseOrderUpdate(BaseModel):
@@ -73,7 +78,7 @@ class PurchaseOrderUpdate(BaseModel):
     delivery_location: str | None = Field(None, pattern="^(brisbane|sydney|melbourne)$")
     expected_delivery_date: datetime | None = None
     notes: str | None = None
-    status: str | None = Field(None, pattern="^(draft|pending_approval|approved|ordered|in_transit|received|cancelled)$")
+    status: str | None = Field(None, pattern="^(draft|pending_approval|approved|ordered|in_transit|received|cancelled)$")  # noqa: E501
 
 
 class PurchaseOrderResponse(BaseModel):
@@ -165,7 +170,7 @@ async def list_purchase_orders(
     total = count_result.scalar() or 0
 
     # Apply pagination
-    query = query.order_by(PurchaseOrder.created_at.desc()).limit(page_size).offset((page - 1) * page_size)
+    query = query.order_by(PurchaseOrder.created_at.desc()).limit(page_size).offset((page - 1) * page_size)  # noqa: E501
 
     # Execute
     result = await db.execute(query)
@@ -294,7 +299,7 @@ async def update_purchase_order(
     if po.status not in ["draft", "pending_approval"]:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot update PO with status '{po.status}'. Only draft/pending_approval can be modified."
+            detail=f"Cannot update PO with status '{po.status}'. Only draft/pending_approval can be modified."  # noqa: E501
         )
 
     # Update fields
@@ -347,7 +352,7 @@ async def receive_goods(
     if receive_data.quantity_received > remaining_qty:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot receive {receive_data.quantity_received} units. Only {remaining_qty} remaining."
+            detail=f"Cannot receive {receive_data.quantity_received} units. Only {remaining_qty} remaining."  # noqa: E501
         )
 
     # Update quantity_received

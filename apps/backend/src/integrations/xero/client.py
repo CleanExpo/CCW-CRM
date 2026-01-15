@@ -5,8 +5,6 @@ handling authentication, error handling, and request formatting.
 """
 
 from datetime import date
-from typing import Any, Optional
-from uuid import UUID
 
 import httpx
 import structlog
@@ -17,7 +15,7 @@ logger = structlog.get_logger(__name__)
 class XeroAPIError(Exception):
     """Exception raised for Xero API errors."""
 
-    def __init__(self, message: str, status_code: Optional[int] = None, response: Optional[dict] = None):
+    def __init__(self, message: str, status_code: int | None = None, response: dict | None = None):
         self.message = message
         self.status_code = status_code
         self.response = response
@@ -57,8 +55,8 @@ class XeroClient:
         self,
         method: str,
         endpoint: str,
-        data: Optional[dict] = None,
-        params: Optional[dict] = None,
+        data: dict | None = None,
+        params: dict | None = None,
     ) -> dict:
         """Make an authenticated request to Xero API.
 
@@ -122,9 +120,9 @@ class XeroClient:
     async def create_contact(
         self,
         name: str,
-        email: Optional[str] = None,
-        phone: Optional[str] = None,
-        address: Optional[dict] = None,
+        email: str | None = None,
+        phone: str | None = None,
+        address: dict | None = None,
     ) -> dict:
         """Create or update a contact (customer) in Xero.
 
@@ -178,7 +176,7 @@ class XeroClient:
 
         raise XeroAPIError("No contact returned from Xero")
 
-    async def get_contact_by_email(self, email: str) -> Optional[dict]:
+    async def get_contact_by_email(self, email: str) -> dict | None:
         """Find a contact by email address.
 
         Args:
@@ -199,8 +197,8 @@ class XeroClient:
         contact_id: str,
         invoice_number: str,
         line_items: list[dict],
-        due_date: Optional[date] = None,
-        reference: Optional[str] = None,
+        due_date: date | None = None,
+        reference: str | None = None,
     ) -> dict:
         """Create an invoice in Xero.
 
@@ -302,8 +300,8 @@ class XeroClient:
 
     async def get_payments(
         self,
-        invoice_id: Optional[str] = None,
-        modified_after: Optional[date] = None,
+        invoice_id: str | None = None,
+        modified_after: date | None = None,
     ) -> list[dict]:
         """Get payments, optionally filtered by invoice or date.
 

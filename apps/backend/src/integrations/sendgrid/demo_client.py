@@ -190,35 +190,35 @@ class SendGridDemoClient:
                 "from": "customer1@example.com",
                 "from_name": "John Smith",
                 "subject": "Order Status Inquiry",
-                "text": "Hi, I placed order #ORD-2026-001 last week. Can you please tell me when it will be shipped? Thanks!",
+                "text": "Hi, I placed order #ORD-2026-001 last week. Can you please tell me when it will be shipped? Thanks!",  # noqa: E501
                 "intent": "order_inquiry",
             },
             {
                 "from": "customer2@example.com",
                 "from_name": "Sarah Johnson",
                 "subject": "Product Availability",
-                "text": "Do you have the Makita cordless drill (SKU: DRL-001) in stock? I need 5 units. Please let me know pricing and delivery time.",
+                "text": "Do you have the Makita cordless drill (SKU: DRL-001) in stock? I need 5 units. Please let me know pricing and delivery time.",  # noqa: E501
                 "intent": "stock_check",
             },
             {
                 "from": "customer3@example.com",
                 "from_name": "Mike Brown",
                 "subject": "Quote Request",
-                "text": "I need a quote for 10x safety helmets and 20x safety vests for my construction site. Can you send me a quote with delivery options?",
+                "text": "I need a quote for 10x safety helmets and 20x safety vests for my construction site. Can you send me a quote with delivery options?",  # noqa: E501
                 "intent": "quote_request",
             },
             {
                 "from": "customer4@example.com",
                 "from_name": "Lisa Chen",
                 "subject": "Complaint - Wrong Item Delivered",
-                "text": "I received the wrong item in my order #ORD-2026-003. I ordered a hammer but received a screwdriver. Please help resolve this urgently!",
+                "text": "I received the wrong item in my order #ORD-2026-003. I ordered a hammer but received a screwdriver. Please help resolve this urgently!",  # noqa: E501
                 "intent": "complaint",
             },
             {
                 "from": "customer5@example.com",
                 "from_name": "David Wilson",
                 "subject": "General Inquiry",
-                "text": "What are your business hours? Do you offer installation services for heavy equipment?",
+                "text": "What are your business hours? Do you offer installation services for heavy equipment?",  # noqa: E501
                 "intent": "support",
             },
         ]

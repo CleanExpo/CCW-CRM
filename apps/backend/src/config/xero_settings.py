@@ -3,7 +3,6 @@
 Loads Xero configuration from environment variables with validation.
 """
 
-import os
 from typing import Literal
 
 from pydantic import ConfigDict, Field

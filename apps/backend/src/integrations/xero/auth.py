@@ -7,7 +7,6 @@ including token exchange, refresh, and storage.
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Optional
 from urllib.parse import urlencode
 
 import httpx
@@ -54,7 +53,7 @@ class XeroAuth:
         self.scopes = scopes
         self._http_client = httpx.AsyncClient(timeout=30.0)
 
-    def get_authorization_url(self, state: Optional[str] = None) -> tuple[str, str]:
+    def get_authorization_url(self, state: str | None = None) -> tuple[str, str]:
         """Generate authorization URL for OAuth2 flow.
 
         Args:
@@ -315,7 +314,7 @@ class XeroAuth:
         self,
         db: AsyncSession,
         organization_id: uuid.UUID,
-    ) -> Optional[XeroConnection]:
+    ) -> XeroConnection | None:
         """Get active Xero connection for an organization.
 
         If the access token is expired, automatically refresh it.

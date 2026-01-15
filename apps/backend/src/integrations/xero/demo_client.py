@@ -5,7 +5,6 @@ Returns realistic mock data that matches Xero's API response structure.
 
 import uuid
 from datetime import date, datetime
-from typing import Optional
 
 import structlog
 
@@ -33,9 +32,9 @@ class DemoXeroClient:
     async def create_contact(
         self,
         name: str,
-        email: Optional[str] = None,
-        phone: Optional[str] = None,
-        address: Optional[dict] = None,
+        email: str | None = None,
+        phone: str | None = None,
+        address: dict | None = None,
     ) -> dict:
         """Return mock contact data."""
         contact_id = str(uuid.uuid4())
@@ -47,11 +46,11 @@ class DemoXeroClient:
             "Name": name,
             "EmailAddress": email or "demo@example.com",
             "ContactStatus": "ACTIVE",
-            "Phones": [{"PhoneType": "DEFAULT", "PhoneNumber": phone or "0400000000"}] if phone else [],
+            "Phones": [{"PhoneType": "DEFAULT", "PhoneNumber": phone or "0400000000"}] if phone else [],  # noqa: E501
             "Addresses": [
                 {
                     "AddressType": "STREET",
-                    "AddressLine1": address.get("street", "123 Demo St") if address else "123 Demo St",
+                    "AddressLine1": address.get("street", "123 Demo St") if address else "123 Demo St",  # noqa: E501
                     "City": address.get("city", "Sydney") if address else "Sydney",
                     "Region": address.get("state", "NSW") if address else "NSW",
                     "PostalCode": address.get("postal_code", "2000") if address else "2000",
@@ -63,7 +62,7 @@ class DemoXeroClient:
             "UpdatedDateUTC": datetime.utcnow().isoformat() + "Z",
         }
 
-    async def get_contact_by_email(self, email: str) -> Optional[dict]:
+    async def get_contact_by_email(self, email: str) -> dict | None:
         """Return None (always create new contacts in demo mode)."""
         logger.info("Demo: Contact lookup by email", email=email)
         return None  # Always create new in demo mode
@@ -73,8 +72,8 @@ class DemoXeroClient:
         contact_id: str,
         invoice_number: str,
         line_items: list[dict],
-        due_date: Optional[date] = None,
-        reference: Optional[str] = None,
+        due_date: date | None = None,
+        reference: str | None = None,
     ) -> dict:
         """Return mock invoice data."""
         invoice_id = str(uuid.uuid4())
@@ -157,8 +156,8 @@ class DemoXeroClient:
 
     async def get_payments(
         self,
-        invoice_id: Optional[str] = None,
-        modified_after: Optional[date] = None,
+        invoice_id: str | None = None,
+        modified_after: date | None = None,
     ) -> list[dict]:
         """Return mock payment data (simulating a payment received)."""
         logger.info(

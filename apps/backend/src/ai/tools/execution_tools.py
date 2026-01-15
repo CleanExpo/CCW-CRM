@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.demo_models import Customer, Order, Product, Quote
+from src.db.demo_models import Customer, Order, Product
 from src.utils import get_logger
 
 from .base import BaseTool, ToolOutput

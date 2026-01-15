@@ -51,7 +51,7 @@ class ShopifyConnection(Base):
 
     # Sync settings (JSON)
     sync_settings: Mapped[dict | None] = mapped_column(JSON)
-    # Example: {"auto_import_orders": true, "auto_sync_inventory": true, "inventory_location_id": 123}
+    # Example: {"auto_import_orders": true, "auto_sync_inventory": true, "inventory_location_id": 123}  # noqa: E501
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(

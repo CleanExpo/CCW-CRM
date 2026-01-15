@@ -1,12 +1,12 @@
 """Learning engine API endpoints."""
 
-from datetime import UTC, datetime, timedelta
 import random
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.ai.learning import get_learning_engine
 from src.ai.monitoring import get_metrics_collector
@@ -498,7 +498,7 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
 
         # Duration varies ±30%
         duration_ms = int(typical_duration * random.uniform(0.7, 1.3))
-        completed_at = (now - timedelta(minutes=minutes_ago) + timedelta(milliseconds=duration_ms)).isoformat()
+        completed_at = (now - timedelta(minutes=minutes_ago) + timedelta(milliseconds=duration_ms)).isoformat()  # noqa: E501
 
         # Success based on task's success rate
         status = "completed" if random.random() < success_rate else "failed"
@@ -517,7 +517,7 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
             metadata={
                 "test_data": True,
                 "iteration": i,
-                "task_complexity": "high" if duration_ms > 3000 else "medium" if duration_ms > 1500 else "low",
+                "task_complexity": "high" if duration_ms > 3000 else "medium" if duration_ms > 1500 else "low",  # noqa: E501
             },
         )
 

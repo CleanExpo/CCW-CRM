@@ -1,9 +1,8 @@
 """Ollama client singleton for LLM interactions."""
 
 import asyncio
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
 
-import ollama
 import structlog
 from ollama import AsyncClient
 

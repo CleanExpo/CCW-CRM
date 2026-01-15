@@ -1,18 +1,19 @@
 """API routes for portal form submissions."""
 
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, EmailStr, field_serializer
-from datetime import datetime
+from sqlalchemy import func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
 from src.db.portal_forms_models import (
-    ContactSubmission,
     ContactSource,
     ContactStatus,
+    ContactSubmission,
     DemoRequest,
     DemoRequestStatus,
 )
@@ -110,7 +111,7 @@ class NoteResponse(BaseModel):
 
 
 # Contact Submission Endpoints
-@router.post("/contact-submissions", response_model=ContactSubmissionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/contact-submissions", response_model=ContactSubmissionResponse, status_code=status.HTTP_201_CREATED)  # noqa: E501
 async def create_contact_submission(
     submission_data: ContactSubmissionCreate,
     db: Annotated[AsyncSession, Depends(get_async_db)],
@@ -179,7 +180,7 @@ async def list_contact_submissions(
     total = count_result.scalar() or 0
 
     # Apply pagination
-    query = query.order_by(ContactSubmission.created_at.desc()).limit(page_size).offset((page - 1) * page_size)
+    query = query.order_by(ContactSubmission.created_at.desc()).limit(page_size).offset((page - 1) * page_size)  # noqa: E501
 
     result = await db.execute(query)
     submissions = result.scalars().all()
@@ -194,7 +195,7 @@ async def list_contact_submissions(
 
 
 # Demo Request Endpoints
-@router.post("/demo-requests", response_model=DemoRequestResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/demo-requests", response_model=DemoRequestResponse, status_code=status.HTTP_201_CREATED)  # noqa: E501
 async def create_demo_request(
     request_data: DemoRequestCreate,
     db: Annotated[AsyncSession, Depends(get_async_db)],
@@ -206,7 +207,7 @@ async def create_demo_request(
         email=request_data.email,
         phone=request_data.phone,
         product_interest=request_data.product_interest,
-        preferred_date=datetime.fromisoformat(request_data.preferred_date) if request_data.preferred_date else None,
+        preferred_date=datetime.fromisoformat(request_data.preferred_date) if request_data.preferred_date else None,  # noqa: E501
         notes=request_data.notes,
         status=DemoRequestStatus.PENDING.value,  # Convert enum to string
     )
@@ -265,7 +266,7 @@ async def list_demo_requests(
     total = count_result.scalar() or 0
 
     # Apply pagination
-    query = query.order_by(DemoRequest.created_at.desc()).limit(page_size).offset((page - 1) * page_size)
+    query = query.order_by(DemoRequest.created_at.desc()).limit(page_size).offset((page - 1) * page_size)  # noqa: E501
 
     result = await db.execute(query)
     requests = result.scalars().all()
@@ -297,7 +298,7 @@ async def get_contact_submission(
     return ContactSubmissionResponse.model_validate(submission)
 
 
-@router.patch("/contact-submissions/{submission_id}/status", response_model=ContactSubmissionResponse)
+@router.patch("/contact-submissions/{submission_id}/status", response_model=ContactSubmissionResponse)  # noqa: E501
 async def update_contact_submission_status(
     submission_id: UUID,
     status_update: StatusUpdate,
@@ -315,7 +316,7 @@ async def update_contact_submission_status(
     # Validate status
     valid_statuses = ["new", "read", "responded", "closed"]
     if status_update.status not in valid_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")  # noqa: E501
 
     old_status = submission.status
     submission.status = status_update.status
@@ -373,7 +374,7 @@ async def update_demo_request_status(
     # Validate status
     valid_statuses = ["pending", "scheduled", "completed", "cancelled"]
     if status_update.status not in valid_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")  # noqa: E501
 
     old_status = demo_request.status
     demo_request.status = status_update.status
@@ -448,7 +449,7 @@ async def get_submissions_statistics(
 
 
 # Notes Endpoints
-@router.post("/submissions/{submission_type}/{submission_id}/notes", response_model=NoteResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/submissions/{submission_type}/{submission_id}/notes", response_model=NoteResponse, status_code=status.HTTP_201_CREATED)  # noqa: E501
 async def create_submission_note(
     submission_type: str,
     submission_id: UUID,

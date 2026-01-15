@@ -99,7 +99,7 @@ async def generate_insights(
     Returns:
         Generated insights with recommendations
     """
-    logger.info(f"Generating insights", category=request.category)
+    logger.info("Generating insights", category=request.category)
 
     try:
         # Prepare context
@@ -129,7 +129,7 @@ async def generate_insights(
         return GenerateInsightsResponse(**result)
 
     except Exception as e:
-        logger.error(f"Error generating insights", error=str(e))
+        logger.error("Error generating insights", error=str(e))
         return GenerateInsightsResponse(
             category=request.category,
             insights=[],
@@ -188,7 +188,7 @@ async def get_dashboard_insights(
                 categories.add(insight["category"])
 
             except Exception as e:
-                logger.error(f"Error parsing insight", record_id=record.id, error=str(e))
+                logger.error("Error parsing insight", record_id=record.id, error=str(e))
                 continue
 
         return DashboardInsightsResponse(
@@ -198,7 +198,7 @@ async def get_dashboard_insights(
         )
 
     except Exception as e:
-        logger.error(f"Error fetching dashboard insights", error=str(e))
+        logger.error("Error fetching dashboard insights", error=str(e))
         return DashboardInsightsResponse(
             insights=[],
             total=0,
@@ -273,7 +273,7 @@ async def get_insight_history(
                 insights.append(insight)
 
             except Exception as e:
-                logger.error(f"Error parsing insight", record_id=record.id, error=str(e))
+                logger.error("Error parsing insight", record_id=record.id, error=str(e))
                 continue
 
         return InsightHistoryResponse(
@@ -284,7 +284,7 @@ async def get_insight_history(
         )
 
     except Exception as e:
-        logger.error(f"Error fetching insight history", error=str(e))
+        logger.error("Error fetching insight history", error=str(e))
         return InsightHistoryResponse(
             insights=[],
             total=0,

@@ -202,7 +202,7 @@ async def list_backorders(
     for backorder in backorders:
         backorder_dict = backorder.to_dict()
         backorder_dict["product"] = (
-            {"id": str(backorder.product.id), "sku": backorder.product.sku, "name": backorder.product.name}
+            {"id": str(backorder.product.id), "sku": backorder.product.sku, "name": backorder.product.name}  # noqa: E501
             if backorder.product
             else None
         )
@@ -252,7 +252,7 @@ async def get_pending_backorders(
     for backorder in backorders:
         backorder_dict = backorder.to_dict()
         backorder_dict["product"] = (
-            {"id": str(backorder.product.id), "sku": backorder.product.sku, "name": backorder.product.name}
+            {"id": str(backorder.product.id), "sku": backorder.product.sku, "name": backorder.product.name}  # noqa: E501
             if backorder.product
             else None
         )
@@ -387,7 +387,7 @@ async def create_backorder(
         alert_type="backorder_created",
         severity="medium",
         title="New Backorder Created",
-        message=f"Backorder created for order {backorder.order_id}: {backorder.quantity_backordered} units",
+        message=f"Backorder created for order {backorder.order_id}: {backorder.quantity_backordered} units",  # noqa: E501
         entity_type="backorder",
         entity_id=backorder.id,
         assign_to_role="sales_manager",
@@ -563,7 +563,7 @@ async def allocate_backorder(
         alert_type="backorder_allocated",
         severity="low",
         title="Backorder Allocated to Container",
-        message=f"Backorder allocated to container {container.container_number}. ETA: {backorder.expected_availability_date.strftime('%Y-%m-%d') if backorder.expected_availability_date else 'TBD'}",
+        message=f"Backorder allocated to container {container.container_number}. ETA: {backorder.expected_availability_date.strftime('%Y-%m-%d') if backorder.expected_availability_date else 'TBD'}",  # noqa: E501
         entity_type="backorder",
         entity_id=backorder.id,
         assign_to_role="sales_manager",
@@ -613,7 +613,7 @@ async def fulfill_backorder(
     if new_fulfilled > backorder.quantity_backordered:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot fulfill {fulfill_data.quantity_fulfilled} units. Only {backorder.quantity_remaining} remaining.",
+            detail=f"Cannot fulfill {fulfill_data.quantity_fulfilled} units. Only {backorder.quantity_remaining} remaining.",  # noqa: E501
         )
 
     # Update backorder
@@ -659,7 +659,7 @@ async def fulfill_backorder(
         alert_type="backorder_fulfilled",
         severity="low",
         title="Backorder Fulfilled",
-        message=f"Backorder fulfilled: {fulfill_data.quantity_fulfilled} units. Remaining: {backorder.quantity_remaining}",
+        message=f"Backorder fulfilled: {fulfill_data.quantity_fulfilled} units. Remaining: {backorder.quantity_remaining}",  # noqa: E501
         entity_type="backorder",
         entity_id=backorder.id,
         assign_to_role="sales_manager",
@@ -709,7 +709,7 @@ async def notify_customer(
         raise HTTPException(status_code=400, detail="Customer has no email address")
 
     # Send email notification
-    email_sent = email_service.send_backorder_notification(
+    email_service.send_backorder_notification(
         backorder_id=str(backorder.id),
         customer_email=backorder.customer.email,
         customer_name=backorder.customer.company_name or backorder.customer.contact_name,

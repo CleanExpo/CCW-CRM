@@ -120,7 +120,7 @@ async def oauth_callback(
         Redirect to frontend settings page with success/error
     """
     code = request.query_params.get("code")
-    state = request.query_params.get("state")
+    request.query_params.get("state")
 
     if not code:
         logger.error("OAuth callback missing authorization code")

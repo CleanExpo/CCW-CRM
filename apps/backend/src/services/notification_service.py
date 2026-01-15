@@ -28,7 +28,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import get_settings
-from src.db.demo_models import Order, Customer, Quote
+from src.db.demo_models import Customer, Order, Quote
 
 
 class NotificationEvent(str, Enum):
@@ -87,7 +87,7 @@ class NotificationService:
             "templates"
         )
         self.jinja_env = Environment(
-            loader=FileSystemLoader(template_dir) if os.path.exists(template_dir) else FileSystemLoader("."),
+            loader=FileSystemLoader(template_dir) if os.path.exists(template_dir) else FileSystemLoader("."),  # noqa: E501
             autoescape=select_autoescape(["html", "xml"]),
         )
 
@@ -113,7 +113,7 @@ class NotificationService:
             # from sendgrid.helpers.mail import Mail
             #
             # message = Mail(
-            #     from_email=(notification.from_email or self.from_email, notification.from_name or self.from_name),
+            #     from_email=(notification.from_email or self.from_email, notification.from_name or self.from_name),  # noqa: E501
             #     to_emails=notification.to_email,
             #     subject=notification.subject,
             #     html_content=notification.html_body,
@@ -174,7 +174,7 @@ class NotificationService:
             </p>
         </body>
         </html>
-        """
+        """  # noqa: E501
 
     # Event-specific notification methods
 
@@ -216,13 +216,13 @@ class NotificationService:
             "order_date": order.order_date.strftime("%d/%m/%Y") if order.order_date else "N/A",
             "total": f"${order.total:,.2f}" if order.total else "$0.00",
             "order_url": f"{self.portal_url}/portal/orders/{order.id}",
-            "message": f"Your order {order.order_number} has been confirmed and is being processed.",
+            "message": f"Your order {order.order_number} has been confirmed and is being processed.",  # noqa: E501
             "details_html": f"""
                 <p><strong>Order Number:</strong> {order.order_number}</p>
                 <p><strong>Order Date:</strong> {order.order_date.strftime("%d/%m/%Y") if order.order_date else "N/A"}</p>
                 <p><strong>Total Amount:</strong> ${order.total:,.2f} (inc. GST)</p>
                 <p><a href="{self.portal_url}/portal/orders/{order.id}" style="color: #007bff;">View Order Details</a></p>
-            """,
+            """,  # noqa: E501
         }
 
         html_body = self._render_template("order_confirmed.html", context)
@@ -264,7 +264,7 @@ class NotificationService:
             "order_number": order.order_number,
             "tracking_number": order.tracking_number or "Not available",
             "carrier_name": order.carrier_name or "N/A",
-            "estimated_delivery": order.estimated_delivery_date.strftime("%d/%m/%Y") if order.estimated_delivery_date else "TBD",
+            "estimated_delivery": order.estimated_delivery_date.strftime("%d/%m/%Y") if order.estimated_delivery_date else "TBD",  # noqa: E501
             "tracking_url": f"{self.portal_url}/portal/orders/{order.id}/tracking",
             "message": f"Your order {order.order_number} has been shipped!",
             "details_html": f"""
@@ -272,7 +272,7 @@ class NotificationService:
                 <p><strong>Carrier:</strong> {order.carrier_name or "N/A"}</p>
                 <p><strong>Estimated Delivery:</strong> {order.estimated_delivery_date.strftime("%d/%m/%Y") if order.estimated_delivery_date else "TBD"}</p>
                 <p><a href="{self.portal_url}/portal/orders/{order.id}/tracking" style="color: #007bff;">Track Your Package</a></p>
-            """,
+            """,  # noqa: E501
         }
 
         html_body = self._render_template("order_shipped.html", context)
@@ -314,7 +314,7 @@ class NotificationService:
             "details_html": f"""
                 <p>Thank you for your business. We hope you're satisfied with your purchase.</p>
                 <p><a href="{self.portal_url}/portal/orders/{order.id}" style="color: #007bff;">View Order</a></p>
-            """,
+            """,  # noqa: E501
         }
 
         html_body = self._render_template("order_delivered.html", context)
@@ -362,7 +362,7 @@ class NotificationService:
                 <p><strong>Total Amount:</strong> ${quote.total:,.2f} (inc. GST)</p>
                 <p><strong>Valid Until:</strong> {quote.valid_until.strftime("%d/%m/%Y") if quote.valid_until else "N/A"}</p>
                 <p><a href="{self.portal_url}/portal/quotes/{quote.id}" style="color: #007bff;">View Quote</a></p>
-            """,
+            """,  # noqa: E501
         }
 
         html_body = self._render_template("quote_created.html", context)
@@ -412,7 +412,7 @@ class NotificationService:
                 <p><strong>Expires:</strong> {quote.valid_until.strftime("%d/%m/%Y") if quote.valid_until else "N/A"} ({days_remaining} days)</p>
                 <p><strong>Total Amount:</strong> ${quote.total:,.2f} (inc. GST)</p>
                 <p><a href="{self.portal_url}/portal/quotes/{quote.id}" style="color: #007bff; background-color: #ffc107; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Accept Quote Now</a></p>
-            """,
+            """,  # noqa: E501
         }
 
         html_body = self._render_template("quote_expiring.html", context)

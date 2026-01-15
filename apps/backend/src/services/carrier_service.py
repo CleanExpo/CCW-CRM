@@ -11,14 +11,11 @@ Supports multiple carriers through adapter pattern.
 """
 
 import os
-from abc import ABC, abstractmethod
 from datetime import datetime
 from decimal import Decimal
-from typing import Protocol, Any
-from uuid import UUID
+from typing import Any, Protocol
 
 from pydantic import BaseModel
-
 
 # Shared data models
 
@@ -122,7 +119,7 @@ class AustraliaPostAdapter:
         # TODO: Implement actual Australia Post API integration
         # For now, returning mock data
 
-        tracking_number = f"AP{datetime.now().strftime('%Y%m%d')}{int(datetime.now().timestamp() % 100000):05d}AU"
+        tracking_number = f"AP{datetime.now().strftime('%Y%m%d')}{int(datetime.now().timestamp() % 100000):05d}AU"  # noqa: E501
 
         return ShipmentResponse(
             tracking_number=tracking_number,
@@ -193,7 +190,7 @@ class StarTrackAdapter:
     async def create_shipment(self, request: ShipmentRequest) -> ShipmentResponse:
         """Create shipment via StarTrack API."""
         # Stub implementation
-        tracking_number = f"ST{datetime.now().strftime('%Y%m%d')}{int(datetime.now().timestamp() % 100000):05d}"
+        tracking_number = f"ST{datetime.now().strftime('%Y%m%d')}{int(datetime.now().timestamp() % 100000):05d}"  # noqa: E501
 
         return ShipmentResponse(
             tracking_number=tracking_number,
@@ -272,7 +269,7 @@ class EasyPostAdapter:
         # )
         # shipment = await shipment.buy(rate=shipment.lowest_rate())
 
-        tracking_number = f"EP{datetime.now().strftime('%Y%m%d')}{int(datetime.now().timestamp() % 100000):05d}"
+        tracking_number = f"EP{datetime.now().strftime('%Y%m%d')}{int(datetime.now().timestamp() % 100000):05d}"  # noqa: E501
 
         return ShipmentResponse(
             tracking_number=tracking_number,
