@@ -61,7 +61,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Only skip auth if explicitly enabled via environment variable
         if settings.skip_auth_enforcement:
             logger.warning(
-                "⚠️  Authentication enforcement DISABLED via SKIP_AUTH_ENFORCEMENT flag. "
+                "WARNING: Authentication enforcement DISABLED via SKIP_AUTH_ENFORCEMENT flag. "
                 "This should ONLY be used for local testing."
             )
             return await call_next(request)
