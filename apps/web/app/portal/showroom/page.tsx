@@ -1,20 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
-  BentoGrid,
   BentoCard,
+  BentoCardDescription,
   BentoCardHeader,
   BentoCardTitle,
-  BentoCardDescription,
-  BentoCardContent,
+  BentoGrid
 } from "@/components/ui/bento-grid";
-import { Card, CardContent, CardImage } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardImage } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { FadeIn, Stagger } from "@/components/ui/motion";
 import {
   Select,
   SelectContent,
@@ -23,8 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { FadeIn, Stagger } from "@/components/ui/motion";
-import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle,
   Copy,
@@ -36,6 +32,9 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { toast } from "sonner";
 
 interface CcwProduct {
   id: string;
@@ -89,9 +88,16 @@ export default function CcwShowroomPage() {
     orderConfirmedAt: null,
     invoiceIssuedAt: null,
   });
-  const [quoteNumber, setQuoteNumber] = useState(generateNumber("Q"));
-  const [orderNumber, setOrderNumber] = useState(generateNumber("ORD"));
-  const [invoiceNumber, setInvoiceNumber] = useState(generateNumber("INV"));
+  const [quoteNumber, setQuoteNumber] = useState("");
+  const [orderNumber, setOrderNumber] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+
+  // Initialize random numbers on client only to avoid hydration mismatch
+  useEffect(() => {
+    setQuoteNumber(generateNumber("Q"));
+    setOrderNumber(generateNumber("ORD"));
+    setInvoiceNumber(generateNumber("INV"));
+  }, []);
 
   useEffect(() => {
     async function loadProducts() {
@@ -565,41 +571,41 @@ export default function CcwShowroomPage() {
                 <Badge variant="success">Preferred</Badge>
               </div>
               <Separator />
-              <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+              <div className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Account</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Account</p>
                   <p className="text-base text-foreground">{customerProfile.account}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Contact</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Contact</p>
                   <p className="text-base text-foreground">{customerProfile.contact}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Terms</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Terms</p>
                   <p className="text-base text-foreground">{customerProfile.terms}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Tier</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Tier</p>
                   <p className="text-base text-foreground">{customerProfile.tier}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Credit limit</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Credit limit</p>
                   <p className="text-base text-foreground">
                     {formatCurrency(customerProfile.creditLimit)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Open balance</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Open balance</p>
                   <p className="text-base text-foreground">
                     {formatCurrency(customerProfile.balance)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Last order</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Last order</p>
                   <p className="text-base text-foreground">{customerProfile.lastOrder}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Sales rep</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Sales rep</p>
                   <p className="text-base text-foreground">{customerProfile.rep}</p>
                 </div>
               </div>
@@ -754,22 +760,22 @@ export default function CcwShowroomPage() {
                 </p>
               </div>
 
-              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+              <div className="grid gap-2 text-sm sm:grid-cols-2">
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Quote</p>
-                  <p className="font-mono text-base">{quoteNumber}</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Quote</p>
+                  <p className="font-mono text-base text-foreground">{quoteNumber}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Order</p>
-                  <p className="font-mono text-base">{orderNumber}</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Order</p>
+                  <p className="font-mono text-base text-foreground">{orderNumber}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Invoice</p>
-                  <p className="font-mono text-base">{invoiceNumber}</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Invoice</p>
+                  <p className="font-mono text-base text-foreground">{invoiceNumber}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest">Branch</p>
-                  <p className="text-base">Brisbane | CCW | Live demo</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/60">Branch</p>
+                  <p className="text-base text-foreground">Brisbane | CCW | Live demo</p>
                 </div>
               </div>
 
@@ -822,24 +828,24 @@ export default function CcwShowroomPage() {
                 })}
               </div>
 
-              <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+              <div className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em]">Subtotal</p>
-                  <p className="text-base font-semibold">
+                  <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Subtotal</p>
+                  <p className="text-base font-semibold text-foreground">
                     {formatCurrency(quoteMetrics.subtotal)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em]">Tax</p>
-                  <p className="text-base font-semibold">{formatCurrency(quoteMetrics.tax)}</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Tax</p>
+                  <p className="text-base font-semibold text-foreground">{formatCurrency(quoteMetrics.tax)}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em]">Total</p>
-                  <p className="text-base font-semibold">{formatCurrency(quoteMetrics.total)}</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Total</p>
+                  <p className="text-base font-semibold text-foreground">{formatCurrency(quoteMetrics.total)}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em]">Margin</p>
-                  <p className="text-base font-semibold">
+                  <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Margin</p>
+                  <p className="text-base font-semibold text-foreground">
                     {formatCurrency(quoteMetrics.margin)}
                   </p>
                 </div>

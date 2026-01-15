@@ -197,7 +197,7 @@
     --secondary: 0 0% 10%;              /* Subtle gray */
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 60%;       /* Muted gray text */
+    --muted-foreground: 0 0% 70%;       /* Muted gray text - improved contrast */
     --accent: 271 81% 56%;              /* Purple accent */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 65%;
