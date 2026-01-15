@@ -85,8 +85,8 @@ class User(Base):
     # contractors = relationship("Contractor", back_populates="user")
     # documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
 
-    # PRD relationship (no type annotation to avoid SQLAlchemy 2.0 errors)
-    prds = relationship("PRD", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
+    # PRD relationship (commented out - PRD model not imported)
+    # prds = relationship("PRD", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email})>"
