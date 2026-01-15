@@ -1,0 +1,135 @@
+# Unique Features Analysis
+# Identify differentiators and opportunities
+
+version: "1.0"
+principle: "Find what makes competitors stand out, and what's missing"
+
+feature_categories:
+  interactive_elements:
+    description: "Tools that engage visitors"
+    examples:
+      - "Quote calculator"
+      - "Service selector quiz"
+      - "Cost estimator"
+      - "Appointment scheduler"
+      - "Live chat widget"
+    value: "Increases engagement, qualifies leads"
+
+  content_types:
+    description: "Beyond standard pages"
+    examples:
+      - "Case studies / project showcases"
+      - "Video library / how-to videos"
+      - "Blog with useful content"
+      - "Resource downloads"
+      - "Before/after gallery"
+    value: "Builds authority, aids SEO"
+
+  trust_signals:
+    description: "Credibility builders"
+    examples:
+      - "License verification widget"
+      - "Insurance documentation"
+      - "Real-time review feed"
+      - "Industry association badges"
+      - "Guarantee statements"
+    value: "Reduces buying friction"
+
+  communication_features:
+    description: "Easy contact options"
+    examples:
+      - "Click-to-call sticky button"
+      - "SMS text option"
+      - "Video call scheduling"
+      - "Callback request"
+      - "WhatsApp integration"
+    value: "Meets customer preferences"
+
+  pricing_transparency:
+    description: "Cost communication"
+    examples:
+      - "Published pricing"
+      - "Price range indicators"
+      - "Package comparisons"
+      - "Financing options"
+      - "Price match guarantee"
+    value: "Pre-qualifies customers"
+
+  customer_experience:
+    description: "Service enhancements"
+    examples:
+      - "Technician profiles/bios"
+      - "Arrival time tracking"
+      - "Job progress updates"
+      - "Digital invoicing"
+      - "Follow-up reminders"
+    value: "Differentiates experience"
+
+analysis_matrix:
+  template:
+    feature: ""
+    competitor_has_it:
+      competitor_1: true/false
+      competitor_2: true/false
+      competitor_3: true/false
+    frequency: "none|rare|common|standard"
+    implementation_difficulty: "easy|medium|hard"
+    potential_impact: "low|medium|high"
+    recommendation: "must_have|nice_to_have|differentiate|skip"
+
+opportunity_scoring:
+  must_have:
+    criteria:
+      - "3+ competitors have it"
+      - "Industry expectation"
+    action: "Include in your site"
+
+  differentiate:
+    criteria:
+      - "1-2 competitors have it"
+      - "High impact potential"
+    action: "Consider implementing"
+
+  first_mover:
+    criteria:
+      - "No competitors have it"
+      - "Clear customer value"
+    action: "Strong differentiation opportunity"
+
+  skip:
+    criteria:
+      - "Low impact"
+      - "High difficulty"
+      - "Doesn't fit brand"
+    action: "Deprioritize"
+
+common_gaps:
+  trade_businesses:
+    often_missing:
+      - "Clear pricing guidance"
+      - "Technician photos/bios"
+      - "Video testimonials"
+      - "Process transparency"
+      - "Mobile-optimized booking"
+    opportunity: "Stand out by addressing these"
+
+output_template:
+  unique_features_report:
+    must_haves:
+      - feature: ""
+        reason: ""
+        competitors_with: []
+
+    differentiators:
+      - feature: ""
+        reason: ""
+        competitors_with: []
+
+    first_mover_opportunities:
+      - feature: ""
+        customer_value: ""
+        implementation_notes: ""
+
+    skip_list:
+      - feature: ""
+        reason_to_skip: ""

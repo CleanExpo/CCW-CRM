@@ -1,0 +1,196 @@
+# Services Page Copy Structure
+# Framework for service pages that convert
+
+version: "1.0"
+page: "services"
+purpose: "Explain services and drive inquiries"
+
+page_types:
+  overview_page:
+    description: "Lists all services with brief descriptions"
+    use_when: "Multiple distinct services"
+
+  single_service_page:
+    description: "Deep dive into one service"
+    use_when: "Each service needs detailed explanation"
+
+  hybrid:
+    description: "Overview with expandable details"
+    use_when: "Moderate number of services"
+
+overview_page_structure:
+  hero:
+    position: 1
+    copy_elements:
+      headline:
+        formula: "How We Help [Target customer]"
+        example: "Plumbing Services for Brisbane Homeowners"
+
+      subhead:
+        formula: "[Benefit statement] + [Differentiator]"
+        example: "From leaky taps to full renovations. Fixed prices, no surprises."
+
+      cta:
+        example: "Get a Free Quote"
+
+  service_grid:
+    position: 2
+    copy_elements:
+      service_card:
+        title: "Service name"
+        description: "2-3 sentences, benefit-focused"
+        bullet_points: "3-4 key inclusions"
+        cta: "Learn More →"
+
+    visual_guidance:
+      layout: "Cards with icons or images"
+      grouping: "By category if many services"
+
+  why_choose:
+    position: 3
+    purpose: "Differentiate from competitors"
+    copy_elements:
+      headline: "Why Choose Us for Your [Service Type]"
+      value_props: "3-5 differentiators"
+
+  service_area:
+    position: 4
+    purpose: "Geographic clarity"
+    copy_elements:
+      headline: "Areas We Service"
+      list: "Suburbs/regions covered"
+      note: "Outside our area? Call us anyway"
+
+  cta_section:
+    position: 5
+    copy_elements:
+      headline: "Not Sure What You Need?"
+      subhead: "We'll help you figure it out. No obligation."
+      cta: "Talk to Someone Now"
+
+single_service_structure:
+  service_hero:
+    position: 1
+    copy_elements:
+      headline:
+        formula: "[Service Name]: [Primary Benefit]"
+        example: "Hot Water Repairs: Same-Day Service, Fixed Prices"
+
+      subhead:
+        formula: "[Who it's for] + [What you do]"
+        example: "No hot water? We'll diagnose the problem and give you options within hours."
+
+      cta: "Book a [Service Name]"
+
+  problem_context:
+    position: 2
+    purpose: "Why they need this service"
+    copy_elements:
+      when_to_call:
+        headline: "Signs You Need [Service Name]"
+        list:
+          - "Symptom 1 (from research)"
+          - "Symptom 2 (from research)"
+          - "Symptom 3 (from research)"
+
+      consequences:
+        headline: "What Happens If You Wait"
+        content: "2-3 sentences on risks of delay"
+
+  what_included:
+    position: 3
+    purpose: "Set clear expectations"
+    copy_elements:
+      headline: "What's Included"
+      checklist:
+        - "Inclusion 1"
+        - "Inclusion 2"
+        - "Inclusion 3"
+
+      not_included:
+        headline: "Good to Know"
+        items: "Any exclusions or extras"
+
+  process:
+    position: 4
+    purpose: "Make it feel easy"
+    copy_elements:
+      headline: "How It Works"
+      steps:
+        - step: "Diagnosis"
+          description: "What happens first"
+        - step: "Quote"
+          description: "How pricing works"
+        - step: "Repair/Install"
+          description: "The actual work"
+        - step: "Follow-up"
+          description: "Aftercare"
+
+  pricing_section:
+    position: 5
+    purpose: "Set price expectations"
+    copy_elements:
+      headline: "Pricing"
+      approach: "Choose one"
+      options:
+        fixed_price:
+          example: "[Service] starts from $XXX"
+        range:
+          example: "Most [service] jobs are $XXX - $XXX"
+        factors:
+          example: "Price depends on [factors]"
+
+      guarantee:
+        headline: "Our Guarantee"
+        content: "What you promise about pricing"
+
+  service_proof:
+    position: 6
+    purpose: "Service-specific trust"
+    copy_elements:
+      testimonials:
+        filter: "For this service specifically"
+        count: "2-3 relevant reviews"
+
+      before_after:
+        include: "If visual results apply"
+
+      stats:
+        example: "247 [service type] jobs completed this year"
+
+  service_faq:
+    position: 7
+    copy_elements:
+      headline: "Common Questions About [Service]"
+      questions:
+        - "How long does it take?"
+        - "What's the warranty?"
+        - "Can you work on [specific thing]?"
+        - "What if you find other problems?"
+
+  service_cta:
+    position: 8
+    copy_elements:
+      headline: "Ready to Get Your [Problem] Fixed?"
+      subhead: "Free diagnosis. Fixed price quote. No surprises."
+      cta: "Book Your [Service Name]"
+      alternative: "Or call: [phone]"
+
+service_copy_rules:
+  benefit_first:
+    rule: "Lead with what they get, not what you do"
+    bad: "We provide comprehensive plumbing services"
+    good: "Get your plumbing fixed right the first time"
+
+  specific_over_generic:
+    rule: "Details build trust"
+    bad: "Fast service"
+    good: "Same-day service for emergencies, 2-hour arrival windows"
+
+  address_objections:
+    rule: "Answer concerns before they ask"
+    common:
+      - "Pricing transparency"
+      - "Time expectations"
+      - "Guarantee/warranty"
+      - "Qualifications"

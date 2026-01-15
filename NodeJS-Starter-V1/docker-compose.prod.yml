@@ -1,0 +1,330 @@
+# ============================================
+# Production Docker Compose Configuration
+# ============================================
+#
+# Features:
+# - Optimized multi-stage Docker images
+# - Health checks for all services
+# - Restart policies
+# - Resource limits
+# - Proper networking
+# - Volume management
+#
+# Usage:
+#   docker-compose -f docker-compose.prod.yml up -d
+#   docker-compose -f docker-compose.prod.yml down
+#   docker-compose -f docker-compose.prod.yml logs -f
+# ============================================
+
+version: '3.9'
+
+services:
+  # ============================================
+  # PostgreSQL Database with pgvector
+  # ============================================
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: ccw-erp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ccw_erp_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ccw_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: "-A md5"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Removed init-db.sql - using Alembic migrations instead
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ccw_user} -d ${POSTGRES_DB:-ccw_erp_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ccw-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ============================================
+  # Redis Cache
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: ccw-erp-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ccw-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # ============================================
+  # Backend API (FastAPI)
+  # ============================================
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile.optimized
+      target: runtime
+    image: ccw-erp-backend:latest
+    container_name: ccw-erp-backend
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ccw_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ccw_erp_db}
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+
+      # AI Configuration
+      AI_PROVIDER: ${AI_PROVIDER:-anthropic}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+
+      # Integration API Keys
+      XERO_CLIENT_ID: ${XERO_CLIENT_ID}
+      XERO_CLIENT_SECRET: ${XERO_CLIENT_SECRET}
+      SHOPIFY_STORE_URL: ${SHOPIFY_STORE_URL}
+      SHOPIFY_ACCESS_TOKEN: ${SHOPIFY_ACCESS_TOKEN}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+
+      # Application Settings
+      ENVIRONMENT: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:8000"]'
+
+      # WebSocket
+      WEBSOCKET_ENABLED: "true"
+
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ccw-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Celery Worker
+  # ============================================
+  celery-worker:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile.optimized
+      target: runtime
+    image: ccw-erp-backend:latest
+    container_name: ccw-erp-celery-worker
+    restart: unless-stopped
+    command: celery -A src.core.celery_app worker --loglevel=info --concurrency=4 --max-tasks-per-child=1000
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ccw_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ccw_erp_db}
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+
+      # AI Configuration
+      AI_PROVIDER: ${AI_PROVIDER:-anthropic}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+      # Application Settings
+      ENVIRONMENT: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - ccw-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Celery Beat (Scheduler)
+  # ============================================
+  celery-beat:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile.optimized
+      target: runtime
+    image: ccw-erp-backend:latest
+    container_name: ccw-erp-celery-beat
+    restart: unless-stopped
+    command: celery -A src.core.celery_app beat --loglevel=info
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ccw_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ccw_erp_db}
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+
+      # Application Settings
+      ENVIRONMENT: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - ccw-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Frontend (Next.js)
+  # ============================================
+  frontend:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: runtime
+    image: ccw-erp-frontend:latest
+    container_name: ccw-erp-frontend
+    restart: unless-stopped
+    environment:
+      # API Configuration
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL:-http://localhost:3000}
+
+      # WebSocket
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:8000}
+
+      # Application Settings
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ccw-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  ccw-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

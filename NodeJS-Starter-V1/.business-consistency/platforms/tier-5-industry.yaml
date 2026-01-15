@@ -1,0 +1,205 @@
+# Tier 5 Platforms - Industry-Specific Directories
+# Trade-specific directories for relevant businesses
+
+version: "1.0"
+tier: 5
+priority: "INDUSTRY"
+description: "Industry-specific directories that generate leads"
+
+home_services:
+  oneflare:
+    name: "Oneflare"
+    url: "https://www.oneflare.com.au"
+    importance: "HIGH for trades"
+    feature: "150+ service categories"
+    model: "Quote request platform"
+
+    services_covered:
+      - "Plumbing"
+      - "Electrical"
+      - "Carpentry"
+      - "Cleaning"
+      - "Landscaping"
+      - "Painting"
+      - "Roofing"
+      - "And 140+ more"
+
+    listing_type: "Free profile, pay per lead"
+
+    optimization_checklist:
+      - "Create detailed business profile"
+      - "Verify NAP accuracy"
+      - "Add license numbers"
+      - "Upload portfolio photos"
+      - "Write compelling description"
+      - "Add all services offered"
+      - "Set service areas"
+      - "Respond quickly to leads"
+
+    lead_generation:
+      - "Receive quote requests"
+      - "Pay per lead (pricing varies)"
+      - "Review generation"
+
+  hipages:
+    name: "hipages"
+    url: "https://www.hipages.com.au"
+    importance: "HIGH for trades"
+    feature: "Major Australian tradesperson directory"
+    model: "Quote request platform"
+
+    services_covered:
+      - "All building trades"
+      - "Home services"
+      - "Renovations"
+      - "Repairs"
+
+    listing_type: "Subscription + per lead"
+
+    optimization_checklist:
+      - "Create business profile"
+      - "Verify licenses"
+      - "Add insurance details"
+      - "Upload portfolio"
+      - "Get customer reviews"
+      - "Set job preferences"
+      - "Define service areas"
+
+    features:
+      - "Job leads"
+      - "Customer reviews"
+      - "Badge system"
+      - "Response rate tracking"
+
+  service_seeking:
+    name: "ServiceSeeking"
+    url: "https://www.serviceseeking.com.au"
+    importance: "MEDIUM-HIGH"
+    feature: "Job leads and business profile"
+    model: "Quote request platform"
+
+    listing_type: "Free profile, pay per quote"
+
+    optimization_checklist:
+      - "Create profile"
+      - "Verify NAP"
+      - "Add services"
+      - "Set pricing guides"
+      - "Build reviews"
+
+  airtasker:
+    name: "Airtasker"
+    url: "https://www.airtasker.com"
+    importance: "MEDIUM"
+    feature: "Task marketplace"
+    model: "Bid on tasks"
+
+    best_for:
+      - "Small jobs"
+      - "One-off tasks"
+      - "Building customer base"
+
+    listing_type: "Free to join"
+
+    optimization_checklist:
+      - "Create tasker profile"
+      - "Verify identity"
+      - "Add skills"
+      - "Build reviews"
+
+healthcare:
+  health_engine:
+    name: "HealthEngine"
+    url: "https://www.healthengine.com.au"
+    importance: "HIGH for healthcare"
+    feature: "Healthcare provider directory"
+
+    applicable_to:
+      - "Medical practices"
+      - "Dental clinics"
+      - "Allied health"
+      - "Specialists"
+
+    features:
+      - "Online bookings"
+      - "Patient reviews"
+      - "Practice profile"
+
+real_estate:
+  realestate_com_au:
+    name: "RealEstate.com.au"
+    url: "https://www.realestate.com.au"
+    importance: "HIGH for real estate"
+    feature: "Agent listings and profiles"
+
+    applicable_to:
+      - "Real estate agents"
+      - "Property managers"
+
+legal:
+  law_society:
+    name: "Law Society Directories"
+    importance: "HIGH for lawyers"
+    feature: "State law society directories"
+
+    directories:
+      - "QLS Find a Solicitor"
+      - "Law Society NSW"
+      - "Law Institute of Victoria"
+
+accounting:
+  cpa_find:
+    name: "CPA Australia Find a CPA"
+    url: "https://www.cpaaustralia.com.au"
+    importance: "HIGH for accountants"
+    feature: "Professional directory"
+
+trade_associations:
+  description: "Industry association directories"
+
+  plumbing:
+    - name: "Master Plumbers Association"
+      url: "https://www.masterplumbers.com.au"
+      feature: "Find a plumber directory"
+
+  electrical:
+    - name: "Master Electricians Australia"
+      url: "https://www.masterelectricians.com.au"
+      feature: "Find an electrician directory"
+
+  building:
+    - name: "Master Builders Australia"
+      url: "https://www.masterbuilders.com.au"
+      feature: "Find a builder directory"
+
+  air_conditioning:
+    - name: "AIRAH"
+      url: "https://www.airah.org.au"
+      feature: "Find a contractor"
+
+setup_approach:
+  evaluate_first:
+    questions:
+      - "Is this platform relevant to my industry?"
+      - "Do my competitors use it?"
+      - "What's the cost vs potential return?"
+      - "Do I have capacity to respond to leads?"
+
+  start_with:
+    trades: ["Oneflare", "hipages", "ServiceSeeking"]
+    healthcare: ["HealthEngine"]
+    professional_services: ["Industry association directories"]
+
+  lead_response:
+    critical: "Speed of response matters"
+    target: "Respond within 1 hour during business hours"
+    tip: "Set up notifications"
+
+success_criteria:
+  industry_platforms:
+    - "Relevant platforms identified"
+    - "Profiles created with consistent NAP"
+    - "Licenses and credentials verified"
+    - "Portfolio/photos uploaded"
+    - "Review strategy in place"
+    - "Lead response process established"

@@ -1,79 +1,64 @@
-"""Rate limiting middleware."""
+"""
+Rate limiting middleware for API endpoints.
 
-import time
-from collections import defaultdict
-from collections.abc import Callable
+Prevents brute force attacks and abuse by limiting request rates.
+"""
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
-
-from src.config import get_settings
-from src.utils import get_logger
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from src.config.settings import get_settings
 
 settings = get_settings()
-logger = get_logger(__name__)
 
 
-class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Simple in-memory rate limiting middleware."""
+def get_rate_limit_key(request) -> str:
+    """
+    Get rate limit key based on user authentication status.
 
-    def __init__(self, app: Callable, requests_per_minute: int = 60) -> None:
-        super().__init__(app)
-        self.requests_per_minute = requests_per_minute
-        self.requests: dict[str, list[float]] = defaultdict(list)
+    - Authenticated users: Rate limited by user_id
+    - Anonymous users: Rate limited by IP address
 
-    def _get_client_id(self, request: Request) -> str:
-        """Get a unique identifier for the client."""
-        # Use user ID if available, otherwise use IP
-        user_id = request.headers.get("X-User-Id")
-        if user_id:
-            return f"user:{user_id}"
+    This ensures:
+    - Legitimate users get higher limits
+    - Attackers can't bypass IP limits by switching IPs
+    - Each authenticated user has independent rate limits
+    """
+    # Try to get user_id from auth token
+    auth_token = request.cookies.get("auth_token")
 
-        # Get client IP from X-Forwarded-For header or connection
-        forwarded_for = request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            return f"ip:{forwarded_for.split(',')[0].strip()}"
+    if auth_token:
+        from src.auth.jwt import decode_access_token
+        payload = decode_access_token(auth_token)
+        if payload and payload.get("user_id"):
+            # Authenticated user - rate limit by user_id
+            return f"user:{payload['user_id']}"
 
-        client_host = request.client.host if request.client else "unknown"
-        return f"ip:{client_host}"
+    # Anonymous user - rate limit by IP
+    return f"ip:{get_remote_address(request)}"
 
-    def _is_rate_limited(self, client_id: str) -> bool:
-        """Check if the client has exceeded the rate limit."""
-        now = time.time()
-        minute_ago = now - 60
 
-        # Remove old requests
-        self.requests[client_id] = [
-            req_time for req_time in self.requests[client_id] if req_time > minute_ago
-        ]
+# Create limiter instance
+limiter = Limiter(
+    key_func=get_rate_limit_key,
+    default_limits=["60/minute"] if settings.rate_limit_enabled else [],
+    storage_uri="memory://",  # Use in-memory storage (for Redis in production: "redis://localhost:6379")
+    enabled=settings.rate_limit_enabled,
+)
 
-        # Check if rate limited
-        if len(self.requests[client_id]) >= self.requests_per_minute:
-            return True
 
-        # Add current request
-        self.requests[client_id].append(now)
-        return False
+# Rate limit configurations for different endpoint types
+class RateLimits:
+    """Predefined rate limits for different endpoint types."""
 
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable[[Request], Response],
-    ) -> Response:
-        """Process the request and apply rate limiting."""
-        # Skip rate limiting for health checks
-        if request.url.path in {"/health", "/ready"}:
-            return await call_next(request)
+    # Authentication endpoints (more restrictive)
+    LOGIN = "5/minute"           # 5 login attempts per minute
+    PASSWORD_RESET = "3/hour"    # 3 password reset requests per hour
+    REFRESH = "10/minute"        # 10 token refresh per minute
 
-        client_id = self._get_client_id(request)
+    # API endpoints (standard)
+    READ = "100/minute"          # 100 read operations per minute
+    WRITE = "30/minute"          # 30 write operations per minute
+    DELETE = "10/minute"         # 10 delete operations per minute
 
-        if self._is_rate_limited(client_id):
-            logger.warning("Rate limit exceeded", client_id=client_id)
-            return Response(
-                content='{"error": "Rate limit exceeded. Please try again later."}',
-                status_code=429,
-                media_type="application/json",
-                headers={"Retry-After": "60"},
-            )
-
-        return await call_next(request)
+    # Public endpoints (most restrictive)
+    PUBLIC = "20/minute"         # 20 requests per minute for unauthenticated users

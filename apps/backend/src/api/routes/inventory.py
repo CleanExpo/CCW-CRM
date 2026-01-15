@@ -284,6 +284,244 @@ async def get_low_stock_products(
     }
 
 
+@router.get("/stock-health")
+async def get_stock_health(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    threshold: int = Query(20, ge=0, description="Low stock threshold"),
+) -> dict:
+    """Get comprehensive stock health analysis across all locations.
+
+    Categorizes products into three tiers:
+    - Critical: Out of stock at ALL locations (total_available = 0)
+    - Low: Low stock but available (0 < total_available < threshold)
+    - Warning: Location imbalance (any location = 0 but others have stock)
+
+    Args:
+        threshold: Stock level to consider as "low" (default: 20)
+
+    Returns:
+        Categorized stock health data
+    """
+    # Get all products with their stock by location
+    stmt = (
+        select(Product, ProductStockByLocation)
+        .join(ProductStockByLocation, Product.id == ProductStockByLocation.product_id)
+        .where(Product.is_active == True)
+        .order_by(Product.name)
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    # Group by product
+    products_dict = {}
+    for product, stock in rows:
+        product_id = str(product.id)
+        if product_id not in products_dict:
+            products_dict[product_id] = {
+                "id": product_id,
+                "sku": product.sku,
+                "name": product.name,
+                "stock_by_location": [],
+            }
+
+        products_dict[product_id]["stock_by_location"].append(
+            {
+                "location": stock.location,
+                "quantity": stock.stock,
+                "reserved": stock.reserved,
+                "available": stock.available,
+            }
+        )
+
+    # Categorize products
+    critical = []  # total_available = 0
+    low = []  # 0 < total_available < threshold
+    warning = []  # any location = 0 but total > 0
+
+    for product_data in products_dict.values():
+        locations = product_data["stock_by_location"]
+
+        # Calculate totals
+        total_available = sum(loc["available"] for loc in locations)
+        min_available = min(loc["available"] for loc in locations)
+        has_zero_location = any(loc["available"] == 0 for loc in locations)
+
+        product_data["total_available"] = total_available
+        product_data["min_available"] = min_available
+
+        if total_available == 0:
+            critical.append(product_data)
+        elif total_available < threshold:
+            low.append(product_data)
+        elif has_zero_location and total_available > 0:
+            warning.append(product_data)
+
+    return {
+        "critical": critical,
+        "low": low,
+        "warning": warning,
+    }
+
+
+@router.get("/transfer-suggestions")
+async def get_transfer_suggestions(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    min_quantity: int = Query(5, ge=1, description="Minimum transfer quantity"),
+) -> dict:
+    """Generate intelligent stock transfer suggestions to optimize distribution.
+
+    Analyzes stock across locations and suggests transfers where:
+    - One location is low/out of stock
+    - Another location has surplus stock
+    - Transfer would improve availability for customers
+
+    Args:
+        min_quantity: Minimum quantity to suggest transferring (default: 5)
+
+    Returns:
+        List of transfer suggestions with cost-benefit analysis
+    """
+    # Get all products with stock by location
+    stmt = (
+        select(Product, ProductStockByLocation)
+        .join(ProductStockByLocation, Product.id == ProductStockByLocation.product_id)
+        .where(Product.is_active == True)
+        .order_by(Product.name)
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    # Group by product
+    products_dict = {}
+    for product, stock in rows:
+        product_id = str(product.id)
+        if product_id not in products_dict:
+            products_dict[product_id] = {
+                "product": product,
+                "locations": {},
+            }
+
+        products_dict[product_id]["locations"][stock.location] = {
+            "stock": stock.stock,
+            "reserved": stock.reserved,
+            "available": stock.available,
+        }
+
+    # Generate transfer suggestions
+    suggestions = []
+    suggestion_id = 1
+
+    for product_id, data in products_dict.items():
+        product = data["product"]
+        locations = data["locations"]
+
+        # Ensure all three locations exist
+        all_locations = ["brisbane", "sydney", "melbourne"]
+        for loc in all_locations:
+            if loc not in locations:
+                locations[loc] = {"stock": 0, "reserved": 0, "available": 0}
+
+        # Find imbalances
+        for to_location in all_locations:
+            to_stock = locations[to_location]["available"]
+
+            # Only suggest if destination is low (< 10 units)
+            if to_stock >= 10:
+                continue
+
+            # Find best source location
+            for from_location in all_locations:
+                if from_location == to_location:
+                    continue
+
+                from_stock = locations[from_location]["available"]
+
+                # Source must have surplus (>20 units)
+                if from_stock <= 20:
+                    continue
+
+                # Calculate suggested quantity
+                # Transfer enough to bring destination to ~15 units
+                target_quantity = 15 - to_stock
+                max_transferable = from_stock - 15  # Leave 15 at source
+
+                suggested_quantity = min(
+                    max(target_quantity, min_quantity), max_transferable
+                )
+
+                if suggested_quantity < min_quantity:
+                    continue
+
+                # Determine priority
+                if to_stock == 0:
+                    priority = "high"
+                elif to_stock < 5:
+                    priority = "high"
+                elif to_stock < 10:
+                    priority = "medium"
+                else:
+                    priority = "low"
+
+                # Calculate cost-benefit
+                # Estimated transfer cost: $10 base + $5 per unit
+                estimated_cost = float(10 + (5 * suggested_quantity))
+
+                # Potential revenue impact: prevent lost sales
+                # Assume product sells at retail price
+                potential_revenue = float(product.price * suggested_quantity)
+
+                # Build reason
+                if to_stock == 0:
+                    reason = f"{to_location.capitalize()} out of stock, {from_location.capitalize()} has {from_stock} available"
+                else:
+                    reason = f"{to_location.capitalize()} low on stock ({to_stock} units) while {from_location.capitalize()} has surplus ({from_stock} units)"
+
+                suggestions.append(
+                    {
+                        "id": f"t{suggestion_id}",
+                        "product_id": product_id,
+                        "product_sku": product.sku,
+                        "product_name": product.name,
+                        "from_location": from_location,
+                        "to_location": to_location,
+                        "suggested_quantity": suggested_quantity,
+                        "priority": priority,
+                        "reason": reason,
+                        "current_stock_from": locations[from_location]["stock"],
+                        "current_stock_to": locations[to_location]["stock"],
+                        "projected_stock_from": locations[from_location]["stock"]
+                        - suggested_quantity,
+                        "projected_stock_to": locations[to_location]["stock"]
+                        + suggested_quantity,
+                        "estimated_cost": estimated_cost,
+                        "potential_revenue_impact": potential_revenue,
+                    }
+                )
+
+                suggestion_id += 1
+
+                # Only suggest one transfer per product (best match)
+                break
+
+    # Sort by priority (high first) and potential revenue
+    priority_order = {"high": 0, "medium": 1, "low": 2}
+    suggestions.sort(
+        key=lambda x: (priority_order[x["priority"]], -x["potential_revenue_impact"])
+    )
+
+    # Calculate totals
+    total_potential_revenue = sum(s["potential_revenue_impact"] for s in suggestions)
+    total_estimated_cost = sum(s["estimated_cost"] for s in suggestions)
+
+    return {
+        "suggestions": suggestions[:10],  # Limit to top 10
+        "total_potential_revenue": total_potential_revenue,
+        "total_estimated_cost": total_estimated_cost,
+    }
+
+
 # ============================================
 # Stock Transfer Endpoints
 # ============================================

@@ -10,6 +10,7 @@ import { AgentStats } from './components/AgentStats'
 import { AgentList } from './components/AgentList'
 import { TaskHistory } from './components/TaskHistory'
 import { PerformanceTrends } from './components/PerformanceTrends'
+import { LearningInsights } from './components/LearningInsights'
 
 export const metadata = {
   title: 'Agent Dashboard | Agentic Layer',
@@ -93,10 +94,18 @@ export default async function AgentDashboardPage() {
       </div>
 
       {/* Performance Trends */}
-      <div>
+      <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Performance Trends</h2>
         <Suspense fallback={<PerformanceTrendsSkeleton />}>
           <PerformanceTrends days={7} />
+        </Suspense>
+      </div>
+
+      {/* Learning Insights */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-4">Learning Insights</h2>
+        <Suspense fallback={<LearningInsightsSkeleton />}>
+          <LearningInsights />
         </Suspense>
       </div>
     </div>
@@ -147,6 +156,20 @@ function PerformanceTrendsSkeleton() {
   return (
     <div className="bg-white p-6 rounded-lg shadow animate-pulse">
       <div className="h-64 bg-gray-200 rounded" />
+    </div>
+  )
+}
+
+function LearningInsightsSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="bg-white p-4 rounded-lg shadow animate-pulse">
+          <div className="h-5 bg-gray-200 rounded w-2/3 mb-2" />
+          <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+          <div className="h-4 bg-gray-200 rounded w-5/6" />
+        </div>
+      ))}
     </div>
   )
 }

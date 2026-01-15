@@ -1,6 +1,14 @@
+# Temporary Claude files
+tmpclaude-*
+.claude/
+
 # Dependencies
 node_modules/
 .pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Build outputs
 .next/
@@ -8,6 +16,8 @@ dist/
 build/
 out/
 .turbo/
+*.egg-info/
+.eggs/
 
 # Python
 __pycache__/
@@ -15,47 +25,59 @@ __pycache__/
 *$py.class
 *.so
 .Python
-.venv/
+env/
 venv/
 ENV/
+.venv/
 .uv/
-*.egg-info/
-.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Environment
+# Environment files
 .env
 .env.local
 .env.*.local
+.env.production
 !.env.example
 
 # Claude Memory (personal settings)
 CLAUDE.local.md
 
-# IDE
+# IDEs
+.vscode/
 .idea/
 *.swp
 *.swo
+*~
+
+# OS
 .DS_Store
 Thumbs.db
+nul
 
-# Testing
+# Logs
+*.log
+logs/
+
+# Test coverage
 coverage/
 .nyc_output/
-.pytest_cache/
-htmlcov/
 .coverage
 .coverage.*
+htmlcov/
+.pytest_cache/
 test-results/
 playwright-report/
 playwright/.cache/
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets
+*secret*.yaml
+*secrets*.yaml
 
 # Supabase
 supabase/.branches
@@ -68,3 +90,7 @@ supabase/.temp
 *.tsbuildinfo
 .vercel
 .cache
+
+# Example/test projects (if not needed)
+my-app/
+shopify-scraper/

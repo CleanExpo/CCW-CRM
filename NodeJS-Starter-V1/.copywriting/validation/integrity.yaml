@@ -1,0 +1,244 @@
+# Content Integrity & Verification Framework
+# CRITICAL: These rules are non-negotiable for ALL copy
+
+version: "1.0"
+priority: "HIGHEST"
+principle: "Every word must be original, every claim must be verifiable"
+
+core_mandates:
+  uniqueness:
+    requirement: "100% original content"
+    definition: "No copied phrases, sentences, or structures from any source"
+    applies_to:
+      - "Headlines and subheads"
+      - "Body copy"
+      - "CTAs"
+      - "Meta descriptions"
+      - "Alt text"
+      - "All customer-facing text"
+
+  non_plagiarism:
+    requirement: "Zero tolerance for plagiarism"
+    includes:
+      - "Direct copying (obvious)"
+      - "Paraphrasing too closely"
+      - "Structural copying (same flow/logic)"
+      - "Template copy from competitors"
+      - "Generic industry phrases presented as original"
+
+  verifiability:
+    requirement: "100% verifiable claims"
+    rule: "If you can't prove it, don't say it"
+    applies_to:
+      - "Statistics and numbers"
+      - "Experience claims"
+      - "Qualifications"
+      - "Awards and recognition"
+      - "Customer results"
+      - "Comparative claims"
+
+verification_framework:
+  claim_categories:
+    tier_1_must_verify:
+      examples:
+        - "Licensed with QBCC #12345"
+        - "Serving Brisbane since 2010"
+        - "Over 500 5-star reviews"
+        - "Response within 2 hours"
+      verification:
+        - "License: Link to official registry lookup"
+        - "Years: Business registration date"
+        - "Reviews: Current count on platform"
+        - "Response: Actual measured data"
+
+    tier_2_should_verify:
+      examples:
+        - "Family-owned business"
+        - "Locally operated"
+        - "Fully insured"
+        - "Trained technicians"
+      verification:
+        - "Ownership: Business structure"
+        - "Local: Address verification"
+        - "Insurance: Policy confirmation"
+        - "Training: Certificates held"
+
+    tier_3_avoid_unless_proven:
+      examples:
+        - "Best in Brisbane"
+        - "Cheapest prices"
+        - "Fastest service"
+        - "Most experienced"
+      rule: "Superlatives require proof or must be removed"
+      alternative: "Use specific, verifiable claims instead"
+
+claim_transformation:
+  unverifiable_to_verifiable:
+    - before: "We're the best plumbers in Brisbane"
+      problem: "Unverifiable superlative"
+      after: "Licensed plumbers with 200+ 5-star Google reviews"
+      why: "Specific, countable, checkable"
+
+    - before: "Fast response times"
+      problem: "Vague, unmeasurable"
+      after: "Same-day service, typically within 2 hours"
+      why: "Specific timeframe, verifiable pattern"
+
+    - before: "Affordable prices"
+      problem: "Subjective, unverifiable"
+      after: "Upfront pricing before work begins"
+      why: "Process claim, verifiable"
+
+    - before: "Quality workmanship"
+      problem: "Vague, subjective"
+      after: "All work backed by 12-month warranty"
+      why: "Specific commitment, verifiable"
+
+    - before: "Trusted by thousands"
+      problem: "Vague number, unverifiable"
+      after: "Trusted by 2,500+ Brisbane homeowners since 2010"
+      why: "Specific number and timeframe"
+
+research_to_original_content:
+  principle: "Research informs, never replaces"
+
+  process:
+    step_1:
+      action: "Collect customer language (quotes, reviews, forums)"
+      purpose: "Understand how customers express problems"
+
+    step_2:
+      action: "Identify patterns and themes"
+      purpose: "Find common pain points and desires"
+
+    step_3:
+      action: "Synthesize into original expression"
+      purpose: "Create new language that captures essence"
+      rule: "NEVER copy customer quotes directly into copy"
+
+    step_4:
+      action: "Weave naturally into original structure"
+      purpose: "Customer language inspires, doesn't replace writing"
+
+  example:
+    research_found: |
+      Customer review: "Finally found someone who actually shows up when they say they will. So tired of waiting around all day for tradies who never come."
+
+    wrong_approach: |
+      "We show up when we say we will. You won't wait around all day."
+      (Too close to original)
+
+    correct_approach: |
+      "We give you a 2-hour arrival window - and we stick to it. Your time matters."
+      (Original expression of same pain point)
+
+plagiarism_prevention:
+  before_publishing_checklist:
+    - "Run through plagiarism checker"
+    - "Verify no copied competitor phrases"
+    - "Check industry clichés are avoided"
+    - "Confirm all claims have evidence"
+    - "Ensure structure is original"
+
+  tools:
+    - name: "Copyscape"
+      purpose: "Detect duplicate content online"
+      when: "Before publishing any page"
+
+    - name: "Grammarly"
+      purpose: "Plagiarism detection"
+      when: "During writing process"
+
+    - name: "Internal comparison"
+      purpose: "Check against own previous content"
+      when: "Avoid self-duplication"
+
+  red_flags:
+    - "Copy feels generic"
+    - "Could apply to any business"
+    - "Sounds like competitor"
+    - "Contains industry clichés"
+    - "Writer can't explain origin"
+
+evidence_documentation:
+  for_every_claim:
+    document:
+      - "Claim made"
+      - "Evidence source"
+      - "Date verified"
+      - "Where evidence stored"
+
+  evidence_sources:
+    licenses: "Official registry screenshots/links"
+    reviews: "Platform links with date"
+    years_in_business: "Registration documents"
+    response_times: "Internal data/logs"
+    coverage_area: "Service records"
+    qualifications: "Certificates"
+    insurance: "Policy documents"
+    warranties: "Written terms"
+
+  storage:
+    location: "Evidence folder per business"
+    format: "Screenshot + URL + date"
+    update: "Quarterly verification"
+
+audit_requirements:
+  per_page:
+    - "List all claims made"
+    - "Evidence reference for each"
+    - "Uniqueness confirmation"
+    - "Last verification date"
+
+  per_claim:
+    fields:
+      - claim_text: ""
+      - evidence_type: ""
+      - evidence_location: ""
+      - verified_date: ""
+      - next_review: ""
+
+  quarterly_audit:
+    - "Re-verify all numerical claims"
+    - "Update review counts"
+    - "Confirm licenses still valid"
+    - "Run plagiarism check on all content"
+
+content_generation_rules:
+  ai_generated_content:
+    rule: "All AI-generated content must be verified and transformed"
+    process:
+      - "Generate initial draft"
+      - "Verify every claim against evidence"
+      - "Rewrite to ensure uniqueness"
+      - "Run plagiarism check"
+      - "Human review required"
+    never:
+      - "Publish AI content without verification"
+      - "Trust AI-generated statistics"
+      - "Use AI claims verbatim"
+
+  human_written_content:
+    rule: "Same verification standards apply"
+    process:
+      - "Draft with evidence in mind"
+      - "Document claim sources during writing"
+      - "Verify before submission"
+      - "Plagiarism check"
+
+failure_consequences:
+  plagiarism_found:
+    - "Immediate removal of content"
+    - "Full rewrite required"
+    - "Process review"
+
+  unverifiable_claim:
+    - "Claim removed or modified"
+    - "Evidence gathered or claim deleted"
+    - "Documentation updated"
+
+  legal_risk:
+    - "False advertising claims"
+    - "Copyright infringement"
+    - "Competitor legal action"
+    - "Consumer protection violations"
