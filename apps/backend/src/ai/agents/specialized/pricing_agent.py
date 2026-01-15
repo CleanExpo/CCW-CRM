@@ -1,7 +1,8 @@
 """Pricing agent for cost analysis and price optimization."""
 
+from collections.abc import AsyncGenerator
 from decimal import Decimal
-from typing import Any, AsyncGenerator
+from typing import Any
 from uuid import UUID
 
 from langgraph.graph import END, StateGraph
@@ -84,7 +85,7 @@ class PricingAgent(BaseAgent):
 
     async def _parse_request(self, state: PricingState) -> PricingState:
         """Parse pricing request and extract parameters."""
-        context = state.get("context", {})
+        state.get("context", {})
         logger.info("Parsing pricing request", request_type=state.get("request_type"))
 
         # Initialize state fields
@@ -209,10 +210,10 @@ class PricingAgent(BaseAgent):
                     )
                     if price_diff_pct > 0:
                         state["market_position"] = "above_market"
-                        state["risk_factors"].append("Price above historical average - may reduce demand")
+                        state["risk_factors"].append("Price above historical average - may reduce demand")  # noqa: E501
                     else:
                         state["market_position"] = "below_market"
-                        state["risk_factors"].append("Price below historical average - may leave money on table")
+                        state["risk_factors"].append("Price below historical average - may leave money on table")  # noqa: E501
                 else:
                     state["market_position"] = "at_market"
                     state["pricing_trends"].append("Current price aligns with historical average")
@@ -286,7 +287,7 @@ class PricingAgent(BaseAgent):
                         recommended_margin=state["recommended_margin"],
                     )
                 else:
-                    state["error"] = f"Failed to generate recommendation: {recommendation_result.error}"
+                    state["error"] = f"Failed to generate recommendation: {recommendation_result.error}"  # noqa: E501
 
         except Exception as e:
             logger.error("Recommendation generation failed", error=str(e))
@@ -309,14 +310,14 @@ class PricingAgent(BaseAgent):
 
         # Business rules validation
         # Rule 1: Minimum margin
-        MIN_MARGIN = 15.0
+        MIN_MARGIN = 15.0  # noqa: N806
         if recommended_margin < MIN_MARGIN:
             validation_warnings.append(
                 f"Recommended margin ({recommended_margin:.1f}%) below minimum ({MIN_MARGIN:.1f}%)"
             )
 
         # Rule 2: Maximum price change
-        MAX_PRICE_CHANGE_PCT = 25.0
+        MAX_PRICE_CHANGE_PCT = 25.0  # noqa: N806
         product_data = state.get("product_data", {})
         current_price = product_data.get("current_price", 0)
 
@@ -324,13 +325,13 @@ class PricingAgent(BaseAgent):
             price_change_pct = abs(((recommended_price - current_price) / current_price) * 100)
             if price_change_pct > MAX_PRICE_CHANGE_PCT:
                 validation_warnings.append(
-                    f"Price change ({price_change_pct:.1f}%) exceeds maximum ({MAX_PRICE_CHANGE_PCT:.1f}%)"
+                    f"Price change ({price_change_pct:.1f}%) exceeds maximum ({MAX_PRICE_CHANGE_PCT:.1f}%)"  # noqa: E501
                 )
                 state["requires_review"] = True
 
         # Rule 3: Check for risk factors
         if len(state.get("risk_factors", [])) > 2:
-            validation_warnings.append("Multiple risk factors identified - manual review recommended")
+            validation_warnings.append("Multiple risk factors identified - manual review recommended")  # noqa: E501
             state["requires_review"] = True
 
         state["validation_warnings"] = validation_warnings

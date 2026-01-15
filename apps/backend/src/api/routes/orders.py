@@ -6,16 +6,15 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from src.config.database import get_db
 from src.config.settings import Settings, get_settings
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
-from src.db.demo_models import Customer as CustomerModel
 from src.db.inventory_models import ProductStockByLocation, StockAdjustment
-from src.db.schemas import Order, OrderCreate, OrderUpdate, OrderItem, PaginatedResponse
+from src.db.schemas import Order, OrderCreate, OrderItem, OrderUpdate, PaginatedResponse
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -171,7 +170,7 @@ async def list_orders(
         # Access order_items before Pydantic conversion
         order_items_list = []
         if hasattr(o, 'order_items') and o.order_items:
-            order_items_list = [OrderItem.model_validate(item).model_dump() for item in o.order_items]
+            order_items_list = [OrderItem.model_validate(item).model_dump() for item in o.order_items]  # noqa: E501
 
         # Convert order to dict
         order_dict = Order.model_validate(o).model_dump()
@@ -209,7 +208,6 @@ async def get_order(
         raise HTTPException(status_code=404, detail="Order not found")
 
     # Manually build response dict from SQLAlchemy model
-    from src.db.schemas import OrderItem as OrderItemSchema
 
     response = {
         "id": str(order.id),

@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, computed_field, model_validator
+from pydantic import BaseModel, EmailStr
 
 
 # Organization schemas

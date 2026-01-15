@@ -10,7 +10,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import or_, select, func
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
@@ -34,8 +34,8 @@ class SupplierCreate(BaseModel):
     state: str | None = Field(None, max_length=50, description="State/Territory")
     postal_code: str | None = Field(None, max_length=20, description="Postal/ZIP code")
     country: str = Field("AU", max_length=2, description="Country code (default: AU)")
-    payment_terms: str | None = Field(None, max_length=100, description="Payment terms (e.g., Net 30)")
-    preferred_carrier: str | None = Field(None, max_length=100, description="Preferred shipping carrier")
+    payment_terms: str | None = Field(None, max_length=100, description="Payment terms (e.g., Net 30)")  # noqa: E501
+    preferred_carrier: str | None = Field(None, max_length=100, description="Preferred shipping carrier")  # noqa: E501
     notes: str | None = Field(None, description="Additional notes")
 
 

@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from enum import Enum as PyEnum
-from typing import Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -16,7 +15,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID  # noqa: N811
 from sqlalchemy.orm import relationship
 
 from .models import Base
@@ -55,7 +54,7 @@ class ServiceRequest(Base):
         nullable=False,
         index=True,
     )
-    order_id: Optional[UUID] = Column(
+    order_id: UUID | None = Column(
         PostgresUUID(as_uuid=True),
         ForeignKey("orders.id", ondelete="SET NULL"),
         nullable=True,
@@ -78,17 +77,17 @@ class ServiceRequest(Base):
     # Equipment and issue
     equipment_description: str = Column(Text, nullable=False)
     issue_description: str = Column(Text, nullable=False)
-    photos: Optional[str] = Column(
+    photos: str | None = Column(
         JSON, nullable=True
     )  # Array of photo URLs as JSON
 
     # Scheduling
-    assigned_technician: Optional[str] = Column(String(255), nullable=True)
-    scheduled_date: Optional[datetime] = Column(DateTime, nullable=True)
+    assigned_technician: str | None = Column(String(255), nullable=True)
+    scheduled_date: datetime | None = Column(DateTime, nullable=True)
 
     # Pricing
-    quote_amount: Optional[float] = Column(Numeric(10, 2), nullable=True)
-    approved_amount: Optional[float] = Column(Numeric(10, 2), nullable=True)
+    quote_amount: float | None = Column(Numeric(10, 2), nullable=True)
+    approved_amount: float | None = Column(Numeric(10, 2), nullable=True)
 
     # Timestamps
     created_at: datetime = Column(DateTime, default=datetime.utcnow, nullable=False)

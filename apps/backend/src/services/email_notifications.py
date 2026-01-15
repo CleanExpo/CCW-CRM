@@ -1,11 +1,11 @@
 """Email notification service for form submissions."""
 
 import os
-from typing import Optional
 from datetime import datetime
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Email, To, Content
+
 import structlog
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Content, Email, Mail, To
 
 logger = structlog.get_logger(__name__)
 
@@ -31,8 +31,8 @@ class EmailNotificationService:
         submission_id: str,
         name: str,
         email: str,
-        phone: Optional[str],
-        subject: Optional[str],
+        phone: str | None,
+        subject: str | None,
         message: str,
         source: str,
         created_at: datetime,
@@ -98,7 +98,7 @@ class EmailNotificationService:
                     </div>
                 </body>
             </html>
-            """
+            """  # noqa: E501
 
             # Create and send email
             message = Mail(
@@ -141,9 +141,9 @@ class EmailNotificationService:
         contact_name: str,
         email: str,
         phone: str,
-        product_interest: Optional[str],
-        preferred_date: Optional[datetime],
-        notes: Optional[str],
+        product_interest: str | None,
+        preferred_date: datetime | None,
+        notes: str | None,
         created_at: datetime,
     ) -> bool:
         """
@@ -215,7 +215,7 @@ class EmailNotificationService:
                     </div>
                 </body>
             </html>
-            """
+            """  # noqa: E501
 
             # Create and send email
             message = Mail(
@@ -260,8 +260,8 @@ class EmailNotificationService:
         product_sku: str,
         quantity: int,
         order_number: str,
-        expected_date: Optional[datetime],
-        container_number: Optional[str],
+        expected_date: datetime | None,
+        container_number: str | None,
         priority: int,
     ) -> bool:
         """
@@ -289,7 +289,7 @@ class EmailNotificationService:
         try:
             # Format expected date
             if expected_date:
-                eta_text = f"<strong>Expected Availability:</strong> {expected_date.strftime('%B %d, %Y')}"
+                eta_text = f"<strong>Expected Availability:</strong> {expected_date.strftime('%B %d, %Y')}"  # noqa: E501
                 eta_style = "color: #16a34a;"
             else:
                 eta_text = "<strong>Expected Availability:</strong> To be confirmed"
@@ -302,7 +302,7 @@ class EmailNotificationService:
                 <div style="margin-bottom: 15px; padding: 10px; background-color: #dbeafe; border-left: 4px solid #2563eb; border-radius: 4px;">
                     <p style="margin: 0; color: #1e40af;"><strong>📦 Allocated to Container:</strong> {container_number}</p>
                 </div>
-                """
+                """  # noqa: E501
 
             # Build email content
             html_content = f"""
@@ -353,7 +353,7 @@ class EmailNotificationService:
                     </div>
                 </body>
             </html>
-            """
+            """  # noqa: E501
 
             # Create and send email
             message = Mail(

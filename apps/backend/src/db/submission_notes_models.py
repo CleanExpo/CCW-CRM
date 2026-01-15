@@ -1,9 +1,10 @@
 """SQLAlchemy models for submission notes and activity tracking."""
 
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 
 from .models import Base
 
@@ -20,7 +21,7 @@ class SubmissionNote(Base):
     submission_id = Column(UUID(as_uuid=True), nullable=False)
 
     # Note content
-    note_type = Column(String(20), nullable=False, default="note")  # 'note', 'status_change', 'email_sent'
+    note_type = Column(String(20), nullable=False, default="note")  # 'note', 'status_change', 'email_sent'  # noqa: E501
     content = Column(Text, nullable=False)
 
     # Metadata

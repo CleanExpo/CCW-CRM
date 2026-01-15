@@ -1,11 +1,11 @@
 """Chat assistant agent for natural language ERP queries."""
 
-import json
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 from uuid import UUID, uuid4
 
 import structlog
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import END, StateGraph
 
 from src.ai.base_agent import BaseAgent
@@ -70,7 +70,7 @@ class ChatAssistant(BaseAgent):
 
         Flow:
         START → receive_message → check_need_tools → [execute_tools] → generate_response → save_history → END
-        """
+        """  # noqa: E501
         workflow = StateGraph(ChatState)
 
         # Add nodes

@@ -1,13 +1,12 @@
 """Email generator for customer communications."""
 
-from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.demo_models import Customer, Order, OrderStatus, Quote, QuoteStatus
+from src.db.demo_models import Customer, Order, Quote
 from src.utils import get_logger
 
 from ..ollama_client import get_ollama_client
@@ -95,7 +94,7 @@ Subject: [subject line]
             }
 
         except Exception as e:
-            logger.error(f"Error generating email", error=str(e))
+            logger.error("Error generating email", error=str(e))
             return self._fallback_quote_follow_up(quote, customer)
 
     async def generate_order_confirmation(
@@ -170,7 +169,7 @@ Subject: [subject line]
             }
 
         except Exception as e:
-            logger.error(f"Error generating email", error=str(e))
+            logger.error("Error generating email", error=str(e))
             return self._fallback_order_confirmation(order, customer)
 
     async def generate_custom_email(
@@ -230,7 +229,7 @@ Subject: [subject line]
             subject, body = self._parse_email(response)
 
             return {
-                "subject": subject or f"Message from Equipment ERP",
+                "subject": subject or "Message from Equipment ERP",
                 "body": body,
                 "to": customer.email,
                 "customer_name": customer.contact_name,
@@ -238,7 +237,7 @@ Subject: [subject line]
             }
 
         except Exception as e:
-            logger.error(f"Error generating email", error=str(e))
+            logger.error("Error generating email", error=str(e))
             return {
                 "error": f"Failed to generate email: {str(e)}",
             }
@@ -249,7 +248,7 @@ Subject: [subject line]
 
         tone_prompts = {
             "formal": "Use formal, professional language. Be respectful and concise.",
-            "friendly": "Use warm, approachable language while maintaining professionalism. Be conversational.",
+            "friendly": "Use warm, approachable language while maintaining professionalism. Be conversational.",  # noqa: E501
             "urgent": "Convey urgency respectfully. Be clear about timelines and actions needed.",
         }
 
@@ -289,7 +288,7 @@ The quote totals ${float(quote.total):,.2f} and is valid until {quote.valid_unti
 If you have any questions or would like to proceed with this quote, please don't hesitate to reach out. We're here to help!
 
 Best regards,
-Equipment ERP Team"""
+Equipment ERP Team"""  # noqa: E501
 
         return {
             "subject": subject,
@@ -317,7 +316,7 @@ We'll keep you updated on the progress of your order. If you have any questions,
 Thank you for your business!
 
 Best regards,
-Equipment ERP Team"""
+Equipment ERP Team"""  # noqa: E501
 
         return {
             "subject": subject,

@@ -1,16 +1,17 @@
 """Content generator agent for quotes, emails, and reports."""
 
 import json
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from langgraph.graph import END, StateGraph
 
 from src.db.demo_models import AIGeneratedContent
 from src.utils import get_logger
 
-from ..generators import EmailGenerator, QuoteGenerator
 from ..base_agent import BaseAgent
+from ..generators import EmailGenerator, QuoteGenerator
 from .content_state import ContentState
 
 logger = get_logger(__name__)
@@ -33,7 +34,7 @@ class ContentGenerator(BaseAgent):
         )
 
         # Set capabilities for agent registry
-        self.capabilities = ["content_generation", "quote_generation", "email_generation", "report_generation"]
+        self.capabilities = ["content_generation", "quote_generation", "email_generation", "report_generation"]  # noqa: E501
         self.description = "Generates business content including quotes, emails, and reports"
         self.estimated_execution_time = 10  # seconds
         self.requires_verification = True  # Content should be reviewed before sending
@@ -78,7 +79,7 @@ class ContentGenerator(BaseAgent):
         requirements = state["requirements"]
         context = state.get("context", {})
 
-        logger.info(f"Parsing content request", content_type=content_type)
+        logger.info("Parsing content request", content_type=content_type)
 
         # Initialize state fields
         state["parsed_requirements"] = {
@@ -102,7 +103,7 @@ class ContentGenerator(BaseAgent):
         content_type = state["content_type"]
         context = state.get("context", {})
 
-        logger.info(f"Gathering context", content_type=content_type)
+        logger.info("Gathering context", content_type=content_type)
 
         # Context is already provided in most cases
         state["relevant_data"] = context
@@ -112,10 +113,10 @@ class ContentGenerator(BaseAgent):
     async def _generate_content(self, state: ContentState) -> ContentState:
         """Generate content based on type."""
         content_type = state["content_type"]
-        requirements = state["requirements"]
-        context = state.get("context", {})
+        state["requirements"]
+        state.get("context", {})
 
-        logger.info(f"Generating content", content_type=content_type)
+        logger.info("Generating content", content_type=content_type)
 
         try:
             if content_type == "quote":
@@ -128,7 +129,7 @@ class ContentGenerator(BaseAgent):
                 state["error"] = f"Unknown content type: {content_type}"
 
         except Exception as e:
-            logger.error(f"Error generating content", error=str(e))
+            logger.error("Error generating content", error=str(e))
             state["error"] = f"Failed to generate content: {str(e)}"
 
         return state
@@ -253,7 +254,7 @@ class ContentGenerator(BaseAgent):
         state["requires_review"] = len(validation_errors) > 0
 
         if validation_errors:
-            logger.warning(f"Validation errors", errors=validation_errors)
+            logger.warning("Validation errors", errors=validation_errors)
 
         return state
 
@@ -314,10 +315,10 @@ class ContentGenerator(BaseAgent):
                 db.add(content_record)
                 await db.commit()
 
-                logger.info(f"Saved generated content", type=content_type, id=content_record.id)
+                logger.info("Saved generated content", type=content_type, id=content_record.id)
 
         except Exception as e:
-            logger.error(f"Error saving content", error=str(e))
+            logger.error("Error saving content", error=str(e))
 
     async def execute(self, task: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute a content generation task.
@@ -365,7 +366,7 @@ class ContentGenerator(BaseAgent):
             return final_state.get("final_output", {})
 
         except Exception as e:
-            logger.error(f"Error executing content generator", error=str(e))
+            logger.error("Error executing content generator", error=str(e))
             return {
                 "error": f"Failed to generate content: {str(e)}",
                 "content_type": context.get("content_type", "unknown"),

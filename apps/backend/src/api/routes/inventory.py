@@ -4,7 +4,7 @@ Provides RESTful endpoints for managing stock across multiple locations.
 """
 
 from datetime import datetime, timedelta
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
 import structlog
@@ -174,7 +174,7 @@ async def get_stock_by_location(
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid location. Must be one of: {', '.join([l.value for l in StoreLocation])}",
+            detail=f"Invalid location. Must be one of: {', '.join([l.value for l in StoreLocation])}",  # noqa: E501, E741
         )
 
     # Build query
@@ -306,7 +306,7 @@ async def get_stock_health(
     stmt = (
         select(Product, ProductStockByLocation)
         .join(ProductStockByLocation, Product.id == ProductStockByLocation.product_id)
-        .where(Product.is_active == True)
+        .where(Product.is_active)
         .order_by(Product.name)
     )
 
@@ -386,7 +386,7 @@ async def get_transfer_suggestions(
     stmt = (
         select(Product, ProductStockByLocation)
         .join(ProductStockByLocation, Product.id == ProductStockByLocation.product_id)
-        .where(Product.is_active == True)
+        .where(Product.is_active)
         .order_by(Product.name)
     )
 
@@ -474,9 +474,9 @@ async def get_transfer_suggestions(
 
                 # Build reason
                 if to_stock == 0:
-                    reason = f"{to_location.capitalize()} out of stock, {from_location.capitalize()} has {from_stock} available"
+                    reason = f"{to_location.capitalize()} out of stock, {from_location.capitalize()} has {from_stock} available"  # noqa: E501
                 else:
-                    reason = f"{to_location.capitalize()} low on stock ({to_stock} units) while {from_location.capitalize()} has surplus ({from_stock} units)"
+                    reason = f"{to_location.capitalize()} low on stock ({to_stock} units) while {from_location.capitalize()} has surplus ({from_stock} units)"  # noqa: E501
 
                 suggestions.append(
                     {
@@ -723,7 +723,7 @@ async def get_stock_transfers(
                 "status": transfer.status,
                 "reason": transfer.reason,
                 "initiated_at": transfer.initiated_at.isoformat(),
-                "completed_at": transfer.completed_at.isoformat() if transfer.completed_at else None,
+                "completed_at": transfer.completed_at.isoformat() if transfer.completed_at else None,  # noqa: E501
             }
         )
 
@@ -776,7 +776,7 @@ async def reserve_stock(
     if stock.available < reservation_req.quantity:
         raise HTTPException(
             status_code=400,
-            detail=f"Insufficient available stock. Available: {stock.available}, Requested: {reservation_req.quantity}",
+            detail=f"Insufficient available stock. Available: {stock.available}, Requested: {reservation_req.quantity}",  # noqa: E501
         )
 
     # Create reservation

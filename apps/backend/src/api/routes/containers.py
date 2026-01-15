@@ -593,7 +593,7 @@ async def receive_container(
         alert_type="container_arrival",
         severity="low",
         title=f"Container {container.container_number} Received",
-        message=f"Container {container.container_number} has been received at {container.destination_warehouse} warehouse.",
+        message=f"Container {container.container_number} has been received at {container.destination_warehouse} warehouse.",  # noqa: E501
         entity_type="container",
         entity_id=container.id,
         assign_to_role="warehouse_manager",

@@ -5,7 +5,6 @@ updating order statuses when invoices are paid.
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 import structlog
@@ -13,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.demo_models import Order, OrderStatus
-from src.db.xero_models import Payment, XeroConnection
+from src.db.xero_models import Payment
 from src.integrations.xero.auth import XeroAuth
 from src.integrations.xero.client import XeroClient
 
@@ -36,7 +35,7 @@ class XeroPaymentSync:
         db: AsyncSession,
         organization_id: UUID,
         order_id: UUID,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Check Xero for payments on an order's invoice and sync.
 
         Args:
@@ -143,7 +142,7 @@ class XeroPaymentSync:
         payment_id = xero_payment_data.get("PaymentID")
         invoice_id = xero_payment_data.get("Invoice", {}).get("InvoiceID")
         amount = float(xero_payment_data.get("Amount", 0))
-        payment_date_str = xero_payment_data.get("Date")
+        xero_payment_data.get("Date")
 
         logger.info(
             "Processing payment webhook",
@@ -188,7 +187,7 @@ class XeroPaymentSync:
             }
 
         # Create payment record
-        payment = await self._create_payment_record(db, order, xero_payment_data)
+        await self._create_payment_record(db, order, xero_payment_data)
 
         # Update order status to indicate payment received
         old_status = order.status

@@ -94,7 +94,7 @@ class HealthMonitor:
                     agent_id=agent_id,
                     agent_name=agent.name,
                     task="health_check",
-                    status="completed" if health_report.status == AgentStatus.ACTIVE else "degraded",
+                    status="completed" if health_report.status == AgentStatus.ACTIVE else "degraded",  # noqa: E501
                     started_at=start_time.isoformat(),
                     completed_at=end_time.isoformat(),
                     duration_ms=duration_ms,

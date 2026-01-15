@@ -130,7 +130,7 @@ async def get_system_health() -> SystemHealthResponse:
 async def get_recent_executions(
     limit: int = Query(50, ge=1, le=200, description="Maximum number of executions to return"),
     agent_id: str | None = Query(None, description="Filter by specific agent ID"),
-    since_minutes: int | None = Query(None, ge=1, description="Only show executions from last N minutes"),
+    since_minutes: int | None = Query(None, ge=1, description="Only show executions from last N minutes"),  # noqa: E501
 ) -> ExecutionResponse:
     """
     Get recent agent executions with optional filtering.
@@ -261,8 +261,8 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
 
     This endpoint injects test executions directly into the running metrics collector.
     """
-    from datetime import UTC, datetime, timedelta
     import random
+    from datetime import UTC, datetime, timedelta
 
     collector = get_metrics_collector()
 
@@ -317,7 +317,7 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
         started_at = (now - timedelta(minutes=minutes_ago)).isoformat()
 
         duration_ms = int(typical_duration * random.uniform(0.7, 1.3))
-        completed_at = (now - timedelta(minutes=minutes_ago) + timedelta(milliseconds=duration_ms)).isoformat()
+        completed_at = (now - timedelta(minutes=minutes_ago) + timedelta(milliseconds=duration_ms)).isoformat()  # noqa: E501
 
         status = "completed" if random.random() < success_rate else "failed"
 
@@ -334,7 +334,7 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
             metadata={
                 "test_data": True,
                 "iteration": i,
-                "task_complexity": "high" if duration_ms > 3000 else "medium" if duration_ms > 1500 else "low",
+                "task_complexity": "high" if duration_ms > 3000 else "medium" if duration_ms > 1500 else "low",  # noqa: E501
             },
         )
 
@@ -353,7 +353,7 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
         else:
             stats["by_agent"][agent_id]["failed"] += 1
 
-    logger.info("Test data generated", total=stats["total"], succeeded=stats["succeeded"], failed=stats["failed"])
+    logger.info("Test data generated", total=stats["total"], succeeded=stats["succeeded"], failed=stats["failed"])  # noqa: E501
 
     return {
         "message": f"Generated {count} test executions",

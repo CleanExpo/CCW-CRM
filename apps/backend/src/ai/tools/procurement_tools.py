@@ -49,7 +49,7 @@ class AnalyzeInventoryTool(BaseTool):
             since_date = datetime.now(UTC) - timedelta(days=days_lookback)
 
             # Get products with current stock
-            products_query = select(Product).where(Product.is_active == True)
+            products_query = select(Product).where(Product.is_active)
             if category:
                 products_query = products_query.where(Product.category == category)
 
@@ -129,7 +129,7 @@ class AnalyzeInventoryTool(BaseTool):
 
             # Calculate summary statistics
             total_products = len(inventory_analysis)
-            out_of_stock = sum(1 for item in inventory_analysis if item["stock_status"] == "out_of_stock")
+            out_of_stock = sum(1 for item in inventory_analysis if item["stock_status"] == "out_of_stock")  # noqa: E501
             low_stock = sum(1 for item in inventory_analysis if item["stock_status"] == "low_stock")
             total_inventory_value = sum(item["inventory_value"] for item in inventory_analysis)
 
@@ -417,7 +417,7 @@ class SuggestSuppliersTool(BaseTool):
                     "quantity_requested": quantity,
                     "suppliers": suppliers,
                     "recommendation": suppliers[0]["supplier_id"],
-                    "note": "Supplier data is illustrative. Verify availability and pricing before ordering.",
+                    "note": "Supplier data is illustrative. Verify availability and pricing before ordering.",  # noqa: E501
                 },
             )
 
