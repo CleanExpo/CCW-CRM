@@ -29,8 +29,100 @@ router = APIRouter(prefix="/api/inventory", tags=["Multi-Store Inventory"])
 
 
 # ============================================
+# Root Endpoints
+# ============================================
+
+
+@router.get("", response_model=InventoryListResponse)
+@router.get("/", response_model=InventoryListResponse, include_in_schema=False)
+async def list_all_inventory(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    location: str | None = Query(None, description="Filter by location"),
+    low_stock_only: bool = Query(False, description="Only show low stock items"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+) -> dict:
+    """List all inventory across locations or filtered by location.
+
+    Args:
+        location: Optional location filter (brisbane, sydney, melbourne)
+        low_stock_only: Only show products below reorder point
+        page: Page number
+        page_size: Items per page
+
+    Returns:
+        Paginated list of inventory items
+    """
+    # Build base query
+    query = (
+        select(ProductStockByLocation, Product)
+        .join(Product, ProductStockByLocation.product_id == Product.id)
+    )
+
+    # Apply location filter if specified
+    if location:
+        try:
+            StoreLocation(location)
+            query = query.where(ProductStockByLocation.location == location)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid location. Must be one of: {', '.join([l.value for l in StoreLocation])}",
+            )
+
+    # Apply low stock filter if requested
+    if low_stock_only:
+        query = query.where(
+            ProductStockByLocation.available < ProductStockByLocation.reorder_point
+        )
+
+    # Get total count
+    count_query = select(func.count()).select_from(query.subquery())
+    result = await db.execute(count_query)
+    total = result.scalar_one()
+
+    # Apply pagination
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    # Execute query
+    result = await db.execute(query)
+    rows = result.all()
+
+    # Format response
+    items = [
+        {
+            "product_id": str(stock.product_id),
+            "sku": product.sku,
+            "name": product.name,
+            "location": stock.location,
+            "stock": stock.stock,
+            "available": stock.available,
+            "reserved": stock.reserved,
+            "reorder_point": stock.reorder_point,
+        }
+        for stock, product in rows
+    ]
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+# ============================================
 # Request/Response Models
 # ============================================
+
+
+class InventoryListResponse(BaseModel):
+    """List of inventory items with pagination."""
+
+    items: list[dict]
+    total: int
+    page: int
+    page_size: int
 
 
 class StockByLocationResponse(BaseModel):

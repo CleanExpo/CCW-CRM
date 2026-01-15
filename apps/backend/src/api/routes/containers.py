@@ -151,7 +151,8 @@ class ContainerListResponse(BaseModel):
     page_size: int
 
 
-@router.get("/", response_model=ContainerListResponse)
+@router.get("", response_model=ContainerListResponse)
+@router.get("/", response_model=ContainerListResponse, include_in_schema=False)
 async def list_containers(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),

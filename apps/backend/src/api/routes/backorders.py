@@ -118,7 +118,8 @@ class BackorderListResponse(BaseModel):
     page_size: int
 
 
-@router.get("/", response_model=BackorderListResponse)
+@router.get("", response_model=BackorderListResponse)
+@router.get("/", response_model=BackorderListResponse, include_in_schema=False)
 async def list_backorders(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
