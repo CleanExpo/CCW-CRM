@@ -19,74 +19,96 @@ CREATE TABLE organizations (
 );
 
 CREATE TABLE users (
-    id UUID DEFAULT gen_random_uuid() NOT NULL, 
-    organization_id UUID, 
-    email VARCHAR(255) NOT NULL, 
-    hashed_password VARCHAR(255) NOT NULL, 
-    full_name VARCHAR(255), 
-    role VARCHAR(50) DEFAULT 'employee' NOT NULL, 
-    is_admin BOOLEAN DEFAULT false NOT NULL, 
-    is_active BOOLEAN DEFAULT true NOT NULL, 
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    PRIMARY KEY (id), 
-    UNIQUE (email), 
+    id UUID DEFAULT gen_random_uuid() NOT NULL,
+    organization_id UUID,
+    email VARCHAR(255) NOT NULL,
+    hashed_password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255),
+    role VARCHAR(50) DEFAULT 'employee' NOT NULL,
+    is_admin BOOLEAN DEFAULT false NOT NULL,
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (email),
     FOREIGN KEY(organization_id) REFERENCES organizations (id)
 );
 
+-- Create enum type for product categories
+CREATE TYPE product_category AS ENUM (
+    'HEAVY_MACHINERY',
+    'HAND_TOOLS',
+    'POWER_TOOLS',
+    'SAFETY_EQUIPMENT',
+    'BUILDING_MATERIALS',
+    'ELECTRICAL',
+    'PLUMBING',
+    'ACCESSORIES'
+);
+
 CREATE TABLE products (
-    id UUID DEFAULT gen_random_uuid() NOT NULL, 
-    organization_id UUID, 
-    sku VARCHAR(50) NOT NULL, 
-    name VARCHAR(255) NOT NULL, 
-    description TEXT, 
-    category VARCHAR(50) NOT NULL, 
-    price NUMERIC(10, 2) NOT NULL, 
-    cost NUMERIC(10, 2), 
-    stock INTEGER DEFAULT 0 NOT NULL, 
-    warehouse_location VARCHAR(100), 
-    is_active BOOLEAN DEFAULT true NOT NULL, 
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    PRIMARY KEY (id), 
-    UNIQUE (sku), 
+    id UUID DEFAULT gen_random_uuid() NOT NULL,
+    organization_id UUID,
+    sku VARCHAR(50) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category product_category,
+    price NUMERIC(10, 2) NOT NULL,
+    cost NUMERIC(10, 2),
+    stock INTEGER DEFAULT 0 NOT NULL,
+    warehouse_location VARCHAR(100),
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (sku),
     FOREIGN KEY(organization_id) REFERENCES organizations (id)
 );
 
 CREATE TABLE customers (
-    id UUID DEFAULT gen_random_uuid() NOT NULL, 
-    organization_id UUID, 
-    customer_number VARCHAR(50) NOT NULL, 
-    company_name VARCHAR(255) NOT NULL, 
-    contact_name VARCHAR(255), 
-    email VARCHAR(255), 
-    phone VARCHAR(50), 
-    address TEXT, 
-    city VARCHAR(100), 
-    state VARCHAR(50), 
-    postcode VARCHAR(20), 
-    is_active BOOLEAN DEFAULT true NOT NULL, 
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    PRIMARY KEY (id), 
-    UNIQUE (customer_number), 
+    id UUID DEFAULT gen_random_uuid() NOT NULL,
+    organization_id UUID,
+    customer_number VARCHAR(50) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    contact_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    address TEXT,
+    city VARCHAR(100),
+    state VARCHAR(50),
+    postcode VARCHAR(20),
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (customer_number),
     FOREIGN KEY(organization_id) REFERENCES organizations (id)
 );
 
 CREATE TABLE orders (
-    id UUID DEFAULT gen_random_uuid() NOT NULL, 
-    organization_id UUID, 
-    order_number VARCHAR(50) NOT NULL, 
-    customer_id UUID, 
-    status VARCHAR(20) DEFAULT 'draft' NOT NULL, 
-    total NUMERIC(10, 2) NOT NULL, 
-    order_date TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    notes TEXT, 
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-    PRIMARY KEY (id), 
-    UNIQUE (order_number), 
-    FOREIGN KEY(organization_id) REFERENCES organizations (id), 
+    id UUID DEFAULT gen_random_uuid() NOT NULL,
+    organization_id UUID,
+    order_number VARCHAR(50) NOT NULL,
+    customer_id UUID,
+    status VARCHAR(20) DEFAULT 'draft' NOT NULL,
+    subtotal NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    tax NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    total NUMERIC(10, 2) NOT NULL,
+    order_date TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    fulfillment_location VARCHAR(50),
+    tracking_number VARCHAR(100),
+    carrier_name VARCHAR(100),
+    shipped_date TIMESTAMP WITH TIME ZONE,
+    estimated_delivery_date TIMESTAMP WITH TIME ZONE,
+    xero_invoice_id VARCHAR(255),
+    xero_synced_at TIMESTAMP WITH TIME ZONE,
+    xero_sync_status VARCHAR(50),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (order_number),
+    FOREIGN KEY(organization_id) REFERENCES organizations (id),
     FOREIGN KEY(customer_id) REFERENCES customers (id)
 );
 
@@ -338,12 +360,6 @@ CREATE INDEX ix_payments_order_id ON payments (order_id);
 
 CREATE INDEX ix_payments_xero_payment_id ON payments (xero_payment_id);
 
-ALTER TABLE orders ADD COLUMN xero_invoice_id VARCHAR(255);
-
-ALTER TABLE orders ADD COLUMN xero_synced_at TIMESTAMP WITH TIME ZONE;
-
-ALTER TABLE orders ADD COLUMN xero_sync_status VARCHAR(50);
-
 CREATE INDEX ix_orders_xero_invoice_id ON orders (xero_invoice_id);
 
 CREATE INDEX ix_orders_xero_sync_status ON orders (xero_sync_status);
@@ -523,16 +539,6 @@ CREATE UNIQUE INDEX ix_outbound_shipments_shipment_number ON outbound_shipments 
 CREATE INDEX ix_outbound_shipments_status ON outbound_shipments (status);
 
 CREATE INDEX ix_outbound_shipments_tracking_number ON outbound_shipments (tracking_number);
-
-ALTER TABLE orders ADD COLUMN fulfillment_location VARCHAR(50);
-
-ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100);
-
-ALTER TABLE orders ADD COLUMN carrier_name VARCHAR(100);
-
-ALTER TABLE orders ADD COLUMN shipped_date TIMESTAMP WITH TIME ZONE;
-
-ALTER TABLE orders ADD COLUMN estimated_delivery_date TIMESTAMP WITH TIME ZONE;
 
 CREATE INDEX ix_orders_fulfillment_location ON orders (fulfillment_location);
 
