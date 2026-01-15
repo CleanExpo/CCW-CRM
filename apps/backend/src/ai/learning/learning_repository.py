@@ -9,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.ai_models import (
     LearningInsight as DBLearningInsight,
+)
+from src.db.ai_models import (
     LearningPattern as DBLearningPattern,
+)
+from src.db.ai_models import (
     PromptVariant as DBPromptVariant,
 )
 
@@ -114,7 +118,7 @@ class LearningRepository:
             return True
 
         except Exception as e:
-            logger.error("Failed to save pattern", error=str(e), pattern_id=pattern_data.get("pattern_id"))
+            logger.error("Failed to save pattern", error=str(e), pattern_id=pattern_data.get("pattern_id"))  # noqa: E501
             await session.rollback()
 
             # Close session if we created it
@@ -147,7 +151,7 @@ class LearningRepository:
             existing = result.scalar_one_or_none()
 
             if existing:
-                logger.debug("Insight already exists, skipping", insight_id=insight_data["insight_id"])
+                logger.debug("Insight already exists, skipping", insight_id=insight_data["insight_id"])  # noqa: E501
                 return True
 
             # Create new insight
@@ -170,7 +174,7 @@ class LearningRepository:
             return True
 
         except Exception as e:
-            logger.error("Failed to save insight", error=str(e), insight_id=insight_data.get("insight_id"))
+            logger.error("Failed to save insight", error=str(e), insight_id=insight_data.get("insight_id"))  # noqa: E501
             await self.db_session.rollback()
             return False
 
@@ -230,7 +234,7 @@ class LearningRepository:
             return True
 
         except Exception as e:
-            logger.error("Failed to save variant", error=str(e), variant_id=variant_data.get("variant_id"))
+            logger.error("Failed to save variant", error=str(e), variant_id=variant_data.get("variant_id"))  # noqa: E501
             await self.db_session.rollback()
             return False
 
@@ -313,7 +317,7 @@ class LearningRepository:
             return []
 
         try:
-            from sqlalchemy import cast, Text
+            from sqlalchemy import Text, cast
 
             query = select(DBLearningInsight)
             if agent_id:

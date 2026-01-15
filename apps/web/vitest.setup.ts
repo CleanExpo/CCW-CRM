@@ -2,6 +2,15 @@ import { expect, afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
 
+// Polyfill browser APIs for Node.js test environment
+if (typeof global.atob === 'undefined') {
+  global.atob = (str: string) => Buffer.from(str, 'base64').toString('binary');
+}
+
+if (typeof global.btoa === 'undefined') {
+  global.btoa = (str: string) => Buffer.from(str, 'binary').toString('base64');
+}
+
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers);
 

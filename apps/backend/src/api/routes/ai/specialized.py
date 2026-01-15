@@ -12,7 +12,6 @@ from src.ai.agents.specialized import (
     ProcurementAgent,
     TaskExecutorAgent,
 )
-from src.ai.orchestration import get_agent_registry
 
 logger = structlog.get_logger(__name__)
 
@@ -235,7 +234,7 @@ async def analyze_procurement(
         # Execute procurement agent
         agent = get_procurement_agent()
         result = await agent.execute(
-            task=f"Analyze inventory{f' for category {request.category}' if request.category else ''}",
+            task=f"Analyze inventory{f' for category {request.category}' if request.category else ''}",  # noqa: E501
             context={
                 "request_type": "analyze_inventory",
                 "category": request.category,

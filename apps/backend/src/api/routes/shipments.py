@@ -11,14 +11,14 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import or_, select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
-from src.db.inventory_models import InboundShipment, OutboundShipment, Supplier, PurchaseOrder
 from src.db.demo_models import Order
+from src.db.inventory_models import InboundShipment, OutboundShipment, PurchaseOrder, Supplier
 
 router = APIRouter(prefix="/api/shipments", tags=["Shipments"])
 
@@ -45,7 +45,7 @@ class InboundShipmentUpdate(BaseModel):
     carrier_name: str | None = Field(None, max_length=100)
     carrier_service: str | None = Field(None, max_length=100)
     tracking_number: str | None = Field(None, max_length=100)
-    status: str | None = Field(None, pattern="^(pending|in_transit|out_for_delivery|delivered|exception|cancelled)$")
+    status: str | None = Field(None, pattern="^(pending|in_transit|out_for_delivery|delivered|exception|cancelled)$")  # noqa: E501
     shipped_date: datetime | None = None
     expected_delivery_date: datetime | None = None
     actual_delivery_date: datetime | None = None
@@ -72,7 +72,7 @@ class OutboundShipmentUpdate(BaseModel):
     carrier_name: str | None = Field(None, max_length=100)
     carrier_service: str | None = Field(None, max_length=100)
     tracking_number: str | None = Field(None, max_length=100)
-    status: str | None = Field(None, pattern="^(pending|in_transit|out_for_delivery|delivered|exception|returned)$")
+    status: str | None = Field(None, pattern="^(pending|in_transit|out_for_delivery|delivered|exception|returned)$")  # noqa: E501
     shipped_date: datetime | None = None
     expected_delivery_date: datetime | None = None
     actual_delivery_date: datetime | None = None
@@ -200,7 +200,7 @@ async def list_inbound_shipments(
     total = count_result.scalar() or 0
 
     # Apply pagination
-    query = query.order_by(InboundShipment.created_at.desc()).limit(page_size).offset((page - 1) * page_size)
+    query = query.order_by(InboundShipment.created_at.desc()).limit(page_size).offset((page - 1) * page_size)  # noqa: E501
 
     result = await db.execute(query)
     shipments = result.scalars().all()
@@ -236,13 +236,13 @@ async def create_inbound_shipment(
 ) -> InboundShipmentResponse:
     """Create a new inbound shipment."""
     # Validate supplier exists
-    supplier_result = await db.execute(select(Supplier).where(Supplier.id == shipment_data.supplier_id))
+    supplier_result = await db.execute(select(Supplier).where(Supplier.id == shipment_data.supplier_id))  # noqa: E501
     if not supplier_result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Supplier not found")
 
     # Validate PO if provided
     if shipment_data.purchase_order_id:
-        po_result = await db.execute(select(PurchaseOrder).where(PurchaseOrder.id == shipment_data.purchase_order_id))
+        po_result = await db.execute(select(PurchaseOrder).where(PurchaseOrder.id == shipment_data.purchase_order_id))  # noqa: E501
         if not po_result.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="Purchase order not found")
 
@@ -320,7 +320,7 @@ async def list_outbound_shipments(
     total = count_result.scalar() or 0
 
     # Apply pagination
-    query = query.order_by(OutboundShipment.created_at.desc()).limit(page_size).offset((page - 1) * page_size)
+    query = query.order_by(OutboundShipment.created_at.desc()).limit(page_size).offset((page - 1) * page_size)  # noqa: E501
 
     result = await db.execute(query)
     shipments = result.scalars().all()

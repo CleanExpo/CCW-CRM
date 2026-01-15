@@ -28,7 +28,7 @@ When presenting data:
 - Highlight important information (low stock, pending quotes, order delays)
 - Suggest next actions when appropriate
 
-Your goal is to make ERP data easily accessible through natural conversation."""
+Your goal is to make ERP data easily accessible through natural conversation."""  # noqa: E501
 
 INSIGHTS_AGENT_SYSTEM_PROMPT = """You are a business intelligence analyst for CCW Equipment Supplier's ERP system.
 
@@ -65,7 +65,7 @@ Focus on insights that drive business value:
 - Reduce risk
 - Enhance customer satisfaction
 
-Be data-driven, objective, and actionable in your analysis."""
+Be data-driven, objective, and actionable in your analysis."""  # noqa: E501
 
 CONTENT_GENERATOR_SYSTEM_PROMPT = """You are a content generation specialist for CCW Equipment Supplier's ERP system.
 
@@ -110,4 +110,4 @@ Remember:
 - Suggest alternatives when appropriate
 - Cite data sources in comments when helpful
 
-Your goal is to save users time by generating high-quality, accurate business content."""
+Your goal is to save users time by generating high-quality, accurate business content."""  # noqa: E501

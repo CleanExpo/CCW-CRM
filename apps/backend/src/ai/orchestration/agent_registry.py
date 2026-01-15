@@ -1,6 +1,5 @@
 """Agent Registry for managing and discovering AI agents."""
 
-import time
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
@@ -369,7 +368,7 @@ class AgentRegistry:
             metadata.failed_executions += 1
 
         # Update health score based on success rate
-        success_rate = (metadata.total_executions - metadata.failed_executions) / metadata.total_executions
+        success_rate = (metadata.total_executions - metadata.failed_executions) / metadata.total_executions  # noqa: E501
         metadata.health_score = success_rate
 
     def set_accepting_requests(self, accepting: bool) -> None:

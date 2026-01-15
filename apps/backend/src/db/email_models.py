@@ -2,9 +2,8 @@
 
 import uuid
 from datetime import UTC, datetime
-from typing import Optional
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,10 +32,10 @@ class EmailConversation(Base):
     customer_email: Mapped[str] = mapped_column(
         String(255), nullable=False, index=True
     )
-    customer_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    customer_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Customer relationship (optional)
-    customer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         nullable=True,
         index=True,
@@ -51,26 +50,26 @@ class EmailConversation(Base):
     )  # open|responded|escalated|closed
 
     # Intent classification
-    intent: Mapped[Optional[str]] = mapped_column(
+    intent: Mapped[str | None] = mapped_column(
         String(100), nullable=True, index=True
     )  # order_inquiry|stock_check|quote_request|support|complaint|other
 
-    confidence_score: Mapped[Optional[float]] = mapped_column(nullable=True)
+    confidence_score: Mapped[float | None] = mapped_column(nullable=True)
 
     # Assignment (if escalated to human)
-    assigned_to: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_to: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         nullable=True,
     )
 
     # Related entities
-    related_order_ids: Mapped[Optional[dict]] = mapped_column(
+    related_order_ids: Mapped[dict | None] = mapped_column(
         JSON, nullable=True
     )  # List of order IDs mentioned
-    related_product_ids: Mapped[Optional[dict]] = mapped_column(
+    related_product_ids: Mapped[dict | None] = mapped_column(
         JSON, nullable=True
     )  # List of product IDs mentioned
-    related_quote_ids: Mapped[Optional[dict]] = mapped_column(
+    related_quote_ids: Mapped[dict | None] = mapped_column(
         JSON, nullable=True
     )  # List of quote IDs mentioned
 
@@ -129,34 +128,34 @@ class EmailMessage(Base):
 
     # Sender/Recipient
     from_email: Mapped[str] = mapped_column(String(255), nullable=False)
-    from_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    from_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     to_email: Mapped[str] = mapped_column(String(255), nullable=False)
-    to_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    to_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # CC/BCC (JSON arrays)
-    cc_emails: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    bcc_emails: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    cc_emails: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    bcc_emails: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Content
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
-    body_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    body_html: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    body_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    body_html: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Attachments (JSON array of {filename, content_type, size, url})
-    attachments: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    attachments: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # AI processing
     was_ai_generated: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
-    ai_confidence: Mapped[Optional[float]] = mapped_column(nullable=True)
-    ai_intent: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    ai_confidence: Mapped[float | None] = mapped_column(nullable=True)
+    ai_intent: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # SendGrid metadata
-    sendgrid_message_id: Mapped[Optional[str]] = mapped_column(
+    sendgrid_message_id: Mapped[str | None] = mapped_column(
         String(255), nullable=True, index=True
     )
-    sendgrid_status: Mapped[Optional[str]] = mapped_column(
+    sendgrid_status: Mapped[str | None] = mapped_column(
         String(50), nullable=True
     )  # processed|delivered|opened|clicked|bounced|dropped
 
@@ -164,10 +163,10 @@ class EmailMessage(Base):
     sent_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
     )
-    delivered_at: Mapped[Optional[datetime]] = mapped_column(
+    delivered_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    opened_at: Mapped[Optional[datetime]] = mapped_column(
+    opened_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -195,15 +194,15 @@ class EmailTemplate(Base):
         String(100), nullable=False, unique=True, index=True
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Template content
     subject_template: Mapped[str] = mapped_column(String(500), nullable=False)
     body_text_template: Mapped[str] = mapped_column(Text, nullable=False)
-    body_html_template: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    body_html_template: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # SendGrid dynamic template ID (optional)
-    sendgrid_template_id: Mapped[Optional[str]] = mapped_column(
+    sendgrid_template_id: Mapped[str | None] = mapped_column(
         String(100), nullable=True
     )
 
@@ -213,7 +212,7 @@ class EmailTemplate(Base):
     )  # order|quote|invoice|support|marketing
 
     # Variables expected in this template (JSON array)
-    required_variables: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    required_variables: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -251,10 +250,10 @@ class EmailWebhookLog(Base):
     )  # inbound|processed|delivered|opened|clicked|bounced|dropped|etc
 
     # Message identification
-    sendgrid_message_id: Mapped[Optional[str]] = mapped_column(
+    sendgrid_message_id: Mapped[str | None] = mapped_column(
         String(255), nullable=True, index=True
     )
-    email_message_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    email_message_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         nullable=True,
         index=True,
@@ -265,7 +264,7 @@ class EmailWebhookLog(Base):
 
     # Processing status
     processed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Timestamp
     created_at: Mapped[datetime] = mapped_column(

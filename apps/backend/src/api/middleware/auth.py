@@ -16,7 +16,18 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """Middleware for JWT authentication."""
 
     # Paths that don't require authentication
-    PUBLIC_PATHS = {"/", "/health", "/ready", "/docs", "/openapi.json"}
+    PUBLIC_PATHS = {
+        "/",
+        "/health",
+        "/ready",
+        "/docs",
+        "/openapi.json",
+        "/api/auth/login",
+        "/api/auth/refresh",
+        "/api/auth/logout",
+        "/api/auth/forgot-password",
+        "/api/auth/reset-password",
+    }
 
     async def dispatch(
         self,
@@ -24,6 +35,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
         call_next: Callable[[Request], Response],
     ) -> Response:
         """Process the request and validate authentication."""
+        # Always allow OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Skip auth for public paths
         if request.url.path in self.PUBLIC_PATHS:
             return await call_next(request)

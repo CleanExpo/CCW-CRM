@@ -2,11 +2,10 @@
 
 import uuid
 from datetime import UTC, datetime
-from typing import Optional
 
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .models import Base
 
@@ -23,14 +22,14 @@ class XeroConnection(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Organization relationship (optional for demo mode)
-    organization_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         nullable=True,
     )
 
     # Xero tenant (organization) ID
     tenant_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    tenant_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    tenant_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # OAuth2 tokens (should be encrypted in production)
     access_token: Mapped[str] = mapped_column(Text, nullable=False)
@@ -42,7 +41,7 @@ class XeroConnection(Base):
 
     # Connection status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    last_synced_at: Mapped[Optional[datetime]] = mapped_column(
+    last_synced_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 
@@ -58,7 +57,7 @@ class XeroConnection(Base):
     )
 
     # Relationships
-    # organization = relationship("Organization", back_populates="xero_connection")  # Disabled for demo mode
+    # organization = relationship("Organization", back_populates="xero_connection")  # Disabled for demo mode  # noqa: E501
 
     def __repr__(self) -> str:
         return f"<XeroConnection(tenant_id={self.tenant_id}, active={self.is_active})>"
@@ -89,7 +88,7 @@ class Payment(Base):
     )
 
     # Xero payment ID
-    xero_payment_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    xero_payment_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)  # noqa: E501
 
     # Payment details
     amount: Mapped[float] = mapped_column(nullable=False)
@@ -97,7 +96,7 @@ class Payment(Base):
     payment_method: Mapped[str] = mapped_column(
         String(50), nullable=False, default="other"
     )  # card|bank_transfer|cash|other
-    reference: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    reference: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Metadata
     created_at: Mapped[datetime] = mapped_column(

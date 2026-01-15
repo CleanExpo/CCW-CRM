@@ -8,7 +8,7 @@ from .client import XeroClient
 from .demo_client import DemoXeroClient
 
 
-def get_xero_client(access_token: str, tenant_id: str, demo_mode: bool = False) -> XeroClient | DemoXeroClient:
+def get_xero_client(access_token: str, tenant_id: str, demo_mode: bool = False) -> XeroClient | DemoXeroClient:  # noqa: E501
     """Factory function to get appropriate Xero client.
 
     Args:

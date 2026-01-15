@@ -36,7 +36,7 @@ Respond in JSON format:
     "estimated_time": 30  // seconds
 }}
 
-Only respond with valid JSON, no other text."""
+Only respond with valid JSON, no other text."""  # noqa: E501
 
 
 class SupervisorAgent(BaseAgent):
@@ -315,7 +315,7 @@ class SupervisorAgent(BaseAgent):
             # Check call stack depth (prevent infinite loops)
             if execution_context["call_stack_depth"] > 3:
                 state["error"] = "Maximum call stack depth exceeded (agent-to-agent calls)"
-                logger.warning("Call stack depth exceeded", depth=execution_context["call_stack_depth"])
+                logger.warning("Call stack depth exceeded", depth=execution_context["call_stack_depth"])  # noqa: E501
                 return state
 
             # Execute agent with metrics tracking
@@ -488,7 +488,7 @@ class SupervisorAgent(BaseAgent):
         elif result["status"] == "pending_confirmation":
             yield "⚠ Task requires user confirmation\n"
         else:
-            yield f"✓ Task completed by {result['metadata'].get('selected_agent', 'unknown agent')}\n"
+            yield f"✓ Task completed by {result['metadata'].get('selected_agent', 'unknown agent')}\n"  # noqa: E501
 
 
 # Singleton instance

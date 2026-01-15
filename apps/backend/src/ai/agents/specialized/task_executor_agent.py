@@ -1,8 +1,9 @@
 """Task executor agent with user confirmation flow for write operations."""
 
 import secrets
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from langgraph.graph import END, StateGraph
 
@@ -407,7 +408,7 @@ class TaskExecutorAgent(BaseAgent):
 
         if action_type == "create_order":
             items_count = len(action_params.get("items", []))
-            return f"Create order with {items_count} items for customer {action_params.get('customer_id', 'unknown')}"
+            return f"Create order with {items_count} items for customer {action_params.get('customer_id', 'unknown')}"  # noqa: E501
         elif action_type == "update_product":
             product_id = action_params.get("product_id", "unknown")
             fields = list(action_params.get("updates", {}).keys())
@@ -482,10 +483,10 @@ class TaskExecutorAgent(BaseAgent):
 
         status = result.get("status")
         if status == "pending_confirmation":
-            yield f"⚠ Action requires confirmation\n"
+            yield "⚠ Action requires confirmation\n"
             yield f"Token: {result.get('confirmation_token')}\n"
         elif status == "completed":
-            yield f"✓ Action executed successfully\n"
+            yield "✓ Action executed successfully\n"
         else:
             yield f"Error: {result.get('message')}\n"
 

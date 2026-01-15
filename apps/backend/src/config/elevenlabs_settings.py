@@ -2,10 +2,9 @@
 
 from typing import Literal
 
+import structlog
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-import structlog
 
 logger = structlog.get_logger(__name__)
 

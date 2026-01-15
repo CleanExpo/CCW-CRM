@@ -6,15 +6,15 @@ Secure, time-limited tokens ensure safe authentication.
 """
 
 import os
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from jose import JWTError, jwt
 
 from src.config.database import get_async_db
 from src.db.demo_models import Customer
@@ -119,7 +119,7 @@ async def send_magic_link(
     """
     # Find customer by email
     result = await db.execute(
-        select(Customer).where(Customer.email == request.email).where(Customer.is_active == True)
+        select(Customer).where(Customer.email == request.email).where(Customer.is_active)
     )
     customer = result.scalar_one_or_none()
 
@@ -145,7 +145,7 @@ async def send_magic_link(
 
     # Always return success (security: don't reveal if email exists)
     return MagicLinkResponse(
-        message="If that email address is registered, we've sent you a magic link to access your portal.",
+        message="If that email address is registered, we've sent you a magic link to access your portal.",  # noqa: E501
         success=True,
     )
 
@@ -168,7 +168,7 @@ async def verify_magic_link(
 
     # Verify customer still exists and is active
     result = await db.execute(
-        select(Customer).where(Customer.id == customer_id).where(Customer.is_active == True)
+        select(Customer).where(Customer.id == customer_id).where(Customer.is_active)
     )
     customer = result.scalar_one_or_none()
 
@@ -228,7 +228,7 @@ async def get_current_customer(
 
     # Fetch customer
     result = await db.execute(
-        select(Customer).where(Customer.id == customer_id).where(Customer.is_active == True)
+        select(Customer).where(Customer.id == customer_id).where(Customer.is_active)
     )
     customer = result.scalar_one_or_none()
 
