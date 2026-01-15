@@ -63,14 +63,16 @@ class User(Base):
     """
 
     __tablename__ = "users"
+    __allow_unmapped__ = True  # Allow unmapped relationships for compatibility
 
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     email: str = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash: str = Column("hashed_password", String(255), nullable=False)
+    password_hash: str = Column("hashed_password", String(255), nullable=False)  # Maps to hashed_password column
     full_name: str | None = Column(String(255), nullable=True)
-    role: str = Column(String(50), nullable=False, default="employee", index=True)
+    role: str = Column(String(50), nullable=False, default="employee")
     is_active: bool = Column(Boolean, default=True, nullable=False, index=True)
     is_admin: bool = Column(Boolean, default=False, nullable=False)
+    organization_id: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
@@ -85,6 +87,7 @@ class User(Base):
     # Relationships - Disabled for ERP demo
     # contractors = relationship("Contractor", back_populates="user")
     # documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+    # prds relationship removed - causing SQLAlchemy issues, use PRD.user_id foreign key instead
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email})>"

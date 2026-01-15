@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_db
-from src.db.erp_models import Customer as CustomerModel
+from src.db.demo_models import Customer as CustomerModel
 from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
@@ -81,16 +81,68 @@ async def create_customer(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new customer."""
+    # Prepare customer data
+    data_dict = customer_data.model_dump(exclude_unset=True)
+
+    # Handle name/company_name aliasing
+    if "name" in data_dict and not data_dict.get("company_name"):
+        data_dict["company_name"] = data_dict.pop("name")
+    elif "name" in data_dict:
+        data_dict.pop("name")  # Remove alias if company_name exists
+
+    # Handle postal_code/postcode aliasing
+    if "postal_code" in data_dict and not data_dict.get("postcode"):
+        data_dict["postcode"] = data_dict.pop("postal_code")
+    elif "postal_code" in data_dict:
+        data_dict.pop("postal_code")
+
+    # Auto-generate customer number if not provided
+    if not data_dict.get("customer_number"):
+        # Get latest customer number
+        query = select(CustomerModel.customer_number).order_by(
+            CustomerModel.created_at.desc()
+        ).limit(1)
+        result = await db.execute(query)
+        latest_number = result.scalar_one_or_none()
+
+        if latest_number and latest_number.startswith("CUST-"):
+            try:
+                last_num = int(latest_number.split("-")[1])
+                data_dict["customer_number"] = f"CUST-{last_num + 1:06d}"
+            except (ValueError, IndexError):
+                data_dict["customer_number"] = "CUST-000001"
+        else:
+            data_dict["customer_number"] = "CUST-000001"
+
+    # Validate required fields
+    if not data_dict.get("company_name"):
+        raise HTTPException(status_code=400, detail="company_name or name is required")
+
     # Check if customer number already exists
     existing_query = select(CustomerModel).where(
-        CustomerModel.customer_number == customer_data.customer_number
+        CustomerModel.customer_number == data_dict["customer_number"]
     )
     result = await db.execute(existing_query)
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Customer number already exists")
 
+    # Check if email already exists (if email is provided)
+    if data_dict.get("email"):
+        email_query = select(CustomerModel).where(
+            CustomerModel.email == data_dict["email"]
+        )
+        result = await db.execute(email_query)
+        if result.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Email already exists")
+
+    # Remove fields not in the model
+    model_fields = {"customer_number", "company_name", "contact_name", "email",
+                   "phone", "address", "city", "state", "postcode", "is_active",
+                   "organization_id"}
+    filtered_data = {k: v for k, v in data_dict.items() if k in model_fields}
+
     # Create customer
-    customer = CustomerModel(**customer_data.model_dump())
+    customer = CustomerModel(**filtered_data)
     db.add(customer)
     await db.commit()
     await db.refresh(customer)

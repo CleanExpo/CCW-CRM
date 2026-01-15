@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { WebSocketStatus } from "@/components/websocket-status";
 import {
   LayoutDashboard,
   Package,
@@ -22,6 +21,7 @@ import {
   AlertCircle,
   Bell,
   CheckCircle,
+  Sparkles,
 } from "lucide-react";
 
 const navigation = [
@@ -37,6 +37,7 @@ const navigation = [
   { name: "Submissions", href: "/submissions", icon: ClipboardCheck },
   { name: "Emails", href: "/emails", icon: Mail },
   // { name: "AI Assistant", href: "/ai-assistant", icon: Bot }, // Hidden for demo - incomplete implementation
+  { name: "PRD Generator", href: "/prd/generate", icon: Sparkles },
   { name: "Insights", href: "/insights", icon: TrendingUp },
   { name: "Alerts", href: "/alerts", icon: Bell },
   { name: "Approvals", href: "/approvals", icon: CheckCircle },
@@ -63,7 +64,7 @@ export function Sidebar() {
           </span>
         </Link>
       </div>
-      <nav className="flex flex-col gap-1 p-4 flex-1">
+      <nav className="flex flex-col gap-1 p-4">
         {navigation.map((item, index) => {
           const isActive = pathname === item.href;
           return (
@@ -116,11 +117,6 @@ export function Sidebar() {
           );
         })}
       </nav>
-
-      {/* WebSocket Connection Status */}
-      <div className="p-4 border-t">
-        <WebSocketStatus showLabel size="sm" />
-      </div>
     </aside>
   );
 }

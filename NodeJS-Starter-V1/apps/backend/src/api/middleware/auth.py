@@ -24,10 +24,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/openapi.json",
         "/api/auth/login",
         "/api/auth/refresh",
+        "/api/auth/logout",
         "/api/auth/forgot-password",
         "/api/auth/reset-password",
-        "/api/portal/auth/login",
-        "/api/portal/auth/register",
     }
 
     async def dispatch(
@@ -36,6 +35,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
         call_next: Callable[[Request], Response],
     ) -> Response:
         """Process the request and validate authentication."""
+        # Always allow OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Skip auth for public paths
         if request.url.path in self.PUBLIC_PATHS:
             return await call_next(request)

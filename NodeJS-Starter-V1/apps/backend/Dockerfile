@@ -14,10 +14,14 @@ RUN pip install uv
 COPY pyproject.toml uv.lock* ./
 
 # Install dependencies
-RUN uv sync --frozen --no-dev
+RUN uv sync --no-dev
 
 # Copy source code
 COPY src/ ./src/
+
+# Copy Alembic configuration for database migrations
+COPY alembic.ini ./
+COPY alembic/ ./alembic/
 
 # Expose port
 EXPOSE 8000

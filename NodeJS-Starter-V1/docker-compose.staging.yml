@@ -1,0 +1,270 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: ccw-erp-postgres-staging
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ccw_erp_staging
+      POSTGRES_USER: ccw_staging
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ccw_staging -d ccw_erp_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ccw-staging-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: ccw-erp-redis-staging
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_staging_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ccw-staging-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: ccw-erp-backend-staging
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://ccw_staging:${POSTGRES_PASSWORD}@postgres:5432/ccw_erp_staging
+
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+
+      # Application
+      ENVIRONMENT: staging
+      DEBUG: "false"
+      LOG_LEVEL: INFO
+
+      # API Configuration
+      API_V1_PREFIX: /api
+      BACKEND_CORS_ORIGINS: '["http://localhost:3000","${FRONTEND_URL}"]'
+
+      # Security
+      SECRET_KEY: ${SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+
+      # AI Provider
+      AI_PROVIDER: ${AI_PROVIDER:-anthropic}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+
+      # Integrations (Staging credentials)
+      XERO_CLIENT_ID: ${XERO_CLIENT_ID_STAGING}
+      XERO_CLIENT_SECRET: ${XERO_CLIENT_SECRET_STAGING}
+      XERO_REDIRECT_URI: ${XERO_REDIRECT_URI_STAGING}
+
+      SHOPIFY_SHOP_URL: ${SHOPIFY_SHOP_URL_STAGING}
+      SHOPIFY_ACCESS_TOKEN: ${SHOPIFY_ACCESS_TOKEN_STAGING}
+      SHOPIFY_API_VERSION: "2024-01"
+
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY_STAGING}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL_STAGING}
+      SENDGRID_FROM_NAME: "CCW ERP Staging"
+
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY_STAGING}
+
+      # Celery Configuration
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs/backend:/app/logs
+    networks:
+      - ccw-staging-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-worker:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: ccw-erp-celery-worker-staging
+    restart: unless-stopped
+    command: uv run celery -A src.scheduler.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      # Same as backend
+      DATABASE_URL: postgresql+asyncpg://ccw_staging:${POSTGRES_PASSWORD}@postgres:5432/ccw_erp_staging
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      ENVIRONMENT: staging
+      SECRET_KEY: ${SECRET_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      XERO_CLIENT_ID: ${XERO_CLIENT_ID_STAGING}
+      XERO_CLIENT_SECRET: ${XERO_CLIENT_SECRET_STAGING}
+      SHOPIFY_SHOP_URL: ${SHOPIFY_SHOP_URL_STAGING}
+      SHOPIFY_ACCESS_TOKEN: ${SHOPIFY_ACCESS_TOKEN_STAGING}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY_STAGING}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY_STAGING}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./logs/celery:/app/logs
+    networks:
+      - ccw-staging-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-beat:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: ccw-erp-celery-beat-staging
+    restart: unless-stopped
+    command: uv run celery -A src.scheduler.celery_app beat --loglevel=info
+    environment:
+      # Same as backend
+      DATABASE_URL: postgresql+asyncpg://ccw_staging:${POSTGRES_PASSWORD}@postgres:5432/ccw_erp_staging
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      ENVIRONMENT: staging
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs/celery-beat:/app/logs
+    networks:
+      - ccw-staging-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: ccw-erp-frontend-staging
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_TELEMETRY_DISABLED: 1
+    ports:
+      - "3005:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - ccw-staging-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_staging_data:
+    driver: local
+  redis_staging_data:
+    driver: local
+
+networks:
+  ccw-staging-network:
+    driver: bridge

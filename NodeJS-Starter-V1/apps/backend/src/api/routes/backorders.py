@@ -119,7 +119,7 @@ class BackorderListResponse(BaseModel):
     page_size: int
 
 
-@router.get("/", response_model=BackorderListResponse)
+@router.get("", response_model=BackorderListResponse)
 async def list_backorders(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -308,7 +308,7 @@ async def get_backorder(
     return BackorderResponse(**backorder_dict)
 
 
-@router.post("/", response_model=BackorderResponse, status_code=201)
+@router.post("", response_model=BackorderResponse, status_code=201)
 async def create_backorder(
     backorder_data: BackorderCreate,
     db: AsyncSession = Depends(get_async_db),

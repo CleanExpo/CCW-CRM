@@ -15,7 +15,7 @@ from .middleware.auth import AuthMiddleware
 from .middleware.prometheus import PrometheusMiddleware, metrics_endpoint
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
-from .routes import approvals, autonomy, backorders, config, containers, customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, portal_auth, portal_forms, products, purchase_orders, quotes, service_requests, shipments, suppliers, test_data_gen, webhooks, websocket
+from .routes import approvals, autonomy, backorders, config, containers, customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, portal_auth, portal_forms, prd, products, purchase_orders, quotes, service_requests, shipments, suppliers, test_data_gen, webhooks, websocket
 from .routes.ai import ai_router, chat, generate, insights, learning
 from .routes.integrations import elevenlabs, sendgrid, shopify, xero
 
@@ -133,6 +133,7 @@ app.include_router(products.router, tags=["Products"])
 app.include_router(customers.router, tags=["Customers"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+app.include_router(prd.router, tags=["PRD Generation"])
 # Multi-store inventory router
 app.include_router(inventory.router, tags=["Multi-Store Inventory"])
 # Service requests router

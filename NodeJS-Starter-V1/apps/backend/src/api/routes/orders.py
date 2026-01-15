@@ -67,7 +67,8 @@ async def deduct_stock_for_order(
         product_id = item["product_id"]
         quantity = item["quantity"]
 
-        # Check stock availability
+        # Check stock availability with pessimistic locking (SELECT FOR UPDATE)
+        # This prevents race conditions when multiple users order simultaneously
         stmt = select(ProductStockByLocation, ProductModel).join(
             ProductModel, ProductStockByLocation.product_id == ProductModel.id
         ).where(
@@ -75,7 +76,7 @@ async def deduct_stock_for_order(
                 ProductStockByLocation.product_id == product_id,
                 ProductStockByLocation.location == location,
             )
-        )
+        ).with_for_update()  # Add pessimistic lock
         result = await db.execute(stmt)
         row = result.first()
 
@@ -105,13 +106,13 @@ async def deduct_stock_for_order(
         product_id = item["product_id"]
         quantity = item["quantity"]
 
-        # Get stock record
+        # Get stock record with lock (already locked from check above, but being explicit)
         stmt = select(ProductStockByLocation).where(
             and_(
                 ProductStockByLocation.product_id == product_id,
                 ProductStockByLocation.location == location,
             )
-        )
+        ).with_for_update()  # Maintain lock through update
         result = await db.execute(stmt)
         stock = result.scalar_one()
 
@@ -272,6 +273,17 @@ async def create_order(
     settings: Settings = Depends(get_settings),
 ):
     """Create a new order with items."""
+    # Validate customer exists
+    customer_query = select(CustomerModel).where(CustomerModel.id == order_data.customer_id)
+    customer_result = await db.execute(customer_query)
+    customer = customer_result.scalar_one_or_none()
+
+    if not customer:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Customer {order_data.customer_id} not found"
+        )
+
     # Generate order number
     order_number = await generate_order_number(db)
 

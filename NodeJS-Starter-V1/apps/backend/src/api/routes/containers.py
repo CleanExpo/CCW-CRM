@@ -152,7 +152,7 @@ class ContainerListResponse(BaseModel):
     page_size: int
 
 
-@router.get("/", response_model=ContainerListResponse)
+@router.get("", response_model=ContainerListResponse)
 async def list_containers(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -334,7 +334,7 @@ async def get_container(
     return ContainerResponse(**container_dict)
 
 
-@router.post("/", response_model=ContainerResponse, status_code=201)
+@router.post("", response_model=ContainerResponse, status_code=201)
 async def create_container(
     container_data: ContainerCreate,
     db: AsyncSession = Depends(get_async_db),
