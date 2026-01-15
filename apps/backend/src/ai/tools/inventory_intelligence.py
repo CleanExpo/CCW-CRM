@@ -9,7 +9,7 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.demo_models import Product
@@ -178,7 +178,7 @@ class SuggestAlternativeProducts:
                         Product.category == product.category,  # Same category
                         Product.price >= price_min,
                         Product.price <= price_max,
-                        Product.is_active == True,
+                        Product.is_active,
                         ProductStockByLocation.stock > 0,  # Has stock
                     )
                 )
@@ -333,7 +333,7 @@ class CalculateBackorderETA:
                 "confidence": confidence,
                 "historical_restocks": len(adjustments),
                 "recommendation": (
-                    f"Expected to be back in stock in approximately {max(0, days_until_restock)} days"
+                    f"Expected to be back in stock in approximately {max(0, days_until_restock)} days"  # noqa: E501
                     if days_until_restock > 0
                     else "Should be available soon"
                 ),

@@ -10,7 +10,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.demo_models import Customer, Order, Product
+from src.db.demo_models import Customer, Order
 from src.db.email_models import EmailConversation, EmailMessage
 from src.integrations.sendgrid.client import SendGridClient
 
@@ -104,7 +104,7 @@ class EmailProcessor:
             self.sendgrid_client.settings.ai_auto_response_enabled
             and intent_result["confidence"] >= self.sendgrid_client.settings.ai_confidence_threshold
         ):
-            response = await self._generate_response(conversation, inbound_message, intent_result, entities)
+            response = await self._generate_response(conversation, inbound_message, intent_result, entities)  # noqa: E501
 
             if response:
                 send_result = await self.sendgrid_client.send_email(
@@ -144,7 +144,7 @@ class EmailProcessor:
             logger.info(
                 "email_escalated_for_human_review",
                 conversation_id=str(conversation.id),
-                reason="low_confidence" if intent_result["confidence"] < 0.75 else "auto_response_disabled",
+                reason="low_confidence" if intent_result["confidence"] < 0.75 else "auto_response_disabled",  # noqa: E501
             )
 
         return {
@@ -481,7 +481,7 @@ Thank you for your inquiry about order {order_number}.
 I wasn't able to find that order number in our system. Could you please verify the order number and provide any additional details?
 
 Best regards,
-CCW Equipment Support Team"""
+CCW Equipment Support Team"""  # noqa: E501
         else:
             body_text = f"""Hi {customer_name},
 
@@ -490,7 +490,7 @@ Thank you for your order inquiry.
 To help you better, could you please provide your order number? It should be in the format ORD-YYYY-NNN.
 
 Best regards,
-CCW Equipment Support Team"""
+CCW Equipment Support Team"""  # noqa: E501
 
         return {"body_text": body_text, "body_html": f"<p>{body_text.replace(chr(10), '<br>')}</p>"}
 
@@ -523,7 +523,7 @@ I've received your inquiry and will prepare a detailed quote for you. Please exp
 If you need the quote urgently, please call us at (07) 1234 5678.
 
 Best regards,
-CCW Equipment Support Team"""
+CCW Equipment Support Team"""  # noqa: E501
 
         return {"body_text": body_text, "body_html": f"<p>{body_text.replace(chr(10), '<br>')}</p>"}
 
@@ -540,7 +540,7 @@ A member of our customer service team will contact you within 24 hours to addres
 If this is urgent, please call us at (07) 1234 5678.
 
 Best regards,
-CCW Equipment Support Team"""
+CCW Equipment Support Team"""  # noqa: E501
 
         return {"body_text": body_text, "body_html": f"<p>{body_text.replace(chr(10), '<br>')}</p>"}
 
@@ -558,7 +558,7 @@ Saturday: 9:00 AM - 1:00 PM
 Sunday: Closed
 
 Best regards,
-CCW Equipment Support Team"""
+CCW Equipment Support Team"""  # noqa: E501
 
         return {"body_text": body_text, "body_html": f"<p>{body_text.replace(chr(10), '<br>')}</p>"}
 

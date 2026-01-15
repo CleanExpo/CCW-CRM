@@ -1,5 +1,6 @@
 """Application settings and configuration."""
 
+from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
 
@@ -25,6 +26,10 @@ class Settings(BaseSettings):
 
     # API
     backend_api_key: str = Field(default="")
+    skip_auth_enforcement: bool = Field(
+        default=False,
+        description="Skip authentication enforcement (ONLY for local testing, NEVER in production)"
+    )
     cors_origins: list[str] = Field(
         default=[
             "http://localhost:3000",
@@ -50,8 +55,8 @@ class Settings(BaseSettings):
         default="your-secret-key-change-in-production",
         description="Secret key for JWT token signing"
     )
-    jwt_expire_minutes: int = Field(default=480, description="JWT access token expiration in minutes (8 hours)")
-    jwt_refresh_expire_days: int = Field(default=30, description="JWT refresh token expiration in days")
+    jwt_expire_minutes: int = Field(default=480, description="JWT access token expiration in minutes (8 hours)")  # noqa: E501
+    jwt_refresh_expire_days: int = Field(default=30, description="JWT refresh token expiration in days")  # noqa: E501
 
     # Security
     secure_cookies: bool = Field(
@@ -93,17 +98,17 @@ class Settings(BaseSettings):
     openrouter_api_key: str = Field(default="", description="OpenRouter API key (optional)")
 
     # Email (SendGrid for password reset, etc.)
-    sendgrid_api_key: str = Field(default="", description="SendGrid API key for transactional emails")
-    sendgrid_from_email: str = Field(default="noreply@ccw-erp.com", description="From email address")
+    sendgrid_api_key: str = Field(default="", description="SendGrid API key for transactional emails")  # noqa: E501
+    sendgrid_from_email: str = Field(default="noreply@ccw-erp.com", description="From email address")  # noqa: E501
     sendgrid_from_name: str = Field(default="CCW ERP", description="From name for emails")
 
     # Business Configuration
-    tax_rate: str = Field(default="0.10", description="Tax rate (GST) as decimal (e.g., 0.10 for 10%)")
+    tax_rate: str = Field(default="0.10", description="Tax rate (GST) as decimal (e.g., 0.10 for 10%)")  # noqa: E501
     tax_name: str = Field(default="GST", description="Tax name displayed in UI")
-    quote_validity_days: int = Field(default=30, description="Default quote validity period in days")
+    quote_validity_days: int = Field(default=30, description="Default quote validity period in days")  # noqa: E501
 
     # Stocktrim Integration
-    stocktrim_api_url: str = Field(default="https://api.stocktrim.com", description="Stocktrim API base URL")
+    stocktrim_api_url: str = Field(default="https://api.stocktrim.com", description="Stocktrim API base URL")  # noqa: E501
     stocktrim_api_key: str = Field(default="", description="Stocktrim API key for stock management")
     stocktrim_enabled: bool = Field(default=True, description="Enable Stocktrim integration")
     stocktrim_fallback_to_local: bool = Field(
@@ -141,13 +146,12 @@ class Settings(BaseSettings):
 
     @property
     def should_use_secure_cookies(self) -> bool:
-        """Determine if secure cookies should be used (True in production or if explicitly enabled)."""
+        """Determine if secure cookies should be used (True in production or if explicitly enabled)."""  # noqa: E501
         return self.is_production or self.secure_cookies
 
     @property
-    def tax_rate_decimal(self) -> "Decimal":
+    def tax_rate_decimal(self) -> Decimal:
         """Get tax rate as Decimal for precise calculations."""
-        from decimal import Decimal
         return Decimal(self.tax_rate)
 
 

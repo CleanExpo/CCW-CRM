@@ -38,6 +38,25 @@ function getAuthToken(): string | null {
 }
 
 /**
+ * Decode JWT token to get payload (without verification)
+ */
+function decodeJWT(token: string): any {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Make an authenticated API request
  */
 async function fetchApi<T>(
@@ -53,6 +72,12 @@ async function fetchApi<T>(
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+
+    // Extract user_id from JWT and add to X-User-Id header (for auth middleware)
+    const payload = decodeJWT(token);
+    if (payload && payload.user_id) {
+      headers["X-User-Id"] = payload.user_id;
+    }
   }
 
   const url = endpoint.startsWith("http")

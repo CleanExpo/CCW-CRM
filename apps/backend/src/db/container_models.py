@@ -25,15 +25,15 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
-
-from .models import Base
 
 # Import related models for SQLAlchemy relationship resolution
 # These need to be imported so string-based relationships can be resolved
 from .erp_models import Customer, Order, Product  # noqa: F401
 from .inventory_models import PurchaseOrder, Supplier  # noqa: F401
+from .models import Base
 
 
 class ContainerStatus(str, enum.Enum):
@@ -99,7 +99,7 @@ class Container(Base):
 
     # Status
     status: ContainerStatus = Column(
-        Enum(ContainerStatus, name="container_status", values_callable=lambda x: [e.value for e in x]),
+        Enum(ContainerStatus, name="container_status", values_callable=lambda x: [e.value for e in x]),  # noqa: E501
         nullable=False,
         default=ContainerStatus.BOOKED,
         index=True,
@@ -138,7 +138,7 @@ class Container(Base):
     backorders = relationship("Backorder", back_populates="container")
 
     def __repr__(self) -> str:
-        return f"<Container(number={self.container_number}, status={self.status}, eta={self.estimated_arrival_date})>"
+        return f"<Container(number={self.container_number}, status={self.status}, eta={self.estimated_arrival_date})>"  # noqa: E501
 
     @property
     def total_cost(self) -> Decimal:
@@ -181,9 +181,9 @@ class Container(Base):
             "destination_warehouse": self.destination_warehouse,
             "booking_date": self.booking_date.isoformat() if self.booking_date else None,
             "departure_date": self.departure_date.isoformat() if self.departure_date else None,
-            "estimated_arrival_date": self.estimated_arrival_date.isoformat() if self.estimated_arrival_date else None,
-            "actual_arrival_date": self.actual_arrival_date.isoformat() if self.actual_arrival_date else None,
-            "customs_clearance_date": self.customs_clearance_date.isoformat() if self.customs_clearance_date else None,
+            "estimated_arrival_date": self.estimated_arrival_date.isoformat() if self.estimated_arrival_date else None,  # noqa: E501
+            "actual_arrival_date": self.actual_arrival_date.isoformat() if self.actual_arrival_date else None,  # noqa: E501
+            "customs_clearance_date": self.customs_clearance_date.isoformat() if self.customs_clearance_date else None,  # noqa: E501
             "delivered_date": self.delivered_date.isoformat() if self.delivered_date else None,
             "status": self.status.value,
             "tracking_number": self.tracking_number,
@@ -255,7 +255,7 @@ class ContainerItem(Base):
     product = relationship("Product")
 
     def __repr__(self) -> str:
-        return f"<ContainerItem(container={self.container_id}, product={self.product_id}, qty={self.quantity_ordered})>"
+        return f"<ContainerItem(container={self.container_id}, product={self.product_id}, qty={self.quantity_ordered})>"  # noqa: E501
 
     @property
     def quantity_available(self) -> int:
@@ -336,7 +336,7 @@ class Backorder(Base):
 
     # Status
     status: BackorderStatus = Column(
-        Enum(BackorderStatus, name="backorder_status", values_callable=lambda x: [e.value for e in x]),
+        Enum(BackorderStatus, name="backorder_status", values_callable=lambda x: [e.value for e in x]),  # noqa: E501
         nullable=False,
         default=BackorderStatus.PENDING,
         index=True,
@@ -377,7 +377,7 @@ class Backorder(Base):
     container = relationship("Container", back_populates="backorders")
 
     def __repr__(self) -> str:
-        return f"<Backorder(order={self.order_id}, product={self.product_id}, qty={self.quantity_backordered}, status={self.status})>"
+        return f"<Backorder(order={self.order_id}, product={self.product_id}, qty={self.quantity_backordered}, status={self.status})>"  # noqa: E501
 
     @property
     def quantity_remaining(self) -> int:
@@ -418,11 +418,11 @@ class Backorder(Base):
             "quantity_remaining": self.quantity_remaining,
             "fulfillment_location": self.fulfillment_location,
             "container_id": str(self.container_id) if self.container_id else None,
-            "expected_availability_date": self.expected_availability_date.isoformat() if self.expected_availability_date else None,
+            "expected_availability_date": self.expected_availability_date.isoformat() if self.expected_availability_date else None,  # noqa: E501
             "original_order_date": self.original_order_date.isoformat(),
             "status": self.status.value,
             "customer_notified": self.customer_notified,
-            "last_notification_date": self.last_notification_date.isoformat() if self.last_notification_date else None,
+            "last_notification_date": self.last_notification_date.isoformat() if self.last_notification_date else None,  # noqa: E501
             "notification_count": self.notification_count,
             "priority": self.priority,
             "is_overdue": self.is_overdue,

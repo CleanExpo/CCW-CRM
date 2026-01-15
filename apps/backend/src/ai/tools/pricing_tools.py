@@ -186,7 +186,7 @@ class CalculateMarginTool(BaseTool):
 
         try:
             # Query product(s)
-            query = select(Product).where(Product.is_active == True)
+            query = select(Product).where(Product.is_active)
             if product_id:
                 query = query.where(Product.id == product_id)
 

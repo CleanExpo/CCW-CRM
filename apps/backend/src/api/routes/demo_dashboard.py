@@ -18,7 +18,6 @@ from src.db.demo_models import (
     Customer,
     Order,
     OrderItem,
-    OrderStatus,
     Product,
     Quote,
     QuoteStatus,

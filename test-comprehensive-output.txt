@@ -1,0 +1,102 @@
+====================================
+CCW-Online ERP Comprehensive Tests
+Started: Thu, Jan 15, 2026  5:40:22 PM
+====================================
+[0;32m✓ PASS[0m: Backend Server Running
+[1;33m⊘ SKIP[0m: Frontend Server Running - Frontend not started (optional)
+
+[1;33m=== Health & Info Endpoints ===[0m
+[0;32m✓ PASS[0m: GET /health
+[0;32m✓ PASS[0m: GET /docs (OpenAPI)
+[0;32m✓ PASS[0m: GET /redoc
+[0;32m✓ PASS[0m: GET /openapi.json
+[0;32m✓ PASS[0m: GET / (root)
+
+[1;33m=== Authentication Endpoints ===[0m
+[0;31m✗ FAIL[0m: POST /api/auth/register - HTTP 404
+[0;31m✗ FAIL[0m: POST /api/auth/login - HTTP 500
+[1;33m⊘ SKIP[0m: GET /api/auth/me (authenticated) - No access token
+[0;32m✓ PASS[0m: GET /api/auth/me (unauthenticated - expect 401)
+[1;33m⊘ SKIP[0m: POST /api/auth/logout - No access token
+[0;32m✓ PASS[0m: POST /api/auth/refresh (invalid token)
+[0;31m✗ FAIL[0m: POST /api/auth/password-reset - HTTP 404
+[1;33m⊘ SKIP[0m: POST /api/auth/change-password - No access token
+
+[1;33m=== Inventory Endpoints ===[0m
+[0;31m✗ FAIL[0m: GET /api/inventory - HTTP 404
+[0;31m✗ FAIL[0m: GET /api/inventory (pagination) - HTTP 404
+[0;31m✗ FAIL[0m: GET /api/inventory (search) - HTTP 404
+[0;31m✗ FAIL[0m: GET /api/inventory/low-stock - HTTP 500
+[0;32m✓ PASS[0m: GET /api/inventory/{id}
+[1;33m⊘ SKIP[0m: POST /api/inventory - No access token
+[1;33m⊘ SKIP[0m: PUT /api/inventory/{id} - No access token
+[1;33m⊘ SKIP[0m: POST /api/inventory/{id}/adjust-stock - No access token
+
+[1;33m=== Order Endpoints ===[0m
+[0;31m✗ FAIL[0m: GET /api/orders - HTTP 500
+[0;31m✗ FAIL[0m: GET /api/orders (status filter) - HTTP 500
+[0;31m✗ FAIL[0m: GET /api/orders/{id} - HTTP 422
+[1;33m⊘ SKIP[0m: POST /api/orders - No access token
+[1;33m⊘ SKIP[0m: PATCH /api/orders/{id}/status - No access token
+
+[1;33m=== Supplier Endpoints ===[0m
+[0;31m✗ FAIL[0m: GET /api/suppliers - HTTP 500
+[0;31m✗ FAIL[0m: GET /api/suppliers/{id} - HTTP 422
+[1;33m⊘ SKIP[0m: POST /api/suppliers - No access token
+
+[1;33m=== Purchase Order Endpoints ===[0m
+[0;31m✗ FAIL[0m: GET /api/purchase-orders - HTTP 500
+[0;31m✗ FAIL[0m: GET /api/purchase-orders/{id} - HTTP 422
+
+[1;33m=== Portal Forms Endpoints ===[0m
+[0;31m✗ FAIL[0m: POST /api/contact-submissions - HTTP 422
+[0;31m✗ FAIL[0m: GET /api/contact-submissions - HTTP 500
+[0;31m✗ FAIL[0m: POST /api/demo-requests - HTTP 500
+[0;31m✗ FAIL[0m: GET /api/demo-requests - HTTP 500
+[0;31m✗ FAIL[0m: GET /api/submissions/statistics - HTTP 500
+
+[1;33m=== AI Endpoints ===[0m
+[1;33m⊘ SKIP[0m: POST /api/ai/chat - No access token
+[1;33m⊘ SKIP[0m: POST /api/ai/generate/email - No access token
+[1;33m⊘ SKIP[0m: GET /api/ai/insights - No access token
+
+[1;33m=== Integration Endpoints ===[0m
+[0;31m✗ FAIL[0m: GET /api/integrations/shopify/sync/status - HTTP 404
+[0;32m✓ PASS[0m: GET /api/integrations/xero/status
+
+====================================
+Test Summary
+====================================
+Total Tests: 43
+[0;32mPassed: 10[0m
+[0;31mFailed: 20[0m
+[1;33mSkipped: 13[0m
+comprehensive-test-all.sh: line 678: bc: command not found
+Success Rate: %
+
+Finished: Thu, Jan 15, 2026  5:41:03 PM
+Results saved to: test-results-20260115-174022.txt
+
+====================================
+Failed Tests:
+====================================
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/auth/password-reset
+- GET /api/inventory
+- GET /api/inventory (pagination)
+- GET /api/inventory (search)
+- GET /api/inventory/low-stock
+- GET /api/orders
+- GET /api/orders (status filter)
+- GET /api/orders/{id}
+- GET /api/suppliers
+- GET /api/suppliers/{id}
+- GET /api/purchase-orders
+- GET /api/purchase-orders/{id}
+- POST /api/contact-submissions
+- GET /api/contact-submissions
+- POST /api/demo-requests
+- GET /api/demo-requests
+- GET /api/submissions/statistics
+- GET /api/integrations/shopify/sync/status

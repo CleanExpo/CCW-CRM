@@ -151,7 +151,8 @@ class ContainerListResponse(BaseModel):
     page_size: int
 
 
-@router.get("/", response_model=ContainerListResponse)
+@router.get("", response_model=ContainerListResponse)
+@router.get("/", response_model=ContainerListResponse, include_in_schema=False)
 async def list_containers(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -593,7 +594,7 @@ async def receive_container(
         alert_type="container_arrival",
         severity="low",
         title=f"Container {container.container_number} Received",
-        message=f"Container {container.container_number} has been received at {container.destination_warehouse} warehouse.",
+        message=f"Container {container.container_number} has been received at {container.destination_warehouse} warehouse.",  # noqa: E501
         entity_type="container",
         entity_id=container.id,
         assign_to_role="warehouse_manager",

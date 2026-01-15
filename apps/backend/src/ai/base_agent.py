@@ -2,14 +2,18 @@
 
 import time
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
-from typing import Any, AsyncGenerator
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_db
+
+if TYPE_CHECKING:
+    from src.ai.orchestration.agent_registry import AgentHealthReport
 
 logger = structlog.get_logger(__name__)
 

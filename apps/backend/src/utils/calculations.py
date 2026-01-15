@@ -6,7 +6,7 @@ across different parts of the ERP system. All financial calculations use
 Python's Decimal type for precision.
 """
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import TypedDict
 
 

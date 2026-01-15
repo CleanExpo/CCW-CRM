@@ -1,13 +1,14 @@
 """Webhook infrastructure for external integrations."""
 
-import hmac
 import hashlib
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
-from pydantic import BaseModel
+import hmac
 from datetime import datetime
+from typing import Annotated
 
-from src.config.settings import get_settings, Settings
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from pydantic import BaseModel
+
+from src.config.settings import Settings, get_settings
 
 router = APIRouter(prefix="/api/webhooks", tags=["Webhooks"])
 

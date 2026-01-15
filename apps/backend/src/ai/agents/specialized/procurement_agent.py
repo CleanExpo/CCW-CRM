@@ -1,17 +1,18 @@
 """Procurement agent for inventory management and supplier recommendations."""
 
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 from uuid import UUID
 
 from langgraph.graph import END, StateGraph
 
 from src.ai.base_agent import BaseAgent
+from src.ai.tools.inventory_intelligence import INVENTORY_INTELLIGENCE_TOOLS
 from src.ai.tools.procurement_tools import (
     AnalyzeInventoryTool,
     CalculateReorderQuantityTool,
     SuggestSuppliersTool,
 )
-from src.ai.tools.inventory_intelligence import INVENTORY_INTELLIGENCE_TOOLS
 from src.db.demo_models import ProductCategory
 from src.utils import get_logger
 
@@ -294,7 +295,7 @@ class ProcurementAgent(BaseAgent):
             if low_stock_count > 0:
                 insights.append(f"{low_stock_count} products have low inventory levels")
                 if low_stock_count > 10:
-                    risk_factors.append("High number of low-stock items may indicate supply chain issues")
+                    risk_factors.append("High number of low-stock items may indicate supply chain issues")  # noqa: E501
 
             # Insight: Inventory value
             total_value = summary["total_inventory_value"]

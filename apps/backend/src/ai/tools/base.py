@@ -132,7 +132,7 @@ class BaseDatabaseTool(LangChainBaseTool):
                 result = await self._execute(db, **kwargs)
                 return result
             except Exception as e:
-                logger.error(f"Tool execution failed", tool=self.name, error=str(e))
+                logger.error("Tool execution failed", tool=self.name, error=str(e))
                 return {"error": str(e)}
             finally:
                 await db.close()

@@ -1,7 +1,7 @@
 """Test failure data generation endpoint."""
 
-from datetime import UTC, datetime, timedelta
 import random
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -94,7 +94,7 @@ async def generate_failure_scenarios(count: int = Query(200, ge=10, le=500)) -> 
 
         # Duration varies ±30%
         duration_ms = int(typical_duration * random.uniform(0.7, 1.3))
-        completed_at = (now - timedelta(minutes=minutes_ago) + timedelta(milliseconds=duration_ms)).isoformat()
+        completed_at = (now - timedelta(minutes=minutes_ago) + timedelta(milliseconds=duration_ms)).isoformat()  # noqa: E501
 
         # Determine success/failure based on task's configured rate
         succeeded = random.random() < success_rate
@@ -127,7 +127,7 @@ async def generate_failure_scenarios(count: int = Query(200, ge=10, le=500)) -> 
                 "test_data": True,
                 "scenario": "failure_testing",
                 "expected_success_rate": success_rate,
-                "task_complexity": "high" if duration_ms > 3000 else "medium" if duration_ms > 1500 else "low",
+                "task_complexity": "high" if duration_ms > 3000 else "medium" if duration_ms > 1500 else "low",  # noqa: E501
             },
         )
 
@@ -175,7 +175,7 @@ async def generate_failure_scenarios(count: int = Query(200, ge=10, le=500)) -> 
             ],
         },
         "next_steps": [
-            "1. Extract patterns: POST /api/ai/learning/extract-patterns?lookback_hours=5&min_observations=5",
+            "1. Extract patterns: POST /api/ai/learning/extract-patterns?lookback_hours=5&min_observations=5",  # noqa: E501
             "2. Generate insights: POST /api/ai/learning/generate-insights?min_confidence=0.3",
             "3. View insights: GET /api/ai/learning/insights",
             "4. Check dashboard: http://localhost:3000/agents",

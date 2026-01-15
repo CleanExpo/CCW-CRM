@@ -1,12 +1,10 @@
 """ERP data access tools for AI agents."""
 
-from typing import Any
 from uuid import UUID
 
 import structlog
 from pydantic import Field
 from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_db
 from src.db.demo_models import Customer, Order, Product, Quote
@@ -30,7 +28,7 @@ class SearchProductsTool(BaseTool):
     def __init__(self):
         super().__init__(
             name="search_products",
-            description="Search for products by name, SKU, or category. Returns product details including price, stock, and category.",
+            description="Search for products by name, SKU, or category. Returns product details including price, stock, and category.",  # noqa: E501
         )
 
     async def execute(self, query: str, category: str | None = None, limit: int = 10) -> ToolOutput:
@@ -48,7 +46,7 @@ class SearchProductsTool(BaseTool):
         try:
             async for db in get_db():
                 # Build query
-                stmt = select(Product).where(Product.is_active == True)
+                stmt = select(Product).where(Product.is_active)
 
                 # Apply search filter
                 if query:
@@ -120,7 +118,7 @@ class SearchCustomersTool(BaseTool):
     def __init__(self):
         super().__init__(
             name="search_customers",
-            description="Search for customers by company name or customer number. Returns customer contact details and status.",
+            description="Search for customers by company name or customer number. Returns customer contact details and status.",  # noqa: E501
         )
 
     async def execute(self, query: str, limit: int = 10) -> ToolOutput:
@@ -137,7 +135,7 @@ class SearchCustomersTool(BaseTool):
         try:
             async for db in get_db():
                 # Build query
-                stmt = select(Customer).where(Customer.is_active == True)
+                stmt = select(Customer).where(Customer.is_active)
 
                 # Apply search filter
                 if query:
@@ -206,7 +204,7 @@ class SearchOrdersTool(BaseTool):
     def __init__(self):
         super().__init__(
             name="search_orders",
-            description="Search for orders by customer or status. Returns order details including items and totals.",
+            description="Search for orders by customer or status. Returns order details including items and totals.",  # noqa: E501
         )
 
     async def execute(
@@ -304,7 +302,7 @@ class GetQuoteDetailsTool(BaseTool):
     def __init__(self):
         super().__init__(
             name="get_quote_details",
-            description="Get detailed information about a specific quote including line items, customer, and totals.",
+            description="Get detailed information about a specific quote including line items, customer, and totals.",  # noqa: E501
         )
 
     async def execute(self, quote_id: str) -> ToolOutput:

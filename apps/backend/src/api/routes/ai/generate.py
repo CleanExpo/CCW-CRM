@@ -63,7 +63,7 @@ class GenerateEmailRequest(BaseModel):
     """Request to generate an email."""
 
     email_type: str = Field(..., description="Type: quote_follow_up, order_confirmation, custom")
-    context: dict[str, Any] = Field(..., description="Context data (quote_id, order_id, customer_id)")
+    context: dict[str, Any] = Field(..., description="Context data (quote_id, order_id, customer_id)")  # noqa: E501
     requirements: str | None = Field(None, description="Additional requirements for custom emails")
     tone: str = Field(default="formal", description="Email tone: formal, friendly, urgent")
     user_id: str | None = Field(None, description="User ID")
@@ -98,7 +98,7 @@ async def generate_quote(
     Returns:
         Generated quote data
     """
-    logger.info(f"Generating quote", requirements_length=len(request.requirements))
+    logger.info("Generating quote", requirements_length=len(request.requirements))
 
     try:
         # Prepare context
@@ -134,7 +134,7 @@ async def generate_quote(
         )
 
     except Exception as e:
-        logger.error(f"Error generating quote", error=str(e))
+        logger.error("Error generating quote", error=str(e))
         return {
             "error": f"Failed to generate quote: {str(e)}",
         }
@@ -154,7 +154,7 @@ async def generate_email(
     Returns:
         Generated email
     """
-    logger.info(f"Generating email", email_type=request.email_type)
+    logger.info("Generating email", email_type=request.email_type)
 
     try:
         # Prepare context
@@ -193,7 +193,7 @@ async def generate_email(
         )
 
     except Exception as e:
-        logger.error(f"Error generating email", error=str(e))
+        logger.error("Error generating email", error=str(e))
         return {
             "error": f"Failed to generate email: {str(e)}",
         }
@@ -217,7 +217,7 @@ async def generate_summary(
     Returns:
         Generated summary
     """
-    logger.info(f"Generating summary", summary_type=summary_type)
+    logger.info("Generating summary", summary_type=summary_type)
 
     try:
         context = {
@@ -237,7 +237,7 @@ async def generate_summary(
         return result
 
     except Exception as e:
-        logger.error(f"Error generating summary", error=str(e))
+        logger.error("Error generating summary", error=str(e))
         return {
             "error": f"Failed to generate summary: {str(e)}",
         }

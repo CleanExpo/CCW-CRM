@@ -16,7 +16,18 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """Middleware for JWT authentication."""
 
     # Paths that don't require authentication
-    PUBLIC_PATHS = {"/", "/health", "/ready", "/docs", "/openapi.json"}
+    PUBLIC_PATHS = {
+        "/",
+        "/health",
+        "/ready",
+        "/docs",
+        "/openapi.json",
+        "/api/auth/login",
+        "/api/auth/refresh",
+        "/api/auth/logout",
+        "/api/auth/forgot-password",
+        "/api/auth/reset-password",
+    }
 
     async def dispatch(
         self,
@@ -24,6 +35,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
         call_next: Callable[[Request], Response],
     ) -> Response:
         """Process the request and validate authentication."""
+        # Always allow OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Skip auth for public paths
         if request.url.path in self.PUBLIC_PATHS:
             return await call_next(request)
@@ -43,9 +58,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
             request.state.auth_type = "user"
             return await call_next(request)
 
-        # In development, allow unauthenticated requests
-        if settings.environment == "development":
-            logger.warning("Unauthenticated request allowed in development mode")
+        # Only skip auth if explicitly enabled via environment variable
+        if settings.skip_auth_enforcement:
+            logger.warning(
+                "WARNING: Authentication enforcement DISABLED via SKIP_AUTH_ENFORCEMENT flag. "
+                "This should ONLY be used for local testing."
+            )
             return await call_next(request)
 
         # In production, reject unauthenticated requests

@@ -79,7 +79,7 @@ class ShopifyInventorySyncer:
 
         # Update inventory in Shopify
         try:
-            result_data = await self.client.update_inventory(
+            await self.client.update_inventory(
                 inventory_item_id=mapping.shopify_inventory_item_id,
                 location_id=location_id,
                 available=product.stock,

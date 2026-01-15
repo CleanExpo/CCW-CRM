@@ -4,7 +4,7 @@ Provides RESTful endpoints for managing stock across multiple locations.
 """
 
 from datetime import datetime, timedelta
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
 import structlog
@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_async_db
+from src.config.database import get_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
     ProductStockByLocation,
@@ -31,6 +31,98 @@ router = APIRouter(prefix="/api/inventory", tags=["Multi-Store Inventory"])
 # ============================================
 # Request/Response Models
 # ============================================
+
+
+class InventoryListResponse(BaseModel):
+    """List of inventory items with pagination."""
+
+    items: list[dict]
+    total: int
+    page: int
+    page_size: int
+
+
+# ============================================
+# Root Endpoints
+# ============================================
+
+
+@router.get("", response_model=InventoryListResponse)
+@router.get("/", response_model=InventoryListResponse, include_in_schema=False)
+async def list_all_inventory(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    location: str | None = Query(None, description="Filter by location"),
+    low_stock_only: bool = Query(False, description="Only show low stock items"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+) -> dict:
+    """List all inventory across locations or filtered by location.
+
+    Args:
+        location: Optional location filter (brisbane, sydney, melbourne)
+        low_stock_only: Only show products below reorder point
+        page: Page number
+        page_size: Items per page
+
+    Returns:
+        Paginated list of inventory items
+    """
+    # Build base query
+    query = (
+        select(ProductStockByLocation, Product)
+        .join(Product, ProductStockByLocation.product_id == Product.id)
+    )
+
+    # Apply location filter if specified
+    if location:
+        try:
+            StoreLocation(location)
+            query = query.where(ProductStockByLocation.location == location)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid location. Must be one of: {', '.join([l.value for l in StoreLocation])}",
+            )
+
+    # Apply low stock filter if requested
+    if low_stock_only:
+        query = query.where(
+            ProductStockByLocation.available < ProductStockByLocation.reorder_point
+        )
+
+    # Get total count
+    count_query = select(func.count()).select_from(query.subquery())
+    result = await db.execute(count_query)
+    total = result.scalar_one()
+
+    # Apply pagination
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    # Execute query
+    result = await db.execute(query)
+    rows = result.all()
+
+    # Format response
+    items = [
+        {
+            "product_id": str(stock.product_id),
+            "sku": product.sku,
+            "name": product.name,
+            "location": stock.location,
+            "stock": stock.stock,
+            "available": stock.available,
+            "reserved": stock.reserved,
+            "reorder_point": stock.reorder_point,
+        }
+        for stock, product in rows
+    ]
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 class StockByLocationResponse(BaseModel):
@@ -95,7 +187,7 @@ class ReserveStockRequest(BaseModel):
 @router.get("/product/{product_id}/locations")
 async def get_product_stock_by_locations(
     product_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ProductStockResponse:
     """Get stock levels for a product across all locations.
 
@@ -152,7 +244,7 @@ async def get_product_stock_by_locations(
 @router.get("/by-location")
 async def get_stock_by_location(
     location: str,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     low_stock_only: bool = False,
@@ -174,7 +266,7 @@ async def get_stock_by_location(
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid location. Must be one of: {', '.join([l.value for l in StoreLocation])}",
+            detail=f"Invalid location. Must be one of: {', '.join([l.value for l in StoreLocation])}",  # noqa: E501, E741
         )
 
     # Build query
@@ -235,7 +327,7 @@ async def get_stock_by_location(
 
 @router.get("/low-stock")
 async def get_low_stock_products(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     threshold: int = Query(10, ge=0, description="Stock threshold"),
 ) -> dict:
     """Get products with low stock across all locations.
@@ -286,7 +378,7 @@ async def get_low_stock_products(
 
 @router.get("/stock-health")
 async def get_stock_health(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     threshold: int = Query(20, ge=0, description="Low stock threshold"),
 ) -> dict:
     """Get comprehensive stock health analysis across all locations.
@@ -306,7 +398,7 @@ async def get_stock_health(
     stmt = (
         select(Product, ProductStockByLocation)
         .join(ProductStockByLocation, Product.id == ProductStockByLocation.product_id)
-        .where(Product.is_active == True)
+        .where(Product.is_active)
         .order_by(Product.name)
     )
 
@@ -366,7 +458,7 @@ async def get_stock_health(
 
 @router.get("/transfer-suggestions")
 async def get_transfer_suggestions(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     min_quantity: int = Query(5, ge=1, description="Minimum transfer quantity"),
 ) -> dict:
     """Generate intelligent stock transfer suggestions to optimize distribution.
@@ -386,7 +478,7 @@ async def get_transfer_suggestions(
     stmt = (
         select(Product, ProductStockByLocation)
         .join(ProductStockByLocation, Product.id == ProductStockByLocation.product_id)
-        .where(Product.is_active == True)
+        .where(Product.is_active)
         .order_by(Product.name)
     )
 
@@ -474,9 +566,9 @@ async def get_transfer_suggestions(
 
                 # Build reason
                 if to_stock == 0:
-                    reason = f"{to_location.capitalize()} out of stock, {from_location.capitalize()} has {from_stock} available"
+                    reason = f"{to_location.capitalize()} out of stock, {from_location.capitalize()} has {from_stock} available"  # noqa: E501
                 else:
-                    reason = f"{to_location.capitalize()} low on stock ({to_stock} units) while {from_location.capitalize()} has surplus ({from_stock} units)"
+                    reason = f"{to_location.capitalize()} low on stock ({to_stock} units) while {from_location.capitalize()} has surplus ({from_stock} units)"  # noqa: E501
 
                 suggestions.append(
                     {
@@ -530,7 +622,7 @@ async def get_transfer_suggestions(
 @router.post("/transfer")
 async def create_stock_transfer(
     transfer_req: StockTransferRequest,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Create a stock transfer between locations.
 
@@ -662,7 +754,7 @@ async def create_stock_transfer(
 
 @router.get("/transfers")
 async def get_stock_transfers(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     product_id: UUID | None = None,
     location: str | None = None,
     status: str | None = None,
@@ -723,7 +815,7 @@ async def get_stock_transfers(
                 "status": transfer.status,
                 "reason": transfer.reason,
                 "initiated_at": transfer.initiated_at.isoformat(),
-                "completed_at": transfer.completed_at.isoformat() if transfer.completed_at else None,
+                "completed_at": transfer.completed_at.isoformat() if transfer.completed_at else None,  # noqa: E501
             }
         )
 
@@ -744,7 +836,7 @@ async def get_stock_transfers(
 @router.post("/reserve")
 async def reserve_stock(
     reservation_req: ReserveStockRequest,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Reserve stock for an order at a specific location.
 
@@ -776,7 +868,7 @@ async def reserve_stock(
     if stock.available < reservation_req.quantity:
         raise HTTPException(
             status_code=400,
-            detail=f"Insufficient available stock. Available: {stock.available}, Requested: {reservation_req.quantity}",
+            detail=f"Insufficient available stock. Available: {stock.available}, Requested: {reservation_req.quantity}",  # noqa: E501
         )
 
     # Create reservation
@@ -821,7 +913,7 @@ async def reserve_stock(
 @router.post("/release/{reservation_id}")
 async def release_reservation(
     reservation_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Release a stock reservation (e.g., when order is cancelled).
 
@@ -888,7 +980,7 @@ async def release_reservation(
 @router.post("/adjust")
 async def adjust_stock(
     adjustment_req: StockAdjustmentRequest,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Adjust stock level at a location (for corrections, damages, etc.).
 

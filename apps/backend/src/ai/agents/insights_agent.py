@@ -1,14 +1,16 @@
 """Insights agent for automated business intelligence and data analysis."""
 
 import json
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from langgraph.graph import END, StateGraph
 
 from src.db.demo_models import AIGeneratedContent
 from src.utils import get_logger
 
+from ..base_agent import BaseAgent
 from ..ollama_client import get_ollama_client
 from ..tools.analytics_tools import (
     AggregateSalesTool,
@@ -16,7 +18,6 @@ from ..tools.analytics_tools import (
     CustomerSegmentationTool,
     InventoryAnalysisTool,
 )
-from ..base_agent import BaseAgent
 from .insights_state import InsightsState
 
 logger = get_logger(__name__)
@@ -41,7 +42,7 @@ class InsightsAgent(BaseAgent):
         )
 
         # Set capabilities for agent registry
-        self.capabilities = ["data_analysis", "insights_generation", "analytics", "business_intelligence"]
+        self.capabilities = ["data_analysis", "insights_generation", "analytics", "business_intelligence"]  # noqa: E501
         self.description = "Automated business intelligence and data analysis for ERP metrics"
         self.estimated_execution_time = 15  # seconds
         self.requires_verification = False
@@ -94,10 +95,10 @@ class InsightsAgent(BaseAgent):
     async def _receive_request(self, state: InsightsState) -> InsightsState:
         """Parse the insight request and determine required tools."""
         category = state["category"]
-        date_range = state.get("date_range")
+        state.get("date_range")
         filters = state.get("filters", {})
 
-        logger.info(f"Processing insight request", category=category, filters=filters)
+        logger.info("Processing insight request", category=category, filters=filters)
 
         # Determine which tools to use based on category
         tools_to_use = []
@@ -130,7 +131,6 @@ class InsightsAgent(BaseAgent):
         filters = state.get("filters", {})
 
         raw_data = {}
-        aggregated_data = {}
 
         for tool_name in tools_to_use:
             if tool_name not in self.tools:
@@ -165,7 +165,7 @@ class InsightsAgent(BaseAgent):
                 result = await tool._run(**kwargs)
                 raw_data[tool_name] = result
 
-                logger.info(f"Tool executed successfully", tool=tool_name)
+                logger.info("Tool executed successfully", tool=tool_name)
 
             except Exception as e:
                 logger.error(f"Error executing tool: {tool_name}", error=str(e))
@@ -252,7 +252,7 @@ class InsightsAgent(BaseAgent):
         return state
 
     def _format_analysis_context(
-        self, raw_data: dict[str, Any], trends: list[dict[str, Any]], anomalies: list[dict[str, Any]]
+        self, raw_data: dict[str, Any], trends: list[dict[str, Any]], anomalies: list[dict[str, Any]]  # noqa: E501
     ) -> str:
         """Format analysis context for LLM."""
         context_parts = ["# Business Data Analysis\n"]
@@ -263,7 +263,7 @@ class InsightsAgent(BaseAgent):
             for trend in trends:
                 context_parts.append(
                     f"- {trend['metric'].capitalize()} trend: {trend['direction']} "
-                    f"({trend.get('percentage', 0):.1f}% change over {trend.get('period_days', 0)} days)"
+                    f"({trend.get('percentage', 0):.1f}% change over {trend.get('period_days', 0)} days)"  # noqa: E501
                 )
 
         # Add anomalies
@@ -324,7 +324,7 @@ For each insight:
 3. Provide concrete recommendations
 4. Assign a priority level (high, medium, low)
 
-Be specific and data-driven. Focus on actionable recommendations."""
+Be specific and data-driven. Focus on actionable recommendations."""  # noqa: E501
 
         user_prompt = f"""Analyze the following business data and generate insights for the {category} category:
 
@@ -335,7 +335,7 @@ Generate 3-5 key insights with specific recommendations. Format each insight as:
 - Finding: What the data shows
 - Impact: Business impact
 - Recommendation: Specific action to take
-- Priority: high/medium/low"""
+- Priority: high/medium/low"""  # noqa: E501
 
         try:
             response = await self.ollama.generate(
@@ -355,7 +355,7 @@ Generate 3-5 key insights with specific recommendations. Format each insight as:
             logger.info(f"Generated {len(insights)} insights")
 
         except Exception as e:
-            logger.error(f"Error generating insights", error=str(e))
+            logger.error("Error generating insights", error=str(e))
             state["error"] = f"Failed to generate insights: {str(e)}"
             state["insights"] = []
             state["priority_insights"] = []
@@ -392,7 +392,7 @@ Generate 3-5 key insights with specific recommendations. Format each insight as:
             elif line.startswith("- Priority:") or line.startswith("Priority:"):
                 priority_text = line.split(":", 1)[1].strip().lower()
                 current_insight["priority"] = (
-                    "high" if "high" in priority_text else "medium" if "medium" in priority_text else "low"
+                    "high" if "high" in priority_text else "medium" if "medium" in priority_text else "low"  # noqa: E501
                 )
 
         # Add last insight
@@ -426,7 +426,7 @@ Generate 3-5 key insights with specific recommendations. Format each insight as:
                         "title": f"Top Performer: {top_item.get('name', 'Unknown')}",
                         "finding": f"${top_item.get('total_revenue', 0):,.2f} in revenue",
                         "impact": "Significant contribution to overall sales",
-                        "recommendation": "Ensure adequate stock and consider promoting similar products",
+                        "recommendation": "Ensure adequate stock and consider promoting similar products",  # noqa: E501
                         "priority": "medium",
                     }
                 )
@@ -542,7 +542,7 @@ Generate 3-5 key insights with specific recommendations. Format each insight as:
             return final_state.get("formatted_response", {})
 
         except Exception as e:
-            logger.error(f"Error executing insights agent", error=str(e))
+            logger.error("Error executing insights agent", error=str(e))
             return {
                 "error": f"Failed to generate insights: {str(e)}",
                 "category": context.get("category", "unknown"),
@@ -579,7 +579,7 @@ Generate 3-5 key insights with specific recommendations. Format each insight as:
                 logger.info(f"Saved {len(insights)} insights to database")
 
         except Exception as e:
-            logger.error(f"Error saving insights", error=str(e))
+            logger.error("Error saving insights", error=str(e))
 
     async def stream(
         self, task: str, context: dict[str, Any] | None = None

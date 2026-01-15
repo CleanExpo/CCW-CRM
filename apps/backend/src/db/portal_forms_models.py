@@ -1,10 +1,11 @@
 """SQLAlchemy models for portal form submissions."""
 
-from sqlalchemy import Column, String, Text, DateTime
-from sqlalchemy.dialects.postgresql import UUID
+import enum
 import uuid
 from datetime import datetime
-import enum
+
+from sqlalchemy import Column, DateTime, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 
 from .models import Base
 

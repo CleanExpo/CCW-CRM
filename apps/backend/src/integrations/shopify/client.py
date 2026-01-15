@@ -6,8 +6,9 @@ Automatically routes to demo or live client based on configuration.
 
 import hashlib
 import hmac
-import httpx
 from typing import Any
+
+import httpx
 
 from src.config.shopify_settings import ShopifySettings, get_shopify_settings
 from src.integrations.shopify.demo_client import ShopifyDemoClient

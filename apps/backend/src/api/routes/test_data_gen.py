@@ -1,7 +1,7 @@
 """Test data generation endpoint - standalone router."""
 
-from datetime import UTC, datetime, timedelta
 import random
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -70,7 +70,7 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
         started_at = (now - timedelta(minutes=minutes_ago)).isoformat()
 
         duration_ms = int(typical_duration * random.uniform(0.7, 1.3))
-        completed_at = (now - timedelta(minutes=minutes_ago) + timedelta(milliseconds=duration_ms)).isoformat()
+        completed_at = (now - timedelta(minutes=minutes_ago) + timedelta(milliseconds=duration_ms)).isoformat()  # noqa: E501
 
         status = "completed" if random.random() < success_rate else "failed"
 
@@ -87,7 +87,7 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
             metadata={
                 "test_data": True,
                 "iteration": i,
-                "task_complexity": "high" if duration_ms > 3000 else "medium" if duration_ms > 1500 else "low",
+                "task_complexity": "high" if duration_ms > 3000 else "medium" if duration_ms > 1500 else "low",  # noqa: E501
             },
         )
 
@@ -106,7 +106,7 @@ async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)
         else:
             stats["by_agent"][agent_id]["failed"] += 1
 
-    logger.info("Test data generated", total=stats["total"], succeeded=stats["succeeded"], failed=stats["failed"])
+    logger.info("Test data generated", total=stats["total"], succeeded=stats["succeeded"], failed=stats["failed"])  # noqa: E501
 
     return {
         "message": f"Generated {count} test executions",

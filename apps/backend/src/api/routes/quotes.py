@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.config.database import get_async_db
+from src.config.database import get_db
 from src.config.settings import Settings, get_settings
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderItem as OrderItemModel
@@ -47,7 +47,7 @@ async def list_quotes(
     search: str | None = None,
     status: str | None = None,
     customer_id: UUID | None = None,
-    db: AsyncSession = Depends(get_async_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """List quotes with pagination and filters."""
     # Build query
@@ -89,7 +89,7 @@ async def list_quotes(
 @router.get("/{quote_id}")
 async def get_quote(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """Get a single quote by ID."""
     query = (
@@ -137,7 +137,7 @@ async def get_quote(
 @router.post("", response_model=Quote, status_code=201)
 async def create_quote(
     quote_data: QuoteCreate,
-    db: AsyncSession = Depends(get_async_db),
+    db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ):
     """Create a new quote with items."""
@@ -212,7 +212,7 @@ async def create_quote(
 async def update_quote(
     quote_id: UUID,
     quote_data: QuoteUpdate,
-    db: AsyncSession = Depends(get_async_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """Update a quote."""
     # Get existing quote
@@ -290,7 +290,7 @@ async def update_quote(
 @router.delete("/{quote_id}", status_code=204)
 async def delete_quote(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """Delete a quote and its items."""
     # Get existing quote
@@ -311,7 +311,7 @@ async def delete_quote(
 @router.post("/{quote_id}/convert-to-order", response_model=Order, status_code=201)
 async def convert_quote_to_order(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """Convert a quote to an order."""
     # Get existing quote with items

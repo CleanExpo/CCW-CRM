@@ -49,7 +49,7 @@ Format output as JSON:
   "customer_info": {"company": "...", "contact": "..."},
   "notes": "...",
   "special_requirements": "..."
-}"""
+}"""  # noqa: E501
 
         user_prompt = f"""Parse this quote request:
 
@@ -70,11 +70,11 @@ Extract products, quantities, customer info, and any special requirements."""
                 # Fallback: basic keyword extraction
                 parsed = self._fallback_parse(requirements)
 
-            logger.info(f"Parsed requirements", product_count=len(parsed.get("products", [])))
+            logger.info("Parsed requirements", product_count=len(parsed.get("products", [])))
             return parsed
 
         except Exception as e:
-            logger.error(f"Error parsing requirements", error=str(e))
+            logger.error("Error parsing requirements", error=str(e))
             return self._fallback_parse(requirements)
 
     def _extract_json(self, text: str) -> dict[str, Any] | None:
@@ -182,12 +182,12 @@ Extract products, quantities, customer info, and any special requirements."""
                     }
                 )
                 logger.info(
-                    f"Matched product",
+                    "Matched product",
                     search=description,
                     matched=product.name,
                 )
             else:
-                logger.warning(f"No product match found", search=description)
+                logger.warning("No product match found", search=description)
 
         return matched_products
 
@@ -270,8 +270,8 @@ Extract products, quantities, customer info, and any special requirements."""
             "customer_id": str(customer.id) if customer else None,
             "customer": {
                 "id": str(customer.id) if customer else None,
-                "company_name": customer.company_name if customer else parsed.get("customer_info", {}).get("company"),
-                "contact_name": customer.contact_name if customer else parsed.get("customer_info", {}).get("contact"),
+                "company_name": customer.company_name if customer else parsed.get("customer_info", {}).get("company"),  # noqa: E501
+                "contact_name": customer.contact_name if customer else parsed.get("customer_info", {}).get("contact"),  # noqa: E501
                 "email": customer.email if customer else None,
             },
             "items": matched_products,
@@ -287,7 +287,7 @@ Extract products, quantities, customer info, and any special requirements."""
         }
 
         logger.info(
-            f"Generated quote",
+            "Generated quote",
             quote_number=quote_number,
             items=len(matched_products),
             total=pricing["total"],
@@ -313,11 +313,11 @@ Include:
 - List of items with quantities
 - Pricing summary
 - Valid until date
-- Professional closing"""
+- Professional closing"""  # noqa: E501
 
         items_text = "\n".join(
             [
-                f"- {item['name']}: {item['quantity']} x ${item['unit_price']:.2f} = ${item['line_total']:.2f}"
+                f"- {item['name']}: {item['quantity']} x ${item['unit_price']:.2f} = ${item['line_total']:.2f}"  # noqa: E501
                 for item in quote_data["items"]
             ]
         )
@@ -336,7 +336,7 @@ Total: ${quote_data['total']:.2f}
 
 Valid Until: {quote_data['valid_until'][:10]}
 
-{f"Special Requirements: {quote_data['special_requirements']}" if quote_data.get('special_requirements') else ''}"""
+{f"Special Requirements: {quote_data['special_requirements']}" if quote_data.get('special_requirements') else ''}"""  # noqa: E501
 
         try:
             response = await self.ollama.generate(
@@ -345,6 +345,6 @@ Valid Until: {quote_data['valid_until'][:10]}
             )
             return response.strip()
         except Exception as e:
-            logger.error(f"Error generating description", error=str(e))
+            logger.error("Error generating description", error=str(e))
             # Fallback to simple description
-            return f"Quote for {quote_data['customer'].get('company_name', 'Customer')}: {len(quote_data['items'])} items totaling ${quote_data['total']:.2f}"
+            return f"Quote for {quote_data['customer'].get('company_name', 'Customer')}: {len(quote_data['items'])} items totaling ${quote_data['total']:.2f}"  # noqa: E501

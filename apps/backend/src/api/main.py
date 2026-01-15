@@ -3,7 +3,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -14,8 +14,31 @@ from src.utils import get_logger, setup_logging
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
-from .routes import approvals, backorders, config, containers, customers, demo_auth, demo_dashboard, demo_lists, health, inventory, orders, portal_auth, portal_forms, products, purchase_orders, quotes, service_requests, shipments, suppliers, test_data_gen, webhooks
-from .routes.ai import ai_router, chat, generate, insights, learning
+from .routes import (
+    # approvals,  # TODO: Implement approvals workflow
+    backorders,
+    config,
+    containers,
+    customers,
+    demo_auth,
+    demo_dashboard,
+    demo_lists,
+    health,
+    inventory,
+    orders,
+    portal_auth,
+    portal_forms,
+    # prd,  # TODO: Fix PRD dependencies
+    products,
+    purchase_orders,
+    quotes,
+    service_requests,
+    shipments,
+    suppliers,
+    test_data_gen,
+    webhooks,
+)
+from .routes.ai import ai_router, chat, generate, insights
 from .routes.integrations import elevenlabs, sendgrid, shopify, xero
 
 settings = get_settings()
@@ -44,7 +67,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         pricing = PricingAgent()
         procurement = ProcurementAgent()
         executor = TaskExecutorAgent()
-        supervisor = get_supervisor_agent()
+        get_supervisor_agent()
 
         logger.info(
             "Agents initialized",
@@ -120,7 +143,7 @@ app.add_middleware(AuthMiddleware)
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(config.router, tags=["Configuration"])
-app.include_router(approvals.router, tags=["Approvals"])
+# app.include_router(approvals.router, tags=["Approvals"])  # TODO: Implement approvals
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
@@ -161,6 +184,9 @@ app.include_router(xero.router, prefix="/api", tags=["Xero Integration"])
 app.include_router(shopify.router, tags=["Shopify Integration"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
+
+# PRD Generation router
+# app.include_router(prd.router, tags=["PRD Generation"])  # TODO: Fix PRD dependencies
 
 
 @app.get("/")

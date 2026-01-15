@@ -46,6 +46,7 @@ dependencies = [
     "langchain-core>=0.1.0",
     "langgraph>=0.0.20",
     "ollama>=0.1.6",
+    "anthropic>=0.39.0",  # Claude API for PRD generation
 ]
 
 [project.optional-dependencies]

@@ -7,14 +7,14 @@ and syncing inventory.
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
 from src.config.shopify_settings import ShopifySettings, get_shopify_settings
 from src.db.shopify_models import ShopifyConnection
-from src.integrations.shopify.client import ShopifyClient, get_shopify_client
+from src.integrations.shopify.client import get_shopify_client
 from src.integrations.shopify.inventory import ShopifyInventorySyncer
 from src.integrations.shopify.orders import ShopifyOrderImporter
 from src.integrations.shopify.webhooks import ShopifyWebhookHandler

@@ -1,6 +1,6 @@
 """Core learning engine for agent self-improvement."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -51,7 +51,7 @@ class LearningInsight(BaseModel):
     """An actionable insight derived from learning patterns."""
 
     insight_id: str
-    insight_type: str = Field(description="prompt_improvement, process_optimization, error_prevention")
+    insight_type: str = Field(description="prompt_improvement, process_optimization, error_prevention")  # noqa: E501
     agent_id: str
     priority: str = Field(description="high, medium, low")
     title: str
@@ -74,7 +74,7 @@ class LearningEngine:
         """
         self.metrics_collector = get_metrics_collector()
         self._patterns: dict[str, LearningPattern] = {}
-        self._prompt_variants: dict[str, dict[str, PromptVariant]] = {}  # agent_id -> variant_id -> variant
+        self._prompt_variants: dict[str, dict[str, PromptVariant]] = {}  # agent_id -> variant_id -> variant  # noqa: E501
         self._insights: list[LearningInsight] = []
         self.repository = repository
         logger.info("Learning engine initialized", has_persistence=repository is not None)
@@ -128,7 +128,7 @@ class LearningEngine:
             task_groups[key].append(execution)
 
         patterns = []
-        now = datetime.now(UTC).isoformat()
+        datetime.now(UTC).isoformat()
 
         for key, group in task_groups.items():
             if len(group) < min_observations:
@@ -143,7 +143,7 @@ class LearningEngine:
             success_rate = successes / total if total > 0 else 0
 
             # Calculate average duration for completed tasks
-            durations = [ex.duration_ms for ex in group if ex.duration_ms is not None and ex.status == "completed"]
+            durations = [ex.duration_ms for ex in group if ex.duration_ms is not None and ex.status == "completed"]  # noqa: E501
             avg_duration = sum(durations) / len(durations) if durations else 0
 
             # Determine pattern type
@@ -335,7 +335,7 @@ class LearningEngine:
 
         # Insight 3: Identify successful patterns worth reinforcing
         for pattern in patterns:
-            if pattern.pattern_type == "success" and pattern.success_rate > 0.9 and pattern.observed_count >= 10:
+            if pattern.pattern_type == "success" and pattern.success_rate > 0.9 and pattern.observed_count >= 10:  # noqa: E501
                 insight = LearningInsight(
                     insight_id=f"insight-{len(insights) + 1}",
                     insight_type="prompt_improvement",
@@ -343,8 +343,8 @@ class LearningEngine:
                     priority="low",
                     title=f"Strong success pattern for {pattern.task_category}",
                     description=(
-                        f"Agent {pattern.agent_id} has {pattern.success_rate * 100:.1f}% success rate "
-                        f"on {pattern.task_category}. This approach should be documented and reused."
+                        f"Agent {pattern.agent_id} has {pattern.success_rate * 100:.1f}% success rate "  # noqa: E501
+                        f"on {pattern.task_category}. This approach should be documented and reused."  # noqa: E501
                     ),
                     recommended_action=(
                         "Extract successful prompt patterns and apply to similar tasks. "
@@ -448,7 +448,7 @@ class LearningEngine:
         if variant.executions == 1:
             variant.avg_duration_ms = duration_ms
         else:
-            variant.avg_duration_ms = (variant.avg_duration_ms * (variant.executions - 1) + duration_ms) / variant.executions
+            variant.avg_duration_ms = (variant.avg_duration_ms * (variant.executions - 1) + duration_ms) / variant.executions  # noqa: E501
 
         # Update confidence score (based on success rate and sample size)
         success_rate = variant.success_count / variant.executions
@@ -469,7 +469,7 @@ class LearningEngine:
         if self.repository:
             await self.repository.save_variant(variant.model_dump())
 
-    async def select_best_variant(self, agent_id: str, min_executions: int = 10) -> PromptVariant | None:
+    async def select_best_variant(self, agent_id: str, min_executions: int = 10) -> PromptVariant | None:  # noqa: E501
         """
         Select the best performing prompt variant for an agent.
 
@@ -483,7 +483,7 @@ class LearningEngine:
         if agent_id not in self._prompt_variants:
             return None
 
-        variants = [v for v in self._prompt_variants[agent_id].values() if v.executions >= min_executions and v.is_active]
+        variants = [v for v in self._prompt_variants[agent_id].values() if v.executions >= min_executions and v.is_active]  # noqa: E501
 
         if not variants:
             logger.warning(
@@ -564,7 +564,7 @@ class LearningEngine:
             return list(self._patterns.values())
         return [p for p in self._patterns.values() if p.agent_id == agent_id]
 
-    def get_insights(self, agent_id: str | None = None, priority: str | None = None) -> list[LearningInsight]:
+    def get_insights(self, agent_id: str | None = None, priority: str | None = None) -> list[LearningInsight]:  # noqa: E501
         """Get all insights, optionally filtered by agent and priority."""
         insights = self._insights
 
@@ -620,7 +620,6 @@ def get_learning_engine() -> LearningEngine:
         repository = None
         try:
             from src.ai.learning.learning_repository import LearningRepository
-            from src.config.database import get_async_db
 
             # Create a repository instance
             # Note: We can't use async context here, so we'll pass None
@@ -628,7 +627,7 @@ def get_learning_engine() -> LearningEngine:
             repository = LearningRepository(db_session=None)
             logger.info("Learning engine initialized with database persistence")
         except Exception as e:
-            logger.warning("Failed to initialize database persistence, using in-memory only", error=str(e))
+            logger.warning("Failed to initialize database persistence, using in-memory only", error=str(e))  # noqa: E501
 
         _learning_engine = LearningEngine(repository=repository)
     return _learning_engine
