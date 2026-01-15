@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_async_db
+from src.config.database import get_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
     ProductStockByLocation,
@@ -95,7 +95,7 @@ class ReserveStockRequest(BaseModel):
 @router.get("/product/{product_id}/locations")
 async def get_product_stock_by_locations(
     product_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ProductStockResponse:
     """Get stock levels for a product across all locations.
 
@@ -152,7 +152,7 @@ async def get_product_stock_by_locations(
 @router.get("/by-location")
 async def get_stock_by_location(
     location: str,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     low_stock_only: bool = False,
@@ -235,7 +235,7 @@ async def get_stock_by_location(
 
 @router.get("/low-stock")
 async def get_low_stock_products(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     threshold: int = Query(10, ge=0, description="Stock threshold"),
 ) -> dict:
     """Get products with low stock across all locations.
@@ -286,7 +286,7 @@ async def get_low_stock_products(
 
 @router.get("/stock-health")
 async def get_stock_health(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     threshold: int = Query(20, ge=0, description="Low stock threshold"),
 ) -> dict:
     """Get comprehensive stock health analysis across all locations.
@@ -366,7 +366,7 @@ async def get_stock_health(
 
 @router.get("/transfer-suggestions")
 async def get_transfer_suggestions(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     min_quantity: int = Query(5, ge=1, description="Minimum transfer quantity"),
 ) -> dict:
     """Generate intelligent stock transfer suggestions to optimize distribution.
@@ -530,7 +530,7 @@ async def get_transfer_suggestions(
 @router.post("/transfer")
 async def create_stock_transfer(
     transfer_req: StockTransferRequest,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Create a stock transfer between locations.
 
@@ -662,7 +662,7 @@ async def create_stock_transfer(
 
 @router.get("/transfers")
 async def get_stock_transfers(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     product_id: UUID | None = None,
     location: str | None = None,
     status: str | None = None,
@@ -744,7 +744,7 @@ async def get_stock_transfers(
 @router.post("/reserve")
 async def reserve_stock(
     reservation_req: ReserveStockRequest,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Reserve stock for an order at a specific location.
 
@@ -821,7 +821,7 @@ async def reserve_stock(
 @router.post("/release/{reservation_id}")
 async def release_reservation(
     reservation_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Release a stock reservation (e.g., when order is cancelled).
 
@@ -888,7 +888,7 @@ async def release_reservation(
 @router.post("/adjust")
 async def adjust_stock(
     adjustment_req: StockAdjustmentRequest,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Adjust stock level at a location (for corrections, damages, etc.).
 

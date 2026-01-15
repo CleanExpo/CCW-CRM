@@ -107,10 +107,10 @@ echo ""
 echo "=== CATEGORY 3: PORTAL & PUBLIC ENDPOINTS (10 tests) ==="
 test_endpoint "GET Contact Submissions" "GET" "/api/contact-submissions" "200"
 test_endpoint "GET Demo Requests" "GET" "/api/demo-requests" "200"
-test_endpoint "POST Contact Submission (valid)" "POST" "/api/portal/contact" "201" '{"name":"Test User","email":"test@example.com","phone":"0400000000","message":"Test message"}'
-test_endpoint "POST Contact Submission (invalid - no email)" "POST" "/api/portal/contact" "422" '{"name":"Test User","message":"Test"}'
-test_endpoint "POST Demo Request (valid)" "POST" "/api/portal/demo-request" "201" '{"company_name":"Test Co","contact_name":"John Doe","email":"john@test.com","phone":"0400000000","preferred_date":"2026-02-01"}'
-test_endpoint "POST Demo Request (invalid)" "POST" "/api/portal/demo-request" "422" '{"company_name":"Test"}'
+test_endpoint "POST Contact Submission (valid)" "POST" "/api/contact-submissions" "201" '{"name":"Test User","email":"test@example.com","phone":"0400000000","message":"Test message"}'
+test_endpoint "POST Contact Submission (invalid - no email)" "POST" "/api/contact-submissions" "422" '{"name":"Test User","message":"Test"}'
+test_endpoint "POST Demo Request (valid)" "POST" "/api/demo-requests" "201" '{"company_name":"Test Co","contact_name":"John Doe","email":"john@test.com","phone":"0400000000","preferred_date":"2026-02-01"}'
+test_endpoint "POST Demo Request (invalid)" "POST" "/api/demo-requests" "422" '{"company_name":"Test"}'
 test_endpoint_any_success "Portal Auth: Register" "POST" "/api/portal-auth/register" '{"email":"test@test.com","password":"test123","company_name":"Test"}'
 test_endpoint_any_success "Portal Auth: Login" "POST" "/api/portal-auth/login" '{"email":"test@test.com","password":"wrong"}'
 test_endpoint_any_success "Demo Auth: Register" "POST" "/api/demo-auth/register" '{"email":"demo@test.com","password":"demo123"}'
