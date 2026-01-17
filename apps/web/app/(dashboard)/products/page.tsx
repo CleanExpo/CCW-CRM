@@ -26,11 +26,21 @@ interface StockByLocation {
   available: number;
 }
 
+type ProductCategory =
+  | "heavy_machinery"
+  | "hand_tools"
+  | "power_tools"
+  | "safety_equipment"
+  | "building_materials"
+  | "electrical"
+  | "plumbing"
+  | "accessories";
+
 interface Product {
   id: string;
   sku: string;
   name: string;
-  category: string;
+  category: ProductCategory;
   price: number;
   cost: number;
   stock: number;

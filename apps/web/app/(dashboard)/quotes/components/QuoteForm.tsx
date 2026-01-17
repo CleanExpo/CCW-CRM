@@ -116,12 +116,15 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       });
       // Convert decimal strings to numbers for proper calculations
       const rawItems: QuoteItem[] = quote.items || quote.quote_items || [];
-      const normalizedItems = rawItems.map((item) => ({
-        ...item,
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
-        line_total: Number(item.line_total ?? 0),
-      }));
+      const normalizedItems = rawItems
+        .filter((item) => item.product_id) // Filter out items without product_id
+        .map((item) => ({
+          ...item,
+          product_id: item.product_id!, // Assert product_id is present after filter
+          quantity: Number(item.quantity),
+          unit_price: Number(item.unit_price),
+          line_total: Number(item.line_total ?? 0),
+        }));
       setLineItems(normalizedItems);
     } else {
       // Default valid_until to 30 days from now

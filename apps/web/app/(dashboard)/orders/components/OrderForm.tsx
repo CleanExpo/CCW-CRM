@@ -122,12 +122,15 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         notes: order.notes || "",
       });
       // Convert API strings to numbers for line items
-      const items = (order.items || order.order_items || []).map((item: OrderItem) => ({
-        ...item,
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
-        line_total: Number(item.line_total || 0),
-      }));
+      const items = (order.items || order.order_items || [])
+        .filter((item: OrderItem) => item.product_id) // Filter out items without product_id
+        .map((item: OrderItem) => ({
+          ...item,
+          product_id: item.product_id!, // Assert product_id is present after filter
+          quantity: Number(item.quantity),
+          unit_price: Number(item.unit_price),
+          line_total: Number(item.line_total || 0),
+        }));
 
       setLineItems(items);
     } else {

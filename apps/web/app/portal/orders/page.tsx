@@ -191,7 +191,7 @@ export default async function PortalOrdersPage() {
               Your order history will appear here once you place an order
             </p>
             <Button asChild>
-              <Link href="/portal">Browse Products</Link>
+              <Link href={"/portal" as any}>Browse Products</Link>
             </Button>
           </CardContent>
         </Card>

@@ -34,7 +34,7 @@ export function PortalNav() {
         {navLinks.map((link) => (
           <Link
             key={link.href}
-            href={link.href}
+            href={link.href as any}
             aria-current={isActive(link.href) ? "page" : undefined}
             className={`text-sm font-medium transition-colors whitespace-nowrap ${
               isActive(link.href)
@@ -67,7 +67,7 @@ export function PortalNav() {
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
+                href={link.href as any}
                 onClick={() => setOpen(false)}
                 aria-current={isActive(link.href) ? "page" : undefined}
                 className={`text-base font-medium transition-colors py-2 ${
