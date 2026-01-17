@@ -66,8 +66,12 @@ export function ContactForm({ source = "walk-in", triggerButton }: ContactFormPr
       toast.success("Message sent! We'll get back to you soon.");
       form.reset();
       setOpen(false);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to send message. Please try again.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to send message. Please try again.";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

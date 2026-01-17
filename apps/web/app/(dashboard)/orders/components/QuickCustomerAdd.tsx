@@ -75,11 +75,15 @@ export function QuickCustomerAdd({
       onCustomerCreated(response);
       onOpenChange(false);
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not create customer. Please try again.";
       toast({
         variant: "destructive",
         title: "Failed to Create Customer",
-        description: error.message || "Could not create customer. Please try again.",
+        description: message,
       });
     } finally {
       setIsLoading(false);

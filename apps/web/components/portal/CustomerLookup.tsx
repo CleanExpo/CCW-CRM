@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, User, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { apiClient } from "@/lib/api/client";
 import { debounce } from "lodash";
+import { toast } from "sonner";
 
 interface Customer {
   id: string;
@@ -32,7 +34,7 @@ interface Order {
 }
 
 interface CustomerLookupProps {
-  onCustomerSelect: (customer: Customer) => void;
+  onCustomerSelect: (customer: Customer | null) => void;
   selectedCustomer: Customer | null;
 }
 
@@ -46,32 +48,54 @@ export function CustomerLookup({
   const [showResults, setShowResults] = useState(false);
   const [orderHistory, setOrderHistory] = useState<Order[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [createValues, setCreateValues] = useState({
+    company_name: "",
+    contact_name: "",
+    email: "",
+    phone: "",
+  });
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editValues, setEditValues] = useState({
+    company_name: "",
+    contact_name: "",
+    email: "",
+    phone: "",
+  });
 
   // Debounced search function
-  const searchCustomers = useCallback(
-    debounce(async (searchQuery: string) => {
-      if (!searchQuery || searchQuery.length < 2) {
-        setResults([]);
-        setIsSearching(false);
-        return;
-      }
+  const searchCustomers = useMemo(
+    () =>
+      debounce(async (searchQuery: string) => {
+        if (!searchQuery || searchQuery.length < 2) {
+          setResults([]);
+          setShowResults(false);
+          setIsSearching(false);
+          return;
+        }
 
-      setIsSearching(true);
-      try {
-        const response = await apiClient.get<{ items: Customer[] }>(
-          `/api/customers?search=${encodeURIComponent(searchQuery)}&page_size=10`
-        );
-        setResults(response.items || []);
-        setShowResults(true);
-      } catch (error) {
-        console.error("Customer search failed:", error);
-        setResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300),
+        setIsSearching(true);
+        try {
+          const response = await apiClient.get<{ items: Customer[] }>(
+            `/api/customers?search=${encodeURIComponent(searchQuery)}&page_size=10`
+          );
+          setResults(response.items || []);
+          setShowResults(true);
+        } catch (error) {
+          console.error("Customer search failed:", error);
+          setResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300),
     []
   );
+
+  useEffect(() => {
+    return () => searchCustomers.cancel();
+  }, [searchCustomers]);
 
   // Load customer order history
   const loadOrderHistory = async (customerId: string) => {
@@ -94,13 +118,129 @@ export function CustomerLookup({
     setQuery("");
     setResults([]);
     setShowResults(false);
+    setShowCreateForm(false);
+    setShowEditForm(false);
     loadOrderHistory(customer.id);
   };
 
   const handleClearCustomer = () => {
-    onCustomerSelect(null as any);
+    onCustomerSelect(null);
     setOrderHistory([]);
     setQuery("");
+    setShowEditForm(false);
+  };
+
+  const handleStartCreate = () => {
+    const trimmed = query.trim();
+    const nextValues = {
+      company_name: "",
+      contact_name: "",
+      email: "",
+      phone: "",
+    };
+
+    if (trimmed) {
+      if (trimmed.includes("@")) {
+        nextValues.email = trimmed;
+      } else if (/[\d\s()+-]{5,}/.test(trimmed)) {
+        nextValues.phone = trimmed;
+      } else {
+        nextValues.company_name = trimmed;
+      }
+    }
+
+    setCreateValues((prev) => ({ ...prev, ...nextValues }));
+    setShowCreateForm(true);
+    setShowResults(false);
+    setShowEditForm(false);
+  };
+
+  const handleCreateCustomer = async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+
+    const companyName =
+      createValues.company_name.trim() || createValues.contact_name.trim();
+
+    if (!companyName) {
+      toast.error("Company name is required.");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const payload = {
+        customer_number: `CUST-${Date.now()}`,
+        company_name: companyName,
+        contact_name: createValues.contact_name.trim() || undefined,
+        email: createValues.email.trim() || undefined,
+        phone: createValues.phone.trim() || undefined,
+      };
+
+      const created = await apiClient.post<Customer>("/api/customers", payload);
+      toast.success(`Customer ${created.company_name} created.`);
+      setCreateValues({
+        company_name: "",
+        contact_name: "",
+        email: "",
+        phone: "",
+      });
+      handleSelect(created);
+    } catch (error) {
+      console.error("Customer creation failed:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create customer."
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleStartEdit = () => {
+    if (!selectedCustomer) {
+      return;
+    }
+
+    setEditValues({
+      company_name: selectedCustomer.company_name || "",
+      contact_name: selectedCustomer.contact_name || "",
+      email: selectedCustomer.email || "",
+      phone: selectedCustomer.phone || "",
+    });
+    setShowEditForm(true);
+  };
+
+  const handleUpdateCustomer = async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    if (!selectedCustomer) {
+      return;
+    }
+
+    const companyName = editValues.company_name.trim() || selectedCustomer.company_name;
+
+    setIsUpdating(true);
+    try {
+      const payload = {
+        company_name: companyName,
+        contact_name: editValues.contact_name.trim() || undefined,
+        email: editValues.email.trim() || undefined,
+        phone: editValues.phone.trim() || undefined,
+      };
+
+      const updated = await apiClient.put<Customer>(
+        `/api/customers/${selectedCustomer.id}`,
+        payload
+      );
+      toast.success("Customer updated.");
+      onCustomerSelect(updated);
+      setShowEditForm(false);
+    } catch (error) {
+      console.error("Customer update failed:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update customer."
+      );
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -120,7 +260,7 @@ export function CustomerLookup({
     <div className="space-y-4">
       {/* Search Bar */}
       {!selectedCustomer && (
-        <Card className="p-4">
+        <Card className="p-4 relative">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -142,7 +282,7 @@ export function CustomerLookup({
           </div>
 
           {/* Search Results Dropdown */}
-          {showResults && results.length > 0 && (
+          {!showCreateForm && showResults && results.length > 0 && (
             <Card className="absolute z-50 mt-2 w-full max-h-80 overflow-y-auto shadow-lg">
               <div className="divide-y">
                 {results.map((customer) => (
@@ -159,7 +299,7 @@ export function CustomerLookup({
                         </p>
                         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                           <span>{customer.email}</span>
-                          <span>•</span>
+                          <span>|</span>
                           <span>{customer.phone}</span>
                         </div>
                       </div>
@@ -172,22 +312,122 @@ export function CustomerLookup({
           )}
 
           {/* No Results */}
-          {showResults && !isSearching && query.length >= 2 && results.length === 0 && (
+          {!showCreateForm &&
+            showResults &&
+            !isSearching &&
+            query.length >= 2 &&
+            results.length === 0 && (
             <Card className="absolute z-50 mt-2 w-full p-4 shadow-lg">
               <p className="text-sm text-muted-foreground text-center">
                 No customers found. Create new customer?
               </p>
-              <Button variant="outline" className="w-full mt-2" size="sm">
+              <Button
+                variant="outline"
+                className="w-full mt-2"
+                size="sm"
+                onClick={handleStartCreate}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Create New Customer
               </Button>
             </Card>
           )}
 
-          {isSearching && (
+          {!showCreateForm && isSearching && (
             <Card className="absolute z-50 mt-2 w-full p-4 shadow-lg">
               <p className="text-sm text-muted-foreground text-center">Searching...</p>
             </Card>
+          )}
+
+          {showCreateForm && (
+            <form onSubmit={handleCreateCustomer} className="mt-4 border-t pt-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-semibold">Create new customer</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Add a quick profile without leaving the order flow.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+
+              <div className="grid gap-4 mt-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="company_name">Company name *</Label>
+                  <Input
+                    id="company_name"
+                    value={createValues.company_name}
+                    onChange={(event) =>
+                      setCreateValues((prev) => ({
+                        ...prev,
+                        company_name: event.target.value,
+                      }))
+                    }
+                    placeholder="Company or business name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contact_name">Contact name</Label>
+                  <Input
+                    id="contact_name"
+                    value={createValues.contact_name}
+                    onChange={(event) =>
+                      setCreateValues((prev) => ({
+                        ...prev,
+                        contact_name: event.target.value,
+                      }))
+                    }
+                    placeholder="Primary contact"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customer_email">Email</Label>
+                  <Input
+                    id="customer_email"
+                    type="email"
+                    value={createValues.email}
+                    onChange={(event) =>
+                      setCreateValues((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
+                    placeholder="name@company.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customer_phone">Phone</Label>
+                  <Input
+                    id="customer_phone"
+                    type="tel"
+                    value={createValues.phone}
+                    onChange={(event) =>
+                      setCreateValues((prev) => ({
+                        ...prev,
+                        phone: event.target.value,
+                      }))
+                    }
+                    placeholder="0400 000 000"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Customer number is generated automatically.
+                </p>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? "Creating..." : "Create customer"}
+                </Button>
+              </div>
+            </form>
           )}
         </Card>
       )}
@@ -207,9 +447,14 @@ export function CustomerLookup({
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleClearCustomer}>
-              Change
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={handleStartEdit}>
+                Edit
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleClearCustomer}>
+                Change
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-sm">
@@ -226,6 +471,90 @@ export function CustomerLookup({
               <p className="font-medium">{selectedCustomer.email}</p>
             </div>
           </div>
+
+          {showEditForm && (
+            <form onSubmit={handleUpdateCustomer} className="mt-4 rounded-lg border p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h4 className="font-semibold">Quick edit</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Update key contact details without leaving the order.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEditForm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+
+              <div className="grid gap-4 mt-4 md:grid-cols-2">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="edit_company_name">Company name</Label>
+                  <Input
+                    id="edit_company_name"
+                    value={editValues.company_name}
+                    onChange={(event) =>
+                      setEditValues((prev) => ({
+                        ...prev,
+                        company_name: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_contact_name">Contact name</Label>
+                  <Input
+                    id="edit_contact_name"
+                    value={editValues.contact_name}
+                    onChange={(event) =>
+                      setEditValues((prev) => ({
+                        ...prev,
+                        contact_name: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_email">Email</Label>
+                  <Input
+                    id="edit_email"
+                    type="email"
+                    value={editValues.email}
+                    onChange={(event) =>
+                      setEditValues((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_phone">Phone</Label>
+                  <Input
+                    id="edit_phone"
+                    type="tel"
+                    value={editValues.phone}
+                    onChange={(event) =>
+                      setEditValues((prev) => ({
+                        ...prev,
+                        phone: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-end">
+                <Button type="submit" disabled={isUpdating}>
+                  {isUpdating ? "Saving..." : "Save changes"}
+                </Button>
+              </div>
+            </form>
+          )}
 
           <Separator className="my-4" />
 

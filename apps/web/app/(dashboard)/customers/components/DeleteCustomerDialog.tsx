@@ -49,10 +49,12 @@ export function DeleteCustomerDialog({
       });
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete customer";
       toast({
         title: "Error",
-        description: error.message || "Failed to delete customer",
+        description: message,
         variant: "destructive",
       });
     } finally {

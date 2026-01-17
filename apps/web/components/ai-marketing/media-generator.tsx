@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
+import Image, { type ImageLoaderProps } from "next/image";
 import { Button } from "@/components/ui/button";
 import { BentoCard, BentoCardHeader, BentoCardTitle, BentoCardDescription, BentoCardContent } from "@/components/ui/bento-grid";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +28,8 @@ interface GeneratedAsset {
   timestamp: Date;
   prompt: string;
 }
+
+const rawImageLoader = ({ src }: ImageLoaderProps) => src;
 
 export function MediaGenerator({ className, variant = "glass", span = 2, ...props }: MediaGeneratorProps) {
   const [activeTab, setActiveTab] = useState<"image" | "copy">("image");
@@ -182,10 +185,14 @@ export function MediaGenerator({ className, variant = "glass", span = 2, ...prop
             {generatedImage && (
               <div className="space-y-4">
                 <div className="relative rounded-xl overflow-hidden border border-white/10 bg-card/50 aspect-video">
-                  <img
+                  <Image
                     src={generatedImage}
                     alt="AI Generated"
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="100vw"
+                    loader={rawImageLoader}
+                    unoptimized
+                    className="object-cover"
                   />
                 </div>
                 <div className="flex gap-3">

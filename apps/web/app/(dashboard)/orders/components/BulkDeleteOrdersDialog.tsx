@@ -45,11 +45,12 @@ export function BulkDeleteOrdersDialog({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to delete orders";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to delete orders",
+        description: message,
       });
     } finally {
       setIsDeleting(false);

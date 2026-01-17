@@ -11,7 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardImage } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FadeIn, Stagger } from "@/components/ui/motion";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -20,7 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { trackTelemetry } from "@/lib/telemetry";
+import { apiClient } from "@/lib/api/client";
+import { formatCurrency } from "@/lib/utils/calculations";
 import {
   CheckCircle,
   Copy,
@@ -31,9 +37,12 @@ import {
   Receipt,
   Sparkles,
   TrendingUp,
+  X,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { toast } from "sonner";
 
 interface CcwProduct {
@@ -57,6 +66,24 @@ interface CcwProductsResponse {
   products: CcwProduct[];
 }
 
+interface BackendCustomer {
+  id: string;
+  customer_number: string;
+  company_name: string;
+  email?: string;
+}
+
+interface BackendProduct {
+  id: string;
+  sku: string;
+  name: string;
+}
+
+interface BackendOrderResponse {
+  id: string;
+  order_number: string;
+}
+
 type PipelineStage =
   | "quote_prepared"
   | "quote_sent"
@@ -70,7 +97,48 @@ interface StageTimestamps {
   invoiceIssuedAt: string | null;
 }
 
+interface DemoOrder {
+  id: string;
+  orderNumber: string;
+  invoiceNumber: string;
+  createdAt: string;
+  customerName: string;
+  customerAccount: string;
+  customerEmail: string;
+  customerPhone: string;
+  lineItems: Array<{
+    title: string;
+    sku: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+  }>;
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  tax: number;
+  total: number;
+}
+
+interface QuoteItem {
+  id: string;
+  sku: string;
+  title: string;
+  unitPrice: number;
+  quantity: number;
+  available: boolean;
+  category: string;
+}
+
+interface AuditNote {
+  id: string;
+  timestamp: string;
+  message: string;
+  actor: string;
+}
+
 export default function CcwShowroomPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<CcwProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +149,11 @@ export default function CcwShowroomPage() {
   const [summary, setSummary] = useState("");
   const [summarySource, setSummarySource] = useState<"shopify" | "jina">("shopify");
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
+  const [quoteDiscountPercent, setQuoteDiscountPercent] = useState(0);
+  const [quoteShipping, setQuoteShipping] = useState(0);
+  const [quoteGstEnabled, setQuoteGstEnabled] = useState(true);
+  const [auditNotes, setAuditNotes] = useState<AuditNote[]>([]);
   const [stage, setStage] = useState<PipelineStage>("quote_prepared");
   const [stageTimestamps, setStageTimestamps] = useState<StageTimestamps>({
     quotePreparedAt: null,
@@ -91,12 +164,24 @@ export default function CcwShowroomPage() {
   const [quoteNumber, setQuoteNumber] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [demoOrder, setDemoOrder] = useState<DemoOrder | null>(null);
+  const [isOrderCreating, setIsOrderCreating] = useState(false);
+  const hasTrackedVisit = useRef(false);
+  const hasQuoteSeeded = useRef(false);
 
-  // Initialize random numbers on client only to avoid hydration mismatch
   useEffect(() => {
     setQuoteNumber(generateNumber("Q"));
     setOrderNumber(generateNumber("ORD"));
     setInvoiceNumber(generateNumber("INV"));
+  }, []);
+
+  useEffect(() => {
+    if (hasTrackedVisit.current) return;
+    hasTrackedVisit.current = true;
+    void trackTelemetry({
+      name: "showroom_visit",
+      metadata: { surface: "portal_showroom" },
+    });
   }, []);
 
   useEffect(() => {
@@ -109,8 +194,34 @@ export default function CcwShowroomPage() {
         }
         const data = (await response.json()) as CcwProductsResponse;
         setProducts(data.products ?? []);
-        setSelected(data.products?.[0] ?? null);
+        const firstProduct = data.products?.[0] ?? null;
+        setSelected(firstProduct);
+        if (firstProduct) {
+          const initialQuantity = 24;
+          const baseLineTotal = firstProduct.price * initialQuantity;
+          const suggestedDiscountRate =
+            firstProduct.compareAtPrice && firstProduct.compareAtPrice > firstProduct.price
+              ? Math.min((firstProduct.compareAtPrice - firstProduct.price) / firstProduct.compareAtPrice, 0.15)
+              : 0.08;
+
+          setQuoteItems([createQuoteItem(firstProduct, initialQuantity)]);
+          setQuoteDiscountPercent(Math.round(suggestedDiscountRate * 100));
+          setQuoteShipping(baseLineTotal > 0 ? (baseLineTotal > 1200 ? 0 : 45) : 0);
+          setQuoteGstEnabled(true);
+        } else {
+          setQuoteItems([]);
+        }
         setError(null);
+        if (firstProduct) {
+          void trackTelemetry({
+            name: "showroom_product_selected",
+            metadata: {
+              productId: firstProduct.id,
+              title: firstProduct.title,
+              source: "auto",
+            },
+          });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load products");
       } finally {
@@ -135,7 +246,7 @@ export default function CcwShowroomPage() {
     setSummarySource("shopify");
   }, [selected]);
 
-  useEffect(() => {
+  const resetQuoteWorkflow = useCallback(() => {
     const now = new Date().toISOString();
     setStage("quote_prepared");
     setStageTimestamps({
@@ -147,7 +258,24 @@ export default function CcwShowroomPage() {
     setQuoteNumber(generateNumber("Q"));
     setOrderNumber(generateNumber("ORD"));
     setInvoiceNumber(generateNumber("INV"));
-  }, [selected?.id]);
+    setDemoOrder(null);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("ccw_showroom_order");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!quoteItems.length) {
+      if (hasQuoteSeeded.current) {
+        resetQuoteWorkflow();
+        setAuditNotes([]);
+      }
+      return;
+    }
+    hasQuoteSeeded.current = true;
+    resetQuoteWorkflow();
+    setAuditNotes([]);
+  }, [quoteItems, resetQuoteWorkflow]);
 
   const categories = useMemo(() => {
     const unique = new Set<string>();
@@ -187,26 +315,23 @@ export default function CcwShowroomPage() {
   }, [products, categories]);
 
   const quoteMetrics = useMemo(() => {
-    const unitPrice = selected?.price ?? 0;
-    const quantity = unitPrice ? 24 : 0;
-    const lineTotal = unitPrice * quantity;
-    const discountRate =
-      lineTotal > 0
-        ? selected?.compareAtPrice && selected.compareAtPrice > unitPrice
-          ? Math.min((selected.compareAtPrice - unitPrice) / selected.compareAtPrice, 0.15)
-          : 0.08
-        : 0;
-    const discount = lineTotal * discountRate;
-    const shipping = lineTotal > 0 ? (lineTotal > 1200 ? 0 : 45) : 0;
-    const subtotal = lineTotal - discount + shipping;
-    const tax = subtotal * 0.1;
+    const discountPercent = clampNumber(quoteDiscountPercent, 0, 25);
+    const discountRate = discountPercent / 100;
+    const lineSubtotal = quoteItems.reduce((sum, item) => {
+      return sum + item.unitPrice * item.quantity;
+    }, 0);
+    const discount = lineSubtotal * discountRate;
+    const shipping = Math.max(0, quoteShipping);
+    const subtotal = Math.max(lineSubtotal - discount + shipping, 0);
+    const tax = quoteGstEnabled ? subtotal * 0.1 : 0;
     const total = subtotal + tax;
-    const cost = lineTotal * 0.6;
+    const cost = lineSubtotal * 0.6;
     const margin = subtotal - cost;
+    const marginRate = subtotal > 0 ? (margin / subtotal) * 100 : 0;
+    const itemCount = quoteItems.reduce((sum, item) => sum + item.quantity, 0);
     return {
-      unitPrice,
-      quantity,
-      lineTotal,
+      lineSubtotal,
+      discountPercent,
       discountRate,
       discount,
       shipping,
@@ -214,8 +339,10 @@ export default function CcwShowroomPage() {
       tax,
       total,
       margin,
+      marginRate,
+      itemCount,
     };
-  }, [selected]);
+  }, [quoteDiscountPercent, quoteGstEnabled, quoteItems, quoteShipping]);
 
   const customerProfile = {
     name: "Metro Facility Services",
@@ -231,6 +358,9 @@ export default function CcwShowroomPage() {
     region: "Brisbane, QLD",
     rep: "J. Fielding",
   };
+  const creditUsage = customerProfile.creditLimit
+    ? Math.min((customerProfile.balance / customerProfile.creditLimit) * 100, 100)
+    : 0;
 
   const stageSequence: PipelineStage[] = [
     "quote_prepared",
@@ -238,6 +368,10 @@ export default function CcwShowroomPage() {
     "order_confirmed",
     "invoice_issued",
   ];
+  const hasQuoteItems = quoteItems.length > 0;
+  const isOrderReady =
+    hasQuoteItems &&
+    stageSequence.indexOf(stage) >= stageSequence.indexOf("order_confirmed");
 
   const stageLabels: Record<PipelineStage, string> = {
     quote_prepared: "Quote prepared",
@@ -287,12 +421,59 @@ export default function CcwShowroomPage() {
     return `${day}/${month}/${year} ${displayHours}:${minutes} ${ampm}`;
   };
 
+  const handleAddToQuote = (product: CcwProduct) => {
+    const isFirstItem = quoteItems.length === 0;
+    setQuoteItems((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, createQuoteItem(product, 1)];
+    });
+    if (isFirstItem) {
+      const baseLineTotal = product.price;
+      const suggestedDiscountRate =
+        product.compareAtPrice && product.compareAtPrice > product.price
+          ? Math.min((product.compareAtPrice - product.price) / product.compareAtPrice, 0.15)
+          : 0.08;
+
+      setQuoteDiscountPercent(Math.round(suggestedDiscountRate * 100));
+      setQuoteShipping(baseLineTotal > 0 ? (baseLineTotal > 1200 ? 0 : 45) : 0);
+      setQuoteGstEnabled(true);
+    }
+  };
+
+  const handleUpdateQuantity = (productId: string, quantity: number) => {
+    const nextQuantity = Math.max(0, Math.floor(quantity));
+    setQuoteItems((prev) => {
+      if (nextQuantity === 0) {
+        return prev.filter((item) => item.id !== productId);
+      }
+      return prev.map((item) =>
+        item.id === productId ? { ...item, quantity: nextQuantity } : item
+      );
+    });
+  };
+
+  const handleRemoveItem = (productId: string) => {
+    setQuoteItems((prev) => prev.filter((item) => item.id !== productId));
+  };
+
+  const handleClearQuote = () => {
+    setQuoteItems([]);
+  };
+
   const handleAdvanceStage = () => {
-    if (!selected) {
-      toast.error("Select a product before advancing the workflow.");
+    if (!quoteItems.length) {
+      toast.error("Add at least one line item before advancing the workflow.");
       return;
     }
 
+    const previousStage = stage;
     const currentIndex = stageSequence.indexOf(stage);
     if (currentIndex === stageSequence.length - 1) {
       toast.success("Pipeline already complete");
@@ -306,32 +487,75 @@ export default function CcwShowroomPage() {
       ...prev,
       [timestampKeyMap[nextStage]]: now,
     }));
+    setAuditNotes((prev) => [
+      ...prev,
+      {
+        id:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `note-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        timestamp: now,
+        message: `${stageLabels[nextStage]} recorded`,
+        actor: "Workflow engine",
+      },
+    ]);
+    void trackTelemetry({
+      name: "showroom_pipeline_advance",
+      metadata: {
+        from: previousStage,
+        to: nextStage,
+        itemCount: quoteItems.length,
+      },
+    });
     toast.success(`${stageLabels[nextStage]} recorded`);
   };
 
   const handleResetPipeline = () => {
-    const now = new Date().toISOString();
-    setStage("quote_prepared");
-    setStageTimestamps({
-      quotePreparedAt: now,
-      quoteSentAt: null,
-      orderConfirmedAt: null,
-      invoiceIssuedAt: null,
+    resetQuoteWorkflow();
+    setAuditNotes((prev) => [
+      ...prev,
+      {
+        id:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `note-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        timestamp: new Date().toISOString(),
+        message: "Pipeline reset to quote prepared",
+        actor: "Sales operator",
+      },
+    ]);
+    void trackTelemetry({
+      name: "showroom_pipeline_reset",
+      metadata: {
+        itemCount: quoteItems.length,
+      },
     });
-    setQuoteNumber(generateNumber("Q"));
-    setOrderNumber(generateNumber("ORD"));
-    setInvoiceNumber(generateNumber("INV"));
   };
 
   const handleCopyPrompt = async () => {
     if (!prompt) return;
     await navigator.clipboard.writeText(prompt);
+    void trackTelemetry({
+      name: "showroom_prompt_copied",
+      metadata: {
+        productId: selected?.id ?? null,
+        title: selected?.title ?? null,
+      },
+    });
     toast.success("Prompt copied to clipboard");
   };
 
   const handleSummaryRefresh = async () => {
     if (!selected) return;
     setSummaryLoading(true);
+    void trackTelemetry({
+      name: "showroom_summary_refresh",
+      metadata: {
+        productId: selected.id,
+        title: selected.title,
+        status: "start",
+      },
+    });
     try {
       const response = await fetch(
         `/api/ccw/summary?url=${encodeURIComponent(selected.url)}`
@@ -343,14 +567,210 @@ export default function CcwShowroomPage() {
       if (data.summary) {
         setSummary(data.summary);
         setSummarySource("jina");
+        void trackTelemetry({
+          name: "showroom_summary_refresh",
+          metadata: {
+            productId: selected.id,
+            title: selected.title,
+            status: "success",
+          },
+        });
       } else {
+        void trackTelemetry({
+          name: "showroom_summary_refresh",
+          metadata: {
+            productId: selected.id,
+            title: selected.title,
+            status: "empty",
+          },
+        });
         toast.error("No summary returned from Jina");
       }
     } catch (err) {
+      void trackTelemetry({
+        name: "showroom_summary_refresh",
+        metadata: {
+          productId: selected.id,
+          title: selected.title,
+          status: "error",
+        },
+      });
       toast.error(err instanceof Error ? err.message : "Unable to load summary");
     } finally {
       setSummaryLoading(false);
     }
+  };
+
+  const handleCreateOrder = async () => {
+    if (!quoteItems.length) {
+      toast.error("Add at least one line item before creating an order.");
+      return;
+    }
+    if (!isOrderReady) {
+      toast.error("Advance the pipeline to order confirmed before creating an order.");
+      return;
+    }
+    if (demoOrder) {
+      toast.success("Order already created for this quote.");
+      return;
+    }
+
+    setIsOrderCreating(true);
+
+    try {
+      const resolveCustomerId = async () => {
+        const searchKey = customerProfile.account || customerProfile.name;
+        const lookup = await apiClient.get<{ items: BackendCustomer[] }>(
+          `/api/customers?search=${encodeURIComponent(searchKey)}&page_size=5`
+        );
+        const match =
+          lookup.items?.find((customer) =>
+            customer.customer_number === customerProfile.account ||
+            customer.company_name === customerProfile.name ||
+            customer.email === customerProfile.email
+          ) ?? lookup.items?.[0];
+
+        if (match) {
+          return match.id;
+        }
+
+        const [city, state] = customerProfile.region
+          .split(",")
+          .map((value) => value.trim());
+        const customerPayload = {
+          customer_number: customerProfile.account || `CUST-${Date.now()}`,
+          company_name: customerProfile.name,
+          contact_name: customerProfile.contact,
+          email: customerProfile.email,
+          phone: customerProfile.phone,
+          city: city || undefined,
+          state: state || undefined,
+        };
+        const created = await apiClient.post<BackendCustomer>(
+          "/api/customers",
+          customerPayload
+        );
+        return created.id;
+      };
+
+      const resolveProductId = async (item: QuoteItem) => {
+        const searchKey = item.sku || item.title;
+        const lookup = await apiClient.get<{ items: BackendProduct[] }>(
+          `/api/products?search=${encodeURIComponent(searchKey)}&page_size=5`
+        );
+        const match =
+          lookup.items?.find((product) =>
+            item.sku ? product.sku === item.sku : product.name === item.title
+          ) ?? lookup.items?.[0];
+
+        if (match) {
+          return match.id;
+        }
+
+        const sourceProduct = products.find((product) => product.id === item.id);
+        const productPayload = {
+          sku: item.sku || `CCW-${item.id}`,
+          name: item.title,
+          description: sourceProduct?.description ?? "",
+          category: sourceProduct?.category ?? "Uncategorized",
+          price: item.unitPrice,
+          cost: Number((item.unitPrice * 0.6).toFixed(2)),
+          stock: Math.max(item.quantity * 2, 5),
+          warehouse_location: "BNE-01",
+        };
+        const created = await apiClient.post<BackendProduct>(
+          "/api/products",
+          productPayload
+        );
+        return created.id;
+      };
+
+      const customerId = await resolveCustomerId();
+      const resolvedItems: Array<{ product_id: string; quantity: number }> = [];
+
+      for (const item of quoteItems) {
+        const productId = await resolveProductId(item);
+        resolvedItems.push({
+          product_id: productId,
+          quantity: item.quantity,
+        });
+      }
+
+      const orderNotes = [
+        `Showroom demo order from ${quoteNumber}.`,
+        `Discount: ${quoteMetrics.discountPercent}%`,
+        `Shipping: ${formatCurrency(quoteMetrics.shipping)}`,
+        `GST: ${quoteGstEnabled ? "enabled" : "exempt"}`,
+      ].join("\n");
+
+      const orderPayload = {
+        customer_id: customerId,
+        status: "pending",
+        fulfillment_location: "brisbane",
+        notes: orderNotes,
+        items: resolvedItems,
+      };
+
+      const response = await apiClient.post<BackendOrderResponse>(
+        "/api/orders",
+        orderPayload
+      );
+
+      const resolvedOrderNumber = response.order_number || orderNumber;
+      setOrderNumber(resolvedOrderNumber);
+
+      const newOrder: DemoOrder = {
+        id: response.id,
+        orderNumber: resolvedOrderNumber,
+        invoiceNumber,
+        createdAt: new Date().toISOString(),
+        customerName: customerProfile.name,
+        customerAccount: customerProfile.account,
+        customerEmail: customerProfile.email,
+        customerPhone: customerProfile.phone,
+        lineItems: quoteItems.map((item) => ({
+          title: item.title,
+          sku: item.sku,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          lineTotal: item.unitPrice * item.quantity,
+        })),
+        subtotal: quoteMetrics.subtotal,
+        discount: quoteMetrics.discount,
+        shipping: quoteMetrics.shipping,
+        tax: quoteMetrics.tax,
+        total: quoteMetrics.total,
+      };
+
+      setDemoOrder(newOrder);
+      sessionStorage.setItem("ccw_showroom_order", JSON.stringify(newOrder));
+      void trackTelemetry({
+        name: "showroom_order_created",
+        metadata: {
+          orderNumber: newOrder.orderNumber,
+          itemCount: quoteItems.length,
+          backendOrderId: response.id,
+        },
+      });
+      toast.success("Order created and ready for invoice export.");
+    } catch (err) {
+      console.error("Order creation failed:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to create order.");
+    } finally {
+      setIsOrderCreating(false);
+    }
+  };
+
+  const handleViewInvoice = () => {
+    if (!demoOrder) {
+      toast.error("Create an order before viewing the invoice.");
+      return;
+    }
+    void trackTelemetry({
+      name: "showroom_invoice_opened",
+      metadata: { orderNumber: demoOrder.orderNumber },
+    });
+    router.push("/portal/showroom/invoice");
   };
 
   return (
@@ -382,6 +802,10 @@ export default function CcwShowroomPage() {
               variant="gradient"
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href);
+                void trackTelemetry({
+                  name: "showroom_share_link",
+                  metadata: { url: window.location.href },
+                });
                 toast.success("Demo link copied to clipboard");
               }}
             >
@@ -501,7 +925,17 @@ export default function CcwShowroomPage() {
                           : "border-border"
                       }`}
                       data-testid="product-card"
-                      onClick={() => setSelected(product)}
+                      onClick={() => {
+                        setSelected(product);
+                        void trackTelemetry({
+                          name: "showroom_product_selected",
+                          metadata: {
+                            productId: product.id,
+                            title: product.title,
+                            source: "user",
+                          },
+                        });
+                      }}
                     >
                       {product.image ? (
                         <CardImage src={product.image} alt={product.title} />
@@ -543,6 +977,14 @@ export default function CcwShowroomPage() {
                           size="sm"
                           onClick={(event) => {
                             event.stopPropagation();
+                            handleAddToQuote(product);
+                            void trackTelemetry({
+                              name: "showroom_product_added",
+                              metadata: {
+                                productId: product.id,
+                                title: product.title,
+                              },
+                            });
                             toast.success(`${product.title} added to quote draft`);
                           }}
                         >
@@ -609,6 +1051,13 @@ export default function CcwShowroomPage() {
                   <p className="text-base text-foreground">{customerProfile.rep}</p>
                 </div>
               </div>
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                <div className="flex items-center justify-between text-xs uppercase tracking-widest text-foreground/60">
+                  <span>Credit usage</span>
+                  <span>{Math.round(creditUsage)}%</span>
+                </div>
+                <Progress value={creditUsage} />
+              </div>
               <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
                 Next action: renew 12-month consumables contract and schedule Q4 delivery.
               </div>
@@ -617,7 +1066,7 @@ export default function CcwShowroomPage() {
                 <div>{customerProfile.phone}</div>
               </div>
             </Card>
-            <Card variant="glass" className="p-6 lg:sticky lg:top-6">
+            <Card variant="glass" className="p-6">
               {selected ? (
                 <div className="space-y-6">
                   <div className="space-y-3">
@@ -636,11 +1085,13 @@ export default function CcwShowroomPage() {
                   </div>
 
                   {selected.image && (
-                    <div className="overflow-hidden rounded-xl border border-white/10">
-                      <img
+                    <div className="relative h-48 w-full overflow-hidden rounded-xl border border-white/10">
+                      <Image
                         src={selected.image}
                         alt={selected.title}
-                        className="h-48 w-full object-cover"
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 360px"
+                        className="object-cover"
                       />
                     </div>
                   )}
@@ -662,7 +1113,10 @@ export default function CcwShowroomPage() {
                         <span className="ml-2">Refresh with Jina</span>
                       </Button>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p
+                      className="text-sm text-muted-foreground leading-relaxed"
+                      data-testid="summary-text"
+                    >
                       {summary}
                     </p>
                   </div>
@@ -670,13 +1124,31 @@ export default function CcwShowroomPage() {
                   <div className="grid gap-3">
                     <Button
                       variant="gradient"
-                      onClick={() => toast.success("Quote workflow started")}
+                      onClick={() => {
+                        void trackTelemetry({
+                          name: "showroom_quote_start",
+                          metadata: {
+                            productId: selected.id,
+                            title: selected.title,
+                          },
+                        });
+                        toast.success("Quote workflow started");
+                      }}
                     >
                       Start quote workflow
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => toast.success("Marketing agent notified")}
+                      onClick={() => {
+                        void trackTelemetry({
+                          name: "showroom_marketing_notify",
+                          metadata: {
+                            productId: selected.id,
+                            title: selected.title,
+                          },
+                        });
+                        toast.success("Marketing agent notified");
+                      }}
                     >
                       Send to marketing agent
                     </Button>
@@ -697,33 +1169,135 @@ export default function CcwShowroomPage() {
                   </p>
                   <p className="text-xl font-semibold text-foreground">Line items</p>
                 </div>
-                <Badge variant="outline">Draft</Badge>
+                <Badge variant="outline" data-testid="quote-item-count">
+                  {quoteItems.length ? `${quoteItems.length} items` : "Draft"}
+                </Badge>
               </div>
               <Separator />
-              <div className="space-y-3 text-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {selected?.title ?? "Select a product to start"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Qty {quoteMetrics.quantity} · {formatCurrency(quoteMetrics.unitPrice)} each
-                    </p>
-                  </div>
-                  <p className="font-semibold text-foreground">
-                    {formatCurrency(quoteMetrics.lineTotal)}
+              {quoteItems.length ? (
+                <div className="space-y-3 text-sm">
+                  {quoteItems.map((item) => (
+                    <div
+                      key={item.id}
+                      data-testid="quote-item"
+                      className="rounded-lg border border-border/60 bg-muted/10 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <p className="font-medium text-foreground">{item.title}</p>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            {item.sku && <span>SKU {item.sku}</span>}
+                            <span>{formatCurrency(item.unitPrice)} each</span>
+                            <Badge variant={item.available ? "success" : "secondary"}>
+                              {item.available ? "In stock" : "Backorder"}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveItem(item.id)}
+                        >
+                          <X className="h-4 w-4" />
+                          <span className="sr-only">Remove item</span>
+                        </Button>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <Label
+                            htmlFor={`quote-qty-${item.id}`}
+                            className="text-[10px] uppercase tracking-widest text-muted-foreground"
+                          >
+                            Qty
+                          </Label>
+                          <Input
+                            id={`quote-qty-${item.id}`}
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={item.quantity}
+                            onChange={(event) => {
+                              const value = Number(event.target.value);
+                              handleUpdateQuantity(item.id, Number.isFinite(value) ? value : 0);
+                            }}
+                            className="h-9 w-20 bg-background/70"
+                          />
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {formatCurrency(item.unitPrice * item.quantity)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+                  No line items yet. Use "Add to quote" to build the draft.
+                </div>
+              )}
+              <div className="grid gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 text-xs sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="quote-discount"
+                    className="text-[10px] uppercase tracking-widest text-muted-foreground"
+                  >
+                    Discount %
+                  </Label>
+                  <Input
+                    id="quote-discount"
+                    type="number"
+                    min={0}
+                    max={25}
+                    step={0.5}
+                    value={quoteDiscountPercent}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      setQuoteDiscountPercent(Number.isFinite(value) ? clampNumber(value, 0, 25) : 0);
+                    }}
+                    className="h-9 bg-background/70"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="quote-shipping"
+                    className="text-[10px] uppercase tracking-widest text-muted-foreground"
+                  >
+                    Shipping (AUD)
+                  </Label>
+                  <Input
+                    id="quote-shipping"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={quoteShipping}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      setQuoteShipping(Number.isFinite(value) ? Math.max(0, value) : 0);
+                    }}
+                    className="h-9 bg-background/70"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-xs">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-foreground/60">GST</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Toggle for GST-exempt accounts
                   </p>
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Discount ({Math.round(quoteMetrics.discountRate * 100)}%)</span>
+                <Switch checked={quoteGstEnabled} onCheckedChange={setQuoteGstEnabled} />
+              </div>
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  <span>Discount ({quoteMetrics.discountPercent}%)</span>
                   <span>-{formatCurrency(quoteMetrics.discount)}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center justify-between">
                   <span>Shipping (Brisbane)</span>
                   <span>{formatCurrency(quoteMetrics.shipping)}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Tax (GST)</span>
+                <div className="flex items-center justify-between">
+                  <span>{quoteGstEnabled ? "GST (10%)" : "GST (exempt)"}</span>
                   <span>{formatCurrency(quoteMetrics.tax)}</span>
                 </div>
               </div>
@@ -732,8 +1306,19 @@ export default function CcwShowroomPage() {
                 <span>Total</span>
                 <span>{formatCurrency(quoteMetrics.total)}</span>
               </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{quoteMetrics.itemCount} items in draft</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearQuote}
+                  disabled={!quoteItems.length}
+                >
+                  Clear quote
+                </Button>
+              </div>
               <div className="text-xs text-muted-foreground">
-                Delivery window: 3-4 business days · Warehouse: BNE-01
+                Delivery window: 3-4 business days | Warehouse: BNE-01
               </div>
             </Card>
 
@@ -742,7 +1327,7 @@ export default function CcwShowroomPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                      Quote → Order pipeline
+                      Quote to order pipeline
                     </p>
                     <p
                       className="text-xl font-semibold text-foreground"
@@ -828,6 +1413,32 @@ export default function CcwShowroomPage() {
                 })}
               </div>
 
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                  <span>Audit notes</span>
+                  <span>{auditNotes.length} events</span>
+                </div>
+                <div className="mt-3 space-y-2 text-xs text-muted-foreground">
+                  {auditNotes.length ? (
+                    auditNotes.slice(-3).map((note) => (
+                      <div key={note.id} className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-foreground">{note.message}</p>
+                          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                            {note.actor}
+                          </p>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                          {formatTimestamp(note.timestamp)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p>Notes appear as workflow stages advance.</p>
+                  )}
+                </div>
+              </div>
+
               <div className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Subtotal</p>
@@ -849,6 +1460,12 @@ export default function CcwShowroomPage() {
                     {formatCurrency(quoteMetrics.margin)}
                   </p>
                 </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Margin %</p>
+                  <p className="text-base font-semibold text-foreground">
+                    {quoteMetrics.marginRate.toFixed(1)}%
+                  </p>
+                </div>
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -856,7 +1473,7 @@ export default function CcwShowroomPage() {
                   variant="gradient"
                   className="flex-1"
                   onClick={handleAdvanceStage}
-                  disabled={!selected || stage === "invoice_issued"}
+                  disabled={!hasQuoteItems || stage === "invoice_issued"}
                   data-testid="pipeline-advance"
                 >
                   {stageActions[stage]}
@@ -865,10 +1482,84 @@ export default function CcwShowroomPage() {
                   variant="ghost"
                   className="flex-1 border border-border text-sm"
                   onClick={handleResetPipeline}
-                  disabled={!selected}
+                  disabled={!hasQuoteItems}
                   data-testid="pipeline-reset"
                 >
                   Reset pipeline
+                </Button>
+              </div>
+            </Card>
+
+            <Card variant="outline" className="space-y-4 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                    Order to cash
+                  </p>
+                  <p className="text-xl font-semibold text-foreground">Order actions</p>
+                </div>
+                <Badge variant={demoOrder ? "success" : "outline"}>
+                  {demoOrder ? "Order created" : "Draft"}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Create the order once the pipeline is confirmed, then export the invoice for
+                accounts.
+              </p>
+              {demoOrder ? (
+                <div className="grid gap-3 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span>Order number</span>
+                    <span className="font-mono text-foreground">{demoOrder.orderNumber}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Invoice number</span>
+                    <span className="font-mono text-foreground">{demoOrder.invoiceNumber}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Line items</span>
+                    <span className="font-semibold text-foreground">
+                      {demoOrder.lineItems.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Total</span>
+                    <span className="font-semibold text-foreground">
+                      {formatCurrency(demoOrder.total)}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                  Pipeline must reach order confirmed before creating the order.
+                </div>
+              )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button
+                  variant="gradient"
+                  onClick={handleCreateOrder}
+                  disabled={
+                    !hasQuoteItems ||
+                    !isOrderReady ||
+                    Boolean(demoOrder) ||
+                    isOrderCreating
+                  }
+                >
+                  {isOrderCreating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating order...
+                    </>
+                  ) : (
+                    "Create order"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleViewInvoice}
+                  disabled={!demoOrder}
+                >
+                  View invoice
                 </Button>
               </div>
             </Card>
@@ -919,15 +1610,24 @@ export default function CcwShowroomPage() {
   );
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: "AUD",
-  }).format(value);
-}
-
 function generateNumber(prefix: string): string {
   const date = new Date();
   const suffix = String(Math.floor(Math.random() * 900) + 100);
   return `${prefix}-${date.getFullYear()}-${suffix}`;
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function createQuoteItem(product: CcwProduct, quantity: number): QuoteItem {
+  return {
+    id: product.id,
+    sku: product.sku,
+    title: product.title,
+    unitPrice: product.price,
+    quantity: Math.max(0, Math.floor(quantity)),
+    available: product.available,
+    category: product.category,
+  };
 }

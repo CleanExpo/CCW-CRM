@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 export default function PlaygroundPage() {
@@ -19,7 +20,7 @@ export default function PlaygroundPage() {
       `}</style>
 
       <div className="min-h-screen bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-white">
-        <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10 p-4">
+        <header className="bg-white dark:bg-gray-800 shadow-sm z-10 p-4">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-bold">Dashboard</h1>
             <div className="flex items-center space-x-4">
@@ -30,10 +31,12 @@ export default function PlaygroundPage() {
                 <span className="material-symbols-outlined">notifications</span>
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-800"></span>
               </button>
-              <img
+              <Image
                 alt="User avatar"
                 className="h-8 w-8 rounded-full"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGjv0lyYxKWDu7fXTmChgG3DngKhUHqB11vNoqI_FCLar1D9g5Dfj1BLSaDJrQ7HBTBX1VLfOIjylAOUBuAdxRp4bMmU9tlxdYJyNcgAPGNxY5tqLM2Zs5F66FD3cIxSBTWCGFJfeS3ChgKL00SfrBZ24XPii_K7o5nLSSHr6ESeJrTjefVwYxM4UMd2yVmcEIzIH51kqsCbLg_FnnHRf7r950H1C8VjPvgdO0URbGfHepyoAKE-qb8k68B_BaPtHjHVJLVopPxH0"
+                width={32}
+                height={32}
               />
             </div>
           </div>
@@ -221,7 +224,7 @@ export default function PlaygroundPage() {
           </section>
         </main>
 
-        <footer className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2">
+        <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2">
           <nav className="flex justify-around">
             <a href="#" className="flex flex-col items-center text-primary">
               <span className="material-symbols-outlined">dashboard</span>

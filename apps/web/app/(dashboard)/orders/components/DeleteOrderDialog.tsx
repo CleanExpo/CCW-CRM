@@ -45,11 +45,12 @@ export function DeleteOrderDialog({
       });
       onOpenChange(false);
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to delete order";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to delete order",
+        description: message,
       });
     } finally {
       setIsLoading(false);

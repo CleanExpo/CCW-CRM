@@ -8,6 +8,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import uuid4
 
 from src.db.demo_models import Product
 
@@ -64,7 +65,8 @@ class TestProductsList:
         # If we have drill products, verify search works
         if data["total"] > 0:
             product = data["items"][0]
-            assert "drill" in product["name"].lower() or "drill" in product.get("description", "").lower() or "drill" in product["sku"].lower()
+            description = (product.get("description") or "").lower()
+            assert "drill" in product["name"].lower() or "drill" in description or "drill" in product["sku"].lower()
 
     async def test_list_products_category_filter(self, client: AsyncClient, auth_token: str):
         """Test filtering products by category."""
@@ -95,8 +97,9 @@ class TestProductCreate:
 
     async def test_create_product_success(self, client: AsyncClient, auth_token: str):
         """Test creating a new product."""
+        sku = f"TEST-SKU-{uuid4().hex[:8]}"
         new_product = {
-            "sku": "TEST-SKU-001",
+            "sku": sku,
             "name": "Test Product",
             "description": "A test product for automated testing",
             "category": "hand_tools",
@@ -117,22 +120,30 @@ class TestProductCreate:
         data = response.json()
 
         # Verify created product
-        assert data["sku"] == new_product["sku"]
+        assert data["sku"] == sku
         assert data["name"] == new_product["name"]
-        assert data["price"] == new_product["price"]
+        assert float(data["price"]) == new_product["price"]
         assert "id" in data
         assert "created_at" in data
 
     async def test_create_product_duplicate_sku(self, client: AsyncClient, auth_token: str):
         """Test creating product with duplicate SKU (should fail)."""
+        sku = f"DRILL-{uuid4().hex[:8]}"
         product = {
-            "sku": "DRILL-001",  # Assuming this exists from seed data
+            "sku": sku,
             "name": "Duplicate Product",
             "category": "hand_tools",
             "price": 99.99,
             "cost": 50.00,
             "stock": 10,
         }
+
+        create_response = await client.post(
+            "/api/products",
+            json=product,
+            cookies={"auth_token": auth_token},
+        )
+        assert create_response.status_code == 201
 
         response = await client.post(
             "/api/products",
@@ -161,7 +172,7 @@ class TestProductCreate:
     async def test_create_product_invalid_price(self, client: AsyncClient, auth_token: str):
         """Test creating product with invalid price."""
         invalid_product = {
-            "sku": "TEST-INVALID-001",
+            "sku": f"TEST-INVALID-{uuid4().hex[:8]}",
             "name": "Invalid Price Product",
             "category": "hand_tools",
             "price": -10.00,  # Negative price
@@ -185,11 +196,16 @@ class TestProductUpdate:
     async def test_update_product_success(self, client: AsyncClient, auth_token: str, db_session: AsyncSession):
         """Test updating an existing product."""
         # Get an existing product
-        result = await db_session.execute(select(Product).limit(1))
-        product = result.scalar_one()
+        result = await db_session.execute(
+            select(Product).where(Product.price >= 0).limit(1)
+        )
+        product = result.scalar_one_or_none()
+        if not product:
+            pytest.skip("No non-negative priced products found for tests.")
 
+        base_name = product.name[:240]
         updated_data = {
-            "name": f"{product.name} - Updated",
+            "name": f"{base_name} - Updated",
             "price": float(product.price) + 10.00,
             "stock": product.stock + 5,
         }
@@ -204,7 +220,7 @@ class TestProductUpdate:
         data = response.json()
 
         assert data["name"] == updated_data["name"]
-        assert data["price"] == updated_data["price"]
+        assert float(data["price"]) == updated_data["price"]
         assert data["stock"] == updated_data["stock"]
 
     async def test_update_product_not_found(self, client: AsyncClient, auth_token: str):
@@ -227,7 +243,7 @@ class TestProductDelete:
         """Test deleting a product (soft delete)."""
         # First create a test product
         new_product = {
-            "sku": "TEST-DELETE-001",
+            "sku": f"TEST-DELETE-{uuid4().hex[:8]}",
             "name": "Product to Delete",
             "category": "hand_tools",
             "price": 10.00,
@@ -280,8 +296,12 @@ class TestProductGet:
     async def test_get_product_success(self, client: AsyncClient, auth_token: str, db_session: AsyncSession):
         """Test getting a single product by ID."""
         # Get an existing product
-        result = await db_session.execute(select(Product).limit(1))
-        product = result.scalar_one()
+        result = await db_session.execute(
+            select(Product).where(Product.price >= 0).limit(1)
+        )
+        product = result.scalar_one_or_none()
+        if not product:
+            pytest.skip("No non-negative priced products found for tests.")
 
         response = await client.get(
             f"/api/products/{product.id}",

@@ -344,8 +344,6 @@ async def create_quotes(
         tax = (subtotal * Decimal("0.10")).quantize(Decimal("0.01"))  # 10% GST
         total = subtotal + tax
 
-        quote.subtotal = subtotal
-        quote.tax = tax
         quote.total = total
 
         quotes.append(quote)

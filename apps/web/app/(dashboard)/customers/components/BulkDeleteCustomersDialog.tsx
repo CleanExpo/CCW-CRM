@@ -45,11 +45,13 @@ export function BulkDeleteCustomersDialog({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete customers";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to delete customers",
+        description: message,
       });
     } finally {
       setIsDeleting(false);

@@ -53,14 +53,14 @@ class QuoteStatus(str, enum.Enum):
 class ProductCategory(str, enum.Enum):
     """Product category enum for equipment supplier."""
 
-    HEAVY_MACHINERY = "HEAVY_MACHINERY"
-    HAND_TOOLS = "HAND_TOOLS"
-    POWER_TOOLS = "POWER_TOOLS"
-    SAFETY_EQUIPMENT = "SAFETY_EQUIPMENT"
-    BUILDING_MATERIALS = "BUILDING_MATERIALS"
-    ELECTRICAL = "ELECTRICAL"
-    PLUMBING = "PLUMBING"
-    ACCESSORIES = "ACCESSORIES"
+    HEAVY_MACHINERY = "heavy_machinery"
+    HAND_TOOLS = "hand_tools"
+    POWER_TOOLS = "power_tools"
+    SAFETY_EQUIPMENT = "safety_equipment"
+    BUILDING_MATERIALS = "building_materials"
+    ELECTRICAL = "electrical"
+    PLUMBING = "plumbing"
+    ACCESSORIES = "accessories"
 
 
 class JobStatus(str, enum.Enum):
@@ -106,10 +106,10 @@ class Product(Base):
     sku: str = Column(String(50), unique=True, nullable=False, index=True)
     name: str = Column(String(255), nullable=False)
     description: str | None = Column(Text, nullable=True)
-    category: ProductCategory = Column(
-        Enum(ProductCategory, name="product_category", native_enum=True, values_callable=lambda x: [e.value for e in x]),
+    category: str = Column(
+        String(50),
         nullable=False,
-        default=ProductCategory.ACCESSORIES,
+        default=ProductCategory.ACCESSORIES.value,
         index=True,
     )
     price: Decimal = Column(Numeric(10, 2), nullable=False)
@@ -189,14 +189,12 @@ class Order(Base):
         nullable=False,
         index=True,
     )
-    status: OrderStatus = Column(
-        Enum(OrderStatus, name="order_status", native_enum=True, values_callable=lambda x: [e.value for e in x]),
+    status: str = Column(
+        String(20),
         default=OrderStatus.PENDING,
         nullable=False,
         index=True,
     )
-    subtotal: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
-    tax: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     total: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     notes: str | None = Column(Text, nullable=True)
 
@@ -229,6 +227,7 @@ class Order(Base):
     customer = relationship("Customer", back_populates="orders")
     order_items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     shipments = relationship("OutboundShipment", back_populates="order")
+    activities = relationship("OrderActivity", back_populates="order", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Order(number={self.order_number}, total={self.total})>"
@@ -267,6 +266,32 @@ class OrderItem(Base):
         return f"<OrderItem(order_id={self.order_id}, product_id={self.product_id}, quantity={self.quantity})>"
 
 
+class OrderActivity(Base):
+    """Audit trail for order activity."""
+
+    __tablename__ = "order_activity"
+
+    id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    order_id: UUID = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("orders.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    event_type: str = Column(String(50), nullable=False, index=True)
+    message: str = Column(Text, nullable=False)
+    created_by: str | None = Column(String(255), nullable=True)
+    meta_data: dict | None = Column(JSON, nullable=True)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
+
+    order = relationship("Order", back_populates="activities")
+
+    def __repr__(self) -> str:
+        return f"<OrderActivity(order_id={self.order_id}, event_type={self.event_type})>"
+
+
 class Quote(Base):
     """Quote model for pricing estimates."""
 
@@ -281,14 +306,12 @@ class Quote(Base):
         nullable=False,
         index=True,
     )
-    status: QuoteStatus = Column(
-        Enum(QuoteStatus, name="quote_status", native_enum=True, values_callable=lambda x: [e.value for e in x]),
+    status: str = Column(
+        String(20),
         default=QuoteStatus.DRAFT,
         nullable=False,
         index=True,
     )
-    subtotal: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
-    tax: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     total: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     notes: str | None = Column(Text, nullable=True)
     valid_until: datetime | None = Column(DateTime(timezone=True), nullable=True)

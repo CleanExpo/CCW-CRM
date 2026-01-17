@@ -1,4 +1,5 @@
 import * as React from "react";
+import Image, { type ImageProps } from "next/image";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
@@ -134,13 +135,14 @@ CardFooter.displayName = "CardFooter";
 /* ----------------------------------------
    Card Image Component
    ---------------------------------------- */
-interface CardImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface CardImageProps extends Omit<ImageProps, "fill" | "width" | "height"> {
   aspectRatio?: "video" | "square" | "wide";
 }
 
-const CardImage = React.forwardRef<HTMLImageElement, CardImageProps>(
-  ({ className, aspectRatio = "video", alt = "", ...props }, ref) => (
+const CardImage = React.forwardRef<HTMLDivElement, CardImageProps>(
+  ({ className, aspectRatio = "video", alt = "", sizes = "100vw", ...props }, ref) => (
     <div
+      ref={ref}
       className={cn(
         "relative overflow-hidden rounded-t-xl",
         aspectRatio === "video" && "aspect-video",
@@ -148,9 +150,10 @@ const CardImage = React.forwardRef<HTMLImageElement, CardImageProps>(
         aspectRatio === "wide" && "aspect-[21/9]"
       )}
     >
-      <img
-        ref={ref}
+      <Image
         alt={alt}
+        fill
+        sizes={sizes}
         className={cn(
           "h-full w-full object-cover transition-transform duration-slow hover:scale-105",
           className

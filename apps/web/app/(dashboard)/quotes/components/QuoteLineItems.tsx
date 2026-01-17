@@ -17,6 +17,10 @@ interface Product {
   stock: number;
 }
 
+interface ProductResponse {
+  items: Product[];
+}
+
 export interface LineItem {
   id?: string;
   product_id: string;
@@ -41,9 +45,9 @@ export function QuoteLineItems({ items, onChange, errors, selectedLocation = "br
   useEffect(() => {
     async function loadProducts() {
       try {
-        const response = await apiClient.get<any>("/api/products?page=1&page_size=100");
+        const response = await apiClient.get<ProductResponse>("/api/products?page=1&page_size=100");
         setProducts(response.items || []);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to load products:", error);
       } finally {
         setLoadingProducts(false);

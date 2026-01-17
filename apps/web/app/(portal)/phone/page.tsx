@@ -59,6 +59,22 @@ export default function PhonePage() {
   const [callNotes, setCallNotes] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("pickup");
   const [isProcessing, setIsProcessing] = useState(false);
+  const noteTemplates = [
+    "Send invoice today",
+    "Pickup requested",
+    "Delivery required",
+    "Follow up tomorrow",
+  ];
+
+  const appendCallNote = (template: string) => {
+    setCallNotes((prev) => {
+      const trimmed = prev.trim();
+      if (trimmed.includes(template)) {
+        return prev;
+      }
+      return trimmed ? `${trimmed}\n${template}` : template;
+    });
+  };
 
   // Add product to cart
   const handleProductSelect = (product: Product) => {
@@ -154,9 +170,11 @@ export default function PhonePage() {
       // Reset form
       setCartItems([]);
       setCallNotes("");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Quote creation failed:", error);
-      toast.error(error.message || "Failed to create quote");
+      const message =
+        error instanceof Error ? error.message : "Failed to create quote";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -212,9 +230,11 @@ export default function PhonePage() {
       setCartItems([]);
       setCallNotes("");
       setDeliveryMethod("pickup");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Order creation failed:", error);
-      toast.error(error.message || "Failed to create order");
+      const message =
+        error instanceof Error ? error.message : "Failed to create order";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -270,9 +290,11 @@ export default function PhonePage() {
       setCartItems([]);
       setCallNotes("");
       setDeliveryMethod("pickup");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Order creation failed:", error);
-      toast.error(error.message || "Failed to save order");
+      const message =
+        error instanceof Error ? error.message : "Failed to save order";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -323,6 +345,19 @@ export default function PhonePage() {
               rows={4}
               className="mt-2"
             />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {noteTemplates.map((template) => (
+                <Button
+                  key={template}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendCallNote(template)}
+                >
+                  {template}
+                </Button>
+              ))}
+            </div>
           </Card>
 
           {/* Delivery Options */}

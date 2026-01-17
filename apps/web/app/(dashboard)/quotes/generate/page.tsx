@@ -32,10 +32,6 @@ export default function GenerateQuotePage() {
         requirements: requirements.trim(),
       });
 
-      if ("error" in response) {
-        throw new Error((response as any).error);
-      }
-
       setGeneratedQuote(response);
       toast({
         title: "Quote generated",

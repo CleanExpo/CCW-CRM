@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,7 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [formOpen, setFormOpen] = useState(false);
@@ -63,11 +64,13 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiClient.get<PaginatedResponse>(
-        `/api/products?page=${page}&page_size=${pageSize}${search ? `&search=${search}` : ""}`
+        `/api/products?page=${page}&page_size=${pageSize}${
+          debouncedSearch ? `&search=${debouncedSearch}` : ""
+        }`
       );
 
       // Fetch multi-location stock data for each product
@@ -95,35 +98,33 @@ export default function ProductsPage() {
       setProducts(productsWithStock);
       setTotal(data.total);
       setTotalPages(data.total_pages);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load products";
       console.error("Failed to load products:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load products",
+        description: message,
       });
       setProducts([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, pageSize, debouncedSearch, toast]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      // Reset to page 1 when search changes
-      if (page !== 1) {
-        setPage(1);
-      } else {
-        loadProducts();
-      }
+      setDebouncedSearch(search);
+      setPage(1);
     }, 300);
     return () => clearTimeout(debounce);
   }, [search]);
 
   useEffect(() => {
     loadProducts();
-  }, [page, pageSize]);
+  }, [loadProducts]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-AU", {

@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ShoppingCart, Printer, Mail, CreditCard, Banknote, Building2 } from "lucide-react";
+import { ShoppingCart, CreditCard, Banknote, Building2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ProductSearch } from "@/components/portal/ProductSearch";
 import { CartManager } from "@/components/portal/CartManager";
-import { ContactForm } from "@/components/portal/ContactForm";
+import { CustomerLookup } from "@/components/portal/CustomerLookup";
 import { apiClient } from "@/lib/api/client";
 import { toast } from "sonner";
 
@@ -33,9 +31,23 @@ interface CartItem {
   stock: number;
 }
 
+interface Customer {
+  id: string;
+  customer_number: string;
+  company_name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  postal_code: string;
+}
+
 export default function WalkInPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [customerEmail, setCustomerEmail] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [guestCustomerId, setGuestCustomerId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Add product to cart
@@ -50,8 +62,7 @@ export default function WalkInPage() {
       }
       setCartItems(
         cartItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 }
             : item
         )
       );
@@ -95,8 +106,28 @@ export default function WalkInPage() {
   // Clear entire cart
   const handleClearCart = () => {
     setCartItems([]);
-    setCustomerEmail("");
     toast.success("Cart cleared");
+  };
+
+  const resolveCustomerId = async () => {
+    if (selectedCustomer) {
+      return selectedCustomer.id;
+    }
+
+    if (guestCustomerId) {
+      return guestCustomerId;
+    }
+
+    const guestPayload = {
+      customer_number: `WALK-${Date.now()}`,
+      company_name: "Walk-In Guest",
+      contact_name: "Guest",
+    };
+
+    const created = await apiClient.post<Customer>("/api/customers", guestPayload);
+    setGuestCustomerId(created.id);
+    toast.info("Using guest profile for this order.");
+    return created.id;
   };
 
   // Process payment
@@ -106,12 +137,18 @@ export default function WalkInPage() {
       return;
     }
 
+    if (paymentMethod === "account" && !selectedCustomer) {
+      toast.error("Select or create a customer for account billing.");
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
+      const customerId = await resolveCustomerId();
       // Create order
       const orderData = {
-        customer_id: null, // Walk-in doesn't require customer
+        customer_id: customerId,
         items: cartItems.map((item) => ({
           product_id: item.id,
           quantity: item.quantity,
@@ -131,7 +168,6 @@ export default function WalkInPage() {
         status: paymentMethod === "account" ? "pending" : "confirmed",
         payment_method: paymentMethod,
         channel: "walk-in",
-        customer_email: customerEmail || null,
       };
 
       const response = await apiClient.post<{ id: string; order_number: string }>(
@@ -148,17 +184,17 @@ export default function WalkInPage() {
 
       // Clear cart after successful order
       setCartItems([]);
-      setCustomerEmail("");
-
       // Optionally print receipt
       if (paymentMethod !== "account") {
         toast.info("Receipt ready to print");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Order creation failed:", error);
-      toast.error(
-        error.message || "Failed to process order. Please try again."
-      );
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to process order. Please try again.";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -183,6 +219,11 @@ export default function WalkInPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column: Product Search */}
         <div className="space-y-6">
+          <CustomerLookup
+            onCustomerSelect={setSelectedCustomer}
+            selectedCustomer={selectedCustomer}
+          />
+
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <ShoppingCart className="h-5 w-5" />
@@ -200,29 +241,11 @@ export default function WalkInPage() {
                 <strong>Quick Tips:</strong>
               </p>
               <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                <li>• Use barcode scanner or type SKU</li>
-                <li>• Press Enter to add to cart</li>
-                <li>• Item already in cart? Quantity will increment</li>
+                <li>- Use barcode scanner or type SKU</li>
+                <li>- Press Enter to add to cart</li>
+                <li>- Item already in cart- Quantity will increment</li>
               </ul>
             </div>
-          </Card>
-
-          {/* Optional Email for Receipt */}
-          <Card className="p-6">
-            <Label htmlFor="email" className="flex items-center gap-2 mb-2">
-              <Mail className="h-4 w-4" />
-              Email Receipt (Optional)
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="customer@example.com"
-              value={customerEmail}
-              onChange={(e) => setCustomerEmail(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              Leave blank if customer doesn't want a receipt
-            </p>
           </Card>
         </div>
 
@@ -265,7 +288,7 @@ export default function WalkInPage() {
 
                 <Button
                   onClick={() => handlePayment("account")}
-                  disabled={isProcessing}
+                  disabled={isProcessing || !selectedCustomer}
                   className="w-full h-16 text-lg"
                   variant="outline"
                 >
@@ -273,6 +296,13 @@ export default function WalkInPage() {
                   Account (Invoice)
                 </Button>
               </div>
+
+              {!selectedCustomer && (
+                <p className="text-sm text-muted-foreground mt-3">
+                  No customer selected. Cash or card will use a guest profile. Add a
+                  customer for account billing.
+                </p>
+              )}
 
               <Separator className="my-4" />
 
@@ -291,11 +321,6 @@ export default function WalkInPage() {
             </Card>
           )}
         </div>
-      </div>
-
-      {/* Contact Form - Floating Action Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <ContactForm source="walk-in" />
       </div>
     </div>
   );

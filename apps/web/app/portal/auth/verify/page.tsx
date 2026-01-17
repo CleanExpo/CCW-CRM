@@ -47,9 +47,13 @@ function VerifyContent() {
         setTimeout(() => {
           router.push(data.redirect_url || "/portal/orders");
         }, 2000);
-      } catch (err: any) {
+      } catch (err) {
         setStatus("error");
-        setErrorMessage(err.message || "An error occurred during verification");
+        const message =
+          err instanceof Error
+            ? err.message
+            : "An error occurred during verification";
+        setErrorMessage(message);
       }
     }
 

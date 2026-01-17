@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,40 +52,41 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<any>(
+      const response = await apiClient.get<PaginatedResponse>(
         `/api/orders?page=${page}&page_size=${pageSize}`
       );
 
       // Map API response to frontend format
-      const mappedOrders = response.items.map((order: any) => ({
+      const mappedOrders = response.items.map((order) => ({
         ...order,
         customer_name: order.customer_name || "Unknown Customer",
-        item_count: order.items?.length || 0,
+        item_count: order.items?.length ?? order.item_count ?? 0,
       }));
 
       setOrders(mappedOrders);
       setTotal(response.total);
       setTotalPages(response.total_pages);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to load orders";
       console.error("Failed to load orders:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load orders",
+        description: message,
       });
       setOrders([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, pageSize, toast]);
 
   useEffect(() => {
     loadOrders();
-  }, [page, pageSize]);
+  }, [loadOrders]);
 
   const handleAddOrder = () => {
     setSelectedOrder(null);
@@ -95,14 +96,16 @@ export default function OrdersPage() {
   const handleEditOrder = async (order: Order) => {
     // Fetch full order details including line items
     try {
-      const fullOrder = await apiClient.get<any>(`/api/orders/${order.id}`);
+      const fullOrder = await apiClient.get<Order>(`/api/orders/${order.id}`);
       setSelectedOrder(fullOrder);
       setFormOpen(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load order details";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load order details",
+        description: message,
       });
     }
   };
@@ -115,14 +118,16 @@ export default function OrdersPage() {
   const handleViewDetails = async (order: Order) => {
     // Fetch full order details including line items
     try {
-      const fullOrder = await apiClient.get<any>(`/api/orders/${order.id}`);
+      const fullOrder = await apiClient.get<Order>(`/api/orders/${order.id}`);
       setSelectedOrder(fullOrder);
       setDetailDialogOpen(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load order details";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load order details",
+        description: message,
       });
     }
   };

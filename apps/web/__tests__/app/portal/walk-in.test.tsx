@@ -36,6 +36,18 @@ describe("Walk-In Portal", () => {
     stock: 10,
     warehouse_location: "Brisbane",
   };
+  const mockCustomer = {
+    id: "cust-1",
+    customer_number: "CUST-001",
+    company_name: "Acme Co",
+    contact_name: "Alex",
+    email: "alex@acme.co",
+    phone: "0400 000 000",
+    address: "",
+    city: "Brisbane",
+    state: "QLD",
+    postal_code: "4000",
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -60,11 +72,11 @@ describe("Walk-In Portal", () => {
     ).toBeInTheDocument();
   });
 
-  test("renders email receipt input", () => {
+  test("renders customer lookup", () => {
     render(<WalkInPage />);
 
     expect(
-      screen.getByPlaceholderText(/customer@example.com/i)
+      screen.getByPlaceholderText(/search customer by name, phone, or email/i)
     ).toBeInTheDocument();
   });
 
@@ -129,10 +141,14 @@ describe("Walk-In Portal", () => {
       items: [mockProduct],
     });
 
-    vi.spyOn(apiClient.apiClient, "post").mockResolvedValue({
-      id: "order-1",
-      order_number: "ORD-2026-001",
-    });
+    vi.spyOn(apiClient.apiClient, "post")
+      .mockResolvedValueOnce({
+        id: "guest-1",
+      })
+      .mockResolvedValueOnce({
+        id: "order-1",
+        order_number: "ORD-2026-001",
+      });
 
     render(<WalkInPage />);
 
@@ -152,13 +168,22 @@ describe("Walk-In Portal", () => {
       fireEvent.click(cashButton);
     });
 
-    // Verify order was created
+    // Verify guest customer and order were created
     await waitFor(() => {
-      expect(apiClient.apiClient.post).toHaveBeenCalledWith(
+      expect(apiClient.apiClient.post).toHaveBeenNthCalledWith(
+        1,
+        "/api/customers",
+        expect.objectContaining({
+          company_name: "Walk-In Guest",
+        })
+      );
+      expect(apiClient.apiClient.post).toHaveBeenNthCalledWith(
+        2,
         "/api/orders",
         expect.objectContaining({
           channel: "walk-in",
           status: "confirmed",
+          customer_id: "guest-1",
         })
       );
     });
@@ -169,10 +194,14 @@ describe("Walk-In Portal", () => {
       items: [mockProduct],
     });
 
-    vi.spyOn(apiClient.apiClient, "post").mockResolvedValue({
-      id: "order-1",
-      order_number: "ORD-2026-002",
-    });
+    vi.spyOn(apiClient.apiClient, "post")
+      .mockResolvedValueOnce({
+        id: "guest-2",
+      })
+      .mockResolvedValueOnce({
+        id: "order-1",
+        order_number: "ORD-2026-002",
+      });
 
     render(<WalkInPage />);
 
@@ -192,22 +221,37 @@ describe("Walk-In Portal", () => {
       fireEvent.click(cardButton);
     });
 
-    // Verify order was created
+    // Verify guest customer and order were created
     await waitFor(() => {
-      expect(apiClient.apiClient.post).toHaveBeenCalledWith(
+      expect(apiClient.apiClient.post).toHaveBeenNthCalledWith(
+        1,
+        "/api/customers",
+        expect.objectContaining({
+          company_name: "Walk-In Guest",
+        })
+      );
+      expect(apiClient.apiClient.post).toHaveBeenNthCalledWith(
+        2,
         "/api/orders",
         expect.objectContaining({
           channel: "walk-in",
           status: "confirmed",
           payment_method: "card",
+          customer_id: "guest-2",
         })
       );
     });
   });
 
   test("processes account payment as pending order", async () => {
-    vi.spyOn(apiClient.apiClient, "get").mockResolvedValue({
-      items: [mockProduct],
+    vi.spyOn(apiClient.apiClient, "get").mockImplementation((url: string) => {
+      if (url.startsWith("/api/customers")) {
+        return Promise.resolve({ items: [mockCustomer] });
+      }
+      if (url.startsWith("/api/orders")) {
+        return Promise.resolve({ items: [] });
+      }
+      return Promise.resolve({ items: [mockProduct] });
     });
 
     vi.spyOn(apiClient.apiClient, "post").mockResolvedValue({
@@ -216,6 +260,18 @@ describe("Walk-In Portal", () => {
     });
 
     render(<WalkInPage />);
+
+    // Select customer
+    const customerInput = screen.getByPlaceholderText(
+      /search customer by name, phone, or email/i
+    );
+    fireEvent.change(customerInput, { target: { value: "Acme" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Acme Co")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Acme Co"));
 
     // Add product to cart
     const searchInput = screen.getByPlaceholderText(
@@ -241,28 +297,18 @@ describe("Walk-In Portal", () => {
           channel: "walk-in",
           status: "pending",
           payment_method: "account",
+          customer_id: "cust-1",
         })
       );
     });
   });
 
-  test("includes customer email in order if provided", async () => {
+  test("disables account payment until customer is selected", async () => {
     vi.spyOn(apiClient.apiClient, "get").mockResolvedValue({
       items: [mockProduct],
     });
 
-    vi.spyOn(apiClient.apiClient, "post").mockResolvedValue({
-      id: "order-1",
-      order_number: "ORD-2026-004",
-    });
-
     render(<WalkInPage />);
-
-    // Enter customer email
-    const emailInput = screen.getByPlaceholderText(/customer@example.com/i);
-    fireEvent.change(emailInput, {
-      target: { value: "customer@test.com" },
-    });
 
     // Add product to cart
     const searchInput = screen.getByPlaceholderText(
@@ -274,20 +320,9 @@ describe("Walk-In Portal", () => {
       fireEvent.click(screen.getByText("Test Product"));
     });
 
-    // Process payment
     await waitFor(() => {
-      const cashButton = screen.getByText("Cash");
-      fireEvent.click(cashButton);
-    });
-
-    // Verify email was included
-    await waitFor(() => {
-      expect(apiClient.apiClient.post).toHaveBeenCalledWith(
-        "/api/orders",
-        expect.objectContaining({
-          customer_email: "customer@test.com",
-        })
-      );
+      const accountButton = screen.getByText("Account (Invoice)");
+      expect(accountButton).toBeDisabled();
     });
   });
 

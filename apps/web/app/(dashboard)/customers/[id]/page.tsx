@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,11 +73,7 @@ export default function CustomerDetailPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadCustomerData();
-  }, [customerId]);
-
-  async function loadCustomerData() {
+  const loadCustomerData = useCallback(async () => {
     setLoading(true);
     try {
       // Load customer details
@@ -95,16 +91,22 @@ export default function CustomerDetailPage() {
         `/api/quotes?customer_id=${customerId}&page_size=100`
       );
       setQuotes(quotesData.items || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load customer data";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load customer data",
+        description: message,
       });
     } finally {
       setLoading(false);
     }
-  }
+  }, [customerId, toast]);
+
+  useEffect(() => {
+    loadCustomerData();
+  }, [loadCustomerData]);
 
   if (loading) {
     return (

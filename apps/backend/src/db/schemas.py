@@ -1,9 +1,11 @@
 """Pydantic schemas for ERP API."""
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from src.db.demo_models import OrderStatus, QuoteStatus
 
 
 # Organization schemas
@@ -55,7 +57,7 @@ class ProductBase(BaseModel):
     name: str
     description: str | None = None
     category: str
-    price: Decimal
+    price: Decimal = Field(ge=0)
     cost: Decimal | None = None
     stock: int = 0
     warehouse_location: str | None = None
@@ -70,7 +72,7 @@ class ProductUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     category: str | None = None
-    price: Decimal | None = None
+    price: Decimal | None = Field(default=None, ge=0)
     cost: Decimal | None = None
     stock: int | None = None
     warehouse_location: str | None = None
@@ -141,7 +143,7 @@ class OrderItemBase(BaseModel):
 
 class OrderItemCreate(BaseModel):
     product_id: UUID
-    quantity: int
+    quantity: int = Field(ge=0)
 
 
 class OrderItem(OrderItemBase):
@@ -156,9 +158,13 @@ class OrderItem(OrderItemBase):
 # Order schemas
 class OrderBase(BaseModel):
     customer_id: UUID
-    status: str = "draft"
+    status: OrderStatus = OrderStatus.DRAFT
     fulfillment_location: str | None = "brisbane"  # brisbane, sydney, or melbourne
     notes: str | None = None
+    tracking_number: str | None = None
+    carrier_name: str | None = None
+    shipped_date: datetime | None = None
+    estimated_delivery_date: datetime | None = None
 
 
 class OrderCreate(OrderBase):
@@ -167,9 +173,13 @@ class OrderCreate(OrderBase):
 
 class OrderUpdate(BaseModel):
     customer_id: UUID | None = None
-    status: str | None = None
+    status: OrderStatus | None = None
     fulfillment_location: str | None = None
     notes: str | None = None
+    tracking_number: str | None = None
+    carrier_name: str | None = None
+    shipped_date: datetime | None = None
+    estimated_delivery_date: datetime | None = None
     items: list[OrderItemCreate] | None = None
     subtotal: Decimal | None = None
     tax: Decimal | None = None
@@ -184,8 +194,32 @@ class Order(OrderBase):
     order_date: datetime
     created_at: datetime
     updated_at: datetime
+    items: list[OrderItem] = []
     # Relationship loaded from SQLAlchemy - frontend handles both 'items' and 'order_items'
     order_items: list[OrderItem]
+
+    class Config:
+        from_attributes = True
+
+
+class OrderActivityBase(BaseModel):
+    order_id: UUID
+    event_type: str
+    message: str
+    created_by: str | None = None
+    meta_data: dict | None = None
+
+
+class OrderActivityCreate(BaseModel):
+    event_type: str
+    message: str
+    created_by: str | None = None
+    meta_data: dict | None = None
+
+
+class OrderActivity(OrderActivityBase):
+    id: UUID
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -201,7 +235,7 @@ class QuoteItemBase(BaseModel):
 
 class QuoteItemCreate(BaseModel):
     product_id: UUID
-    quantity: int
+    quantity: int = Field(ge=0)
 
 
 class QuoteItem(QuoteItemBase):
@@ -216,19 +250,27 @@ class QuoteItem(QuoteItemBase):
 # Quote schemas
 class QuoteBase(BaseModel):
     customer_id: UUID
-    status: str = "draft"
-    valid_until: datetime | None = None
+    status: QuoteStatus = QuoteStatus.DRAFT
+    valid_until: date | None = None
     notes: str | None = None
+
+    @field_validator("valid_until", mode="before")
+    @classmethod
+    def normalize_valid_until(cls, value):
+        if isinstance(value, datetime):
+            return value.date()
+        return value
 
 
 class QuoteCreate(QuoteBase):
+    valid_until: date
     items: list[QuoteItemCreate]
 
 
 class QuoteUpdate(BaseModel):
     customer_id: UUID | None = None
-    status: str | None = None
-    valid_until: datetime | None = None
+    status: QuoteStatus | None = None
+    valid_until: date | None = None
     notes: str | None = None
     items: list[QuoteItemCreate] | None = None
 

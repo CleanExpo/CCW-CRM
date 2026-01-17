@@ -10,7 +10,9 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config.settings import get_settings
 from src.db.demo_models import Quote, QuoteItem, Order, Customer, Product
+from src.utils.calculations import calculate_totals
 
 
 @pytest.fixture
@@ -23,8 +25,13 @@ async def test_customer(db_session: AsyncSession) -> Customer:
 @pytest.fixture
 async def test_product(db_session: AsyncSession) -> Product:
     """Get a test product for quote items."""
-    result = await db_session.execute(select(Product).limit(1))
-    return result.scalar_one()
+    result = await db_session.execute(
+        select(Product).where(Product.price >= 0).limit(1)
+    )
+    product = result.scalar_one_or_none()
+    if not product:
+        pytest.fail("No non-negative priced products found for tests.")
+    return product
 
 
 class TestQuotesList:
@@ -166,9 +173,15 @@ class TestQuoteCreate:
     ):
         """Test that quote total is calculated from line items."""
         quantity = 3
-        unit_price = float(test_product.price)
-        expected_total = quantity * unit_price
+        settings = get_settings()
+        totals = calculate_totals(
+            [(quantity, test_product.price)],
+            settings.tax_rate_decimal,
+            tax_enabled=True,
+        )
+        expected_total = float(totals["total"])
         valid_until = (date.today() + timedelta(days=30)).isoformat()
+        unit_price = float(test_product.price)
 
         new_quote = {
             "customer_id": str(test_customer.id),
@@ -194,7 +207,7 @@ class TestQuoteCreate:
         data = response.json()
 
         # Verify total is calculated correctly
-        assert data["total"] == pytest.approx(expected_total, rel=0.01)
+        assert float(data["total"]) == pytest.approx(expected_total, rel=0.01)
 
     async def test_create_quote_number_generation(
         self,

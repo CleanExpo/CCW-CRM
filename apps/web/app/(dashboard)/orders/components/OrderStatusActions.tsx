@@ -120,11 +120,15 @@ export function OrderStatusActions({
 
       onStatusChange();
       setConfirmDialogOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not update order status. Please try again.";
       toast({
         variant: "destructive",
         title: "Failed to Update Status",
-        description: error.message || "Could not update order status. Please try again.",
+        description: message,
       });
     } finally {
       setIsLoading(false);
@@ -146,11 +150,15 @@ export function OrderStatusActions({
       });
 
       onStatusChange();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not cancel order. Please try again.";
       toast({
         variant: "destructive",
         title: "Failed to Cancel Order",
-        description: error.message || "Could not cancel order. Please try again.",
+        description: message,
       });
     } finally {
       setIsLoading(false);

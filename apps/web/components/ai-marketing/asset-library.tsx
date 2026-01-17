@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { BentoGrid, BentoCard, BentoCardHeader, BentoCardTitle, BentoCardDescription, BentoCardContent } from "@/components/ui/bento-grid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -243,10 +244,12 @@ export function AssetLibrary({ className, variant = "glass", span = 3, ...props 
                   {/* Asset Preview */}
                   <div className="relative aspect-video bg-muted/20 overflow-hidden">
                     {asset.type === "image" ? (
-                      <img
+                      <Image
                         src={asset.thumbnail || asset.content}
                         alt={asset.title}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 33vw"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full">
@@ -337,11 +340,13 @@ export function AssetLibrary({ className, variant = "glass", span = 3, ...props 
           {selectedAsset && (
             <div className="space-y-4">
               {selectedAsset.type === "image" ? (
-                <div className="rounded-lg overflow-hidden border border-white/10">
-                  <img
+                <div className="relative aspect-video rounded-lg overflow-hidden border border-white/10">
+                  <Image
                     src={selectedAsset.content}
                     alt={selectedAsset.title}
-                    className="w-full h-auto"
+                    fill
+                    sizes="100vw"
+                    className="object-contain bg-black/5"
                   />
                 </div>
               ) : (

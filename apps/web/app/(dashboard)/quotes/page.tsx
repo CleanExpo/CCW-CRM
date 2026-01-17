@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
@@ -42,7 +42,7 @@ export default function QuotesPage() {
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
 
-  async function loadQuotes() {
+  const loadQuotes = useCallback(async () => {
     setLoading(true);
     try {
       const response = await apiClient.get<PaginatedResponse>(
@@ -50,23 +50,25 @@ export default function QuotesPage() {
       );
       setQuotes(response.items);
       setTotal(response.total);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load quotes";
       console.error("Failed to load quotes:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load quotes",
+        description: message,
       });
       setQuotes([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
 
   useEffect(() => {
     loadQuotes();
-  }, []);
+  }, [loadQuotes]);
 
   const handleAddQuote = () => {
     setSelectedQuote(null);
@@ -76,15 +78,17 @@ export default function QuotesPage() {
   const handleEditQuote = async (quote: Quote) => {
     // Fetch full quote details including line items
     try {
-      const fullQuote = await apiClient.get<any>(`/api/quotes/${quote.id}`);
+      const fullQuote = await apiClient.get<Quote>(`/api/quotes/${quote.id}`);
       setSelectedQuote(fullQuote);
       setFormOpen(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load quote details";
       console.error("Failed to load quote details:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load quote details",
+        description: message,
       });
     }
   };

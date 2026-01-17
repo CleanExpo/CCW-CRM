@@ -2,14 +2,14 @@
 
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils/calculations";
-import { Order } from "../types";
+import { Order, OrderItem } from "../types";
 
 interface OrderPrintViewProps {
   order: Order;
 }
 
 export function OrderPrintView({ order }: OrderPrintViewProps) {
-  const items = order.items || order.order_items || [];
+  const items: OrderItem[] = order.items || order.order_items || [];
   const subtotal = Number(order.total) / 1.1;
   const tax = Number(order.total) - subtotal;
 
@@ -94,7 +94,7 @@ export function OrderPrintView({ order }: OrderPrintViewProps) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item: any, index: number) => (
+              {items.map((item, index) => (
                 <tr key={item.id || index} className="border-b border-gray-200">
                   <td className="py-3 text-sm">{item.product_name || item.product_id}</td>
                   <td className="py-3 text-sm text-center">{item.quantity}</td>

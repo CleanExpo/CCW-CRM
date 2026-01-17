@@ -45,11 +45,13 @@ export function DeleteQuoteDialog({
       });
       onOpenChange(false);
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete quote";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to delete quote",
+        description: message,
       });
     } finally {
       setIsLoading(false);

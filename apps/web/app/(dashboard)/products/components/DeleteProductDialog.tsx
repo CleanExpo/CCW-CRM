@@ -49,10 +49,12 @@ export function DeleteProductDialog({
       });
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete product";
       toast({
         title: "Error",
-        description: error.message || "Failed to delete product",
+        description: message,
         variant: "destructive",
       });
     } finally {

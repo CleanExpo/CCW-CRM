@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -36,30 +36,35 @@ export function ProductSearch({
   const [showResults, setShowResults] = useState(false);
 
   // Debounced search function
-  const searchProducts = useCallback(
-    debounce(async (searchQuery: string) => {
-      if (!searchQuery || searchQuery.length < 2) {
-        setResults([]);
-        setIsSearching(false);
-        return;
-      }
+  const searchProducts = useMemo(
+    () =>
+      debounce(async (searchQuery: string) => {
+        if (!searchQuery || searchQuery.length < 2) {
+          setResults([]);
+          setIsSearching(false);
+          return;
+        }
 
-      setIsSearching(true);
-      try {
-        const response = await apiClient.get<{ items: Product[] }>(
-          `/api/products?search=${encodeURIComponent(searchQuery)}&page_size=10`
-        );
-        setResults(response.items || []);
-        setShowResults(true);
-      } catch (error) {
-        console.error("Product search failed:", error);
-        setResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300),
+        setIsSearching(true);
+        try {
+          const response = await apiClient.get<{ items: Product[] }>(
+            `/api/products?search=${encodeURIComponent(searchQuery)}&page_size=10`
+          );
+          setResults(response.items || []);
+          setShowResults(true);
+        } catch (error) {
+          console.error("Product search failed:", error);
+          setResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300),
     []
   );
+
+  useEffect(() => {
+    return () => searchProducts.cancel();
+  }, [searchProducts]);
 
   useEffect(() => {
     searchProducts(query);
@@ -139,11 +144,11 @@ export function ProductSearch({
                     </p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                       <span>{product.category}</span>
-                      <span>•</span>
+                      <span>|</span>
                       <span>{product.stock} in stock</span>
                       {product.warehouse_location && (
                         <>
-                          <span>•</span>
+                          <span>|</span>
                           <span>{product.warehouse_location}</span>
                         </>
                       )}

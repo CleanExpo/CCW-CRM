@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Minus, Plus, X, ShoppingCart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 interface CartItem {
   id: string;
@@ -48,7 +49,7 @@ export function CartManager({
 
     // Validate against stock
     if (newQuantity > item.stock) {
-      alert(`Only ${item.stock} units available in stock`);
+      toast.error(`Only ${item.stock} units available in stock`);
       return;
     }
 

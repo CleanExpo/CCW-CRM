@@ -103,9 +103,11 @@ export default function ServicePage() {
 
       // Reload requests
       loadServiceRequests();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Service request submission failed:", error);
-      toast.error(error.message || "Failed to submit service request");
+      const message =
+        error instanceof Error ? error.message : "Failed to submit service request";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

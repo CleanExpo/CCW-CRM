@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -34,7 +34,7 @@ import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { OrderLineItems, LineItem } from "./OrderLineItems";
 import { QuickCustomerAdd } from "./QuickCustomerAdd";
-import { Order, Customer } from "../types";
+import { Order, Customer, OrderItem } from "../types";
 import { Plus } from "lucide-react";
 
 const ORDER_STATUSES = [
@@ -83,19 +83,21 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     },
   });
 
-  // Load customers
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  async function loadCustomers() {
+  const loadCustomers = useCallback(async () => {
     try {
-      const response = await apiClient.get<any>("/api/customers?page=1&page_size=100");
+      const response = await apiClient.get<{ items: Customer[] }>(
+        "/api/customers?page=1&page_size=100"
+      );
       setCustomers(response.items || []);
     } catch (error) {
       console.error("Failed to load customers:", error);
     }
-  }
+  }, []);
+
+  // Load customers
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
 
   function handleCustomerCreated(customer: { id: string; company_name: string }) {
     // Reload customers list
@@ -111,7 +113,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   // Reset form when order changes or dialog opens
   useEffect(() => {
     if (order) {
-      const location = (order as any).fulfillment_location || "brisbane";
+      const location = order.fulfillment_location || "brisbane";
       setSelectedLocation(location);
       form.reset({
         customer_id: order.customer_id,
@@ -120,11 +122,11 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         notes: order.notes || "",
       });
       // Convert API strings to numbers for line items
-      const items = (order.items || order.order_items || []).map((item: any) => ({
+      const items = (order.items || order.order_items || []).map((item: OrderItem) => ({
         ...item,
         quantity: Number(item.quantity),
         unit_price: Number(item.unit_price),
-        line_total: Number(item.line_total),
+        line_total: Number(item.line_total || 0),
       }));
 
       setLineItems(items);
@@ -194,11 +196,15 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
       onOpenChange(false);
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Failed to ${isEdit ? "update" : "create"} order`;
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || `Failed to ${isEdit ? "update" : "create"} order`,
+        description: message,
       });
     } finally {
       setIsLoading(false);

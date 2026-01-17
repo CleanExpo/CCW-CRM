@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -43,14 +43,7 @@ export function ChatWidget() {
     }
   }, [messages]);
 
-  // Initialize conversation when widget opens
-  useEffect(() => {
-    if (isOpen && !conversationId) {
-      handleNewConversation();
-    }
-  }, [isOpen]);
-
-  const handleNewConversation = async () => {
+  const handleNewConversation = useCallback(async () => {
     try {
       const response = await createConversation();
       setConversationId(response.conversation_id);
@@ -59,14 +52,23 @@ export function ChatWidget() {
         title: "New Conversation",
         description: "Started a new chat session",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to create conversation";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to create conversation",
+        description: message,
       });
     }
-  };
+  }, [toast]);
+
+  // Initialize conversation when widget opens
+  useEffect(() => {
+    if (isOpen && !conversationId) {
+      handleNewConversation();
+    }
+  }, [isOpen, conversationId, handleNewConversation]);
 
   const handleLoadHistory = async () => {
     if (!conversationId) return;
@@ -75,11 +77,13 @@ export function ChatWidget() {
     try {
       const response = await getConversationHistory(conversationId);
       setMessages(response.messages);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load conversation history";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load conversation history",
+        description: message,
       });
     } finally {
       setLoadingHistory(false);
@@ -99,11 +103,13 @@ export function ChatWidget() {
       });
       // Create new conversation
       await handleNewConversation();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete conversation";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to delete conversation",
+        description: message,
       });
     }
   };
@@ -136,11 +142,13 @@ export function ChatWidget() {
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to send message";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send message",
+        description: message,
       });
       // Remove optimistic user message on error
       setMessages((prev) => prev.slice(0, -1));

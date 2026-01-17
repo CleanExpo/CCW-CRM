@@ -136,10 +136,14 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       }
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Failed to ${isEdit ? "update" : "create"} customer`;
       toast({
         title: "Error",
-        description: error.message || `Failed to ${isEdit ? "update" : "create"} customer`,
+        description: message,
         variant: "destructive",
       });
     } finally {

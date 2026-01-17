@@ -1,26 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api/client";
+import { convertToCSV, downloadCSV } from "@/lib/utils/csv-export";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Download, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils/calculations";
-
-interface Order {
-  id: string;
-  order_number: string;
-  customer_name?: string;
-  order_date: string;
-  status: string;
-  total: number;
-  notes?: string;
-  items?: any[];
-  order_items?: any[];
-}
+import type { Order, OrderItem } from "../../types";
 
 export default function InvoicePage() {
   const params = useParams();
@@ -31,29 +21,62 @@ export default function InvoicePage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadOrder();
-  }, [orderId]);
-
-  async function loadOrder() {
+  const loadOrder = useCallback(async () => {
     setLoading(true);
     try {
       const orderData = await apiClient.get<Order>(`/api/orders/${orderId}`);
       setOrder(orderData);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to load order";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load order",
+        description: message,
       });
       router.push("/orders");
     } finally {
       setLoading(false);
     }
-  }
+  }, [orderId, router, toast]);
+
+  useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
 
   const handlePrint = () => {
     window.print();
+  };
+  const handleExportCsv = () => {
+    if (!order) return;
+    const invoiceNumber = order.order_number.replace("ORD-", "INV-");
+    const headers = [
+      "invoice_number",
+      "order_number",
+      "customer_name",
+      "description",
+      "quantity",
+      "unit_price",
+      "line_total",
+      "tax",
+      "total",
+    ];
+    const items: OrderItem[] = order.items || order.order_items || [];
+    const subtotal = Number(order.total) / 1.1;
+    const tax = Number(order.total) - subtotal;
+    const data = items.map((item) => ({
+      invoice_number: invoiceNumber,
+      order_number: order.order_number,
+      customer_name: order.customer_name || "",
+      description: item.product_name || item.product_id,
+      quantity: item.quantity,
+      unit_price: Number(item.unit_price),
+      line_total: Number(item.line_total),
+      tax,
+      total: Number(order.total),
+    }));
+    const csv = convertToCSV(data, headers);
+    const timestamp = new Date().toISOString().split("T")[0];
+    downloadCSV(csv, `invoice-${invoiceNumber}-${timestamp}.csv`);
   };
 
   if (loading) {
@@ -69,7 +92,7 @@ export default function InvoicePage() {
     return null;
   }
 
-  const items = order.items || order.order_items || [];
+  const items: OrderItem[] = order.items || order.order_items || [];
   const subtotal = Number(order.total) / 1.1;
   const tax = Number(order.total) - subtotal;
 
@@ -115,9 +138,13 @@ export default function InvoicePage() {
           <h1 className="text-3xl font-bold tracking-tight">Invoice</h1>
           <p className="text-muted-foreground">{invoiceNumber}</p>
         </div>
+        <Button variant="outline" onClick={handleExportCsv}>
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
         <Button onClick={handlePrint}>
           <Printer className="h-4 w-4 mr-2" />
-          Print Invoice
+          Download PDF
         </Button>
       </div>
 
@@ -181,7 +208,7 @@ export default function InvoicePage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((item: any, index: number) => (
+              {items.map((item, index) => (
                 <tr key={item.id || index} className="border-b border-gray-200">
                   <td className="py-3 text-sm">{item.product_name || item.product_id}</td>
                   <td className="py-3 text-sm text-center">{item.quantity}</td>

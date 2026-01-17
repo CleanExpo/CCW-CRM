@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 // import { ScrollArea } from "@/components/ui/scroll-area"; // TODO: Add shadcn ScrollArea component
@@ -37,14 +37,7 @@ export default function AIAssistantPage() {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    // Auto-create first conversation
-    if (!conversationId) {
-      handleNewConversation();
-    }
-  }, []);
-
-  const handleNewConversation = async () => {
+  const handleNewConversation = useCallback(async () => {
     try {
       const response = await createNewConversation();
       setConversationId(response.conversation_id);
@@ -64,7 +57,14 @@ export default function AIAssistantPage() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    // Auto-create first conversation
+    if (!conversationId) {
+      handleNewConversation();
+    }
+  }, [conversationId, handleNewConversation]);
 
   const handleLoadConversation = async (convId: string) => {
     try {

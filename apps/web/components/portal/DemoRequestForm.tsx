@@ -67,8 +67,12 @@ export function DemoRequestForm({ triggerButton }: DemoRequestFormProps) {
       toast.success("Demo request submitted! We'll contact you soon.");
       form.reset();
       setOpen(false);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to submit request. Please try again.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to submit request. Please try again.";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

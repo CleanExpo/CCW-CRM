@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 import { Quote } from "../types";
 
 interface ConvertToOrderDialogProps{
@@ -20,6 +19,10 @@ interface ConvertToOrderDialogProps{
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+}
+
+interface ConvertToOrderResponse {
+  order_number: string;
 }
 
 export function ConvertToOrderDialog({
@@ -30,7 +33,6 @@ export function ConvertToOrderDialog({
 }: ConvertToOrderDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const router = useRouter();
 
   const canConvert = quote?.status.toLowerCase() === "accepted";
 
@@ -40,7 +42,10 @@ export function ConvertToOrderDialog({
     setIsLoading(true);
 
     try {
-      const response = await apiClient.post<any>(`/api/quotes/${quote.id}/convert-to-order`, {});
+      const response = await apiClient.post<ConvertToOrderResponse>(
+        `/api/quotes/${quote.id}/convert-to-order`,
+        {}
+      );
 
       toast({
         title: "Success",
@@ -52,11 +57,13 @@ export function ConvertToOrderDialog({
 
       // Optional: Navigate to orders page
       // router.push("/orders");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to convert quote to order";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to convert quote to order",
+        description: message,
       });
     } finally {
       setIsLoading(false);

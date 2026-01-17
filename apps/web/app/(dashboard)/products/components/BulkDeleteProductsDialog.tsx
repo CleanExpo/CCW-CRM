@@ -45,11 +45,13 @@ export function BulkDeleteProductsDialog({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete products";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to delete products",
+        description: message,
       });
     } finally {
       setIsDeleting(false);

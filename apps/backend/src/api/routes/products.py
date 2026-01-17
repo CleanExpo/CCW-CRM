@@ -89,7 +89,7 @@ async def create_product(
     existing_query = select(ProductModel).where(ProductModel.sku == product_data.sku)
     result = await db.execute(existing_query)
     if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="SKU already exists")
+        raise HTTPException(status_code=409, detail="SKU already exists")
 
     # Create product
     product = ProductModel(**product_data.model_dump())

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -35,20 +35,22 @@ import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
+const productCategories = [
+  "heavy_machinery",
+  "hand_tools",
+  "power_tools",
+  "safety_equipment",
+  "building_materials",
+  "electrical",
+  "plumbing",
+  "accessories",
+] as const;
+
 const formSchema = z.object({
   sku: z.string().min(1, "SKU is required").max(50, "SKU must be 50 characters or less"),
   name: z.string().min(1, "Name is required").max(255, "Name must be 255 characters or less"),
   description: z.string().optional(),
-  category: z.enum([
-    "heavy_machinery",
-    "hand_tools",
-    "power_tools",
-    "safety_equipment",
-    "building_materials",
-    "electrical",
-    "plumbing",
-    "accessories",
-  ], {
+  category: z.enum(productCategories, {
     required_error: "Please select a category",
   }),
   price: z.coerce.number().min(0, "Price must be 0 or greater"),
@@ -59,13 +61,14 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
+type ProductCategory = FormData["category"];
 
 interface Product {
   id: string;
   sku: string;
   name: string;
   description?: string;
-  category: string;
+  category: ProductCategory;
   price: number;
   cost: number;
   stock: number;
@@ -80,7 +83,7 @@ interface ProductFormProps {
   onSuccess: () => void;
 }
 
-const categoryLabels = {
+const categoryLabels: Record<ProductCategory, string> = {
   heavy_machinery: "Heavy Machinery",
   hand_tools: "Hand Tools",
   power_tools: "Power Tools",
@@ -119,7 +122,7 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
           sku: product.sku,
           name: product.name,
           description: product.description || "",
-          category: product.category as any,
+          category: product.category,
           price: product.price,
           cost: product.cost,
           stock: product.stock,
@@ -160,10 +163,14 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
       }
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Failed to ${isEdit ? "update" : "create"} product`;
       toast({
         title: "Error",
-        description: error.message || `Failed to ${isEdit ? "update" : "create"} product`,
+        description: message,
         variant: "destructive",
       });
     } finally {

@@ -3,6 +3,7 @@
 import time
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
@@ -10,7 +11,7 @@ from uuid import UUID, uuid4
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_db
+from src.config.database import get_db_session as db_session_context
 
 if TYPE_CHECKING:
     from src.ai.orchestration.agent_registry import AgentHealthReport
@@ -80,7 +81,8 @@ class BaseAgent(ABC):
         """
         pass
 
-    async def get_db_session(self) -> AsyncSession:
+    @asynccontextmanager
+    async def get_db_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
         Get database session for data access.
 
@@ -91,8 +93,8 @@ class BaseAgent(ABC):
             async with agent.get_db_session() as db:
                 result = await db.execute(query)
         """
-        async for session in get_db():
-            return session
+        async with db_session_context() as session:
+            yield session
 
     def register_tool(self, tool: Any) -> None:
         """
@@ -240,11 +242,11 @@ class BaseAgent(ABC):
 
             # Check 2: Agent can access database (if needed)
             try:
-                db = await self.get_db_session()
-                if db:
-                    checks_passed.append("database_accessible")
-                else:
-                    checks_failed.append("database_check: session is None")
+                async with self.get_db_session() as db:
+                    if db:
+                        checks_passed.append("database_accessible")
+                    else:
+                        checks_failed.append("database_check: session is None")
             except Exception as e:
                 checks_failed.append(f"database_check: {str(e)}")
 

@@ -5,6 +5,7 @@ import { Globe, Package, FileText, User, ShoppingBag, Filter } from "lucide-reac
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -14,8 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { ProductSearch } from "@/components/portal/ProductSearch";
 import { CartManager } from "@/components/portal/CartManager";
+import { CustomerLookup } from "@/components/portal/CustomerLookup";
 import { apiClient } from "@/lib/api/client";
 import { toast } from "sonner";
 
@@ -25,7 +28,7 @@ interface Product {
   name: string;
   description: string;
   category: string;
-  price: number;
+  price: number | string; // Backend returns string, but we'll convert to number
   stock: number;
   warehouse_location: string;
 }
@@ -39,13 +42,21 @@ interface CartItem {
   stock: number;
 }
 
+interface OrderItem {
+  id?: string;
+  product_id?: string;
+  quantity?: number;
+  unit_price?: number;
+  line_total?: number;
+}
+
 interface Order {
   id: string;
   order_number: string;
   order_date: string;
   status: string;
-  total: number;
-  items: any[];
+  total: number | string; // Backend returns string
+  items?: OrderItem[];
 }
 
 interface Quote {
@@ -53,8 +64,21 @@ interface Quote {
   quote_number: string;
   quote_date: string;
   status: string;
-  total: number;
+  total: number | string; // Backend returns string
   valid_until: string;
+}
+
+interface Customer {
+  id: string;
+  customer_number: string;
+  company_name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  postal_code: string;
 }
 
 export default function InternetPage() {
@@ -63,21 +87,36 @@ export default function InternetPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [checkoutNotes, setCheckoutNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Load initial data
+  // Ensure client-side only rendering to prevent hydration errors
   useEffect(() => {
-    loadOrders();
-    loadQuotes();
-    loadProducts();
+    setMounted(true);
   }, []);
+
+  // Load initial data only after component is mounted
+  useEffect(() => {
+    if (mounted) {
+      loadOrders();
+      loadQuotes();
+      loadProducts();
+    }
+  }, [mounted]);
 
   const loadOrders = async () => {
     try {
-      const response = await apiClient.get<{ items: Order[] }>(
-        "/api/orders?page_size=10"
+      const response = await apiClient.get<{ data: Order[] }>(
+        "/api/demo/orders?page_size=10"
       );
-      setOrders(response.items || []);
+      // Convert string totals to numbers
+      const ordersWithNumericTotals = (response.data || []).map(o => ({
+        ...o,
+        total: typeof o.total === 'string' ? parseFloat(o.total) : o.total
+      }));
+      setOrders(ordersWithNumericTotals);
     } catch (error) {
       console.error("Failed to load orders:", error);
     }
@@ -85,10 +124,15 @@ export default function InternetPage() {
 
   const loadQuotes = async () => {
     try {
-      const response = await apiClient.get<{ items: Quote[] }>(
-        "/api/quotes?page_size=10"
+      const response = await apiClient.get<{ data: Quote[] }>(
+        "/api/demo/quotes?page_size=10"
       );
-      setQuotes(response.items || []);
+      // Convert string totals to numbers
+      const quotesWithNumericTotals = (response.data || []).map(q => ({
+        ...q,
+        total: typeof q.total === 'string' ? parseFloat(q.total) : q.total
+      }));
+      setQuotes(quotesWithNumericTotals);
     } catch (error) {
       console.error("Failed to load quotes:", error);
     }
@@ -97,10 +141,15 @@ export default function InternetPage() {
   const loadProducts = async (category?: string) => {
     try {
       const categoryParam = category && category !== "all" ? `&category=${category}` : "";
-      const response = await apiClient.get<{ items: Product[] }>(
-        `/api/products?page_size=20${categoryParam}`
+      const response = await apiClient.get<{ data: Product[] }>(
+        `/api/demo/products?page_size=20${categoryParam}`
       );
-      setProducts(response.items || []);
+      // Convert string prices to numbers
+      const productsWithNumericPrices = (response.data || []).map(p => ({
+        ...p,
+        price: typeof p.price === 'string' ? parseFloat(p.price) : p.price
+      }));
+      setProducts(productsWithNumericPrices);
     } catch (error) {
       console.error("Failed to load products:", error);
     }
@@ -138,7 +187,7 @@ export default function InternetPage() {
           id: product.id,
           sku: product.sku,
           name: product.name,
-          price: product.price,
+          price: typeof product.price === "string" ? parseFloat(product.price) : product.price,
           quantity: 1,
           stock: product.stock,
         },
@@ -165,18 +214,41 @@ export default function InternetPage() {
     toast.success("Cart cleared");
   };
 
+  const noteTemplates = [
+    "Need bulk pricing",
+    "Call before delivery",
+    "Deliver to site address on file",
+    "Project deadline in 30 days",
+  ];
+
+  const appendCheckoutNote = (template: string) => {
+    setCheckoutNotes((prev) => {
+      const trimmed = prev.trim();
+      if (trimmed.includes(template)) {
+        return prev;
+      }
+      return trimmed ? `${trimmed}\n${template}` : template;
+    });
+  };
+
   const handleRequestQuote = async () => {
     if (cartItems.length === 0) {
       toast.error("Cart is empty");
       return;
     }
 
+    if (!selectedCustomer) {
+      toast.error("Select a customer to request a quote.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      const notes = checkoutNotes.trim();
       // In a real app, customer_id would come from authentication
       const quoteData = {
-        customer_id: "mock-customer-id", // Replace with actual authenticated customer
+        customer_id: selectedCustomer.id,
         items: cartItems.map((item) => ({
           product_id: item.id,
           quantity: item.quantity,
@@ -184,6 +256,7 @@ export default function InternetPage() {
         })),
         status: "pending",
         valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        notes: notes || undefined,
       };
 
       const response = await apiClient.post<{ id: string; quote_number: string }>(
@@ -196,10 +269,13 @@ export default function InternetPage() {
       );
 
       setCartItems([]);
+      setCheckoutNotes("");
       loadQuotes();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Quote request failed:", error);
-      toast.error(error.message || "Failed to request quote");
+      const message =
+        error instanceof Error ? error.message : "Failed to request quote";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -208,6 +284,11 @@ export default function InternetPage() {
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
       toast.error("Cart is empty");
+      return;
+    }
+
+    if (!selectedCustomer) {
+      toast.error("Select a customer to place an order.");
       return;
     }
 
@@ -220,9 +301,10 @@ export default function InternetPage() {
       );
       const tax = subtotal * 0.1;
       const total = subtotal + tax;
+      const notes = checkoutNotes.trim();
 
       const orderData = {
-        customer_id: "mock-customer-id", // Replace with actual authenticated customer
+        customer_id: selectedCustomer.id,
         items: cartItems.map((item) => ({
           product_id: item.id,
           quantity: item.quantity,
@@ -233,6 +315,7 @@ export default function InternetPage() {
         total,
         status: "pending",
         channel: "internet",
+        notes: notes || undefined,
       };
 
       const response = await apiClient.post<{ id: string; order_number: string }>(
@@ -245,10 +328,13 @@ export default function InternetPage() {
       );
 
       setCartItems([]);
+      setCheckoutNotes("");
       loadOrders();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Order placement failed:", error);
-      toast.error(error.message || "Failed to place order");
+      const message =
+        error instanceof Error ? error.message : "Failed to place order";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -270,6 +356,29 @@ export default function InternetPage() {
     };
     return colors[status] || "bg-gray-100 text-gray-700";
   };
+
+  // Don't render interactive content until mounted on client to prevent hydration errors
+  if (!mounted) {
+    return (
+      <div className="container py-8 px-4">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+            <Globe className="h-8 w-8" />
+            Online Portal
+          </h1>
+          <p className="text-muted-foreground">
+            Browse products, track orders, and manage quotes online.
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+            <p className="mt-4 text-muted-foreground">Loading portal...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 px-4">
@@ -355,7 +464,7 @@ export default function InternetPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-lg font-bold text-primary">
-                            ${product.price.toFixed(2)}
+                            ${(typeof product.price === "string" ? parseFloat(product.price) : product.price).toFixed(2)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {product.stock > 10 ? "In stock" : product.stock > 0 ? `${product.stock} left` : "Out of stock"}
@@ -377,6 +486,11 @@ export default function InternetPage() {
 
             {/* Right: Cart */}
             <div className="space-y-6">
+              <CustomerLookup
+                onCustomerSelect={setSelectedCustomer}
+                selectedCustomer={selectedCustomer}
+              />
+
               <CartManager
                 items={cartItems}
                 onUpdateQuantity={handleUpdateQuantity}
@@ -389,24 +503,56 @@ export default function InternetPage() {
               {cartItems.length > 0 && (
                 <Card className="p-6">
                   <h3 className="text-lg font-semibold mb-4">Checkout</h3>
-                  <div className="space-y-3">
-                    <Button
-                      onClick={handleRequestQuote}
-                      disabled={isLoading}
-                      className="w-full"
-                      variant="outline"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Request Quote
-                    </Button>
-                    <Button
-                      onClick={handlePlaceOrder}
-                      disabled={isLoading}
-                      className="w-full"
-                    >
-                      <Package className="h-4 w-4 mr-2" />
-                      Place Order
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="checkout_notes">Order notes (optional)</Label>
+                      <Textarea
+                        id="checkout_notes"
+                        value={checkoutNotes}
+                        onChange={(event) => setCheckoutNotes(event.target.value)}
+                        placeholder="Add context for the sales team..."
+                        rows={3}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        {noteTemplates.map((template) => (
+                          <Button
+                            key={template}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => appendCheckoutNote(template)}
+                          >
+                            {template}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Button
+                        onClick={handleRequestQuote}
+                        disabled={isLoading || !selectedCustomer}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Request Quote
+                      </Button>
+                      <Button
+                        onClick={handlePlaceOrder}
+                        disabled={isLoading || !selectedCustomer}
+                        className="w-full"
+                      >
+                        <Package className="h-4 w-4 mr-2" />
+                        Place Order
+                      </Button>
+                    </div>
+
+                    {!selectedCustomer && (
+                      <p className="text-sm text-muted-foreground">
+                        Select a customer to enable checkout.
+                      </p>
+                    )}
                   </div>
                 </Card>
               )}
@@ -425,7 +571,7 @@ export default function InternetPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-semibold">{order.order_number}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground" suppressHydrationWarning>
                           {new Date(order.order_date).toLocaleDateString()}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -437,7 +583,7 @@ export default function InternetPage() {
                           {order.status}
                         </Badge>
                         <p className="text-lg font-bold mt-2">
-                          ${order.total.toFixed(2)}
+                          ${(typeof order.total === "string" ? parseFloat(order.total) : order.total).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -463,10 +609,10 @@ export default function InternetPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-semibold">{quote.quote_number}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground" suppressHydrationWarning>
                           Created: {new Date(quote.quote_date).toLocaleDateString()}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground" suppressHydrationWarning>
                           Valid until: {new Date(quote.valid_until).toLocaleDateString()}
                         </p>
                       </div>
@@ -475,7 +621,7 @@ export default function InternetPage() {
                           {quote.status}
                         </Badge>
                         <p className="text-lg font-bold mt-2">
-                          ${quote.total.toFixed(2)}
+                          ${(typeof quote.total === "string" ? parseFloat(quote.total) : quote.total).toFixed(2)}
                         </p>
                       </div>
                     </div>

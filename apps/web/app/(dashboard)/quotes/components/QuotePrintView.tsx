@@ -2,26 +2,14 @@
 
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils/calculations";
-
-interface Quote {
-  id: string;
-  quote_number: string;
-  customer_name?: string;
-  quote_date: string;
-  valid_until: string;
-  status: string;
-  total: number;
-  notes?: string;
-  items?: any[];
-  quote_items?: any[];
-}
+import { Quote, QuoteItem } from "../types";
 
 interface QuotePrintViewProps {
   quote: Quote;
 }
 
 export function QuotePrintView({ quote }: QuotePrintViewProps) {
-  const items = quote.items || quote.quote_items || [];
+  const items: QuoteItem[] = quote.items || quote.quote_items || [];
   const subtotal = Number(quote.total) / 1.1;
   const tax = Number(quote.total) - subtotal;
 
@@ -110,7 +98,7 @@ export function QuotePrintView({ quote }: QuotePrintViewProps) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item: any, index: number) => (
+              {items.map((item, index) => (
                 <tr key={item.id || index} className="border-b border-gray-200">
                   <td className="py-3 text-sm">{item.product_name || item.product_id}</td>
                   <td className="py-3 text-sm text-center">{item.quantity}</td>

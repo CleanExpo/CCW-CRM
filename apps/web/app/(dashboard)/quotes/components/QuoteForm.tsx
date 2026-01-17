@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteLineItems, LineItem } from "./QuoteLineItems";
-import { Quote, Customer } from "../types";
+import { Quote, Customer, QuoteItem } from "../types";
 
 const QUOTE_STATUSES = [
   { value: "draft", label: "Draft" },
@@ -63,6 +63,10 @@ interface QuoteFormProps{
   onSuccess: () => void;
 }
 
+interface CustomersResponse {
+  items: Customer[];
+}
+
 export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -88,9 +92,9 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   useEffect(() => {
     async function loadCustomers() {
       try {
-        const response = await apiClient.get<any>("/api/customers?page=1&page_size=100");
+        const response = await apiClient.get<CustomersResponse>("/api/customers?page=1&page_size=100");
         setCustomers(response.items || []);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to load customers:", error);
       }
     }
@@ -100,7 +104,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   // Reset form when quote changes or dialog opens
   useEffect(() => {
     if (quote) {
-      const location = (quote as any).fulfillment_location || "brisbane";
+      const location = quote.fulfillment_location || "brisbane";
       setSelectedLocation(location);
       form.reset({
         customer_id: quote.customer_id,
@@ -111,11 +115,12 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
         notes: quote.notes || "",
       });
       // Convert decimal strings to numbers for proper calculations
-      const normalizedItems = (quote.items || []).map(item => ({
+      const rawItems: QuoteItem[] = quote.items || quote.quote_items || [];
+      const normalizedItems = rawItems.map((item) => ({
         ...item,
         quantity: Number(item.quantity),
         unit_price: Number(item.unit_price),
-        line_total: Number(item.line_total),
+        line_total: Number(item.line_total ?? 0),
       }));
       setLineItems(normalizedItems);
     } else {
@@ -201,11 +206,15 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
 
       onOpenChange(false);
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Failed to ${isEdit ? "update" : "create"} quote`;
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || `Failed to ${isEdit ? "update" : "create"} quote`,
+        description: message,
       });
     } finally {
       setIsLoading(false);

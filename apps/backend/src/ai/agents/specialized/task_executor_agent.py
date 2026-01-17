@@ -348,12 +348,12 @@ class TaskExecutorAgent(BaseAgent):
         error = state.get("error")
 
         # Determine status
-        if error or validation_errors:
-            status = "failed"
+        if confirmation_status in ["rejected", "expired"]:
+            status = "confirmation_failed"
         elif confirmation_status == "pending":
             status = "pending_confirmation"
-        elif confirmation_status in ["rejected", "expired"]:
-            status = "confirmation_failed"
+        elif error or validation_errors:
+            status = "failed"
         elif action_executed:
             status = "completed"
         else:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ export default function CustomersPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [formOpen, setFormOpen] = useState(false);
@@ -56,44 +57,44 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
 
-  async function loadCustomers() {
+  const loadCustomers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await apiClient.get<PaginatedResponse>(
-        `/api/customers?page=${page}&page_size=${pageSize}${search ? `&search=${search}` : ""}`
+        `/api/customers?page=${page}&page_size=${pageSize}${
+          debouncedSearch ? `&search=${debouncedSearch}` : ""
+        }`
       );
       setCustomers(response.items);
       setTotal(response.total);
       setTotalPages(response.total_pages);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load customers";
       console.error("Failed to load customers:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load customers",
+        description: message,
       });
       setCustomers([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, pageSize, debouncedSearch, toast]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      // Reset to page 1 when search changes
-      if (page !== 1) {
-        setPage(1);
-      } else {
-        loadCustomers();
-      }
+      setDebouncedSearch(search);
+      setPage(1);
     }, 300);
     return () => clearTimeout(debounce);
   }, [search]);
 
   useEffect(() => {
     loadCustomers();
-  }, [page, pageSize]);
+  }, [loadCustomers]);
 
   const handleAddCustomer = () => {
     setSelectedCustomer(null);

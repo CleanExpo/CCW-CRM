@@ -5,11 +5,15 @@ Tests CRUD operations, line items, status management, and order number generatio
 """
 
 import pytest
+from uuid import UUID
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config.settings import get_settings
 from src.db.demo_models import Order, OrderItem, Customer, Product
+from src.db.inventory_models import ProductStockByLocation, StockReservation
+from src.utils.calculations import calculate_totals
 
 
 @pytest.fixture
@@ -22,8 +26,13 @@ async def test_customer(db_session: AsyncSession) -> Customer:
 @pytest.fixture
 async def test_product(db_session: AsyncSession) -> Product:
     """Get a test product for order items."""
-    result = await db_session.execute(select(Product).limit(1))
-    return result.scalar_one()
+    result = await db_session.execute(
+        select(Product).where(Product.price >= 0).limit(1)
+    )
+    product = result.scalar_one_or_none()
+    if not product:
+        pytest.fail("No non-negative priced products found for tests.")
+    return product
 
 
 class TestOrdersList:
@@ -163,7 +172,13 @@ class TestOrderCreate:
         """Test that order total is calculated from line items."""
         quantity = 3
         unit_price = float(test_product.price)
-        expected_total = quantity * unit_price
+        settings = get_settings()
+        totals = calculate_totals(
+            [(quantity, test_product.price)],
+            settings.tax_rate_decimal,
+            tax_enabled=True,
+        )
+        expected_total = float(totals["total"])
 
         new_order = {
             "customer_id": str(test_customer.id),
@@ -188,7 +203,7 @@ class TestOrderCreate:
         data = response.json()
 
         # Verify total is calculated correctly
-        assert data["total"] == pytest.approx(expected_total, rel=0.01)
+        assert float(data["total"]) == pytest.approx(expected_total, rel=0.01)
 
     async def test_create_order_multiple_line_items(
         self,
@@ -199,8 +214,12 @@ class TestOrderCreate:
     ):
         """Test creating order with multiple line items."""
         # Get 2 products
-        result = await db_session.execute(select(Product).limit(2))
+        result = await db_session.execute(
+            select(Product).where(Product.price >= 0).limit(2)
+        )
         products = result.scalars().all()
+        if len(products) < 2:
+            pytest.fail("Not enough non-negative priced products found for tests.")
 
         new_order = {
             "customer_id": str(test_customer.id),
@@ -233,8 +252,14 @@ class TestOrderCreate:
         assert len(data["items"]) == 2
 
         # Verify total is sum of both items
-        expected_total = (2 * float(products[0].price)) + (3 * float(products[1].price))
-        assert data["total"] == pytest.approx(expected_total, rel=0.01)
+        settings = get_settings()
+        totals = calculate_totals(
+            [(2, products[0].price), (3, products[1].price)],
+            settings.tax_rate_decimal,
+            tax_enabled=True,
+        )
+        expected_total = float(totals["total"])
+        assert float(data["total"]) == pytest.approx(expected_total, rel=0.01)
 
     async def test_create_order_missing_customer(
         self,
@@ -372,8 +397,12 @@ class TestOrderUpdate:
         # Create new order first
         result = await db_session.execute(select(Customer).limit(1))
         customer = result.scalar_one()
-        result = await db_session.execute(select(Product).limit(1))
-        product = result.scalar_one()
+        result = await db_session.execute(
+            select(Product).where(Product.price >= 0).limit(1)
+        )
+        product = result.scalar_one_or_none()
+        if not product:
+            pytest.fail("No non-negative priced products found for tests.")
 
         # Create order
         new_order = {
@@ -417,8 +446,14 @@ class TestOrderUpdate:
         data = response.json()
 
         # Verify total recalculated
-        expected_total = 5 * float(product.price)
-        assert data["total"] == pytest.approx(expected_total, rel=0.01)
+        settings = get_settings()
+        totals = calculate_totals(
+            [(5, product.price)],
+            settings.tax_rate_decimal,
+            tax_enabled=True,
+        )
+        expected_total = float(totals["total"])
+        assert float(data["total"]) == pytest.approx(expected_total, rel=0.01)
 
     async def test_update_order_not_found(self, client: AsyncClient, auth_token: str):
         """Test updating non-existent order."""
@@ -531,6 +566,161 @@ class TestOrderGet:
         )
 
         assert response.status_code == 404
+
+
+class TestOrderActivity:
+    """Test order activity audit trail."""
+
+    async def test_order_activity_logged_on_create(
+        self,
+        client: AsyncClient,
+        auth_token: str,
+        test_customer: Customer,
+        test_product: Product,
+    ):
+        """Order creation should log a created activity event."""
+        new_order = {
+            "customer_id": str(test_customer.id),
+            "order_date": "2026-01-12",
+            "status": "draft",
+            "items": [
+                {
+                    "product_id": str(test_product.id),
+                    "quantity": 2,
+                    "unit_price": float(test_product.price),
+                }
+            ],
+        }
+
+        create_response = await client.post(
+            "/api/orders",
+            json=new_order,
+            cookies={"auth_token": auth_token},
+        )
+        assert create_response.status_code == 201
+        order_id = create_response.json()["id"]
+
+        activity_response = await client.get(
+            f"/api/orders/{order_id}/activity",
+            cookies={"auth_token": auth_token},
+        )
+        assert activity_response.status_code == 200
+        events = activity_response.json()
+        assert len(events) >= 1
+        assert events[0]["event_type"] == "created"
+
+    async def test_order_activity_logged_on_status_update(
+        self,
+        client: AsyncClient,
+        auth_token: str,
+        test_customer: Customer,
+        test_product: Product,
+    ):
+        """Order status updates should log a status_updated activity event."""
+        new_order = {
+            "customer_id": str(test_customer.id),
+            "order_date": "2026-01-12",
+            "status": "draft",
+            "items": [
+                {
+                    "product_id": str(test_product.id),
+                    "quantity": 1,
+                    "unit_price": float(test_product.price),
+                }
+            ],
+        }
+
+        create_response = await client.post(
+            "/api/orders",
+            json=new_order,
+            cookies={"auth_token": auth_token},
+        )
+        assert create_response.status_code == 201
+        order_id = create_response.json()["id"]
+
+        update_response = await client.put(
+            f"/api/orders/{order_id}",
+            json={"status": "pending"},
+            cookies={"auth_token": auth_token},
+        )
+        assert update_response.status_code == 200
+
+        activity_response = await client.get(
+            f"/api/orders/{order_id}/activity",
+            cookies={"auth_token": auth_token},
+        )
+        assert activity_response.status_code == 200
+        events = activity_response.json()
+        assert any(event["event_type"] == "status_updated" for event in events)
+
+
+class TestOrderReservations:
+    """Test inventory reservations for orders."""
+
+    async def test_pending_order_creates_reservations(
+        self,
+        client: AsyncClient,
+        auth_token: str,
+        test_customer: Customer,
+        test_product: Product,
+        db_session: AsyncSession,
+    ):
+        """Pending orders should reserve stock by location."""
+        quantity = 3
+        location = "brisbane"
+
+        stock_stmt = select(ProductStockByLocation).where(
+            ProductStockByLocation.product_id == test_product.id,
+            ProductStockByLocation.location == location,
+        )
+        stock_result = await db_session.execute(stock_stmt)
+        stock = stock_result.scalar_one_or_none()
+
+        if not stock:
+            stock = ProductStockByLocation(
+                product_id=test_product.id,
+                location=location,
+                stock=quantity + 5,
+                reserved=0,
+            )
+            db_session.add(stock)
+        else:
+            stock.stock = max(stock.stock, quantity + 5)
+            stock.reserved = 0
+
+        await db_session.commit()
+
+        new_order = {
+            "customer_id": str(test_customer.id),
+            "order_date": "2026-01-12",
+            "status": "pending",
+            "fulfillment_location": location,
+            "items": [
+                {
+                    "product_id": str(test_product.id),
+                    "quantity": quantity,
+                    "unit_price": float(test_product.price),
+                }
+            ],
+        }
+
+        create_response = await client.post(
+            "/api/orders",
+            json=new_order,
+            cookies={"auth_token": auth_token},
+        )
+        assert create_response.status_code == 201
+        order_id = create_response.json()["id"]
+
+        reservation_stmt = select(StockReservation).where(
+            StockReservation.order_id == UUID(order_id),
+            StockReservation.status == "active",
+        )
+        reservation_result = await db_session.execute(reservation_stmt)
+        reservations = reservation_result.scalars().all()
+
+        assert reservations
+        assert sum(r.quantity for r in reservations) == quantity
 
 
 class TestOrderStatus:
