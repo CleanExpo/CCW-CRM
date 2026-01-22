@@ -1,5 +1,19 @@
 # CCW-Online-ERP - Architecture Guide for Development
 
+> 🚨 **IMPORTANT**: Before reading this file, read `.claude/STARTUP.md` first.
+>
+> **Claude Framework**: This project uses a comprehensive Claude Code framework located in `.claude/`:
+> - `.claude/STARTUP.md` - Read this FIRST every session
+> - `.claude/CLAUDE.md` - Full system instructions & workflow
+> - `.claude/agents/` - Orchestrator, Planner, Coder, Reviewer agents
+> - `.claude/commands/` - /plan, /spec, /test, /audit, /reset commands
+> - `.claude/.directives` - Auto-enforced rules
+> - `.claude/.execution` - Current state tracking
+>
+> This file (root CLAUDE.md) is your quick reference. For detailed instructions, see `.claude/CLAUDE.md`.
+
+---
+
 ## Project Overview
 This is a **full-stack Equipment Supplier ERP** built for CCW's internal business operations, based on the NodeJS-Starter-V1 template.
 

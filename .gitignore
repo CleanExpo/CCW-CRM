@@ -1,6 +1,5 @@
 # Temporary Claude files
 tmpclaude-*
-.claude/
 
 # Dependencies
 node_modules/
