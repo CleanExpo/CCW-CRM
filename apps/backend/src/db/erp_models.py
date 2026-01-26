@@ -2,8 +2,9 @@
 # ruff: noqa: E501, N811
 from datetime import datetime
 from uuid import uuid4
+import enum
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import DeclarativeBase, relationship
 
@@ -11,6 +12,18 @@ from sqlalchemy.orm import DeclarativeBase, relationship
 class Base(DeclarativeBase):
     """Base class for all models."""
     pass
+
+
+class ProductCategory(str, enum.Enum):
+    """Product category enum for equipment supplier."""
+    HEAVY_MACHINERY = "HEAVY_MACHINERY"
+    HAND_TOOLS = "HAND_TOOLS"
+    POWER_TOOLS = "POWER_TOOLS"
+    SAFETY_EQUIPMENT = "SAFETY_EQUIPMENT"
+    BUILDING_MATERIALS = "BUILDING_MATERIALS"
+    ELECTRICAL = "ELECTRICAL"
+    PLUMBING = "PLUMBING"
+    ACCESSORIES = "ACCESSORIES"
 
 
 class Organization(Base):
@@ -60,7 +73,11 @@ class Product(Base):
     sku = Column(String(50), nullable=False, unique=True, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
-    category = Column(String(50), nullable=False)
+    category = Column(
+        Enum(ProductCategory, name="product_category", native_enum=True),
+        nullable=False,
+        default=ProductCategory.ACCESSORIES
+    )
     price = Column(Numeric(10, 2), nullable=False)
     cost = Column(Numeric(10, 2))
     stock = Column(Integer, nullable=False, default=0)

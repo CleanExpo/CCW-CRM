@@ -1,4 +1,7 @@
-"""Quotes API routes."""
+"""Quotes API routes.
+
+Performance optimized with cache invalidation on writes.
+"""
 from datetime import datetime, time, timezone
 from decimal import Decimal
 from uuid import UUID
@@ -8,6 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
 from src.config.settings import Settings, get_settings
 from src.db.demo_models import Order as OrderModel
@@ -29,14 +33,20 @@ from src.utils.calculations import calculate_line_total, calculate_totals
 router = APIRouter(prefix="/api/quotes", tags=["quotes"])
 
 
+async def invalidate_quote_caches() -> None:
+    """Invalidate all quote-related caches."""
+    await invalidate_cache("dashboard_metrics")
+    await invalidate_cache("dashboard_quote_conversion")
+    await invalidate_cache("dashboard_activity")
+
+
 async def generate_quote_number(db: AsyncSession) -> str:
-    """Generate next quote number."""
-    year = datetime.now().year
-    # Get count of quotes this year
-    query = select(func.count()).where(QuoteModel.quote_number.like(f"Q-{year}-%"))
-    result = await db.execute(query)
-    count = result.scalar_one()
-    return f"Q-{year}-{count + 1:03d}"
+    """Generate next quote number with microsecond timestamp to avoid race conditions."""
+    now = datetime.now()
+    year = now.year
+    # Use microseconds to ensure uniqueness in concurrent scenarios
+    timestamp_suffix = f"{now.month:02d}{now.day:02d}{now.hour:02d}{now.minute:02d}{now.second:02d}{now.microsecond:06d}"
+    return f"Q-{year}-{timestamp_suffix}"
 
 
 async def generate_order_number(db: AsyncSession) -> str:
@@ -221,6 +231,9 @@ async def create_quote(
     await db.commit()
     await db.refresh(quote)
 
+    # Invalidate quote-related caches
+    await invalidate_quote_caches()
+
     # Reload with items
     query = (
         select(QuoteModel)
@@ -320,6 +333,9 @@ async def update_quote(
     await db.commit()
     await db.refresh(quote)
 
+    # Invalidate quote-related caches
+    await invalidate_quote_caches()
+
     # Reload with items
     query = (
         select(QuoteModel)
@@ -357,6 +373,9 @@ async def delete_quote(
     # Delete quote (cascade will delete items)
     await db.delete(quote)
     await db.commit()
+
+    # Invalidate quote-related caches
+    await invalidate_quote_caches()
 
     return None
 
@@ -412,6 +431,13 @@ async def convert_quote_to_order(
 
     await db.commit()
     await db.refresh(order)
+
+    # Invalidate both quote and order caches (since we're creating an order from a quote)
+    await invalidate_quote_caches()
+    await invalidate_cache("dashboard_metrics")
+    await invalidate_cache("dashboard_revenue")
+    await invalidate_cache("dashboard_order_status")
+    await invalidate_cache("dashboard_activity")
 
     # Reload with items
     query = (
