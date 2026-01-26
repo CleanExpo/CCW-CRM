@@ -1,4 +1,7 @@
-"""Orders API routes."""
+"""Orders API routes.
+
+Performance optimized with cache invalidation on writes.
+"""
 from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
@@ -9,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from src.api.deps import get_optional_user
+from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
 from src.config.settings import Settings, get_settings
 from src.db.demo_models import Order as OrderModel
@@ -29,17 +33,27 @@ from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
+
+async def invalidate_order_caches() -> None:
+    """Invalidate all order-related caches."""
+    await invalidate_cache("dashboard_metrics")
+    await invalidate_cache("dashboard_revenue")
+    await invalidate_cache("dashboard_order_status")
+    await invalidate_cache("dashboard_activity")
+    await invalidate_cache("dashboard_categories")
+    await invalidate_cache("dashboard_top_products")
+    await invalidate_cache("dashboard_revenue_location")
+
 RESERVABLE_STATUSES = {"pending", "processing"}
 
 
 async def generate_order_number(db: AsyncSession) -> str:
-    """Generate next order number."""
-    year = datetime.now().year
-    # Get count of orders this year
-    query = select(func.count()).where(OrderModel.order_number.like(f"ORD-{year}-%"))
-    result = await db.execute(query)
-    count = result.scalar_one()
-    return f"ORD-{year}-{count + 1:03d}"
+    """Generate next order number with microsecond timestamp to avoid race conditions."""
+    now = datetime.now()
+    year = now.year
+    # Use microseconds to ensure uniqueness in concurrent scenarios
+    timestamp_suffix = f"{now.month:02d}{now.day:02d}{now.hour:02d}{now.minute:02d}{now.second:02d}{now.microsecond:06d}"
+    return f"ORD-{year}-{timestamp_suffix}"
 
 
 async def deduct_stock_for_order(
@@ -560,6 +574,9 @@ async def create_order(
     await db.commit()
     await db.refresh(order)
 
+    # Invalidate order-related caches
+    await invalidate_order_caches()
+
     # Reload with items
     query = (
         select(OrderModel)
@@ -758,6 +775,9 @@ async def update_order(
     await db.commit()
     await db.refresh(order)
 
+    # Invalidate order-related caches
+    await invalidate_order_caches()
+
     # Reload with items
     query = (
         select(OrderModel)
@@ -869,6 +889,9 @@ async def update_order_status(
     await db.commit()
     await db.refresh(order)
 
+    # Invalidate order-related caches
+    await invalidate_order_caches()
+
     # Reload with items
     query = (
         select(OrderModel)
@@ -911,6 +934,9 @@ async def delete_order(
     # Delete the order
     await db.delete(order)
     await db.commit()
+
+    # Invalidate order-related caches
+    await invalidate_order_caches()
 
     # Return None for 204 No Content - proper REST standard
     return None

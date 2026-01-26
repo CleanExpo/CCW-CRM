@@ -106,10 +106,11 @@ class QuoteScenarioGenerator:
             items.append({
                 'product_id': 'placeholder',
                 'quantity': random.randint(1, 10),
-                'unit_price': round(random.uniform(10.0, 500.0), 2),
+                # unit_price is calculated by backend from product price
             })
 
-        valid_until = (datetime.now() + timedelta(days=30)).isoformat()
+        # Schema expects date (not datetime) in YYYY-MM-DD format
+        valid_until = (datetime.now() + timedelta(days=30)).date().isoformat()
 
         data = {
             'customer_id': 'placeholder',
@@ -243,7 +244,7 @@ class QuoteScenarioGenerator:
             items.append({
                 'product_id': product_id,
                 'quantity': 1,
-                'unit_price': 10.00,
+                # unit_price is calculated by backend
             })
 
         data = self._generate_quote_data({'items': items})

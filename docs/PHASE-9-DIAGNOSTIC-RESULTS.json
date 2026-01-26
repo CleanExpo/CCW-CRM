@@ -1,0 +1,348 @@
+{
+  "summary": {
+    "total": 100,
+    "passed": 59,
+    "failed": 41,
+    "pass_rate": 59.0,
+    "avg_response_time_ms": 6167.488555908203,
+    "p50_response_time_ms": 4635.846853256226,
+    "p95_response_time_ms": 15843.63842010498,
+    "p99_response_time_ms": 17109.74431037903,
+    "min_response_time_ms": 751.4853477478027,
+    "max_response_time_ms": 17109.74431037903,
+    "failure_types": {
+      "Unknown": 41
+    },
+    "slowest_scenarios": [
+      [
+        "quote_create_valid_1",
+        17109.74431037903
+      ],
+      [
+        "order_create_valid_4",
+        16236.584186553955
+      ],
+      [
+        "quote_create_valid_7",
+        16232.09524154663
+      ],
+      [
+        "order_create_valid_2",
+        16003.846883773804
+      ],
+      [
+        "order_create_valid_3",
+        15843.63842010498
+      ],
+      [
+        "order_create_valid_0",
+        15836.680173873901
+      ],
+      [
+        "quote_create_valid_4",
+        15774.31058883667
+      ],
+      [
+        "order_create_valid_1",
+        15339.1432762146
+      ],
+      [
+        "quote_create_valid_8",
+        15321.503400802612
+      ],
+      [
+        "quote_create_valid_0",
+        15179.341554641724
+      ]
+    ]
+  },
+  "failures": [
+    {
+      "scenario": "order_create_valid_0",
+      "status_code": 409,
+      "response_time_ms": 15836.680173873901,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_2",
+      "status_code": 409,
+      "response_time_ms": 16003.846883773804,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_3",
+      "status_code": 409,
+      "response_time_ms": 15843.63842010498,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_4",
+      "status_code": 409,
+      "response_time_ms": 16236.584186553955,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_5",
+      "status_code": 409,
+      "response_time_ms": 12222.831726074219,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_6",
+      "status_code": 409,
+      "response_time_ms": 12374.834299087524,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_7",
+      "status_code": 409,
+      "response_time_ms": 13496.134042739868,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_9",
+      "status_code": 409,
+      "response_time_ms": 8642.707347869873,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_10",
+      "status_code": 409,
+      "response_time_ms": 5106.236696243286,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_11",
+      "status_code": 409,
+      "response_time_ms": 3880.44810295105,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_12",
+      "status_code": 409,
+      "response_time_ms": 4286.352634429932,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_14",
+      "status_code": 409,
+      "response_time_ms": 4464.057922363281,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_15",
+      "status_code": 409,
+      "response_time_ms": 2249.85933303833,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_16",
+      "status_code": 409,
+      "response_time_ms": 4630.793809890747,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_18",
+      "status_code": 409,
+      "response_time_ms": 3704.8046588897705,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_19",
+      "status_code": 409,
+      "response_time_ms": 3255.216121673584,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_20",
+      "status_code": 409,
+      "response_time_ms": 5571.236610412598,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_21",
+      "status_code": 409,
+      "response_time_ms": 2404.107093811035,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_22",
+      "status_code": 409,
+      "response_time_ms": 4742.940664291382,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_23",
+      "status_code": 409,
+      "response_time_ms": 3272.771120071411,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "order_create_valid_24",
+      "status_code": 409,
+      "response_time_ms": 2823.8420486450195,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_1",
+      "status_code": 409,
+      "response_time_ms": 17109.74431037903,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_2",
+      "status_code": 409,
+      "response_time_ms": 14660.015106201172,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_3",
+      "status_code": 409,
+      "response_time_ms": 12220.14856338501,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_4",
+      "status_code": 409,
+      "response_time_ms": 15774.31058883667,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_5",
+      "status_code": 409,
+      "response_time_ms": 13359.519720077515,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_6",
+      "status_code": 409,
+      "response_time_ms": 12880.009651184082,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_8",
+      "status_code": 409,
+      "response_time_ms": 15321.503400802612,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_9",
+      "status_code": 409,
+      "response_time_ms": 14369.9471950531,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_10",
+      "status_code": 409,
+      "response_time_ms": 2007.2574615478516,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_11",
+      "status_code": 409,
+      "response_time_ms": 5051.438570022583,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_12",
+      "status_code": 409,
+      "response_time_ms": 6201.709270477295,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_14",
+      "status_code": 409,
+      "response_time_ms": 4747.582197189331,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_15",
+      "status_code": 409,
+      "response_time_ms": 2977.842092514038,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_16",
+      "status_code": 409,
+      "response_time_ms": 4233.0052852630615,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_17",
+      "status_code": 409,
+      "response_time_ms": 3754.1816234588623,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_18",
+      "status_code": 409,
+      "response_time_ms": 1610.644817352295,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_20",
+      "status_code": 409,
+      "response_time_ms": 2411.7064476013184,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_22",
+      "status_code": 409,
+      "response_time_ms": 1626.1940002441406,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_23",
+      "status_code": 409,
+      "response_time_ms": 1171.523094177246,
+      "error_message": null,
+      "error_type": null
+    },
+    {
+      "scenario": "quote_create_valid_24",
+      "status_code": 409,
+      "response_time_ms": 751.4853477478027,
+      "error_message": null,
+      "error_type": null
+    }
+  ]
+}

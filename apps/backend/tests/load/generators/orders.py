@@ -105,7 +105,7 @@ class OrderScenarioGenerator:
             items.append({
                 'product_id': 'placeholder',  # Will be replaced
                 'quantity': random.randint(1, 10),
-                'unit_price': round(random.uniform(10.0, 500.0), 2),
+                # unit_price is calculated by backend from product price
             })
 
         data = {
@@ -152,7 +152,7 @@ class OrderScenarioGenerator:
 
         data = self._generate_order_data()
         data['customer_id'] = customer_id
-        data['items'] = [{'product_id': product_id, 'quantity': 0, 'unit_price': 99.99}]
+        data['items'] = [{'product_id': product_id, 'quantity': 0}]
 
         return await self._make_request('POST', '/api/orders', data=data, expected_status=422, should_fail=True)
 
@@ -214,7 +214,7 @@ class OrderScenarioGenerator:
 
         update_data = {
             'items': [
-                {'product_id': product_id, 'quantity': random.randint(1, 10), 'unit_price': 99.99}
+                {'product_id': product_id, 'quantity': random.randint(1, 10)}
             ]
         }
         return await self._make_request('PUT', f'/api/orders/{order_id}', data=update_data, expected_status=200)

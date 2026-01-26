@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from src.db.demo_models import OrderStatus, QuoteStatus
+from src.db.erp_models import ProductCategory
 
 
 # Organization schemas
@@ -56,7 +57,7 @@ class ProductBase(BaseModel):
     sku: str
     name: str
     description: str | None = None
-    category: str
+    category: ProductCategory | str  # Accept both enum and string for flexibility
     price: Decimal = Field(ge=0)
     cost: Decimal | None = None
     stock: int = 0
@@ -71,7 +72,7 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
-    category: str | None = None
+    category: ProductCategory | str | None = None  # Accept both enum and string for flexibility
     price: Decimal | None = Field(default=None, ge=0)
     cost: Decimal | None = None
     stock: int | None = None
