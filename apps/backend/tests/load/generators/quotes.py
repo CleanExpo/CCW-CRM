@@ -216,7 +216,8 @@ class QuoteScenarioGenerator:
         customer_id = await self._ensure_customer()
         product_id = await self._ensure_product()
 
-        expired_date = (datetime.now() - timedelta(days=30)).isoformat()
+        # Schema expects date string (YYYY-MM-DD), not datetime string
+        expired_date = (datetime.now() - timedelta(days=30)).date().isoformat()
 
         data = self._generate_quote_data({'valid_until': expired_date})
         data['customer_id'] = customer_id
