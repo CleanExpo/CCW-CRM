@@ -1,61 +1,206 @@
 global:
   resolve_timeout: 5m
+  # SMTP settings for email notifications
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@ccw-erp.com'
+  smtp_auth_username: 'alerts@ccw-erp.com'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
 
 # Alert routing
 route:
   group_by: ['alertname', 'severity']
   group_wait: 10s
-  group_interval: 10s
-  repeat_interval: 12h
+  group_interval: 5m
+  repeat_interval: 3h
   receiver: 'default'
 
   routes:
-    # Critical alerts go to multiple channels
+    # Critical alerts go to email + Slack
     - match:
         severity: critical
       receiver: 'critical-alerts'
-      continue: true
+      group_wait: 10s
+      repeat_interval: 1h
 
-    # Warning alerts go to default
+    # Warning alerts go to email only
     - match:
         severity: warning
       receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 6h
 
 # Alert receivers
 receivers:
   - name: 'default'
-    # Webhook for custom integrations (placeholder)
-    # webhook_configs:
-    #   - url: 'http://localhost:5001/webhook'
+    # Default receiver for alerts without severity label
+    email_configs:
+      - to: 'dev-team@ccw-erp.com'
+        send_resolved: true
+        headers:
+          Subject: '{{ .Status | toUpper }}: {{ .GroupLabels.alertname }}'
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; }
+              .alert { padding: 20px; border-left: 4px solid #666; margin: 10px 0; }
+              .critical { border-color: #d32f2f; background-color: #ffebee; }
+              .warning { border-color: #f57c00; background-color: #fff3e0; }
+              .resolved { border-color: #388e3c; background-color: #e8f5e9; }
+              .label { display: inline-block; padding: 2px 8px; margin: 2px; background: #eee; border-radius: 3px; }
+            </style>
+          </head>
+          <body>
+            <h2>{{ .GroupLabels.alertname }}</h2>
+            {{ range .Alerts }}
+            <div class="alert {{ .Status }}">
+              <p><strong>Status:</strong> {{ .Status }}</p>
+              <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+              <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+              <p><strong>Started:</strong> {{ .StartsAt }}</p>
+              {{ if .Labels }}<p><strong>Labels:</strong>
+              {{ range .Labels.SortedPairs }}<span class="label">{{ .Name }}={{ .Value }}</span>{{ end }}
+              </p>{{ end }}
+            </div>
+            {{ end }}
+            <p><small>AlertManager: CCW ERP Monitoring</small></p>
+          </body>
+          </html>
 
   - name: 'critical-alerts'
-    # For production, configure email/Slack here
-    # email_configs:
-    #   - to: 'dev-team@ccw-erp.com'
-    #     from: 'alerts@ccw-erp.com'
-    #     smarthost: 'smtp.gmail.com:587'
-    #     auth_username: 'alerts@ccw-erp.com'
-    #     auth_password: '${SMTP_PASSWORD}'
-    #     headers:
-    #       Subject: '🚨 CRITICAL ALERT: {{ .GroupLabels.alertname }}'
+    # Critical alerts: Email + Slack
+    email_configs:
+      - to: 'dev-team@ccw-erp.com'
+        send_resolved: true
+        headers:
+          Subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; }
+              .alert { padding: 20px; border-left: 4px solid #d32f2f; background-color: #ffebee; margin: 10px 0; }
+              .resolved { border-color: #388e3c; background-color: #e8f5e9; }
+              .label { display: inline-block; padding: 2px 8px; margin: 2px; background: #eee; border-radius: 3px; font-size: 12px; }
+              .critical-banner { background: #d32f2f; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
+              .action { background: #fff3e0; padding: 15px; margin: 15px 0; border-left: 4px solid #f57c00; }
+            </style>
+          </head>
+          <body>
+            {{ if eq .Status "firing" }}
+            <div class="critical-banner">🚨 CRITICAL ALERT FIRING 🚨</div>
+            {{ else }}
+            <div style="background: #388e3c; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold;">✅ ALERT RESOLVED</div>
+            {{ end }}
 
-    # Slack webhook (example)
-    # slack_configs:
-    #   - api_url: '${SLACK_WEBHOOK_URL}'
-    #     channel: '#alerts-critical'
-    #     title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
-    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+            <h2>{{ .GroupLabels.alertname }}</h2>
+
+            {{ range .Alerts }}
+            <div class="alert {{ .Status }}">
+              <p><strong>Severity:</strong> <span style="color: #d32f2f; font-weight: bold;">CRITICAL</span></p>
+              <p><strong>Status:</strong> {{ .Status }}</p>
+              <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+              <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+              <p><strong>Started:</strong> {{ .StartsAt }}</p>
+              {{ if .EndsAt }}<p><strong>Ended:</strong> {{ .EndsAt }}</p>{{ end }}
+
+              {{ if .Labels }}
+              <p><strong>Labels:</strong><br>
+              {{ range .Labels.SortedPairs }}<span class="label">{{ .Name }}={{ .Value }}</span>{{ end }}
+              </p>
+              {{ end }}
+            </div>
+            {{ end }}
+
+            <div class="action">
+              <h3>⚡ Immediate Actions Required</h3>
+              <ol>
+                <li>Check Grafana dashboards: <a href="http://localhost:3001">http://localhost:3001</a></li>
+                <li>Check Prometheus alerts: <a href="http://localhost:9090/alerts">http://localhost:9090/alerts</a></li>
+                <li>Review backend logs: <code>docker logs ccw-backend --tail=100</code></li>
+                <li>Consult runbook: <code>docs/operations/ALERT-RUNBOOK.md</code></li>
+              </ol>
+            </div>
+
+            <p><small>AlertManager: CCW ERP Monitoring | Time: {{ .CommonAnnotations.timestamp }}</small></p>
+          </body>
+          </html>
+
+    # Slack notifications for critical alerts (optional)
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        send_resolved: true
+        channel: '#alerts-critical'
+        title: '{{ if eq .Status "firing" }}🚨 CRITICAL{{ else }}✅ RESOLVED{{ end }}: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Description:* {{ .Annotations.description }}
+          *Summary:* {{ .Annotations.summary }}
+          *Status:* {{ .Status }}
+          *Started:* {{ .StartsAt }}
+          {{ if .EndsAt }}*Ended:* {{ .EndsAt }}{{ end }}
+          {{ end }}
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
 
   - name: 'warning-alerts'
-    # For production, configure email/Slack here
-    # email_configs:
-    #   - to: 'dev-team@ccw-erp.com'
-    #     from: 'alerts@ccw-erp.com'
-    #     smarthost: 'smtp.gmail.com:587'
-    #     auth_username: 'alerts@ccw-erp.com'
-    #     auth_password: '${SMTP_PASSWORD}'
-    #     headers:
-    #       Subject: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+    # Warning alerts: Email only
+    email_configs:
+      - to: 'dev-team@ccw-erp.com'
+        send_resolved: true
+        headers:
+          Subject: '⚠️ WARNING: {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; }
+              .alert { padding: 20px; border-left: 4px solid #f57c00; background-color: #fff3e0; margin: 10px 0; }
+              .resolved { border-color: #388e3c; background-color: #e8f5e9; }
+              .label { display: inline-block; padding: 2px 8px; margin: 2px; background: #eee; border-radius: 3px; font-size: 12px; }
+              .warning-banner { background: #f57c00; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            {{ if eq .Status "firing" }}
+            <div class="warning-banner">⚠️ WARNING ALERT</div>
+            {{ else }}
+            <div style="background: #388e3c; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold;">✅ ALERT RESOLVED</div>
+            {{ end }}
+
+            <h2>{{ .GroupLabels.alertname }}</h2>
+
+            {{ range .Alerts }}
+            <div class="alert {{ .Status }}">
+              <p><strong>Severity:</strong> <span style="color: #f57c00; font-weight: bold;">WARNING</span></p>
+              <p><strong>Status:</strong> {{ .Status }}</p>
+              <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+              <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+              <p><strong>Started:</strong> {{ .StartsAt }}</p>
+              {{ if .EndsAt }}<p><strong>Ended:</strong> {{ .EndsAt }}</p>{{ end }}
+
+              {{ if .Labels }}
+              <p><strong>Labels:</strong><br>
+              {{ range .Labels.SortedPairs }}<span class="label">{{ .Name }}={{ .Value }}</span>{{ end }}
+              </p>
+              {{ end }}
+            </div>
+            {{ end }}
+
+            <p><strong>📋 Recommended Actions:</strong></p>
+            <ul>
+              <li>Monitor the situation - this may resolve automatically</li>
+              <li>Check Grafana dashboards for trends</li>
+              <li>Review if this requires immediate attention</li>
+              <li>Consult runbook if issue persists</li>
+            </ul>
+
+            <p><small>AlertManager: CCW ERP Monitoring</small></p>
+          </body>
+          </html>
 
 # Inhibition rules (suppress alerts)
 inhibit_rules:

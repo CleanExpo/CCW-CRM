@@ -47,6 +47,73 @@ uv run uvicorn src.api.main:app --reload
 | Grafana | http://localhost:3001 | admin/admin |
 | AlertManager | http://localhost:9093 | None |
 
+### 5. Configure Email Alerts (IMPORTANT)
+
+**Enable email notifications for critical alerts:**
+
+```bash
+# 1. Get Gmail App Password (recommended for development)
+# - Go to https://myaccount.google.com/apppasswords
+# - Enable 2FA if not already enabled
+# - Generate new App Password for "Mail"
+# - Copy the 16-character password (no spaces)
+
+# 2. Update .env file
+cd apps/backend
+nano .env  # or use your preferred editor
+
+# Add this line:
+SMTP_PASSWORD=your_16_character_app_password_here
+
+# 3. Restart AlertManager to pick up environment variable
+docker compose restart alertmanager
+
+# 4. Test alert notification
+cd ../..  # Return to project root
+./scripts/test-alert.ps1  # Windows
+# OR
+./scripts/test-alert.sh   # Linux/Mac
+
+# 5. Check your email (dev-team@ccw-erp.com)
+# Should receive email within 30 seconds
+```
+
+**Alternative: SendGrid SMTP (recommended for production)**
+
+```bash
+# 1. Create SendGrid account (free tier: 100 emails/day)
+# 2. Generate API key at https://app.sendgrid.com/settings/api_keys
+# 3. Update .env:
+SMTP_PASSWORD=your_sendgrid_api_key_here
+
+# 4. Restart AlertManager
+docker compose restart alertmanager
+```
+
+**Optional: Slack Notifications**
+
+```bash
+# 1. Create Slack App with Incoming Webhook
+# 2. Get webhook URL from: https://api.slack.com/apps
+# 3. Update .env:
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+
+# 4. Restart AlertManager
+docker compose restart alertmanager
+```
+
+**Verify Configuration**:
+```bash
+# Check AlertManager picked up environment variables
+docker logs ccw-alertmanager | grep -i smtp
+
+# Send test alert
+./scripts/test-alert.ps1
+
+# Check AlertManager UI for active alerts
+# http://localhost:9093/#/alerts
+```
+
 ---
 
 ## Architecture
@@ -501,9 +568,150 @@ docker compose up -d prometheus grafana alertmanager
 
 ---
 
+## Email Alert Troubleshooting
+
+### Email Not Received
+
+**Issue**: Test alert sent but no email arrives
+
+**Diagnosis**:
+```bash
+# 1. Check AlertManager logs
+docker logs ccw-alertmanager --tail=50 | grep -i error
+
+# 2. Verify SMTP_PASSWORD is set
+docker exec ccw-alertmanager env | grep SMTP_PASSWORD
+# Should show: SMTP_PASSWORD=your_password_here
+
+# 3. Check alert was sent to AlertManager
+curl -s http://localhost:9093/api/v2/alerts | grep TestAlert
+
+# 4. Check AlertManager configuration
+docker exec ccw-alertmanager cat /etc/alertmanager/config.yml | grep smtp
+```
+
+**Common Causes**:
+
+1. **SMTP_PASSWORD not set or incorrect**
+   ```bash
+   # Solution: Update .env and restart
+   echo "SMTP_PASSWORD=your_app_password_here" >> apps/backend/.env
+   docker compose restart alertmanager
+   ```
+
+2. **Gmail App Password not generated**
+   ```bash
+   # Solution: Enable 2FA and generate App Password
+   # https://myaccount.google.com/apppasswords
+   # Use the 16-character password (no spaces)
+   ```
+
+3. **Email blocked by Gmail**
+   ```bash
+   # Check Gmail "Less secure app" setting
+   # Or use SendGrid instead (recommended for production)
+   ```
+
+4. **Wrong email address in config.yml**
+   ```bash
+   # Verify email address in monitoring/alertmanager/config.yml
+   grep "to:" monitoring/alertmanager/config.yml
+   # Should show: to: 'dev-team@ccw-erp.com'
+   ```
+
+5. **Alert not routing to email receiver**
+   ```bash
+   # Check AlertManager UI
+   # http://localhost:9093/#/alerts
+   # Verify alert has severity label: critical or warning
+   ```
+
+### Slack Not Receiving Alerts
+
+**Issue**: Slack webhook configured but no notifications
+
+**Diagnosis**:
+```bash
+# 1. Verify SLACK_WEBHOOK_URL is set
+docker exec ccw-alertmanager env | grep SLACK_WEBHOOK_URL
+
+# 2. Test webhook manually
+curl -X POST "${SLACK_WEBHOOK_URL}" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Test from AlertManager"}'
+
+# 3. Check AlertManager logs for webhook errors
+docker logs ccw-alertmanager | grep -i slack
+```
+
+**Common Causes**:
+
+1. **Webhook URL not set**
+   ```bash
+   # Add to .env:
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+   docker compose restart alertmanager
+   ```
+
+2. **Invalid webhook URL**
+   ```bash
+   # Recreate webhook in Slack:
+   # Slack App → Incoming Webhooks → Add New Webhook
+   ```
+
+3. **Slack workspace permissions**
+   ```bash
+   # Verify webhook has permission to post to channel
+   # Check channel privacy settings
+   ```
+
+### Alerts Firing Too Frequently
+
+**Issue**: Receiving duplicate emails for same alert
+
+**Solution**:
+```yaml
+# Edit monitoring/alertmanager/config.yml
+route:
+  repeat_interval: 3h  # Only repeat after 3 hours
+
+# Restart AlertManager
+docker compose restart alertmanager
+```
+
+### HTML Email Not Rendering
+
+**Issue**: Email received as plain text instead of HTML
+
+**Cause**: Email client doesn't support HTML
+
+**Solution**: Email templates include both HTML and plain text fallback. No action needed.
+
+### Testing Different Alert Severities
+
+```bash
+# Test critical alert (email + Slack)
+curl -X POST http://localhost:9093/api/v1/alerts -H "Content-Type: application/json" -d '[
+  {
+    "labels": {"alertname": "TestCritical", "severity": "critical"},
+    "annotations": {"summary": "Critical test", "description": "This is a critical test alert"}
+  }
+]'
+
+# Test warning alert (email only)
+curl -X POST http://localhost:9093/api/v1/alerts -H "Content-Type: application/json" -d '[
+  {
+    "labels": {"alertname": "TestWarning", "severity": "warning"},
+    "annotations": {"summary": "Warning test", "description": "This is a warning test alert"}
+  }
+]'
+```
+
+---
+
 ## Next Steps
 
-1. **Configure Email/Slack**: Setup alert notifications for production
+1. ✅ **Configure Email/Slack**: Setup alert notifications for production
 2. **Add Custom Metrics**: Instrument critical business paths
 3. **Create More Dashboards**: Add dashboards for specific features
 4. **Setup Long-term Storage**: Add Thanos/VictoriaMetrics for >7 day retention
