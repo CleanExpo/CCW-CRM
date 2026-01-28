@@ -1,12 +1,13 @@
 """Bank Feed API endpoints for reconciliation."""
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Annotated, Optional
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from sqlalchemy import select
+from pydantic import BaseModel, Field
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_current_user
@@ -16,14 +17,15 @@ from src.db.pos_models import BankAccount, BankFeed
 from src.services.bank_feed_service import BankFeedService
 
 router = APIRouter(prefix="/api/bank-feeds", tags=["Bank Feeds"])
+logger = structlog.get_logger(__name__)
 
 
 class BankFeedSyncRequest(BaseModel):
     """Request to sync bank feeds."""
 
-    account_id: UUID
-    start_date: date
-    end_date: date
+    account_id: UUID | None = Field(None, description="Specific account to sync, or None for all")
+    start_date: date | None = Field(None, description="Start date (defaults to 7 days ago)")
+    end_date: date | None = Field(None, description="End date (defaults to today)")
 
 
 class BankFeedSyncResponse(BaseModel):
@@ -57,7 +59,7 @@ async def sync_bank_feeds(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> BankFeedSyncResponse:
     """
-    Sync bank feed data for a specific account and date range.
+    Sync bank feed data for a specific account or all accounts.
 
     Supports:
     - Xero bank feeds
@@ -68,14 +70,53 @@ async def sync_bank_feeds(
     """
     service = BankFeedService(db)
 
-    try:
-        result = await service.sync_bank_feeds(
-            account_id=request.account_id,
-            start_date=request.start_date,
-            end_date=request.end_date,
-        )
+    # Default date range: last 7 days
+    end_date = request.end_date or date.today()
+    start_date = request.start_date or (end_date - timedelta(days=7))
 
-        return BankFeedSyncResponse(**result)
+    try:
+        if request.account_id:
+            # Sync specific account
+            result = await service.sync_bank_feeds(
+                account_id=request.account_id,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+            return BankFeedSyncResponse(**result)
+        else:
+            # Sync all active accounts
+            result = await db.execute(
+                select(BankAccount).where(
+                    BankAccount.is_active == True,  # noqa: E712
+                    BankAccount.feed_provider.isnot(None),
+                    BankAccount.feed_provider != "manual",
+                )
+            )
+            accounts = result.scalars().all()
+
+            total_transactions = 0
+            for account in accounts:
+                try:
+                    sync_result = await service.sync_bank_feeds(
+                        account_id=account.id,
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
+                    total_transactions += sync_result["transactions_synced"]
+                except Exception as e:
+                    logger.error(
+                        "Failed to sync account",
+                        account_id=str(account.id),
+                        error=str(e),
+                    )
+
+            return BankFeedSyncResponse(
+                transactions_synced=total_transactions,
+                provider="multiple",
+                start_date=start_date.isoformat(),
+                end_date=end_date.isoformat(),
+            )
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -181,3 +222,72 @@ async def list_bank_accounts(
         }
         for account in accounts
     ]
+
+
+@router.get("/stats")
+async def get_reconciliation_stats(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    account_id: UUID | None = Query(None, description="Filter by bank account"),
+    start_date: date | None = Query(None, description="Start date"),
+    end_date: date | None = Query(None, description="End date"),
+) -> dict:
+    """
+    Get reconciliation statistics.
+
+    Returns:
+    - Total transactions
+    - Auto-matched count
+    - Manually matched count
+    - Unmatched count
+    - Reconciliation rate
+    """
+    try:
+        # Default date range: last 30 days
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            start_date = end_date - timedelta(days=30)
+
+        # Build query
+        query = select(
+            func.count(BankFeed.id).label("total"),
+            func.count(BankFeed.id).filter(BankFeed.match_status == "auto_matched").label("auto_matched"),
+            func.count(BankFeed.id).filter(BankFeed.match_status == "manual_matched").label("manual_matched"),
+            func.count(BankFeed.id).filter(BankFeed.match_status == "pending").label("unmatched"),
+        ).where(
+            and_(
+                BankFeed.transaction_date >= start_date,
+                BankFeed.transaction_date <= end_date,
+            )
+        )
+
+        if account_id:
+            query = query.where(BankFeed.bank_account_id == account_id)
+
+        result = await db.execute(query)
+        row = result.one()
+
+        total = row.total or 0
+        auto_matched = row.auto_matched or 0
+        manual_matched = row.manual_matched or 0
+        unmatched = row.unmatched or 0
+
+        matched = auto_matched + manual_matched
+        reconciliation_rate = (matched / total * 100) if total > 0 else 0
+
+        return {
+            "total_transactions": total,
+            "auto_matched": auto_matched,
+            "manual_matched": manual_matched,
+            "unmatched": unmatched,
+            "reconciliation_rate": round(reconciliation_rate, 1),
+            "date_range": {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            },
+        }
+
+    except Exception as e:
+        logger.error("Failed to get reconciliation stats", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to retrieve statistics")
