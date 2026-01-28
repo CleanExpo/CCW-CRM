@@ -20,9 +20,16 @@ from sqlalchemy.orm import selectinload
 
 from src.db.demo_models import Customer, Order, Product
 from src.db.pos_models import POSTransaction, Location
-from src.integrations.xero import get_xero_client
 from src.integrations.xero.auth import XeroAuth
 from src.integrations.xero.client import XeroAPIError, XeroClient
+from src.integrations.xero.demo_client import DemoXeroClient
+
+
+def __get_xero_client(access_token: str, tenant_id: str, demo_mode: bool = False) -> XeroClient | DemoXeroClient:
+    """Get appropriate Xero client (local to avoid circular import)."""
+    if demo_mode:
+        return DemoXeroClient(access_token, tenant_id)
+    return XeroClient(access_token, tenant_id)
 
 logger = structlog.get_logger(__name__)
 
@@ -114,7 +121,7 @@ class POSXeroReconciliation:
 
         # Initialize Xero client
         demo_mode = connection.access_token.startswith("demo_")
-        xero_client = get_xero_client(
+        xero_client = _get_xero_client(
             access_token=connection.access_token,
             tenant_id=connection.tenant_id,
             demo_mode=demo_mode,
