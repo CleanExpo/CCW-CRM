@@ -48,12 +48,19 @@ RESERVABLE_STATUSES = {"pending", "processing"}
 
 
 async def generate_order_number(db: AsyncSession) -> str:
-    """Generate next order number with microsecond timestamp to avoid race conditions."""
-    now = datetime.now()
-    year = now.year
-    # Use microseconds to ensure uniqueness in concurrent scenarios
-    timestamp_suffix = f"{now.month:02d}{now.day:02d}{now.hour:02d}{now.minute:02d}{now.second:02d}{now.microsecond:06d}"
-    return f"ORD-{year}-{timestamp_suffix}"
+    """
+    Generate next order number using PostgreSQL SEQUENCE.
+
+    This is guaranteed to be unique and atomic at the database level.
+    No race conditions possible.
+
+    Format: ORD-YYYY-NNNNNN (e.g., ORD-2026-000123)
+    """
+    from sqlalchemy import text
+
+    result = await db.execute(text("SELECT generate_order_number()"))
+    order_number = result.scalar()
+    return order_number
 
 
 async def deduct_stock_for_order(
@@ -118,13 +125,13 @@ async def deduct_stock_for_order(
         product_id = item["product_id"]
         quantity = item["quantity"]
 
-        # Get stock record
+        # Get stock record with pessimistic lock to prevent race conditions
         stmt = select(ProductStockByLocation).where(
             and_(
                 ProductStockByLocation.product_id == product_id,
                 ProductStockByLocation.location == location,
             )
-        )
+        ).with_for_update()
         result = await db.execute(stmt)
         stock = result.scalar_one()
 
@@ -641,6 +648,21 @@ async def update_order(
 
     # Handle line items update if provided
     if order_data.items is not None:
+        # Validate order can be edited
+        if order.status in ['shipped', 'delivered', 'cancelled']:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot update items for order in status: {order.status}"
+            )
+
+        # Validate all items have valid quantities
+        for item_data in order_data.items:
+            if item_data.quantity <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid quantity {item_data.quantity} for product {item_data.product_id}"
+                )
+
         # Delete existing items
         delete_query = select(OrderItemModel).where(OrderItemModel.order_id == order_id)
         delete_result = await db.execute(delete_query)
@@ -663,6 +685,13 @@ async def update_order(
             if not product:
                 raise HTTPException(
                     status_code=400, detail=f"Product {item_data.product_id} not found"
+                )
+
+            # Validate stock availability if order is confirmed
+            if order.status == 'confirmed' and product.stock < item_data.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient stock for {product.name}: {product.stock} available, {item_data.quantity} requested"
                 )
 
             unit_price = product.price
@@ -802,11 +831,11 @@ async def update_order_status(
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ):
-    """Update order status and deduct stock when confirming."""
-    # Get existing order with items
+    """Update order status and deduct stock when confirming with pessimistic locking."""
+    # Get existing order with items using pessimistic lock to prevent race conditions
     query = select(OrderModel).options(
         selectinload(OrderModel.order_items)
-    ).where(OrderModel.id == order_id)
+    ).where(OrderModel.id == order_id).with_for_update()
     result = await db.execute(query)
     order = result.scalar_one_or_none()
 
