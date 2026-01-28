@@ -7,15 +7,19 @@ Handles:
 - Manual reconciliation workflow
 """
 
+import os
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
+import structlog
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.pos_models import BankAccount, BankFeed, POSTransaction
+
+logger = structlog.get_logger(__name__)
 
 
 class BankFeedService:
@@ -113,66 +117,111 @@ class BankFeedService:
 
         Uses existing Xero integration to pull bank transactions.
         """
-        # TODO: Integrate with existing Xero client
-        # from src.integrations.xero.client import get_xero_client
-        #
-        # xero_client = get_xero_client()
-        # bank_transactions = await xero_client.get_bank_transactions(
-        #     account_id=account.feed_account_id,
-        #     from_date=start_date,
-        #     to_date=end_date,
-        # )
-        #
-        # return [
-        #     {
-        #         "transaction_date": txn["Date"],
-        #         "description": txn["Description"],
-        #         "reference": txn["Reference"],
-        #         "credit": Decimal(txn["Credit"]) if txn.get("Credit") else None,
-        #         "debit": Decimal(txn["Debit"]) if txn.get("Debit") else None,
-        #         "balance": Decimal(txn["Balance"]),
-        #     }
-        #     for txn in bank_transactions
-        # ]
+        from src.config.xero_settings import xero_settings
+        from src.integrations.xero.client import XeroClient
 
-        # Mock implementation for Phase 3D
-        import random
+        # Get Xero credentials from environment
+        access_token = os.getenv("XERO_ACCESS_TOKEN", "")
+        tenant_id = os.getenv("XERO_TENANT_ID", "")
 
-        mock_transactions = []
-        current_date = start_date
-        balance = Decimal("10000.00")
+        # Check if we're in demo mode or missing credentials
+        if xero_settings.is_demo_mode or not access_token or not tenant_id:
+            logger.warning(
+                "Xero in demo mode or missing credentials - using mock bank feed data",
+                demo_mode=xero_settings.is_demo_mode,
+                has_token=bool(access_token),
+                has_tenant=bool(tenant_id),
+            )
 
-        while current_date <= end_date:
-            # Generate 0-3 transactions per day
-            num_txns = random.randint(0, 3)
-            for _ in range(num_txns):
-                amount = Decimal(str(random.uniform(10, 500))).quantize(Decimal("0.01"))
-                is_credit = random.choice([True, False])
+            # Return mock data for development/testing
+            import random
 
-                if is_credit:
-                    balance += amount
-                    mock_transactions.append({
-                        "transaction_date": current_date,
-                        "description": f"EFTPOS PURCHASE {random.randint(1000, 9999)}",
-                        "reference": f"REF{random.randint(100000, 999999)}",
-                        "credit": amount,
-                        "debit": None,
-                        "balance": balance,
-                    })
-                else:
-                    balance -= amount
-                    mock_transactions.append({
-                        "transaction_date": current_date,
-                        "description": f"PAYMENT TO SUPPLIER",
-                        "reference": f"REF{random.randint(100000, 999999)}",
-                        "credit": None,
-                        "debit": amount,
-                        "balance": balance,
-                    })
+            mock_transactions = []
+            current_date = start_date
+            balance = Decimal("10000.00")
 
-            current_date = date(current_date.year, current_date.month, current_date.day + 1)
+            while current_date <= end_date:
+                # Generate 0-3 transactions per day
+                num_txns = random.randint(0, 3)
+                for _ in range(num_txns):
+                    amount = Decimal(str(random.uniform(10, 500))).quantize(Decimal("0.01"))
+                    is_credit = random.choice([True, False])
 
-        return mock_transactions
+                    if is_credit:
+                        balance += amount
+                        mock_transactions.append({
+                            "transaction_date": current_date,
+                            "description": f"EFTPOS PURCHASE {random.randint(1000, 9999)}",
+                            "reference": f"REF{random.randint(100000, 999999)}",
+                            "credit": amount,
+                            "debit": None,
+                            "balance": balance,
+                        })
+                    else:
+                        balance -= amount
+                        mock_transactions.append({
+                            "transaction_date": current_date,
+                            "description": f"PAYMENT TO SUPPLIER",
+                            "reference": f"REF{random.randint(100000, 999999)}",
+                            "credit": None,
+                            "debit": amount,
+                            "balance": balance,
+                        })
+
+                # Move to next day (avoiding date arithmetic issues)
+                from datetime import timedelta
+
+                current_date = current_date + timedelta(days=1)
+
+            return mock_transactions
+
+        # Real Xero API integration
+        xero_client = XeroClient(access_token=access_token, tenant_id=tenant_id)
+
+        try:
+            bank_transactions = await xero_client.get_bank_transactions(
+                bank_account_id=account.feed_account_id if account.feed_account_id else None,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+            logger.info(
+                "Fetched bank transactions from Xero",
+                account_id=str(account.id),
+                account_name=account.account_name,
+                count=len(bank_transactions),
+                date_range=f"{start_date} to {end_date}",
+            )
+
+            # Transform Xero format to our internal format
+            return [
+                {
+                    "transaction_date": datetime.strptime(txn["Date"], "%Y-%m-%dT%H:%M:%S").date()
+                    if isinstance(txn["Date"], str)
+                    else txn["Date"],
+                    "description": txn.get("Description", ""),
+                    "reference": txn.get("Reference", ""),
+                    "credit": Decimal(str(txn["Total"]))
+                    if txn.get("Type") == "RECEIVE" and txn.get("Total")
+                    else None,
+                    "debit": Decimal(str(txn["Total"]))
+                    if txn.get("Type") == "SPEND" and txn.get("Total")
+                    else None,
+                    "balance": None,  # Xero doesn't provide running balance in transactions
+                }
+                for txn in bank_transactions
+            ]
+
+        except Exception as e:
+            logger.error(
+                "Failed to fetch bank transactions from Xero",
+                account_id=str(account.id),
+                error=str(e),
+            )
+            raise
+
+        finally:
+            await xero_client.close()
 
     async def _fetch_yodlee_bank_feed(
         self,

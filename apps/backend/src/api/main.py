@@ -56,7 +56,7 @@ from .routes import (
     webhooks,
 )
 from .routes.ai import ai_router, chat, generate, insights
-from .routes import google_ai, pos_transactions, pos_xero_reconciliation
+from .routes import bank_feeds, google_ai, pos_transactions, pos_xero_reconciliation
 from .routes.integrations import ap2, elevenlabs, sendgrid, shopify, shopify_theme, xero
 
 settings = get_settings()
@@ -136,7 +136,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         except Exception as cache_error:
             logger.warning("Redis connection failed, caching disabled", error=str(cache_error))
 
+    # Start bank feed scheduler
+    bank_feed_scheduler = None
+    try:
+        from src.config.database import AsyncSessionLocal
+        from src.scheduler.bank_feed_scheduler import BankFeedScheduler
+
+        bank_feed_scheduler = BankFeedScheduler(session_maker=AsyncSessionLocal)
+        bank_feed_scheduler.start()
+        logger.info("Bank feed scheduler started")
+    except Exception as scheduler_error:
+        logger.error("Failed to start bank feed scheduler", error=str(scheduler_error))
+
     yield
+
+    # Shutdown: Stop bank feed scheduler
+    if bank_feed_scheduler:
+        try:
+            bank_feed_scheduler.shutdown(wait=True)
+            logger.info("Bank feed scheduler stopped")
+        except Exception as scheduler_error:
+            logger.error("Error stopping bank feed scheduler", error=str(scheduler_error))
 
     # Shutdown: Stop health monitor
     logger.info("Shutting down application")
@@ -408,6 +428,7 @@ app.include_router(google_ai.router, tags=["Google AI"])
 # POS routers
 app.include_router(pos_transactions.router, tags=["POS"])
 app.include_router(pos_xero_reconciliation.router, tags=["POS Xero Reconciliation"])
+app.include_router(bank_feeds.router, tags=["Bank Feeds"])
 
 # PRD Generation router
 # app.include_router(prd.router, tags=["PRD Generation"])  # TODO: Fix PRD dependencies

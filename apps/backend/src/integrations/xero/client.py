@@ -344,6 +344,46 @@ class XeroClient:
 
         raise XeroAPIError("No organisation data returned")
 
+    async def get_bank_transactions(
+        self,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        bank_account_id: str | None = None,
+    ) -> list[dict]:
+        """Get bank transactions (bank feed data).
+
+        Args:
+            start_date: Filter transactions from this date
+            end_date: Filter transactions to this date
+            bank_account_id: Filter by specific bank account
+
+        Returns:
+            List of bank transaction data
+
+        Raises:
+            XeroAPIError: If request fails
+        """
+        params = {}
+
+        # Build where clause for filtering
+        where_clauses = []
+
+        if start_date:
+            where_clauses.append(f'Date>=DateTime({start_date.year},{start_date.month},{start_date.day})')
+
+        if end_date:
+            where_clauses.append(f'Date<=DateTime({end_date.year},{end_date.month},{end_date.day})')
+
+        if bank_account_id:
+            where_clauses.append(f'BankAccount.AccountID==Guid("{bank_account_id}")')
+
+        if where_clauses:
+            params["where"] = " AND ".join(where_clauses)
+
+        result = await self._make_request("GET", "/BankTransactions", params=params)
+
+        return result.get("BankTransactions", [])
+
     async def close(self) -> None:
         """Close HTTP client."""
         await self._http_client.aclose()
