@@ -115,6 +115,34 @@ services:
     networks:
       - starter-network
 
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: ccw-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://starter_user:local_dev_password@postgres:5432/starter_db?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - starter-network
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: ccw-redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis:6379"
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - starter-network
+
 volumes:
   postgres_data:
     driver: local
