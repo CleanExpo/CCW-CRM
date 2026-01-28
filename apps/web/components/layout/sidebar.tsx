@@ -25,6 +25,7 @@ import {
   Sparkles,
   Activity,
   CreditCard,
+  Scale,
 } from "lucide-react";
 
 const navigation = [
@@ -37,6 +38,7 @@ const navigation = [
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "POS Terminal", href: "/pos", icon: CreditCard },
+  { name: "Reconciliation", href: "/pos/reconciliation", icon: Scale },
   { name: "Quotes", href: "/quotes", icon: FileText },
   { name: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
   { name: "Submissions", href: "/submissions", icon: ClipboardCheck },
