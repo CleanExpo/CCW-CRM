@@ -159,22 +159,30 @@ Optimize Database Indexes for Search,"✅ COMPLETE: Database search optimization
 - Database load significantly reduced
 - Better resource utilization
 - Improved user satisfaction",High,Done,2,"performance,database,optimization",CCW-ERP/CRM
-Setup Production Monitoring and Alerts,"⏳ READY TO START: Implement Prometheus + Grafana monitoring
+Setup Production Monitoring and Alerts,"READY TO START: Enhance existing internal monitoring system
 
-**Problem:** No production monitoring or alerting, blind to issues
+**Current State:**
+- Internal metrics collection (prometheus_client format)
+- AlertManager service for system alerts
+- AI agent monitoring endpoints
+- Health monitoring for agents
 
-**Impact:** Issues only discovered when users report, no SLA visibility
-
-**Solution:** Prometheus + Grafana stack with alerting
+**What's Missing:**
+- Email/Slack notifications for alerts
+- Consolidated monitoring dashboard UI
+- Business metrics tracking (POS, reconciliation, orders)
+- API performance monitoring (response times, error rates)
+- Database connection pool monitoring
+- Scheduled alert checks
 
 **Deliverables:**
-- Prometheus metrics collection (response times, error rates, throughput)
-- Grafana production dashboard (real-time metrics visualization)
-- Alert rules (>2s response, >1% error rate, low DB connections)
-- Business metrics (POS transactions, bank reconciliations)
-- 30-day metric retention
-- Email/Slack alert notifications
-- Documentation and runbook
+- Email/Slack notification service for alerts
+- Monitoring dashboard UI (using existing internal endpoints)
+- Business metrics endpoints (POS volume, reconciliation rate, order throughput)
+- API performance middleware (track response times, error rates)
+- Database pool metrics collection
+- Scheduled jobs for alert generation
+- Alert acknowledgement workflow
 
 **Metrics to Track:**
 - Request rate (req/sec)
@@ -184,23 +192,29 @@ Setup Production Monitoring and Alerts,"⏳ READY TO START: Implement Prometheus
 - POS transaction volume by location
 - Bank reconciliation success rate
 - Top 10 slowest endpoints
+- AI agent execution success rates
 
 **Alert Conditions:**
 - p95 response time > 2s for 5 minutes
 - Error rate > 1% for 5 minutes
 - Database connection pool > 90% for 2 minutes
 - Bank reconciliation failures > 5/hour
+- POS payment failures > 3/hour
+- AI agent failure rate > 20%
 
 **Acceptance Criteria:**
-- Prometheus collecting metrics from backend
-- Grafana dashboard accessible
-- All alerts configured and tested
-- Notifications sent via email/Slack
-- Documentation complete
+- Email notifications working for critical alerts
+- Slack webhooks configured (optional)
+- Monitoring dashboard accessible at /monitoring
+- All business metrics tracked
+- Alert acknowledgement workflow functional
+- Documentation updated
 
 **Business Value:** Proactive issue detection, reduce downtime, improve SLA
 
-**Priority:** Medium - Important for production stability",Medium,Ready,4,"devops,monitoring,observability",CCW-ERP/CRM
+**Priority:** Medium - Important for production stability
+
+**Note:** Uses existing internal monitoring infrastructure (no external Prometheus/Grafana)",Medium,Ready,4,"devops,monitoring,observability",CCW-ERP/CRM
 Implement Shopify Bidirectional Product Sync,"❌ BLOCKED: Requires Shopify authentication resolution
 
 **Problem:** Need real-time bidirectional product synchronization
