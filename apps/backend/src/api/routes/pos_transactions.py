@@ -466,3 +466,152 @@ async def list_terminals(
         }
         for term in terminals
     ]
+
+
+# ============================================================
+# XERO INVOICE CREATION ENDPOINTS
+# ============================================================
+
+
+class XeroInvoiceResponse(BaseModel):
+    """Xero invoice creation response."""
+
+    success: bool
+    pos_transaction_id: Optional[str] = None
+    transaction_number: Optional[str] = None
+    xero_invoice_id: Optional[str] = None
+    xero_invoice_number: Optional[str] = None
+    xero_payment_id: Optional[str] = None
+    amount: Optional[float] = None
+    status: Optional[str] = None
+    already_exists: Optional[bool] = None
+    error: Optional[str] = None
+
+
+class BulkXeroInvoiceResponse(BaseModel):
+    """Bulk Xero invoice creation response."""
+
+    total: int
+    created: int
+    failed: int
+    errors: Optional[list[dict]] = None
+
+
+@router.post(
+    "/transactions/{transaction_id}/xero-invoice",
+    response_model=XeroInvoiceResponse,
+)
+async def create_xero_invoice_from_pos_transaction(
+    transaction_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> XeroInvoiceResponse:
+    """
+    Create a Xero invoice from a POS transaction.
+
+    Creates an invoice in Xero for the captured POS transaction.
+    For walk-in sales, uses a generic "Cash Sales" contact.
+    For order-based sales, uses the customer from the linked order.
+
+    Also creates a payment in Xero (since POS transaction is already paid).
+
+    Returns:
+    - Xero invoice ID and number
+    - Payment ID
+    - Error if Xero connection not available
+    """
+    try:
+        from src.integrations.xero import POSXeroReconciliation
+        from src.integrations.xero.auth import XeroAuth
+
+        # Get current user's organization ID (assuming organization support)
+        # For now, use the user's organization_id if available
+        organization_id = getattr(current_user, "organization_id", None)
+
+        if not organization_id:
+            return XeroInvoiceResponse(
+                success=False,
+                error="User is not associated with an organization",
+            )
+
+        xero_auth = XeroAuth()
+        pos_xero = POSXeroReconciliation(xero_auth)
+
+        result = await pos_xero.create_invoice_from_pos_transaction(
+            db=db,
+            organization_id=organization_id,
+            pos_transaction_id=transaction_id,
+        )
+
+        return XeroInvoiceResponse(**result)
+
+    except ValueError as e:
+        return XeroInvoiceResponse(
+            success=False,
+            error=str(e),
+        )
+    except Exception as e:
+        return XeroInvoiceResponse(
+            success=False,
+            error=f"Failed to create Xero invoice: {str(e)}",
+        )
+
+
+@router.post("/xero/bulk-invoices", response_model=BulkXeroInvoiceResponse)
+async def bulk_create_xero_invoices(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    max_transactions: int = Query(100, ge=1, le=500, description="Max transactions to process"),
+) -> BulkXeroInvoiceResponse:
+    """
+    Bulk create Xero invoices for captured POS transactions.
+
+    Finds all captured POS transactions without Xero invoices
+    and creates invoices for them.
+
+    Use this to catch up on transactions that were not automatically
+    invoiced (e.g., if Xero was disconnected).
+
+    Returns:
+    - Count of created/failed invoices
+    - Error details for failed transactions
+    """
+    try:
+        from src.integrations.xero import POSXeroReconciliation
+        from src.integrations.xero.auth import XeroAuth
+
+        organization_id = getattr(current_user, "organization_id", None)
+
+        if not organization_id:
+            return BulkXeroInvoiceResponse(
+                total=0,
+                created=0,
+                failed=0,
+                errors=[{"error": "User is not associated with an organization"}],
+            )
+
+        xero_auth = XeroAuth()
+        pos_xero = POSXeroReconciliation(xero_auth)
+
+        result = await pos_xero.bulk_create_invoices(
+            db=db,
+            organization_id=organization_id,
+            max_transactions=max_transactions,
+        )
+
+        return BulkXeroInvoiceResponse(**result)
+
+    except ValueError as e:
+        return BulkXeroInvoiceResponse(
+            total=0,
+            created=0,
+            failed=0,
+            errors=[{"error": str(e)}],
+        )
+    except Exception as e:
+        return BulkXeroInvoiceResponse(
+            total=0,
+            created=0,
+            failed=0,
+            errors=[{"error": f"Failed to create Xero invoices: {str(e)}"}],
+        )
