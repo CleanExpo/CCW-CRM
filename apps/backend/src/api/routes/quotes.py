@@ -41,21 +41,35 @@ async def invalidate_quote_caches() -> None:
 
 
 async def generate_quote_number(db: AsyncSession) -> str:
-    """Generate next quote number with microsecond timestamp to avoid race conditions."""
-    now = datetime.now()
-    year = now.year
-    # Use microseconds to ensure uniqueness in concurrent scenarios
-    timestamp_suffix = f"{now.month:02d}{now.day:02d}{now.hour:02d}{now.minute:02d}{now.second:02d}{now.microsecond:06d}"
-    return f"Q-{year}-{timestamp_suffix}"
+    """
+    Generate next quote number using PostgreSQL SEQUENCE.
+
+    This is guaranteed to be unique and atomic at the database level.
+    No race conditions possible.
+
+    Format: Q-YYYY-NNNNNN (e.g., Q-2026-000456)
+    """
+    from sqlalchemy import text
+
+    result = await db.execute(text("SELECT generate_quote_number()"))
+    quote_number = result.scalar()
+    return quote_number
 
 
 async def generate_order_number(db: AsyncSession) -> str:
-    """Generate next order number."""
-    year = datetime.now().year
-    query = select(func.count()).where(OrderModel.order_number.like(f"ORD-{year}-%"))
-    result = await db.execute(query)
-    count = result.scalar_one()
-    return f"ORD-{year}-{count + 1:03d}"
+    """
+    Generate next order number using PostgreSQL SEQUENCE.
+
+    This is guaranteed to be unique and atomic at the database level.
+    No race conditions possible.
+
+    Format: ORD-YYYY-NNNNNN (e.g., ORD-2026-000123)
+    """
+    from sqlalchemy import text
+
+    result = await db.execute(text("SELECT generate_order_number()"))
+    order_number = result.scalar()
+    return order_number
 
 
 @router.get("", response_model=PaginatedResponse)
