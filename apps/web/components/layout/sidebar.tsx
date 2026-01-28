@@ -23,11 +23,9 @@ import {
   Bell,
   CheckCircle,
   Sparkles,
-  Languages,
-  Cpu,
+  Activity,
   CreditCard,
-  UserCog,
-  MapPin,
+  Scale,
 } from "lucide-react";
 
 const navigation = [
@@ -39,20 +37,18 @@ const navigation = [
   { name: "Backorders", href: "/backorders", icon: AlertCircle },
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
+  { name: "POS Terminal", href: "/pos", icon: CreditCard },
+  { name: "Reconciliation", href: "/pos/reconciliation", icon: Scale },
   { name: "Quotes", href: "/quotes", icon: FileText },
   { name: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
-  { name: "POS Terminal", href: "/pos/terminal", icon: CreditCard },
-  { name: "Sales Staff", href: "/pos/staff", icon: UserCog },
-  { name: "Locations", href: "/pos/locations", icon: MapPin },
   { name: "Submissions", href: "/submissions", icon: ClipboardCheck },
   { name: "Emails", href: "/emails", icon: Mail },
   // { name: "AI Assistant", href: "/ai-assistant", icon: Bot }, // Hidden for demo - incomplete implementation
   { name: "PRD Generator", href: "/prd/generate", icon: Sparkles },
   { name: "Insights", href: "/insights", icon: TrendingUp },
-  { name: "Autonomous Dev", href: "/autonomous-dev", icon: Cpu },
   { name: "Alerts", href: "/alerts", icon: Bell },
   { name: "Approvals", href: "/approvals", icon: CheckCircle },
-  { name: "Translations", href: "/settings/translations", icon: Languages },
+  { name: "Monitoring", href: "/monitoring", icon: Activity },
   { name: "Settings", href: "/settings/integrations", icon: Settings },
 ];
 

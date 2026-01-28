@@ -100,12 +100,12 @@ class EFTPOSClient:
         Mock EFTPOS sale for development/testing.
 
         Simulates:
-        - 2 second delay (customer interaction)
+        - Short delay (reduced from 2s to 0.1s for testing)
         - 95% approval rate
         - Random card types
         """
-        # Simulate customer interaction delay
-        await asyncio.sleep(2)
+        # Simulate customer interaction delay (reduced for testing)
+        await asyncio.sleep(0.1)
 
         # Mock approval (95% success rate)
         import random

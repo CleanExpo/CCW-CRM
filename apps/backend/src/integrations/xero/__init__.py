@@ -6,6 +6,7 @@ This module provides OAuth2 authentication, API client, and sync functionality f
 from .auth import XeroAuth
 from .client import XeroClient
 from .demo_client import DemoXeroClient
+from .pos_reconciliation import POSXeroReconciliation
 
 
 def get_xero_client(access_token: str, tenant_id: str, demo_mode: bool = False) -> XeroClient | DemoXeroClient:  # noqa: E501
@@ -24,4 +25,4 @@ def get_xero_client(access_token: str, tenant_id: str, demo_mode: bool = False) 
     return XeroClient(access_token, tenant_id)
 
 
-__all__ = ["XeroAuth", "XeroClient", "DemoXeroClient", "get_xero_client"]
+__all__ = ["XeroAuth", "XeroClient", "DemoXeroClient", "get_xero_client", "POSXeroReconciliation"]

@@ -1,14 +1,16 @@
-"""POS-Xero reconciliation service.
+"""
+Xero POS Reconciliation Service.
 
-This module handles automatic reconciliation between POS transactions,
-bank feeds, and Xero invoices/payments. Key features:
-- Auto-create Xero invoices from POS transactions
-- Auto-reconcile when bank feed matches POS transaction
-- Save accounts team 10+ hours/week on manual reconciliation
+Creates Xero invoices from POS transactions and handles reconciliation:
+- Walk-in sales (no order/customer - uses Cash Sales contact)
+- Order-based sales (links to existing order customer)
+- Automatic invoice creation after payment capture
+- Payment reconciliation linking
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import Optional
 from uuid import UUID
 
 import structlog
@@ -16,36 +18,57 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.db.demo_models import Customer, Order, OrderItem, OrderStatus, Product
-from src.db.pos_models import BankFeed, POSTransaction
+from src.db.demo_models import Customer, Order, Product
+from src.db.pos_models import POSTransaction, Location
 from src.integrations.xero.auth import XeroAuth
-from src.integrations.xero.client import XeroAPIError
-from src.integrations.xero import get_xero_client
+from src.integrations.xero.client import XeroAPIError, XeroClient
+from src.integrations.xero.demo_client import DemoXeroClient
+
+
+def __get_xero_client(access_token: str, tenant_id: str, demo_mode: bool = False) -> XeroClient | DemoXeroClient:
+    """Get appropriate Xero client (local to avoid circular import)."""
+    if demo_mode:
+        return DemoXeroClient(access_token, tenant_id)
+    return XeroClient(access_token, tenant_id)
 
 logger = structlog.get_logger(__name__)
 
 
 class POSXeroReconciliation:
-    """Handles reconciliation between POS transactions, bank feeds, and Xero."""
+    """
+    Handles Xero reconciliation for POS transactions.
+
+    Creates invoices for:
+    1. Walk-in sales (no customer) - Uses generic "Cash Sales" contact
+    2. Customer sales - Uses/creates customer contact
+    3. Order-based sales - Uses order customer
+
+    Features:
+    - Auto-create invoices when payment is captured
+    - Link payments to invoices
+    - Track reconciliation status
+    """
+
+    # Default contact for walk-in cash sales
+    CASH_SALES_CONTACT_NAME = "Cash Sales - Walk-in"
+    CASH_SALES_CONTACT_EMAIL = "cash.sales@internal.pos"
 
     def __init__(self, xero_auth: XeroAuth):
-        """Initialize POS-Xero reconciliation service.
+        """Initialize POS Xero reconciliation handler.
 
         Args:
             xero_auth: XeroAuth instance for managing authentication
         """
         self.xero_auth = xero_auth
 
-    async def create_xero_invoice_from_pos_transaction(
+    async def create_invoice_from_pos_transaction(
         self,
         db: AsyncSession,
         organization_id: UUID,
         pos_transaction_id: UUID,
     ) -> dict:
-        """Create Xero invoice from POS transaction.
-
-        This is called when a POS transaction is captured successfully.
-        Creates a corresponding invoice in Xero and links it to the transaction.
+        """
+        Create Xero invoice from a POS transaction.
 
         Args:
             db: Database session
@@ -53,7 +76,7 @@ class POSXeroReconciliation:
             pos_transaction_id: POS transaction UUID
 
         Returns:
-            Dict with invoice details
+            Dict with invoice creation result
 
         Raises:
             ValueError: If transaction not found or invalid
@@ -64,21 +87,24 @@ class POSXeroReconciliation:
         if not connection:
             raise ValueError("No active Xero connection found for organization")
 
-        # Get POS transaction with order eagerly loaded
+        # Get POS transaction with related data
         stmt = (
             select(POSTransaction)
             .where(POSTransaction.id == pos_transaction_id)
-            .options(selectinload(POSTransaction.order))
+            .options(
+                selectinload(POSTransaction.location),
+                selectinload(POSTransaction.sales_staff),
+            )
         )
         result = await db.execute(stmt)
-        pos_txn = result.scalar_one_or_none()
+        pos_txn = result.unique().scalar_one_or_none()
 
         if not pos_txn:
             raise ValueError(f"POS transaction {pos_transaction_id} not found")
 
         if pos_txn.payment_status != "captured":
             raise ValueError(
-                f"Cannot create invoice for transaction with status: {pos_txn.payment_status}"
+                f"POS transaction must be captured to create invoice (current: {pos_txn.payment_status})"
             )
 
         if pos_txn.xero_invoice_id:
@@ -88,91 +114,71 @@ class POSXeroReconciliation:
                 xero_invoice_id=pos_txn.xero_invoice_id,
             )
             return {
+                "success": True,
                 "already_exists": True,
                 "xero_invoice_id": pos_txn.xero_invoice_id,
             }
 
-        # Get or create order for this transaction
-        if not pos_txn.order_id:
-            # Walk-in sale without pre-existing order - create one
-            order = await self._create_order_from_pos_transaction(db, pos_txn)
-            pos_txn.order_id = order.id
-            await db.flush()
-        else:
-            # Load existing order with items
-            stmt = (
-                select(Order)
-                .where(Order.id == pos_txn.order_id)
-                .options(
-                    selectinload(Order.customer),
-                    selectinload(Order.order_items),
-                )
-            )
-            result = await db.execute(stmt)
-            order = result.scalar_one_or_none()
-
-            if not order:
-                raise ValueError(f"Order {pos_txn.order_id} not found")
-
-            # Load products for order items
-            if order.order_items:
-                product_ids = [item.product_id for item in order.order_items]
-                products_stmt = select(Product).where(Product.id.in_(product_ids))
-                products_result = await db.execute(products_stmt)
-                products = {p.id: p for p in products_result.scalars().all()}
-                for item in order.order_items:
-                    item.product = products.get(item.product_id)
-
         # Initialize Xero client
         demo_mode = connection.access_token.startswith("demo_")
-        xero_client = get_xero_client(
+        xero_client = _get_xero_client(
             access_token=connection.access_token,
             tenant_id=connection.tenant_id,
             demo_mode=demo_mode,
         )
 
         try:
-            # Step 1: Get or create Xero contact
-            contact = await self._get_or_create_contact(xero_client, order.customer)
+            # Step 1: Get or create contact
+            if pos_txn.order_id:
+                # Order-based sale - use order's customer
+                order = await self._get_order_with_customer(db, pos_txn.order_id)
+                contact = await self._get_or_create_contact(xero_client, order.customer)
+                description = f"Order {order.order_number}"
+            else:
+                # Walk-in sale - use Cash Sales contact
+                contact = await self._get_or_create_cash_sales_contact(xero_client)
+                description = f"Walk-in Sale at {pos_txn.location.name}"
 
-            # Step 2: Create invoice
-            line_items = []
-            for item in order.order_items:
-                line_items.append(
-                    {
-                        "description": f"{item.product.name} (SKU: {item.product.sku})",
-                        "quantity": float(item.quantity),
-                        "unit_amount": float(item.unit_price),
-                    }
-                )
+            # Step 2: Build line items
+            line_items = await self._build_line_items(db, pos_txn, description)
 
+            # Step 3: Create invoice
             invoice = await xero_client.create_invoice(
                 contact_id=contact["ContactID"],
                 invoice_number=pos_txn.transaction_number,
                 line_items=line_items,
-                due_date=datetime.now(UTC).date(),  # Due immediately for POS
-                reference=f"POS {pos_txn.transaction_number} - {pos_txn.payment_method}",
+                due_date=datetime.now().date(),  # Immediate payment
+                reference=self._build_reference(pos_txn),
             )
 
-            # Step 3: Approve invoice
+            # Step 4: Approve invoice (AUTHORISED status)
             approved_invoice = await xero_client.approve_invoice(invoice["InvoiceID"])
 
-            # Step 4: Update POS transaction and order
-            pos_txn.xero_invoice_id = approved_invoice["InvoiceID"]
-            order.xero_invoice_id = approved_invoice["InvoiceID"]
-            order.xero_synced_at = datetime.now(UTC)
-            order.xero_sync_status = "synced"
+            # Step 5: Create payment (since POS is already paid)
+            payment = await xero_client.create_payment(
+                invoice_id=approved_invoice["InvoiceID"],
+                amount=float(pos_txn.amount),
+                date=datetime.now().date(),
+                reference=pos_txn.payment_gateway_ref or pos_txn.transaction_number,
+            )
 
-            connection.last_synced_at = datetime.now(UTC)
-            await db.commit()
+            # Step 6: Update POS transaction with Xero links
+            pos_txn.xero_invoice_id = approved_invoice["InvoiceID"]
+            pos_txn.reconciliation_status = "matched"
+            pos_txn.reconciled_at = datetime.now()
 
             logger.info(
                 "Created Xero invoice from POS transaction",
                 pos_transaction_id=str(pos_transaction_id),
                 transaction_number=pos_txn.transaction_number,
-                xero_invoice_id=approved_invoice["InvoiceID"],
-                total=approved_invoice["Total"],
+                invoice_id=approved_invoice["InvoiceID"],
+                invoice_number=approved_invoice["InvoiceNumber"],
+                payment_id=payment.get("PaymentID"),
             )
+
+            # Update connection last_synced_at
+            connection.last_synced_at = datetime.now()
+            await db.commit()
 
             return {
                 "success": True,
@@ -180,7 +186,9 @@ class POSXeroReconciliation:
                 "transaction_number": pos_txn.transaction_number,
                 "xero_invoice_id": approved_invoice["InvoiceID"],
                 "xero_invoice_number": approved_invoice["InvoiceNumber"],
-                "total": float(approved_invoice["Total"]),
+                "xero_payment_id": payment.get("PaymentID"),
+                "amount": float(pos_txn.amount),
+                "status": "paid",
             }
 
         except XeroAPIError as e:
@@ -195,365 +203,48 @@ class POSXeroReconciliation:
         finally:
             await xero_client.close()
 
-    async def create_xero_payment_and_reconcile(
-        self,
-        db: AsyncSession,
-        organization_id: UUID,
-        pos_transaction_id: UUID,
-        bank_feed_id: UUID,
-    ) -> dict:
-        """Create Xero payment and reconcile with bank feed.
-
-        This is called when a bank feed transaction matches a POS transaction.
-        Creates payment in Xero and marks both transactions as reconciled.
-
-        Args:
-            db: Database session
-            organization_id: Organization UUID
-            pos_transaction_id: POS transaction UUID
-            bank_feed_id: Bank feed transaction UUID
-
-        Returns:
-            Dict with reconciliation details
-
-        Raises:
-            ValueError: If reconciliation fails validation
-            XeroAPIError: If Xero API call fails
-        """
-        # Get active Xero connection
-        connection = await self.xero_auth.get_active_connection(db, organization_id)
-        if not connection:
-            raise ValueError("No active Xero connection found for organization")
-
-        # Get POS transaction
-        stmt = select(POSTransaction).where(POSTransaction.id == pos_transaction_id)
+    async def _get_order_with_customer(self, db: AsyncSession, order_id: UUID) -> Order:
+        """Get order with customer data."""
+        stmt = (
+            select(Order)
+            .where(Order.id == order_id)
+            .options(
+                selectinload(Order.customer),
+                selectinload(Order.order_items),
+            )
+        )
         result = await db.execute(stmt)
-        pos_txn = result.scalar_one_or_none()
+        order = result.unique().scalar_one_or_none()
 
-        if not pos_txn:
-            raise ValueError(f"POS transaction {pos_transaction_id} not found")
+        if not order:
+            raise ValueError(f"Order {order_id} not found")
 
-        # Get bank feed
-        stmt = select(BankFeed).where(BankFeed.id == bank_feed_id)
-        result = await db.execute(stmt)
-        bank_feed = result.scalar_one_or_none()
-
-        if not bank_feed:
-            raise ValueError(f"Bank feed {bank_feed_id} not found")
-
-        # Validate amounts match (within 10 cent tolerance)
-        amount_diff = abs(float(pos_txn.amount) - float(bank_feed.credit or 0))
-        if amount_diff > 0.10:
-            raise ValueError(
-                f"Amount mismatch: POS ${pos_txn.amount}, Bank ${bank_feed.credit}"
-            )
-
-        # Ensure invoice exists
-        if not pos_txn.xero_invoice_id:
-            raise ValueError("POS transaction has no Xero invoice. Create invoice first.")
-
-        # Initialize Xero client
-        demo_mode = connection.access_token.startswith("demo_")
-        xero_client = get_xero_client(
-            access_token=connection.access_token,
-            tenant_id=connection.tenant_id,
-            demo_mode=demo_mode,
-        )
-
-        try:
-            # Create payment in Xero
-            payment = await xero_client.create_payment(
-                invoice_id=pos_txn.xero_invoice_id,
-                account_code="200",  # Bank account code (should be configurable)
-                amount=float(pos_txn.amount),
-                date=bank_feed.transaction_date,
-                reference=bank_feed.reference or pos_txn.transaction_number,
-            )
-
-            # Update POS transaction
-            pos_txn.bank_statement_ref = bank_feed.reference
-            pos_txn.reconciliation_status = "matched"
-            pos_txn.reconciled_at = datetime.now(UTC)
-
-            # Update bank feed
-            bank_feed.matched_pos_transaction_id = pos_transaction_id
-            bank_feed.match_confidence = Decimal("1.00")  # Perfect match
-            bank_feed.match_status = "auto_matched"
-            bank_feed.matched_at = datetime.now(UTC)
-
-            connection.last_synced_at = datetime.now(UTC)
-            await db.commit()
-
-            logger.info(
-                "Created Xero payment and reconciled with bank feed",
-                pos_transaction_id=str(pos_transaction_id),
-                bank_feed_id=str(bank_feed_id),
-                xero_payment_id=payment["PaymentID"],
-                amount=pos_txn.amount,
-            )
-
-            return {
-                "success": True,
-                "pos_transaction_id": str(pos_transaction_id),
-                "bank_feed_id": str(bank_feed_id),
-                "xero_payment_id": payment["PaymentID"],
-                "amount": float(pos_txn.amount),
-                "reconciliation_status": "matched",
-            }
-
-        except XeroAPIError as e:
-            logger.error(
-                "Failed to create Xero payment",
-                pos_transaction_id=str(pos_transaction_id),
-                bank_feed_id=str(bank_feed_id),
-                error=str(e),
-                status_code=e.status_code,
-            )
-            raise
-
-        finally:
-            await xero_client.close()
-
-    async def auto_reconcile_unmatched_transactions(
-        self,
-        db: AsyncSession,
-        organization_id: UUID,
-        days_back: int = 7,
-    ) -> dict:
-        """Auto-reconcile unmatched POS transactions with bank feeds.
-
-        Runs matching algorithm to find POS transactions and bank feeds
-        that likely match, then creates Xero payments for high-confidence matches.
-
-        Args:
-            db: Database session
-            organization_id: Organization UUID
-            days_back: Number of days to look back
-
-        Returns:
-            Dict with reconciliation statistics
-        """
-        from datetime import timedelta
-
-        cutoff_date = datetime.now(UTC).date() - timedelta(days=days_back)
-
-        # Get unmatched POS transactions (captured, have invoice, not reconciled)
-        pos_stmt = (
-            select(POSTransaction)
-            .where(
-                POSTransaction.payment_status == "captured",
-                POSTransaction.xero_invoice_id.isnot(None),
-                POSTransaction.reconciliation_status == "pending",
-                POSTransaction.created_at >= cutoff_date,
-            )
-        )
-        pos_result = await db.execute(pos_stmt)
-        pos_transactions = pos_result.scalars().all()
-
-        # Get unmatched bank feeds (credits only, not matched)
-        bank_stmt = (
-            select(BankFeed)
-            .where(
-                BankFeed.match_status == "pending",
-                BankFeed.credit.isnot(None),
-                BankFeed.transaction_date >= cutoff_date,
-            )
-        )
-        bank_result = await db.execute(bank_stmt)
-        bank_feeds = bank_result.scalars().all()
-
-        logger.info(
-            "Starting auto-reconciliation",
-            pos_transactions=len(pos_transactions),
-            bank_feeds=len(bank_feeds),
-            days_back=days_back,
-        )
-
-        matched = 0
-        suggested = 0
-        errors = []
-
-        # Match transactions
-        for pos_txn in pos_transactions:
-            for bank_feed in bank_feeds:
-                # Skip if already matched
-                if bank_feed.match_status != "pending":
-                    continue
-
-                # Calculate match confidence
-                confidence = self._calculate_match_confidence(pos_txn, bank_feed)
-
-                # Auto-match if confidence >= 80%
-                if confidence >= 0.8:
-                    try:
-                        await self.create_xero_payment_and_reconcile(
-                            db, organization_id, pos_txn.id, bank_feed.id
-                        )
-                        matched += 1
-                        break  # Move to next POS transaction
-                    except Exception as e:
-                        errors.append(
-                            {
-                                "pos_transaction_id": str(pos_txn.id),
-                                "bank_feed_id": str(bank_feed.id),
-                                "error": str(e),
-                            }
-                        )
-                        logger.error(
-                            "Failed to auto-reconcile",
-                            pos_txn_id=str(pos_txn.id),
-                            bank_feed_id=str(bank_feed.id),
-                            error=str(e),
-                        )
-
-                # Suggest if confidence >= 60%
-                elif confidence >= 0.6:
-                    # Update bank feed with suggestion
-                    bank_feed.matched_pos_transaction_id = pos_txn.id
-                    bank_feed.match_confidence = Decimal(str(confidence))
-                    bank_feed.match_status = "suggested"
-                    suggested += 1
-
-        await db.commit()
-
-        logger.info(
-            "Auto-reconciliation completed",
-            matched=matched,
-            suggested=suggested,
-            errors=len(errors),
-        )
-
-        return {
-            "total_pos_transactions": len(pos_transactions),
-            "total_bank_feeds": len(bank_feeds),
-            "auto_matched": matched,
-            "suggested_matches": suggested,
-            "errors": errors if errors else None,
-        }
-
-    def _calculate_match_confidence(
-        self,
-        pos_txn: POSTransaction,
-        bank_feed: BankFeed,
-    ) -> float:
-        """Calculate confidence score for POS transaction and bank feed match.
-
-        Args:
-            pos_txn: POS transaction
-            bank_feed: Bank feed transaction
-
-        Returns:
-            Confidence score between 0.0 and 1.0
-        """
-        confidence = 0.0
-
-        # Amount match (±10 cents tolerance)
-        amount_diff = abs(float(pos_txn.amount) - float(bank_feed.credit or 0))
-        if amount_diff == 0:
-            confidence += 0.5  # Exact match
-        elif amount_diff <= 0.10:
-            confidence += 0.3  # Close match
-
-        # Date match (±3 days tolerance)
-        from datetime import timedelta
-
-        pos_date = pos_txn.created_at.date()
-        bank_date = bank_feed.transaction_date
-
-        date_diff = abs((pos_date - bank_date).days)
-        if date_diff == 0:
-            confidence += 0.3  # Same day
-        elif date_diff <= 1:
-            confidence += 0.2  # ±1 day
-        elif date_diff <= 3:
-            confidence += 0.1  # ±3 days
-
-        # Reference match
-        if bank_feed.reference and pos_txn.transaction_number:
-            if pos_txn.transaction_number in bank_feed.reference:
-                confidence += 0.2
-
-        return min(confidence, 1.0)
-
-    async def _create_order_from_pos_transaction(
-        self,
-        db: AsyncSession,
-        pos_txn: POSTransaction,
-    ) -> Order:
-        """Create an order from a walk-in POS transaction.
-
-        Args:
-            db: Database session
-            pos_txn: POS transaction
-
-        Returns:
-            Created Order instance
-        """
-        # For walk-in sales, we need a customer
-        # If no customer_id, create a generic "Walk-in Customer"
-        customer_id = None
-
-        if not customer_id:
-            # Check if "Walk-in Customer" exists
-            stmt = select(Customer).where(Customer.email == "walkin@pos.internal")
-            result = await db.execute(stmt)
-            customer = result.scalar_one_or_none()
-
-            if not customer:
-                # Create walk-in customer
-                customer = Customer(
-                    customer_number="WALKIN-001",
-                    company_name="Walk-in Customer",
-                    contact_name="Walk-in",
-                    email="walkin@pos.internal",
-                    phone="N/A",
-                    address="N/A",
-                    city=pos_txn.resolved_location_code or "Unknown",
-                    state="Queensland",
-                    postal_code="0000",
-                    country="Australia",
-                    is_active=True,
-                )
-                db.add(customer)
-                await db.flush()
-
-            customer_id = customer.id
-
-        # Create order
-        order = Order(
-            order_number=f"POS-{pos_txn.transaction_number}",
-            customer_id=customer_id,
-            order_date=pos_txn.created_at,
-            status=OrderStatus.CONFIRMED,
-            notes=f"POS walk-in sale - {pos_txn.payment_method}",
-            total=pos_txn.amount,
-        )
-        db.add(order)
-        await db.flush()
-
-        # Note: For walk-in sales, line items would typically be entered at POS
-        # This is a simplified version - in production, POS would send line items
+        # Load products for line items
+        if order.order_items:
+            product_ids = [item.product_id for item in order.order_items]
+            products_stmt = select(Product).where(Product.id.in_(product_ids))
+            products_result = await db.execute(products_stmt)
+            products = {p.id: p for p in products_result.scalars().all()}
+            for item in order.order_items:
+                item.product = products.get(item.product_id)
 
         return order
 
     async def _get_or_create_contact(
         self,
-        xero_client,
+        xero_client: XeroClient,
         customer: Customer,
     ) -> dict:
-        """Get existing Xero contact or create new one.
-
-        Args:
-            xero_client: XeroClient instance
-            customer: Customer model instance
-
-        Returns:
-            Xero contact data
-        """
+        """Get existing Xero contact or create new one for customer."""
         # Try to find existing contact by email
         existing_contact = await xero_client.get_contact_by_email(customer.email)
 
         if existing_contact:
+            logger.debug(
+                "Found existing Xero contact",
+                contact_id=existing_contact["ContactID"],
+                email=customer.email,
+            )
             return existing_contact
 
         # Create new contact
@@ -561,7 +252,7 @@ class POSXeroReconciliation:
             "street": customer.address or "",
             "city": customer.city or "",
             "state": customer.state or "",
-            "postal_code": customer.postal_code or "",
+            "postal_code": customer.postcode or "",
             "country": "Australia",
         }
 
@@ -579,3 +270,142 @@ class POSXeroReconciliation:
         )
 
         return contact
+
+    async def _get_or_create_cash_sales_contact(self, xero_client: XeroClient) -> dict:
+        """Get or create the Cash Sales contact for walk-in sales."""
+        existing_contact = await xero_client.get_contact_by_email(self.CASH_SALES_CONTACT_EMAIL)
+
+        if existing_contact:
+            return existing_contact
+
+        # Create Cash Sales contact
+        contact = await xero_client.create_contact(
+            name=self.CASH_SALES_CONTACT_NAME,
+            email=self.CASH_SALES_CONTACT_EMAIL,
+        )
+
+        logger.info(
+            "Created Cash Sales contact for walk-in sales",
+            contact_id=contact["ContactID"],
+        )
+
+        return contact
+
+    async def _build_line_items(
+        self,
+        db: AsyncSession,
+        pos_txn: POSTransaction,
+        description: str,
+    ) -> list[dict]:
+        """Build line items for Xero invoice."""
+        if pos_txn.order_id:
+            # Order-based sale - use order line items
+            order = await self._get_order_with_customer(db, pos_txn.order_id)
+            line_items = []
+            for item in order.order_items:
+                line_items.append({
+                    "description": f"{item.product.name} (SKU: {item.product.sku})",
+                    "quantity": float(item.quantity),
+                    "unit_amount": float(item.unit_price),
+                })
+            return line_items
+        else:
+            # Walk-in sale - single line item with total amount
+            return [{
+                "description": description,
+                "quantity": 1.0,
+                "unit_amount": float(pos_txn.amount),
+            }]
+
+    def _build_reference(self, pos_txn: POSTransaction) -> str:
+        """Build reference string for Xero invoice."""
+        parts = [pos_txn.transaction_number]
+
+        if pos_txn.location:
+            parts.append(f"Location: {pos_txn.location.name}")
+
+        if pos_txn.payment_method:
+            parts.append(f"Payment: {pos_txn.payment_method.upper()}")
+
+        if pos_txn.payment_gateway_ref:
+            parts.append(f"Gateway Ref: {pos_txn.payment_gateway_ref}")
+
+        return " | ".join(parts)
+
+    async def bulk_create_invoices(
+        self,
+        db: AsyncSession,
+        organization_id: UUID,
+        max_transactions: int = 100,
+    ) -> dict:
+        """
+        Bulk create Xero invoices for captured POS transactions.
+
+        Args:
+            db: Database session
+            organization_id: Organization UUID
+            max_transactions: Maximum transactions to process
+
+        Returns:
+            Dict with processing statistics
+        """
+        # Get active Xero connection
+        connection = await self.xero_auth.get_active_connection(db, organization_id)
+        if not connection:
+            raise ValueError("No active Xero connection found for organization")
+
+        # Find captured transactions without Xero invoice
+        stmt = (
+            select(POSTransaction)
+            .where(
+                POSTransaction.payment_status == "captured",
+                POSTransaction.xero_invoice_id.is_(None),
+            )
+            .limit(max_transactions)
+        )
+        result = await db.execute(stmt)
+        transactions = result.scalars().all()
+
+        logger.info(
+            "Starting bulk Xero invoice creation",
+            organization_id=str(organization_id),
+            total_transactions=len(transactions),
+        )
+
+        created = 0
+        failed = 0
+        errors = []
+
+        for txn in transactions:
+            try:
+                await self.create_invoice_from_pos_transaction(
+                    db, organization_id, txn.id
+                )
+                created += 1
+            except Exception as e:
+                failed += 1
+                errors.append({
+                    "transaction_id": str(txn.id),
+                    "transaction_number": txn.transaction_number,
+                    "error": str(e),
+                })
+                logger.error(
+                    "Failed to create Xero invoice",
+                    transaction_id=str(txn.id),
+                    transaction_number=txn.transaction_number,
+                    error=str(e),
+                )
+
+        logger.info(
+            "Bulk Xero invoice creation completed",
+            created=created,
+            failed=failed,
+            total=len(transactions),
+        )
+
+        return {
+            "total": len(transactions),
+            "created": created,
+            "failed": failed,
+            "errors": errors if errors else None,
+        }

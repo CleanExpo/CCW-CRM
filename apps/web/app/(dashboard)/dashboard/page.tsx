@@ -124,7 +124,7 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground text-lg mt-2">iBaaS ERP - Real-time business overview</p>
+        <p className="text-muted-foreground text-lg mt-2">CCW Equipment — Real-time business overview</p>
       </motion.div>
 
       {/* Bento Grid Dashboard */}

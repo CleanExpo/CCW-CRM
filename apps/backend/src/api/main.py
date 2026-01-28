@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy.exc import DatabaseError, IntegrityError, OperationalError
@@ -28,8 +27,9 @@ from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
     # approvals,  # TODO: Implement approvals workflow
-    autonomous_dev,
+    # autonomous_dev,  # TODO: File does not exist yet
     backorders,
+    bank_feeds,
     config,
     containers,
     customers,
@@ -42,22 +42,24 @@ from .routes import (
     orders,
     portal_auth,
     portal_forms,
+    pos_transactions,
     # prd,  # TODO: Fix PRD dependencies
     products,
     purchase_orders,
     quotes,
-    recommendations,
-    search,
+    # recommendations,  # TODO: File does not exist yet
+    # search,  # TODO: File does not exist yet
     service_requests,
     shipments,
     suppliers,
     test_data_gen,
-    translations,
+    # translations,  # TODO: File does not exist yet
     webhooks,
 )
 from .routes.ai import ai_router, chat, generate, insights
-from .routes import bank_feeds, google_ai, pos_transactions, pos_xero_reconciliation
-from .routes.integrations import ap2, elevenlabs, sendgrid, shopify, shopify_theme, xero
+from .routes import google_ai
+from .routes.integrations import elevenlabs, sendgrid, shopify, xero
+# ap2, shopify_theme - TODO: Files do not exist yet
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -136,27 +138,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         except Exception as cache_error:
             logger.warning("Redis connection failed, caching disabled", error=str(cache_error))
 
-    # Start bank feed scheduler
-    bank_feed_scheduler = None
-    try:
-        from src.config.database import AsyncSessionLocal
-        from src.scheduler.bank_feed_scheduler import BankFeedScheduler
-
-        bank_feed_scheduler = BankFeedScheduler(session_maker=AsyncSessionLocal)
-        bank_feed_scheduler.start()
-        logger.info("Bank feed scheduler started")
-    except Exception as scheduler_error:
-        logger.error("Failed to start bank feed scheduler", error=str(scheduler_error))
-
     yield
-
-    # Shutdown: Stop bank feed scheduler
-    if bank_feed_scheduler:
-        try:
-            bank_feed_scheduler.shutdown(wait=True)
-            logger.info("Bank feed scheduler stopped")
-        except Exception as scheduler_error:
-            logger.error("Error stopping bank feed scheduler", error=str(scheduler_error))
 
     # Shutdown: Stop health monitor
     logger.info("Shutting down application")
@@ -335,10 +317,6 @@ All errors return JSON with this format:
     ],
 )
 
-# Prometheus metrics instrumentation
-# Exposes /metrics endpoint for Prometheus scraping
-Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
-
 # Rate limiter state (for SlowAPI)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -406,28 +384,27 @@ app.include_router(generate.router, tags=["AI Generation"])
 # app.include_router(learning.router, tags=["AI Learning"])  # Already included in ai_router
 app.include_router(test_data_gen.router)  # Test data generation for learning engine
 
-# AI Search & Recommendations
-app.include_router(search.router)  # Semantic & hybrid search
-app.include_router(recommendations.router)  # Product recommendations
+# AI Search & Recommendations - TODO: Files do not exist yet
+# app.include_router(search.router)  # Semantic & hybrid search
+# app.include_router(recommendations.router)  # Product recommendations
 
 # Autonomous Development
-app.include_router(autonomous_dev.router)  # Autonomous development orchestration
+# app.include_router(autonomous_dev.router)  # TODO: File does not exist yet
 
-# Translation management router
-app.include_router(translations.router, tags=["Translation Management"])
+# Translation management router - TODO: File does not exist yet
+# app.include_router(translations.router, tags=["Translation Management"])
 
 # Integration routers
 app.include_router(xero.router, prefix="/api", tags=["Xero Integration"])
 app.include_router(shopify.router, tags=["Shopify Integration"])
-app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
+# app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])  # TODO: File does not exist
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
-app.include_router(ap2.router, tags=["AP2 Integration"])
+# app.include_router(ap2.router, tags=["AP2 Integration"])  # TODO: File does not exist
 app.include_router(google_ai.router, tags=["Google AI"])
 
-# POS routers
-app.include_router(pos_transactions.router, tags=["POS"])
-app.include_router(pos_xero_reconciliation.router, tags=["POS Xero Reconciliation"])
+# POS System router
+app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
 
 # PRD Generation router
