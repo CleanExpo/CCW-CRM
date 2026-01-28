@@ -116,6 +116,121 @@ groups:
           summary: "Redis cache hit rate <70%"
           description: "Cache hit rate is {{ $value | humanizePercentage }}"
 
+  - name: infrastructure
+    interval: 30s
+    rules:
+      # PostgreSQL down
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL exporter is not responding"
+
+      # PostgreSQL too many connections
+      - alert: PostgreSQLTooManyConnections
+        expr: |
+          sum(pg_stat_activity_count)
+          /
+          pg_settings_max_connections > 0.9
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL connection limit approaching"
+          description: "{{ $value | humanizePercentage }} of max connections in use"
+
+      # PostgreSQL slow queries
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration[5m]) > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL has slow queries"
+          description: "Long-running queries detected (>60s)"
+
+      # PostgreSQL high database size
+      - alert: PostgreSQLDatabaseSizeHigh
+        expr: pg_database_size_bytes > 10737418240  # 10GB
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL database size >10GB"
+          description: "Database {{ $labels.datname }} is {{ $value | humanize1024 }}"
+
+      # Redis down
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis exporter is not responding"
+
+      # Redis memory usage high
+      - alert: RedisMemoryHigh
+        expr: |
+          redis_memory_used_bytes
+          /
+          redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage >80%"
+          description: "{{ $value | humanizePercentage }} of max memory in use"
+
+      # Redis memory usage critical
+      - alert: RedisMemoryCritical
+        expr: |
+          redis_memory_used_bytes
+          /
+          redis_memory_max_bytes > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis memory usage >95%"
+          description: "{{ $value | humanizePercentage }} of max memory in use - eviction imminent"
+
+      # Redis cache hit rate low
+      - alert: RedisCacheHitRateLow
+        expr: |
+          rate(redis_keyspace_hits_total[5m])
+          /
+          (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) < 0.7
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis cache hit rate <70%"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+      # Redis too many client connections
+      - alert: RedisTooManyConnections
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis has too many client connections"
+          description: "{{ $value }} clients connected"
+
+      # Redis evicted keys
+      - alert: RedisEvictingKeys
+        expr: rate(redis_evicted_keys_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis is evicting keys"
+          description: "{{ $value }} keys/sec being evicted due to memory pressure"
+
   - name: business_metrics
     interval: 1m
     rules:

@@ -145,6 +145,39 @@ docker logs ccw-alertmanager | grep -i smtp
 └──────────────┘    Dashboards
 ```
 
+### Infrastructure Monitoring (Database + Cache)
+
+The monitoring stack also includes exporters for PostgreSQL and Redis:
+
+```
+┌──────────────┐       ┌──────────────────┐
+│  PostgreSQL  │──────>│ postgres-exporter│──> :9187/metrics
+│   :5432      │       │                  │
+└──────────────┘       └──────────────────┘
+                              │
+                              │ scrape
+                              ▼
+┌──────────────┐       ┌──────────────────┐
+│    Redis     │──────>│  redis-exporter  │──> :9121/metrics
+│   :6379      │       │                  │
+└──────────────┘       └──────────────────┘
+                              │
+                              │ scrape
+                              ▼
+                       ┌──────────────┐
+                       │  Prometheus  │
+                       │   :9090      │
+                       └──────────────┘
+```
+
+**What metrics are tracked:**
+- **PostgreSQL**: connections, transactions/sec, database size, locks, row operations
+- **Redis**: memory usage, cache hit rate, evictions, operations/sec, connected clients
+
+**Dashboards available:**
+- PostgreSQL Metrics (http://localhost:3001/d/postgresql-metrics)
+- Redis Metrics (http://localhost:3001/d/redis-metrics)
+
 ---
 
 ## Dashboards
@@ -709,13 +742,157 @@ curl -X POST http://localhost:9093/api/v1/alerts -H "Content-Type: application/j
 
 ---
 
+## Infrastructure Monitoring
+
+### PostgreSQL Monitoring
+
+**Exporter**: postgres_exporter (port 9187)
+**Dashboard**: http://localhost:3001/d/postgresql-metrics
+
+**Metrics Tracked**:
+- **Connections**: Active connections vs max connections limit
+- **Transaction Rate**: Commits/sec, rollbacks/sec
+- **Database Size**: Total database size with warnings at 5GB, critical at 10GB
+- **Row Operations**: Inserts/sec, updates/sec, deletes/sec
+- **Locks**: Number of active database locks
+- **Query Performance**: Long-running queries, slow queries
+
+**Key Alerts**:
+
+1. **PostgreSQLDown** (Critical)
+   - Fires when: Postgres exporter unreachable for 1 minute
+   - Action: Check database container status
+
+2. **PostgreSQLTooManyConnections** (Critical)
+   - Fires when: >90% of max connections in use for 2 minutes
+   - Action: Investigate connection leaks, increase pool size
+
+3. **PostgreSQLSlowQueries** (Warning)
+   - Fires when: Long-running queries detected (>60s) for 5 minutes
+   - Action: Review query performance, add indexes
+
+4. **PostgreSQLDatabaseSizeHigh** (Warning)
+   - Fires when: Database size >10GB for 5 minutes
+   - Action: Review data retention policy, archive old data
+
+**Useful Queries**:
+```promql
+# Connection pool utilization
+sum(pg_stat_activity_count) / pg_settings_max_connections * 100
+
+# Transaction rate
+rate(pg_stat_database_xact_commit{datname="starter_db"}[5m])
+
+# Database size growth rate
+delta(pg_database_size_bytes{datname="starter_db"}[1h])
+
+# Active locks
+pg_locks_count
+```
+
+### Redis Monitoring
+
+**Exporter**: redis_exporter (port 9121)
+**Dashboard**: http://localhost:3001/d/redis-metrics
+
+**Metrics Tracked**:
+- **Memory Usage**: Used memory vs max memory limit
+- **Cache Hit Rate**: Percentage of cache hits vs total requests
+- **Evictions**: Keys evicted due to memory pressure
+- **Operations**: Commands processed per second
+- **Connections**: Connected clients
+- **Network I/O**: Input/output bytes per second
+
+**Key Alerts**:
+
+1. **RedisDown** (Critical)
+   - Fires when: Redis exporter unreachable for 1 minute
+   - Action: Check Redis container status
+
+2. **RedisMemoryCritical** (Critical)
+   - Fires when: >95% of max memory in use for 2 minutes
+   - Action: Increase max memory, review cache expiration policy
+
+3. **RedisMemoryHigh** (Warning)
+   - Fires when: >80% of max memory in use for 5 minutes
+   - Action: Monitor memory growth, consider increasing limit
+
+4. **RedisCacheHitRateLow** (Warning)
+   - Fires when: Cache hit rate <70% for 10 minutes
+   - Action: Review cache strategy, adjust TTL values
+
+5. **RedisEvictingKeys** (Warning)
+   - Fires when: >10 keys/sec being evicted for 5 minutes
+   - Action: Increase max memory or review cache policy
+
+6. **RedisTooManyConnections** (Warning)
+   - Fires when: >100 client connections for 5 minutes
+   - Action: Review connection pooling, check for leaks
+
+**Useful Queries**:
+```promql
+# Cache hit rate percentage
+rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) * 100
+
+# Memory usage percentage
+redis_memory_used_bytes / redis_memory_max_bytes * 100
+
+# Eviction rate
+rate(redis_evicted_keys_total[5m])
+
+# Operations per second
+rate(redis_commands_processed_total[5m])
+```
+
+### Troubleshooting Infrastructure Alerts
+
+**PostgreSQL connection pool exhausted:**
+```bash
+# Check active connections
+docker exec nodejs-starter-postgres psql -U starter_user -d starter_db -c "SELECT count(*) FROM pg_stat_activity;"
+
+# Kill idle connections
+docker exec nodejs-starter-postgres psql -U starter_user -d starter_db -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle' AND query_start < now() - interval '5 minutes';"
+
+# Increase max connections (edit docker-compose.yml)
+# Add to postgres service:
+# command: postgres -c max_connections=200
+```
+
+**Redis memory high:**
+```bash
+# Check memory usage
+docker exec nodejs-starter-redis redis-cli INFO memory
+
+# Check cache hit rate
+docker exec nodejs-starter-redis redis-cli INFO stats | grep keyspace
+
+# Flush all keys (CAUTION: Only in dev)
+docker exec nodejs-starter-redis redis-cli FLUSHALL
+
+# Increase max memory (edit docker-compose.yml)
+# Add to redis service:
+# command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+```
+
+**Slow PostgreSQL queries:**
+```bash
+# View active queries
+docker exec nodejs-starter-postgres psql -U starter_user -d starter_db -c "SELECT pid, now() - pg_stat_activity.query_start AS duration, query FROM pg_stat_activity WHERE state = 'active' ORDER BY duration DESC;"
+
+# Kill long-running query
+docker exec nodejs-starter-postgres psql -U starter_user -d starter_db -c "SELECT pg_terminate_backend(PID);"
+```
+
+---
+
 ## Next Steps
 
 1. ✅ **Configure Email/Slack**: Setup alert notifications for production
-2. **Add Custom Metrics**: Instrument critical business paths
-3. **Create More Dashboards**: Add dashboards for specific features
-4. **Setup Long-term Storage**: Add Thanos/VictoriaMetrics for >7 day retention
-5. **Add Database/Redis Exporters**: Get deeper infrastructure metrics
+2. ✅ **Add Database/Redis Exporters**: Get deeper infrastructure metrics
+3. **Add Custom Metrics**: Instrument critical business paths
+4. **Create More Dashboards**: Add dashboards for specific features
+5. **Setup Long-term Storage**: Add Thanos/VictoriaMetrics for >7 day retention
 6. **Enable Distributed Tracing**: Add Jaeger/Tempo for request tracing
 
 ---
@@ -731,5 +908,5 @@ curl -X POST http://localhost:9093/api/v1/alerts -H "Content-Type: application/j
 
 ---
 
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-01-29
 **Maintained By**: CCW ERP Team
