@@ -258,6 +258,7 @@ async def create_pos_transaction(
     )
 
     db.add(pos_transaction)
+    await db.flush()  # Flush to get the ID assigned before payment processing
 
     # Process payment using payment processor
     from src.integrations.payments import PaymentProcessor
