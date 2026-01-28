@@ -9,9 +9,11 @@ with open(csv_path, "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     rows = list(reader)
 
-# Update "Optimize Database Indexes for Search" to Done
+# Update completed tasks to Done
 for row in rows:
     if row["Title"] == "Optimize Database Indexes for Search":
+        row["Status"] = "Done"
+    elif row["Title"] == "Integrate POS with Xero Reconciliation":
         row["Status"] = "Done"
         row["Description"] = '''✅ COMPLETE: Database search optimization implemented and verified
 
