@@ -29,6 +29,7 @@ from src.db.schemas import (
     OrderUpdate,
     PaginatedResponse,
 )
+from src.monitoring import metrics
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -584,6 +585,12 @@ async def create_order(
     # Invalidate order-related caches
     await invalidate_order_caches()
 
+    # Track business metrics
+    status_value = normalize_status(order.status)
+    location = order_data.fulfillment_location or "unknown"
+    metrics.orders_created.labels(status=status_value, location=location).inc()
+    metrics.orders_revenue.labels(location=location).inc(float(total))
+
     # Reload with items
     query = (
         select(OrderModel)
@@ -920,6 +927,15 @@ async def update_order_status(
 
     # Invalidate order-related caches
     await invalidate_order_caches()
+
+    # Track business metrics for status changes
+    location = order.fulfillment_location or "unknown"
+    if status == "confirmed":
+        metrics.orders_confirmed.labels(location=location).inc()
+    elif status == "shipped":
+        metrics.orders_shipped.labels(location=location).inc()
+    elif status == "delivered":
+        metrics.orders_delivered.labels(location=location).inc()
 
     # Reload with items
     query = (

@@ -28,6 +28,7 @@ from src.db.pos_models import (
     POSTransaction,
     SalesStaff,
 )
+from src.monitoring import metrics
 
 router = APIRouter(prefix="/api/pos", tags=["POS"])
 
@@ -280,6 +281,17 @@ async def create_pos_transaction(
         await db.commit()
         await db.refresh(pos_transaction)
 
+        # Track business metrics for successful transaction
+        metrics.pos_transactions.labels(
+            payment_method=data.payment_method,
+            location=resolved_location,
+            status=payment_result["status"],
+        ).inc()
+        metrics.pos_transaction_amount.labels(
+            payment_method=data.payment_method,
+            location=resolved_location,
+        ).observe(float(data.amount))
+
         return pos_transaction
 
     except Exception as e:
@@ -289,6 +301,13 @@ async def create_pos_transaction(
         pos_transaction.payment_gateway_response = {"error": str(e)}
         await db.commit()
         await db.refresh(pos_transaction)
+
+        # Track failed transaction metric
+        metrics.pos_transactions.labels(
+            payment_method=data.payment_method,
+            location=resolved_location,
+            status="failed",
+        ).inc()
 
         raise HTTPException(
             status_code=402,

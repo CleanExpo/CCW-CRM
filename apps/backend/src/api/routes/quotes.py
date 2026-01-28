@@ -28,6 +28,7 @@ from src.db.schemas import (
     QuoteItem,
     QuoteUpdate,
 )
+from src.monitoring import metrics
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/quotes", tags=["quotes"])
@@ -248,6 +249,10 @@ async def create_quote(
     # Invalidate quote-related caches
     await invalidate_quote_caches()
 
+    # Track business metrics
+    status_value = quote.status.value if hasattr(quote.status, 'value') else quote.status
+    metrics.quotes_created.labels(status=status_value).inc()
+
     # Reload with items
     query = (
         select(QuoteModel)
@@ -452,6 +457,9 @@ async def convert_quote_to_order(
     await invalidate_cache("dashboard_revenue")
     await invalidate_cache("dashboard_order_status")
     await invalidate_cache("dashboard_activity")
+
+    # Track business metrics for quote conversion
+    metrics.quotes_converted.inc()
 
     # Reload with items
     query = (

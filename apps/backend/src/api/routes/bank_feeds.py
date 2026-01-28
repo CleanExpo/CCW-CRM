@@ -14,6 +14,7 @@ from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.models import User
 from src.db.pos_models import BankAccount, BankFeed
+from src.monitoring import metrics
 from src.services.bank_feed_service import BankFeedService
 
 router = APIRouter(prefix="/api/bank-feeds", tags=["Bank Feeds"])
@@ -83,6 +84,9 @@ async def sync_bank_feeds(
                 end_date=end_date,
             )
 
+            # Track successful sync
+            metrics.bank_feed_sync_success.labels(provider=result.get("provider", "xero")).inc()
+
             return BankFeedSyncResponse(**result)
         else:
             # Sync all active accounts
@@ -96,6 +100,8 @@ async def sync_bank_feeds(
             accounts = result.scalars().all()
 
             total_transactions = 0
+            successful_syncs = 0
+            failed_syncs = 0
             for account in accounts:
                 try:
                     sync_result = await service.sync_bank_feeds(
@@ -104,7 +110,17 @@ async def sync_bank_feeds(
                         end_date=end_date,
                     )
                     total_transactions += sync_result["transactions_synced"]
+                    successful_syncs += 1
+                    # Track successful sync per provider
+                    metrics.bank_feed_sync_success.labels(
+                        provider=account.feed_provider or "xero"
+                    ).inc()
                 except Exception as e:
+                    failed_syncs += 1
+                    # Track failed sync
+                    metrics.bank_feed_sync_failures.labels(
+                        provider=account.feed_provider or "xero"
+                    ).inc()
                     logger.error(
                         "Failed to sync account",
                         account_id=str(account.id),
