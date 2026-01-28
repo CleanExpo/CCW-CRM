@@ -24,6 +24,7 @@ import {
   CheckCircle,
   Sparkles,
   Activity,
+  CreditCard,
 } from "lucide-react";
 
 const navigation = [
@@ -35,6 +36,7 @@ const navigation = [
   { name: "Backorders", href: "/backorders", icon: AlertCircle },
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
+  { name: "POS Terminal", href: "/pos", icon: CreditCard },
   { name: "Quotes", href: "/quotes", icon: FileText },
   { name: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
   { name: "Submissions", href: "/submissions", icon: ClipboardCheck },
