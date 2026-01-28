@@ -65,11 +65,11 @@ export function ShopifyConnectionCard({
       }
 
       onStatusChange();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Connection Failed",
-        description: error.message || "Failed to connect to Shopify",
+        description: error instanceof Error ? error.message : "Failed to connect to Shopify",
       });
     } finally {
       setConnecting(false);
@@ -87,11 +87,11 @@ export function ShopifyConnectionCard({
       });
 
       onStatusChange();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Disconnect Failed",
-        description: error.message || "Failed to disconnect from Shopify",
+        description: error instanceof Error ? error.message : "Failed to disconnect from Shopify",
       });
     } finally {
       setDisconnecting(false);
@@ -106,11 +106,11 @@ export function ShopifyConnectionCard({
         title: "Status Refreshed",
         description: "Connection status has been updated",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Refresh Failed",
-        description: error.message || "Failed to refresh status",
+        description: error instanceof Error ? error.message : "Failed to refresh status",
       });
     } finally {
       setRefreshing(false);

@@ -29,8 +29,9 @@ export function OrderStatusBreakdownWidget() {
         setLoading(true);
         const response = await apiClient.get<OrderStatusBreakdown>("/api/dashboard/order-status-breakdown");
         setData(response);
-      } catch (err: any) {
-        setError(err.message || "Failed to load order status data");
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load order status data";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

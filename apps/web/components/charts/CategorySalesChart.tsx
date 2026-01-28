@@ -33,7 +33,7 @@ export function CategorySalesChart({ data }: CategorySalesChartProps) {
   }));
 
   // Custom tooltip to format currency and percentage
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { category: string; percentage: number }; value: number }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border bg-background p-3 shadow-md">

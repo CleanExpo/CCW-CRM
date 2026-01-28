@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,7 +112,7 @@ export default function BackordersPage() {
   const [notifyDialogOpen, setNotifyDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  async function loadBackorders() {
+  const loadBackorders = useCallback(async function() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -127,18 +127,19 @@ export default function BackordersPage() {
         `/api/backorders?${params.toString()}`
       );
       setBackorders(response.items);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load backorders:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load backorders";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load backorders",
+        description: errorMessage,
       });
       setBackorders([]);
     } finally {
       setLoading(false);
     }
-  }
+  }, [activeTab, toast]);
 
   useEffect(() => {
     loadBackorders();
@@ -146,7 +147,7 @@ export default function BackordersPage() {
     // Auto-refresh every 60 seconds
     const interval = setInterval(loadBackorders, 60000);
     return () => clearInterval(interval);
-  }, [activeTab]);
+  }, [loadBackorders]);
 
   const handleNotifyCustomer = async () => {
     if (!selectedBackorder) return;
@@ -165,12 +166,13 @@ export default function BackordersPage() {
       setNotifyDialogOpen(false);
       setSelectedBackorder(null);
       loadBackorders();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to notify customer:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to send notification";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send notification",
+        description: errorMessage,
       });
     } finally {
       setProcessing(false);
@@ -219,7 +221,7 @@ export default function BackordersPage() {
         </Card>
       )}
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "pending" | "allocated")} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="pending">
             Pending

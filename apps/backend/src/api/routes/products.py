@@ -1,11 +1,14 @@
-"""Products API routes."""
+"""Products API routes.
+
+Performance optimized with Redis caching.
+"""
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.cache.decorators import invalidate_cache
+from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
 from src.db.erp_models import Product as ProductModel
 from src.db.schemas import PaginatedResponse, Product, ProductCreate, ProductUpdate
@@ -14,6 +17,7 @@ router = APIRouter(prefix="/api/products", tags=["products"])
 
 
 @router.get("", response_model=PaginatedResponse)
+@cached(ttl=300, key_prefix="api_products_list")  # 5 minute cache
 async def list_products(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
@@ -22,7 +26,7 @@ async def list_products(
     is_active: bool | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    """List products with pagination and filters."""
+    """List products with pagination and filters. Cached for 5 minutes."""
     # Build query
     query = select(ProductModel)
 
@@ -97,8 +101,11 @@ async def create_product(
     await db.commit()
     await db.refresh(product)
 
-    # Invalidate product list cache
+    # Invalidate product caches (list and dashboard inventory)
     await invalidate_cache("products")
+    await invalidate_cache("api_products_list")
+    await invalidate_cache("dashboard_inventory")
+    await invalidate_cache("dashboard_top_products")
 
     return Product.model_validate(product)
 
@@ -126,8 +133,11 @@ async def update_product(
     await db.commit()
     await db.refresh(product)
 
-    # Invalidate product list cache
+    # Invalidate product caches (list and dashboard inventory)
     await invalidate_cache("products")
+    await invalidate_cache("api_products_list")
+    await invalidate_cache("dashboard_inventory")
+    await invalidate_cache("dashboard_top_products")
 
     return Product.model_validate(product)
 
@@ -150,7 +160,10 @@ async def delete_product(
     product.is_active = False
     await db.commit()
 
-    # Invalidate product list cache
+    # Invalidate product caches (list and dashboard inventory)
     await invalidate_cache("products")
+    await invalidate_cache("api_products_list")
+    await invalidate_cache("dashboard_inventory")
+    await invalidate_cache("dashboard_top_products")
 
     return None

@@ -6,7 +6,7 @@
 /**
  * Convert an array of objects to CSV format
  */
-export function convertToCSV(data: any[], headers: string[]): string {
+export function convertToCSV(data: Record<string, unknown>[], headers: string[]): string {
   if (data.length === 0) return "";
 
   // Create header row
@@ -53,7 +53,7 @@ export function downloadCSV(csv: string, filename: string): void {
 /**
  * Export products to CSV
  */
-export function exportProductsToCSV(products: any[]): void {
+export function exportProductsToCSV(products: Record<string, unknown>[]): void {
   const headers = [
     "sku",
     "name",
@@ -84,7 +84,7 @@ export function exportProductsToCSV(products: any[]): void {
 /**
  * Export customers to CSV
  */
-export function exportCustomersToCSV(customers: any[]): void {
+export function exportCustomersToCSV(customers: Record<string, unknown>[]): void {
   const headers = [
     "customer_number",
     "company_name",

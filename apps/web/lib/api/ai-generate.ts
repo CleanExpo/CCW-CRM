@@ -100,7 +100,7 @@ export async function generateSummary(
   requirements: string,
   summaryType: string = "general",
   userId?: string
-): Promise<any> {
+): Promise<{content: string; [key: string]: unknown}> {
   return apiClient.post("/api/ai/generate/summary", {
     requirements,
     summary_type: summaryType,

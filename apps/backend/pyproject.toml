@@ -34,6 +34,8 @@ dependencies = [
     "python-multipart>=0.0.12",
     "slowapi>=0.1.9",  # Rate limiting
     "sendgrid>=6.11.0",  # Email notifications
+    "prometheus-fastapi-instrumentator>=7.0.0",  # Prometheus metrics
+    "prometheus-client>=0.19.0",  # Prometheus Python client
 
     # AI/LLM (LangChain + Ollama)
     "langchain>=0.1.0",

@@ -1,0 +1,74 @@
+global:
+  resolve_timeout: 5m
+
+# Alert routing
+route:
+  group_by: ['alertname', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+
+  routes:
+    # Critical alerts go to multiple channels
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+
+    # Warning alerts go to default
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+
+# Alert receivers
+receivers:
+  - name: 'default'
+    # Webhook for custom integrations (placeholder)
+    # webhook_configs:
+    #   - url: 'http://localhost:5001/webhook'
+
+  - name: 'critical-alerts'
+    # For production, configure email/Slack here
+    # email_configs:
+    #   - to: 'dev-team@ccw-erp.com'
+    #     from: 'alerts@ccw-erp.com'
+    #     smarthost: 'smtp.gmail.com:587'
+    #     auth_username: 'alerts@ccw-erp.com'
+    #     auth_password: '${SMTP_PASSWORD}'
+    #     headers:
+    #       Subject: '🚨 CRITICAL ALERT: {{ .GroupLabels.alertname }}'
+
+    # Slack webhook (example)
+    # slack_configs:
+    #   - api_url: '${SLACK_WEBHOOK_URL}'
+    #     channel: '#alerts-critical'
+    #     title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  - name: 'warning-alerts'
+    # For production, configure email/Slack here
+    # email_configs:
+    #   - to: 'dev-team@ccw-erp.com'
+    #     from: 'alerts@ccw-erp.com'
+    #     smarthost: 'smtp.gmail.com:587'
+    #     auth_username: 'alerts@ccw-erp.com'
+    #     auth_password: '${SMTP_PASSWORD}'
+    #     headers:
+    #       Subject: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+
+# Inhibition rules (suppress alerts)
+inhibit_rules:
+  # Suppress warning if critical is firing for same alert
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'path']
+
+  # Suppress all alerts if backend is down (root cause)
+  - source_match:
+      alertname: 'BackendDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['job']

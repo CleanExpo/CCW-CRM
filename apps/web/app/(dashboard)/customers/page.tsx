@@ -116,7 +116,7 @@ export default function CustomersPage() {
   };
 
   const handleExport = () => {
-    exportCustomersToCSV(customers);
+    exportCustomersToCSV(customers as unknown as Record<string, unknown>[]);
     toast({
       title: "Export Successful",
       description: `Exported ${customers.length} customers to CSV`,

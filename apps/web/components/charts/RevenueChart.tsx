@@ -20,7 +20,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
   }));
 
   // Custom tooltip to format currency
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { month: string }; value: number }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border bg-background p-3 shadow-md">

@@ -84,11 +84,11 @@ export default function PurchaseOrdersPage() {
 
       setPurchaseOrders(response.items || []);
       setTotalPages(response.total_pages || 1);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load purchase orders:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to load purchase orders",
+        description: error instanceof Error ? error.message : "Failed to load purchase orders",
         variant: "destructive",
       });
     } finally {
@@ -111,11 +111,11 @@ export default function PurchaseOrdersPage() {
 
       loadPurchaseOrders();
       setCancellingPO(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to cancel purchase order:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to cancel purchase order",
+        description: error instanceof Error ? error.message : "Failed to cancel purchase order",
         variant: "destructive",
       });
     }

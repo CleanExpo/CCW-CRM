@@ -130,6 +130,7 @@ class Product(Base):
     # Relationships
     order_items = relationship("OrderItem", back_populates="product")
     quote_items = relationship("QuoteItem", back_populates="product")
+    translations = relationship("ProductTranslation", back_populates="product", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Product(sku={self.sku}, name={self.name})>"

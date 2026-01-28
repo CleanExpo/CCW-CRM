@@ -25,7 +25,7 @@ export async function GET() {
 
     // Fetch stats for each agent
     const agentsWithStats = await Promise.all(
-      agentsData.agents.map(async (agent: any) => {
+      agentsData.agents.map(async (agent: Record<string, unknown>) => {
         try {
           const statsRes = await fetch(
             `${backendUrl}/api/ai/monitoring/stats/${agent.agent_id}`,
@@ -77,7 +77,7 @@ export async function GET() {
     );
 
     return NextResponse.json(agentsWithStats);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching agent list:", error);
     return NextResponse.json([]);
   }

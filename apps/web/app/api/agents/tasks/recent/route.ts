@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json(tasks);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching recent tasks:", error);
     return NextResponse.json([]);
   }

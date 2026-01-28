@@ -31,8 +31,9 @@ export function QuoteConversionWidget() {
         setLoading(true);
         const response = await apiClient.get<QuoteConversionData>("/api/dashboard/quote-conversion");
         setData(response);
-      } catch (err: any) {
-        setError(err.message || "Failed to load quote conversion data");
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load quote conversion data";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

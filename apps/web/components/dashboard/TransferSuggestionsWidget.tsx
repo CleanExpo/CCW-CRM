@@ -43,8 +43,9 @@ export function TransferSuggestionsWidget() {
         setLoading(true);
         const response = await apiClient.get<TransferSuggestionsData>("/api/inventory/transfer-suggestions");
         setData(response);
-      } catch (err: any) {
-        setError(err.message || "Failed to load transfer suggestions");
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to load transfer suggestions";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
