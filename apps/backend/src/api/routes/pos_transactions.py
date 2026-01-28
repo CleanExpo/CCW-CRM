@@ -195,7 +195,7 @@ async def create_pos_transaction(
     data: POSTransactionCreate,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-) -> POSTransaction:
+) -> POSTransactionResponse:
     """
     Create a new POS transaction.
 
@@ -258,7 +258,6 @@ async def create_pos_transaction(
     )
 
     db.add(pos_transaction)
-    await db.flush()
 
     # Process payment using payment processor
     from src.integrations.payments import PaymentProcessor
@@ -280,15 +279,49 @@ async def create_pos_transaction(
         await db.commit()
         await db.refresh(pos_transaction)
 
-        return pos_transaction
+        # Return as dict to avoid session issues during serialization
+        return POSTransactionResponse(
+            id=pos_transaction.id,
+            transaction_number=pos_transaction.transaction_number,
+            order_id=pos_transaction.order_id,
+            terminal_id=pos_transaction.terminal_id,
+            sales_staff_id=pos_transaction.sales_staff_id,
+            location_code=pos_transaction.location_code,
+            resolved_location_code=pos_transaction.resolved_location_code,
+            transaction_type=pos_transaction.transaction_type,
+            payment_method=pos_transaction.payment_method,
+            amount=pos_transaction.amount,
+            currency=pos_transaction.currency,
+            payment_status=pos_transaction.payment_status,
+            payment_gateway_ref=pos_transaction.payment_gateway_ref,
+            reconciliation_status=pos_transaction.reconciliation_status,
+            bank_statement_ref=pos_transaction.bank_statement_ref,
+            xero_invoice_id=pos_transaction.xero_invoice_id,
+            created_at=pos_transaction.created_at,
+            updated_at=pos_transaction.updated_at,
+        )
 
     except Exception as e:
         await db.rollback()
-        # Update transaction as failed
-        pos_transaction.payment_status = "failed"
-        pos_transaction.payment_gateway_response = {"error": str(e)}
+        # After rollback, the object is detached - create a new one
+        failed_transaction = POSTransaction(
+            transaction_number=transaction_number,
+            order_id=data.order_id,
+            terminal_id=data.terminal_id,
+            sales_staff_id=data.sales_staff_id,
+            location_code=terminal_location,
+            resolved_location_code=resolved_location,
+            transaction_type="sale",
+            payment_method=data.payment_method,
+            amount=data.amount,
+            currency="AUD",
+            payment_status="failed",
+            reconciliation_status="pending",
+            payment_gateway_response={"error": str(e)},
+        )
+        db.add(failed_transaction)
         await db.commit()
-        await db.refresh(pos_transaction)
+        await db.refresh(failed_transaction)
 
         raise HTTPException(
             status_code=402,
