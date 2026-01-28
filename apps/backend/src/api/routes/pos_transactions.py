@@ -32,6 +32,12 @@ from src.db.pos_models import (
 router = APIRouter(prefix="/api/pos", tags=["POS"])
 
 
+@router.get("/health")
+async def pos_health_check():
+    """Health check for POS routes (no auth required)."""
+    return {"status": "ok", "service": "POS"}
+
+
 # ============================================================
 # PYDANTIC MODELS
 # ============================================================
@@ -190,6 +196,59 @@ class LocationRoutingService:
 # ============================================================
 
 
+@router.post("/transactions-simple", status_code=201)
+async def create_pos_transaction_simple(
+    data: POSTransactionCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Simple test endpoint without payment processing."""
+    try:
+        # Validate terminal exists
+        terminal_result = await db.execute(
+            select(POSTerminal).where(POSTerminal.id == data.terminal_id)
+        )
+        terminal = terminal_result.scalar_one_or_none()
+        if not terminal:
+            raise HTTPException(status_code=404, detail="Terminal not found")
+
+        # Generate transaction number
+        from sqlalchemy import text
+        result = await db.execute(text("SELECT generate_pos_transaction_number()"))
+        transaction_number = result.scalar()
+
+        # Create transaction without payment processing
+        pos_transaction = POSTransaction(
+            transaction_number=transaction_number,
+            terminal_id=data.terminal_id,
+            sales_staff_id=data.sales_staff_id,
+            location_code=terminal.location_code,
+            resolved_location_code=terminal.location_code,
+            transaction_type="sale",
+            payment_method=data.payment_method,
+            amount=data.amount,
+            currency="AUD",
+            payment_status="pending",
+            reconciliation_status="pending",
+        )
+
+        db.add(pos_transaction)
+        await db.commit()
+        await db.refresh(pos_transaction)
+
+        return {
+            "id": str(pos_transaction.id),
+            "transaction_number": pos_transaction.transaction_number,
+            "amount": float(pos_transaction.amount),
+            "payment_method": pos_transaction.payment_method,
+            "status": "created_without_payment"
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
 @router.post("/transactions", response_model=POSTransactionResponse, status_code=201)
 async def create_pos_transaction(
     data: POSTransactionCreate,
@@ -257,15 +316,13 @@ async def create_pos_transaction(
         reconciliation_status="pending",
     )
 
-    db.add(pos_transaction)
-    await db.flush()  # Flush to get the ID assigned before payment processing
-
-    # Process payment using payment processor
+    # Process payment BEFORE adding to database
     from src.integrations.payments import PaymentProcessor
 
     processor = PaymentProcessor()
 
     try:
+        # Process payment with primitive values (no DB session needed)
         payment_result = await processor.process_payment(
             db=db,
             transaction=pos_transaction,
@@ -277,6 +334,8 @@ async def create_pos_transaction(
         pos_transaction.payment_gateway_ref = payment_result.get("gateway_ref")
         pos_transaction.payment_gateway_response = payment_result.get("raw_response")
 
+        # Now add and commit the complete transaction
+        db.add(pos_transaction)
         await db.commit()
         await db.refresh(pos_transaction)
 
