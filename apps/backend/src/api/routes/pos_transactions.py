@@ -339,6 +339,39 @@ async def create_pos_transaction(
         await db.commit()
         await db.refresh(pos_transaction)
 
+        # Auto-create Xero invoice if payment captured successfully
+        if pos_transaction.payment_status == "captured":
+            try:
+                # Get organization from current user
+                from src.integrations.xero.pos_reconciliation import POSXeroReconciliation
+                from src.integrations.xero.auth import XeroAuth
+
+                xero_auth = XeroAuth()
+                xero_recon = POSXeroReconciliation(xero_auth)
+
+                # Create Xero invoice in background (non-blocking)
+                # This automatically creates invoice + payment in Xero
+                await xero_recon.create_invoice_from_pos_transaction(
+                    db=db,
+                    organization_id=current_user.organization_id,
+                    pos_transaction_id=pos_transaction.id,
+                )
+
+                logger.info(
+                    "Auto-created Xero invoice from POS transaction",
+                    transaction_id=str(pos_transaction.id),
+                    transaction_number=pos_transaction.transaction_number,
+                )
+
+            except Exception as e:
+                # Log error but don't fail the transaction
+                # Invoice creation can be retried later via bulk endpoint
+                logger.warning(
+                    "Failed to auto-create Xero invoice (transaction still successful)",
+                    transaction_id=str(pos_transaction.id),
+                    error=str(e),
+                )
+
         # Return as dict to avoid session issues during serialization
         return POSTransactionResponse(
             id=pos_transaction.id,
