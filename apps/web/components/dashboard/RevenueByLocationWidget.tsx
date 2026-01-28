@@ -33,8 +33,9 @@ export function RevenueByLocationWidget() {
         setLoading(true);
         const response = await apiClient.get<RevenueByLocationData>("/api/dashboard/revenue-by-location");
         setData(response);
-      } catch (err: any) {
-        setError(err.message || "Failed to load revenue by location data");
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load revenue by location data";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

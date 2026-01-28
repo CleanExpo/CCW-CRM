@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,28 +101,29 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ id: 
     });
   }, [params]);
 
-  useEffect(() => {
-    if (containerId) {
-      fetchContainer();
-    }
-  }, [containerId]);
-
-  const fetchContainer = async () => {
+  const fetchContainer = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.get<Container>(`/api/containers/${containerId}`);
       setContainer(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to fetch container:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load container details";
       toast({
         title: "Error",
-        description: "Failed to load container details",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [containerId, toast]);
+
+  useEffect(() => {
+    if (containerId) {
+      fetchContainer();
+    }
+  }, [containerId, fetchContainer]);
 
   if (loading) {
     return (

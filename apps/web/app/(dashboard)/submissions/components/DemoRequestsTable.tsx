@@ -99,8 +99,8 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
       toast.success("Status updated");
       fetchDemoRequests();
       onDataChange?.(); // Notify parent to refresh statistics
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update status");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to update status");
     }
   }
 

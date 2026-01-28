@@ -4,6 +4,14 @@
  * Displays list of active agents with their status and metrics.
  */
 
+interface Agent {
+  agent_id: string;
+  agent_type: string;
+  status: string;
+  task_count: number;
+  success_rate: number;
+}
+
 async function fetchAgents() {
   try {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
@@ -52,7 +60,7 @@ export async function AgentList() {
 
   return (
     <div className="space-y-3">
-      {agents.map((agent: any) => {
+      {agents.map((agent: Agent) => {
         const statusColor =
           agent.status === 'active'
             ? 'bg-green-100 text-green-800'

@@ -60,15 +60,15 @@ export function XeroSyncControls({ isConnected }: XeroSyncControlsProps) {
         description: `Invoice ${result.xero_invoice_number} created in Xero`,
       });
       setOrderId(""); // Clear input on success
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLastSyncResult({
         success: false,
-        message: error.message || "Failed to sync order",
+        message: error instanceof Error ? error.message : "Failed to sync order",
       });
       toast({
         variant: "destructive",
         title: "Sync Failed",
-        description: error.message || "Failed to sync order to Xero",
+        description: error instanceof Error ? error.message : "Failed to sync order to Xero",
       });
     } finally {
       setSyncing(false);
@@ -100,15 +100,15 @@ export function XeroSyncControls({ isConnected }: XeroSyncControlsProps) {
           description: result.errors?.[0] || "No orders were synced",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLastSyncResult({
         success: false,
-        message: error.message || "Failed to sync orders",
+        message: error instanceof Error ? error.message : "Failed to sync orders",
       });
       toast({
         variant: "destructive",
         title: "Bulk Sync Failed",
-        description: error.message || "Failed to sync orders to Xero",
+        description: error instanceof Error ? error.message : "Failed to sync orders to Xero",
       });
     } finally {
       setBulkSyncing(false);

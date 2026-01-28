@@ -35,8 +35,9 @@ export function StockHealthWidget() {
         setLoading(true);
         const response = await apiClient.get<StockHealthData>("/api/inventory/stock-health?threshold=20");
         setStockHealth(response);
-      } catch (err: any) {
-        setError(err.message || "Failed to load stock health data");
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to load stock health data";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

@@ -16,6 +16,13 @@ from src.db.demo_models import (
     Quote,
 )
 from src.db.models import User
+from src.db.inventory_models import (
+    Supplier,
+    PurchaseOrder,
+    InboundShipment,
+)
+from src.db.container_models import Container
+from src.db.service_models import ServiceRequest
 
 
 @pytest.fixture(scope="function")
@@ -112,3 +119,140 @@ async def seed_all_test_data(
         "orders": test_orders,
         "quotes": test_quotes,
     }
+
+
+# ==================== Individual Sample Fixtures ====================
+# These return single IDs for use in smoke tests
+
+
+@pytest.fixture(scope="function")
+async def sample_product_id(test_products: list[Product]) -> str:
+    """Get a sample product ID for testing."""
+    return str(test_products[0].id)
+
+
+@pytest.fixture(scope="function")
+async def sample_customer_id(test_customers: list[Customer]) -> str:
+    """Get a sample customer ID for testing."""
+    return str(test_customers[0].id)
+
+
+@pytest.fixture(scope="function")
+async def sample_order_id(test_orders: list[Order]) -> str:
+    """Get a sample order ID for testing."""
+    return str(test_orders[0].id)
+
+
+@pytest.fixture(scope="function")
+async def sample_quote_id(test_quotes: list[Quote]) -> str:
+    """Get a sample quote ID for testing."""
+    return str(test_quotes[0].id)
+
+
+@pytest.fixture(scope="function")
+async def sample_supplier_id(db_session: AsyncSession) -> str:
+    """Get a sample supplier ID for testing."""
+    result = await db_session.execute(select(Supplier).limit(1))
+    supplier = result.scalar_one_or_none()
+    if not supplier:
+        pytest.fail("No suppliers found in database. Run seed script first.")
+    return str(supplier.id)
+
+
+@pytest.fixture(scope="function")
+async def sample_po_id(db_session: AsyncSession) -> str:
+    """Get a sample purchase order ID for testing."""
+    result = await db_session.execute(select(PurchaseOrder).limit(1))
+    po = result.scalar_one_or_none()
+    if not po:
+        pytest.fail("No purchase orders found in database. Run seed script first.")
+    return str(po.id)
+
+
+@pytest.fixture(scope="function")
+async def sample_shipment_id(db_session: AsyncSession) -> str:
+    """Get a sample shipment ID for testing."""
+    result = await db_session.execute(select(InboundShipment).limit(1))
+    shipment = result.scalar_one_or_none()
+    if not shipment:
+        # Return a fake ID if no shipments exist (endpoint may not be implemented)
+        return "00000000-0000-0000-0000-000000000000"
+    return str(shipment.id)
+
+
+@pytest.fixture(scope="function")
+async def sample_container_id(db_session: AsyncSession) -> str:
+    """Get a sample container ID for testing."""
+    result = await db_session.execute(select(Container).limit(1))
+    container = result.scalar_one_or_none()
+    if not container:
+        # Return a fake ID if no containers exist
+        return "00000000-0000-0000-0000-000000000000"
+    return str(container.id)
+
+
+@pytest.fixture(scope="function")
+async def sample_service_request_id(db_session: AsyncSession) -> str:
+    """Get a sample service request ID for testing."""
+    result = await db_session.execute(select(ServiceRequest).limit(1))
+    service_request = result.scalar_one_or_none()
+    if not service_request:
+        # Return a fake ID if no service requests exist
+        return "00000000-0000-0000-0000-000000000000"
+    return str(service_request.id)
+
+
+# ==================== Deletable Fixtures ====================
+# These return IDs of items that can be safely deleted in tests
+
+
+@pytest.fixture(scope="function")
+async def deletable_product_id(test_products: list[Product]) -> str:
+    """Get a deletable product ID for testing (uses last product in list)."""
+    if len(test_products) < 2:
+        pytest.fail("Need at least 2 products for delete tests")
+    return str(test_products[-1].id)
+
+
+@pytest.fixture(scope="function")
+async def deletable_customer_id(test_customers: list[Customer]) -> str:
+    """Get a deletable customer ID for testing (uses last customer in list)."""
+    if len(test_customers) < 2:
+        pytest.fail("Need at least 2 customers for delete tests")
+    return str(test_customers[-1].id)
+
+
+@pytest.fixture(scope="function")
+async def deletable_order_id(test_orders: list[Order]) -> str:
+    """Get a deletable order ID for testing (uses last order in list)."""
+    if len(test_orders) < 2:
+        pytest.fail("Need at least 2 orders for delete tests")
+    return str(test_orders[-1].id)
+
+
+@pytest.fixture(scope="function")
+async def deletable_quote_id(test_quotes: list[Quote]) -> str:
+    """Get a deletable quote ID for testing (uses last quote in list)."""
+    if len(test_quotes) < 2:
+        pytest.fail("Need at least 2 quotes for delete tests")
+    return str(test_quotes[-1].id)
+
+
+@pytest.fixture(scope="function")
+async def deletable_supplier_id(db_session: AsyncSession) -> str:
+    """Get a deletable supplier ID for testing."""
+    result = await db_session.execute(select(Supplier).offset(1).limit(1))
+    supplier = result.scalar_one_or_none()
+    if not supplier:
+        pytest.fail("Need at least 2 suppliers for delete tests")
+    return str(supplier.id)
+
+
+@pytest.fixture(scope="function")
+async def deletable_po_id(db_session: AsyncSession) -> str:
+    """Get a deletable purchase order ID for testing."""
+    result = await db_session.execute(select(PurchaseOrder).offset(1).limit(1))
+    po = result.scalar_one_or_none()
+    if not po:
+        pytest.fail("Need at least 2 purchase orders for delete tests")
+    return str(po.id)

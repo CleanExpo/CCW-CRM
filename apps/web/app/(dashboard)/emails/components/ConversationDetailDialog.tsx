@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -43,28 +43,29 @@ export function ConversationDetailDialog({
   const [messages, setMessages] = useState<EmailMessage[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (open && conversationId) {
-      loadConversation();
-    }
-  }, [conversationId, open]);
-
-  const loadConversation = async () => {
+  const loadConversation = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getConversation(conversationId);
       setConversation(response.conversation);
       setMessages(response.messages);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to load conversation";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load conversation",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [conversationId, toast]);
+
+  useEffect(() => {
+    if (open && conversationId) {
+      loadConversation();
+    }
+  }, [conversationId, open, loadConversation]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -164,7 +164,7 @@ export default function ProductsPage() {
   };
 
   const handleExport = () => {
-    exportProductsToCSV(products);
+    exportProductsToCSV(products as unknown as Record<string, unknown>[]);
     toast({
       title: "Export Successful",
       description: `Exported ${products.length} products to CSV`,

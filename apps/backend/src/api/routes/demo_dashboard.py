@@ -2,6 +2,7 @@
 Demo dashboard endpoints.
 
 Provides metrics, charts, and activity feed for the overnight demo.
+Performance optimized with Redis caching and query optimization.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -13,6 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.cache.decorators import cached
 from src.config.database import get_async_db
 from src.db.demo_models import (
     Customer,
@@ -80,6 +82,7 @@ class ActivityItem(BaseModel):
 
 
 @router.get("/metrics", response_model=DashboardMetrics)
+@cached(ttl=60, key_prefix="dashboard_metrics")  # 1 minute cache - metrics need to be fairly fresh
 async def get_dashboard_metrics(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> DashboardMetrics:
@@ -147,31 +150,53 @@ async def get_dashboard_metrics(
 
 
 @router.get("/charts/revenue", response_model=list[RevenueDataPoint])
+@cached(ttl=300, key_prefix="dashboard_revenue")  # 5 minute cache
 async def get_revenue_chart(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[RevenueDataPoint]:
-    """Get revenue trend for last 6 months."""
-    now = datetime.now(UTC)
-    revenue_data = []
+    """Get revenue trend for last 6 months.
 
+    Optimized with single aggregation query using date_trunc.
+    Previously: 6 separate queries (one per month)
+    Now: 1 query with GROUP BY month
+    """
+    now = datetime.now(UTC)
+    # Calculate 6 months ago (start of that month)
+    six_months_ago = (now - timedelta(days=180)).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0
+    )
+
+    # Single optimized query with date grouping
+    month_col = func.date_trunc("month", Order.order_date)
+    result = await db.execute(
+        select(
+            month_col.label("month"),
+            func.sum(Order.total).label("revenue"),
+        )
+        .where(Order.order_date >= six_months_ago)
+        .where(func.cast(Order.status, String) == "delivered")
+        .group_by(month_col)
+        .order_by(month_col)
+    )
+    monthly_revenue = {row[0]: row[1] for row in result.all()}
+
+    # Build response with all 6 months (filling in zeros for missing months)
+    revenue_data = []
     for i in range(5, -1, -1):
-        # Calculate month start/end
         month_date = now - timedelta(days=i * 30)
         month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        if i == 0:
-            month_end = now
-        else:
-            next_month = month_start + timedelta(days=32)
-            month_end = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-        # Get revenue for month
-        result = await db.execute(
-            select(func.sum(Order.total))
-            .where(Order.order_date >= month_start)
-            .where(Order.order_date < month_end)
-            .where(func.cast(Order.status, String) == "delivered")
-        )
-        revenue = result.scalar() or Decimal(0)
+        # Find matching month in results (compare year and month)
+        revenue = Decimal(0)
+        for month_key, month_revenue in monthly_revenue.items():
+            is_matching_month = (
+                month_key
+                and month_key.year == month_start.year
+                and month_key.month == month_start.month
+            )
+            if is_matching_month:
+                revenue = month_revenue or Decimal(0)
+                break
 
         revenue_data.append(
             RevenueDataPoint(
@@ -184,6 +209,7 @@ async def get_revenue_chart(
 
 
 @router.get("/charts/categories", response_model=list[CategoryDataPoint])
+@cached(ttl=300, key_prefix="dashboard_categories")  # 5 minute cache
 async def get_category_distribution(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[CategoryDataPoint]:
@@ -220,6 +246,7 @@ async def get_category_distribution(
 
 
 @router.get("/charts/top-products", response_model=list[TopProductDataPoint])
+@cached(ttl=300, key_prefix="dashboard_top_products")  # 5 minute cache
 async def get_top_products(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[TopProductDataPoint]:
@@ -250,57 +277,52 @@ async def get_top_products(
 
 
 @router.get("/charts/inventory", response_model=list[InventoryDataPoint])
+@cached(ttl=120, key_prefix="dashboard_inventory")  # 2 minute cache
 async def get_inventory_status(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[InventoryDataPoint]:
-    """Get inventory status by warehouse."""
-    # Get unique warehouses
-    warehouses_result = await db.execute(select(Product.warehouse_location).distinct())
-    warehouses = [w[0] for w in warehouses_result.all() if w[0]]
+    """Get inventory status by warehouse.
 
-    inventory_data = []
-    for warehouse in warehouses:
-        # In stock (> 10)
-        in_stock_result = await db.execute(
-            select(func.count(Product.id))
-            .where(Product.warehouse_location == warehouse)
-            .where(Product.stock > 10)
-            .where(Product.is_active)
-        )
-        in_stock = in_stock_result.scalar() or 0
+    Optimized with single aggregation query to eliminate N+1 pattern.
+    Previously: 1 + (3 * N) queries where N = number of warehouses
+    Now: 1 query with conditional aggregation
+    """
+    from sqlalchemy import case
 
-        # Low stock (1-10)
-        low_stock_result = await db.execute(
-            select(func.count(Product.id))
-            .where(Product.warehouse_location == warehouse)
-            .where(Product.stock > 0)
-            .where(Product.stock <= 10)
-            .where(Product.is_active)
+    # Single optimized query with conditional aggregation
+    result = await db.execute(
+        select(
+            Product.warehouse_location,
+            # In stock (> 10)
+            func.count(case((Product.stock > 10, Product.id))).label("in_stock"),
+            # Low stock (1-10)
+            func.count(
+                case(((Product.stock > 0) & (Product.stock <= 10), Product.id))
+            ).label("low_stock"),
+            # Out of stock (0)
+            func.count(case((Product.stock == 0, Product.id))).label("out_of_stock"),
         )
-        low_stock = low_stock_result.scalar() or 0
+        .where(Product.is_active)
+        .where(Product.warehouse_location.isnot(None))
+        .group_by(Product.warehouse_location)
+    )
+    warehouse_stats = result.all()
 
-        # Out of stock (0)
-        out_of_stock_result = await db.execute(
-            select(func.count(Product.id))
-            .where(Product.warehouse_location == warehouse)
-            .where(Product.stock == 0)
-            .where(Product.is_active)
+    inventory_data = [
+        InventoryDataPoint(
+            warehouse=warehouse,
+            in_stock=in_stock,
+            low_stock=low_stock,
+            out_of_stock=out_of_stock,
         )
-        out_of_stock = out_of_stock_result.scalar() or 0
-
-        inventory_data.append(
-            InventoryDataPoint(
-                warehouse=warehouse,
-                in_stock=in_stock,
-                low_stock=low_stock,
-                out_of_stock=out_of_stock,
-            )
-        )
+        for warehouse, in_stock, low_stock, out_of_stock in warehouse_stats
+    ]
 
     return inventory_data
 
 
 @router.get("/activity", response_model=list[ActivityItem])
+@cached(ttl=30, key_prefix="dashboard_activity")  # 30 second cache - activity feed should be fresh
 async def get_recent_activity(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     limit: int = 20,
@@ -324,7 +346,7 @@ async def get_recent_activity(
                 title=f"Order {order.order_number}",
                 description=f"{company_name} - ${order.total}",
                 timestamp=order.created_at,
-                status=order.status.value,
+                status=order.status,
             )
         )
 
@@ -344,7 +366,7 @@ async def get_recent_activity(
                 title=f"Quote {quote.quote_number}",
                 description=f"{company_name} - ${quote.total}",
                 timestamp=quote.created_at,
-                status=quote.status.value,
+                status=quote.status,
             )
         )
 
@@ -390,6 +412,7 @@ class OrderStatusBreakdown(BaseModel):
 
 
 @router.get("/order-status-breakdown", response_model=OrderStatusBreakdown)
+@cached(ttl=60, key_prefix="dashboard_order_status")  # 1 minute cache
 async def get_order_status_breakdown(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> OrderStatusBreakdown:
@@ -419,7 +442,7 @@ async def get_order_status_breakdown(
         percentage = (count / total_active * 100) if total_active > 0 else 0
         by_status.append(
             OrderStatusCount(
-                status=status.value,
+                status=status,
                 count=count,
                 percentage=round(percentage, 1),
             )
@@ -449,6 +472,7 @@ class QuoteConversionData(BaseModel):
 
 
 @router.get("/quote-conversion", response_model=QuoteConversionData)
+@cached(ttl=120, key_prefix="dashboard_quote_conversion")  # 2 minute cache
 async def get_quote_conversion(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> QuoteConversionData:
@@ -517,6 +541,7 @@ class RevenueByLocationData(BaseModel):
 
 
 @router.get("/revenue-by-location", response_model=RevenueByLocationData)
+@cached(ttl=300, key_prefix="dashboard_revenue_location")  # 5 minute cache
 async def get_revenue_by_location(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> RevenueByLocationData:

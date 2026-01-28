@@ -1,0 +1,151 @@
+groups:
+  - name: api_performance
+    interval: 30s
+    rules:
+      # High response time (warning)
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API response time (p95 > 2s)"
+          description: "p95 response time is {{ $value }}s for path {{ $labels.path }}"
+
+      # Critical response time
+      - alert: CriticalResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: API response time (p95 > 5s)"
+          description: "p95 response time is {{ $value }}s for path {{ $labels.path }}"
+
+      # High error rate (warning)
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[5m])
+            /
+            rate(http_requests_total[5m])
+          ) > 0.01
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API error rate (>1%)"
+          description: "Error rate is {{ $value | humanizePercentage }} for path {{ $labels.path }}"
+
+      # Critical error rate
+      - alert: CriticalErrorRate
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[5m])
+            /
+            rate(http_requests_total[5m])
+          ) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: API error rate (>5%)"
+          description: "Error rate is {{ $value | humanizePercentage }} for path {{ $labels.path }}"
+
+  - name: system_health
+    interval: 30s
+    rules:
+      # Backend service down
+      - alert: BackendDown
+        expr: up{job="ccw-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down"
+          description: "The backend API is not responding to Prometheus scrapes"
+
+      # High memory usage (if process metrics available)
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 1073741824  # 1GB
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage (>1GB)"
+          description: "Memory usage is {{ $value | humanize1024 }}"
+
+  - name: database
+    interval: 30s
+    rules:
+      # Database connection pool saturation
+      - alert: DatabasePoolSaturation
+        expr: (db_pool_active_connections / db_pool_size) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool >80% utilized"
+          description: "Connection pool is {{ $value | humanizePercentage }} full"
+
+      # Database connection pool exhausted
+      - alert: DatabasePoolExhausted
+        expr: (db_pool_active_connections / db_pool_size) >= 1.0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool exhausted"
+          description: "All database connections are in use"
+
+  - name: cache
+    interval: 30s
+    rules:
+      # Low cache hit rate
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            rate(cache_hits[5m])
+            /
+            (rate(cache_hits[5m]) + rate(cache_misses[5m]))
+          ) < 0.7
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis cache hit rate <70%"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+  - name: business_metrics
+    interval: 1m
+    rules:
+      # No orders in last 30 minutes (business hours only)
+      # Note: hour() returns UTC hour, adjust for timezone
+      - alert: NoOrders
+        expr: increase(orders_created_total[30m]) == 0 and hour() >= 9 and hour() <= 17
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No orders created in last 30 minutes"
+          description: "Zero orders created during business hours (UTC 9-17)"
+
+      # POS reconciliation rate dropped
+      - alert: LowReconciliationRate
+        expr: pos_reconciliation_rate < 0.8
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "POS reconciliation rate <80%"
+          description: "Reconciliation rate is {{ $value | humanizePercentage }}"
+
+      # High order processing time
+      - alert: SlowOrderProcessing
+        expr: histogram_quantile(0.95, rate(orders_processing_seconds_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow order processing (p95 > 10s)"
+          description: "Order processing p95 is {{ $value }}s"

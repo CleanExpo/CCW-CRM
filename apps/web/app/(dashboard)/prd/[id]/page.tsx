@@ -18,8 +18,9 @@ async function getPRD(id: string) {
   }
 }
 
-export default async function PRDDetailPage({ params }: { params: { id: string } }) {
-  const prd = await getPRD(params.id);
+export default async function PRDDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const prd = await getPRD(id);
 
   if (!prd) {
     notFound();

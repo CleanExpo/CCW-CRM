@@ -163,11 +163,11 @@ export function PurchaseOrderForm({
 
       onOpenChange(false);
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to save purchase order:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to save purchase order",
+        description: error instanceof Error ? error.message : "Failed to save purchase order",
         variant: "destructive",
       });
     } finally {

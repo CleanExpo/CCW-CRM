@@ -102,11 +102,11 @@ export function ReceiveGoodsDialog({
 
       onOpenChange(false);
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to receive goods:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to receive goods",
+        description: error instanceof Error ? error.message : "Failed to receive goods",
         variant: "destructive",
       });
     } finally {

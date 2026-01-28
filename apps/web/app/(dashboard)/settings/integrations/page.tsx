@@ -25,7 +25,7 @@ function IntegrationsContent() {
     try {
       const status = await getXeroStatus();
       setXeroStatus(status);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load Xero status:", error);
       setXeroStatus(null);
     }
@@ -35,7 +35,7 @@ function IntegrationsContent() {
     try {
       const status = await getShopifyStatus();
       setShopifyStatus(status);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load Shopify status:", error);
       setShopifyStatus(null);
     }
@@ -45,7 +45,7 @@ function IntegrationsContent() {
     try {
       const status = await getSendGridStatus();
       setSendgridStatus(status);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load SendGrid status:", error);
       setSendgridStatus(null);
     }
@@ -55,11 +55,11 @@ function IntegrationsContent() {
     setLoading(true);
     try {
       await Promise.all([loadXeroStatus(), loadShopifyStatus(), loadSendGridStatus()]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load integration status",
+        description: error instanceof Error ? error.message : "Failed to load integration status",
       });
     } finally {
       setLoading(false);

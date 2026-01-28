@@ -4,6 +4,19 @@
  * Displays list of tasks in the queue with status and details.
  */
 
+interface Task {
+  id: string;
+  status: string;
+  task_type: string;
+  priority: number;
+  title: string;
+  description: string;
+  assigned_agent_type?: string;
+  iterations: number;
+  pr_url?: string;
+  created_at: string;
+}
+
 async function fetchTasks(statusFilter?: string) {
   try {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
@@ -60,7 +73,7 @@ export async function TaskList() {
         Showing {tasks.length} of {total} tasks
       </div>
 
-      {tasks.map((task: any) => {
+      {tasks.map((task: Task) => {
         const statusConfig = {
           pending: { color: 'bg-yellow-100 text-yellow-800', icon: '[>]' },
           in_progress: { color: 'bg-blue-100 text-blue-800', icon: '[*]' },

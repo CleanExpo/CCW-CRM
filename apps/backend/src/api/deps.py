@@ -5,7 +5,7 @@ Provides reusable dependencies for authentication, database sessions, etc.
 """
 
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -150,3 +150,34 @@ async def get_optional_user(
         return user
     except Exception:
         return None
+
+
+def get_language(accept_language: str | None = Header(None, alias="Accept-Language")) -> str:
+    """
+    Extract preferred language from Accept-Language header.
+
+    Supports standard Accept-Language format:
+    - "en-US,en;q=0.9,zh-CN;q=0.8"
+    - "zh-CN"
+    - "es"
+
+    Args:
+        accept_language: Accept-Language header value
+
+    Returns:
+        Preferred language code (e.g., 'en', 'zh-CN')
+        Defaults to 'en' if no header or invalid format
+    """
+    if not accept_language:
+        return "en"
+
+    # Parse "en-US,en;q=0.9,zh-CN;q=0.8"
+    # Split by comma, take first language, strip quality value
+    try:
+        languages = [lang.split(";")[0].strip() for lang in accept_language.split(",")]
+        if languages:
+            return languages[0]
+    except Exception:
+        pass
+
+    return "en"

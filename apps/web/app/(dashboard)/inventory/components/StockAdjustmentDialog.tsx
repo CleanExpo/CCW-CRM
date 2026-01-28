@@ -97,11 +97,11 @@ export function StockAdjustmentDialog({
       onSuccess?.();
       onOpenChange(false);
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Adjustment Failed",
-        description: error.message || "Failed to adjust stock. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to adjust stock. Please try again.",
       });
     } finally {
       setIsLoading(false);

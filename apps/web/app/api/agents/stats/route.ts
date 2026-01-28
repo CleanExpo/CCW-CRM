@@ -53,7 +53,7 @@ export async function GET() {
     };
 
     return NextResponse.json(stats);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching agent stats:", error);
 
     // Return fallback data on error

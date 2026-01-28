@@ -1,47 +1,58 @@
-"""Verify performance indexes were created."""
+"""Verify that all performance indexes were created successfully."""
 
-from sqlalchemy import create_engine, text
-from src.config.settings import get_settings
+import asyncio
+import sys
+from pathlib import Path
+from sqlalchemy import text
 
-settings = get_settings()
-engine = create_engine(settings.database_url.replace('+asyncpg', ''))
+sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-query = text("""
+from config.database import async_engine
+
+
+async def verify_indexes():
+    """Query database for created indexes."""
+    print("Verifying database indexes...")
+    print()
+
+    query = """
     SELECT
+        schemaname,
         tablename,
         indexname,
         indexdef
     FROM pg_indexes
-    WHERE tablename IN ('products', 'customers', 'orders', 'quotes', 'order_items', 'quote_items')
+    WHERE schemaname = 'public'
     AND indexname LIKE 'idx_%'
-    ORDER BY tablename, indexname
-""")
+    ORDER BY tablename, indexname;
+    """
 
-print("\n" + "=" * 80)
-print("DATABASE PERFORMANCE INDEXES")
-print("=" * 80)
+    async with async_engine.connect() as conn:
+        result = await conn.execute(text(query))
+        rows = result.fetchall()
 
-with engine.connect() as conn:
-    result = conn.execute(query)
+        if not rows:
+            print("[ERROR] No indexes found!")
+            return
 
-    current_table = None
-    for row in result:
-        table, index_name, index_def = row
+        # Group by table
+        by_table = {}
+        for row in rows:
+            table = row[1]
+            if table not in by_table:
+                by_table[table] = []
+            by_table[table].append(row[2])
 
-        if table != current_table:
-            print(f"\nTable: {table}")
-            current_table = table
+        print(f"[OK] Found {len(rows)} indexes across {len(by_table)} tables\n")
 
-        # Extract index type from definition
-        if 'gin' in index_def.lower():
-            idx_type = "(GIN trigram)"
-        elif 'DESC' in index_def:
-            idx_type = "(composite with sort)"
-        else:
-            idx_type = "(composite)"
+        for table, indexes in sorted(by_table.items()):
+            print(f"{table}: {len(indexes)} indexes")
+            for idx in sorted(indexes):
+                print(f"  - {idx}")
+            print()
 
-        print(f"  {index_name} {idx_type}")
+    await async_engine.dispose()
 
-print("\n" + "=" * 80)
-print("Verification complete!")
-print("=" * 80 + "\n")
+
+if __name__ == "__main__":
+    asyncio.run(verify_indexes())

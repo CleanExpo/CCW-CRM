@@ -20,7 +20,7 @@ export async function GET() {
       patterns: data.patterns || [],
       total: data.total || 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching patterns:", error);
     return NextResponse.json({
       patterns: [],
