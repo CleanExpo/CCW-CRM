@@ -16,6 +16,7 @@ from src.db.models import User
 from src.db.pos_models import BankAccount, BankFeed
 from src.monitoring import metrics
 from src.services.bank_feed_service import BankFeedService
+from src.services.reconciliation_alerts import ReconciliationAlertsService
 
 router = APIRouter(prefix="/api/bank-feeds", tags=["Bank Feeds"])
 logger = structlog.get_logger(__name__)
@@ -307,3 +308,72 @@ async def get_reconciliation_stats(
     except Exception as e:
         logger.error("Failed to get reconciliation stats", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to retrieve statistics")
+
+
+@router.get("/alerts")
+async def get_reconciliation_alerts(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    account_id: UUID | None = Query(None, description="Filter by bank account"),
+) -> list[dict]:
+    """
+    Get active reconciliation alerts.
+
+    Checks for:
+    - High count of unmatched transactions
+    - Large unmatched amounts (>$1000)
+    - Old unmatched transactions (>7 days)
+    - Total unmatched exceeding threshold (>$5000)
+    - POS transactions missing Xero invoices
+
+    Returns list of alerts with severity (info, warning, critical).
+    """
+    try:
+        alerts_service = ReconciliationAlertsService(db)
+        alerts = await alerts_service.check_reconciliation_alerts(account_id=account_id)
+
+        return [
+            {
+                "type": alert.alert_type,
+                "severity": alert.severity,
+                "title": alert.title,
+                "description": alert.description,
+                "affected_count": alert.affected_count,
+                "total_amount": float(alert.total_amount),
+                "details": alert.details,
+                "created_at": alert.created_at.isoformat(),
+            }
+            for alert in alerts
+        ]
+
+    except Exception as e:
+        logger.error("Failed to get reconciliation alerts", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to retrieve alerts")
+
+
+@router.get("/daily-summary")
+async def get_daily_reconciliation_summary(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    report_date: date | None = Query(None, description="Date for report (defaults to today)"),
+) -> dict:
+    """
+    Get daily reconciliation summary report.
+
+    Includes:
+    - POS transaction statistics
+    - Bank feed match statistics
+    - Active alerts
+    - Overall health status
+
+    Perfect for daily email reports to accounting team.
+    """
+    try:
+        alerts_service = ReconciliationAlertsService(db)
+        summary = await alerts_service.get_daily_reconciliation_summary(report_date=report_date)
+
+        return summary
+
+    except Exception as e:
+        logger.error("Failed to get daily summary", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to retrieve daily summary")
