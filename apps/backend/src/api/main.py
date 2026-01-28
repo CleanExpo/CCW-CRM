@@ -55,7 +55,7 @@ from .routes import (
     webhooks,
 )
 from .routes.ai import ai_router, chat, generate, insights
-from .routes import google_ai, pos_xero_reconciliation
+from .routes import google_ai, pos_transactions, pos_xero_reconciliation
 from .routes.integrations import ap2, elevenlabs, sendgrid, shopify, shopify_theme, xero
 
 settings = get_settings()
@@ -400,7 +400,8 @@ app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
 app.include_router(ap2.router, tags=["AP2 Integration"])
 app.include_router(google_ai.router, tags=["Google AI"])
 
-# POS-Xero Reconciliation router
+# POS routers
+app.include_router(pos_transactions.router, tags=["POS"])
 app.include_router(pos_xero_reconciliation.router, tags=["POS Xero Reconciliation"])
 
 # PRD Generation router
