@@ -24,7 +24,7 @@ services:
     image: redis:7-alpine
     container_name: nodejs-starter-redis
     ports:
-      - "6379:6379"
+      - "6381:6379"  # Mapped to 6381 to avoid conflict with other Redis instances
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -78,25 +78,7 @@ services:
     networks:
       - starter-network
 
-  grafana:
-    image: grafana/grafana:10.2.2
-    container_name: ccw-grafana
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://localhost:3001
-    volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
-      - grafana-data:/var/lib/grafana
-    ports:
-      - "3001:3000"
-    depends_on:
-      - prometheus
-    networks:
-      - starter-network
+  # Grafana removed - using custom monitoring dashboard at /monitoring
 
   alertmanager:
     image: prom/alertmanager:v0.26.0
@@ -147,8 +129,6 @@ volumes:
   postgres_data:
     driver: local
   prometheus-data:
-    driver: local
-  grafana-data:
     driver: local
 
 networks:

@@ -59,16 +59,86 @@ class PaymentProcessor:
         Raises:
             PaymentProcessingError: If payment fails
         """
-        if transaction.payment_method == "eftpos":
-            return await self._process_eftpos(transaction, terminal)
-        elif transaction.payment_method == "amex":
-            return await self._process_amex(transaction)
-        elif transaction.payment_method == "bank_transfer":
-            return await self._process_bank_transfer(transaction)
-        elif transaction.payment_method == "cash":
-            return await self._process_cash(transaction)
+        # Extract values to avoid session issues with ORM objects
+        payment_method = transaction.payment_method
+        amount = transaction.amount
+        reference = transaction.transaction_number
+        terminal_id = terminal.terminal_id
+
+        if payment_method == "eftpos":
+            return await self._process_eftpos_simple(terminal_id, amount, reference)
+        elif payment_method == "amex":
+            return await self._process_amex_simple(amount, reference)
+        elif payment_method == "bank_transfer":
+            return await self._process_bank_transfer_simple(reference)
+        elif payment_method == "cash":
+            return await self._process_cash_simple(reference)
         else:
-            raise PaymentProcessingError(f"Unsupported payment method: {transaction.payment_method}")
+            raise PaymentProcessingError(f"Unsupported payment method: {payment_method}")
+
+    async def _process_eftpos_simple(self, terminal_id: str, amount: Decimal, reference: str) -> dict:
+        """Process EFTPOS payment with primitive values."""
+        request = EFTPOSRequest(
+            terminal_id=terminal_id,
+            amount=amount,
+            reference=reference,
+        )
+
+        response = await self.eftpos_client.process_sale(request)
+
+        if response.success:
+            return {
+                "status": "captured",
+                "gateway_ref": response.transaction_id,
+                "approval_code": response.approval_code,
+                "card_type": response.card_type,
+                "card_last_4": response.card_last_4,
+                "response_text": response.response_text,
+                "raw_response": response.model_dump(mode="json"),
+            }
+        else:
+            raise PaymentProcessingError(f"EFTPOS declined: {response.response_text}")
+
+    async def _process_amex_simple(self, amount: Decimal, reference: str) -> dict:
+        """Process AMEX payment with primitive values."""
+        request = AMEXChargeRequest(
+            amount=amount,
+            reference=reference,
+            card_token="tok_test_amex",
+        )
+
+        response = await self.amex_client.charge(request)
+
+        if response.success:
+            return {
+                "status": "captured",
+                "gateway_ref": response.transaction_id,
+                "approval_code": response.authorization_code,
+                "card_type": "amex",
+                "card_last_4": response.card_last_4,
+                "response_text": response.response_text,
+                "raw_response": response.model_dump(mode="json"),
+            }
+        else:
+            raise PaymentProcessingError(f"AMEX declined: {response.response_text}")
+
+    async def _process_bank_transfer_simple(self, reference: str) -> dict:
+        """Process bank transfer with primitive values."""
+        return {
+            "status": "pending",
+            "gateway_ref": f"BANK-{reference}",
+            "response_text": "Bank transfer pending reconciliation",
+            "raw_response": {},
+        }
+
+    async def _process_cash_simple(self, reference: str) -> dict:
+        """Process cash payment with primitive values."""
+        return {
+            "status": "captured",
+            "gateway_ref": f"CASH-{reference}",
+            "response_text": "Cash received",
+            "raw_response": {},
+        }
 
     async def _process_eftpos(self, transaction: POSTransaction, terminal: POSTerminal) -> dict:
         """Process EFTPOS payment."""
@@ -88,7 +158,7 @@ class PaymentProcessor:
                 "card_type": response.card_type,
                 "card_last_4": response.card_last_4,
                 "response_text": response.response_text,
-                "raw_response": response.dict(),
+                "raw_response": response.model_dump(mode="json"),
             }
         else:
             raise PaymentProcessingError(f"EFTPOS declined: {response.response_text}")

@@ -130,20 +130,21 @@ receivers:
           </html>
 
     # Slack notifications for critical alerts (optional)
-    slack_configs:
-      - api_url: '${SLACK_WEBHOOK_URL}'
-        send_resolved: true
-        channel: '#alerts-critical'
-        title: '{{ if eq .Status "firing" }}🚨 CRITICAL{{ else }}✅ RESOLVED{{ end }}: {{ .GroupLabels.alertname }}'
-        text: |
-          {{ range .Alerts }}
-          *Description:* {{ .Annotations.description }}
-          *Summary:* {{ .Annotations.summary }}
-          *Status:* {{ .Status }}
-          *Started:* {{ .StartsAt }}
-          {{ if .EndsAt }}*Ended:* {{ .EndsAt }}{{ end }}
-          {{ end }}
-        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+    # Commented out - uncomment and set SLACK_WEBHOOK_URL environment variable to enable
+    # slack_configs:
+    #   - api_url: '${SLACK_WEBHOOK_URL}'
+    #     send_resolved: true
+    #     channel: '#alerts-critical'
+    #     title: '{{ if eq .Status "firing" }}🚨 CRITICAL{{ else }}✅ RESOLVED{{ end }}: {{ .GroupLabels.alertname }}'
+    #     text: |
+    #       {{ range .Alerts }}
+    #       *Description:* {{ .Annotations.description }}
+    #       *Summary:* {{ .Annotations.summary }}
+    #       *Status:* {{ .Status }}
+    #       *Started:* {{ .StartsAt }}
+    #       {{ if .EndsAt }}*Ended:* {{ .EndsAt }}{{ end }}
+    #       {{ end }}
+    #     color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
 
   - name: 'warning-alerts'
     # Warning alerts: Email only

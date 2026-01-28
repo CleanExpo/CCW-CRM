@@ -1,198 +1,181 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { BentoGrid, BentoCard, BentoCardHeader, BentoCardTitle, BentoCardDescription, BentoCardContent } from "@/components/ui/bento-grid";
-import { BorderBeam } from "@/components/ui/border-beam";
 import {
-  Sparkles,
-  Users,
   Package,
+  Users,
+  ShoppingCart,
+  Warehouse,
   BarChart3,
-  Zap,
-  Globe
+  MapPin,
+  ChevronRight,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-24 md:py-32">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center space-y-6 max-w-5xl mx-auto"
-        >
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-tight">
-            <span className="text-gradient bg-gradient-brand bg-clip-text text-transparent">
-              iBaaS ERP/CRM
+      <header className="border-b">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="w-7 h-7 text-primary" />
+            <span className="text-xl font-bold tracking-tight">
+              CCW Equipment
             </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/portal/orders">Customer Portal</Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href="/login">Sign In</Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        {/* Hero */}
+        <section className="container mx-auto px-6 py-20 md:py-28 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+            Equipment Supply
+            <br />
+            <span className="text-primary">Operations Platform</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-            High-end ERP system for Australian & New Zealand SMBs.
-            <br className="hidden md:block" />
-            AI-powered marketing, intelligent CRM, and streamlined operations.
+          <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Orders, inventory, quotes and fulfilment across Brisbane, Sydney
+            &amp; Melbourne — all in one place.
           </p>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
-          >
-            <Button
-              variant="gradient"
-              size="lg"
-              className="text-base"
-              asChild
-            >
-              <Link href="/login">Get Started</Link>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <Button size="lg" asChild>
+              <Link href="/login">
+                Get Started
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-base"
-              asChild
-            >
-              <Link href="/dashboard">View Demo</Link>
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/portal/orders">Customer Portal</Link>
             </Button>
-          </motion.div>
-        </motion.div>
-      </section>
+          </div>
+        </section>
 
-      {/* Feature Bento Grid */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <BentoGrid columns={3} gap="lg">
-            {/* AI Marketing Engine - Large Featured Card */}
-            <BorderBeam>
-              <BentoCard
-                span={2}
-                variant="glass"
-                glowOnHover
-                className="min-h-[300px]"
-              >
-                <BentoCardHeader>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 rounded-lg bg-gradient-brand/10 border border-white/10">
-                      <Sparkles className="w-6 h-6 text-brand-primary" />
-                    </div>
-                    <BentoCardTitle className="text-2xl">AI Marketing Engine</BentoCardTitle>
-                  </div>
-                  <BentoCardDescription className="text-base">
-                    Generate professional marketing assets directly within your CRM.
-                    Create images, copy, and campaigns with AI-powered tools.
-                  </BentoCardDescription>
-                </BentoCardHeader>
-                <BentoCardContent>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-brand-secondary" />
-                      <span>DALL-E 3 image generation</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-brand-secondary" />
-                      <span>GPT-4 powered copywriting</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-brand-secondary" />
-                      <span>Asset library management</span>
-                    </div>
-                  </div>
-                </BentoCardContent>
-              </BentoCard>
-            </BorderBeam>
-
-            {/* Smart CRM */}
-            <BentoCard variant="gradient" className="min-h-[300px]">
-              <BentoCardHeader>
+        {/* Features Grid */}
+        <section className="border-t bg-muted/40">
+          <div className="container mx-auto px-6 py-16 md:py-20">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Orders & Quotes */}
+              <div className="lg:col-span-2 rounded-xl border bg-card p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 rounded-lg bg-white/10">
-                    <Users className="w-6 h-6 text-white" />
+                  <div className="p-2.5 rounded-lg bg-primary/10">
+                    <ShoppingCart className="w-5 h-5 text-primary" />
                   </div>
-                  <BentoCardTitle className="text-white">Smart CRM</BentoCardTitle>
+                  <h3 className="text-xl font-semibold">Orders &amp; Quotes</h3>
                 </div>
-                <BentoCardDescription className="text-white/80">
-                  Manage customers, track interactions, and close deals faster with intelligent insights.
-                </BentoCardDescription>
-              </BentoCardHeader>
-            </BentoCard>
+                <p className="text-muted-foreground mb-5">
+                  Create quotes, convert to orders, track fulfilment and manage
+                  line items across all product categories.
+                </p>
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span>Quote-to-order conversion</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span>Multi-location fulfilment</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span>Order status tracking</span>
+                  </div>
+                </div>
+              </div>
 
-            {/* ERP Operations */}
-            <BentoCard variant="glass" className="min-h-[280px]">
-              <BentoCardHeader>
+              {/* Customers */}
+              <div className="rounded-xl border bg-card p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 rounded-lg bg-gradient-brand/10 border border-white/10">
-                    <Package className="w-6 h-6 text-brand-accent" />
+                  <div className="p-2.5 rounded-lg bg-primary/10">
+                    <Users className="w-5 h-5 text-primary" />
                   </div>
-                  <BentoCardTitle>ERP Operations</BentoCardTitle>
+                  <h3 className="text-xl font-semibold">Customers</h3>
                 </div>
-                <BentoCardDescription>
-                  Inventory, orders, purchasing, and warehouse management in one platform.
-                </BentoCardDescription>
-              </BentoCardHeader>
-            </BentoCard>
+                <p className="text-muted-foreground">
+                  Customer directory with contact details, order history and
+                  account management.
+                </p>
+              </div>
 
-            {/* Real-time Analytics */}
-            <BentoCard variant="elevated" span={2} className="min-h-[280px]">
-              <BentoCardHeader>
+              {/* Products */}
+              <div className="rounded-xl border bg-card p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 rounded-lg bg-gradient-brand/10">
-                    <BarChart3 className="w-6 h-6 text-brand-primary" />
+                  <div className="p-2.5 rounded-lg bg-primary/10">
+                    <Package className="w-5 h-5 text-primary" />
                   </div>
-                  <BentoCardTitle className="text-2xl">Real-time Analytics</BentoCardTitle>
+                  <h3 className="text-xl font-semibold">Products</h3>
                 </div>
-                <BentoCardDescription className="text-base">
-                  Comprehensive dashboards with live data. Track sales, inventory, and performance metrics
-                  across all your operations in Australia and New Zealand.
-                </BentoCardDescription>
-              </BentoCardHeader>
-              <BentoCardContent>
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-brand-primary">99.9%</div>
-                    <div className="text-xs text-muted-foreground mt-1">Uptime</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-brand-secondary">&lt; 200ms</div>
-                    <div className="text-xs text-muted-foreground mt-1">Response Time</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-brand-accent">AU/NZ</div>
-                    <div className="text-xs text-muted-foreground mt-1">Data Centers</div>
-                  </div>
-                </div>
-              </BentoCardContent>
-            </BentoCard>
+                <p className="text-muted-foreground">
+                  Full product catalogue covering heavy machinery, power tools,
+                  safety equipment and more.
+                </p>
+              </div>
 
-            {/* Regional Focus */}
-            <BentoCard variant="glass" glowOnHover className="min-h-[280px]">
-              <BentoCardHeader>
+              {/* Inventory & Warehouse */}
+              <div className="lg:col-span-2 rounded-xl border bg-card p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 rounded-lg bg-gradient-brand/10 border border-white/10">
-                    <Globe className="w-6 h-6 text-success" />
+                  <div className="p-2.5 rounded-lg bg-primary/10">
+                    <Warehouse className="w-5 h-5 text-primary" />
                   </div>
-                  <BentoCardTitle>Built for AU/NZ</BentoCardTitle>
+                  <h3 className="text-xl font-semibold">
+                    Inventory &amp; Warehouse
+                  </h3>
                 </div>
-                <BentoCardDescription>
-                  Local currency, GST compliance, and Australia Post integration out of the box.
-                </BentoCardDescription>
-              </BentoCardHeader>
-            </BentoCard>
-          </BentoGrid>
-        </motion.div>
-      </section>
+                <p className="text-muted-foreground mb-5">
+                  Stock levels, transfers between locations, purchase orders and
+                  backorder management across all three warehouses.
+                </p>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { city: "Brisbane", label: "HQ" },
+                    { city: "Sydney", label: "Branch" },
+                    { city: "Melbourne", label: "Branch" },
+                  ].map((loc) => (
+                    <div
+                      key={loc.city}
+                      className="text-center p-3 rounded-lg bg-muted/60"
+                    >
+                      <MapPin className="w-4 h-4 text-primary mx-auto mb-1.5" />
+                      <div className="text-sm font-medium">{loc.city}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {loc.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reporting */}
+              <div className="rounded-xl border bg-card p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 rounded-lg bg-primary/10">
+                    <BarChart3 className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Reporting</h3>
+                </div>
+                <p className="text-muted-foreground">
+                  Revenue, stock health, order status and performance dashboards
+                  with live data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
 
       {/* Footer */}
-      <footer className="container mx-auto px-4 py-12 border-t border-white/10">
-        <div className="text-center text-sm text-muted-foreground">
-          <p>© 2026 iBaaS ERP/CRM. Built for SMBs in Australia & New Zealand.</p>
+      <footer className="border-t">
+        <div className="container mx-auto px-6 py-8 text-center text-sm text-muted-foreground">
+          &copy; {new Date().getFullYear()} CCW Equipment Suppliers. Brisbane |
+          Sydney | Melbourne
         </div>
       </footer>
     </div>

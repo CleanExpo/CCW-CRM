@@ -28,9 +28,14 @@ from src.db.pos_models import (
     POSTransaction,
     SalesStaff,
 )
-from src.monitoring import metrics
 
 router = APIRouter(prefix="/api/pos", tags=["POS"])
+
+
+@router.get("/health")
+async def pos_health_check():
+    """Health check for POS routes (no auth required)."""
+    return {"status": "ok", "service": "POS"}
 
 
 # ============================================================
@@ -191,12 +196,65 @@ class LocationRoutingService:
 # ============================================================
 
 
+@router.post("/transactions-simple", status_code=201)
+async def create_pos_transaction_simple(
+    data: POSTransactionCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Simple test endpoint without payment processing."""
+    try:
+        # Validate terminal exists
+        terminal_result = await db.execute(
+            select(POSTerminal).where(POSTerminal.id == data.terminal_id)
+        )
+        terminal = terminal_result.scalar_one_or_none()
+        if not terminal:
+            raise HTTPException(status_code=404, detail="Terminal not found")
+
+        # Generate transaction number
+        from sqlalchemy import text
+        result = await db.execute(text("SELECT generate_pos_transaction_number()"))
+        transaction_number = result.scalar()
+
+        # Create transaction without payment processing
+        pos_transaction = POSTransaction(
+            transaction_number=transaction_number,
+            terminal_id=data.terminal_id,
+            sales_staff_id=data.sales_staff_id,
+            location_code=terminal.location_code,
+            resolved_location_code=terminal.location_code,
+            transaction_type="sale",
+            payment_method=data.payment_method,
+            amount=data.amount,
+            currency="AUD",
+            payment_status="pending",
+            reconciliation_status="pending",
+        )
+
+        db.add(pos_transaction)
+        await db.commit()
+        await db.refresh(pos_transaction)
+
+        return {
+            "id": str(pos_transaction.id),
+            "transaction_number": pos_transaction.transaction_number,
+            "amount": float(pos_transaction.amount),
+            "payment_method": pos_transaction.payment_method,
+            "status": "created_without_payment"
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
 @router.post("/transactions", response_model=POSTransactionResponse, status_code=201)
 async def create_pos_transaction(
     data: POSTransactionCreate,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-) -> POSTransaction:
+) -> POSTransactionResponse:
     """
     Create a new POS transaction.
 
@@ -258,15 +316,13 @@ async def create_pos_transaction(
         reconciliation_status="pending",
     )
 
-    db.add(pos_transaction)
-    await db.flush()
-
-    # Process payment using payment processor
+    # Process payment BEFORE adding to database
     from src.integrations.payments import PaymentProcessor
 
     processor = PaymentProcessor()
 
     try:
+        # Process payment with primitive values (no DB session needed)
         payment_result = await processor.process_payment(
             db=db,
             transaction=pos_transaction,
@@ -278,36 +334,54 @@ async def create_pos_transaction(
         pos_transaction.payment_gateway_ref = payment_result.get("gateway_ref")
         pos_transaction.payment_gateway_response = payment_result.get("raw_response")
 
+        # Now add and commit the complete transaction
+        db.add(pos_transaction)
         await db.commit()
         await db.refresh(pos_transaction)
 
-        # Track business metrics for successful transaction
-        metrics.pos_transactions.labels(
-            payment_method=data.payment_method,
-            location=resolved_location,
-            status=payment_result["status"],
-        ).inc()
-        metrics.pos_transaction_amount.labels(
-            payment_method=data.payment_method,
-            location=resolved_location,
-        ).observe(float(data.amount))
-
-        return pos_transaction
+        # Return as dict to avoid session issues during serialization
+        return POSTransactionResponse(
+            id=pos_transaction.id,
+            transaction_number=pos_transaction.transaction_number,
+            order_id=pos_transaction.order_id,
+            terminal_id=pos_transaction.terminal_id,
+            sales_staff_id=pos_transaction.sales_staff_id,
+            location_code=pos_transaction.location_code,
+            resolved_location_code=pos_transaction.resolved_location_code,
+            transaction_type=pos_transaction.transaction_type,
+            payment_method=pos_transaction.payment_method,
+            amount=pos_transaction.amount,
+            currency=pos_transaction.currency,
+            payment_status=pos_transaction.payment_status,
+            payment_gateway_ref=pos_transaction.payment_gateway_ref,
+            reconciliation_status=pos_transaction.reconciliation_status,
+            bank_statement_ref=pos_transaction.bank_statement_ref,
+            xero_invoice_id=pos_transaction.xero_invoice_id,
+            created_at=pos_transaction.created_at,
+            updated_at=pos_transaction.updated_at,
+        )
 
     except Exception as e:
         await db.rollback()
-        # Update transaction as failed
-        pos_transaction.payment_status = "failed"
-        pos_transaction.payment_gateway_response = {"error": str(e)}
-        await db.commit()
-        await db.refresh(pos_transaction)
-
-        # Track failed transaction metric
-        metrics.pos_transactions.labels(
+        # After rollback, the object is detached - create a new one
+        failed_transaction = POSTransaction(
+            transaction_number=transaction_number,
+            order_id=data.order_id,
+            terminal_id=data.terminal_id,
+            sales_staff_id=data.sales_staff_id,
+            location_code=terminal_location,
+            resolved_location_code=resolved_location,
+            transaction_type="sale",
             payment_method=data.payment_method,
-            location=resolved_location,
-            status="failed",
-        ).inc()
+            amount=data.amount,
+            currency="AUD",
+            payment_status="failed",
+            reconciliation_status="pending",
+            payment_gateway_response={"error": str(e)},
+        )
+        db.add(failed_transaction)
+        await db.commit()
+        await db.refresh(failed_transaction)
 
         raise HTTPException(
             status_code=402,
@@ -485,3 +559,152 @@ async def list_terminals(
         }
         for term in terminals
     ]
+
+
+# ============================================================
+# XERO INVOICE CREATION ENDPOINTS
+# ============================================================
+
+
+class XeroInvoiceResponse(BaseModel):
+    """Xero invoice creation response."""
+
+    success: bool
+    pos_transaction_id: Optional[str] = None
+    transaction_number: Optional[str] = None
+    xero_invoice_id: Optional[str] = None
+    xero_invoice_number: Optional[str] = None
+    xero_payment_id: Optional[str] = None
+    amount: Optional[float] = None
+    status: Optional[str] = None
+    already_exists: Optional[bool] = None
+    error: Optional[str] = None
+
+
+class BulkXeroInvoiceResponse(BaseModel):
+    """Bulk Xero invoice creation response."""
+
+    total: int
+    created: int
+    failed: int
+    errors: Optional[list[dict]] = None
+
+
+@router.post(
+    "/transactions/{transaction_id}/xero-invoice",
+    response_model=XeroInvoiceResponse,
+)
+async def create_xero_invoice_from_pos_transaction(
+    transaction_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> XeroInvoiceResponse:
+    """
+    Create a Xero invoice from a POS transaction.
+
+    Creates an invoice in Xero for the captured POS transaction.
+    For walk-in sales, uses a generic "Cash Sales" contact.
+    For order-based sales, uses the customer from the linked order.
+
+    Also creates a payment in Xero (since POS transaction is already paid).
+
+    Returns:
+    - Xero invoice ID and number
+    - Payment ID
+    - Error if Xero connection not available
+    """
+    try:
+        from src.integrations.xero import POSXeroReconciliation
+        from src.integrations.xero.auth import XeroAuth
+
+        # Get current user's organization ID (assuming organization support)
+        # For now, use the user's organization_id if available
+        organization_id = getattr(current_user, "organization_id", None)
+
+        if not organization_id:
+            return XeroInvoiceResponse(
+                success=False,
+                error="User is not associated with an organization",
+            )
+
+        xero_auth = XeroAuth()
+        pos_xero = POSXeroReconciliation(xero_auth)
+
+        result = await pos_xero.create_invoice_from_pos_transaction(
+            db=db,
+            organization_id=organization_id,
+            pos_transaction_id=transaction_id,
+        )
+
+        return XeroInvoiceResponse(**result)
+
+    except ValueError as e:
+        return XeroInvoiceResponse(
+            success=False,
+            error=str(e),
+        )
+    except Exception as e:
+        return XeroInvoiceResponse(
+            success=False,
+            error=f"Failed to create Xero invoice: {str(e)}",
+        )
+
+
+@router.post("/xero/bulk-invoices", response_model=BulkXeroInvoiceResponse)
+async def bulk_create_xero_invoices(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    max_transactions: int = Query(100, ge=1, le=500, description="Max transactions to process"),
+) -> BulkXeroInvoiceResponse:
+    """
+    Bulk create Xero invoices for captured POS transactions.
+
+    Finds all captured POS transactions without Xero invoices
+    and creates invoices for them.
+
+    Use this to catch up on transactions that were not automatically
+    invoiced (e.g., if Xero was disconnected).
+
+    Returns:
+    - Count of created/failed invoices
+    - Error details for failed transactions
+    """
+    try:
+        from src.integrations.xero import POSXeroReconciliation
+        from src.integrations.xero.auth import XeroAuth
+
+        organization_id = getattr(current_user, "organization_id", None)
+
+        if not organization_id:
+            return BulkXeroInvoiceResponse(
+                total=0,
+                created=0,
+                failed=0,
+                errors=[{"error": "User is not associated with an organization"}],
+            )
+
+        xero_auth = XeroAuth()
+        pos_xero = POSXeroReconciliation(xero_auth)
+
+        result = await pos_xero.bulk_create_invoices(
+            db=db,
+            organization_id=organization_id,
+            max_transactions=max_transactions,
+        )
+
+        return BulkXeroInvoiceResponse(**result)
+
+    except ValueError as e:
+        return BulkXeroInvoiceResponse(
+            total=0,
+            created=0,
+            failed=0,
+            errors=[{"error": str(e)}],
+        )
+    except Exception as e:
+        return BulkXeroInvoiceResponse(
+            total=0,
+            created=0,
+            failed=0,
+            errors=[{"error": f"Failed to create Xero invoices: {str(e)}"}],
+        )

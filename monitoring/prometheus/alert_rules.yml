@@ -172,12 +172,11 @@ groups:
           summary: "Redis is down"
           description: "Redis exporter is not responding"
 
-      # Redis memory usage high
+      # Redis memory usage high (only when maxmemory is configured)
       - alert: RedisMemoryHigh
         expr: |
-          redis_memory_used_bytes
-          /
-          redis_memory_max_bytes > 0.8
+          (redis_memory_used_bytes / redis_memory_max_bytes > 0.8)
+          and redis_memory_max_bytes > 0
         for: 5m
         labels:
           severity: warning
@@ -185,12 +184,11 @@ groups:
           summary: "Redis memory usage >80%"
           description: "{{ $value | humanizePercentage }} of max memory in use"
 
-      # Redis memory usage critical
+      # Redis memory usage critical (only when maxmemory is configured)
       - alert: RedisMemoryCritical
         expr: |
-          redis_memory_used_bytes
-          /
-          redis_memory_max_bytes > 0.95
+          (redis_memory_used_bytes / redis_memory_max_bytes > 0.95)
+          and redis_memory_max_bytes > 0
         for: 2m
         labels:
           severity: critical
