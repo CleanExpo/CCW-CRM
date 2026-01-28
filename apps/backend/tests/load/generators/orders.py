@@ -113,6 +113,7 @@ class OrderScenarioGenerator:
             'status': 'draft',
             'notes': self.faker.text(max_nb_chars=100),
             'items': items,
+            'fulfillment_location': random.choice(['brisbane', 'sydney', 'melbourne']),
         }
         if override:
             data.update(override)
