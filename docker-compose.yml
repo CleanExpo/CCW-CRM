@@ -24,7 +24,7 @@ services:
     image: redis:7-alpine
     container_name: nodejs-starter-redis
     ports:
-      - "6379:6379"
+      - "6381:6379"  # Mapped to 6381 to avoid conflict with other Redis instances
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -58,8 +58,77 @@ services:
   #     - ./apps/backend:/app
   #   command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: ccw-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - starter-network
+
+  # Grafana removed - using custom monitoring dashboard at /monitoring
+
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: ccw-alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    environment:
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+    ports:
+      - "9093:9093"
+    networks:
+      - starter-network
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: ccw-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://starter_user:local_dev_password@postgres:5432/starter_db?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - starter-network
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: ccw-redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis:6379"
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - starter-network
+
 volumes:
   postgres_data:
+    driver: local
+  prometheus-data:
     driver: local
 
 networks:
