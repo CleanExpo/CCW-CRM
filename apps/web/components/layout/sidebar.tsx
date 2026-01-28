@@ -23,6 +23,7 @@ import {
   Bell,
   CheckCircle,
   Sparkles,
+  Activity,
 } from "lucide-react";
 
 const navigation = [
@@ -43,6 +44,7 @@ const navigation = [
   { name: "Insights", href: "/insights", icon: TrendingUp },
   { name: "Alerts", href: "/alerts", icon: Bell },
   { name: "Approvals", href: "/approvals", icon: CheckCircle },
+  { name: "Monitoring", href: "/monitoring", icon: Activity },
   { name: "Settings", href: "/settings/integrations", icon: Settings },
 ];
 
