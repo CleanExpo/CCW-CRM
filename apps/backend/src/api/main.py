@@ -27,6 +27,7 @@ from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
     # approvals,  # TODO: Implement approvals workflow
+    autonomous_dev,
     backorders,
     config,
     containers,
@@ -44,14 +45,18 @@ from .routes import (
     products,
     purchase_orders,
     quotes,
+    recommendations,
+    search,
     service_requests,
     shipments,
     suppliers,
     test_data_gen,
+    translations,
     webhooks,
 )
 from .routes.ai import ai_router, chat, generate, insights
-from .routes.integrations import elevenlabs, sendgrid, shopify, xero
+from .routes import google_ai
+from .routes.integrations import ap2, elevenlabs, sendgrid, shopify, shopify_theme, xero
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -157,9 +162,156 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(
     title=settings.project_name,
-    description="CCW Equipment Supplier ERP System API",
+    description="""
+# CCW Equipment Supplier ERP System API
+
+Modern, AI-powered ERP system for equipment suppliers with comprehensive features:
+
+## Core Features
+- **Product Management**: Complete catalog management with multi-language support
+- **Order Processing**: Sales orders, quotes, purchase orders with intelligent workflow
+- **Inventory Management**: Real-time stock tracking, warehouse management, container tracking
+- **Customer Management**: Customer profiles, service requests, portal access
+- **AI-Powered Search**: Semantic search with vector embeddings and hybrid ranking
+- **Product Recommendations**: Personalized and similar product suggestions
+- **Multi-Language**: 10 languages supported (EN, ZH-CN, ZH-TW, ES, PT, AR, VI, HI, TA, TE)
+
+## Integrations
+- **Shopify**: E-commerce sync with metafields and theme APIs
+- **Xero**: Accounting and payment sync
+- **Google AP2**: Frictionless payments and voice commerce
+- **AI Services**: OpenAI embeddings, Ollama for code generation
+
+## AI & Automation
+- **Semantic Search**: Natural language product search
+- **Recommendations**: Collaborative and content-based filtering
+- **Autonomous Development**: Self-improving system with AI agents
+- **Agent Orchestration**: Intelligent task routing with supervisor pattern
+
+## Authentication
+All endpoints (except /health and /docs) require JWT authentication.
+Include the JWT token in the Authorization header: `Bearer <token>`
+
+## Rate Limiting
+API endpoints are rate-limited to prevent abuse:
+- Default: 100 requests/minute per IP
+- Authentication: 10 requests/minute per IP
+- Search: 60 requests/minute per user
+
+## Pagination
+List endpoints support pagination with these parameters:
+- `page`: Page number (default: 1, min: 1)
+- `page_size`: Items per page (default: 50, min: 1, max: 100)
+
+Response includes pagination metadata:
+```json
+{
+  "data": [...],
+  "total": 1000,
+  "page": 1,
+  "page_size": 50,
+  "total_pages": 20
+}
+```
+
+## Error Handling
+All errors return JSON with this format:
+```json
+{
+  "detail": "Error description",
+  "status_code": 400,
+  "type": "validation_error"
+}
+```
+
+## Performance
+- P95 Response Time: <500ms for most endpoints
+- Search P95: <500ms
+- Recommendations P95: <200ms
+- Uptime SLA: 99.9%
+    """,
     version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    contact={
+        "name": "CCW ERP Support",
+        "url": "https://ccw-erp.example.com/support",
+        "email": "support@ccw-erp.example.com",
+    },
+    license_info={
+        "name": "Proprietary",
+        "url": "https://ccw-erp.example.com/license",
+    },
+    servers=[
+        {
+            "url": "http://localhost:8000",
+            "description": "Development server",
+        },
+        {
+            "url": "https://api.ccw-erp.example.com",
+            "description": "Production server",
+        },
+    ],
+    tags_metadata=[
+        {
+            "name": "Health",
+            "description": "Health check and system status endpoints",
+        },
+        {
+            "name": "Authentication",
+            "description": "User authentication and session management",
+        },
+        {
+            "name": "Products",
+            "description": "Product catalog management with full CRUD operations",
+        },
+        {
+            "name": "Customers",
+            "description": "Customer relationship management",
+        },
+        {
+            "name": "Orders",
+            "description": "Sales order processing and management",
+        },
+        {
+            "name": "Quotes",
+            "description": "Quote generation and management",
+        },
+        {
+            "name": "Purchase Orders",
+            "description": "Supplier purchase order management",
+        },
+        {
+            "name": "Inventory",
+            "description": "Stock management and warehouse operations",
+        },
+        {
+            "name": "AI Search",
+            "description": "Semantic search with vector embeddings and hybrid ranking",
+        },
+        {
+            "name": "AI Recommendations",
+            "description": "Product recommendations using collaborative and content-based filtering",
+        },
+        {
+            "name": "Integrations",
+            "description": "Third-party integrations (Shopify, Xero, AP2)",
+        },
+        {
+            "name": "Autonomous Development",
+            "description": "AI-powered autonomous development and deployment system",
+        },
+        {
+            "name": "Translations",
+            "description": "Multi-language content management",
+        },
+        {
+            "name": "Dashboard",
+            "description": "Analytics and business intelligence",
+        },
+    ],
 )
 
 # Rate limiter state (for SlowAPI)
@@ -229,11 +381,24 @@ app.include_router(generate.router, tags=["AI Generation"])
 # app.include_router(learning.router, tags=["AI Learning"])  # Already included in ai_router
 app.include_router(test_data_gen.router)  # Test data generation for learning engine
 
+# AI Search & Recommendations
+app.include_router(search.router)  # Semantic & hybrid search
+app.include_router(recommendations.router)  # Product recommendations
+
+# Autonomous Development
+app.include_router(autonomous_dev.router)  # Autonomous development orchestration
+
+# Translation management router
+app.include_router(translations.router, tags=["Translation Management"])
+
 # Integration routers
 app.include_router(xero.router, prefix="/api", tags=["Xero Integration"])
 app.include_router(shopify.router, tags=["Shopify Integration"])
+app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
+app.include_router(ap2.router, tags=["AP2 Integration"])
+app.include_router(google_ai.router, tags=["Google AI"])
 
 # PRD Generation router
 # app.include_router(prd.router, tags=["PRD Generation"])  # TODO: Fix PRD dependencies
