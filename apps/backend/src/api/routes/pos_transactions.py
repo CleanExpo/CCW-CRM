@@ -260,15 +260,40 @@ async def create_pos_transaction(
     db.add(pos_transaction)
     await db.flush()
 
-    # TODO: Process payment based on payment_method
-    # For now, mark as captured (will integrate payment gateways in Phase 3D)
-    pos_transaction.payment_status = "captured"
-    pos_transaction.payment_gateway_ref = f"MOCK-{transaction_number}"
+    # Process payment using payment processor
+    from src.integrations.payments import PaymentProcessor
 
-    await db.commit()
-    await db.refresh(pos_transaction)
+    processor = PaymentProcessor()
 
-    return pos_transaction
+    try:
+        payment_result = await processor.process_payment(
+            db=db,
+            transaction=pos_transaction,
+            terminal=terminal,
+        )
+
+        # Update transaction with payment result
+        pos_transaction.payment_status = payment_result["status"]
+        pos_transaction.payment_gateway_ref = payment_result.get("gateway_ref")
+        pos_transaction.payment_gateway_response = payment_result.get("raw_response")
+
+        await db.commit()
+        await db.refresh(pos_transaction)
+
+        return pos_transaction
+
+    except Exception as e:
+        await db.rollback()
+        # Update transaction as failed
+        pos_transaction.payment_status = "failed"
+        pos_transaction.payment_gateway_response = {"error": str(e)}
+        await db.commit()
+        await db.refresh(pos_transaction)
+
+        raise HTTPException(
+            status_code=402,
+            detail=f"Payment failed: {str(e)}",
+        )
 
 
 @router.get("/transactions/{transaction_id}", response_model=POSTransactionResponse)
