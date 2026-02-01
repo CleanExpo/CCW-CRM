@@ -4,7 +4,7 @@
 
 import { test, expect } from "@playwright/test";
 
-test.describe.skip("PRD Generation Flow", () => {
+test.describe("PRD Generation Flow", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to PRD generator page
     await page.goto("/prd/generate");

@@ -22,23 +22,45 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
+  /* Timeout for each test */
+  timeout: 30 * 1000, // 30 seconds
+  /* Timeout for assertions */
+  expect: {
+    timeout: 5 * 1000, // 5 seconds
+  },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? "html" : [["html"], ["list"]],
+  reporter: process.env.CI
+    ? [["html"], ["github"], ["json", { outputFile: "test-results.json" }]]
+    : [["html"], ["list"]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
     /* Screenshot on failure */
     screenshot: "only-on-failure",
+    /* Video on failure */
+    video: "retain-on-failure",
   },
 
   /* Configure projects for major browsers */
   projects: [
+    // Setup project for authentication
+    {
+      name: "setup",
+      testMatch: /.*\.setup\.ts/,
+    },
+
+    // Tests that require authentication
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Use auth state from setup
+        storageState: ".auth/user.json",
+      },
+      dependencies: ["setup"],
     },
 
     // Uncomment to test on other browsers
