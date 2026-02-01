@@ -8,6 +8,7 @@ These models are optimized for quick demo setup with essential fields only.
 import enum
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -25,6 +26,10 @@ from sqlalchemy.dialects.postgresql import JSON, UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from .models import Base  # Use existing Base class
+
+# Import i18n_models to ensure ProductTranslation is registered with SQLAlchemy
+# This prevents "failed to locate a name" errors when using string-based relationships
+from . import i18n_models  # noqa: F401
 
 
 class OrderStatus(str, enum.Enum):
