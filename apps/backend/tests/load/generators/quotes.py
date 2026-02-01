@@ -141,10 +141,18 @@ class QuoteScenarioGenerator:
         return result
 
     async def create_quote_with_ai(self) -> dict:
-        """Create quote with AI generation - disabled until /generate endpoint is implemented."""
-        # TODO: Implement /api/quotes/generate endpoint for AI-powered quote generation
-        # For now, just create a regular quote
-        return await self.create_valid_quote()
+        """Create quote with AI generation."""
+        customer_id = await self._ensure_customer()
+
+        data = {
+            'requirements': self.faker.text(max_nb_chars=100),
+            'customer_id': customer_id,
+        }
+
+        result = await self._make_request('POST', '/api/quotes/generate', data=data, expected_status=201)
+        if result['success'] and result['data']:
+            self.created_quote_ids.append(result['data'].get('id'))
+        return result
 
     async def create_quote_invalid_data(self) -> dict:
         """Attempt to create quote with invalid data (should fail)."""
