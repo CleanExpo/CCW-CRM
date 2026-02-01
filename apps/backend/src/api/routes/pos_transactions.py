@@ -594,6 +594,128 @@ async def list_terminals(
     ]
 
 
+class POSTerminalCreate(BaseModel):
+    """Create a new POS terminal."""
+
+    terminal_id: str = Field(..., description="Unique terminal code")
+    location_code: str
+    terminal_type: str = Field(default="physical", pattern="^(physical|virtual)$")
+    merchant_id: Optional[str] = None
+
+
+class POSTerminalUpdate(BaseModel):
+    """Update a POS terminal."""
+
+    location_code: Optional[str] = None
+    terminal_type: Optional[str] = Field(None, pattern="^(physical|virtual)$")
+    merchant_id: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+@router.post("/terminals", response_model=dict, status_code=201)
+async def create_terminal(
+    data: POSTerminalCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Create a new POS terminal."""
+    # Check if terminal_id already exists
+    existing = await db.execute(
+        select(POSTerminal).where(POSTerminal.terminal_id == data.terminal_id)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Terminal code already exists")
+
+    # Verify location exists
+    location_result = await db.execute(
+        select(Location).where(Location.code == data.location_code)
+    )
+    if not location_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    terminal = POSTerminal(
+        terminal_id=data.terminal_id,
+        location_code=data.location_code,
+        terminal_type=data.terminal_type,
+        merchant_id=data.merchant_id,
+        is_active=True,
+    )
+
+    db.add(terminal)
+    await db.commit()
+    await db.refresh(terminal)
+
+    return {
+        "id": terminal.id,
+        "terminal_id": terminal.terminal_id,
+        "location_code": terminal.location_code,
+        "terminal_type": terminal.terminal_type,
+        "merchant_id": terminal.merchant_id,
+        "is_active": terminal.is_active,
+    }
+
+
+@router.put("/terminals/{terminal_id}", response_model=dict)
+async def update_terminal(
+    terminal_id: UUID,
+    data: POSTerminalUpdate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Update a POS terminal."""
+    result = await db.execute(select(POSTerminal).where(POSTerminal.id == terminal_id))
+    terminal = result.scalar_one_or_none()
+
+    if not terminal:
+        raise HTTPException(status_code=404, detail="Terminal not found")
+
+    # Verify location if changed
+    if data.location_code and data.location_code != terminal.location_code:
+        location_result = await db.execute(
+            select(Location).where(Location.code == data.location_code)
+        )
+        if not location_result.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="Location not found")
+        terminal.location_code = data.location_code
+
+    if data.terminal_type is not None:
+        terminal.terminal_type = data.terminal_type
+    if data.merchant_id is not None:
+        terminal.merchant_id = data.merchant_id
+    if data.is_active is not None:
+        terminal.is_active = data.is_active
+
+    await db.commit()
+    await db.refresh(terminal)
+
+    return {
+        "id": terminal.id,
+        "terminal_id": terminal.terminal_id,
+        "location_code": terminal.location_code,
+        "terminal_type": terminal.terminal_type,
+        "merchant_id": terminal.merchant_id,
+        "is_active": terminal.is_active,
+    }
+
+
+@router.delete("/terminals/{terminal_id}", status_code=204)
+async def delete_terminal(
+    terminal_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    """Delete a POS terminal (soft delete by setting is_active=False)."""
+    result = await db.execute(select(POSTerminal).where(POSTerminal.id == terminal_id))
+    terminal = result.scalar_one_or_none()
+
+    if not terminal:
+        raise HTTPException(status_code=404, detail="Terminal not found")
+
+    # Soft delete
+    terminal.is_active = False
+    await db.commit()
+
+
 # ============================================================
 # XERO INVOICE CREATION ENDPOINTS
 # ============================================================

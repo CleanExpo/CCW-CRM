@@ -59,7 +59,8 @@ import {
 } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api/client";
-import { Plus, Edit, Trash2, MapPin, Building2, Store } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, Building2, Store, Monitor } from "lucide-react";
+import { TerminalDialog } from "./components/TerminalDialog";
 
 // Form validation schema
 const locationSchema = z.object({
@@ -85,7 +86,7 @@ interface Location {
   id: string;
   code: string;
   name: string;
-  location_type: string;
+  location_type: "physical" | "virtual";
   address: string | null;
   city: string | null;
   state: string | null;
@@ -117,6 +118,9 @@ export default function LocationsPage() {
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [deletingLocation, setDeletingLocation] = useState<Location | null>(null);
   const [selectedLocationForTerminals, setSelectedLocationForTerminals] = useState<string | null>(null);
+  const [isTerminalDialogOpen, setIsTerminalDialogOpen] = useState(false);
+  const [editingTerminal, setEditingTerminal] = useState<POSTerminal | null>(null);
+  const [deletingTerminal, setDeletingTerminal] = useState<POSTerminal | null>(null);
 
   // Initialize form
   const form = useForm<LocationFormData>({
@@ -310,6 +314,9 @@ export default function LocationsPage() {
           </TabsTrigger>
           <TabsTrigger value="virtual">
             Virtual Locations ({virtualLocations.length})
+          </TabsTrigger>
+          <TabsTrigger value="terminals">
+            Terminals ({terminals.length})
           </TabsTrigger>
         </TabsList>
 
@@ -505,6 +512,102 @@ export default function LocationsPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Terminals Tab */}
+        <TabsContent value="terminals" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>POS Terminals</CardTitle>
+                  <CardDescription>Manage terminals across all locations</CardDescription>
+                </div>
+                <Button onClick={() => {
+                  setEditingTerminal(null);
+                  setIsTerminalDialogOpen(true);
+                }}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Terminal
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {terminals.length === 0 ? (
+                <div className="text-center py-12">
+                  <Monitor className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <p className="mt-4 text-lg font-medium">No terminals found</p>
+                  <p className="text-muted-foreground">
+                    Create your first POS terminal
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setEditingTerminal(null);
+                      setIsTerminalDialogOpen(true);
+                    }}
+                    className="mt-4"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Terminal
+                  </Button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Terminal Code</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Provider</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {terminals.map((terminal) => {
+                      const location = locations.find(l => l.code === terminal.location_code);
+                      return (
+                        <TableRow key={terminal.id}>
+                          <TableCell className="font-medium">{terminal.terminal_id}</TableCell>
+                          <TableCell>
+                            {location ? location.name : terminal.location_code}
+                          </TableCell>
+                          <TableCell className="capitalize">{terminal.terminal_type}</TableCell>
+                          <TableCell>{terminal.merchant_id || "-"}</TableCell>
+                          <TableCell>
+                            <Badge variant={terminal.is_active ? "default" : "secondary"}>
+                              {terminal.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingTerminal(terminal);
+                                  setIsTerminalDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeletingTerminal(terminal)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -792,6 +895,60 @@ export default function LocationsPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Terminal Dialog */}
+      <TerminalDialog
+        open={isTerminalDialogOpen}
+        onOpenChange={setIsTerminalDialogOpen}
+        mode={editingTerminal ? "edit" : "create"}
+        terminal={editingTerminal || undefined}
+        locations={locations}
+        onSuccess={() => {
+          loadLocations();
+          loadTerminals();
+        }}
+      />
+
+      {/* Terminal Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingTerminal} onOpenChange={(open) => !open && setDeletingTerminal(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Terminal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will deactivate terminal {deletingTerminal?.terminal_id}. It will no longer accept transactions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingTerminal(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!deletingTerminal) return;
+                try {
+                  await apiClient.delete(`/api/pos/terminals/${deletingTerminal.id}`);
+                  toast({
+                    title: "Success",
+                    description: "Terminal deleted successfully",
+                  });
+                  setDeletingTerminal(null);
+                  loadLocations();
+                  loadTerminals();
+                } catch (error: any) {
+                  toast({
+                    title: "Error",
+                    description: error.message || "Failed to delete terminal",
+                    variant: "destructive",
+                  });
+                }
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
