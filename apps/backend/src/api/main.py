@@ -343,6 +343,12 @@ app.add_middleware(
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(AuthMiddleware)
 
+# Performance monitoring middleware
+from src.api.middleware.performance import PerformanceMiddleware, get_performance_metrics
+
+performance_metrics = get_performance_metrics()
+app.add_middleware(PerformanceMiddleware, metrics=performance_metrics)
+
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(config.router, tags=["Configuration"])
@@ -406,6 +412,13 @@ app.include_router(google_ai.router, tags=["Google AI"])
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
+
+# Monitoring routers (system alerts, business metrics, performance)
+from src.api.routes.monitoring import alerts, business_metrics, performance
+
+app.include_router(alerts.router)
+app.include_router(business_metrics.router)
+app.include_router(performance.router)
 
 # PRD Generation router
 # app.include_router(prd.router, tags=["PRD Generation"])  # TODO: Fix PRD dependencies

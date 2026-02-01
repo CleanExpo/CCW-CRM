@@ -37,19 +37,32 @@ import {
   Search,
   Building2,
   ArrowRight,
+  Download,
+  Plus,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { FilterPanel, type ReconciliationFilters } from "./components/FilterPanel";
+import { BulkActionsPanel } from "./components/BulkActionsPanel";
+import { ExportDialog } from "./components/ExportDialog";
+import { BankAccountDialog } from "./components/BankAccountDialog";
 
 interface BankAccount {
   id: string;
   account_name: string;
   account_number: string;
+  bsb: string;
   bank_name: string;
-  location_code: string;
-  feed_provider: string;
-  last_feed_sync_at: string | null;
+  account_type: "checking" | "savings" | "credit";
+  feed_provider: "xero" | "yodlee" | "basiq" | "manual";
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  location_code?: string;
+  last_feed_sync_at?: string | null;
 }
 
 interface BankFeed {
@@ -96,6 +109,11 @@ export default function ReconciliationPage() {
   const [selectedFeed, setSelectedFeed] = useState<BankFeed | null>(null);
   const [selectedPOS, setSelectedPOS] = useState<POSTransaction | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<ReconciliationFilters>({});
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isBankAccountDialogOpen, setIsBankAccountDialogOpen] = useState(false);
+  const [editingBankAccount, setEditingBankAccount] = useState<BankAccount | null>(null);
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return "-";
@@ -292,6 +310,10 @@ export default function ReconciliationPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setIsExportDialogOpen(true)} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
           <Button onClick={handleBulkCreateInvoices} disabled={creatingInvoices} variant="outline">
             <RefreshCw className={`h-4 w-4 mr-2 ${creatingInvoices ? "animate-spin" : ""}`} />
             {creatingInvoices ? "Creating..." : "Create Xero Invoices"}
@@ -383,6 +405,28 @@ export default function ReconciliationPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Filters */}
+      <FilterPanel
+        filters={filters}
+        onFilterChange={setFilters}
+        bankAccounts={accounts.map(a => ({ id: a.id, account_name: a.account_name }))}
+      />
+
+      {/* Bulk Actions */}
+      {selectedItems.size > 0 && (
+        <BulkActionsPanel
+          selectedItems={selectedItems}
+          onClearSelection={() => setSelectedItems(new Set())}
+          onSuccess={() => {
+            loadAccounts();
+            loadAlerts();
+            loadUnreconciledData();
+          }}
+          bankFeedData={unreconciledFeeds.map(f => ({ id: f.id, amount: f.credit || -f.debit || 0 }))}
+          posTransactionData={unreconciledPOS.map(t => ({ id: t.id, amount: t.amount }))}
+        />
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -641,6 +685,26 @@ export default function ReconciliationPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        bankAccountId={selectedAccount}
+      />
+
+      {/* Bank Account Dialog */}
+      <BankAccountDialog
+        open={isBankAccountDialogOpen}
+        onOpenChange={setIsBankAccountDialogOpen}
+        mode={editingBankAccount ? "edit" : "create"}
+        account={editingBankAccount || undefined}
+        onSuccess={() => {
+          loadAccounts();
+          loadAlerts();
+          loadUnreconciledData();
+        }}
+      />
     </div>
   );
 }

@@ -41,6 +41,9 @@ import {
   Zap,
   ArrowUpDown,
 } from "lucide-react";
+import { BusinessMetrics } from "./components/BusinessMetrics";
+import { ApiPerformance } from "./components/ApiPerformance";
+import { AlertCard } from "./components/AlertCard";
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -55,7 +58,7 @@ interface Metrics {
   [key: string]: number | null;
 }
 
-interface Alert {
+interface PrometheusAlert {
   name: string;
   severity: string;
   state: string;
@@ -63,6 +66,20 @@ interface Alert {
   description: string;
   activeAt: string;
   value: string;
+}
+
+interface SystemAlert {
+  id: number;
+  type: string;
+  severity: "info" | "warning" | "error" | "critical";
+  title: string;
+  message: string;
+  metadata: Record<string, any>;
+  created_at: string;
+  acknowledged: boolean;
+  acknowledged_at?: string;
+  resolved: boolean;
+  resolved_at?: string;
 }
 
 interface TimeSeriesPoint {
@@ -131,7 +148,8 @@ const SERVICE_LABELS: Record<string, { label: string; icon: typeof Database }> =
 export default function MonitoringPage() {
   const [services, setServices] = useState<ServiceStatus[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({});
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [prometheusAlerts, setPrometheusAlerts] = useState<PrometheusAlert[]>([]);
+  const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
   const [alertSummary, setAlertSummary] = useState({ total_rules: 0, firing: 0, pending: 0 });
   const [prometheusStatus, setPrometheusStatus] = useState<"up" | "down">("down");
   const [loading, setLoading] = useState(true);
@@ -168,9 +186,22 @@ export default function MonitoringPage() {
       setServices(healthData.services || []);
       setPrometheusStatus(healthData.prometheus || "down");
       setMetrics(metricsData.metrics || {});
-      setAlerts(alertsData.alerts || []);
+      setPrometheusAlerts(alertsData.alerts || []);
       setAlertSummary(alertsData.summary || { total_rules: 0, firing: 0, pending: 0 });
       setLastUpdated(new Date().toLocaleTimeString("en-AU"));
+
+      // Fetch system alerts (unresolved only)
+      try {
+        const systemAlertsRes = await fetch("/api/monitoring/alerts?acknowledged=false", {
+          cache: "no-store",
+        });
+        if (systemAlertsRes.ok) {
+          const systemAlertsData = await systemAlertsRes.json();
+          setSystemAlerts(systemAlertsData.alerts || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch system alerts:", error);
+      }
 
       // Fetch chart data
       const step = duration === "1h" ? "15" : duration === "6h" ? "60" : "300";
@@ -414,6 +445,8 @@ export default function MonitoringPage() {
       <Tabs defaultValue="infrastructure" className="space-y-4">
         <TabsList>
           <TabsTrigger value="infrastructure">Infrastructure</TabsTrigger>
+          <TabsTrigger value="business">Business Metrics</TabsTrigger>
+          <TabsTrigger value="performance">API Performance</TabsTrigger>
           <TabsTrigger value="alerts" className="relative">
             Alerts
             {alertSummary.firing > 0 && (
@@ -574,92 +607,146 @@ export default function MonitoringPage() {
           </div>
         </TabsContent>
 
+        {/* ─── Business Metrics Tab ───────────────────── */}
+        <TabsContent value="business" className="space-y-4">
+          <BusinessMetrics />
+        </TabsContent>
+
+        {/* ─── API Performance Tab ─────────────────────── */}
+        <TabsContent value="performance" className="space-y-4">
+          <ApiPerformance />
+        </TabsContent>
+
         {/* ─── Alerts Tab ─────────────────────────────── */}
-        <TabsContent value="alerts" className="space-y-4">
-          {/* Alert Summary */}
-          <div className="grid grid-cols-3 gap-3">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold">{alertSummary.total_rules}</p>
-                <p className="text-xs text-muted-foreground">Alert Rules</p>
-              </CardContent>
-            </Card>
-            <Card className={alertSummary.firing > 0 ? "border-red-500/50" : ""}>
-              <CardContent className="p-4 text-center">
-                <p className={`text-2xl font-bold ${alertSummary.firing > 0 ? "text-red-600" : ""}`}>
-                  {alertSummary.firing}
-                </p>
-                <p className="text-xs text-muted-foreground">Firing</p>
-              </CardContent>
-            </Card>
-            <Card className={alertSummary.pending > 0 ? "border-yellow-500/50" : ""}>
-              <CardContent className="p-4 text-center">
-                <p className={`text-2xl font-bold ${alertSummary.pending > 0 ? "text-yellow-600" : ""}`}>
-                  {alertSummary.pending}
-                </p>
-                <p className="text-xs text-muted-foreground">Pending</p>
-              </CardContent>
-            </Card>
+        <TabsContent value="alerts" className="space-y-6">
+          {/* System Alerts Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">System Alerts</h3>
+              <Badge variant="secondary" className="text-xs">
+                {systemAlerts.length} active
+              </Badge>
+            </div>
+            {systemAlerts.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                  <CheckCircle2 className="h-8 w-8 text-green-500 mb-2" />
+                  <p className="text-sm font-medium">All Clear</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    No active system alerts
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {systemAlerts.map((alert) => (
+                  <AlertCard key={alert.id} alert={alert} onUpdate={fetchData} />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Active Alerts List */}
-          {alerts.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center p-10 text-center">
-                <CheckCircle2 className="h-10 w-10 text-green-500 mb-3" />
-                <p className="font-medium">All Clear</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  No active alerts. All {alertSummary.total_rules} rules are healthy.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {alerts.map((alert, i) => (
-                <Card
-                  key={`${alert.name}-${i}`}
-                  className={
-                    alert.state === "firing"
-                      ? "border-red-500/50 bg-red-500/5"
-                      : alert.state === "pending"
-                      ? "border-yellow-500/50 bg-yellow-500/5"
-                      : ""
-                  }
-                >
-                  <CardContent className="flex items-start gap-3 p-4">
-                    {alert.state === "firing" ? (
-                      <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
-                    ) : (
-                      <Clock className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium text-sm">{alert.name}</p>
-                        <Badge
-                          variant={alert.severity === "critical" ? "destructive" : "secondary"}
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {alert.severity}
-                        </Badge>
-                        <Badge
-                          variant={alert.state === "firing" ? "destructive" : "outline"}
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {alert.state}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{alert.summary || alert.description}</p>
-                      {alert.activeAt && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Since {new Date(alert.activeAt).toLocaleString("en-AU")}
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          {/* Infrastructure Alerts Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Infrastructure Alerts (Prometheus)</h3>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs">
+                  {alertSummary.total_rules} rules
+                </Badge>
+                {alertSummary.firing > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {alertSummary.firing} firing
+                  </Badge>
+                )}
+              </div>
             </div>
-          )}
+
+            {/* Alert Summary Cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <p className="text-2xl font-bold">{alertSummary.total_rules}</p>
+                  <p className="text-xs text-muted-foreground">Alert Rules</p>
+                </CardContent>
+              </Card>
+              <Card className={alertSummary.firing > 0 ? "border-red-500/50" : ""}>
+                <CardContent className="p-4 text-center">
+                  <p className={`text-2xl font-bold ${alertSummary.firing > 0 ? "text-red-600" : ""}`}>
+                    {alertSummary.firing}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Firing</p>
+                </CardContent>
+              </Card>
+              <Card className={alertSummary.pending > 0 ? "border-yellow-500/50" : ""}>
+                <CardContent className="p-4 text-center">
+                  <p className={`text-2xl font-bold ${alertSummary.pending > 0 ? "text-yellow-600" : ""}`}>
+                    {alertSummary.pending}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Prometheus Alerts List */}
+            {prometheusAlerts.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                  <CheckCircle2 className="h-8 w-8 text-green-500 mb-2" />
+                  <p className="text-sm font-medium">All Clear</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    No active infrastructure alerts
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {prometheusAlerts.map((alert, i) => (
+                  <Card
+                    key={`${alert.name}-${i}`}
+                    className={
+                      alert.state === "firing"
+                        ? "border-red-500/50 bg-red-500/5"
+                        : alert.state === "pending"
+                        ? "border-yellow-500/50 bg-yellow-500/5"
+                        : ""
+                    }
+                  >
+                    <CardContent className="flex items-start gap-3 p-4">
+                      {alert.state === "firing" ? (
+                        <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                      ) : (
+                        <Clock className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-sm">{alert.name}</p>
+                          <Badge
+                            variant={alert.severity === "critical" ? "destructive" : "secondary"}
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            {alert.severity}
+                          </Badge>
+                          <Badge
+                            variant={alert.state === "firing" ? "destructive" : "outline"}
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            {alert.state}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{alert.summary || alert.description}</p>
+                        {alert.activeAt && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Since {new Date(alert.activeAt).toLocaleString("en-AU")}
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

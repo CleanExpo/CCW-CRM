@@ -109,6 +109,18 @@ class Settings(BaseSettings):
     sendgrid_from_email: str = Field(default="noreply@ccw-erp.com", description="From email address")  # noqa: E501
     sendgrid_from_name: str = Field(default="CCW ERP", description="From name for emails")
 
+    # System Alert Notifications (for monitoring/ops team)
+    smtp_host: str = Field(default="smtp.gmail.com", description="SMTP host for alert emails")
+    smtp_port: int = Field(default=587, description="SMTP port")
+    smtp_user: str = Field(default="", description="SMTP username")
+    smtp_password: str = Field(default="", description="SMTP password")
+    alert_email_to: str = Field(default="", description="Email address to send system alerts")
+    slack_webhook_url: str = Field(default="", description="Slack webhook URL for system alerts")
+
+    # Monitoring Configuration
+    alert_check_interval_minutes: int = Field(default=5, description="Alert check interval in minutes")
+    metrics_retention_hours: int = Field(default=24, description="Performance metrics retention in hours")
+
     # Business Configuration
     tax_rate: str = Field(default="0.10", description="Tax rate (GST) as decimal (e.g., 0.10 for 10%)")  # noqa: E501
     tax_name: str = Field(default="GST", description="Tax name displayed in UI")

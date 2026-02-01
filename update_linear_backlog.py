@@ -10,48 +10,154 @@ with open(csv_path, "r", encoding="utf-8") as f:
     rows = list(reader)
 
 # Update completed tasks to Done
+updated = False
 for row in rows:
-    if row["Title"] == "Optimize Database Indexes for Search":
+    if row["Title"] == "Complete POS System Frontend UI" and not updated:
+        row["Status"] = "In Progress"
+        row["Description"] = '''🔄 IN PROGRESS: Completing final 5-15% of POS frontend features
+
+**Current Assessment (via Explore Agent):**
+- ✅ POS Terminal Interface: 100% Complete
+- ✅ Direct Terminal Form: 100% Complete
+- ✅ Staff Management CRUD: 100% Complete
+- ⚠️ Location Management: 90% Complete (missing Terminal CRUD)
+- ⚠️ Bank Reconciliation: 85% Complete (missing bulk actions, filters, export, bank account CRUD)
+
+**Overall Progress: 95% Complete**
+
+**Missing Features to Implement:**
+
+1. **Reconciliation Dashboard (Phase 2):**
+   - [ ] Bulk reconciliation actions (auto-match, bulk reconcile)
+   - [ ] Advanced filters (date range, status, amount)
+   - [ ] CSV export functionality
+   - [ ] Bank account management CRUD
+
+2. **Location Management (Phase 3):**
+   - [ ] Terminal CRUD (create/edit/delete terminals)
+
+**Implementation Plan:**
+
+**Phase 1: API Client Refactoring**
+- Create apps/web/lib/api/pos.ts (centralized POS API methods)
+- Export typed functions for all endpoints
+
+**Phase 2: Backend Verification**
+- Verify terminal endpoints exist in pos_transactions.py
+- Verify bulk reconcile + export endpoints in bank_feeds.py
+- Create missing endpoints if needed
+
+**Phase 3: Terminal Management UI**
+- Create TerminalDialog.tsx component (form validation)
+- Update locations/page.tsx with Terminals tab
+- Table with Edit/Delete actions
+
+**Phase 4: Reconciliation Filters**
+- Create FilterPanel.tsx (date range, status, amount)
+- Update reconciliation/page.tsx to apply filters
+- Backend respects filter parameters
+
+**Phase 5: Bulk Reconciliation Actions**
+- Create BulkActionsPanel.tsx (checkboxes, action buttons)
+- Add "Auto-Match Selected" and "Reconcile Selected"
+- Confirmation dialogs for bulk operations
+
+**Phase 6: CSV Export**
+- Create ExportDialog.tsx (date range, format selection)
+- Download CSV with columns: Date, Bank TX ID, POS TX ID, Amount, Status, Discrepancy
+- Use browser download API
+
+**Phase 7: Bank Account Management**
+- Create BankAccountDialog.tsx (account details, BSB validation)
+- Add Bank Accounts section to reconciliation page
+- CRUD operations for bank accounts
+
+**Files to Create (5 new components):**
+- FilterPanel.tsx, BulkActionsPanel.tsx, ExportDialog.tsx
+- BankAccountDialog.tsx, TerminalDialog.tsx
+
+**Files to Modify (3 pages):**
+- reconciliation/page.tsx, locations/page.tsx
+- lib/api/pos.ts (new)
+
+**Success Criteria:**
+- [ ] Terminal CRUD functional
+- [ ] Date/status/amount filters work
+- [ ] Bulk auto-match within $0.10
+- [ ] CSV export downloads correctly
+- [ ] Bank account CRUD validates BSB format
+- [ ] Type-check passes
+- [ ] Lint passes
+- [ ] All manual tests pass
+
+**Estimated Effort:** 4 hours (7 phases)
+
+**Business Value:** Complete POS system for 3 physical locations + online/phone sales
+
+**Status:** Plan created, awaiting implementation'''
+        print(f"[OK] Updated: {row['Title']} -> Status: In Progress with implementation plan")
+        updated = True
+    elif row["Title"] == "Setup Production Monitoring and Alerts" and row["Status"] != "Done":
         row["Status"] = "Done"
-    elif row["Title"] == "Integrate POS with Xero Reconciliation":
-        row["Status"] = "Done"
-        row["Description"] = '''✅ COMPLETE: Database search optimization implemented and verified
+        row["Description"] = '''COMPLETE: Production monitoring and alerts fully implemented
 
 **Completed Deliverables:**
-- ✅ Applied add_search_indexes.sql migration
-- ✅ Enabled pg_trgm extension for fuzzy text matching
-- ✅ Created 27 indexes (trigram + B-tree + composite)
-- ✅ Trigram indexes: products (name, sku, description), customers (company, contact, email)
-- ✅ B-tree indexes: foreign keys, status fields, date columns
-- ✅ Composite indexes: common query patterns
-- ✅ All indexes verified and active
+- Backend Services (4 new files):
+  - system_alert_service.py - Email/Slack notifications with rate limiting
+  - business_metrics_service.py - POS, reconciliation, and order metrics
+  - performance.py middleware - API performance tracking
+  - alert_manager.py - Updated with resolve/notification features
 
-**Verified Performance Results:**
-- Customer search: 91ms (using trigram index) ✅
-- Product search: 9ms (using trigram index) ✅
-- Order lookup: 17ms (using composite indexes) ✅
-- Quote filtering: 18ms (using composite indexes) ✅
+- API Endpoints (3 new route files):
+  - /api/monitoring/alerts - Alert management (create, list, acknowledge, resolve)
+  - /api/monitoring/business/* - Business metrics (POS, reconciliation, orders)
+  - /api/monitoring/performance/* - API performance (overall, slowest, errors)
 
-**Impact:**
-- Customer search: 3,500ms → 91ms (97% faster) 🚀
-- Product search: 1,700ms → 9ms (99% faster) 🚀
-- Order/Quote queries: 50-60% faster
-- Database CPU usage: Reduced by 70%+
+- Frontend Components (3 new):
+  - BusinessMetrics.tsx - POS/reconciliation/order metrics dashboard
+  - AlertCard.tsx - Alert management with acknowledge/resolve
+  - ApiPerformance.tsx - API response times and error rates
+
+- Features:
+  - Email notifications via SMTP (fastapi-mail)
+  - Slack webhook notifications
+  - Rate limiting (10 alerts/hour per type)
+  - Alert deduplication (1-hour window)
+  - In-memory metrics (1-hour retention)
+  - Auto-refresh (15-30 seconds)
+  - Status-based color coding (good/warning/critical)
 
 **Files Changed:**
-- apps/backend/migrations/add_search_indexes.sql (already existed, applied)
-- apps/backend/apply_search_indexes.py (verified)
-- apps/backend/test_search_performance.py (created for verification)
+Backend:
+- apps/backend/src/services/system_alert_service.py (created)
+- apps/backend/src/services/business_metrics_service.py (created)
+- apps/backend/src/api/middleware/performance.py (created)
+- apps/backend/src/services/alert_manager.py (modified)
+- apps/backend/src/api/routes/monitoring/alerts.py (created)
+- apps/backend/src/api/routes/monitoring/business_metrics.py (created)
+- apps/backend/src/api/routes/monitoring/performance.py (created)
+- apps/backend/src/config/settings.py (added monitoring config)
+- apps/backend/src/api/main.py (added middleware and routes)
+- apps/backend/pyproject.toml (added fastapi-mail)
 
-**Status:** Committed to main branch (commit: 05bf2ea) and pushed to GitHub
+Frontend:
+- apps/web/lib/api/monitoring.ts (created - 175 lines)
+- apps/web/app/(dashboard)/monitoring/components/BusinessMetrics.tsx (created)
+- apps/web/app/(dashboard)/monitoring/components/AlertCard.tsx (created)
+- apps/web/app/(dashboard)/monitoring/components/ApiPerformance.tsx (created)
+- apps/web/app/(dashboard)/monitoring/page.tsx (updated - added tabs and system alerts)
 
-**Business Value Delivered:**
-- Users experience instant search results (<100ms)
-- Database load significantly reduced
-- Better resource utilization
-- Improved user satisfaction'''
+**Tests:** Type-check and lint passing
+
+**Business Value:**
+- Proactive issue detection
+- Email/Slack alerts for critical issues
+- Business metrics visibility (POS, reconciliation, orders)
+- API performance monitoring
+- Reduce downtime with early warning system
+
+**Status:** Complete - Ready for manual testing'''
         print(f"[OK] Updated: {row['Title']} -> Status: Done")
-        break
 
 # Write back to CSV
 with open(csv_path, "w", encoding="utf-8", newline="") as f:
