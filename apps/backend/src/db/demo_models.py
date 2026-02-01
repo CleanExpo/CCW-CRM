@@ -27,9 +27,10 @@ from sqlalchemy.orm import relationship
 
 from .models import Base  # Use existing Base class
 
-# Import i18n_models to ensure ProductTranslation is registered with SQLAlchemy
+# Import related models to ensure they are registered with SQLAlchemy
 # This prevents "failed to locate a name" errors when using string-based relationships
-from . import i18n_models  # noqa: F401
+from . import i18n_models  # noqa: F401 - For ProductTranslation
+from . import inventory_models  # noqa: F401 - For OutboundShipment
 
 
 class OrderStatus(str, enum.Enum):
