@@ -45,62 +45,62 @@ from src.db.demo_models import (
 from src.db.models_base import Base
 from src.integrations.shopify.client import get_shopify_client
 
-# Demonstration customer profiles
+# Demonstration customer profiles - Carpet Cleaning & Water Damage Restoration Industry
 DEMO_CUSTOMERS = [
     {
-        "company_name": "Brisbane Construction Co",
+        "company_name": "Brisbane Elite Carpet Care",
         "contact_name": "Sarah Mitchell",
-        "email": "sarah.mitchell@brisbaneconstruction.com.au",
+        "email": "sarah.mitchell@brisbanecarpetcare.com.au",
         "phone": "0412 345 678",
-        "address": "45 Industrial Drive",
+        "address": "45 Commercial Drive",
         "city": "Brisbane",
         "state": "QLD",
         "postcode": "4000",
-        "scenario": "Large equipment purchase for new project",
+        "scenario": "Large equipment purchase for fleet expansion",
     },
     {
-        "company_name": "Gold Coast Electrical Services",
+        "company_name": "Gold Coast Water Damage Restoration",
         "contact_name": "James Chen",
-        "email": "james.chen@gcelectrical.com.au",
+        "email": "james.chen@gcwaterrestoration.com.au",
         "phone": "0423 456 789",
         "address": "12 Marina Boulevard",
         "city": "Gold Coast",
         "state": "QLD",
         "postcode": "4217",
-        "scenario": "Regular stock replenishment",
+        "scenario": "Emergency restoration equipment order",
     },
     {
-        "company_name": "Sunshine Coast Plumbing",
+        "company_name": "Sunshine Coast Carpet Cleaning Pro",
         "contact_name": "Emma Roberts",
-        "email": "emma.roberts@scplumbing.com.au",
+        "email": "emma.roberts@sccarpetpro.com.au",
         "phone": "0434 567 890",
         "address": "78 Coastal Way",
         "city": "Maroochydore",
         "state": "QLD",
         "postcode": "4558",
-        "scenario": "Urgent replacement parts",
+        "scenario": "Urgent chemical and solution replenishment",
     },
     {
-        "company_name": "Toowoomba Building Supplies",
+        "company_name": "Toowoomba Flood & Fire Restoration",
         "contact_name": "Michael Thompson",
-        "email": "michael.thompson@toowoombabuild.com.au",
+        "email": "michael.thompson@toowoombarestore.com.au",
         "phone": "0445 678 901",
         "address": "156 Range Street",
         "city": "Toowoomba",
         "state": "QLD",
         "postcode": "4350",
-        "scenario": "Quote for bulk order - converted to purchase",
+        "scenario": "Quote for commercial restoration project - converted to purchase",
     },
     {
-        "company_name": "Cairns Industrial Equipment",
+        "company_name": "Cairns Premium Carpet Services",
         "contact_name": "Lisa Anderson",
-        "email": "lisa.anderson@cairnsindustrial.com.au",
+        "email": "lisa.anderson@cairnscarpets.com.au",
         "phone": "0456 789 012",
         "address": "34 Port Road",
         "city": "Cairns",
         "state": "QLD",
         "postcode": "4870",
-        "scenario": "Quote pending customer approval",
+        "scenario": "Quote for new business startup equipment pending approval",
     },
 ]
 
@@ -312,12 +312,13 @@ async def create_purchase_scenario_1(
     quote_num: int,
     order_num: int,
 ) -> tuple[Quote, Order]:
-    """Scenario 1: Large equipment order (delivered).
+    """Scenario 1: Fleet expansion equipment order (delivered).
 
-    High-value order with multiple items. Quote was sent 3 weeks ago,
+    High-value order for carpet cleaning equipment. Quote was sent 3 weeks ago,
     converted to order 2 weeks ago, and delivered last week.
+    Brisbane Elite Carpet Care expanding their fleet with new extractors and chemicals.
     """
-    print("\n[SCENARIO 1] Large equipment purchase - DELIVERED")
+    print("\n[SCENARIO 1] Fleet expansion - Carpet cleaning equipment - DELIVERED")
     print(f"   Customer: {customer.company_name}")
 
     now = datetime.now(UTC)
@@ -336,7 +337,7 @@ async def create_purchase_scenario_1(
         quote_date=quote_date,
         valid_until=valid_until,
         total=Decimal(0),
-        notes="Large equipment order for new construction project. 10% bulk discount applied.",
+        notes="Fleet expansion: 3 new truck-mount extractors, industrial chemicals, and accessories. 10% bulk discount applied for fleet purchase.",
     )
     db.add(quote)
     await db.flush()
@@ -373,7 +374,7 @@ async def create_purchase_scenario_1(
         status=OrderStatus.DELIVERED,
         order_date=order_date,
         total=quote.total,
-        notes=f"Converted from quote {quote.quote_number}. Delivered on schedule.",
+        notes=f"Converted from quote {quote.quote_number}. Fleet expansion completed. All equipment delivered and installed on schedule.",
     )
     db.add(order)
     await db.flush()
@@ -406,12 +407,13 @@ async def create_purchase_scenario_2(
     products: list[Product],
     order_num: int,
 ) -> Order:
-    """Scenario 2: Medium order with multiple items (shipped).
+    """Scenario 2: Emergency water damage restoration equipment (shipped).
 
-    Regular stock replenishment order. No quote, direct order placed 5 days ago,
-    currently in transit.
+    Urgent order for flood restoration equipment. No quote, direct order placed 5 days ago after major flood event,
+    currently in transit for emergency delivery.
+    Gold Coast Water Damage Restoration responding to recent storm flooding.
     """
-    print("\n[SCENARIO 2] Regular stock replenishment - SHIPPED")
+    print("\n[SCENARIO 2] Emergency restoration equipment - SHIPPED")
     print(f"   Customer: {customer.company_name}")
 
     now = datetime.now(UTC)
@@ -428,7 +430,7 @@ async def create_purchase_scenario_2(
         status=OrderStatus.SHIPPED,
         order_date=order_date,
         total=Decimal(0),
-        notes="Regular stock replenishment. Express shipping requested.",
+        notes="URGENT: Emergency flood restoration equipment. Dehumidifiers, air movers, moisture meters. Express overnight shipping for storm response.",
     )
     db.add(order)
     await db.flush()
@@ -466,12 +468,13 @@ async def create_purchase_scenario_3(
     products: list[Product],
     order_num: int,
 ) -> Order:
-    """Scenario 3: Small urgent order (processing).
+    """Scenario 3: Chemical and cleaning solution replenishment (processing).
 
-    Urgent replacement parts order. Placed 2 days ago, currently being processed
-    for expedited shipping.
+    Urgent restock order for carpet cleaning chemicals and solutions. Placed 2 days ago, currently being processed
+    for expedited shipping. Customer running low on key products.
+    Sunshine Coast Carpet Cleaning Pro needs immediate resupply.
     """
-    print("\n[SCENARIO 3] Urgent replacement parts - PROCESSING")
+    print("\n[SCENARIO 3] Urgent chemical replenishment - PROCESSING")
     print(f"   Customer: {customer.company_name}")
 
     now = datetime.now(UTC)
@@ -488,7 +491,7 @@ async def create_purchase_scenario_3(
         status=OrderStatus.PROCESSING,
         order_date=order_date,
         total=Decimal(0),
-        notes="URGENT: Replacement parts needed ASAP. Expedited shipping.",
+        notes="URGENT: Carpet cleaning chemicals and solutions running low. High-traffic season. Expedited shipping requested for next-day delivery.",
     )
     db.add(order)
     await db.flush()
@@ -527,12 +530,13 @@ async def create_purchase_scenario_4(
     quote_num: int,
     order_num: int,
 ) -> tuple[Quote, Order]:
-    """Scenario 4: Quote converted to order (confirmed).
+    """Scenario 4: Commercial restoration project equipment (confirmed).
 
-    Bulk order quote sent 1 week ago, accepted and converted to order yesterday.
-    Order is confirmed and awaiting processing.
+    Complete restoration equipment package quote sent 1 week ago for large commercial project,
+    accepted and converted to order yesterday. Order is confirmed and awaiting processing.
+    Toowoomba Flood & Fire Restoration won major hotel restoration contract.
     """
-    print("\n[SCENARIO 4] Quote converted to order - CONFIRMED")
+    print("\n[SCENARIO 4] Commercial restoration project - Quote converted - CONFIRMED")
     print(f"   Customer: {customer.company_name}")
 
     now = datetime.now(UTC)
@@ -551,7 +555,7 @@ async def create_purchase_scenario_4(
         quote_date=quote_date,
         valid_until=valid_until,
         total=Decimal(0),
-        notes="Bulk order for ongoing project. Volume discount applied.",
+        notes="Complete restoration equipment package for 5-star hotel flood damage project. Industrial dehumidifiers, air scrubbers, HEPA filters. 5% volume discount applied.",
     )
     db.add(quote)
     await db.flush()
@@ -588,7 +592,7 @@ async def create_purchase_scenario_4(
         status=OrderStatus.CONFIRMED,
         order_date=order_date,
         total=quote.total,
-        notes=f"Converted from quote {quote.quote_number}. Ready for processing.",
+        notes=f"Converted from quote {quote.quote_number}. Hotel restoration project - 200 rooms affected. Complete equipment package. Ready for processing and urgent delivery.",
     )
     db.add(order)
     await db.flush()
@@ -621,11 +625,13 @@ async def create_purchase_scenario_5(
     products: list[Product],
     quote_num: int,
 ) -> Quote:
-    """Scenario 5: Recent quote awaiting approval (sent).
+    """Scenario 5: New business startup equipment package (sent).
 
-    Quote sent 2 days ago, awaiting customer decision. Still within valid period.
+    Complete startup equipment package quote sent 2 days ago for new carpet cleaning business,
+    awaiting customer decision and financing approval. Still within valid period.
+    Cairns Premium Carpet Services launching new business operation.
     """
-    print("\n[SCENARIO 5] Quote pending customer approval - SENT")
+    print("\n[SCENARIO 5] New business startup package - Quote pending - SENT")
     print(f"   Customer: {customer.company_name}")
 
     now = datetime.now(UTC)
@@ -644,7 +650,7 @@ async def create_purchase_scenario_5(
         quote_date=quote_date,
         valid_until=valid_until,
         total=Decimal(0),
-        notes="Quote for upcoming project. Customer reviewing with team. Follow-up scheduled.",
+        notes="Complete business startup package: 2 portable extractors, truck-mount system, chemical starter kit, accessories. New business launching. Customer securing financing. Follow-up scheduled.",
     )
     db.add(quote)
     await db.flush()
@@ -760,11 +766,11 @@ async def generate_demo_purchases() -> None:
     print(f"   [OK] Generated 3 quotes (2 accepted, 1 sent)")
     print(f"   [OK] Generated 4 orders (1 delivered, 1 shipped, 1 processing, 1 confirmed)")
     print("\nScenarios Created:")
-    print("   1. Brisbane Construction Co - Large order DELIVERED ($X,XXX)")
-    print("   2. Gold Coast Electrical - Medium order SHIPPED ($X,XXX)")
-    print("   3. Sunshine Coast Plumbing - Urgent order PROCESSING ($XXX)")
-    print("   4. Toowoomba Building - Quote -> Order CONFIRMED ($X,XXX)")
-    print("   5. Cairns Industrial - Quote SENT awaiting approval ($X,XXX)")
+    print("   1. Brisbane Elite Carpet Care - Fleet expansion equipment DELIVERED ($X,XXX)")
+    print("   2. Gold Coast Water Damage Restoration - Emergency equipment SHIPPED ($X,XXX)")
+    print("   3. Sunshine Coast Carpet Cleaning Pro - Urgent chemicals PROCESSING ($XXX)")
+    print("   4. Toowoomba Flood & Fire Restoration - Commercial project CONFIRMED ($X,XXX)")
+    print("   5. Cairns Premium Carpet Services - New business startup SENT ($X,XXX)")
     print("\nYou can now:")
     print("   - Log in to the ERP system (admin@demo.com / demo123)")
     print("   - View customers, quotes, and orders in the dashboard")
