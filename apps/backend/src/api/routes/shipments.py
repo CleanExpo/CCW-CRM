@@ -7,11 +7,13 @@ Provides tracking and management for:
 - Carrier webhook integration for tracking updates
 """
 
+import os
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+import structlog
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,8 +21,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config.database import get_async_db
 from src.db.demo_models import Order
 from src.db.inventory_models import InboundShipment, OutboundShipment, PurchaseOrder, Supplier
+from src.security.webhook_verification import (
+    get_fedex_verifier,
+    get_ups_verifier,
+    get_usps_verifier,
+)
 
 router = APIRouter(prefix="/api/shipments", tags=["Shipments"])
+logger = structlog.get_logger(__name__)
 
 
 # Pydantic models
@@ -464,18 +472,61 @@ async def track_by_number(
 
 @router.post("/webhooks/inbound/{shipment_id}")
 async def inbound_tracking_webhook(
+    request: Request,
     shipment_id: UUID,
     webhook_data: TrackingWebhookPayload,
     db: Annotated[AsyncSession, Depends(get_async_db)],
-    x_webhook_signature: str | None = Header(None),
+    x_fedex_signature: str | None = Header(None),
+    x_fedex_timestamp: str | None = Header(None),
+    x_ups_signature: str | None = Header(None),
+    x_ups_timestamp: str | None = Header(None),
+    x_usps_signature: str | None = Header(None),
+    x_usps_timestamp: str | None = Header(None),
 ) -> dict:
     """
     Webhook endpoint for carrier tracking updates (inbound shipments).
 
     Carriers will POST tracking events here.
+    Signature verification is enforced in production (USE_WEBHOOK_VERIFICATION=true).
     """
-    # TODO: Verify webhook signature (carrier-specific)
-    # For now, accepting all webhooks in development
+    # Verify webhook signature based on carrier
+    verify_webhooks = os.getenv("USE_WEBHOOK_VERIFICATION", "false").lower() == "true"
+
+    if verify_webhooks:
+        body = await request.body()
+        carrier = webhook_data.carrier.lower() if webhook_data.carrier else "unknown"
+
+        if carrier == "fedex":
+            try:
+                verifier = get_fedex_verifier()
+                if not verifier.verify_request(body, x_fedex_signature, x_fedex_timestamp):
+                    logger.warning("FedEx webhook signature verification failed", shipment_id=str(shipment_id))
+                    raise HTTPException(status_code=401, detail="Invalid webhook signature")
+            except ValueError as e:
+                logger.error("FedEx verifier not configured", error=str(e))
+                raise HTTPException(status_code=500, detail="Webhook verification not configured")
+
+        elif carrier == "ups":
+            try:
+                verifier = get_ups_verifier()
+                if not verifier.verify_request(body, x_ups_signature, x_ups_timestamp):
+                    logger.warning("UPS webhook signature verification failed", shipment_id=str(shipment_id))
+                    raise HTTPException(status_code=401, detail="Invalid webhook signature")
+            except ValueError as e:
+                logger.error("UPS verifier not configured", error=str(e))
+                raise HTTPException(status_code=500, detail="Webhook verification not configured")
+
+        elif carrier == "usps":
+            try:
+                verifier = get_usps_verifier()
+                if not verifier.verify_request(body, x_usps_signature, x_usps_timestamp):
+                    logger.warning("USPS webhook signature verification failed", shipment_id=str(shipment_id))
+                    raise HTTPException(status_code=401, detail="Invalid webhook signature")
+            except ValueError as e:
+                logger.error("USPS verifier not configured", error=str(e))
+                raise HTTPException(status_code=500, detail="Webhook verification not configured")
+        else:
+            logger.warning("Unknown carrier for webhook verification", carrier=carrier)
 
     result = await db.execute(select(InboundShipment).where(InboundShipment.id == shipment_id))
     shipment = result.scalar_one_or_none()
@@ -518,16 +569,61 @@ async def inbound_tracking_webhook(
 
 @router.post("/webhooks/outbound/{shipment_id}")
 async def outbound_tracking_webhook(
+    request: Request,
     shipment_id: UUID,
     webhook_data: TrackingWebhookPayload,
     db: Annotated[AsyncSession, Depends(get_async_db)],
-    x_webhook_signature: str | None = Header(None),
+    x_fedex_signature: str | None = Header(None),
+    x_fedex_timestamp: str | None = Header(None),
+    x_ups_signature: str | None = Header(None),
+    x_ups_timestamp: str | None = Header(None),
+    x_usps_signature: str | None = Header(None),
+    x_usps_timestamp: str | None = Header(None),
 ) -> dict:
     """
     Webhook endpoint for carrier tracking updates (outbound shipments).
 
     Carriers will POST tracking events here.
+    Signature verification is enforced in production (USE_WEBHOOK_VERIFICATION=true).
     """
+    # Verify webhook signature based on carrier
+    verify_webhooks = os.getenv("USE_WEBHOOK_VERIFICATION", "false").lower() == "true"
+
+    if verify_webhooks:
+        body = await request.body()
+        carrier = webhook_data.carrier.lower() if webhook_data.carrier else "unknown"
+
+        if carrier == "fedex":
+            try:
+                verifier = get_fedex_verifier()
+                if not verifier.verify_request(body, x_fedex_signature, x_fedex_timestamp):
+                    logger.warning("FedEx webhook signature verification failed", shipment_id=str(shipment_id))
+                    raise HTTPException(status_code=401, detail="Invalid webhook signature")
+            except ValueError as e:
+                logger.error("FedEx verifier not configured", error=str(e))
+                raise HTTPException(status_code=500, detail="Webhook verification not configured")
+
+        elif carrier == "ups":
+            try:
+                verifier = get_ups_verifier()
+                if not verifier.verify_request(body, x_ups_signature, x_ups_timestamp):
+                    logger.warning("UPS webhook signature verification failed", shipment_id=str(shipment_id))
+                    raise HTTPException(status_code=401, detail="Invalid webhook signature")
+            except ValueError as e:
+                logger.error("UPS verifier not configured", error=str(e))
+                raise HTTPException(status_code=500, detail="Webhook verification not configured")
+
+        elif carrier == "usps":
+            try:
+                verifier = get_usps_verifier()
+                if not verifier.verify_request(body, x_usps_signature, x_usps_timestamp):
+                    logger.warning("USPS webhook signature verification failed", shipment_id=str(shipment_id))
+                    raise HTTPException(status_code=401, detail="Invalid webhook signature")
+            except ValueError as e:
+                logger.error("USPS verifier not configured", error=str(e))
+                raise HTTPException(status_code=500, detail="Webhook verification not configured")
+        else:
+            logger.warning("Unknown carrier for webhook verification", carrier=carrier)
     result = await db.execute(select(OutboundShipment).where(OutboundShipment.id == shipment_id))
     shipment = result.scalar_one_or_none()
 

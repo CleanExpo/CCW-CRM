@@ -34,6 +34,7 @@ from src.db.ap2_models import (
     AP2WebhookLog,
 )
 from src.integrations.ap2 import get_ap2_client
+from src.integrations.ap2.security import get_ap2_signature_verifier
 
 logger = structlog.get_logger(__name__)
 
@@ -635,11 +636,13 @@ async def handle_webhook(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     x_google_signature: Annotated[str | None, Header()] = None,
+    x_google_timestamp: Annotated[str | None, Header()] = None,
 ) -> dict:
     """
     Handle AP2 webhooks from Google.
 
     Logs all webhook events for auditing and processes them.
+    Signature verification is enforced in production.
     """
     settings = get_ap2_settings()
 
@@ -661,16 +664,50 @@ async def handle_webhook(
     await db.commit()
 
     # Verify signature if enabled
-    if settings.signature_verification_enabled and x_google_signature:
-        # TODO: Implement signature verification logic
-        # For now, we'll mark it as verified in demo mode
+    if settings.signature_verification_enabled:
+        if not x_google_signature or not x_google_timestamp:
+            logger.error(
+                "Missing signature headers",
+                has_signature=bool(x_google_signature),
+                has_timestamp=bool(x_google_timestamp),
+            )
+            webhook_log.signature_verified = False
+            await db.commit()
+            raise HTTPException(
+                status_code=401,
+                detail="Missing X-Google-Signature or X-Google-Timestamp header",
+            )
+
+        try:
+            verifier = get_ap2_signature_verifier()
+            signature_valid = verifier.verify_signature(
+                payload=body,
+                received_signature=x_google_signature,
+                timestamp=x_google_timestamp,
+            )
+
+            webhook_log.signature_verified = signature_valid
+            await db.commit()
+
+            if not signature_valid:
+                logger.warning(
+                    "AP2 webhook signature verification failed",
+                    event_type=payload.get("event_type"),
+                    event_id=payload.get("event_id"),
+                )
+                raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
+            logger.info("AP2 webhook signature verified", event_id=payload.get("event_id"))
+
+        except ValueError as e:
+            logger.error("AP2 signature verifier not configured", error=str(e))
+            raise HTTPException(status_code=500, detail="Webhook verification not configured")
+    else:
+        # Demo mode - accept without verification
         if settings.mode == "demo":
             webhook_log.signature_verified = True
-        else:
-            # Real signature verification would go here
-            pass
-
-        await db.commit()
+            await db.commit()
+            logger.debug("Demo mode: webhook accepted without verification")
 
     logger.info(
         "Webhook received",
@@ -679,10 +716,37 @@ async def handle_webhook(
         verified=webhook_log.signature_verified,
     )
 
-    # TODO: Process webhook based on event_type
-    # - payment.completed → update transaction status
-    # - mandate.expired → mark mandate as expired
-    # - etc.
+    # Process webhook based on event_type
+    event_type = payload.get("event_type")
+
+    if event_type == "payment.completed":
+        # Update transaction status
+        transaction_id = payload.get("transaction_id")
+        if transaction_id:
+            from uuid import UUID
+
+            result = await db.execute(
+                select(AP2Transaction).where(AP2Transaction.id == UUID(transaction_id))
+            )
+            transaction = result.scalar_one_or_none()
+            if transaction:
+                transaction.status = AP2TransactionStatus.COMPLETED
+                transaction.completed_at = datetime.now(UTC)
+                await db.commit()
+                logger.info("Transaction marked as completed", transaction_id=transaction_id)
+
+    elif event_type == "mandate.expired":
+        # Mark mandate as expired
+        mandate_id = payload.get("mandate_id")
+        if mandate_id:
+            from uuid import UUID
+
+            result = await db.execute(select(AP2Mandate).where(AP2Mandate.id == UUID(mandate_id)))
+            mandate = result.scalar_one_or_none()
+            if mandate:
+                mandate.status = AP2MandateStatus.EXPIRED
+                await db.commit()
+                logger.info("Mandate marked as expired", mandate_id=mandate_id)
 
     return {
         "received": True,

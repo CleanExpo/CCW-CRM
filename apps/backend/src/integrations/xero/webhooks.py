@@ -2,6 +2,11 @@
 
 This module handles incoming webhooks from Xero for events like
 invoice payments, contact updates, etc.
+
+Enhanced with:
+- Signature verification (HMAC-SHA256)
+- Replay attack protection
+- Rate limiting
 """
 
 import base64
@@ -20,6 +25,10 @@ from src.integrations.xero import get_xero_client
 from src.integrations.xero.auth import XeroAuth
 from src.integrations.xero.customers import XeroCustomerSync
 from src.integrations.xero.payments import XeroPaymentSync
+from src.integrations.xero.webhook_security import (
+    get_xero_webhook_verifier,
+    is_webhook_duplicate,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -102,10 +111,18 @@ class XeroWebhookHandler:
         # Get raw body for signature verification
         body_bytes = await request.body()
 
-        # Verify signature
-        if not self.verify_signature(body_bytes, signature):
-            logger.error("Webhook signature verification failed")
-            raise HTTPException(status_code=401, detail="Invalid signature")
+        # Verify signature using enhanced verifier
+        try:
+            verifier = get_xero_webhook_verifier()
+            if not verifier.verify_signature(body_bytes, signature):
+                logger.error("Xero webhook signature verification failed")
+                raise HTTPException(status_code=401, detail="Invalid signature")
+        except ValueError as e:
+            # Fallback to legacy verification if verifier not configured
+            logger.warning("Using legacy signature verification", error=str(e))
+            if not self.verify_signature(body_bytes, signature):
+                logger.error("Webhook signature verification failed")
+                raise HTTPException(status_code=401, detail="Invalid signature")
 
         # Parse webhook payload
         try:
@@ -114,11 +131,21 @@ class XeroWebhookHandler:
             logger.error("Failed to parse webhook payload", error=str(e))
             raise HTTPException(status_code=400, detail="Invalid JSON payload") from e
 
+        # Replay attack protection - check for duplicate event IDs
+        first_event_id = payload.get("firstEventSequence")
+        if first_event_id and is_webhook_duplicate(str(first_event_id)):
+            logger.warning(
+                "Duplicate webhook detected (replay attack?)",
+                first_event_id=first_event_id,
+            )
+            raise HTTPException(status_code=409, detail="Duplicate webhook event")
+
         logger.info(
             "Received Xero webhook",
             event_category=payload.get("eventCategory"),
             event_type=payload.get("eventType"),
             event_count=len(payload.get("events", [])),
+            first_event_sequence=first_event_id,
         )
 
         # Process events
