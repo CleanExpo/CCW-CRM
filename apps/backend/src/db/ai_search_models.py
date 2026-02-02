@@ -25,7 +25,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import Vector
 
-from src.db.models import Base
+from src.db.models_base import Base
 
 
 class RecommendationType(str, enum.Enum):
