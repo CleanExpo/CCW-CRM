@@ -1,11 +1,18 @@
 """
-Shopify Real-Time Inventory Sync.
+Shopify Real-Time Inventory Sync (ISS-010).
 
 Handles bidirectional inventory synchronization:
 - ERP → Shopify: Update Shopify when ERP stock changes
 - Shopify → ERP: Update ERP when Shopify stock changes (via webhooks)
+
+Features:
+- Automatic retry with exponential backoff
+- Conflict resolution
+- Audit trail
+- Bulk sync support
 """
 
+import asyncio
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -16,24 +23,75 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.demo_models import Product
 from src.db.shopify_extended_models import ShopifyInventorySync
-from src.integrations.shopify.client import get_shopify_client
+from src.db.shopify_models import ShopifyProductMapping
+from src.integrations.shopify.client import ShopifyClient
 
 logger = structlog.get_logger(__name__)
 
 
 class InventorySyncService:
     """
-    Manages bidirectional inventory synchronization between ERP and Shopify.
+    Manages bidirectional inventory synchronization between ERP and Shopify (ISS-010).
 
     Features:
     - Real-time sync on stock changes
+    - Automatic retry with exponential backoff
     - Conflict resolution (ERP as source of truth)
     - Audit trail for all sync operations
     - Batch sync support
     """
 
-    def __init__(self):
-        self.client = get_shopify_client()
+    def __init__(self, client: ShopifyClient):
+        """Initialize with Shopify client.
+
+        Args:
+            client: Shopify API client instance
+        """
+        self.client = client
+        self.max_retries = 3
+        self.base_delay = 1.0  # seconds
+
+    async def _retry_with_backoff(self, func, *args, **kwargs):
+        """Retry a function with exponential backoff.
+
+        Args:
+            func: Async function to retry
+            *args: Positional arguments for the function
+            **kwargs: Keyword arguments for the function
+
+        Returns:
+            Function result
+
+        Raises:
+            Exception: If all retries fail, raises the last exception
+        """
+        last_exception = None
+
+        for attempt in range(self.max_retries):
+            try:
+                return await func(*args, **kwargs)
+            except Exception as e:
+                last_exception = e
+                if attempt < self.max_retries - 1:
+                    # Calculate delay with exponential backoff
+                    delay = self.base_delay * (2 ** attempt)
+                    logger.warning(
+                        "retry_attempt",
+                        attempt=attempt + 1,
+                        max_retries=self.max_retries,
+                        delay=delay,
+                        error=str(e),
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    logger.error(
+                        "retry_exhausted",
+                        attempts=self.max_retries,
+                        error=str(e),
+                    )
+
+        # All retries failed, raise the last exception
+        raise last_exception
 
     async def sync_stock_to_shopify(
         self,
@@ -240,61 +298,84 @@ class InventorySyncService:
     async def bulk_sync_to_shopify(
         self,
         db: AsyncSession,
-        product_ids: list[UUID],
+        product_ids: list[UUID] | None = None,
     ) -> dict[str, Any]:
         """
-        Bulk sync multiple products to Shopify.
+        Bulk sync multiple products to Shopify (ISS-010).
+
+        If product_ids is None, syncs all mapped products.
 
         Args:
             db: Database session
-            product_ids: List of product UUIDs
+            product_ids: List of product UUIDs, or None for all mapped products
 
         Returns:
             Bulk sync results
         """
+        # Get product mappings
+        if product_ids:
+            stmt = select(ShopifyProductMapping).where(
+                ShopifyProductMapping.product_id.in_(product_ids)
+            )
+        else:
+            stmt = select(ShopifyProductMapping).where(
+                ShopifyProductMapping.shopify_product_id.isnot(None)
+            )
+
+        result = await db.execute(stmt)
+        mappings = result.scalars().all()
+
         results = {
-            "total": len(product_ids),
+            "total": len(mappings),
             "successful": 0,
             "failed": 0,
             "skipped": 0,
             "errors": [],
         }
 
-        for product_id in product_ids:
+        for mapping in mappings:
             try:
-                # Get Shopify IDs for this product
-                # (In real implementation, this would come from shopify_products table)
-                # For now, skip products without Shopify mapping
-
-                # Placeholder - would need to get from shopify_products table
-                shopify_product_id = None
-                shopify_inventory_item_id = None
-                shopify_location_id = None
-
-                if not all([shopify_product_id, shopify_inventory_item_id, shopify_location_id]):
-                    logger.warning("Product not linked to Shopify", product_id=str(product_id))
+                # Check if we have all required Shopify IDs
+                if not all([
+                    mapping.shopify_product_id,
+                    mapping.shopify_inventory_item_id,
+                ]):
+                    logger.warning(
+                        "Product mapping incomplete",
+                        product_id=str(mapping.product_id)
+                    )
                     results["skipped"] += 1
                     continue
 
-                result = await self.sync_stock_to_shopify(
+                # Get location ID from environment/config
+                from src.config.settings import get_shopify_settings
+                settings = get_shopify_settings()
+
+                sync_result = await self.sync_stock_to_shopify(
                     db=db,
-                    product_id=product_id,
-                    shopify_product_id=shopify_product_id,
-                    shopify_inventory_item_id=shopify_inventory_item_id,
-                    shopify_location_id=shopify_location_id,
+                    product_id=mapping.product_id,
+                    shopify_product_id=str(mapping.shopify_product_id),
+                    shopify_inventory_item_id=str(mapping.shopify_inventory_item_id),
+                    shopify_location_id=settings.inventory_location_id,
                     triggered_by="bulk_sync",
                 )
 
-                if result["success"]:
+                if sync_result["success"]:
                     results["successful"] += 1
                 else:
                     results["failed"] += 1
-                    results["errors"].append(f"Product {product_id}: {result.get('error')}")
+                    results["errors"].append(
+                        f"Product {mapping.product_id}: {sync_result.get('error')}"
+                    )
 
             except Exception as e:
                 results["failed"] += 1
-                results["errors"].append(f"Product {product_id}: {str(e)}")
-                logger.error("Bulk sync failed for product", product_id=str(product_id), error=str(e))
+                results["errors"].append(f"Product {mapping.product_id}: {str(e)}")
+                logger.error(
+                    "Bulk sync failed for product",
+                    product_id=str(mapping.product_id),
+                    error=str(e)
+                )
 
         logger.info(
             "Bulk inventory sync complete",
@@ -351,11 +432,11 @@ class InventorySyncService:
         self,
         db: AsyncSession,
         product_id: UUID,
-        shopify_product_id: str,
+        shopify_product_id: int,
         resolution: str = "erp_wins",
     ) -> dict[str, Any]:
         """
-        Resolve inventory sync conflict.
+        Resolve inventory sync conflict (ISS-010).
 
         When ERP and Shopify have different quantities, decide which is correct.
 
@@ -368,28 +449,101 @@ class InventorySyncService:
         Returns:
             Resolution result
         """
-        if resolution == "erp_wins":
-            # Use ERP quantity as source of truth, update Shopify
-            # (This would need full Shopify IDs - simplified here)
-            logger.info("Conflict resolved: ERP wins", product_id=str(product_id))
-            return {"success": True, "resolution": "erp_wins"}
+        try:
+            # Get product and mapping
+            product_stmt = select(Product).where(Product.id == product_id)
+            product_result = await db.execute(product_stmt)
+            product = product_result.scalar_one_or_none()
 
-        elif resolution == "shopify_wins":
-            # Use Shopify quantity as source of truth, update ERP
-            logger.info("Conflict resolved: Shopify wins", product_id=str(product_id))
-            return {"success": True, "resolution": "shopify_wins"}
+            if not product:
+                return {"success": False, "error": "Product not found"}
 
-        else:
-            return {"success": False, "error": f"Unknown resolution strategy: {resolution}"}
+            mapping_stmt = select(ShopifyProductMapping).where(
+                ShopifyProductMapping.product_id == product_id
+            )
+            mapping_result = await db.execute(mapping_stmt)
+            mapping = mapping_result.scalar_one_or_none()
 
+            if not mapping:
+                return {"success": False, "error": "Product mapping not found"}
 
-# Singleton instance
-_inventory_sync_service: InventorySyncService | None = None
+            # Get Shopify inventory level
+            shopify_data = await self.client.get(f"/products/{shopify_product_id}.json")
+            if not shopify_data or "product" not in shopify_data:
+                return {"success": False, "error": "Could not fetch Shopify product"}
 
+            variants = shopify_data["product"].get("variants", [])
+            if not variants:
+                return {"success": False, "error": "No variants found"}
 
-def get_inventory_sync_service() -> InventorySyncService:
-    """Get InventorySyncService singleton."""
-    global _inventory_sync_service
-    if _inventory_sync_service is None:
-        _inventory_sync_service = InventorySyncService()
-    return _inventory_sync_service
+            shopify_quantity = variants[0].get("inventory_quantity", 0)
+            erp_quantity = product.stock or 0
+
+            if resolution == "erp_wins":
+                # Use ERP quantity as source of truth, update Shopify
+                logger.info(
+                    "Resolving conflict: ERP wins",
+                    product_id=str(product_id),
+                    erp_quantity=erp_quantity,
+                    shopify_quantity=shopify_quantity,
+                )
+
+                # Get location ID
+                from src.config.settings import get_shopify_settings
+                settings = get_shopify_settings()
+
+                sync_result = await self.sync_stock_to_shopify(
+                    db=db,
+                    product_id=product_id,
+                    shopify_product_id=str(shopify_product_id),
+                    shopify_inventory_item_id=str(mapping.shopify_inventory_item_id),
+                    shopify_location_id=settings.inventory_location_id,
+                    triggered_by="conflict_resolution",
+                )
+
+                return {
+                    "success": True,
+                    "resolution": "erp_wins",
+                    "erp_quantity": erp_quantity,
+                    "shopify_quantity": shopify_quantity,
+                    "sync_result": sync_result,
+                }
+
+            elif resolution == "shopify_wins":
+                # Use Shopify quantity as source of truth, update ERP
+                logger.info(
+                    "Resolving conflict: Shopify wins",
+                    product_id=str(product_id),
+                    erp_quantity=erp_quantity,
+                    shopify_quantity=shopify_quantity,
+                )
+
+                sync_result = await self.sync_stock_from_shopify(
+                    db=db,
+                    product_id=product_id,
+                    shopify_product_id=str(shopify_product_id),
+                    new_shopify_quantity=shopify_quantity,
+                    triggered_by="conflict_resolution",
+                )
+
+                return {
+                    "success": True,
+                    "resolution": "shopify_wins",
+                    "erp_quantity": erp_quantity,
+                    "shopify_quantity": shopify_quantity,
+                    "sync_result": sync_result,
+                }
+
+            else:
+                return {
+                    "success": False,
+                    "error": f"Unknown resolution strategy: {resolution}"
+                }
+
+        except Exception as e:
+            logger.error(
+                "Conflict resolution failed",
+                product_id=str(product_id),
+                error=str(e),
+            )
+            return {"success": False, "error": str(e)}
