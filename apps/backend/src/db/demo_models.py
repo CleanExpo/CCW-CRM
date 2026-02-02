@@ -60,14 +60,14 @@ class QuoteStatus(str, enum.Enum):
 class ProductCategory(str, enum.Enum):
     """Product category enum for equipment supplier."""
 
-    HEAVY_MACHINERY = "heavy_machinery"
-    HAND_TOOLS = "hand_tools"
-    POWER_TOOLS = "power_tools"
-    SAFETY_EQUIPMENT = "safety_equipment"
-    BUILDING_MATERIALS = "building_materials"
-    ELECTRICAL = "electrical"
-    PLUMBING = "plumbing"
-    ACCESSORIES = "accessories"
+    HEAVY_MACHINERY = "HEAVY_MACHINERY"
+    HAND_TOOLS = "HAND_TOOLS"
+    POWER_TOOLS = "POWER_TOOLS"
+    SAFETY_EQUIPMENT = "SAFETY_EQUIPMENT"
+    BUILDING_MATERIALS = "BUILDING_MATERIALS"
+    ELECTRICAL = "ELECTRICAL"
+    PLUMBING = "PLUMBING"
+    ACCESSORIES = "ACCESSORIES"
 
 
 class JobStatus(str, enum.Enum):
