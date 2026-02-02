@@ -27,6 +27,222 @@ router = APIRouter(prefix="/api/integrations/shopify", tags=["Shopify Integratio
 # Connection Management Endpoints
 
 
+@router.get("/test")
+async def test_shopify_authentication(
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Test Shopify API authentication (ISS-008 diagnostic endpoint).
+
+    Returns detailed shop information if authentication succeeds.
+    Provides troubleshooting guidance if authentication fails.
+
+    This endpoint is specifically designed to diagnose ISS-008 (401 Unauthorized errors).
+    """
+    logger.info("testing_shopify_authentication")
+
+    if settings.is_demo_mode:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "Demo mode active",
+                "message": "Set SHOPIFY_MODE=live in .env to test real authentication",
+                "shop_domain": settings.shop_domain,
+                "mode": settings.mode,
+            },
+        )
+
+    try:
+        async with get_shopify_client() as client:
+            shop_data = await client.get_shop_info()
+            shop_info = shop_data.get("shop", {})
+
+            return {
+                "status": "success",
+                "message": "Shopify authentication successful",
+                "shop": {
+                    "name": shop_info.get("name"),
+                    "email": shop_info.get("email"),
+                    "domain": shop_info.get("domain"),
+                    "shop_owner": shop_info.get("shop_owner"),
+                    "country": shop_info.get("country_name"),
+                    "currency": shop_info.get("currency"),
+                    "plan": shop_info.get("plan_display_name"),
+                    "created_at": shop_info.get("created_at"),
+                },
+                "api_version": settings.api_version,
+                "admin_api_url": settings.admin_api_url,
+            }
+
+    except ValueError as e:
+        error_msg = str(e)
+
+        # Check for 401 errors
+        if "401" in error_msg:
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "error": "Shopify authentication failed",
+                    "message": error_msg,
+                    "troubleshooting": {
+                        "possible_causes": [
+                            "Invalid or expired access token",
+                            "Insufficient API scopes",
+                            "Wrong shop domain",
+                            "API access disabled",
+                        ],
+                        "fix_steps": [
+                            "1. Go to Shopify Admin > Settings > Apps and sales channels",
+                            "2. Click 'Develop apps' > Select your app or create new one",
+                            "3. Click 'Configure Admin API scopes'",
+                            "4. Enable required scopes: read_products, write_products, read_orders, read_inventory",
+                            "5. Save and install/reinstall the app",
+                            "6. Generate a new Admin API access token",
+                            "7. Update SHOPIFY_ACCESS_TOKEN in .env",
+                        ],
+                    },
+                    "current_config": {
+                        "shop_domain": settings.shop_domain,
+                        "api_version": settings.api_version,
+                        "admin_api_url": settings.admin_api_url,
+                    },
+                },
+            ) from e
+
+        # Check for 404 errors
+        elif "404" in error_msg:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "Shop not found",
+                    "message": error_msg,
+                    "troubleshooting": {
+                        "possible_causes": [
+                            "Incorrect shop domain",
+                            "Wrong API version",
+                        ],
+                        "fix_steps": [
+                            "1. Verify SHOPIFY_SHOP_DOMAIN is correct (e.g., your-store.myshopify.com)",
+                            "2. Check SHOPIFY_API_VERSION (try 2024-01 or 2023-10)",
+                        ],
+                    },
+                    "current_config": {
+                        "shop_domain": settings.shop_domain,
+                        "api_version": settings.api_version,
+                    },
+                },
+            ) from e
+
+        # Other errors
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "error": "Shopify API error",
+                    "message": error_msg,
+                },
+            ) from e
+
+
+@router.get("/scopes")
+async def check_shopify_scopes(
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Check which Shopify API scopes are accessible (ISS-008 diagnostic endpoint).
+
+    Tests access to common API endpoints to verify scope permissions.
+    Useful for diagnosing permission issues after authentication succeeds.
+    """
+    logger.info("checking_shopify_scopes")
+
+    if settings.is_demo_mode:
+        raise HTTPException(
+            status_code=503,
+            detail="Demo mode active. Set SHOPIFY_MODE=live to test scopes.",
+        )
+
+    scopes_result = {
+        "read_products": {"accessible": False, "error": None},
+        "read_orders": {"accessible": False, "error": None},
+        "read_inventory": {"accessible": False, "error": None},
+    }
+
+    try:
+        async with get_shopify_client() as client:
+            # Test read_products scope
+            try:
+                await client.get_products(limit=1)
+                scopes_result["read_products"]["accessible"] = True
+            except ValueError as e:
+                scopes_result["read_products"]["error"] = str(e)
+
+            # Test read_orders scope
+            try:
+                await client.get_orders(limit=1)
+                scopes_result["read_orders"]["accessible"] = True
+            except ValueError as e:
+                scopes_result["read_orders"]["error"] = str(e)
+
+            # Test read_inventory scope
+            try:
+                await client.get_locations()
+                scopes_result["read_inventory"]["accessible"] = True
+            except ValueError as e:
+                scopes_result["read_inventory"]["error"] = str(e)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error checking scopes: {str(e)}",
+        ) from e
+
+    # Summary
+    accessible_count = sum(
+        1 for scope in scopes_result.values() if scope["accessible"]
+    )
+    total_count = len(scopes_result)
+
+    return {
+        "status": "success" if accessible_count == total_count else "partial",
+        "accessible_scopes": accessible_count,
+        "total_scopes": total_count,
+        "scopes": scopes_result,
+        "recommendation": (
+            "All required scopes are accessible!"
+            if accessible_count == total_count
+            else "Some scopes are missing. Update API scopes in Shopify Admin."
+        ),
+    }
+
+
+@router.get("/config")
+async def get_shopify_config(
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Get current Shopify configuration (ISS-008 diagnostic endpoint).
+
+    Returns configuration info for debugging without exposing full credentials.
+    """
+    logger.info("getting_shopify_config")
+
+    # Show first 10 characters of access token for verification
+    token_preview = (
+        settings.access_token[:10] + "..." if len(settings.access_token) > 10 else "***"
+    )
+
+    return {
+        "mode": settings.mode,
+        "is_demo_mode": settings.is_demo_mode,
+        "is_live_mode": settings.is_live_mode,
+        "shop_domain": settings.shop_domain,
+        "shop_url": settings.shop_url,
+        "admin_api_url": settings.admin_api_url,
+        "api_version": settings.api_version,
+        "access_token_preview": token_preview,
+        "sync_inventory": settings.sync_inventory,
+        "inventory_location_id": settings.inventory_location_id,
+    }
+
+
 @router.get("/status")
 async def get_connection_status(
     settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
