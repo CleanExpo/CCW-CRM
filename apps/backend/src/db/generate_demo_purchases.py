@@ -117,7 +117,7 @@ async def fetch_shopify_products(limit: int = 50) -> list[dict]:
     settings = get_shopify_settings()
 
     if settings.is_demo_mode:
-        print("⚠️  WARNING: Running in DEMO mode. No real Shopify data will be fetched.")
+        print("WARNING: Running in DEMO mode. No real Shopify data will be fetched.")
         print("   Set SHOPIFY_MODE=live to fetch real products from CCWonline.com.au")
         return []
 
@@ -137,7 +137,7 @@ async def fetch_shopify_products(limit: int = 50) -> list[dict]:
             print(f"[SHOPIFY] Successfully fetched {len(products)} products")
 
             if len(products) == 0:
-                print("⚠️  WARNING: No products found in Shopify store.")
+                print("WARNING: No products found in Shopify store.")
                 print("   Please ensure products exist in your CCWonline.com.au store.")
 
             return products
@@ -244,13 +244,13 @@ async def sync_shopify_products_to_erp(db: AsyncSession, shopify_products: list[
                 if key != "shopify_id" and key != "shopify_variant_id":  # Don't overwrite IDs
                     setattr(existing_product, key, value)
             synced_products.append(existing_product)
-            print(f"   ✓ Updated: {erp_data['sku']} - {erp_data['name'][:50]}")
+            print(f"   [OK] Updated: {erp_data['sku']} - {erp_data['name'][:50]}")
         else:
             # Create new product
             product = Product(**{k: v for k, v in erp_data.items() if k not in ["shopify_id", "shopify_variant_id"]})
             db.add(product)
             synced_products.append(product)
-            print(f"   ✓ Created: {erp_data['sku']} - {erp_data['name'][:50]}")
+            print(f"   [OK] Created: {erp_data['sku']} - {erp_data['name'][:50]}")
 
     await db.commit()
     print(f"[PRODUCTS] Successfully synced {len(synced_products)} products")
@@ -279,7 +279,7 @@ async def create_demo_customers(db: AsyncSession) -> list[Customer]:
 
         if existing_customer:
             customers.append(existing_customer)
-            print(f"   ✓ Using existing: {existing_customer.company_name}")
+            print(f"   [OK] Using existing: {existing_customer.company_name}")
             continue
 
         customer = Customer(
@@ -297,7 +297,7 @@ async def create_demo_customers(db: AsyncSession) -> list[Customer]:
         db.add(customer)
         customers.append(customer)
         customer_number += 1
-        print(f"   ✓ Created: {customer.company_name} ({customer.contact_name})")
+        print(f"   [OK] Created: {customer.company_name} ({customer.contact_name})")
 
     await db.commit()
     print(f"[CUSTOMERS] Successfully created {len(customers)} demonstration customers")
@@ -335,8 +335,6 @@ async def create_purchase_scenario_1(
         status=QuoteStatus.ACCEPTED,  # Quote was accepted
         quote_date=quote_date,
         valid_until=valid_until,
-        subtotal=Decimal(0),
-        tax=Decimal(0),
         total=Decimal(0),
         notes="Large equipment order for new construction project. 10% bulk discount applied.",
     )
@@ -344,7 +342,7 @@ async def create_purchase_scenario_1(
     await db.flush()
 
     # Add quote items with bulk discount
-    quote_subtotal = Decimal(0)
+    quote_total = Decimal(0)
     for product in selected_products:
         quantity = random.randint(2, 5)
         discount = Decimal("0.90")  # 10% bulk discount
@@ -359,14 +357,12 @@ async def create_purchase_scenario_1(
             line_total=line_total,
         )
         db.add(quote_item)
-        quote_subtotal += line_total
+        quote_total += line_total
 
-    quote_tax = (quote_subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
-    quote.subtotal = quote_subtotal
-    quote.tax = quote_tax
-    quote.total = quote_subtotal + quote_tax
+    # Prices include GST (10% Australian tax is already in the price)
+    quote.total = quote_total
 
-    print(f"   ✓ Quote {quote.quote_number}: ${quote.total:,.2f} (ACCEPTED)")
+    print(f"   [OK] Quote {quote.quote_number}: ${quote.total:,.2f} (ACCEPTED)")
 
     # Create Order (2 weeks ago, converted from quote)
     order_date = now - timedelta(days=14)
@@ -376,8 +372,6 @@ async def create_purchase_scenario_1(
         customer_id=customer.id,
         status=OrderStatus.DELIVERED,
         order_date=order_date,
-        subtotal=quote_subtotal,
-        tax=quote_tax,
         total=quote.total,
         notes=f"Converted from quote {quote.quote_number}. Delivered on schedule.",
     )
@@ -399,8 +393,8 @@ async def create_purchase_scenario_1(
         )
         db.add(order_item)
 
-    print(f"   ✓ Order {order.order_number}: ${order.total:,.2f} (DELIVERED)")
-    print(f"   → Items: {len(selected_products)}, Total: ${order.total:,.2f}")
+    print(f"   [OK] Order {order.order_number}: ${order.total:,.2f} (DELIVERED)")
+    print(f"   -> Items: {len(selected_products)}, Total: ${order.total:,.2f}")
 
     await db.commit()
     return quote, order
@@ -433,8 +427,6 @@ async def create_purchase_scenario_2(
         customer_id=customer.id,
         status=OrderStatus.SHIPPED,
         order_date=order_date,
-        subtotal=Decimal(0),
-        tax=Decimal(0),
         total=Decimal(0),
         notes="Regular stock replenishment. Express shipping requested.",
     )
@@ -442,7 +434,7 @@ async def create_purchase_scenario_2(
     await db.flush()
 
     # Add order items
-    order_subtotal = Decimal(0)
+    order_total = Decimal(0)
     for product in selected_products:
         quantity = random.randint(1, 3)
         unit_price = product.price
@@ -456,15 +448,13 @@ async def create_purchase_scenario_2(
             line_total=line_total,
         )
         db.add(order_item)
-        order_subtotal += line_total
+        order_total += line_total
 
-    order_tax = (order_subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
-    order.subtotal = order_subtotal
-    order.tax = order_tax
-    order.total = order_subtotal + order_tax
+    # Prices include GST (10% Australian tax is already in the price)
+    order.total = order_total
 
-    print(f"   ✓ Order {order.order_number}: ${order.total:,.2f} (SHIPPED)")
-    print(f"   → Items: {len(selected_products)}, Total: ${order.total:,.2f}")
+    print(f"   [OK] Order {order.order_number}: ${order.total:,.2f} (SHIPPED)")
+    print(f"   -> Items: {len(selected_products)}, Total: ${order.total:,.2f}")
 
     await db.commit()
     return order
@@ -497,8 +487,6 @@ async def create_purchase_scenario_3(
         customer_id=customer.id,
         status=OrderStatus.PROCESSING,
         order_date=order_date,
-        subtotal=Decimal(0),
-        tax=Decimal(0),
         total=Decimal(0),
         notes="URGENT: Replacement parts needed ASAP. Expedited shipping.",
     )
@@ -506,7 +494,7 @@ async def create_purchase_scenario_3(
     await db.flush()
 
     # Add order items
-    order_subtotal = Decimal(0)
+    order_total = Decimal(0)
     for product in selected_products:
         quantity = random.randint(1, 2)
         unit_price = product.price
@@ -520,15 +508,13 @@ async def create_purchase_scenario_3(
             line_total=line_total,
         )
         db.add(order_item)
-        order_subtotal += line_total
+        order_total += line_total
 
-    order_tax = (order_subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
-    order.subtotal = order_subtotal
-    order.tax = order_tax
-    order.total = order_subtotal + order_tax
+    # Prices include GST (10% Australian tax is already in the price)
+    order.total = order_total
 
-    print(f"   ✓ Order {order.order_number}: ${order.total:,.2f} (PROCESSING)")
-    print(f"   → Items: {len(selected_products)}, Total: ${order.total:,.2f}")
+    print(f"   [OK] Order {order.order_number}: ${order.total:,.2f} (PROCESSING)")
+    print(f"   -> Items: {len(selected_products)}, Total: ${order.total:,.2f}")
 
     await db.commit()
     return order
@@ -564,8 +550,6 @@ async def create_purchase_scenario_4(
         status=QuoteStatus.ACCEPTED,
         quote_date=quote_date,
         valid_until=valid_until,
-        subtotal=Decimal(0),
-        tax=Decimal(0),
         total=Decimal(0),
         notes="Bulk order for ongoing project. Volume discount applied.",
     )
@@ -573,7 +557,7 @@ async def create_purchase_scenario_4(
     await db.flush()
 
     # Add quote items with volume discount
-    quote_subtotal = Decimal(0)
+    quote_total = Decimal(0)
     for product in selected_products:
         quantity = random.randint(3, 8)
         discount = Decimal("0.95")  # 5% volume discount
@@ -588,14 +572,12 @@ async def create_purchase_scenario_4(
             line_total=line_total,
         )
         db.add(quote_item)
-        quote_subtotal += line_total
+        quote_total += line_total
 
-    quote_tax = (quote_subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
-    quote.subtotal = quote_subtotal
-    quote.tax = quote_tax
-    quote.total = quote_subtotal + quote_tax
+    # Prices include GST (10% Australian tax is already in the price)
+    quote.total = quote_total
 
-    print(f"   ✓ Quote {quote.quote_number}: ${quote.total:,.2f} (ACCEPTED)")
+    print(f"   [OK] Quote {quote.quote_number}: ${quote.total:,.2f} (ACCEPTED)")
 
     # Create Order (yesterday, converted from quote)
     order_date = now - timedelta(days=1)
@@ -605,8 +587,6 @@ async def create_purchase_scenario_4(
         customer_id=customer.id,
         status=OrderStatus.CONFIRMED,
         order_date=order_date,
-        subtotal=quote_subtotal,
-        tax=quote_tax,
         total=quote.total,
         notes=f"Converted from quote {quote.quote_number}. Ready for processing.",
     )
@@ -628,8 +608,8 @@ async def create_purchase_scenario_4(
         )
         db.add(order_item)
 
-    print(f"   ✓ Order {order.order_number}: ${order.total:,.2f} (CONFIRMED)")
-    print(f"   → Items: {len(selected_products)}, Total: ${order.total:,.2f}")
+    print(f"   [OK] Order {order.order_number}: ${order.total:,.2f} (CONFIRMED)")
+    print(f"   -> Items: {len(selected_products)}, Total: ${order.total:,.2f}")
 
     await db.commit()
     return quote, order
@@ -663,8 +643,6 @@ async def create_purchase_scenario_5(
         status=QuoteStatus.SENT,
         quote_date=quote_date,
         valid_until=valid_until,
-        subtotal=Decimal(0),
-        tax=Decimal(0),
         total=Decimal(0),
         notes="Quote for upcoming project. Customer reviewing with team. Follow-up scheduled.",
     )
@@ -672,7 +650,7 @@ async def create_purchase_scenario_5(
     await db.flush()
 
     # Add quote items
-    quote_subtotal = Decimal(0)
+    quote_total = Decimal(0)
     for product in selected_products:
         quantity = random.randint(2, 6)
         unit_price = product.price
@@ -686,15 +664,13 @@ async def create_purchase_scenario_5(
             line_total=line_total,
         )
         db.add(quote_item)
-        quote_subtotal += line_total
+        quote_total += line_total
 
-    quote_tax = (quote_subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
-    quote.subtotal = quote_subtotal
-    quote.tax = quote_tax
-    quote.total = quote_subtotal + quote_tax
+    # Prices include GST (10% Australian tax is already in the price)
+    quote.total = quote_total
 
-    print(f"   ✓ Quote {quote.quote_number}: ${quote.total:,.2f} (SENT - Awaiting Customer)")
-    print(f"   → Items: {len(selected_products)}, Total: ${quote.total:,.2f}")
+    print(f"   [OK] Quote {quote.quote_number}: ${quote.total:,.2f} (SENT - Awaiting Customer)")
+    print(f"   -> Items: {len(selected_products)}, Total: ${quote.total:,.2f}")
 
     await db.commit()
     return quote
@@ -713,7 +689,7 @@ async def generate_demo_purchases() -> None:
     print(f"Shop Domain: {settings.shop_domain}")
 
     if settings.is_demo_mode:
-        print("\n⚠️  WARNING: Running in DEMO mode!")
+        print("\nWARNING: Running in DEMO mode!")
         print("   Set SHOPIFY_MODE=live to fetch real Shopify products.")
         print("   Will use existing ERP products instead.")
         proceed = input("\n   Continue anyway? (y/N): ")
@@ -733,7 +709,7 @@ async def generate_demo_purchases() -> None:
         products = await sync_shopify_products_to_erp(db, shopify_products)
 
         if len(products) < 5:
-            print("\n⚠️  ERROR: Not enough products available.")
+            print("\nERROR: Not enough products available.")
             print(f"   Found: {len(products)} products")
             print("   Need: At least 5 products to generate scenarios")
             return
@@ -779,22 +755,22 @@ async def generate_demo_purchases() -> None:
     print("DEMONSTRATION PURCHASES GENERATED SUCCESSFULLY!")
     print("=" * 80)
     print("\nSummary:")
-    print(f"   ✓ Synced {len(products)} products from CCWonline.com.au")
-    print(f"   ✓ Created 5 demonstration customers")
-    print(f"   ✓ Generated 3 quotes (2 accepted, 1 sent)")
-    print(f"   ✓ Generated 4 orders (1 delivered, 1 shipped, 1 processing, 1 confirmed)")
+    print(f"   [OK] Synced {len(products)} products from CCWonline.com.au")
+    print(f"   [OK] Created 5 demonstration customers")
+    print(f"   [OK] Generated 3 quotes (2 accepted, 1 sent)")
+    print(f"   [OK] Generated 4 orders (1 delivered, 1 shipped, 1 processing, 1 confirmed)")
     print("\nScenarios Created:")
     print("   1. Brisbane Construction Co - Large order DELIVERED ($X,XXX)")
     print("   2. Gold Coast Electrical - Medium order SHIPPED ($X,XXX)")
     print("   3. Sunshine Coast Plumbing - Urgent order PROCESSING ($XXX)")
-    print("   4. Toowoomba Building - Quote → Order CONFIRMED ($X,XXX)")
+    print("   4. Toowoomba Building - Quote -> Order CONFIRMED ($X,XXX)")
     print("   5. Cairns Industrial - Quote SENT awaiting approval ($X,XXX)")
     print("\nYou can now:")
-    print("   • Log in to the ERP system (admin@demo.com / demo123)")
-    print("   • View customers, quotes, and orders in the dashboard")
-    print("   • Demonstrate the quote-to-order conversion workflow")
-    print("   • Show different order statuses and tracking")
-    print("   • Present the system to the business owner")
+    print("   - Log in to the ERP system (admin@demo.com / demo123)")
+    print("   - View customers, quotes, and orders in the dashboard")
+    print("   - Demonstrate the quote-to-order conversion workflow")
+    print("   - Show different order statuses and tracking")
+    print("   - Present the system to the business owner")
     print("\n" + "=" * 80 + "\n")
 
 
