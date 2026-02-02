@@ -10,10 +10,11 @@ from typing import Any
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.shopify_models import ShopifyWebhookLog
+from src.db.shopify_models import ShopifyWebhookLog, ShopifyProductMapping
 from src.integrations.shopify.client import ShopifyClient
 from src.integrations.shopify.orders import ShopifyOrderImporter
 from src.integrations.shopify.product_sync import BidirectionalProductSyncer
+from src.integrations.shopify.inventory_sync import InventorySyncService
 
 logger = structlog.get_logger(__name__)
 
@@ -297,7 +298,7 @@ class ShopifyWebhookHandler:
         self,
         payload: dict[str, Any],
     ) -> dict[str, Any]:
-        """Handle inventory_levels/update webhook.
+        """Handle inventory_levels/update webhook (ISS-010: Shopify → ERP inventory sync).
 
         Args:
             payload: Inventory level data from Shopify
@@ -305,16 +306,68 @@ class ShopifyWebhookHandler:
         Returns:
             Processing result
         """
+        inventory_item_id = payload.get("inventory_item_id")
+        available_quantity = payload.get("available")
+
         logger.info(
             "handling_inventory_update",
-            inventory_item_id=payload.get("inventory_item_id"),
+            inventory_item_id=inventory_item_id,
+            available_quantity=available_quantity,
         )
 
-        # For now, just log - inventory is managed from ERP to Shopify
-        # In a full implementation, you might sync Shopify inventory back to ERP
+        # Find product mapping by shopify_inventory_item_id
+        from sqlalchemy import select
+        stmt = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.shopify_inventory_item_id == inventory_item_id
+        )
+        result = await self.db.execute(stmt)
+        mapping = result.scalar_one_or_none()
 
-        return {
-            "handled": True,
-            "action": "inventory_logged",
-            "inventory_item_id": payload.get("inventory_item_id"),
-        }
+        if not mapping:
+            logger.warning(
+                "inventory_update_no_mapping",
+                inventory_item_id=inventory_item_id,
+            )
+            return {
+                "handled": False,
+                "action": "no_mapping_found",
+                "inventory_item_id": inventory_item_id,
+            }
+
+        # Sync inventory from Shopify to ERP (ISS-010)
+        sync_service = InventorySyncService(self.client)
+
+        try:
+            # Sync the inventory level from Shopify to ERP
+            result = await sync_service.sync_stock_from_shopify(
+                db=self.db,
+                product_id=mapping.product_id,
+                shopify_product_id=mapping.shopify_product_id,
+                new_shopify_quantity=available_quantity,
+                triggered_by="webhook",
+            )
+
+            return {
+                "handled": True,
+                "action": "inventory_synced_from_shopify",
+                "inventory_item_id": inventory_item_id,
+                "product_id": str(mapping.product_id),
+                "shopify_product_id": mapping.shopify_product_id,
+                "new_quantity": available_quantity,
+                "result": result,
+            }
+
+        except Exception as e:
+            logger.error(
+                "inventory_update_sync_failed",
+                inventory_item_id=inventory_item_id,
+                product_id=mapping.product_id,
+                error=str(e),
+            )
+            return {
+                "handled": False,
+                "action": "sync_failed",
+                "inventory_item_id": inventory_item_id,
+                "product_id": str(mapping.product_id),
+                "error": str(e),
+            }

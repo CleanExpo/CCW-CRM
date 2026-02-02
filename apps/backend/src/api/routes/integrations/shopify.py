@@ -16,6 +16,7 @@ from src.config.shopify_settings import ShopifySettings, get_shopify_settings
 from src.db.shopify_models import ShopifyConnection
 from src.integrations.shopify.client import get_shopify_client
 from src.integrations.shopify.inventory import ShopifyInventorySyncer
+from src.integrations.shopify.inventory_sync import InventorySyncService
 from src.integrations.shopify.orders import ShopifyOrderImporter
 from src.integrations.shopify.product_sync import BidirectionalProductSyncer
 from src.integrations.shopify.webhooks import ShopifyWebhookHandler
@@ -792,6 +793,459 @@ async def get_product_sync_status(
         raise HTTPException(
             status_code=400,
             detail=f"Failed to get sync status: {str(e)}",
+        ) from e
+
+
+# Real-Time Inventory Sync Endpoints (ISS-010)
+
+
+@router.post("/inventory/sync-to-shopify/{product_id}")
+async def sync_inventory_to_shopify_realtime(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Sync inventory from ERP to Shopify (ERP → Shopify direction).
+
+    Real-time inventory synchronization with automatic retry logic.
+
+    Args:
+        product_id: ERP product ID (UUID string)
+
+    Returns:
+        Sync result with audit trail
+    """
+    logger.info("syncing_inventory_to_shopify", product_id=product_id)
+
+    client = get_shopify_client(settings)
+    sync_service = InventorySyncService(client)
+
+    try:
+        from uuid import UUID
+
+        product_uuid = UUID(product_id)
+
+        # Get product mapping to get Shopify IDs
+        from sqlalchemy import select
+        from src.db.shopify_models import ShopifyProductMapping
+
+        stmt = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.product_id == product_uuid
+        )
+        result = await db.execute(stmt)
+        mapping = result.scalar_one_or_none()
+
+        if not mapping:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Product {product_id} not mapped to Shopify",
+            )
+
+        async with client:
+            sync_result = await sync_service.sync_stock_to_shopify(
+                db=db,
+                product_id=product_uuid,
+                shopify_product_id=mapping.shopify_product_id,
+                shopify_inventory_item_id=mapping.shopify_inventory_item_id,
+                shopify_location_id=settings.inventory_location_id,
+                triggered_by="manual",
+            )
+
+        return {
+            **sync_result,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(
+            "inventory_sync_to_shopify_failed",
+            product_id=product_id,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to sync inventory: {str(e)}",
+        ) from e
+
+
+@router.post("/inventory/sync-from-shopify/{shopify_product_id}")
+async def sync_inventory_from_shopify_realtime(
+    shopify_product_id: int,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+    new_quantity: int | None = None,
+) -> dict:
+    """Sync inventory from Shopify to ERP (Shopify → ERP direction).
+
+    Real-time inventory synchronization triggered by manual action or webhook.
+
+    Args:
+        shopify_product_id: Shopify product ID
+        new_quantity: New quantity from Shopify (if not provided, fetches from API)
+
+    Returns:
+        Sync result with audit trail
+    """
+    logger.info(
+        "syncing_inventory_from_shopify",
+        shopify_product_id=shopify_product_id,
+        new_quantity=new_quantity,
+    )
+
+    client = get_shopify_client(settings)
+    sync_service = InventorySyncService(client)
+
+    try:
+        # Get product mapping
+        from sqlalchemy import select
+        from src.db.shopify_models import ShopifyProductMapping
+
+        stmt = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.shopify_product_id == shopify_product_id
+        )
+        result = await db.execute(stmt)
+        mapping = result.scalar_one_or_none()
+
+        if not mapping:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Shopify product {shopify_product_id} not mapped to ERP",
+            )
+
+        # If no quantity provided, fetch from Shopify API
+        if new_quantity is None:
+            async with client:
+                product_data = await client.get(f"/products/{shopify_product_id}.json")
+                if product_data and "product" in product_data:
+                    variants = product_data["product"].get("variants", [])
+                    if variants:
+                        new_quantity = variants[0].get("inventory_quantity", 0)
+                else:
+                    raise ValueError("Could not fetch product data from Shopify")
+
+        async with client:
+            sync_result = await sync_service.sync_stock_from_shopify(
+                db=db,
+                product_id=mapping.product_id,
+                shopify_product_id=shopify_product_id,
+                new_shopify_quantity=new_quantity,
+                triggered_by="manual",
+            )
+
+        return {
+            **sync_result,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(
+            "inventory_sync_from_shopify_failed",
+            shopify_product_id=shopify_product_id,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to sync inventory: {str(e)}",
+        ) from e
+
+
+@router.get("/inventory/sync-history/{product_id}")
+async def get_inventory_sync_history(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+    limit: int = 50,
+) -> dict:
+    """Get inventory sync history for a product.
+
+    Returns audit trail of all inventory sync operations.
+
+    Args:
+        product_id: ERP product ID (UUID string)
+        limit: Maximum number of records to return (default: 50)
+
+    Returns:
+        List of sync history records
+    """
+    logger.info("getting_inventory_sync_history", product_id=product_id, limit=limit)
+
+    client = get_shopify_client(settings)
+    sync_service = InventorySyncService(client)
+
+    try:
+        from uuid import UUID
+
+        product_uuid = UUID(product_id)
+
+        async with client:
+            history = await sync_service.get_sync_history(
+                db=db,
+                product_id=product_uuid,
+                limit=limit,
+            )
+
+        return {
+            "product_id": product_id,
+            "history": history,
+            "count": len(history),
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(
+            "get_inventory_sync_history_failed",
+            product_id=product_id,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to get sync history: {str(e)}",
+        ) from e
+
+
+@router.post("/inventory/resolve-conflict/{product_id}")
+async def resolve_inventory_conflict(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+    resolution: str = "erp_wins",
+) -> dict:
+    """Resolve inventory sync conflict for a product.
+
+    Args:
+        product_id: ERP product ID (UUID string)
+        resolution: Conflict resolution strategy ("erp_wins" or "shopify_wins")
+
+    Returns:
+        Conflict resolution result
+    """
+    logger.info(
+        "resolving_inventory_conflict",
+        product_id=product_id,
+        resolution=resolution,
+    )
+
+    if resolution not in ["erp_wins", "shopify_wins"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Resolution must be 'erp_wins' or 'shopify_wins'",
+        )
+
+    client = get_shopify_client(settings)
+    sync_service = InventorySyncService(client)
+
+    try:
+        from uuid import UUID
+
+        product_uuid = UUID(product_id)
+
+        # Get product mapping
+        from sqlalchemy import select
+        from src.db.shopify_models import ShopifyProductMapping
+
+        stmt = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.product_id == product_uuid
+        )
+        result = await db.execute(stmt)
+        mapping = result.scalar_one_or_none()
+
+        if not mapping:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Product {product_id} not mapped to Shopify",
+            )
+
+        async with client:
+            resolve_result = await sync_service.resolve_sync_conflict(
+                db=db,
+                product_id=product_uuid,
+                shopify_product_id=mapping.shopify_product_id,
+                resolution=resolution,
+            )
+
+        return {
+            **resolve_result,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(
+            "resolve_inventory_conflict_failed",
+            product_id=product_id,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to resolve conflict: {str(e)}",
+        ) from e
+
+
+@router.post("/inventory/bulk-sync-to-shopify")
+async def bulk_sync_inventory_to_shopify(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+    product_ids: list[str] | None = None,
+) -> dict:
+    """Bulk sync inventory from ERP to Shopify.
+
+    If product_ids not provided, syncs all mapped products.
+
+    Args:
+        product_ids: List of ERP product IDs (UUID strings), or None for all
+
+    Returns:
+        Bulk sync results
+    """
+    logger.info("bulk_syncing_inventory_to_shopify", product_ids=product_ids)
+
+    client = get_shopify_client(settings)
+    sync_service = InventorySyncService(client)
+
+    try:
+        from uuid import UUID
+
+        product_uuids = None
+        if product_ids:
+            product_uuids = [UUID(pid) for pid in product_ids]
+
+        async with client:
+            bulk_result = await sync_service.bulk_sync_to_shopify(
+                db=db,
+                product_ids=product_uuids,
+            )
+
+        return {
+            **bulk_result,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error("bulk_inventory_sync_failed", error=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to bulk sync inventory: {str(e)}",
+        ) from e
+
+
+@router.post("/inventory/reconcile")
+async def reconcile_inventory(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Reconcile inventory between ERP and Shopify.
+
+    Compares inventory levels in both systems and reports discrepancies.
+    Does not make changes - returns a report for review.
+
+    Returns:
+        Reconciliation report with discrepancies
+    """
+    logger.info("reconciling_inventory")
+
+    client = get_shopify_client(settings)
+
+    try:
+        from sqlalchemy import select
+        from src.db.shopify_models import ShopifyProductMapping
+        from src.db.models.prd import Product
+
+        # Get all mapped products
+        stmt = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.shopify_product_id.isnot(None)
+        )
+        result = await db.execute(stmt)
+        mappings = result.scalars().all()
+
+        discrepancies = []
+        matched = 0
+        errors = []
+
+        async with client:
+            for mapping in mappings:
+                try:
+                    # Get ERP stock
+                    product_stmt = select(Product).where(Product.id == mapping.product_id)
+                    product_result = await db.execute(product_stmt)
+                    product = product_result.scalar_one_or_none()
+
+                    if not product:
+                        errors.append({
+                            "product_id": str(mapping.product_id),
+                            "error": "Product not found in ERP",
+                        })
+                        continue
+
+                    erp_stock = product.stock or 0
+
+                    # Get Shopify stock
+                    shopify_data = await client.get(
+                        f"/products/{mapping.shopify_product_id}.json"
+                    )
+
+                    if not shopify_data or "product" not in shopify_data:
+                        errors.append({
+                            "product_id": str(mapping.product_id),
+                            "shopify_product_id": mapping.shopify_product_id,
+                            "error": "Could not fetch from Shopify",
+                        })
+                        continue
+
+                    variants = shopify_data["product"].get("variants", [])
+                    if not variants:
+                        errors.append({
+                            "product_id": str(mapping.product_id),
+                            "shopify_product_id": mapping.shopify_product_id,
+                            "error": "No variants found",
+                        })
+                        continue
+
+                    shopify_stock = variants[0].get("inventory_quantity", 0)
+
+                    # Check for discrepancy
+                    if erp_stock != shopify_stock:
+                        discrepancies.append({
+                            "product_id": str(mapping.product_id),
+                            "sku": product.sku,
+                            "name": product.name,
+                            "shopify_product_id": mapping.shopify_product_id,
+                            "erp_stock": erp_stock,
+                            "shopify_stock": shopify_stock,
+                            "difference": erp_stock - shopify_stock,
+                        })
+                    else:
+                        matched += 1
+
+                except Exception as e:
+                    errors.append({
+                        "product_id": str(mapping.product_id),
+                        "error": str(e),
+                    })
+
+        return {
+            "total_mapped": len(mappings),
+            "matched": matched,
+            "discrepancies_count": len(discrepancies),
+            "discrepancies": discrepancies,
+            "errors_count": len(errors),
+            "errors": errors,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except Exception as e:
+        logger.error("inventory_reconciliation_failed", error=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to reconcile inventory: {str(e)}",
         ) from e
 
 
