@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.xero_models import XeroConnection
+from src.security.encryption import get_encryption_service
 
 logger = structlog.get_logger(__name__)
 
@@ -270,18 +271,23 @@ class XeroAuth:
 
         expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
 
+        # Encrypt tokens before storage
+        encryption_service = get_encryption_service()
+        encrypted_access_token = encryption_service.encrypt(access_token)
+        encrypted_refresh_token = encryption_service.encrypt(refresh_token)
+
         if existing:
             # Update existing connection
             existing.tenant_id = tenant_id
             existing.tenant_name = tenant_name
-            existing.access_token = access_token  # TODO: Encrypt in production
-            existing.refresh_token = refresh_token  # TODO: Encrypt in production
+            existing.access_token = encrypted_access_token
+            existing.refresh_token = encrypted_refresh_token
             existing.expires_at = expires_at
             existing.scopes = scopes
             existing.updated_at = datetime.now(UTC)
 
             logger.info(
-                "Updated existing Xero connection",
+                "Updated existing Xero connection with encrypted tokens",
                 organization_id=str(organization_id),
                 tenant_id=tenant_id,
             )
@@ -293,8 +299,8 @@ class XeroAuth:
                 organization_id=organization_id,
                 tenant_id=tenant_id,
                 tenant_name=tenant_name,
-                access_token=access_token,  # TODO: Encrypt in production
-                refresh_token=refresh_token,  # TODO: Encrypt in production
+                access_token=encrypted_access_token,
+                refresh_token=encrypted_refresh_token,
                 expires_at=expires_at,
                 scopes=scopes,
                 is_active=True,
@@ -303,12 +309,28 @@ class XeroAuth:
             db.add(connection)
 
             logger.info(
-                "Created new Xero connection",
+                "Created new Xero connection with encrypted tokens",
                 organization_id=str(organization_id),
                 tenant_id=tenant_id,
             )
 
             return connection
+
+    @staticmethod
+    def get_decrypted_access_token(connection: XeroConnection) -> str:
+        """Get decrypted access token from connection.
+
+        Args:
+            connection: XeroConnection instance with encrypted token
+
+        Returns:
+            Decrypted access token
+
+        Raises:
+            ValueError: If decryption fails
+        """
+        encryption_service = get_encryption_service()
+        return encryption_service.decrypt(connection.access_token)
 
     async def get_active_connection(
         self,
@@ -324,7 +346,7 @@ class XeroAuth:
             organization_id: Organization UUID
 
         Returns:
-            XeroConnection instance or None
+            XeroConnection instance or None (tokens remain encrypted)
         """
         stmt = select(XeroConnection).where(
             XeroConnection.organization_id == organization_id,
@@ -336,6 +358,16 @@ class XeroAuth:
         if not connection:
             return None
 
+        # Decrypt tokens when retrieving
+        encryption_service = get_encryption_service()
+        try:
+            decrypted_refresh_token = encryption_service.decrypt(connection.refresh_token)
+        except Exception as e:
+            logger.error("Failed to decrypt refresh token", error=str(e))
+            connection.is_active = False
+            await db.commit()
+            return None
+
         # Check if token is expired
         if connection.is_token_expired:
             logger.info(
@@ -344,10 +376,12 @@ class XeroAuth:
             )
 
             try:
-                token_data = await self.refresh_access_token(connection.refresh_token)
+                token_data = await self.refresh_access_token(decrypted_refresh_token)
 
-                connection.access_token = token_data["access_token"]
-                connection.refresh_token = token_data.get("refresh_token", connection.refresh_token)
+                # Re-encrypt new tokens before storing
+                connection.access_token = encryption_service.encrypt(token_data["access_token"])
+                new_refresh = token_data.get("refresh_token", decrypted_refresh_token)
+                connection.refresh_token = encryption_service.encrypt(new_refresh)
                 connection.expires_at = datetime.now(UTC) + timedelta(
                     seconds=token_data["expires_in"]
                 )
@@ -355,7 +389,7 @@ class XeroAuth:
 
                 await db.commit()
 
-                logger.info("Successfully refreshed access token")
+                logger.info("Successfully refreshed and re-encrypted access token")
 
             except Exception as e:
                 logger.error("Failed to refresh token", error=str(e))
@@ -386,8 +420,12 @@ class XeroAuth:
             return False
 
         try:
+            # Decrypt refresh token before revoking
+            encryption_service = get_encryption_service()
+            decrypted_refresh_token = encryption_service.decrypt(connection.refresh_token)
+
             # Revoke refresh token
-            await self.revoke_token(connection.refresh_token)
+            await self.revoke_token(decrypted_refresh_token)
 
             # Deactivate connection
             connection.is_active = False

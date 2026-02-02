@@ -24,8 +24,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSON, UUID as PGUUID
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 
-from .models import Base  # Use existing Base class
+from .models_base import Base  # Use existing Base class
 
 # Import related models to ensure they are registered with SQLAlchemy
 # This prevents "failed to locate a name" errors when using string-based relationships
@@ -122,6 +123,12 @@ class Product(Base):
     cost: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     stock: int = Column(Integer, nullable=False, default=0)
     warehouse_location: str | None = Column(String(100), nullable=True)
+
+    # Vector embedding for semantic search (1536 dimensions for OpenAI ada-002)
+    embedding: list[float] | None = Column(
+        Vector(1536), nullable=True, comment="Vector embedding for semantic search"
+    )
+
     is_active: bool = Column(Boolean, default=True, nullable=False)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False

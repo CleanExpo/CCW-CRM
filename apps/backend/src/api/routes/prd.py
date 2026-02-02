@@ -8,7 +8,7 @@ import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.api.prd_schemas import (
+from src.api.schemas.prd import (
     AgentRunDetail,
     PRDCostSummary,
     PRDDetail,
@@ -17,7 +17,7 @@ from src.api.prd_schemas import (
     PRDListResponse,
     PRDSummary,
 )
-from src.db.prd_models import PRD, AgentRun, APIUsage
+from src.db.models.prd import PRD, AgentRun, APIUsage
 
 from src.api.deps import get_current_user
 from src.config.database import get_db
