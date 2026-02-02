@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.shopify_models import ShopifyWebhookLog
 from src.integrations.shopify.client import ShopifyClient
 from src.integrations.shopify.orders import ShopifyOrderImporter
+from src.integrations.shopify.product_sync import BidirectionalProductSyncer
 
 logger = structlog.get_logger(__name__)
 
@@ -211,7 +212,7 @@ class ShopifyWebhookHandler:
         }
 
     async def _handle_product_create(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Handle products/create webhook.
+        """Handle products/create webhook (ISS-009: Shopify → ERP sync).
 
         Args:
             payload: Product data from Shopify
@@ -221,17 +222,38 @@ class ShopifyWebhookHandler:
         """
         logger.info("handling_product_create", product_id=payload.get("id"))
 
-        # For now, just log - products are typically created in ERP first
-        # In a full implementation, you might sync new Shopify products to ERP
+        # Sync from Shopify to ERP (ISS-009)
+        syncer = BidirectionalProductSyncer(self.db, self.client)
 
-        return {
-            "handled": True,
-            "action": "product_logged",
-            "shopify_product_id": payload.get("id"),
-        }
+        try:
+            # Sync the product from Shopify to ERP
+            result = await syncer.sync_from_shopify(
+                shopify_product_id=payload["id"],
+                force=False,  # Don't force - respect conflict resolution
+            )
+
+            return {
+                "handled": True,
+                "action": "product_synced_from_shopify",
+                "shopify_product_id": payload.get("id"),
+                "result": result,
+            }
+
+        except Exception as e:
+            logger.error(
+                "product_create_sync_failed",
+                shopify_product_id=payload.get("id"),
+                error=str(e),
+            )
+            return {
+                "handled": False,
+                "action": "sync_failed",
+                "shopify_product_id": payload.get("id"),
+                "error": str(e),
+            }
 
     async def _handle_product_update(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Handle products/update webhook.
+        """Handle products/update webhook (ISS-009: Shopify → ERP sync).
 
         Args:
             payload: Product data from Shopify
@@ -241,14 +263,35 @@ class ShopifyWebhookHandler:
         """
         logger.info("handling_product_update", product_id=payload.get("id"))
 
-        # For now, just log - products are updated in ERP first
-        # In a full implementation, you might sync Shopify changes back to ERP
+        # Sync from Shopify to ERP (ISS-009)
+        syncer = BidirectionalProductSyncer(self.db, self.client)
 
-        return {
-            "handled": True,
-            "action": "product_logged",
-            "shopify_product_id": payload.get("id"),
-        }
+        try:
+            # Sync the updated product from Shopify to ERP
+            result = await syncer.sync_from_shopify(
+                shopify_product_id=payload["id"],
+                force=False,  # Don't force - use conflict resolution
+            )
+
+            return {
+                "handled": True,
+                "action": "product_synced_from_shopify",
+                "shopify_product_id": payload.get("id"),
+                "result": result,
+            }
+
+        except Exception as e:
+            logger.error(
+                "product_update_sync_failed",
+                shopify_product_id=payload.get("id"),
+                error=str(e),
+            )
+            return {
+                "handled": False,
+                "action": "sync_failed",
+                "shopify_product_id": payload.get("id"),
+                "error": str(e),
+            }
 
     async def _handle_inventory_update(
         self,

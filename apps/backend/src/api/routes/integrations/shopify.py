@@ -17,6 +17,7 @@ from src.db.shopify_models import ShopifyConnection
 from src.integrations.shopify.client import get_shopify_client
 from src.integrations.shopify.inventory import ShopifyInventorySyncer
 from src.integrations.shopify.orders import ShopifyOrderImporter
+from src.integrations.shopify.product_sync import BidirectionalProductSyncer
 from src.integrations.shopify.webhooks import ShopifyWebhookHandler
 
 logger = structlog.get_logger(__name__)
@@ -610,6 +611,187 @@ async def sync_product_to_shopify(
         raise HTTPException(
             status_code=400,
             detail=f"Failed to sync product: {str(e)}",
+        ) from e
+
+
+# Bidirectional Product Sync Endpoints (ISS-009)
+
+
+@router.post("/sync-from-shopify/{shopify_product_id}")
+async def sync_product_from_shopify(
+    shopify_product_id: int,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+    force: bool = False,
+) -> dict:
+    """Sync a product from Shopify to ERP (Shopify → ERP direction).
+
+    Args:
+        shopify_product_id: Shopify product ID
+        force: Force sync even if conflict detected
+
+    Returns:
+        Sync result
+    """
+    logger.info(
+        "syncing_from_shopify",
+        shopify_product_id=shopify_product_id,
+        force=force,
+    )
+
+    client = get_shopify_client(settings)
+    syncer = BidirectionalProductSyncer(db, client)
+
+    try:
+        async with client:
+            result = await syncer.sync_from_shopify(
+                shopify_product_id=shopify_product_id,
+                force=force,
+            )
+
+        return {
+            **result,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except Exception as e:
+        logger.error(
+            "sync_from_shopify_failed",
+            shopify_product_id=shopify_product_id,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to sync from Shopify: {str(e)}",
+        ) from e
+
+
+@router.post("/sync-to-shopify/{product_id}")
+async def sync_product_to_shopify_bidirectional(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+    force: bool = False,
+) -> dict:
+    """Sync a product from ERP to Shopify (ERP → Shopify direction).
+
+    Args:
+        product_id: ERP product ID (UUID string)
+        force: Force sync even if conflict detected
+
+    Returns:
+        Sync result
+    """
+    logger.info("syncing_to_shopify_bidirectional", product_id=product_id, force=force)
+
+    client = get_shopify_client(settings)
+    syncer = BidirectionalProductSyncer(db, client)
+
+    try:
+        from uuid import UUID
+
+        product_uuid = UUID(product_id)
+
+        async with client:
+            result = await syncer.sync_to_shopify(
+                product_id=product_uuid,
+                force=force,
+            )
+
+        return {
+            **result,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(
+            "sync_to_shopify_failed",
+            product_id=product_id,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to sync to Shopify: {str(e)}",
+        ) from e
+
+
+@router.get("/sync-status")
+async def get_all_sync_status(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Get sync status for all mapped products (ISS-009 dashboard).
+
+    Returns:
+        Sync status summary and list of all product mappings
+    """
+    logger.info("getting_all_sync_status")
+
+    client = get_shopify_client(settings)
+    syncer = BidirectionalProductSyncer(db, client)
+
+    try:
+        async with client:
+            status = await syncer.get_sync_status()
+
+        return {
+            **status,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except Exception as e:
+        logger.error("get_sync_status_failed", error=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to get sync status: {str(e)}",
+        ) from e
+
+
+@router.get("/sync-status/{product_id}")
+async def get_product_sync_status(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Get sync status for a specific product (ISS-009 dashboard).
+
+    Args:
+        product_id: ERP product ID (UUID string)
+
+    Returns:
+        Product sync status details
+    """
+    logger.info("getting_product_sync_status", product_id=product_id)
+
+    client = get_shopify_client(settings)
+    syncer = BidirectionalProductSyncer(db, client)
+
+    try:
+        from uuid import UUID
+
+        product_uuid = UUID(product_id)
+
+        async with client:
+            status = await syncer.get_sync_status(product_id=product_uuid)
+
+        return {
+            **status,
+            "mode": "demo" if settings.is_demo_mode else "live",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(
+            "get_product_sync_status_failed",
+            product_id=product_id,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to get sync status: {str(e)}",
         ) from e
 
 
