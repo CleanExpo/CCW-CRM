@@ -656,10 +656,11 @@ async def update_order(
     # Handle line items update if provided
     if order_data.items is not None:
         # Validate order can be edited
-        if order.status in ['shipped', 'delivered', 'cancelled']:
+        current_status = normalize_status(order.status)
+        if current_status in ['shipped', 'delivered', 'cancelled']:
             raise HTTPException(
                 status_code=400,
-                detail=f"Cannot update items for order in status: {order.status}"
+                detail=f"Cannot update items for order in status: {current_status}"
             )
 
         # Validate all items have valid quantities
@@ -695,7 +696,7 @@ async def update_order(
                 )
 
             # Validate stock availability if order is confirmed
-            if order.status == 'confirmed' and product.stock < item_data.quantity:
+            if current_status == 'confirmed' and product.stock < item_data.quantity:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Insufficient stock for {product.name}: {product.stock} available, {item_data.quantity} requested"
