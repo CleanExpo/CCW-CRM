@@ -101,6 +101,9 @@ class ShopifyProductMapping(Base):
         default="pending",
     )  # pending, synced, failed
     sync_error: Mapped[str | None] = mapped_column(Text)
+    sync_direction: Mapped[str | None] = mapped_column(
+        String(20)
+    )  # to_shopify, from_shopify
 
     # Shopify data snapshot (for comparison)
     shopify_data: Mapped[dict | None] = mapped_column(JSON)
@@ -230,4 +233,53 @@ class ShopifyWebhookLog(Base):
         return (
             f"<ShopifyWebhookLog(topic='{self.topic}', "
             f"processed={self.processed}, received_at={self.received_at})>"
+        )
+
+
+class ShopifyProductSyncLog(Base):
+    """Log of product sync operations for ISS-009 (Bidirectional Product Sync).
+
+    Tracks every sync operation between ERP and Shopify for audit and debugging.
+    """
+
+    __tablename__ = "shopify_product_sync_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+
+    # Product references
+    product_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        index=True,
+    )  # FK to products table
+    shopify_product_id: Mapped[int | None] = mapped_column(Integer, index=True)
+
+    # Sync operation details
+    sync_direction: Mapped[str] = mapped_column(
+        String(20),
+        index=True,
+    )  # to_shopify, from_shopify
+    sync_action: Mapped[str] = mapped_column(
+        String(50)
+    )  # created, updated, deleted, conflict, failed
+    sync_status: Mapped[str] = mapped_column(String(50))  # success, failed, conflict
+
+    # Error details (if failed)
+    error_message: Mapped[str | None] = mapped_column(Text)
+
+    # Timestamp
+    synced_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        index=True,
+    )
+
+    def __repr__(self) -> str:
+        """String representation."""
+        return (
+            f"<ShopifyProductSyncLog(product_id='{self.product_id}', "
+            f"direction='{self.sync_direction}', status='{self.sync_status}')>"
         )
