@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { ShoppingCart, Package, Truck, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,8 @@ interface OrderStatusBreakdown {
   by_status: OrderStatusCount[];
 }
 
-export function OrderStatusBreakdownWidget() {
+// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
+export const OrderStatusBreakdownWidget = memo(function OrderStatusBreakdownWidget() {
   const [data, setData] = useState<OrderStatusBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -169,4 +170,4 @@ export function OrderStatusBreakdownWidget() {
       </CardContent>
     </Card>
   );
-}
+});

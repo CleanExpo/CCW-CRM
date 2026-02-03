@@ -35,6 +35,10 @@ import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteLineItems, LineItem } from "./QuoteLineItems";
 import { Quote, Customer, QuoteItem } from "../types";
+// PHASE 4: Autosave + Recent Items imports
+import { useAutosave } from "@/lib/hooks/use-autosave";
+import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
+import { useRecentItems } from "@/lib/hooks/use-recent-items";
 
 const QUOTE_STATUSES = [
   { value: "draft", label: "Draft" },
@@ -86,6 +90,38 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       valid_until: "",
       notes: "",
     },
+  });
+
+  // PHASE 4: Recent customers cache
+  const { recentItems: recentCustomers, addRecentItem: addRecentCustomer } =
+    useRecentItems<Customer>({
+      key: "recent-customers",
+      maxItems: 10,
+    });
+
+  // PHASE 4: Autosave hook - prevents data loss on dialog close/navigation
+  const draftKey = isEdit ? `quote-form-${quote?.id}` : "quote-form-new";
+  const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
+    key: draftKey,
+    formValues: {
+      ...form.watch(),
+      lineItems, // Include line items in autosave
+    },
+    onRestore: (draft) => {
+      // Restore form fields
+      if (draft.customer_id) form.setValue("customer_id", draft.customer_id);
+      if (draft.fulfillment_location) form.setValue("fulfillment_location", draft.fulfillment_location);
+      if (draft.status) form.setValue("status", draft.status);
+      if (draft.quote_date) form.setValue("quote_date", draft.quote_date);
+      if (draft.valid_until) form.setValue("valid_until", draft.valid_until);
+      if (draft.notes) form.setValue("notes", draft.notes);
+      // Restore line items
+      if (Array.isArray(draft.lineItems) && draft.lineItems.length > 0) {
+        setLineItems(draft.lineItems);
+      }
+    },
+    enabled: open && !isEdit, // Only autosave for new quotes (not edits)
+    debounceMs: 2000, // Save every 2 seconds
   });
 
   // Load customers
@@ -207,6 +243,15 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
         });
       }
 
+      // PHASE 4: Clear draft on successful submission
+      clearDraft();
+
+      // PHASE 4: Add customer to recent items
+      const selectedCustomer = customers.find((c) => c.id === values.customer_id);
+      if (selectedCustomer) {
+        addRecentCustomer(selectedCustomer);
+      }
+
       onOpenChange(false);
       onSuccess();
     } catch (error: unknown) {
@@ -237,6 +282,16 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
               : "Fill in the quote details and add line items to create a new quote."}
           </DialogDescription>
         </DialogHeader>
+
+        {/* PHASE 4: Draft Recovery Alert */}
+        {hasDraft && !isEdit && draftMetadata && (
+          <DraftRecoveryAlert
+            savedAt={draftMetadata.savedAt}
+            onRestore={loadDraft}
+            onDiscard={clearDraft}
+            message="You have unsaved quote data. Would you like to restore it?"
+          />
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -284,11 +339,26 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {customers.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.customer_number} - {customer.company_name}
-                          </SelectItem>
-                        ))}
+                        {/* PHASE 4: Show recent customers first */}
+                        {recentCustomers.length > 0 && (
+                          <>
+                            {recentCustomers.map((customer) => (
+                              <SelectItem key={`recent-${customer.id}`} value={customer.id}>
+                                🕒 {customer.customer_number} - {customer.company_name}
+                              </SelectItem>
+                            ))}
+                            <div className="border-t my-1" />
+                          </>
+                        )}
+                        {customers
+                          .filter(
+                            (c) => !recentCustomers.some((recent) => recent.id === c.id)
+                          )
+                          .map((customer) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              {customer.customer_number} - {customer.company_name}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

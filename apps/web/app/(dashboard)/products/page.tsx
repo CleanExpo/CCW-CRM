@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+// PHASE 4: Real-time inventory updates
+import { useInventoryStream, type InventoryUpdate } from "@/lib/hooks/use-sse";
+import { RealTimeIndicator } from "@/components/ui/real-time-indicator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,38 +77,54 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
+  // PHASE 4: Real-time inventory updates via SSE
+  const {
+    data: inventoryUpdate,
+    status: sseStatus,
+    stats: sseStats,
+  } = useInventoryStream();
+
+  // Update product stock in real-time when SSE event received
+  useEffect(() => {
+    if (inventoryUpdate) {
+      setProducts((prevProducts) =>
+        prevProducts.map((product) => {
+          // Find matching product and location
+          if (product.id === inventoryUpdate.product_id) {
+            return {
+              ...product,
+              stock_by_location: product.stock_by_location?.map((loc) =>
+                loc.location === inventoryUpdate.location
+                  ? {
+                      ...loc,
+                      stock: inventoryUpdate.stock,
+                      reserved: inventoryUpdate.reserved,
+                      available: inventoryUpdate.available,
+                    }
+                  : loc
+              ),
+            };
+          }
+          return product;
+        })
+      );
+    }
+  }, [inventoryUpdate]);
+
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
+      // PHASE 4 OPTIMIZATION: include_stock=true fetches stock_by_location in single query
+      // Before: 50 products = 51 API calls (1 list + 50 stock lookups)
+      // After: 50 products = 1 API call (98% reduction)
       const data = await apiClient.get<PaginatedResponse>(
-        `/api/products?page=${page}&page_size=${pageSize}${
+        `/api/products?page=${page}&page_size=${pageSize}&include_stock=true${
           debouncedSearch ? `&search=${debouncedSearch}` : ""
         }`
       );
 
-      // Fetch multi-location stock data for each product
-      const productsWithStock = await Promise.all(
-        data.items.map(async (product) => {
-          try {
-            const stockResponse = await apiClient.get<{ locations: StockByLocation[] }>(
-              `/api/inventory/product/${product.id}/locations`
-            );
-            const stockData = stockResponse.locations || [];
-            return {
-              ...product,
-              stock_by_location: Array.isArray(stockData) ? stockData : [],
-            };
-          } catch (err) {
-            // Stock data unavailable for this product, return empty array
-            return {
-              ...product,
-              stock_by_location: [],
-            };
-          }
-        })
-      );
-
-      setProducts(productsWithStock);
+      // Stock data is now included in the response - no additional API calls needed!
+      setProducts(data.items);
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch (error: unknown) {
@@ -199,13 +218,17 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground">
-            {selectedProductIds.length > 0
-              ? `${selectedProductIds.length} selected`
-              : "Manage your product catalog"}
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+            <p className="text-muted-foreground">
+              {selectedProductIds.length > 0
+                ? `${selectedProductIds.length} selected`
+                : "Manage your product catalog"}
+            </p>
+          </div>
+          {/* PHASE 4: Real-time connection indicator */}
+          <RealTimeIndicator status={sseStatus} messagesReceived={sseStats.messagesReceived} />
         </div>
         <div className="flex gap-2">
           {selectedProductIds.length > 0 && (

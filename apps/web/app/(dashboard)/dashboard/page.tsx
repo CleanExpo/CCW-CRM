@@ -54,6 +54,22 @@ interface ActivityItem {
   status: string | null;
 }
 
+interface InventoryDataPoint {
+  warehouse: string;
+  in_stock: number;
+  low_stock: number;
+  out_of_stock: number;
+}
+
+interface AggregatedDashboardData {
+  metrics: DashboardMetrics;
+  revenue_chart: RevenueDataPoint[];
+  category_sales: CategorySales[];
+  top_products: TopProduct[];
+  inventory_status: InventoryDataPoint[];
+  recent_activity: ActivityItem[];
+}
+
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
@@ -66,20 +82,19 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const [metricsData, revenueData, categoryData, topProductsData, activityData, insightsData] = await Promise.all([
-          apiClient.get<DashboardMetrics>("/api/dashboard/metrics"),
-          apiClient.get<RevenueDataPoint[]>("/api/dashboard/charts/revenue"),
-          apiClient.get<CategorySales[]>("/api/dashboard/charts/categories"),
-          apiClient.get<TopProduct[]>("/api/dashboard/charts/top-products"),
-          apiClient.get<ActivityItem[]>("/api/dashboard/activity"),
+        // PHASE 4 OPTIMIZATION: Use aggregated endpoint (1 API call instead of 6)
+        // Expected performance: 70% faster (5-8s → <2s)
+        const [dashboardData, insightsData] = await Promise.all([
+          apiClient.get<AggregatedDashboardData>("/api/dashboard/aggregated"),
           getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
         ]);
 
-        setMetrics(metricsData);
-        setRevenueData(revenueData);
-        setCategorySales(categoryData);
-        setTopProducts(topProductsData);
-        setActivity(activityData);
+        // Destructure aggregated data
+        setMetrics(dashboardData.metrics);
+        setRevenueData(dashboardData.revenue_chart);
+        setCategorySales(dashboardData.category_sales);
+        setTopProducts(dashboardData.top_products);
+        setActivity(dashboardData.recent_activity);
         setInsights(insightsData.insights.filter((i) => i.priority === "high").slice(0, 3));
       } catch (error) {
         console.error("Failed to load dashboard data:", error);

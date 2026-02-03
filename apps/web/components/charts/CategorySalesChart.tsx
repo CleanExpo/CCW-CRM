@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -23,7 +24,8 @@ const COLORS = [
   "hsl(var(--chart-5))",
 ];
 
-export function CategorySalesChart({ data }: CategorySalesChartProps) {
+// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
+export const CategorySalesChart = memo(function CategorySalesChart({ data }: CategorySalesChartProps) {
   // Transform data for recharts
   const chartData = data.map((item, index) => ({
     category: item.category.replace(/_/g, " "),
@@ -104,4 +106,4 @@ export function CategorySalesChart({ data }: CategorySalesChartProps) {
       </CardContent>
     </Card>
   );
-}
+});
