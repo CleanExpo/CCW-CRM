@@ -733,6 +733,51 @@ async def create_stock_transfer(
 
     await db.commit()
 
+    # PHASE 5: Publish real-time inventory updates for both locations
+    from src.services.sse_service import sse_service
+
+    # Source location update
+    source_available = source_stock.stock - (source_stock.reserved or 0)
+    await sse_service.publish(f"inventory-{transfer_req.from_location}", {
+        "product_id": str(product_id),
+        "location": transfer_req.from_location,
+        "stock": source_stock.stock,
+        "reserved": source_stock.reserved or 0,
+        "available": source_available,
+        "change_type": "transfer",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+    await sse_service.publish("inventory-all", {
+        "product_id": str(product_id),
+        "location": transfer_req.from_location,
+        "stock": source_stock.stock,
+        "reserved": source_stock.reserved or 0,
+        "available": source_available,
+        "change_type": "transfer",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+
+    # Destination location update
+    dest_available = dest_stock.stock - (dest_stock.reserved or 0)
+    await sse_service.publish(f"inventory-{transfer_req.to_location}", {
+        "product_id": str(product_id),
+        "location": transfer_req.to_location,
+        "stock": dest_stock.stock,
+        "reserved": dest_stock.reserved or 0,
+        "available": dest_available,
+        "change_type": "transfer",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+    await sse_service.publish("inventory-all", {
+        "product_id": str(product_id),
+        "location": transfer_req.to_location,
+        "stock": dest_stock.stock,
+        "reserved": dest_stock.reserved or 0,
+        "available": dest_available,
+        "change_type": "transfer",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+
     logger.info(
         "Stock transfer completed",
         transfer_id=str(transfer.id),
@@ -1032,6 +1077,28 @@ async def adjust_stock(
     db.add(adjustment)
 
     await db.commit()
+
+    # PHASE 5: Publish real-time inventory update to SSE subscribers
+    from src.services.sse_service import sse_service
+    available = new_stock - (stock.reserved or 0)
+    await sse_service.publish(f"inventory-{adjustment_req.location}", {
+        "product_id": str(product_id),
+        "location": adjustment_req.location,
+        "stock": new_stock,
+        "reserved": stock.reserved or 0,
+        "available": available,
+        "change_type": "adjustment",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+    await sse_service.publish("inventory-all", {
+        "product_id": str(product_id),
+        "location": adjustment_req.location,
+        "stock": new_stock,
+        "reserved": stock.reserved or 0,
+        "available": available,
+        "change_type": "adjustment",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
 
     logger.info(
         "Stock adjusted",

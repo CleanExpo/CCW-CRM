@@ -632,6 +632,34 @@ async def create_order(
     # Invalidate order-related caches
     await invalidate_order_caches()
 
+    # PHASE 5: Publish comprehensive real-time events
+    # Get customer name for events
+    from src.db.demo_models import Customer
+    customer_query = select(Customer).where(Customer.id == order_data.customer_id)
+    customer_result = await db.execute(customer_query)
+    customer = customer_result.scalar_one_or_none()
+    customer_name = customer.company_name if customer else "Unknown Customer"
+
+    # Publish to order-updates channel
+    await sse_service.publish("order-updates", {
+        "event_type": "order_created",
+        "order_id": str(order.id),
+        "order_number": order_number,
+        "customer_name": customer_name,
+        "status": order_data.status,
+        "total": str(total),
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    # Publish to dashboard-activity channel
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "order_created",
+        "title": "New Order",
+        "description": f"Order {order_number} created - ${total}",
+        "link": f"/orders/{order.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     # PHASE 4: Publish dashboard metrics update
     await sse_service.publish("dashboard-metrics", {
         "type": "metrics_updated",
