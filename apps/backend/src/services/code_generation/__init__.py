@@ -1,0 +1,25 @@
+"""Code generation services for autonomous development.
+
+This package provides AI-powered code generation capabilities including:
+- Context analysis and codebase understanding
+- LLM-powered code generation
+- Automated test generation
+- Documentation generation
+- Code quality validation
+"""
+
+from .context_builder import (
+    CodeContext,
+    CodePattern,
+    ContextBuilder,
+    ProjectStructure,
+    StyleGuide,
+)
+
+__all__ = [
+    "CodeContext",
+    "CodePattern",
+    "ContextBuilder",
+    "ProjectStructure",
+    "StyleGuide",
+]
