@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { FileText, TrendingUp, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -20,7 +20,8 @@ interface QuoteConversionData {
   total_converted_revenue: number;
 }
 
-export function QuoteConversionWidget() {
+// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
+export const QuoteConversionWidget = memo(function QuoteConversionWidget() {
   const [data, setData] = useState<QuoteConversionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -211,4 +212,4 @@ export function QuoteConversionWidget() {
       </CardContent>
     </Card>
   );
-}
+});

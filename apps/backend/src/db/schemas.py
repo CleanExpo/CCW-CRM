@@ -90,6 +90,27 @@ class Product(ProductBase):
         from_attributes = True
 
 
+# PHASE 4: Enhanced Product with Stock by Location
+class StockByLocation(BaseModel):
+    """Stock information for a single location."""
+
+    location: str
+    stock: int
+    reserved: int
+    available: int
+    reorder_point: int | None = None
+    last_counted_at: str | None = None
+
+
+class ProductWithStock(Product):
+    """Product with multi-location stock data.
+
+    PHASE 4 OPTIMIZATION: Includes stock_by_location to eliminate N+1 queries.
+    """
+
+    stock_by_location: list[StockByLocation] = []
+
+
 # Customer schemas
 class CustomerBase(BaseModel):
     customer_number: str

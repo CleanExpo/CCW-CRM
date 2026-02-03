@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { MapPin, TrendingUp, DollarSign } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,8 @@ interface RevenueByLocationData {
   period: string; // e.g., "Last 30 days"
 }
 
-export function RevenueByLocationWidget() {
+// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
+export const RevenueByLocationWidget = memo(function RevenueByLocationWidget() {
   const [data, setData] = useState<RevenueByLocationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -223,4 +224,4 @@ export function RevenueByLocationWidget() {
       </CardContent>
     </Card>
   );
-}
+});

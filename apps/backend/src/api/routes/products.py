@@ -1,17 +1,27 @@
 """Products API routes.
 
 Performance optimized with Redis caching.
+PHASE 4: Enhanced with multi-location stock to eliminate N+1 queries.
 """
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
 from src.db.erp_models import Product as ProductModel
-from src.db.schemas import PaginatedResponse, Product, ProductCreate, ProductUpdate
+from src.db.inventory_models import ProductStockByLocation
+from src.db.schemas import (
+    PaginatedResponse,
+    Product,
+    ProductCreate,
+    ProductUpdate,
+    ProductWithStock,
+    StockByLocation,
+)
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
@@ -24,9 +34,18 @@ async def list_products(
     search: str | None = None,
     category: str | None = None,
     is_active: bool | None = None,
+    include_stock: bool = Query(True, description="Include multi-location stock data"),
     db: AsyncSession = Depends(get_db),
 ):
-    """List products with pagination and filters. Cached for 5 minutes."""
+    """List products with pagination and filters.
+
+    PHASE 4 OPTIMIZATION: Now includes multi-location stock data in a single query.
+    - Before: 50 products = 51 API calls (1 list + 50 stock lookups)
+    - After: 50 products = 1 API call (98% reduction)
+    - Performance gain: Eliminates N+1 query pattern
+
+    Cached for 5 minutes.
+    """
     # Build query
     query = select(ProductModel)
 
@@ -34,9 +53,9 @@ async def list_products(
     if search:
         search_filter = f"%{search}%"
         query = query.where(
-            (ProductModel.name.ilike(search_filter)) |
-            (ProductModel.sku.ilike(search_filter)) |
-            (ProductModel.description.ilike(search_filter))
+            (ProductModel.name.ilike(search_filter))
+            | (ProductModel.sku.ilike(search_filter))
+            | (ProductModel.description.ilike(search_filter))
         )
 
     if category:
@@ -58,8 +77,53 @@ async def list_products(
     result = await db.execute(query)
     products = result.scalars().all()
 
+    # PHASE 4 OPTIMIZATION: Fetch stock data for all products in a SINGLE query
+    if include_stock and products:
+        product_ids = [p.id for p in products]
+        stock_query = select(ProductStockByLocation).where(
+            ProductStockByLocation.product_id.in_(product_ids)
+        )
+        stock_result = await db.execute(stock_query)
+        stock_records = stock_result.scalars().all()
+
+        # Group stock by product_id for O(1) lookup
+        stock_by_product: dict[UUID, list[ProductStockByLocation]] = {}
+        for stock in stock_records:
+            if stock.product_id not in stock_by_product:
+                stock_by_product[stock.product_id] = []
+            stock_by_product[stock.product_id].append(stock)
+
+        # Build response with stock data
+        items_with_stock = []
+        for product in products:
+            product_dict = Product.model_validate(product).model_dump()
+            stock_list = stock_by_product.get(product.id, [])
+            product_dict["stock_by_location"] = [
+                StockByLocation(
+                    location=s.location,
+                    stock=s.stock,
+                    reserved=s.reserved,
+                    available=s.available,
+                    reorder_point=s.reorder_point,
+                    last_counted_at=(
+                        s.last_counted_at.isoformat() if s.last_counted_at else None
+                    ),
+                ).model_dump()
+                for s in stock_list
+            ]
+            items_with_stock.append(product_dict)
+
+        return {
+            "items": items_with_stock,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size,
+        }
+
+    # Fallback: No stock data requested
     return {
-        "items": [Product.model_validate(p) for p in products],
+        "items": [Product.model_validate(p).model_dump() for p in products],
         "total": total,
         "page": page,
         "page_size": page_size,

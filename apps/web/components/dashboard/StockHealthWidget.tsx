@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Package, AlertTriangle, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,8 @@ interface StockHealthData {
   warning: LowStockProduct[]; // any location = 0 but total > 0
 }
 
-export function StockHealthWidget() {
+// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
+export const StockHealthWidget = memo(function StockHealthWidget() {
   const [stockHealth, setStockHealth] = useState<StockHealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -234,4 +235,4 @@ export function StockHealthWidget() {
       </CardContent>
     </Card>
   );
-}
+});

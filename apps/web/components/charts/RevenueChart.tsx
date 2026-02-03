@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -12,7 +13,8 @@ interface RevenueChartProps {
   data: RevenueDataPoint[];
 }
 
-export function RevenueChart({ data }: RevenueChartProps) {
+// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
+export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartProps) {
   // Transform data for recharts (convert revenue string to number)
   const chartData = data.map((point) => ({
     month: point.month,
@@ -89,4 +91,4 @@ export function RevenueChart({ data }: RevenueChartProps) {
       </CardContent>
     </Card>
   );
-}
+});
