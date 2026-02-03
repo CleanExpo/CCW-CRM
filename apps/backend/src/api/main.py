@@ -30,7 +30,7 @@ from .routes import (
     autonomous_dev,
     backorders,
     bank_feeds,
-    billing,
+    # billing,  # Disabled temporarily - requires stripe package
     config,
     containers,
     customers,
@@ -386,7 +386,7 @@ app.include_router(suppliers.router, tags=["Suppliers"])
 # Team management router (multi-tenant user management)
 app.include_router(team.router, tags=["Team Management"])
 # Billing and subscription management router
-app.include_router(billing.router, tags=["Billing"])
+# app.include_router(billing.router, tags=["Billing"])  # Disabled - requires stripe
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 # Shipment tracking router

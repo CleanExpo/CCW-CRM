@@ -29,7 +29,7 @@ from src.db.models.subscription import (
     SubscriptionTier,
     get_tier_config,
 )
-from src.db.models_base import Organization
+from src.db.demo_models import Organization
 from src.integrations.stripe.client import StripeClient
 
 router = APIRouter(prefix="/api/billing", tags=["Billing"])
