@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Order } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 import { PaginationControls } from "@/components/ui/pagination-controls";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns"; // PHASE 4: Add timestamp display
 import { exportOrdersToCSV } from "@/lib/utils/csv-export";
 
 interface PaginatedResponse {
@@ -45,6 +45,7 @@ export default function OrdersPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
 
   // PHASE 4: Search state persistence - remembers pagination on navigation
   const { state: searchState, updateField } = useSearchState({
@@ -92,6 +93,7 @@ export default function OrdersPage() {
       setTotal(0);
     } finally {
       setLoading(false);
+      setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
   }, [page, pageSize, toast]);
 
@@ -244,6 +246,11 @@ export default function OrdersPage() {
               <CardTitle>Sales Orders</CardTitle>
               <CardDescription>
                 {total} orders in system
+                {lastUpdated && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                  </span>
+                )}
               </CardDescription>
             </div>
           </div>

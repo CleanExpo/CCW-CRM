@@ -23,6 +23,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { exportProductsToCSV } from "@/lib/utils/csv-export";
+// PHASE 4: Last updated timestamps
+import { formatDistanceToNow } from "date-fns";
 
 interface StockByLocation {
   location: string;
@@ -69,6 +71,7 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
 
   // PHASE 4: Search state persistence - remembers search/pagination on navigation
@@ -152,6 +155,7 @@ export default function ProductsPage() {
       setTotal(0);
     } finally {
       setLoading(false);
+      setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
   }, [page, pageSize, debouncedSearch, toast]);
 
@@ -270,6 +274,11 @@ export default function ProductsPage() {
               <CardTitle>Product Catalog</CardTitle>
               <CardDescription>
                 {total} products in inventory
+                {lastUpdated && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                  </span>
+                )}
               </CardDescription>
             </div>
           </div>
