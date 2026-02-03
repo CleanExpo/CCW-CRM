@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 // PHASE 4: Search state persistence
 import { useSearchState } from "@/lib/hooks/use-search-state";
+// PHASE 4: Last updated timestamps
+import { formatDistanceToNow } from "date-fns";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -51,6 +53,7 @@ export default function PurchaseOrdersPage() {
   const { toast } = useToast();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [totalPages, setTotalPages] = useState(1);
 
   // PHASE 4: Search state persistence - remembers search/filters/pagination
@@ -111,6 +114,7 @@ export default function PurchaseOrdersPage() {
       });
     } finally {
       setLoading(false);
+      setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
   }
 
@@ -191,6 +195,11 @@ export default function PurchaseOrdersPage() {
           <h1 className="text-3xl font-bold">Purchase Orders</h1>
           <p className="text-muted-foreground">
             Manage supplier orders and goods receiving
+            {lastUpdated && (
+              <span className="ml-2 text-xs">
+                • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+              </span>
+            )}
           </p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)}>
