@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Building2, Mail, Phone, MapPin, DollarSign, ShoppingCart, FileText } from "lucide-react";
@@ -144,6 +145,15 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* PHASE 4: Breadcrumb Navigation */}
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Customers", href: "/customers" },
+          { label: customer.company_name },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/customers")}>
