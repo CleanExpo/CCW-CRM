@@ -46,6 +46,7 @@ from .routes import (
     pos_transactions,
     prd,
     products,
+    prometheus_metrics,  # Prometheus metrics endpoint
     purchase_orders,
     quotes,
     recommendations,  # Re-enabled
@@ -360,6 +361,7 @@ app.add_middleware(PerformanceMiddleware, metrics=performance_metrics)
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
+app.include_router(prometheus_metrics.router, tags=["Monitoring"])  # Prometheus metrics
 app.include_router(config.router, tags=["Configuration"])
 app.include_router(approvals.router, tags=["Approvals"])
 app.include_router(demo_auth.router, tags=["Authentication"])

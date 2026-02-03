@@ -232,3 +232,191 @@ background_job_duration = Histogram(
     ["job_type"],
     buckets=[1.0, 10.0, 60.0, 300.0, 600.0, 1800.0],
 )
+
+# ============================================================
+# AUTONOMOUS DEVELOPMENT METRICS (Phase 5)
+# ============================================================
+
+# Risk Assessment Metrics
+risk_assessments_total = Counter(
+    "risk_assessments_total",
+    "Total risk assessments performed",
+    ["risk_level"],  # LOW, MEDIUM, HIGH, CRITICAL
+)
+
+risk_assessment_duration = Histogram(
+    "risk_assessment_duration_seconds",
+    "Time spent performing risk assessment",
+    buckets=[0.1, 0.5, 1.0, 2.0, 5.0],
+)
+
+approval_decisions_total = Counter(
+    "approval_decisions_total",
+    "Approval policy decisions",
+    ["policy"],  # AUTO_MERGE, ONE_REVIEWER, TWO_REVIEWERS, SECURITY_AUDIT
+)
+
+# Auto-Merge Metrics
+auto_merges_attempted = Counter(
+    "auto_merges_attempted_total",
+    "Auto-merge attempts",
+    ["risk_level"],
+)
+
+auto_merges_successful = Counter(
+    "auto_merges_successful_total",
+    "Successful auto-merges",
+    ["risk_level"],
+)
+
+auto_merges_failed = Counter(
+    "auto_merges_failed_total",
+    "Failed auto-merges",
+    ["risk_level", "failure_reason"],
+)
+
+auto_merge_duration = Histogram(
+    "auto_merge_duration_seconds",
+    "Time from commit to successful merge",
+    buckets=[1.0, 5.0, 10.0, 30.0, 60.0, 300.0],
+)
+
+# Rollback Metrics
+rollbacks_triggered = Counter(
+    "rollbacks_triggered_total",
+    "Rollbacks triggered",
+    ["trigger_reason"],  # test_failure, build_failure, runtime_error, manual
+)
+
+rollback_duration = Histogram(
+    "rollback_duration_seconds",
+    "Time to complete rollback",
+    buckets=[1.0, 5.0, 10.0, 30.0, 60.0],
+)
+
+rollbacks_successful = Counter(
+    "rollbacks_successful_total",
+    "Successful rollbacks",
+)
+
+rollbacks_failed = Counter(
+    "rollbacks_failed_total",
+    "Failed rollbacks requiring manual intervention",
+)
+
+# Circuit Breaker Metrics
+circuit_breaker_state = Gauge(
+    "circuit_breaker_state",
+    "Circuit breaker state (0=CLOSED, 1=OPEN, 2=HALF_OPEN)",
+    ["component"],
+)
+
+circuit_breaker_opens = Counter(
+    "circuit_breaker_opens_total",
+    "Circuit breaker open events",
+    ["component"],
+)
+
+circuit_breaker_closes = Counter(
+    "circuit_breaker_closes_total",
+    "Circuit breaker close events",
+    ["component"],
+)
+
+# Test Execution Metrics
+test_executions_total = Counter(
+    "test_executions_total",
+    "Test suite executions",
+    ["suite"],  # unit, integration, e2e, security
+)
+
+test_failures_total = Counter(
+    "test_failures_total",
+    "Test failures",
+    ["suite", "test_name"],
+)
+
+test_execution_duration = Histogram(
+    "test_execution_duration_seconds",
+    "Test suite execution time",
+    ["suite"],
+    buckets=[1.0, 10.0, 30.0, 60.0, 300.0, 600.0],
+)
+
+test_coverage_percentage = Gauge(
+    "test_coverage_percentage",
+    "Code coverage percentage",
+    ["module"],
+)
+
+# Deployment Metrics
+deployments_total = Counter(
+    "deployments_total",
+    "Total deployments",
+    ["environment"],  # development, staging, production
+)
+
+deployment_duration = Histogram(
+    "deployment_duration_seconds",
+    "Time to complete deployment",
+    ["environment"],
+    buckets=[10.0, 30.0, 60.0, 300.0, 600.0, 1800.0],
+)
+
+deployment_failures_total = Counter(
+    "deployment_failures_total",
+    "Deployment failures",
+    ["environment", "stage"],  # build, test, deploy
+)
+
+# Agent Performance Metrics
+agent_task_execution_time = Histogram(
+    "agent_task_execution_seconds",
+    "Agent task execution time",
+    ["agent_id", "task_type"],
+    buckets=[1.0, 5.0, 10.0, 30.0, 60.0, 300.0, 600.0],
+)
+
+agent_task_success_total = Counter(
+    "agent_task_success_total",
+    "Successful agent task executions",
+    ["agent_id", "task_type"],
+)
+
+agent_task_failure_total = Counter(
+    "agent_task_failure_total",
+    "Failed agent task executions",
+    ["agent_id", "task_type", "error_type"],
+)
+
+agent_verification_required = Counter(
+    "agent_verification_required_total",
+    "Tasks requiring manual verification",
+    ["agent_id", "verification_reason"],
+)
+
+# Code Quality Metrics
+code_lines_changed = Histogram(
+    "code_lines_changed",
+    "Lines of code changed per commit",
+    buckets=[10, 50, 100, 200, 500, 1000, 2000],
+)
+
+code_files_changed = Histogram(
+    "code_files_changed",
+    "Files changed per commit",
+    buckets=[1, 3, 5, 10, 20, 50],
+)
+
+protected_files_modified = Counter(
+    "protected_files_modified_total",
+    "Protected files modified (requires elevated approval)",
+    ["file_pattern"],
+)
+
+# System Health for Autonomous Operations
+autonomous_system_errors = Counter(
+    "autonomous_system_errors_total",
+    "Errors in autonomous development system",
+    ["component", "error_type"],
+)
