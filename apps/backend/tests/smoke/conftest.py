@@ -101,14 +101,23 @@ async def deletable_customer_id(db_session: AsyncSession) -> str:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def sample_order_id(db_session: AsyncSession) -> str:
+async def sample_order_id(db_session: AsyncSession, sample_customer_id: str) -> str:
     """Get a sample order ID from database."""
     result = await db_session.execute(select(Order).limit(1))
     order = result.scalar_one_or_none()
     if order:
         return str(order.id)
-    # Return a dummy ID if no orders exist
-    return "00000000-0000-0000-0000-000000000001"
+    # Fallback: create a test order
+    test_order = Order(
+        order_number=f"SMOKE-ORD-{pytest.timestamp}",
+        customer_id=sample_customer_id,
+        status="draft",
+        total=0,
+    )
+    db_session.add(test_order)
+    await db_session.commit()
+    await db_session.refresh(test_order)
+    return str(test_order.id)
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -126,14 +135,23 @@ async def deletable_order_id(db_session: AsyncSession, sample_customer_id: str) 
 
 
 @pytest_asyncio.fixture(scope="function")
-async def sample_quote_id(db_session: AsyncSession) -> str:
+async def sample_quote_id(db_session: AsyncSession, sample_customer_id: str) -> str:
     """Get a sample quote ID from database."""
     result = await db_session.execute(select(Quote).limit(1))
     quote = result.scalar_one_or_none()
     if quote:
         return str(quote.id)
-    # Return a dummy ID if no quotes exist
-    return "00000000-0000-0000-0000-000000000002"
+    # Fallback: create a test quote
+    test_quote = Quote(
+        quote_number=f"SMOKE-Q-{pytest.timestamp}",
+        customer_id=sample_customer_id,
+        status="draft",
+        total=0,
+    )
+    db_session.add(test_quote)
+    await db_session.commit()
+    await db_session.refresh(test_quote)
+    return str(test_quote.id)
 
 
 @pytest_asyncio.fixture(scope="function")
