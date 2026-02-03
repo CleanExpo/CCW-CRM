@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+// PHASE 4: Real-time order status updates
+import { useOrderStatusStream, type OrderStatusUpdate } from "@/lib/hooks/use-sse";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +22,7 @@ import { OrderPrintView } from "./OrderPrintView";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils/calculations";
 import { apiClient } from "@/lib/api/client";
-import { Printer, FileText } from "lucide-react";
+import { Printer, FileText, Wifi } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,6 +51,12 @@ export function OrderDetailDialog({
   const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState("");
   const [isTrackingSaving, setIsTrackingSaving] = useState(false);
   const orderId = order?.id;
+
+  // PHASE 4: Subscribe to real-time order status updates
+  const {
+    data: statusUpdate,
+    status: sseStatus,
+  } = useOrderStatusStream(open && !!orderId);
 
   const handleStatusChange = () => {
     onOrderUpdate();
@@ -146,6 +154,44 @@ export function OrderDetailDialog({
     );
   }, [order]);
 
+  // PHASE 4: Handle real-time order status updates
+  useEffect(() => {
+    if (!statusUpdate || !orderId) return;
+
+    // Only process updates for THIS order
+    if (statusUpdate.order_id !== orderId) return;
+
+    console.log("Real-time order update received:", statusUpdate);
+
+    // Show toast notification for status changes
+    if (statusUpdate.type === "status_changed") {
+      toast({
+        title: "Order Updated",
+        description: `Status changed from ${statusUpdate.previous_status} to ${statusUpdate.new_status}`,
+      });
+      // Refresh parent order list
+      onOrderUpdate();
+    } else if (statusUpdate.type === "fulfillment_updated") {
+      toast({
+        title: "Fulfillment Updated",
+        description: "Tracking information has been updated",
+      });
+      // Update local tracking state
+      if (statusUpdate.tracking_number !== undefined) {
+        setTrackingNumber(statusUpdate.tracking_number || "");
+      }
+      if (statusUpdate.carrier_name !== undefined) {
+        setCarrierName(statusUpdate.carrier_name || "");
+      }
+      if (statusUpdate.shipped_date) {
+        setShippedDate(statusUpdate.shipped_date.split("T")[0]);
+      }
+      if (statusUpdate.estimated_delivery_date) {
+        setEstimatedDeliveryDate(statusUpdate.estimated_delivery_date.split("T")[0]);
+      }
+    }
+  }, [statusUpdate, orderId, toast, onOrderUpdate]);
+
   if (!order) return null;
 
   const items: OrderItem[] = order.items || order.order_items || [];
@@ -175,6 +221,13 @@ export function OrderDetailDialog({
                 >
                   {order.status}
                 </Badge>
+                {/* PHASE 4: Real-time connection indicator */}
+                {sseStatus === "connected" && (
+                  <Badge variant="outline" className="text-xs">
+                    <Wifi className="h-3 w-3 mr-1 text-green-500" />
+                    Live
+                  </Badge>
+                )}
                 <Button variant="outline" size="sm" onClick={handlePrint}>
                   <Printer className="h-4 w-4 mr-1" />
                   Print

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -15,6 +15,7 @@ from src.api.deps import get_optional_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
 from src.config.settings import Settings, get_settings
+from src.services.sse_service import sse_service
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderActivity as OrderActivityModel
 from src.db.demo_models import OrderItem as OrderItemModel
@@ -34,6 +35,20 @@ from src.monitoring import metrics
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
+
+
+@router.get("/status-stream")
+async def order_status_stream(request: Request):
+    """
+    PHASE 4: Real-time order status updates via Server-Sent Events (SSE).
+
+    Frontend subscribes to this endpoint to receive live order status changes,
+    activity updates, and fulfillment progress without manual refresh.
+
+    Channel: "order-updates"
+    Events: status_changed, activity_added, fulfillment_updated
+    """
+    return await sse_service.subscribe(request, "order-updates", heartbeat_interval=15)
 
 
 class StatusUpdate(BaseModel):
@@ -804,6 +819,15 @@ async def update_order(
                 meta_data={"from": previous_status, "to": updated_status},
             )
 
+            # PHASE 4: Publish real-time status update to SSE subscribers
+            await sse_service.publish("order-updates", {
+                "type": "status_changed",
+                "order_id": str(order.id),
+                "order_number": order.order_number,
+                "previous_status": previous_status,
+                "new_status": updated_status,
+            })
+
             if previous_status in RESERVABLE_STATUSES and updated_status not in RESERVABLE_STATUSES:
                 released = await release_reservations_for_order(
                     db=db,
@@ -844,6 +868,17 @@ async def update_order(
                 "carrier_name": order.carrier_name,
             },
         )
+
+        # PHASE 4: Publish real-time fulfillment update to SSE subscribers
+        await sse_service.publish("order-updates", {
+            "type": "fulfillment_updated",
+            "order_id": str(order.id),
+            "order_number": order.order_number,
+            "tracking_number": order.tracking_number,
+            "carrier_name": order.carrier_name,
+            "shipped_date": str(order.shipped_date) if order.shipped_date else None,
+            "estimated_delivery_date": str(order.estimated_delivery_date) if order.estimated_delivery_date else None,
+        })
 
     await db.commit()
     await db.refresh(order)
