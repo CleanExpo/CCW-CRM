@@ -40,6 +40,11 @@ import { Plus } from "lucide-react";
 import { useAutosave } from "@/lib/hooks/use-autosave";
 import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
 import { useRecentItems } from "@/lib/hooks/use-recent-items";
+// PHASE AI: Form Auto-Fill imports
+import { useFormAutoFill } from "@/lib/hooks/use-form-autofill";
+import { ProductAutoFillSuggestion } from "@/components/forms/AutoFillSuggestion";
+// PHASE AI: Anomaly Detection imports
+import { AnomalyAlert } from "@/components/alerts/AnomalyAlert";
 
 const ORDER_STATUSES = [
   { value: "draft", label: "Draft" },
@@ -74,6 +79,8 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("brisbane");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [anomalyDetected, setAnomalyDetected] = useState<any>(null);
+  const [showAnomalyAlert, setShowAnomalyAlert] = useState(false);
   const { toast } = useToast();
   const isEdit = !!order;
 
@@ -93,6 +100,22 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
       key: "recent-customers",
       maxItems: 10,
     });
+
+  // PHASE AI: Form auto-fill suggestions based on customer history
+  const selectedCustomerId = form.watch("customer_id");
+  const { suggestions, confidence, source, loading: autoFillLoading, fetchSuggestions } =
+    useFormAutoFill({
+      formType: "order",
+      customerId: selectedCustomerId || undefined,
+      limit: 10,
+    });
+
+  // Fetch auto-fill suggestions when customer selected
+  useEffect(() => {
+    if (selectedCustomerId && !isEdit) {
+      fetchSuggestions();
+    }
+  }, [selectedCustomerId, isEdit, fetchSuggestions]);
 
   // PHASE 4: Autosave hook - prevents data loss on dialog close/navigation
   const draftKey = isEdit ? `order-form-${order?.id}` : "order-form-new";
@@ -202,8 +225,42 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
       return;
     }
 
-    setIsLoading(true);
     setLineItemErrors([]);
+
+    // PHASE AI: Check for anomalies before creating order
+    if (!isEdit && !anomalyDetected) {
+      const orderTotal = subtotal + tax;
+
+      try {
+        const anomalyCheck = await apiClient.post<{
+          is_anomaly: boolean;
+          severity: string;
+          description: string;
+          recommended_action: string;
+          confidence: number;
+          details: Record<string, any>;
+        }>("/api/ai/anomaly", {
+          detection_type: "order_amount",
+          customer_id: values.customer_id,
+          amount: orderTotal,
+        });
+
+        // If anomaly detected with high/critical severity, show alert
+        if (
+          anomalyCheck.is_anomaly &&
+          (anomalyCheck.severity === "high" || anomalyCheck.severity === "critical")
+        ) {
+          setAnomalyDetected(anomalyCheck);
+          setShowAnomalyAlert(true);
+          return; // Stop submission, wait for user confirmation
+        }
+      } catch (error) {
+        console.error("Anomaly check failed:", error);
+        // Continue with order creation even if anomaly check fails
+      }
+    }
+
+    setIsLoading(true);
 
     try {
       const payload = {
@@ -411,6 +468,74 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                 </FormItem>
               )}
             />
+
+            {/* PHASE AI: Product Suggestions */}
+            {!isEdit && suggestions?.products && suggestions.products.length > 0 && (
+              <div className="space-y-2">
+                <ProductAutoFillSuggestion
+                  products={suggestions.products}
+                  confidence={confidence.products || 0}
+                  source={source.products}
+                  onApplyProduct={(product) => {
+                    setLineItems((prev) => [
+                      ...prev,
+                      {
+                        product_id: product.product_id,
+                        sku: product.sku,
+                        product_name: product.name,
+                        quantity: product.avg_quantity,
+                        unit_price: product.price,
+                        line_total: product.avg_quantity * product.price,
+                      },
+                    ]);
+                    toast({
+                      title: "Product Added",
+                      description: `${product.name} added with quantity ${product.avg_quantity}`,
+                    });
+                  }}
+                  onApplyAll={() => {
+                    const newItems = suggestions.products!.map((product) => ({
+                      product_id: product.product_id,
+                      sku: product.sku,
+                      product_name: product.name,
+                      quantity: product.avg_quantity,
+                      unit_price: product.price,
+                      line_total: product.avg_quantity * product.price,
+                    }));
+                    setLineItems((prev) => [...prev, ...newItems]);
+                    toast({
+                      title: "Products Added",
+                      description: `Added ${newItems.length} products based on customer history`,
+                    });
+                  }}
+                  onDismiss={() => {
+                    // Suggestions dismissed
+                  }}
+                />
+              </div>
+            )}
+
+            {/* PHASE AI: Anomaly Alert */}
+            {showAnomalyAlert && anomalyDetected && (
+              <AnomalyAlert
+                isAnomaly={anomalyDetected.is_anomaly}
+                severity={anomalyDetected.severity}
+                description={anomalyDetected.description}
+                recommendedAction={anomalyDetected.recommended_action}
+                confidence={anomalyDetected.confidence}
+                details={anomalyDetected.details}
+                onProceedAnyway={() => {
+                  setShowAnomalyAlert(false);
+                  // Resubmit form with anomaly flag set to skip check
+                  setAnomalyDetected("bypass");
+                  form.handleSubmit(onSubmit)();
+                }}
+                onDismiss={() => {
+                  setShowAnomalyAlert(false);
+                  setAnomalyDetected(null);
+                }}
+              />
+            )}
 
             <OrderLineItems
               items={lineItems}
