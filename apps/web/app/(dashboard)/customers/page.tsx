@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { exportCustomersToCSV } from "@/lib/utils/csv-export";
+// PHASE 4: Last updated timestamps
+import { formatDistanceToNow } from "date-fns";
 
 interface Customer {
   id: string;
@@ -49,6 +51,7 @@ export default function CustomersPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
 
@@ -93,6 +96,7 @@ export default function CustomersPage() {
       setTotal(0);
     } finally {
       setLoading(false);
+      setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
   }, [page, pageSize, debouncedSearch, toast]);
 
@@ -199,6 +203,11 @@ export default function CustomersPage() {
               <CardTitle>Customer Directory</CardTitle>
               <CardDescription>
                 {total} customers in database
+                {lastUpdated && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                  </span>
+                )}
               </CardDescription>
             </div>
           </div>
