@@ -28,6 +28,7 @@ from src.db.pos_models import (
     POSTransaction,
     SalesStaff,
 )
+from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/pos", tags=["POS"])
 
@@ -415,6 +416,18 @@ async def create_pos_transaction(
         db.add(failed_transaction)
         await db.commit()
         await db.refresh(failed_transaction)
+
+        # PHASE 4: Publish real-time POS failure alert
+        await sse_service.publish("pos-failures", {
+            "type": "failure_detected",
+            "transaction_id": str(failed_transaction.id),
+            "transaction_number": failed_transaction.transaction_number,
+            "terminal_id": str(failed_transaction.terminal_id) if failed_transaction.terminal_id else None,
+            "location_code": failed_transaction.location_code,
+            "amount": float(failed_transaction.amount),
+            "payment_method": failed_transaction.payment_method,
+            "error": str(e),
+        })
 
         raise HTTPException(
             status_code=402,
