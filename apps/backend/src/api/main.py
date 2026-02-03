@@ -30,6 +30,7 @@ from .routes import (
     autonomous_dev,
     backorders,
     bank_feeds,
+    billing,
     config,
     containers,
     customers,
@@ -52,6 +53,7 @@ from .routes import (
     service_requests,
     shipments,
     suppliers,
+    team,
     test_data_gen,
     translations,
     webhooks,
@@ -69,6 +71,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager."""
     setup_logging(debug=settings.debug)
     logger.info("Starting application", environment=settings.environment)
+
+    # Initialize Sentry for error tracking
+    try:
+        from src.integrations.sentry_client import initialize_sentry
+        initialize_sentry()
+    except Exception as e:
+        logger.warning("Failed to initialize Sentry", error=str(e))
 
     # Initialize AI agents on startup
     logger.info("Initializing AI agent orchestration system")
@@ -374,6 +383,10 @@ app.include_router(portal_forms.router, tags=["Portal Forms"])
 app.include_router(webhooks.router, tags=["Webhooks"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])
+# Team management router (multi-tenant user management)
+app.include_router(team.router, tags=["Team Management"])
+# Billing and subscription management router
+app.include_router(billing.router, tags=["Billing"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 # Shipment tracking router

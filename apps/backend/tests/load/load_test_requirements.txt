@@ -1,0 +1,25 @@
+# Load Testing Dependencies for CCW-Online ERP
+#
+# Install with: pip install -r load_test_requirements.txt
+
+# Core load testing framework
+locust>=2.20.0
+
+# HTTP client (used by Locust)
+requests>=2.31.0
+
+# Data generation and utilities
+faker>=22.0.0  # Generate realistic test data
+python-dateutil>=2.8.2  # Date manipulation
+
+# Optional: Enhanced reporting
+matplotlib>=3.8.0  # For custom charts
+pandas>=2.2.0  # Data analysis of results
+
+# Optional: Distributed load testing
+pyzmq>=25.1.0  # For Locust distributed mode
+
+# Development dependencies
+pytest>=8.0.0  # For testing the load test scripts
+black>=24.1.0  # Code formatting
+ruff>=0.1.0  # Linting

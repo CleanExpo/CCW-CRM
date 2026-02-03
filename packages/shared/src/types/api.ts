@@ -11,8 +11,8 @@ export interface PaginatedResponse<T> {
   data: T[];
   total: number;
   page: number;
-  pageSize: number;
-  hasMore: boolean;
+  page_size: number;  // Standardized to snake_case to match backend
+  total_pages: number;
 }
 
 // Chat API types

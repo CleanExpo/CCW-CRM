@@ -60,6 +60,28 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(min_length=8, description="New password (min 8 characters)")
 
 
+class RegisterRequest(BaseModel):
+    """Registration request model."""
+
+    email: EmailStr
+    password: str = Field(min_length=8, description="Password (min 8 characters)")
+    full_name: str | None = None
+
+
+class ChangePasswordRequest(BaseModel):
+    """Change password request model."""
+
+    current_password: str
+    new_password: str = Field(min_length=8, description="New password (min 8 characters)")
+
+
+class UpdateProfileRequest(BaseModel):
+    """Update profile request model."""
+
+    full_name: str | None = None
+    email: EmailStr | None = None
+
+
 @router.post("/login", response_model=LoginResponse)
 @limiter.limit(RateLimits.LOGIN)
 async def login(
@@ -381,4 +403,192 @@ async def reset_password(
     await db.commit()
 
     return {"message": "Password has been reset successfully"}
+
+
+@router.post("/register")
+@limiter.limit(RateLimits.REGISTER)
+async def register(
+    request: Request,
+    data: RegisterRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """
+    Register a new user.
+
+    Creates a new user account with email and password.
+    Rate limited to prevent abuse.
+    """
+    # Check if user already exists
+    result = await db.execute(select(User).where(User.email == data.email))
+    existing_user = result.scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        )
+
+    # Hash password
+    hashed_password = get_password_hash(data.password)
+
+    # Create new user
+    new_user = User(
+        email=data.email,
+        hashed_password=hashed_password,
+        full_name=data.full_name,
+        is_active=True,
+        is_admin=False,
+    )
+
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    return {
+        "user": {
+            "id": str(new_user.id),
+            "email": new_user.email,
+            "full_name": new_user.full_name,
+            "is_admin": new_user.is_admin,
+        },
+        "message": "User registered successfully",
+    }
+
+
+@router.patch("/me")
+async def update_profile(
+    request: Request,
+    data: UpdateProfileRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """
+    Update current user profile.
+
+    Requires authentication via JWT token.
+    """
+    # Get token from Authorization header or cookie
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+
+    if not token:
+        token = request.cookies.get("auth_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    # Decode token
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    # Get user from database
+    email = payload.get("sub")
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    # Update profile fields
+    if data.full_name is not None:
+        user.full_name = data.full_name
+
+    if data.email is not None:
+        # Check if new email is already taken
+        result = await db.execute(
+            select(User).where(User.email == data.email, User.id != user.id)
+        )
+        existing_user = result.scalar_one_or_none()
+
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already in use",
+            )
+
+        user.email = data.email
+
+    await db.commit()
+    await db.refresh(user)
+
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "is_admin": user.is_admin,
+        "is_active": user.is_active,
+        "created_at": user.created_at.isoformat(),
+    }
+
+
+@router.post("/change-password")
+@limiter.limit(RateLimits.CHANGE_PASSWORD)
+async def change_password(
+    request: Request,
+    data: ChangePasswordRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """
+    Change password for authenticated user.
+
+    Requires current password verification.
+    """
+    # Get token from Authorization header or cookie
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+
+    if not token:
+        token = request.cookies.get("auth_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    # Decode token
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    # Get user from database
+    email = payload.get("sub")
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    # Verify current password
+    if not verify_password(data.current_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+
+    # Hash and update new password
+    user.hashed_password = get_password_hash(data.new_password)
+
+    await db.commit()
+
+    return {"message": "Password changed successfully"}
 

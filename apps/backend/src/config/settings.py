@@ -59,8 +59,8 @@ class Settings(BaseSettings):
 
     # JWT Authentication
     jwt_secret_key: str = Field(
-        default="your-secret-key-change-in-production",
-        description="Secret key for JWT token signing"
+        default="",
+        description="Secret key for JWT token signing (loaded from AWS Secrets Manager in production)"
     )
     jwt_expire_minutes: int = Field(default=480, description="JWT access token expiration in minutes (8 hours)")  # noqa: E501
     jwt_refresh_expire_days: int = Field(default=30, description="JWT refresh token expiration in days")  # noqa: E501
@@ -137,8 +137,8 @@ class Settings(BaseSettings):
 
     # Webhook Configuration
     webhook_secret: str = Field(
-        default="change-this-webhook-secret-in-production",
-        description="Secret key for webhook signature verification"
+        default="",
+        description="Secret key for webhook signature verification (loaded from AWS Secrets Manager in production)"
     )
     webhook_contact_form_url: str | None = Field(
         default=None,
@@ -172,6 +172,40 @@ class Settings(BaseSettings):
     def tax_rate_decimal(self) -> Decimal:
         """Get tax rate as Decimal for precise calculations."""
         return Decimal(self.tax_rate)
+
+    def get_jwt_secret_secure(self) -> str:
+        """
+        Get JWT secret from AWS Secrets Manager (production) or environment (development).
+
+        Returns:
+            JWT secret key
+
+        Raises:
+            ValueError: If secret not configured in production
+        """
+        if self.is_production:
+            from src.integrations.secrets_manager import get_jwt_secret
+            return get_jwt_secret()
+        else:
+            # Development: allow default from env or settings
+            return self.jwt_secret_key or "dev-jwt-secret-not-for-production"
+
+    def get_webhook_secret_secure(self) -> str:
+        """
+        Get webhook secret from AWS Secrets Manager (production) or environment (development).
+
+        Returns:
+            Webhook signature verification secret
+
+        Raises:
+            ValueError: If secret not configured in production
+        """
+        if self.is_production:
+            from src.integrations.secrets_manager import get_webhook_secret
+            return get_webhook_secret()
+        else:
+            # Development: allow default from env or settings
+            return self.webhook_secret or "dev-webhook-secret-not-for-production"
 
 
 @lru_cache

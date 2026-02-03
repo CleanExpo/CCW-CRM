@@ -23,6 +23,9 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",  # JWT tokens
     "passlib[bcrypt]>=1.7.0",  # Password hashing
 
+    # Billing
+    "stripe>=7.0.0",  # Stripe payment processing
+
     # Core
     "pydantic>=2.9.0",
     "pydantic-settings>=2.6.0",
@@ -74,11 +77,19 @@ check_untyped_defs = false
 disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
-module = "src.api.routes.demo_*"
+module = "src.api.routes.demo_lists"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "src.db.demo_*"
+module = "src.api.routes.demo_dashboard"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.api.routes.demo_auth"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.db.demo_models"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
