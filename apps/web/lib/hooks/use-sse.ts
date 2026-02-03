@@ -342,3 +342,29 @@ export function usePOSFailureAlerts(enabled = true) {
     maxReconnectAttempts: 10,
   });
 }
+
+/**
+ * PHASE 4: Real-time dashboard metrics updates
+ */
+export interface DashboardMetricsUpdate {
+  type: "metrics_updated";
+  metric: "active_orders" | "total_products" | "total_customers" | "low_stock_alerts" | "pending_quotes";
+  change: "increment" | "decrement" | "status_change" | "update";
+  timestamp: string;
+}
+
+/**
+ * Hook for subscribing to dashboard metrics updates.
+ * Receives instant notifications when dashboard metrics change, eliminating need for polling.
+ *
+ * @param enabled - Enable/disable connection (default: true)
+ */
+export function useDashboardMetricsStream(enabled = true) {
+  return useSSE<DashboardMetricsUpdate>({
+    url: "/api/dashboard/metrics-stream",
+    enabled,
+    autoReconnect: true,
+    reconnectDelay: 3000,
+    maxReconnectAttempts: 5,
+  });
+}

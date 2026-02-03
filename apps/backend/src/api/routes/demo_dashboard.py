@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy import String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +24,7 @@ from src.db.demo_models import (
     Quote,
     QuoteStatus,
 )
+from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/dashboard", tags=["Demo Dashboard"])
 
@@ -63,6 +64,24 @@ async def get_aggregated_dashboard(
         inventory_status=inventory_data,
         recent_activity=activity_data,
     )
+
+
+@router.get("/metrics-stream")
+async def dashboard_metrics_stream(request: Request):
+    """
+    PHASE 4: Real-time dashboard metrics via SSE.
+
+    Frontend subscribes to receive instant metric updates when:
+    - Orders created/updated (affects active_orders, revenue)
+    - Products created (affects total_products)
+    - Customers created (affects total_customers)
+    - Stock changes (affects low_stock_alerts)
+    - Quotes created/updated (affects pending_quotes)
+
+    Channel: "dashboard-metrics"
+    Events: metrics_updated
+    """
+    return await sse_service.subscribe(request, "dashboard-metrics", heartbeat_interval=20)
 
 
 class DashboardMetrics(BaseModel):

@@ -632,6 +632,14 @@ async def create_order(
     # Invalidate order-related caches
     await invalidate_order_caches()
 
+    # PHASE 4: Publish dashboard metrics update
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "active_orders",
+        "change": "increment",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     # Track business metrics
     status_value = normalize_status(order.status)
     location = order_data.fulfillment_location or "unknown"
@@ -885,6 +893,15 @@ async def update_order(
 
     # Invalidate order-related caches
     await invalidate_order_caches()
+
+    # PHASE 4: Publish dashboard metrics update if status changed
+    if order_data.status is not None and updated_status != previous_status:
+        await sse_service.publish("dashboard-metrics", {
+            "type": "metrics_updated",
+            "metric": "active_orders",
+            "change": "status_change",
+            "timestamp": datetime.utcnow().isoformat(),
+        })
 
     # Reload with items
     query = (

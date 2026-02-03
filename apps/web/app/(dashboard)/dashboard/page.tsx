@@ -9,8 +9,8 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText, Sparkles, ArrowRight } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { getDashboardInsights, type Insight } from "@/lib/api/ai-insights";
-// PHASE 4: Real-time POS failure alerts
-import { usePOSFailureAlerts, type POSFailureAlert } from "@/lib/hooks/use-sse";
+// PHASE 4: Real-time POS failure alerts + Dashboard metrics
+import { usePOSFailureAlerts, useDashboardMetricsStream, type POSFailureAlert, type DashboardMetricsUpdate } from "@/lib/hooks/use-sse";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { InsightCard } from "@/components/insights/insight-card";
@@ -92,6 +92,9 @@ export default function DashboardPage() {
   const [posFailureCount, setPosFailureCount] = useState(0);
   const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(true);
 
+  // PHASE 4: Real-time dashboard metrics
+  const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(true);
+
   useEffect(() => {
     async function loadDashboardData() {
       try {
@@ -140,6 +143,28 @@ export default function DashboardPage() {
     }
   }, [posFailure, toast]);
 
+  // PHASE 4: Handle real-time dashboard metrics updates
+  useEffect(() => {
+    if (metricsUpdate) {
+      console.log("Dashboard metric updated:", metricsUpdate);
+
+      // Refresh specific metrics based on the update
+      async function refreshMetrics() {
+        try {
+          const dashboardData = await apiClient.get<AggregatedDashboardData>("/api/dashboard/aggregated");
+          setMetrics(dashboardData.metrics);
+          setActivity(dashboardData.recent_activity);
+        } catch (error) {
+          console.error("Failed to refresh metrics:", error);
+        }
+      }
+
+      // Debounce refresh to avoid excessive API calls (wait 500ms before refreshing)
+      const timeout = setTimeout(refreshMetrics, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [metricsUpdate]);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-AU", {
       style: "currency",
@@ -167,9 +192,18 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
         className="flex items-start justify-between"
       >
-        <div>
-          <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-lg mt-2">CCW Equipment — Real-time business overview</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground text-lg mt-2">CCW Equipment — Real-time business overview</p>
+          </div>
+          {/* PHASE 4: Live metrics indicator */}
+          {metricsStreamStatus === "connected" && (
+            <Badge variant="outline" className="text-xs">
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse mr-2" />
+              Live Metrics
+            </Badge>
+          )}
         </div>
 
         {/* PHASE 4: POS Failure Alert Badge */}
