@@ -9,6 +9,10 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText, Sparkles, ArrowRight } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { getDashboardInsights, type Insight } from "@/lib/api/ai-insights";
+// PHASE 4: Real-time POS failure alerts
+import { usePOSFailureAlerts, type POSFailureAlert } from "@/lib/hooks/use-sse";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import { InsightCard } from "@/components/insights/insight-card";
 import { RevenueChart } from "@/components/charts/RevenueChart";
 import { CategorySalesChart } from "@/components/charts/CategorySalesChart";
@@ -75,6 +79,7 @@ interface AggregatedDashboardData {
 }
 
 export default function DashboardPage() {
+  const { toast } = useToast();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
   const [categorySales, setCategorySales] = useState<CategorySales[]>([]);
@@ -83,14 +88,19 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // PHASE 4: Real-time POS failure monitoring
+  const [posFailureCount, setPosFailureCount] = useState(0);
+  const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(true);
+
   useEffect(() => {
     async function loadDashboardData() {
       try {
         // PHASE 4 OPTIMIZATION: Use aggregated endpoint (1 API call instead of 6)
         // Expected performance: 70% faster (5-8s → <2s)
-        const [dashboardData, insightsData] = await Promise.all([
+        const [dashboardData, insightsData, posFailures] = await Promise.all([
           apiClient.get<AggregatedDashboardData>("/api/dashboard/aggregated"),
           getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
+          apiClient.get<{ alert_count: number }>("/api/monitoring/alerts/pos-failures?hours=24").catch(() => ({ alert_count: 0 })),
         ]);
 
         // Destructure aggregated data
@@ -100,6 +110,7 @@ export default function DashboardPage() {
         setTopProducts(dashboardData.top_products);
         setActivity(dashboardData.recent_activity);
         setInsights(insightsData.insights.filter((i) => i.priority === "high").slice(0, 3));
+        setPosFailureCount(posFailures.alert_count);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
         setMetrics(null);
@@ -115,6 +126,19 @@ export default function DashboardPage() {
 
     loadDashboardData();
   }, []);
+
+  // PHASE 4: Handle real-time POS failure alerts
+  useEffect(() => {
+    if (posFailure) {
+      console.log("POS failure detected:", posFailure);
+      setPosFailureCount((prev) => prev + 1);
+      toast({
+        title: "POS Payment Failed",
+        description: `Transaction ${posFailure.transaction_number} at ${posFailure.location_code} failed: ${posFailure.error}`,
+        variant: "destructive",
+      });
+    }
+  }, [posFailure, toast]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-AU", {
@@ -141,9 +165,34 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="flex items-start justify-between"
       >
-        <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground text-lg mt-2">CCW Equipment — Real-time business overview</p>
+        <div>
+          <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground text-lg mt-2">CCW Equipment — Real-time business overview</p>
+        </div>
+
+        {/* PHASE 4: POS Failure Alert Badge */}
+        {posFailureCount > 0 && (
+          <Link href="/pos/reconciliation">
+            <Card className="border-destructive/50 bg-destructive/10">
+              <CardContent className="pt-6 pb-4 px-4">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  <div>
+                    <p className="text-sm font-medium text-destructive">
+                      {posFailureCount} POS {posFailureCount === 1 ? "Failure" : "Failures"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Last 24 hours</p>
+                  </div>
+                  {posAlertStatus === "connected" && (
+                    <Badge variant="outline" className="ml-2">Live</Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
       </motion.div>
 
       {/* Bento Grid Dashboard */}

@@ -1,12 +1,18 @@
 """Alert management API endpoints for monitoring."""
 
+from datetime import datetime, timedelta
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.services.alert_manager import get_alert_manager
+from src.services.sse_service import sse_service
+from src.config.database import get_db
+from src.db.pos_models import POSTransaction
 
 logger = structlog.get_logger(__name__)
 
@@ -200,3 +206,98 @@ async def clear_old_alerts(days: int = Query(30, ge=1, le=365)) -> dict:
     except Exception as e:
         logger.error("Failed to clear old alerts", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to clear old alerts: {str(e)}") from e
+
+
+# PHASE 4: POS Failure Alerts
+class POSFailureAlert(BaseModel):
+    """POS failure alert data."""
+    transaction_id: str
+    transaction_number: str
+    terminal_id: str | None
+    location_code: str
+    amount: float
+    payment_method: str
+    payment_status: str
+    created_at: str
+    time_ago: str
+
+
+@router.get("/pos-failures")
+async def get_pos_failures(
+    db: AsyncSession = Depends(get_db),
+    hours: int = Query(24, ge=1, le=168, description="Hours to look back (1-168)"),
+) -> dict:
+    """
+    PHASE 4: Get POS transaction failures from the last N hours.
+
+    Monitors payment_status='failed' transactions to catch payment processing issues,
+    terminal failures, and network problems quickly.
+
+    Args:
+        hours: Hours to look back (default: 24, max: 168/1 week)
+
+    Returns:
+        List of failed transactions with alert count
+    """
+    try:
+        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+
+        # Query failed POS transactions
+        query = (
+            select(POSTransaction)
+            .where(POSTransaction.payment_status == "failed")
+            .where(POSTransaction.created_at >= cutoff_time)
+            .order_by(POSTransaction.created_at.desc())
+        )
+
+        result = await db.execute(query)
+        failed_transactions = result.scalars().all()
+
+        # Format response
+        failures = []
+        for txn in failed_transactions:
+            time_diff = datetime.utcnow() - txn.created_at
+            hours_ago = int(time_diff.total_seconds() / 3600)
+            minutes_ago = int((time_diff.total_seconds() % 3600) / 60)
+
+            if hours_ago > 0:
+                time_ago = f"{hours_ago}h ago"
+            else:
+                time_ago = f"{minutes_ago}m ago"
+
+            failures.append({
+                "transaction_id": str(txn.id),
+                "transaction_number": txn.transaction_number,
+                "terminal_id": str(txn.terminal_id) if txn.terminal_id else None,
+                "location_code": txn.location_code,
+                "amount": float(txn.amount),
+                "payment_method": txn.payment_method,
+                "payment_status": txn.payment_status,
+                "created_at": txn.created_at.isoformat(),
+                "time_ago": time_ago,
+            })
+
+        return {
+            "success": True,
+            "alert_count": len(failures),
+            "failures": failures,
+            "period_hours": hours,
+        }
+
+    except Exception as e:
+        logger.error("Failed to get POS failures", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to get POS failures: {str(e)}") from e
+
+
+@router.get("/pos-failures/stream")
+async def pos_failures_stream(request: Request):
+    """
+    PHASE 4: Real-time POS failure alerts via SSE.
+
+    Frontend subscribes to receive instant notifications when POS payments fail.
+    Allows proactive response to payment processing issues.
+
+    Channel: "pos-failures"
+    Events: failure_detected
+    """
+    return await sse_service.subscribe(request, "pos-failures", heartbeat_interval=30)

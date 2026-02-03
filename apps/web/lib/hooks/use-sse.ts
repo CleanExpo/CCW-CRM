@@ -312,3 +312,33 @@ export function useOrderStatusStream(enabled = true) {
     maxReconnectAttempts: 5,
   });
 }
+
+/**
+ * PHASE 4: Real-time POS failure alerts
+ */
+export interface POSFailureAlert {
+  type: "failure_detected";
+  transaction_id: string;
+  transaction_number: string;
+  terminal_id: string | null;
+  location_code: string;
+  amount: number;
+  payment_method: string;
+  error: string;
+}
+
+/**
+ * Hook for subscribing to POS payment failure alerts.
+ * Receives instant notifications when POS payments fail, enabling proactive response.
+ *
+ * @param enabled - Enable/disable connection (default: true)
+ */
+export function usePOSFailureAlerts(enabled = true) {
+  return useSSE<POSFailureAlert>({
+    url: "/api/monitoring/alerts/pos-failures/stream",
+    enabled,
+    autoReconnect: true,
+    reconnectDelay: 5000,
+    maxReconnectAttempts: 10,
+  });
+}
