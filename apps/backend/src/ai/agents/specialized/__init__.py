@@ -2,7 +2,9 @@
 
 from .anomaly_detection_agent import AnomalyDetectionAgent
 from .development_agent import DevelopmentAgent
+from .document_parser_agent import DocumentParserAgent
 from .form_autofill_agent import FormAutoFillAgent
+from .inventory_forecasting_agent import InventoryForecastingAgent
 from .pricing_agent import PricingAgent, get_pricing_agent
 from .procurement_agent import ProcurementAgent, get_procurement_agent
 from .recommendation_agent import RecommendationAgent
@@ -13,7 +15,9 @@ from .testing_agent import TestingAgent
 __all__ = [
     "AnomalyDetectionAgent",
     "DevelopmentAgent",
+    "DocumentParserAgent",
     "FormAutoFillAgent",
+    "InventoryForecastingAgent",
     "PricingAgent",
     "get_pricing_agent",
     "ProcurementAgent",

@@ -4,8 +4,10 @@ from fastapi import APIRouter
 
 from .anomaly import router as anomaly_router
 from .assets import router as assets_router
+from .document_parser import router as document_parser_router
 from .form_autofill import router as form_autofill_router
 from .generate import router as generate_router
+from .inventory_forecast import router as inventory_forecast_router
 from .learning import router as learning_router
 from .monitoring import router as monitoring_router
 from .specialized import router as specialized_router
@@ -27,5 +29,7 @@ ai_router.include_router(generate_router)
 ai_router.include_router(assets_router)
 ai_router.include_router(form_autofill_router)
 ai_router.include_router(anomaly_router)
+ai_router.include_router(document_parser_router)
+ai_router.include_router(inventory_forecast_router)
 
 __all__ = ["ai_router", "learning"]
