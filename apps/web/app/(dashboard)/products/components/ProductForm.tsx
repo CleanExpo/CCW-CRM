@@ -34,6 +34,8 @@ import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useAutosave } from "@/lib/hooks/use-autosave";
+import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
 
 const productCategories = [
   "heavy_machinery",
@@ -114,6 +116,20 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
     },
   });
 
+  // Autosave hook - prevents data loss on dialog close/navigation
+  const draftKey = isEdit ? `product-form-${product?.id}` : "product-form-new";
+  const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
+    key: draftKey,
+    formValues: form.watch(),
+    onRestore: (draft) => {
+      Object.keys(draft).forEach((key) => {
+        form.setValue(key as keyof FormData, draft[key]);
+      });
+    },
+    enabled: open && !isEdit,
+    debounceMs: 2000,
+  });
+
   // Reset form when product changes or dialog opens/closes
   useEffect(() => {
     if (open) {
@@ -161,6 +177,7 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
           description: "Product created successfully",
         });
       }
+      clearDraft(); // Clear autosave draft on success
       onSuccess();
       onOpenChange(false);
     } catch (error: unknown) {
@@ -189,6 +206,15 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
               : "Add a new product to your catalog."}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Draft Recovery Alert */}
+        {hasDraft && !isEdit && draftMetadata && (
+          <DraftRecoveryAlert
+            savedAt={draftMetadata.savedAt}
+            onRestore={loadDraft}
+            onDiscard={clearDraft}
+          />
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
