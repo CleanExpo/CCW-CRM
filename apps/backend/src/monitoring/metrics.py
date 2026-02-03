@@ -275,6 +275,17 @@ auto_merges_failed = Counter(
     ["risk_level", "failure_reason"],
 )
 
+auto_merge_rejections = Counter(
+    "auto_merge_rejections_total",
+    "Auto-merge rejections (requires manual review)",
+    ["reason"],  # tests_failed, merge_conflicts, protected_files, rate_limited, manual_review_required
+)
+
+protected_file_violations = Counter(
+    "protected_file_violations_total",
+    "Attempts to auto-merge protected files",
+)
+
 auto_merge_duration = Histogram(
     "auto_merge_duration_seconds",
     "Time from commit to successful merge",
