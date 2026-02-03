@@ -6,7 +6,8 @@
 
 // Core API clients
 export { apiClient, createClient, ApiClientError } from "./client";
-export { serverApiClient, createClient as createServerClient } from "./server";
+// Server API should be imported directly in Server Components only
+// export { serverApiClient, createClient as createServerClient } from "./server";
 export { updateSession } from "./middleware";
 
 // Domain API clients
