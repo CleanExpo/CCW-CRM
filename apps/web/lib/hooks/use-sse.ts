@@ -281,3 +281,34 @@ export function useLowStockAlerts() {
     enabled: true,
   });
 }
+
+/**
+ * PHASE 4: Real-time order status updates
+ */
+export interface OrderStatusUpdate {
+  type: "status_changed" | "fulfillment_updated" | "activity_added";
+  order_id: string;
+  order_number: string;
+  previous_status?: string;
+  new_status?: string;
+  tracking_number?: string | null;
+  carrier_name?: string | null;
+  shipped_date?: string | null;
+  estimated_delivery_date?: string | null;
+}
+
+/**
+ * Hook for subscribing to order status updates.
+ * Receives real-time notifications when orders change status or fulfillment updates.
+ *
+ * @param enabled - Enable/disable connection (default: true)
+ */
+export function useOrderStatusStream(enabled = true) {
+  return useSSE<OrderStatusUpdate>({
+    url: "/api/orders/status-stream",
+    enabled,
+    autoReconnect: true,
+    reconnectDelay: 3000,
+    maxReconnectAttempts: 5,
+  });
+}
