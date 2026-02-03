@@ -180,6 +180,56 @@ class ShopifyLiveClient:
         computed_hmac = hmac.new(secret, data, hashlib.sha256).hexdigest()
         return hmac.compare_digest(computed_hmac, hmac_header)
 
+    async def graphql(self, query: str, variables: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute GraphQL query or mutation.
+
+        PHASE 3: Multi-Language Product Sync - Task 3.1
+        GraphQL API support for translations and other advanced features.
+
+        Args:
+            query: GraphQL query or mutation string
+            variables: Optional variables for the query
+
+        Returns:
+            GraphQL response data
+
+        Raises:
+            ValueError: If GraphQL returns errors
+        """
+        # Shopify GraphQL endpoint
+        graphql_url = f"{self.settings.shop_domain}/admin/api/{self.settings.api_version}/graphql.json"
+
+        payload = {"query": query}
+        if variables:
+            payload["variables"] = variables
+
+        try:
+            response = await self.client.post(
+                graphql_url,
+                json=payload,
+                headers={
+                    "X-Shopify-Access-Token": self.settings.access_token,
+                    "Content-Type": "application/json",
+                },
+            )
+            response.raise_for_status()
+            result = response.json()
+
+            # Check for GraphQL errors
+            if "errors" in result:
+                error_messages = [err.get("message", str(err)) for err in result["errors"]]
+                raise ValueError(f"GraphQL errors: {', '.join(error_messages)}")
+
+            return result.get("data", {})
+
+        except httpx.HTTPStatusError as e:
+            error_detail = e.response.text
+            raise ValueError(
+                f"Shopify GraphQL API error ({e.response.status_code}): {error_detail}"
+            ) from e
+        except httpx.RequestError as e:
+            raise ValueError(f"Shopify GraphQL request failed: {str(e)}") from e
+
 
 class ShopifyClient:
     """Unified Shopify client that routes to demo or live implementation."""
@@ -280,6 +330,13 @@ class ShopifyClient:
     def verify_webhook(self, data: bytes, hmac_header: str) -> bool:
         """Verify webhook signature."""
         return self._client.verify_webhook(data, hmac_header)
+
+    async def graphql(self, query: str, variables: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute GraphQL query or mutation.
+
+        PHASE 3: Multi-Language Product Sync - Task 3.1
+        """
+        return await self._client.graphql(query, variables)
 
 
 def get_shopify_client(settings: ShopifySettings | None = None) -> ShopifyClient:

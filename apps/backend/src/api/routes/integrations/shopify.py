@@ -1659,3 +1659,277 @@ async def get_inventory_sync_status(
             for sync in recent_failures
         ],
     }
+
+
+# PHASE 3: Multi-Language Product Sync - Task 3.4: API Endpoints
+# Translation Sync Endpoints
+
+
+@router.post("/translations/sync-to-shopify/{product_id}")
+async def sync_translations_to_shopify(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+    languages: list[str] | None = None,
+) -> dict:
+    """Sync product translations from ERP to Shopify.
+
+    PHASE 3 - Task 3.4: Translation Sync Endpoint (ERP → Shopify)
+    Syncs product name and description translations in all available languages.
+
+    Args:
+        product_id: ERP product UUID
+        languages: Optional list of language codes to sync (e.g., ['es', 'fr']). If None, syncs all.
+
+    Returns:
+        Sync result with synced languages
+    """
+    from uuid import UUID
+    from src.db.shopify_models import ShopifyProductMapping
+    from src.integrations.shopify.translations import get_translation_syncer
+
+    logger.info("sync_translations_to_shopify", product_id=product_id, languages=languages)
+
+    # Convert string to UUID
+    try:
+        product_uuid = UUID(product_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid product_id format: {product_id}",
+        ) from e
+
+    # Check if product has Shopify mapping
+    mapping_query = select(ShopifyProductMapping).where(
+        ShopifyProductMapping.product_id == product_uuid
+    )
+    mapping_result = await db.execute(mapping_query)
+    shopify_mapping = mapping_result.scalar_one_or_none()
+
+    if not shopify_mapping:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Product {product_id} is not mapped to Shopify",
+        )
+
+    # Initialize translation syncer
+    shopify_client = get_shopify_client(settings)
+    translation_syncer = get_translation_syncer(shopify_client)
+
+    # Sync translations
+    async with shopify_client:
+        sync_result = await translation_syncer.sync_product_translations_to_shopify(
+            db=db,
+            product_id=product_uuid,
+            shopify_product_id=str(shopify_mapping.shopify_product_id),
+            languages=languages,
+        )
+
+    logger.info(
+        "translations_synced_to_shopify",
+        product_id=product_id,
+        success=sync_result["success"],
+        synced_languages=sync_result.get("synced_languages", []),
+    )
+
+    return sync_result
+
+
+@router.post("/translations/sync-from-shopify/{product_id}")
+async def sync_translations_from_shopify(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Sync product translations from Shopify to ERP.
+
+    PHASE 3 - Task 3.4: Translation Sync Endpoint (Shopify → ERP)
+    Fetches translations from Shopify and updates ERP translation table.
+
+    Args:
+        product_id: ERP product UUID
+
+    Returns:
+        Sync result with synced languages
+    """
+    from uuid import UUID
+    from src.db.shopify_models import ShopifyProductMapping
+    from src.integrations.shopify.translations import get_translation_syncer
+
+    logger.info("sync_translations_from_shopify", product_id=product_id)
+
+    # Convert string to UUID
+    try:
+        product_uuid = UUID(product_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid product_id format: {product_id}",
+        ) from e
+
+    # Check if product has Shopify mapping
+    mapping_query = select(ShopifyProductMapping).where(
+        ShopifyProductMapping.product_id == product_uuid
+    )
+    mapping_result = await db.execute(mapping_query)
+    shopify_mapping = mapping_result.scalar_one_or_none()
+
+    if not shopify_mapping:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Product {product_id} is not mapped to Shopify",
+        )
+
+    # Initialize translation syncer
+    shopify_client = get_shopify_client(settings)
+    translation_syncer = get_translation_syncer(shopify_client)
+
+    # Sync translations
+    async with shopify_client:
+        sync_result = await translation_syncer.sync_translations_from_shopify(
+            db=db,
+            product_id=product_uuid,
+            shopify_product_id=str(shopify_mapping.shopify_product_id),
+        )
+
+    logger.info(
+        "translations_synced_from_shopify",
+        product_id=product_id,
+        success=sync_result["success"],
+        synced_languages=sync_result.get("synced_languages", []),
+    )
+
+    return sync_result
+
+
+@router.post("/translations/sync-all")
+async def sync_all_translations(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+    direction: str = "to_shopify",  # "to_shopify" or "from_shopify"
+) -> dict:
+    """Bulk sync translations for all mapped products.
+
+    PHASE 3 - Task 3.4: Bulk Translation Sync Endpoint
+    Syncs translations for all products with Shopify mappings.
+
+    Args:
+        direction: Sync direction ("to_shopify" or "from_shopify")
+
+    Returns:
+        Bulk sync results
+    """
+    from src.db.shopify_models import ShopifyProductMapping
+    from src.integrations.shopify.translations import get_translation_syncer
+
+    logger.info("bulk_translation_sync_started", direction=direction)
+
+    if direction not in ("to_shopify", "from_shopify"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid direction. Must be 'to_shopify' or 'from_shopify'",
+        )
+
+    # Get all products with Shopify mappings
+    mapping_query = select(ShopifyProductMapping).where(
+        ShopifyProductMapping.sync_status.in_(["synced", "pending"])
+    )
+    result = await db.execute(mapping_query)
+    mappings = result.scalars().all()
+
+    if not mappings:
+        logger.info("no_shopify_mappings_found_for_translation_sync")
+        return {
+            "success": True,
+            "total": 0,
+            "successful": 0,
+            "failed": 0,
+            "errors": [],
+            "message": "No products mapped to Shopify",
+        }
+
+    logger.info("shopify_mappings_found_for_translation_sync", count=len(mappings))
+
+    # Initialize translation syncer
+    shopify_client = get_shopify_client(settings)
+    translation_syncer = get_translation_syncer(shopify_client)
+
+    results = {
+        "total": len(mappings),
+        "successful": 0,
+        "failed": 0,
+        "errors": [],
+        "synced_products": [],
+    }
+
+    async with shopify_client:
+        for mapping in mappings:
+            try:
+                if direction == "to_shopify":
+                    sync_result = await translation_syncer.sync_product_translations_to_shopify(
+                        db=db,
+                        product_id=mapping.product_id,
+                        shopify_product_id=str(mapping.shopify_product_id),
+                    )
+                else:  # from_shopify
+                    sync_result = await translation_syncer.sync_translations_from_shopify(
+                        db=db,
+                        product_id=mapping.product_id,
+                        shopify_product_id=str(mapping.shopify_product_id),
+                    )
+
+                if sync_result["success"]:
+                    results["successful"] += 1
+                    results["synced_products"].append({
+                        "product_id": str(mapping.product_id),
+                        "shopify_product_id": str(mapping.shopify_product_id),
+                        "synced_languages": sync_result.get("synced_languages", []),
+                        "synced_count": sync_result.get("synced_count", 0),
+                    })
+
+                    logger.info(
+                        "product_translations_synced",
+                        product_id=str(mapping.product_id),
+                        direction=direction,
+                        synced_count=sync_result.get("synced_count", 0),
+                    )
+                else:
+                    results["failed"] += 1
+                    error_msg = f"Product {mapping.product_id}: {sync_result.get('error', 'Unknown error')}"
+                    results["errors"].append(error_msg)
+
+                    logger.error(
+                        "product_translation_sync_failed",
+                        product_id=str(mapping.product_id),
+                        direction=direction,
+                        error=sync_result.get("error"),
+                    )
+
+            except Exception as e:
+                results["failed"] += 1
+                error_msg = f"Product {mapping.product_id}: {str(e)}"
+                results["errors"].append(error_msg)
+
+                logger.error(
+                    "translation_sync_exception",
+                    product_id=str(mapping.product_id),
+                    direction=direction,
+                    error=str(e),
+                )
+
+    logger.info(
+        "bulk_translation_sync_completed",
+        direction=direction,
+        total=results["total"],
+        successful=results["successful"],
+        failed=results["failed"],
+    )
+
+    return {
+        "success": results["failed"] == 0,
+        **results,
+        "message": (
+            f"Synced {results['successful']} of {results['total']} products. "
+            f"{results['failed']} failed."
+        ),
+    }
