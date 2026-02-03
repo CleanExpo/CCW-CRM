@@ -150,7 +150,7 @@ async def get_dashboard_metrics(
 
 
 @router.get("/charts/revenue", response_model=list[RevenueDataPoint])
-@cached(ttl=300, key_prefix="dashboard_revenue")  # 5 minute cache
+# @cached(ttl=300, key_prefix="dashboard_revenue")  # Temporarily disabled - caching issue with Pydantic models
 async def get_revenue_chart(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[RevenueDataPoint]:
@@ -234,9 +234,11 @@ async def get_category_distribution(
     for category, sales in category_sales:
         sales_decimal = Decimal(str(sales))
         percentage = float((sales_decimal / total) * 100)
+        # Handle category - could be enum or string depending on query result
+        category_str = category.value if hasattr(category, 'value') else str(category)
         category_data.append(
             CategoryDataPoint(
-                category=category.value.replace("_", " ").title(),
+                category=category_str.replace("_", " ").title(),
                 value=str(sales_decimal),
                 percentage=round(percentage, 1),
             )
@@ -246,7 +248,7 @@ async def get_category_distribution(
 
 
 @router.get("/charts/top-products", response_model=list[TopProductDataPoint])
-@cached(ttl=300, key_prefix="dashboard_top_products")  # 5 minute cache
+# @cached(ttl=300, key_prefix="dashboard_top_products")  # Temporarily disabled - caching issue with Pydantic models
 async def get_top_products(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[TopProductDataPoint]:

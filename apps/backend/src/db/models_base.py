@@ -84,8 +84,8 @@ class User(Base):
     # contractors = relationship("Contractor", back_populates="user")
     # documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
 
-    # PRD relationship - Disabled for demo purchase generation
-    # prds = relationship("PRD", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
+    # PRD relationship - Re-enabled to fix mapper initialization
+    prds = relationship("PRD", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email})>"

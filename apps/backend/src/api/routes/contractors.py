@@ -1,50 +1,153 @@
 """
-Contractor Availability API Routes (Supabase-enabled)
+Contractor Availability API Routes (SQLAlchemy implementation)
 
 Australian-first API for managing contractor schedules with:
 - ABN validation
 - Australian mobile number format
 - Brisbane location focus
 - AEST timezone handling
-- Supabase PostgreSQL database
+- SQLAlchemy ORM with async support
 """
 
+from datetime import date as DateType, time as TimeType
 from typing import Annotated
-from uuid import uuid4
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field, field_validator
+import re
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.models.contractor import (
+from src.config.database import get_db
+from src.db.models_base import (
     AustralianState,
-    AvailabilitySlot,
-    AvailabilitySlotCreate,
+    AvailabilitySlot as AvailabilitySlotModel,
     AvailabilityStatus,
-    Contractor,
-    ContractorCreate,
-    ContractorList,
-    ContractorUpdate,
-    ErrorResponse,
-    Location,
+    Contractor as ContractorModel,
 )
-from src.utils.supabase_client import supabase
 
-# DEBUG: Print to confirm this is the Supabase version
-print("=" * 60)
-print("LOADING CONTRACTORS ROUTE (SUPABASE VERSION)")
-print("=" * 60)
+# ============================================================================
+# PYDANTIC SCHEMAS
+# ============================================================================
+
+
+class Location(BaseModel):
+    """Location model for Australian addresses."""
+
+    suburb: str = Field(..., min_length=1, max_length=100)
+    state: AustralianState
+    postcode: str | None = Field(None, pattern=r"^\d{4}$")
+
+
+class AvailabilitySlotBase(BaseModel):
+    """Base availability slot model."""
+
+    date: DateType
+    start_time: str = Field(..., description="Time in HH:MM format")
+    end_time: str = Field(..., description="Time in HH:MM format")
+    location: Location
+    status: AvailabilityStatus = AvailabilityStatus.AVAILABLE
+    notes: str | None = None
+
+
+class AvailabilitySlotCreate(AvailabilitySlotBase):
+    """Create availability slot request."""
+
+    pass
+
+
+class AvailabilitySlot(AvailabilitySlotBase):
+    """Availability slot response."""
+
+    id: UUID
+
+    model_config = {"from_attributes": True}
+
+
+class ContractorBase(BaseModel):
+    """Base contractor model."""
+
+    name: str = Field(..., min_length=1, max_length=100)
+    mobile: str = Field(..., pattern=r"^04\d{2}\s?\d{3}\s?\d{3}$")
+    abn: str | None = Field(None, pattern=r"^\d{2}\s?\d{3}\s?\d{3}\s?\d{3}$")
+    email: str | None = Field(None, max_length=255)
+    specialisation: str | None = Field(None, max_length=100)
+
+    @field_validator("mobile")
+    @classmethod
+    def validate_mobile(cls, v: str) -> str:
+        """Validate Australian mobile format (04XX XXX XXX)."""
+        cleaned = re.sub(r"\s", "", v)
+        if not re.match(r"^04\d{8}$", cleaned):
+            raise ValueError("Invalid Australian mobile number format (must be 04XX XXX XXX)")
+        return cleaned
+
+    @field_validator("abn")
+    @classmethod
+    def validate_abn(cls, v: str | None) -> str | None:
+        """Validate ABN format (XX XXX XXX XXX)."""
+        if v is None:
+            return v
+        cleaned = re.sub(r"\s", "", v)
+        if not re.match(r"^\d{11}$", cleaned):
+            raise ValueError("Invalid ABN format (must be XX XXX XXX XXX)")
+        return cleaned
+
+
+class ContractorCreate(ContractorBase):
+    """Create contractor request."""
+
+    pass
+
+
+class ContractorUpdate(BaseModel):
+    """Update contractor request (partial update)."""
+
+    name: str | None = None
+    mobile: str | None = None
+    abn: str | None = None
+    email: str | None = None
+    specialisation: str | None = None
+
+
+class Contractor(ContractorBase):
+    """Contractor response."""
+
+    id: UUID
+    created_at: str
+    updated_at: str
+    availability_slots: list[AvailabilitySlot] = []
+
+    model_config = {"from_attributes": True}
+
+
+class ContractorList(BaseModel):
+    """Paginated contractor list response."""
+
+    contractors: list[Contractor]
+    total: int
+    page: int
+    page_size: int
+
+
+class ErrorResponse(BaseModel):
+    """Error response model."""
+
+    detail: str
+
+
+# ============================================================================
+# API ROUTES
+# ============================================================================
 
 router = APIRouter(
     prefix="/contractors",
     tags=["contractors"],
     responses={
-        404: {
-            "model": ErrorResponse,
-            "description": "Contractor not found"
-        },
-        422: {
-            "model": ErrorResponse,
-            "description": "Validation error (invalid ABN, mobile, etc.)"
-        },
+        404: {"model": ErrorResponse, "description": "Contractor not found"},
+        422: {"model": ErrorResponse, "description": "Validation error (invalid ABN, mobile, etc.)"},
     },
 )
 
@@ -58,17 +161,12 @@ router = APIRouter(
 async def list_contractors(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
-    state: AustralianState | None = Query(
-        None,
-        description="Filter by Australian state (e.g., QLD, NSW)"
-    ),
-    specialisation: str | None = Query(
-        None,
-        description="Filter by specialisation"
-    ),
+    state: AustralianState | None = Query(None, description="Filter by Australian state (e.g., QLD, NSW)"),
+    specialisation: str | None = Query(None, description="Filter by specialisation"),
+    db: AsyncSession = Depends(get_db),
 ) -> ContractorList:
     """
-    List contractors with optional filtering from Supabase.
+    List contractors with optional filtering.
 
     **Australian Context:**
     - Phone numbers formatted as 04XX XXX XXX
@@ -77,65 +175,37 @@ async def list_contractors(
     - Locations include Australian state (QLD, NSW, etc.)
     """
     # Build query
-    query = supabase.table("contractors").select("*, availability_slots(*)")
+    query = select(ContractorModel).options(selectinload(ContractorModel.availability_slots))
 
     # Apply specialisation filter
     if specialisation:
-        query = query.ilike("specialisation", f"%{specialisation}%")
+        query = query.where(ContractorModel.specialisation.ilike(f"%{specialisation}%"))
 
-    # Execute query with pagination
-    offset = (page - 1) * page_size
-    response = query.range(offset, offset + page_size - 1).execute()
+    # Get total count
+    count_query = select(func.count()).select_from(query.subquery())
+    result = await db.execute(count_query)
+    total = result.scalar_one()
 
-    # Convert database records to Pydantic models
-    contractors = []
-    for record in response.data:
-        # Parse availability slots
-        slots = []
-        for slot_record in record.get("availability_slots", []):
-            slots.append(AvailabilitySlot(
-                id=slot_record["id"],
-                date=slot_record["date"],
-                start_time=slot_record["start_time"],
-                end_time=slot_record["end_time"],
-                location=Location(
-                    suburb=slot_record["suburb"],
-                    state=slot_record["state"],
-                    postcode=slot_record.get("postcode")
-                ),
-                status=slot_record["status"],
-                notes=slot_record.get("notes")
-            ))
+    # Apply pagination
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    query = query.order_by(ContractorModel.created_at.desc())
 
-        # Filter by state if provided (post-query filter)
-        if state and not any(slot.location.state == state for slot in slots):
-            continue
+    # Execute query
+    result = await db.execute(query)
+    contractors = result.scalars().all()
 
-        contractor = Contractor(
-            id=record["id"],
-            name=record["name"],
-            mobile=record["mobile"],
-            abn=record.get("abn"),
-            email=record.get("email"),
-            specialisation=record.get("specialisation"),
-            created_at=record["created_at"],
-            updated_at=record["updated_at"],
-            availability_slots=slots
-        )
-        contractors.append(contractor)
-
-    # Get total count (without pagination)
-    count_query = supabase.table("contractors").select("id", count="exact")
-    if specialisation:
-        count_query = count_query.ilike("specialisation", f"%{specialisation}%")
-    count_response = count_query.execute()
-    total = count_response.count or 0
+    # Filter by state if provided (post-query filter on availability slots)
+    if state:
+        contractors = [
+            c for c in contractors
+            if any(slot.state == state for slot in c.availability_slots)
+        ]
 
     return ContractorList(
-        contractors=contractors,
+        contractors=[Contractor.model_validate(c) for c in contractors],
         total=total,
         page=page,
-        page_size=page_size
+        page_size=page_size,
     )
 
 
@@ -145,51 +215,26 @@ async def list_contractors(
     summary="Get contractor by ID",
     description="Retrieve contractor details with availability slots",
 )
-async def get_contractor(contractor_id: str) -> Contractor:
-    """Get contractor by ID from Supabase."""
-    # Query contractor with availability slots
-    response = supabase.table("contractors").select(
-        "*, availability_slots(*)"
-    ).eq("id", contractor_id).execute()
+async def get_contractor(
+    contractor_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> Contractor:
+    """Get contractor by ID."""
+    query = (
+        select(ContractorModel)
+        .options(selectinload(ContractorModel.availability_slots))
+        .where(ContractorModel.id == contractor_id)
+    )
+    result = await db.execute(query)
+    contractor = result.scalar_one_or_none()
 
-    if not response.data:
+    if not contractor:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Contractor with ID {contractor_id} not found"
+            detail=f"Contractor with ID {contractor_id} not found",
         )
 
-    record = response.data[0]
-
-    # Parse availability slots
-    slots = []
-    for slot_record in record.get("availability_slots", []):
-        slots.append(AvailabilitySlot(
-            id=slot_record["id"],
-            date=slot_record["date"],
-            start_time=slot_record["start_time"],
-            end_time=slot_record["end_time"],
-            location=Location(
-                suburb=slot_record["suburb"],
-                state=slot_record["state"],
-                postcode=slot_record.get("postcode")
-            ),
-            status=slot_record["status"],
-            notes=slot_record.get("notes")
-        ))
-
-    contractor = Contractor(
-        id=record["id"],
-        name=record["name"],
-        mobile=record["mobile"],
-        abn=record.get("abn"),
-        email=record.get("email"),
-        specialisation=record.get("specialisation"),
-        created_at=record["created_at"],
-        updated_at=record["updated_at"],
-        availabilitySlots=slots
-    )
-
-    return contractor
+    return Contractor.model_validate(contractor)
 
 
 @router.post(
@@ -199,39 +244,25 @@ async def get_contractor(contractor_id: str) -> Contractor:
     summary="Create new contractor",
     description="Register a new contractor with Australian validation",
 )
-async def create_contractor(contractor: ContractorCreate) -> Contractor:
-    """Create new contractor in Supabase."""
-    # Insert into database
-    insert_data = {
-        "id": str(uuid4()),
-        "name": contractor.name,
-        "mobile": contractor.mobile,
-        "abn": contractor.abn,
-        "email": contractor.email,
-        "specialisation": contractor.specialisation,
-    }
-
-    response = supabase.table("contractors").insert(insert_data).execute()
-
-    if not response.data:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create contractor"
-        )
-
-    record = response.data[0]
-
-    return Contractor(
-        id=record["id"],
-        name=record["name"],
-        mobile=record["mobile"],
-        abn=record.get("abn"),
-        email=record.get("email"),
-        specialisation=record.get("specialisation"),
-        created_at=record["created_at"],
-        updated_at=record["updated_at"],
-        availabilitySlots=[]
+async def create_contractor(
+    contractor: ContractorCreate,
+    db: AsyncSession = Depends(get_db),
+) -> Contractor:
+    """Create new contractor."""
+    new_contractor = ContractorModel(
+        id=uuid4(),
+        name=contractor.name,
+        mobile=contractor.mobile,
+        abn=contractor.abn,
+        email=contractor.email,
+        specialisation=contractor.specialisation,
     )
+
+    db.add(new_contractor)
+    await db.commit()
+    await db.refresh(new_contractor)
+
+    return Contractor.model_validate(new_contractor)
 
 
 @router.patch(
@@ -241,37 +272,31 @@ async def create_contractor(contractor: ContractorCreate) -> Contractor:
     description="Update contractor details (partial update)",
 )
 async def update_contractor(
-    contractor_id: str,
+    contractor_id: UUID,
     updates: ContractorUpdate,
+    db: AsyncSession = Depends(get_db),
 ) -> Contractor:
-    """Update contractor in Supabase."""
-    # Check if contractor exists
-    existing = supabase.table("contractors").select("id").eq(
-        "id", contractor_id
-    ).execute()
+    """Update contractor."""
+    # Get existing contractor
+    query = select(ContractorModel).where(ContractorModel.id == contractor_id)
+    result = await db.execute(query)
+    contractor = result.scalar_one_or_none()
 
-    if not existing.data:
+    if not contractor:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Contractor with ID {contractor_id} not found"
+            detail=f"Contractor with ID {contractor_id} not found",
         )
 
-    # Update only provided fields
+    # Update fields
     update_data = updates.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(contractor, field, value)
 
-    if update_data:
-        response = supabase.table("contractors").update(
-            update_data
-        ).eq("id", contractor_id).execute()
+    await db.commit()
+    await db.refresh(contractor)
 
-        if not response.data:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update contractor"
-            )
-
-    # Return updated contractor
-    return await get_contractor(contractor_id)
+    return await get_contractor(contractor_id, db)
 
 
 @router.delete(
@@ -280,21 +305,23 @@ async def update_contractor(
     summary="Delete contractor",
     description="Remove contractor from system",
 )
-async def delete_contractor(contractor_id: str):
-    """Delete contractor from Supabase (cascades to availability slots)."""
-    # Check if contractor exists
-    existing = supabase.table("contractors").select("id").eq(
-        "id", contractor_id
-    ).execute()
+async def delete_contractor(
+    contractor_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete contractor (cascades to availability slots)."""
+    query = select(ContractorModel).where(ContractorModel.id == contractor_id)
+    result = await db.execute(query)
+    contractor = result.scalar_one_or_none()
 
-    if not existing.data:
+    if not contractor:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Contractor with ID {contractor_id} not found"
+            detail=f"Contractor with ID {contractor_id} not found",
         )
 
-    # Delete contractor (cascades to availability_slots)
-    supabase.table("contractors").delete().eq("id", contractor_id).execute()
+    await db.delete(contractor)
+    await db.commit()
 
     return None
 
@@ -307,58 +334,41 @@ async def delete_contractor(contractor_id: str):
     description="Add availability slot for contractor (Brisbane focus)",
 )
 async def add_availability_slot(
-    contractor_id: str,
+    contractor_id: UUID,
     slot: AvailabilitySlotCreate,
+    db: AsyncSession = Depends(get_db),
 ) -> AvailabilitySlot:
-    """Add availability slot to Supabase."""
+    """Add availability slot."""
     # Check if contractor exists
-    existing = supabase.table("contractors").select("id").eq(
-        "id", contractor_id
-    ).execute()
+    query = select(ContractorModel).where(ContractorModel.id == contractor_id)
+    result = await db.execute(query)
+    contractor = result.scalar_one_or_none()
 
-    if not existing.data:
+    if not contractor:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Contractor with ID {contractor_id} not found"
+            detail=f"Contractor with ID {contractor_id} not found",
         )
 
-    # Insert availability slot
-    insert_data = {
-        "id": str(uuid4()),
-        "contractor_id": contractor_id,
-        "date": slot.date.isoformat(),
-        "start_time": slot.startTime,
-        "end_time": slot.endTime,
-        "suburb": slot.location.suburb,
-        "state": slot.location.state,
-        "postcode": slot.location.postcode,
-        "status": slot.status,
-        "notes": slot.notes,
-    }
-
-    response = supabase.table("availability_slots").insert(insert_data).execute()
-
-    if not response.data:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create availability slot"
-        )
-
-    record = response.data[0]
-
-    return AvailabilitySlot(
-        id=record["id"],
-        date=record["date"],
-        start_time=record["start_time"],
-        end_time=record["end_time"],
-        location=Location(
-            suburb=record["suburb"],
-            state=record["state"],
-            postcode=record.get("postcode")
-        ),
-        status=record["status"],
-        notes=record.get("notes")
+    # Create availability slot
+    new_slot = AvailabilitySlotModel(
+        id=uuid4(),
+        contractor_id=contractor_id,
+        date=slot.date,
+        start_time=slot.start_time,
+        end_time=slot.end_time,
+        suburb=slot.location.suburb,
+        state=slot.location.state,
+        postcode=slot.location.postcode,
+        status=slot.status,
+        notes=slot.notes,
     )
+
+    db.add(new_slot)
+    await db.commit()
+    await db.refresh(new_slot)
+
+    return AvailabilitySlot.model_validate(new_slot)
 
 
 @router.get(
@@ -368,53 +378,34 @@ async def add_availability_slot(
     description="List all availability slots for contractor",
 )
 async def get_contractor_availability(
-    contractor_id: str,
-    status_filter: AvailabilityStatus | None = Query(
-        None,
-        alias="status",
-        description="Filter by status (available, booked, tentative)"
-    ),
+    contractor_id: UUID,
+    status_filter: AvailabilityStatus | None = Query(None, alias="status", description="Filter by status"),
+    db: AsyncSession = Depends(get_db),
 ) -> list[AvailabilitySlot]:
-    """Get contractor availability from Supabase."""
+    """Get contractor availability."""
     # Check if contractor exists
-    existing = supabase.table("contractors").select("id").eq(
-        "id", contractor_id
-    ).execute()
+    query = select(ContractorModel).where(ContractorModel.id == contractor_id)
+    result = await db.execute(query)
+    contractor = result.scalar_one_or_none()
 
-    if not existing.data:
+    if not contractor:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Contractor with ID {contractor_id} not found"
+            detail=f"Contractor with ID {contractor_id} not found",
         )
 
     # Query availability slots
-    query = supabase.table("availability_slots").select(
-        "*"
-    ).eq("contractor_id", contractor_id)
+    query = select(AvailabilitySlotModel).where(AvailabilitySlotModel.contractor_id == contractor_id)
 
     if status_filter:
-        query = query.eq("status", status_filter.value)
+        query = query.where(AvailabilitySlotModel.status == status_filter)
 
-    response = query.order("date").execute()
+    query = query.order_by(AvailabilitySlotModel.date)
 
-    # Convert to Pydantic models
-    slots = []
-    for record in response.data:
-        slots.append(AvailabilitySlot(
-            id=record["id"],
-            date=record["date"],
-            start_time=record["start_time"],
-            end_time=record["end_time"],
-            location=Location(
-                suburb=record["suburb"],
-                state=record["state"],
-                postcode=record.get("postcode")
-            ),
-            status=record["status"],
-            notes=record.get("notes")
-        ))
+    result = await db.execute(query)
+    slots = result.scalars().all()
 
-    return slots
+    return [AvailabilitySlot.model_validate(s) for s in slots]
 
 
 @router.get(
@@ -425,45 +416,42 @@ async def get_contractor_availability(
 )
 async def search_by_location(
     suburb: Annotated[str, Query(description="Brisbane suburb (e.g., Indooroopilly)")],
-    state: AustralianState = Query(
-        AustralianState.QLD,
-        description="Australian state (default: QLD)"
-    ),
+    state: AustralianState = Query(AustralianState.QLD, description="Australian state (default: QLD)"),
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+    db: AsyncSession = Depends(get_db),
 ) -> ContractorList:
-    """Search contractors by location in Supabase."""
-    # Query availability slots matching location
-    offset = (page - 1) * page_size
+    """Search contractors by location."""
+    # Query contractors with matching availability slots
+    subquery = (
+        select(AvailabilitySlotModel.contractor_id)
+        .where(
+            AvailabilitySlotModel.suburb.ilike(f"%{suburb}%"),
+            AvailabilitySlotModel.state == state,
+        )
+        .distinct()
+    )
 
-    # Get contractors with matching availability slots
-    response = supabase.table("availability_slots").select(
-        "contractor_id, contractors(*)"
-    ).ilike("suburb", suburb).eq("state", state.value).execute()
+    query = (
+        select(ContractorModel)
+        .options(selectinload(ContractorModel.availability_slots))
+        .where(ContractorModel.id.in_(subquery))
+    )
 
-    # Get unique contractors
-    contractor_ids = set()
-    contractors_map = {}
+    # Get total count
+    count_query = select(func.count()).select_from(query.subquery())
+    result = await db.execute(count_query)
+    total = result.scalar_one()
 
-    for record in response.data:
-        contractor_id = record["contractor_id"]
-        if contractor_id not in contractor_ids:
-            contractor_ids.add(contractor_id)
-            contractor_data = record["contractors"]
-            contractors_map[contractor_id] = contractor_data
+    # Apply pagination
+    query = query.offset((page - 1) * page_size).limit(page_size)
 
-    # Get full contractor details with availability
-    contractors = []
-    for contractor_id in list(contractor_ids)[offset:offset + page_size]:
-        try:
-            contractor = await get_contractor(contractor_id)
-            contractors.append(contractor)
-        except HTTPException:
-            continue
+    result = await db.execute(query)
+    contractors = result.scalars().all()
 
     return ContractorList(
-        contractors=contractors,
-        total=len(contractor_ids),
+        contractors=[Contractor.model_validate(c) for c in contractors],
+        total=total,
         page=page,
-        page_size=page_size
+        page_size=page_size,
     )

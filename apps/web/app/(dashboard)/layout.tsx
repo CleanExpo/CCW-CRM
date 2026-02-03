@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { PageTransition } from "@/components/transitions/PageTransition";
+import { CommandPalette } from "@/components/ui/command-palette";
 
 export default function DashboardLayout({
   children,
@@ -25,6 +26,7 @@ export default function DashboardLayout({
       </div>
 
       <ChatWidget />
+      <CommandPalette />
     </div>
   );
 }

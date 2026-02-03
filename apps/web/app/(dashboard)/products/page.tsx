@@ -315,7 +315,7 @@ export default function ProductsPage() {
                   label: "Category",
                   render: (product) => (
                     <Badge variant="outline" className="capitalize">
-                      {product.category.replace(/_/g, " ")}
+                      {product.category ? product.category.replace(/_/g, " ") : "N/A"}
                     </Badge>
                   ),
                 },
