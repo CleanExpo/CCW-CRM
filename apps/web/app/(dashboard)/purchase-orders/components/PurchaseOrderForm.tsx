@@ -33,6 +33,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api/client";
 import { useLineItemCalculations } from "@/hooks/use-line-item-calculations";
+import { useAutosave } from "@/lib/hooks/use-autosave";
+import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
 import { SupplierSelect } from "./SupplierSelect";
 import { PurchaseOrderLineItems } from "./PurchaseOrderLineItems";
 import type { PurchaseOrder, PurchaseOrderItem, DeliveryLocation } from "../types";
@@ -79,6 +81,28 @@ export function PurchaseOrderForm({
       shipping_cost: purchaseOrder?.shipping_cost?.toString() || "",
       notes: purchaseOrder?.notes || "",
     },
+  });
+
+  // Autosave hook - prevents data loss on dialog close/navigation
+  const draftKey = mode === "edit" ? `po-form-${purchaseOrder?.id}` : "po-form-new";
+  const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
+    key: draftKey,
+    formValues: {
+      ...form.watch(),
+      lineItems, // Include line items in autosave
+    },
+    onRestore: (draft) => {
+      Object.keys(draft).forEach((key) => {
+        if (key !== "lineItems") {
+          form.setValue(key as keyof FormData, draft[key]);
+        }
+      });
+      if (Array.isArray(draft.lineItems) && draft.lineItems.length > 0) {
+        setLineItems(draft.lineItems);
+      }
+    },
+    enabled: open && mode === "create",
+    debounceMs: 2000,
   });
 
   // Initialize line items when editing
@@ -161,6 +185,7 @@ export function PurchaseOrderForm({
         });
       }
 
+      clearDraft(); // Clear autosave draft on success
       onOpenChange(false);
       router.refresh();
     } catch (error: unknown) {
@@ -200,6 +225,15 @@ export function PurchaseOrderForm({
               : "Update purchase order details."}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Draft Recovery Alert */}
+        {hasDraft && mode === "create" && draftMetadata && (
+          <DraftRecoveryAlert
+            savedAt={draftMetadata.savedAt}
+            onRestore={loadDraft}
+            onDiscard={clearDraft}
+          />
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
