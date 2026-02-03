@@ -48,8 +48,8 @@ from .routes import (
     products,
     purchase_orders,
     quotes,
-    recommendations,
-    search,
+    # recommendations,  # Disabled - AI import errors
+    # search,  # Disabled - AI import errors
     service_requests,
     shipments,
     suppliers,
@@ -58,8 +58,9 @@ from .routes import (
     translations,
     webhooks,
 )
-from .routes.ai import ai_router, chat, generate, insights
-from .routes import google_ai
+# Temporarily disabled for Phase 4 deployment - import errors in AI agents
+# from .routes.ai import ai_router, chat, generate, insights
+# from .routes import google_ai
 from .routes.integrations import ap2, elevenlabs, sendgrid, shopify, shopify_theme, xero
 
 settings = get_settings()
@@ -84,18 +85,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     try:
         # Import and initialize specialized agents (registers them in registry)
-        from src.ai.agents.specialized import (
-            PricingAgent,
-            ProcurementAgent,
-            TaskExecutorAgent,
-        )
-        from src.ai.orchestration.supervisor_agent import get_supervisor_agent
+        # Temporarily disabled for Phase 4 deployment - import errors
+        # from src.ai.agents.specialized import (
+        #     PricingAgent,
+        #     ProcurementAgent,
+        #     TaskExecutorAgent,
+        # )
+        # from src.ai.orchestration.supervisor_agent import get_supervisor_agent
 
-        # Initialize agents (this registers them)
-        pricing = PricingAgent()
-        procurement = ProcurementAgent()
-        executor = TaskExecutorAgent()
-        get_supervisor_agent()
+        # # Initialize agents (this registers them)
+        # pricing = PricingAgent()
+        # procurement = ProcurementAgent()
+        # executor = TaskExecutorAgent()
+        # get_supervisor_agent()
+        logger.info("AI agents temporarily disabled for deployment")
 
         logger.info(
             "Agents initialized",
@@ -395,16 +398,17 @@ app.include_router(shipments.router, tags=["Shipment Tracking"])
 app.include_router(containers.router, tags=["Container Tracking"])
 app.include_router(backorders.router, tags=["Backorder Management"])
 # AI routers
-app.include_router(ai_router)  # Main AI agent orchestration routes (includes learning router)
-app.include_router(chat.router, tags=["AI Chat"])
-app.include_router(insights.router, tags=["AI Insights"])
-app.include_router(generate.router, tags=["AI Generation"])
+# app.include_router(ai_router)  # Disabled - AI import errors  # Main AI agent orchestration routes (includes learning router)
+# app.include_router(chat.router, tags=["AI Chat"])  # Disabled - AI import errors
+# app.include_router(insights.router, tags=["AI Insights"])  # Disabled - AI import errors
+# app.include_router(generate.router, tags=["AI Generation"])  # Disabled - AI import errors
 # app.include_router(learning.router, tags=["AI Learning"])  # Already included in ai_router
 app.include_router(test_data_gen.router)  # Test data generation for learning engine
 
 # AI Search & Recommendations (✅ IMPLEMENTED)
-app.include_router(search.router)  # Semantic & hybrid search
-app.include_router(recommendations.router)  # Product recommendations
+# Temporarily disabled for Phase 4 deployment - import errors
+# app.include_router(search.router)  # Semantic & hybrid search
+# app.include_router(recommendations.router)  # Product recommendations
 
 # Autonomous Development (✅ IMPLEMENTED)
 app.include_router(autonomous_dev.router)
@@ -419,7 +423,8 @@ app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
 app.include_router(ap2.router, tags=["AP2 Integration"])
-app.include_router(google_ai.router, tags=["Google AI"])
+# Temporarily disabled for Phase 4 deployment
+# app.include_router(google_ai.router, tags=["Google AI"])
 
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])

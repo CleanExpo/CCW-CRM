@@ -35,11 +35,11 @@ router = APIRouter(prefix="/api/dashboard", tags=["Demo Dashboard"])
 # Expected Performance: 70% faster dashboard load (5-8s → <2s)
 
 
-@router.get("/aggregated", response_model=AggregatedDashboardData)
+@router.get("/aggregated")
 @cached(ttl=60, key_prefix="dashboard_aggregated")  # 1 minute cache
 async def get_aggregated_dashboard(
     db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> AggregatedDashboardData:
+):
     """Get all dashboard data in a single API call.
 
     PERFORMANCE OPTIMIZATION (Phase 4):
