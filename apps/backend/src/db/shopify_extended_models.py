@@ -229,3 +229,68 @@ class ShopifyProductTranslation(Base):
 
     def __repr__(self) -> str:
         return f"<ShopifyProductTranslation(id={self.id}, product_id={self.product_id}, language={self.language_code})>"
+
+
+class ShopifyInventorySyncQueue(Base):
+    """
+    Shopify inventory sync retry queue.
+
+    PHASE 2: Enhanced Shopify Integration - Task 2.3
+    Tracks failed inventory syncs for automatic retry with exponential backoff.
+    """
+
+    __tablename__ = "shopify_inventory_sync_queue"
+
+    id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # Product reference
+    product_id: UUID = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Shopify references
+    shopify_product_id: str = Column(String(255), nullable=False, index=True)
+    shopify_inventory_item_id: str = Column(String(255), nullable=False)
+    shopify_location_id: str = Column(String(255), nullable=False)
+
+    # Sync details
+    sync_direction: str = Column(
+        String(20), nullable=False, index=True
+    )  # 'erp_to_shopify' or 'shopify_to_erp'
+    triggered_by: str = Column(String(100), nullable=True)  # Source of sync trigger
+
+    # Retry tracking
+    retry_count: int = Column(Integer, default=0, nullable=False)
+    max_retries: int = Column(Integer, default=5, nullable=False)
+    next_retry_at: datetime = Column(DateTime(timezone=True), nullable=False, index=True)
+    last_error: str | None = Column(Text, nullable=True)
+
+    # Status
+    status: str = Column(
+        String(50), nullable=False, default="pending", index=True
+    )  # pending, processing, completed, failed
+
+    # Metadata
+    sync_metadata: dict | None = Column(JSONB, nullable=True)
+    # Example: {"quantity_delta": 10, "old_quantity": 50, "new_quantity": 60}
+
+    # Timestamps
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+    completed_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+
+    def __repr__(self) -> str:
+        return (
+            f"<ShopifyInventorySyncQueue(id={self.id}, product_id={self.product_id}, "
+            f"retry_count={self.retry_count}, status={self.status})>"
+        )

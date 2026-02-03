@@ -28,6 +28,9 @@ from src.integrations.shopify.client import ShopifyClient
 
 logger = structlog.get_logger(__name__)
 
+# PHASE 2 - Task 2.3: Background worker state
+_background_worker_running = False
+
 
 class InventorySyncService:
     """
@@ -105,6 +108,9 @@ class InventorySyncService:
         """
         Sync ERP stock level to Shopify (ERP → Shopify).
 
+        PHASE 2: Enhanced Shopify Integration - Task 2.2: Multi-Location Aggregation
+        Aggregates stock across Brisbane, Sydney, and Melbourne locations before syncing.
+
         Args:
             db: Database session
             product_id: Product UUID
@@ -116,9 +122,45 @@ class InventorySyncService:
         Returns:
             Sync result
         """
-        # Get current ERP stock
-        result = await db.execute(select(Product).where(Product.id == product_id))
-        product = result.scalar_one_or_none()
+        # PHASE 2 - Task 2.2: Get multi-location stock and aggregate
+        from src.db.inventory_models import ProductStockByLocation
+
+        # Get stock from all locations
+        stock_query = select(ProductStockByLocation).where(
+            ProductStockByLocation.product_id == product_id
+        )
+        stock_result = await db.execute(stock_query)
+        stock_records = stock_result.scalars().all()
+
+        if not stock_records:
+            logger.error("No stock records found for product", product_id=str(product_id))
+            return {"success": False, "error": "No stock records found"}
+
+        # Aggregate stock across all locations (Brisbane, Sydney, Melbourne)
+        total_stock = sum(record.stock for record in stock_records)
+        total_available = sum(record.available for record in stock_records)
+
+        # Log location breakdown for debugging
+        location_breakdown = {
+            record.location: {
+                "stock": record.stock,
+                "reserved": record.reserved or 0,
+                "available": record.available,
+            }
+            for record in stock_records
+        }
+
+        logger.info(
+            "Multi-location stock aggregated for Shopify sync",
+            product_id=str(product_id),
+            total_stock=total_stock,
+            total_available=total_available,
+            locations=location_breakdown,
+        )
+
+        # Verify product exists (for logging purposes)
+        product_result = await db.execute(select(Product).where(Product.id == product_id))
+        product = product_result.scalar_one_or_none()
 
         if not product:
             logger.error("Product not found for sync", product_id=str(product_id))
@@ -132,7 +174,8 @@ class InventorySyncService:
             )
 
             old_quantity = shopify_inventory.get("available", 0)
-            new_quantity = product.stock
+            # PHASE 2 - Task 2.2: Use aggregated total stock instead of single location
+            new_quantity = total_stock
             quantity_delta = new_quantity - old_quantity
 
             # Update Shopify inventory
@@ -144,11 +187,12 @@ class InventorySyncService:
                 )
 
                 logger.info(
-                    "Inventory synced to Shopify",
+                    "Inventory synced to Shopify (multi-location aggregated)",
                     product_id=str(product_id),
                     old_qty=old_quantity,
                     new_qty=new_quantity,
                     delta=quantity_delta,
+                    total_locations=len(stock_records),
                 )
 
             # Create sync log
@@ -197,9 +241,44 @@ class InventorySyncService:
             )
 
             db.add(sync_log)
+
+            # PHASE 2 - Task 2.3: Add to retry queue for automatic retry
+            from src.db.shopify_extended_models import ShopifyInventorySyncQueue
+            from datetime import timedelta
+
+            # Calculate next retry time (exponential backoff: 1min, 2min, 4min, 8min, 16min)
+            retry_delay_minutes = 2 ** 0  # Start with 1 minute (2^0 = 1)
+            next_retry_at = datetime.now(UTC) + timedelta(minutes=retry_delay_minutes)
+
+            queue_item = ShopifyInventorySyncQueue(
+                product_id=product_id,
+                shopify_product_id=shopify_product_id,
+                shopify_inventory_item_id=shopify_inventory_item_id,
+                shopify_location_id=shopify_location_id,
+                sync_direction="erp_to_shopify",
+                triggered_by=triggered_by,
+                retry_count=0,
+                max_retries=5,
+                next_retry_at=next_retry_at,
+                last_error=str(e),
+                status="pending",
+                sync_metadata={
+                    "total_stock": total_stock,
+                    "total_available": total_available,
+                    "location_count": len(stock_records),
+                },
+            )
+
+            db.add(queue_item)
             await db.commit()
 
-            return {"success": False, "error": str(e)}
+            logger.info(
+                "Failed sync added to retry queue",
+                product_id=str(product_id),
+                next_retry_at=next_retry_at.isoformat(),
+            )
+
+            return {"success": False, "error": str(e), "queued_for_retry": True}
 
     async def sync_stock_from_shopify(
         self,
@@ -547,3 +626,210 @@ class InventorySyncService:
                 error=str(e),
             )
             return {"success": False, "error": str(e)}
+
+
+# PHASE 2 - Task 2.3: Background Worker for Sync Queue Processing
+
+
+async def process_sync_queue_item(
+    db: AsyncSession,
+    queue_item: "ShopifyInventorySyncQueue",
+    sync_service: "InventorySyncService",
+) -> bool:
+    """
+    Process a single item from the sync queue.
+
+    Args:
+        db: Database session
+        queue_item: Queue item to process
+        sync_service: Initialized sync service
+
+    Returns:
+        True if sync succeeded, False otherwise
+    """
+    from src.db.shopify_extended_models import ShopifyInventorySyncQueue
+
+    # Update status to processing
+    queue_item.status = "processing"
+    await db.commit()
+
+    try:
+        # Attempt sync
+        sync_result = await sync_service.sync_stock_to_shopify(
+            db=db,
+            product_id=queue_item.product_id,
+            shopify_product_id=queue_item.shopify_product_id,
+            shopify_inventory_item_id=queue_item.shopify_inventory_item_id,
+            shopify_location_id=queue_item.shopify_location_id,
+            triggered_by=f"retry_{queue_item.retry_count + 1}",
+        )
+
+        if sync_result["success"]:
+            # Mark as completed
+            queue_item.status = "completed"
+            queue_item.completed_at = datetime.now(UTC)
+            await db.commit()
+
+            logger.info(
+                "Sync queue item processed successfully",
+                queue_item_id=str(queue_item.id),
+                product_id=str(queue_item.product_id),
+                retry_count=queue_item.retry_count,
+            )
+            return True
+        else:
+            # Sync failed, schedule retry or mark as failed
+            return False
+
+    except Exception as e:
+        logger.error(
+            "Sync queue item processing failed",
+            queue_item_id=str(queue_item.id),
+            product_id=str(queue_item.product_id),
+            error=str(e),
+        )
+        queue_item.last_error = str(e)
+        return False
+
+
+async def process_sync_queue_batch(db: AsyncSession) -> dict[str, int]:
+    """
+    Process a batch of items from the sync queue.
+
+    PHASE 2 - Task 2.3: Background worker batch processor
+    Runs every 5 minutes to retry failed syncs with exponential backoff.
+
+    Args:
+        db: Database session
+
+    Returns:
+        Processing statistics
+    """
+    from src.db.shopify_extended_models import ShopifyInventorySyncQueue
+    from src.integrations.shopify.client import get_shopify_client
+    from src.config.shopify_settings import get_shopify_settings
+
+    # Query for items ready to retry
+    query = (
+        select(ShopifyInventorySyncQueue)
+        .where(
+            ShopifyInventorySyncQueue.status == "pending",
+            ShopifyInventorySyncQueue.next_retry_at <= datetime.now(UTC),
+            ShopifyInventorySyncQueue.retry_count < ShopifyInventorySyncQueue.max_retries,
+        )
+        .limit(50)  # Process max 50 items per batch
+        .order_by(ShopifyInventorySyncQueue.next_retry_at.asc())
+    )
+
+    result = await db.execute(query)
+    queue_items = result.scalars().all()
+
+    if not queue_items:
+        logger.debug("No items in sync queue ready for retry")
+        return {"total": 0, "successful": 0, "failed": 0, "retrying": 0}
+
+    logger.info("Processing sync queue batch", item_count=len(queue_items))
+
+    # Initialize sync service
+    shopify_settings = get_shopify_settings()
+    shopify_client = get_shopify_client(shopify_settings)
+    sync_service = InventorySyncService(shopify_client)
+
+    stats = {
+        "total": len(queue_items),
+        "successful": 0,
+        "failed": 0,
+        "retrying": 0,
+    }
+
+    async with shopify_client:
+        for queue_item in queue_items:
+            success = await process_sync_queue_item(db, queue_item, sync_service)
+
+            if success:
+                stats["successful"] += 1
+            else:
+                # Increment retry count
+                queue_item.retry_count += 1
+
+                if queue_item.retry_count >= queue_item.max_retries:
+                    # Max retries exceeded, mark as failed
+                    queue_item.status = "failed"
+                    stats["failed"] += 1
+
+                    logger.warning(
+                        "Sync queue item failed after max retries",
+                        queue_item_id=str(queue_item.id),
+                        product_id=str(queue_item.product_id),
+                        retry_count=queue_item.retry_count,
+                    )
+                else:
+                    # Schedule next retry with exponential backoff
+                    from datetime import timedelta
+
+                    retry_delay_minutes = 2 ** queue_item.retry_count  # 1, 2, 4, 8, 16 minutes
+                    queue_item.next_retry_at = datetime.now(UTC) + timedelta(
+                        minutes=retry_delay_minutes
+                    )
+                    queue_item.status = "pending"
+                    stats["retrying"] += 1
+
+                    logger.info(
+                        "Sync queue item scheduled for retry",
+                        queue_item_id=str(queue_item.id),
+                        product_id=str(queue_item.product_id),
+                        retry_count=queue_item.retry_count,
+                        next_retry_at=queue_item.next_retry_at.isoformat(),
+                    )
+
+                await db.commit()
+
+    logger.info(
+        "Sync queue batch processing complete",
+        total=stats["total"],
+        successful=stats["successful"],
+        failed=stats["failed"],
+        retrying=stats["retrying"],
+    )
+
+    return stats
+
+
+async def start_sync_queue_worker():
+    """
+    Start the background worker for processing the sync queue.
+
+    PHASE 2 - Task 2.3: Background worker lifecycle
+    Runs every 5 minutes to process pending sync queue items.
+    """
+    global _background_worker_running
+    from src.config.database import get_async_db
+
+    if _background_worker_running:
+        logger.warning("Sync queue worker already running, skipping start")
+        return
+
+    _background_worker_running = True
+    logger.info("Starting Shopify inventory sync queue worker (5 minute interval)")
+
+    while _background_worker_running:
+        try:
+            # Process queue batch
+            async for db in get_async_db():
+                try:
+                    await process_sync_queue_batch(db)
+                finally:
+                    await db.close()
+
+        except Exception as e:
+            logger.error("Sync queue worker error", error=str(e))
+
+        # Wait 5 minutes before next batch
+        await asyncio.sleep(300)  # 5 minutes
+
+
+async def stop_sync_queue_worker():
+    """Stop the background worker."""
+    global _background_worker_running
+    _background_worker_running = False
+    logger.info("Stopping Shopify inventory sync queue worker")

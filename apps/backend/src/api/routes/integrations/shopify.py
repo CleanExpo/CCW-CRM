@@ -1541,3 +1541,121 @@ async def sync_product_metafields(
     )
 
     return sync_result
+
+
+# PHASE 2: Enhanced Shopify Integration - Task 2.4: Sync Health Dashboard
+# Inventory Sync Health Monitoring
+
+
+@router.get("/inventory/sync-status")
+async def get_inventory_sync_status(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Get Shopify inventory sync health status.
+
+    PHASE 2 - Task 2.4: Sync Health Dashboard
+    Returns statistics about sync queue, success rate, and recent activity.
+
+    Returns:
+        Sync health metrics and statistics
+    """
+    from src.db.shopify_extended_models import ShopifyInventorySync, ShopifyInventorySyncQueue
+    from sqlalchemy import func, and_
+
+    logger.info("fetching_inventory_sync_status")
+
+    # Get sync queue statistics
+    pending_query = select(func.count()).select_from(ShopifyInventorySyncQueue).where(
+        ShopifyInventorySyncQueue.status == "pending"
+    )
+    pending_result = await db.execute(pending_query)
+    pending_syncs = pending_result.scalar_one()
+
+    failed_query = select(func.count()).select_from(ShopifyInventorySyncQueue).where(
+        ShopifyInventorySyncQueue.status == "failed"
+    )
+    failed_result = await db.execute(failed_query)
+    failed_syncs = failed_result.scalar_one()
+
+    # Get last 24 hours sync history
+    from datetime import timedelta
+    last_24h = datetime.now(UTC) - timedelta(hours=24)
+
+    total_syncs_query = select(func.count()).select_from(ShopifyInventorySync).where(
+        ShopifyInventorySync.synced_at >= last_24h
+    )
+    total_syncs_result = await db.execute(total_syncs_query)
+    total_syncs_24h = total_syncs_result.scalar_one()
+
+    successful_syncs_query = (
+        select(func.count())
+        .select_from(ShopifyInventorySync)
+        .where(
+            and_(
+                ShopifyInventorySync.synced_at >= last_24h,
+                ShopifyInventorySync.status == "completed",
+            )
+        )
+    )
+    successful_syncs_result = await db.execute(successful_syncs_query)
+    successful_syncs_24h = successful_syncs_result.scalar_one()
+
+    # Calculate success rate
+    success_rate = (
+        (successful_syncs_24h / total_syncs_24h * 100) if total_syncs_24h > 0 else 100.0
+    )
+
+    # Get last sync time
+    last_sync_query = (
+        select(ShopifyInventorySync)
+        .order_by(ShopifyInventorySync.synced_at.desc())
+        .limit(1)
+    )
+    last_sync_result = await db.execute(last_sync_query)
+    last_sync = last_sync_result.scalar_one_or_none()
+
+    # Get recent failed syncs for debugging
+    failed_syncs_query = (
+        select(ShopifyInventorySync)
+        .where(ShopifyInventorySync.status == "failed")
+        .order_by(ShopifyInventorySync.synced_at.desc())
+        .limit(5)
+    )
+    failed_syncs_result = await db.execute(failed_syncs_query)
+    recent_failures = failed_syncs_result.scalars().all()
+
+    logger.info(
+        "inventory_sync_status_retrieved",
+        pending_syncs=pending_syncs,
+        failed_syncs=failed_syncs,
+        success_rate=success_rate,
+    )
+
+    return {
+        "status": "healthy" if success_rate >= 95 and pending_syncs < 10 else "degraded",
+        "queue": {
+            "pending_syncs": pending_syncs,
+            "failed_syncs": failed_syncs,
+        },
+        "performance_24h": {
+            "total_syncs": total_syncs_24h,
+            "successful_syncs": successful_syncs_24h,
+            "failed_syncs": total_syncs_24h - successful_syncs_24h,
+            "success_rate": round(success_rate, 2),
+        },
+        "last_sync": {
+            "timestamp": last_sync.synced_at.isoformat() if last_sync else None,
+            "status": last_sync.status if last_sync else None,
+            "direction": last_sync.direction if last_sync else None,
+        } if last_sync else None,
+        "recent_failures": [
+            {
+                "product_id": str(sync.product_id),
+                "timestamp": sync.synced_at.isoformat(),
+                "error": sync.error_message,
+                "direction": sync.direction,
+            }
+            for sync in recent_failures
+        ],
+    }
