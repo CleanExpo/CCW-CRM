@@ -165,7 +165,7 @@ class OrderItemBase(BaseModel):
 
 class OrderItemCreate(BaseModel):
     product_id: UUID
-    quantity: int = Field(ge=0)
+    quantity: int = Field(ge=1, description="Quantity must be at least 1")
 
 
 class OrderItem(OrderItemBase):
@@ -190,7 +190,7 @@ class OrderBase(BaseModel):
 
 
 class OrderCreate(OrderBase):
-    items: list[OrderItemCreate]
+    items: list[OrderItemCreate] = Field(min_length=1, description="Order must have at least one item")
 
 
 class OrderUpdate(BaseModel):
