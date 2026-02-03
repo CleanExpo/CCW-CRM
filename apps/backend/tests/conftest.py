@@ -22,7 +22,7 @@ from src.api.main import app
 from src.config.database import AsyncSessionLocal, get_async_db
 
 # Import test data fixtures
-pytest_plugins = ["tests.fixtures.data", "tests.fixtures.pos_data"]
+pytest_plugins = ["tests.fixtures.data", "tests.fixtures.pos_data", "tests.fixtures.shopify_fixtures"]
 
 
 @pytest.fixture
