@@ -204,18 +204,28 @@ async def create_quote(
     quote_items = []
     line_items_for_calc = []
 
+    # OPTIMIZATION: Batch load all products in single query (was N queries)
+    product_ids = [item.product_id for item in quote_data.items]
+    products_query = select(ProductModel).where(ProductModel.id.in_(product_ids))
+    products_result = await db.execute(products_query)
+    products = products_result.scalars().all()
+
+    # Create lookup dictionary
+    products_by_id: dict[UUID, ProductModel] = {p.id: p for p in products}
+
+    # Validate all products exist
+    missing_ids = set(product_ids) - set(products_by_id.keys())
+    if missing_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Products not found: {', '.join(str(id) for id in missing_ids)}"
+        )
+
+    # Process items without additional queries
     for item_data in quote_data.items:
-        # Get product to get price
-        product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
-        product_result = await db.execute(product_query)
-        product = product_result.scalar_one_or_none()
-
-        if not product:
-            raise HTTPException(
-                status_code=400, detail=f"Product {item_data.product_id} not found"
-            )
-
+        product = products_by_id[item_data.product_id]
         unit_price = product.price
+
         # Use shared calculation utility for line total
         line_total = calculate_line_total(item_data.quantity, unit_price)
 
@@ -321,20 +331,29 @@ async def update_quote(
         await db.flush()
 
         # Calculate new total and create items
+        # OPTIMIZATION: Batch load all products in single query (was N queries)
+        product_ids = [item.product_id for item in quote_data.items]
+        products_query = select(ProductModel).where(ProductModel.id.in_(product_ids))
+        products_result = await db.execute(products_query)
+        products = products_result.scalars().all()
+
+        # Create lookup dictionary
+        products_by_id: dict[UUID, ProductModel] = {p.id: p for p in products}
+
+        # Validate all products exist
+        missing_ids = set(product_ids) - set(products_by_id.keys())
+        if missing_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Products not found: {', '.join(str(id) for id in missing_ids)}"
+            )
+
+        # Process items without additional queries
         quote_items = []
         line_items_for_calc = []
 
         for item_data in quote_data.items:
-            # Get product to get price
-            product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
-            product_result = await db.execute(product_query)
-            product = product_result.scalar_one_or_none()
-
-            if not product:
-                raise HTTPException(
-                    status_code=400, detail=f"Product {item_data.product_id} not found"
-                )
-
+            product = products_by_id[item_data.product_id]
             unit_price = product.price
             line_total = calculate_line_total(item_data.quantity, unit_price)
 
