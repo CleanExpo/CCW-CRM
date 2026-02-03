@@ -18,10 +18,10 @@ from src.ai.base_agent import BaseAgent
 from src.db.demo_models import (
     Customer,
     Order,
-    POSTransaction,
     Product,
-    StockMovement,
 )
+from src.db.pos_models import POSTransaction
+# from src.db.inventory_models import StockMovement  # Not implemented yet
 
 logger = structlog.get_logger(__name__)
 

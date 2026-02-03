@@ -14,7 +14,8 @@ from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.base_agent import BaseAgent
-from src.db.demo_models import Customer, Order, OrderItem, Product, PurchaseOrder
+from src.db.demo_models import Customer, Order, OrderItem, Product
+from src.db.inventory_models import PurchaseOrder
 
 logger = structlog.get_logger(__name__)
 
