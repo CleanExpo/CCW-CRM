@@ -390,6 +390,8 @@ app.include_router(test_data_gen.router)  # Test data generation for learning en
 
 # Autonomous Development
 # app.include_router(autonomous_dev.router)  # TODO: File does not exist yet
+from .routes import autonomy_metrics
+app.include_router(autonomy_metrics.router, tags=["Autonomy Metrics"])
 
 # Translation management router - TODO: File does not exist yet
 # app.include_router(translations.router, tags=["Translation Management"])
