@@ -39,6 +39,9 @@ import { Quote, Customer, QuoteItem } from "../types";
 import { useAutosave } from "@/lib/hooks/use-autosave";
 import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
 import { useRecentItems } from "@/lib/hooks/use-recent-items";
+// PHASE C: AI Quote Assistant imports
+import { AIQuoteGenerator } from "@/components/ai/AIQuoteGenerator";
+import { Sparkles } from "lucide-react";
 
 const QUOTE_STATUSES = [
   { value: "draft", label: "Draft" },
@@ -77,6 +80,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("brisbane");
+  const [aiDialogOpen, setAiDialogOpen] = useState(false); // PHASE C: AI dialog state
   const { toast } = useToast();
   const isEdit = !!quote;
 
@@ -271,11 +275,55 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
 
   const total = lineItems.reduce((sum, item) => sum + item.line_total, 0);
 
+  // PHASE C: Handler for AI-generated quote data
+  const handleAIQuoteGenerated = (aiQuoteData: any) => {
+    // Pre-fill customer if provided
+    if (aiQuoteData.customer_id) {
+      form.setValue("customer_id", aiQuoteData.customer_id);
+    }
+
+    // Pre-fill notes with AI description
+    if (aiQuoteData.notes) {
+      form.setValue("notes", aiQuoteData.notes);
+    }
+
+    // Pre-fill line items
+    if (aiQuoteData.items && Array.isArray(aiQuoteData.items)) {
+      const mappedItems = aiQuoteData.items.map((item: any) => ({
+        product_id: item.product_id,
+        product_name: item.name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        line_total: item.line_total,
+      }));
+      setLineItems(mappedItems);
+    }
+
+    toast({
+      title: "Quote Pre-Filled",
+      description: `AI suggested ${aiQuoteData.items?.length || 0} products. Review and adjust as needed.`,
+    });
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Quote" : "Create Quote"}</DialogTitle>
+          <DialogTitle className="flex items-center justify-between w-full">
+            <span>{isEdit ? "Edit Quote" : "Create Quote"}</span>
+            {!isEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAiDialogOpen(true)}
+                type="button"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate with AI
+              </Button>
+            )}
+          </DialogTitle>
           <DialogDescription>
             {isEdit
               ? "Update the quote information and line items below."
@@ -475,5 +523,14 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
         </Form>
       </DialogContent>
     </Dialog>
+
+    {/* PHASE C: AI Quote Assistant */}
+    <AIQuoteGenerator
+      open={aiDialogOpen}
+      onOpenChange={setAiDialogOpen}
+      customerId={form.watch("customer_id")}
+      onQuoteGenerated={handleAIQuoteGenerated}
+    />
+    </>
   );
 }

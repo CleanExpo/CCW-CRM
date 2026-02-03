@@ -181,7 +181,7 @@ class ProductWorkflow(TaskSet):
     def list_products(self):
         """List products with search and filters."""
         search_terms = ["drill", "hammer", "saw", "wrench", "bolt", None, None, None]
-        categories = ["power_tools", "hand_tools", "safety_equipment", None, None]
+        categories = ["power_tools", "HAND_TOOLS", "safety_equipment", None, None]
 
         params = {
             "page": random.randint(1, 10),
@@ -209,7 +209,7 @@ class ProductWorkflow(TaskSet):
         product_data = {
             "sku": f"SKU-{uuid.uuid4().hex[:8].upper()}",
             "name": f"Load Test Product {random.choice(['Drill', 'Hammer', 'Saw'])}",
-            "category": random.choice(["power_tools", "hand_tools", "safety_equipment"]),
+            "category": random.choice(["power_tools", "HAND_TOOLS", "safety_equipment"]),
             "price": round(random.uniform(50, 500), 2),
             "cost": round(random.uniform(20, 200), 2),
             "stock": random.randint(0, 100),

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api/client";
 import type { Supplier } from "../types";
+import { useRecentItems } from "@/lib/hooks/use-recent-items";
 
 interface SupplierSelectProps {
   value: string;
@@ -21,6 +22,13 @@ export function SupplierSelect({ value, onSelect, disabled }: SupplierSelectProp
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // PHASE 4: Recent suppliers cache - speeds up PO entry
+  const { recentItems: recentSuppliers, addRecentItem: addRecentSupplier } =
+    useRecentItems<Supplier>({
+      key: "recent-suppliers",
+      maxItems: 10,
+    });
 
   useEffect(() => {
     async function loadSuppliers() {
@@ -41,6 +49,15 @@ export function SupplierSelect({ value, onSelect, disabled }: SupplierSelectProp
 
     loadSuppliers();
   }, []);
+
+  const handleSelect = (supplierId: string) => {
+    // Track supplier in recent items
+    const selectedSupplier = suppliers.find((s) => s.id === supplierId);
+    if (selectedSupplier) {
+      addRecentSupplier(selectedSupplier);
+    }
+    onSelect(supplierId);
+  };
 
   if (loading) {
     return (
@@ -73,16 +90,29 @@ export function SupplierSelect({ value, onSelect, disabled }: SupplierSelectProp
   }
 
   return (
-    <Select value={value} onValueChange={onSelect} disabled={disabled}>
+    <Select value={value} onValueChange={handleSelect} disabled={disabled}>
       <SelectTrigger>
         <SelectValue placeholder="Select supplier" />
       </SelectTrigger>
       <SelectContent>
-        {suppliers.map((supplier) => (
-          <SelectItem key={supplier.id} value={supplier.id}>
-            {supplier.supplier_code} - {supplier.company_name}
-          </SelectItem>
-        ))}
+        {/* PHASE 4: Show recent suppliers first */}
+        {recentSuppliers.length > 0 && (
+          <>
+            {recentSuppliers.map((supplier) => (
+              <SelectItem key={`recent-${supplier.id}`} value={supplier.id}>
+                🕒 {supplier.supplier_code} - {supplier.company_name}
+              </SelectItem>
+            ))}
+            <div className="border-t my-1" />
+          </>
+        )}
+        {suppliers
+          .filter((s) => !recentSuppliers.some((recent) => recent.id === s.id))
+          .map((supplier) => (
+            <SelectItem key={supplier.id} value={supplier.id}>
+              {supplier.supplier_code} - {supplier.company_name}
+            </SelectItem>
+          ))}
       </SelectContent>
     </Select>
   );

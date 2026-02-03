@@ -113,7 +113,7 @@ class TestProductsEndpoints:
             json={
                 "sku": f"TEST-SMOKE-{pytest.timestamp}",
                 "name": "Smoke Test Product",
-                "category": "hand_tools",
+                "category": "HAND_TOOLS",
                 "price": 99.99,
                 "cost": 50.00,
                 "stock": 100,
@@ -142,7 +142,7 @@ class TestProductsEndpoints:
             json={
                 "sku": "TEST-SKU-001",
                 "name": "Updated Product Name",
-                "category": "hand_tools",
+                "category": "HAND_TOOLS",
                 "price": 199.99,
                 "cost": 100.00,
                 "stock": 50,

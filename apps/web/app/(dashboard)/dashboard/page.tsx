@@ -17,6 +17,10 @@ import { TransferSuggestionsWidget } from "@/components/dashboard/TransferSugges
 import { OrderStatusBreakdownWidget } from "@/components/dashboard/OrderStatusBreakdownWidget";
 import { QuoteConversionWidget } from "@/components/dashboard/QuoteConversionWidget";
 import { RevenueByLocationWidget } from "@/components/dashboard/RevenueByLocationWidget";
+// PHASE C: AI Sales Insights Widget
+import { SalesInsightsWidget } from "@/components/dashboard/SalesInsightsWidget";
+// PHASE C: AI Order Patterns Widget
+import { OrderPatternsWidget } from "@/components/dashboard/OrderPatternsWidget";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 
@@ -276,13 +280,23 @@ export default function DashboardPage() {
           </BorderBeam>
         )}
 
+        {/* PHASE C: AI Sales Insights Widget - Spans 2 columns */}
+        <BentoCard variant="elevated" span={2} className="min-h-[400px]">
+          <SalesInsightsWidget />
+        </BentoCard>
+
         {/* Transfer Suggestions - 1 column */}
         <BentoCard variant="glass" span={1} className="min-h-[350px]">
           <TransferSuggestionsWidget />
         </BentoCard>
 
-        {/* Revenue by Location - Spans 2 columns */}
-        <BentoCard variant="glass" span={2} className="min-h-[350px]">
+        {/* PHASE C: AI Order Patterns Widget - Spans 2 columns */}
+        <BentoCard variant="glass" span={2} className="min-h-[450px]">
+          <OrderPatternsWidget />
+        </BentoCard>
+
+        {/* Revenue by Location - Spans 3 columns */}
+        <BentoCard variant="glass" span={3} className="min-h-[350px]">
           <RevenueByLocationWidget />
         </BentoCard>
 

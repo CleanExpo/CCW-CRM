@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 // PHASE 4: Real-time inventory updates
 import { useInventoryStream, type InventoryUpdate } from "@/lib/hooks/use-sse";
 import { RealTimeIndicator } from "@/components/ui/real-time-indicator";
+// PHASE 4: Search state persistence
+import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -66,11 +68,21 @@ export default function ProductsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [formOpen, setFormOpen] = useState(false);
+
+  // PHASE 4: Search state persistence - remembers search/pagination on navigation
+  const { state: searchState, updateField } = useSearchState({
+    key: "products-list",
+    defaultState: { search: "", page: 1, pageSize: 50 },
+  });
+
+  const search = searchState.search || "";
+  const page = searchState.page || 1;
+  const pageSize = searchState.pageSize || 50;
+  const setSearch = (value: string) => updateField("search", value);
+  const setPage = (value: number) => updateField("page", value);
+  const setPageSize = (value: number) => updateField("pageSize", value);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);

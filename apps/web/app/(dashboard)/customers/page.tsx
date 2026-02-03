@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// PHASE 4: Search state persistence
+import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,11 +49,21 @@ export default function CustomersPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [formOpen, setFormOpen] = useState(false);
+
+  // PHASE 4: Search state persistence - remembers search/pagination on navigation
+  const { state: searchState, updateField } = useSearchState({
+    key: "customers-list",
+    defaultState: { search: "", page: 1, pageSize: 50 },
+  });
+
+  const search = searchState.search || "";
+  const page = searchState.page || 1;
+  const pageSize = searchState.pageSize || 50;
+  const setSearch = (value: string) => updateField("search", value);
+  const setPage = (value: number) => updateField("page", value);
+  const setPageSize = (value: number) => updateField("pageSize", value);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);

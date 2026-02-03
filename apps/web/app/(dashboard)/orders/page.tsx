@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// PHASE 4: Search state persistence
+import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiClient } from "@/lib/api/client";
@@ -11,7 +13,7 @@ import { OrderForm } from "./components/OrderForm";
 import { DeleteOrderDialog } from "./components/DeleteOrderDialog";
 import { BulkDeleteOrdersDialog } from "./components/BulkDeleteOrdersDialog";
 import { OrderDetailDialog } from "./components/OrderDetailDialog";
-import { Pencil, Trash2, Plus, Eye, Download } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, Download, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
@@ -42,9 +44,18 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [loading, setLoading] = useState(true);
+
+  // PHASE 4: Search state persistence - remembers pagination on navigation
+  const { state: searchState, updateField } = useSearchState({
+    key: "orders-list",
+    defaultState: { page: 1, pageSize: 50 },
+  });
+
+  const page = searchState.page || 1;
+  const pageSize = searchState.pageSize || 50;
+  const setPage = (value: number) => updateField("page", value);
+  const setPageSize = (value: number) => updateField("pageSize", value);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
@@ -102,6 +113,35 @@ export default function OrdersPage() {
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to load order details";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
+    }
+  };
+
+  // PHASE 4: Duplicate order - quickly create copy with same items
+  const handleDuplicateOrder = async (order: Order) => {
+    try {
+      const fullOrder = await apiClient.get<Order>(`/api/orders/${order.id}`);
+      // Create a copy without id (will be treated as new order)
+      const orderCopy = {
+        ...fullOrder,
+        id: undefined, // Remove id to create new order
+        order_number: undefined, // Will be auto-generated
+        status: "draft", // Reset to draft
+        notes: fullOrder.notes ? `Copy of ${fullOrder.order_number}\n\n${fullOrder.notes}` : `Copy of ${fullOrder.order_number}`,
+      };
+      setSelectedOrder(orderCopy as Order);
+      setFormOpen(true);
+      toast({
+        title: "Order Duplicated",
+        description: "Review and modify the copy before saving",
+      });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to duplicate order";
       toast({
         variant: "destructive",
         title: "Error",
@@ -322,6 +362,17 @@ export default function OrdersPage() {
                         title="Edit Order"
                       >
                         <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicateOrder(order);
+                        }}
+                        title="Duplicate Order"
+                      >
+                        <Copy className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"

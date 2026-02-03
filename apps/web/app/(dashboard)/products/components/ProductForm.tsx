@@ -33,9 +33,11 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { useAutosave } from "@/lib/hooks/use-autosave";
 import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
+// PHASE C: AI Product Copy Generator
+import { AIProductCopyGenerator } from "@/components/ai/AIProductCopyGenerator";
 
 const productCategories = [
   "heavy_machinery",
@@ -99,6 +101,7 @@ const categoryLabels: Record<ProductCategory, string> = {
 export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [aiDialogOpen, setAiDialogOpen] = useState(false); // PHASE C: AI dialog state
   const isEdit = !!product;
 
   const form = useForm<FormData>({
@@ -195,7 +198,18 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
     }
   }
 
+  // PHASE C: Handler for AI-generated product copy
+  const handleCopyGenerated = (generatedCopy: string, copyType: string) => {
+    // Insert the generated copy into the description field
+    form.setValue("description", generatedCopy);
+    toast({
+      title: "Copy Inserted",
+      description: `AI-generated ${copyType} has been added to the description field.`,
+    });
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -281,7 +295,19 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Description</FormLabel>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAiDialogOpen(true)}
+                      className="h-auto p-1 text-xs"
+                    >
+                      <Sparkles className="mr-1 h-3 w-3" />
+                      Generate with AI
+                    </Button>
+                  </div>
                   <FormControl>
                     <Textarea
                       placeholder="Product description..."
@@ -405,5 +431,15 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
         </Form>
       </DialogContent>
     </Dialog>
+
+    {/* PHASE C: AI Product Copy Generator */}
+    <AIProductCopyGenerator
+      open={aiDialogOpen}
+      onOpenChange={setAiDialogOpen}
+      productName={form.watch("name")}
+      productCategory={form.watch("category")}
+      onCopyGenerated={handleCopyGenerated}
+    />
+    </>
   );
 }

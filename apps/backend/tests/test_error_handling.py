@@ -70,7 +70,7 @@ async def test_duplicate_sku_returns_json(client: AsyncClient, auth_token: str):
     product_data = {
         "sku": f"TEST-{uuid4().hex[:8]}",
         "name": "Test Product",
-        "category": "hand_tools",
+        "category": "HAND_TOOLS",
         "price": 99.99,
         "stock": 100,
     }
