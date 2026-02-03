@@ -29,10 +29,17 @@ from src.db.schemas import (
     OrderUpdate,
     PaginatedResponse,
 )
+from pydantic import BaseModel
 from src.monitoring import metrics
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
+
+
+class StatusUpdate(BaseModel):
+    """Request body for status updates."""
+    status: str
+    fulfillment_location: str = "brisbane"
 
 
 async def invalidate_order_caches() -> None:
@@ -952,6 +959,29 @@ async def update_order_status(
         OrderItem.model_validate(item).model_dump() for item in order.order_items
     ]
     return order_dict
+
+
+@router.patch("/{order_id}/status", response_model=Order)
+async def update_order_status_patch(
+    order_id: UUID,
+    status_update: StatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
+):
+    """
+    Update order status (PATCH endpoint accepting JSON body).
+
+    This is the RESTful PATCH version that accepts JSON body.
+    The PUT version uses query parameters for backwards compatibility.
+    """
+    # Call the existing PUT endpoint logic with query params extracted from body
+    return await update_order_status(
+        order_id=order_id,
+        status=status_update.status,
+        fulfillment_location=status_update.fulfillment_location,
+        db=db,
+        current_user=current_user,
+    )
 
 
 @router.delete("/{order_id}", status_code=204)

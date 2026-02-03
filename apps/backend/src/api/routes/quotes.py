@@ -28,10 +28,16 @@ from src.db.schemas import (
     QuoteItem,
     QuoteUpdate,
 )
+from pydantic import BaseModel
 from src.monitoring import metrics
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/quotes", tags=["quotes"])
+
+
+class StatusUpdate(BaseModel):
+    """Request body for status updates."""
+    status: str
 
 
 async def invalidate_quote_caches() -> None:
@@ -399,6 +405,67 @@ async def delete_quote(
     return None
 
 
+@router.patch("/{quote_id}/status", response_model=Quote)
+async def update_quote_status(
+    quote_id: UUID,
+    status_update: StatusUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Update quote status (PATCH endpoint accepting JSON body).
+
+    Validates status and updates the quote. RESTful endpoint.
+    """
+    # Get existing quote
+    query = select(QuoteModel).where(QuoteModel.id == quote_id)
+    result = await db.execute(query)
+    quote = result.scalar_one_or_none()
+
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+
+    # Validate status (must be a valid QuoteStatus)
+    valid_statuses = ["draft", "pending", "sent", "accepted", "rejected", "expired"]
+    if status_update.status not in valid_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+        )
+
+    # Update status
+    quote.status = status_update.status
+    await db.commit()
+    await db.refresh(quote)
+
+    # Invalidate quote-related caches
+    await invalidate_quote_caches()
+
+    # Track business metrics for status changes
+    if status_update.status == "sent":
+        metrics.quotes_created.labels(status="sent").inc()
+    elif status_update.status == "accepted":
+        metrics.quotes_converted.inc()
+
+    # Reload with items
+    query = (
+        select(QuoteModel)
+        .options(selectinload(QuoteModel.quote_items))
+        .where(QuoteModel.id == quote.id)
+    )
+    result = await db.execute(query)
+    quote = result.scalar_one()
+
+    quote_dict = Quote.model_validate(quote).model_dump()
+    quote_dict["valid_until"] = (
+        quote.valid_until.date().isoformat() if quote.valid_until else None
+    )
+    quote_dict["items"] = [
+        QuoteItem.model_validate(item).model_dump()
+        for item in quote.quote_items
+    ]
+    return quote_dict
+
+
 @router.post("/generate", response_model=Quote, status_code=201)
 async def generate_quote_with_ai(
     requirements: str,
@@ -535,3 +602,12 @@ async def convert_quote_to_order(
         for item in order.order_items
     ]
     return order_dict
+
+
+@router.post("/{quote_id}/convert", response_model=Order, status_code=201)
+async def convert_quote_to_order_short(
+    quote_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Convert a quote to an order (short alias for /convert-to-order)."""
+    return await convert_quote_to_order(quote_id, db)
