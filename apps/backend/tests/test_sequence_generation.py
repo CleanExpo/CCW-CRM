@@ -121,13 +121,14 @@ async def test_sequence_format():
         quote_num = quote_result.scalar()
 
         # Verify format: ORD-YYYY-NNNNNN and Q-YYYY-NNNNNN
+        # Format: ORD-2026-000001 (15 chars) and Q-2026-000001 (13 chars)
         assert order_num.startswith("ORD-2026-"), f"Invalid order format: {order_num}"
-        assert len(order_num) == 17, f"Invalid order length: {order_num}"
+        assert len(order_num) == 15, f"Invalid order length: {order_num} (expected 15 chars: ORD-YYYY-NNNNNN)"
 
         assert quote_num.startswith("Q-2026-"), f"Invalid quote format: {quote_num}"
-        assert len(quote_num) == 15, f"Invalid quote length: {quote_num}"
+        assert len(quote_num) == 13, f"Invalid quote length: {quote_num} (expected 13 chars: Q-YYYY-NNNNNN)"
 
         print(f"\n✅ Number format validation passed")
-        print(f"   Order: {order_num} (format: ORD-YYYY-NNNNNN)")
-        print(f"   Quote: {quote_num} (format: Q-YYYY-NNNNNN)")
+        print(f"   Order: {order_num} (format: ORD-YYYY-NNNNNN, 15 chars)")
+        print(f"   Quote: {quote_num} (format: Q-YYYY-NNNNNN, 13 chars)")
         break

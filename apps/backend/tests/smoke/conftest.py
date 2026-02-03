@@ -35,7 +35,7 @@ async def sample_product_id(db_session: AsyncSession) -> str:
     test_product = Product(
         sku=f"SMOKE-TEST-{pytest.timestamp}",
         name="Smoke Test Product",
-        category="hand_tools",
+        category="HAND_TOOLS",
         price=99.99,
         cost=50.00,
         stock=100,
@@ -52,7 +52,7 @@ async def deletable_product_id(db_session: AsyncSession) -> str:
     test_product = Product(
         sku=f"DELETE-ME-{pytest.timestamp}-{time.time_ns()}",
         name="Deletable Test Product",
-        category="hand_tools",
+        category="HAND_TOOLS",
         price=1.00,
         cost=0.50,
         stock=1,

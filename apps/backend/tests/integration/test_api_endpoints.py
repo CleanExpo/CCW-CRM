@@ -254,7 +254,7 @@ class TestProductEndpoints:
             json={
                 "sku": "DUPLICATE-SKU",
                 "name": "Second Product",
-                "category": "hand_tools",
+                "category": "HAND_TOOLS",
                 "price": 200.0,
             },
             headers=auth_headers,
@@ -592,7 +592,7 @@ class TestMultiTenantIsolation:
             id=uuid.uuid4(),
             sku="ORG2-PROD",
             name="Org 2 Product",
-            category="hand_tools",
+            category="HAND_TOOLS",
             price=200.0,
             cost=100.0,
             stock=20,

@@ -102,7 +102,7 @@ class TestProductCreate:
             "sku": sku,
             "name": "Test Product",
             "description": "A test product for automated testing",
-            "category": "hand_tools",
+            "category": "HAND_TOOLS",
             "price": 99.99,
             "cost": 50.00,
             "stock": 100,
@@ -132,7 +132,7 @@ class TestProductCreate:
         product = {
             "sku": sku,
             "name": "Duplicate Product",
-            "category": "hand_tools",
+            "category": "HAND_TOOLS",
             "price": 99.99,
             "cost": 50.00,
             "stock": 10,
@@ -174,7 +174,7 @@ class TestProductCreate:
         invalid_product = {
             "sku": f"TEST-INVALID-{uuid4().hex[:8]}",
             "name": "Invalid Price Product",
-            "category": "hand_tools",
+            "category": "HAND_TOOLS",
             "price": -10.00,  # Negative price
             "cost": 5.00,
             "stock": 10,
@@ -245,7 +245,7 @@ class TestProductDelete:
         new_product = {
             "sku": f"TEST-DELETE-{uuid4().hex[:8]}",
             "name": "Product to Delete",
-            "category": "hand_tools",
+            "category": "HAND_TOOLS",
             "price": 10.00,
             "cost": 5.00,
             "stock": 1,
