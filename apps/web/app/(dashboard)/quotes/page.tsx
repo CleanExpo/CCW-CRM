@@ -15,7 +15,7 @@ import { QuoteCopilotChat } from "@/components/ai/QuoteCopilotChat";
 import { useToast } from "@/hooks/use-toast";
 import { Quote } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns"; // PHASE 4: Add timestamp display
 
 interface PaginatedResponse {
   items: Quote[];
@@ -39,6 +39,7 @@ export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
@@ -66,6 +67,7 @@ export default function QuotesPage() {
       setTotal(0);
     } finally {
       setLoading(false);
+      setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
   }, [toast]);
 
@@ -182,6 +184,11 @@ export default function QuotesPage() {
               <CardTitle>Quotations</CardTitle>
               <CardDescription>
                 {total} quotes in system
+                {lastUpdated && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                  </span>
+                )}
               </CardDescription>
             </div>
           </div>
