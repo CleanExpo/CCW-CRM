@@ -268,7 +268,11 @@ async def create_purchase_order(
         .options(selectinload(PurchaseOrder.items))
         .where(PurchaseOrder.id == po.id)
     )
-    po_with_items = result.scalar_one()
+    po_with_items = result.scalar_one_or_none()
+
+    if not po_with_items:
+        # PO was deleted between creation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Purchase order not found after creation")
 
     return PurchaseOrderResponse.model_validate(po_with_items)
 

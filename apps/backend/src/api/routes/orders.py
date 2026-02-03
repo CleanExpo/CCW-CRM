@@ -141,7 +141,14 @@ async def deduct_stock_for_order(
             )
         ).with_for_update()
         result = await db.execute(stmt)
-        stock = result.scalar_one()
+        stock = result.scalar_one_or_none()
+
+        if not stock:
+            # Stock record was deleted between check and reservation (race condition)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Stock record not found for product {product_id} at {location}"
+            )
 
         previous_qty = stock.stock
         stock.stock -= quantity
@@ -605,7 +612,11 @@ async def create_order(
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
-    order = result.scalar_one()
+    order = result.scalar_one_or_none()
+
+    if not order:
+        # Order was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Order not found after operation")
 
     order_dict = Order.model_validate(order).model_dump()
     order_dict["items"] = [
@@ -829,7 +840,11 @@ async def update_order(
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
-    order = result.scalar_one()
+    order = result.scalar_one_or_none()
+
+    if not order:
+        # Order was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Order not found after operation")
 
     order_dict = Order.model_validate(order).model_dump()
     order_dict["items"] = [
@@ -952,7 +967,11 @@ async def update_order_status(
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
-    order = result.scalar_one()
+    order = result.scalar_one_or_none()
+
+    if not order:
+        # Order was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Order not found after operation")
 
     order_dict = Order.model_validate(order).model_dump()
     order_dict["items"] = [

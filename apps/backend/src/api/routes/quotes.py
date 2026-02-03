@@ -266,7 +266,11 @@ async def create_quote(
         .where(QuoteModel.id == quote.id)
     )
     result = await db.execute(query)
-    quote = result.scalar_one()
+    quote = result.scalar_one_or_none()
+
+    if not quote:
+        # Quote was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Quote not found after operation")
 
     quote_dict = Quote.model_validate(quote).model_dump()
     quote_dict["valid_until"] = (
@@ -368,7 +372,11 @@ async def update_quote(
         .where(QuoteModel.id == quote.id)
     )
     result = await db.execute(query)
-    quote = result.scalar_one()
+    quote = result.scalar_one_or_none()
+
+    if not quote:
+        # Quote was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Quote not found after operation")
 
     quote_dict = Quote.model_validate(quote).model_dump()
     quote_dict["valid_until"] = (
@@ -453,7 +461,11 @@ async def update_quote_status(
         .where(QuoteModel.id == quote.id)
     )
     result = await db.execute(query)
-    quote = result.scalar_one()
+    quote = result.scalar_one_or_none()
+
+    if not quote:
+        # Quote was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Quote not found after operation")
 
     quote_dict = Quote.model_validate(quote).model_dump()
     quote_dict["valid_until"] = (
@@ -594,7 +606,11 @@ async def convert_quote_to_order(
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
-    order = result.scalar_one()
+    order = result.scalar_one_or_none()
+
+    if not order:
+        # Order was deleted between creation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Order not found after quote conversion")
 
     order_dict = Order.model_validate(order).model_dump()
     order_dict["items"] = [
