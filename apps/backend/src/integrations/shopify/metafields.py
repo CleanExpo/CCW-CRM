@@ -30,6 +30,11 @@ class MetafieldManager:
     - ccw_custom.warehouse_location: Internal warehouse location
     - ccw_custom.supplier_info: Supplier information
     - ccw_custom.maintenance_guide: Maintenance instructions URL
+    - ccw_custom.stock_alert_threshold: Low stock alert threshold
+    - ccw_custom.dimensions: Product dimensions (JSON)
+    - ccw_custom.weight_kg: Product weight in kilograms
+    - ccw_custom.brand: Brand name
+    - ccw_custom.certification_expiry: Certification expiration date
     """
 
     CCW_NAMESPACE = "ccw_custom"
@@ -58,6 +63,23 @@ class MetafieldManager:
         "stock_alert_threshold": {
             "type": "number_integer",
             "description": "Low stock alert threshold",
+        },
+        # PHASE: Enhanced Shopify Integration - New Metafields (Task 1.1)
+        "dimensions": {
+            "type": "json",
+            "description": "Product dimensions (length, width, height, unit)",
+        },
+        "weight_kg": {
+            "type": "number_decimal",
+            "description": "Product weight in kilograms",
+        },
+        "brand": {
+            "type": "single_line_text_field",
+            "description": "Brand name",
+        },
+        "certification_expiry": {
+            "type": "date",
+            "description": "Certification expiration date (ISO 8601 format: YYYY-MM-DD)",
         },
     }
 
@@ -195,6 +217,73 @@ class MetafieldManager:
         # Stock alert threshold
         if product.stock < 10:  # Example threshold
             metafields["stock_alert_threshold"] = 10
+
+        # PHASE: Enhanced Shopify Integration - New Metafields (Task 1.1)
+
+        # Dimensions - Extract from product category or use default
+        # For heavy machinery, use larger default dimensions
+        if product.category in ["heavy_machinery", "power_tools"]:
+            metafields["dimensions"] = {
+                "length": 120,
+                "width": 80,
+                "height": 100,
+                "unit": "cm",
+            }
+        elif product.category in ["hand_tools", "accessories"]:
+            metafields["dimensions"] = {
+                "length": 30,
+                "width": 20,
+                "height": 10,
+                "unit": "cm",
+            }
+        else:
+            metafields["dimensions"] = {
+                "length": 50,
+                "width": 40,
+                "height": 30,
+                "unit": "cm",
+            }
+
+        # Weight - Estimate based on category
+        if product.category == "heavy_machinery":
+            metafields["weight_kg"] = 150.0
+        elif product.category == "power_tools":
+            metafields["weight_kg"] = 5.0
+        elif product.category in ["hand_tools", "accessories"]:
+            metafields["weight_kg"] = 1.5
+        elif product.category == "building_materials":
+            metafields["weight_kg"] = 25.0
+        else:
+            metafields["weight_kg"] = 10.0
+
+        # Brand - Extract from product name (first word) or use "CCW"
+        # Example: "DeWalt Drill" → brand = "DeWalt"
+        if product.name:
+            first_word = product.name.split()[0] if " " in product.name else product.name
+            # Check if first word looks like a brand (capitalized, not generic)
+            generic_words = {
+                "the",
+                "a",
+                "an",
+                "industrial",
+                "heavy",
+                "professional",
+                "commercial",
+            }
+            if first_word.lower() not in generic_words and first_word[0].isupper():
+                metafields["brand"] = first_word
+            else:
+                metafields["brand"] = "CCW"
+        else:
+            metafields["brand"] = "CCW"
+
+        # Certification expiry - Set to 1 year from product creation
+        # In production, this would come from a dedicated certification tracking system
+        from datetime import timedelta
+
+        if product.created_at:
+            expiry_date = product.created_at + timedelta(days=365)
+            metafields["certification_expiry"] = expiry_date.strftime("%Y-%m-%d")
 
         return metafields
 

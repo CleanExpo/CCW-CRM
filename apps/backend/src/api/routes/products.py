@@ -2,7 +2,9 @@
 
 Performance optimized with Redis caching.
 PHASE 4: Enhanced with multi-location stock to eliminate N+1 queries.
+PHASE: Enhanced Shopify Integration - Task 1.2: Automatic metafield sync on product update.
 """
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -180,7 +182,11 @@ async def update_product(
     product_data: ProductUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update a product."""
+    """Update a product.
+
+    PHASE: Enhanced Shopify Integration - Task 1.2
+    Automatically syncs metafields to Shopify if product is mapped.
+    """
     # Get existing product
     query = select(ProductModel).where(ProductModel.id == product_id)
     result = await db.execute(query)
@@ -202,6 +208,80 @@ async def update_product(
     await invalidate_cache("api_products_list")
     await invalidate_cache("dashboard_inventory")
     await invalidate_cache("dashboard_top_products")
+
+    # PHASE: Enhanced Shopify Integration - Task 1.2: Automatic Metafield Sync
+    # Check if product has Shopify mapping and sync metafields automatically
+    try:
+        from src.db.shopify_models import ShopifyProductMapping
+        from src.integrations.shopify.metafields import get_metafield_manager
+        from src.services.sse_service import sse_service
+        import structlog
+
+        logger = structlog.get_logger(__name__)
+
+        # Check if product is mapped to Shopify
+        mapping_query = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.product_id == product_id
+        )
+        mapping_result = await db.execute(mapping_query)
+        shopify_mapping = mapping_result.scalar_one_or_none()
+
+        if shopify_mapping:
+            logger.info(
+                "Product updated, triggering automatic metafield sync",
+                product_id=str(product_id),
+                shopify_product_id=shopify_mapping.shopify_product_id,
+            )
+
+            # Publish SSE event: Metafield sync starting
+            await sse_service.publish("shopify-metafield-sync", {
+                "event_type": "sync_started",
+                "product_id": str(product_id),
+                "shopify_product_id": str(shopify_mapping.shopify_product_id),
+                "timestamp": datetime.now().isoformat(),
+            })
+
+            # Trigger metafield sync
+            metafield_manager = get_metafield_manager()
+            sync_result = await metafield_manager.sync_product_metafields(
+                db=db,
+                product_id=product_id,
+                shopify_product_id=str(shopify_mapping.shopify_product_id),
+            )
+
+            # Publish SSE event: Metafield sync completed
+            await sse_service.publish("shopify-metafield-sync", {
+                "event_type": "sync_completed" if sync_result["success"] else "sync_failed",
+                "product_id": str(product_id),
+                "shopify_product_id": str(shopify_mapping.shopify_product_id),
+                "synced_count": sync_result.get("synced_count", 0),
+                "synced_metafields": sync_result.get("synced_metafields", []),
+                "errors": sync_result.get("errors", []),
+                "timestamp": datetime.now().isoformat(),
+            })
+
+            logger.info(
+                "Automatic metafield sync completed",
+                product_id=str(product_id),
+                success=sync_result["success"],
+                synced_count=sync_result.get("synced_count", 0),
+            )
+        else:
+            logger.debug(
+                "Product not mapped to Shopify, skipping metafield sync",
+                product_id=str(product_id),
+            )
+
+    except Exception as e:
+        # Log error but don't fail the product update
+        import structlog
+        logger = structlog.get_logger(__name__)
+        logger.error(
+            "Failed to sync metafields automatically",
+            product_id=str(product_id),
+            error=str(e),
+        )
+        # Continue with product update success
 
     return Product.model_validate(product)
 

@@ -2,8 +2,11 @@
 
 Provides API routes for managing Shopify connection, importing orders,
 and syncing inventory.
+
+PHASE: Enhanced Shopify Integration - Task 1.3: Bulk metafield sync endpoints.
 """
 
+from datetime import datetime
 from typing import Annotated
 
 import structlog
@@ -1309,3 +1312,232 @@ async def handle_webhook(
         # Return 200 to prevent Shopify from retrying
         # Error is logged in database
         return {"success": False, "error": str(e)}
+
+
+# PHASE: Enhanced Shopify Integration - Task 1.3: Bulk Metafield Sync
+# Metafield Sync Endpoints
+
+
+@router.post("/metafields/sync-all")
+async def sync_all_metafields(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Bulk sync metafields for all products mapped to Shopify.
+
+    PHASE: Enhanced Shopify Integration - Task 1.3
+    Syncs custom metafields (dimensions, weight, brand, certification_expiry) for all
+    products that have Shopify mappings. Publishes SSE events for real-time progress.
+
+    Returns:
+        Summary of sync results including successful and failed products.
+    """
+    from src.db.shopify_models import ShopifyProductMapping
+    from src.integrations.shopify.metafields import get_metafield_manager
+    from src.services.sse_service import sse_service
+
+    logger.info("bulk_metafield_sync_started")
+
+    # Get all products with Shopify mappings
+    mapping_query = select(ShopifyProductMapping).where(
+        ShopifyProductMapping.sync_status.in_(["synced", "pending"])
+    )
+    result = await db.execute(mapping_query)
+    mappings = result.scalars().all()
+
+    if not mappings:
+        logger.info("no_shopify_mappings_found")
+        return {
+            "success": True,
+            "total": 0,
+            "successful": 0,
+            "failed": 0,
+            "errors": [],
+            "message": "No products mapped to Shopify",
+        }
+
+    logger.info("shopify_mappings_found", count=len(mappings))
+
+    # Initialize results
+    results = {
+        "total": len(mappings),
+        "successful": 0,
+        "failed": 0,
+        "errors": [],
+        "synced_products": [],
+    }
+
+    # Publish SSE event: Bulk sync started
+    await sse_service.publish("shopify-metafield-sync", {
+        "event_type": "bulk_sync_started",
+        "total_products": len(mappings),
+        "timestamp": datetime.now().isoformat(),
+    })
+
+    # Get metafield manager
+    metafield_manager = get_metafield_manager()
+
+    # Process each product
+    for idx, mapping in enumerate(mappings):
+        try:
+            # Publish SSE event: Processing product
+            await sse_service.publish("shopify-metafield-sync", {
+                "event_type": "sync_progress",
+                "product_id": str(mapping.product_id),
+                "shopify_product_id": str(mapping.shopify_product_id),
+                "progress": idx + 1,
+                "total": len(mappings),
+                "percent": round(((idx + 1) / len(mappings)) * 100, 1),
+                "timestamp": datetime.now().isoformat(),
+            })
+
+            # Sync metafields for this product
+            sync_result = await metafield_manager.sync_product_metafields(
+                db=db,
+                product_id=mapping.product_id,
+                shopify_product_id=str(mapping.shopify_product_id),
+            )
+
+            if sync_result["success"]:
+                results["successful"] += 1
+                results["synced_products"].append({
+                    "product_id": str(mapping.product_id),
+                    "shopify_product_id": str(mapping.shopify_product_id),
+                    "synced_count": sync_result.get("synced_count", 0),
+                    "synced_metafields": sync_result.get("synced_metafields", []),
+                })
+
+                logger.info(
+                    "product_metafields_synced",
+                    product_id=str(mapping.product_id),
+                    synced_count=sync_result.get("synced_count", 0),
+                )
+            else:
+                results["failed"] += 1
+                error_msg = f"Product {mapping.product_id}: {', '.join(sync_result.get('errors', []))}"
+                results["errors"].append(error_msg)
+
+                logger.error(
+                    "product_metafield_sync_failed",
+                    product_id=str(mapping.product_id),
+                    errors=sync_result.get("errors", []),
+                )
+
+        except Exception as e:
+            results["failed"] += 1
+            error_msg = f"Product {mapping.product_id}: {str(e)}"
+            results["errors"].append(error_msg)
+
+            logger.error(
+                "metafield_sync_exception",
+                product_id=str(mapping.product_id),
+                error=str(e),
+            )
+
+    # Publish SSE event: Bulk sync completed
+    await sse_service.publish("shopify-metafield-sync", {
+        "event_type": "bulk_sync_completed",
+        "total": results["total"],
+        "successful": results["successful"],
+        "failed": results["failed"],
+        "timestamp": datetime.now().isoformat(),
+    })
+
+    logger.info(
+        "bulk_metafield_sync_completed",
+        total=results["total"],
+        successful=results["successful"],
+        failed=results["failed"],
+    )
+
+    return {
+        "success": results["failed"] == 0,
+        **results,
+        "message": (
+            f"Synced {results['successful']} of {results['total']} products. "
+            f"{results['failed']} failed."
+        ),
+    }
+
+
+@router.post("/metafields/sync/{product_id}")
+async def sync_product_metafields(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Sync metafields for a single product.
+
+    PHASE: Enhanced Shopify Integration - Task 1.3
+    Manually triggers metafield sync for a specific product.
+
+    Args:
+        product_id: ERP product UUID
+
+    Returns:
+        Sync result with synced metafield count and errors.
+    """
+    from uuid import UUID
+    from src.db.shopify_models import ShopifyProductMapping
+    from src.integrations.shopify.metafields import get_metafield_manager
+    from src.services.sse_service import sse_service
+
+    logger.info("manual_metafield_sync", product_id=product_id)
+
+    # Convert string to UUID
+    try:
+        product_uuid = UUID(product_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid product_id format: {product_id}",
+        ) from e
+
+    # Check if product has Shopify mapping
+    mapping_query = select(ShopifyProductMapping).where(
+        ShopifyProductMapping.product_id == product_uuid
+    )
+    mapping_result = await db.execute(mapping_query)
+    shopify_mapping = mapping_result.scalar_one_or_none()
+
+    if not shopify_mapping:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Product {product_id} is not mapped to Shopify",
+        )
+
+    # Publish SSE event: Sync started
+    await sse_service.publish("shopify-metafield-sync", {
+        "event_type": "sync_started",
+        "product_id": product_id,
+        "shopify_product_id": str(shopify_mapping.shopify_product_id),
+        "timestamp": datetime.now().isoformat(),
+    })
+
+    # Sync metafields
+    metafield_manager = get_metafield_manager()
+    sync_result = await metafield_manager.sync_product_metafields(
+        db=db,
+        product_id=product_uuid,
+        shopify_product_id=str(shopify_mapping.shopify_product_id),
+    )
+
+    # Publish SSE event: Sync completed
+    await sse_service.publish("shopify-metafield-sync", {
+        "event_type": "sync_completed" if sync_result["success"] else "sync_failed",
+        "product_id": product_id,
+        "shopify_product_id": str(shopify_mapping.shopify_product_id),
+        "synced_count": sync_result.get("synced_count", 0),
+        "synced_metafields": sync_result.get("synced_metafields", []),
+        "errors": sync_result.get("errors", []),
+        "timestamp": datetime.now().isoformat(),
+    })
+
+    logger.info(
+        "manual_metafield_sync_completed",
+        product_id=product_id,
+        success=sync_result["success"],
+        synced_count=sync_result.get("synced_count", 0),
+    )
+
+    return sync_result
