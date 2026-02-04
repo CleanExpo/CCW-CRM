@@ -15,11 +15,25 @@ from .context_builder import (
     ProjectStructure,
     StyleGuide,
 )
+from .generator import (
+    CodeGenerationRequest,
+    CodeGenerationResult,
+    CodeGenerator,
+    GeneratedFile,
+    QualityReport,
+)
 
 __all__ = [
+    # Context Builder
     "CodeContext",
     "CodePattern",
     "ContextBuilder",
     "ProjectStructure",
     "StyleGuide",
+    # Code Generator
+    "CodeGenerationRequest",
+    "CodeGenerationResult",
+    "CodeGenerator",
+    "GeneratedFile",
+    "QualityReport",
 ]
