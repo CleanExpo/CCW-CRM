@@ -159,8 +159,8 @@ class BankFeedScheduler:
 
                         service = BankFeedService(db)
 
-                        # Sync transactions
-                        sync_result = await service.sync_bank_feeds(
+                        # Sync transactions with retry (Phase 5)
+                        sync_result = await service.sync_bank_feeds_with_retry(
                             account_id=account.id,
                             start_date=start_date,
                             end_date=end_date,
@@ -169,7 +169,7 @@ class BankFeedScheduler:
                         transactions_synced = sync_result["transactions_synced"]
                         total_transactions += transactions_synced
 
-                        # Auto-reconcile was already done in sync_bank_feeds
+                        # Auto-reconcile was already done in sync_bank_feeds_with_retry
                         # Get reconciliation stats
                         recon_result = await service.auto_reconcile(account.id)
                         auto_matched = recon_result["auto_matched"]
@@ -311,8 +311,8 @@ class BankFeedScheduler:
             start_date = end_date - timedelta(days=7)
 
             if account_id:
-                # Sync specific account
-                sync_result = await service.sync_bank_feeds(
+                # Sync specific account with retry (Phase 5)
+                sync_result = await service.sync_bank_feeds_with_retry(
                     account_id=account_id,
                     start_date=start_date,
                     end_date=end_date,

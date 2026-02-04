@@ -6,8 +6,10 @@ Handles:
 - Auto-matching transactions with POS records
 - Manual reconciliation workflow
 - AI-powered match suggestions (Phase 2 enhancement)
+- Error recovery with exponential backoff (Phase 5)
 """
 
+import asyncio
 import os
 from datetime import date, datetime
 from decimal import Decimal
@@ -30,6 +32,101 @@ class BankFeedService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.tolerance_cents = Decimal("0.10")  # ±10 cents tolerance for auto-match
+        self.max_retries = 3  # Maximum retry attempts (Phase 5)
+        self.base_delay = 2.0  # Base delay in seconds for exponential backoff
+
+    async def sync_bank_feeds_with_retry(
+        self,
+        account_id: UUID,
+        start_date: date,
+        end_date: date,
+    ) -> dict:
+        """
+        Sync bank feeds with exponential backoff retry (Phase 5).
+
+        Attempts to sync up to max_retries times with exponential backoff.
+        Tracks retry count and last error in the database.
+
+        Args:
+            account_id: Bank account ID
+            start_date: Start date for sync
+            end_date: End date for sync
+
+        Returns:
+            Sync result with transaction count
+
+        Raises:
+            Exception: If all retries are exhausted
+        """
+        # Get bank account for retry tracking
+        account_result = await self.db.execute(
+            select(BankAccount).where(BankAccount.id == account_id)
+        )
+        account = account_result.scalar_one_or_none()
+
+        if not account:
+            raise ValueError(f"Bank account {account_id} not found")
+
+        last_error = None
+        retry_count = 0
+
+        for attempt in range(self.max_retries):
+            try:
+                # Attempt sync
+                result = await self.sync_bank_feeds(account_id, start_date, end_date)
+
+                # Success! Reset retry count and clear error
+                account.sync_retry_count = 0
+                account.last_sync_error = None
+                await self.db.commit()
+
+                logger.info(
+                    "Bank feed sync succeeded",
+                    account_id=str(account_id),
+                    attempt=attempt + 1,
+                    transactions=result["transactions_synced"],
+                )
+
+                return result
+
+            except Exception as e:
+                last_error = e
+                retry_count = attempt + 1
+
+                logger.warning(
+                    "Bank feed sync failed, will retry",
+                    account_id=str(account_id),
+                    attempt=retry_count,
+                    max_retries=self.max_retries,
+                    error=str(e),
+                )
+
+                # Update retry count and error
+                account.sync_retry_count = retry_count
+                account.last_sync_error = str(e)[:500]  # Limit error message length
+                await self.db.commit()
+
+                # If not last attempt, wait with exponential backoff
+                if attempt < self.max_retries - 1:
+                    delay = self.base_delay * (2**attempt)  # 2s, 4s, 8s
+                    logger.info(
+                        "Waiting before retry",
+                        account_id=str(account_id),
+                        delay_seconds=delay,
+                    )
+                    await asyncio.sleep(delay)
+
+        # All retries exhausted
+        logger.error(
+            "Bank feed sync failed after all retries",
+            account_id=str(account_id),
+            total_attempts=self.max_retries,
+            final_error=str(last_error),
+        )
+
+        raise Exception(
+            f"Sync failed after {self.max_retries} attempts: {str(last_error)}"
+        )
 
     async def sync_bank_feeds(
         self,
@@ -76,27 +173,72 @@ class BankFeedService:
         else:
             raise ValueError(f"Unsupported feed provider: {account.feed_provider}")
 
-        # Store transactions in database
-        for txn in transactions:
-            bank_feed = BankFeed(
-                bank_account_id=account_id,
-                transaction_date=txn["transaction_date"],
-                description=txn.get("description"),
-                reference=txn.get("reference"),
-                debit=txn.get("debit"),
-                credit=txn.get("credit"),
-                balance=txn.get("balance"),
-                raw_data=txn,
-            )
-            self.db.add(bank_feed)
+        # Store transactions in database with partial sync recovery (Phase 5)
+        synced_count = 0
+        failed_count = 0
 
+        for txn in transactions:
+            try:
+                # Check if transaction already exists (prevent duplicates on retry)
+                existing = await self.db.execute(
+                    select(BankFeed).where(
+                        and_(
+                            BankFeed.bank_account_id == account_id,
+                            BankFeed.transaction_date == txn["transaction_date"],
+                            BankFeed.reference == txn.get("reference"),
+                            BankFeed.credit == txn.get("credit"),
+                            BankFeed.debit == txn.get("debit"),
+                        )
+                    )
+                )
+                if existing.scalar_one_or_none():
+                    logger.debug(
+                        "Skipping duplicate transaction",
+                        account_id=str(account_id),
+                        date=txn["transaction_date"],
+                        reference=txn.get("reference"),
+                    )
+                    continue
+
+                bank_feed = BankFeed(
+                    bank_account_id=account_id,
+                    transaction_date=txn["transaction_date"],
+                    description=txn.get("description"),
+                    reference=txn.get("reference"),
+                    debit=txn.get("debit"),
+                    credit=txn.get("credit"),
+                    balance=txn.get("balance"),
+                    raw_data=txn,
+                )
+                self.db.add(bank_feed)
+                synced_count += 1
+
+            except Exception as e:
+                failed_count += 1
+                logger.warning(
+                    "Failed to store transaction",
+                    account_id=str(account_id),
+                    transaction=txn,
+                    error=str(e),
+                )
+                # Continue processing remaining transactions
+
+        # Flush stored transactions
         await self.db.flush()
 
         # Update account sync status
         account.last_feed_sync_at = datetime.now()
-        account.feed_sync_status = "active"
+        account.feed_sync_status = "active" if failed_count == 0 else "partial"
 
         await self.db.commit()
+
+        logger.info(
+            "Bank feed sync completed",
+            account_id=str(account_id),
+            synced=synced_count,
+            failed=failed_count,
+            total=len(transactions),
+        )
 
         # Auto-reconcile exact matches
         await self.auto_reconcile(account_id)

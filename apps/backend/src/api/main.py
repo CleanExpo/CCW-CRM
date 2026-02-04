@@ -37,6 +37,7 @@ from .routes import (
     customers,
     demo_auth,
     demo_dashboard,
+    reconciliation_dashboard,
     demo_lists,
     health,
     inventory,
@@ -433,6 +434,7 @@ app.include_router(google_ai.router, tags=["Google AI"])
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
+app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashboard"])
 
 # Monitoring routers (system alerts, business metrics, performance)
 from src.api.routes.monitoring import alerts, business_metrics, performance

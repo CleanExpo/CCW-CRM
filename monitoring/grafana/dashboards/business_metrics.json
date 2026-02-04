@@ -175,6 +175,143 @@
           "legendFormat": "Transactions"
         }
       ]
+    },
+    {
+      "title": "Bank Feed Auto-Match Rate",
+      "type": "gauge",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "bank_feed_auto_match_rate",
+          "legendFormat": "Auto-Match Rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 0.7, "color": "yellow"},
+              {"value": 0.85, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Pending Bank Feeds",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 20,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "bank_feed_pending_count",
+          "legendFormat": "Pending"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 50, "color": "yellow"},
+              {"value": 100, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Bank Feed Sync Success Rate",
+      "type": "graph",
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "rate(bank_feed_sync_success_total[1h]) / (rate(bank_feed_sync_success_total[1h]) + rate(bank_feed_sync_failure_total[1h]))",
+          "legendFormat": "{{provider}}"
+        }
+      ],
+      "yaxes": [
+        {"format": "percentunit", "min": 0, "max": 1}
+      ]
+    },
+    {
+      "title": "Webhook Activity",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 12,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "rate(bank_feed_webhook_received_total[5m]) * 300",
+          "legendFormat": "{{provider}}"
+        }
+      ],
+      "yaxes": [
+        {"format": "short", "label": "Webhooks per 5m"}
+      ]
+    },
+    {
+      "title": "AI Suggestions Generated",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 26,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "increase(bank_feed_suggestions_generated_total[24h])",
+          "legendFormat": "Suggestions (24h)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "title": "Top Unmatched Feeds (by Amount)",
+      "type": "table",
+      "gridPos": {
+        "x": 18,
+        "y": 26,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "topk(10, bank_feed_pending_count) by (account)",
+          "legendFormat": "{{account}}",
+          "format": "table"
+        }
+      ]
     }
   ]
 }
