@@ -28,6 +28,10 @@ setup("authenticate as admin user", async ({ page }) => {
   // Wait for dashboard to be fully loaded
   await page.waitForLoadState("networkidle");
 
+  // Debug: Check what cookies we have
+  const cookies = await page.context().cookies();
+  console.log("Cookies after login:", JSON.stringify(cookies.map(c => ({name: c.name, domain: c.domain, path: c.path})), null, 2));
+
   // Save authenticated state
   await page.context().storageState({ path: authFile });
 });

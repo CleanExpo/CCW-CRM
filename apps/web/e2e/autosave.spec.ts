@@ -19,22 +19,24 @@
  */
 
 import { test, expect } from "@playwright/test";
+import { loginAsAdmin } from "./test-helper";
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3005";
 
-// Helper: Start each test from dashboard (already authenticated via setup)
+// Helper: Login before each test
 test.beforeEach(async ({ page }) => {
-  // Navigate to dashboard - authentication state is already loaded from .auth/user.json
-  await page.goto(`${BASE_URL}/dashboard`);
+  await loginAsAdmin(page, BASE_URL);
 });
 
 test.describe("Autosave: Order Form", () => {
   test("should save draft after 2 seconds of inactivity", async ({ page }) => {
     // Navigate to orders page
     await page.goto(`${BASE_URL}/orders`);
+    await page.waitForLoadState("networkidle");
 
-    // Open order form
-    await page.click('button:has-text("New Order")');
+    // Wait for and click the create order button
+    await expect(page.locator('button:has-text("Create Order")')).toBeVisible();
+    await page.click('button:has-text("Create Order")');
 
     // Wait for dialog to open
     await expect(page.locator('[role="dialog"]')).toBeVisible();
@@ -54,13 +56,13 @@ test.describe("Autosave: Order Form", () => {
     await expect(page.locator('[role="dialog"]')).not.toBeVisible();
 
     // Reopen order form
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Should see draft recovery alert
-    await expect(page.locator('text=/You have unsaved order data/i')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('text=/You have unsaved work/i')).toBeVisible({ timeout: 3000 });
 
     // Click restore
-    await page.click('button:has-text("Restore")');
+    await page.click('button:has-text("Restore Draft")');
 
     // Verify fields were restored
     const notesValue = await page.inputValue('textarea[name="notes"]');
@@ -73,7 +75,7 @@ test.describe("Autosave: Order Form", () => {
 
   test("should clear draft on successful submit", async ({ page }) => {
     await page.goto(`${BASE_URL}/orders`);
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Fill form
     await page.selectOption('select[name="fulfillment_location"]', "brisbane");
@@ -91,13 +93,13 @@ test.describe("Autosave: Order Form", () => {
     await expect(page.locator('text=/Order created successfully/i')).toBeVisible({ timeout: 5000 });
 
     // Reopen form - should NOT see draft recovery alert
-    await page.click('button:has-text("New Order")');
-    await expect(page.locator('text=/You have unsaved order data/i')).not.toBeVisible();
+    await page.click('button:has-text("Create Order")');
+    await expect(page.locator('text=/You have unsaved work/i')).not.toBeVisible();
   });
 
   test("should persist line items correctly", async ({ page }) => {
     await page.goto(`${BASE_URL}/orders`);
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Add 3 line items
     for (let i = 0; i < 3; i++) {
@@ -111,8 +113,8 @@ test.describe("Autosave: Order Form", () => {
 
     // Close and reopen
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Order")');
-    await page.click('button:has-text("Restore")');
+    await page.click('button:has-text("Create Order")');
+    await page.click('button:has-text("Restore Draft")');
 
     // Verify all 3 line items restored
     const lineItemRows = await page.locator('[data-testid="line-item-row"]').count();
@@ -129,7 +131,7 @@ test.describe("Autosave: Order Form", () => {
 
   test("should handle discard draft correctly", async ({ page }) => {
     await page.goto(`${BASE_URL}/orders`);
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Fill form
     await page.fill('textarea[name="notes"]', "Draft to discard");
@@ -137,7 +139,7 @@ test.describe("Autosave: Order Form", () => {
 
     // Close and reopen
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Click discard
     await page.click('button:has-text("Discard")');
@@ -148,15 +150,15 @@ test.describe("Autosave: Order Form", () => {
 
     // Close and reopen - should not see alert
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Order")');
-    await expect(page.locator('text=/You have unsaved order data/i')).not.toBeVisible();
+    await page.click('button:has-text("Create Order")');
+    await expect(page.locator('text=/You have unsaved work/i')).not.toBeVisible();
   });
 });
 
 test.describe("Autosave: Quote Form", () => {
   test("should save and restore quote drafts", async ({ page }) => {
     await page.goto(`${BASE_URL}/quotes`);
-    await page.click('button:has-text("New Quote")');
+    await page.click('button:has-text("Create Quote")');
 
     // Fill quote form
     await page.selectOption('select[name="customer_id"]', { index: 1 });
@@ -173,8 +175,8 @@ test.describe("Autosave: Quote Form", () => {
 
     // Close and reopen
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Quote")');
-    await page.click('button:has-text("Restore")');
+    await page.click('button:has-text("Create Quote")');
+    await page.click('button:has-text("Restore Draft")');
 
     // Verify restoration
     const notes = await page.inputValue('textarea[name="notes"]');
@@ -191,7 +193,7 @@ test.describe("Autosave: Quote Form", () => {
 test.describe("Autosave: Customer Form", () => {
   test("should save and restore customer drafts", async ({ page }) => {
     await page.goto(`${BASE_URL}/customers`);
-    await page.click('button:has-text("New Customer")');
+    await page.click('button:has-text("Add Customer")');
 
     // Fill customer form
     await page.fill('input[name="company_name"]', "Test Company Autosave");
@@ -205,8 +207,8 @@ test.describe("Autosave: Customer Form", () => {
 
     // Close and reopen
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Customer")');
-    await page.click('button:has-text("Restore")');
+    await page.click('button:has-text("Add Customer")');
+    await page.click('button:has-text("Restore Draft")');
 
     // Verify all fields restored
     expect(await page.inputValue('input[name="company_name"]')).toBe("Test Company Autosave");
@@ -220,7 +222,7 @@ test.describe("Autosave: Customer Form", () => {
 test.describe("Autosave: Product Form", () => {
   test("should save and restore product drafts", async ({ page }) => {
     await page.goto(`${BASE_URL}/products`);
-    await page.click('button:has-text("New Product")');
+    await page.click('button:has-text("Add Product")');
 
     // Fill product form
     await page.fill('input[name="sku"]', "TEST-SKU-001");
@@ -235,8 +237,8 @@ test.describe("Autosave: Product Form", () => {
 
     // Close and reopen
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Product")');
-    await page.click('button:has-text("Restore")');
+    await page.click('button:has-text("Add Product")');
+    await page.click('button:has-text("Restore Draft")');
 
     // Verify restoration
     expect(await page.inputValue('input[name="sku"]')).toBe("TEST-SKU-001");
@@ -250,7 +252,7 @@ test.describe("Autosave: Product Form", () => {
 test.describe("Autosave: Performance", () => {
   test("should save draft within 100ms", async ({ page }) => {
     await page.goto(`${BASE_URL}/orders`);
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Fill form
     await page.fill('textarea[name="notes"]', "Performance test");
@@ -265,13 +267,13 @@ test.describe("Autosave: Performance", () => {
 
     // Verify draft was saved (by reopening and checking for alert)
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Order")');
-    await expect(page.locator('text=/You have unsaved order data/i')).toBeVisible();
+    await page.click('button:has-text("Create Order")');
+    await expect(page.locator('text=/You have unsaved work/i')).toBeVisible();
   });
 
   test("should load draft within 50ms", async ({ page }) => {
     await page.goto(`${BASE_URL}/orders`);
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Create draft
     await page.fill('textarea[name="notes"]', "Load performance test");
@@ -280,8 +282,8 @@ test.describe("Autosave: Performance", () => {
 
     // Measure load time
     const start = Date.now();
-    await page.click('button:has-text("New Order")');
-    await page.click('button:has-text("Restore")');
+    await page.click('button:has-text("Create Order")');
+    await page.click('button:has-text("Restore Draft")');
     const elapsed = Date.now() - start;
 
     // Restore should be instant (<50ms for localStorage read)
@@ -295,7 +297,7 @@ test.describe("Autosave: Performance", () => {
 test.describe("Autosave: Recent Items", () => {
   test("should track recent customers in order form", async ({ page }) => {
     await page.goto(`${BASE_URL}/orders`);
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Select a customer
     const customerSelect = page.locator('select[name="customer_id"]');
@@ -312,7 +314,7 @@ test.describe("Autosave: Recent Items", () => {
     await expect(page.locator('text=/Order created successfully/i')).toBeVisible({ timeout: 5000 });
 
     // Open new order form
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Customer dropdown should have recent customer at top (verify option exists)
     const options = await customerSelect.locator('option').allTextContents();
@@ -326,17 +328,17 @@ test.describe("Autosave: Recent Items", () => {
 test.describe("Autosave: Edge Cases", () => {
   test("should not save empty forms", async ({ page }) => {
     await page.goto(`${BASE_URL}/orders`);
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Don't fill anything, just wait
     await page.waitForTimeout(2500);
 
     // Close and reopen
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Should NOT see draft recovery alert (empty form not saved)
-    await expect(page.locator('text=/You have unsaved order data/i')).not.toBeVisible();
+    await expect(page.locator('text=/You have unsaved work/i')).not.toBeVisible();
   });
 
   test("should handle rapid form opening/closing", async ({ page }) => {
@@ -344,7 +346,7 @@ test.describe("Autosave: Edge Cases", () => {
 
     // Open and close rapidly 3 times
     for (let i = 0; i < 3; i++) {
-      await page.click('button:has-text("New Order")');
+      await page.click('button:has-text("Create Order")');
       await page.fill('textarea[name="notes"]', `Rapid test ${i}`);
       await page.keyboard.press("Escape");
     }
@@ -353,8 +355,8 @@ test.describe("Autosave: Edge Cases", () => {
     await page.waitForTimeout(2500);
 
     // Reopen - should have last entry
-    await page.click('button:has-text("New Order")');
-    await page.click('button:has-text("Restore")');
+    await page.click('button:has-text("Create Order")');
+    await page.click('button:has-text("Restore Draft")');
 
     const notes = await page.inputValue('textarea[name="notes"]');
     expect(notes).toBe("Rapid test 2");
@@ -381,7 +383,7 @@ test.describe("Autosave: Edge Cases", () => {
       await page.locator('button[aria-label="Edit order"]').first().click();
 
       // Should NOT see draft recovery alert (autosave disabled in edit mode)
-      await expect(page.locator('text=/You have unsaved order data/i')).not.toBeVisible();
+      await expect(page.locator('text=/You have unsaved work/i')).not.toBeVisible();
     }
   });
 });
@@ -389,7 +391,7 @@ test.describe("Autosave: Edge Cases", () => {
 test.describe("Autosave: Storage Limits", () => {
   test("should handle large form data", async ({ page }) => {
     await page.goto(`${BASE_URL}/orders`);
-    await page.click('button:has-text("New Order")');
+    await page.click('button:has-text("Create Order")');
 
     // Fill with large notes (10KB of text)
     const largeText = "A".repeat(10000);
@@ -407,8 +409,8 @@ test.describe("Autosave: Storage Limits", () => {
 
     // Close and reopen
     await page.keyboard.press("Escape");
-    await page.click('button:has-text("New Order")');
-    await page.click('button:has-text("Restore")');
+    await page.click('button:has-text("Create Order")');
+    await page.click('button:has-text("Restore Draft")');
 
     // Verify large data restored
     const notes = await page.inputValue('textarea[name="notes"]');
