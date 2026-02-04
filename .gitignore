@@ -78,6 +78,13 @@ playwright/.cache/
 *secret*.yaml
 *secrets*.yaml
 
+# Linear API (project management - not part of application)
+scripts/*linear*.py
+scripts/*linear*.js
+!scripts/*.example.py
+!scripts/*.example.js
+.linear-api-key
+
 # Supabase
 supabase/.branches
 supabase/.temp
