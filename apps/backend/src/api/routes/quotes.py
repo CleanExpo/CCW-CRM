@@ -296,8 +296,8 @@ async def create_quote(
     quote = result.scalar_one_or_none()
 
     if not quote:
-        # Quote was deleted between operation and reload (rare race condition)
-        raise HTTPException(status_code=500, detail="Quote not found after operation")
+        # Quote was deleted between operation and reload (race condition or concurrent delete)
+        raise HTTPException(status_code=404, detail="Quote not found - may have been deleted")
 
     quote_dict = Quote.model_validate(quote).model_dump()
     quote_dict["valid_until"] = (
@@ -420,8 +420,8 @@ async def update_quote(
     quote = result.scalar_one_or_none()
 
     if not quote:
-        # Quote was deleted between operation and reload (rare race condition)
-        raise HTTPException(status_code=500, detail="Quote not found after operation")
+        # Quote was deleted between operation and reload (race condition or concurrent delete)
+        raise HTTPException(status_code=404, detail="Quote not found - may have been deleted")
 
     quote_dict = Quote.model_validate(quote).model_dump()
     quote_dict["valid_until"] = (
@@ -528,8 +528,8 @@ async def update_quote_status(
     quote = result.scalar_one_or_none()
 
     if not quote:
-        # Quote was deleted between operation and reload (rare race condition)
-        raise HTTPException(status_code=500, detail="Quote not found after operation")
+        # Quote was deleted between operation and reload (race condition or concurrent delete)
+        raise HTTPException(status_code=404, detail="Quote not found - may have been deleted")
 
     quote_dict = Quote.model_validate(quote).model_dump()
     quote_dict["valid_until"] = (
@@ -696,8 +696,8 @@ async def convert_quote_to_order(
     order = result.scalar_one_or_none()
 
     if not order:
-        # Order was deleted between creation and reload (rare race condition)
-        raise HTTPException(status_code=500, detail="Order not found after quote conversion")
+        # Order was deleted between creation and reload (race condition or concurrent delete)
+        raise HTTPException(status_code=404, detail="Order not found after creation - may have been deleted")
 
     order_dict = Order.model_validate(order).model_dump()
     order_dict["items"] = [

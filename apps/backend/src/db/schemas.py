@@ -305,7 +305,7 @@ class QuoteBase(BaseModel):
 
 
 class QuoteCreate(QuoteBase):
-    valid_until: date
+    valid_until: date | None = None  # Made optional to match backend logic
     items: list[QuoteItemCreate] = Field(min_length=1, description="Quote must have at least one item")
 
 
@@ -315,6 +315,25 @@ class QuoteUpdate(BaseModel):
     valid_until: date | None = None
     notes: str | None = None
     items: list[QuoteItemCreate] | None = Field(None, min_length=1, description="If provided, quote must have at least one item")
+
+    @field_validator("valid_until", mode="before")
+    @classmethod
+    def normalize_valid_until(cls, value):
+        """Normalize valid_until to date type, accepting datetime or ISO date strings."""
+        if value is None:
+            return value
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            # Try parsing ISO format (YYYY-MM-DD)
+            try:
+                return datetime.fromisoformat(value.replace('Z', '+00:00')).date()
+            except (ValueError, AttributeError):
+                # If that fails, let Pydantic handle it (will raise validation error)
+                pass
+        return value
 
 
 class Quote(QuoteBase):
