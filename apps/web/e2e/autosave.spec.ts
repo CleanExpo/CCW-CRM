@@ -20,15 +20,12 @@
 
 import { test, expect } from "@playwright/test";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3005";
 
-// Helper: Login before each test
+// Helper: Start each test from dashboard (already authenticated via setup)
 test.beforeEach(async ({ page }) => {
-  await page.goto(`${BASE_URL}/login`);
-  await page.fill('input[name="email"]', "admin@demo.com");
-  await page.fill('input[name="password"]', "demo123");
-  await page.click('button[type="submit"]');
-  await page.waitForURL(`${BASE_URL}/dashboard`);
+  // Navigate to dashboard - authentication state is already loaded from .auth/user.json
+  await page.goto(`${BASE_URL}/dashboard`);
 });
 
 test.describe("Autosave: Order Form", () => {
