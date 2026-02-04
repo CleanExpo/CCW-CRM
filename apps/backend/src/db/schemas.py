@@ -168,6 +168,14 @@ class OrderItemCreate(BaseModel):
     quantity: int = Field(ge=1, description="Quantity must be at least 1")
 
 
+# PHASE 4 OPTIMIZATION: OrderItemUpdate with optional id for diff-based updates
+class OrderItemUpdate(BaseModel):
+    """Order item for updates - includes optional id to enable diff-based updates."""
+    id: UUID | None = None  # If provided, update existing item; if None, create new item
+    product_id: UUID
+    quantity: int = Field(ge=1, description="Quantity must be at least 1")
+
+
 class OrderItem(OrderItemBase):
     id: UUID
     order_id: UUID
@@ -202,7 +210,7 @@ class OrderUpdate(BaseModel):
     carrier_name: str | None = None
     shipped_date: datetime | None = None
     estimated_delivery_date: datetime | None = None
-    items: list[OrderItemCreate] | None = None
+    items: list[OrderItemUpdate] | None = None  # PHASE 4: Use OrderItemUpdate for diff-based updates
     subtotal: Decimal | None = None
     tax: Decimal | None = None
     total: Decimal | None = None

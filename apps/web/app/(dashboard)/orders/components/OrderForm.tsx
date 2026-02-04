@@ -263,12 +263,14 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     setIsLoading(true);
 
     try {
+      // PHASE 4 OPTIMIZATION: Include item IDs for diff-based updates
       const payload = {
         customer_id: values.customer_id,
         fulfillment_location: values.fulfillment_location,
         status: values.status,
         notes: values.notes || null,
         items: lineItems.map((item) => ({
+          id: item.id || undefined, // Include ID for updates (enables diff-based backend logic)
           product_id: item.product_id,
           quantity: item.quantity,
         })),
