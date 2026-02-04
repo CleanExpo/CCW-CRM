@@ -125,6 +125,13 @@ class CodeGenerator:
             project_root=self.project_root, anthropic_api_key=api_key
         )
 
+        # Initialize documentation generator
+        from .doc_generator import DocGenerator
+
+        self.doc_generator = DocGenerator(
+            project_root=self.project_root, anthropic_api_key=api_key
+        )
+
     # ========================================================================
     # Main API
     # ========================================================================
@@ -160,7 +167,7 @@ class CodeGenerator:
             code=generated_code, language=request.target_language
         )
 
-        # Create generated file
+        # Create generated file (initial, without documentation)
         file_path = await self._infer_file_path(
             requirement=request.requirement,
             language=request.target_language,
@@ -175,6 +182,30 @@ class CodeGenerator:
             syntax_valid=syntax_valid,
             imports=imports,
         )
+
+        # Generate documentation (Task #72)
+        documentation_list = []
+        if syntax_valid:
+            try:
+                documented_code = await self.doc_generator.generate_documentation(
+                    generated_file=generated_file
+                )
+                # Update generated file with documented code
+                generated_file = GeneratedFile(
+                    file_path=file_path,
+                    content=documented_code,
+                    language=request.target_language,
+                    file_type="implementation",
+                    syntax_valid=True,  # Already validated by doc generator
+                    imports=imports,
+                )
+                # Add documentation summary
+                documentation_list.append(
+                    f"Added comprehensive documentation to {file_path}"
+                )
+            except Exception as e:
+                # Documentation generation failure shouldn't block code generation
+                pass
 
         # Generate tests (Task #71)
         tests = []
@@ -199,7 +230,7 @@ class CodeGenerator:
         return CodeGenerationResult(
             generated_files=[generated_file],
             tests=tests,
-            documentation=[],  # Task #72: Documentation generation
+            documentation=documentation_list,
             quality_report=quality_report,
             pr_ready=syntax_valid and len(tests) > 0,  # PR ready if code + tests valid
         )

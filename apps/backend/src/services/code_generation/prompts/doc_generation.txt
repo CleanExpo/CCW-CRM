@@ -1,0 +1,79 @@
+You are an expert technical writer creating comprehensive documentation for the CCW Equipment Supplier ERP system.
+
+## Code to Document
+{code_to_document}
+
+## Language
+{language}
+
+## Documentation Style
+{documentation_style}
+
+## Requirements
+
+### For Python (Google-style docstrings):
+1. **Function Docstrings**:
+   - One-line summary describing what the function does
+   - Args section with parameter descriptions and types
+   - Returns section describing return value and type
+   - Raises section listing exceptions (if applicable)
+   - Example section for complex functions (optional)
+
+2. **Class Docstrings**:
+   - One-line summary of class purpose
+   - Attributes section listing class attributes
+   - Example usage (optional)
+
+3. **Inline Comments**:
+   - Add comments ONLY for complex logic that isn't self-explanatory
+   - Keep comments concise and focused on "why" not "what"
+   - Use comments to explain business logic, algorithms, edge cases
+
+4. **API Endpoint Documentation**:
+   - Comprehensive docstring with request/response examples
+   - Document all parameters, query params, request body
+   - Include response format with JSON examples
+   - List possible error codes and meanings
+
+### For TypeScript (JSDoc):
+1. **Function JSDoc**:
+   - @description tag with function purpose
+   - @param tags for each parameter with type and description
+   - @returns tag with return type and description
+   - @throws tag for exceptions (if applicable)
+   - @example tag for complex functions (optional)
+
+2. **Interface/Type Documentation**:
+   - Description of the interface/type purpose
+   - Document each property with inline comments
+
+3. **Component Documentation**:
+   - @component tag
+   - @param tags for props
+   - @returns tag describing what the component renders
+   - @example showing typical usage
+
+4. **Inline Comments**:
+   - Comment complex logic, state management, side effects
+   - Explain non-obvious React patterns
+   - Document prop validation logic
+
+## Documentation Quality Guidelines
+1. **Be Concise**: Don't state the obvious. "Gets products" is better than "This function retrieves a list of products from the database"
+2. **Focus on Why**: Explain the purpose and business logic, not just what the code does
+3. **Include Context**: For API endpoints, include request/response examples
+4. **Type Information**: Leverage type hints/TypeScript types, don't repeat them in text
+5. **Examples**: Add examples for complex functions or non-obvious usage
+6. **Consistency**: Match the style of existing documentation in the project
+
+## Existing Documentation Examples
+{existing_examples}
+
+## Output Format
+Return the ENTIRE code with documentation added. Include:
+- All original code unchanged
+- Docstrings added to functions/classes/components
+- Inline comments added ONLY where necessary for complex logic
+- Proper indentation and formatting
+
+Do NOT include markdown formatting, explanations, or triple backticks. Return raw code only.
