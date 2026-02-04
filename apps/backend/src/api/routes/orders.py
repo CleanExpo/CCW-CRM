@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -15,6 +15,7 @@ from src.api.deps import get_optional_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
 from src.config.settings import Settings, get_settings
+from src.services.sse_service import sse_service
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderActivity as OrderActivityModel
 from src.db.demo_models import OrderItem as OrderItemModel
@@ -29,9 +30,31 @@ from src.db.schemas import (
     OrderUpdate,
     PaginatedResponse,
 )
+from pydantic import BaseModel
+from src.monitoring import metrics
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
+
+
+@router.get("/status-stream")
+async def order_status_stream(request: Request):
+    """
+    PHASE 4: Real-time order status updates via Server-Sent Events (SSE).
+
+    Frontend subscribes to this endpoint to receive live order status changes,
+    activity updates, and fulfillment progress without manual refresh.
+
+    Channel: "order-updates"
+    Events: status_changed, activity_added, fulfillment_updated
+    """
+    return await sse_service.subscribe(request, "order-updates", heartbeat_interval=15)
+
+
+class StatusUpdate(BaseModel):
+    """Request body for status updates."""
+    status: str
+    fulfillment_location: str = "brisbane"
 
 
 async def invalidate_order_caches() -> None:
@@ -133,7 +156,14 @@ async def deduct_stock_for_order(
             )
         ).with_for_update()
         result = await db.execute(stmt)
-        stock = result.scalar_one()
+        stock = result.scalar_one_or_none()
+
+        if not stock:
+            # Stock record was deleted between check and reservation (race condition)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Stock record not found for product {product_id} at {location}"
+            )
 
         previous_qty = stock.stock
         stock.stock -= quantity
@@ -290,15 +320,25 @@ async def release_reservations_for_order(
     now = datetime.now()
     released = 0
 
-    for reservation in reservations:
-        stock_stmt = select(ProductStockByLocation).where(
-            and_(
-                ProductStockByLocation.product_id == reservation.product_id,
-                ProductStockByLocation.location == reservation.location,
-            )
+    # OPTIMIZATION: Batch load all stock records in single query (was N queries)
+    product_ids = [r.product_id for r in reservations]
+    locations = [r.location for r in reservations]
+
+    stock_stmt = select(ProductStockByLocation).where(
+        and_(
+            ProductStockByLocation.product_id.in_(product_ids),
+            ProductStockByLocation.location.in_(locations),
         )
-        stock_result = await db.execute(stock_stmt)
-        stock = stock_result.scalar_one_or_none()
+    )
+    stock_result = await db.execute(stock_stmt)
+    stocks = stock_result.scalars().all()
+
+    # Create lookup dictionary: (product_id, location) -> stock
+    stock_lookup = {(s.product_id, s.location): s for s in stocks}
+
+    # Update reservations and stock in memory (single commit at function end)
+    for reservation in reservations:
+        stock = stock_lookup.get((reservation.product_id, reservation.location))
 
         if stock:
             stock.reserved = max(0, stock.reserved - reservation.quantity)
@@ -492,23 +532,31 @@ async def create_order(
     order_number = await generate_order_number(db)
 
     # Calculate totals using shared calculation utilities
+    # OPTIMIZATION: Batch load all products in single query (was N queries)
+    product_ids = [item.product_id for item in order_data.items]
+    products_query = select(ProductModel).where(ProductModel.id.in_(product_ids))
+    products_result = await db.execute(products_query)
+    products = products_result.scalars().all()
+
+    # Create lookup dictionary
+    products_by_id: dict[UUID, ProductModel] = {p.id: p for p in products}
+
+    # Validate all products exist
+    missing_ids = set(product_ids) - set(products_by_id.keys())
+    if missing_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Products not found: {', '.join(str(id) for id in missing_ids)}"
+        )
+
+    # Process items without additional queries
     order_items = []
     line_items_for_calc = []
-    products_by_id: dict[UUID, ProductModel] = {}
 
     for item_data in order_data.items:
-        # Get product to get price
-        product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
-        product_result = await db.execute(product_query)
-        product = product_result.scalar_one_or_none()
-
-        if not product:
-            raise HTTPException(
-                status_code=400, detail=f"Product {item_data.product_id} not found"
-            )
-
+        product = products_by_id[item_data.product_id]
         unit_price = product.price
-        products_by_id[item_data.product_id] = product
+
         # Use shared calculation utility for line total
         line_total = calculate_line_total(item_data.quantity, unit_price)
 
@@ -584,6 +632,48 @@ async def create_order(
     # Invalidate order-related caches
     await invalidate_order_caches()
 
+    # PHASE 5: Publish comprehensive real-time events
+    # Get customer name for events
+    from src.db.demo_models import Customer
+    customer_query = select(Customer).where(Customer.id == order_data.customer_id)
+    customer_result = await db.execute(customer_query)
+    customer = customer_result.scalar_one_or_none()
+    customer_name = customer.company_name if customer else "Unknown Customer"
+
+    # Publish to order-updates channel
+    await sse_service.publish("order-updates", {
+        "event_type": "order_created",
+        "order_id": str(order.id),
+        "order_number": order_number,
+        "customer_name": customer_name,
+        "status": order_data.status,
+        "total": str(total),
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    # Publish to dashboard-activity channel
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "order_created",
+        "title": "New Order",
+        "description": f"Order {order_number} created - ${total}",
+        "link": f"/orders/{order.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    # PHASE 4: Publish dashboard metrics update
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "active_orders",
+        "change": "increment",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    # Track business metrics
+    status_value = normalize_status(order.status)
+    location = order_data.fulfillment_location or "unknown"
+    metrics.orders_created.labels(status=status_value, location=location).inc()
+    metrics.orders_revenue.labels(location=location).inc(float(total))
+
     # Reload with items
     query = (
         select(OrderModel)
@@ -591,7 +681,11 @@ async def create_order(
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
-    order = result.scalar_one()
+    order = result.scalar_one_or_none()
+
+    if not order:
+        # Order was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Order not found after operation")
 
     order_dict = Order.model_validate(order).model_dump()
     order_dict["items"] = [
@@ -649,10 +743,11 @@ async def update_order(
     # Handle line items update if provided
     if order_data.items is not None:
         # Validate order can be edited
-        if order.status in ['shipped', 'delivered', 'cancelled']:
+        current_status = normalize_status(order.status)
+        if current_status in ['shipped', 'delivered', 'cancelled']:
             raise HTTPException(
                 status_code=400,
-                detail=f"Cannot update items for order in status: {order.status}"
+                detail=f"Cannot update items for order in status: {current_status}"
             )
 
         # Validate all items have valid quantities
@@ -688,7 +783,7 @@ async def update_order(
                 )
 
             # Validate stock availability if order is confirmed
-            if order.status == 'confirmed' and product.stock < item_data.quantity:
+            if current_status == 'confirmed' and product.stock < item_data.quantity:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Insufficient stock for {product.name}: {product.stock} available, {item_data.quantity} requested"
@@ -760,6 +855,15 @@ async def update_order(
                 meta_data={"from": previous_status, "to": updated_status},
             )
 
+            # PHASE 4: Publish real-time status update to SSE subscribers
+            await sse_service.publish("order-updates", {
+                "type": "status_changed",
+                "order_id": str(order.id),
+                "order_number": order.order_number,
+                "previous_status": previous_status,
+                "new_status": updated_status,
+            })
+
             if previous_status in RESERVABLE_STATUSES and updated_status not in RESERVABLE_STATUSES:
                 released = await release_reservations_for_order(
                     db=db,
@@ -801,11 +905,31 @@ async def update_order(
             },
         )
 
+        # PHASE 4: Publish real-time fulfillment update to SSE subscribers
+        await sse_service.publish("order-updates", {
+            "type": "fulfillment_updated",
+            "order_id": str(order.id),
+            "order_number": order.order_number,
+            "tracking_number": order.tracking_number,
+            "carrier_name": order.carrier_name,
+            "shipped_date": str(order.shipped_date) if order.shipped_date else None,
+            "estimated_delivery_date": str(order.estimated_delivery_date) if order.estimated_delivery_date else None,
+        })
+
     await db.commit()
     await db.refresh(order)
 
     # Invalidate order-related caches
     await invalidate_order_caches()
+
+    # PHASE 4: Publish dashboard metrics update if status changed
+    if order_data.status is not None and updated_status != previous_status:
+        await sse_service.publish("dashboard-metrics", {
+            "type": "metrics_updated",
+            "metric": "active_orders",
+            "change": "status_change",
+            "timestamp": datetime.utcnow().isoformat(),
+        })
 
     # Reload with items
     query = (
@@ -814,7 +938,11 @@ async def update_order(
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
-    order = result.scalar_one()
+    order = result.scalar_one_or_none()
+
+    if not order:
+        # Order was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Order not found after operation")
 
     order_dict = Order.model_validate(order).model_dump()
     order_dict["items"] = [
@@ -921,6 +1049,15 @@ async def update_order_status(
     # Invalidate order-related caches
     await invalidate_order_caches()
 
+    # Track business metrics for status changes
+    location = order.fulfillment_location or "unknown"
+    if status == "confirmed":
+        metrics.orders_confirmed.labels(location=location).inc()
+    elif status == "shipped":
+        metrics.orders_shipped.labels(location=location).inc()
+    elif status == "delivered":
+        metrics.orders_delivered.labels(location=location).inc()
+
     # Reload with items
     query = (
         select(OrderModel)
@@ -928,13 +1065,40 @@ async def update_order_status(
         .where(OrderModel.id == order.id)
     )
     result = await db.execute(query)
-    order = result.scalar_one()
+    order = result.scalar_one_or_none()
+
+    if not order:
+        # Order was deleted between operation and reload (rare race condition)
+        raise HTTPException(status_code=500, detail="Order not found after operation")
 
     order_dict = Order.model_validate(order).model_dump()
     order_dict["items"] = [
         OrderItem.model_validate(item).model_dump() for item in order.order_items
     ]
     return order_dict
+
+
+@router.patch("/{order_id}/status", response_model=Order)
+async def update_order_status_patch(
+    order_id: UUID,
+    status_update: StatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
+):
+    """
+    Update order status (PATCH endpoint accepting JSON body).
+
+    This is the RESTful PATCH version that accepts JSON body.
+    The PUT version uses query parameters for backwards compatibility.
+    """
+    # Call the existing PUT endpoint logic with query params extracted from body
+    return await update_order_status(
+        order_id=order_id,
+        status=status_update.status,
+        fulfillment_location=status_update.fulfillment_location,
+        db=db,
+        current_user=current_user,
+    )
 
 
 @router.delete("/{order_id}", status_code=204)

@@ -1,3 +1,10 @@
+/**
+ * Middleware for CCW Online ERP
+ *
+ * Handles JWT session management (auth).
+ * i18n is handled via cookies at the layout level.
+ */
+
 import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/api/middleware";
 

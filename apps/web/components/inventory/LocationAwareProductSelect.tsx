@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api/client";
+import { useRecentItems } from "@/lib/hooks/use-recent-items";
 
 interface StockByLocation {
   location: string;
@@ -50,6 +51,13 @@ export function LocationAwareProductSelect({
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // PHASE 4: Recent products cache - speeds up order entry
+  const { recentItems: recentProducts, addRecentItem: addRecentProduct } =
+    useRecentItems<Product>({
+      key: "recent-products",
+      maxItems: 10,
+    });
 
   useEffect(() => {
     if (!search || search.length < 2) {
@@ -139,6 +147,8 @@ export function LocationAwareProductSelect({
   const handleSelect = (product: Product) => {
     setSelectedProduct(product);
     onSelect(product);
+    // PHASE 4: Add product to recent items
+    addRecentProduct(product);
     setOpen(false);
     setSearch("");
   };
@@ -179,6 +189,33 @@ export function LocationAwareProductSelect({
                 ? "Type to search"
                 : "No products found."}
             </CommandEmpty>
+
+            {/* PHASE 4: Show recent products when no search active */}
+            {!loading && search.length < 2 && recentProducts.length > 0 && (
+              <CommandGroup heading="Recently Used Products">
+                {recentProducts.map((product) => {
+                  const stockAtLocation = getStockAtLocation(product, selectedLocation);
+                  return (
+                    <CommandItem
+                      key={`recent-${product.id}`}
+                      onSelect={() => handleSelect(product)}
+                      className="flex justify-between cursor-pointer"
+                    >
+                      <span className="flex-1">
+                        🕒 <span className="font-mono text-sm">{product.sku}</span>
+                        {" - "}
+                        {product.name}
+                      </span>
+                      {stockAtLocation > 0 && (
+                        <Badge variant="secondary" className="ml-2">
+                          {stockAtLocation} available
+                        </Badge>
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
 
             {!loading && inStock.length > 0 && (
               <CommandGroup heading={`In Stock at ${selectedLocation}`}>

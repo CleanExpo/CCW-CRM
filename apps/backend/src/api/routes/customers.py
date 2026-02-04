@@ -1,11 +1,14 @@
-"""Customers API routes."""
+"""Customers API routes.
+
+Performance optimized with Redis caching.
+"""
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.cache.decorators import invalidate_cache
+from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
 from src.db.erp_models import Customer as CustomerModel
 from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
@@ -14,6 +17,7 @@ router = APIRouter(prefix="/api/customers", tags=["customers"])
 
 
 @router.get("", response_model=PaginatedResponse)
+@cached(ttl=300, key_prefix="api_customers_list")  # 5 minute cache
 async def list_customers(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
@@ -21,7 +25,7 @@ async def list_customers(
     is_active: bool | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    """List customers with pagination and filters."""
+    """List customers with pagination and filters. Cached for 5 minutes."""
     # Build query
     query = select(CustomerModel)
 
@@ -96,8 +100,11 @@ async def create_customer(
     await db.commit()
     await db.refresh(customer)
 
-    # Invalidate customer list cache
+    # Invalidate customer caches (list and dashboard metrics)
     await invalidate_cache("customers")
+    await invalidate_cache("api_customers_list")
+    await invalidate_cache("dashboard_metrics")
+    await invalidate_cache("dashboard_activity")
 
     return Customer.model_validate(customer)
 
@@ -125,8 +132,10 @@ async def update_customer(
     await db.commit()
     await db.refresh(customer)
 
-    # Invalidate customer list cache
+    # Invalidate customer caches (list and dashboard)
     await invalidate_cache("customers")
+    await invalidate_cache("api_customers_list")
+    await invalidate_cache("dashboard_metrics")
 
     return Customer.model_validate(customer)
 
@@ -149,7 +158,9 @@ async def delete_customer(
     customer.is_active = False
     await db.commit()
 
-    # Invalidate customer list cache
+    # Invalidate customer caches (list and dashboard)
     await invalidate_cache("customers")
+    await invalidate_cache("api_customers_list")
+    await invalidate_cache("dashboard_metrics")
 
     return None

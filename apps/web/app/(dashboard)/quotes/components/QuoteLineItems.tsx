@@ -28,6 +28,7 @@ export interface LineItem {
   quantity: number;
   unit_price: number;
   line_total: number;
+  [key: string]: unknown;
 }
 
 interface QuoteLineItemsProps {

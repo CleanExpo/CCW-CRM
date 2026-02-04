@@ -61,11 +61,18 @@ class QuoteScenarioGenerator:
                     raise
 
     async def _ensure_customer(self) -> str:
-        """Ensure at least one customer exists and return ID."""
-        if not self.created_customer_ids:
+        """Ensure at least one customer exists and return ID.
+
+        Creates a dedicated customer pool for quote scenarios to avoid
+        cascade deletion issues if customers are deleted by other test scenarios.
+        """
+        # Create a pool of dedicated customers to reduce conflicts
+        MIN_CUSTOMER_POOL = 10
+
+        while len(self.created_customer_ids) < MIN_CUSTOMER_POOL:
             customer_data = {
-                'customer_number': f'CUST-{uuid4().hex[:8].upper()}',
-                'company_name': self.faker.company(),
+                'customer_number': f'QUOTE-CUST-{uuid4().hex[:8].upper()}',  # Prefix to identify quote customers
+                'company_name': f'{self.faker.company()} (Quote Test)',
                 'contact_name': self.faker.name(),
                 'email': self.faker.email(),
                 'phone': '555-1234',
@@ -76,25 +83,45 @@ class QuoteScenarioGenerator:
                 'country': 'USA',
             }
             result = await self._make_request('POST', '/api/customers', data=customer_data, expected_status=201)
-            if result['success']:
+            if result['success'] and result.get('data') and result['data'].get('id'):
                 self.created_customer_ids.append(result['data']['id'])
+            else:
+                # Customer creation failed, but continue to avoid blocking all tests
+                print(f"Warning: Customer creation failed: {result.get('status_code')}")
+                break
+
+        if not self.created_customer_ids:
+            raise Exception("Failed to create any customers for quote scenarios")
 
         return random.choice(self.created_customer_ids)
 
     async def _ensure_product(self) -> str:
-        """Ensure at least one product exists and return ID."""
-        if not self.created_product_ids:
+        """Ensure at least one product exists and return ID.
+
+        Creates a dedicated product pool for quote scenarios.
+        """
+        # Create a pool of dedicated products
+        MIN_PRODUCT_POOL = 10
+
+        while len(self.created_product_ids) < MIN_PRODUCT_POOL:
             product_data = {
-                'sku': f'SKU-{uuid4().hex[:8].upper()}',
-                'name': self.faker.catch_phrase(),
+                'sku': f'QUOTE-SKU-{uuid4().hex[:8].upper()}',  # Prefix to identify quote products
+                'name': f'{self.faker.catch_phrase()} (Quote Test)',
                 'category': 'HAND_TOOLS',
-                'price': 99.99,
-                'cost': 50.00,
-                'stock': 1000,
+                'price': round(random.uniform(10.0, 500.0), 2),
+                'cost': round(random.uniform(5.0, 250.0), 2),
+                'stock': random.randint(100, 1000),
             }
             result = await self._make_request('POST', '/api/products', data=product_data, expected_status=201)
-            if result['success']:
+            if result['success'] and result.get('data') and result['data'].get('id'):
                 self.created_product_ids.append(result['data']['id'])
+            else:
+                # Product creation failed, but continue
+                print(f"Warning: Product creation failed: {result.get('status_code')}")
+                break
+
+        if not self.created_product_ids:
+            raise Exception("Failed to create any products for quote scenarios")
 
         return random.choice(self.created_product_ids)
 
@@ -141,10 +168,18 @@ class QuoteScenarioGenerator:
         return result
 
     async def create_quote_with_ai(self) -> dict:
-        """Create quote with AI generation - disabled until /generate endpoint is implemented."""
-        # TODO: Implement /api/quotes/generate endpoint for AI-powered quote generation
-        # For now, just create a regular quote
-        return await self.create_valid_quote()
+        """Create quote with AI generation."""
+        customer_id = await self._ensure_customer()
+
+        data = {
+            'requirements': self.faker.text(max_nb_chars=100),
+            'customer_id': customer_id,
+        }
+
+        result = await self._make_request('POST', '/api/quotes/generate', data=data, expected_status=201)
+        if result['success'] and result['data']:
+            self.created_quote_ids.append(result['data'].get('id'))
+        return result
 
     async def create_quote_invalid_data(self) -> dict:
         """Attempt to create quote with invalid data (should fail)."""
@@ -190,10 +225,19 @@ class QuoteScenarioGenerator:
         if not quote['success']:
             return quote
 
-        quote_id = quote['data']['id']
+        # Defensive check: ensure quote data and ID exist
+        if not quote.get('data'):
+            return {'success': False, 'status_code': None, 'data': None, 'error': 'Quote creation returned no data'}
 
-        # Update to accepted
-        await self._make_request('PUT', f'/api/quotes/{quote_id}', data={'status': 'accepted'}, expected_status=200)
+        quote_id = quote['data'].get('id')
+        if not quote_id:
+            return {'success': False, 'status_code': None, 'data': None, 'error': 'Quote creation returned no ID'}
+
+        # Update to accepted and check result
+        update_result = await self._make_request('PUT', f'/api/quotes/{quote_id}', data={'status': 'accepted'}, expected_status=200)
+        if not update_result['success']:
+            # Quote doesn't exist - this is the 404 issue
+            return {'success': False, 'status_code': update_result['status_code'], 'data': None, 'error': f'Quote update failed: {update_result.get("status_code")}'}
 
         # Convert to order - correct endpoint is /convert-to-order not /convert
         return await self._make_request('POST', f'/api/quotes/{quote_id}/convert-to-order', expected_status=201)

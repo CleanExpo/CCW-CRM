@@ -388,6 +388,15 @@ class AgentRegistry:
         """
         return self._accepting_requests
 
+    @property
+    def agents(self) -> dict[str, Any]:
+        """Get all registered agents.
+
+        Returns:
+            Dictionary of agent_id -> agent instance
+        """
+        return self._agents
+
     def get_statistics(self) -> dict[str, Any]:
         """Get registry statistics.
 

@@ -55,11 +55,12 @@ export function LoginForm() {
       // Redirect to dashboard
       router.push("/dashboard");
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: error.message || "Invalid email or password",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

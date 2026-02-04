@@ -110,7 +110,7 @@ export function SubmissionDetailDialog({
         : `/api/demo-requests/${submissionId}`;
       const data = await apiClient.get<ContactSubmission | DemoRequest>(endpoint);
       setSubmission(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Failed to load submission details");
     }
   }
@@ -119,7 +119,7 @@ export function SubmissionDetailDialog({
     try {
       const data = await apiClient.get<Note[]>(`/api/submissions/${submissionType}/${submissionId}/notes`);
       setNotes(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Failed to load notes");
     }
   }
@@ -136,8 +136,8 @@ export function SubmissionDetailDialog({
       await loadSubmission();
       await loadNotes();
       onStatusUpdate?.();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update status");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to update status");
     } finally {
       setIsLoading(false);
     }
@@ -155,8 +155,8 @@ export function SubmissionDetailDialog({
       setNewNote("");
       toast.success("Note added successfully");
       await loadNotes();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to add note");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to add note");
     } finally {
       setIsAddingNote(false);
     }

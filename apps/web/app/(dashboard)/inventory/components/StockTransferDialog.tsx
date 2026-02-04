@@ -98,11 +98,11 @@ export function StockTransferDialog({
       onSuccess?.();
       onOpenChange(false);
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Transfer Failed",
-        description: error.message || "Failed to transfer stock. Please check availability and try again.",
+        description: error instanceof Error ? error.message : "Failed to transfer stock. Please check availability and try again.",
       });
     } finally {
       setIsLoading(false);

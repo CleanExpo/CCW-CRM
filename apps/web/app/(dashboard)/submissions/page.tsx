@@ -49,8 +49,8 @@ export default function SubmissionsPage() {
     try {
       const stats = await apiClient.get<Statistics>("/api/submissions/statistics");
       setStatistics(stats);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load statistics");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to load statistics");
     } finally {
       setLoading(false);
     }
@@ -98,8 +98,8 @@ export default function SubmissionsPage() {
       window.URL.revokeObjectURL(url);
 
       toast.success("Export completed successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to export data");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to export data");
     }
   }
 

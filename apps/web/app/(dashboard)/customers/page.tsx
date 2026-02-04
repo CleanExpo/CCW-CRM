@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// PHASE 4: Search state persistence
+import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { exportCustomersToCSV } from "@/lib/utils/csv-export";
+// PHASE 4: Last updated timestamps
+import { formatDistanceToNow } from "date-fns";
 
 interface Customer {
   id: string;
@@ -47,11 +51,22 @@ export default function CustomersPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [formOpen, setFormOpen] = useState(false);
+
+  // PHASE 4: Search state persistence - remembers search/pagination on navigation
+  const { state: searchState, updateField } = useSearchState({
+    key: "customers-list",
+    defaultState: { search: "", page: 1, pageSize: 50 },
+  });
+
+  const search = searchState.search || "";
+  const page = searchState.page || 1;
+  const pageSize = searchState.pageSize || 50;
+  const setSearch = (value: string) => updateField("search", value);
+  const setPage = (value: number) => updateField("page", value);
+  const setPageSize = (value: number) => updateField("pageSize", value);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -81,6 +96,7 @@ export default function CustomersPage() {
       setTotal(0);
     } finally {
       setLoading(false);
+      setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
   }, [page, pageSize, debouncedSearch, toast]);
 
@@ -116,7 +132,7 @@ export default function CustomersPage() {
   };
 
   const handleExport = () => {
-    exportCustomersToCSV(customers);
+    exportCustomersToCSV(customers as unknown as Record<string, unknown>[]);
     toast({
       title: "Export Successful",
       description: `Exported ${customers.length} customers to CSV`,
@@ -187,6 +203,11 @@ export default function CustomersPage() {
               <CardTitle>Customer Directory</CardTitle>
               <CardDescription>
                 {total} customers in database
+                {lastUpdated && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                  </span>
+                )}
               </CardDescription>
             </div>
           </div>

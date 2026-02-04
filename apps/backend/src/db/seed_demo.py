@@ -32,7 +32,7 @@ from src.db.demo_models import (
     QuoteItem,
     QuoteStatus,
 )
-from src.db.models import Base, User
+from src.db.models_base import Base, User
 
 # Sample data pools
 EQUIPMENT_NAMES = {

@@ -26,10 +26,11 @@ from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
-    # approvals,  # TODO: Implement approvals workflow
-    # autonomous_dev,  # TODO: File does not exist yet
+    approvals,
+    autonomous_dev,
     backorders,
     bank_feeds,
+    # billing,  # Disabled temporarily - requires stripe package
     config,
     containers,
     customers,
@@ -43,23 +44,24 @@ from .routes import (
     portal_auth,
     portal_forms,
     pos_transactions,
-    # prd,  # TODO: Fix PRD dependencies
+    prd,
     products,
     purchase_orders,
     quotes,
-    # recommendations,  # TODO: File does not exist yet
-    # search,  # TODO: File does not exist yet
+    recommendations,  # Re-enabled
+    search,  # Re-enabled
     service_requests,
     shipments,
     suppliers,
+    team,
     test_data_gen,
-    # translations,  # TODO: File does not exist yet
+    translations,
     webhooks,
 )
+# Re-enabling AI routes after fixing import errors
 from .routes.ai import ai_router, chat, generate, insights
 from .routes import google_ai
-from .routes.integrations import elevenlabs, sendgrid, shopify, xero
-# ap2, shopify_theme - TODO: Files do not exist yet
+from .routes.integrations import ap2, elevenlabs, sendgrid, shopify, shopify_theme, xero
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -70,6 +72,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager."""
     setup_logging(debug=settings.debug)
     logger.info("Starting application", environment=settings.environment)
+
+    # Initialize Sentry for error tracking
+    try:
+        from src.integrations.sentry_client import initialize_sentry
+        initialize_sentry()
+    except Exception as e:
+        logger.warning("Failed to initialize Sentry", error=str(e))
 
     # Initialize AI agents on startup
     logger.info("Initializing AI agent orchestration system")
@@ -343,10 +352,16 @@ app.add_middleware(
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(AuthMiddleware)
 
+# Performance monitoring middleware
+from src.api.middleware.performance import PerformanceMiddleware, get_performance_metrics
+
+performance_metrics = get_performance_metrics()
+app.add_middleware(PerformanceMiddleware, metrics=performance_metrics)
+
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(config.router, tags=["Configuration"])
-# app.include_router(approvals.router, tags=["Approvals"])  # TODO: Implement approvals
+app.include_router(approvals.router, tags=["Approvals"])
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
@@ -369,6 +384,10 @@ app.include_router(portal_forms.router, tags=["Portal Forms"])
 app.include_router(webhooks.router, tags=["Webhooks"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])
+# Team management router (multi-tenant user management)
+app.include_router(team.router, tags=["Team Management"])
+# Billing and subscription management router
+# app.include_router(billing.router, tags=["Billing"])  # Disabled - requires stripe
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 # Shipment tracking router
@@ -377,40 +396,54 @@ app.include_router(shipments.router, tags=["Shipment Tracking"])
 app.include_router(containers.router, tags=["Container Tracking"])
 app.include_router(backorders.router, tags=["Backorder Management"])
 # AI routers
-app.include_router(ai_router)  # Main AI agent orchestration routes (includes learning router)
+app.include_router(ai_router)  # Main AI agent orchestration routes
 app.include_router(chat.router, tags=["AI Chat"])
 app.include_router(insights.router, tags=["AI Insights"])
 app.include_router(generate.router, tags=["AI Generation"])
 # app.include_router(learning.router, tags=["AI Learning"])  # Already included in ai_router
 app.include_router(test_data_gen.router)  # Test data generation for learning engine
 
-# AI Search & Recommendations - TODO: Files do not exist yet
-# app.include_router(search.router)  # Semantic & hybrid search
-# app.include_router(recommendations.router)  # Product recommendations
+# AI Search & Recommendations (✅ IMPLEMENTED)
+app.include_router(search.router)  # Semantic & hybrid search
+app.include_router(recommendations.router)  # Product recommendations
 
-# Autonomous Development
-# app.include_router(autonomous_dev.router)  # TODO: File does not exist yet
+# Autonomous Development (✅ IMPLEMENTED)
+app.include_router(autonomous_dev.router)
+
+# Autonomy Metrics
 from .routes import autonomy_metrics
 app.include_router(autonomy_metrics.router, tags=["Autonomy Metrics"])
 
-# Translation management router - TODO: File does not exist yet
-# app.include_router(translations.router, tags=["Translation Management"])
+# Translation management router (✅ IMPLEMENTED)
+app.include_router(translations.router, tags=["Translation Management"])
 
-# Integration routers
+# Integration routers (✅ ALL IMPLEMENTED)
 app.include_router(xero.router, prefix="/api", tags=["Xero Integration"])
 app.include_router(shopify.router, tags=["Shopify Integration"])
-# app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])  # TODO: File does not exist
+app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
-# app.include_router(ap2.router, tags=["AP2 Integration"])  # TODO: File does not exist
+app.include_router(ap2.router, tags=["AP2 Integration"])
 app.include_router(google_ai.router, tags=["Google AI"])
 
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
 
-# PRD Generation router
-# app.include_router(prd.router, tags=["PRD Generation"])  # TODO: Fix PRD dependencies
+# Monitoring routers (system alerts, business metrics, performance)
+from src.api.routes.monitoring import alerts, business_metrics, performance
+
+app.include_router(alerts.router)
+app.include_router(business_metrics.router)
+app.include_router(performance.router)
+
+# Real-Time Infrastructure - SSE Inventory Stream (Phase 4)
+from src.api.routes import inventory_stream
+
+app.include_router(inventory_stream.router, tags=["Real-Time Inventory"])
+
+# PRD Generation router (✅ IMPLEMENTED)
+app.include_router(prd.router, tags=["PRD Generation"])
 
 
 @app.get("/")

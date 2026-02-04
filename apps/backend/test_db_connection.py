@@ -1,21 +1,19 @@
-"""Test database connection and list tables."""
-from src.config.database import sync_engine
-from sqlalchemy import text
+import asyncio
+import asyncpg
 
-try:
-    conn = sync_engine.connect()
-    result = conn.execute(text("SELECT tablename FROM pg_tables WHERE schemaname='public'"))
-    tables = [row[0] for row in result]
-    print(f"✓ Database connected successfully!")
-    print(f"✓ Found {len(tables)} tables: {', '.join(tables) if tables else '(none)'}")
+async def test_connection():
+    try:
+        conn = await asyncpg.connect(
+            'postgresql://ccw_staging:postgres@localhost:5434/ccw_erp_staging'
+        )
+        print("Connection successful!")
+        result = await conn.fetchval("SELECT COUNT(*) FROM products")
+        print(f"Products count: {result}")
+        await conn.close()
+        return True
+    except Exception as e:
+        print(f"Connection failed: {e}")
+        return False
 
-    if tables:
-        # Check if ERP tables exist
-        erp_tables = ['organizations', 'users', 'products', 'customers', 'orders', 'quotes']
-        found_erp = [t for t in erp_tables if t in tables]
-        print(f"✓ ERP tables found: {', '.join(found_erp) if found_erp else '(none)'}")
-
-    conn.close()
-except Exception as e:
-    print(f"✗ Database connection failed: {e}")
-    exit(1)
+if __name__ == "__main__":
+    asyncio.run(test_connection())

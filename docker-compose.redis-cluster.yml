@@ -1,0 +1,169 @@
+# Redis Cluster Configuration for CCW-Online ERP
+# Version: 1.0
+# Related: ISS-D043
+# Description: Redis Sentinel setup for high availability
+
+version: '3.8'
+
+services:
+  # Redis Master
+  redis-master:
+    image: redis:7-alpine
+    container_name: ccw-redis-master
+    command: >
+      redis-server
+      --port 6379
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD:-redis_password_change_me}
+      --masterauth ${REDIS_PASSWORD:-redis_password_change_me}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-master-data:/data
+    networks:
+      - redis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # Redis Replica 1
+  redis-replica-1:
+    image: redis:7-alpine
+    container_name: ccw-redis-replica-1
+    command: >
+      redis-server
+      --port 6380
+      --appendonly yes
+      --appendfsync everysec
+      --replicaof redis-master 6379
+      --masterauth ${REDIS_PASSWORD:-redis_password_change_me}
+      --requirepass ${REDIS_PASSWORD:-redis_password_change_me}
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6380"
+    volumes:
+      - redis-replica-1-data:/data
+    networks:
+      - redis-network
+    depends_on:
+      - redis-master
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # Redis Replica 2
+  redis-replica-2:
+    image: redis:7-alpine
+    container_name: ccw-redis-replica-2
+    command: >
+      redis-server
+      --port 6381
+      --appendonly yes
+      --appendfsync everysec
+      --replicaof redis-master 6379
+      --masterauth ${REDIS_PASSWORD:-redis_password_change_me}
+      --requirepass ${REDIS_PASSWORD:-redis_password_change_me}
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "6381:6381"
+    volumes:
+      - redis-replica-2-data:/data
+    networks:
+      - redis-network
+    depends_on:
+      - redis-master
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6381", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # Redis Sentinel 1
+  redis-sentinel-1:
+    image: redis:7-alpine
+    container_name: ccw-redis-sentinel-1
+    command: >
+      redis-sentinel /etc/redis/sentinel.conf
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./redis/sentinel-1.conf:/etc/redis/sentinel.conf
+      - redis-sentinel-1-data:/data
+    networks:
+      - redis-network
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+    restart: unless-stopped
+
+  # Redis Sentinel 2
+  redis-sentinel-2:
+    image: redis:7-alpine
+    container_name: ccw-redis-sentinel-2
+    command: >
+      redis-sentinel /etc/redis/sentinel.conf
+    ports:
+      - "26380:26379"
+    volumes:
+      - ./redis/sentinel-2.conf:/etc/redis/sentinel.conf
+      - redis-sentinel-2-data:/data
+    networks:
+      - redis-network
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+    restart: unless-stopped
+
+  # Redis Sentinel 3
+  redis-sentinel-3:
+    image: redis:7-alpine
+    container_name: ccw-redis-sentinel-3
+    command: >
+      redis-sentinel /etc/redis/sentinel.conf
+    ports:
+      - "26381:26379"
+    volumes:
+      - ./redis/sentinel-3.conf:/etc/redis/sentinel.conf
+      - redis-sentinel-3-data:/data
+    networks:
+      - redis-network
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+    restart: unless-stopped
+
+volumes:
+  redis-master-data:
+    driver: local
+  redis-replica-1-data:
+    driver: local
+  redis-replica-2-data:
+    driver: local
+  redis-sentinel-1-data:
+    driver: local
+  redis-sentinel-2-data:
+    driver: local
+  redis-sentinel-3-data:
+    driver: local
+
+networks:
+  redis-network:
+    driver: bridge

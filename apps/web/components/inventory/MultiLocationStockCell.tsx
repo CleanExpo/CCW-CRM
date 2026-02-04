@@ -44,9 +44,9 @@ export function MultiLocationStockCell({ productId, locations }: MultiLocationSt
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {sortedLocations.map((loc) => (
-        <TooltipProvider key={loc.location}>
-          <Tooltip>
+      <TooltipProvider>
+        {sortedLocations.map((loc) => (
+          <Tooltip key={loc.location}>
             <TooltipTrigger asChild>
               <Badge
                 variant={getStockColor(loc.available)}
@@ -69,8 +69,8 @@ export function MultiLocationStockCell({ productId, locations }: MultiLocationSt
               </div>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-      ))}
+        ))}
+      </TooltipProvider>
     </div>
   );
 }

@@ -75,11 +75,12 @@ export function EmailComposeDialog({ open, onOpenChange, onSuccess }: EmailCompo
       });
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send email";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send email",
+        description: errorMessage,
       });
     } finally {
       setSending(false);

@@ -1,28 +1,53 @@
-"""Products API routes."""
+"""Products API routes.
+
+Performance optimized with Redis caching.
+PHASE 4: Enhanced with multi-location stock to eliminate N+1 queries.
+PHASE: Enhanced Shopify Integration - Task 1.2: Automatic metafield sync on product update.
+"""
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.cache.decorators import invalidate_cache
+from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
 from src.db.erp_models import Product as ProductModel
-from src.db.schemas import PaginatedResponse, Product, ProductCreate, ProductUpdate
+from src.db.inventory_models import ProductStockByLocation
+from src.db.schemas import (
+    PaginatedResponse,
+    Product,
+    ProductCreate,
+    ProductUpdate,
+    ProductWithStock,
+    StockByLocation,
+)
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
 
 @router.get("", response_model=PaginatedResponse)
+@cached(ttl=300, key_prefix="api_products_list")  # 5 minute cache
 async def list_products(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     search: str | None = None,
     category: str | None = None,
     is_active: bool | None = None,
+    include_stock: bool = Query(True, description="Include multi-location stock data"),
     db: AsyncSession = Depends(get_db),
 ):
-    """List products with pagination and filters."""
+    """List products with pagination and filters.
+
+    PHASE 4 OPTIMIZATION: Now includes multi-location stock data in a single query.
+    - Before: 50 products = 51 API calls (1 list + 50 stock lookups)
+    - After: 50 products = 1 API call (98% reduction)
+    - Performance gain: Eliminates N+1 query pattern
+
+    Cached for 5 minutes.
+    """
     # Build query
     query = select(ProductModel)
 
@@ -30,9 +55,9 @@ async def list_products(
     if search:
         search_filter = f"%{search}%"
         query = query.where(
-            (ProductModel.name.ilike(search_filter)) |
-            (ProductModel.sku.ilike(search_filter)) |
-            (ProductModel.description.ilike(search_filter))
+            (ProductModel.name.ilike(search_filter))
+            | (ProductModel.sku.ilike(search_filter))
+            | (ProductModel.description.ilike(search_filter))
         )
 
     if category:
@@ -54,8 +79,53 @@ async def list_products(
     result = await db.execute(query)
     products = result.scalars().all()
 
+    # PHASE 4 OPTIMIZATION: Fetch stock data for all products in a SINGLE query
+    if include_stock and products:
+        product_ids = [p.id for p in products]
+        stock_query = select(ProductStockByLocation).where(
+            ProductStockByLocation.product_id.in_(product_ids)
+        )
+        stock_result = await db.execute(stock_query)
+        stock_records = stock_result.scalars().all()
+
+        # Group stock by product_id for O(1) lookup
+        stock_by_product: dict[UUID, list[ProductStockByLocation]] = {}
+        for stock in stock_records:
+            if stock.product_id not in stock_by_product:
+                stock_by_product[stock.product_id] = []
+            stock_by_product[stock.product_id].append(stock)
+
+        # Build response with stock data
+        items_with_stock = []
+        for product in products:
+            product_dict = Product.model_validate(product).model_dump()
+            stock_list = stock_by_product.get(product.id, [])
+            product_dict["stock_by_location"] = [
+                StockByLocation(
+                    location=s.location,
+                    stock=s.stock,
+                    reserved=s.reserved,
+                    available=s.available,
+                    reorder_point=s.reorder_point,
+                    last_counted_at=(
+                        s.last_counted_at.isoformat() if s.last_counted_at else None
+                    ),
+                ).model_dump()
+                for s in stock_list
+            ]
+            items_with_stock.append(product_dict)
+
+        return {
+            "items": items_with_stock,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size,
+        }
+
+    # Fallback: No stock data requested
     return {
-        "items": [Product.model_validate(p) for p in products],
+        "items": [Product.model_validate(p).model_dump() for p in products],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -97,8 +167,11 @@ async def create_product(
     await db.commit()
     await db.refresh(product)
 
-    # Invalidate product list cache
+    # Invalidate product caches (list and dashboard inventory)
     await invalidate_cache("products")
+    await invalidate_cache("api_products_list")
+    await invalidate_cache("dashboard_inventory")
+    await invalidate_cache("dashboard_top_products")
 
     return Product.model_validate(product)
 
@@ -109,7 +182,11 @@ async def update_product(
     product_data: ProductUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update a product."""
+    """Update a product.
+
+    PHASE: Enhanced Shopify Integration - Task 1.2
+    Automatically syncs metafields to Shopify if product is mapped.
+    """
     # Get existing product
     query = select(ProductModel).where(ProductModel.id == product_id)
     result = await db.execute(query)
@@ -126,8 +203,85 @@ async def update_product(
     await db.commit()
     await db.refresh(product)
 
-    # Invalidate product list cache
+    # Invalidate product caches (list and dashboard inventory)
     await invalidate_cache("products")
+    await invalidate_cache("api_products_list")
+    await invalidate_cache("dashboard_inventory")
+    await invalidate_cache("dashboard_top_products")
+
+    # PHASE: Enhanced Shopify Integration - Task 1.2: Automatic Metafield Sync
+    # Check if product has Shopify mapping and sync metafields automatically
+    try:
+        from src.db.shopify_models import ShopifyProductMapping
+        from src.integrations.shopify.metafields import get_metafield_manager
+        from src.services.sse_service import sse_service
+        import structlog
+
+        logger = structlog.get_logger(__name__)
+
+        # Check if product is mapped to Shopify
+        mapping_query = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.product_id == product_id
+        )
+        mapping_result = await db.execute(mapping_query)
+        shopify_mapping = mapping_result.scalar_one_or_none()
+
+        if shopify_mapping:
+            logger.info(
+                "Product updated, triggering automatic metafield sync",
+                product_id=str(product_id),
+                shopify_product_id=shopify_mapping.shopify_product_id,
+            )
+
+            # Publish SSE event: Metafield sync starting
+            await sse_service.publish("shopify-metafield-sync", {
+                "event_type": "sync_started",
+                "product_id": str(product_id),
+                "shopify_product_id": str(shopify_mapping.shopify_product_id),
+                "timestamp": datetime.now().isoformat(),
+            })
+
+            # Trigger metafield sync
+            metafield_manager = get_metafield_manager()
+            sync_result = await metafield_manager.sync_product_metafields(
+                db=db,
+                product_id=product_id,
+                shopify_product_id=str(shopify_mapping.shopify_product_id),
+            )
+
+            # Publish SSE event: Metafield sync completed
+            await sse_service.publish("shopify-metafield-sync", {
+                "event_type": "sync_completed" if sync_result["success"] else "sync_failed",
+                "product_id": str(product_id),
+                "shopify_product_id": str(shopify_mapping.shopify_product_id),
+                "synced_count": sync_result.get("synced_count", 0),
+                "synced_metafields": sync_result.get("synced_metafields", []),
+                "errors": sync_result.get("errors", []),
+                "timestamp": datetime.now().isoformat(),
+            })
+
+            logger.info(
+                "Automatic metafield sync completed",
+                product_id=str(product_id),
+                success=sync_result["success"],
+                synced_count=sync_result.get("synced_count", 0),
+            )
+        else:
+            logger.debug(
+                "Product not mapped to Shopify, skipping metafield sync",
+                product_id=str(product_id),
+            )
+
+    except Exception as e:
+        # Log error but don't fail the product update
+        import structlog
+        logger = structlog.get_logger(__name__)
+        logger.error(
+            "Failed to sync metafields automatically",
+            product_id=str(product_id),
+            error=str(e),
+        )
+        # Continue with product update success
 
     return Product.model_validate(product)
 
@@ -150,7 +304,10 @@ async def delete_product(
     product.is_active = False
     await db.commit()
 
-    # Invalidate product list cache
+    # Invalidate product caches (list and dashboard inventory)
     await invalidate_cache("products")
+    await invalidate_cache("api_products_list")
+    await invalidate_cache("dashboard_inventory")
+    await invalidate_cache("dashboard_top_products")
 
     return None

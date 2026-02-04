@@ -1,6 +1,6 @@
 """Database models and utilities."""
 
-from .models import (
+from src.db.models_base import (
     AustralianState,
     AvailabilitySlot,
     AvailabilityStatus,

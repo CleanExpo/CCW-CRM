@@ -8,6 +8,7 @@ These models are optimized for quick demo setup with essential fields only.
 import enum
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -23,8 +24,14 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSON, UUID as PGUUID
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 
-from .models import Base  # Use existing Base class
+from .models_base import Base  # Use existing Base class
+
+# Import related models to ensure they are registered with SQLAlchemy
+# This prevents "failed to locate a name" errors when using string-based relationships
+from . import i18n_models  # noqa: F401 - For ProductTranslation
+from . import inventory_models  # noqa: F401 - For OutboundShipment
 
 
 class OrderStatus(str, enum.Enum):
@@ -53,14 +60,14 @@ class QuoteStatus(str, enum.Enum):
 class ProductCategory(str, enum.Enum):
     """Product category enum for equipment supplier."""
 
-    HEAVY_MACHINERY = "heavy_machinery"
-    HAND_TOOLS = "hand_tools"
-    POWER_TOOLS = "power_tools"
-    SAFETY_EQUIPMENT = "safety_equipment"
-    BUILDING_MATERIALS = "building_materials"
-    ELECTRICAL = "electrical"
-    PLUMBING = "plumbing"
-    ACCESSORIES = "accessories"
+    HEAVY_MACHINERY = "HEAVY_MACHINERY"
+    HAND_TOOLS = "HAND_TOOLS"
+    POWER_TOOLS = "POWER_TOOLS"
+    SAFETY_EQUIPMENT = "SAFETY_EQUIPMENT"
+    BUILDING_MATERIALS = "BUILDING_MATERIALS"
+    ELECTRICAL = "ELECTRICAL"
+    PLUMBING = "PLUMBING"
+    ACCESSORIES = "ACCESSORIES"
 
 
 class JobStatus(str, enum.Enum):
@@ -116,6 +123,12 @@ class Product(Base):
     cost: Decimal = Column(Numeric(10, 2), nullable=False, default=0)
     stock: int = Column(Integer, nullable=False, default=0)
     warehouse_location: str | None = Column(String(100), nullable=True)
+
+    # Vector embedding for semantic search (1536 dimensions for OpenAI ada-002)
+    embedding: list[float] | None = Column(
+        Vector(1536), nullable=True, comment="Vector embedding for semantic search"
+    )
+
     is_active: bool = Column(Boolean, default=True, nullable=False)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
@@ -130,6 +143,7 @@ class Product(Base):
     # Relationships
     order_items = relationship("OrderItem", back_populates="product")
     quote_items = relationship("QuoteItem", back_populates="product")
+    translations = relationship("ProductTranslation", back_populates="product", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Product(sku={self.sku}, name={self.name})>"

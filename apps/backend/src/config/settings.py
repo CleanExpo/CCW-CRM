@@ -59,8 +59,8 @@ class Settings(BaseSettings):
 
     # JWT Authentication
     jwt_secret_key: str = Field(
-        default="your-secret-key-change-in-production",
-        description="Secret key for JWT token signing"
+        default="",
+        description="Secret key for JWT token signing (loaded from AWS Secrets Manager in production)"
     )
     jwt_expire_minutes: int = Field(default=480, description="JWT access token expiration in minutes (8 hours)")  # noqa: E501
     jwt_refresh_expire_days: int = Field(default=30, description="JWT refresh token expiration in days")  # noqa: E501
@@ -109,6 +109,18 @@ class Settings(BaseSettings):
     sendgrid_from_email: str = Field(default="noreply@ccw-erp.com", description="From email address")  # noqa: E501
     sendgrid_from_name: str = Field(default="CCW ERP", description="From name for emails")
 
+    # System Alert Notifications (for monitoring/ops team)
+    smtp_host: str = Field(default="smtp.gmail.com", description="SMTP host for alert emails")
+    smtp_port: int = Field(default=587, description="SMTP port")
+    smtp_user: str = Field(default="", description="SMTP username")
+    smtp_password: str = Field(default="", description="SMTP password")
+    alert_email_to: str = Field(default="", description="Email address to send system alerts")
+    slack_webhook_url: str = Field(default="", description="Slack webhook URL for system alerts")
+
+    # Monitoring Configuration
+    alert_check_interval_minutes: int = Field(default=5, description="Alert check interval in minutes")
+    metrics_retention_hours: int = Field(default=24, description="Performance metrics retention in hours")
+
     # Business Configuration
     tax_rate: str = Field(default="0.10", description="Tax rate (GST) as decimal (e.g., 0.10 for 10%)")  # noqa: E501
     tax_name: str = Field(default="GST", description="Tax name displayed in UI")
@@ -125,8 +137,8 @@ class Settings(BaseSettings):
 
     # Webhook Configuration
     webhook_secret: str = Field(
-        default="change-this-webhook-secret-in-production",
-        description="Secret key for webhook signature verification"
+        default="",
+        description="Secret key for webhook signature verification (loaded from AWS Secrets Manager in production)"
     )
     webhook_contact_form_url: str | None = Field(
         default=None,
@@ -160,6 +172,40 @@ class Settings(BaseSettings):
     def tax_rate_decimal(self) -> Decimal:
         """Get tax rate as Decimal for precise calculations."""
         return Decimal(self.tax_rate)
+
+    def get_jwt_secret_secure(self) -> str:
+        """
+        Get JWT secret from AWS Secrets Manager (production) or environment (development).
+
+        Returns:
+            JWT secret key
+
+        Raises:
+            ValueError: If secret not configured in production
+        """
+        if self.is_production:
+            from src.integrations.secrets_manager import get_jwt_secret
+            return get_jwt_secret()
+        else:
+            # Development: allow default from env or settings
+            return self.jwt_secret_key or "dev-jwt-secret-not-for-production"
+
+    def get_webhook_secret_secure(self) -> str:
+        """
+        Get webhook secret from AWS Secrets Manager (production) or environment (development).
+
+        Returns:
+            Webhook signature verification secret
+
+        Raises:
+            ValueError: If secret not configured in production
+        """
+        if self.is_production:
+            from src.integrations.secrets_manager import get_webhook_secret
+            return get_webhook_secret()
+        else:
+            # Development: allow default from env or settings
+            return self.webhook_secret or "dev-webhook-secret-not-for-production"
 
 
 @lru_cache

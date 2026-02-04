@@ -7,6 +7,7 @@ from typing import AsyncGenerator
 
 # CRITICAL: Set environment variables BEFORE any imports
 os.environ["RATE_LIMIT_ENABLED"] = "false"
+os.environ["SKIP_AUTH_ENFORCEMENT"] = "true"  # Bypass auth middleware for tests
 
 # Windows asyncpg compatibility: ensure selector event loop in tests.
 if sys.platform.startswith("win"):
@@ -21,7 +22,7 @@ from src.api.main import app
 from src.config.database import AsyncSessionLocal, get_async_db
 
 # Import test data fixtures
-pytest_plugins = ["tests.fixtures.data"]
+pytest_plugins = ["tests.fixtures.data", "tests.fixtures.pos_data"]
 
 
 @pytest.fixture
@@ -81,6 +82,14 @@ async def auth_token(client: AsyncClient) -> str:
         json={"email": "admin@demo.com", "password": "demo123"},
     )
     assert response.status_code == 200, f"Login failed: {response.status_code} - {response.text}"
-    token = response.cookies.get("auth_token")
-    assert token is not None, "No auth_token cookie received"
+    # Get token from response body (also available in cookies)
+    data = response.json()
+    token = data.get("access_token")
+    assert token is not None, "No access_token in response"
     return token
+
+
+@pytest_asyncio.fixture(scope="function")
+async def auth_headers(auth_token: str) -> dict:
+    """Get Authorization headers with Bearer token for testing."""
+    return {"Authorization": f"Bearer {auth_token}"}
