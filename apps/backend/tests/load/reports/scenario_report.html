@@ -84,8 +84,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔍 10,000 Scenario Test Report</h1>
-        <p class="timestamp">Generated: 2026-01-16 19:37:18</p>
+        <h1>[LOAD TEST] 10,000 Scenario Test Report</h1>
+        <p class="timestamp">Generated: 2026-02-03 15:58:21</p>
 
         <section class="summary">
             <div class="metric">
@@ -93,46 +93,40 @@
                 <div class="metric-label">Total Scenarios</div>
             </div>
             <div class="metric">
-                <div class="metric-value pass">6,116 (61.2%)</div>
+                <div class="metric-value pass">1,200 (12.0%)</div>
                 <div class="metric-label">Passed</div>
             </div>
             <div class="metric">
-                <div class="metric-value fail">3,884 (38.8%)</div>
+                <div class="metric-value fail">8,800 (88.0%)</div>
                 <div class="metric-label">Failed</div>
             </div>
             <div class="metric">
-                <div class="metric-value warning">26227ms</div>
+                <div class="metric-value warning">3044ms</div>
                 <div class="metric-label">Avg Response Time</div>
             </div>
             <div class="metric">
-                <div class="metric-value">7738ms</div>
+                <div class="metric-value">3682ms</div>
                 <div class="metric-label">P95 Response Time</div>
             </div>
             <div class="metric">
-                <div class="metric-value">25590644ms</div>
+                <div class="metric-value">5773ms</div>
                 <div class="metric-label">Max Response Time</div>
             </div>
         </section>
 
-        <h2>🚨 Critical Failures (0)</h2>
+        <h2>[CRITICAL] Critical Failures (0)</h2>
         <p>No critical failures detected.</p>
 
-        <h2>❌ All Failures by Type</h2>
+        <h2>[FAILURES] All Failures by Type</h2>
         
-            <h3>Unknown (3866)</h3>
+            <h3>ConnectError (8800)</h3>
             <ul>
-                <li><code class="code">order_create_valid_0</code>: </li><li><code class="code">order_create_valid_1</code>: </li><li><code class="code">order_create_valid_2</code>: </li><li><code class="code">order_create_valid_3</code>: </li><li><code class="code">order_create_valid_4</code>: </li><li><code class="code">order_create_valid_5</code>: </li><li><code class="code">order_create_valid_6</code>: </li><li><code class="code">order_create_valid_7</code>: </li><li><code class="code">order_create_valid_9</code>: </li><li><code class="code">order_create_valid_10</code>: </li>
+                <li><code class="code">product_create_0</code>: All connection attempts failed</li><li><code class="code">product_create_1</code>: All connection attempts failed</li><li><code class="code">product_create_2</code>: All connection attempts failed</li><li><code class="code">product_create_3</code>: All connection attempts failed</li><li><code class="code">product_create_4</code>: All connection attempts failed</li><li><code class="code">product_create_5</code>: All connection attempts failed</li><li><code class="code">product_create_6</code>: All connection attempts failed</li><li><code class="code">product_create_7</code>: All connection attempts failed</li><li><code class="code">product_create_8</code>: All connection attempts failed</li><li><code class="code">product_create_9</code>: All connection attempts failed</li>
             </ul>
-            <p><em>...and 3856 more</em></p>
-        
-            <h3>ConnectTimeout (18)</h3>
-            <ul>
-                <li><code class="code">customer_delete_20</code>: </li><li><code class="code">customer_delete_21</code>: </li><li><code class="code">customer_delete_22</code>: </li><li><code class="code">customer_delete_23</code>: </li><li><code class="code">customer_delete_24</code>: </li><li><code class="code">customer_delete_25</code>: </li><li><code class="code">customer_delete_26</code>: </li><li><code class="code">customer_delete_27</code>: </li><li><code class="code">customer_delete_28</code>: </li><li><code class="code">customer_delete_29</code>: </li>
-            </ul>
-            <p><em>...and 8 more</em></p>
+            <p><em>...and 8790 more</em></p>
         
 
-        <h2>🐌 Performance Issues</h2>
+        <h2>[PERFORMANCE] Performance Issues</h2>
         <p>Scenarios with response time > 1000ms</p>
         
         <table>
@@ -147,132 +141,132 @@
                 
             <tr>
                 <td><code class="code">product_create_0</code></td>
-                <td class="warning">6630ms</td>
-                <td>201</td>
+                <td class="warning">3437ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_1</code></td>
-                <td class="warning">6331ms</td>
-                <td>201</td>
+                <td class="warning">2676ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_2</code></td>
-                <td class="warning">3919ms</td>
-                <td>201</td>
+                <td class="warning">3019ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_3</code></td>
-                <td class="warning">3949ms</td>
-                <td>201</td>
+                <td class="warning">3031ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_4</code></td>
-                <td class="warning">5436ms</td>
-                <td>201</td>
+                <td class="warning">3015ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_5</code></td>
-                <td class="warning">3346ms</td>
-                <td>201</td>
+                <td class="warning">2983ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_6</code></td>
-                <td class="warning">3045ms</td>
-                <td>201</td>
+                <td class="warning">3470ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_7</code></td>
-                <td class="warning">2680ms</td>
-                <td>201</td>
+                <td class="warning">2823ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_8</code></td>
-                <td class="warning">2301ms</td>
-                <td>201</td>
+                <td class="warning">2934ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_9</code></td>
-                <td class="warning">1929ms</td>
-                <td>201</td>
+                <td class="warning">3183ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_10</code></td>
-                <td class="warning">3347ms</td>
-                <td>201</td>
+                <td class="warning">3688ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_11</code></td>
-                <td class="warning">3024ms</td>
-                <td>201</td>
+                <td class="warning">2768ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_12</code></td>
-                <td class="warning">2726ms</td>
-                <td>201</td>
+                <td class="warning">3427ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_13</code></td>
-                <td class="warning">2423ms</td>
-                <td>201</td>
+                <td class="warning">2659ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_14</code></td>
-                <td class="warning">2130ms</td>
-                <td>201</td>
+                <td class="warning">3139ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_15</code></td>
-                <td class="warning">1842ms</td>
-                <td>201</td>
+                <td class="warning">3314ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_16</code></td>
-                <td class="warning">1248ms</td>
-                <td>201</td>
+                <td class="warning">3746ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_17</code></td>
-                <td class="warning">4030ms</td>
-                <td>201</td>
+                <td class="warning">2763ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_18</code></td>
-                <td class="warning">2800ms</td>
-                <td>201</td>
+                <td class="warning">3090ms</td>
+                <td>N/A</td>
             </tr>
         
             <tr>
                 <td><code class="code">product_create_19</code></td>
-                <td class="warning">2802ms</td>
-                <td>201</td>
+                <td class="warning">3080ms</td>
+                <td>N/A</td>
             </tr>
         
             </tbody>
         </table>
     
 
-        <h2>🔒 Security Concerns</h2>
+        <h2>[SECURITY] Security Concerns</h2>
         <p>No security issues detected.</p>
 
-        <h2>📊 Top 10 Slowest Scenarios</h2>
+        <h2>[SLOWEST] Top 10 Slowest Scenarios</h2>
         
         <table>
             <thead>
@@ -286,69 +280,69 @@
                 
             <tr>
                 <td>1</td>
-                <td><code class="code">customer_delete_30</code></td>
-                <td class="warning">25590644ms</td>
+                <td><code class="code">order_invalid_status_15</code></td>
+                <td class="warning">5773ms</td>
             </tr>
         
             <tr>
                 <td>2</td>
-                <td><code class="code">customer_delete_28</code></td>
-                <td class="warning">16145448ms</td>
+                <td><code class="code">ai_empty_requirements_4</code></td>
+                <td class="warning">5634ms</td>
             </tr>
         
             <tr>
                 <td>3</td>
-                <td><code class="code">customer_delete_27</code></td>
-                <td class="warning">16144135ms</td>
+                <td><code class="code">order_invalid_status_29</code></td>
+                <td class="warning">5484ms</td>
             </tr>
         
             <tr>
                 <td>4</td>
-                <td><code class="code">customer_delete_38</code></td>
-                <td class="warning">14558728ms</td>
+                <td><code class="code">ai_empty_requirements_5</code></td>
+                <td class="warning">5332ms</td>
             </tr>
         
             <tr>
                 <td>5</td>
-                <td><code class="code">customer_delete_31</code></td>
-                <td class="warning">14547988ms</td>
+                <td><code class="code">order_invalid_status_17</code></td>
+                <td class="warning">5206ms</td>
             </tr>
         
             <tr>
                 <td>6</td>
-                <td><code class="code">customer_delete_32</code></td>
-                <td class="warning">14545982ms</td>
+                <td><code class="code">product_read_75</code></td>
+                <td class="warning">5116ms</td>
             </tr>
         
             <tr>
                 <td>7</td>
-                <td><code class="code">customer_delete_33</code></td>
-                <td class="warning">14544098ms</td>
+                <td><code class="code">order_delete_193</code></td>
+                <td class="warning">5050ms</td>
             </tr>
         
             <tr>
                 <td>8</td>
-                <td><code class="code">customer_delete_34</code></td>
-                <td class="warning">14542290ms</td>
+                <td><code class="code">ai_dashboard_insights_173</code></td>
+                <td class="warning">4988ms</td>
             </tr>
         
             <tr>
                 <td>9</td>
-                <td><code class="code">customer_delete_35</code></td>
-                <td class="warning">14539938ms</td>
+                <td><code class="code">quote_create_valid_79</code></td>
+                <td class="warning">4963ms</td>
             </tr>
         
             <tr>
                 <td>10</td>
-                <td><code class="code">customer_delete_36</code></td>
-                <td class="warning">14537849ms</td>
+                <td><code class="code">ai_dashboard_insights_85</code></td>
+                <td class="warning">4951ms</td>
             </tr>
         
             </tbody>
         </table>
     
 
-        <h2>✅ Success Criteria</h2>
+        <h2>[SUCCESS CRITERIA] Success Criteria</h2>
         <table>
             <tr>
                 <th>Criteria</th>
@@ -359,25 +353,25 @@
             <tr>
                 <td>Pass Rate</td>
                 <td>≥ 90%</td>
-                <td>61.2%</td>
+                <td>12.0%</td>
                 <td class="fail">
-                    ✗ FAIL
+                    [FAIL]
                 </td>
             </tr>
             <tr>
                 <td>Average Response Time</td>
                 <td>≤ 500ms</td>
-                <td>26227ms</td>
+                <td>3044ms</td>
                 <td class="warning">
-                    ⚠ WARNING
+                    [WARNING]
                 </td>
             </tr>
             <tr>
                 <td>P95 Response Time</td>
                 <td>≤ 1000ms</td>
-                <td>7738ms</td>
+                <td>3682ms</td>
                 <td class="warning">
-                    ⚠ WARNING
+                    [WARNING]
                 </td>
             </tr>
             <tr>
@@ -385,7 +379,7 @@
                 <td>0</td>
                 <td>0</td>
                 <td class="pass">
-                    ✓ PASS
+                    [PASS]
                 </td>
             </tr>
         </table>

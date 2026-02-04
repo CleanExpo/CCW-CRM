@@ -90,6 +90,27 @@ class Product(ProductBase):
         from_attributes = True
 
 
+# PHASE 4: Enhanced Product with Stock by Location
+class StockByLocation(BaseModel):
+    """Stock information for a single location."""
+
+    location: str
+    stock: int
+    reserved: int
+    available: int
+    reorder_point: int | None = None
+    last_counted_at: str | None = None
+
+
+class ProductWithStock(Product):
+    """Product with multi-location stock data.
+
+    PHASE 4 OPTIMIZATION: Includes stock_by_location to eliminate N+1 queries.
+    """
+
+    stock_by_location: list[StockByLocation] = []
+
+
 # Customer schemas
 class CustomerBase(BaseModel):
     customer_number: str
@@ -144,7 +165,7 @@ class OrderItemBase(BaseModel):
 
 class OrderItemCreate(BaseModel):
     product_id: UUID
-    quantity: int = Field(ge=0)
+    quantity: int = Field(ge=1, description="Quantity must be at least 1")
 
 
 class OrderItem(OrderItemBase):
@@ -169,7 +190,7 @@ class OrderBase(BaseModel):
 
 
 class OrderCreate(OrderBase):
-    items: list[OrderItemCreate]
+    items: list[OrderItemCreate] = Field(min_length=1, description="Order must have at least one item")
 
 
 class OrderUpdate(BaseModel):
@@ -236,7 +257,7 @@ class QuoteItemBase(BaseModel):
 
 class QuoteItemCreate(BaseModel):
     product_id: UUID
-    quantity: int = Field(ge=0)
+    quantity: int = Field(ge=1, description="Quantity must be at least 1")
 
 
 class QuoteItem(QuoteItemBase):
@@ -258,14 +279,26 @@ class QuoteBase(BaseModel):
     @field_validator("valid_until", mode="before")
     @classmethod
     def normalize_valid_until(cls, value):
+        """Normalize valid_until to date type, accepting datetime or ISO date strings."""
+        if value is None:
+            return value
         if isinstance(value, datetime):
             return value.date()
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            # Try parsing ISO format (YYYY-MM-DD)
+            try:
+                return datetime.fromisoformat(value.replace('Z', '+00:00')).date()
+            except (ValueError, AttributeError):
+                # If that fails, let Pydantic handle it (will raise validation error)
+                pass
         return value
 
 
 class QuoteCreate(QuoteBase):
     valid_until: date
-    items: list[QuoteItemCreate]
+    items: list[QuoteItemCreate] = Field(min_length=1, description="Quote must have at least one item")
 
 
 class QuoteUpdate(BaseModel):
@@ -273,7 +306,7 @@ class QuoteUpdate(BaseModel):
     status: QuoteStatus | None = None
     valid_until: date | None = None
     notes: str | None = None
-    items: list[QuoteItemCreate] | None = None
+    items: list[QuoteItemCreate] | None = Field(None, min_length=1, description="If provided, quote must have at least one item")
 
 
 class Quote(QuoteBase):

@@ -27,6 +27,8 @@ import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useAutosave } from "@/lib/hooks/use-autosave";
+import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
 
 const formSchema = z.object({
   customer_number: z.string().min(1, "Customer number is required").max(50, "Customer number must be 50 characters or less"),
@@ -85,6 +87,20 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
     },
   });
 
+  // Autosave hook - prevents data loss on dialog close/navigation
+  const draftKey = isEdit ? `customer-form-${customer?.id}` : "customer-form-new";
+  const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
+    key: draftKey,
+    formValues: form.watch(),
+    onRestore: (draft) => {
+      Object.keys(draft).forEach((key) => {
+        form.setValue(key as keyof FormData, draft[key]);
+      });
+    },
+    enabled: open && !isEdit, // Only autosave for new customers (not edits)
+    debounceMs: 2000, // Save every 2 seconds
+  });
+
   // Reset form when customer changes or dialog opens/closes
   useEffect(() => {
     if (open) {
@@ -134,6 +150,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           description: "Customer created successfully",
         });
       }
+      clearDraft(); // Clear autosave draft on success
       onSuccess();
       onOpenChange(false);
     } catch (error: unknown) {
@@ -162,6 +179,15 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
               : "Add a new customer to your directory."}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Draft Recovery Alert */}
+        {hasDraft && !isEdit && draftMetadata && (
+          <DraftRecoveryAlert
+            savedAt={draftMetadata.savedAt}
+            onRestore={loadDraft}
+            onDiscard={clearDraft}
+          />
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

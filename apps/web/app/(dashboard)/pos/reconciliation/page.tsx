@@ -37,19 +37,32 @@ import {
   Search,
   Building2,
   ArrowRight,
+  Download,
+  Plus,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { FilterPanel, type ReconciliationFilters } from "./components/FilterPanel";
+import { BulkActionsPanel } from "./components/BulkActionsPanel";
+import { ExportDialog } from "./components/ExportDialog";
+import { BankAccountDialog } from "./components/BankAccountDialog";
 
 interface BankAccount {
   id: string;
   account_name: string;
   account_number: string;
+  bsb: string;
   bank_name: string;
-  location_code: string;
-  feed_provider: string;
-  last_feed_sync_at: string | null;
+  account_type: "checking" | "savings" | "credit";
+  feed_provider: "xero" | "yodlee" | "basiq" | "manual";
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  location_code?: string;
+  last_feed_sync_at?: string | null;
 }
 
 interface BankFeed {
@@ -73,18 +86,34 @@ interface POSTransaction {
   location_code: string;
 }
 
+interface ReconciliationAlert {
+  type: string;
+  severity: "info" | "warning" | "critical";
+  title: string;
+  description: string;
+  affected_count: number;
+  total_amount: number;
+}
+
 export default function ReconciliationPage() {
   const { toast } = useToast();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [unreconciledFeeds, setUnreconciledFeeds] = useState<BankFeed[]>([]);
   const [unreconciledPOS, setUnreconciledPOS] = useState<POSTransaction[]>([]);
+  const [alerts, setAlerts] = useState<ReconciliationAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [creatingInvoices, setCreatingInvoices] = useState(false);
   const [matchDialogOpen, setMatchDialogOpen] = useState(false);
   const [selectedFeed, setSelectedFeed] = useState<BankFeed | null>(null);
   const [selectedPOS, setSelectedPOS] = useState<POSTransaction | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<ReconciliationFilters>({});
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isBankAccountDialogOpen, setIsBankAccountDialogOpen] = useState(false);
+  const [editingBankAccount, setEditingBankAccount] = useState<BankAccount | null>(null);
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return "-";
@@ -107,6 +136,16 @@ export default function ReconciliationPage() {
     }
   }, [selectedAccount]);
 
+  // Load alerts
+  const loadAlerts = useCallback(async () => {
+    try {
+      const alertsData = await apiClient.get<ReconciliationAlert[]>("/api/bank-feeds/alerts");
+      setAlerts(alertsData);
+    } catch (error) {
+      console.error("Failed to load alerts:", error);
+    }
+  }, []);
+
   // Load unreconciled data
   const loadUnreconciledData = useCallback(async () => {
     if (!selectedAccount) return;
@@ -124,6 +163,9 @@ export default function ReconciliationPage() {
 
       setUnreconciledFeeds(feeds);
       setUnreconciledPOS(transactions.items || []);
+
+      // Load alerts
+      await loadAlerts();
     } catch (error) {
       console.error("Failed to load data:", error);
       toast({
@@ -134,7 +176,7 @@ export default function ReconciliationPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedAccount, toast]);
+  }, [selectedAccount, toast, loadAlerts]);
 
   useEffect(() => {
     loadAccounts();
@@ -176,6 +218,34 @@ export default function ReconciliationPage() {
       });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  // Bulk create Xero invoices
+  const handleBulkCreateInvoices = async () => {
+    setCreatingInvoices(true);
+    try {
+      const result = await apiClient.post<{
+        total: number;
+        created: number;
+        failed: number;
+      }>("/api/pos/xero/bulk-invoices");
+
+      toast({
+        title: "Invoices Created",
+        description: `Created ${result.created} invoices. ${result.failed > 0 ? `${result.failed} failed.` : ""}`,
+      });
+
+      await loadUnreconciledData();
+    } catch (error) {
+      console.error("Bulk invoice creation failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed",
+        description: "Failed to create Xero invoices",
+      });
+    } finally {
+      setCreatingInvoices(false);
     }
   };
 
@@ -239,11 +309,65 @@ export default function ReconciliationPage() {
             Match bank transactions to POS sales
           </p>
         </div>
-        <Button onClick={handleSync} disabled={syncing || !selectedAccount}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-          {syncing ? "Syncing..." : "Sync Bank Feeds"}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsExportDialogOpen(true)} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button onClick={handleBulkCreateInvoices} disabled={creatingInvoices} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${creatingInvoices ? "animate-spin" : ""}`} />
+            {creatingInvoices ? "Creating..." : "Create Xero Invoices"}
+          </Button>
+          <Button onClick={handleSync} disabled={syncing || !selectedAccount}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing..." : "Sync Bank Feeds"}
+          </Button>
+        </div>
       </div>
+
+      {/* Alerts */}
+      {alerts.length > 0 && (
+        <div className="space-y-2">
+          {alerts.map((alert, index) => {
+            const severityColors = {
+              info: "bg-blue-50 border-blue-200 text-blue-900",
+              warning: "bg-yellow-50 border-yellow-200 text-yellow-900",
+              critical: "bg-red-50 border-red-200 text-red-900",
+            };
+
+            const severityIcons = {
+              info: <CheckCircle2 className="h-5 w-5" />,
+              warning: <AlertTriangle className="h-5 w-5" />,
+              critical: <AlertTriangle className="h-5 w-5" />,
+            };
+
+            return (
+              <Card key={index} className={`border-l-4 ${severityColors[alert.severity]}`}>
+                <CardContent className="py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5">{severityIcons[alert.severity]}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{alert.title}</h3>
+                        <Badge variant={alert.severity === "critical" ? "destructive" : "secondary"}>
+                          {alert.severity.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <p className="text-sm mt-1">{alert.description}</p>
+                      {alert.affected_count > 0 && (
+                        <p className="text-xs mt-2 opacity-70">
+                          Affected: {alert.affected_count} transaction{alert.affected_count !== 1 ? "s" : ""}
+                          {alert.total_amount > 0 && ` • Total: ${formatCurrency(alert.total_amount)}`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Account Selector */}
       <Card>
@@ -281,6 +405,28 @@ export default function ReconciliationPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Filters */}
+      <FilterPanel
+        filters={filters}
+        onFilterChange={setFilters}
+        bankAccounts={accounts.map(a => ({ id: a.id, account_name: a.account_name }))}
+      />
+
+      {/* Bulk Actions */}
+      {selectedItems.size > 0 && (
+        <BulkActionsPanel
+          selectedItems={selectedItems}
+          onClearSelection={() => setSelectedItems(new Set())}
+          onSuccess={() => {
+            loadAccounts();
+            loadAlerts();
+            loadUnreconciledData();
+          }}
+          bankFeedData={unreconciledFeeds.map(f => ({ id: f.id, amount: f.credit || -f.debit || 0 }))}
+          posTransactionData={unreconciledPOS.map(t => ({ id: t.id, amount: t.amount }))}
+        />
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -539,6 +685,26 @@ export default function ReconciliationPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        bankAccountId={selectedAccount}
+      />
+
+      {/* Bank Account Dialog */}
+      <BankAccountDialog
+        open={isBankAccountDialogOpen}
+        onOpenChange={setIsBankAccountDialogOpen}
+        mode={editingBankAccount ? "edit" : "create"}
+        account={editingBankAccount || undefined}
+        onSuccess={() => {
+          loadAccounts();
+          loadAlerts();
+          loadUnreconciledData();
+        }}
+      />
     </div>
   );
 }

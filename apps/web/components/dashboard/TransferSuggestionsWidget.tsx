@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { ArrowRight, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,8 @@ interface TransferSuggestionsData {
   total_estimated_cost: number;
 }
 
-export function TransferSuggestionsWidget() {
+// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
+export const TransferSuggestionsWidget = memo(function TransferSuggestionsWidget() {
   const [data, setData] = useState<TransferSuggestionsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +44,9 @@ export function TransferSuggestionsWidget() {
         setLoading(true);
         const response = await apiClient.get<TransferSuggestionsData>("/api/inventory/transfer-suggestions");
         setData(response);
-      } catch (err: any) {
-        setError(err.message || "Failed to load transfer suggestions");
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to load transfer suggestions";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -261,4 +263,4 @@ export function TransferSuggestionsWidget() {
       </CardContent>
     </Card>
   );
-}
+});

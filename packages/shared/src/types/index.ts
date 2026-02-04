@@ -56,3 +56,13 @@ export interface VerificationResult {
   errors: string[];
   output?: string;
 }
+
+// Domain types (ERP)
+export * from "./orders";
+export * from "./quotes";
+export * from "./customers";
+export * from "./products";
+export * from "./inventory";
+export * from "./purchase-orders";
+export * from "./suppliers";
+export * from "./shipments";

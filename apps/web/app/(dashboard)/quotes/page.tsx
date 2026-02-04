@@ -9,11 +9,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { QuoteForm } from "./components/QuoteForm";
 import { DeleteQuoteDialog } from "./components/DeleteQuoteDialog";
 import { ConvertToOrderDialog } from "./components/ConvertToOrderDialog";
-import { Pencil, Trash2, Plus, ArrowRight } from "lucide-react";
+import { Pencil, Trash2, Plus, ArrowRight, Copy, Sparkles } from "lucide-react";
+// PHASE C: Quote Copilot Chat
+import { QuoteCopilotChat } from "@/components/ai/QuoteCopilotChat";
 import { useToast } from "@/hooks/use-toast";
 import { Quote } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns"; // PHASE 4: Add timestamp display
 
 interface PaginatedResponse {
   items: Quote[];
@@ -37,9 +39,11 @@ export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false); // PHASE C: Copilot dialog state
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
 
   const loadQuotes = useCallback(async () => {
@@ -63,6 +67,7 @@ export default function QuotesPage() {
       setTotal(0);
     } finally {
       setLoading(false);
+      setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
   }, [toast]);
 
@@ -93,6 +98,35 @@ export default function QuotesPage() {
     }
   };
 
+  // PHASE 4: Duplicate quote - quickly create copy with same items
+  const handleDuplicateQuote = async (quote: Quote) => {
+    try {
+      const fullQuote = await apiClient.get<Quote>(`/api/quotes/${quote.id}`);
+      // Create a copy without id (will be treated as new quote)
+      const quoteCopy = {
+        ...fullQuote,
+        id: undefined, // Remove id to create new quote
+        quote_number: undefined, // Will be auto-generated
+        status: "draft", // Reset to draft
+        notes: fullQuote.notes ? `Copy of ${fullQuote.quote_number}\n\n${fullQuote.notes}` : `Copy of ${fullQuote.quote_number}`,
+      };
+      setSelectedQuote(quoteCopy as Quote);
+      setFormOpen(true);
+      toast({
+        title: "Quote Duplicated",
+        description: "Review and modify the copy before saving",
+      });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to duplicate quote";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
+    }
+  };
+
   const handleDeleteQuote = (quote: Quote) => {
     setSelectedQuote(quote);
     setDeleteDialogOpen(true);
@@ -107,6 +141,17 @@ export default function QuotesPage() {
     loadQuotes();
   };
 
+  // PHASE C: Handle quote created from Copilot
+  const handleCopilotQuoteCreated = (quoteData: any) => {
+    // Pre-fill the quote form with copilot data
+    setSelectedQuote(quoteData as Quote);
+    setFormOpen(true);
+    toast({
+      title: "Quote Ready",
+      description: "Copilot has prepared your quote. Review and save to finalize.",
+    });
+  };
+
   const isExpired = (validUntil: string | null) => {
     if (!validUntil) return false;
     return new Date(validUntil) < new Date();
@@ -119,10 +164,17 @@ export default function QuotesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Quotes</h1>
           <p className="text-muted-foreground">Manage customer quotations</p>
         </div>
-        <Button onClick={handleAddQuote}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Quote
-        </Button>
+        <div className="flex gap-2">
+          {/* PHASE C: Quote Copilot Button */}
+          <Button variant="outline" onClick={() => setCopilotOpen(true)}>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Copilot
+          </Button>
+          <Button onClick={handleAddQuote}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Quote
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -132,6 +184,11 @@ export default function QuotesPage() {
               <CardTitle>Quotations</CardTitle>
               <CardDescription>
                 {total} quotes in system
+                {lastUpdated && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                  </span>
+                )}
               </CardDescription>
             </div>
           </div>
@@ -258,6 +315,17 @@ export default function QuotesPage() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleDuplicateQuote(quote);
+                        }}
+                        title="Duplicate Quote"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleDeleteQuote(quote);
                         }}
                       >
@@ -291,6 +359,13 @@ export default function QuotesPage() {
         open={convertDialogOpen}
         onOpenChange={setConvertDialogOpen}
         onSuccess={handleSuccess}
+      />
+
+      {/* PHASE C: Quote Copilot Chat */}
+      <QuoteCopilotChat
+        open={copilotOpen}
+        onOpenChange={setCopilotOpen}
+        onQuoteCreated={handleCopilotQuoteCreated}
       />
     </div>
   );

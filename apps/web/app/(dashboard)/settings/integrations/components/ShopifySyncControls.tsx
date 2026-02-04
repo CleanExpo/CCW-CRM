@@ -94,16 +94,16 @@ export function ShopifySyncControls({ isConnected }: ShopifySyncControlsProps) {
       });
 
       setOrderId("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLastOrderImport({
         success: false,
-        message: error.message || "Failed to import order",
+        message: error instanceof Error ? error.message : "Failed to import order",
       });
 
       toast({
         variant: "destructive",
         title: "Import Failed",
-        description: error.message || "Failed to import order from Shopify",
+        description: error instanceof Error ? error.message : "Failed to import order from Shopify",
       });
     } finally {
       setImportingOrder(false);
@@ -128,16 +128,16 @@ export function ShopifySyncControls({ isConnected }: ShopifySyncControlsProps) {
         title: "Bulk Import Complete",
         description: `Imported ${result.imported_count} orders from Shopify`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLastBulkImport({
         success: false,
-        message: error.message || "Failed to import orders",
+        message: error instanceof Error ? error.message : "Failed to import orders",
       });
 
       toast({
         variant: "destructive",
         title: "Bulk Import Failed",
-        description: error.message || "Failed to import orders from Shopify",
+        description: error instanceof Error ? error.message : "Failed to import orders from Shopify",
       });
     } finally {
       setBulkImporting(false);
@@ -160,16 +160,16 @@ export function ShopifySyncControls({ isConnected }: ShopifySyncControlsProps) {
         title: "Inventory Synced",
         description: `Successfully synced ${result.synced} products to Shopify`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLastInventorySync({
         success: false,
-        message: error.message || "Failed to sync inventory",
+        message: error instanceof Error ? error.message : "Failed to sync inventory",
       });
 
       toast({
         variant: "destructive",
         title: "Sync Failed",
-        description: error.message || "Failed to sync inventory to Shopify",
+        description: error instanceof Error ? error.message : "Failed to sync inventory to Shopify",
       });
     } finally {
       setSyncingInventory(false);

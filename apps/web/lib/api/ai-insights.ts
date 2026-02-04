@@ -12,7 +12,7 @@ export interface DateRange {
 export interface GenerateInsightsRequest {
   category: "sales" | "inventory" | "customers" | "orders" | "all";
   date_range?: DateRange;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   user_id?: string;
 }
 

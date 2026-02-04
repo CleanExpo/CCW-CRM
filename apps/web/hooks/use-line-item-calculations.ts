@@ -34,7 +34,7 @@ export interface LineItem {
   quantity: number;
   unit_price: number;
   line_total: number;
-  [key: string]: any; // Allow additional properties
+  [key: string]: unknown; // Allow additional properties
 }
 
 /**
@@ -96,9 +96,9 @@ export function useLineItemCalculations(): UseLineItemCalculationsReturn {
       setError(null);
       const response = await apiClient.get<BusinessConfig>("/api/config/business");
       setConfig(response);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch business config:", err);
-      setError(err.message || "Failed to load business configuration");
+      setError(err instanceof Error ? err.message : "Failed to load business configuration");
       // Keep using default config on error
     } finally {
       setLoading(false);
@@ -194,7 +194,7 @@ export function useLineItemCalculations(): UseLineItemCalculationsReturn {
 /**
  * Type guard to check if an object is a valid LineItem.
  */
-export function isValidLineItem(item: any): item is LineItem {
+export function isValidLineItem(item: unknown): item is LineItem {
   return (
     item &&
     typeof item === "object" &&

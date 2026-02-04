@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,21 +38,22 @@ export default function EmailsPage() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [simulatingEmail, setSimulatingEmail] = useState(false);
 
-  const loadConversations = async (status?: string) => {
+  const loadConversations = useCallback(async (status?: string) => {
     try {
       const response = await listConversations(status === "all" ? undefined : status);
       setConversations(response.conversations);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to load conversations";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load conversations",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [toast]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -68,11 +69,12 @@ export default function EmailsPage() {
         description: `Processed email: ${result.preview.subject}`,
       });
       await loadConversations(statusFilter);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to simulate email";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to simulate email",
+        description: errorMessage,
       });
     } finally {
       setSimulatingEmail(false);
@@ -87,7 +89,7 @@ export default function EmailsPage() {
 
   useEffect(() => {
     loadConversations();
-  }, []);
+  }, [loadConversations]);
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">

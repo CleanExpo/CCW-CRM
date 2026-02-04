@@ -38,11 +38,17 @@ def get_rate_limit_key(request) -> str:
     return f"ip:{get_remote_address(request)}"
 
 
-# Create limiter instance
+# Create limiter instance with Redis storage for multi-instance support
+storage_uri = (
+    f"redis://{settings.redis_host}:{settings.redis_port}/{settings.redis_db}"
+    if settings.cache_enabled
+    else "memory://"
+)
+
 limiter = Limiter(
     key_func=get_rate_limit_key,
     default_limits=["60/minute"] if settings.rate_limit_enabled else [],
-    storage_uri="memory://",  # Use in-memory storage (for Redis in production: "redis://localhost:6379")
+    storage_uri=storage_uri,
     enabled=settings.rate_limit_enabled,
 )
 
@@ -53,7 +59,9 @@ class RateLimits:
 
     # Authentication endpoints (more restrictive)
     LOGIN = "5/minute"           # 5 login attempts per minute
+    REGISTER = "3/hour"          # 3 registration attempts per hour
     PASSWORD_RESET = "3/hour"    # 3 password reset requests per hour
+    CHANGE_PASSWORD = "5/hour"   # 5 password change attempts per hour
     REFRESH = "10/minute"        # 10 token refresh per minute
 
     # API endpoints (standard)

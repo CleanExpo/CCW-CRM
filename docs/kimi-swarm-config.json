@@ -1,0 +1,80 @@
+{
+  "swarm_name": "CCW-ERP-Deployment-Swarm",
+  "version": "2.0.0",
+  "target_date": "2026-02-15",
+  "objective": "Identify all deployment blockers and create Linear roadmap for CCW-Online ERP",
+  
+  "agents": [
+    {
+      "id": "pm-lead",
+      "name": "Senior Project Manager",
+      "model": "moonshotai/kimi-k2-thinking",
+      "role": "Analyze project state, identify critical path, estimate timelines",
+      "input_files": [
+        "IMPLEMENTATION_COMPLETE.md",
+        "TODO.md",
+        "docs/LINEAR-ISSUES-IMPORT.md",
+        "PRODUCTION-DEPLOYMENT-CHECKLIST.md"
+      ],
+      "output_format": "linear_epics",
+      "prompt_template": "You are a Senior Project Manager with 15+ years of ERP deployment experience.\n\nAnalyze the following codebase state and documentation to:\n1. Identify all critical deployment blockers\n2. Create 8 EPICs with proper sequencing\n3. Estimate realistic timelines with 20% buffer\n4. Flag dependencies and risks\n5. Generate deployment readiness score (0-100%)\n\nFocus on these areas:\n- Backend stability issues\n- Performance bottlenecks\n- Infrastructure readiness\n- Security compliance\n- Integration completeness\n\nOutput: JSON array of EPICs with title, description, priority, and dependencies."
+    },
+    {
+      "id": "backend-lead", 
+      "name": "Senior Backend Engineer",
+      "model": "moonshotai/kimi-k2-thinking",
+      "role": "Analyze backend code, identify bugs, estimate fixes",
+      "input_files": [
+        "apps/backend/src/api/routes/quotes.py",
+        "apps/backend/src/api/routes/orders.py",
+        "TEST-RESULTS-FINAL.md",
+        "docs/LINEAR-ISSUES-IMPORT.md"
+      ],
+      "output_format": "linear_issues_technical",
+      "prompt_template": "You are a Senior Backend Engineer with FastAPI/PostgreSQL expertise.\n\nReview the code and test results to:\n1. Identify root causes of 405, 404, 422 errors in Quote module\n2. Analyze race conditions in order/quote number generation\n3. Review 500 internal server error patterns\n4. Propose specific code fixes with file locations\n5. Estimate effort for each fix\n\nOutput: JSON array of technical issues with acceptance criteria and file paths."
+    },
+    {
+      "id": "devops-lead",
+      "name": "Senior DevOps Engineer", 
+      "model": "moonshotai/kimi-k2-thinking",
+      "role": "Analyze infrastructure needs, create deployment plan",
+      "input_files": [
+        "DEPLOYMENT_READY.md",
+        "RAILWAY_DEPLOYMENT.md",
+        "docker-compose.yml",
+        "PRODUCTION-DEPLOYMENT-CHECKLIST.md"
+      ],
+      "output_format": "linear_issues_infrastructure",
+      "prompt_template": "You are a Senior DevOps Engineer specializing in production deployments.\n\nAnalyze the deployment documentation to:\n1. Identify missing production infrastructure\n2. List required security hardening steps\n3. Create monitoring/observability plan\n4. Define backup/DR procedures\n5. Specify server requirements and costs\n\nOutput: JSON array of infrastructure issues with specifications and deployment order."
+    },
+    {
+      "id": "integration-lead",
+      "name": "Senior Integration Engineer",
+      "model": "moonshotai/kimi-k2-thinking",
+      "role": "Analyze integration status, identify gaps",
+      "input_files": [
+        "INTEGRATIONS_STATUS.md",
+        "SHOPIFY_INTEGRATION_COMPLETE.md",
+        "XERO_INTEGRATION_COMPLETE.md",
+        "docs/LINEAR-ISSUES-IMPORT.md"
+      ],
+      "output_format": "linear_issues_integrations",
+      "prompt_template": "You are a Senior Integration Engineer with Shopify/Xero experience.\n\nReview integration status to:\n1. Identify why Shopify authentication is failing (401)\n2. List requirements for bidirectional sync\n3. Define webhook configuration needs\n4. Identify missing real-time sync features\n5. Estimate effort for live mode activation\n\nOutput: JSON array of integration issues with technical requirements."
+    }
+  ],
+  
+  "consensus_rules": {
+    "effort_estimation": "median_of_three",
+    "priority_assignment": "pm_has_tie_breaker",
+    "dependency_detection": "all_agents_must_agree"
+  },
+  
+  "output_files": [
+    "docs/linear-roadmap-v2.0.csv",
+    "docs/kimi-swarm-analysis-report.md",
+    "docs/deployment-risk-assessment.md"
+  ],
+  
+  "linear_team_key": "CCW",
+  "linear_project": "ERP Deployment"
+}

@@ -98,8 +98,8 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
       toast.success("Status updated");
       fetchSubmissions();
       onDataChange?.(); // Notify parent to refresh statistics
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update status");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to update status");
     }
   }
 

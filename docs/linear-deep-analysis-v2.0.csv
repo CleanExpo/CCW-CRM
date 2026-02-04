@@ -1,0 +1,56 @@
+Identifier,Title,Description,Priority,Estimate (hours),Labels,Parent Issue
+DEEP-1,[EPIC] Missing Core Routes & Modules,Implement missing API routes and modules that are referenced but not implemented,High,,epic;missing-modules;backend;infrastructure,
+ISS-D001,Implement Approvals Workflow Router,Router imported in main.py but commented out with TODO: Implement approvals workflow. Create full approvals system with workflow engine.,High,16,backend;approvals;workflow;missing,DEEP-1
+ISS-D002,Implement Autonomous Development Router,Router referenced but file does not exist. Create autonomous development system for self-improving code.,High,24,backend;autonomous-dev;ai;missing,DEEP-1
+ISS-D003,Implement PRD Generation Router,Router commented out with TODO: Fix PRD dependencies. Complete PRD generation with AI integration.,High,12,backend;prd;ai-generation;missing,DEEP-1
+ISS-D004,Implement Recommendations Router,Router commented out with TODO: File does not exist yet. Build product recommendation engine.,High,16,backend;recommendations;ml;missing,DEEP-1
+ISS-D005,Implement Semantic Search Router,Router commented out with TODO: File does not exist yet. Full semantic search with vector embeddings.,High,20,backend;search;vector;embeddings;missing,DEEP-1
+ISS-D006,Implement Translation Management Router,Router commented out with TODO: File does not exist yet. Complete i18n management system.,Medium,12,backend;i18n;translations;missing,DEEP-1
+ISS-D007,Implement Shopify Theme API Router,Router commented out with TODO: File does not exist. Shopify theme customization endpoints.,Medium,8,backend;shopify;theme;missing,DEEP-1
+ISS-D008,Implement AP2 Integration Router,Router commented out with TODO: File does not exist. Google AP2 frictionless payments.,High,12,backend;ap2;payments;google;missing,DEEP-1
+DEEP-2,[EPIC] Production Security Hardening,Critical security items marked as TODO for production readiness,Critical,,epic;security;production;hardening,
+ISS-D009,Encrypt Xero Tokens at Rest,Xero auth.py has TODO: Encrypt in production for access_token and refresh_token. Implement proper encryption.,Critical,4,security;encryption;xero;tokens;production,DEEP-2
+ISS-D010,Implement Webhook Signature Verification,Shipments router has TODO: Verify webhook signature (carrier-specific). Production security requirement.,High,6,security;webhooks;signature;verification,DEEP-2
+ISS-D011,Implement Demo Auth Email Sending,demo_auth.py has TODO: Send email with reset link. Currently logs only - security risk for prod.,High,4,security;auth;email;password-reset,DEEP-2
+ISS-D012,Implement Portal Auth Email Notifications,portal_auth.py has TODO: Send email via SendGrid/notification service. Magic link emails not sent.,High,4,security;auth;email;notifications,DEEP-2
+ISS-D013,Implement Container Stock Integration,containers.py has TODO: Add stock to warehouse inventory. ProductStockByLocation integration pending.,High,6,inventory;containers;warehouse;integration,DEEP-2
+ISS-D014,Implement Backorder Event Publishing,backorders.py has TODO: Publish event when event bus is initialized. Event-driven architecture incomplete.,Medium,4,events;backorders;event-bus;architecture,DEEP-2
+DEEP-3,[EPIC] AI & ML Infrastructure Gaps,Missing AI/ML components for full autonomous operation,High,,epic;ai;ml;infrastructure;gaps,
+ISS-D015,Complete AI Quote Generation Integration,quotes.py has TODO: Integrate with AI quote generation service at /api/ai/generate/quote. Currently mocked.,High,8,ai;quotes;generation;integration,DEEP-3
+ISS-D016,Implement Translation Auth Context,translations.py has TODO: Get from auth context for translated_by field. Audit trail incomplete.,Medium,4,i18n;auth;audit;translations,DEEP-3
+ISS-D017,Implement Webhook Forwarding Logic,webhooks.py has multiple TODOs for forwarding to configured webhook URLs. Currently only logs.,Medium,6,webhooks;forwarding;integrations,DEEP-3
+ISS-D018,Implement AP2 Signature Verification,integrations/ap2.py has TODO: Implement signature verification logic. Security requirement for payments.,Critical,6,payments;ap2;signature;security,DEEP-3
+ISS-D019,Implement AP2 Webhook Processing,integrations/ap2.py has TODO: Process webhook based on event_type. Payment webhooks not processed.,High,8,payments;ap2;webhooks;processing,DEEP-3
+DEEP-4,[EPIC] Xero Integration Production Readiness,Xero integration incomplete for production use,High,,epic;xero;integration;production,
+ISS-D020,Implement Xero Organization ID from Auth,Multiple TODOs in xero.py: Get organization_id from authenticated user. Currently uses placeholder/demo org ID.,High,6,xero;auth;organization;production,DEEP-4
+ISS-D021,Implement Xero Token Refresh Automation,Xero tokens expire but automated refresh scheduling not implemented. Risk of sync failures.,High,8,xero;tokens;refresh;automation,DEEP-4
+ISS-D022,Implement Xero Webhook Endpoint Security,Xero webhooks need proper signature verification and endpoint security hardening.,High,6,xero;webhooks;security;verification,DEEP-4
+DEEP-5,[EPIC] Frontend Component Completeness,Missing or incomplete frontend components,Medium,,epic;frontend;components;ui,
+ISS-D023,Implement Customer Portal Full Feature Set,Portal pages exist but may lack full feature set for customer self-service.,Medium,12,frontend;portal;customers;features,DEEP-5
+ISS-D024,Implement Marketing Page Components,marketing/page.tsx exists but may be incomplete for campaign management.,Medium,8,frontend;marketing;campaigns;ui,DEEP-5
+ISS-D025,Implement Submissions Management UI,submissions/page.tsx exists but workflow for form submissions may be incomplete.,Medium,6,frontend;submissions;forms;workflow,DEEP-5
+ISS-D026,Implement Tasks Management Full UI,tasks/page.tsx exists but task management workflow may need completion.,Medium,8,frontend;tasks;management;workflow,DEEP-5
+ISS-D027,Implement Warehouse Management UI,warehouse/page.tsx exists but warehouse operations UI may be incomplete.,Medium,10,frontend;warehouse;inventory;operations,DEEP-5
+DEEP-6,[EPIC] Testing & Quality Assurance Gaps,Missing test coverage and quality assurance,High,,epic;testing;qa;coverage,
+ISS-D028,Implement Quote Module Integration Tests,Quote module has 33% failure rate in load tests. Need comprehensive integration test suite.,Critical,16,testing;quotes;integration;load-tests,DEEP-6
+ISS-D029,Implement Order Module E2E Tests,Orders module needs complete E2E test coverage for all CRUD operations and status workflows.,High,12,testing;orders;e2e;coverage,DEEP-6
+ISS-D030,Implement Inventory Module Test Suite,Inventory management lacks comprehensive test coverage for stock operations.,High,10,testing;inventory;stock;coverage,DEEP-6
+ISS-D031,Implement POS System Test Suite,POS terminal and transactions need full test coverage for production confidence.,High,12,testing;pos;terminal;coverage,DEEP-6
+ISS-D032,Implement Integration Test Automation,Xero Shopify and other integrations need automated integration tests.,High,14,testing;integrations;automation;xero;shopify,DEEP-6
+DEEP-7,[EPIC] Monitoring & Observability Gaps,Incomplete monitoring and observability infrastructure,Medium,,epic;monitoring;observability;gaps,
+ISS-D033,Implement Alert Notification Channels,System alert service has email/Slack config but needs full notification pipeline implementation.,Medium,6,monitoring;alerts;notifications;slack,DEEP-7
+ISS-D034,Implement Business Metrics Dashboard,Business metrics API exists but frontend dashboard components may be incomplete.,Medium,8,monitoring;metrics;business;dashboard,DEEP-7
+ISS-D035,Implement Performance Monitoring Suite,Performance middleware exists but comprehensive performance monitoring not fully implemented.,Medium,6,monitoring;performance;apm;suite,DEEP-7
+DEEP-8,[EPIC] Documentation & Developer Experience,Missing documentation and DX improvements,Low,,epic;documentation;dx;developer-experience,
+ISS-D036,Complete API Documentation,Swagger docs exist but some endpoints lack full documentation and examples.,Medium,8,documentation;api;swagger;examples,DEEP-8
+ISS-D037,Create Developer Onboarding Guide,New developers need comprehensive onboarding documentation for this complex system.,Medium,6,documentation;onboarding;developers,DEEP-8
+ISS-D038,Create Production Deployment Runbook,Operations team needs detailed runbook for deployment and troubleshooting.,High,8,documentation;runbook;operations;deployment,DEEP-8
+DEEP-9,[EPIC] Data Migration & Integrity,Data migration and integrity concerns for production,High,,epic;data;migration;integrity,
+ISS-D039,Implement Database Migration Strategy,Current migrations need review and production migration strategy documented.,High,10,database;migrations;strategy;production,DEEP-9
+ISS-D040,Implement Data Validation & Cleanup,Seed data and demo data need cleanup scripts for production deployment.,High,8,data;validation;cleanup;production,DEEP-9
+ISS-D041,Implement Backup & Restore Verification,Backup procedures exist but automated verification and testing needed.,Critical,6,database;backup;restore;verification,DEEP-9
+DEEP-10,[EPIC] Scalability & Performance,Scalability and performance optimization for production load,Critical,,epic;scalability;performance;optimization,
+ISS-D042,Implement Database Connection Pooling,Database connection pooling configuration for production load.,High,6,database;connection-pool;scalability,DEEP-10
+ISS-D043,Implement Redis Cluster Configuration,Redis caching needs cluster configuration for high availability.,High,8,redis;cluster;ha;caching,DEEP-10
+ISS-D044,Implement Load Balancer Health Checks,Health check endpoints exist but load balancer configuration needs completion.,High,4,infrastructure;load-balancer;health-checks,DEEP-10
+ISS-D045,Implement Auto-scaling Configuration,Production needs auto-scaling configuration for handling traffic spikes.,High,10,infrastructure;auto-scaling;production,DEEP-10

@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+// PHASE 4: Search state persistence
+import { useSearchState } from "@/lib/hooks/use-search-state";
+// PHASE 4: Last updated timestamps
+import { formatDistanceToNow } from "date-fns";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -27,7 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, PackageCheck, X } from "lucide-react";
+import { Plus, Search, MoreHorizontal, PackageCheck, X, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api/client";
 import { PurchaseOrderForm } from "./components/PurchaseOrderForm";
@@ -49,11 +53,28 @@ export default function PurchaseOrdersPage() {
   const { toast } = useToast();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [locationFilter, setLocationFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [totalPages, setTotalPages] = useState(1);
+
+  // PHASE 4: Search state persistence - remembers search/filters/pagination
+  const { state: searchState, updateField } = useSearchState({
+    key: "purchase-orders-list",
+    defaultState: {
+      searchQuery: "",
+      statusFilter: "all",
+      locationFilter: "all",
+      page: 1,
+    },
+  });
+
+  const searchQuery = searchState.searchQuery || "";
+  const statusFilter = searchState.statusFilter || "all";
+  const locationFilter = searchState.locationFilter || "all";
+  const page = searchState.page || 1;
+  const setSearchQuery = (value: string) => updateField("searchQuery", value);
+  const setStatusFilter = (value: string) => updateField("statusFilter", value);
+  const setLocationFilter = (value: string) => updateField("locationFilter", value);
+  const setPage = (value: number) => updateField("page", value);
 
   // Dialogs
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -84,15 +105,16 @@ export default function PurchaseOrdersPage() {
 
       setPurchaseOrders(response.items || []);
       setTotalPages(response.total_pages || 1);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load purchase orders:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to load purchase orders",
+        description: error instanceof Error ? error.message : "Failed to load purchase orders",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+      setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
   }
 
@@ -111,11 +133,39 @@ export default function PurchaseOrdersPage() {
 
       loadPurchaseOrders();
       setCancellingPO(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to cancel purchase order:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to cancel purchase order",
+        description: error instanceof Error ? error.message : "Failed to cancel purchase order",
+        variant: "destructive",
+      });
+    }
+  }
+
+  // PHASE 4: Duplicate PO - quickly create copy with same items
+  async function handleDuplicatePO(po: PurchaseOrder) {
+    try {
+      const fullPO = await apiClient.get<PurchaseOrder>(`/api/purchase-orders/${po.id}`);
+      // Create a copy without id (will be treated as new PO)
+      const poCopy = {
+        ...fullPO,
+        id: undefined, // Remove id to create new PO
+        po_number: undefined, // Will be auto-generated
+        status: "draft", // Reset to draft
+        notes: fullPO.notes ? `Copy of ${fullPO.po_number}\n\n${fullPO.notes}` : `Copy of ${fullPO.po_number}`,
+      };
+      setEditingPO(poCopy as PurchaseOrder);
+      setIsCreateOpen(true);
+      toast({
+        title: "Purchase Order Duplicated",
+        description: "Review and modify the copy before saving",
+      });
+    } catch (error: unknown) {
+      console.error("Failed to duplicate purchase order:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to duplicate purchase order",
         variant: "destructive",
       });
     }
@@ -145,6 +195,11 @@ export default function PurchaseOrdersPage() {
           <h1 className="text-3xl font-bold">Purchase Orders</h1>
           <p className="text-muted-foreground">
             Manage supplier orders and goods receiving
+            {lastUpdated && (
+              <span className="ml-2 text-xs">
+                • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+              </span>
+            )}
           </p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)}>
@@ -278,6 +333,10 @@ export default function PurchaseOrdersPage() {
                         <DropdownMenuItem onClick={() => setEditingPO(po)}>
                           Edit
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicatePO(po)}>
+                          <Copy className="mr-2 h-4 w-4" />
+                          Duplicate
+                        </DropdownMenuItem>
                         {canReceiveGoods(po) && (
                           <DropdownMenuItem onClick={() => setReceivingPO(po)}>
                             <PackageCheck className="mr-2 h-4 w-4" />
@@ -312,7 +371,7 @@ export default function PurchaseOrdersPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
           >
             Previous
@@ -323,7 +382,7 @@ export default function PurchaseOrdersPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
           >
             Next

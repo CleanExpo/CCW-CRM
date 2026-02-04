@@ -135,7 +135,7 @@ def generate_html_report(summary: Dict[str, Any], results: List[Any], output_pat
 </head>
 <body>
     <div class="container">
-        <h1>🔍 10,000 Scenario Test Report</h1>
+        <h1>[LOAD TEST] 10,000 Scenario Test Report</h1>
         <p class="timestamp">Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
 
         <section class="summary">
@@ -165,23 +165,23 @@ def generate_html_report(summary: Dict[str, Any], results: List[Any], output_pat
             </div>
         </section>
 
-        <h2>🚨 Critical Failures ({len(critical_failures)})</h2>
+        <h2>[CRITICAL] Critical Failures ({len(critical_failures)})</h2>
         {_generate_failure_table(critical_failures, 'critical') if critical_failures else '<p>No critical failures detected.</p>'}
 
-        <h2>❌ All Failures by Type</h2>
+        <h2>[FAILURES] All Failures by Type</h2>
         {_generate_failures_by_type_section(failures_by_type) if failures_by_type else '<p>No failures detected.</p>'}
 
-        <h2>🐌 Performance Issues</h2>
+        <h2>[PERFORMANCE] Performance Issues</h2>
         <p>Scenarios with response time > 1000ms</p>
         {_generate_slow_scenarios_table(slow_scenarios[:20]) if slow_scenarios else '<p>No performance issues detected.</p>'}
 
-        <h2>🔒 Security Concerns</h2>
+        <h2>[SECURITY] Security Concerns</h2>
         {_generate_failure_table(security_issues, 'security') if security_issues else '<p>No security issues detected.</p>'}
 
-        <h2>📊 Top 10 Slowest Scenarios</h2>
+        <h2>[SLOWEST] Top 10 Slowest Scenarios</h2>
         {_generate_top_slowest_table(summary.get('slowest_scenarios', [])[:10])}
 
-        <h2>✅ Success Criteria</h2>
+        <h2>[SUCCESS CRITERIA] Success Criteria</h2>
         <table>
             <tr>
                 <th>Criteria</th>
@@ -194,7 +194,7 @@ def generate_html_report(summary: Dict[str, Any], results: List[Any], output_pat
                 <td>≥ 90%</td>
                 <td>{summary.get('pass_rate', 0):.1f}%</td>
                 <td class="{'pass' if summary.get('pass_rate', 0) >= 90 else 'fail'}">
-                    {'✓ PASS' if summary.get('pass_rate', 0) >= 90 else '✗ FAIL'}
+                    {'[PASS]' if summary.get('pass_rate', 0) >= 90 else '[FAIL]'}
                 </td>
             </tr>
             <tr>
@@ -202,7 +202,7 @@ def generate_html_report(summary: Dict[str, Any], results: List[Any], output_pat
                 <td>≤ 500ms</td>
                 <td>{summary.get('avg_response_time_ms', 0):.0f}ms</td>
                 <td class="{'pass' if summary.get('avg_response_time_ms', 0) <= 500 else 'warning'}">
-                    {'✓ PASS' if summary.get('avg_response_time_ms', 0) <= 500 else '⚠ WARNING'}
+                    {'[PASS]' if summary.get('avg_response_time_ms', 0) <= 500 else '[WARNING]'}
                 </td>
             </tr>
             <tr>
@@ -210,7 +210,7 @@ def generate_html_report(summary: Dict[str, Any], results: List[Any], output_pat
                 <td>≤ 1000ms</td>
                 <td>{summary.get('p95_response_time_ms', 0):.0f}ms</td>
                 <td class="{'pass' if summary.get('p95_response_time_ms', 0) <= 1000 else 'warning'}">
-                    {'✓ PASS' if summary.get('p95_response_time_ms', 0) <= 1000 else '⚠ WARNING'}
+                    {'[PASS]' if summary.get('p95_response_time_ms', 0) <= 1000 else '[WARNING]'}
                 </td>
             </tr>
             <tr>
@@ -218,7 +218,7 @@ def generate_html_report(summary: Dict[str, Any], results: List[Any], output_pat
                 <td>0</td>
                 <td>{len(critical_failures)}</td>
                 <td class="{'pass' if len(critical_failures) == 0 else 'fail'}">
-                    {'✓ PASS' if len(critical_failures) == 0 else '✗ FAIL'}
+                    {'[PASS]' if len(critical_failures) == 0 else '[FAIL]'}
                 </td>
             </tr>
         </table>
@@ -231,7 +231,7 @@ def generate_html_report(summary: Dict[str, Any], results: List[Any], output_pat
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html)
 
-    print(f"\n📄 HTML report generated: {output_path}")
+    print(f"\n[REPORT] HTML report generated: {output_path}")
 
 
 def _generate_failure_table(failures: List[Any], table_type: str = 'general') -> str:

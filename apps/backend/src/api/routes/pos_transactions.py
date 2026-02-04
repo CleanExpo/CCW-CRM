@@ -28,6 +28,7 @@ from src.db.pos_models import (
     POSTransaction,
     SalesStaff,
 )
+from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/pos", tags=["POS"])
 
@@ -339,6 +340,39 @@ async def create_pos_transaction(
         await db.commit()
         await db.refresh(pos_transaction)
 
+        # Auto-create Xero invoice if payment captured successfully
+        if pos_transaction.payment_status == "captured":
+            try:
+                # Get organization from current user
+                from src.integrations.xero.pos_reconciliation import POSXeroReconciliation
+                from src.integrations.xero.auth import XeroAuth
+
+                xero_auth = XeroAuth()
+                xero_recon = POSXeroReconciliation(xero_auth)
+
+                # Create Xero invoice in background (non-blocking)
+                # This automatically creates invoice + payment in Xero
+                await xero_recon.create_invoice_from_pos_transaction(
+                    db=db,
+                    organization_id=current_user.organization_id,
+                    pos_transaction_id=pos_transaction.id,
+                )
+
+                logger.info(
+                    "Auto-created Xero invoice from POS transaction",
+                    transaction_id=str(pos_transaction.id),
+                    transaction_number=pos_transaction.transaction_number,
+                )
+
+            except Exception as e:
+                # Log error but don't fail the transaction
+                # Invoice creation can be retried later via bulk endpoint
+                logger.warning(
+                    "Failed to auto-create Xero invoice (transaction still successful)",
+                    transaction_id=str(pos_transaction.id),
+                    error=str(e),
+                )
+
         # Return as dict to avoid session issues during serialization
         return POSTransactionResponse(
             id=pos_transaction.id,
@@ -382,6 +416,18 @@ async def create_pos_transaction(
         db.add(failed_transaction)
         await db.commit()
         await db.refresh(failed_transaction)
+
+        # PHASE 4: Publish real-time POS failure alert
+        await sse_service.publish("pos-failures", {
+            "type": "failure_detected",
+            "transaction_id": str(failed_transaction.id),
+            "transaction_number": failed_transaction.transaction_number,
+            "terminal_id": str(failed_transaction.terminal_id) if failed_transaction.terminal_id else None,
+            "location_code": failed_transaction.location_code,
+            "amount": float(failed_transaction.amount),
+            "payment_method": failed_transaction.payment_method,
+            "error": str(e),
+        })
 
         raise HTTPException(
             status_code=402,
@@ -559,6 +605,128 @@ async def list_terminals(
         }
         for term in terminals
     ]
+
+
+class POSTerminalCreate(BaseModel):
+    """Create a new POS terminal."""
+
+    terminal_id: str = Field(..., description="Unique terminal code")
+    location_code: str
+    terminal_type: str = Field(default="physical", pattern="^(physical|virtual)$")
+    merchant_id: Optional[str] = None
+
+
+class POSTerminalUpdate(BaseModel):
+    """Update a POS terminal."""
+
+    location_code: Optional[str] = None
+    terminal_type: Optional[str] = Field(None, pattern="^(physical|virtual)$")
+    merchant_id: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+@router.post("/terminals", response_model=dict, status_code=201)
+async def create_terminal(
+    data: POSTerminalCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Create a new POS terminal."""
+    # Check if terminal_id already exists
+    existing = await db.execute(
+        select(POSTerminal).where(POSTerminal.terminal_id == data.terminal_id)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Terminal code already exists")
+
+    # Verify location exists
+    location_result = await db.execute(
+        select(Location).where(Location.code == data.location_code)
+    )
+    if not location_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    terminal = POSTerminal(
+        terminal_id=data.terminal_id,
+        location_code=data.location_code,
+        terminal_type=data.terminal_type,
+        merchant_id=data.merchant_id,
+        is_active=True,
+    )
+
+    db.add(terminal)
+    await db.commit()
+    await db.refresh(terminal)
+
+    return {
+        "id": terminal.id,
+        "terminal_id": terminal.terminal_id,
+        "location_code": terminal.location_code,
+        "terminal_type": terminal.terminal_type,
+        "merchant_id": terminal.merchant_id,
+        "is_active": terminal.is_active,
+    }
+
+
+@router.put("/terminals/{terminal_id}", response_model=dict)
+async def update_terminal(
+    terminal_id: UUID,
+    data: POSTerminalUpdate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Update a POS terminal."""
+    result = await db.execute(select(POSTerminal).where(POSTerminal.id == terminal_id))
+    terminal = result.scalar_one_or_none()
+
+    if not terminal:
+        raise HTTPException(status_code=404, detail="Terminal not found")
+
+    # Verify location if changed
+    if data.location_code and data.location_code != terminal.location_code:
+        location_result = await db.execute(
+            select(Location).where(Location.code == data.location_code)
+        )
+        if not location_result.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="Location not found")
+        terminal.location_code = data.location_code
+
+    if data.terminal_type is not None:
+        terminal.terminal_type = data.terminal_type
+    if data.merchant_id is not None:
+        terminal.merchant_id = data.merchant_id
+    if data.is_active is not None:
+        terminal.is_active = data.is_active
+
+    await db.commit()
+    await db.refresh(terminal)
+
+    return {
+        "id": terminal.id,
+        "terminal_id": terminal.terminal_id,
+        "location_code": terminal.location_code,
+        "terminal_type": terminal.terminal_type,
+        "merchant_id": terminal.merchant_id,
+        "is_active": terminal.is_active,
+    }
+
+
+@router.delete("/terminals/{terminal_id}", status_code=204)
+async def delete_terminal(
+    terminal_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    """Delete a POS terminal (soft delete by setting is_active=False)."""
+    result = await db.execute(select(POSTerminal).where(POSTerminal.id == terminal_id))
+    terminal = result.scalar_one_or_none()
+
+    if not terminal:
+        raise HTTPException(status_code=404, detail="Terminal not found")
+
+    # Soft delete
+    terminal.is_active = False
+    await db.commit()
 
 
 # ============================================================

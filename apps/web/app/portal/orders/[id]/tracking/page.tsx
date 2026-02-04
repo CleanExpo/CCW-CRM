@@ -118,8 +118,9 @@ function getStatusIcon(status: string) {
   }
 }
 
-export default async function TrackingPage({ params }: { params: { id: string } }) {
-  const tracking = await getTrackingInfo(params.id);
+export default async function TrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tracking = await getTrackingInfo(id);
 
   if (!tracking) {
     notFound();
@@ -129,7 +130,7 @@ export default async function TrackingPage({ params }: { params: { id: string } 
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Back Button */}
       <Button asChild variant="ghost" className="mb-6">
-        <Link href={`/portal/orders/${params.id}`}>
+        <Link href={`/portal/orders/${id}`}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Order
         </Link>

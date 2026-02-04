@@ -4,10 +4,11 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/workflows/${params.id}`);
+    const { id } = await params;
+    const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`);
     const data = await response.json();
 
     return NextResponse.json(data, { status: response.status });
@@ -22,12 +23,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/workflows/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -49,10 +51,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/workflows/${params.id}`, {
+    const { id } = await params;
+    const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`, {
       method: "DELETE",
     });
 

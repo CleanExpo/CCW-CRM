@@ -733,6 +733,51 @@ async def create_stock_transfer(
 
     await db.commit()
 
+    # PHASE 5: Publish real-time inventory updates for both locations
+    from src.services.sse_service import sse_service
+
+    # Source location update
+    source_available = source_stock.stock - (source_stock.reserved or 0)
+    await sse_service.publish(f"inventory-{transfer_req.from_location}", {
+        "product_id": str(product_id),
+        "location": transfer_req.from_location,
+        "stock": source_stock.stock,
+        "reserved": source_stock.reserved or 0,
+        "available": source_available,
+        "change_type": "transfer",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+    await sse_service.publish("inventory-all", {
+        "product_id": str(product_id),
+        "location": transfer_req.from_location,
+        "stock": source_stock.stock,
+        "reserved": source_stock.reserved or 0,
+        "available": source_available,
+        "change_type": "transfer",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+
+    # Destination location update
+    dest_available = dest_stock.stock - (dest_stock.reserved or 0)
+    await sse_service.publish(f"inventory-{transfer_req.to_location}", {
+        "product_id": str(product_id),
+        "location": transfer_req.to_location,
+        "stock": dest_stock.stock,
+        "reserved": dest_stock.reserved or 0,
+        "available": dest_available,
+        "change_type": "transfer",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+    await sse_service.publish("inventory-all", {
+        "product_id": str(product_id),
+        "location": transfer_req.to_location,
+        "stock": dest_stock.stock,
+        "reserved": dest_stock.reserved or 0,
+        "available": dest_available,
+        "change_type": "transfer",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+
     logger.info(
         "Stock transfer completed",
         transfer_id=str(transfer.id),
@@ -741,6 +786,74 @@ async def create_stock_transfer(
         to_location=transfer_req.to_location,
         quantity=transfer_req.quantity,
     )
+
+    # PHASE 2: Enhanced Shopify Integration - Task 2.1: Automatic Shopify Sync
+    # Trigger automatic Shopify inventory sync after stock transfer
+    try:
+        from src.db.shopify_models import ShopifyProductMapping
+        from src.integrations.shopify.client import get_shopify_client
+        from src.integrations.shopify.inventory_sync import InventorySyncService
+        from src.config.shopify_settings import get_shopify_settings
+
+        # Check if product has Shopify mapping
+        mapping_query = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.product_id == product_id
+        )
+        mapping_result = await db.execute(mapping_query)
+        shopify_mapping = mapping_result.scalar_one_or_none()
+
+        if shopify_mapping and shopify_mapping.shopify_inventory_item_id:
+            logger.info(
+                "Stock transferred, triggering automatic Shopify sync",
+                product_id=str(product_id),
+                from_location=transfer_req.from_location,
+                to_location=transfer_req.to_location,
+            )
+
+            # Get Shopify settings
+            shopify_settings = get_shopify_settings()
+
+            # Initialize sync service
+            shopify_client = get_shopify_client(shopify_settings)
+            sync_service = InventorySyncService(shopify_client)
+
+            # Sync to Shopify (aggregates multi-location stock, handled in Task 2.2)
+            async with shopify_client:
+                sync_result = await sync_service.sync_stock_to_shopify(
+                    db=db,
+                    product_id=product_id,
+                    shopify_product_id=str(shopify_mapping.shopify_product_id),
+                    shopify_inventory_item_id=str(shopify_mapping.shopify_inventory_item_id),
+                    shopify_location_id=shopify_settings.inventory_location_id,
+                    triggered_by="auto_inventory_transfer",
+                )
+
+                if sync_result["success"]:
+                    logger.info(
+                        "Automatic Shopify sync completed after transfer",
+                        product_id=str(product_id),
+                        delta=sync_result.get("delta", 0),
+                    )
+                else:
+                    logger.error(
+                        "Automatic Shopify sync failed after transfer",
+                        product_id=str(product_id),
+                        error=sync_result.get("error"),
+                    )
+        else:
+            logger.debug(
+                "Product not mapped to Shopify, skipping automatic sync",
+                product_id=str(product_id),
+            )
+
+    except Exception as e:
+        # Log error but don't fail the stock transfer
+        logger.error(
+            "Failed to trigger automatic Shopify sync after transfer",
+            product_id=str(product_id),
+            error=str(e),
+        )
+        # Continue with transfer success
 
     return {
         "success": True,
@@ -1033,6 +1146,28 @@ async def adjust_stock(
 
     await db.commit()
 
+    # PHASE 5: Publish real-time inventory update to SSE subscribers
+    from src.services.sse_service import sse_service
+    available = new_stock - (stock.reserved or 0)
+    await sse_service.publish(f"inventory-{adjustment_req.location}", {
+        "product_id": str(product_id),
+        "location": adjustment_req.location,
+        "stock": new_stock,
+        "reserved": stock.reserved or 0,
+        "available": available,
+        "change_type": "adjustment",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+    await sse_service.publish("inventory-all", {
+        "product_id": str(product_id),
+        "location": adjustment_req.location,
+        "stock": new_stock,
+        "reserved": stock.reserved or 0,
+        "available": available,
+        "change_type": "adjustment",
+        "timestamp": datetime.utcnow().timestamp(),
+    })
+
     logger.info(
         "Stock adjusted",
         adjustment_id=str(adjustment.id),
@@ -1041,6 +1176,75 @@ async def adjust_stock(
         change=adjustment_req.quantity_change,
         new_stock=new_stock,
     )
+
+    # PHASE 2: Enhanced Shopify Integration - Task 2.1: Automatic Shopify Sync
+    # Trigger automatic Shopify inventory sync after stock adjustment
+    try:
+        from src.db.shopify_models import ShopifyProductMapping
+        from src.integrations.shopify.client import get_shopify_client
+        from src.integrations.shopify.inventory_sync import InventorySyncService
+        from src.config.shopify_settings import get_shopify_settings
+
+        # Check if product has Shopify mapping
+        mapping_query = select(ShopifyProductMapping).where(
+            ShopifyProductMapping.product_id == product_id
+        )
+        mapping_result = await db.execute(mapping_query)
+        shopify_mapping = mapping_result.scalar_one_or_none()
+
+        if shopify_mapping and shopify_mapping.shopify_inventory_item_id:
+            logger.info(
+                "Stock adjusted, triggering automatic Shopify sync",
+                product_id=str(product_id),
+                location=adjustment_req.location,
+                new_stock=new_stock,
+            )
+
+            # Get Shopify settings
+            shopify_settings = get_shopify_settings()
+
+            # Initialize sync service
+            shopify_client = get_shopify_client(shopify_settings)
+            sync_service = InventorySyncService(shopify_client)
+
+            # Sync to Shopify (with retry logic built-in)
+            # Note: This syncs the product's total stock, aggregating across locations handled in Task 2.2
+            async with shopify_client:
+                sync_result = await sync_service.sync_stock_to_shopify(
+                    db=db,
+                    product_id=product_id,
+                    shopify_product_id=str(shopify_mapping.shopify_product_id),
+                    shopify_inventory_item_id=str(shopify_mapping.shopify_inventory_item_id),
+                    shopify_location_id=shopify_settings.inventory_location_id,
+                    triggered_by="auto_inventory_adjustment",
+                )
+
+                if sync_result["success"]:
+                    logger.info(
+                        "Automatic Shopify sync completed",
+                        product_id=str(product_id),
+                        delta=sync_result.get("delta", 0),
+                    )
+                else:
+                    logger.error(
+                        "Automatic Shopify sync failed",
+                        product_id=str(product_id),
+                        error=sync_result.get("error"),
+                    )
+        else:
+            logger.debug(
+                "Product not mapped to Shopify, skipping automatic sync",
+                product_id=str(product_id),
+            )
+
+    except Exception as e:
+        # Log error but don't fail the stock adjustment
+        logger.error(
+            "Failed to trigger automatic Shopify sync",
+            product_id=str(product_id),
+            error=str(e),
+        )
+        # Continue with stock adjustment success
 
     return {
         "success": True,

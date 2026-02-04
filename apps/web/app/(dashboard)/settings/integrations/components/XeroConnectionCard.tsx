@@ -52,11 +52,11 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
         // Redirect to Xero authorization URL
         window.location.href = authResponse.authorization_url;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Connection Failed",
-        description: error.message || "Failed to start Xero authorization",
+        description: error instanceof Error ? error.message : "Failed to start Xero authorization",
       });
     } finally {
       setConnecting(false);
@@ -72,11 +72,11 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
         description: "Xero integration has been disconnected",
       });
       onStatusChange();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Disconnection Failed",
-        description: error.message || "Failed to disconnect Xero",
+        description: error instanceof Error ? error.message : "Failed to disconnect Xero",
       });
     } finally {
       setDisconnecting(false);

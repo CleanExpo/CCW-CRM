@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,7 +120,7 @@ export default function ContainersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"arriving" | "in_transit" | "all">("arriving");
 
-  async function loadContainers() {
+  const loadContainers = useCallback(async function() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -135,18 +135,19 @@ export default function ContainersPage() {
         `/api/containers?${params.toString()}`
       );
       setContainers(response.items);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load containers:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load containers";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load containers",
+        description: errorMessage,
       });
       setContainers([]);
     } finally {
       setLoading(false);
     }
-  }
+  }, [activeTab, toast]);
 
   useEffect(() => {
     loadContainers();
@@ -154,7 +155,7 @@ export default function ContainersPage() {
     // Auto-refresh every 60 seconds
     const interval = setInterval(loadContainers, 60000);
     return () => clearInterval(interval);
-  }, [activeTab]);
+  }, [loadContainers]);
 
   const arrivingSoonCount = containers.filter((c) => {
     if (!c.estimated_arrival_date || c.status === "delivered") return false;
@@ -209,7 +210,7 @@ export default function ContainersPage() {
         </Card>
       )}
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "arriving" | "in_transit")} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="arriving">
             Arriving Soon

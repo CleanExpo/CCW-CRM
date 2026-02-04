@@ -18,13 +18,13 @@ export async function GET() {
       insights: data.insights || [],
       total: data.total || 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching insights:", error);
     // Return empty array on error instead of hardcoded data
     return NextResponse.json({
       insights: [],
       total: 0,
-      error: error.message,
+      error: error instanceof Error ? error.message : "Failed to fetch insights",
     });
   }
 }

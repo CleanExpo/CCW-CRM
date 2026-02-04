@@ -23,6 +23,9 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",  # JWT tokens
     "passlib[bcrypt]>=1.7.0",  # Password hashing
 
+    # Billing
+    "stripe>=7.0.0",  # Stripe payment processing
+
     # Core
     "pydantic>=2.9.0",
     "pydantic-settings>=2.6.0",
@@ -34,6 +37,10 @@ dependencies = [
     "python-multipart>=0.0.12",
     "slowapi>=0.1.9",  # Rate limiting
     "sendgrid>=6.11.0",  # Email notifications
+    "fastapi-mail>=1.4.1",  # Email notifications for system alerts
+    "prometheus-fastapi-instrumentator>=7.0.0",  # Prometheus metrics
+    "prometheus-client>=0.19.0",  # Prometheus Python client
+    "apscheduler>=3.10.0",  # Job scheduling
 
     # AI/LLM (LangChain + Ollama + Anthropic)
     "langchain>=0.1.0",
@@ -49,6 +56,7 @@ dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=5.0.0",
+    "respx>=0.21.0",  # HTTP mocking for tests
     "mypy>=1.13.0",
     "ruff>=0.7.0",
     "httpx>=0.27.0",
@@ -70,11 +78,19 @@ check_untyped_defs = false
 disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
-module = "src.api.routes.demo_*"
+module = "src.api.routes.demo_lists"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "src.db.demo_*"
+module = "src.api.routes.demo_dashboard"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.api.routes.demo_auth"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.db.demo_models"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
