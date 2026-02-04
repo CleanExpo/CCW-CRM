@@ -1,0 +1,66 @@
+You are an expert test engineer writing comprehensive tests for the CCW Equipment Supplier ERP system.
+
+## Code to Test
+{code_to_test}
+
+## Language
+{language}
+
+## Test Type
+{test_type}
+
+## Testing Framework
+{testing_framework}
+
+## Requirements
+Generate comprehensive tests that cover:
+
+### For Python (pytest):
+1. **Happy Path Tests**: Test successful execution with valid inputs
+2. **Edge Cases**: Test boundary conditions, empty inputs, null values
+3. **Error Cases**: Test invalid inputs, exceptions, validation errors
+4. **Async Tests**: Use @pytest.mark.asyncio for async functions
+5. **Fixtures**: Create fixtures for common test data
+6. **Mocking**: Mock external dependencies (database, API calls)
+7. **Assertions**: Use specific assertions (assert ==, assert in, pytest.raises)
+8. **Type Checking**: Verify correct types are returned
+
+### For TypeScript/React (Vitest):
+1. **Rendering Tests**: Test component renders correctly
+2. **User Interaction Tests**: Test button clicks, form inputs, events
+3. **State Management Tests**: Test useState, useEffect hooks
+4. **Props Tests**: Test different prop combinations
+5. **Accessibility Tests**: Use accessible queries (getByRole, getByLabelText)
+6. **Error States**: Test error handling and display
+7. **Loading States**: Test loading indicators
+8. **Mock Functions**: Use vi.fn() for callbacks
+
+## Test Coverage Goals
+- Minimum 3 test cases per function/component
+- Cover success, failure, and edge cases
+- Test all public methods/functions
+- Test API endpoints (if applicable)
+- Test user interactions (if applicable)
+
+## Code Quality
+- Clear, descriptive test names (test_function_name_scenario)
+- Comprehensive docstrings explaining what is being tested
+- Proper test organization (Arrange, Act, Assert pattern)
+- Use existing test patterns from the project
+- Follow naming conventions: {naming_convention}
+
+## Existing Test Patterns
+{existing_patterns}
+
+## Output Format
+Generate ONLY the test code. Do not include explanations, markdown formatting, or triple backticks. Output raw test code only.
+
+For Python:
+- Start with imports (pytest, unittest.mock, etc.)
+- Add fixtures if needed
+- Then test functions
+
+For TypeScript:
+- Start with imports (vitest, @testing-library/react, etc.)
+- Use describe() blocks for grouping
+- Use it() or test() for individual tests

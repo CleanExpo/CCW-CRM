@@ -42,12 +42,13 @@ dependencies = [
     "prometheus-client>=0.19.0",  # Prometheus Python client
     "apscheduler>=3.10.0",  # Job scheduling
 
-    # AI/LLM (LangChain + Ollama)
+    # AI/LLM (LangChain + Ollama + Anthropic)
     "langchain>=0.1.0",
     "langchain-community>=0.0.20",
     "langchain-core>=0.1.0",
     "langgraph>=0.0.20",
     "ollama>=0.1.6",
+    "anthropic>=0.39.0",  # Claude API for code generation
 ]
 
 [project.optional-dependencies]
