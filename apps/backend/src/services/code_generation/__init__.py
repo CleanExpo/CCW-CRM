@@ -24,6 +24,7 @@ from .generator import (
 )
 from .test_generator import TestGenerator
 from .doc_generator import DocGenerator
+from .quality_checker import QualityChecker
 
 __all__ = [
     # Context Builder
@@ -42,4 +43,6 @@ __all__ = [
     "TestGenerator",
     # Documentation Generator
     "DocGenerator",
+    # Quality Checker
+    "QualityChecker",
 ]

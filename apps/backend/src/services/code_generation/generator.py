@@ -132,6 +132,11 @@ class CodeGenerator:
             project_root=self.project_root, anthropic_api_key=api_key
         )
 
+        # Initialize quality checker
+        from .quality_checker import QualityChecker
+
+        self.quality_checker = QualityChecker(project_root=self.project_root)
+
     # ========================================================================
     # Main API
     # ========================================================================
@@ -220,11 +225,8 @@ class CodeGenerator:
                 # Log warning but continue
                 pass
 
-        # Run quality checks (placeholder for Task #73)
-        quality_report = QualityReport(
-            linting_passed=syntax_valid,
-            type_check_passed=syntax_valid,
-        )
+        # Run quality checks (Task #73)
+        quality_report = await self.quality_checker.check_quality(generated_file)
 
         # Return result
         return CodeGenerationResult(
