@@ -22,6 +22,7 @@ from .generator import (
     GeneratedFile,
     QualityReport,
 )
+from .test_generator import TestGenerator
 
 __all__ = [
     # Context Builder
@@ -36,4 +37,6 @@ __all__ = [
     "CodeGenerator",
     "GeneratedFile",
     "QualityReport",
+    # Test Generator
+    "TestGenerator",
 ]

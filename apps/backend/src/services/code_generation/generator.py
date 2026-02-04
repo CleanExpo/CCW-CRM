@@ -118,6 +118,13 @@ class CodeGenerator:
         self.context_builder = ContextBuilder(project_root=self.project_root)
         self.prompts_dir = Path(__file__).parent / "prompts"
 
+        # Initialize test generator (lazy import to avoid circular dependency)
+        from .test_generator import TestGenerator
+
+        self.test_generator = TestGenerator(
+            project_root=self.project_root, anthropic_api_key=api_key
+        )
+
     # ========================================================================
     # Main API
     # ========================================================================
@@ -169,6 +176,19 @@ class CodeGenerator:
             imports=imports,
         )
 
+        # Generate tests (Task #71)
+        tests = []
+        if syntax_valid:
+            try:
+                generated_tests = await self.test_generator.generate_tests(
+                    generated_file=generated_file, test_type="unit"
+                )
+                tests.extend(generated_tests)
+            except Exception as e:
+                # Test generation failure shouldn't block code generation
+                # Log warning but continue
+                pass
+
         # Run quality checks (placeholder for Task #73)
         quality_report = QualityReport(
             linting_passed=syntax_valid,
@@ -178,10 +198,10 @@ class CodeGenerator:
         # Return result
         return CodeGenerationResult(
             generated_files=[generated_file],
-            tests=[],  # Task #71: Test generation
+            tests=tests,
             documentation=[],  # Task #72: Documentation generation
             quality_report=quality_report,
-            pr_ready=syntax_valid,
+            pr_ready=syntax_valid and len(tests) > 0,  # PR ready if code + tests valid
         )
 
     # ========================================================================
