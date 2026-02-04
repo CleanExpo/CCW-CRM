@@ -443,10 +443,11 @@ app.include_router(alerts.router)
 app.include_router(business_metrics.router)
 app.include_router(performance.router)
 
-# Real-Time Infrastructure - SSE Inventory Stream (Phase 4)
-from src.api.routes import inventory_stream
+# Real-Time Infrastructure - SSE Streams (Phase 4)
+from src.api.routes import inventory_stream, dashboard_stream
 
 app.include_router(inventory_stream.router, tags=["Real-Time Inventory"])
+app.include_router(dashboard_stream.router, tags=["Real-Time Dashboard"])
 
 # PRD Generation router (✅ IMPLEMENTED)
 app.include_router(prd.router, tags=["PRD Generation"])

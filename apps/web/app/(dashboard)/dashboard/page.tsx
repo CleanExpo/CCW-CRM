@@ -90,12 +90,10 @@ export default function DashboardPage() {
 
   // PHASE 4: Real-time POS failure monitoring
   const [posFailureCount, setPosFailureCount] = useState(0);
-  // TODO: Enable when backend endpoints are implemented
-  const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(false);
+  const { data: posFailure, status: posAlertStatus} = usePOSFailureAlerts(true);
 
   // PHASE 4: Real-time dashboard metrics
-  // TODO: Enable when backend endpoints are implemented
-  const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(false);
+  const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(true);
 
   useEffect(() => {
     async function loadDashboardData() {
