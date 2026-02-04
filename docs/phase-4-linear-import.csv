@@ -1,0 +1,292 @@
+Title,Description,Priority,Estimate,Labels,Status
+"[P0] Fix Products N+1 Query","**Issue**: 50 products = 51 API calls (1 list + 50 stock lookups)
+
+**Fix**: Add stock_by_location to product list response in apps/backend/src/api/routes/products.py
+
+**Impact**: 98% fewer API calls
+
+**Steps**:
+1. Read products.py endpoint
+2. Modify query to include stock JOIN
+3. Add stock_by_location to response model
+4. Update frontend to use new field
+5. Test with 50+ products
+
+**Success Criteria**:
+- Products list makes 1 API call instead of 51
+- Stock data visible for all locations
+- Type-check passes
+- Tests pass",Urgent,4,phase-4,Todo
+"[P0] Add Missing Database Indexes","**Issue**: Foreign keys without indexes cause slow JOINs
+
+**Fix**: Create Alembic migration adding indexes on:
+- order_items.product_id
+- order_items.order_id
+- quote_items.product_id
+- quote_items.quote_id
+- stock_movements.product_id
+- stock_movements.location_id
+
+**Impact**: 40% faster queries with JOINs
+
+**Steps**:
+1. Create new Alembic migration file
+2. Add CREATE INDEX statements
+3. Run migration on dev database
+4. Verify indexes with verify_indexes.py
+5. Test query performance
+
+**Success Criteria**:
+- All foreign keys have indexes
+- JOIN queries 40% faster
+- Migration runs successfully",Urgent,3,phase-4,Todo
+"[P0] Memoize Pagination getPageNumbers()","**Issue**: O(n) calculation on every render in apps/web/components/ui/pagination-controls.tsx
+
+**Fix**: Wrap getPageNumbers() in useMemo()
+
+**Impact**: 5% UI responsiveness improvement
+
+**Steps**:
+1. Read pagination-controls.tsx
+2. Wrap getPageNumbers() in useMemo([page totalPages])
+3. Test pagination with large datasets
+
+**Success Criteria**:
+- Pagination renders faster
+- No unnecessary re-calculations
+- Type-check passes",High,1,phase-4,Todo
+"[P1] Add React.memo to Dashboard Widgets","**Files**:
+- apps/web/components/dashboard/OrderPatternsWidget.tsx
+- apps/web/components/dashboard/SalesInsightsWidget.tsx
+
+**Issue**: Unnecessary re-renders on parent state change
+
+**Fix**: Wrap components in React.memo()
+
+**Impact**: 30% fewer re-renders
+
+**Success Criteria**:
+- Widgets don't re-render when other metrics change
+- Performance profiler shows improvement",High,2,phase-4,Todo
+"[P0] Verify All Performance Optimizations","**Action**: Run performance analysis and verify improvements
+
+**Script**: apps/backend/scripts/analyze_query_performance.py
+
+**Verify**:
+- Dashboard loads in <2s (down from 5-8s)
+- Products list API calls reduced to 1
+- Order creation 80% faster
+- p95 API response <300ms
+
+**Success Criteria**:
+- All performance targets met
+- Load tests pass
+- No regressions detected",Urgent,1,phase-4,Todo
+"[P1] Add Last Updated Timestamps to List Pages","**Files**:
+- apps/web/app/(dashboard)/products/page.tsx
+- apps/web/app/(dashboard)/orders/page.tsx
+- apps/web/app/(dashboard)/customers/page.tsx
+
+**Fix**: Add formatDistanceToNow(lastUpdated) to UI
+
+**Impact**: Transparency builds trust
+
+**Success Criteria**:
+- All list pages show 'Updated 5 minutes ago'
+- Timestamps update correctly
+- Responsive design maintained",High,2,phase-4,Todo
+"[P1] Test Real-Time SSE Connections","**Action**: Manual testing of all SSE streams
+
+**Test Cases**:
+- Dashboard metrics stream (<1s latency)
+- Inventory stream (instant updates)
+- Order status stream (live progress)
+- POS failure alerts (within 5 min)
+
+**Verify**:
+- Auto-reconnect works
+- No memory leaks
+- Connection stays alive with heartbeat
+
+**Success Criteria**:
+- All streams functional
+- <1s update latency
+- Graceful error handling",High,2,phase-4,Todo
+"[P1] Implement Smart Form Auto-Fill","**Files**:
+- apps/backend/src/api/routes/ai/form_autofill.py (new)
+- apps/web/lib/hooks/use-form-autofill.ts (enhance)
+
+**Features**:
+- Pre-fill last customer order details
+- Suggest products based on history
+- Pre-fill supplier quantities
+- Deduplicate by email/name
+
+**Impact**: 40% faster order entry
+
+**Steps**:
+1. Create /api/ai/form-auto-fill endpoint
+2. Query customer order history
+3. Use AI to suggest products/quantities
+4. Return confidence scores
+5. Frontend integration with UI
+6. A/B testing
+
+**Success Criteria**:
+- 80%+ suggestion accuracy
+- Forms pre-fill automatically
+- User can accept/reject suggestions",High,16,phase-4-ai,Todo
+"[P1] Implement Anomaly Detection Agent","**Files**:
+- apps/backend/src/ai/agents/specialized/anomaly_detection_agent.py (new)
+- apps/backend/src/api/routes/ai/anomaly.py (enhance)
+
+**Features**:
+- Unusual order amounts (fraud)
+- Inventory discrepancies
+- Pricing errors
+- Supplier delays
+
+**Impact**: 30-40% reduction in costly errors
+
+**Steps**:
+1. Create AnomalyDetectionAgent class
+2. Implement detection algorithms
+3. Hook into order creation
+4. Create alert system
+5. Add anomaly alert UI
+6. Test with synthetic data
+
+**Success Criteria**:
+- >90% detection precision
+- <10% false positive rate
+- Alerts within 5 minutes",High,12,phase-4-ai,Todo
+"[P2] Implement Email/Document Parsing","**Files**:
+- apps/backend/src/api/routes/ai/document_parser.py (new)
+
+**Features**:
+- Extract customer products quantities from emails
+- Parse PDF invoices/quotes
+- Auto-create orders from supplier emails
+
+**Impact**: 60% faster order processing from email
+
+**Steps**:
+1. Create /api/ai/parse-document endpoint
+2. Integrate email parsing library
+3. Use LLM to extract structured data
+4. Map to order creation payload
+5. Create manual review UI
+6. Test with sample emails/PDFs
+
+**Success Criteria**:
+- 85%+ parsing accuracy
+- Structured order data extracted
+- Manual review workflow functional",Medium,20,phase-4-ai,Todo
+"[P2] Enhance Inventory Forecasting","**File**: apps/backend/src/api/routes/ai/inventory_forecast.py (enhance)
+
+**Features**:
+- Predict stock depletion dates
+- Auto-generate PO suggestions
+- Seasonal demand analysis
+- Safety stock recommendations
+
+**Impact**: 25-35% reduction in stockouts
+
+**Steps**:
+1. Enhance existing forecasting endpoint
+2. Add seasonal trend analysis
+3. Implement PO suggestion logic
+4. Create forecasting dashboard widget
+5. Test with historical data
+
+**Success Criteria**:
+- MAE <15% on forecasts
+- PO suggestions actionable
+- Dashboard widget shows predictions",Medium,12,phase-4-ai,Todo
+"[P0] Create Autosave E2E Tests","**File**: apps/web/e2e/autosave.spec.ts (new)
+
+**Tests**:
+- Draft saved after 2 seconds
+- Draft restored on dialog reopen
+- Draft cleared on successful submit
+- Line items persisted correctly
+- Expiry after 7 days works
+
+**Effort**: 6 hours
+
+**Success Criteria**:
+- All E2E tests pass
+- Coverage >90% of autosave flows
+- Tests run in CI/CD",Urgent,6,phase-4-testing,Todo
+"[P0] Create Performance Regression Tests","**File**: apps/backend/tests/performance/test_phase4_optimizations.py (new)
+
+**Tests**:
+- Dashboard loads in <2s
+- Products API calls <5 (not 51)
+- Order creation <1.5s
+- p95 API response <300ms
+
+**Effort**: 4 hours
+
+**Success Criteria**:
+- All performance tests pass
+- Regression tests in CI/CD
+- Baseline metrics documented",Urgent,4,phase-4-testing,Todo
+"[P1] Run Load Tests","**Script**: apps/backend/tests/load/run_full_load_test.py
+
+**Action**:
+- Test 1000 concurrent users
+- Verify dashboard under load
+- Check SSE connection limits
+- Monitor database connections
+
+**Effort**: 2 hours
+
+**Success Criteria**:
+- System handles 1000 users
+- No memory leaks
+- Response times acceptable
+- Error rate <1%",High,2,phase-4-testing,Todo
+"[P1] Update Phase 4 Documentation","**File**: docs/phase-4-completion-report.md (new)
+
+**Content**:
+- Performance improvements achieved
+- AI features implemented
+- Testing results
+- Known limitations
+- Next steps
+
+**Effort**: 3 hours
+
+**Success Criteria**:
+- Comprehensive documentation
+- Screenshots/metrics included
+- Deployment guide complete",High,3,phase-4-docs,Todo
+"[P1] Create Phase 4 Deployment Checklist","**File**: docs/phase-4-deployment-checklist.md (new)
+
+**Content**:
+- Database migrations to run
+- Environment variables needed
+- Feature flags to enable
+- Monitoring alerts to set
+- Rollback procedure
+
+**Effort**: 2 hours
+
+**Success Criteria**:
+- Complete deployment checklist
+- Runbook tested
+- Rollback plan documented",High,2,phase-4-docs,Todo
+"[P1] Update Linear Backlog","**Action**: Mark all completed Phase 4 tasks as Done in Linear
+
+**Verify**:
+- All autosave tasks marked Done
+- Performance optimization tasks updated
+- Documentation tasks complete
+
+**Effort**: 1 hour
+
+**Success Criteria**:
+- Linear reflects accurate status
+- Burndown chart updated
+- Sprint velocity calculated",High,1,phase-4-docs,Todo
