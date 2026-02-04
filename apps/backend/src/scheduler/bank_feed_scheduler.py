@@ -36,54 +36,110 @@ class BankFeedScheduler:
         self._register_jobs()
 
     def _register_jobs(self) -> None:
-        """Register scheduled jobs."""
-        # Daily bank feed sync at 9:00 AM
+        """Register scheduled jobs with configurable intervals (Phase 1)."""
+        # Hourly sync (for accounts with sync_interval_hours = 1)
         self.scheduler.add_job(
-            self.sync_all_bank_feeds,
-            trigger=CronTrigger(hour=9, minute=0),
-            id="bank_feed_sync",
+            self.sync_hourly_accounts,
+            trigger=CronTrigger(hour="*", minute=5),  # Every hour at :05
+            id="bank_feed_sync_hourly",
+            name="Hourly Bank Feed Sync",
+            replace_existing=True,
+            max_instances=1,
+        )
+
+        # 4-hour sync (for accounts with sync_interval_hours = 4)
+        self.scheduler.add_job(
+            self.sync_four_hourly_accounts,
+            trigger=CronTrigger(hour="*/4", minute=10),  # Every 4 hours at :10
+            id="bank_feed_sync_4hour",
+            name="4-Hour Bank Feed Sync",
+            replace_existing=True,
+            max_instances=1,
+        )
+
+        # Daily sync (for accounts with sync_interval_hours = 24) - default
+        self.scheduler.add_job(
+            self.sync_daily_accounts,
+            trigger=CronTrigger(hour=9, minute=0),  # Daily at 9:00 AM
+            id="bank_feed_sync_daily",
             name="Daily Bank Feed Sync",
             replace_existing=True,
-            max_instances=1,  # Prevent overlapping executions
+            max_instances=1,
         )
 
         logger.info(
-            "Registered bank feed sync job",
-            schedule="Daily at 9:00 AM",
+            "Registered bank feed sync jobs",
+            schedules="Hourly (:05), 4-Hour (:10), Daily (9:00 AM)",
         )
 
-    async def sync_all_bank_feeds(self) -> None:
-        """Sync bank feeds for all active accounts.
+    async def sync_hourly_accounts(self) -> None:
+        """Sync accounts configured for hourly sync (sync_interval_hours = 1)."""
+        logger.info("Starting hourly bank feed sync")
+        await self._sync_accounts_by_interval(1)
 
-        This job:
-        1. Fetches bank transactions from last 7 days (configurable)
-        2. Auto-reconciles with POS transactions
-        3. Sends summary email to accounts team
+    async def sync_four_hourly_accounts(self) -> None:
+        """Sync accounts configured for 4-hour sync (sync_interval_hours = 4)."""
+        logger.info("Starting 4-hour bank feed sync")
+        await self._sync_accounts_by_interval(4)
+
+    async def sync_daily_accounts(self) -> None:
+        """Sync accounts configured for daily sync (sync_interval_hours = 24)."""
+        logger.info("Starting daily bank feed sync")
+        await self._sync_accounts_by_interval(24)
+
+    async def _sync_accounts_by_interval(self, interval_hours: int) -> None:
         """
-        logger.info("Starting scheduled bank feed sync")
+        Sync bank feeds for accounts with specific sync interval.
 
+        Args:
+            interval_hours: Sync interval (1, 4, or 24 hours)
+        """
         async with self.session_maker() as db:
             try:
-                # Get all active bank accounts with feed providers
+                # Get accounts with this sync interval
                 result = await db.execute(
                     select(BankAccount).where(
                         BankAccount.is_active == True,  # noqa: E712
                         BankAccount.feed_provider.isnot(None),
                         BankAccount.feed_provider != "manual",
+                        BankAccount.sync_interval_hours == interval_hours,
                     )
                 )
                 accounts = result.scalars().all()
 
                 if not accounts:
-                    logger.warning("No active bank accounts with feed providers found")
+                    logger.debug(
+                        "No accounts with this sync interval",
+                        interval_hours=interval_hours,
+                    )
                     return
 
                 logger.info(
-                    "Found active bank accounts",
+                    "Found accounts to sync",
+                    interval_hours=interval_hours,
                     count=len(accounts),
                 )
 
-                # Sync each account
+                # Sync these accounts
+                await self._sync_accounts(db, accounts)
+
+            except Exception as e:
+                logger.error(
+                    "Scheduled sync job failed",
+                    interval_hours=interval_hours,
+                    error=str(e),
+                )
+                raise
+
+    async def _sync_accounts(self, db: AsyncSession, accounts: list[BankAccount]) -> None:
+        """
+        Common logic to sync a list of bank accounts (Phase 1 refactor).
+
+        Args:
+            db: Database session
+            accounts: List of bank accounts to sync
+        """
+        # Sync each account
                 total_transactions = 0
                 total_auto_matched = 0
                 account_results = []
@@ -180,6 +236,41 @@ class BankFeedScheduler:
             except Exception as e:
                 logger.error(
                     "Bank feed sync job failed",
+                    error=str(e),
+                )
+                raise
+
+    async def sync_all_bank_feeds(self) -> None:
+        """Sync bank feeds for all active accounts (legacy - calls all intervals)."""
+        logger.info("Starting manual bank feed sync for all accounts")
+
+        async with self.session_maker() as db:
+            try:
+                # Get all active bank accounts with feed providers
+                result = await db.execute(
+                    select(BankAccount).where(
+                        BankAccount.is_active == True,  # noqa: E712
+                        BankAccount.feed_provider.isnot(None),
+                        BankAccount.feed_provider != "manual",
+                    )
+                )
+                accounts = result.scalars().all()
+
+                if not accounts:
+                    logger.warning("No active bank accounts with feed providers found")
+                    return
+
+                logger.info(
+                    "Found active bank accounts",
+                    count=len(accounts),
+                )
+
+                # Sync all accounts
+                await self._sync_accounts(db, accounts)
+
+            except Exception as e:
+                logger.error(
+                    "Manual bank feed sync job failed",
                     error=str(e),
                 )
                 raise

@@ -648,3 +648,143 @@ async def export_reconciliation_data(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=reconciliation-{date.today()}.csv"},
     )
+
+
+# ========== Phase 1: Webhook Support ==========
+
+
+class WebhookPayload(BaseModel):
+    """Webhook payload from bank feed provider."""
+
+    account_id: str = Field(..., description="Provider's account ID")
+    event_type: str = Field(..., description="Event type (e.g., 'transaction.created')")
+    data: dict = Field(..., description="Event data from provider")
+    signature: Optional[str] = Field(None, description="HMAC signature for verification")
+
+
+@router.post("/webhook/{provider}")
+async def bank_feed_webhook(
+    provider: str,
+    payload: WebhookPayload,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """
+    Webhook endpoint for real-time bank feed notifications (Phase 1).
+
+    Supported providers:
+    - xero
+    - yodlee
+    - basiq
+
+    Security:
+    - Verifies HMAC signature
+    - Requires webhook_enabled = TRUE on account
+    - Rate limited (TODO: implement rate limiting)
+    """
+    logger.info(
+        "Received bank feed webhook",
+        provider=provider,
+        event_type=payload.event_type,
+        account_id=payload.account_id,
+    )
+
+    # Find bank account by provider and feed_account_id
+    result = await db.execute(
+        select(BankAccount).where(
+            BankAccount.feed_provider == provider,
+            BankAccount.feed_account_id == payload.account_id,
+            BankAccount.webhook_enabled == True,  # noqa: E712
+        )
+    )
+    account = result.scalar_one_or_none()
+
+    if not account:
+        logger.warning(
+            "Bank account not found or webhooks disabled",
+            provider=provider,
+            account_id=payload.account_id,
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Bank account not found or webhooks not enabled",
+        )
+
+    # Verify HMAC signature
+    if account.webhook_secret:
+        if not payload.signature:
+            logger.warning("Webhook signature missing")
+            raise HTTPException(status_code=401, detail="Signature required")
+
+        if not _verify_webhook_signature(
+            payload.data, payload.signature, account.webhook_secret
+        ):
+            logger.warning("Invalid webhook signature")
+            raise HTTPException(status_code=401, detail="Invalid signature")
+
+    # Trigger immediate sync for this account
+    try:
+        service = BankFeedService(db)
+
+        # Sync last 7 days (webhook triggers catch-up)
+        end_date = date.today()
+        start_date = end_date - timedelta(days=7)
+
+        sync_result = await service.sync_bank_feeds(
+            account_id=account.id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        logger.info(
+            "Webhook triggered sync completed",
+            account_id=str(account.id),
+            transactions_synced=sync_result["transactions_synced"],
+        )
+
+        # Track webhook success metric
+        metrics.bank_feed_webhook_received.labels(provider=provider).inc()
+
+        return {
+            "status": "success",
+            "account_id": str(account.id),
+            "transactions_synced": sync_result["transactions_synced"],
+            "event_type": payload.event_type,
+        }
+
+    except Exception as e:
+        logger.error(
+            "Webhook sync failed",
+            account_id=str(account.id),
+            error=str(e),
+        )
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+
+def _verify_webhook_signature(data: dict, signature: str, secret: str) -> bool:
+    """
+    Verify HMAC-SHA256 signature for webhook.
+
+    Args:
+        data: Webhook payload data
+        signature: Provided signature (hex-encoded)
+        secret: Webhook secret
+
+    Returns:
+        True if signature is valid
+    """
+    import hmac
+    import hashlib
+    import json
+
+    # Serialize data to consistent JSON string
+    payload_str = json.dumps(data, sort_keys=True, separators=(",", ":"))
+
+    # Calculate expected signature
+    expected_signature = hmac.new(
+        secret.encode("utf-8"),
+        payload_str.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    # Constant-time comparison
+    return hmac.compare_digest(expected_signature, signature)

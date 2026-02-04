@@ -50,6 +50,44 @@ pos_transaction_amount = Counter(
 )
 
 # ============================================================
+# BANK FEED RECONCILIATION METRICS (Phase 1 Enhancement)
+# ============================================================
+
+bank_feed_sync_success = Counter(
+    "bank_feed_sync_success_total",
+    "Successful bank feed syncs",
+    ["provider"],
+)
+
+bank_feed_sync_failure = Counter(
+    "bank_feed_sync_failure_total",
+    "Failed bank feed syncs",
+    ["provider"],
+)
+
+bank_feed_auto_match_rate = Gauge(
+    "bank_feed_auto_match_rate",
+    "Auto-match success rate for bank feeds (0.0-1.0)",
+)
+
+bank_feed_webhook_received = Counter(
+    "bank_feed_webhook_received_total",
+    "Webhooks received from bank feed providers",
+    ["provider"],
+)
+
+bank_feed_pending_count = Gauge(
+    "bank_feed_pending_count",
+    "Number of pending (unmatched) bank feed transactions",
+    ["account"],
+)
+
+bank_feed_suggestions_generated = Counter(
+    "bank_feed_suggestions_generated_total",
+    "AI-powered match suggestions generated",
+)
+
+# ============================================================
 # QUOTE METRICS
 # ============================================================
 

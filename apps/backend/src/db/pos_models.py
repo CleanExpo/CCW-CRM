@@ -223,6 +223,13 @@ class BankAccount(Base):
     )
     feed_sync_status: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
+    # Auto-Sync Configuration (Phase 1)
+    sync_interval_hours: Mapped[int] = mapped_column(default=24, nullable=False)
+    webhook_enabled: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
+    webhook_secret: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    sync_retry_count: Mapped[int] = mapped_column(default=0, nullable=False)
+    last_sync_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     # Status
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False, index=True)
 
@@ -398,6 +405,9 @@ class BankFeed(Base):
 
     # Metadata
     raw_data: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
+    # AI Matching Suggestions (Phase 2)
+    match_suggestions: Mapped[Optional[list]] = mapped_column(JSONB, default=list, nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)

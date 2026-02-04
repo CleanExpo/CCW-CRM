@@ -5,6 +5,7 @@ Handles:
 - Syncing bank feed data from providers (Xero, Yodlee, Basiq)
 - Auto-matching transactions with POS records
 - Manual reconciliation workflow
+- AI-powered match suggestions (Phase 2 enhancement)
 """
 
 import os
@@ -17,6 +18,7 @@ import structlog
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.ai.agents.specialized.reconciliation_agent import ReconciliationAgent
 from src.db.pos_models import BankAccount, BankFeed, POSTransaction
 
 logger = structlog.get_logger(__name__)
@@ -328,12 +330,19 @@ class BankFeedService:
                     pos_transaction.reconciled_at = datetime.now()
 
                     matched_count += 1
+                else:
+                    # Confidence below auto-match threshold - generate AI suggestions
+                    await self._generate_suggestions_for_feed(feed)
 
         await self.db.commit()
+
+        # Count feeds with suggestions
+        suggestions_count = sum(1 for f in feeds if f.match_suggestions)
 
         return {
             "feeds_processed": len(feeds),
             "auto_matched": matched_count,
+            "with_suggestions": suggestions_count,
         }
 
     def _calculate_match_confidence(
@@ -379,6 +388,36 @@ class BankFeedService:
             confidence += Decimal("0.20")
 
         return min(confidence, Decimal("1.00"))  # Cap at 1.00
+
+    async def _generate_suggestions_for_feed(self, feed: BankFeed) -> None:
+        """
+        Generate AI-powered match suggestions for a bank feed (Phase 2).
+
+        This is called when auto-match confidence is below 80% but there
+        may still be viable matches that need manual review.
+        """
+        try:
+            reconciliation_agent = ReconciliationAgent(self.db)
+            suggestions = await reconciliation_agent.generate_match_suggestions(
+                feed_id=feed.id,
+                max_suggestions=3,
+            )
+
+            if suggestions:
+                feed.match_suggestions = suggestions
+                logger.debug(
+                    "Generated match suggestions",
+                    feed_id=str(feed.id),
+                    num_suggestions=len(suggestions),
+                )
+        except Exception as e:
+            logger.error(
+                "Failed to generate suggestions",
+                feed_id=str(feed.id),
+                error=str(e),
+            )
+            # Don't fail the whole reconciliation process if suggestions fail
+            pass
 
     async def manual_reconcile(
         self,
