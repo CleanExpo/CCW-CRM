@@ -30,6 +30,7 @@ from src.db.schemas import (
 )
 from pydantic import BaseModel
 from src.monitoring import metrics
+from src.services.sse_service import sse_service
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 router = APIRouter(prefix="/api/quotes", tags=["quotes"])
@@ -269,6 +270,22 @@ async def create_quote(
     status_value = quote.status.value if hasattr(quote.status, 'value') else quote.status
     metrics.quotes_created.labels(status=status_value).inc()
 
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "pending_quotes",
+        "change": "increment",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "quote_created",
+        "title": "New Quote",
+        "description": f"Quote {quote_number} created - ${total}",
+        "link": f"/quotes/{quote.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     # Reload with items
     query = (
         select(QuoteModel)
@@ -384,6 +401,15 @@ async def update_quote(
     # Invalidate quote-related caches
     await invalidate_quote_caches()
 
+    # Publish real-time update
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "quote_updated",
+        "title": "Quote Updated",
+        "description": f"Quote {quote.quote_number} updated",
+        "link": f"/quotes/{quote.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     # Reload with items
     query = (
         select(QuoteModel)
@@ -422,12 +448,31 @@ async def delete_quote(
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
 
+    # Store info before deletion
+    quote_number = quote.quote_number
+
     # Delete quote (cascade will delete items)
     await db.delete(quote)
     await db.commit()
 
     # Invalidate quote-related caches
     await invalidate_quote_caches()
+
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "pending_quotes",
+        "change": "decrement",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "quote_deleted",
+        "title": "Quote Deleted",
+        "description": f"Quote {quote_number} deleted",
+        "link": "/quotes",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
 
     return None
 
@@ -617,6 +662,29 @@ async def convert_quote_to_order(
 
     # Track business metrics for quote conversion
     metrics.quotes_converted.inc()
+
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "pending_quotes",
+        "change": "decrement",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "active_orders",
+        "change": "increment",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "quote_converted",
+        "title": "Quote Converted to Order",
+        "description": f"Quote {quote.quote_number} converted to order {order_number}",
+        "link": f"/orders/{order.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
 
     # Reload with items
     query = (

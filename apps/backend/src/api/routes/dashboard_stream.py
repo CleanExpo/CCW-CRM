@@ -166,3 +166,32 @@ async def update_order(...):
 
 # Similar pattern for products, customers, quotes
 """
+
+
+@router.post("/test-event")
+async def publish_test_event(
+    metric: str = "active_orders",
+    change: str = "increment",
+):
+    """
+    Test endpoint to manually trigger SSE events.
+
+    Usage:
+    curl -X POST "http://localhost:8000/api/dashboard/test-event?metric=active_orders&change=increment"
+    """
+    await publish_dashboard_metric_update(metric=metric, change=change)
+
+    # Also publish activity event
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "test_event",
+        "title": "Test Event",
+        "description": f"Test: {metric} - {change}",
+        "link": "/dashboard",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    return {
+        "success": True,
+        "message": f"Published test event: {metric} - {change}",
+        "channel": "dashboard-metrics"
+    }

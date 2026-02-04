@@ -1139,6 +1139,22 @@ async def update_order_status(
     # Invalidate order-related caches
     await invalidate_order_caches()
 
+    # Publish real-time status update
+    await sse_service.publish("order-updates", {
+        "type": "status_changed",
+        "order_id": str(order.id),
+        "order_number": order.order_number,
+        "previous_status": old_status,
+        "new_status": status,
+    })
+
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "active_orders",
+        "change": "status_change",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     # Track business metrics for status changes
     location = order.fulfillment_location or "unknown"
     if status == "confirmed":
@@ -1207,6 +1223,9 @@ async def delete_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    # Store info before deletion
+    order_number = order.order_number
+
     # Delete order items first
     delete_items_query = select(OrderItemModel).where(OrderItemModel.order_id == order_id)
     items_result = await db.execute(delete_items_query)
@@ -1220,6 +1239,22 @@ async def delete_order(
 
     # Invalidate order-related caches
     await invalidate_order_caches()
+
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "active_orders",
+        "change": "decrement",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "order_deleted",
+        "title": "Order Deleted",
+        "description": f"Order {order_number} deleted",
+        "link": "/orders",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
 
     # Return None for 204 No Content - proper REST standard
     return None

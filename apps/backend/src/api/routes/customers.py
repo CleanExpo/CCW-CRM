@@ -2,6 +2,7 @@
 
 Performance optimized with Redis caching.
 """
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -12,6 +13,7 @@ from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
 from src.db.erp_models import Customer as CustomerModel
 from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
+from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
 
@@ -106,6 +108,22 @@ async def create_customer(
     await invalidate_cache("dashboard_metrics")
     await invalidate_cache("dashboard_activity")
 
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "total_customers",
+        "change": "increment",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "customer_created",
+        "title": "New Customer",
+        "description": f"Customer {customer.company_name} created",
+        "link": f"/customers/{customer.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     return Customer.model_validate(customer)
 
 
@@ -137,6 +155,15 @@ async def update_customer(
     await invalidate_cache("api_customers_list")
     await invalidate_cache("dashboard_metrics")
 
+    # Publish real-time update
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "customer_updated",
+        "title": "Customer Updated",
+        "description": f"Customer {customer.company_name} updated",
+        "link": f"/customers/{customer.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     return Customer.model_validate(customer)
 
 
@@ -155,6 +182,7 @@ async def delete_customer(
         raise HTTPException(status_code=404, detail="Customer not found")
 
     # Soft delete
+    customer_name = customer.company_name
     customer.is_active = False
     await db.commit()
 
@@ -162,5 +190,21 @@ async def delete_customer(
     await invalidate_cache("customers")
     await invalidate_cache("api_customers_list")
     await invalidate_cache("dashboard_metrics")
+
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "total_customers",
+        "change": "decrement",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "customer_deleted",
+        "title": "Customer Deleted",
+        "description": f"Customer {customer_name} deleted",
+        "link": "/customers",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
 
     return None

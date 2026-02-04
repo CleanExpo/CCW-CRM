@@ -24,6 +24,7 @@ from src.db.schemas import (
     ProductWithStock,
     StockByLocation,
 )
+from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
@@ -173,6 +174,22 @@ async def create_product(
     await invalidate_cache("dashboard_inventory")
     await invalidate_cache("dashboard_top_products")
 
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "total_products",
+        "change": "increment",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "product_created",
+        "title": "New Product",
+        "description": f"Product {product.name} created",
+        "link": f"/products/{product.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     return Product.model_validate(product)
 
 
@@ -283,6 +300,15 @@ async def update_product(
         )
         # Continue with product update success
 
+    # Publish real-time dashboard update
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "product_updated",
+        "title": "Product Updated",
+        "description": f"Product {product.name} updated",
+        "link": f"/products/{product.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     return Product.model_validate(product)
 
 
@@ -301,6 +327,7 @@ async def delete_product(
         raise HTTPException(status_code=404, detail="Product not found")
 
     # Soft delete
+    product_name = product.name
     product.is_active = False
     await db.commit()
 
@@ -309,5 +336,21 @@ async def delete_product(
     await invalidate_cache("api_products_list")
     await invalidate_cache("dashboard_inventory")
     await invalidate_cache("dashboard_top_products")
+
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "total_products",
+        "change": "decrement",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "product_deleted",
+        "title": "Product Deleted",
+        "description": f"Product {product_name} deleted",
+        "link": "/products",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
 
     return None
