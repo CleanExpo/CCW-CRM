@@ -33,6 +33,7 @@ from .routes import (
     # billing,  # Disabled temporarily - requires stripe package
     config,
     containers,
+    customer_orders,
     customers,
     demo_auth,
     demo_dashboard,
@@ -370,6 +371,7 @@ app.include_router(demo_dashboard.router, tags=["Dashboard"])
 # CRUD routers registered after demo_lists to override read-only routes
 app.include_router(products.router, tags=["Products"])
 app.include_router(customers.router, tags=["Customers"])
+app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
 # Background jobs router
