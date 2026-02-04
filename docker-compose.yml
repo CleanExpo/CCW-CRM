@@ -78,7 +78,26 @@ services:
     networks:
       - starter-network
 
-  # Grafana removed - using custom monitoring dashboard at /monitoring
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: ccw-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - starter-network
 
   alertmanager:
     image: prom/alertmanager:v0.26.0
@@ -129,6 +148,8 @@ volumes:
   postgres_data:
     driver: local
   prometheus-data:
+    driver: local
+  grafana-data:
     driver: local
 
 networks:
