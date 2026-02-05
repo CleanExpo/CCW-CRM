@@ -140,105 +140,98 @@ class BankFeedScheduler:
             accounts: List of bank accounts to sync
         """
         # Sync each account
-                total_transactions = 0
-                total_auto_matched = 0
-                account_results = []
+        total_transactions = 0
+        total_auto_matched = 0
+        account_results = []
 
-                # Sync last 7 days
-                end_date = date.today()
-                start_date = end_date - timedelta(days=7)
+        # Sync last 7 days
+        end_date = date.today()
+        start_date = end_date - timedelta(days=7)
 
-                for account in accounts:
-                    try:
-                        logger.info(
-                            "Syncing bank feed",
-                            account_id=str(account.id),
-                            account_name=account.account_name,
-                            provider=account.feed_provider,
-                        )
+        for account in accounts:
+            try:
+                logger.info(
+                    "Syncing bank feed",
+                    account_id=str(account.id),
+                    account_name=account.account_name,
+                    provider=account.feed_provider,
+                )
 
-                        service = BankFeedService(db)
+                service = BankFeedService(db)
 
-                        # Sync transactions with retry (Phase 5)
-                        sync_result = await service.sync_bank_feeds_with_retry(
-                            account_id=account.id,
-                            start_date=start_date,
-                            end_date=end_date,
-                        )
+                # Sync transactions with retry (Phase 5)
+                sync_result = await service.sync_bank_feeds_with_retry(
+                    account_id=account.id,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
 
-                        transactions_synced = sync_result["transactions_synced"]
-                        total_transactions += transactions_synced
+                transactions_synced = sync_result["transactions_synced"]
+                total_transactions += transactions_synced
 
-                        # Auto-reconcile was already done in sync_bank_feeds_with_retry
-                        # Get reconciliation stats
-                        recon_result = await service.auto_reconcile(account.id)
-                        auto_matched = recon_result["auto_matched"]
-                        total_auto_matched += auto_matched
+                # Auto-reconcile was already done in sync_bank_feeds_with_retry
+                # Get reconciliation stats
+                recon_result = await service.auto_reconcile(account.id)
+                auto_matched = recon_result["auto_matched"]
+                total_auto_matched += auto_matched
 
-                        account_results.append({
-                            "account_name": account.account_name,
-                            "provider": account.feed_provider,
-                            "transactions_synced": transactions_synced,
-                            "auto_matched": auto_matched,
-                        })
-
-                        logger.info(
-                            "Bank feed sync completed",
-                            account_id=str(account.id),
-                            transactions=transactions_synced,
-                            auto_matched=auto_matched,
-                        )
-
-                    except Exception as e:
-                        logger.error(
-                            "Failed to sync bank feed",
-                            account_id=str(account.id),
-                            account_name=account.account_name,
-                            error=str(e),
-                        )
-                        account_results.append({
-                            "account_name": account.account_name,
-                            "provider": account.feed_provider,
-                            "error": str(e),
-                        })
-
-                # Send summary email
-                try:
-                    from src.services.email_service import EmailService
-
-                    email_service = EmailService()
-                    await email_service.send_bank_feed_sync_summary(
-                        date_range=(start_date, end_date),
-                        total_transactions=total_transactions,
-                        total_auto_matched=total_auto_matched,
-                        account_results=account_results,
-                    )
-
-                    logger.info(
-                        "Sent bank feed sync summary email",
-                        total_transactions=total_transactions,
-                        total_auto_matched=total_auto_matched,
-                    )
-
-                except Exception as e:
-                    logger.error(
-                        "Failed to send summary email",
-                        error=str(e),
-                    )
+                account_results.append({
+                    "account_name": account.account_name,
+                    "provider": account.feed_provider,
+                    "transactions_synced": transactions_synced,
+                    "auto_matched": auto_matched,
+                })
 
                 logger.info(
-                    "Scheduled bank feed sync completed",
-                    accounts_synced=len(accounts),
-                    total_transactions=total_transactions,
-                    total_auto_matched=total_auto_matched,
+                    "Bank feed sync completed",
+                    account_id=str(account.id),
+                    transactions=transactions_synced,
+                    auto_matched=auto_matched,
                 )
 
             except Exception as e:
                 logger.error(
-                    "Bank feed sync job failed",
+                    "Failed to sync bank feed",
+                    account_id=str(account.id),
+                    account_name=account.account_name,
                     error=str(e),
                 )
-                raise
+                account_results.append({
+                    "account_name": account.account_name,
+                    "provider": account.feed_provider,
+                    "error": str(e),
+                })
+
+        # Send summary email
+        try:
+            from src.services.email_service import EmailService
+
+            email_service = EmailService()
+            await email_service.send_bank_feed_sync_summary(
+                date_range=(start_date, end_date),
+                total_transactions=total_transactions,
+                total_auto_matched=total_auto_matched,
+                account_results=account_results,
+            )
+
+            logger.info(
+                "Sent bank feed sync summary email",
+                total_transactions=total_transactions,
+                total_auto_matched=total_auto_matched,
+            )
+
+        except Exception as e:
+            logger.error(
+                "Failed to send summary email",
+                error=str(e),
+            )
+
+        logger.info(
+            "Scheduled bank feed sync completed",
+            accounts_synced=len(accounts),
+            total_transactions=total_transactions,
+            total_auto_matched=total_auto_matched,
+        )
 
     async def sync_all_bank_feeds(self) -> None:
         """Sync bank feeds for all active accounts (legacy - calls all intervals)."""
