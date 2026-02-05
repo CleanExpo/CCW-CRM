@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ccw-online-erp/schemas/discovery-report.schema.json",
+  "title": "Discovery Report",
+  "description": "Schema for Phase 1 discovery output",
+  "type": "object",
+  "required": ["task_id", "timestamp", "codebase_analysis", "patterns_found", "constraints"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Reference to parent task"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "codebase_analysis": {
+      "type": "object",
+      "properties": {
+        "total_files": { "type": "integer" },
+        "total_lines": { "type": "integer" },
+        "languages": { "type": "array", "items": { "type": "string" } },
+        "frameworks": { "type": "array", "items": { "type": "string" } },
+        "structure": {
+          "type": "object",
+          "description": "Directory structure relevant to task"
+        }
+      }
+    },
+    "patterns_found": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pattern_type": { "type": "string", "examples": ["component", "api_endpoint", "database_model", "test"] },
+          "location": { "type": "string" },
+          "example_file": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["forbidden", "required", "recommended"] },
+          "category": { "type": "string", "examples": ["database", "auth", "api", "packages"] },
+          "description": { "type": "string" },
+          "source": { "type": "string", "examples": ["CLAUDE.md", "demo_models.py", "middleware.ts"] }
+        }
+      }
+    },
+    "related_files": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Files that will likely need to be created or modified"
+    },
+    "recommendations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Suggested approach based on discovery"
+    }
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ccw-online-erp/schemas/handoff.schema.json",
+  "title": "Phase Handoff",
+  "description": "Schema for phase-handoffs/*.json - data passed between execution phases",
+  "type": "object",
+  "required": [
+    "from_phase",
+    "from_agent",
+    "to_phase",
+    "to_agent",
+    "timestamp",
+    "data",
+    "validation_passed"
+  ],
+  "properties": {
+    "from_phase": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Source phase number"
+    },
+    "from_agent": {
+      "type": "string",
+      "enum": ["discovery", "architect", "builder", "finalizer"],
+      "description": "Agent that produced this handoff"
+    },
+    "to_phase": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Destination phase number"
+    },
+    "to_agent": {
+      "type": "string",
+      "enum": ["architect", "builder", "finalizer", "user"],
+      "description": "Agent that will consume this handoff"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this handoff was created"
+    },
+    "data": {
+      "type": "object",
+      "description": "Phase-specific handoff data",
+      "properties": {
+        "phase_1_discovery": {
+          "type": "object",
+          "description": "Discovery phase output",
+          "properties": {
+            "codebase_analysis": {
+              "type": "object",
+              "properties": {
+                "total_files": { "type": "integer" },
+                "total_lines": { "type": "integer" },
+                "languages": { "type": "array", "items": { "type": "string" } },
+                "frameworks": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "patterns_found": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "pattern_type": { "type": "string" },
+                  "location": { "type": "string" },
+                  "example": { "type": "string" }
+                }
+              }
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "enum": ["forbidden", "required", "recommended"] },
+                  "description": { "type": "string" }
+                }
+              }
+            },
+            "related_files": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Files relevant to the task"
+            }
+          }
+        },
+        "phase_2_architecture": {
+          "type": "object",
+          "description": "Architecture phase output",
+          "properties": {
+            "design_summary": { "type": "string" },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "type": { "type": "string" },
+                  "file_path": { "type": "string" },
+                  "dependencies": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            },
+            "files_to_create": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": { "type": "string" },
+                  "purpose": { "type": "string" },
+                  "template": { "type": "string" }
+                }
+              }
+            },
+            "files_to_modify": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": { "type": "string" },
+                  "changes": { "type": "string" }
+                }
+              }
+            },
+            "breaking_changes": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "phase_3_build": {
+          "type": "object",
+          "description": "Build phase output",
+          "properties": {
+            "files_created": { "type": "array", "items": { "type": "string" } },
+            "files_modified": { "type": "array", "items": { "type": "string" } },
+            "tests_written": { "type": "array", "items": { "type": "string" } },
+            "tests_passing": { "type": "boolean" },
+            "type_check_passing": { "type": "boolean" },
+            "lint_passing": { "type": "boolean" },
+            "build_errors": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "validation_passed": {
+      "type": "boolean",
+      "description": "Whether validator approved this handoff"
+    },
+    "validator_notes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Notes from validator agent"
+    }
+  }
+}
