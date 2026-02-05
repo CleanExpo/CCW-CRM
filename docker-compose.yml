@@ -42,6 +42,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://starter_user:local_dev_password@postgres:5432/starter_db
       REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
       AI_PROVIDER: ${AI_PROVIDER:-ollama}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       ENVIRONMENT: development
