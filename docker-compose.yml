@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: local_dev_password
       POSTGRES_HOST_AUTH_METHOD: trust  # Simplified for local development
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
@@ -33,30 +33,35 @@ services:
     networks:
       - starter-network
 
-  # Backend service (optional - can be run locally for development)
-  # Uncomment if you want to run the entire stack in Docker
-  # backend:
-  #   build:
-  #     context: ./apps/backend
-  #     dockerfile: Dockerfile
-  #   container_name: nodejs-starter-backend
-  #   environment:
-  #     DATABASE_URL: postgresql://starter_user:local_dev_password@postgres:5432/starter_db
-  #     REDIS_URL: redis://redis:6379
-  #     AI_PROVIDER: ${AI_PROVIDER:-ollama}
-  #     OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - starter-network
-  #   volumes:
-  #     - ./apps/backend:/app
-  #   command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+  # Backend service (running in Docker)
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: nodejs-starter-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://starter_user:local_dev_password@postgres:5432/starter_db
+      REDIS_URL: redis://redis:6379
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      ENVIRONMENT: development
+      DEBUG: "True"
+      LOG_LEVEL: DEBUG
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:3005","http://localhost:3006"]'
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - starter-network
+    volumes:
+      - ./apps/backend/src:/app/src
+      - ./apps/backend/alembic:/app/alembic
+      - ./apps/backend/alembic.ini:/app/alembic.ini
+    command: uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 
   # Monitoring Stack
   prometheus:
