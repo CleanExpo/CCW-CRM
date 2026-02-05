@@ -8,47 +8,42 @@ dependencies = [
     # Web Framework
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
-
     # Database (PostgreSQL + SQLAlchemy)
     "sqlalchemy>=2.0.0",
-    "asyncpg>=0.29.0",  # Async PostgreSQL driver
-    "psycopg2-binary>=2.9.0",  # Sync PostgreSQL driver (for migrations)
-    "pgvector>=0.3.0",  # Vector similarity search
-    "alembic>=1.13.0",  # Database migrations
-
+    "asyncpg>=0.29.0", # Async PostgreSQL driver
+    "psycopg2-binary>=2.9.0", # Sync PostgreSQL driver (for migrations)
+    "pgvector>=0.3.0", # Vector similarity search
+    "alembic>=1.13.0", # Database migrations
     # Caching
-    "redis>=5.0.0",  # Redis async client for caching
-
+    "redis>=5.0.0", # Redis async client for caching
     # Authentication
-    "python-jose[cryptography]>=3.3.0",  # JWT tokens
-    "passlib[bcrypt]>=1.7.0",  # Password hashing
-
+    "python-jose[cryptography]>=3.3.0", # JWT tokens
+    "passlib[bcrypt]>=1.7.0", # Password hashing
     # Billing
-    "stripe>=7.0.0",  # Stripe payment processing
-
+    "stripe>=7.0.0", # Stripe payment processing
     # Core
     "pydantic>=2.9.0",
     "pydantic-settings>=2.6.0",
-    "email-validator>=2.0.0",  # For pydantic email validation
+    "email-validator>=2.0.0", # For pydantic email validation
     "python-dotenv>=1.0.0",
     "httpx>=0.27.0",
     "pyyaml>=6.0.0",
     "structlog>=24.4.0",
     "python-multipart>=0.0.12",
-    "slowapi>=0.1.9",  # Rate limiting
-    "sendgrid>=6.11.0",  # Email notifications
-    "fastapi-mail>=1.4.1",  # Email notifications for system alerts
-    "prometheus-fastapi-instrumentator>=7.0.0",  # Prometheus metrics
-    "prometheus-client>=0.19.0",  # Prometheus Python client
-    "apscheduler>=3.10.0",  # Job scheduling
-
+    "slowapi>=0.1.9", # Rate limiting
+    "sendgrid>=6.11.0", # Email notifications
+    "fastapi-mail>=1.4.1", # Email notifications for system alerts
+    "prometheus-fastapi-instrumentator>=7.0.0", # Prometheus metrics
+    "prometheus-client>=0.19.0", # Prometheus Python client
+    "apscheduler>=3.10.0", # Job scheduling
     # AI/LLM (LangChain + Ollama + Anthropic)
     "langchain>=0.1.0",
     "langchain-community>=0.0.20",
     "langchain-core>=0.1.0",
     "langgraph>=0.0.20",
     "ollama>=0.1.6",
-    "anthropic>=0.39.0",  # Claude API for code generation
+    "anthropic>=0.39.0", # Claude API for code generation
+    "sse-starlette>=3.2.0",
 ]
 
 [project.optional-dependencies]

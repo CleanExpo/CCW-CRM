@@ -17,7 +17,9 @@ class PRD(Base):
     __tablename__ = "prds"
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)  # noqa: E501
+    user_id = Column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )  # noqa: E501
     organization_id = Column(PGUUID(as_uuid=True), nullable=True)  # Made optional for demo auth
 
     # Input
@@ -48,11 +50,13 @@ class PRD(Base):
     error_message = Column(Text, nullable=True)
 
     # Model info
-    model_used = Column(String(100), default="claude-opus-4-5-20251101")
+    model_used = Column(String(100), default="claude-opus-4-6")
 
     # Timestamps
     created_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, nullable=False)
-    updated_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)  # noqa: E501
+    updated_at = Column(
+        TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )  # noqa: E501
     completed_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     # Relationships

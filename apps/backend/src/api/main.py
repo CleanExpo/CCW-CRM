@@ -26,12 +26,14 @@ from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
+    activities,  # CRM activities
     approvals,
     autonomous_dev,
     backorders,
     bank_feeds,
     # billing,  # Disabled temporarily - requires stripe package
     config,
+    contacts,  # CRM contacts
     containers,
     customer_orders,
     customers,
@@ -287,6 +289,14 @@ All errors return JSON with this format:
             "description": "Customer relationship management",
         },
         {
+            "name": "Contacts",
+            "description": "Contact management - multiple contacts per customer",
+        },
+        {
+            "name": "Activities",
+            "description": "CRM activity tracking - calls, emails, meetings, notes, tasks",
+        },
+        {
             "name": "Orders",
             "description": "Sales order processing and management",
         },
@@ -372,6 +382,8 @@ app.include_router(demo_dashboard.router, tags=["Dashboard"])
 # CRUD routers registered after demo_lists to override read-only routes
 app.include_router(products.router, tags=["Products"])
 app.include_router(customers.router, tags=["Customers"])
+app.include_router(contacts.router, tags=["Contacts"])  # CRM Contacts
+app.include_router(activities.router, tags=["Activities"])  # CRM Activities
 app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])

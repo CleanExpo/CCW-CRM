@@ -104,3 +104,5 @@ shopify-scraper/
 # Backups (contain sensitive data)
 backups/
 **/backups/
+.planning/linear-sync.mjs
+scripts/linear-project-status.mjs

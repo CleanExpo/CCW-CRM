@@ -19,16 +19,14 @@ class Settings(BaseSettings):
 
     # Project
     project_name: str = Field(default="AI Agent Orchestration")
-    environment: Literal["development", "staging", "production"] = Field(
-        default="development"
-    )
+    environment: Literal["development", "staging", "production"] = Field(default="development")
     debug: bool = Field(default=False)
 
     # API
     backend_api_key: str = Field(default="")
     skip_auth_enforcement: bool = Field(
         default=False,
-        description="Skip authentication enforcement (ONLY for local testing, NEVER in production)"
+        description="Skip authentication enforcement (ONLY for local testing, NEVER in production)",
     )
     cors_origins: list[str] = Field(
         default=[
@@ -39,7 +37,7 @@ class Settings(BaseSettings):
             "http://localhost:3004",
             "http://localhost:3005",
         ],
-        description="Allowed CORS origins (override in production with your domain)"
+        description="Allowed CORS origins (override in production with your domain)",
     )
     # Production domains should be added via environment variable:
     # CORS_ORIGINS='["https://your-domain.com","https://www.your-domain.com"]'
@@ -47,7 +45,7 @@ class Settings(BaseSettings):
     # Database (PostgreSQL)
     database_url: str = Field(
         default="postgresql://starter_user:local_dev_password@localhost:5432/starter_db",
-        description="PostgreSQL connection URL"
+        description="PostgreSQL connection URL",
     )
 
     # Redis Cache
@@ -60,15 +58,19 @@ class Settings(BaseSettings):
     # JWT Authentication
     jwt_secret_key: str = Field(
         default="",
-        description="Secret key for JWT token signing (loaded from AWS Secrets Manager in production)"
+        description="Secret key for JWT token signing (loaded from AWS Secrets Manager in production)",
     )
-    jwt_expire_minutes: int = Field(default=480, description="JWT access token expiration in minutes (8 hours)")  # noqa: E501
-    jwt_refresh_expire_days: int = Field(default=30, description="JWT refresh token expiration in days")  # noqa: E501
+    jwt_expire_minutes: int = Field(
+        default=480, description="JWT access token expiration in minutes (8 hours)"
+    )  # noqa: E501
+    jwt_refresh_expire_days: int = Field(
+        default=30, description="JWT refresh token expiration in days"
+    )  # noqa: E501
 
     # Security
     secure_cookies: bool = Field(
         default=False,
-        description="Enable secure flag on cookies (requires HTTPS, auto-enabled in production)"
+        description="Enable secure flag on cookies (requires HTTPS, auto-enabled in production)",
     )
     rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
     rate_limit_per_minute: int = Field(default=60, description="API rate limit per minute per user")
@@ -81,22 +83,14 @@ class Settings(BaseSettings):
 
     # AI Provider Configuration
     ai_provider: str = Field(
-        default="ollama",
-        description="AI provider: 'ollama' (local) or 'anthropic' (cloud)"
+        default="ollama", description="AI provider: 'ollama' (local) or 'anthropic' (cloud)"
     )
 
     # Ollama (Local AI - No API key required)
-    ollama_base_url: str = Field(
-        default="http://localhost:11434",
-        description="Ollama server URL"
-    )
-    ollama_model: str = Field(
-        default="llama3.1:8b",
-        description="Ollama model for generation"
-    )
+    ollama_base_url: str = Field(default="http://localhost:11434", description="Ollama server URL")
+    ollama_model: str = Field(default="llama3.1:8b", description="Ollama model for generation")
     ollama_embedding_model: str = Field(
-        default="nomic-embed-text",
-        description="Ollama model for embeddings"
+        default="nomic-embed-text", description="Ollama model for embeddings"
     )
 
     # Cloud AI Models (Optional)
@@ -105,8 +99,12 @@ class Settings(BaseSettings):
     openrouter_api_key: str = Field(default="", description="OpenRouter API key (optional)")
 
     # Email (SendGrid for password reset, etc.)
-    sendgrid_api_key: str = Field(default="", description="SendGrid API key for transactional emails")  # noqa: E501
-    sendgrid_from_email: str = Field(default="noreply@ccw-erp.com", description="From email address")  # noqa: E501
+    sendgrid_api_key: str = Field(
+        default="", description="SendGrid API key for transactional emails"
+    )  # noqa: E501
+    sendgrid_from_email: str = Field(
+        default="noreply@ccw-erp.com", description="From email address"
+    )  # noqa: E501
     sendgrid_from_name: str = Field(default="CCW ERP", description="From name for emails")
 
     # System Alert Notifications (for monitoring/ops team)
@@ -118,35 +116,42 @@ class Settings(BaseSettings):
     slack_webhook_url: str = Field(default="", description="Slack webhook URL for system alerts")
 
     # Monitoring Configuration
-    alert_check_interval_minutes: int = Field(default=5, description="Alert check interval in minutes")
-    metrics_retention_hours: int = Field(default=24, description="Performance metrics retention in hours")
+    alert_check_interval_minutes: int = Field(
+        default=5, description="Alert check interval in minutes"
+    )
+    metrics_retention_hours: int = Field(
+        default=24, description="Performance metrics retention in hours"
+    )
 
     # Business Configuration
-    tax_rate: str = Field(default="0.10", description="Tax rate (GST) as decimal (e.g., 0.10 for 10%)")  # noqa: E501
+    tax_rate: str = Field(
+        default="0.10", description="Tax rate (GST) as decimal (e.g., 0.10 for 10%)"
+    )  # noqa: E501
     tax_name: str = Field(default="GST", description="Tax name displayed in UI")
-    quote_validity_days: int = Field(default=30, description="Default quote validity period in days")  # noqa: E501
+    quote_validity_days: int = Field(
+        default=30, description="Default quote validity period in days"
+    )  # noqa: E501
 
     # Stocktrim Integration
-    stocktrim_api_url: str = Field(default="https://api.stocktrim.com", description="Stocktrim API base URL")  # noqa: E501
+    stocktrim_api_url: str = Field(
+        default="https://api.stocktrim.com", description="Stocktrim API base URL"
+    )  # noqa: E501
     stocktrim_api_key: str = Field(default="", description="Stocktrim API key for stock management")
     stocktrim_enabled: bool = Field(default=True, description="Enable Stocktrim integration")
     stocktrim_fallback_to_local: bool = Field(
-        default=True,
-        description="Fallback to local stock check if Stocktrim unavailable"
+        default=True, description="Fallback to local stock check if Stocktrim unavailable"
     )
 
     # Webhook Configuration
     webhook_secret: str = Field(
         default="",
-        description="Secret key for webhook signature verification (loaded from AWS Secrets Manager in production)"
+        description="Secret key for webhook signature verification (loaded from AWS Secrets Manager in production)",
     )
     webhook_contact_form_url: str | None = Field(
-        default=None,
-        description="External URL to POST contact form events"
+        default=None, description="External URL to POST contact form events"
     )
     webhook_demo_request_url: str | None = Field(
-        default=None,
-        description="External URL to POST demo request events"
+        default=None, description="External URL to POST demo request events"
     )
 
     # MCP Tools
@@ -154,9 +159,9 @@ class Settings(BaseSettings):
     ref_tools_api_key: str = Field(default="")
 
     # Model defaults
-    default_model: str = Field(default="claude-sonnet-4-5-20250929")
+    default_model: str = Field(default="claude-opus-4-6")
     max_tokens: int = Field(default=4096)
-    temperature: float = Field(default=0.7)
+    temperature: float = Field(default=0.4)
 
     @property
     def is_production(self) -> bool:
@@ -185,6 +190,7 @@ class Settings(BaseSettings):
         """
         if self.is_production:
             from src.integrations.secrets_manager import get_jwt_secret
+
             return get_jwt_secret()
         else:
             # Development: allow default from env or settings
@@ -202,6 +208,7 @@ class Settings(BaseSettings):
         """
         if self.is_production:
             from src.integrations.secrets_manager import get_webhook_secret
+
             return get_webhook_secret()
         else:
             # Development: allow default from env or settings

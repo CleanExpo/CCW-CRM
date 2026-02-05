@@ -10,9 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Building2, Mail, Phone, MapPin, DollarSign, ShoppingCart, FileText } from "lucide-react";
+import { ArrowLeft, Building2, Mail, Phone, MapPin, DollarSign, ShoppingCart, FileText, Users, Plus, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils/calculations";
+import { ContactForm } from "../../contacts/components/ContactForm";
+import { DeleteContactDialog } from "../../contacts/components/DeleteContactDialog";
+import { ActivityTimeline, type Activity } from "./components/ActivityTimeline";
+import { ActivityForm } from "./components/ActivityForm";
+import { DeleteActivityDialog } from "./components/DeleteActivityDialog";
 
 interface Customer {
   id: string;
@@ -49,6 +54,20 @@ interface Quote {
   item_count?: number;
 }
 
+interface Contact {
+  id: string;
+  customer_id: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  job_title: string | null;
+  department: string | null;
+  is_primary: boolean;
+  is_active: boolean;
+}
+
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   draft: "secondary",
   pending: "outline",
@@ -72,7 +91,19 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Contact dialog states
+  const [contactFormOpen, setContactFormOpen] = useState(false);
+  const [deleteContactDialogOpen, setDeleteContactDialogOpen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+  // Activity dialog states
+  const [activityFormOpen, setActivityFormOpen] = useState(false);
+  const [deleteActivityDialogOpen, setDeleteActivityDialogOpen] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [activityRefreshTrigger, setActivityRefreshTrigger] = useState(0);
 
   const loadCustomerData = useCallback(async () => {
     setLoading(true);
@@ -92,6 +123,12 @@ export default function CustomerDetailPage() {
         `/api/quotes?customer_id=${customerId}&page_size=100`
       );
       setQuotes(quotesData.items || []);
+
+      // Load customer contacts
+      const contactsData = await apiClient.get<{ data: Contact[] }>(
+        `/api/contacts/customer/${customerId}`
+      );
+      setContacts(contactsData.data || []);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to load customer data";
@@ -143,6 +180,54 @@ export default function CustomerDetailPage() {
   const quoteConversionRate =
     quotes.length > 0 ? ((acceptedQuotes / quotes.length) * 100).toFixed(1) : "0";
 
+  // Contact handlers
+  const handleAddContact = () => {
+    setSelectedContact(null);
+    setContactFormOpen(true);
+  };
+
+  const handleEditContact = (contact: Contact) => {
+    setSelectedContact(contact);
+    setContactFormOpen(true);
+  };
+
+  const handleDeleteContact = (contact: Contact) => {
+    setSelectedContact(contact);
+    setDeleteContactDialogOpen(true);
+  };
+
+  const handleContactSuccess = () => {
+    setContactFormOpen(false);
+    setDeleteContactDialogOpen(false);
+    setSelectedContact(null);
+    loadCustomerData();
+  };
+
+  const primaryContact = contacts.find((c) => c.is_primary);
+
+  // Activity handlers
+  const handleAddActivity = () => {
+    setSelectedActivity(null);
+    setActivityFormOpen(true);
+  };
+
+  const handleEditActivity = (activity: Activity) => {
+    setSelectedActivity(activity);
+    setActivityFormOpen(true);
+  };
+
+  const handleDeleteActivity = (activity: Activity) => {
+    setSelectedActivity(activity);
+    setDeleteActivityDialogOpen(true);
+  };
+
+  const handleActivitySuccess = () => {
+    setActivityFormOpen(false);
+    setDeleteActivityDialogOpen(false);
+    setSelectedActivity(null);
+    setActivityRefreshTrigger((prev) => prev + 1);
+  };
+
   return (
     <div className="space-y-6">
       {/* PHASE 4: Breadcrumb Navigation */}
@@ -171,7 +256,7 @@ export default function CustomerDetailPage() {
       </div>
 
       {/* Customer Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -207,6 +292,19 @@ export default function CustomerDetailPage() {
             <div className="text-2xl font-bold">{quoteConversionRate}%</div>
             <p className="text-xs text-muted-foreground">
               {acceptedQuotes} of {quotes.length} quotes accepted
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Contacts</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{contacts.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {primaryContact ? `Primary: ${primaryContact.first_name} ${primaryContact.last_name}` : "No primary contact"}
             </p>
           </CardContent>
         </Card>
@@ -270,6 +368,12 @@ export default function CustomerDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="quotes">
             Quotes ({quotes.length})
+          </TabsTrigger>
+          <TabsTrigger value="contacts">
+            Contacts ({contacts.length})
+          </TabsTrigger>
+          <TabsTrigger value="activities">
+            Activities
           </TabsTrigger>
         </TabsList>
 
@@ -386,7 +490,166 @@ export default function CustomerDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="contacts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Customer Contacts</CardTitle>
+                  <CardDescription>People associated with this customer</CardDescription>
+                </div>
+                <Button onClick={handleAddContact}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Contact
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {contacts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No contacts yet</p>
+                  <Button onClick={handleAddContact} variant="outline" className="mt-4">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add First Contact
+                  </Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-medium">Name</th>
+                        <th className="text-left py-3 px-4 font-medium">Title</th>
+                        <th className="text-left py-3 px-4 font-medium">Email</th>
+                        <th className="text-left py-3 px-4 font-medium">Phone</th>
+                        <th className="text-center py-3 px-4 font-medium">Status</th>
+                        <th className="text-right py-3 px-4 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {contacts.map((contact) => (
+                        <tr key={contact.id} className="border-b hover:bg-muted/50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {contact.first_name} {contact.last_name}
+                              </span>
+                              {contact.is_primary && (
+                                <Badge variant="default" className="text-xs">Primary</Badge>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-muted-foreground">
+                            {contact.job_title || "-"}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            {contact.email ? (
+                              <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
+                                {contact.email}
+                              </a>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            {contact.phone || contact.mobile || "-"}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <Badge variant={contact.is_active ? "outline" : "secondary"}>
+                              {contact.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditContact(contact)}
+                                title="Edit Contact"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteContact(contact)}
+                                title="Delete Contact"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activities" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Activity Timeline</CardTitle>
+              <CardDescription>
+                Track all interactions and tasks for this customer
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ActivityTimeline
+                customerId={customerId}
+                onAddActivity={handleAddActivity}
+                onEditActivity={handleEditActivity}
+                onDeleteActivity={handleDeleteActivity}
+                refreshTrigger={activityRefreshTrigger}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Contact Form Dialog */}
+      <ContactForm
+        contact={selectedContact}
+        open={contactFormOpen}
+        onOpenChange={setContactFormOpen}
+        onSuccess={handleContactSuccess}
+        customerId={customerId}
+      />
+
+      {/* Delete Contact Dialog */}
+      {selectedContact && (
+        <DeleteContactDialog
+          contact={selectedContact}
+          open={deleteContactDialogOpen}
+          onOpenChange={setDeleteContactDialogOpen}
+          onSuccess={handleContactSuccess}
+        />
+      )}
+
+      {/* Activity Form Dialog */}
+      <ActivityForm
+        activity={selectedActivity}
+        customerId={customerId}
+        contacts={contacts}
+        open={activityFormOpen}
+        onOpenChange={setActivityFormOpen}
+        onSuccess={handleActivitySuccess}
+      />
+
+      {/* Delete Activity Dialog */}
+      {selectedActivity && (
+        <DeleteActivityDialog
+          activity={selectedActivity}
+          open={deleteActivityDialogOpen}
+          onOpenChange={setDeleteActivityDialogOpen}
+          onSuccess={handleActivitySuccess}
+        />
+      )}
     </div>
   );
 }

@@ -39,26 +39,11 @@ class TestScenario(BaseModel):
     given: str = Field(description="Test preconditions/setup")
     when: str = Field(description="Action being tested")
     then: str = Field(description="Expected outcome")
-    test_data: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Test data fixtures"
-    )
-    related_user_story: str | None = Field(
-        default=None,
-        description="User story ID this validates"
-    )
-    related_endpoint: str | None = Field(
-        default=None,
-        description="API endpoint being tested"
-    )
-    priority: str = Field(
-        description="Critical | High | Medium | Low",
-        default="Medium"
-    )
-    estimated_effort: str = Field(
-        description="Time to implement (hours)",
-        default="2-4"
-    )
+    test_data: dict[str, Any] = Field(default_factory=dict, description="Test data fixtures")
+    related_user_story: str | None = Field(default=None, description="User story ID this validates")
+    related_endpoint: str | None = Field(default=None, description="API endpoint being tested")
+    priority: str = Field(description="Critical | High | Medium | Low", default="Medium")
+    estimated_effort: str = Field(description="Time to implement (hours)", default="2-4")
 
 
 class TestCategory(BaseModel):
@@ -66,13 +51,8 @@ class TestCategory(BaseModel):
 
     category: str = Field(description="Category name (e.g., 'Authentication')")
     description: str = Field(description="What this category tests")
-    test_scenarios: list[str] = Field(
-        description="Test scenario IDs in this category"
-    )
-    coverage_target: str = Field(
-        description="Target coverage percentage",
-        default="80%"
-    )
+    test_scenarios: list[str] = Field(description="Test scenario IDs in this category")
+    coverage_target: str = Field(description="Target coverage percentage", default="80%")
 
 
 class TestPlan(BaseModel):
@@ -90,56 +70,39 @@ class TestPlan(BaseModel):
     )
 
     # Organization
-    test_categories: list[TestCategory] = Field(
-        description="Tests grouped by feature/category"
-    )
+    test_categories: list[TestCategory] = Field(description="Tests grouped by feature/category")
 
     # Coverage
-    coverage_strategy: str = Field(
-        description="How to achieve coverage targets"
-    )
-    critical_test_paths: list[str] = Field(
-        description="Must-pass tests for deployment"
-    )
+    coverage_strategy: str = Field(description="How to achieve coverage targets")
+    critical_test_paths: list[str] = Field(description="Must-pass tests for deployment")
 
     # Test Data
-    test_fixtures: dict[str, Any] = Field(
-        description="Reusable test data fixtures"
-    )
+    test_fixtures: dict[str, Any] = Field(description="Reusable test data fixtures")
     mock_services: list[dict[str, str]] = Field(
-        default_factory=list,
-        description="External services to mock (name, reason, mock_data)"
+        default_factory=list, description="External services to mock (name, reason, mock_data)"
     )
 
     # Automation
-    ci_integration: str = Field(
-        description="How tests run in CI/CD pipeline"
-    )
-    test_frameworks: dict[str, str] = Field(
-        description="Recommended test frameworks by type"
-    )
+    ci_integration: str = Field(description="How tests run in CI/CD pipeline")
+    test_frameworks: dict[str, str] = Field(description="Recommended test frameworks by type")
 
     # Performance Testing
     performance_tests: list[dict[str, Any]] = Field(
-        default_factory=list,
-        description="Performance/load test scenarios"
+        default_factory=list, description="Performance/load test scenarios"
     )
 
     # Security Testing
     security_tests: list[str] = Field(
-        default_factory=list,
-        description="Security test scenarios (injection, XSS, etc.)"
+        default_factory=list, description="Security test scenarios (injection, XSS, etc.)"
     )
 
     # Summary
     total_test_count: int = Field(description="Total number of test scenarios")
-    estimated_implementation_effort: str = Field(
-        description="Total effort to implement all tests"
-    )
+    estimated_implementation_effort: str = Field(description="Total effort to implement all tests")
 
     # Metadata
     generated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-    model_used: str = "claude-opus-4-5-20251101"
+    model_used: str = "claude-opus-4-6"
 
 
 class TestScenarioGenerator(BaseAgent):
@@ -211,10 +174,7 @@ class TestScenarioGenerator(BaseAgent):
         try:
             # Generate the test plan using Claude Opus
             test_plan = await self._generate_test_plan(
-                prd_analysis,
-                feature_decomposition,
-                tech_spec,
-                context
+                prd_analysis, feature_decomposition, tech_spec, context
             )
 
             # Report outputs for verification
@@ -253,15 +213,12 @@ class TestScenarioGenerator(BaseAgent):
 
         # Build the test plan prompt
         prompt = self._build_test_plan_prompt(
-            prd_analysis,
-            feature_decomposition,
-            tech_spec,
-            context
+            prd_analysis, feature_decomposition, tech_spec, context
         )
 
         # Call Claude Opus for test planning
         response = await self.client.messages.create(
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-6",
             max_tokens=12000,  # Large token count for comprehensive test plan
             temperature=0.4,  # Moderate temperature for test creativity
             system=self._get_system_prompt(),
@@ -362,8 +319,7 @@ Security Testing:
 
         # Summarize critical user stories
         critical_stories = [
-            s for s in feature_decomposition.user_stories
-            if s.priority in ["Critical", "High"]
+            s for s in feature_decomposition.user_stories if s.priority in ["Critical", "High"]
         ]
         story_summary = "\n".join(
             f"- {s.id}: {s.title} ({s.priority})"
@@ -391,7 +347,7 @@ Security Testing:
 {api_summary}
 
 **Database Tables**: {len(tech_spec.database_schema)} tables
-**Third-Party Services**: {', '.join(s['name'] for s in tech_spec.third_party_services)}
+**Third-Party Services**: {", ".join(s["name"] for s in tech_spec.third_party_services)}
 {context_str}
 
 ## Instructions

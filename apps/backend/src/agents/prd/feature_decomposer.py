@@ -34,21 +34,14 @@ class UserStory(BaseModel):
     description: str = Field(
         description="User story in format: As a [user], I want to [action], so that [benefit]"
     )
-    acceptance_criteria: list[str] = Field(
-        description="Given-When-Then acceptance criteria"
-    )
+    acceptance_criteria: list[str] = Field(description="Given-When-Then acceptance criteria")
     priority: str = Field(description="Critical | High | Medium | Low")
     epic: str = Field(description="Parent epic name")
     dependencies: list[str] = Field(
         default_factory=list, description="IDs of dependent user stories"
     )
-    effort_estimate: str = Field(
-        description="T-shirt size: XS | S | M | L | XL",
-        default="M"
-    )
-    technical_notes: list[str] = Field(
-        default_factory=list, description="Implementation hints"
-    )
+    effort_estimate: str = Field(description="T-shirt size: XS | S | M | L | XL", default="M")
+    technical_notes: list[str] = Field(default_factory=list, description="Implementation hints")
 
 
 class Epic(BaseModel):
@@ -57,9 +50,7 @@ class Epic(BaseModel):
     id: str = Field(description="Unique identifier (e.g., EP-001)")
     name: str = Field(description="Epic name")
     description: str = Field(description="What this epic achieves")
-    user_stories: list[str] = Field(
-        description="IDs of user stories in this epic"
-    )
+    user_stories: list[str] = Field(description="IDs of user stories in this epic")
     priority: str = Field(description="Critical | High | Medium | Low")
     business_value: str = Field(description="Why this epic matters")
 
@@ -69,16 +60,12 @@ class FeatureDecomposition(BaseModel):
 
     epics: list[Epic] = Field(description="High-level feature groups")
     user_stories: list[UserStory] = Field(description="Actionable user stories")
-    total_effort_estimate: str = Field(
-        description="Overall project size estimate"
-    )
-    critical_path: list[str] = Field(
-        description="User story IDs on critical path"
-    )
+    total_effort_estimate: str = Field(description="Overall project size estimate")
+    critical_path: list[str] = Field(description="User story IDs on critical path")
 
     # Metadata
     generated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-    model_used: str = "claude-opus-4-5-20251101"
+    model_used: str = "claude-opus-4-6"
 
 
 class FeatureDecomposer(BaseAgent):
@@ -176,7 +163,7 @@ class FeatureDecomposer(BaseAgent):
 
         # Call Claude Opus for deep analysis
         response = await self.client.messages.create(
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-6",
             max_tokens=8000,  # More tokens for detailed stories
             temperature=0.4,  # Slightly higher for creativity in story writing
             system=self._get_system_prompt(),
@@ -252,9 +239,7 @@ Epic Quality Checklist:
             for key, value in context.items():
                 context_str += f"- {key}: {value}\n"
 
-        functional_reqs = "\n".join(
-            f"- {req}" for req in prd_analysis.functional_requirements
-        )
+        functional_reqs = "\n".join(f"- {req}" for req in prd_analysis.functional_requirements)
         non_functional_reqs = "\n".join(
             f"- {req}" for req in prd_analysis.non_functional_requirements
         )
@@ -344,7 +329,7 @@ Return ONLY the JSON, no additional text."""
             description="Feature decomposition requires manual review",
             user_stories=["US-001"],
             priority="High",
-            business_value="See raw output for details"
+            business_value="See raw output for details",
         )
 
         fallback_story = UserStory(
@@ -353,7 +338,7 @@ Return ONLY the JSON, no additional text."""
             description="As a developer, I want to review the PRD analysis, so that I can create proper user stories",  # noqa: E501
             acceptance_criteria=[
                 "Given the PRD analysis, when reviewed, then user stories are created",
-                "Given user stories, when prioritized, then development can begin"
+                "Given user stories, when prioritized, then development can begin",
             ],
             priority="Critical",
             epic="EP-001",

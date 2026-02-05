@@ -38,7 +38,7 @@ class PRDAnalysis(BaseModel):
 
     # Metadata
     generated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-    model_used: str = "claude-opus-4-5-20251101"
+    model_used: str = "claude-opus-4-6"
 
 
 class PRDAnalysisAgent(BaseAgent):
@@ -135,7 +135,7 @@ class PRDAnalysisAgent(BaseAgent):
 
         # Call Claude Opus for deep analysis
         response = await self.client.messages.create(
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-6",
             max_tokens=4000,
             temperature=0.3,  # Lower temperature for structured output
             system=self._get_system_prompt(),
@@ -255,37 +255,47 @@ Return ONLY the JSON, no additional text."""  # noqa: E501
             # Detect section headers
             if "executive" in line.lower() or "summary" in line.lower():
                 if current_section and current_list:
-                    analysis_data[current_section] = current_list if isinstance(
-                        analysis_data[current_section], list
-                    ) else "\n".join(current_list)
+                    analysis_data[current_section] = (
+                        current_list
+                        if isinstance(analysis_data[current_section], list)
+                        else "\n".join(current_list)
+                    )
                 current_section = "executive_summary"
                 current_list = []
             elif "problem" in line.lower():
                 if current_section and current_list:
-                    analysis_data[current_section] = current_list if isinstance(
-                        analysis_data[current_section], list
-                    ) else "\n".join(current_list)
+                    analysis_data[current_section] = (
+                        current_list
+                        if isinstance(analysis_data[current_section], list)
+                        else "\n".join(current_list)
+                    )
                 current_section = "problem_statement"
                 current_list = []
             elif "target" in line.lower() and "user" in line.lower():
                 if current_section and current_list:
-                    analysis_data[current_section] = current_list if isinstance(
-                        analysis_data[current_section], list
-                    ) else "\n".join(current_list)
+                    analysis_data[current_section] = (
+                        current_list
+                        if isinstance(analysis_data[current_section], list)
+                        else "\n".join(current_list)
+                    )
                 current_section = "target_users"
                 current_list = []
             elif "metric" in line.lower() or "success" in line.lower():
                 if current_section and current_list:
-                    analysis_data[current_section] = current_list if isinstance(
-                        analysis_data[current_section], list
-                    ) else "\n".join(current_list)
+                    analysis_data[current_section] = (
+                        current_list
+                        if isinstance(analysis_data[current_section], list)
+                        else "\n".join(current_list)
+                    )
                 current_section = "success_metrics"
                 current_list = []
             elif "functional" in line.lower() and "requirement" in line.lower():
                 if current_section and current_list:
-                    analysis_data[current_section] = current_list if isinstance(
-                        analysis_data[current_section], list
-                    ) else "\n".join(current_list)
+                    analysis_data[current_section] = (
+                        current_list
+                        if isinstance(analysis_data[current_section], list)
+                        else "\n".join(current_list)
+                    )
                 current_section = "functional_requirements"
                 current_list = []
             elif line.startswith("- ") or line.startswith("* "):

@@ -37,14 +37,8 @@ class DatabaseTable(BaseModel):
     columns: list[dict[str, str]] = Field(
         description="List of {name, type, constraints, description}"
     )
-    indexes: list[str] = Field(
-        default_factory=list,
-        description="Indexes to create"
-    )
-    relationships: list[str] = Field(
-        default_factory=list,
-        description="Foreign key relationships"
-    )
+    indexes: list[str] = Field(default_factory=list, description="Indexes to create")
+    relationships: list[str] = Field(default_factory=list, description="Foreign key relationships")
 
 
 class APIEndpoint(BaseModel):
@@ -55,19 +49,12 @@ class APIEndpoint(BaseModel):
     description: str = Field(description="What this endpoint does")
     auth_required: bool = Field(description="Requires authentication")
     request_body: dict[str, Any] | None = Field(
-        default=None,
-        description="Request body schema (JSON Schema format)"
+        default=None, description="Request body schema (JSON Schema format)"
     )
-    response: dict[str, Any] = Field(
-        description="Response schema (JSON Schema format)"
-    )
-    rate_limit: str | None = Field(
-        default=None,
-        description="Rate limit (e.g., '100/hour')"
-    )
+    response: dict[str, Any] = Field(description="Response schema (JSON Schema format)")
+    rate_limit: str | None = Field(default=None, description="Rate limit (e.g., '100/hour')")
     related_user_story: str | None = Field(
-        default=None,
-        description="User story ID this implements"
+        default=None, description="User story ID this implements"
     )
 
 
@@ -75,79 +62,46 @@ class TechnicalSpec(BaseModel):
     """Complete technical specification."""
 
     # Architecture
-    architecture_overview: str = Field(
-        description="High-level system architecture description"
-    )
-    architecture_diagram_mermaid: str = Field(
-        description="Mermaid diagram code for architecture"
-    )
+    architecture_overview: str = Field(description="High-level system architecture description")
+    architecture_diagram_mermaid: str = Field(description="Mermaid diagram code for architecture")
 
     # Database
-    database_schema: list[DatabaseTable] = Field(
-        description="Database tables and relationships"
-    )
-    database_migrations_needed: list[str] = Field(
-        description="Migration steps required"
-    )
+    database_schema: list[DatabaseTable] = Field(description="Database tables and relationships")
+    database_migrations_needed: list[str] = Field(description="Migration steps required")
 
     # API Design
-    api_endpoints: list[APIEndpoint] = Field(
-        description="REST API endpoints"
-    )
-    api_versioning_strategy: str = Field(
-        description="How API versioning will work"
-    )
+    api_endpoints: list[APIEndpoint] = Field(description="REST API endpoints")
+    api_versioning_strategy: str = Field(description="How API versioning will work")
 
     # Technology Stack
-    recommended_stack: dict[str, str] = Field(
-        description="Technology recommendations by category"
-    )
+    recommended_stack: dict[str, str] = Field(description="Technology recommendations by category")
     existing_stack_integration: list[str] = Field(
         description="How to integrate with existing stack"
     )
 
     # Security
-    security_considerations: list[str] = Field(
-        description="Security measures needed"
-    )
-    authentication_approach: str = Field(
-        description="How authentication will work"
-    )
-    authorization_model: str = Field(
-        description="How permissions will work (RBAC, ABAC, etc.)"
-    )
+    security_considerations: list[str] = Field(description="Security measures needed")
+    authentication_approach: str = Field(description="How authentication will work")
+    authorization_model: str = Field(description="How permissions will work (RBAC, ABAC, etc.)")
 
     # Performance & Scalability
-    scalability_approach: str = Field(
-        description="How the system will scale"
-    )
-    performance_targets: dict[str, str] = Field(
-        description="Performance requirements by metric"
-    )
-    caching_strategy: str = Field(
-        description="What and how to cache"
-    )
+    scalability_approach: str = Field(description="How the system will scale")
+    performance_targets: dict[str, str] = Field(description="Performance requirements by metric")
+    caching_strategy: str = Field(description="What and how to cache")
 
     # Integration
     third_party_services: list[dict[str, str]] = Field(
-        default_factory=list,
-        description="External services needed (name, purpose, API)"
+        default_factory=list, description="External services needed (name, purpose, API)"
     )
-    integration_points: list[str] = Field(
-        description="How components integrate"
-    )
+    integration_points: list[str] = Field(description="How components integrate")
 
     # Deployment
-    deployment_architecture: str = Field(
-        description="How the system will be deployed"
-    )
-    infrastructure_requirements: list[str] = Field(
-        description="Infrastructure needed"
-    )
+    deployment_architecture: str = Field(description="How the system will be deployed")
+    infrastructure_requirements: list[str] = Field(description="Infrastructure needed")
 
     # Metadata
     generated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-    model_used: str = "claude-opus-4-5-20251101"
+    model_used: str = "claude-opus-4-6"
 
 
 class TechnicalSpecGenerator(BaseAgent):
@@ -214,9 +168,7 @@ class TechnicalSpecGenerator(BaseAgent):
         try:
             # Generate the technical specification using Claude Opus
             specification = await self._generate_specification(
-                prd_analysis,
-                feature_decomposition,
-                context
+                prd_analysis, feature_decomposition, context
             )
 
             # Report outputs for verification
@@ -252,15 +204,11 @@ class TechnicalSpecGenerator(BaseAgent):
         """Use Claude Opus to generate technical specification."""
 
         # Build the specification prompt
-        prompt = self._build_specification_prompt(
-            prd_analysis,
-            feature_decomposition,
-            context
-        )
+        prompt = self._build_specification_prompt(prd_analysis, feature_decomposition, context)
 
         # Call Claude Opus for deep technical analysis
         response = await self.client.messages.create(
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-6",
             max_tokens=12000,  # Large token count for comprehensive spec
             temperature=0.3,  # Lower temperature for technical accuracy
             system=self._get_system_prompt(),
@@ -361,13 +309,9 @@ Security:
         epics_summary = []
         for epic in feature_decomposition.epics:
             story_titles = [
-                f"  - {s.title}"
-                for s in feature_decomposition.user_stories
-                if s.epic == epic.id
+                f"  - {s.title}" for s in feature_decomposition.user_stories if s.epic == epic.id
             ]
-            epics_summary.append(
-                f"**{epic.name}** ({epic.id}):\n" + "\n".join(story_titles)
-            )
+            epics_summary.append(f"**{epic.name}** ({epic.id}):\n" + "\n".join(story_titles))
 
         return f"""Design a comprehensive technical specification for this system.
 
@@ -375,7 +319,7 @@ Security:
 
 **Problem**: {prd_analysis.problem_statement}
 
-**Target Users**: {', '.join(prd_analysis.target_users)}
+**Target Users**: {", ".join(prd_analysis.target_users)}
 
 **Success Metrics**:
 {chr(10).join(f"- {m}" for m in prd_analysis.success_metrics)}
@@ -388,7 +332,7 @@ Security:
 {chr(10).join(epics_summary)}
 
 **Total User Stories**: {len(feature_decomposition.user_stories)}
-**Critical Path**: {', '.join(feature_decomposition.critical_path)}
+**Critical Path**: {", ".join(feature_decomposition.critical_path)}
 {context_str}
 
 ## Instructions
@@ -512,7 +456,7 @@ Return ONLY the JSON, no additional text."""  # noqa: E501
                             "name": "id",
                             "type": "UUID",
                             "constraints": "PRIMARY KEY",
-                            "description": "Primary key"
+                            "description": "Primary key",
                         }
                     ],
                 )
