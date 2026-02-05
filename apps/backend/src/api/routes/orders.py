@@ -523,20 +523,7 @@ async def get_order(
         ),
         "created_at": order.created_at.isoformat(),
         "updated_at": order.updated_at.isoformat(),
-        # Manually serialize order_items
-        "order_items": [
-            {
-                "id": str(item.id),
-                "order_id": str(item.order_id),
-                "product_id": str(item.product_id),
-                "quantity": item.quantity,
-                "unit_price": str(item.unit_price),
-                "line_total": str(item.line_total),
-                "created_at": item.created_at.isoformat(),
-            }
-            for item in order.order_items
-        ],
-        # Also provide 'items' for frontend compatibility
+        # Serialize order items (single serialization for performance)
         "items": [
             {
                 "id": str(item.id),
@@ -832,14 +819,28 @@ async def update_order(
         # Prepare for total calculation
         order_items = []
         line_items_for_calc = []
-        products_by_id: dict[UUID, ProductModel] = {}
+
+        # OPTIMIZATION: Batch load all products in single query (was N queries)
+        product_ids = [item.product_id for item in order_data.items]
+        products_query = select(ProductModel).where(ProductModel.id.in_(product_ids))
+        products_result = await db.execute(products_query)
+        products = products_result.scalars().all()
+
+        # Create lookup dictionary
+        products_by_id: dict[UUID, ProductModel] = {p.id: p for p in products}
+
+        # Validate all products exist
+        missing_ids = set(product_ids) - set(products_by_id.keys())
+        if missing_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Products not found: {', '.join(str(id) for id in missing_ids)}"
+            )
 
         # Process all items (update existing + create new)
         for item_data in order_data.items:
-            # Get product to get price
-            product_query = select(ProductModel).where(ProductModel.id == item_data.product_id)
-            product_result = await db.execute(product_query)
-            product = product_result.scalar_one_or_none()
+            # Get product from pre-loaded dictionary
+            product = products_by_id.get(item_data.product_id)
 
             if not product:
                 raise HTTPException(
@@ -854,7 +855,6 @@ async def update_order(
                 )
 
             unit_price = product.price
-            products_by_id[item_data.product_id] = product
             line_total = calculate_line_total(item_data.quantity, unit_price)
 
             order_items.append({

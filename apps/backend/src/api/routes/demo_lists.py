@@ -211,6 +211,7 @@ async def list_customers(
 
 
 @router.get("/orders")
+@cached(ttl=300, key_prefix="orders")
 async def list_orders(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
@@ -287,6 +288,7 @@ async def list_orders(
 
 
 @router.get("/quotes")
+@cached(ttl=300, key_prefix="quotes")
 async def list_quotes(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
