@@ -1,0 +1,46 @@
+src/ai/agents/chat_assistant.py:481:        # TODO: Implement true streaming with Ollama stream_chat
+src/ai/agents/specialized/reconciliation_agent.py:178:        # TODO: Implement learning from past matches
+src/api/middleware/tenant_isolation.py:148:            pass  # TODO: Implement automatic filtering (advanced feature)
+src/api/routes/backorders.py:734:    # TODO: Publish event when event bus is initialized
+src/api/routes/bank_feeds.py:682:    - Rate limited (TODO: implement rate limiting)
+src/api/routes/billing.py:199:                email=f"billing@{organization.slug}.example.com",  # TODO: Use actual billing email
+src/api/routes/billing.py:213:        stripe_subscription = None  # TODO: Create actual Stripe subscription with Price ID
+src/api/routes/billing.py:299:    # TODO: Update Stripe subscription with new price
+src/api/routes/containers.py:567:    # TODO: Add stock to warehouse inventory
+src/api/routes/demo_auth.py:340:        # TODO: Send email with reset link
+src/api/routes/integrations/xero.py:155:        # TODO: Get organization_id from authenticated user session
+src/api/routes/integrations/xero.py:206:    # TODO: Get organization_id from authenticated user
+src/api/routes/integrations/xero.py:234:    # TODO: Get organization_id from authenticated user
+src/api/routes/integrations/xero.py:264:    # TODO: Get organization_id from authenticated user
+src/api/routes/integrations/xero.py:319:    # TODO: Get organization_id from authenticated user
+src/api/routes/integrations/xero.py:350:    # TODO: Get organization_id from authenticated user
+src/api/routes/integrations/xero.py:394:    # TODO: Get organization_id from authenticated user
+src/api/routes/integrations/xero.py:432:    # TODO: Get organization_id from authenticated user
+src/api/routes/integrations/xero.py:469:    # TODO: Get organization_id from authenticated user
+src/api/routes/portal_auth.py:131:        # TODO: Send email via SendGrid/notification service
+src/api/routes/pos_xero_reconciliation.py:135:        # TODO: Get organization_id from authenticated user
+src/api/routes/quotes.py:558:    # TODO: Integrate with AI quote generation service at /api/ai/generate/quote
+src/api/routes/team.py:170:    # TODO: Send invitation email with magic link
+src/api/routes/team.py:233:    # TODO: Invalidate user's JWT tokens (force re-login)
+src/api/routes/translations.py:350:        translation.translated_by = "manual_edit"  # TODO: Get from auth context
+src/api/routes/webhooks.py:78:    # TODO: Forward to configured webhook URL
+src/api/routes/webhooks.py:123:    # TODO: Forward to configured webhook URL
+src/integrations/payments/amex.py:83:        # TODO: Integrate with real AMEX gateway SDK
+src/integrations/payments/eftpos.py:87:        # TODO: Integrate with real EFTPOS terminal SDK
+src/integrations/xero/invoices.py:364:        # TODO: Implement after adding xero_invoice_id column
+src/services/bank_feed_service.py:377:        # TODO: Integrate with Yodlee API
+src/services/bank_feed_service.py:387:        # TODO: Integrate with Basiq API
+src/services/carrier_service.py:119:        # TODO: Implement actual Australia Post API integration
+src/services/carrier_service.py:139:        # TODO: Implement actual tracking API call
+src/services/carrier_service.py:158:        # TODO: Implement cancellation API
+src/services/carrier_service.py:163:        # TODO: Implement rates API
+src/services/carrier_service.py:263:        # TODO: Implement actual EasyPost API integration
+src/services/carrier_service.py:285:        # TODO: Implement EasyPost tracking
+src/services/recommendation_service.py:618:                language="en",  # TODO: Use customer preferred language
+src/telemetry/usage_tracker.py:46:        # TODO: Implement state store when needed
+src/workflow/engine.py:299:        # TODO: Implement tool registry or route through agents
+src/workflows/pr_automation.py:158:        # TODO: Integrate with Git API
+src/workflows/pr_automation.py:186:        # TODO: Integrate with Git API
+src/workflows/pr_automation.py:218:        # TODO: Integrate with GitHub API
+src/workflows/pr_automation.py:424:        # TODO: Integrate with GitHub API
+src/workflows/pr_automation.py:502:        # TODO: Check GitHub API for PR status

@@ -41,6 +41,11 @@ interface PendingMatchesTableProps {
   onReconciled?: () => void;
 }
 
+interface BulkApprovalResponse {
+  approved: number;
+  failed: number;
+}
+
 export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) {
   const [feeds, setFeeds] = useState<PendingFeed[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -115,7 +120,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
         })
       );
 
-      const result = await apiClient.post("/api/reconciliation/bulk-approve", {
+      const result = await apiClient.post<BulkApprovalResponse>("/api/reconciliation/bulk-approve", {
         approvals,
       });
 

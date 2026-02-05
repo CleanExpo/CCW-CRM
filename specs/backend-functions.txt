@@ -1,0 +1,200 @@
+=== src/api/routes/ai/anomaly.py ===
+def get_anomaly_agent() -> AnomalyDetectionAgent:
+async def detect_anomaly(
+=== src/api/routes/ai/assets.py ===
+async def get_assets(
+async def delete_asset(asset_id: str) -> dict[str, str]:
+async def get_marketing_stats() -> StatsResponse:
+=== src/api/routes/ai/chat.py ===
+def get_chat_assistant() -> ChatAssistant:
+async def create_new_conversation() -> NewConversationResponse:
+async def send_message(
+async def stream_message(
+async def get_conversation_history(
+async def delete_conversation(
+=== src/api/routes/ai/document_parser.py ===
+def get_parser_agent() -> DocumentParserAgent:
+async def parse_document(
+=== src/api/routes/ai/form_autofill.py ===
+def get_autofill_agent() -> FormAutoFillAgent:
+async def auto_fill_form(
+=== src/api/routes/ai/generate.py ===
+async def generate_quote(
+async def generate_email(
+async def generate_summary(
+async def generate_image(
+async def generate_copy(
+=== src/api/routes/ai/insights.py ===
+async def generate_insights(
+async def get_dashboard_insights(
+async def get_insight_history(
+=== src/api/routes/ai/inventory_forecast.py ===
+def get_forecast_agent() -> InventoryForecastingAgent:
+async def forecast_inventory(
+async def forecast_low_stock_products(
+=== src/api/routes/ai/learning.py ===
+async def extract_patterns(
+async def generate_insights(
+async def get_patterns(
+async def get_insights(
+async def create_variant(request: CreateVariantRequest) -> dict[str, Any]:
+async def record_variant_execution(request: RecordExecutionRequest) -> dict[str, str]:
+async def get_agent_variants(agent_id: str) -> VariantResponse:
+async def select_best_variant(
+async def get_learning_status() -> LearningStatusResponse:
+async def load_patterns_from_database(agent_id: str | None = None) -> dict[str, Any]:
+async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)) -> dict[str, Any]:
+=== src/api/routes/ai/monitoring.py ===
+async def list_agents() -> AgentListResponse:
+async def get_system_health() -> SystemHealthResponse:
+async def get_recent_executions(
+async def health_check() -> HealthCheckResponse:
+async def get_agent_statistics(agent_id: str) -> AgentStatsResponse:
+async def generate_test_data_with_failures(count: int = Query(100, ge=1, le=500)) -> dict[str, Any]:
+=== src/api/routes/ai/specialized.py ===
+def get_pricing_agent() -> PricingAgent:
+def get_procurement_agent() -> ProcurementAgent:
+def get_executor_agent() -> TaskExecutorAgent:
+async def recommend_pricing(
+async def analyze_procurement(
+async def validate_action(
+async def execute_action(
+=== src/api/routes/ai/supervisor.py ===
+async def route_task(request: RouteTaskRequest) -> RouteTaskResponse:
+async def analyze_task(request: AnalyzeTaskRequest) -> AnalyzeTaskResponse:
+=== src/api/routes/ai/test_data.py ===
+async def generate_test_data_with_failures(count: int = 100) -> dict[str, Any]:
+=== src/api/routes/ai/test_failures.py ===
+async def generate_failure_scenarios(count: int = Query(200, ge=10, le=500)) -> dict[str, Any]:
+=== src/api/routes/ai/__init__.py ===
+=== src/api/routes/approvals.py ===
+async def create_approval(
+async def list_approvals(
+async def get_pending_approvals(
+async def get_approval(
+async def add_approval_step(
+async def update_approval_step(
+async def cancel_approval(
+def _build_approval_response(approval: Approval, steps: list[ApprovalStep]) -> ApprovalResponse:
+=== src/api/routes/autonomous_dev.py ===
+async def create_project(
+async def get_project_progress(
+async def get_execution_loop_status():
+async def get_detailed_status():
+async def start_execution_loop():
+async def stop_execution_loop():
+async def resume_project(request: ResumeProjectRequest):
+async def list_projects():
+async def get_agent_activity():
+=== src/api/routes/autonomy_metrics.py ===
+async def get_metrics(
+async def get_prometheus_metrics(
+async def get_recent_audit_entries(
+async def get_anomalies(
+async def get_autonomy_health(
+=== src/api/routes/backorders.py ===
+async def list_backorders(
+async def get_pending_backorders(
+async def get_backorder(
+async def create_backorder(
+async def update_backorder(
+async def allocate_backorder(
+async def fulfill_backorder(
+async def notify_customer(
+async def cancel_backorder(
+=== src/api/routes/bank_feeds.py ===
+async def sync_bank_feeds(
+async def reconcile_bank_feed(
+async def list_unreconciled_feeds(
+async def list_bank_accounts(
+async def create_bank_account(
+async def update_bank_account(
+async def delete_bank_account(
+async def get_reconciliation_stats(
+async def get_reconciliation_alerts(
+async def get_daily_reconciliation_summary(
+async def bulk_reconcile_transactions(
+async def export_reconciliation_data(
+async def bank_feed_webhook(
+def _verify_webhook_signature(data: dict, signature: str, secret: str) -> bool:
+=== src/api/routes/billing.py ===
+async def get_subscription(
+async def subscribe(
+async def update_subscription(
+async def cancel_subscription(
+async def list_invoices(
+async def handle_stripe_webhook(
+=== src/api/routes/chat.py ===
+def get_orchestrator() -> OrchestratorAgent:
+async def chat(
+def _generate_response(result: dict[str, Any]) -> str:
+=== src/api/routes/config.py ===
+async def get_business_config(
+async def get_settings_info(settings: Annotated[Settings, Depends(get_settings)]) -> dict:
+async def get_frontend_config(settings: Annotated[Settings, Depends(get_settings)]) -> dict:
+async def get_tax_rate_info(settings: Annotated[Settings, Depends(get_settings)]) -> dict:
+async def get_ai_providers_list(settings: Annotated[Settings, Depends(get_settings)]) -> dict:
+async def get_warehouse_locations() -> dict:
+=== src/api/routes/containers.py ===
+async def list_containers(
+async def get_arriving_soon(
+async def get_container(
+async def create_container(
+async def update_container(
+async def receive_container(
+async def delete_container(
+=== src/api/routes/contractors.py ===
+async def list_contractors(
+async def get_contractor(
+async def create_contractor(
+async def update_contractor(
+async def delete_contractor(
+async def add_availability_slot(
+async def get_contractor_availability(
+async def search_by_location(
+=== src/api/routes/cron_jobs.py ===
+def verify_cron_secret(authorization: str | None = Header(None)) -> bool:
+async def check_expiring_quotes(
+=== src/api/routes/customers.py ===
+async def list_customers(
+async def get_customer(
+async def create_customer(
+async def update_customer(
+async def delete_customer(
+=== src/api/routes/customer_orders.py ===
+async def get_customer_order_history(
+=== src/api/routes/dashboard_stream.py ===
+async def dashboard_metrics_stream(request: Request):
+async def get_metrics_stream_stats():
+async def publish_dashboard_metric_update(
+async def create_order(...):
+async def update_order(...):
+async def publish_test_event(
+=== src/api/routes/demo_auth.py ===
+async def login(
+async def get_current_user(
+async def refresh_access_token(
+async def logout(response: Response) -> dict:
+async def forgot_password(
+async def reset_password(
+async def register(
+async def update_profile(
+async def change_password(
+=== src/api/routes/demo_dashboard.py ===
+async def get_aggregated_dashboard(
+async def dashboard_metrics_stream(request: Request):
+async def get_dashboard_metrics(
+async def get_revenue_chart(
+async def get_category_distribution(
+async def get_top_products(
+async def get_inventory_status(
+async def get_recent_activity(
+async def get_order_status_breakdown(
+async def get_quote_conversion(
+async def get_revenue_by_location(
+=== src/api/routes/demo_lists.py ===
+async def list_products(
+async def list_customers(
+async def list_orders(
+async def list_quotes(
+=== src/api/routes/google_ai.py ===

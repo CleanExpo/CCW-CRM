@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api/client";
-import { debounce } from "lodash";
+import { debounce } from "@/lib/utils/debounce";
 
 interface Product {
   id: string;

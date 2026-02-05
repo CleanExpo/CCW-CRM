@@ -45,5 +45,8 @@
     "*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "mcp-linear": "^0.1.8"
   }
 }

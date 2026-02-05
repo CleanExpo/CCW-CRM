@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { apiClient } from "@/lib/api/client";
-import { debounce } from "lodash";
+import { debounce } from "@/lib/utils/debounce";
 import { toast } from "sonner";
 
 interface Customer {

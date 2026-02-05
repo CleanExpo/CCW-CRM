@@ -1,12 +1,13 @@
 import { render, screen } from "@testing-library/react";
+import { vi } from "vitest";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 
 describe("PaginationControls", () => {
-  const mockOnPageChange = jest.fn();
-  const mockOnPageSizeChange = jest.fn();
+  const mockOnPageChange = vi.fn();
+  const mockOnPageSizeChange = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("renders pagination controls with correct item counts", () => {
