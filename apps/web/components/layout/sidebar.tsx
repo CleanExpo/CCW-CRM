@@ -27,6 +27,7 @@ import {
   Activity,
   CreditCard,
   Scale,
+  Receipt,
 } from "lucide-react";
 
 const navigation = [
@@ -42,6 +43,7 @@ const navigation = [
   { name: "POS Terminal", href: "/pos", icon: CreditCard },
   { name: "Reconciliation", href: "/pos/reconciliation", icon: Scale },
   { name: "Quotes", href: "/quotes", icon: FileText },
+  { name: "Invoices", href: "/invoices", icon: Receipt },
   { name: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
   { name: "Submissions", href: "/submissions", icon: ClipboardCheck },
   { name: "Emails", href: "/emails", icon: Mail },
