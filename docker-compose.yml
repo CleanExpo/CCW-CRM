@@ -50,7 +50,7 @@ services:
       ENVIRONMENT: development
       DEBUG: "True"
       LOG_LEVEL: DEBUG
-      CORS_ORIGINS: '["http://localhost:3000","http://localhost:3005","http://localhost:3006","http://localhost:3007","http://localhost:8080","http://10.252.22.111:3006","http://10.252.22.111:3007"]'
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:3005","http://localhost:3006","http://localhost:3007","http://localhost:3011","http://localhost:8080","http://10.252.22.111:3006","http://10.252.22.111:3007","http://192.168.2.65:3011"]'
     ports:
       - "8000:8000"
     depends_on:
