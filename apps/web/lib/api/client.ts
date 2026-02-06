@@ -24,11 +24,17 @@ export class ApiClientError extends Error {
 }
 
 /**
- * Get JWT token from cookies (browser-side)
+ * Get JWT token from localStorage or cookies (browser-side)
+ * Tries localStorage first (more reliable for cross-port access), then falls back to cookies
  */
 function getAuthToken(): string | null {
-  if (typeof document === "undefined") return null;
+  if (typeof window === "undefined") return null;
 
+  // Try localStorage first (set by auth.ts after login)
+  const localStorageToken = localStorage.getItem("auth_token");
+  if (localStorageToken) return localStorageToken;
+
+  // Fallback to cookies (for backward compatibility)
   const cookies = document.cookie.split("; ");
   const tokenCookie = cookies.find((c) => c.startsWith("auth_token="));
 

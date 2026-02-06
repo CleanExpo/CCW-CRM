@@ -43,6 +43,23 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.PUBLIC_PATHS:
             return await call_next(request)
 
+        # Check for JWT token in cookie (HttpOnly auth_token from login)
+        auth_token_cookie = request.cookies.get("auth_token")
+        if auth_token_cookie:
+            # Validate JWT token from cookie
+            try:
+                from src.auth.jwt import decode_access_token
+                payload = decode_access_token(auth_token_cookie)
+                request.state.user_id = payload.get("user_id")
+                request.state.auth_type = "jwt_cookie"
+                logger.debug(f"JWT cookie auth successful for user {payload.get('user_id')}")
+                return await call_next(request)
+            except Exception as e:
+                logger.warning(f"Invalid JWT cookie: {e}")
+                # Continue to check other auth methods
+        else:
+            logger.debug("No auth_token cookie found")
+
         # Check for API key authentication
         api_key = request.headers.get("Authorization", "").replace("Bearer ", "")
 
