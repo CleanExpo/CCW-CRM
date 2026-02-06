@@ -43,6 +43,8 @@ from .routes import (
     demo_lists,
     health,
     inventory,
+    invoice_payments,  # Invoice payments for UNI-173
+    invoices,  # Invoices for UNI-173
     jobs,
     orders,
     portal_auth,
@@ -387,6 +389,9 @@ app.include_router(activities.router, tags=["Activities"])  # CRM Activities
 app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+# Invoicing & Payments (UNI-173)
+app.include_router(invoices.router, tags=["Invoices"])
+app.include_router(invoice_payments.router, tags=["Invoice Payments"])
 # Background jobs router
 app.include_router(jobs.router, tags=["Background Jobs"])
 # Multi-store inventory router
