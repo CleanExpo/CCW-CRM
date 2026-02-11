@@ -48,8 +48,12 @@ services:
     ports:
       - "3001:3000"  # Port 3001 to avoid conflict with Next.js
     volumes:
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      # Provisioning configurations
+      - ./grafana/provisioning/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./grafana/provisioning/datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      # Dashboard JSON files
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      # Grafana data persistence
       - grafana-data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
@@ -111,13 +115,13 @@ services:
 
   # Redis Exporter - Cache metrics
   redis-exporter:
-    image: oliver006/redis_exporter:latest
+    image: oliver006/redis_exporter:v1.55.0
     container_name: ccw-redis-exporter
     restart: unless-stopped
     ports:
-      - "9121:9121"
+      - "9122:9121"  # External 9122 to avoid conflict with other processes
     environment:
-      - REDIS_ADDR=redis:6379
+      - REDIS_ADDR=redis://redis:6379
     networks:
       - monitoring
       - default  # Connect to main app network

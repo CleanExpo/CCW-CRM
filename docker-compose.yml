@@ -77,6 +77,11 @@ services:
       DEBUG: "True"
       LOG_LEVEL: DEBUG
       CORS_ORIGINS: '["http://localhost:3000","http://localhost:3005","http://localhost:3006","http://localhost:3007","http://localhost:3011","http://localhost:8080","http://10.252.22.111:3006","http://10.252.22.111:3007","http://192.168.2.65:3011"]'
+      # Sentry Error Tracking (optional in development)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-1.0}
+      SENTRY_PROFILES_SAMPLE_RATE: ${SENTRY_PROFILES_SAMPLE_RATE:-1.0}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-development}
     ports:
       - "8000:8000"
     depends_on:
@@ -234,14 +239,15 @@ services:
     container_name: ccw-redis-exporter
     restart: unless-stopped
     environment:
-      REDIS_ADDR: "redis:6379"
+      REDIS_ADDR: "redis://redis:6379"
     ports:
-      - "9121:9121"
+      - "9122:9121"  # External 9122 to avoid conflict with native process on 9121
     depends_on:
       redis:
         condition: service_healthy
     networks:
       - starter-network
+    # Note: No healthcheck needed as Prometheus monitors redis_up metric
     deploy:
       resources:
         limits:
@@ -251,7 +257,7 @@ services:
           cpus: '0.05'
           memory: 32M
       restart_policy:
-        condition: unless-stopped
+        condition: on-failure
         delay: 5s
         max_attempts: 3
         window: 120s

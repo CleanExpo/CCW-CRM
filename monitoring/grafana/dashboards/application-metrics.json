@@ -46,7 +46,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "# PostgreSQL Database Performance\nMonitor database connections, query performance, cache efficiency, and resource utilization.",
+        "content": "# Application Metrics\nMonitor business operations: orders, quotes, authentication, background jobs, and API endpoint performance.",
         "mode": "markdown"
       },
       "pluginVersion": "10.0.0",
@@ -59,42 +59,23 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "PostgreSQL database status",
+      "description": "Orders created in the last 24 hours",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 1,
-                  "text": "DOWN"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "UP"
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "blue",
                 "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
               }
             ]
-          }
+          },
+          "unit": "short"
         }
       },
       "gridPos": {
@@ -105,8 +86,8 @@
       },
       "id": 1,
       "options": {
-        "colorMode": "background",
-        "graphMode": "none",
+        "colorMode": "value",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
@@ -123,11 +104,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "up{job=\"postgresql\"}",
+          "expr": "increase(orders_created_total[24h])",
           "refId": "A"
         }
       ],
-      "title": "PostgreSQL Status",
+      "title": "Orders (24h)",
       "type": "stat"
     },
     {
@@ -135,7 +116,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Total database size",
+      "description": "Quotes created in the last 24 hours",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -146,20 +127,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "purple",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 5368709120
-              },
-              {
-                "color": "red",
-                "value": 10737418240
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "short"
         }
       },
       "gridPos": {
@@ -188,11 +161,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_database_size_bytes{datname=\"starter_db\"}",
+          "expr": "increase(quotes_created_total[24h])",
           "refId": "A"
         }
       ],
-      "title": "Database Size",
+      "title": "Quotes (24h)",
       "type": "stat"
     },
     {
@@ -200,31 +173,33 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Active database connections",
+      "description": "Quote to order conversion rate",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
                 "color": "yellow",
-                "value": 50
+                "value": 20
               },
               {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 40
               }
             ]
           },
-          "unit": "short"
+          "unit": "percent"
         }
       },
       "gridPos": {
@@ -235,16 +210,14 @@
       },
       "id": 3,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "pluginVersion": "10.0.0",
       "targets": [
@@ -253,19 +226,19 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(pg_stat_activity_count)",
+          "expr": "(rate(quotes_converted_total[24h]) / rate(quotes_created_total[24h])) * 100",
           "refId": "A"
         }
       ],
-      "title": "Active Connections",
-      "type": "stat"
+      "title": "Quote Conversion Rate",
+      "type": "gauge"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Buffer cache hit ratio",
+      "description": "Authentication success rate",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -318,7 +291,72 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(pg_stat_database_blks_hit{datname=\"starter_db\"} / (pg_stat_database_blks_hit{datname=\"starter_db\"} + pg_stat_database_blks_read{datname=\"starter_db\"})) * 100",
+          "expr": "(sum(rate(auth_login_success_total[5m])) / (sum(rate(auth_login_success_total[5m])) + sum(rate(auth_login_failure_total[5m])))) * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Auth Success Rate",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Redis cache hit rate",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "green",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 2
+      },
+      "id": 5,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))) * 100",
           "refId": "A"
         }
       ],
@@ -330,64 +368,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Transactions committed per second",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "ops"
-        }
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 16,
-        "y": 2
-      },
-      "id": 5,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(pg_stat_database_xact_commit{datname=\"starter_db\"}[5m])",
-          "refId": "A"
-        }
-      ],
-      "title": "Commits/sec",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Active database locks",
+      "description": "Background job queue depth",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -403,11 +384,11 @@
               },
               {
                 "color": "yellow",
-                "value": 10
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 100
               }
             ]
           },
@@ -440,11 +421,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_locks_count",
+          "expr": "background_job_queue_depth",
           "refId": "A"
         }
       ],
-      "title": "Active Locks",
+      "title": "Job Queue Depth",
       "type": "stat"
     },
     {
@@ -452,7 +433,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Database connection pool usage over time",
+      "description": "Order and quote creation rates over time",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -461,108 +442,7 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Connections",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(pg_stat_activity_count) by (state)",
-          "legendFormat": "{{state}}",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "pg_settings_max_connections",
-          "legendFormat": "Max Connections",
-          "refId": "B"
-        }
-      ],
-      "title": "Connection Pool Usage",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Transaction commit and rollback rates",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Transactions/sec",
+            "axisLabel": "Per Hour",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -599,13 +479,119 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "sum"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(orders_created_total[1h]) * 3600",
+          "legendFormat": "Orders/hour",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(quotes_created_total[1h]) * 3600",
+          "legendFormat": "Quotes/hour",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(quotes_converted_total[1h]) * 3600",
+          "legendFormat": "Conversions/hour",
+          "refId": "C"
+        }
+      ],
+      "title": "Order & Quote Activity",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Authentication attempts and failures",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Attempts",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "Rollbacks/sec"
+              "options": "Failed Logins"
             },
             "properties": [
               {
@@ -628,7 +614,7 @@
       "id": 8,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": ["mean", "sum"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -645,8 +631,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(pg_stat_database_xact_commit{datname=\"starter_db\"}[5m])",
-          "legendFormat": "Commits/sec",
+          "expr": "rate(auth_login_success_total[5m]) * 300",
+          "legendFormat": "Successful Logins",
           "refId": "A"
         },
         {
@@ -654,12 +640,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(pg_stat_database_xact_rollback{datname=\"starter_db\"}[5m])",
-          "legendFormat": "Rollbacks/sec",
+          "expr": "rate(auth_login_failure_total[5m]) * 300",
+          "legendFormat": "Failed Logins",
           "refId": "B"
         }
       ],
-      "title": "Transaction Rate",
+      "title": "Authentication Activity",
       "type": "timeseries"
     },
     {
@@ -667,7 +653,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Row operations per second (inserts, updates, deletes)",
+      "description": "API endpoint performance breakdown",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -676,240 +662,11 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Operations/sec",
+            "axisLabel": "Response Time",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "ops"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 14
-      },
-      "id": 9,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(pg_stat_database_tup_inserted{datname=\"starter_db\"}[5m])",
-          "legendFormat": "Inserts/sec",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(pg_stat_database_tup_updated{datname=\"starter_db\"}[5m])",
-          "legendFormat": "Updates/sec",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(pg_stat_database_tup_deleted{datname=\"starter_db\"}[5m])",
-          "legendFormat": "Deletes/sec",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(pg_stat_database_tup_fetched{datname=\"starter_db\"}[5m])",
-          "legendFormat": "Fetched/sec",
-          "refId": "D"
-        }
-      ],
-      "title": "Row Operations",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Buffer cache performance metrics",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Blocks/sec",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Disk Reads"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 14
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(pg_stat_database_blks_hit{datname=\"starter_db\"}[5m])",
-          "legendFormat": "Cache Hits",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(pg_stat_database_blks_read{datname=\"starter_db\"}[5m])",
-          "legendFormat": "Disk Reads",
-          "refId": "B"
-        }
-      ],
-      "title": "Buffer Cache Performance",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Database lock activity over time",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Locks",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -942,24 +699,24 @@
               },
               {
                 "color": "yellow",
-                "value": 20
+                "value": 0.2
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 0.5
               }
             ]
           },
-          "unit": "short"
+          "unit": "s"
         }
       },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 14
       },
-      "id": 11,
+      "id": 9,
       "options": {
         "legend": {
           "calcs": ["mean", "max"],
@@ -979,12 +736,39 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_locks_count",
-          "legendFormat": "Total Locks",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{endpoint=~\"/api/products.*\"}[5m])) by (le))",
+          "legendFormat": "Products API (p95)",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{endpoint=~\"/api/orders.*\"}[5m])) by (le))",
+          "legendFormat": "Orders API (p95)",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{endpoint=~\"/api/quotes.*\"}[5m])) by (le))",
+          "legendFormat": "Quotes API (p95)",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{endpoint=~\"/api/customers.*\"}[5m])) by (le))",
+          "legendFormat": "Customers API (p95)",
+          "refId": "D"
         }
       ],
-      "title": "Database Locks",
+      "title": "API Endpoint Response Times (P95)",
       "type": "timeseries"
     },
     {
@@ -992,7 +776,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Database size growth over time",
+      "description": "Cache performance metrics",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1001,7 +785,7 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Size",
+            "axisLabel": "Ops/sec",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -1038,7 +822,235 @@
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "ops"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Misses"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "sum"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(redis_keyspace_hits_total[5m])",
+          "legendFormat": "Hits",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(redis_keyspace_misses_total[5m])",
+          "legendFormat": "Misses",
+          "refId": "B"
+        }
+      ],
+      "title": "Cache Hits vs Misses",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Background job processing metrics",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Jobs",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "increase(background_jobs_completed_total[5m])",
+          "legendFormat": "Completed",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "increase(background_jobs_failed_total[5m])",
+          "legendFormat": "Failed",
+          "refId": "B"
+        }
+      ],
+      "title": "Background Job Processing",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "API endpoint request rates",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Requests/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
         }
       },
       "gridPos": {
@@ -1067,12 +1079,48 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_database_size_bytes{datname=\"starter_db\"}",
-          "legendFormat": "starter_db",
+          "expr": "sum(rate(http_requests_total{endpoint=~\"/api/products.*\"}[5m]))",
+          "legendFormat": "Products",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_requests_total{endpoint=~\"/api/orders.*\"}[5m]))",
+          "legendFormat": "Orders",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_requests_total{endpoint=~\"/api/quotes.*\"}[5m]))",
+          "legendFormat": "Quotes",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_requests_total{endpoint=~\"/api/customers.*\"}[5m]))",
+          "legendFormat": "Customers",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_requests_total{endpoint=~\"/api/auth.*\"}[5m]))",
+          "legendFormat": "Auth",
+          "refId": "E"
         }
       ],
-      "title": "Database Size Trend",
+      "title": "API Endpoint Request Rates",
       "type": "timeseries"
     },
     {
@@ -1080,7 +1128,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Connections by state",
+      "description": "Order status distribution",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1129,12 +1177,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_stat_activity_count",
-          "legendFormat": "{{state}}",
+          "expr": "orders_by_status",
+          "legendFormat": "{{status}}",
           "refId": "A"
         }
       ],
-      "title": "Connections by State",
+      "title": "Orders by Status",
       "type": "piechart"
     },
     {
@@ -1142,11 +1190,18 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Slow query metrics",
+      "description": "Top API endpoints by error rate",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -1158,16 +1213,30 @@
               },
               {
                 "color": "yellow",
-                "value": 5
+                "value": 0.01
               },
               {
                 "color": "red",
-                "value": 20
+                "value": 0.05
               }
             ]
           },
-          "unit": "short"
-        }
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "endpoint"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1177,16 +1246,20 @@
       },
       "id": 14,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
           "fields": "",
-          "values": false
+          "reducer": ["sum"],
+          "show": false
         },
-        "textMode": "auto"
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Value"
+          }
+        ]
       },
       "pluginVersion": "10.0.0",
       "targets": [
@@ -1195,24 +1268,71 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_stat_activity_count{state=\"active\", wait_event_type!=\"\"}",
-          "legendFormat": "Waiting Queries",
+          "expr": "topk(10, sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (endpoint) / sum(rate(http_requests_total[5m])) by (endpoint))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{endpoint}}",
           "refId": "A"
         }
       ],
-      "title": "Queries Waiting",
-      "type": "stat"
+      "title": "Endpoints by Error Rate",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Error Rate",
+              "endpoint": "Endpoint"
+            }
+          }
+        }
+      ],
+      "type": "table"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Temporary files used for sorting and hashing",
+      "description": "Revenue tracking (if metrics available)",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Revenue (AUD)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -1221,18 +1341,10 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1073741824
-              },
-              {
-                "color": "red",
-                "value": 5368709120
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "currencyAUD"
         }
       },
       "gridPos": {
@@ -1243,16 +1355,16 @@
       },
       "id": 15,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "textMode": "auto"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "10.0.0",
       "targets": [
@@ -1261,32 +1373,32 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_stat_database_temp_bytes{datname=\"starter_db\"}",
-          "legendFormat": "Temp Bytes",
+          "expr": "increase(orders_revenue_total[1h])",
+          "legendFormat": "Revenue",
           "refId": "A"
         }
       ],
-      "title": "Temp File Usage",
-      "type": "stat"
+      "title": "Hourly Revenue",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["ccw-erp", "database", "postgresql"],
+  "tags": ["ccw-erp", "application", "business"],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {
     "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"]
   },
   "timezone": "browser",
-  "title": "Database Performance",
-  "uid": "ccw-database-performance",
+  "title": "Application Metrics",
+  "uid": "ccw-application-metrics",
   "version": 1,
   "weekStart": ""
 }

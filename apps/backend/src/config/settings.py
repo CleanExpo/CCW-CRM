@@ -123,6 +123,28 @@ class Settings(BaseSettings):
         default=24, description="Performance metrics retention in hours"
     )
 
+    # Sentry Error Tracking
+    sentry_dsn: str = Field(
+        default="",
+        description="Sentry DSN for error tracking (get from https://sentry.io/settings/[org]/projects/[project]/keys/)",
+    )
+    sentry_traces_sample_rate: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description="Sentry performance traces sample rate (0.0-1.0, 0.1 = 10%)",
+    )
+    sentry_profiles_sample_rate: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description="Sentry profiling sample rate (0.0-1.0, 0.1 = 10%)",
+    )
+    sentry_release: str = Field(
+        default="",
+        description="Sentry release identifier (defaults to ccw-erp@1.0.0 if not set)",
+    )
+
     # Business Configuration
     tax_rate: str = Field(
         default="0.10", description="Tax rate (GST) as decimal (e.g., 0.10 for 10%)"
