@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from src.db.demo_models import OrderStatus, QuoteStatus
-from src.db.erp_models import ProductCategory
+from src.db.demo_models import ProductCategory
 
 
 # Organization schemas

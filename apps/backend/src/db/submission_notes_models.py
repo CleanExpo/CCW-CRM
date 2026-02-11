@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 
-from .models import Base
+from .models_base import Base
 
 
 class SubmissionNote(Base):

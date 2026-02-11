@@ -18,7 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID  # noqa: N811
 from sqlalchemy.orm import relationship
 
-from .models import Base
+from .models_base import Base
 
 
 class RequestType(str, PyEnum):

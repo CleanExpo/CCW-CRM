@@ -21,7 +21,7 @@ from src.db.crm_schemas import (
     ContactWithCustomer,
     PaginatedContacts,
 )
-from src.db.erp_models import Customer as CustomerModel
+from src.db.demo_models import Customer as CustomerModel
 from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/contacts", tags=["contacts"])

@@ -25,7 +25,7 @@ from sqlalchemy.dialects.postgresql import UUID as PostgresUUID  # noqa: N811
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from .models import Base
+from .models_base import Base
 
 
 class StoreLocation(str, Enum):

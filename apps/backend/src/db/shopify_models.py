@@ -10,7 +10,7 @@ from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .models import Base  # Use existing Base class
+from .models_base import Base  # Use existing Base class
 
 
 class ShopifyConnection(Base):

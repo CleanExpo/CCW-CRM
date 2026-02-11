@@ -14,7 +14,7 @@ from sqlalchemy.orm import selectinload
 
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
-from src.db.erp_models import Product as ProductModel
+from src.db.demo_models import Product as ProductModel
 from src.db.inventory_models import ProductStockByLocation
 from src.db.schemas import (
     PaginatedResponse,

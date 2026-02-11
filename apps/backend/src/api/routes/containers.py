@@ -18,7 +18,7 @@ from src.db.container_models import (
     ContainerItem,
     ContainerStatus,
 )
-from src.db.erp_models import Product
+from src.db.demo_models import Product
 from src.db.inventory_models import PurchaseOrder, Supplier
 from src.db.models import User
 from src.events.event_bus import get_event_bus

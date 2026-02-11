@@ -22,7 +22,7 @@ from src.db.crm_schemas import (
     ActivityWithRelations,
     PaginatedActivities,
 )
-from src.db.erp_models import Customer as CustomerModel
+from src.db.demo_models import Customer as CustomerModel
 from src.db.demo_models import Order as OrderModel, Quote as QuoteModel
 from src.services.sse_service import sse_service
 
