@@ -3,12 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@shared"],
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // ESLint enabled during builds for code quality
+  // typescript: Type checking enabled during builds for type safety
   experimental: {
     typedRoutes: true,
   },
