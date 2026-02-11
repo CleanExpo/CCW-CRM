@@ -68,24 +68,38 @@ export type {
   ProductUpdate,
   ProductListParams,
   PaginatedProducts,
-  StockByLocation,
 } from "./products";
 
-// Inventory types
+// Inventory types - exported from centralized types
 export type {
   InventoryItem,
-  InventoryListParams,
-  PaginatedInventory,
-  StockHealthItem,
-  StockHealth,
-  TransferSuggestion,
+  StockByLocation,
   StockTransfer,
-  StockTransferCreate,
-  TransferListParams,
-  PaginatedTransfers,
   StockReservation,
-  StockReservationCreate,
   StockAdjustment,
+  StockAlert,
+  StockHealth,
+  CreateStockTransferRequest,
+  CreateStockReservationRequest,
+  CreateStockAdjustmentRequest,
+  PaginatedInventoryResponse,
+  PaginatedTransfersResponse,
+  PaginatedReservationsResponse,
+  PaginatedAdjustmentsResponse,
+  StoreLocation,
+  TransferStatus,
+  ReservationStatus,
+  AdjustmentType,
+  InventorySummary,
+  LocationStock,
+} from "@/lib/types/inventory";
+
+// Inventory API param types
+export type {
+  InventoryListParams,
+  TransferListParams,
+  StockHealthItem,
+  TransferSuggestion,
 } from "./inventory";
 
 // Purchase Orders types

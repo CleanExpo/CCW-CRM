@@ -1,17 +1,22 @@
 import { apiClient } from "./client";
+import type {
+  InventoryItem,
+  StockByLocation,
+  StockTransfer,
+  StockReservation,
+  StockHealth,
+  StockAlert,
+  CreateStockTransferRequest,
+  CreateStockReservationRequest,
+  CreateStockAdjustmentRequest,
+  PaginatedInventoryResponse,
+  PaginatedTransfersResponse,
+  StoreLocation,
+  TransferStatus,
+} from "@/lib/types/inventory";
 
 /**
- * Stock by location interface
- */
-export interface StockByLocation {
-  location: string;
-  stock: number;
-  reserved: number;
-  available: number;
-}
-
-/**
- * Stock health item interface
+ * Stock health item interface (legacy - for backward compatibility)
  */
 export interface StockHealthItem {
   product_id: string;
@@ -25,15 +30,6 @@ export interface StockHealthItem {
 }
 
 /**
- * Stock health response
- */
-export interface StockHealth {
-  critical: StockHealthItem[];
-  low: StockHealthItem[];
-  warning: StockHealthItem[];
-}
-
-/**
  * Transfer suggestion interface
  */
 export interface TransferSuggestion {
@@ -44,85 +40,6 @@ export interface TransferSuggestion {
   to_location: string;
   suggested_quantity: number;
   reason: string;
-}
-
-/**
- * Stock transfer interface
- */
-export interface StockTransfer {
-  id: string;
-  product_id: string;
-  from_location: string;
-  to_location: string;
-  quantity: number;
-  status: "pending" | "in_transit" | "completed" | "cancelled";
-  initiated_by?: string;
-  completed_at?: string;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-/**
- * Stock transfer create request
- */
-export interface StockTransferCreate {
-  product_id: string;
-  from_location: string;
-  to_location: string;
-  quantity: number;
-  notes?: string;
-}
-
-/**
- * Stock reservation interface
- */
-export interface StockReservation {
-  id: string;
-  product_id: string;
-  location: string;
-  quantity: number;
-  reserved_for: string;
-  expires_at?: string;
-  notes?: string;
-  created_at: string;
-}
-
-/**
- * Stock reservation create request
- */
-export interface StockReservationCreate {
-  product_id: string;
-  location: string;
-  quantity: number;
-  reserved_for: string;
-  expires_at?: string;
-  notes?: string;
-}
-
-/**
- * Stock adjustment interface
- */
-export interface StockAdjustment {
-  product_id: string;
-  location: string;
-  quantity: number;
-  adjustment_type: "add" | "remove" | "set";
-  reason: string;
-  notes?: string;
-}
-
-/**
- * Inventory item interface
- */
-export interface InventoryItem {
-  product_id: string;
-  sku: string;
-  name: string;
-  total_stock: number;
-  total_reserved: number;
-  total_available: number;
-  locations: StockByLocation[];
 }
 
 /**
@@ -151,35 +68,15 @@ export interface TransferListParams {
 }
 
 /**
- * Paginated inventory response
- */
-export interface PaginatedInventory {
-  items: InventoryItem[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
-
-/**
- * Paginated transfers response
- */
-export interface PaginatedTransfers {
-  items: StockTransfer[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
-
-/**
  * Inventory API client
+ * Backend routes: apps/backend/src/api/routes/inventory.py
  */
 export const inventoryApi = {
   /**
    * List all inventory with pagination and filters
+   * GET /api/inventory
    */
-  async list(params: InventoryListParams = {}): Promise<PaginatedInventory> {
+  async list(params: InventoryListParams = {}): Promise<PaginatedInventoryResponse> {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.page_size) queryParams.append("page_size", params.page_size.toString());
@@ -189,23 +86,25 @@ export const inventoryApi = {
     if (params.sort_by) queryParams.append("sort_by", params.sort_by);
     if (params.sort_order) queryParams.append("sort_order", params.sort_order);
 
-    return apiClient.get<PaginatedInventory>(`/api/inventory?${queryParams.toString()}`);
+    return apiClient.get<PaginatedInventoryResponse>(`/api/inventory?${queryParams.toString()}`);
   },
 
   /**
    * Get stock by specific location
+   * GET /api/inventory/by-location
    */
-  async getStockByLocation(location: string, params: InventoryListParams = {}): Promise<PaginatedInventory> {
+  async getStockByLocation(location: string, params: InventoryListParams = {}): Promise<PaginatedInventoryResponse> {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.page_size) queryParams.append("page_size", params.page_size.toString());
     if (params.search) queryParams.append("search", params.search);
 
-    return apiClient.get<PaginatedInventory>(`/api/inventory/by-location?location=${location}&${queryParams.toString()}`);
+    return apiClient.get<PaginatedInventoryResponse>(`/api/inventory/by-location?location=${location}&${queryParams.toString()}`);
   },
 
   /**
    * Get low stock products
+   * GET /api/inventory/low-stock
    */
   async getLowStock(threshold: number = 20): Promise<StockHealthItem[]> {
     return apiClient.get<StockHealthItem[]>(`/api/inventory/low-stock?threshold=${threshold}`);
@@ -213,6 +112,7 @@ export const inventoryApi = {
 
   /**
    * Get stock health analysis
+   * GET /api/inventory/stock-health
    */
   async getStockHealth(threshold: number = 20): Promise<StockHealth> {
     return apiClient.get<StockHealth>(`/api/inventory/stock-health?threshold=${threshold}`);
@@ -220,6 +120,7 @@ export const inventoryApi = {
 
   /**
    * Get transfer suggestions
+   * GET /api/inventory/transfer-suggestions
    */
   async getTransferSuggestions(): Promise<TransferSuggestion[]> {
     return apiClient.get<TransferSuggestion[]>("/api/inventory/transfer-suggestions");
@@ -227,6 +128,7 @@ export const inventoryApi = {
 
   /**
    * Get product stock by all locations
+   * GET /api/inventory/product/{productId}/locations
    */
   async getProductStock(productId: string): Promise<StockByLocation[]> {
     return apiClient.get<StockByLocation[]>(`/api/inventory/product/${productId}/locations`);
@@ -234,15 +136,17 @@ export const inventoryApi = {
 
   /**
    * Create stock transfer
+   * POST /api/inventory/transfer
    */
-  async createTransfer(data: StockTransferCreate): Promise<StockTransfer> {
+  async createTransfer(data: CreateStockTransferRequest): Promise<StockTransfer> {
     return apiClient.post<StockTransfer>("/api/inventory/transfer", data);
   },
 
   /**
    * Get transfer history
+   * GET /api/inventory/transfers
    */
-  async getTransfers(params: TransferListParams = {}): Promise<PaginatedTransfers> {
+  async getTransfers(params: TransferListParams = {}): Promise<PaginatedTransfersResponse> {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.page_size) queryParams.append("page_size", params.page_size.toString());
@@ -251,18 +155,20 @@ export const inventoryApi = {
     if (params.from_location) queryParams.append("from_location", params.from_location);
     if (params.to_location) queryParams.append("to_location", params.to_location);
 
-    return apiClient.get<PaginatedTransfers>(`/api/inventory/transfers?${queryParams.toString()}`);
+    return apiClient.get<PaginatedTransfersResponse>(`/api/inventory/transfers?${queryParams.toString()}`);
   },
 
   /**
    * Reserve stock
+   * POST /api/inventory/reserve
    */
-  async reserveStock(data: StockReservationCreate): Promise<StockReservation> {
+  async reserveStock(data: CreateStockReservationRequest): Promise<StockReservation> {
     return apiClient.post<StockReservation>("/api/inventory/reserve", data);
   },
 
   /**
    * Release stock reservation
+   * POST /api/inventory/release/{id}
    */
   async releaseReservation(id: string): Promise<void> {
     return apiClient.post(`/api/inventory/release/${id}`, {});
@@ -270,8 +176,9 @@ export const inventoryApi = {
 
   /**
    * Adjust stock levels
+   * POST /api/inventory/adjust
    */
-  async adjustStock(data: StockAdjustment): Promise<void> {
+  async adjustStock(data: CreateStockAdjustmentRequest): Promise<void> {
     return apiClient.post("/api/inventory/adjust", data);
   },
 };

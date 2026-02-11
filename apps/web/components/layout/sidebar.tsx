@@ -28,12 +28,20 @@ import {
   CreditCard,
   Scale,
   Receipt,
+  PackageSearch,
+  PackageCheck,
+  Timer,
+  BarChart3,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Products", href: "/products", icon: Package },
-  { name: "Inventory", href: "/inventory", icon: Warehouse },
+  { name: "Inventory Overview", href: "/inventory", icon: Warehouse },
+  { name: "Stock List", href: "/inventory/stock", icon: PackageSearch },
+  { name: "Stock Transfers", href: "/inventory/transfers", icon: PackageCheck },
+  { name: "Reservations", href: "/inventory/reservations", icon: Timer },
+  { name: "Stock Forecast", href: "/inventory/forecast", icon: BarChart3 },
   { name: "Warehouse Ops", href: "/warehouse", icon: Truck },
   { name: "Containers", href: "/containers", icon: Ship },
   { name: "Backorders", href: "/backorders", icon: AlertCircle },
