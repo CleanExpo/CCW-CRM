@@ -83,6 +83,8 @@ scripts/*linear*.py
 scripts/*linear*.js
 !scripts/*.example.py
 !scripts/*.example.js
+!scripts/update_linear_deployment_prep.py
+!scripts/get_linear_priorities.py
 .linear-api-key
 
 # Supabase
