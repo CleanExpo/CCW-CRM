@@ -1,13 +1,13 @@
 """Pydantic schemas for CRM API (Contacts & Activities)."""
 
 from datetime import datetime
-from enum import Enum
+import enum
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
 
-class ActivityType(str, Enum):
+class ActivityType(str, enum.Enum):
     """Activity type enum for API."""
 
     CALL = "call"

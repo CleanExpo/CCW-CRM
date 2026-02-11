@@ -5,7 +5,7 @@ Database models for tracking stock across multiple locations.
 
 from datetime import UTC, datetime
 from decimal import Decimal
-from enum import Enum
+import enum
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -28,7 +28,7 @@ from sqlalchemy.sql import func
 from .models_base import Base
 
 
-class StoreLocation(str, Enum):
+class StoreLocation(str, enum.Enum):
     """Store location enum."""
 
     BRISBANE = "brisbane"

@@ -1,7 +1,7 @@
 """Service request models for workshop/field service tracking."""
 
 from datetime import UTC, datetime
-from enum import Enum as PyEnum
+import enum
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -21,7 +21,7 @@ from sqlalchemy.orm import relationship
 from .models_base import Base
 
 
-class RequestType(str, PyEnum):
+class RequestType(str, enum.Enum):
     """Service request types."""
 
     repair = "repair"
@@ -29,7 +29,7 @@ class RequestType(str, PyEnum):
     installation = "installation"
 
 
-class ServiceStatus(str, PyEnum):
+class ServiceStatus(str, enum.Enum):
     """Service request status."""
 
     submitted = "submitted"
