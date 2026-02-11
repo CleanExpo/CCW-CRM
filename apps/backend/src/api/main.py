@@ -69,6 +69,7 @@ from .routes import (
 from .routes.ai import ai_router, chat, generate, insights
 from .routes import google_ai
 from .routes.integrations import ap2, elevenlabs, sendgrid, shopify, shopify_theme, xero
+from .routes import email_audit  # Email audit trail for GDPR compliance (ISS-037)
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -447,6 +448,9 @@ app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
 app.include_router(ap2.router, tags=["AP2 Integration"])
 app.include_router(google_ai.router, tags=["Google AI"])
+
+# Email Audit Trail (ISS-037) - GDPR compliance, delivery tracking
+app.include_router(email_audit.router, tags=["Email Audit"])
 
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])

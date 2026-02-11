@@ -1,26 +1,42 @@
 """Shopify webhook handlers.
 
 Processes incoming webhooks from Shopify for real-time order and inventory updates.
+
+ISS-036: Enhanced with proper transaction boundaries to prevent data loss on crashes.
+- Uses WebhookService for idempotency and retry support
+- Transaction commits only on successful processing
+- Failed webhooks queued for automatic retry with exponential backoff
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.shopify_models import ShopifyWebhookLog, ShopifyProductMapping
+from src.db.shopify_models import ShopifyProductMapping, ShopifyWebhookLog
 from src.integrations.shopify.client import ShopifyClient
+from src.integrations.shopify.inventory_sync import InventorySyncService
 from src.integrations.shopify.orders import ShopifyOrderImporter
 from src.integrations.shopify.product_sync import BidirectionalProductSyncer
-from src.integrations.shopify.inventory_sync import InventorySyncService
+from src.services.webhook_service import (
+    WebhookProcessingError,
+    WebhookService,
+)
 
 logger = structlog.get_logger(__name__)
 
 
 class ShopifyWebhookHandler:
-    """Handle incoming Shopify webhooks."""
+    """Handle incoming Shopify webhooks with transaction safety.
+
+    ISS-036: This handler now uses WebhookService for:
+    - Idempotency (prevents duplicate processing via X-Shopify-Webhook-Id)
+    - Transaction boundaries (commits only on success)
+    - Retry mechanism (failed webhooks queued for retry)
+    - Dead letter queue (max retries exceeded → manual intervention)
+    """
 
     def __init__(self, db: AsyncSession, client: ShopifyClient) -> None:
         """Initialize webhook handler.
@@ -31,6 +47,7 @@ class ShopifyWebhookHandler:
         """
         self.db = db
         self.client = client
+        self.webhook_service = WebhookService(db)
 
     async def handle_webhook(
         self,
@@ -40,81 +57,97 @@ class ShopifyWebhookHandler:
         webhook_id: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Handle a Shopify webhook.
+        """Handle a Shopify webhook with transaction safety.
+
+        ISS-036: Now uses WebhookService for reliable processing:
+        1. Check idempotency (skip if already processed)
+        2. Create webhook event record
+        3. Process in transaction
+        4. Commit only on success, schedule retry on failure
 
         Args:
             topic: Webhook topic (e.g., "orders/create")
             shop_domain: Shopify shop domain
             payload: Webhook payload
-            webhook_id: Shopify webhook ID (if available)
+            webhook_id: Shopify webhook ID (from X-Shopify-Webhook-Id header)
             headers: Request headers
 
         Returns:
             Processing result dict
         """
         logger.info(
-            "webhook_received",
+            "shopify_webhook_received",
             topic=topic,
             shop_domain=shop_domain,
             webhook_id=webhook_id,
         )
 
-        # Log webhook
-        webhook_log = await self._log_webhook(
-            topic=topic,
-            shop_domain=shop_domain,
-            payload=payload,
-            webhook_id=webhook_id,
-            headers=headers,
-        )
+        # Generate event_id for idempotency (use Shopify's webhook ID if available)
+        if webhook_id:
+            event_id = webhook_id
+        else:
+            timestamp = datetime.now(UTC).timestamp()
+            event_id = f"{shop_domain}_{topic}_{payload.get('id', 'unknown')}_{timestamp}"
 
-        # Route to appropriate handler
-        try:
+        # Create handler wrapper that routes to topic-specific handlers
+        async def process_shopify_webhook(
+            webhook_payload: dict[str, Any],
+            db: AsyncSession,
+        ) -> dict[str, Any]:
+            """Inner handler for Shopify webhook processing."""
+            # Also log to legacy ShopifyWebhookLog for backward compatibility
+            await self._log_webhook_legacy(
+                topic=topic,
+                shop_domain=shop_domain,
+                payload=webhook_payload,
+                webhook_id=webhook_id,
+                headers=headers,
+            )
+
+            # Route to topic-specific handler
             if topic == "orders/create":
-                result = await self._handle_order_create(payload)
+                return await self._handle_order_create(webhook_payload)
             elif topic == "orders/updated":
-                result = await self._handle_order_updated(payload)
+                return await self._handle_order_updated(webhook_payload)
             elif topic == "orders/cancelled":
-                result = await self._handle_order_cancelled(payload)
+                return await self._handle_order_cancelled(webhook_payload)
             elif topic == "products/create":
-                result = await self._handle_product_create(payload)
+                return await self._handle_product_create(webhook_payload)
             elif topic == "products/update":
-                result = await self._handle_product_update(payload)
+                return await self._handle_product_update(webhook_payload)
             elif topic == "inventory_levels/update":
-                result = await self._handle_inventory_update(payload)
+                return await self._handle_inventory_update(webhook_payload)
             else:
                 logger.warning("unhandled_webhook_topic", topic=topic)
-                result = {"handled": False, "reason": f"Unknown topic: {topic}"}
+                return {"handled": False, "reason": f"Unknown topic: {topic}"}
 
-            # Mark webhook as processed
-            webhook_log.processed = True
-            webhook_log.processed_at = datetime.utcnow()
-            await self.db.commit()
+        # Process webhook with transaction safety (ISS-036)
+        result = await self.webhook_service.process_webhook(
+            source="shopify",
+            event_type=topic,
+            event_id=event_id,
+            payload=payload,
+            handler=process_shopify_webhook,
+            headers=headers,
+            max_retries=3,
+        )
 
-            logger.info(
-                "webhook_processed",
-                topic=topic,
-                webhook_id=webhook_id,
-                result=result,
-            )
+        # Transform result for backward compatibility
+        if result["status"] == "success":
+            return {"success": True, "result": result.get("result", {})}
+        elif result["status"] == "duplicate":
+            return {"success": True, "result": {"skipped": True, "reason": "duplicate"}}
+        else:
+            # Return 200 to prevent Shopify from retrying immediately
+            # Webhook service handles retry scheduling
+            return {
+                "success": False,
+                "error": result.get("error", "Processing failed"),
+                "will_retry": result.get("will_retry", False),
+                "next_retry_at": result.get("next_retry_at"),
+            }
 
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            logger.error(
-                "webhook_processing_failed",
-                topic=topic,
-                webhook_id=webhook_id,
-                error=str(e),
-            )
-
-            # Log error
-            webhook_log.processing_error = str(e)
-            await self.db.commit()
-
-            return {"success": False, "error": str(e)}
-
-    async def _log_webhook(
+    async def _log_webhook_legacy(
         self,
         topic: str,
         shop_domain: str,
@@ -122,7 +155,10 @@ class ShopifyWebhookHandler:
         webhook_id: str | None,
         headers: dict[str, str] | None,
     ) -> ShopifyWebhookLog:
-        """Log webhook to database.
+        """Log webhook to legacy ShopifyWebhookLog table for backward compatibility.
+
+        Note: Primary tracking is now in webhook_events table via WebhookService.
+        This maintains the existing audit trail in shopify_webhook_logs.
 
         Args:
             topic: Webhook topic
@@ -220,6 +256,9 @@ class ShopifyWebhookHandler:
 
         Returns:
             Processing result
+
+        Raises:
+            WebhookProcessingError: On sync failure (triggers retry)
         """
         logger.info("handling_product_create", product_id=payload.get("id"))
 
@@ -246,12 +285,15 @@ class ShopifyWebhookHandler:
                 shopify_product_id=payload.get("id"),
                 error=str(e),
             )
-            return {
-                "handled": False,
-                "action": "sync_failed",
-                "shopify_product_id": payload.get("id"),
-                "error": str(e),
-            }
+            # ISS-036: Raise WebhookProcessingError to trigger retry
+            raise WebhookProcessingError(
+                f"Product sync failed: {str(e)}",
+                retriable=True,
+                details={
+                    "shopify_product_id": payload.get("id"),
+                    "action": "product_create",
+                },
+            ) from e
 
     async def _handle_product_update(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Handle products/update webhook (ISS-009: Shopify → ERP sync).
@@ -261,6 +303,9 @@ class ShopifyWebhookHandler:
 
         Returns:
             Processing result
+
+        Raises:
+            WebhookProcessingError: On sync failure (triggers retry)
         """
         logger.info("handling_product_update", product_id=payload.get("id"))
 
@@ -287,12 +332,15 @@ class ShopifyWebhookHandler:
                 shopify_product_id=payload.get("id"),
                 error=str(e),
             )
-            return {
-                "handled": False,
-                "action": "sync_failed",
-                "shopify_product_id": payload.get("id"),
-                "error": str(e),
-            }
+            # ISS-036: Raise WebhookProcessingError to trigger retry
+            raise WebhookProcessingError(
+                f"Product update sync failed: {str(e)}",
+                retriable=True,
+                details={
+                    "shopify_product_id": payload.get("id"),
+                    "action": "product_update",
+                },
+            ) from e
 
     async def _handle_inventory_update(
         self,
@@ -364,10 +412,13 @@ class ShopifyWebhookHandler:
                 product_id=mapping.product_id,
                 error=str(e),
             )
-            return {
-                "handled": False,
-                "action": "sync_failed",
-                "inventory_item_id": inventory_item_id,
-                "product_id": str(mapping.product_id),
-                "error": str(e),
-            }
+            # ISS-036: Raise WebhookProcessingError to trigger retry
+            raise WebhookProcessingError(
+                f"Inventory sync failed: {str(e)}",
+                retriable=True,
+                details={
+                    "inventory_item_id": inventory_item_id,
+                    "product_id": str(mapping.product_id),
+                    "action": "inventory_update",
+                },
+            ) from e

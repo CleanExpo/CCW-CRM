@@ -235,6 +235,35 @@ xero_api_calls = Counter(
     ["operation", "status"],
 )
 
+xero_token_refresh_total = Counter(
+    "xero_token_refresh_total",
+    "Total Xero token refresh attempts",
+    ["status"],  # success, failed, invalid_refresh_token
+)
+
+xero_token_refresh_duration = Histogram(
+    "xero_token_refresh_duration_seconds",
+    "Time spent refreshing Xero tokens",
+    buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
+)
+
+xero_token_expiry_minutes = Gauge(
+    "xero_token_expiry_minutes",
+    "Minutes until Xero access token expires (per connection)",
+    ["tenant_id"],
+)
+
+xero_active_connections = Gauge(
+    "xero_active_connections",
+    "Number of active Xero connections",
+)
+
+xero_connection_health = Gauge(
+    "xero_connection_health",
+    "Xero connection health status (0=inactive, 1=expired, 2=expiring_soon, 3=healthy)",
+    ["tenant_id"],
+)
+
 shopify_api_calls = Counter(
     "shopify_api_calls_total",
     "Shopify API calls",
