@@ -6,7 +6,7 @@ import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Eye, DollarSign, FileText } from "lucide-react";
+import { Plus, Eye, DollarSign, FileText, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Invoice, PaginatedInvoiceResponse } from "./types";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
@@ -15,6 +15,8 @@ import { format } from "date-fns";
 import { InvoiceStatusBadge } from "./components/InvoiceStatusBadge";
 import { InvoiceDetailDialog } from "./components/InvoiceDetailDialog";
 import { RecordPaymentDialog } from "./components/RecordPaymentDialog";
+import { InvoiceForm } from "./components/InvoiceForm";
+import { DeleteInvoiceDialog } from "./components/DeleteInvoiceDialog";
 
 export default function InvoicesPage() {
   const { toast } = useToast();
@@ -36,7 +38,10 @@ export default function InvoicesPage() {
 
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
 
   const loadInvoices = useCallback(async () => {
     setLoading(true);
@@ -90,6 +95,33 @@ export default function InvoicesPage() {
   const handlePaymentRecorded = () => {
     loadInvoices();
     setPaymentDialogOpen(false);
+  };
+
+  const handleCreateInvoice = () => {
+    setEditingInvoice(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setEditingInvoice(invoice);
+    setFormDialogOpen(true);
+  };
+
+  const handleDeleteInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    loadInvoices();
+    setFormDialogOpen(false);
+    setEditingInvoice(null);
+  };
+
+  const handleDeleteSuccess = () => {
+    loadInvoices();
+    setDeleteDialogOpen(false);
+    setSelectedInvoice(null);
   };
 
   const columns = [
@@ -165,13 +197,33 @@ export default function InvoicesPage() {
             View
           </Button>
           {invoice.status !== "paid" && invoice.status !== "cancelled" && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEditInvoice(invoice)}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleRecordPayment(invoice)}
+              >
+                <DollarSign className="h-4 w-4 mr-1" />
+                Payment
+              </Button>
+            </>
+          )}
+          {(invoice.status === "draft" || invoice.status === "cancelled") && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={() => handleRecordPayment(invoice)}
+              onClick={() => handleDeleteInvoice(invoice)}
             >
-              <DollarSign className="h-4 w-4 mr-1" />
-              Payment
+              <Trash2 className="h-4 w-4 mr-1 text-destructive" />
+              Delete
             </Button>
           )}
         </div>
@@ -207,7 +259,7 @@ export default function InvoicesPage() {
             Manage customer invoices and payments
           </p>
         </div>
-        <Button onClick={() => {/* TODO: Open create invoice form */}}>
+        <Button onClick={handleCreateInvoice}>
           <Plus className="h-4 w-4 mr-2" />
           New Invoice
         </Button>
@@ -298,7 +350,7 @@ export default function InvoicesPage() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Get started by creating your first invoice
               </p>
-              <Button className="mt-4" onClick={() => {/* TODO: Open create form */}}>
+              <Button className="mt-4" onClick={handleCreateInvoice}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Invoice
               </Button>
@@ -339,8 +391,22 @@ export default function InvoicesPage() {
             onOpenChange={setPaymentDialogOpen}
             onPaymentRecorded={handlePaymentRecorded}
           />
+          <DeleteInvoiceDialog
+            invoice={selectedInvoice}
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            onSuccess={handleDeleteSuccess}
+          />
         </>
       )}
+
+      {/* Create/Edit Invoice Form */}
+      <InvoiceForm
+        invoice={editingInvoice}
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }
