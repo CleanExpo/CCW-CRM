@@ -8,13 +8,20 @@
 
 | Secret | Status | Enables | When to Add |
 |--------|--------|---------|-------------|
-| *None required* | ✅ | Local development, CI/CD | **Never** - works without secrets |
+| *None required* | ✅ | Local development, CI | **Never** - works without secrets |
+| `STAGING_SSH_KEY` | 🔴 Required for deploy | Staging deployment | Before deploying to staging |
+| `STAGING_SSH_HOST` | 🔴 Required for deploy | Staging deployment | Before deploying to staging |
+| `STAGING_SSH_USER` | 🔴 Required for deploy | Staging deployment | Before deploying to staging |
+| `PRODUCTION_SSH_KEY` | 🔴 Required for deploy | Production deployment | Before deploying to production |
+| `PRODUCTION_SSH_HOST` | 🔴 Required for deploy | Production deployment | Before deploying to production |
+| `PRODUCTION_SSH_USER` | 🔴 Required for deploy | Production deployment | Before deploying to production |
+| `SLACK_WEBHOOK_URL` | 🟡 Optional | Deployment notifications | When you want Slack alerts |
 | `SNYK_TOKEN` | 🟡 Optional | Advanced security scanning | When you want Snyk reports |
 | `CODECOV_TOKEN` | 🟡 Optional | Coverage trend tracking | When you want historical coverage |
-| `DIGITALOCEAN_ACCESS_TOKEN` | 🟡 Optional | Backend deployment | When deploying backend |
-| `VERCEL_TOKEN` | 🟡 Optional | Frontend deployment | When deploying frontend (if not using GitHub integration) |
+| `DIGITALOCEAN_ACCESS_TOKEN` | 🟡 Optional | Alternative backend deployment | When using DigitalOcean |
+| `VERCEL_TOKEN` | 🟡 Optional | Alternative frontend deployment | When using Vercel |
 
-**Default behavior**: All workflows run successfully without any secrets.
+**Default behavior**: CI workflows run successfully without any secrets. Deployment workflows require SSH credentials.
 
 ---
 

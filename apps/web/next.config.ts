@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@shared"],
+  // Enable standalone output for Docker builds
+  output: "standalone",
   // ESLint enabled during builds for code quality
   // typescript: Type checking enabled during builds for type safety
   experimental: {
