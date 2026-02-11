@@ -19,6 +19,19 @@ services:
       retries: 5
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   redis:
     image: redis:7-alpine
@@ -32,6 +45,19 @@ services:
       retries: 5
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   # Backend service (running in Docker)
   backend:
@@ -65,6 +91,19 @@ services:
       - ./apps/backend/alembic:/app/alembic
       - ./apps/backend/alembic.ini:/app/alembic.ini
     command: uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   # Monitoring Stack
   prometheus:
@@ -85,6 +124,19 @@ services:
       - "9090:9090"
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   grafana:
     image: grafana/grafana:10.2.2
@@ -106,6 +158,19 @@ services:
       - prometheus
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   alertmanager:
     image: prom/alertmanager:v0.26.0
@@ -123,6 +188,19 @@ services:
       - "9093:9093"
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
@@ -137,6 +215,19 @@ services:
         condition: service_healthy
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   redis-exporter:
     image: oliver006/redis_exporter:v1.55.0
@@ -151,6 +242,49 @@ services:
         condition: service_healthy
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  # Container metrics exporter (cAdvisor)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: ccw-cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
 volumes:
   postgres_data:

@@ -621,10 +621,13 @@ async def create_order(
     db.add(order)
     await db.flush()
 
-    # Create order items
-    for item_data in order_items:
-        item = OrderItemModel(order_id=order.id, **item_data)
-        db.add(item)
+    # Create order items - BULK INSERT OPTIMIZATION (ISS-031)
+    # Use add_all() for single bulk insert instead of individual adds
+    order_item_models = [
+        OrderItemModel(order_id=order.id, **item_data)
+        for item_data in order_items
+    ]
+    db.add_all(order_item_models)
 
     await log_order_activity(
         db=db,
@@ -867,8 +870,9 @@ async def update_order(
             line_items_for_calc.append((item_data.quantity, unit_price))
 
         # PHASE 4: Apply diff - update existing items or create new ones
+        # ISS-031: BULK INSERT OPTIMIZATION - collect new items and add_all at once
         items_updated = 0
-        items_created = 0
+        new_items_to_create = []
 
         for i, item_data_orig in enumerate(order_data.items):
             item_dict = order_items[i]
@@ -882,10 +886,15 @@ async def update_order(
                 existing_item.line_total = item_dict["line_total"]
                 items_updated += 1
             else:
-                # Create new item
-                item = OrderItemModel(order_id=order.id, **item_dict)
-                db.add(item)
-                items_created += 1
+                # Collect new item for bulk insert
+                new_items_to_create.append(
+                    OrderItemModel(order_id=order.id, **item_dict)
+                )
+
+        # Bulk insert all new items at once (single database round-trip)
+        if new_items_to_create:
+            db.add_all(new_items_to_create)
+        items_created = len(new_items_to_create)
 
         totals = calculate_totals(
             line_items_for_calc,

@@ -228,10 +228,13 @@ async def create_quote(
     db.add(quote)
     await db.flush()
 
-    # Create quote items
-    for item_data in quote_items:
-        item = QuoteItemModel(quote_id=quote.id, **item_data)
-        db.add(item)
+    # Create quote items - BULK INSERT OPTIMIZATION (ISS-031)
+    # Use add_all() for single bulk insert instead of individual adds
+    quote_item_models = [
+        QuoteItemModel(quote_id=quote.id, **item_data)
+        for item_data in quote_items
+    ]
+    db.add_all(quote_item_models)
 
     await db.commit()
 
@@ -342,10 +345,13 @@ async def update_quote(
 
             line_items_for_calc.append((item_data.quantity, unit_price))
 
-        # Create new quote items
-        for item_data in quote_items:
-            item = QuoteItemModel(quote_id=quote.id, **item_data)
-            db.add(item)
+        # Create new quote items - BULK INSERT OPTIMIZATION (ISS-031)
+        # Use add_all() for single bulk insert instead of individual adds
+        quote_item_models = [
+            QuoteItemModel(quote_id=quote.id, **item_data)
+            for item_data in quote_items
+        ]
+        db.add_all(quote_item_models)
 
         totals = calculate_totals(
             line_items_for_calc,
@@ -569,16 +575,19 @@ async def convert_quote_to_order(
     db.add(order)
     await db.flush()
 
-    # Create order items from quote items
-    for quote_item in quote.quote_items:
-        order_item = OrderItemModel(
+    # Create order items from quote items - BULK INSERT OPTIMIZATION (ISS-031)
+    # Use add_all() for single bulk insert instead of individual adds
+    order_item_models = [
+        OrderItemModel(
             order_id=order.id,
             product_id=quote_item.product_id,
             quantity=quote_item.quantity,
             unit_price=quote_item.unit_price,
             line_total=quote_item.line_total,
         )
-        db.add(order_item)
+        for quote_item in quote.quote_items
+    ]
+    db.add_all(order_item_models)
 
     # Update quote status
     quote.status = "accepted"
