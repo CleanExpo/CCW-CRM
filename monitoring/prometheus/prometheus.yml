@@ -17,7 +17,7 @@ rule_files:
 
 scrape_configs:
   - job_name: 'ccw-erp-backend'
-    metrics_path: '/api/metrics'
+    metrics_path: '/metrics'
     static_configs:
       - targets:
           - 'backend:8000'

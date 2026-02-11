@@ -20,6 +20,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/",
         "/health",
         "/ready",
+        "/metrics",  # Prometheus metrics endpoint (must be public for scraping)
         "/docs",
         "/openapi.json",
         "/api/auth/login",
