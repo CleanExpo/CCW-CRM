@@ -120,9 +120,7 @@ async def list_quotes(
     items = []
     for q in quotes:
         quote_dict = Quote.model_validate(q).model_dump()
-        quote_dict["valid_until"] = (
-            q.valid_until.date().isoformat() if q.valid_until else None
-        )
+        # Pydantic serializer handles valid_until conversion
         quote_dict["items"] = [
             QuoteItem.model_validate(item).model_dump()
             for item in q.quote_items
@@ -155,35 +153,13 @@ async def get_quote(
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
 
-    # Manually build response dict from SQLAlchemy model
-    response = {
-        "id": str(quote.id),
-        "organization_id": str(quote.organization_id) if quote.organization_id else None,
-        "quote_number": quote.quote_number,
-        "customer_id": str(quote.customer_id),
-        "status": quote.status.value if hasattr(quote.status, 'value') else quote.status,
-        "valid_until": quote.valid_until.date().isoformat() if quote.valid_until else None,
-        "notes": quote.notes,
-        "total": str(quote.total),
-        "quote_date": quote.quote_date.isoformat(),
-        "created_at": quote.created_at.isoformat(),
-        "updated_at": quote.updated_at.isoformat(),
-        # Manually serialize quote_items
-        "items": [
-            {
-                "id": str(item.id),
-                "quote_id": str(item.quote_id),
-                "product_id": str(item.product_id),
-                "quantity": item.quantity,
-                "unit_price": str(item.unit_price),
-                "line_total": str(item.line_total),
-                "created_at": item.created_at.isoformat(),
-            }
-            for item in quote.quote_items
-        ],
-    }
-
-    return response
+    # Use Pydantic serialization (handles status enum and valid_until conversion)
+    quote_dict = Quote.model_validate(quote).model_dump()
+    quote_dict["items"] = [
+        QuoteItem.model_validate(item).model_dump()
+        for item in quote.quote_items
+    ]
+    return quote_dict
 
 
 @router.post("", response_model=Quote, status_code=201)
@@ -195,11 +171,8 @@ async def create_quote(
     """Create a new quote with items."""
     # Generate quote number
     quote_number = await generate_quote_number(db)
-    valid_until = (
-        datetime.combine(quote_data.valid_until, time.min, tzinfo=timezone.utc)
-        if quote_data.valid_until
-        else None
-    )
+    # Pydantic validator now handles datetime conversion
+    valid_until = quote_data.valid_until
 
     # Calculate totals using shared calculation utilities
     quote_items = []
@@ -261,21 +234,22 @@ async def create_quote(
         db.add(item)
 
     await db.commit()
-    await db.refresh(quote)
+
+    # Refresh with items relationship loaded (no separate query = no race condition)
+    await db.refresh(quote, attribute_names=['quote_items'])
 
     # Invalidate quote-related caches
     await invalidate_quote_caches()
 
-    # Track business metrics
-    status_value = quote.status.value if hasattr(quote.status, 'value') else quote.status
-    metrics.quotes_created.labels(status=status_value).inc()
+    # Track business metrics (Pydantic ensures status is QuoteStatus enum)
+    metrics.quotes_created.labels(status=quote.status.value).inc()
 
     # Publish real-time events
     await sse_service.publish("dashboard-metrics", {
         "type": "metrics_updated",
         "metric": "pending_quotes",
         "change": "increment",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -283,26 +257,11 @@ async def create_quote(
         "title": "New Quote",
         "description": f"Quote {quote_number} created - ${total}",
         "link": f"/quotes/{quote.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
-    # Reload with items
-    query = (
-        select(QuoteModel)
-        .options(selectinload(QuoteModel.quote_items))
-        .where(QuoteModel.id == quote.id)
-    )
-    result = await db.execute(query)
-    quote = result.scalar_one_or_none()
-
-    if not quote:
-        # Quote was deleted between operation and reload (race condition or concurrent delete)
-        raise HTTPException(status_code=404, detail="Quote not found - may have been deleted")
-
+    # Build response from already-loaded quote object (Pydantic serializer handles valid_until)
     quote_dict = Quote.model_validate(quote).model_dump()
-    quote_dict["valid_until"] = (
-        quote.valid_until.date().isoformat() if quote.valid_until else None
-    )
     quote_dict["items"] = [
         QuoteItem.model_validate(item).model_dump()
         for item in quote.quote_items
@@ -396,7 +355,9 @@ async def update_quote(
         quote.total = totals["total"]
 
     await db.commit()
-    await db.refresh(quote)
+
+    # Refresh with items relationship loaded (no separate query = no race condition)
+    await db.refresh(quote, attribute_names=['quote_items'])
 
     # Invalidate quote-related caches
     await invalidate_quote_caches()
@@ -407,26 +368,11 @@ async def update_quote(
         "title": "Quote Updated",
         "description": f"Quote {quote.quote_number} updated",
         "link": f"/quotes/{quote.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
-    # Reload with items
-    query = (
-        select(QuoteModel)
-        .options(selectinload(QuoteModel.quote_items))
-        .where(QuoteModel.id == quote.id)
-    )
-    result = await db.execute(query)
-    quote = result.scalar_one_or_none()
-
-    if not quote:
-        # Quote was deleted between operation and reload (race condition or concurrent delete)
-        raise HTTPException(status_code=404, detail="Quote not found - may have been deleted")
-
+    # Build response from already-loaded quote object (Pydantic serializer handles valid_until)
     quote_dict = Quote.model_validate(quote).model_dump()
-    quote_dict["valid_until"] = (
-        quote.valid_until.date().isoformat() if quote.valid_until else None
-    )
     quote_dict["items"] = [
         QuoteItem.model_validate(item).model_dump()
         for item in quote.quote_items
@@ -463,7 +409,7 @@ async def delete_quote(
         "type": "metrics_updated",
         "metric": "pending_quotes",
         "change": "decrement",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -471,7 +417,7 @@ async def delete_quote(
         "title": "Quote Deleted",
         "description": f"Quote {quote_number} deleted",
         "link": "/quotes",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
     return None
@@ -507,7 +453,9 @@ async def update_quote_status(
     # Update status
     quote.status = status_update.status
     await db.commit()
-    await db.refresh(quote)
+
+    # Refresh with items relationship loaded (no separate query = no race condition)
+    await db.refresh(quote, attribute_names=['quote_items'])
 
     # Invalidate quote-related caches
     await invalidate_quote_caches()
@@ -518,23 +466,8 @@ async def update_quote_status(
     elif status_update.status == "accepted":
         metrics.quotes_converted.inc()
 
-    # Reload with items
-    query = (
-        select(QuoteModel)
-        .options(selectinload(QuoteModel.quote_items))
-        .where(QuoteModel.id == quote.id)
-    )
-    result = await db.execute(query)
-    quote = result.scalar_one_or_none()
-
-    if not quote:
-        # Quote was deleted between operation and reload (race condition or concurrent delete)
-        raise HTTPException(status_code=404, detail="Quote not found - may have been deleted")
-
+    # Build response from already-loaded quote object (Pydantic serializer handles valid_until)
     quote_dict = Quote.model_validate(quote).model_dump()
-    quote_dict["valid_until"] = (
-        quote.valid_until.date().isoformat() if quote.valid_until else None
-    )
     quote_dict["items"] = [
         QuoteItem.model_validate(item).model_dump()
         for item in quote.quote_items
@@ -668,14 +601,14 @@ async def convert_quote_to_order(
         "type": "metrics_updated",
         "metric": "pending_quotes",
         "change": "decrement",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
     await sse_service.publish("dashboard-metrics", {
         "type": "metrics_updated",
         "metric": "active_orders",
         "change": "increment",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -683,7 +616,7 @@ async def convert_quote_to_order(
         "title": "Quote Converted to Order",
         "description": f"Quote {quote.quote_number} converted to order {order_number}",
         "link": f"/orders/{order.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
     # Reload with items
@@ -705,12 +638,3 @@ async def convert_quote_to_order(
         for item in order.order_items
     ]
     return order_dict
-
-
-@router.post("/{quote_id}/convert", response_model=Order, status_code=201)
-async def convert_quote_to_order_short(
-    quote_id: UUID,
-    db: AsyncSession = Depends(get_db),
-):
-    """Convert a quote to an order (short alias for /convert-to-order)."""
-    return await convert_quote_to_order(quote_id, db)
