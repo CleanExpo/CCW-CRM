@@ -1,7 +1,7 @@
 """SQLAlchemy models for submission notes and activity tracking."""
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import Column, DateTime, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -26,7 +26,15 @@ class SubmissionNote(Base):
 
     # Metadata
     created_by = Column(String(255), nullable=True)  # User who created the note
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     # Additional data (JSON-serializable dict stored as text for status changes, etc.)
     meta_data = Column(Text, nullable=True)

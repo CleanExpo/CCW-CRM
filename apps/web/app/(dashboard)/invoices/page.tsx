@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { InvoiceForm } from "./components/InvoiceForm";
 import { DeleteInvoiceDialog } from "./components/DeleteInvoiceDialog";
 
 export default function InvoicesPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [total, setTotal] = useState(0);
@@ -73,18 +75,8 @@ export default function InvoicesPage() {
     loadInvoices();
   }, [loadInvoices]);
 
-  const handleViewInvoice = async (invoice: Invoice) => {
-    try {
-      const fullInvoice = await apiClient.get<Invoice>(`/api/invoices/${invoice.id}`);
-      setSelectedInvoice(fullInvoice);
-      setDetailDialogOpen(true);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load invoice details",
-      });
-    }
+  const handleViewInvoice = (invoice: Invoice) => {
+    router.push(`/invoices/${invoice.id}`);
   };
 
   const handleRecordPayment = (invoice: Invoice) => {
