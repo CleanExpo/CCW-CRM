@@ -32,6 +32,7 @@ import {
   PackageCheck,
   Timer,
   BarChart3,
+  Calendar,
 } from "lucide-react";
 
 const navigation = [
@@ -47,6 +48,7 @@ const navigation = [
   { name: "Backorders", href: "/backorders", icon: AlertCircle },
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Contacts", href: "/contacts", icon: UserCircle },
+  { name: "Activities", href: "/activities", icon: Calendar },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "POS Terminal", href: "/pos", icon: CreditCard },
   { name: "Reconciliation", href: "/pos/reconciliation", icon: Scale },

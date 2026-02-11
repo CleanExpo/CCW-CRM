@@ -18,6 +18,7 @@ import { DeleteContactDialog } from "../../contacts/components/DeleteContactDial
 import { ActivityTimeline, type Activity } from "./components/ActivityTimeline";
 import { ActivityForm } from "./components/ActivityForm";
 import { DeleteActivityDialog } from "./components/DeleteActivityDialog";
+import type { ActivityWithRelations } from "@/lib/types/activities";
 
 interface Customer {
   id: string;
@@ -102,7 +103,7 @@ export default function CustomerDetailPage() {
   // Activity dialog states
   const [activityFormOpen, setActivityFormOpen] = useState(false);
   const [deleteActivityDialogOpen, setDeleteActivityDialogOpen] = useState(false);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityWithRelations | null>(null);
   const [activityRefreshTrigger, setActivityRefreshTrigger] = useState(0);
 
   const loadCustomerData = useCallback(async () => {
@@ -212,12 +213,12 @@ export default function CustomerDetailPage() {
   };
 
   const handleEditActivity = (activity: Activity) => {
-    setSelectedActivity(activity);
+    setSelectedActivity(activity as ActivityWithRelations);
     setActivityFormOpen(true);
   };
 
   const handleDeleteActivity = (activity: Activity) => {
-    setSelectedActivity(activity);
+    setSelectedActivity(activity as ActivityWithRelations);
     setDeleteActivityDialogOpen(true);
   };
 

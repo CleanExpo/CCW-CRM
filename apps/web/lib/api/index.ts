@@ -20,6 +20,7 @@ export { inventoryApi } from "./inventory";
 export { purchaseOrdersApi } from "./purchase-orders";
 export { suppliersApi } from "./suppliers";
 export { shipmentsApi } from "./shipments";
+export { activitiesApi } from "./activities";
 
 // Auth types
 export type { User, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "./auth";
@@ -134,3 +135,23 @@ export type {
   PaginatedShipments,
   TrackingUpdate,
 } from "./shipments";
+
+// Activities types - exported from centralized types
+export type {
+  Activity,
+  ActivityWithRelations,
+  ActivityType,
+  CreateActivityRequest,
+  UpdateActivityRequest,
+  PaginatedActivities,
+  ActivityStats,
+  ActivityTypeConfig,
+  ACTIVITY_TYPE_CONFIG,
+  isTask,
+  isCompleted,
+  isOverdue,
+  getActivityStatus,
+} from "@/lib/types/activities";
+
+// Activities API param types
+export type { ActivityListParams } from "./activities";

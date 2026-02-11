@@ -66,7 +66,7 @@ export function DeleteActivityDialog({
           <AlertDialogTitle>Delete Activity?</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently delete the{" "}
-            <span className="font-semibold">{activity.activity_type}</span> activity{" "}
+            <span className="font-semibold capitalize">{activity.activity_type}</span> activity{" "}
             <span className="font-semibold">&quot;{activity.subject}&quot;</span>.
             <br />
             <br />
