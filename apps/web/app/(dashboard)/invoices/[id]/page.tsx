@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { apiClient } from "@/lib/api/client";
 import { Invoice } from "../types";
@@ -38,7 +38,7 @@ export default function InvoiceDetailPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
-  const loadInvoice = async () => {
+  const loadInvoice = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiClient.get<Invoice>(`/api/invoices/${invoiceId}`);
@@ -55,11 +55,11 @@ export default function InvoiceDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [invoiceId, toast, router]);
 
   useEffect(() => {
     loadInvoice();
-  }, [invoiceId]);
+  }, [loadInvoice]);
 
   const handleBack = () => {
     router.push("/invoices");

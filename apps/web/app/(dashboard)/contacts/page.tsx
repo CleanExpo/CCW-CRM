@@ -62,9 +62,9 @@ export default function ContactsPage() {
   const search = searchState.search || "";
   const page = searchState.page || 1;
   const pageSize = searchState.pageSize || 50;
-  const setSearch = (value: string) => updateField("search", value);
-  const setPage = (value: number) => updateField("page", value);
-  const setPageSize = (value: number) => updateField("pageSize", value);
+  const setSearch = useCallback((value: string) => updateField("search", value), [updateField]);
+  const setPage = useCallback((value: number) => updateField("page", value), [updateField]);
+  const setPageSize = useCallback((value: number) => updateField("pageSize", value), [updateField]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
