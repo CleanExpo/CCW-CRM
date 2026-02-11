@@ -31,16 +31,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { apiClient } from "@/lib/api/client";
+import { invoicesApi } from "@/lib/api/invoices";
 import { useToast } from "@/hooks/use-toast";
-import { Invoice, CreatePaymentData } from "../types";
+import type { Invoice, InvoiceSummary, PaymentMethod } from "@/lib/types/invoices";
 
 const paymentSchema = z.object({
   amount: z.string().refine(
     (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
     "Amount must be greater than 0"
   ),
-  payment_method: z.enum(["cash", "card", "account", "bank_transfer"]),
+  payment_method: z.enum(["cash", "check", "bank_transfer", "credit_card", "other"] as const),
   payment_date: z.string().optional(),
   reference_number: z.string().optional(),
   notes: z.string().optional(),
@@ -49,7 +49,7 @@ const paymentSchema = z.object({
 type PaymentFormData = z.infer<typeof paymentSchema>;
 
 interface RecordPaymentDialogProps {
-  invoice: Invoice;
+  invoice: Invoice | InvoiceSummary;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPaymentRecorded: () => void;
@@ -72,7 +72,7 @@ export function RecordPaymentDialog({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       amount: maxAmount.toString(),
-      payment_method: "card",
+      payment_method: "credit_card",
       payment_date: new Date().toISOString().split("T")[0],
       reference_number: "",
       notes: "",
@@ -82,18 +82,13 @@ export function RecordPaymentDialog({
   const onSubmit = async (data: PaymentFormData) => {
     setIsLoading(true);
     try {
-      const paymentData: CreatePaymentData = {
+      await invoicesApi.recordPayment(invoice.id, {
         amount: parseFloat(data.amount),
-        payment_method: data.payment_method,
-        payment_date: data.payment_date,
+        payment_method: data.payment_method as PaymentMethod,
+        payment_date: data.payment_date || new Date().toISOString().split("T")[0],
         reference_number: data.reference_number || undefined,
         notes: data.notes || undefined,
-      };
-
-      await apiClient.post(
-        `/api/invoices/${invoice.id}/payments`,
-        paymentData
-      );
+      });
 
       toast({
         title: "Payment recorded",
@@ -167,9 +162,10 @@ export function RecordPaymentDialog({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="card">Credit/Debit Card</SelectItem>
-                      <SelectItem value="account">On Account</SelectItem>
+                      <SelectItem value="credit_card">Credit/Debit Card</SelectItem>
+                      <SelectItem value="check">Check</SelectItem>
                       <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

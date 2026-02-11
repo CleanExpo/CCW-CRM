@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Invoice } from "../types";
+import type { Invoice } from "@/lib/types/invoices";
 import { format } from "date-fns";
 import { InvoiceStatusBadge } from "./InvoiceStatusBadge";
 import { Separator } from "@/components/ui/separator";
@@ -49,16 +49,16 @@ export function InvoiceDetailDialog({
               <p className="mt-1 font-medium">{invoice.customer_name || "—"}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Issue Date</h3>
-              <p className="mt-1">{format(new Date(invoice.issue_date), "MMM d, yyyy")}</p>
+              <h3 className="text-sm font-medium text-muted-foreground">Invoice Date</h3>
+              <p className="mt-1">{format(new Date(invoice.invoice_date), "MMM d, yyyy")}</p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Due Date</h3>
               <p className="mt-1">{format(new Date(invoice.due_date), "MMM d, yyyy")}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Payment Terms</h3>
-              <p className="mt-1">{invoice.payment_terms}</p>
+              <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
+              <p className="mt-1"><InvoiceStatusBadge status={invoice.status} /></p>
             </div>
           </div>
 
@@ -106,10 +106,8 @@ export function InvoiceDetailDialog({
               <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
-                Tax ({typeof invoice.tax_rate === "string" ? invoice.tax_rate : invoice.tax_rate.toFixed(2)}%)
-              </span>
-              <span className="font-medium">{formatCurrency(invoice.tax_amount)}</span>
+              <span className="text-muted-foreground">Tax</span>
+              <span className="font-medium">{formatCurrency(invoice.tax_total)}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-lg font-bold">

@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { apiClient } from "@/lib/api/client";
-import { Invoice } from "../types";
+import { invoicesApi } from "@/lib/api/invoices";
+import type { Invoice } from "@/lib/types/invoices";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -41,7 +41,7 @@ export default function InvoiceDetailPage() {
   const loadInvoice = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiClient.get<Invoice>(`/api/invoices/${invoiceId}`);
+      const data = await invoicesApi.get(invoiceId);
       setInvoice(data);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load invoice";
@@ -79,7 +79,7 @@ export default function InvoiceDetailPage() {
 
   const handleSendInvoice = async () => {
     try {
-      await apiClient.post(`/api/invoices/${invoiceId}/send`, {});
+      await invoicesApi.send(invoiceId);
       toast({
         title: "Invoice Sent",
         description: "Invoice has been sent to the customer",
@@ -235,9 +235,9 @@ export default function InvoiceDetailPage() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span className="text-sm font-medium">Issue Date</span>
+                  <span className="text-sm font-medium">Invoice Date</span>
                 </div>
-                <p className="text-lg">{format(new Date(invoice.issue_date), "MMM d, yyyy")}</p>
+                <p className="text-lg">{format(new Date(invoice.invoice_date), "MMM d, yyyy")}</p>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -247,13 +247,6 @@ export default function InvoiceDetailPage() {
                 <p className="text-lg font-semibold">
                   {format(new Date(invoice.due_date), "MMM d, yyyy")}
                 </p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <FileText className="h-4 w-4" />
-                  <span className="text-sm font-medium">Payment Terms</span>
-                </div>
-                <p className="text-lg">{invoice.payment_terms}</p>
               </div>
             </CardContent>
           </Card>
@@ -337,14 +330,8 @@ export default function InvoiceDetailPage() {
                   <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Tax (
-                    {typeof invoice.tax_rate === "string"
-                      ? invoice.tax_rate
-                      : invoice.tax_rate.toFixed(2)}
-                    %)
-                  </span>
-                  <span className="font-medium">{formatCurrency(invoice.tax_amount)}</span>
+                  <span className="text-muted-foreground">Tax</span>
+                  <span className="font-medium">{formatCurrency(invoice.tax_total)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">

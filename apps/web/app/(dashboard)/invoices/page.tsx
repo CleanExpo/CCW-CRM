@@ -5,24 +5,23 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "@/lib/api/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Eye, DollarSign, FileText, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Invoice, PaginatedInvoiceResponse } from "./types";
+import type { Invoice, InvoiceSummary } from "@/lib/types/invoices";
+import { invoicesApi } from "@/lib/api/invoices";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { format } from "date-fns";
 import { InvoiceStatusBadge } from "./components/InvoiceStatusBadge";
-import { InvoiceDetailDialog } from "./components/InvoiceDetailDialog";
 import { RecordPaymentDialog } from "./components/RecordPaymentDialog";
 import { InvoiceForm } from "./components/InvoiceForm";
 import { DeleteInvoiceDialog } from "./components/DeleteInvoiceDialog";
 
 export default function InvoicesPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const { toast} = useToast();
+  const [invoices, setInvoices] = useState<InvoiceSummary[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -38,21 +37,21 @@ export default function InvoicesPage() {
   const setPage = (value: number) => updateField("page", value);
   const setPageSize = (value: number) => updateField("pageSize", value);
 
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceSummary | null>(null);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
 
   const loadInvoices = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<PaginatedInvoiceResponse>(
-        `/api/invoices?page=${page}&page_size=${pageSize}`
-      );
+      const response = await invoicesApi.list({
+        page,
+        page_size: pageSize,
+      });
 
-      setInvoices(response.items);
+      setInvoices(response.data);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
@@ -75,11 +74,11 @@ export default function InvoicesPage() {
     loadInvoices();
   }, [loadInvoices]);
 
-  const handleViewInvoice = (invoice: Invoice) => {
+  const handleViewInvoice = (invoice: InvoiceSummary) => {
     router.push(`/invoices/${invoice.id}`);
   };
 
-  const handleRecordPayment = (invoice: Invoice) => {
+  const handleRecordPayment = (invoice: InvoiceSummary) => {
     setSelectedInvoice(invoice);
     setPaymentDialogOpen(true);
   };
@@ -94,12 +93,22 @@ export default function InvoicesPage() {
     setFormDialogOpen(true);
   };
 
-  const handleEditInvoice = (invoice: Invoice) => {
-    setEditingInvoice(invoice);
-    setFormDialogOpen(true);
+  const handleEditInvoice = async (invoice: InvoiceSummary) => {
+    try {
+      const fullInvoice = await invoicesApi.get(invoice.id);
+      setEditingInvoice(fullInvoice);
+      setFormDialogOpen(true);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to load invoice";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
+    }
   };
 
-  const handleDeleteInvoice = (invoice: Invoice) => {
+  const handleDeleteInvoice = (invoice: InvoiceSummary) => {
     setSelectedInvoice(invoice);
     setDeleteDialogOpen(true);
   };
@@ -120,7 +129,7 @@ export default function InvoicesPage() {
     {
       key: "invoice_number",
       label: "Invoice #",
-      render: (invoice: Invoice) => (
+      render: (invoice: InvoiceSummary) => (
         <span className="font-mono font-semibold text-primary">
           {invoice.invoice_number}
         </span>
@@ -129,30 +138,30 @@ export default function InvoicesPage() {
     {
       key: "customer_name",
       label: "Customer",
-      render: (invoice: Invoice) => (
+      render: (invoice: InvoiceSummary) => (
         <span className="font-medium">{invoice.customer_name || "—"}</span>
       ),
     },
     {
-      key: "issue_date",
-      label: "Issue Date",
-      render: (invoice: Invoice) => format(new Date(invoice.issue_date), "MMM d, yyyy"),
+      key: "invoice_date",
+      label: "Invoice Date",
+      render: (invoice: InvoiceSummary) => format(new Date(invoice.invoice_date), "MMM d, yyyy"),
     },
     {
       key: "due_date",
       label: "Due Date",
-      render: (invoice: Invoice) => format(new Date(invoice.due_date), "MMM d, yyyy"),
+      render: (invoice: InvoiceSummary) => format(new Date(invoice.due_date), "MMM d, yyyy"),
     },
     {
       key: "status",
       label: "Status",
-      render: (invoice: Invoice) => <InvoiceStatusBadge status={invoice.status} />,
+      render: (invoice: InvoiceSummary) => <InvoiceStatusBadge status={invoice.status} />,
     },
     {
       key: "total",
       label: "Total",
       align: "right" as const,
-      render: (invoice: Invoice) => (
+      render: (invoice: InvoiceSummary) => (
         <span className="font-semibold">
           ${typeof invoice.total === "string" ? invoice.total : invoice.total.toFixed(2)}
         </span>
@@ -162,7 +171,7 @@ export default function InvoicesPage() {
       key: "amount_due",
       label: "Amount Due",
       align: "right" as const,
-      render: (invoice: Invoice) => {
+      render: (invoice: InvoiceSummary) => {
         const amountDue = typeof invoice.amount_due === "string"
           ? parseFloat(invoice.amount_due)
           : invoice.amount_due;
@@ -178,7 +187,7 @@ export default function InvoicesPage() {
       key: "actions",
       label: "Actions",
       align: "right" as const,
-      render: (invoice: Invoice) => (
+      render: (invoice: InvoiceSummary) => (
         <div className="flex justify-end gap-2">
           <Button
             variant="ghost"
@@ -372,11 +381,6 @@ export default function InvoicesPage() {
       {/* Dialogs */}
       {selectedInvoice && (
         <>
-          <InvoiceDetailDialog
-            invoice={selectedInvoice}
-            open={detailDialogOpen}
-            onOpenChange={setDetailDialogOpen}
-          />
           <RecordPaymentDialog
             invoice={selectedInvoice}
             open={paymentDialogOpen}

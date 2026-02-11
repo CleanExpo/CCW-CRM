@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/dialog";
 import { invoicesApi } from "@/lib/api/invoices";
 import { useToast } from "@/hooks/use-toast";
-import { Invoice } from "../types";
+import type { Invoice, InvoiceSummary } from "@/lib/types/invoices";
 
 interface DeleteInvoiceDialogProps {
-  invoice: Invoice | null;
+  invoice: Invoice | InvoiceSummary | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;

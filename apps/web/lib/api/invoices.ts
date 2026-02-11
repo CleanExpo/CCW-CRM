@@ -1,49 +1,54 @@
 import { apiClient } from "./client";
-import {
+import type {
   Invoice,
-  InvoiceItem,
   InvoicePayment,
-  CreateInvoiceData,
-  CreatePaymentData,
-  UpdateInvoiceData,
-  PaginatedInvoiceResponse,
-} from "@/app/(dashboard)/invoices/types";
-
-/**
- * Invoice list params
- */
-export interface InvoiceListParams {
-  page?: number;
-  page_size?: number;
-  search?: string;
-  status?: string;
-  customer_id?: string;
-  sort_by?: string;
-  sort_order?: "asc" | "desc";
-}
+  PaginatedInvoicesResponse,
+  CreateInvoiceRequest,
+  UpdateInvoiceRequest,
+  RecordPaymentRequest,
+  InvoiceStatus,
+  RevenueSummary,
+  TaxSummary,
+} from "@/lib/types/invoices";
 
 /**
  * Invoices API client
+ * Backend routes: apps/backend/src/api/routes/invoices.py, invoice_payments.py
  */
 export const invoicesApi = {
   /**
    * List invoices with pagination and filters
+   * GET /api/invoices
    */
-  async list(params: InvoiceListParams = {}): Promise<PaginatedInvoiceResponse> {
+  async list(params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: InvoiceStatus;
+    customer_id?: string;
+    date_from?: string;
+    date_to?: string;
+    overdue_only?: boolean;
+  }): Promise<PaginatedInvoicesResponse> {
     const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
-    if (params.search) queryParams.append("search", params.search);
-    if (params.status) queryParams.append("status", params.status);
-    if (params.customer_id) queryParams.append("customer_id", params.customer_id);
-    if (params.sort_by) queryParams.append("sort_by", params.sort_by);
-    if (params.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.page_size)
+      queryParams.append("page_size", params.page_size.toString());
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.customer_id) queryParams.append("customer_id", params.customer_id);
+    if (params?.date_from) queryParams.append("date_from", params.date_from);
+    if (params?.date_to) queryParams.append("date_to", params.date_to);
+    if (params?.overdue_only)
+      queryParams.append("overdue_only", params.overdue_only.toString());
 
-    return apiClient.get<PaginatedInvoiceResponse>(`/api/invoices?${queryParams.toString()}`);
+    const url = `/api/invoices${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    return apiClient.get<PaginatedInvoicesResponse>(url);
   },
 
   /**
-   * Get a single invoice by ID
+   * Get a single invoice by ID with items and payments
+   * GET /api/invoices/{invoice_id}
    */
   async get(id: string): Promise<Invoice> {
     return apiClient.get<Invoice>(`/api/invoices/${id}`);
@@ -51,41 +56,33 @@ export const invoicesApi = {
 
   /**
    * Create a new invoice
+   * POST /api/invoices
+   * Returns invoice with auto-generated invoice_number (INV-YYYY-NNNN)
    */
-  async create(data: CreateInvoiceData): Promise<Invoice> {
+  async create(data: CreateInvoiceRequest): Promise<Invoice> {
     return apiClient.post<Invoice>("/api/invoices", data);
   },
 
   /**
-   * Update an existing invoice
+   * Update an existing invoice (draft only)
+   * PUT /api/invoices/{invoice_id}
    */
-  async update(id: string, data: UpdateInvoiceData): Promise<Invoice> {
+  async update(id: string, data: UpdateInvoiceRequest): Promise<Invoice> {
     return apiClient.put<Invoice>(`/api/invoices/${id}`, data);
   },
 
   /**
-   * Delete an invoice
+   * Delete an invoice (draft only)
+   * DELETE /api/invoices/{invoice_id}
    */
   async delete(id: string): Promise<void> {
     return apiClient.delete(`/api/invoices/${id}`);
   },
 
   /**
-   * Record a payment against an invoice
-   */
-  async recordPayment(invoiceId: string, data: CreatePaymentData): Promise<InvoicePayment> {
-    return apiClient.post<InvoicePayment>(`/api/invoices/${invoiceId}/payments`, data);
-  },
-
-  /**
-   * Get payments for an invoice
-   */
-  async getPayments(invoiceId: string): Promise<InvoicePayment[]> {
-    return apiClient.get<InvoicePayment[]>(`/api/invoices/${invoiceId}/payments`);
-  },
-
-  /**
-   * Send invoice to customer
+   * Mark invoice as sent
+   * POST /api/invoices/{invoice_id}/send
+   * Changes status from 'draft' to 'sent'
    */
   async send(id: string): Promise<Invoice> {
     return apiClient.post<Invoice>(`/api/invoices/${id}/send`, {});
@@ -93,8 +90,54 @@ export const invoicesApi = {
 
   /**
    * Cancel an invoice
+   * POST /api/invoices/{invoice_id}/cancel
    */
   async cancel(id: string): Promise<Invoice> {
     return apiClient.post<Invoice>(`/api/invoices/${id}/cancel`, {});
+  },
+
+  /**
+   * Record a payment against an invoice
+   * POST /api/invoices/{invoice_id}/payments
+   * Backend automatically updates amount_paid, amount_due, and status
+   */
+  async recordPayment(
+    invoiceId: string,
+    data: RecordPaymentRequest
+  ): Promise<Invoice> {
+    return apiClient.post<Invoice>(`/api/invoices/${invoiceId}/payments`, data);
+  },
+
+  /**
+   * Get all payments for an invoice
+   * GET /api/invoices/{invoice_id}/payments
+   */
+  async getPayments(invoiceId: string): Promise<InvoicePayment[]> {
+    return apiClient.get<InvoicePayment[]>(`/api/invoices/${invoiceId}/payments`);
+  },
+
+  /**
+   * Delete a payment record
+   * DELETE /api/invoices/payments/{payment_id}
+   * Backend recalculates amount_paid, amount_due, and status
+   */
+  async deletePayment(paymentId: string): Promise<void> {
+    return apiClient.delete(`/api/invoices/payments/${paymentId}`);
+  },
+
+  /**
+   * Get revenue summary for financial dashboard
+   * GET /api/invoices/reports/revenue
+   */
+  async getRevenueSummary(): Promise<RevenueSummary> {
+    return apiClient.get<RevenueSummary>("/api/invoices/reports/revenue");
+  },
+
+  /**
+   * Get tax summary report
+   * GET /api/invoices/reports/tax
+   */
+  async getTaxSummary(): Promise<TaxSummary> {
+    return apiClient.get<TaxSummary>("/api/invoices/reports/tax");
   },
 };

@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { invoicesApi } from "@/lib/api/invoices";
-import { Invoice, CreateInvoiceItem } from "../types";
+import type { Invoice, CreateInvoiceItemRequest } from "@/lib/types/invoices";
 import { Plus, X } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 
@@ -54,10 +54,9 @@ interface Product {
 // Validation schema
 const formSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
+  invoice_date: z.string().min(1, "Invoice date is required"),
   due_date: z.string().min(1, "Due date is required"),
-  payment_terms: z.string().optional(),
   notes: z.string().optional(),
-  tax_rate: z.coerce.number().min(0).max(100).optional(),
   items: z.array(
     z.object({
       product_id: z.string().optional(),
@@ -65,6 +64,7 @@ const formSchema = z.object({
       quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
       unit_price: z.coerce.number().min(0, "Price must be positive"),
       tax_rate: z.coerce.number().min(0).max(100).optional(),
+      tax_amount: z.coerce.number().min(0).optional(),
     })
   ).min(1, "At least one line item is required"),
 });
@@ -89,10 +89,9 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
     resolver: zodResolver(formSchema),
     defaultValues: {
       customer_id: "",
+      invoice_date: new Date().toISOString().split("T")[0],
       due_date: "",
-      payment_terms: "Net 30",
       notes: "",
-      tax_rate: 10,
       items: [
         {
           product_id: "",
@@ -147,17 +146,17 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
       // Edit mode - populate form with invoice data
       form.reset({
         customer_id: invoice.customer_id,
+        invoice_date: invoice.invoice_date.split("T")[0], // Format for date input
         due_date: invoice.due_date.split("T")[0], // Format for date input
-        payment_terms: invoice.payment_terms || "Net 30",
         notes: invoice.notes || "",
-        tax_rate: typeof invoice.tax_rate === "string" ? parseFloat(invoice.tax_rate) : invoice.tax_rate,
         items: invoice.items && invoice.items.length > 0
           ? invoice.items.map((item) => ({
               product_id: item.product_id || "",
               description: item.description,
               quantity: item.quantity,
               unit_price: typeof item.unit_price === "string" ? parseFloat(item.unit_price) : item.unit_price,
-              tax_rate: typeof item.tax_rate === "string" ? parseFloat(item.tax_rate) : item.tax_rate,
+              tax_rate: item.tax_rate || 0,
+              tax_amount: item.tax_amount || 0,
             }))
           : [
               {
@@ -165,7 +164,8 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                 description: "",
                 quantity: 1,
                 unit_price: 0,
-                tax_rate: 10,
+                tax_rate: 0,
+                tax_amount: 0,
               },
             ],
       });
@@ -173,10 +173,9 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
       // Create mode - reset to defaults
       form.reset({
         customer_id: "",
+        invoice_date: new Date().toISOString().split("T")[0],
         due_date: "",
-        payment_terms: "Net 30",
         notes: "",
-        tax_rate: 10,
         items: [
           {
             product_id: "",
@@ -206,34 +205,35 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
   async function onSubmit(values: FormData) {
     setIsLoading(true);
     try {
-      const invoiceData = {
-        customer_id: values.customer_id,
-        due_date: values.due_date,
-        payment_terms: values.payment_terms || "Net 30",
-        notes: values.notes,
-        tax_rate: values.tax_rate || 10,
-        items: values.items.map((item) => ({
-          product_id: item.product_id || null,
-          description: item.description,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          tax_rate: item.tax_rate || 10,
-        })) as CreateInvoiceItem[],
-      };
+      const items: CreateInvoiceItemRequest[] = values.items.map((item) => ({
+        product_id: item.product_id || "",
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        tax_rate: item.tax_rate,
+        tax_amount: item.tax_amount,
+      }));
 
       if (isEdit && invoice) {
         await invoicesApi.update(invoice.id, {
-          customer_id: invoiceData.customer_id,
-          due_date: invoiceData.due_date,
-          payment_terms: invoiceData.payment_terms,
-          notes: invoiceData.notes,
+          customer_id: values.customer_id,
+          invoice_date: values.invoice_date,
+          due_date: values.due_date,
+          notes: values.notes,
+          items,
         });
         toast({
           title: "Success",
           description: "Invoice updated successfully",
         });
       } else {
-        await invoicesApi.create(invoiceData);
+        await invoicesApi.create({
+          customer_id: values.customer_id,
+          invoice_date: values.invoice_date,
+          due_date: values.due_date,
+          notes: values.notes,
+          items,
+        });
         toast({
           title: "Success",
           description: "Invoice created successfully",
@@ -315,6 +315,21 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                 )}
               />
 
+              {/* Invoice Date */}
+              <FormField
+                control={form.control}
+                name="invoice_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Invoice Date *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Due Date */}
               <FormField
                 control={form.control}
@@ -324,36 +339,6 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                     <FormLabel>Due Date *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Payment Terms */}
-              <FormField
-                control={form.control}
-                name="payment_terms"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Terms</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Net 30" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Tax Rate */}
-              <FormField
-                control={form.control}
-                name="tax_rate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Tax Rate (%)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -394,7 +379,8 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                       description: "",
                       quantity: 1,
                       unit_price: 0,
-                      tax_rate: form.getValues("tax_rate") || 10,
+                      tax_rate: 0,
+                      tax_amount: 0,
                     })
                   }
                 >
