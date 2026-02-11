@@ -3,7 +3,7 @@
 Database models for tracking stock across multiple locations.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 from uuid import UUID, uuid4
@@ -80,12 +80,12 @@ class ProductStockByLocation(Base):
 
     # Timestamps
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(),
-        onupdate=lambda: datetime.now(),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -136,16 +136,16 @@ class StockTransfer(Base):
 
     # Timestamps
     initiated_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     completed_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(),
-        onupdate=lambda: datetime.now(),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -191,18 +191,18 @@ class StockReservation(Base):
 
     # Timestamps
     reserved_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     fulfilled_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
     cancelled_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
 
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(),
-        onupdate=lambda: datetime.now(),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -248,10 +248,10 @@ class StockAdjustment(Base):
 
     # Timestamp
     adjusted_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     created_at: datetime = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     def __repr__(self) -> str:

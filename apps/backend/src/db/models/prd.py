@@ -1,6 +1,6 @@
 """PRD database models."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import ARRAY, TIMESTAMP, Column, ForeignKey, Integer, String, Text
@@ -53,9 +53,9 @@ class PRD(Base):
     model_used = Column(String(100), default="claude-opus-4-6")
 
     # Timestamps
-    created_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
     )  # noqa: E501
     completed_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
@@ -88,7 +88,7 @@ class AgentRun(Base):
     prd_id = Column(PGUUID(as_uuid=True), ForeignKey("prds.id", ondelete="CASCADE"), nullable=True)
 
     # Timestamps
-    started_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, nullable=False)
+    started_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     completed_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     # Relationships
@@ -120,7 +120,7 @@ class APIUsage(Base):
     extra_data = Column("metadata", JSONB, nullable=True)
 
     # Timestamp
-    created_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
 
     # Relationships
     prd = relationship("PRD", back_populates="api_usage")

@@ -1,7 +1,7 @@
 """Subscription and billing models for multi-tenant SaaS."""
 
 import enum
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -112,13 +112,13 @@ class Subscription(Base):
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     # Relationships
@@ -133,7 +133,7 @@ class Subscription(Base):
         """Check if trial is still active."""
         if self.status != SubscriptionStatus.TRIAL or not self.trial_ends_at:
             return False
-        return datetime.utcnow() < self.trial_ends_at
+        return datetime.now(UTC) < self.trial_ends_at
 
     def is_feature_available(self, feature: str) -> bool:
         """Check if a feature is available on current plan."""

@@ -1,6 +1,6 @@
 """Service request models for workshop/field service tracking."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum as PyEnum
 from uuid import UUID, uuid4
 
@@ -90,9 +90,9 @@ class ServiceRequest(Base):
     approved_amount: float | None = Column(Numeric(10, 2), nullable=True)
 
     # Timestamps
-    created_at: datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: datetime = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at: datetime = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
     )
 
     # Relationships

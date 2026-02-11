@@ -33,7 +33,7 @@ class TaxRate(Base):
     country: Mapped[str | None] = mapped_column(String(2), nullable=True)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC), nullable=False)
 
 
 class Invoice(Base):
@@ -72,9 +72,9 @@ class Invoice(Base):
     payment_terms: Mapped[str] = mapped_column(Text, default="Net 30", nullable=False)
 
     # Metadata
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
     )
     created_by: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id"), nullable=True
@@ -128,7 +128,7 @@ class InvoiceItem(Base):
     total: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
 
     # Metadata
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC), nullable=False)
 
     # Relationships
     invoice: Mapped["Invoice"] = relationship("Invoice", back_populates="items")
@@ -168,7 +168,7 @@ class InvoicePayment(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Metadata
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC), nullable=False)
     created_by: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id"), nullable=True
     )
