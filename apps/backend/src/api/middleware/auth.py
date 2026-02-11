@@ -60,13 +60,32 @@ class AuthMiddleware(BaseHTTPMiddleware):
         else:
             logger.debug("No auth_token cookie found")
 
-        # Check for API key authentication
-        api_key = request.headers.get("Authorization", "").replace("Bearer ", "")
+        # Check for JWT Bearer token or API key in Authorization header
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.replace("Bearer ", "").strip()
 
-        if api_key == settings.backend_api_key and settings.backend_api_key:
-            # API key authentication successful
-            request.state.auth_type = "api_key"
-            return await call_next(request)
+            # First, try to validate as JWT token
+            try:
+                from src.auth.jwt import decode_access_token
+                payload = decode_access_token(token)
+                request.state.user_id = payload.get("user_id")
+                request.state.email = payload.get("sub")
+                request.state.auth_type = "jwt_bearer"
+                logger.debug(
+                    f"JWT Bearer auth successful for user {payload.get('user_id')}"
+                )
+                return await call_next(request)
+            except Exception as e:
+                logger.debug(f"JWT Bearer validation failed: {e}")
+                # Not a valid JWT, check if it's a fixed API key
+
+            # If JWT validation failed, check if it's the fixed API key
+            if token == settings.backend_api_key and settings.backend_api_key:
+                # API key authentication successful
+                request.state.auth_type = "api_key"
+                logger.debug("API key auth successful")
+                return await call_next(request)
 
         # Check for user ID header (set by frontend after Supabase auth)
         user_id = request.headers.get("X-User-Id")

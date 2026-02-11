@@ -23,26 +23,38 @@ export const options = {
 };
 
 const baseUrl = testConfig.baseUrl;
-let authToken = null;
 
 export function setup() {
   console.log('[*] Starting quick load test...');
   checkHealth(baseUrl);
-  return { startTime: new Date().toISOString() };
+
+  // Authenticate once in setup phase and return token to all VUs
+  const token = authenticate(
+    baseUrl,
+    testConfig.auth.email,
+    testConfig.auth.password
+  );
+
+  if (!token) {
+    console.error('[ERROR] Authentication failed in setup phase');
+    throw new Error('Authentication failed - cannot proceed with test');
+  }
+
+  console.log('[OK] Authentication successful');
+  return {
+    startTime: new Date().toISOString(),
+    authToken: token
+  };
 }
 
-export default function () {
-  if (!authToken) {
-    authToken = authenticate(
-      baseUrl,
-      testConfig.auth.email,
-      testConfig.auth.password
-    );
+export default function (data) {
+  // Use token from setup phase - persists across all iterations
+  const authToken = data.authToken;
 
-    if (!authToken) {
-      console.error('[ERROR] Authentication failed');
-      return;
-    }
+  // Debug: Log token to verify it's being passed
+  if (!authToken) {
+    console.error('[ERROR] No auth token received from setup phase');
+    return;
   }
 
   // Test health

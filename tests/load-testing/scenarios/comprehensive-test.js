@@ -61,13 +61,28 @@ const baseUrl = testConfig.baseUrl;
 let authToken = null;
 
 /**
- * Setup - Run once per VU before iterations
+ * Setup - Run once before test starts (shared across all VUs)
  */
 export function setup() {
   console.log('[*] Starting comprehensive load test setup...');
   checkHealth(baseUrl);
+
+  // Authenticate once in setup phase and return token to all VUs
+  const token = authenticate(
+    baseUrl,
+    testConfig.auth.email,
+    testConfig.auth.password
+  );
+
+  if (!token) {
+    console.error('[ERROR] Authentication failed in setup phase');
+    throw new Error('Authentication failed - cannot proceed with test');
+  }
+
+  console.log('[OK] Authentication successful');
   return {
     startTime: new Date().toISOString(),
+    authToken: token,
   };
 }
 
@@ -75,19 +90,8 @@ export function setup() {
  * Main test iteration - Each VU runs this function repeatedly
  */
 export default function (data) {
-  // Authenticate if we don't have a token
-  if (!authToken) {
-    authToken = authenticate(
-      baseUrl,
-      testConfig.auth.email,
-      testConfig.auth.password
-    );
-
-    if (!authToken) {
-      console.error('[ERROR] Authentication failed, skipping iteration');
-      return;
-    }
-  }
+  // Get token from setup phase - persists across all iterations
+  authToken = data.authToken;
 
   // Randomly select which set of scenarios to run
   const scenarioSet = randomInt(1, 10);
