@@ -5,12 +5,11 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.schemas.invoicing import (
     InvoicePaymentCreate,
-    InvoicePaymentUpdate,
     InvoicePaymentResponse,
     PaymentListResponse,
 )
@@ -67,7 +66,7 @@ async def list_invoice_payments(
     )
     payments = result.scalars().all()
 
-    return [InvoicePaymentResponse.model_validate(p) for p in payments]
+    return [InvoicePaymentResponse.model_validate(p).model_dump() for p in payments]
 
 
 @router.post("/{invoice_id}/payments", response_model=InvoicePaymentResponse, status_code=201)
@@ -154,7 +153,7 @@ async def list_all_payments(
     payments = result.scalars().all()
 
     return PaymentListResponse(
-        items=[InvoicePaymentResponse.model_validate(p) for p in payments],
+        items=[InvoicePaymentResponse.model_validate(p).model_dump() for p in payments],
         total=total,
         page=page,
         page_size=page_size,

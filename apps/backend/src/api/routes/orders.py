@@ -3,11 +3,11 @@
 Performance optimized with cache invalidation on writes.
 """
 from datetime import datetime, timedelta
-from decimal import Decimal
 from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -16,7 +16,6 @@ from src.api.deps import get_optional_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
 from src.config.settings import Settings, get_settings
-from src.services.sse_service import sse_service
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderActivity as OrderActivityModel
 from src.db.demo_models import OrderItem as OrderItemModel
@@ -31,8 +30,8 @@ from src.db.schemas import (
     OrderUpdate,
     PaginatedResponse,
 )
-from pydantic import BaseModel
 from src.monitoring import metrics
+from src.services.sse_service import sse_service
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 logger = structlog.get_logger(__name__)
@@ -555,7 +554,7 @@ async def get_order_activity(
     result = await db.execute(query)
     activities = result.scalars().all()
 
-    return [OrderActivity.model_validate(activity) for activity in activities]
+    return [OrderActivity.model_validate(activity).model_dump() for activity in activities]
 
 
 @router.post("", response_model=Order, status_code=201)

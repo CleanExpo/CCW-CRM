@@ -7,12 +7,13 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
-from src.db.crm_models import Activity as ActivityModel, Contact as ContactModel
+from src.db.crm_models import Activity as ActivityModel
+from src.db.crm_models import Contact as ContactModel
 from src.db.crm_schemas import (
     Activity,
     ActivityComplete,
@@ -23,7 +24,8 @@ from src.db.crm_schemas import (
     PaginatedActivities,
 )
 from src.db.demo_models import Customer as CustomerModel
-from src.db.demo_models import Order as OrderModel, Quote as QuoteModel
+from src.db.demo_models import Order as OrderModel
+from src.db.demo_models import Quote as QuoteModel
 from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/activities", tags=["activities"])
@@ -78,7 +80,7 @@ async def list_activities(
     activities = result.scalars().all()
 
     return PaginatedActivities(
-        data=[Activity.model_validate(a) for a in activities],
+        data=[Activity.model_validate(a).model_dump() for a in activities],
         total=total,
         page=page,
         page_size=page_size,
@@ -293,7 +295,7 @@ async def get_customer_activities(
     result = await db.execute(query)
     activities = result.scalars().all()
 
-    return [Activity.model_validate(a) for a in activities]
+    return [Activity.model_validate(a).model_dump() for a in activities]
 
 
 @router.get("/contact/{contact_id}", response_model=list[Activity])
@@ -313,7 +315,7 @@ async def get_contact_activities(
     result = await db.execute(query)
     activities = result.scalars().all()
 
-    return [Activity.model_validate(a) for a in activities]
+    return [Activity.model_validate(a).model_dump() for a in activities]
 
 
 @router.get("/pending-tasks", response_model=list[Activity])
@@ -338,4 +340,4 @@ async def get_pending_tasks(
     result = await db.execute(query)
     activities = result.scalars().all()
 
-    return [Activity.model_validate(a) for a in activities]
+    return [Activity.model_validate(a).model_dump() for a in activities]

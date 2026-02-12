@@ -9,7 +9,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
@@ -72,7 +71,7 @@ async def list_contacts(
     contacts = result.scalars().all()
 
     return PaginatedContacts(
-        data=[Contact.model_validate(c) for c in contacts],
+        data=[Contact.model_validate(c).model_dump() for c in contacts],
         total=total,
         page=page,
         page_size=page_size,
@@ -240,7 +239,7 @@ async def get_customer_contacts(
     result = await db.execute(query)
     contacts = result.scalars().all()
 
-    return [Contact.model_validate(c) for c in contacts]
+    return [Contact.model_validate(c).model_dump() for c in contacts]
 
 
 @router.post("/{contact_id}/set-primary", response_model=Contact)
