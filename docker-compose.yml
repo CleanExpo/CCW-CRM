@@ -6,7 +6,6 @@ services:
       POSTGRES_DB: starter_db
       POSTGRES_USER: starter_user
       POSTGRES_PASSWORD: local_dev_password
-      POSTGRES_HOST_AUTH_METHOD: trust  # Simplified for local development
     ports:
       - "5434:5432"
     volumes:
@@ -30,8 +29,6 @@ services:
       restart_policy:
         condition: unless-stopped
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
   redis:
     image: redis:7-alpine
@@ -56,8 +53,6 @@ services:
       restart_policy:
         condition: unless-stopped
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
   # Backend service (running in Docker)
   backend:
@@ -107,8 +102,6 @@ services:
       restart_policy:
         condition: unless-stopped
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
   # Monitoring Stack
   prometheus:
@@ -140,8 +133,6 @@ services:
       restart_policy:
         condition: unless-stopped
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
   grafana:
     image: grafana/grafana:10.2.2
@@ -174,8 +165,6 @@ services:
       restart_policy:
         condition: unless-stopped
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
   alertmanager:
     image: prom/alertmanager:v0.26.0
@@ -204,8 +193,6 @@ services:
       restart_policy:
         condition: unless-stopped
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
@@ -231,8 +218,6 @@ services:
       restart_policy:
         condition: unless-stopped
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
   redis-exporter:
     image: oliver006/redis_exporter:v1.55.0
@@ -259,8 +244,6 @@ services:
       restart_policy:
         condition: on-failure
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
   # Container metrics exporter (cAdvisor)
   cadvisor:
@@ -289,8 +272,6 @@ services:
       restart_policy:
         condition: unless-stopped
         delay: 5s
-        max_attempts: 3
-        window: 120s
 
 volumes:
   postgres_data:
