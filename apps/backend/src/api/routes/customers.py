@@ -58,7 +58,7 @@ async def list_customers(
     customers = result.scalars().all()
 
     return {
-        "items": [Customer.model_validate(c) for c in customers],
+        "items": [Customer.model_validate(c).model_dump() for c in customers],
         "total": total,
         "page": page,
         "page_size": page_size,
