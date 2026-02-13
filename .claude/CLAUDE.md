@@ -5,7 +5,7 @@
 
 ## PRIME DIRECTIVE
 
-You are enhancing CCW-Online ERP, a full-stack Equipment Supplier ERP system. Your job is to:
+You are enhancing CCW-ERP-CRM, a deployed full-stack Equipment Supplier ERP/CRM system. Your job is to:
 1. Follow instructions exactly
 2. Ask when unclear
 3. Never deviate from the plan
@@ -57,32 +57,31 @@ Every 5 messages:
 ## 📁 MONOREPO STRUCTURE
 
 ```
-C:\CCW-Online-ERP/
-├── .claude/                    # ⛔ READ ONLY (this framework)
+D:\CCW-ERP-CRM/
+├── .claude/                    # READ ONLY (this framework)
 │   ├── agents/                 # Agent definitions
-│   ├── skills/                 # Skill definitions
 │   ├── commands/               # Command definitions
-│   └── hooks/                  # Git hooks
+│   └── rules/                  # Auto-enforced rules
 ├── apps/
-│   ├── web/                    # ✅ Next.js 15 Frontend
+│   ├── web/                    # Next.js 15 Frontend (Vercel)
 │   │   ├── app/
 │   │   │   ├── (auth)/         # Auth pages
-│   │   │   └── (dashboard)/    # Protected routes
-│   │   ├── components/         # ✅ React components
-│   │   ├── lib/                # ✅ Utilities
-│   │   └── middleware.ts       # ⛔ DO NOT MODIFY
-│   └── backend/                # ✅ FastAPI Backend
+│   │   │   └── (dashboard)/    # Protected routes (27 pages)
+│   │   ├── components/         # React components + dashboard widgets
+│   │   ├── lib/                # Utilities, API clients, hooks
+│   │   └── middleware.ts       # DO NOT MODIFY
+│   └── backend/                # FastAPI Backend
 │       ├── src/
-│       │   ├── api/routes/     # ✅ API endpoints
-│       │   ├── db/
-│       │   │   └── demo_models.py  # ⛔ DO NOT MODIFY
-│       │   └── services/       # ✅ Business logic
-│       └── tests/              # ✅ Pytest tests
-├── docs/                       # ✅ Documentation
-│   └── specs/                  # Project specifications
-├── scripts/                    # ✅ Utility scripts
-├── docker-compose.yml          # ✅ PostgreSQL + services
-└── package.json                # ⛔ Package changes need approval
+│       │   ├── api/routes/     # API endpoints + integrations/ + ai/
+│       │   ├── integrations/   # Cin7 (7 phases), Xero, Shopify
+│       │   ├── ai/agents/      # Specialized AI agents
+│       │   ├── db/             # Models (demo, cin7, pos, webhook)
+│       │   └── config/         # Settings (database, cin7, etc.)
+│       └── tests/              # Pytest + integration tests (321 assertions)
+├── docs/                       # Documentation & specs
+├── scripts/                    # Utility scripts
+├── docker-compose.yml          # PostgreSQL (local dev)
+└── package.json                # Package changes need approval
 ```
 
 **Creating ANY new top-level folder requires explicit user approval.**
@@ -151,15 +150,16 @@ C:\CCW-Online-ERP/
 - **State**: React hooks (no Redux/Zustand)
 - **Forms**: React Hook Form + Zod validation
 - **API**: apiClient from lib/api/client.ts
-- **i18n**: next-intl v3.26.5 (cookie-based)
+- **Deployment**: Vercel
 
 ### Backend
 - **Framework**: FastAPI (Python 3.12)
 - **ORM**: SQLAlchemy 2.0 (async)
 - **Validation**: Pydantic v2
-- **Database**: PostgreSQL 15 (Docker)
-- **Auth**: JWT tokens (passlib/bcrypt)
-- **AI**: Ollama client (for translations)
+- **Database**: PostgreSQL 15 — Supabase Cloud (prod), Docker (local)
+- **Auth**: Supabase Auth (prod), JWT tokens (local dev)
+- **HTTP Client**: httpx (async, for integrations)
+- **Logging**: structlog (structured logging)
 
 ### Development
 - **Package Manager**: pnpm
@@ -249,31 +249,20 @@ try {
 
 ## 🎯 CURRENT PROJECT PHASES
 
-**Phase 1: Multi-Language Foundation (i18n)** - ✅ COMPLETE
-- Database schema with 6 tables
-- AI-powered translation service
-- Translation Management Dashboard
-- 10 languages supported
-- Cookie-based language switcher
+**Completed Work:**
+- Full CRUD operations (Products, Customers, Orders, Quotes) with line items
+- POS system with transaction tracking
+- Cin7 Integration (7 phases): client, product/inventory sync, CRM sync, procurement, webhooks/SSE, AI agents, frontend dashboard
+- Agents Protocol v1.0: multi-agent governance (models, governor, message bus, error handler, confidence scoring)
+- Supabase Cloud deployment (database + auth)
+- Vercel production deployment (frontend)
+- 321 integration test assertions, all passing
 
-**Phase 2: Google AP2 Integration** - PENDING
-- Payment processing with mandate verification
-- Voice commerce integration
-- Agent-to-agent commerce
-
-**Phase 3: Enhanced Shopify Backend** - PENDING
-- Custom metafields
-- Real-time inventory sync
-- Multi-language product sync
-
-**Phase 4: AI-Powered Search & Recommendations** - PENDING ⭐ Recommended next
-- Semantic/vector search (pgvector)
-- AI product recommendations
-- Voice search optimization
-
-**Phase 5: Autonomous Development Framework** - PENDING
-- Self-sustaining development system
-- AI agents plan, code, test, deploy
+**Potential Next Work:**
+- Google AP2 Integration (payment processing)
+- Enhanced Shopify Backend (metafields, real-time inventory sync)
+- AI-Powered Search & Recommendations (pgvector, semantic search)
+- Additional integrations (Xero accounting, etc.)
 
 ---
 
