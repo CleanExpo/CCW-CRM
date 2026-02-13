@@ -28,23 +28,25 @@ export async function GET(request: Request) {
     const critical = items
       .filter((p) => p.stock === 0)
       .map((p) => ({
-        id: p.id,
-        sku: p.sku,
-        name: p.name,
-        stock_by_location: buildStockByLocation(p),
+        product_id: p.id,
+        product_sku: p.sku,
+        product_name: p.name,
+        total_stock: p.stock,
+        total_reserved: 0,
         total_available: p.stock,
-        min_available: 0,
+        locations: buildStockByLocation(p),
       }));
 
     const low = items
       .filter((p) => p.stock > 0 && p.stock <= threshold)
       .map((p) => ({
-        id: p.id,
-        sku: p.sku,
-        name: p.name,
-        stock_by_location: buildStockByLocation(p),
+        product_id: p.id,
+        product_sku: p.sku,
+        product_name: p.name,
+        total_stock: p.stock,
+        total_reserved: 0,
         total_available: p.stock,
-        min_available: p.stock,
+        locations: buildStockByLocation(p),
       }));
 
     return NextResponse.json({
