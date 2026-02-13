@@ -1,7 +1,7 @@
 """Service request models for workshop/field service tracking."""
 
-from datetime import UTC, datetime
 import enum
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (

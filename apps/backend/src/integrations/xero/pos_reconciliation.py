@@ -8,9 +8,7 @@ Creates Xero invoices from POS transactions and handles reconciliation:
 - Payment reconciliation linking
 """
 
-from datetime import datetime, timedelta
-from decimal import Decimal
-from typing import Optional
+from datetime import datetime
 from uuid import UUID
 
 import structlog
@@ -19,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.db.demo_models import Customer, Order, Product
-from src.db.pos_models import POSTransaction, Location
+from src.db.pos_models import POSTransaction
 from src.integrations.xero.auth import XeroAuth
 from src.integrations.xero.client import XeroAPIError, XeroClient
 from src.integrations.xero.demo_client import DemoXeroClient

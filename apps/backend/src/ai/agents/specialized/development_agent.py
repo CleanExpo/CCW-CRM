@@ -177,7 +177,7 @@ class DevelopmentAgent(BaseAgent):
             try:
                 pattern_path = self.project_root / pattern_file
                 if pattern_path.exists():
-                    with open(pattern_path, "r", encoding="utf-8") as f:
+                    with open(pattern_path, encoding="utf-8") as f:
                         content = f.read()
                         pattern_context.append(f"## Pattern: {pattern_file}\n\n{content}")
             except Exception as e:

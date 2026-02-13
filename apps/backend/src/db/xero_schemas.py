@@ -22,7 +22,7 @@ Security Notes:
 - All __repr__ methods mask sensitive data
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import UUID
 
@@ -34,7 +34,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-
 
 # =============================================================================
 # ENUMS / LITERAL TYPES
@@ -144,7 +143,7 @@ class XeroConnectionCreate(XeroConnectionBase):
 
         # Ensure timezone aware
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
 
         return dt
 
@@ -238,7 +237,7 @@ class XeroConnectionUpdate(BaseModel):
             dt = v
 
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
 
         return dt
 
@@ -296,11 +295,11 @@ class XeroConnectionInDB(XeroConnectionBase):
     def compute_token_expired(self) -> "XeroConnectionInDB":
         """Compute is_token_expired based on expires_at."""
         # Compare with current time
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # Ensure expires_at is timezone aware for comparison
         expires_at = self.expires_at
         if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
+            expires_at = expires_at.replace(tzinfo=UTC)
         self.is_token_expired = now >= expires_at
         return self
 
@@ -390,7 +389,7 @@ class PaymentBase(BaseModel):
             dt = v
 
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
 
         return dt
 
@@ -481,7 +480,7 @@ class PaymentUpdate(BaseModel):
             dt = v
 
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
 
         return dt
 
@@ -723,7 +722,7 @@ class XeroTokenResponse(BaseModel):
 
     def get_expires_at(self) -> datetime:
         """Calculate expiration datetime from expires_in."""
-        return datetime.now(timezone.utc).replace(
+        return datetime.now(UTC).replace(
             microsecond=0
         ) + __import__("datetime").timedelta(seconds=self.expires_in)
 

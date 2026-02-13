@@ -3,9 +3,9 @@
 Database models for tracking stock across multiple locations.
 """
 
+import enum
 from datetime import UTC, datetime
 from decimal import Decimal
-import enum
 from uuid import UUID, uuid4
 
 from sqlalchemy import (

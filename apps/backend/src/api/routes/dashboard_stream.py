@@ -13,13 +13,10 @@ Usage:
     };
 """
 
-from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Request
 
-from src.config.database import get_db
 from src.services.sse_service import sse_service
 
 logger = structlog.get_logger(__name__)

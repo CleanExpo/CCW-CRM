@@ -14,14 +14,15 @@ from datetime import datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Request
-from pydantic import BaseModel, EmailStr, Field
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.middleware.rbac import require_permission
 from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
+from src.db.demo_models import Organization
 from src.db.models.subscription import (
     BillingInterval,
     Subscription,
@@ -29,7 +30,6 @@ from src.db.models.subscription import (
     SubscriptionTier,
     get_tier_config,
 )
-from src.db.demo_models import Organization
 from src.integrations.stripe.client import StripeClient
 
 router = APIRouter(prefix="/api/billing", tags=["Billing"])

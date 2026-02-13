@@ -790,10 +790,10 @@ async def create_stock_transfer(
     # PHASE 2: Enhanced Shopify Integration - Task 2.1: Automatic Shopify Sync
     # Trigger automatic Shopify inventory sync after stock transfer
     try:
+        from src.config.shopify_settings import get_shopify_settings
         from src.db.shopify_models import ShopifyProductMapping
         from src.integrations.shopify.client import get_shopify_client
         from src.integrations.shopify.inventory_sync import InventorySyncService
-        from src.config.shopify_settings import get_shopify_settings
 
         # Check if product has Shopify mapping
         mapping_query = select(ShopifyProductMapping).where(
@@ -1180,10 +1180,10 @@ async def adjust_stock(
     # PHASE 2: Enhanced Shopify Integration - Task 2.1: Automatic Shopify Sync
     # Trigger automatic Shopify inventory sync after stock adjustment
     try:
+        from src.config.shopify_settings import get_shopify_settings
         from src.db.shopify_models import ShopifyProductMapping
         from src.integrations.shopify.client import get_shopify_client
         from src.integrations.shopify.inventory_sync import InventorySyncService
-        from src.config.shopify_settings import get_shopify_settings
 
         # Check if product has Shopify mapping
         mapping_query = select(ShopifyProductMapping).where(

@@ -17,7 +17,7 @@ from html import unescape
 from typing import Any
 
 import structlog
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.email_audit_models import (

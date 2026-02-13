@@ -245,6 +245,61 @@ class Cin7ForecastingAgent(BaseAgent):
         self.requires_verification = False
         self.estimated_execution_time = 5
 
+        # Protocol v1.0: Agent Card
+        self._protocol_card = self._build_agent_card()
+        self._register_protocol_card()
+
+    @staticmethod
+    def _build_agent_card() -> Any:
+        """Build protocol AgentCard for this agent."""
+        try:
+            from src.ai.protocol.models import AgentCard, PermissionTier
+
+            return AgentCard(
+                agent_id="cin7_forecasting_agent",
+                name="Cin7 Forecasting Agent",
+                version="1.0.0",
+                description="AI-powered demand forecasting for Cin7-synced products",
+                capabilities=[
+                    "cin7_forecasting",
+                    "sync_demand_prediction",
+                    "cin7_reorder_recommendations",
+                ],
+                boundaries=[
+                    "Read-only: cannot modify product data",
+                    "Cannot place orders or trigger syncs",
+                    "Forecasts are advisory only",
+                ],
+                inputs={
+                    "product_id": "Optional specific product UUID",
+                    "forecast_days": "Days to forecast (default 30)",
+                    "source": "Cin7 source: core or omni",
+                },
+                outputs={
+                    "forecast": "Demand forecast with daily predictions",
+                    "velocity": "Sync velocity metrics",
+                    "seasonality": "Seasonal pattern analysis",
+                    "reorder_point": "Recommended reorder point",
+                },
+                permission_tier=PermissionTier.READ_ONLY,
+                max_concurrent=10,
+                timeout_seconds=30,
+            )
+        except ImportError:
+            return None
+
+    def _register_protocol_card(self) -> None:
+        """Register protocol card with agent registry."""
+        if not hasattr(self, "_protocol_card") or self._protocol_card is None:
+            return
+        try:
+            from src.ai.orchestration import get_agent_registry
+
+            registry = get_agent_registry()
+            registry.register_agent_card(self.agent_id, self._protocol_card)
+        except Exception as e:
+            logger.debug("Could not register protocol card", error=str(e))
+
     async def execute(
         self, task: str, context: dict[str, Any] | None = None
     ) -> dict[str, Any]:

@@ -7,10 +7,11 @@ Part of Phase 5 (Autonomous Development Framework) - Week 2 implementation.
 
 import asyncio
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 

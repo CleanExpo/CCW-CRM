@@ -4,7 +4,6 @@ Bank Feed Scheduler.
 Handles automated synchronization of bank feeds on a daily schedule.
 """
 
-import asyncio
 from datetime import date, timedelta
 from uuid import UUID
 

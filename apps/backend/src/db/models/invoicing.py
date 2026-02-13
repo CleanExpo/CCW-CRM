@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    CheckConstraint,
     DECIMAL,
+    Boolean,
+    CheckConstraint,
+    Date,
     ForeignKey,
     Integer,
     String,
     Text,
-    Boolean,
-    Date,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

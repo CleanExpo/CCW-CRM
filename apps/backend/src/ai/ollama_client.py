@@ -1,10 +1,17 @@
 """Ollama client singleton for LLM interactions."""
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import AsyncGenerator
+from typing import Any
 
 import structlog
-from ollama import AsyncClient
+
+try:
+    from ollama import AsyncClient
+except ImportError:
+    AsyncClient = None  # type: ignore[assignment, misc]
 
 from src.config import get_settings
 
@@ -19,8 +26,8 @@ class OllamaClient:
     interacting with local Ollama models.
     """
 
-    _instance: "OllamaClient | None" = None
-    _client: AsyncClient | None = None
+    _instance: OllamaClient | None = None
+    _client: Any = None
     _lock = asyncio.Lock()
 
     def __new__(cls) -> "OllamaClient":

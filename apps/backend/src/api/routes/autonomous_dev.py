@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.ai.orchestration.autonomous_loop import get_autonomous_loop
 from src.ai.orchestration.project_orchestrator import (
     Phase,
-    Project,
     Task,
     get_project_orchestrator,
 )

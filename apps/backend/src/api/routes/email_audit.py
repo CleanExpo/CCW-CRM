@@ -328,6 +328,7 @@ async def get_email_detail(
     Returns full email content and delivery tracking information.
     """
     from sqlalchemy import select
+
     from src.db.email_audit_models import EmailLog
 
     result = await db.execute(
@@ -570,7 +571,8 @@ async def get_suppression_list(
     - spam_reported: Recipient marked as spam
     - unsubscribed: Recipient opted out
     """
-    from sqlalchemy import or_, select, func
+    from sqlalchemy import func, or_, select
+
     from src.db.email_audit_models import EmailConsent
 
     query = select(EmailConsent).where(

@@ -14,7 +14,6 @@ from pydantic import BaseModel
 from sqlalchemy import String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.cache.decorators import cached
 from src.config.database import get_async_db
 from src.db.demo_models import (
     Customer,

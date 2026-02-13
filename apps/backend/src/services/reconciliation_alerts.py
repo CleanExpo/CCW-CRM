@@ -9,14 +9,13 @@ Monitors reconciliation discrepancies and sends notifications:
 
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 import structlog
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.pos_models import BankAccount, BankFeed, POSTransaction
+from src.db.pos_models import BankFeed, POSTransaction
 
 logger = structlog.get_logger(__name__)
 
@@ -32,7 +31,7 @@ class ReconciliationAlert:
         description: str,
         affected_count: int = 0,
         total_amount: Decimal = Decimal("0"),
-        details: Optional[dict] = None,
+        details: dict | None = None,
     ):
         self.alert_type = alert_type
         self.severity = severity  # info, warning, critical
@@ -58,7 +57,7 @@ class ReconciliationAlertsService:
 
     async def check_reconciliation_alerts(
         self,
-        account_id: Optional[UUID] = None,
+        account_id: UUID | None = None,
     ) -> list[ReconciliationAlert]:
         """
         Check for reconciliation issues and generate alerts.
@@ -98,7 +97,7 @@ class ReconciliationAlertsService:
 
         return alerts
 
-    async def _check_unmatched_count(self, account_id: Optional[UUID]) -> Optional[ReconciliationAlert]:
+    async def _check_unmatched_count(self, account_id: UUID | None) -> ReconciliationAlert | None:
         """Check if unmatched transaction count exceeds threshold."""
         query = select(func.count(BankFeed.id)).where(BankFeed.match_status == "pending")
 
@@ -119,7 +118,7 @@ class ReconciliationAlertsService:
 
         return None
 
-    async def _check_large_unmatched_amounts(self, account_id: Optional[UUID]) -> Optional[ReconciliationAlert]:
+    async def _check_large_unmatched_amounts(self, account_id: UUID | None) -> ReconciliationAlert | None:
         """Check for individual large unmatched amounts."""
         query = (
             select(BankFeed)
@@ -168,7 +167,7 @@ class ReconciliationAlertsService:
 
         return None
 
-    async def _check_old_unmatched_transactions(self, account_id: Optional[UUID]) -> Optional[ReconciliationAlert]:
+    async def _check_old_unmatched_transactions(self, account_id: UUID | None) -> ReconciliationAlert | None:
         """Check for transactions unmatched for extended period."""
         cutoff_date = date.today() - timedelta(days=self.DAYS_UNMATCHED_THRESHOLD)
 
@@ -203,7 +202,7 @@ class ReconciliationAlertsService:
 
         return None
 
-    async def _check_total_unmatched_amount(self, account_id: Optional[UUID]) -> Optional[ReconciliationAlert]:
+    async def _check_total_unmatched_amount(self, account_id: UUID | None) -> ReconciliationAlert | None:
         """Check if total unmatched amount exceeds threshold."""
         query = (
             select(
@@ -229,7 +228,7 @@ class ReconciliationAlertsService:
 
         return None
 
-    async def _check_missing_xero_invoices(self) -> Optional[ReconciliationAlert]:
+    async def _check_missing_xero_invoices(self) -> ReconciliationAlert | None:
         """Check for captured POS transactions without Xero invoices."""
         query = (
             select(func.count(POSTransaction.id))
@@ -271,7 +270,7 @@ class ReconciliationAlertsService:
 
     async def get_daily_reconciliation_summary(
         self,
-        report_date: Optional[date] = None,
+        report_date: date | None = None,
     ) -> dict:
         """
         Generate daily reconciliation summary report.

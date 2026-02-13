@@ -1,4 +1,5 @@
 """Internationalization service for content translation."""
+from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
@@ -9,7 +10,10 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.ai.ollama_client import get_ollama_client
+try:
+    from src.ai.ollama_client import get_ollama_client
+except ImportError:
+    get_ollama_client = None  # type: ignore[assignment]
 from src.db.demo_models import Product
 from src.db.i18n_models import (
     CategoryTranslation,

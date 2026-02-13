@@ -8,19 +8,22 @@ Handles:
 - AI-powered match suggestions (Phase 2 enhancement)
 - Error recovery with exponential backoff (Phase 5)
 """
+from __future__ import annotations
 
 import asyncio
 import os
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 import structlog
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.ai.agents.specialized.reconciliation_agent import ReconciliationAgent
+try:
+    from src.ai.agents.specialized.reconciliation_agent import ReconciliationAgent
+except ImportError:
+    ReconciliationAgent = None  # type: ignore[assignment, misc]
 from src.db.pos_models import BankAccount, BankFeed, POSTransaction
 
 logger = structlog.get_logger(__name__)
@@ -305,7 +308,7 @@ class BankFeedService:
                         balance -= amount
                         mock_transactions.append({
                             "transaction_date": current_date,
-                            "description": f"PAYMENT TO SUPPLIER",
+                            "description": "PAYMENT TO SUPPLIER",
                             "reference": f"REF{random.randint(100000, 999999)}",
                             "credit": None,
                             "debit": amount,

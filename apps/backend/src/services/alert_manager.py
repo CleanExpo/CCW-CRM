@@ -1,8 +1,9 @@
 """Alert management service for critical system notifications."""
 
-import structlog
 from datetime import UTC, datetime
 from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

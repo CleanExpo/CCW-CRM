@@ -63,10 +63,14 @@ async_engine = create_async_engine(
     get_database_url(async_mode=True),
     echo=get_settings().debug,
     pool_pre_ping=True,
-    pool_size=20,  # Support 20 concurrent requests
-    max_overflow=30,  # Burst up to 50 total connections
+    pool_size=5,  # Smaller pool for serverless/pooler environments
+    max_overflow=10,  # Burst up to 15 total connections
     pool_timeout=30,  # Wait 30s before failing connection request
     pool_recycle=3600,  # Recycle connections after 1 hour
+    connect_args={
+        "statement_cache_size": 0,  # Required for pgbouncer/Supabase pooler
+        "prepared_statement_cache_size": 0,  # Disable prepared statement cache
+    },
 )
 
 # Asynchronous session factory

@@ -7,7 +7,6 @@ Part of Phase 5 (Autonomous Development Framework) - Week 1 implementation.
 
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 import structlog

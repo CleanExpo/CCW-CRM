@@ -11,16 +11,16 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.base_agent import BaseAgent
 from src.db.demo_models import (
-    Customer,
     Order,
     Product,
 )
 from src.db.pos_models import POSTransaction
+
 # from src.db.inventory_models import StockMovement  # Not implemented yet
 
 logger = structlog.get_logger(__name__)

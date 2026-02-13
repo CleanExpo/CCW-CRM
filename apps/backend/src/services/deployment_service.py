@@ -4,21 +4,27 @@ Deployment Service with Rollback Integration.
 Manages deployments and triggers automatic rollbacks on failures.
 Part of Phase 5 (Autonomous Development Framework) - Week 2 implementation.
 """
+from __future__ import annotations
 
 import asyncio
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
 import structlog
 
-from src.ai.agents.rollback_agent import (
-    RollbackAgent,
-    RollbackTrigger,
-    get_rollback_agent,
-)
+try:
+    from src.ai.agents.rollback_agent import (
+        RollbackAgent,
+        RollbackTrigger,
+        get_rollback_agent,
+    )
+except ImportError:
+    RollbackAgent = None  # type: ignore[assignment, misc]
+    RollbackTrigger = None  # type: ignore[assignment, misc]
+    get_rollback_agent = None  # type: ignore[assignment]
 from src.monitoring.metrics import (
     deployment_duration,
     deployment_failures_total,
@@ -122,7 +128,7 @@ class DeploymentService:
             DeploymentResult with deployment status
         """
         deployment_id = str(uuid.uuid4())
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         logs: list[str] = []
 
         logger.info(
@@ -153,23 +159,23 @@ class DeploymentService:
 
         try:
             # Stage 1: Build
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Starting build stage")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Starting build stage")
             build_result = await self._execute_build_stage(config)
             result.stage_results["build"] = build_result
             if not build_result["success"]:
                 raise Exception(f"Build failed: {build_result['error']}")
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Build stage completed")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Build stage completed")
 
             # Stage 2: Test (if enabled)
             if config.run_tests:
-                logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Starting test stage")
+                logs.append(f"[{datetime.now(UTC).isoformat()}] Starting test stage")
                 test_result = await self._execute_test_stage(config)
                 result.stage_results["test"] = test_result
                 if not test_result["success"]:
                     # Test failure - trigger rollback
                     if config.auto_rollback:
                         logs.append(
-                            f"[{datetime.now(timezone.utc).isoformat()}] Test failures detected, triggering rollback"
+                            f"[{datetime.now(UTC).isoformat()}] Test failures detected, triggering rollback"
                         )
                         rollback_id = await self._trigger_rollback(
                             config=config,
@@ -180,17 +186,17 @@ class DeploymentService:
                         )
                         result.rollback_id = rollback_id
                     raise Exception(f"Tests failed: {test_result['error']}")
-                logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Test stage completed")
+                logs.append(f"[{datetime.now(UTC).isoformat()}] Test stage completed")
 
             # Stage 3: Deploy
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Starting deploy stage")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Starting deploy stage")
             deploy_result = await self._execute_deploy_stage(config)
             result.stage_results["deploy"] = deploy_result
             if not deploy_result["success"]:
                 # Deploy failure - trigger rollback
                 if config.auto_rollback:
                     logs.append(
-                        f"[{datetime.now(timezone.utc).isoformat()}] Deploy failed, triggering rollback"
+                        f"[{datetime.now(UTC).isoformat()}] Deploy failed, triggering rollback"
                     )
                     rollback_id = await self._trigger_rollback(
                         config=config,
@@ -199,17 +205,17 @@ class DeploymentService:
                     )
                     result.rollback_id = rollback_id
                 raise Exception(f"Deploy failed: {deploy_result['error']}")
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Deploy stage completed")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Deploy stage completed")
 
             # Stage 4: Verify
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Starting verify stage")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Starting verify stage")
             verify_result = await self._execute_verify_stage(config)
             result.stage_results["verify"] = verify_result
             if not verify_result["success"]:
                 # Verification failure - trigger rollback
                 if config.auto_rollback:
                     logs.append(
-                        f"[{datetime.now(timezone.utc).isoformat()}] Verification failed, triggering rollback"
+                        f"[{datetime.now(UTC).isoformat()}] Verification failed, triggering rollback"
                     )
                     rollback_id = await self._trigger_rollback(
                         config=config,
@@ -220,10 +226,10 @@ class DeploymentService:
                     )
                     result.rollback_id = rollback_id
                 raise Exception(f"Verification failed: {verify_result['error']}")
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Verify stage completed")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Verify stage completed")
 
             # Success!
-            end_time = datetime.now(timezone.utc)
+            end_time = datetime.now(UTC)
             duration = (end_time - start_time).total_seconds()
 
             result.status = DeploymentStatus.SUCCESSFUL
@@ -243,7 +249,7 @@ class DeploymentService:
             return result
 
         except Exception as e:
-            end_time = datetime.now(timezone.utc)
+            end_time = datetime.now(UTC)
             duration = (end_time - start_time).total_seconds()
 
             # Determine which stage failed
@@ -262,7 +268,7 @@ class DeploymentService:
             ).inc()
 
             error_msg = str(e)
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] ERROR: {error_msg}")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] ERROR: {error_msg}")
 
             result.status = (
                 DeploymentStatus.ROLLED_BACK

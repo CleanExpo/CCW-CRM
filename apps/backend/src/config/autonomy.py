@@ -13,8 +13,6 @@ Part of Phase 5 (Autonomous Development Framework) - Week 3 implementation.
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any
 
 import structlog
 

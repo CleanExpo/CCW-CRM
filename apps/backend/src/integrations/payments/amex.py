@@ -13,7 +13,6 @@ Production implementation will integrate with actual gateway SDK.
 import asyncio
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -24,10 +23,10 @@ class AMEXChargeRequest(BaseModel):
 
     amount: Decimal
     reference: str
-    card_number: Optional[str] = None  # For card-present transactions
-    card_token: Optional[str] = None  # For stored cards
-    cvv: Optional[str] = None
-    expiry: Optional[str] = None  # MM/YY format
+    card_number: str | None = None  # For card-present transactions
+    card_token: str | None = None  # For stored cards
+    cvv: str | None = None
+    expiry: str | None = None  # MM/YY format
 
 
 class AMEXChargeResponse(BaseModel):
@@ -36,9 +35,9 @@ class AMEXChargeResponse(BaseModel):
     success: bool
     status: str  # 'authorized', 'captured', 'declined', 'error'
     transaction_id: str
-    authorization_code: Optional[str] = None
+    authorization_code: str | None = None
     amount: Decimal
-    card_last_4: Optional[str] = None
+    card_last_4: str | None = None
     response_text: str
     timestamp: datetime
 
@@ -56,7 +55,7 @@ class AMEXClient:
     Production will integrate with AMEX gateway SDK.
     """
 
-    def __init__(self, api_key: Optional[str] = None, merchant_id: Optional[str] = None):
+    def __init__(self, api_key: str | None = None, merchant_id: str | None = None):
         self.api_key = api_key
         self.merchant_id = merchant_id
         self.mock_mode = True  # Set to False when integrating real gateway

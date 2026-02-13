@@ -14,7 +14,7 @@ from typing import Annotated
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,8 +22,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config.ap2_settings import get_ap2_settings
 from src.config.database import get_async_db
 from src.db.ap2_models import (
-    AP2AgentInteraction,
-    AP2Connection,
     AP2Mandate,
     AP2MandateStatus,
     AP2MandateType,

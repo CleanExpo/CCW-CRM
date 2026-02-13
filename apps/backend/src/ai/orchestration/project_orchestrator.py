@@ -4,12 +4,11 @@ Project Orchestrator for multi-phase autonomous development.
 Coordinates complex development projects across multiple phases and tasks.
 """
 
-import asyncio
 import enum
 from collections import defaultdict
 from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import structlog
 

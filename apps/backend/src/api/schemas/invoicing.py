@@ -5,7 +5,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, computed_field
 
-
 # ============================================================================
 # Tax Rate Schemas
 # ============================================================================

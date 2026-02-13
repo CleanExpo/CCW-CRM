@@ -1,23 +1,23 @@
 """Invoice API endpoints for UNI-173."""
-from datetime import date, datetime
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, or_
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.api.schemas.invoicing import (
     InvoiceCreate,
-    InvoiceUpdate,
+    InvoiceListResponse,
     InvoiceResponse,
     InvoiceSummary,
-    InvoiceListResponse,
+    InvoiceUpdate,
 )
 from src.config.database import get_async_db
-from src.db.models.invoicing import Invoice, InvoiceItem
 from src.db.demo_models import Customer
+from src.db.models.invoicing import Invoice, InvoiceItem
 
 router = APIRouter(prefix="/api/invoices", tags=["Invoices"])
 

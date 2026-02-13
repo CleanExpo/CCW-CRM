@@ -330,8 +330,10 @@ async def get_reconciliation_stats(
     """
     try:
         from datetime import datetime, timedelta
-        from src.db.pos_models import BankFeed, POSTransaction
+
         from sqlalchemy import func, select
+
+        from src.db.pos_models import BankFeed, POSTransaction
 
         cutoff_date = datetime.now() - timedelta(days=30)
 

@@ -6,10 +6,11 @@ Part of Phase 5 (Autonomous Development Framework) - Week 2 implementation.
 """
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 
@@ -170,7 +171,7 @@ class CircuitBreaker:
         if self.state == CircuitState.OPEN:
             # Check if timeout expired, try half-open
             if self.opened_at:
-                time_open = (datetime.now(timezone.utc) - self.opened_at).total_seconds()
+                time_open = (datetime.now(UTC) - self.opened_at).total_seconds()
                 if time_open >= self.config.timeout_seconds:
                     await self._transition_to_half_open()
 
@@ -180,7 +181,7 @@ class CircuitBreaker:
             self.metrics.successful_calls += 1
             self.metrics.consecutive_successes += 1
             self.metrics.consecutive_failures = 0
-            self.metrics.last_success_time = datetime.now(timezone.utc)
+            self.metrics.last_success_time = datetime.now(UTC)
 
             logger.debug(
                 "Circuit breaker call succeeded",
@@ -200,7 +201,7 @@ class CircuitBreaker:
             self.metrics.failed_calls += 1
             self.metrics.consecutive_failures += 1
             self.metrics.consecutive_successes = 0
-            self.metrics.last_failure_time = datetime.now(timezone.utc)
+            self.metrics.last_failure_time = datetime.now(UTC)
 
             logger.warning(
                 "Circuit breaker call failed",
@@ -222,7 +223,7 @@ class CircuitBreaker:
     async def _transition_to_open(self) -> None:
         """Transition to OPEN state."""
         self.state = CircuitState.OPEN
-        self.opened_at = datetime.now(timezone.utc)
+        self.opened_at = datetime.now(UTC)
         self.half_open_calls = 0
 
         logger.error(
@@ -272,7 +273,7 @@ class CircuitBreaker:
 
     def _record_state_change(self, new_state: CircuitState) -> None:
         """Record a state transition."""
-        self.metrics.state_transitions.append((new_state, datetime.now(timezone.utc)))
+        self.metrics.state_transitions.append((new_state, datetime.now(UTC)))
 
         # Update Prometheus gauge
         state_value = {"closed": 0, "open": 1, "half_open": 2}[new_state.value]

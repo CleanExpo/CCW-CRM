@@ -1,7 +1,7 @@
 """Pydantic schemas for CRM API (Contacts & Activities)."""
 
-from datetime import datetime
 import enum
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field

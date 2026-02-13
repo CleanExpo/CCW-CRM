@@ -26,7 +26,6 @@ from pydantic import (
     model_validator,
 )
 
-
 # =============================================================================
 # ENUMS (as Literal types for Pydantic compatibility)
 # =============================================================================
@@ -943,7 +942,7 @@ class LanguageProgress(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_counts(self) -> "LanguageProgress":
+    def validate_counts(self) -> LanguageProgress:
         """Validate that counts are consistent."""
         if self.translated_strings > self.total_strings:
             raise ValueError("Translated strings cannot exceed total strings")

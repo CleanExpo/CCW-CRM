@@ -1012,5 +1012,114 @@ p7_passed = passed - p1_passed - p2_passed - p3_passed - p4_passed - p5_passed -
 p7_failed = failed - p1_failed - p2_failed - p3_failed - p4_failed - p5_failed - p6_failed
 print(f"  Phase 7: {p7_passed} passed, {p7_failed} failed")
 
-print(f"\nAll Cin7 tests: {passed} passed, {failed} failed (Phase 1: {p1_passed}, Phase 2: {p2_passed}, Phase 3: {p3_passed}, Phase 4: {p4_passed}, Phase 5: {p5_passed}, Phase 6: {p6_passed}, Phase 7: {p7_passed})")
+# ============================================================
+# PHASE 8: Agents Protocol v1.0 (Governance Layer)
+# ============================================================
+
+from src.ai.protocol.models import (
+    AgentCard as _AgentCard8,
+    AgentMessage as _AgentMessage8,
+    ConfidenceScore as _ConfidenceScore8,
+    DelegationRequest as _DelegationRequest8,
+    EscalationTrigger as _EscalationTrigger8,
+    EscalationTriggerType as _EscalationTriggerType8,
+    ErrorType as _ErrorType8,
+    HandoffPackage as _HandoffPackage8,
+    MessageType as _MessageType8,
+    PermissionTier as _PermissionTier8,
+    Priority as _Priority8,
+    ProtocolVersion as _ProtocolVersion8,
+    Severity as _Severity8,
+)
+
+# Protocol Version
+check("p8 version", str(_ProtocolVersion8.current()) == "1.0.0")
+
+# AgentCard
+_card8 = _AgentCard8(
+    agent_id="test-agent",
+    name="Test Agent",
+    capabilities=["test"],
+    permission_tier=_PermissionTier8.STANDARD,
+)
+check("p8 card creation", _card8.agent_id == "test-agent")
+check("p8 card tier", _card8.permission_tier == _PermissionTier8.STANDARD)
+
+# Governor pure functions
+from src.ai.protocol.governor import (
+    validate_delegation as _validate_delegation8,
+    classify_error as _classify_error8,
+    should_escalate as _should_escalate8,
+    validate_permissions as _validate_permissions8,
+    detect_delegation_loop as _detect_delegation_loop8,
+)
+
+# Delegation validation
+_sender8 = _AgentCard8(agent_id="s", name="S", capabilities=["delegation"], permission_tier=_PermissionTier8.ADMIN)
+_recipient8 = _AgentCard8(agent_id="r", name="R", capabilities=["pricing"], permission_tier=_PermissionTier8.STANDARD)
+_vreq8 = _DelegationRequest8(delegator_id="s", delegate_id="r", task="test", required_capabilities=["pricing"], chain=[])
+_valid8, _errs8 = _validate_delegation8(_vreq8, _sender8, _recipient8)
+check("p8 delegation valid", _valid8 is True)
+
+_bad_req8 = _DelegationRequest8(delegator_id="s", delegate_id="r", task="test", required_capabilities=["inventory"], chain=[])
+_valid8b, _errs8b = _validate_delegation8(_bad_req8, _sender8, _recipient8)
+check("p8 delegation missing cap", _valid8b is False)
+
+# Circular delegation
+check("p8 no loop", _detect_delegation_loop8(["a", "b"], "c") is False)
+check("p8 loop detected", _detect_delegation_loop8(["a", "b"], "b") is True)
+
+# Error classification
+check("p8 timeout error", _classify_error8(TimeoutError("t")).error_type == _ErrorType8.TIMEOUT)
+check("p8 permission error", _classify_error8(PermissionError("p")).retryable is False)
+check("p8 value error", _classify_error8(ValueError("v")).error_type == _ErrorType8.DATA_QUALITY)
+
+# Escalation
+_hi8 = _ConfidenceScore8(score=0.9, reasoning="good", factors={})
+_lo8 = _ConfidenceScore8(score=0.2, reasoning="bad", factors={})
+_trig8 = [_EscalationTrigger8(trigger_type=_EscalationTriggerType8.CONFIDENCE_LOW, threshold=0.5)]
+check("p8 no escalation", _should_escalate8(_hi8, _trig8)[0] is False)
+check("p8 escalation triggered", _should_escalate8(_lo8, _trig8)[0] is True)
+
+# Permissions
+_admin8 = _AgentCard8(agent_id="a", name="A", permission_tier=_PermissionTier8.ADMIN)
+_ro8 = _AgentCard8(agent_id="r", name="R", permission_tier=_PermissionTier8.READ_ONLY)
+check("p8 admin can delete", _validate_permissions8(_admin8, "delete") is True)
+check("p8 readonly no create", _validate_permissions8(_ro8, "create") is False)
+
+# Message bus
+from src.ai.protocol.message_bus import create_message as _cm8, create_response as _cr8, is_expired as _ie8
+
+_msg8 = _cm8("a", "b", _MessageType8.REQUEST, {"key": "val"})
+check("p8 message sender", _msg8.sender_id == "a")
+_resp8 = _cr8(_msg8, {"result": "ok"})
+check("p8 response correlation", _resp8.correlation_id == _msg8.correlation_id)
+check("p8 response type", _resp8.message_type == _MessageType8.RESPONSE)
+
+# Error handler
+from src.ai.protocol.error_handler import classify_exception as _ce8, should_retry as _sr8, calculate_backoff as _cb8
+
+check("p8 classify timeout", _ce8(TimeoutError("t")).retryable is True)
+check("p8 retry allowed", _sr8(_ce8(TimeoutError("t")), 0) is True)
+check("p8 backoff exponential", _cb8("exponential", 3, 1.0) == 8.0)
+
+# Confidence scoring
+from src.ai.protocol.confidence import score_from_execution as _sfe8, aggregate_confidence as _ac8
+
+check("p8 fast execution", _sfe8(500, 1000) == 1.0)
+_agg8 = _ac8({"a": 0.9, "b": 0.8})
+check("p8 aggregate score", _agg8.score > 0.8)
+
+# AST verification for protocol API
+with open(os.path.join(_backend_dir, "src", "api", "routes", "ai", "protocol.py")) as fh:
+    tree_p8 = ast.parse(fh.read())
+p8_funcs = [n.name for n in ast.walk(tree_p8) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+for exp in ["get_protocol_version", "list_agent_cards", "get_agent_card", "validate_delegation", "get_protocol_health", "get_audit_log"]:
+    check(f"p8 endpoint {exp}", exp in p8_funcs)
+
+p8_passed = passed - p1_passed - p2_passed - p3_passed - p4_passed - p5_passed - p6_passed - p7_passed
+p8_failed = failed - p1_failed - p2_failed - p3_failed - p4_failed - p5_failed - p6_failed - p7_failed
+print(f"  Phase 8: {p8_passed} passed, {p8_failed} failed")
+
+print(f"\nAll Cin7 tests: {passed} passed, {failed} failed (Phase 1: {p1_passed}, Phase 2: {p2_passed}, Phase 3: {p3_passed}, Phase 4: {p4_passed}, Phase 5: {p5_passed}, Phase 6: {p6_passed}, Phase 7: {p7_passed}, Phase 8: {p8_passed})")
 sys.exit(1 if failed > 0 else 0)

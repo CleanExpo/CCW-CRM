@@ -1,5 +1,0 @@
-Line 175:     print("\n🔹 Creating 5,000 small orders (1-5 items)...")
-Line 217:     print("\n🔹 Creating 3,000 medium orders (6-15 items)...")
-Line 257:     print("\n🔹 Creating 1,500 large orders (16-30 items)...")
-Line 297:     print("\n🔹 Creating 500 bulk orders (31-50 items)...")
-Line 383:     print("\n🔹 Testing batch stock operations (1,000 orders)...")

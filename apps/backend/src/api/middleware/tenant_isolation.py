@@ -31,7 +31,6 @@ from uuid import UUID
 
 import structlog
 from fastapi import Depends, HTTPException, Request
-from sqlalchemy import event, inspect
 from sqlalchemy.orm import Session
 
 logger = structlog.get_logger(__name__)
@@ -333,6 +332,7 @@ def create_test_organizations(db: Session, count: int = 10) -> list[UUID]:
             create_test_data(db, org_id)
     """
     from uuid import uuid4
+
     from src.db.demo_models import Organization
 
     org_ids = []
@@ -384,7 +384,7 @@ def verify_tenant_isolation(
         assert verify_tenant_isolation(db, Product, org_a_id, expected_count=10)
         assert verify_tenant_isolation(db, Product, org_b_id, expected_count=10)
     """
-    from sqlalchemy import select, func
+    from sqlalchemy import func, select
 
     # Count records for this organization
     query = select(func.count()).where(

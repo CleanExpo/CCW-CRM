@@ -2,11 +2,11 @@
 
 Performance optimized with cache invalidation on writes.
 """
-from datetime import datetime, time, timedelta, timezone
-from decimal import Decimal
+from datetime import UTC, datetime, time, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -28,7 +28,6 @@ from src.db.schemas import (
     QuoteItem,
     QuoteUpdate,
 )
-from pydantic import BaseModel
 from src.monitoring import metrics
 from src.services.sse_service import sse_service
 from src.utils.calculations import calculate_line_total, calculate_totals
@@ -252,7 +251,7 @@ async def create_quote(
         "type": "metrics_updated",
         "metric": "pending_quotes",
         "change": "increment",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -260,7 +259,7 @@ async def create_quote(
         "title": "New Quote",
         "description": f"Quote {quote_number} created - ${total}",
         "link": f"/quotes/{quote.id}",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     # Build response from already-loaded quote object (Pydantic serializer handles valid_until)
@@ -294,7 +293,7 @@ async def update_quote(
         update_data["valid_until"] = datetime.combine(
             update_data["valid_until"],
             time.min,
-            tzinfo=timezone.utc,
+            tzinfo=UTC,
         )
     for field, value in update_data.items():
         setattr(quote, field, value)
@@ -374,7 +373,7 @@ async def update_quote(
         "title": "Quote Updated",
         "description": f"Quote {quote.quote_number} updated",
         "link": f"/quotes/{quote.id}",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     # Build response from already-loaded quote object (Pydantic serializer handles valid_until)
@@ -415,7 +414,7 @@ async def delete_quote(
         "type": "metrics_updated",
         "metric": "pending_quotes",
         "change": "decrement",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -423,7 +422,7 @@ async def delete_quote(
         "title": "Quote Deleted",
         "description": f"Quote {quote_number} deleted",
         "link": "/quotes",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return None
@@ -526,7 +525,7 @@ async def generate_quote_with_ai(
     quote_data = QuoteCreate(
         customer_id=customer_id,
         status="draft",
-        valid_until=(datetime.now(timezone.utc) + timedelta(days=30)).date(),
+        valid_until=(datetime.now(UTC) + timedelta(days=30)).date(),
         notes=f"AI Generated: {requirements[:100]}",
         items=[
             {
@@ -558,7 +557,7 @@ async def convert_quote_to_order(
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
 
-    if quote.valid_until and quote.valid_until < datetime.now(timezone.utc):
+    if quote.valid_until and quote.valid_until < datetime.now(UTC):
         raise HTTPException(status_code=400, detail="Quote has expired")
 
     # Generate order number
@@ -610,14 +609,14 @@ async def convert_quote_to_order(
         "type": "metrics_updated",
         "metric": "pending_quotes",
         "change": "decrement",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     await sse_service.publish("dashboard-metrics", {
         "type": "metrics_updated",
         "metric": "active_orders",
         "change": "increment",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -625,7 +624,7 @@ async def convert_quote_to_order(
         "title": "Quote Converted to Order",
         "description": f"Quote {quote.quote_number} converted to order {order_number}",
         "link": f"/orders/{order.id}",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     # Reload with items

@@ -56,10 +56,10 @@ class Location(Base):
     )
 
     # Address (for physical locations)
-    address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    state: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    postal_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    state: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    postal_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
     country: Mapped[str] = mapped_column(String(100), default="Australia", nullable=False)
 
     # Configuration
@@ -111,8 +111,8 @@ class SalesStaff(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     staff_code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     full_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    email: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    phone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Location mapping
     primary_location_code: Mapped[str] = mapped_column(
@@ -165,12 +165,12 @@ class POSTerminal(Base):
     )
 
     # Configuration
-    merchant_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    merchant_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
     terminal_config: Mapped[dict] = mapped_column(JSONB, default={}, nullable=False)
 
     # Status
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False, index=True)
-    last_ping_at: Mapped[Optional[datetime]] = mapped_column(
+    last_ping_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 
@@ -203,12 +203,12 @@ class BankAccount(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     account_name: Mapped[str] = mapped_column(String(200), nullable=False)
     account_number: Mapped[str] = mapped_column(String(100), nullable=False)
-    bsb: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    bank_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    location_code: Mapped[Optional[str]] = mapped_column(
+    bsb: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    bank_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    location_code: Mapped[str | None] = mapped_column(
         String(50), ForeignKey("locations.code", ondelete="SET NULL"), nullable=True, index=True
     )
-    account_type: Mapped[Optional[str]] = mapped_column(
+    account_type: Mapped[str | None] = mapped_column(
         String(50),
         CheckConstraint("account_type IN ('checking', 'savings', 'merchant')"),
         nullable=True,
@@ -216,19 +216,19 @@ class BankAccount(Base):
     currency: Mapped[str] = mapped_column(String(3), default="AUD", nullable=False)
 
     # Bank Feed Integration
-    feed_provider: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
-    feed_account_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    last_feed_sync_at: Mapped[Optional[datetime]] = mapped_column(
+    feed_provider: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    feed_account_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    last_feed_sync_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    feed_sync_status: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    feed_sync_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Auto-Sync Configuration (Phase 1)
     sync_interval_hours: Mapped[int] = mapped_column(default=24, nullable=False)
     webhook_enabled: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
-    webhook_secret: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    webhook_secret: Mapped[str | None] = mapped_column(String(200), nullable=True)
     sync_retry_count: Mapped[int] = mapped_column(default=0, nullable=False)
-    last_sync_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    last_sync_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Status
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False, index=True)
@@ -268,13 +268,13 @@ class POSTransaction(Base):
     )
 
     # Links
-    order_id: Mapped[Optional[UUID]] = mapped_column(
+    order_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("orders.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    terminal_id: Mapped[Optional[UUID]] = mapped_column(
+    terminal_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("pos_terminals.id", ondelete="RESTRICT"), nullable=True, index=True
     )
-    sales_staff_id: Mapped[Optional[UUID]] = mapped_column(
+    sales_staff_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("sales_staff.id", ondelete="RESTRICT"), nullable=True, index=True
     )
 
@@ -282,7 +282,7 @@ class POSTransaction(Base):
     location_code: Mapped[str] = mapped_column(
         String(50), ForeignKey("locations.code", ondelete="RESTRICT"), nullable=False, index=True
     )
-    resolved_location_code: Mapped[Optional[str]] = mapped_column(
+    resolved_location_code: Mapped[str | None] = mapped_column(
         String(50), ForeignKey("locations.code", ondelete="RESTRICT"), nullable=True, index=True
     )
 
@@ -309,13 +309,13 @@ class POSTransaction(Base):
         nullable=False,
         index=True,
     )
-    payment_gateway_ref: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    payment_gateway_response: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    payment_gateway_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    payment_gateway_response: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Reconciliation
-    bank_statement_ref: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    xero_invoice_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    cin7_transaction_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    bank_statement_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    xero_invoice_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    cin7_transaction_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
     reconciliation_status: Mapped[str] = mapped_column(
         String(50),
         CheckConstraint(
@@ -325,10 +325,10 @@ class POSTransaction(Base):
         nullable=False,
         index=True,
     )
-    reconciled_at: Mapped[Optional[datetime]] = mapped_column(
+    reconciled_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    reconciled_by: Mapped[Optional[UUID]] = mapped_column(nullable=True)
+    reconciled_by: Mapped[UUID | None] = mapped_column(nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -380,17 +380,17 @@ class BankFeed(Base):
 
     # Transaction data
     transaction_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    reference: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    debit: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
-    credit: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
-    balance: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reference: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    debit: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
+    credit: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
+    balance: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
 
     # Matching
-    matched_pos_transaction_id: Mapped[Optional[UUID]] = mapped_column(
+    matched_pos_transaction_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("pos_transactions.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    match_confidence: Mapped[Optional[Decimal]] = mapped_column(Numeric(3, 2), nullable=True)
+    match_confidence: Mapped[Decimal | None] = mapped_column(Numeric(3, 2), nullable=True)
     match_status: Mapped[str] = mapped_column(
         String(50),
         CheckConstraint(
@@ -400,14 +400,14 @@ class BankFeed(Base):
         nullable=False,
         index=True,
     )
-    matched_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    matched_by: Mapped[Optional[UUID]] = mapped_column(nullable=True)
+    matched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    matched_by: Mapped[UUID | None] = mapped_column(nullable=True)
 
     # Metadata
-    raw_data: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    raw_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # AI Matching Suggestions (Phase 2)
-    match_suggestions: Mapped[Optional[list]] = mapped_column(JSONB, default=list, nullable=True)
+    match_suggestions: Mapped[list | None] = mapped_column(JSONB, default=list, nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

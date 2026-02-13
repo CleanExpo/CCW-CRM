@@ -243,8 +243,9 @@ class InventorySyncService:
             db.add(sync_log)
 
             # PHASE 2 - Task 2.3: Add to retry queue for automatic retry
-            from src.db.shopify_extended_models import ShopifyInventorySyncQueue
             from datetime import timedelta
+
+            from src.db.shopify_extended_models import ShopifyInventorySyncQueue
 
             # Calculate next retry time (exponential backoff: 1min, 2min, 4min, 8min, 16min)
             retry_delay_minutes = 2 ** 0  # Start with 1 minute (2^0 = 1)
@@ -647,7 +648,6 @@ async def process_sync_queue_item(
     Returns:
         True if sync succeeded, False otherwise
     """
-    from src.db.shopify_extended_models import ShopifyInventorySyncQueue
 
     # Update status to processing
     queue_item.status = "processing"
@@ -705,9 +705,9 @@ async def process_sync_queue_batch(db: AsyncSession) -> dict[str, int]:
     Returns:
         Processing statistics
     """
+    from src.config.shopify_settings import get_shopify_settings
     from src.db.shopify_extended_models import ShopifyInventorySyncQueue
     from src.integrations.shopify.client import get_shopify_client
-    from src.config.shopify_settings import get_shopify_settings
 
     # Query for items ready to retry
     query = (
