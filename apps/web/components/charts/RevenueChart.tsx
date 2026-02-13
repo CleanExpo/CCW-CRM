@@ -74,7 +74,7 @@ export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartPro
                   }).format(value)
                 }
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={(props: any) => <CustomTooltip active={props.active} payload={props.payload} />} />
               <Legend wrapperStyle={{ paddingTop: "20px" }} />
               <Line
                 type="monotone"

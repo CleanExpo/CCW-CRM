@@ -93,7 +93,7 @@ export const CategorySalesChart = memo(function CategorySalesChart({ data }: Cat
                   }).format(value)
                 }
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={(props: any) => <CustomTooltip active={props.active} payload={props.payload} />} />
               <Legend wrapperStyle={{ paddingTop: "10px" }} />
               <Bar dataKey="value" name="Sales" radius={[8, 8, 0, 0]}>
                 {chartData.map((entry, index) => (
