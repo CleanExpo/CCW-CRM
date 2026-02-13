@@ -16,7 +16,7 @@ interface RevenueChartProps {
 // PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
 export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartProps) {
   // Transform data for recharts (convert revenue string to number)
-  const chartData = data.map((point) => ({
+  const chartData = (data || []).map((point) => ({
     month: point.month,
     revenue: parseFloat(point.revenue),
   }));

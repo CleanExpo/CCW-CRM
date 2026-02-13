@@ -26,7 +26,7 @@ export interface Cin7SyncEvent {
  * @param enabled - Enable/disable connection (default: true)
  */
 export function useCin7Stream(enabled = true) {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
   return useSSE<Cin7SyncEvent>({
     url: `${backendUrl}/api/integrations/cin7/stream`,
     enabled,

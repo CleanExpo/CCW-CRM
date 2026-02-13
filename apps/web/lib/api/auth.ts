@@ -44,9 +44,9 @@ export interface RegisterResponse {
  * Check if we should use Supabase Auth (production) or FastAPI (local dev)
  */
 function useSupabaseAuth(): boolean {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-  // Use Supabase Auth when backend URL points to supabase or is not localhost
-  return backendUrl.includes("supabase.co") || (!backendUrl.includes("localhost") && backendUrl !== "");
+  // Use Supabase Auth when NEXT_PUBLIC_SUPABASE_URL is configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  return supabaseUrl.length > 0 && supabaseUrl.includes("supabase.co");
 }
 
 /**

@@ -27,7 +27,7 @@ const COLORS = [
 // PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
 export const CategorySalesChart = memo(function CategorySalesChart({ data }: CategorySalesChartProps) {
   // Transform data for recharts
-  const chartData = data.map((item, index) => ({
+  const chartData = (data || []).map((item, index) => ({
     category: item.category.replace(/_/g, " "),
     value: parseFloat(item.value),
     percentage: item.percentage,
