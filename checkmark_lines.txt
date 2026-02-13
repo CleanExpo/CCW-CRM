@@ -1,0 +1,5 @@
+Line 236:             print(f"  ✓ {i + 1}/5000 small orders created")
+Line 276:             print(f"  ✓ {i + 1}/3000 medium orders created")
+Line 316:             print(f"  ✓ {i + 1}/1500 large orders created")
+Line 356:             print(f"  ✓ {i + 1}/500 bulk orders created")
+Line 473:             print(f"  ✓ {i + 1}/1000 stock operations completed")

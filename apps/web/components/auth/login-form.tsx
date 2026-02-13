@@ -52,9 +52,9 @@ export function LoginForm() {
         description: `Welcome back, ${response.user.email}!`,
       });
 
-      // Redirect to dashboard
-      router.push("/dashboard");
-      router.refresh();
+      // Force full page reload to trigger middleware authentication check
+      // This ensures the auth cookie is properly validated server-side
+      window.location.href = "/dashboard";
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       toast({

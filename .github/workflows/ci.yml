@@ -2,19 +2,26 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, ai-updates]
   pull_request:
-    branches: [main]
+    branches: [main, ai-updates]
 
 env:
   NODE_VERSION: "20"
   PNPM_VERSION: "9.15.0"
   PYTHON_VERSION: "3.12"
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # ============================================================================
+  # Backend Tests
+  # ============================================================================
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
+    outputs:
+      tests_passed: ${{ steps.test.outcome == 'success' }}
 
     services:
       postgres:
@@ -27,6 +34,16 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -49,7 +66,7 @@ jobs:
           path: |
             ~/.cache/uv
             apps/backend/.venv
-          key: ${{ runner.os }}-uv-${{ hashFiles('apps/backend/pyproject.toml') }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('apps/backend/pyproject.toml', 'apps/backend/uv.lock') }}
           restore-keys: |
             ${{ runner.os }}-uv-
 
@@ -61,16 +78,20 @@ jobs:
         working-directory: apps/backend
         run: uv run ruff check src/
 
-      # TODO: Fix mypy errors and re-enable
+      # Type checking (enable when mypy errors are fixed)
       # - name: Type check with mypy
       #   working-directory: apps/backend
       #   run: uv run mypy src/
 
       - name: Run tests with coverage
+        id: test
         working-directory: apps/backend
         run: uv run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=15 -v
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
+          REDIS_URL: redis://localhost:6379/0
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
 
       - name: Upload coverage report
         if: always()
@@ -82,16 +103,15 @@ jobs:
             apps/backend/htmlcov/
           retention-days: 30
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-test-results
-          path: apps/backend/.pytest_cache/
-
+  # ============================================================================
+  # Frontend Tests
+  # ============================================================================
   frontend-tests:
     name: Frontend Tests
     runs-on: ubuntu-latest
+    outputs:
+      tests_passed: ${{ steps.test.outcome == 'success' }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -117,6 +137,7 @@ jobs:
         run: pnpm turbo run type-check
 
       - name: Run unit tests with coverage
+        id: test
         run: pnpm turbo run test:coverage
 
       - name: Upload coverage report
@@ -127,17 +148,16 @@ jobs:
           path: apps/web/coverage/
           retention-days: 30
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-test-results
-          path: apps/web/coverage/
-
+  # ============================================================================
+  # Build Check
+  # ============================================================================
   build:
     name: Build Check
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-tests]
+    outputs:
+      build_passed: ${{ steps.build.outcome == 'success' }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -157,14 +177,57 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build all packages
+        id: build
         run: pnpm turbo run build
         env:
           NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
 
+  # ============================================================================
+  # Docker Build (for deployment readiness)
+  # ============================================================================
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend
+          file: ./apps/backend/Dockerfile
+          push: false
+          tags: ccw-erp-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          file: ./apps/web/Dockerfile
+          push: false
+          tags: ccw-erp-web:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================================
+  # E2E Tests
+  # ============================================================================
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-tests]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -207,10 +270,14 @@ jobs:
           name: e2e-test-results
           path: apps/web/test-results/
 
+  # ============================================================================
+  # Accessibility Tests
+  # ============================================================================
   accessibility-tests:
     name: Accessibility Tests
     runs-on: ubuntu-latest
     needs: [frontend-tests]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -253,3 +320,57 @@ jobs:
           name: accessibility-playwright-report
           path: apps/web/playwright-report/
           retention-days: 30
+
+  # ============================================================================
+  # CI Summary
+  # ============================================================================
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, build, e2e-tests, accessibility-tests]
+    if: always()
+
+    steps:
+      - name: Check CI results
+        run: |
+          echo "## CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.backend-tests.result }}" == "success" ]; then
+            echo "- :white_check_mark: Backend Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: Backend Tests: ${{ needs.backend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.frontend-tests.result }}" == "success" ]; then
+            echo "- :white_check_mark: Frontend Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: Frontend Tests: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "- :white_check_mark: Build: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.e2e-tests.result }}" == "success" ]; then
+            echo "- :white_check_mark: E2E Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: E2E Tests: ${{ needs.e2e-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.accessibility-tests.result }}" == "success" ]; then
+            echo "- :white_check_mark: Accessibility Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: Accessibility Tests: ${{ needs.accessibility-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Fail if any job failed
+        if: |
+          needs.backend-tests.result == 'failure' ||
+          needs.frontend-tests.result == 'failure' ||
+          needs.build.result == 'failure'
+        run: |
+          echo "One or more critical jobs failed"
+          exit 1

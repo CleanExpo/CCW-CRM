@@ -31,9 +31,9 @@ from sqlalchemy.orm import relationship
 
 # Import related models for SQLAlchemy relationship resolution
 # These need to be imported so string-based relationships can be resolved
-from .erp_models import Customer, Order, Product  # noqa: F401
+from .demo_models import Customer, Order, Product  # noqa: F401
 from .inventory_models import PurchaseOrder, Supplier  # noqa: F401
-from .models import Base
+from .models_base import Base
 
 
 class ContainerStatus(str, enum.Enum):

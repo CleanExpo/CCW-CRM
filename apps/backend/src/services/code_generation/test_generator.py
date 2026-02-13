@@ -14,7 +14,6 @@ import anthropic
 
 from .generator import GeneratedFile
 
-
 # ============================================================================
 # Test Generator
 # ============================================================================
@@ -37,7 +36,7 @@ class TestGenerator:
 
     project_root: Path
     anthropic_api_key: str | None = None
-    model: str = "claude-sonnet-4-20250514"  # Claude Sonnet 4.5
+    model: str = "claude-opus-4-6"  # Claude Opus 4-6
     max_retries: int = 2
 
     def __post_init__(self):
@@ -79,9 +78,7 @@ class TestGenerator:
         )
 
         # Check if there are any testable elements
-        has_testable_elements = any(
-            len(targets) > 0 for targets in test_targets.values()
-        )
+        has_testable_elements = any(len(targets) > 0 for targets in test_targets.values())
 
         if not has_testable_elements:
             # No testable code found
@@ -125,9 +122,7 @@ class TestGenerator:
     # Code Analysis
     # ========================================================================
 
-    async def _analyze_code(
-        self, code: str, language: str
-    ) -> dict[str, Any]:
+    async def _analyze_code(self, code: str, language: str) -> dict[str, Any]:
         """Analyze code to identify what needs testing.
 
         Args:
@@ -173,17 +168,21 @@ class TestGenerator:
                         # Handle both @router.get and @router.get("/path")
                         if isinstance(dec, ast.Call):
                             # Decorator with arguments like @router.get("/path")
-                            if (isinstance(dec.func, ast.Attribute)
+                            if (
+                                isinstance(dec.func, ast.Attribute)
                                 and isinstance(dec.func.value, ast.Name)
                                 and dec.func.value.id == "router"
-                                and dec.func.attr in ["get", "post", "put", "delete", "patch"]):
+                                and dec.func.attr in ["get", "post", "put", "delete", "patch"]
+                            ):
                                 is_endpoint = True
                                 break
                         elif isinstance(dec, ast.Attribute):
                             # Decorator without arguments like @router.get
-                            if (isinstance(dec.value, ast.Name)
+                            if (
+                                isinstance(dec.value, ast.Name)
                                 and dec.value.id == "router"
-                                and dec.attr in ["get", "post", "put", "delete", "patch"]):
+                                and dec.attr in ["get", "post", "put", "delete", "patch"]
+                            ):
                                 is_endpoint = True
                                 break
 
@@ -280,7 +279,9 @@ class TestGenerator:
 
         # Format existing patterns
         patterns_str = (
-            "\n".join(existing_patterns[:3]) if existing_patterns else "No existing patterns provided"
+            "\n".join(existing_patterns[:3])
+            if existing_patterns
+            else "No existing patterns provided"
         )
 
         # Render template
@@ -333,7 +334,8 @@ class TestGenerator:
             except anthropic.RateLimitError as e:
                 if attempt < self.max_retries:
                     import asyncio
-                    await asyncio.sleep(2 ** attempt)
+
+                    await asyncio.sleep(2**attempt)
                     continue
                 raise Exception(f"Rate limit exceeded: {str(e)}")
 
@@ -368,9 +370,7 @@ class TestGenerator:
     # Validation
     # ========================================================================
 
-    async def _validate_test_syntax(
-        self, tests: str, language: str
-    ) -> tuple[bool, list[str]]:
+    async def _validate_test_syntax(self, tests: str, language: str) -> tuple[bool, list[str]]:
         """Validate generated test syntax.
 
         Args:

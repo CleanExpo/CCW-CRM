@@ -1,0 +1,12 @@
+83:class Organization(Base):
+106:class Product(Base):
+152:class Customer(Base):
+192:class Order(Base):
+250:class OrderItem(Base):
+283:class OrderActivity(Base):
+309:class Quote(Base):
+353:class QuoteItem(Base):
+389:class ConversationHistory(Base):
+407:class AgentExecution(Base):
+435:class AIGeneratedContent(Base):
+456:class BackgroundJob(Base):

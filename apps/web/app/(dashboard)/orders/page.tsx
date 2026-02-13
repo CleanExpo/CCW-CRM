@@ -7,7 +7,7 @@ import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiClient } from "@/lib/api/client";
-import { Badge } from "@/components/ui/badge";
+import { OrderStatusBadge } from "@/components/ui/order-status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OrderForm } from "./components/OrderForm";
 import { DeleteOrderDialog } from "./components/DeleteOrderDialog";
@@ -28,16 +28,6 @@ interface PaginatedResponse {
   page_size: number;
   total_pages: number;
 }
-
-const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  draft: "secondary",
-  pending: "outline",
-  confirmed: "default",
-  processing: "default",
-  shipped: "default",
-  delivered: "default",
-  cancelled: "destructive",
-};
 
 export default function OrdersPage() {
   const { toast } = useToast();
@@ -316,11 +306,7 @@ export default function OrdersPage() {
                 {
                   key: "status",
                   label: "Status",
-                  render: (order) => (
-                    <Badge variant={statusColors[order.status] || "outline"} className="capitalize">
-                      {order.status}
-                    </Badge>
-                  ),
+                  render: (order) => <OrderStatusBadge status={order.status} />,
                 },
                 {
                   key: "items",

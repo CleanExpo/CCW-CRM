@@ -37,27 +37,14 @@ class Sprint(BaseModel):
     sprint_number: int = Field(description="Sprint number (1, 2, 3, ...)")
     sprint_goal: str = Field(description="What this sprint aims to achieve")
     duration_weeks: int = Field(description="Sprint length in weeks", default=2)
-    user_stories: list[str] = Field(
-        description="User story IDs in this sprint"
-    )
+    user_stories: list[str] = Field(description="User story IDs in this sprint")
     dependencies_met: list[str] = Field(
-        default_factory=list,
-        description="User story dependencies resolved by this sprint"
+        default_factory=list, description="User story dependencies resolved by this sprint"
     )
-    deliverables: list[str] = Field(
-        description="What will be delivered at sprint end"
-    )
-    acceptance_criteria: list[str] = Field(
-        description="Sprint completion criteria"
-    )
-    risks: list[str] = Field(
-        default_factory=list,
-        description="Potential risks and blockers"
-    )
-    team_capacity: str = Field(
-        description="Expected team capacity/velocity",
-        default="100%"
-    )
+    deliverables: list[str] = Field(description="What will be delivered at sprint end")
+    acceptance_criteria: list[str] = Field(description="Sprint completion criteria")
+    risks: list[str] = Field(default_factory=list, description="Potential risks and blockers")
+    team_capacity: str = Field(description="Expected team capacity/velocity", default="100%")
 
 
 class Milestone(BaseModel):
@@ -66,12 +53,8 @@ class Milestone(BaseModel):
     name: str = Field(description="Milestone name (e.g., 'MVP Launch')")
     target_sprint: int = Field(description="Sprint number when milestone is due")
     description: str = Field(description="What this milestone represents")
-    success_criteria: list[str] = Field(
-        description="How to know milestone is achieved"
-    )
-    deliverables: list[str] = Field(
-        description="What is delivered at this milestone"
-    )
+    success_criteria: list[str] = Field(description="How to know milestone is achieved")
+    deliverables: list[str] = Field(description="What is delivered at this milestone")
 
 
 class Risk(BaseModel):
@@ -97,48 +80,32 @@ class Roadmap(BaseModel):
     milestones: list[Milestone] = Field(description="Major project milestones")
 
     # Dependencies
-    dependency_graph_mermaid: str = Field(
-        description="Mermaid diagram showing dependencies"
-    )
-    critical_path: list[str] = Field(
-        description="Critical path user story IDs"
-    )
+    dependency_graph_mermaid: str = Field(description="Mermaid diagram showing dependencies")
+    critical_path: list[str] = Field(description="Critical path user story IDs")
 
     # Resource Planning
     team_composition: dict[str, str] = Field(
         description="Recommended team roles and responsibilities"
     )
-    resource_allocation: list[dict[str, Any]] = Field(
-        description="Resource allocation by sprint"
-    )
+    resource_allocation: list[dict[str, Any]] = Field(description="Resource allocation by sprint")
 
     # Risks
     risks: list[Risk] = Field(description="Project risks and mitigations")
 
     # Release Strategy
-    release_strategy: str = Field(
-        description="How releases will be managed"
-    )
-    deployment_checkpoints: list[str] = Field(
-        description="Quality gates before deployment"
-    )
+    release_strategy: str = Field(description="How releases will be managed")
+    deployment_checkpoints: list[str] = Field(description="Quality gates before deployment")
 
     # Success Tracking
-    velocity_tracking: str = Field(
-        description="How to measure team velocity"
-    )
-    kpis: list[str] = Field(
-        description="Key performance indicators to track"
-    )
+    velocity_tracking: str = Field(description="How to measure team velocity")
+    kpis: list[str] = Field(description="Key performance indicators to track")
 
     # Summary
-    executive_summary: str = Field(
-        description="High-level roadmap summary for stakeholders"
-    )
+    executive_summary: str = Field(description="High-level roadmap summary for stakeholders")
 
     # Metadata
     generated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-    model_used: str = "claude-opus-4-5-20251101"
+    model_used: str = "claude-opus-4-6"
 
 
 class RoadmapPlanner(BaseAgent):
@@ -215,11 +182,7 @@ class RoadmapPlanner(BaseAgent):
         try:
             # Generate the roadmap using Claude Opus
             roadmap = await self._generate_roadmap(
-                prd_analysis,
-                feature_decomposition,
-                tech_spec,
-                test_plan,
-                context
+                prd_analysis, feature_decomposition, tech_spec, test_plan, context
             )
 
             # Report outputs for verification
@@ -259,16 +222,12 @@ class RoadmapPlanner(BaseAgent):
 
         # Build the roadmap prompt
         prompt = self._build_roadmap_prompt(
-            prd_analysis,
-            feature_decomposition,
-            tech_spec,
-            test_plan,
-            context
+            prd_analysis, feature_decomposition, tech_spec, test_plan, context
         )
 
         # Call Claude Opus for roadmap planning
         response = await self.client.messages.create(
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-6",
             max_tokens=12000,  # Large token count for comprehensive roadmap
             temperature=0.4,  # Moderate temperature for planning creativity
             system=self._get_system_prompt(),
@@ -362,14 +321,11 @@ Milestone Planning:
         # Group user stories by epic
         epic_stories = {}
         for epic in feature_decomposition.epics:
-            stories = [
-                s for s in feature_decomposition.user_stories
-                if s.epic == epic.id
-            ]
+            stories = [s for s in feature_decomposition.user_stories if s.epic == epic.id]
             epic_stories[epic.name] = {
                 "id": epic.id,
                 "priority": epic.priority,
-                "stories": [(s.id, s.title, s.effort_estimate, s.dependencies) for s in stories]
+                "stories": [(s.id, s.title, s.effort_estimate, s.dependencies) for s in stories],
             }
 
         return f"""Create an implementation roadmap for this project.
@@ -389,7 +345,7 @@ Milestone Planning:
 **Total User Stories**: {len(feature_decomposition.user_stories)}
 **Epics**: {len(feature_decomposition.epics)}
 **Estimated Effort**: {feature_decomposition.total_effort_estimate}
-**Critical Path**: {', '.join(feature_decomposition.critical_path[:5])} ... ({len(feature_decomposition.critical_path)} stories)
+**Critical Path**: {", ".join(feature_decomposition.critical_path[:5])} ... ({len(feature_decomposition.critical_path)} stories)
 
 **Database Tables**: {len(tech_spec.database_schema)}
 **API Endpoints**: {len(tech_spec.api_endpoints)}

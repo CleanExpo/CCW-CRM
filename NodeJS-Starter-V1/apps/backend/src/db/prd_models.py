@@ -1,10 +1,11 @@
 """PRD database models."""
 
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import uuid4
 
-from sqlalchemy import ARRAY, JSON, Column, ForeignKey, Integer, String, Text, TIMESTAMP
-from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
+from sqlalchemy import ARRAY, TIMESTAMP, Column, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from src.db.models import Base
@@ -16,7 +17,9 @@ class PRD(Base):
     __tablename__ = "prds"
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     organization_id = Column(PGUUID(as_uuid=True), nullable=True)  # Made optional for demo auth
 
     # Input
@@ -47,11 +50,13 @@ class PRD(Base):
     error_message = Column(Text, nullable=True)
 
     # Model info
-    model_used = Column(String(100), default="claude-opus-4-5-20251101")
+    model_used = Column(String(100), default="claude-opus-4-6")
 
     # Timestamps
     created_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, nullable=False)
-    updated_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     completed_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     # Relationships

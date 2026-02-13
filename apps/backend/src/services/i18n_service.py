@@ -1,7 +1,7 @@
 """Internationalization service for content translation."""
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -313,7 +313,7 @@ IMPORTANT: Return ONLY the JSON object, no other text.
             existing.meta_description = translation_data.get("meta_description")
             existing.translation_status = translation_status
             existing.translated_by = translated_by
-            existing.translated_at = datetime.utcnow()
+            existing.translated_at = datetime.now(UTC)
             return existing
         else:
             # Create new
@@ -327,7 +327,7 @@ IMPORTANT: Return ONLY the JSON object, no other text.
                 meta_description=translation_data.get("meta_description"),
                 translation_status=translation_status,
                 translated_by=translated_by,
-                translated_at=datetime.utcnow(),
+                translated_at=datetime.now(UTC),
             )
             db.add(translation)
             return translation

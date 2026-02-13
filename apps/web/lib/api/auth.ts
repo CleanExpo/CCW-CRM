@@ -51,9 +51,12 @@ export const authApi = {
       credentials
     );
 
-    // Store token in cookie
+    // Store token in localStorage for cross-port access (localhost:3011 -> localhost:8000)
+    // This is more reliable than cookies for local development
     if (response.access_token) {
-      document.cookie = `auth_token=${response.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("auth_token", response.access_token);
+      }
     }
 
     return response;
@@ -70,8 +73,10 @@ export const authApi = {
    * Logout (clear auth token)
    */
   async logout(): Promise<void> {
-    // Clear token cookie
-    document.cookie = "auth_token=; path=/; max-age=0";
+    // Clear token from localStorage
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth_token");
+    }
 
     // Optionally call backend logout endpoint if it exists
     try {

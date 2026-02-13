@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ccw-online-erp/schemas/completion-report.schema.json",
+  "title": "Completion Report",
+  "description": "Schema for Phase 5 finalization output",
+  "type": "object",
+  "required": ["task_id", "timestamp", "status", "summary", "files_changed", "quality_report"],
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "completed_with_warnings", "failed"]
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary of what was accomplished"
+    },
+    "user_request": {
+      "type": "string",
+      "description": "Original user request for reference"
+    },
+    "files_changed": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Files created during execution"
+        },
+        "modified": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Files modified during execution"
+        },
+        "total_lines_added": { "type": "integer" },
+        "total_lines_removed": { "type": "integer" }
+      }
+    },
+    "quality_report": {
+      "type": "object",
+      "properties": {
+        "all_tests_passing": { "type": "boolean" },
+        "type_check_passing": { "type": "boolean" },
+        "lint_passing": { "type": "boolean" },
+        "test_coverage_percent": { "type": "number" },
+        "no_breaking_changes": { "type": "boolean" }
+      }
+    },
+    "deployment_readiness": {
+      "type": "object",
+      "properties": {
+        "ready_for_deployment": { "type": "boolean" },
+        "checklist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": { "type": "string" },
+              "status": { "type": "string", "enum": ["complete", "incomplete", "na"] }
+            }
+          }
+        },
+        "rollback_plan": { "type": "string" }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Non-critical issues to be aware of"
+    },
+    "next_steps": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Recommended follow-up actions"
+    },
+    "execution_metrics": {
+      "type": "object",
+      "properties": {
+        "total_time_minutes": { "type": "integer" },
+        "phases_completed": { "type": "integer" },
+        "validation_retries": { "type": "integer" },
+        "user_approvals_required": { "type": "integer" }
+      }
+    }
+  }
+}

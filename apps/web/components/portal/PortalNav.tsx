@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,18 +15,18 @@ import { useState } from "react";
 import { ContactForm } from "./ContactForm";
 import { DemoRequestForm } from "./DemoRequestForm";
 
-const navLinks = [
-  { href: "/portal/showroom", label: "Showroom" },
-  { href: "/portal/walk-in", label: "Walk-In" },
-  { href: "/portal/phone", label: "Phone Orders" },
-  { href: "/portal/internet", label: "Internet" },
-  { href: "/portal/service", label: "Service" },
+const navLinks: Array<{ href: Route; label: string }> = [
+  { href: "/portal/showroom" as Route, label: "Showroom" },
+  { href: "/portal/walk-in" as Route, label: "Walk-In" },
+  { href: "/portal/phone" as Route, label: "Phone Orders" },
+  { href: "/portal/internet" as Route, label: "Internet" },
+  { href: "/portal/service" as Route, label: "Service" },
 ];
 
 export function PortalNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: Route) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <div className="flex items-center gap-2 lg:gap-4">
@@ -34,7 +35,7 @@ export function PortalNav() {
         {navLinks.map((link) => (
           <Link
             key={link.href}
-            href={link.href as any}
+            href={link.href}
             aria-current={isActive(link.href) ? "page" : undefined}
             className={`text-sm font-medium transition-colors whitespace-nowrap ${
               isActive(link.href)
@@ -67,7 +68,7 @@ export function PortalNav() {
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                href={link.href as any}
+                href={link.href}
                 onClick={() => setOpen(false)}
                 aria-current={isActive(link.href) ? "page" : undefined}
                 className={`text-base font-medium transition-colors py-2 ${

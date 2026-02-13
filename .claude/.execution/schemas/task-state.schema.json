@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ccw-online-erp/schemas/task-state.schema.json",
+  "title": "Task State",
+  "description": "Schema for current-task.json - tracks autonomous execution state",
+  "type": "object",
+  "required": [
+    "task_id",
+    "created_at",
+    "user_request",
+    "current_phase",
+    "current_agent",
+    "status",
+    "approval_mode",
+    "phases_completed",
+    "phases_remaining"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^task_\\d{8}_\\d{6}$",
+      "description": "Unique task identifier (format: task_YYYYMMDD_HHMMSS)",
+      "examples": ["task_20260205_143022"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of task creation"
+    },
+    "user_request": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "Original user task description"
+    },
+    "current_phase": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Current execution phase (1=Discovery, 2=Architecture, 3=Build, 4=Final Build, 5=Finalize)"
+    },
+    "current_agent": {
+      "type": "string",
+      "enum": ["lead", "discovery", "architect", "builder", "validator", "finalizer"],
+      "description": "Agent currently handling the task"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "paused", "completed", "failed"],
+      "description": "Overall task status"
+    },
+    "approval_mode": {
+      "type": "string",
+      "enum": ["manual", "auto"],
+      "description": "Approval mode for phase transitions (manual=requires user approval, auto=automatic)"
+    },
+    "phases_completed": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      },
+      "uniqueItems": true,
+      "description": "List of completed phases"
+    },
+    "phases_remaining": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      },
+      "uniqueItems": true,
+      "description": "List of remaining phases"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "estimated_total_time_minutes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Estimated total time in minutes"
+        },
+        "elapsed_time_minutes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Elapsed time in minutes"
+        },
+        "files_to_create": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of files to create"
+        },
+        "files_to_modify": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of files to modify"
+        },
+        "files_created": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of files created so far"
+        },
+        "files_modified": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of files modified so far"
+        }
+      },
+      "description": "Additional task metadata"
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "agent": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Error information if task failed"
+    }
+  }
+}

@@ -15,14 +15,22 @@ setup("authenticate as admin user", async ({ page }) => {
   await page.fill('input[name="email"]', "admin@demo.com");
   await page.fill('input[name="password"]', "demo123");
 
-  // Submit login form
-  await page.click('button[type="submit"]');
+  // Submit login form and wait for navigation
+  // Use Promise.all to wait for both the click and the subsequent navigation
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "networkidle" }),
+    page.click('button[type="submit"]'),
+  ]);
 
-  // Wait for redirect to dashboard
-  await page.waitForURL("/dashboard");
+  // Verify we're on the dashboard
+  await expect(page).toHaveURL(/.*dashboard/);
 
-  // Verify we're logged in by checking for dashboard content
-  await expect(page.locator("h1, h2")).toContainText(/dashboard/i);
+  // Wait for dashboard to be fully loaded
+  await page.waitForLoadState("networkidle");
+
+  // Debug: Check what cookies we have
+  const cookies = await page.context().cookies();
+  console.log("Cookies after login:", JSON.stringify(cookies.map(c => ({name: c.name, domain: c.domain, path: c.path})), null, 2));
 
   // Save authenticated state
   await page.context().storageState({ path: authFile });

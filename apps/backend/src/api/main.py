@@ -1,4 +1,5 @@
 """FastAPI application entry point."""
+from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -26,19 +27,25 @@ from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
+    activities,  # CRM activities
     approvals,
-    autonomous_dev,
     backorders,
     bank_feeds,
     # billing,  # Disabled temporarily - requires stripe package
     config,
+    contacts,  # CRM contacts
     containers,
+    customer_orders,
     customers,
     demo_auth,
     demo_dashboard,
     demo_lists,
+    email_audit,  # Email audit trail for GDPR compliance (ISS-037)
+    google_ai,
     health,
     inventory,
+    invoice_payments,  # Invoice payments for UNI-173
+    invoices,  # Invoices for UNI-173
     jobs,
     orders,
     portal_auth,
@@ -46,22 +53,28 @@ from .routes import (
     pos_transactions,
     prd,
     products,
+    prometheus_metrics,  # Prometheus metrics endpoint
     purchase_orders,
     quotes,
-    recommendations,  # Re-enabled
-    search,  # Re-enabled
+    reconciliation_dashboard,
     service_requests,
     shipments,
     suppliers,
     team,
-    test_data_gen,
     translations,
     webhooks,
 )
-# Re-enabling AI routes after fixing import errors
-from .routes.ai import ai_router, chat, generate, insights
-from .routes import google_ai
-from .routes.integrations import ap2, elevenlabs, sendgrid, shopify, shopify_theme, xero
+
+# AI-dependent routes - conditional import (requires langchain/langgraph)
+_ai_routes_available = False
+try:
+    from .routes.ai import ai_router, chat, generate, insights
+    from .routes import autonomous_dev, recommendations, search, test_data_gen
+    _ai_routes_available = True
+except (ImportError, Exception):
+    autonomous_dev = recommendations = search = test_data_gen = None  # type: ignore[assignment]
+
+from .routes.integrations import ap2, cin7, cin7_crm, cin7_procurement, cin7_stream, cin7_sync, cin7_webhooks, elevenlabs, sendgrid, shopify, shopify_theme, xero
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -284,6 +297,14 @@ All errors return JSON with this format:
             "description": "Customer relationship management",
         },
         {
+            "name": "Contacts",
+            "description": "Contact management - multiple contacts per customer",
+        },
+        {
+            "name": "Activities",
+            "description": "CRM activity tracking - calls, emails, meetings, notes, tasks",
+        },
+        {
             "name": "Orders",
             "description": "Sales order processing and management",
         },
@@ -360,6 +381,7 @@ app.add_middleware(PerformanceMiddleware, metrics=performance_metrics)
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
+app.include_router(prometheus_metrics.router, tags=["Monitoring"])  # Prometheus metrics
 app.include_router(config.router, tags=["Configuration"])
 app.include_router(approvals.router, tags=["Approvals"])
 app.include_router(demo_auth.router, tags=["Authentication"])
@@ -368,8 +390,14 @@ app.include_router(demo_dashboard.router, tags=["Dashboard"])
 # CRUD routers registered after demo_lists to override read-only routes
 app.include_router(products.router, tags=["Products"])
 app.include_router(customers.router, tags=["Customers"])
+app.include_router(contacts.router, tags=["Contacts"])  # CRM Contacts
+app.include_router(activities.router, tags=["Activities"])  # CRM Activities
+app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+# Invoicing & Payments (UNI-173)
+app.include_router(invoices.router, tags=["Invoices"])
+app.include_router(invoice_payments.router, tags=["Invoice Payments"])
 # Background jobs router
 app.include_router(jobs.router, tags=["Background Jobs"])
 # Multi-store inventory router
@@ -395,23 +423,30 @@ app.include_router(shipments.router, tags=["Shipment Tracking"])
 # Container tracking and backorder management
 app.include_router(containers.router, tags=["Container Tracking"])
 app.include_router(backorders.router, tags=["Backorder Management"])
-# AI routers
-app.include_router(ai_router)  # Main AI agent orchestration routes
-app.include_router(chat.router, tags=["AI Chat"])
-app.include_router(insights.router, tags=["AI Insights"])
-app.include_router(generate.router, tags=["AI Generation"])
-# app.include_router(learning.router, tags=["AI Learning"])  # Already included in ai_router
-app.include_router(test_data_gen.router)  # Test data generation for learning engine
+# AI routers (conditional - requires langchain/langgraph packages)
+if _ai_routes_available:
+    app.include_router(ai_router)  # Main AI agent orchestration routes
+    app.include_router(chat.router, tags=["AI Chat"])
+    app.include_router(insights.router, tags=["AI Insights"])
+    app.include_router(generate.router, tags=["AI Generation"])
+    app.include_router(test_data_gen.router)  # Test data generation for learning engine
 
-# AI Search & Recommendations (✅ IMPLEMENTED)
-app.include_router(search.router)  # Semantic & hybrid search
-app.include_router(recommendations.router)  # Product recommendations
+# AI Search & Recommendations
+try:
+    app.include_router(search.router)  # Semantic & hybrid search
+    app.include_router(recommendations.router)  # Product recommendations
+except Exception:
+    pass  # Skip if AI dependencies not available
 
-# Autonomous Development (✅ IMPLEMENTED)
-app.include_router(autonomous_dev.router)
+# Autonomous Development
+try:
+    app.include_router(autonomous_dev.router)
+except Exception:
+    pass  # Skip if AI dependencies not available
 
 # Autonomy Metrics
 from .routes import autonomy_metrics
+
 app.include_router(autonomy_metrics.router, tags=["Autonomy Metrics"])
 
 # Translation management router (✅ IMPLEMENTED)
@@ -424,23 +459,44 @@ app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
 app.include_router(ap2.router, tags=["AP2 Integration"])
+app.include_router(cin7.router, tags=["Cin7 Integration"])
+app.include_router(cin7_sync.router, tags=["Cin7 Sync"])
+app.include_router(cin7_crm.router, tags=["Cin7 CRM Sync"])
+app.include_router(cin7_procurement.router, tags=["Cin7 Procurement Sync"])
+app.include_router(cin7_webhooks.router, tags=["Cin7 Webhooks"])
+app.include_router(cin7_stream.router, tags=["Cin7 Real-Time"])
 app.include_router(google_ai.router, tags=["Google AI"])
+
+# Cin7 AI agents (forecasting + anomaly detection)
+try:
+    from src.api.routes.ai import cin7_forecast, cin7_anomaly
+    app.include_router(cin7_forecast.router, tags=["Cin7 AI Forecasting"])
+    app.include_router(cin7_anomaly.router, tags=["Cin7 AI Anomaly Detection"])
+except (ImportError, AttributeError):
+    pass  # AI agents not available without langgraph
+
+# Email Audit Trail (ISS-037) - GDPR compliance, delivery tracking
+app.include_router(email_audit.router, tags=["Email Audit"])
 
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
+app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashboard"])
 
 # Monitoring routers (system alerts, business metrics, performance)
-from src.api.routes.monitoring import alerts, business_metrics, performance
+try:
+    from src.api.routes.monitoring import alerts, business_metrics, performance
+    app.include_router(alerts.router)
+    app.include_router(business_metrics.router)
+    app.include_router(performance.router)
+except (ImportError, AttributeError):
+    pass  # Monitoring routes not available
 
-app.include_router(alerts.router)
-app.include_router(business_metrics.router)
-app.include_router(performance.router)
-
-# Real-Time Infrastructure - SSE Inventory Stream (Phase 4)
-from src.api.routes import inventory_stream
+# Real-Time Infrastructure - SSE Streams (Phase 4)
+from src.api.routes import dashboard_stream, inventory_stream
 
 app.include_router(inventory_stream.router, tags=["Real-Time Inventory"])
+app.include_router(dashboard_stream.router, tags=["Real-Time Dashboard"])
 
 # PRD Generation router (✅ IMPLEMENTED)
 app.include_router(prd.router, tags=["PRD Generation"])

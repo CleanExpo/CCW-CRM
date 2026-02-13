@@ -83,9 +83,9 @@ export default function ProductsPage() {
   const search = searchState.search || "";
   const page = searchState.page || 1;
   const pageSize = searchState.pageSize || 50;
-  const setSearch = (value: string) => updateField("search", value);
-  const setPage = (value: number) => updateField("page", value);
-  const setPageSize = (value: number) => updateField("pageSize", value);
+  const setSearch = useCallback((value: string) => updateField("search", value), [updateField]);
+  const setPage = useCallback((value: number) => updateField("page", value), [updateField]);
+  const setPageSize = useCallback((value: number) => updateField("pageSize", value), [updateField]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
@@ -165,7 +165,7 @@ export default function ProductsPage() {
       setPage(1);
     }, 300);
     return () => clearTimeout(debounce);
-  }, [search]);
+  }, [search, setPage]);
 
   useEffect(() => {
     loadProducts();

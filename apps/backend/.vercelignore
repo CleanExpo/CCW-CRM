@@ -1,0 +1,14 @@
+# Exclude uv.lock and pyproject.toml so Vercel uses requirements.txt instead
+uv.lock
+pyproject.toml
+
+# Exclude dev/test files
+tests/
+*.test.py
+*.spec.py
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage

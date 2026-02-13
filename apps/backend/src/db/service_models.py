@@ -1,7 +1,7 @@
 """Service request models for workshop/field service tracking."""
 
-from datetime import datetime
-from enum import Enum as PyEnum
+from datetime import UTC, datetime
+import enum
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -18,10 +18,10 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID  # noqa: N811
 from sqlalchemy.orm import relationship
 
-from .models import Base
+from .models_base import Base
 
 
-class RequestType(str, PyEnum):
+class RequestType(str, enum.Enum):
     """Service request types."""
 
     repair = "repair"
@@ -29,7 +29,7 @@ class RequestType(str, PyEnum):
     installation = "installation"
 
 
-class ServiceStatus(str, PyEnum):
+class ServiceStatus(str, enum.Enum):
     """Service request status."""
 
     submitted = "submitted"
@@ -90,9 +90,9 @@ class ServiceRequest(Base):
     approved_amount: float | None = Column(Numeric(10, 2), nullable=True)
 
     # Timestamps
-    created_at: datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: datetime = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at: datetime = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
     )
 
     # Relationships

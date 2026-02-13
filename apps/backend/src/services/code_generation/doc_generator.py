@@ -14,7 +14,6 @@ import anthropic
 
 from .generator import GeneratedFile
 
-
 # ============================================================================
 # Documentation Generator
 # ============================================================================
@@ -36,7 +35,7 @@ class DocGenerator:
 
     project_root: Path
     anthropic_api_key: str | None = None
-    model: str = "claude-sonnet-4-20250514"  # Claude Sonnet 4.5
+    model: str = "claude-opus-4-6"  # Claude Opus 4-6
     max_retries: int = 2
 
     def __post_init__(self):
@@ -105,9 +104,7 @@ class DocGenerator:
     # Code Analysis
     # ========================================================================
 
-    async def _analyze_documentation_needs(
-        self, code: str, language: str
-    ) -> dict[str, Any]:
+    async def _analyze_documentation_needs(self, code: str, language: str) -> dict[str, Any]:
         """Analyze code to determine what documentation is needed.
 
         Args:
@@ -122,9 +119,7 @@ class DocGenerator:
         else:
             return await self._analyze_typescript_documentation_needs(code)
 
-    async def _analyze_python_documentation_needs(
-        self, code: str
-    ) -> dict[str, Any]:
+    async def _analyze_python_documentation_needs(self, code: str) -> dict[str, Any]:
         """Analyze Python code for documentation needs.
 
         Args:
@@ -148,8 +143,7 @@ class DocGenerator:
                 # Check functions for docstrings
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     has_docstring = (
-                        ast.get_docstring(node) is not None
-                        and len(ast.get_docstring(node)) > 0
+                        ast.get_docstring(node) is not None and len(ast.get_docstring(node)) > 0
                     )
 
                     if not has_docstring:
@@ -158,10 +152,12 @@ class DocGenerator:
 
                     # Check for endpoint decorators
                     is_endpoint = any(
-                        (isinstance(dec, ast.Call)
-                         and isinstance(dec.func, ast.Attribute)
-                         and isinstance(dec.func.value, ast.Name)
-                         and dec.func.value.id == "router")
+                        (
+                            isinstance(dec, ast.Call)
+                            and isinstance(dec.func, ast.Attribute)
+                            and isinstance(dec.func.value, ast.Name)
+                            and dec.func.value.id == "router"
+                        )
                         for dec in node.decorator_list
                     )
 
@@ -171,8 +167,7 @@ class DocGenerator:
                 # Check classes for docstrings
                 elif isinstance(node, ast.ClassDef):
                     has_docstring = (
-                        ast.get_docstring(node) is not None
-                        and len(ast.get_docstring(node)) > 0
+                        ast.get_docstring(node) is not None and len(ast.get_docstring(node)) > 0
                     )
 
                     if not has_docstring:
@@ -193,9 +188,7 @@ class DocGenerator:
 
         return needs
 
-    async def _analyze_typescript_documentation_needs(
-        self, code: str
-    ) -> dict[str, Any]:
+    async def _analyze_typescript_documentation_needs(self, code: str) -> dict[str, Any]:
         """Analyze TypeScript code for documentation needs.
 
         Args:
@@ -212,7 +205,9 @@ class DocGenerator:
         }
 
         # Find components without JSDoc
-        component_pattern = r"(?:export\s+)?(?:function|const)\s+([A-Z]\w+)\s*(?:=\s*)?\([^)]*\)\s*(?::\s*\w+\s*)?{"
+        component_pattern = (
+            r"(?:export\s+)?(?:function|const)\s+([A-Z]\w+)\s*(?:=\s*)?\([^)]*\)\s*(?::\s*\w+\s*)?{"
+        )
         components = re.findall(component_pattern, code)
 
         for comp in components:
@@ -326,7 +321,8 @@ class DocGenerator:
             except anthropic.RateLimitError as e:
                 if attempt < self.max_retries:
                     import asyncio
-                    await asyncio.sleep(2 ** attempt)
+
+                    await asyncio.sleep(2**attempt)
                     continue
                 raise Exception(f"Rate limit exceeded: {str(e)}")
 

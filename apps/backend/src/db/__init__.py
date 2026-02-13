@@ -9,6 +9,7 @@ from src.db.models_base import (
     Document,
     User,
 )
+from src.db.models.prd import PRD, AgentRun, APIUsage  # Import PRD models for relationship resolution
 
 __all__ = [
     "Base",
@@ -18,4 +19,7 @@ __all__ = [
     "Document",
     "AustralianState",
     "AvailabilityStatus",
+    "PRD",
+    "AgentRun",
+    "APIUsage",
 ]

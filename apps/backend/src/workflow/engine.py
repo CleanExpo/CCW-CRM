@@ -110,9 +110,7 @@ class WorkflowEngine:
         """Execute a single node."""
         context.current_node_id = node.id
         await self.storage.update_execution(context.execution_id, context)
-        await self._add_log(
-            context, node.id, f"Executing {node.type.value} node: {node.label}"
-        )
+        await self._add_log(context, node.id, f"Executing {node.type.value} node: {node.label}")
 
         try:
             # Resolve input variables
@@ -201,7 +199,7 @@ class WorkflowEngine:
         logger.info("LLM node execution (placeholder)", node_id=node.id)
         return {
             "response": f"LLM response for: {node.config.get('prompt', '')}",
-            "model": node.config.get("model", "claude-sonnet"),
+            "model": node.config.get("model", "claude-opus-4-6"),
         }
 
     async def _execute_agent_node(

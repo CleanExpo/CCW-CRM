@@ -1,0 +1,40 @@
+{
+  "customer_id": "c0000000-0000-0000-0000-000000000001",
+  "status": "sent",
+  "valid_until": "2026-03-15",
+  "notes": "Quote for heavy machinery and power tools - Performance test with 8 items",
+  "items": [
+    {
+      "product_id": "10000000-0000-0000-0000-000000000001",
+      "quantity": 2
+    },
+    {
+      "product_id": "10000000-0000-0000-0000-000000000003",
+      "quantity": 1
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000001",
+      "quantity": 5
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000002",
+      "quantity": 3
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000003",
+      "quantity": 4
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000001",
+      "quantity": 20
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000002",
+      "quantity": 10
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000003",
+      "quantity": 5
+    }
+  ]
+}

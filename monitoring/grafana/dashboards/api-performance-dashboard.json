@@ -1,150 +1,221 @@
 {
-  "dashboard": {
-    "title": "CCW ERP - API Performance",
-    "tags": ["ccw-erp", "api", "performance"],
-    "timezone": "browser",
-    "schemaVersion": 16,
-    "version": 1,
-    "refresh": "30s",
-    "panels": [
-      {
-        "id": 1,
-        "title": "Request Rate",
-        "type": "graph",
-        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
-        "targets": [
-          {
-            "expr": "rate(http_requests_total[5m])",
-            "legendFormat": "{{method}} {{endpoint}}",
-            "refId": "A"
-          }
-        ],
-        "yaxes": [
-          {"format": "reqps", "label": "Requests/sec"},
-          {"format": "short"}
-        ]
+  "title": "CCW ERP - API Performance",
+  "tags": [
+    "ccw-erp",
+    "api",
+    "performance"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Rate",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
       },
-      {
-        "id": 2,
-        "title": "Response Time (p95)",
-        "type": "graph",
-        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
-            "legendFormat": "p95",
-            "refId": "A"
-          },
-          {
-            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
-            "legendFormat": "p99",
-            "refId": "B"
-          }
-        ],
-        "yaxes": [
-          {"format": "s", "label": "Response Time"},
-          {"format": "short"}
-        ],
-        "alert": {
-          "conditions": [
-            {
-              "evaluator": {"params": [0.5], "type": "gt"},
-              "operator": {"type": "and"},
-              "query": {"params": ["A", "5m", "now"]},
-              "reducer": {"params": [], "type": "avg"},
-              "type": "query"
-            }
-          ],
-          "executionErrorState": "alerting",
-          "frequency": "1m",
-          "handler": 1,
-          "name": "High Response Time",
-          "noDataState": "no_data",
-          "notifications": []
+      "targets": [
+        {
+          "expr": "rate(http_requests_total[5m])",
+          "legendFormat": "{{method}} {{endpoint}}",
+          "refId": "A"
         }
-      },
-      {
-        "id": 3,
-        "title": "Error Rate",
-        "type": "graph",
-        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
-        "targets": [
-          {
-            "expr": "rate(http_requests_total{status=~\"4..\"}[5m])",
-            "legendFormat": "4xx Client Errors",
-            "refId": "A"
-          },
-          {
-            "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
-            "legendFormat": "5xx Server Errors",
-            "refId": "B"
-          }
-        ],
-        "yaxes": [
-          {"format": "reqps", "label": "Errors/sec"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 4,
-        "title": "Active Requests",
-        "type": "stat",
-        "gridPos": {"x": 12, "y": 8, "w": 6, "h": 4},
-        "targets": [
-          {
-            "expr": "http_requests_in_progress",
-            "refId": "A"
-          }
-        ],
-        "options": {
-          "colorMode": "value",
-          "graphMode": "area",
-          "justifyMode": "auto",
-          "orientation": "auto",
-          "reduceOptions": {
-            "calcs": ["lastNotNull"],
-            "fields": "",
-            "values": false
-          },
-          "textMode": "auto"
-        }
-      },
-      {
-        "id": 5,
-        "title": "Success Rate",
-        "type": "gauge",
-        "gridPos": {"x": 18, "y": 8, "w": 6, "h": 4},
-        "targets": [
-          {
-            "expr": "sum(rate(http_requests_total{status=~\"2..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
-            "refId": "A"
-          }
-        ],
-        "options": {
-          "orientation": "auto",
-          "reduceOptions": {
-            "calcs": ["lastNotNull"],
-            "fields": "",
-            "values": false
-          },
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true
+      ],
+      "yaxes": [
+        {
+          "format": "reqps",
+          "label": "Requests/sec"
         },
-        "fieldConfig": {
-          "defaults": {
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"color": "red", "value": null},
-                {"color": "yellow", "value": 95},
-                {"color": "green", "value": 99}
+        {
+          "format": "short"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Response Time (p95)",
+      "type": "graph",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99",
+          "refId": "B"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Response Time"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "alert": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0.5
+              ],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "A",
+                "5m",
+                "now"
               ]
             },
-            "unit": "percent"
+            "reducer": {
+              "params": [],
+              "type": "avg"
+            },
+            "type": "query"
           }
+        ],
+        "executionErrorState": "alerting",
+        "frequency": "1m",
+        "handler": 1,
+        "name": "High Response Time",
+        "noDataState": "no_data",
+        "notifications": []
+      }
+    },
+    {
+      "id": 3,
+      "title": "Error Rate",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{status=~\"4..\"}[5m])",
+          "legendFormat": "4xx Client Errors",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+          "legendFormat": "5xx Server Errors",
+          "refId": "B"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "reqps",
+          "label": "Errors/sec"
+        },
+        {
+          "format": "short"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Active Requests",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "http_requests_in_progress",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Success Rate",
+      "type": "gauge",
+      "gridPos": {
+        "x": 18,
+        "y": 8,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{status=~\"2..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 95
+              },
+              {
+                "color": "green",
+                "value": 99
+              }
+            ]
+          },
+          "unit": "percent"
         }
       }
-    ]
-  }
+    }
+  ]
 }

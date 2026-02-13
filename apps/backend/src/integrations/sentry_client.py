@@ -34,34 +34,41 @@ def initialize_sentry():
     """
     Initialize Sentry SDK with FastAPI integration.
 
-    Configuration via environment variables:
-    - SENTRY_DSN: Sentry project DSN
+    Configuration via settings (which reads from environment variables):
+    - SENTRY_DSN: Sentry project DSN (get from Sentry.io project settings)
     - ENVIRONMENT: production, staging, development
     - SENTRY_TRACES_SAMPLE_RATE: Performance monitoring sample rate (0.0-1.0)
     - SENTRY_PROFILES_SAMPLE_RATE: Profiling sample rate (0.0-1.0)
+    - SENTRY_RELEASE: Release identifier for tracking deployments
     """
     settings = get_settings()
 
-    sentry_dsn = os.getenv("SENTRY_DSN")
+    # Get DSN from settings (which reads SENTRY_DSN env var) or fallback to direct env var
+    sentry_dsn = settings.sentry_dsn or os.getenv("SENTRY_DSN", "")
 
     # Only initialize Sentry if DSN is configured
     if not sentry_dsn:
-        print("⚠️  Sentry DSN not configured, skipping initialization")
+        print("[WARNING] Sentry DSN not configured, skipping initialization")
+        print("          Set SENTRY_DSN environment variable to enable error tracking")
+        print("          Get your DSN from: https://sentry.io/settings/[org]/projects/[project]/keys/")
         return
 
     # Determine environment
     environment = settings.environment or "development"
 
-    # Sample rates (lower in production to reduce costs)
-    traces_sample_rate = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
-    profiles_sample_rate = float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.1"))
+    # Sample rates from settings (lower in production to reduce costs)
+    traces_sample_rate = settings.sentry_traces_sample_rate
+    profiles_sample_rate = settings.sentry_profiles_sample_rate
+
+    # Determine release (from settings, env var, or default)
+    release = settings.sentry_release or os.getenv("SENTRY_RELEASE", "ccw-erp@1.0.0")
 
     # Initialize Sentry
     sentry_sdk.init(
         dsn=sentry_dsn,
         environment=environment,
         # Release tracking (use git commit hash or version)
-        release=os.getenv("SENTRY_RELEASE", "ccw-erp@1.0.0"),
+        release=release,
         # Integrations
         integrations=[
             FastApiIntegration(transaction_style="endpoint"),
@@ -89,7 +96,7 @@ def initialize_sentry():
         },
     )
 
-    print(f"✅ Sentry initialized (environment: {environment}, traces: {traces_sample_rate})")
+    print(f"[OK] Sentry initialized (environment: {environment}, traces: {traces_sample_rate})")
 
 
 def set_user_context(user_id: str, email: str, organization_id: str):

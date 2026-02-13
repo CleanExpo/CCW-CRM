@@ -284,7 +284,7 @@ class LoadTestOrchestrator:
 
 async def main():
     """Main entry point for full load test."""
-    base_url = "http://localhost:8001"  # Container backend
+    base_url = "http://localhost:8000"  # Local backend
     max_concurrent = 2  # Conservative concurrency for stability
 
     orchestrator = LoadTestOrchestrator(base_url, max_concurrent)

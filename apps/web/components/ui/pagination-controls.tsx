@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -32,8 +33,8 @@ export function PaginationControls({
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
-  // Generate page numbers to display
-  const getPageNumbers = () => {
+  // PHASE 4 OPTIMIZATION: Memoize page numbers calculation to prevent O(n) recalculation on every render
+  const pageNumbers = useMemo(() => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
 
@@ -72,9 +73,7 @@ export function PaginationControls({
     }
 
     return pages;
-  };
-
-  const pageNumbers = getPageNumbers();
+  }, [currentPage, totalPages]);
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4">

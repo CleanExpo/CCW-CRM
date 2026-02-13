@@ -9,13 +9,13 @@ Australian-first API for managing contractor schedules with:
 - SQLAlchemy ORM with async support
 """
 
-from datetime import date as DateType, time as TimeType
+import re
+from datetime import date as DateType
 from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, field_validator
-import re
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -23,8 +23,12 @@ from sqlalchemy.orm import selectinload
 from src.config.database import get_db
 from src.db.models_base import (
     AustralianState,
-    AvailabilitySlot as AvailabilitySlotModel,
     AvailabilityStatus,
+)
+from src.db.models_base import (
+    AvailabilitySlot as AvailabilitySlotModel,
+)
+from src.db.models_base import (
     Contractor as ContractorModel,
 )
 
@@ -202,7 +206,7 @@ async def list_contractors(
         ]
 
     return ContractorList(
-        contractors=[Contractor.model_validate(c) for c in contractors],
+        contractors=[Contractor.model_validate(c).model_dump() for c in contractors],
         total=total,
         page=page,
         page_size=page_size,
@@ -405,7 +409,7 @@ async def get_contractor_availability(
     result = await db.execute(query)
     slots = result.scalars().all()
 
-    return [AvailabilitySlot.model_validate(s) for s in slots]
+    return [AvailabilitySlot.model_validate(s).model_dump() for s in slots]
 
 
 @router.get(
@@ -450,7 +454,7 @@ async def search_by_location(
     contractors = result.scalars().all()
 
     return ContractorList(
-        contractors=[Contractor.model_validate(c) for c in contractors],
+        contractors=[Contractor.model_validate(c).model_dump() for c in contractors],
         total=total,
         page=page,
         page_size=page_size,

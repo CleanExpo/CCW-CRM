@@ -2,12 +2,14 @@
  * Shared types for Orders module
  */
 
+import type { OrderStatus } from "@/../../packages/shared/src/types/orders";
+
 export interface Order {
   id: string;
   order_number: string;
   customer_name?: string;
   customer_id?: string;
-  status: string;
+  status: OrderStatus;
   total?: string;
   order_date?: string;
   fulfillment_location?: string | null;

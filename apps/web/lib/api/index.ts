@@ -20,6 +20,7 @@ export { inventoryApi } from "./inventory";
 export { purchaseOrdersApi } from "./purchase-orders";
 export { suppliersApi } from "./suppliers";
 export { shipmentsApi } from "./shipments";
+export { activitiesApi } from "./activities";
 
 // Auth types
 export type { User, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "./auth";
@@ -68,24 +69,38 @@ export type {
   ProductUpdate,
   ProductListParams,
   PaginatedProducts,
-  StockByLocation,
 } from "./products";
 
-// Inventory types
+// Inventory types - exported from centralized types
 export type {
   InventoryItem,
-  InventoryListParams,
-  PaginatedInventory,
-  StockHealthItem,
-  StockHealth,
-  TransferSuggestion,
+  StockByLocation,
   StockTransfer,
-  StockTransferCreate,
-  TransferListParams,
-  PaginatedTransfers,
   StockReservation,
-  StockReservationCreate,
   StockAdjustment,
+  StockAlert,
+  StockHealth,
+  CreateStockTransferRequest,
+  CreateStockReservationRequest,
+  CreateStockAdjustmentRequest,
+  PaginatedInventoryResponse,
+  PaginatedTransfersResponse,
+  PaginatedReservationsResponse,
+  PaginatedAdjustmentsResponse,
+  StoreLocation,
+  TransferStatus,
+  ReservationStatus,
+  AdjustmentType,
+  InventorySummary,
+  LocationStock,
+} from "@/lib/types/inventory";
+
+// Inventory API param types
+export type {
+  InventoryListParams,
+  TransferListParams,
+  StockHealthItem,
+  TransferSuggestion,
 } from "./inventory";
 
 // Purchase Orders types
@@ -120,3 +135,23 @@ export type {
   PaginatedShipments,
   TrackingUpdate,
 } from "./shipments";
+
+// Activities types - exported from centralized types
+export type {
+  Activity,
+  ActivityWithRelations,
+  ActivityType,
+  CreateActivityRequest,
+  UpdateActivityRequest,
+  PaginatedActivities,
+  ActivityStats,
+  ActivityTypeConfig,
+  ACTIVITY_TYPE_CONFIG,
+  isTask,
+  isCompleted,
+  isOverdue,
+  getActivityStatus,
+} from "@/lib/types/activities";
+
+// Activities API param types
+export type { ActivityListParams } from "./activities";

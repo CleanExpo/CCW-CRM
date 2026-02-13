@@ -3,12 +3,13 @@
 Tests AI-powered test generation for Python and TypeScript code.
 """
 
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-from src.services.code_generation.test_generator import TestGenerator
-from src.services.code_generation.generator import GeneratedFile
 
+import pytest
+
+from src.services.code_generation.generator import GeneratedFile
+from src.services.code_generation.test_generator import TestGenerator
 
 # ============================================================================
 # Fixtures
@@ -27,9 +28,7 @@ def mock_anthropic_client():
     mock_client = MagicMock()
     mock_response = MagicMock()
     mock_response.content = [
-        MagicMock(
-            text="import pytest\n\ndef test_example():\n    assert True"
-        )
+        MagicMock(text="import pytest\n\ndef test_example():\n    assert True")
     ]
     mock_client.messages.create.return_value = mock_response
     return mock_client
@@ -38,9 +37,7 @@ def mock_anthropic_client():
 @pytest.fixture
 def test_generator(project_root, mock_anthropic_client):
     """TestGenerator instance with mocked client."""
-    generator = TestGenerator(
-        project_root=project_root, anthropic_api_key="test-key-123"
-    )
+    generator = TestGenerator(project_root=project_root, anthropic_api_key="test-key-123")
     generator.client = mock_anthropic_client
     return generator
 
@@ -52,12 +49,10 @@ def test_generator(project_root, mock_anthropic_client):
 
 def test_test_generator_initialization(project_root):
     """Test TestGenerator initializes correctly."""
-    generator = TestGenerator(
-        project_root=project_root, anthropic_api_key="test-key"
-    )
+    generator = TestGenerator(project_root=project_root, anthropic_api_key="test-key")
 
     assert generator.project_root == project_root
-    assert generator.model == "claude-sonnet-4-20250514"
+    assert generator.model == "claude-opus-4-6"
     assert generator.max_retries == 2
 
 
@@ -280,9 +275,7 @@ async def test_get_products(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_generate_tests_typescript_component(
-    test_generator, mock_anthropic_client
-):
+async def test_generate_tests_typescript_component(test_generator, mock_anthropic_client):
     """Test generating tests for TypeScript component."""
     source_file = GeneratedFile(
         file_path="apps/web/components/ProductForm.tsx",

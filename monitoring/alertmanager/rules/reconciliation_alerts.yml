@@ -1,0 +1,155 @@
+# Reconciliation Alert Rules (Phase 4)
+#
+# Alerts for bank feed reconciliation health and failures
+
+groups:
+  - name: reconciliation_alerts
+    interval: 1m
+    rules:
+      # Alert if auto-match rate drops below 60%
+      - alert: LowAutoMatchRate
+        expr: bank_feed_auto_match_rate < 0.6
+        for: 30m
+        labels:
+          severity: warning
+          component: reconciliation
+        annotations:
+          summary: "Bank feed auto-match rate below 60%"
+          description: |
+            Auto-match rate has dropped to {{ $value | humanizePercentage }}.
+            This may indicate:
+            - Changes in bank feed format
+            - Issues with matching algorithm
+            - Unusual transaction patterns
+
+            Review pending feeds and AI suggestions in the reconciliation dashboard.
+
+      # Alert if sync fails 3 times in a row
+      - alert: BankFeedSyncFailures
+        expr: |
+          (
+            increase(bank_feed_sync_failure_total[15m])
+            /
+            (increase(bank_feed_sync_success_total[15m]) + increase(bank_feed_sync_failure_total[15m]))
+          ) > 0.5
+        for: 15m
+        labels:
+          severity: critical
+          component: reconciliation
+        annotations:
+          summary: "Bank feed sync failures detected for {{ $labels.provider }}"
+          description: |
+            More than 50% of bank feed syncs are failing for provider {{ $labels.provider }}.
+
+            Possible causes:
+            - API credentials expired
+            - Network connectivity issues
+            - Provider API down
+            - Rate limiting
+
+            Check logs and verify API credentials.
+
+      # Alert for large unmatched amounts (>$1000)
+      - alert: LargeUnmatchedAmount
+        expr: bank_feed_pending_count{account!=""} > 20
+        for: 1h
+        labels:
+          severity: warning
+          component: reconciliation
+        annotations:
+          summary: "Large backlog of pending feeds for {{ $labels.account }}"
+          description: |
+            Account {{ $labels.account }} has {{ $value }} pending bank feeds.
+
+            This may require manual intervention to clear the backlog.
+            Check the reconciliation dashboard for AI suggestions.
+
+      # Alert for reconciliation delays (>48 hours of pending feeds)
+      - alert: ReconciliationDelay
+        expr: |
+          (
+            time() - timestamp(bank_feed_auto_match_rate)
+          ) > 172800
+        for: 1h
+        labels:
+          severity: warning
+          component: reconciliation
+        annotations:
+          summary: "Bank feed reconciliation delayed"
+          description: |
+            No reconciliation activity detected in the last 48 hours.
+
+            Possible issues:
+            - Sync jobs not running
+            - No new bank transactions
+            - Auto-reconcile disabled
+
+            Verify scheduler is running and accounts are active.
+
+      # Alert if webhook endpoint is receiving errors
+      - alert: WebhookErrors
+        expr: |
+          rate(http_requests_total{endpoint="/api/bank-feeds/webhook",status=~"4..|5.."}[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: reconciliation
+        annotations:
+          summary: "Bank feed webhook errors detected"
+          description: |
+            Webhook endpoint is returning {{ $labels.status }} errors at {{ $value | humanize }} req/s.
+
+            Possible causes:
+            - Invalid HMAC signatures
+            - Account not found or webhooks disabled
+            - Internal server errors
+
+            Check webhook logs and verify provider configuration.
+
+      # Alert if no webhooks received for accounts with webhooks enabled
+      - alert: NoWebhooksReceived
+        expr: |
+          (
+            increase(bank_feed_webhook_received_total[1h]) == 0
+          )
+          and
+          (
+            bank_feed_pending_count > 0
+          )
+        for: 6h
+        labels:
+          severity: info
+          component: reconciliation
+        annotations:
+          summary: "No webhooks received for {{ $labels.provider }}"
+          description: |
+            Provider {{ $labels.provider }} has not sent any webhooks in the last 6 hours,
+            but there are pending feeds.
+
+            This may be normal if:
+            - No new transactions occurred
+            - Webhook interval is longer than 6 hours
+
+            Or may indicate:
+            - Webhook endpoint not configured at provider
+            - Network issues blocking webhooks
+            - Provider webhook service down
+
+      # Alert for high suggestion count without action
+      - alert: HighSuggestionsBacklog
+        expr: increase(bank_feed_suggestions_generated_total[24h]) > 100
+        for: 24h
+        labels:
+          severity: info
+          component: reconciliation
+        annotations:
+          summary: "Large backlog of AI suggestions not being actioned"
+          description: |
+            {{ $value }} AI suggestions generated in the last 24 hours.
+
+            This suggests:
+            - High volume of pending feeds requiring manual review
+            - Auto-match threshold may be too conservative
+            - Need for additional reconciliation staff
+
+            Consider reviewing and bulk-approving high-confidence suggestions.

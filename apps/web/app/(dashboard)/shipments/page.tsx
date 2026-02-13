@@ -13,13 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -40,6 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Edit, Trash2, Package } from "lucide-react";
+import { ShipmentForm } from "./components/ShipmentForm";
 
 const STATUS_COLORS: Record<ShipmentStatus, string> = {
   pending: "bg-yellow-500",
@@ -56,6 +50,8 @@ export default function ShipmentsPage() {
   const [statusFilter, setStatusFilter] = useState<ShipmentStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingShipment, setEditingShipment] = useState<Shipment | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -101,6 +97,22 @@ export default function ShipmentsPage() {
     }
   }
 
+  function handleCreateShipment() {
+    setEditingShipment(null);
+    setFormDialogOpen(true);
+  }
+
+  function handleEditShipment(shipment: Shipment) {
+    setEditingShipment(shipment);
+    setFormDialogOpen(true);
+  }
+
+  function handleFormSuccess() {
+    fetchShipments();
+    setFormDialogOpen(false);
+    setEditingShipment(null);
+  }
+
   function formatDate(dateString: string | undefined) {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
@@ -119,22 +131,10 @@ export default function ShipmentsPage() {
             Track and manage shipments and deliveries
           </p>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Shipment
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Shipment</DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground">
-              Shipment form coming soon...
-            </p>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={handleCreateShipment}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Shipment
+        </Button>
       </div>
 
       {/* Filters */}
@@ -225,21 +225,13 @@ export default function ShipmentsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Update Shipment</DialogTitle>
-                          </DialogHeader>
-                          <p className="text-sm text-muted-foreground">
-                            Edit form coming soon...
-                          </p>
-                        </DialogContent>
-                      </Dialog>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditShipment(shipment)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -303,6 +295,14 @@ export default function ShipmentsPage() {
           </div>
         </div>
       )}
+
+      {/* Create/Edit Shipment Form */}
+      <ShipmentForm
+        shipment={editingShipment}
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }

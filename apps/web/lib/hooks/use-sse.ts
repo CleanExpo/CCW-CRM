@@ -334,8 +334,9 @@ export interface POSFailureAlert {
  * @param enabled - Enable/disable connection (default: true)
  */
 export function usePOSFailureAlerts(enabled = true) {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
   return useSSE<POSFailureAlert>({
-    url: "/api/monitoring/alerts/pos-failures/stream",
+    url: `${backendUrl}/api/monitoring/alerts/pos-failures/stream`,
     enabled,
     autoReconnect: true,
     reconnectDelay: 5000,
@@ -360,8 +361,9 @@ export interface DashboardMetricsUpdate {
  * @param enabled - Enable/disable connection (default: true)
  */
 export function useDashboardMetricsStream(enabled = true) {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
   return useSSE<DashboardMetricsUpdate>({
-    url: "/api/dashboard/metrics-stream",
+    url: `${backendUrl}/api/dashboard/metrics-stream`,
     enabled,
     autoReconnect: true,
     reconnectDelay: 3000,

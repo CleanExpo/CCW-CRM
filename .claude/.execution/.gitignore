@@ -1,0 +1,26 @@
+# Execution State - Runtime files (DO NOT COMMIT)
+
+# Current task state
+current-task.json
+
+# Execution logs
+execution-log.jsonl
+*.log
+
+# Phase handoffs
+phase-handoffs/
+
+# Validation reports
+validation-reports/
+
+# Archives (keep structure only)
+archives/*/
+
+# Temp files
+*.tmp
+*.temp
+
+# EXCEPTIONS: DO COMMIT these files
+!README.md
+!schemas/
+!.gitignore

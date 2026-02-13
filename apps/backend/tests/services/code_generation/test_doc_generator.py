@@ -3,12 +3,13 @@
 Tests AI-powered documentation generation for Python and TypeScript code.
 """
 
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock
+
+import pytest
+
 from src.services.code_generation.doc_generator import DocGenerator
 from src.services.code_generation.generator import GeneratedFile
-
 
 # ============================================================================
 # Fixtures
@@ -34,9 +35,7 @@ def mock_anthropic_client():
 @pytest.fixture
 def doc_generator(project_root, mock_anthropic_client):
     """DocGenerator instance with mocked client."""
-    generator = DocGenerator(
-        project_root=project_root, anthropic_api_key="test-key-123"
-    )
+    generator = DocGenerator(project_root=project_root, anthropic_api_key="test-key-123")
     generator.client = mock_anthropic_client
     return generator
 
@@ -48,12 +47,10 @@ def doc_generator(project_root, mock_anthropic_client):
 
 def test_doc_generator_initialization(project_root):
     """Test DocGenerator initializes correctly."""
-    generator = DocGenerator(
-        project_root=project_root, anthropic_api_key="test-key"
-    )
+    generator = DocGenerator(project_root=project_root, anthropic_api_key="test-key")
 
     assert generator.project_root == project_root
-    assert generator.model == "claude-sonnet-4-20250514"
+    assert generator.model == "claude-opus-4-6"
     assert generator.max_retries == 2
 
 
@@ -242,9 +239,7 @@ function process(data) {
 
 
 @pytest.mark.asyncio
-async def test_generate_documentation_python_function(
-    doc_generator, mock_anthropic_client
-):
+async def test_generate_documentation_python_function(doc_generator, mock_anthropic_client):
     """Test generating documentation for Python function."""
     source_file = GeneratedFile(
         file_path="apps/backend/src/module.py",
@@ -267,9 +262,7 @@ def add(a, b):
     return a + b
 '''
 
-    mock_anthropic_client.messages.create.return_value.content[0].text = (
-        documented_code
-    )
+    mock_anthropic_client.messages.create.return_value.content[0].text = documented_code
 
     result = await doc_generator.generate_documentation(source_file)
 
@@ -278,9 +271,7 @@ def add(a, b):
 
 
 @pytest.mark.asyncio
-async def test_generate_documentation_typescript_component(
-    doc_generator, mock_anthropic_client
-):
+async def test_generate_documentation_typescript_component(doc_generator, mock_anthropic_client):
     """Test generating documentation for TypeScript component."""
     source_file = GeneratedFile(
         file_path="apps/web/components/ProductForm.tsx",
@@ -300,9 +291,7 @@ export function ProductForm() {
 }
 """
 
-    mock_anthropic_client.messages.create.return_value.content[0].text = (
-        documented_code
-    )
+    mock_anthropic_client.messages.create.return_value.content[0].text = documented_code
 
     result = await doc_generator.generate_documentation(source_file)
 
@@ -327,9 +316,7 @@ async def test_generate_documentation_already_documented(doc_generator):
 
 
 @pytest.mark.asyncio
-async def test_generate_documentation_invalid_syntax_fallback(
-    doc_generator, mock_anthropic_client
-):
+async def test_generate_documentation_invalid_syntax_fallback(doc_generator, mock_anthropic_client):
     """Test fallback to original code if documentation breaks syntax."""
     source_file = GeneratedFile(
         file_path="apps/backend/src/module.py",
@@ -339,9 +326,9 @@ async def test_generate_documentation_invalid_syntax_fallback(
     )
 
     # Mock returns invalid Python syntax
-    mock_anthropic_client.messages.create.return_value.content[0].text = (
-        "def broken(\n    # Missing closing parenthesis"
-    )
+    mock_anthropic_client.messages.create.return_value.content[
+        0
+    ].text = "def broken(\n    # Missing closing parenthesis"
 
     result = await doc_generator.generate_documentation(source_file)
 
@@ -487,9 +474,7 @@ def test_clean_generated_code_handles_no_fences(doc_generator):
 @pytest.mark.asyncio
 async def test_call_llm_success(doc_generator, mock_anthropic_client):
     """Test successful LLM call for documentation."""
-    mock_anthropic_client.messages.create.return_value.content[0].text = (
-        '"""Documentation."""'
-    )
+    mock_anthropic_client.messages.create.return_value.content[0].text = '"""Documentation."""'
 
     result = await doc_generator._call_llm("Generate documentation")
 
