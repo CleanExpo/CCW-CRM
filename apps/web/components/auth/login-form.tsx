@@ -15,12 +15,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { authApi } from "@/lib/api/auth";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  rememberMe: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -35,6 +37,7 @@ export function LoginForm() {
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: true,
     },
   });
 
@@ -45,6 +48,7 @@ export function LoginForm() {
       const response = await authApi.login({
         email: values.email,
         password: values.password,
+        rememberMe: values.rememberMe,
       });
 
       toast({
@@ -104,6 +108,24 @@ export function LoginForm() {
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="rememberMe"
+          render={({ field }) => (
+            <FormItem className="flex items-center gap-2 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <FormLabel className="text-sm font-normal cursor-pointer">
+                Keep me signed in
+              </FormLabel>
             </FormItem>
           )}
         />

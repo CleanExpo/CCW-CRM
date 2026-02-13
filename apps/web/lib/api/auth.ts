@@ -19,6 +19,7 @@ export interface User {
 export interface LoginRequest {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface LoginResponse {
@@ -46,16 +47,21 @@ export const authApi = {
    * Login with email and password
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
+    const { rememberMe = true, ...loginData } = credentials;
     const response = await apiClient.post<LoginResponse>(
       "/api/auth/login",
-      credentials
+      loginData
     );
 
-    // Store token in localStorage for cross-port access (localhost:3011 -> localhost:8000)
-    // This is more reliable than cookies for local development
-    if (response.access_token) {
-      if (typeof window !== "undefined") {
+    // Store token based on "Keep me signed in" preference
+    // localStorage persists across browser sessions; sessionStorage clears on close
+    if (response.access_token && typeof window !== "undefined") {
+      if (rememberMe) {
         localStorage.setItem("auth_token", response.access_token);
+        sessionStorage.removeItem("auth_token");
+      } else {
+        sessionStorage.setItem("auth_token", response.access_token);
+        localStorage.removeItem("auth_token");
       }
     }
 
@@ -73,9 +79,10 @@ export const authApi = {
    * Logout (clear auth token)
    */
   async logout(): Promise<void> {
-    // Clear token from localStorage
+    // Clear token from both storage locations
     if (typeof window !== "undefined") {
       localStorage.removeItem("auth_token");
+      sessionStorage.removeItem("auth_token");
     }
 
     // Optionally call backend logout endpoint if it exists

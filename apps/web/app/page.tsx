@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoginForm } from "@/components/auth/login-form";
 import {
   Package,
   Users,
@@ -9,6 +11,7 @@ import {
   MapPin,
   ChevronRight,
   CheckCircle2,
+  LogIn,
 } from "lucide-react";
 
 export default function Home() {
@@ -28,7 +31,7 @@ export default function Home() {
               <Link href="/portal/orders">Customer Portal</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link href="/login">Sign In</Link>
+              <Link href="#signin">Sign In</Link>
             </Button>
           </div>
         </div>
@@ -48,7 +51,7 @@ export default function Home() {
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="lg" asChild>
-              <Link href="/login">
+              <Link href="#signin">
                 Get Started
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
@@ -166,6 +169,30 @@ export default function Home() {
                   with live data.
                 </p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sign In Section */}
+        <section id="signin" className="border-t">
+          <div className="container mx-auto px-6 py-16 md:py-20">
+            <div className="max-w-md mx-auto">
+              <Card>
+                <CardHeader className="text-center">
+                  <div className="mx-auto mb-2 p-2.5 rounded-lg bg-primary/10 w-fit">
+                    <LogIn className="w-5 h-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold">
+                    Sign In
+                  </CardTitle>
+                  <CardDescription>
+                    Sign in to your account to access the platform
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <LoginForm />
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>

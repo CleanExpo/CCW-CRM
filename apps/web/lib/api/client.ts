@@ -30,9 +30,13 @@ export class ApiClientError extends Error {
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
 
-  // Try localStorage first (set by auth.ts after login)
+  // Try localStorage first (persistent "Keep me signed in")
   const localStorageToken = localStorage.getItem("auth_token");
   if (localStorageToken) return localStorageToken;
+
+  // Try sessionStorage (session-only, clears on browser close)
+  const sessionToken = sessionStorage.getItem("auth_token");
+  if (sessionToken) return sessionToken;
 
   // Fallback to cookies (for backward compatibility)
   const cookies = document.cookie.split("; ");
