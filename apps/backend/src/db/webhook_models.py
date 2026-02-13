@@ -51,6 +51,7 @@ class WebhookSource(str, enum.Enum):
     USPS = "usps"
     CONTACT_FORM = "contact_form"
     DEMO_REQUEST = "demo_request"
+    CIN7 = "cin7"
     OTHER = "other"
 
 

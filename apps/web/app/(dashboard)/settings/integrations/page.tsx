@@ -7,10 +7,13 @@ import { XeroSyncControls } from "./components/XeroSyncControls";
 import { ShopifyConnectionCard } from "./components/ShopifyConnectionCard";
 import { ShopifySyncControls } from "./components/ShopifySyncControls";
 import { SendGridConnectionCard } from "./components/SendGridConnectionCard";
+import { Cin7ConnectionCard } from "./components/Cin7ConnectionCard";
+import { Cin7SyncControls } from "./components/Cin7SyncControls";
 import { useToast } from "@/hooks/use-toast";
 import { getXeroStatus, type XeroConnectionStatus } from "@/lib/api/xero";
 import { getShopifyStatus, type ShopifyConnectionStatus } from "@/lib/api/shopify";
 import { getSendGridStatus, type SendGridConnectionStatus } from "@/lib/api/sendgrid";
+import { getCin7Status, type Cin7ConnectionStatus } from "@/lib/api/cin7";
 import { Settings, AlertCircle } from "lucide-react";
 
 function IntegrationsContent() {
@@ -19,6 +22,7 @@ function IntegrationsContent() {
   const [xeroStatus, setXeroStatus] = useState<XeroConnectionStatus | null>(null);
   const [shopifyStatus, setShopifyStatus] = useState<ShopifyConnectionStatus | null>(null);
   const [sendgridStatus, setSendgridStatus] = useState<SendGridConnectionStatus | null>(null);
+  const [cin7Status, setCin7Status] = useState<Cin7ConnectionStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadXeroStatus = async () => {
@@ -51,10 +55,20 @@ function IntegrationsContent() {
     }
   };
 
+  const loadCin7Status = async () => {
+    try {
+      const status = await getCin7Status();
+      setCin7Status(status);
+    } catch (error: unknown) {
+      console.error("Failed to load Cin7 status:", error);
+      setCin7Status(null);
+    }
+  };
+
   const loadAllStatuses = async () => {
     setLoading(true);
     try {
-      await Promise.all([loadXeroStatus(), loadShopifyStatus(), loadSendGridStatus()]);
+      await Promise.all([loadXeroStatus(), loadShopifyStatus(), loadSendGridStatus(), loadCin7Status()]);
     } catch (error: unknown) {
       toast({
         variant: "destructive",
@@ -129,7 +143,8 @@ function IntegrationsContent() {
       {/* Demo Mode Banner */}
       {((xeroStatus?.mode === "demo" && xeroStatus?.connected) ||
         (shopifyStatus?.mode === "demo" && shopifyStatus?.connected) ||
-        (sendgridStatus?.mode === "demo" && sendgridStatus?.connected)) && (
+        (sendgridStatus?.mode === "demo" && sendgridStatus?.connected) ||
+        (cin7Status?.mode === "demo" && cin7Status?.connected)) && (
         <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
           <AlertCircle className="mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-400" />
           <div className="flex-1">
@@ -141,6 +156,7 @@ function IntegrationsContent() {
                 xeroStatus?.mode === "demo" && xeroStatus?.connected && "Xero",
                 shopifyStatus?.mode === "demo" && shopifyStatus?.connected && "Shopify",
                 sendgridStatus?.mode === "demo" && sendgridStatus?.connected && "SendGrid",
+                cin7Status?.mode === "demo" && cin7Status?.connected && "Cin7",
               ]
                 .filter(Boolean)
                 .join(", ")}{" "}
@@ -148,6 +164,7 @@ function IntegrationsContent() {
                 xeroStatus?.mode === "demo" && xeroStatus?.connected,
                 shopifyStatus?.mode === "demo" && shopifyStatus?.connected,
                 sendgridStatus?.mode === "demo" && sendgridStatus?.connected,
+                cin7Status?.mode === "demo" && cin7Status?.connected,
               ].filter(Boolean).length > 1
                 ? "integrations are"
                 : "integration is"}{" "}
@@ -183,6 +200,15 @@ function IntegrationsContent() {
           <h2 className="mb-4 text-lg font-semibold">SendGrid Email Management</h2>
           <div className="grid gap-6 md:grid-cols-1">
             <SendGridConnectionCard status={sendgridStatus} loading={loading} onStatusChange={loadSendGridStatus} />
+          </div>
+        </div>
+
+        {/* Cin7 Integration */}
+        <div>
+          <h2 className="mb-4 text-lg font-semibold">Cin7 Inventory Management</h2>
+          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+            <Cin7ConnectionCard status={cin7Status} loading={loading} onStatusChange={loadCin7Status} />
+            <Cin7SyncControls isConnected={cin7Status?.connected ?? false} />
           </div>
         </div>
       </div>

@@ -25,6 +25,8 @@ import { RevenueByLocationWidget } from "@/components/dashboard/RevenueByLocatio
 import { SalesInsightsWidget } from "@/components/dashboard/SalesInsightsWidget";
 // PHASE C: AI Order Patterns Widget
 import { OrderPatternsWidget } from "@/components/dashboard/OrderPatternsWidget";
+// PHASE 7: Cin7 Sync Status Widget
+import { Cin7SyncStatusWidget } from "@/components/dashboard/Cin7SyncStatusWidget";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 
@@ -371,6 +373,11 @@ export default function DashboardPage() {
         {/* Transfer Suggestions - 1 column */}
         <BentoCard variant="glass" span={1} className="min-h-[350px]">
           <TransferSuggestionsWidget />
+        </BentoCard>
+
+        {/* PHASE 7: Cin7 Sync Status - 1 column */}
+        <BentoCard variant="elevated" span={1} className="min-h-[350px]">
+          <Cin7SyncStatusWidget />
         </BentoCard>
 
         {/* PHASE C: AI Order Patterns Widget - Spans 2 columns */}
