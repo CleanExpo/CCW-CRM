@@ -125,11 +125,11 @@ export default function CustomerDetailPage() {
       );
       setQuotes(quotesData.items || []);
 
-      // Load customer contacts
-      const contactsData = await apiClient.get<{ data: Contact[] }>(
+      // Load customer contacts (endpoint returns plain array)
+      const contactsData = await apiClient.get<Contact[]>(
         `/api/contacts/customer/${customerId}`
       );
-      setContacts(contactsData.data || []);
+      setContacts(contactsData || []);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to load customer data";

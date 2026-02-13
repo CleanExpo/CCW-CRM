@@ -81,7 +81,7 @@ export default function ActivitiesPage() {
         include_completed: searchState.includeCompleted,
       });
 
-      setActivities(response.items);
+      setActivities(response.data);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
@@ -102,8 +102,8 @@ export default function ActivitiesPage() {
         overdue_tasks: statsData.overdue_tasks,
         completed_this_week: statsData.completed_this_week,
       });
-    } catch (error: unknown) {
-      console.error("Failed to load stats:", error);
+    } catch {
+      // Stats are non-critical — silently fail
     }
   }, []);
 
@@ -469,14 +469,6 @@ export default function ActivitiesPage() {
                 <Plus className="mr-2 h-4 w-4" />
                 Log First Activity
               </Button>
-            </div>
-          ) : loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-muted-foreground">Loading activities...</div>
-            </div>
-          ) : activities.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-muted-foreground">No activities found</div>
             </div>
           ) : (
             <>

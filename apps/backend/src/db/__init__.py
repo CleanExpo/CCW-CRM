@@ -1,5 +1,6 @@
 """Database models and utilities."""
 
+from src.db.crm_models import Activity, Contact
 from src.db.models.prd import (  # Import PRD models for relationship resolution
     PRD,
     AgentRun,
@@ -26,4 +27,6 @@ __all__ = [
     "PRD",
     "AgentRun",
     "APIUsage",
+    "Contact",
+    "Activity",
 ]

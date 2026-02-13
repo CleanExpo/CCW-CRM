@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
@@ -93,40 +94,31 @@ async def get_activity(
     activity_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single activity by ID with related entity names."""
-    query = select(ActivityModel).where(ActivityModel.id == activity_id)
+    """Get a single activity by ID with related entity names (single query with joins)."""
+    query = (
+        select(ActivityModel)
+        .where(ActivityModel.id == activity_id)
+        .options(
+            joinedload(ActivityModel.customer),
+            joinedload(ActivityModel.contact),
+            joinedload(ActivityModel.order),
+            joinedload(ActivityModel.quote),
+        )
+    )
     result = await db.execute(query)
-    activity = result.scalar_one_or_none()
+    activity = result.unique().scalar_one_or_none()
 
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    # Get related entity names
+    # Build response from eagerly loaded relationships (single query, no N+1)
     activity_data = Activity.model_validate(activity).model_dump()
-
-    if activity.customer_id:
-        customer_query = select(CustomerModel).where(CustomerModel.id == activity.customer_id)
-        customer_result = await db.execute(customer_query)
-        customer = customer_result.scalar_one_or_none()
-        activity_data["customer_name"] = customer.company_name if customer else None
-
-    if activity.contact_id:
-        contact_query = select(ContactModel).where(ContactModel.id == activity.contact_id)
-        contact_result = await db.execute(contact_query)
-        contact = contact_result.scalar_one_or_none()
-        activity_data["contact_name"] = f"{contact.first_name} {contact.last_name}" if contact else None
-
-    if activity.order_id:
-        order_query = select(OrderModel).where(OrderModel.id == activity.order_id)
-        order_result = await db.execute(order_query)
-        order = order_result.scalar_one_or_none()
-        activity_data["order_number"] = order.order_number if order else None
-
-    if activity.quote_id:
-        quote_query = select(QuoteModel).where(QuoteModel.id == activity.quote_id)
-        quote_result = await db.execute(quote_query)
-        quote = quote_result.scalar_one_or_none()
-        activity_data["quote_number"] = quote.quote_number if quote else None
+    activity_data["customer_name"] = activity.customer.company_name if activity.customer else None
+    activity_data["contact_name"] = (
+        f"{activity.contact.first_name} {activity.contact.last_name}" if activity.contact else None
+    )
+    activity_data["order_number"] = activity.order.order_number if activity.order else None
+    activity_data["quote_number"] = activity.quote.quote_number if activity.quote else None
 
     return ActivityWithRelations(**activity_data)
 
@@ -178,7 +170,7 @@ async def create_activity(
         "title": f"New {activity.activity_type.title()}",
         "description": activity.subject,
         "link": f"/activities/{activity.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Activity.model_validate(activity)
@@ -270,7 +262,7 @@ async def complete_activity(
         "activity_type": "activity_completed",
         "title": "Activity Completed",
         "description": activity.subject,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Activity.model_validate(activity)

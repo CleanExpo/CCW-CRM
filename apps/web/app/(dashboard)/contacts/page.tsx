@@ -7,7 +7,8 @@ import { useSearchState } from "@/lib/hooks/use-search-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { apiClient } from "@/lib/api/client";
+import { contactsApi } from "@/lib/api/contacts";
+import type { Contact } from "@/lib/types/contacts";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ContactForm } from "./components/ContactForm";
@@ -17,30 +18,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { formatDistanceToNow } from "date-fns";
-
-interface Contact {
-  id: string;
-  customer_id: string | null;
-  first_name: string;
-  last_name: string;
-  email: string | null;
-  phone: string | null;
-  mobile: string | null;
-  job_title: string | null;
-  department: string | null;
-  is_primary: boolean;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface PaginatedResponse {
-  data: Contact[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
 
 export default function ContactsPage() {
   const router = useRouter();
@@ -72,18 +49,17 @@ export default function ContactsPage() {
   const loadContacts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<PaginatedResponse>(
-        `/api/contacts?page=${page}&page_size=${pageSize}${
-          debouncedSearch ? `&search=${debouncedSearch}` : ""
-        }`
-      );
+      const response = await contactsApi.list({
+        page,
+        page_size: pageSize,
+        search: debouncedSearch || undefined,
+      });
       setContacts(response.data);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to load contacts";
-      console.error("Failed to load contacts:", error);
       toast({
         variant: "destructive",
         title: "Error",

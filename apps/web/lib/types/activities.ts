@@ -86,10 +86,10 @@ export interface UpdateActivityRequest {
 
 /**
  * Paginated response for activities list endpoint
- * Note: Uses "items" not "data" to match backend pagination pattern
+ * Uses "data" to match backend CRM schema (PaginatedActivities.data)
  */
 export interface PaginatedActivities {
-  items: ActivityWithRelations[];
+  data: ActivityWithRelations[];
   total: number;
   page: number;
   page_size: number;

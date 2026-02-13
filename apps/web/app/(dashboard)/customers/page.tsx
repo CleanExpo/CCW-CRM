@@ -86,7 +86,6 @@ export default function CustomersPage() {
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to load customers";
-      console.error("Failed to load customers:", error);
       toast({
         variant: "destructive",
         title: "Error",
