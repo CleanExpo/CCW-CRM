@@ -55,6 +55,7 @@ from .routes import (
     prd,
     products,
     prometheus_metrics,  # Prometheus metrics endpoint
+    public_stats,  # Public landing page stats (no auth required)
     purchase_orders,
     quotes,
     reconciliation_dashboard,
@@ -383,6 +384,7 @@ app.add_middleware(PerformanceMiddleware, metrics=performance_metrics)
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
+app.include_router(public_stats.router, tags=["Public"])
 app.include_router(prometheus_metrics.router, tags=["Monitoring"])  # Prometheus metrics
 app.include_router(config.router, tags=["Configuration"])
 app.include_router(approvals.router, tags=["Approvals"])

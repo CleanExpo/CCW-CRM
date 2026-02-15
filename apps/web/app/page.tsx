@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
+import {
+  LiveStatsBar,
+  type PublicStats,
+} from "@/components/landing/LiveStatsBar";
 import {
   Package,
   Users,
@@ -12,12 +22,34 @@ import {
   ChevronRight,
   CheckCircle2,
   LogIn,
+  AlertTriangle,
 } from "lucide-react";
 
-export default function Home() {
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+/**
+ * Fetch public stats from the backend (server-side, no auth required).
+ * Returns null gracefully if the backend is unreachable.
+ */
+async function getPublicStats(): Promise<PublicStats | null> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/public/stats`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export default async function Home() {
+  const stats = await getPublicStats();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Hero Section */}
+      {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -62,6 +94,9 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Live Stats Bar */}
+        <LiveStatsBar stats={stats} />
+
         {/* Features Grid */}
         <section className="border-t bg-muted/40">
           <div className="container mx-auto px-6 py-16 md:py-20">
@@ -72,11 +107,26 @@ export default function Home() {
                   <div className="p-2.5 rounded-lg bg-primary/10">
                     <ShoppingCart className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold">Orders &amp; Quotes</h3>
+                  <h3 className="text-xl font-semibold">
+                    Orders &amp; Quotes
+                  </h3>
                 </div>
                 <p className="text-muted-foreground mb-5">
-                  Create quotes, convert to orders, track fulfilment and manage
-                  line items across all product categories.
+                  {stats ? (
+                    <>
+                      <span className="text-foreground font-semibold">
+                        {stats.active_orders} orders
+                      </span>{" "}
+                      in progress and{" "}
+                      <span className="text-foreground font-semibold">
+                        {stats.pending_quotes} quotes
+                      </span>{" "}
+                      open. Create quotes, convert to orders, track fulfilment
+                      and manage line items across all product categories.
+                    </>
+                  ) : (
+                    "Create quotes, convert to orders, track fulfilment and manage line items across all product categories."
+                  )}
                 </p>
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2 text-sm">
@@ -103,8 +153,17 @@ export default function Home() {
                   <h3 className="text-xl font-semibold">Customers</h3>
                 </div>
                 <p className="text-muted-foreground">
-                  Customer directory with contact details, order history and
-                  account management.
+                  {stats ? (
+                    <>
+                      <span className="text-foreground font-semibold">
+                        {stats.total_customers} active accounts
+                      </span>{" "}
+                      with contact details, order history and account
+                      management.
+                    </>
+                  ) : (
+                    "Customer directory with contact details, order history and account management."
+                  )}
                 </p>
               </div>
 
@@ -117,8 +176,21 @@ export default function Home() {
                   <h3 className="text-xl font-semibold">Products</h3>
                 </div>
                 <p className="text-muted-foreground">
-                  Full product catalogue covering heavy machinery, power tools,
-                  safety equipment and more.
+                  {stats ? (
+                    <>
+                      <span className="text-foreground font-semibold">
+                        {stats.total_products} products
+                      </span>{" "}
+                      across{" "}
+                      <span className="text-foreground font-semibold">
+                        {stats.product_categories} categories
+                      </span>{" "}
+                      including heavy machinery, power tools, safety equipment
+                      and more.
+                    </>
+                  ) : (
+                    "Full product catalogue covering heavy machinery, power tools, safety equipment and more."
+                  )}
                 </p>
               </div>
 
@@ -133,8 +205,18 @@ export default function Home() {
                   </h3>
                 </div>
                 <p className="text-muted-foreground mb-5">
-                  Stock levels, transfers between locations, purchase orders and
-                  backorder management across all three warehouses.
+                  {stats && stats.low_stock_alerts > 0 ? (
+                    <>
+                      Stock levels, transfers and purchase orders across all
+                      three warehouses.{" "}
+                      <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        {stats.low_stock_alerts} low stock alerts
+                      </span>
+                    </>
+                  ) : (
+                    "Stock levels, transfers between locations, purchase orders and backorder management across all three warehouses."
+                  )}
                 </p>
                 <div className="grid grid-cols-3 gap-4">
                   {[
@@ -165,8 +247,23 @@ export default function Home() {
                   <h3 className="text-xl font-semibold">Reporting</h3>
                 </div>
                 <p className="text-muted-foreground">
-                  Revenue, stock health, order status and performance dashboards
-                  with live data.
+                  {stats ? (
+                    <>
+                      Revenue, stock health, order status and performance
+                      dashboards tracking{" "}
+                      <span className="text-foreground font-semibold">
+                        ${Number(
+                          stats.total_revenue_this_month
+                        ).toLocaleString("en-AU", {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        })}
+                      </span>{" "}
+                      this month with live data.
+                    </>
+                  ) : (
+                    "Revenue, stock health, order status and performance dashboards with live data."
+                  )}
                 </p>
               </div>
             </div>
@@ -182,9 +279,7 @@ export default function Home() {
                   <div className="mx-auto mb-2 p-2.5 rounded-lg bg-primary/10 w-fit">
                     <LogIn className="w-5 h-5 text-primary" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">
-                    Sign In
-                  </CardTitle>
+                  <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
                   <CardDescription>
                     Sign in to your account to access the platform
                   </CardDescription>
