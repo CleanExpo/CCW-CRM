@@ -27,6 +27,8 @@ import { SalesInsightsWidget } from "@/components/dashboard/SalesInsightsWidget"
 import { OrderPatternsWidget } from "@/components/dashboard/OrderPatternsWidget";
 // PHASE 7: Cin7 Sync Status Widget
 import { Cin7SyncStatusWidget } from "@/components/dashboard/Cin7SyncStatusWidget";
+// NODEJS-Updates: Agent performance metrics widget
+import { AgentMetricsWidget } from "@/components/dashboard/AgentMetricsWidget";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 
@@ -378,6 +380,11 @@ export default function DashboardPage() {
         {/* PHASE 7: Cin7 Sync Status - 1 column */}
         <BentoCard variant="elevated" span={1} className="min-h-[350px]">
           <Cin7SyncStatusWidget />
+        </BentoCard>
+
+        {/* NODEJS-Updates: Agent Performance Metrics - 1 column */}
+        <BentoCard variant="glass" span={1} className="min-h-[350px]">
+          <AgentMetricsWidget />
         </BentoCard>
 
         {/* PHASE C: AI Order Patterns Widget - Spans 2 columns */}

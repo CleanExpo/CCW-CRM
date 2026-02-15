@@ -25,6 +25,7 @@ from .exceptions import (
 )
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
+from .middleware.request_id import RequestIdMiddleware
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
     activities,  # CRM activities
@@ -372,6 +373,7 @@ app.add_middleware(
 # Custom middleware
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(AuthMiddleware)
+app.add_middleware(RequestIdMiddleware)
 
 # Performance monitoring middleware
 from src.api.middleware.performance import PerformanceMiddleware, get_performance_metrics
