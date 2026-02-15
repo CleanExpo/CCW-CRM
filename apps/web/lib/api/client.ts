@@ -94,6 +94,9 @@ function decodeJWT(token: string): JWTPayload | null {
  * Returns true if the token was successfully refreshed.
  */
 async function attemptTokenRefresh(): Promise<boolean> {
+  // Token refresh requires browser APIs (localStorage/sessionStorage)
+  if (typeof window === "undefined") return false;
+
   try {
     const response = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
       method: "POST",
@@ -244,8 +247,13 @@ async function fetchApi<T>(
     } catch (error) {
       clearTimeout(timeoutId);
 
-      // Timeout via AbortController
-      if (error instanceof DOMException && error.name === "AbortError") {
+      // Timeout via AbortController (SSR-safe: DOMException may not exist in Node.js)
+      if (
+        error &&
+        typeof error === "object" &&
+        "name" in error &&
+        (error as { name: string }).name === "AbortError"
+      ) {
         throw new ApiClientError(
           `Request timeout after ${timeout}ms [${requestId}]`,
           408,
