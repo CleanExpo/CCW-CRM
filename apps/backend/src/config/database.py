@@ -27,8 +27,8 @@ def get_database_url(async_mode: bool = False) -> str:
     """
     settings = get_settings()
 
-    # Default to local PostgreSQL if not configured
-    db_url = settings.database_url or "postgresql://starter_user:local_dev_password@localhost:5432/starter_db"
+    # Default to local PostgreSQL if not configured (port 5434 matches docker-compose.yml)
+    db_url = settings.database_url or "postgresql://starter_user:local_dev_password@localhost:5434/starter_db"
 
     # Convert to async URL if needed
     if async_mode and not db_url.startswith("postgresql+asyncpg"):

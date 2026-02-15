@@ -43,7 +43,7 @@ export interface RegisterResponse {
 /**
  * Check if we should use Supabase Auth (production) or FastAPI (local dev)
  */
-function useSupabaseAuth(): boolean {
+function isSupabaseAuthEnabled(): boolean {
   // Use Supabase Auth when NEXT_PUBLIC_SUPABASE_URL is configured
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   return supabaseUrl.length > 0 && supabaseUrl.includes("supabase.co");
@@ -59,7 +59,7 @@ export const authApi = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const { rememberMe = true } = credentials;
 
-    if (useSupabaseAuth()) {
+    if (isSupabaseAuthEnabled()) {
       // Supabase Auth
       const { data, error } = await getSupabase().auth.signInWithPassword({
         email: credentials.email,
@@ -121,7 +121,7 @@ export const authApi = {
    * Register a new user
    */
   async register(data: RegisterRequest): Promise<RegisterResponse> {
-    if (useSupabaseAuth()) {
+    if (isSupabaseAuthEnabled()) {
       const { data: authData, error } = await getSupabase().auth.signUp({
         email: data.email,
         password: data.password,
@@ -158,7 +158,7 @@ export const authApi = {
       sessionStorage.removeItem("auth_token");
     }
 
-    if (useSupabaseAuth()) {
+    if (isSupabaseAuthEnabled()) {
       await getSupabase().auth.signOut();
     } else {
       try {
@@ -173,7 +173,7 @@ export const authApi = {
    * Get current user
    */
   async getCurrentUser(): Promise<User | null> {
-    if (useSupabaseAuth()) {
+    if (isSupabaseAuthEnabled()) {
       const { data: { user } } = await getSupabase().auth.getUser();
       if (!user) return null;
 
@@ -198,7 +198,7 @@ export const authApi = {
    * Update current user profile
    */
   async updateProfile(data: Partial<User>): Promise<User> {
-    if (useSupabaseAuth()) {
+    if (isSupabaseAuthEnabled()) {
       const { data: authData, error } = await getSupabase().auth.updateUser({
         data: { full_name: data.full_name },
       });
@@ -225,7 +225,7 @@ export const authApi = {
     _currentPassword: string,
     newPassword: string
   ): Promise<{ message: string }> {
-    if (useSupabaseAuth()) {
+    if (isSupabaseAuthEnabled()) {
       const { error } = await getSupabase().auth.updateUser({
         password: newPassword,
       });
@@ -244,7 +244,7 @@ export const authApi = {
    * Request password reset
    */
   async requestPasswordReset(email: string): Promise<{ message: string }> {
-    if (useSupabaseAuth()) {
+    if (isSupabaseAuthEnabled()) {
       const { error } = await getSupabase().auth.resetPasswordForEmail(email);
       if (error) throw new Error(error.message);
       return { message: "If an account exists with that email, a password reset link has been sent." };
@@ -260,7 +260,7 @@ export const authApi = {
     _token: string,
     newPassword: string
   ): Promise<{ message: string }> {
-    if (useSupabaseAuth()) {
+    if (isSupabaseAuthEnabled()) {
       const { error } = await getSupabase().auth.updateUser({
         password: newPassword,
       });
