@@ -8,6 +8,18 @@ importers:
 
   .:
     dependencies:
+      '@composio/core':
+        specifier: ^0.6.3
+        version: 0.6.3(ws@8.18.3)(zod@3.25.76)
+      '@composio/openai-agents':
+        specifier: ^0.6.3
+        version: 0.6.3(@composio/core@0.6.3(ws@8.18.3)(zod@3.25.76))(@openai/agents@0.4.10(ws@8.18.3)(zod@3.25.76))(zod@3.25.76)
+      '@openai/agents':
+        specifier: ^0.4.10
+        version: 0.4.10(ws@8.18.3)(zod@3.25.76)
+      dotenv:
+        specifier: ^17.3.1
+        version: 17.3.1
       mcp-linear:
         specifier: ^0.1.8
         version: 0.1.8
@@ -385,6 +397,26 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+
+  '@composio/client@0.1.0-alpha.56':
+    resolution: {integrity: sha512-hNgChB5uhdvT4QXNzzfUuvtG6vrfanQQFY2hPyKwbeR4x6mEmIGFiZ4y2qynErdUWldAZiB/7pY/MBMg6Q9E0g==}
+
+  '@composio/core@0.6.3':
+    resolution: {integrity: sha512-PZm4LQGMaaDFHWUouMHqKPg5fNfgjM2l0zF0Vw/vfWJ34KYyo1ne6YjhGvBDmOIKPByT6Dal4/ff7AHpjedL/w==}
+    peerDependencies:
+      zod: ^3.25 || ^4
+
+  '@composio/json-schema-to-zod@0.1.20':
+    resolution: {integrity: sha512-d4V34itLrUWG/VBh7ciznKcxF/T22MBLHmuEzHoX0zsBOHsUmjYz5qtDh20S2p3FE+HHvLZxpXiv8yfdd4yI+Q==}
+    peerDependencies:
+      zod: '>=3.25.76 <5'
+
+  '@composio/openai-agents@0.6.3':
+    resolution: {integrity: sha512-X0Xk9PXeH+VbaoiAZT5iMXF44RYT7+4uCvMSf/ydboAxh6XoObhDmtpwGy28l2YSCs6W9qtISu/VI30ytUpuPA==}
+    peerDependencies:
+      '@composio/core': 0.6.3
+      '@openai/agents': ^0.1.3
+      zod: ^4.1.0
 
   '@csstools/color-helpers@5.1.0':
     resolution: {integrity: sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA==}
@@ -1092,6 +1124,29 @@ packages:
   '@nolyfill/is-core-module@1.0.39':
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
+
+  '@openai/agents-core@0.4.10':
+    resolution: {integrity: sha512-U2uu22OZGFZ53Ogm5Qtzymg1Oc1FFNdkh+fg0QWDJ7mERQU5G4LzhbTiwS/jylVgKPj74e2uBb8oj/X5rHwxDQ==}
+    peerDependencies:
+      zod: ^4.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
+
+  '@openai/agents-openai@0.4.10':
+    resolution: {integrity: sha512-z0HxNpchPRhAugDeO7mwzj7i8QcEEfWppXYTVbyYYbbN6zni5uIFm2N9t7fxbGXtaKCT7s7Io6aKrOsifRXncw==}
+    peerDependencies:
+      zod: ^4.0.0
+
+  '@openai/agents-realtime@0.4.10':
+    resolution: {integrity: sha512-cUU7tUgWJEZpewHfK+O4Gi36TMst7AStC1RKBm7uwm2t7WYQRIxY042Ykl6sou1wsLg/dXlY2UM07lZPN7TT5A==}
+    peerDependencies:
+      zod: ^4.0.0
+
+  '@openai/agents@0.4.10':
+    resolution: {integrity: sha512-Hw/1VK4FagUHG3OU3SwcPrHHplSyok/O2w/p8utwGmeOT/uy/21j/JLukCIXBe9WHZf1MtP6YSxJ35OrSebVng==}
+    peerDependencies:
+      zod: ^4.0.0
 
   '@opentelemetry/api-logs@0.207.0':
     resolution: {integrity: sha512-lAb0jQRVyleQQGiuuvCOTDVspc14nx6XJjP4FspJ1sNARo3Regq4ZZbrc3rN4b1TYSuUCvgH+UXUPug4SLOqEQ==}
@@ -3675,6 +3730,10 @@ packages:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
 
+  dotenv@17.3.1:
+    resolution: {integrity: sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==}
+    engines: {node: '>=12'}
+
   drange@1.1.1:
     resolution: {integrity: sha512-pYxfDYpued//QpnLIm4Avk7rsNtAtQkUES2cwAYSvD/wd2pKD71gN2Ebj3e7klzXwjocvE8c5vx/1fxwpqmSxA==}
     engines: {node: '>=4'}
@@ -5186,6 +5245,18 @@ packages:
     resolution: {integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==}
     engines: {node: '>=12'}
 
+  openai@6.22.0:
+    resolution: {integrity: sha512-7Yvy17F33Bi9RutWbsaYt5hJEEJ/krRPOrwan+f9aCPuMat1WVsb2VNSII5W1EksKT6fF69TG/xj4XzodK3JZw==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
@@ -5446,6 +5517,9 @@ packages:
   puppeteer-core@24.34.0:
     resolution: {integrity: sha512-24evawO+mUGW4mvS2a2ivwLdX3gk8zRLZr9HP+7+VT2vBQnm0oh9jJEZmUE3ePJhRkYlZ93i7OMpdcoi2qNCLg==}
     engines: {node: '>=18'}
+
+  pusher-js@8.4.0:
+    resolution: {integrity: sha512-wp3HqIIUc1GRyu1XrP6m2dgyE9MoCsXVsWNlohj0rjSkLf+a0jLvEyVubdg58oMk7bhjBWnFClgp8jfAa6Ak4Q==}
 
   qs@6.14.1:
     resolution: {integrity: sha512-4EK3+xJl8Ts67nLYNwqw/dsFVnCf+qR7RgXSK9jEEm9unao3njwMDdmsdvoKBKHzxd7tCYz5e5M+SnMjdtXGQQ==}
@@ -6218,6 +6292,9 @@ packages:
     resolution: {integrity: sha512-bf6YKUv11l5Xfcmg76PyWoy/e2vbkkxFNBGJSnfdSXQC33ZiUfutYh6IXidc5MhsnrFkWfdNNLyaRk+kHMLlwA==}
     hasBin: true
 
+  tweetnacl@1.0.3:
+    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
+
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
@@ -6771,6 +6848,32 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@bcoe/v8-coverage@0.2.3': {}
+
+  '@composio/client@0.1.0-alpha.56': {}
+
+  '@composio/core@0.6.3(ws@8.18.3)(zod@3.25.76)':
+    dependencies:
+      '@composio/client': 0.1.0-alpha.56
+      '@composio/json-schema-to-zod': 0.1.20(zod@3.25.76)
+      '@types/json-schema': 7.0.15
+      chalk: 4.1.2
+      openai: 6.22.0(ws@8.18.3)(zod@3.25.76)
+      pusher-js: 8.4.0
+      semver: 7.7.3
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.1(zod@3.25.76)
+    transitivePeerDependencies:
+      - ws
+
+  '@composio/json-schema-to-zod@0.1.20(zod@3.25.76)':
+    dependencies:
+      zod: 3.25.76
+
+  '@composio/openai-agents@0.6.3(@composio/core@0.6.3(ws@8.18.3)(zod@3.25.76))(@openai/agents@0.4.10(ws@8.18.3)(zod@3.25.76))(zod@3.25.76)':
+    dependencies:
+      '@composio/core': 0.6.3(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents': 0.4.10(ws@8.18.3)(zod@3.25.76)
+      zod: 3.25.76
 
   '@csstools/color-helpers@5.1.0': {}
 
@@ -7352,6 +7455,57 @@ snapshots:
       fastq: 1.19.1
 
   '@nolyfill/is-core-module@1.0.39': {}
+
+  '@openai/agents-core@0.4.10(ws@8.18.3)(zod@3.25.76)':
+    dependencies:
+      debug: 4.4.3
+      openai: 6.22.0(ws@8.18.3)(zod@3.25.76)
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.26.0(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - supports-color
+      - ws
+
+  '@openai/agents-openai@0.4.10(ws@8.18.3)(zod@3.25.76)':
+    dependencies:
+      '@openai/agents-core': 0.4.10(ws@8.18.3)(zod@3.25.76)
+      debug: 4.4.3
+      openai: 6.22.0(ws@8.18.3)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - supports-color
+      - ws
+
+  '@openai/agents-realtime@0.4.10(zod@3.25.76)':
+    dependencies:
+      '@openai/agents-core': 0.4.10(ws@8.18.3)(zod@3.25.76)
+      '@types/ws': 8.18.1
+      debug: 4.4.3
+      ws: 8.18.3
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  '@openai/agents@0.4.10(ws@8.18.3)(zod@3.25.76)':
+    dependencies:
+      '@openai/agents-core': 0.4.10(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-openai': 0.4.10(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-realtime': 0.4.10(zod@3.25.76)
+      debug: 4.4.3
+      openai: 6.22.0(ws@8.18.3)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+      - ws
 
   '@opentelemetry/api-logs@0.207.0':
     dependencies:
@@ -10143,6 +10297,8 @@ snapshots:
 
   dotenv@16.6.1: {}
 
+  dotenv@17.3.1: {}
+
   drange@1.1.1: {}
 
   dunder-proto@1.0.1:
@@ -11907,6 +12063,11 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
+  openai@6.22.0(ws@8.18.3)(zod@3.25.76):
+    optionalDependencies:
+      ws: 8.18.3
+      zod: 3.25.76
+
   optionator@0.9.4:
     dependencies:
       deep-is: 0.1.4
@@ -12178,6 +12339,10 @@ snapshots:
       - react-native-b4a
       - supports-color
       - utf-8-validate
+
+  pusher-js@8.4.0:
+    dependencies:
+      tweetnacl: 1.0.3
 
   qs@6.14.1:
     dependencies:
@@ -13074,6 +13239,8 @@ snapshots:
       turbo-linux-arm64: 2.6.3
       turbo-windows-64: 2.6.3
       turbo-windows-arm64: 2.6.3
+
+  tweetnacl@1.0.3: {}
 
   type-check@0.4.0:
     dependencies:

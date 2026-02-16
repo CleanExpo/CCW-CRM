@@ -6,8 +6,6 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@shared"],
   // Enable standalone output for Docker builds
   output: "standalone",
-  // ESLint enabled during builds for code quality
-  // typescript: Type checking enabled during builds for type safety
   experimental: {
     typedRoutes: true,
   },

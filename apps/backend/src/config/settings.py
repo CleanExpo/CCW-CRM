@@ -121,8 +121,9 @@ class Settings(BaseSettings):
     # CORS_ORIGINS='["https://your-domain.com","https://www.your-domain.com"]'
 
     # Database (PostgreSQL)
+    # Default port 5434 matches docker-compose.yml external mapping (5434:5432)
     database_url: str = Field(
-        default="postgresql://starter_user:local_dev_password@localhost:5432/starter_db",
+        default="postgresql://starter_user:local_dev_password@localhost:5434/starter_db",
         description="PostgreSQL connection URL",
     )
 
@@ -148,7 +149,7 @@ class Settings(BaseSettings):
 
     # Database password for Docker secrets (separate from DATABASE_URL)
     database_host: str = Field(default="localhost", description="Database host")
-    database_port: int = Field(default=5432, description="Database port")
+    database_port: int = Field(default=5434, description="Database port (5434 matches docker-compose)")
     database_name: str = Field(default="starter_db", description="Database name")
     database_user: str = Field(default="starter_user", description="Database user")
     database_password: str = Field(default="", description="Database password (supports Docker secrets)")

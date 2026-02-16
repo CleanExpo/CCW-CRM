@@ -28,6 +28,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/api/auth/logout",
         "/api/auth/forgot-password",
         "/api/auth/reset-password",
+        "/api/public/stats",  # Landing page showcase data (aggregate counts only)
     }
 
     async def dispatch(
