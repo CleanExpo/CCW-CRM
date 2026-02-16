@@ -28,6 +28,9 @@ interface LiveStatsBarProps {
   stats: PublicStats | null;
 }
 
+/* Note: When stats is null the parent now passes demo fallback data,
+   so the null guard below is kept only for type-safety. */
+
 const statItems = [
   {
     key: "total_products" as const,
