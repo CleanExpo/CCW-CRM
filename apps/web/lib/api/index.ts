@@ -5,28 +5,28 @@
  */
 
 // Core API clients
-export { apiClient, createClient, ApiClientError } from "./client";
+export { apiClient, createClient, ApiClientError } from './client';
 // Server API should be imported directly in Server Components only
 // export { serverApiClient, createClient as createServerClient } from "./server";
-export { updateSession } from "./middleware";
+export { updateSession } from './middleware';
 
 // Domain API clients
-export { authApi } from "./auth";
-export { ordersApi } from "./orders";
-export { quotesApi } from "./quotes";
-export { customersApi } from "./customers";
-export { productsApi } from "./products";
-export { inventoryApi } from "./inventory";
-export { purchaseOrdersApi } from "./purchase-orders";
-export { suppliersApi } from "./suppliers";
-export { shipmentsApi } from "./shipments";
-export { activitiesApi } from "./activities";
+export { authApi } from './auth';
+export { ordersApi } from './orders';
+export { quotesApi } from './quotes';
+export { customersApi } from './customers';
+export { productsApi } from './products';
+export { inventoryApi } from './inventory';
+export { purchaseOrdersApi } from './purchase-orders';
+export { suppliersApi } from './suppliers';
+export { shipmentsApi } from './shipments';
+export { activitiesApi } from './activities';
 
 // Auth types
-export type { User, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "./auth";
+export type { User, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from './auth';
 
 // Core types
-export type { ApiError } from "./client";
+export type { ApiError } from './client';
 
 // Orders types
 export type {
@@ -38,7 +38,7 @@ export type {
   OrderListParams,
   PaginatedOrders,
   OrderActivity,
-} from "./orders";
+} from './orders';
 
 // Quotes types
 export type {
@@ -50,7 +50,7 @@ export type {
   QuoteListParams,
   PaginatedQuotes,
   GenerateQuoteRequest,
-} from "./quotes";
+} from './quotes';
 
 // Customers types
 export type {
@@ -59,7 +59,7 @@ export type {
   CustomerUpdate,
   CustomerListParams,
   PaginatedCustomers,
-} from "./customers";
+} from './customers';
 
 // Products types
 export type {
@@ -69,7 +69,7 @@ export type {
   ProductUpdate,
   ProductListParams,
   PaginatedProducts,
-} from "./products";
+} from './products';
 
 // Inventory types - exported from centralized types
 export type {
@@ -93,7 +93,7 @@ export type {
   AdjustmentType,
   InventorySummary,
   LocationStock,
-} from "@/lib/types/inventory";
+} from '@/lib/types/inventory';
 
 // Inventory API param types
 export type {
@@ -101,7 +101,7 @@ export type {
   TransferListParams,
   StockHealthItem,
   TransferSuggestion,
-} from "./inventory";
+} from './inventory';
 
 // Purchase Orders types
 export type {
@@ -114,7 +114,7 @@ export type {
   PaginatedPurchaseOrders,
   Receipt,
   ReceiveStockRequest,
-} from "./purchase-orders";
+} from './purchase-orders';
 
 // Suppliers types
 export type {
@@ -123,7 +123,7 @@ export type {
   SupplierUpdate,
   SupplierListParams,
   PaginatedSuppliers,
-} from "./suppliers";
+} from './suppliers';
 
 // Shipments types
 export type {
@@ -134,7 +134,7 @@ export type {
   ShipmentListParams,
   PaginatedShipments,
   TrackingUpdate,
-} from "./shipments";
+} from './shipments';
 
 // Activities types - exported from centralized types
 export type {
@@ -151,7 +151,36 @@ export type {
   isCompleted,
   isOverdue,
   getActivityStatus,
-} from "@/lib/types/activities";
+} from '@/lib/types/activities';
 
 // Activities API param types
-export type { ActivityListParams } from "./activities";
+export type { ActivityListParams } from './activities';
+
+// Agent monitoring API client
+export { agentsApi } from './agents';
+
+// Tasks API client
+export { tasksApi } from './tasks';
+export type { AgentTask } from './tasks';
+
+// Settings API client
+export { settingsApi } from './settings';
+
+// Agent monitoring types
+export type {
+  AgentStats,
+  Agent,
+  PerformanceTrends,
+  PerformanceDataPoint,
+  AgentInsight,
+  AgentInsights,
+} from './agents';
+
+// Settings types
+export type {
+  AccountProfile,
+  UpdateAccountRequest,
+  ChangePasswordRequest,
+  CompanySettings,
+  UpdateCompanyRequest,
+} from './settings';
