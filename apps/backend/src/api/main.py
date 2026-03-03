@@ -66,6 +66,7 @@ from .routes import (
     quotes,
     reconciliation_dashboard,
     service_requests,
+    settings,  # Account and company settings
     shipments,
     suppliers,
     team,
@@ -434,6 +435,8 @@ app.include_router(cron_jobs.router, tags=["Cron Jobs"])
 app.include_router(crm_health.router, tags=["CRM Health"])
 app.include_router(crm_onboarding.router, tags=["CRM Onboarding"])
 app.include_router(crm_personas.router, tags=["CRM Personas"])
+# Account and company settings
+app.include_router(settings.router, tags=["Settings"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 # Shipment tracking router
