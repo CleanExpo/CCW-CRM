@@ -17,7 +17,7 @@ from stripe import (
     PaymentMethod,
     Subscription,
 )
-from stripe.error import StripeError
+StripeError = stripe.StripeError
 
 
 class StripeClient:

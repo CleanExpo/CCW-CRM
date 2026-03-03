@@ -125,8 +125,11 @@ class InvoiceResponse(BaseModel):
     period_end: datetime | None
 
 
-# Initialize Stripe client (will use STRIPE_SECRET_KEY from environment)
-stripe_client = StripeClient()
+# Initialize Stripe client lazily (requires STRIPE_SECRET_KEY in environment)
+try:
+    stripe_client: StripeClient | None = StripeClient()
+except ValueError:
+    stripe_client = None  # Stripe not configured — billing endpoints will return 503
 
 
 @router.get("", response_model=SubscriptionResponse)

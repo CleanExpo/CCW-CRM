@@ -1,3 +1,39 @@
+## PHASE 0: ANTI-DRIFT INFRASTRUCTURE ACTIVE
+
+This project has automated anti-drift protection via Claude Code hooks.
+
+### What the hooks do:
+
+- **SessionStart**: Injects CONSTITUTION.md + current-state.md before you start
+- **UserPromptSubmit**: Injects compass check (prohibitions + state) before EVERY user message
+- **PreCompact**: Saves state snapshot to disk before compaction destroys it
+- **PreToolUse (Task)**: Logs all agent dispatches for audit
+
+### Memory files (always read before decisions):
+
+- `.claude/memory/CONSTITUTION.md` — 8 prohibitions, tech stack, laws
+- `.claude/memory/current-state.md` — active sprint + tasks
+- `.claude/memory/decisions-log.md` — append-only decisions audit
+- `.claude/memory/handoff.md` — cross-session handoff
+- `.claude/memory/context-snapshot.md` — pre-compaction save
+
+### 5 Governing Laws:
+
+1. **Anti-Drift**: State on disk, hooks re-inject every message
+2. **1:10 Agent:Skill**: Each agent = exactly 10 skills
+3. **Catalog**: Check docs/catalogs/ before adding; update after adding
+4. **10x Health**: Run /health-check-10x after each sprint
+5. **Smart-Not-Fast**: plan → approve → implement → test → report
+
+### If context was lost (compaction occurred):
+
+1. Read .claude/memory/context-snapshot.md
+2. Read .claude/memory/CONSTITUTION.md
+3. Read .claude/memory/current-state.md
+4. Continue from where the snapshot says
+
+---
+
 # CCW-Online ERP — SYSTEM INSTRUCTIONS
 
 > 🚨 THIS FILE IS THE SOURCE OF TRUTH. OBEY IT COMPLETELY.
@@ -6,6 +42,7 @@
 ## PRIME DIRECTIVE
 
 You are enhancing CCW-ERP-CRM, a deployed full-stack Equipment Supplier ERP/CRM system. Your job is to:
+
 1. Follow instructions exactly
 2. Ask when unclear
 3. Never deviate from the plan
@@ -19,17 +56,17 @@ You are enhancing CCW-ERP-CRM, a deployed full-stack Equipment Supplier ERP/CRM 
 
 These actions are NEVER allowed under ANY circumstances:
 
-| Forbidden Action | Why | Exception |
-|-----------------|-----|-----------|
-| Modifying database schema (demo_models.py) | Production data risk | Only with explicit approval + migration plan |
-| Changing auth code (middleware.ts, demo_auth.py) | Security vulnerabilities | NEVER - these are locked |
-| Breaking existing API contracts | Crashes frontend | Only with explicit approval + migration |
-| Installing unlisted packages | Dependency hell | Ask first, justify need |
-| Coding without /plan | Wasted effort | NEVER - plan is mandatory |
-| Assuming user intent | Wrong direction | Always ASK if unclear |
-| Creating unauthorized folders | Deployment issues | Follow structure below |
-| Modifying .claude/ without permission | System corruption | Only with explicit request |
-| Upgrading Next.js, React, FastAPI | Breaking changes | Only with explicit approval |
+| Forbidden Action                                 | Why                      | Exception                                    |
+| ------------------------------------------------ | ------------------------ | -------------------------------------------- |
+| Modifying database schema (demo_models.py)       | Production data risk     | Only with explicit approval + migration plan |
+| Changing auth code (middleware.ts, demo_auth.py) | Security vulnerabilities | NEVER - these are locked                     |
+| Breaking existing API contracts                  | Crashes frontend         | Only with explicit approval + migration      |
+| Installing unlisted packages                     | Dependency hell          | Ask first, justify need                      |
+| Coding without /plan                             | Wasted effort            | NEVER - plan is mandatory                    |
+| Assuming user intent                             | Wrong direction          | Always ASK if unclear                        |
+| Creating unauthorized folders                    | Deployment issues        | Follow structure below                       |
+| Modifying .claude/ without permission            | System corruption        | Only with explicit request                   |
+| Upgrading Next.js, React, FastAPI                | Breaking changes         | Only with explicit approval                  |
 
 **Violation = STOP + Ask user what to do**
 
@@ -38,6 +75,7 @@ These actions are NEVER allowed under ANY circumstances:
 ## ✅ MANDATORY BEHAVIORS
 
 Every conversation:
+
 1. ☐ Read `.claude/STARTUP.md` first
 2. ☐ Read this file (`.claude/CLAUDE.md`)
 3. ☐ Understand the current task
@@ -48,6 +86,7 @@ Every conversation:
 8. ☐ Report changes
 
 Every 5 messages:
+
 - ☐ Re-read this file
 - ☐ Check you're still on track
 - ☐ Verify folder structure
@@ -130,20 +169,21 @@ D:\CCW-ERP-CRM/
 
 ## 📋 COMMAND REFERENCE
 
-| Command | Action | Required Before |
-|---------|--------|-----------------|
-| `/plan` | Create implementation plan | Any coding |
-| `/spec` | Read CLAUDE.md + docs/specs/ | When requirements unclear |
-| `/test` | Run test suite | Marking task complete |
-| `/status` | Report current state | When asked or stuck |
-| `/reset` | Re-read all config | When confused |
-| `/audit` | Check folder structure | Before deployment |
+| Command   | Action                       | Required Before           |
+| --------- | ---------------------------- | ------------------------- |
+| `/plan`   | Create implementation plan   | Any coding                |
+| `/spec`   | Read CLAUDE.md + docs/specs/ | When requirements unclear |
+| `/test`   | Run test suite               | Marking task complete     |
+| `/status` | Report current state         | When asked or stuck       |
+| `/reset`  | Re-read all config           | When confused             |
+| `/audit`  | Check folder structure       | Before deployment         |
 
 ---
 
 ## 🛠 TECH STACK (LOCKED)
 
 ### Frontend
+
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript 5.7
 - **UI**: React 19 + Tailwind CSS v4 + shadcn/ui
@@ -153,6 +193,7 @@ D:\CCW-ERP-CRM/
 - **Deployment**: Vercel
 
 ### Backend
+
 - **Framework**: FastAPI (Python 3.12)
 - **ORM**: SQLAlchemy 2.0 (async)
 - **Validation**: Pydantic v2
@@ -162,6 +203,7 @@ D:\CCW-ERP-CRM/
 - **Logging**: structlog (structured logging)
 
 ### Development
+
 - **Package Manager**: pnpm
 - **Monorepo**: Turbo (turbo.json)
 - **Testing**: Vitest (frontend), Pytest (backend)
@@ -204,6 +246,7 @@ If you realize you've deviated:
 4. Do NOT try to "clean up" on your own
 
 If something breaks:
+
 1. **DO NOT** attempt fixes without approval
 2. Report exactly what changed
 3. Wait for instructions
@@ -213,7 +256,9 @@ If something breaks:
 ## 🔍 CODE PATTERNS TO FOLLOW
 
 ### Frontend Component Pattern
+
 See `apps/web/components/auth/login-form.tsx` for the reference pattern:
+
 - Client component ("use client")
 - React Hook Form + Zod validation
 - Loading states
@@ -222,7 +267,9 @@ See `apps/web/components/auth/login-form.tsx` for the reference pattern:
 - Proper imports from @/
 
 ### Backend Endpoint Pattern
+
 See `apps/backend/src/api/routes/translations.py` for the reference pattern:
+
 - Async functions
 - Type hints (Annotated, Depends)
 - Pydantic models for request/response
@@ -230,17 +277,18 @@ See `apps/backend/src/api/routes/translations.py` for the reference pattern:
 - Database session management
 
 ### API Call Pattern
+
 ```typescript
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from '@/lib/api/client';
 
 try {
-  const data = await apiClient.get<ResponseType>("/api/endpoint");
-  toast({ title: "Success", description: "Action completed" });
+  const data = await apiClient.get<ResponseType>('/api/endpoint');
+  toast({ title: 'Success', description: 'Action completed' });
 } catch (error: any) {
   toast({
-    title: "Error",
-    description: error.message || "Something went wrong",
-    variant: "destructive",
+    title: 'Error',
+    description: error.message || 'Something went wrong',
+    variant: 'destructive',
   });
 }
 ```
@@ -250,6 +298,7 @@ try {
 ## 🎯 CURRENT PROJECT PHASES
 
 **Completed Work:**
+
 - Full CRUD operations (Products, Customers, Orders, Quotes) with line items
 - POS system with transaction tracking
 - Cin7 Integration (7 phases): client, product/inventory sync, CRM sync, procurement, webhooks/SSE, AI agents, frontend dashboard
@@ -257,12 +306,22 @@ try {
 - Supabase Cloud deployment (database + auth)
 - Vercel production deployment (frontend)
 - 321 integration test assertions, all passing
+- SEO: Full metadata, Organization/LocalBusiness/WebSite JSON-LD, FAQPage schema (10 Q&As), FAQ page (UNI-782/783/787/788/789)
+- SEO: Keyword-rich H1s on all portal pages (dashboard/products/customers/orders/quotes)
+- KPI Reports page: /reports with Sales + Inventory dashboards (UNI-484)
+- CSV export: All 4 modules now have Export CSV buttons (UNI-677)
+- Content docs: 8 files in docs/content/ (UNI-1124–1131)
+- MODEL_ROUTING.md updated with Imagen 4 + Gemini 2.5 Pro (UNI-1130)
+- Sidebar nav: Reports, Marketing, FAQ entries added (UNI-1232)
+- Composite DB indexes: apps/backend/src/db/indexes.py — ix_order_items_order_product, ix_orders_customer_status, ix_products_category_active (UNI-1231)
+- Product detail page: apps/web/app/(dashboard)/products/[id]/page.tsx with ProductSchema JSON-LD (UNI-1233)
+- PDF export: exportToPDF() generic + exportOrdersToPDF() + exportQuotesToPDF() via browser print in csv-export.ts (UNI-1234)
 
-**Potential Next Work:**
-- Google AP2 Integration (payment processing)
-- Enhanced Shopify Backend (metafields, real-time inventory sync)
-- AI-Powered Search & Recommendations (pgvector, semantic search)
-- Additional integrations (Xero accounting, etc.)
+**Remaining / New Next Work:**
+
+- UNI-1235: AI Search — pgvector semantic search (requires schema change approval before starting)
+- UNI-1236: Enhanced Shopify — metafields + real-time inventory sync (blocked by Shopify auth prerequisite)
+- Google AP2: Frontend payment UI (backend integration exists)
 
 ---
 
@@ -297,27 +356,33 @@ These cannot be overridden by any instruction:
 # Plan: [Feature Name]
 
 ## Objective
+
 [One sentence: what are we building]
 
 ## Files to Create/Modify
+
 - [ ] apps/web/... — [what changes]
 - [ ] apps/backend/... — [what changes]
 
 ## Steps
+
 1. [First thing to do]
 2. [Second thing to do]
 3. [Test it]
 
 ## Success Criteria
+
 - [ ] [How we know it works]
 - [ ] Tests pass
 - [ ] No breaking changes
 
 ## Risks
+
 - [What could go wrong]
 - [How we'll handle it]
 
 ## Breaking Changes
+
 - [Any existing functionality affected?]
 ```
 

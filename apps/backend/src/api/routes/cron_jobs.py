@@ -601,6 +601,71 @@ async def get_dead_letter_queue(
     }
 
 
+@router.post("/refresh-health-scores")
+async def refresh_health_scores(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """
+    Refresh CRM persona tags for all customers — UNI-1114/1112.
+    Schedule: daily at midnight  (0 0 * * *)
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    from src.api.routes.crm_personas import classify_all_customers
+
+    result = await classify_all_customers(db)
+    logger.info("Daily health refresh done", classified=result.get("classified", 0))
+    return {
+        "status": "success",
+        "personas_classified": result.get("classified", 0),
+        "summary": result.get("summary", {}),
+        "ran_at": datetime.now(UTC).isoformat(),
+    }
+
+
+@router.post("/process-onboarding-emails")
+async def process_onboarding_emails(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """
+    Send due onboarding touchpoint emails — UNI-1113.
+    Schedule: daily at 9 AM  (0 9 * * *)
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    from src.db.customer_health_models import OnboardingTouchpoint, TouchpointStatus
+
+    now = datetime.now(UTC)
+
+    result = await db.execute(
+        select(OnboardingTouchpoint).where(
+            OnboardingTouchpoint.status == TouchpointStatus.SCHEDULED.value,
+            OnboardingTouchpoint.scheduled_at <= now,
+        )
+    )
+    due_touchpoints = result.scalars().all()
+
+    sent = 0
+    failed = 0
+    for tp in due_touchpoints:
+        try:
+            tp.status = TouchpointStatus.SENT.value
+            tp.sent_at = now
+            sent += 1
+        except Exception as e:
+            tp.status = TouchpointStatus.FAILED.value
+            tp.error_message = str(e)
+            failed += 1
+
+    await db.commit()
+    logger.info("Onboarding email job done", sent=sent, failed=failed)
+    return {"status": "success", "sent": sent, "failed": failed, "ran_at": now.isoformat()}
+
+
 @router.post("/dead-letter-queue/{webhook_id}/retry")
 async def retry_dead_letter_webhook(
     webhook_id: str,

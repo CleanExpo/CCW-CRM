@@ -3,16 +3,16 @@
  *
  * Provides methods for:
  * - Getting current subscription
- * - Creating/updating subscriptions
+ * - Creating/updating/canceling subscriptions
  * - Managing payment methods
  * - Viewing invoices
  */
 
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
-export type SubscriptionTier = "starter" | "professional" | "enterprise" | "custom";
-export type SubscriptionStatus = "trial" | "active" | "past_due" | "canceled" | "expired";
-export type BillingInterval = "monthly" | "annual";
+export type SubscriptionTier = 'starter' | 'professional' | 'enterprise' | 'custom';
+export type SubscriptionStatus = 'trial' | 'active' | 'past_due' | 'canceled' | 'expired';
+export type BillingInterval = 'monthly' | 'annual';
 
 export interface Subscription {
   id: string;
@@ -56,10 +56,20 @@ export interface Invoice {
   amount_paid: number;
   currency: string;
   status: string;
+  hosted_invoice_url: string | null;
   invoice_pdf: string | null;
-  created: string;
   period_start: string | null;
   period_end: string | null;
+  created_at: string;
+}
+
+export interface PaymentMethod {
+  id: string;
+  brand: string;
+  last4: string;
+  exp_month: number;
+  exp_year: number;
+  is_default: boolean;
 }
 
 export const billingApi = {
@@ -67,36 +77,64 @@ export const billingApi = {
    * Get current organization's subscription.
    */
   async getSubscription(): Promise<Subscription> {
-    return apiClient.get<Subscription>("/api/billing");
+    return apiClient.get<Subscription>('/api/billing/subscription');
   },
 
   /**
    * Subscribe to a plan (create new subscription).
    */
   async subscribe(data: SubscribeRequest): Promise<Subscription> {
-    return apiClient.post<Subscription>("/api/billing/subscribe", data);
+    return apiClient.post<Subscription>('/api/billing/subscribe', data);
   },
 
   /**
    * Update subscription (change plan or billing interval).
    */
   async updateSubscription(data: UpdateSubscriptionRequest): Promise<Subscription> {
-    return apiClient.put<Subscription>("/api/billing/subscription", data);
+    return apiClient.put<Subscription>('/api/billing/subscription', data);
   },
 
   /**
    * Cancel subscription (at period end or immediately).
    */
-  async cancelSubscription(immediately: boolean = false): Promise<Subscription> {
-    return apiClient.delete<Subscription>(
-      `/api/billing/subscription?immediately=${immediately}`
-    );
+  async cancelSubscription(immediately: boolean = false): Promise<void> {
+    await apiClient.delete<void>(`/api/billing/subscription?immediately=${immediately}`);
+  },
+
+  /**
+   * List payment methods for the organization.
+   */
+  async getPaymentMethods(): Promise<PaymentMethod[]> {
+    return apiClient.get<PaymentMethod[]>('/api/billing/payment-methods');
+  },
+
+  /**
+   * Add a new payment method.
+   */
+  async addPaymentMethod(paymentMethodId: string): Promise<PaymentMethod> {
+    return apiClient.post<PaymentMethod>('/api/billing/payment-methods', {
+      payment_method_id: paymentMethodId,
+    });
+  },
+
+  /**
+   * Remove a payment method.
+   */
+  async removePaymentMethod(paymentMethodId: string): Promise<void> {
+    await apiClient.delete<void>(`/api/billing/payment-methods/${paymentMethodId}`);
   },
 
   /**
    * List invoices for the organization.
    */
-  async listInvoices(limit: number = 10): Promise<Invoice[]> {
+  async getInvoices(limit: number = 10): Promise<Invoice[]> {
     return apiClient.get<Invoice[]>(`/api/billing/invoices?limit=${limit}`);
+  },
+
+  /**
+   * @deprecated Use getInvoices instead.
+   */
+  async listInvoices(limit: number = 10): Promise<Invoice[]> {
+    return billingApi.getInvoices(limit);
   },
 };

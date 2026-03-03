@@ -13,6 +13,7 @@ from sqlalchemy.exc import DatabaseError, IntegrityError, OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.config import get_settings
+from src.db import indexes as _indexes  # noqa: F401 - registers composite indexes with SQLAlchemy metadata
 from src.utils import get_logger, setup_logging
 
 from .exceptions import (
@@ -32,10 +33,15 @@ from .routes import (
     approvals,
     backorders,
     bank_feeds,
-    # billing,  # Disabled temporarily - requires stripe package
+    billing,  # Stripe subscription billing
     config,
+    crm_health,      # CRM client health scoring (UNI-1114)
+    crm_onboarding,  # CRM onboarding sequences Day-1/7/30 (UNI-1113)
+    crm_personas,    # CRM persona tagging (UNI-1112)
     contacts,  # CRM contacts
     containers,
+    contractors,  # Contractor availability management
+    cron_jobs,  # Scheduled task endpoints (Vercel Cron)
     customer_orders,
     customers,
     demo_auth,
@@ -70,11 +76,11 @@ from .routes import (
 # AI-dependent routes - conditional import (requires langchain/langgraph)
 _ai_routes_available = False
 try:
-    from .routes.ai import ai_router, chat, generate, insights
+    from .routes.ai import ai_router, chat, generate, insights, inventory_forecast as ai_inventory_forecast
     from .routes import autonomous_dev, recommendations, search, test_data_gen
     _ai_routes_available = True
 except (ImportError, Exception):
-    autonomous_dev = recommendations = search = test_data_gen = None  # type: ignore[assignment]
+    autonomous_dev = recommendations = search = test_data_gen = ai_inventory_forecast = None  # type: ignore[assignment]
 
 from .routes.integrations import ap2, cin7, cin7_crm, cin7_procurement, cin7_stream, cin7_sync, cin7_webhooks, elevenlabs, sendgrid, shopify, shopify_theme, xero
 
@@ -419,7 +425,15 @@ app.include_router(suppliers.router, tags=["Suppliers"])
 # Team management router (multi-tenant user management)
 app.include_router(team.router, tags=["Team Management"])
 # Billing and subscription management router
-# app.include_router(billing.router, tags=["Billing"])  # Disabled - requires stripe
+app.include_router(billing.router, tags=["Billing"])
+# Contractor availability management router
+app.include_router(contractors.router, tags=["Contractors"])
+# Cron job endpoints (Vercel Cron / scheduled tasks)
+app.include_router(cron_jobs.router, tags=["Cron Jobs"])
+# CRM health scoring, onboarding sequences, and persona tagging (UNI-1112/1113/1114)
+app.include_router(crm_health.router, tags=["CRM Health"])
+app.include_router(crm_onboarding.router, tags=["CRM Onboarding"])
+app.include_router(crm_personas.router, tags=["CRM Personas"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 # Shipment tracking router
@@ -434,6 +448,8 @@ if _ai_routes_available:
     app.include_router(insights.router, tags=["AI Insights"])
     app.include_router(generate.router, tags=["AI Generation"])
     app.include_router(test_data_gen.router)  # Test data generation for learning engine
+    if ai_inventory_forecast is not None:
+        app.include_router(ai_inventory_forecast.router, tags=["AI Inventory Forecasting"])
 
 # AI Search & Recommendations
 try:
@@ -479,6 +495,27 @@ try:
 except (ImportError, AttributeError):
     pass  # AI agents not available without langgraph
 
+# Project Intelligence Agent (codebase auditing + gap analysis)
+try:
+    from src.api.routes.ai import project_intelligence
+    app.include_router(project_intelligence.router, tags=["Project Intelligence"])
+except (ImportError, AttributeError):
+    pass  # Skip if dependencies not available
+
+# Toolshed API (context bundle assembly + quality gates — Minions framework)
+try:
+    from src.api.routes.ai import toolshed
+    app.include_router(toolshed.router, tags=["Toolshed"])
+except (ImportError, AttributeError):
+    pass  # Skip if dependencies not available
+
+# POS-Xero Reconciliation (depends on Xero integration)
+try:
+    from src.api.routes import pos_xero_reconciliation
+    app.include_router(pos_xero_reconciliation.router, tags=["POS Xero Reconciliation"])
+except (ImportError, AttributeError):
+    pass  # Skip if Xero dependencies not available
+
 # Email Audit Trail (ISS-037) - GDPR compliance, delivery tracking
 app.include_router(email_audit.router, tags=["Email Audit"])
 
@@ -495,6 +532,18 @@ try:
     app.include_router(performance.router)
 except (ImportError, AttributeError):
     pass  # Monitoring routes not available
+
+# Workshop Management System
+try:
+    from src.api.routes.workshop import equipment as ws_equipment, templates as ws_templates, bookings as ws_bookings, reminders as ws_reminders, dashboard as ws_dashboard
+    app.include_router(ws_equipment.router, tags=["Workshop"])
+    app.include_router(ws_templates.router, tags=["Workshop"])
+    app.include_router(ws_bookings.router, tags=["Workshop"])
+    app.include_router(ws_reminders.router, tags=["Workshop"])
+    app.include_router(ws_dashboard.router, tags=["Workshop"])
+except (ImportError, Exception) as e:
+    logger.warning("Workshop routes not available", error=str(e))
+    pass
 
 # Real-Time Infrastructure - SSE Streams (Phase 4)
 from src.api.routes import dashboard_stream, inventory_stream

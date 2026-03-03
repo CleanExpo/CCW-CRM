@@ -35,11 +35,7 @@
       "Bash(tasklist *)",
       "Bash(taskkill *)"
     ],
-    "deny": [
-      "Bash(rm -rf /)",
-      "Bash(sudo rm *)",
-      "Bash(del /s /q C:\\*)"
-    ]
+    "deny": ["Bash(rm -rf /)", "Bash(sudo rm *)", "Bash(del /s /q C:\\*)"]
   },
 
   "commands": {
@@ -100,6 +96,50 @@
       "Phase 2.3: Connection pool increase",
       "Phase 2.4: Background job system for AI",
       "Phase 2.5: Redis caching layer"
+    ]
+  },
+
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat D:/CCW-ERP-CRM/.claude/memory/CONSTITUTION.md && echo '---' && cat D:/CCW-ERP-CRM/.claude/memory/current-state.md"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python D:/CCW-ERP-CRM/.claude/hooks/inject-compass.py"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python D:/CCW-ERP-CRM/.claude/hooks/pre-compact-save.py"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python D:/CCW-ERP-CRM/.claude/hooks/validate-agent-dispatch.py"
+          }
+        ]
+      }
     ]
   }
 }

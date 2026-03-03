@@ -1,6 +1,42 @@
+## Anti-Drift Infrastructure (Read This First)
+
+This project uses automated Claude Code hooks to combat context drift:
+
+- **SessionStart**: Auto-injects CONSTITUTION.md + current-state.md at session start
+- **UserPromptSubmit**: Re-injects compass check (6 prohibitions + current state) before EVERY message
+- **PreCompact**: Saves state to .claude/memory/context-snapshot.md before compaction occurs
+- **PreToolUse (Task)**: Logs all agent dispatches to decisions-log.md
+
+**IF hooks fire**, you will see "COMPASS CHECK (auto-injected)" before the user's message — this is correct.
+
+**IF you missed hook injection** (rare — restart Claude Code), manually run:
+
+```bash
+cat .claude/memory/CONSTITUTION.md
+cat .claude/memory/current-state.md
+```
+
+State files in .claude/memory/ — read these before every major decision:
+
+- `CONSTITUTION.md` — immutable rules (same rules every session)
+- `current-state.md` — active sprint, in-progress work
+- `decisions-log.md` — architectural decisions audit log
+- `handoff.md` — cross-session context handoff
+
+**5 Governing Laws:**
+
+1. **Anti-Drift Law**: State on disk. Hooks re-inject. Orchestrator never compacts.
+2. **1:10 Agent:Skill Law**: Every agent has exactly 10 skills. No more, no less.
+3. **Catalog Law**: Check docs/catalogs/ before adding anything. Update after adding.
+4. **10x Health Check Law**: Run /health-check-10x after every major change.
+5. **Smart-Not-Fast Law**: /plan → approve → implement → /test → report. Always.
+
+---
+
 # CCW-ERP-CRM - Architecture Guide for Development
 
 > **Claude Framework**: This project uses a comprehensive Claude Code framework located in `.claude/`:
+>
 > - `.claude/STARTUP.md` - Read this FIRST every session
 > - `.claude/CLAUDE.md` - Full system instructions & workflow
 > - `.claude/agents/` - Orchestrator, Planner, Coder, Reviewer agents
@@ -12,11 +48,13 @@
 ---
 
 ## Project Overview
+
 This is a **full-stack Equipment Supplier ERP/CRM** built for CCW's internal business operations.
 
-**Current Status**: Deployed production application on Vercel (frontend) + Supabase Cloud (database/auth). Full CRUD operations, Cin7 inventory integration (7 phases), AI agent framework, multi-agent governance protocol, POS system, and real-time sync are all complete.
+**Current Status**: Deployed production application on Vercel (frontend) + Supabase Cloud (database/auth). Full CRUD operations, Cin7 inventory integration (7 phases), AI agent framework, multi-agent governance protocol, POS system, and real-time sync are all complete. SEO schema layer (JSON-LD), FAQ page, Stripe billing, KPI Reports page, and CSV export on all modules are also complete.
 
 **Tech Stack**:
+
 - **Frontend**: Next.js 15, React 19, TypeScript 5.7, Tailwind CSS v4, shadcn/ui
 - **Backend**: FastAPI (Python 3.12), SQLAlchemy 2.0, Pydantic v2
 - **Database**: PostgreSQL 15 — Supabase Cloud (production), Docker (local dev)
@@ -34,6 +72,7 @@ This is a **full-stack Equipment Supplier ERP/CRM** built for CCW's internal bus
 ## Architecture Overview
 
 ### Monorepo Structure
+
 ```
 D:\CCW-ERP-CRM/
 ├── apps/
@@ -123,6 +162,7 @@ D:\CCW-ERP-CRM/
 ### NEVER DO THESE (Breaking Changes):
 
 #### 1. **Database Schema Changes**
+
 - DO NOT modify `apps/backend/src/db/demo_models.py` (core SQLAlchemy models)
 - DO NOT add, remove, or rename database columns on core tables
 - DO NOT change table names
@@ -131,6 +171,7 @@ D:\CCW-ERP-CRM/
 **Exception**: Only with explicit user approval and migration strategy. New integration models (like cin7_models.py) are fine.
 
 #### 2. **Authentication & Security**
+
 - DO NOT modify `apps/web/middleware.ts` (JWT auth middleware)
 - DO NOT change `apps/backend/src/api/routes/demo_auth.py` (auth endpoints)
 - DO NOT modify password hashing logic (passlib/bcrypt)
@@ -138,6 +179,7 @@ D:\CCW-ERP-CRM/
 - DO NOT disable authentication checks or bypass security
 
 #### 3. **API Contracts (Existing Endpoints)**
+
 - DO NOT change response structure of existing endpoints
 - DO NOT rename existing API routes
 - DO NOT change required request parameters to optional or vice versa
@@ -146,6 +188,7 @@ D:\CCW-ERP-CRM/
 **Exception**: You CAN add optional parameters or new fields to responses. You CAN create entirely new endpoints.
 
 #### 4. **Dependencies & Package Versions**
+
 - DO NOT upgrade Next.js, React, FastAPI, or other major frameworks without approval
 - DO NOT add large dependencies (>5MB) without justification
 - DO NOT remove existing dependencies that are in use
@@ -170,6 +213,7 @@ D:\CCW-ERP-CRM/
 **Location**: `apps/web/app/(dashboard)/[module]/components/[ModuleName]Form.tsx`
 
 **Pattern** (based on `login-form.tsx`):
+
 ```typescript
 "use client";
 
@@ -250,20 +294,22 @@ export function ModuleForm({ mode, initialData, onSuccess }: ModuleFormProps) {
 ```
 
 ### API Client Pattern
+
 ```typescript
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from '@/lib/api/client';
 
 // apiClient automatically handles JWT token from cookies, JSON serialization,
 // and throws ApiClientError on failure.
 // Base URL: process.env.NEXT_PUBLIC_BACKEND_URL (defaults to http://localhost:8000)
 
-const products = await apiClient.get<Product[]>("/api/products");
-const newProduct = await apiClient.post("/api/products", data);
+const products = await apiClient.get<Product[]>('/api/products');
+const newProduct = await apiClient.post('/api/products', data);
 const updated = await apiClient.put(`/api/products/${id}`, data);
 await apiClient.delete(`/api/products/${id}`);
 ```
 
 ### Backend Endpoint Pattern
+
 ```python
 from typing import Annotated
 from fastapi import APIRouter, Depends, Query
@@ -285,9 +331,11 @@ async def list_items(
 ```
 
 ### Integration Pattern (Cin7 example, reusable for new integrations)
+
 ```
 config/settings.py -> integrations/[name]/client.py (demo/live) -> api/routes/integrations/[name].py
 ```
+
 - Settings: Pydantic BaseSettings, `mode: demo|live`, global singleton
 - Client: httpx.AsyncClient, async context manager, demo/live routing
 - Demo: structlog logging, realistic mock data matching real API shapes
@@ -299,16 +347,16 @@ config/settings.py -> integrations/[name]/client.py (demo/live) -> api/routes/in
 
 **Core Tables** (in `demo_models.py` - DO NOT MODIFY):
 
-| Table | Key Fields |
-|-------|-----------|
-| organizations | id (UUID), name, slug, is_active |
-| users | id (UUID), email (unique), hashed_password, full_name, organization_id (FK) |
-| products | id (UUID), sku (unique), name, category (ProductCategory enum), price, cost, stock |
-| customers | id (UUID), customer_number (unique), company_name, contact_name, email |
-| orders | id (UUID), order_number (ORD-YYYY-NNN), customer_id (FK), status (OrderStatus) |
-| order_items | id (UUID), order_id (FK, cascade), product_id (FK), quantity, unit_price |
-| quotes | id (UUID), quote_number (Q-YYYY-NNN), customer_id (FK), status (QuoteStatus) |
-| quote_items | id (UUID), quote_id (FK, cascade), product_id (FK), quantity, unit_price |
+| Table         | Key Fields                                                                         |
+| ------------- | ---------------------------------------------------------------------------------- |
+| organizations | id (UUID), name, slug, is_active                                                   |
+| users         | id (UUID), email (unique), hashed_password, full_name, organization_id (FK)        |
+| products      | id (UUID), sku (unique), name, category (ProductCategory enum), price, cost, stock |
+| customers     | id (UUID), customer_number (unique), company_name, contact_name, email             |
+| orders        | id (UUID), order_number (ORD-YYYY-NNN), customer_id (FK), status (OrderStatus)     |
+| order_items   | id (UUID), order_id (FK, cascade), product_id (FK), quantity, unit_price           |
+| quotes        | id (UUID), quote_number (Q-YYYY-NNN), customer_id (FK), status (QuoteStatus)       |
+| quote_items   | id (UUID), quote_id (FK, cascade), product_id (FK), quantity, unit_price           |
 
 **Enums**: OrderStatus (draft/pending/confirmed/processing/shipped/delivered/cancelled), QuoteStatus (draft/pending/sent/accepted/rejected/expired), ProductCategory (heavy_machinery/hand_tools/power_tools/safety_equipment/building_materials/electrical/plumbing/accessories)
 
@@ -319,6 +367,7 @@ config/settings.py -> integrations/[name]/client.py (demo/live) -> api/routes/in
 ## Testing Requirements
 
 **Before marking task complete** (MANDATORY):
+
 ```bash
 pnpm turbo run type-check    # No TypeScript errors
 pnpm turbo run lint          # No ESLint errors
@@ -326,6 +375,7 @@ pnpm turbo run test          # All Vitest + Pytest tests passing
 ```
 
 **Test Location**:
+
 - Frontend: `apps/web/__tests__/`
 - Backend: `apps/backend/tests/`
 - Integration: `apps/backend/tests/integration/` (321 assertions, all passing)
@@ -335,6 +385,7 @@ pnpm turbo run test          # All Vitest + Pytest tests passing
 ## Environment Setup
 
 ### Local Development
+
 ```bash
 docker compose up -d                    # PostgreSQL
 cd apps/backend && uvicorn src.api.main:app --reload
@@ -343,11 +394,13 @@ cd apps/web && pnpm dev
 ```
 
 ### Production
+
 - **Frontend**: Vercel (auto-deploys from main branch)
 - **Database**: Supabase Cloud (PostgreSQL)
 - **Auth**: Supabase Auth (production) / JWT (local dev)
 
 ### Login Credentials (local dev)
+
 - **admin@demo.com** / **demo123**
 - sales@demo.com / demo123
 - warehouse@demo.com / demo123
@@ -361,3 +414,26 @@ cd apps/web && pnpm dev
 3. **Delete confirmation** — Always use AlertDialog for destructive actions
 4. **Data refresh** — Call `router.refresh()` after mutations
 5. **Design tokens** — Use `bg-primary` not `bg-blue-500`
+
+---
+
+## Recent Additions (2026-03-03)
+
+**Completed since last CLAUDE.md update (2026-03-02 → 2026-03-03):**
+
+- SEO: Full metadata, Organization/LocalBusiness/WebSite JSON-LD, FAQPage schema (10 Q&As), FAQ page (UNI-782/783/787/788/789)
+- SEO: Keyword-rich H1s on all portal pages (dashboard/products/customers/orders/quotes)
+- KPI Reports page: /reports with Sales + Inventory dashboards (UNI-484)
+- CSV export: All 4 modules now have Export CSV buttons (UNI-677)
+- Content docs: 8 files in docs/content/ (UNI-1124–1131)
+- MODEL_ROUTING.md updated with Imagen 4 + Gemini 2.5 Pro (UNI-1130)
+- Sidebar nav: Reports, Marketing, FAQ entries added to sidebar (UNI-1232)
+- Composite DB indexes: apps/backend/src/db/indexes.py — 3 composite indexes on order_items, orders, products (UNI-1231)
+- Product detail page: /products/[id]/page.tsx with ProductSchema JSON-LD + Edit modal (UNI-1233)
+- PDF export: exportToPDF() + exportOrdersToPDF() + exportQuotesToPDF() via browser print (UNI-1234)
+
+**Remaining / New Next Work:**
+
+- UNI-1235: AI Search — pgvector semantic search (requires schema change approval)
+- UNI-1236: Enhanced Shopify — metafields + real-time inventory sync (blocked by Shopify auth fix)
+- Google AP2: Frontend payment UI (backend integration exists)
