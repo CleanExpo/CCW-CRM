@@ -65,6 +65,7 @@ from .routes import (
     purchase_orders,
     quotes,
     reconciliation_dashboard,
+    agents_monitor,  # Agent monitoring dashboard (UNI-1246)
     service_requests,
     settings,  # Account and company settings
     shipments,
@@ -437,6 +438,8 @@ app.include_router(crm_onboarding.router, tags=["CRM Onboarding"])
 app.include_router(crm_personas.router, tags=["CRM Personas"])
 # Account and company settings
 app.include_router(settings.router, tags=["Settings"])
+# Agent monitoring dashboard
+app.include_router(agents_monitor.router, tags=["Agent Monitoring"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 # Shipment tracking router
