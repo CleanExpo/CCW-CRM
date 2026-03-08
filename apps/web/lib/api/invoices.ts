@@ -1,4 +1,4 @@
-import { apiClient } from "./client";
+import { apiClient } from './client';
 import type {
   Invoice,
   InvoicePayment,
@@ -9,7 +9,7 @@ import type {
   InvoiceStatus,
   RevenueSummary,
   TaxSummary,
-} from "@/lib/types/invoices";
+} from '@/lib/types/invoices';
 
 /**
  * Invoices API client
@@ -31,18 +31,16 @@ export const invoicesApi = {
     overdue_only?: boolean;
   }): Promise<PaginatedInvoicesResponse> {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
-    if (params?.customer_id) queryParams.append("customer_id", params.customer_id);
-    if (params?.date_from) queryParams.append("date_from", params.date_from);
-    if (params?.date_to) queryParams.append("date_to", params.date_to);
-    if (params?.overdue_only)
-      queryParams.append("overdue_only", params.overdue_only.toString());
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.customer_id) queryParams.append('customer_id', params.customer_id);
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    if (params?.overdue_only) queryParams.append('overdue_only', params.overdue_only.toString());
 
-    const url = `/api/invoices${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    const url = `/api/invoices${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get<PaginatedInvoicesResponse>(url);
   },
 
@@ -60,7 +58,7 @@ export const invoicesApi = {
    * Returns invoice with auto-generated invoice_number (INV-YYYY-NNNN)
    */
   async create(data: CreateInvoiceRequest): Promise<Invoice> {
-    return apiClient.post<Invoice>("/api/invoices", data);
+    return apiClient.post<Invoice>('/api/invoices', data);
   },
 
   /**
@@ -101,10 +99,7 @@ export const invoicesApi = {
    * POST /api/invoices/{invoice_id}/payments
    * Backend automatically updates amount_paid, amount_due, and status
    */
-  async recordPayment(
-    invoiceId: string,
-    data: RecordPaymentRequest
-  ): Promise<Invoice> {
+  async recordPayment(invoiceId: string, data: RecordPaymentRequest): Promise<Invoice> {
     return apiClient.post<Invoice>(`/api/invoices/${invoiceId}/payments`, data);
   },
 
@@ -130,7 +125,7 @@ export const invoicesApi = {
    * GET /api/invoices/reports/revenue
    */
   async getRevenueSummary(): Promise<RevenueSummary> {
-    return apiClient.get<RevenueSummary>("/api/invoices/reports/revenue");
+    return apiClient.get<RevenueSummary>('/api/invoices/reports/revenue');
   },
 
   /**
@@ -138,6 +133,15 @@ export const invoicesApi = {
    * GET /api/invoices/reports/tax
    */
   async getTaxSummary(): Promise<TaxSummary> {
-    return apiClient.get<TaxSummary>("/api/invoices/reports/tax");
+    return apiClient.get<TaxSummary>('/api/invoices/reports/tax');
+  },
+
+  /**
+   * Generate an invoice from a confirmed or delivered order
+   * POST /api/invoices/from-order/{orderId}
+   * Returns the newly created draft invoice
+   */
+  async generateFromOrder(orderId: string): Promise<Invoice> {
+    return apiClient.post<Invoice>(`/api/invoices/from-order/${orderId}`, {});
   },
 };

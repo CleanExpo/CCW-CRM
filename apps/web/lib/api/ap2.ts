@@ -111,6 +111,61 @@ export async function getPaymentStatus(transactionId: string): Promise<AP2Transa
   return apiClient.get<AP2TransactionResponse>(`/api/integrations/ap2/payments/${transactionId}`);
 }
 
+// ─── List Endpoints ────────────────────────────────────────────────────────────
+
+export interface AP2MandateListItem {
+  mandate_id: string;
+  mandate_type: 'intent' | 'cart' | 'payment';
+  status: 'pending' | 'verified' | 'executed' | 'expired' | 'failed';
+  expires_at: string;
+  parent_mandate_id: string | null;
+  payment_amount: number | null;
+  payment_currency: string | null;
+  created_at: string;
+}
+
+export interface AP2TransactionListItem {
+  transaction_id: string;
+  mandate_id: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  amount: number;
+  currency: string;
+  payment_method: string | null;
+  completed_at: string | null;
+  failed_at: string | null;
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface AP2ListResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export async function listMandates(
+  page = 1,
+  pageSize = 20,
+  mandateType?: string
+): Promise<AP2ListResponse<AP2MandateListItem>> {
+  const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+  if (mandateType) params.set('mandate_type', mandateType);
+  return apiClient.get<AP2ListResponse<AP2MandateListItem>>(
+    `/api/integrations/ap2/mandates?${params}`
+  );
+}
+
+export async function listTransactions(
+  page = 1,
+  pageSize = 20
+): Promise<AP2ListResponse<AP2TransactionListItem>> {
+  const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+  return apiClient.get<AP2ListResponse<AP2TransactionListItem>>(
+    `/api/integrations/ap2/transactions?${params}`
+  );
+}
+
 // ─── Voice Commerce ────────────────────────────────────────────────────────────
 
 export async function createVoiceSession(language = 'en'): Promise<AP2VoiceSessionResponse> {

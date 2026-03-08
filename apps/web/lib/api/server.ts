@@ -4,9 +4,9 @@
  * Server-side API client that reads JWT from cookies.
  */
 
-import { cookies } from "next/headers";
+import { cookies } from 'next/headers';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export interface ApiError {
   detail: string;
@@ -20,7 +20,7 @@ export class ApiClientError extends Error {
     public errorCode?: string
   ) {
     super(message);
-    this.name = "ApiClientError";
+    this.name = 'ApiClientError';
   }
 }
 
@@ -29,37 +29,32 @@ export class ApiClientError extends Error {
  */
 async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token");
+  const token = cookieStore.get('auth_token');
   return token?.value || null;
 }
 
 /**
  * Make an authenticated API request (server-side)
  */
-async function fetchApi<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = await getAuthToken();
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     ...options.headers,
   };
 
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = endpoint.startsWith("http")
-    ? endpoint
-    : `${BACKEND_URL}${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${BACKEND_URL}${endpoint}`;
 
   const response = await fetch(url, {
     ...options,
     headers,
     // Don't cache by default on server
-    cache: options.cache || "no-store",
+    cache: options.cache || 'no-store',
   });
 
   if (!response.ok) {
@@ -67,11 +62,7 @@ async function fetchApi<T>(
       detail: `HTTP ${response.status}: ${response.statusText}`,
     }));
 
-    throw new ApiClientError(
-      error.detail,
-      response.status,
-      error.error_code
-    );
+    throw new ApiClientError(error.detail, response.status, error.error_code);
   }
 
   // Handle 204 No Content
@@ -90,7 +81,7 @@ export const serverApiClient = {
    * GET request
    */
   get: <T>(endpoint: string, options?: RequestInit) =>
-    fetchApi<T>(endpoint, { ...options, method: "GET" }),
+    fetchApi<T>(endpoint, { ...options, method: 'GET' }),
 
   /**
    * POST request
@@ -98,7 +89,7 @@ export const serverApiClient = {
   post: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
     fetchApi<T>(endpoint, {
       ...options,
-      method: "POST",
+      method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     }),
 
@@ -108,7 +99,7 @@ export const serverApiClient = {
   put: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
     fetchApi<T>(endpoint, {
       ...options,
-      method: "PUT",
+      method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     }),
 
@@ -118,7 +109,7 @@ export const serverApiClient = {
   patch: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
     fetchApi<T>(endpoint, {
       ...options,
-      method: "PATCH",
+      method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
     }),
 
@@ -126,7 +117,7 @@ export const serverApiClient = {
    * DELETE request
    */
   delete: <T>(endpoint: string, options?: RequestInit) =>
-    fetchApi<T>(endpoint, { ...options, method: "DELETE" }),
+    fetchApi<T>(endpoint, { ...options, method: 'DELETE' }),
 };
 
 /**
