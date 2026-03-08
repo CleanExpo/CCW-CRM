@@ -301,27 +301,32 @@ try {
 
 - Full CRUD operations (Products, Customers, Orders, Quotes) with line items
 - POS system with transaction tracking
-- Cin7 Integration (7 phases): client, product/inventory sync, CRM sync, procurement, webhooks/SSE, AI agents, frontend dashboard
-- Agents Protocol v1.0: multi-agent governance (models, governor, message bus, error handler, confidence scoring)
-- Supabase Cloud deployment (database + auth)
-- Vercel production deployment (frontend)
-- 321 integration test assertions, all passing
-- SEO: Full metadata, Organization/LocalBusiness/WebSite JSON-LD, FAQPage schema (10 Q&As), FAQ page (UNI-782/783/787/788/789)
-- SEO: Keyword-rich H1s on all portal pages (dashboard/products/customers/orders/quotes)
-- KPI Reports page: /reports with Sales + Inventory dashboards (UNI-484)
-- CSV export: All 4 modules now have Export CSV buttons (UNI-677)
-- Content docs: 8 files in docs/content/ (UNI-1124–1131)
-- MODEL_ROUTING.md updated with Imagen 4 + Gemini 2.5 Pro (UNI-1130)
-- Sidebar nav: Reports, Marketing, FAQ entries added (UNI-1232)
-- Composite DB indexes: apps/backend/src/db/indexes.py — ix_order_items_order_product, ix_orders_customer_status, ix_products_category_active (UNI-1231)
-- Product detail page: apps/web/app/(dashboard)/products/[id]/page.tsx with ProductSchema JSON-LD (UNI-1233)
-- PDF export: exportToPDF() generic + exportOrdersToPDF() + exportQuotesToPDF() via browser print in csv-export.ts (UNI-1234)
+- Cin7 Integration (7 phases + Wave 1-3 extensions): line items, GRN receiving, write-back, webhooks, shadow/fulfilment/BOM/GL
+- Agents Protocol v1.0 + specialized agents: forecasting, anomaly, shadow AI, marketing, staff copilot
+- Supabase Cloud deployment (database + auth) + Vercel production deployment
+- SEO: metadata, JSON-LD schemas, FAQ page, keyword H1s, product detail page (UNI-782–789/1233)
+- KPI Reports page, CSV + PDF export on all modules (UNI-484/677/1234)
+- Composite DB indexes (UNI-1231), sidebar nav updates (UNI-1232)
+- Anti-Drift framework: memory files, hooks, 10x health check, toolshed API, 6 catalogs
+- Workshop management system: 6 models, 5 route modules, 6 frontend pages, dual-interval scheduler
+- CRM enhancements: contact detail page, activity timeline fix, health/onboarding/persona dashboards (UNI-171/1112-1114)
+- Invoicing module: invoice_date fix, partial status, payment methods, reports, print view, order-to-invoice (UNI-173 SUBs 1-6)
+- Workflow automation: templates/instances/SLA/notifications, workflow builder UI, NotificationBell (UNI-174 all)
+- Inventory: barcode scanner, stock take, reorder automation, product variants/attributes (UNI-172)
+- AP2 frontend integration (UNI-1241), Stripe billing fix, warehouse page rebuild (UNI-1251)
+- CI/CD: updated pipeline, 4 E2E specs, 51 new Vitest unit tests (UNI-664/1253/1254)
+- Local test env fixed: 823 tests passing (UNI-1242)
 
-**Remaining / New Next Work:**
+**Remaining / Blocked Work:**
 
-- UNI-1235: AI Search — pgvector semantic search (requires schema change approval before starting)
-- UNI-1236: Enhanced Shopify — metafields + real-time inventory sync (blocked by Shopify auth prerequisite)
-- Google AP2: Frontend payment UI (backend integration exists)
+- UNI-172 SUB-8: Backend pytest tests for new inventory endpoints
+- UNI-173 SUB-7: Xero sync (blocked on Xero auth)
+- UNI-664 SUBs 2/4/5/6: GitHub Environments, branch protection, staging deploy (require GitHub UI)
+- UNI-1235: pgvector semantic search (requires demo_models.py schema change approval)
+- UNI-1236: Enhanced Shopify (blocked by Shopify auth prerequisite)
+- UNI-1469: (Backlog — see Linear)
+- UNI-693: (Todo — see Linear)
+- UNI-173: remaining sub-tasks per Linear
 
 ---
 
