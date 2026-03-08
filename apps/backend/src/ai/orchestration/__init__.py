@@ -16,7 +16,7 @@ from .supervisor_state import SupervisorState
 # runtime, fixing the "AgentMetadata is not fully defined" error.
 from src.ai.protocol.models import AgentCard as _AgentCard  # noqa: F401
 
-AgentMetadata.model_rebuild()
+AgentMetadata.model_rebuild(_types_namespace={"AgentCard": _AgentCard})
 
 __all__ = [
     "AgentRegistry",

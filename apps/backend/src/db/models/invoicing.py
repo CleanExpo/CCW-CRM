@@ -1,5 +1,5 @@
 """Invoicing and payment models for UNI-173."""
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
@@ -53,7 +53,7 @@ class Invoice(Base):
     )
 
     # Invoice details
-    issue_date: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
+    invoice_date: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
     due_date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(
         String(20), default="draft", nullable=False, index=True

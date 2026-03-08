@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.cin7_models import (
     Cin7CustomerMapping,
+    Cin7OrderLineItem,
     Cin7OrderMapping,
     Cin7QuoteMapping,
     Cin7SyncLog,
@@ -274,6 +275,8 @@ class Cin7SalesSyncer:
 
         self.db.add(order)
         self.db.add(mapping)
+        await self.db.flush()
+        await self._sync_order_line_items(str(mapping.id), cin7_order, source)
         return order
 
     async def _update_erp_order_from_cin7(
@@ -282,7 +285,7 @@ class Cin7SalesSyncer:
         cin7_order: dict[str, Any],
         source: Literal["core", "omni"],
     ) -> None:
-        """Update an existing ERP Order from a Cin7 sale record (status only)."""
+        """Update an existing ERP Order from a Cin7 sale record (status + line items)."""
         result = await self.db.execute(
             select(Order).where(Order.id == mapping.order_id)
         )
@@ -301,6 +304,8 @@ class Cin7SalesSyncer:
 
         mapping.last_synced_at = datetime.now(UTC)
         mapping.sync_status = "synced"
+
+        await self._sync_order_line_items(str(mapping.id), cin7_order, source)
 
     # ------------------------------------------------------------------
     # Quotes: Cin7 → ERP (Omni only)
@@ -507,6 +512,76 @@ class Cin7SalesSyncer:
         log.completed_at = datetime.now(UTC)
         await self.db.flush()
         return log
+
+    # ------------------------------------------------------------------
+    # Line item sync
+    # ------------------------------------------------------------------
+
+    async def _sync_order_line_items(
+        self,
+        mapping_id: str,
+        cin7_order: dict[str, Any],
+        source: Literal["core", "omni"],
+    ) -> None:
+        """Replace line items for an order mapping from Cin7 data.
+
+        Uses a simple delete-then-insert strategy so that line items
+        always reflect the latest Cin7 state.
+        """
+        # Extract line items from the API response (Core uses "Lines", Omni uses "lineItems")
+        if source == "core":
+            lines = cin7_order.get("Lines", [])
+        else:
+            lines = cin7_order.get("lineItems", [])
+
+        if not lines:
+            return
+
+        # Delete existing line items for this mapping
+        existing = await self.db.execute(
+            select(Cin7OrderLineItem).where(
+                Cin7OrderLineItem.cin7_order_mapping_id == mapping_id
+            )
+        )
+        for item in existing.scalars().all():
+            await self.db.delete(item)
+
+        # Insert fresh line items
+        for line in lines:
+            if source == "core":
+                item = Cin7OrderLineItem(
+                    id=str(uuid4()),
+                    cin7_order_mapping_id=mapping_id,
+                    cin7_line_id=str(line.get("LineID", "")),
+                    product_sku=line.get("SKU"),
+                    product_name=line.get("Name"),
+                    quantity=int(line.get("Quantity", 0)),
+                    unit_price=Decimal(str(line.get("Price", 0))),
+                    total_price=Decimal(str(line.get("Total", 0))),
+                    tax_rate=Decimal(str(line.get("TaxRate", 0))) if line.get("TaxRate") is not None else None,
+                    notes=line.get("Comment"),
+                )
+            else:
+                item = Cin7OrderLineItem(
+                    id=str(uuid4()),
+                    cin7_order_mapping_id=mapping_id,
+                    cin7_line_id=str(line.get("id", "")),
+                    product_sku=line.get("styleCode"),
+                    product_name=line.get("description"),
+                    quantity=int(line.get("qty", 0)),
+                    unit_price=Decimal(str(line.get("unitPrice", 0))),
+                    total_price=Decimal(str(line.get("total", 0))),
+                    tax_rate=Decimal(str(line.get("taxRate", 0))) if line.get("taxRate") is not None else None,
+                    notes=line.get("notes"),
+                )
+            self.db.add(item)
+
+        logger.info(
+            "cin7_order_line_items_synced",
+            mapping_id=mapping_id,
+            line_count=len(lines),
+            source=source,
+        )
 
     # ------------------------------------------------------------------
     # Helpers

@@ -5,6 +5,7 @@ Resolves supplier foreign keys via Cin7SupplierMapping.
 """
 
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -13,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.cin7_models import (
+    Cin7PurchaseOrderLineItem,
     Cin7PurchaseOrderMapping,
     Cin7SupplierMapping,
     Cin7SyncLog,
@@ -255,6 +257,8 @@ class Cin7PurchaseSyncer:
 
         self.db.add(po)
         self.db.add(mapping)
+        await self.db.flush()
+        await self._sync_po_line_items(str(mapping.id), cin7_po, source)
         return po
 
     async def _update_erp_po_from_cin7(
@@ -263,7 +267,7 @@ class Cin7PurchaseSyncer:
         cin7_po: dict[str, Any],
         source: Literal["core", "omni"],
     ) -> None:
-        """Update an existing ERP PurchaseOrder status from a Cin7 record."""
+        """Update an existing ERP PurchaseOrder status + line items from a Cin7 record."""
         result = await self.db.execute(
             select(PurchaseOrder).where(PurchaseOrder.id == mapping.purchase_order_id)
         )
@@ -278,6 +282,8 @@ class Cin7PurchaseSyncer:
 
         mapping.last_synced_at = datetime.now(UTC)
         mapping.sync_status = "synced"
+
+        await self._sync_po_line_items(str(mapping.id), cin7_po, source)
 
     # ------------------------------------------------------------------
     # ERP → Cin7
@@ -344,6 +350,76 @@ class Cin7PurchaseSyncer:
         log.completed_at = datetime.now(UTC)
         await self.db.flush()
         return log
+
+    # ------------------------------------------------------------------
+    # Line item sync
+    # ------------------------------------------------------------------
+
+    async def _sync_po_line_items(
+        self,
+        mapping_id: str,
+        cin7_po: dict[str, Any],
+        source: Literal["core", "omni"],
+    ) -> None:
+        """Replace line items for a PO mapping from Cin7 data.
+
+        Uses a simple delete-then-insert strategy so that line items
+        always reflect the latest Cin7 state.
+        """
+        # Extract line items (Core uses "Lines", Omni uses "lineItems")
+        if source == "core":
+            lines = cin7_po.get("Lines", [])
+        else:
+            lines = cin7_po.get("lineItems", [])
+
+        if not lines:
+            return
+
+        # Delete existing line items for this mapping
+        existing = await self.db.execute(
+            select(Cin7PurchaseOrderLineItem).where(
+                Cin7PurchaseOrderLineItem.cin7_purchase_order_mapping_id == mapping_id
+            )
+        )
+        for item in existing.scalars().all():
+            await self.db.delete(item)
+
+        # Insert fresh line items
+        for line in lines:
+            if source == "core":
+                item = Cin7PurchaseOrderLineItem(
+                    id=str(uuid4()),
+                    cin7_purchase_order_mapping_id=mapping_id,
+                    cin7_line_id=str(line.get("LineID", "")),
+                    product_sku=line.get("SKU"),
+                    product_name=line.get("Name"),
+                    quantity=int(line.get("Quantity", 0)),
+                    unit_price=Decimal(str(line.get("Price", 0))),
+                    total_price=Decimal(str(line.get("Total", 0))),
+                    tax_rate=Decimal(str(line.get("TaxRate", 0))) if line.get("TaxRate") is not None else None,
+                    notes=line.get("Comment"),
+                )
+            else:
+                item = Cin7PurchaseOrderLineItem(
+                    id=str(uuid4()),
+                    cin7_purchase_order_mapping_id=mapping_id,
+                    cin7_line_id=str(line.get("id", "")),
+                    product_sku=line.get("styleCode"),
+                    product_name=line.get("description"),
+                    quantity=int(line.get("qty", 0)),
+                    unit_price=Decimal(str(line.get("unitPrice", 0))),
+                    total_price=Decimal(str(line.get("total", 0))),
+                    tax_rate=Decimal(str(line.get("taxRate", 0))) if line.get("taxRate") is not None else None,
+                    notes=line.get("notes"),
+                )
+            self.db.add(item)
+
+        logger.info(
+            "cin7_po_line_items_synced",
+            mapping_id=mapping_id,
+            line_count=len(lines),
+            source=source,
+        )
 
     # ------------------------------------------------------------------
     # Helpers

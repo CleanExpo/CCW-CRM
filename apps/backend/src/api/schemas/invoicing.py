@@ -112,7 +112,7 @@ class InvoiceBase(BaseModel):
 
     customer_id: UUID
     order_id: UUID | None = None
-    issue_date: date = Field(default_factory=date.today)
+    invoice_date: date = Field(default_factory=date.today)
     due_date: date
     notes: str | None = None
     payment_terms: str = "Net 30"
@@ -153,11 +153,11 @@ class InvoiceUpdate(BaseModel):
     """Update invoice request."""
 
     customer_id: UUID | None = None
-    issue_date: date | None = None
+    invoice_date: date | None = None
     due_date: date | None = None
     notes: str | None = None
     payment_terms: str | None = None
-    status: str | None = Field(None, pattern="^(draft|sent|paid|overdue|cancelled)$")
+    status: str | None = Field(None, pattern="^(draft|sent|partial|paid|overdue|cancelled)$")
 
 
 class InvoiceResponse(InvoiceBase):
@@ -186,7 +186,7 @@ class InvoiceSummary(BaseModel):
     invoice_number: str
     customer_id: UUID
     customer_name: str | None = None
-    issue_date: date
+    invoice_date: date
     due_date: date
     status: str
     total: Decimal
@@ -205,7 +205,7 @@ class InvoicePaymentBase(BaseModel):
     """Base invoice payment schema."""
 
     amount: Decimal = Field(..., gt=0, decimal_places=2)
-    payment_method: str = Field(..., pattern="^(cash|card|account|bank_transfer)$")
+    payment_method: str = Field(..., pattern="^(cash|card|account|bank_transfer|credit_card|check|other)$")
     payment_date: date = Field(default_factory=date.today)
     reference_number: str | None = Field(None, max_length=100)
     notes: str | None = None
@@ -221,7 +221,7 @@ class InvoicePaymentUpdate(BaseModel):
     """Update payment request."""
 
     amount: Decimal | None = Field(None, gt=0, decimal_places=2)
-    payment_method: str | None = Field(None, pattern="^(cash|card|account|bank_transfer)$")
+    payment_method: str | None = Field(None, pattern="^(cash|card|account|bank_transfer|credit_card|check|other)$")
     payment_date: date | None = None
     reference_number: str | None = Field(None, max_length=100)
     notes: str | None = None
@@ -250,8 +250,9 @@ class RevenueSummary(BaseModel):
     total_overdue: Decimal
     invoice_count: int
     paid_invoice_count: int
-    period_start: date
-    period_end: date
+    overdue_invoice_count: int
+    period_start: date | None = None
+    period_end: date | None = None
 
 
 class OutstandingInvoice(BaseModel):
@@ -259,21 +260,26 @@ class OutstandingInvoice(BaseModel):
 
     invoice_number: str
     customer_name: str
-    issue_date: date
+    invoice_date: date
     due_date: date
     days_overdue: int
     total: Decimal
     amount_due: Decimal
 
 
-class TaxSummary(BaseModel):
-    """Tax collected summary."""
+class TaxByRate(BaseModel):
+    """Tax breakdown for a single tax rate."""
 
-    tax_name: str
     tax_rate: Decimal
-    taxable_amount: Decimal
-    tax_collected: Decimal
+    total_tax: Decimal
     invoice_count: int
+
+
+class TaxSummary(BaseModel):
+    """Tax collected summary — aggregate across all rates."""
+
+    total_tax_collected: Decimal
+    tax_by_rate: list[TaxByRate]
 
 
 # ============================================================================
