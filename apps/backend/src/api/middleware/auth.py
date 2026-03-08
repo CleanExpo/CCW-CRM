@@ -24,6 +24,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/docs",
         "/openapi.json",
         "/api/auth/login",
+        "/api/auth/signup",
         "/api/auth/refresh",
         "/api/auth/logout",
         "/api/auth/forgot-password",
@@ -53,6 +54,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 from src.auth.jwt import decode_access_token
                 payload = decode_access_token(auth_token_cookie)
                 request.state.user_id = payload.get("user_id")
+                request.state.organization_id = payload.get("organization_id")
                 request.state.auth_type = "jwt_cookie"
                 logger.debug(f"JWT cookie auth successful for user {payload.get('user_id')}")
                 return await call_next(request)
@@ -73,6 +75,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 payload = decode_access_token(token)
                 request.state.user_id = payload.get("user_id")
                 request.state.email = payload.get("sub")
+                request.state.organization_id = payload.get("organization_id")
                 request.state.auth_type = "jwt_bearer"
                 logger.debug(
                     f"JWT Bearer auth successful for user {payload.get('user_id')}"

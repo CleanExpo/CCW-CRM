@@ -60,24 +60,21 @@ def get_current_organization_id(request: Request) -> UUID:
             query = select(Product).where(Product.organization_id == org_id)
             ...
     """
-    # Get user from request state (injected by auth middleware)
-    user = getattr(request.state, "user", None)
+    # Get organization_id from request state (injected by auth middleware from JWT)
+    user_id = getattr(request.state, "user_id", None)
+    organization_id = getattr(request.state, "organization_id", None)
 
-    if not user:
+    if not user_id:
         logger.warning("Tenant isolation check attempted without authenticated user")
         raise HTTPException(
             status_code=401,
             detail="Not authenticated",
         )
 
-    # Extract organization_id from user
-    organization_id = user.get("organization_id")
-
     if not organization_id:
         logger.error(
-            "User has no organization_id",
-            user_id=user.get("id"),
-            email=user.get("email"),
+            "User has no organization_id in JWT",
+            user_id=user_id,
         )
         raise HTTPException(
             status_code=400,
@@ -101,7 +98,7 @@ def get_current_organization_id(request: Request) -> UUID:
     logger.debug(
         "Tenant isolation applied",
         organization_id=str(org_uuid),
-        user_id=user.get("id"),
+        user_id=user_id,
     )
 
     return org_uuid
