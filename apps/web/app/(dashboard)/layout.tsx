@@ -1,15 +1,12 @@
-import { Sidebar } from "@/components/layout/sidebar";
-import { MobileNav } from "@/components/layout/mobile-nav";
-import { ChatWidget } from "@/components/chat/ChatWidget";
-import { PageTransition } from "@/components/transitions/PageTransition";
-import { CommandPalette } from "@/components/ui/command-palette";
-import { WebSocketProvider } from "@/contexts/websocket-context";
+import { Sidebar } from '@/components/layout/sidebar';
+import { MobileNav } from '@/components/layout/mobile-nav';
+import { ChatWidget } from '@/components/chat/ChatWidget';
+import { PageTransition } from '@/components/transitions/PageTransition';
+import { CommandPalette } from '@/components/ui/command-palette';
+import { WebSocketProvider } from '@/contexts/websocket-context';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <WebSocketProvider>
       <div className="flex min-h-screen">
@@ -21,8 +18,13 @@ export default function DashboardLayout({
         {/* Mobile Navigation */}
         <MobileNav />
 
-        <div className="flex-1 flex flex-col">
-          <main className="flex-1 p-4 md:p-6 pt-16 md:pt-6">
+        <div className="flex flex-1 flex-col">
+          {/* Desktop top bar with notification bell */}
+          <header className="hidden h-12 shrink-0 items-center justify-end border-b px-6 md:flex">
+            <NotificationBell />
+          </header>
+
+          <main className="flex-1 p-4 pt-16 md:p-6 md:pt-6">
             <PageTransition>{children}</PageTransition>
           </main>
         </div>
