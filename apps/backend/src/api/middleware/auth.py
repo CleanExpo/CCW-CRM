@@ -88,12 +88,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 logger.debug("API key auth successful")
                 return await call_next(request)
 
-        # Check for user ID header (set by frontend after Supabase auth)
-        user_id = request.headers.get("X-User-Id")
-        if user_id:
-            request.state.user_id = user_id
-            request.state.auth_type = "user"
-            return await call_next(request)
+        # NOTE: X-User-Id header bypass removed — any client could impersonate users.
+        # Authentication requires a valid JWT cookie, Bearer token, or API key.
 
         # Only skip auth if explicitly enabled via environment variable
         if settings.skip_auth_enforcement:

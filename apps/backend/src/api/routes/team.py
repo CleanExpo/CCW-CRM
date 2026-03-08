@@ -20,6 +20,8 @@ from src.api.middleware.rbac import require_permission
 from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
 from src.db.models_base import User
+from src.integrations.sendgrid.client import SendGridClient
+from src.utils.search import sanitize_like_term
 
 router = APIRouter(prefix="/api/team", tags=["Team Management"])
 
@@ -82,11 +84,11 @@ async def list_team_members(
 
     # Apply search filter
     if search:
-        search_pattern = f"%{search}%"
+        safe_search = sanitize_like_term(search)
         query = query.where(
             or_(
-                User.email.ilike(search_pattern),
-                User.full_name.ilike(search_pattern),
+                User.email.ilike(f"%{safe_search}%"),
+                User.full_name.ilike(f"%{safe_search}%"),
             )
         )
 
@@ -167,9 +169,35 @@ async def invite_team_member(
     await db.commit()
     await db.refresh(user)
 
-    # TODO: Send invitation email with magic link
-    # from src.integrations.email import send_team_invitation_email
-    # await send_team_invitation_email(user.email, user.full_name, org_id)
+    # Send invitation email via SendGrid
+    try:
+        email_client = SendGridClient()
+        name = user.full_name or user.email
+        await email_client.send_email(
+            to_email=user.email,
+            subject="You've been invited to join CCW ERP",
+            body_text=(
+                f"Hi {name},\n\n"
+                "You have been invited to join the team on CCW ERP.\n\n"
+                "Please log in to https://app.ccw-erp.com to set up your account.\n\n"
+                "Your role has been set to: {role}\n\n"
+                "If you have any questions, please contact your administrator.\n\n"
+                "The CCW ERP Team"
+            ).format(role=invite_data.role),
+            body_html=(
+                f"<p>Hi {name},</p>"
+                "<p>You have been invited to join the team on <strong>CCW ERP</strong>.</p>"
+                '<p><a href="https://app.ccw-erp.com">Click here to set up your account</a></p>'
+                f"<p>Your role: <strong>{invite_data.role}</strong></p>"
+                "<p>The CCW ERP Team</p>"
+            ),
+        )
+    except Exception:
+        # Non-fatal: user created, email failed — log but don't block response
+        import structlog as _structlog
+        _structlog.get_logger(__name__).warning(
+            "invitation_email_failed", email=user.email
+        )
 
     return TeamMemberResponse(
         id=user.id,

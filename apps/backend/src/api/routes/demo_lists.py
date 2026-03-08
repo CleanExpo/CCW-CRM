@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.decorators import cached
 from src.config.database import get_async_db
+from src.utils.search import sanitize_like_term
 from src.db.demo_models import (
     Customer,
     Order,
@@ -105,10 +106,11 @@ async def list_products(
 
     # Apply filters
     if search:
+        safe_search = sanitize_like_term(search)
         query = query.where(
             or_(
-                Product.name.ilike(f"%{search}%"),
-                Product.sku.ilike(f"%{search}%"),
+                Product.name.ilike(f"%{safe_search}%"),
+                Product.sku.ilike(f"%{safe_search}%"),
             )
         )
 
@@ -165,12 +167,13 @@ async def list_customers(
 
     # Apply filters
     if search:
+        safe_search = sanitize_like_term(search)
         query = query.where(
             or_(
-                Customer.company_name.ilike(f"%{search}%"),
-                Customer.contact_name.ilike(f"%{search}%"),
-                Customer.email.ilike(f"%{search}%"),
-                Customer.customer_number.ilike(f"%{search}%"),
+                Customer.company_name.ilike(f"%{safe_search}%"),
+                Customer.contact_name.ilike(f"%{safe_search}%"),
+                Customer.email.ilike(f"%{safe_search}%"),
+                Customer.customer_number.ilike(f"%{safe_search}%"),
             )
         )
 

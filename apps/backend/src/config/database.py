@@ -4,14 +4,45 @@ Database configuration and session management.
 Provides SQLAlchemy connection setup for local PostgreSQL.
 """
 
+import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from sqlalchemy import create_engine
+import structlog
+from sqlalchemy import create_engine, event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from .settings import get_settings
+
+logger = structlog.get_logger(__name__)
+
+# Slow query threshold in seconds (CCW-PERF-004)
+SLOW_QUERY_THRESHOLD_SECS = 0.5
+
+
+def _register_slow_query_listener(engine):
+    """Register before/after cursor execute events to log queries exceeding 500ms."""
+
+    @event.listens_for(engine.sync_engine if hasattr(engine, "sync_engine") else engine, "before_cursor_execute")
+    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        conn.info.setdefault("query_start_time", []).append(time.monotonic())
+
+    @event.listens_for(engine.sync_engine if hasattr(engine, "sync_engine") else engine, "after_cursor_execute")
+    def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        times = conn.info.get("query_start_time")
+        if not times:
+            return
+        elapsed = time.monotonic() - times.pop()
+        if elapsed >= SLOW_QUERY_THRESHOLD_SECS:
+            # Truncate query text to avoid flooding logs
+            short_stmt = statement[:500].replace("\n", " ")
+            logger.warning(
+                "slow_query_detected",
+                duration_ms=round(elapsed * 1000, 1),
+                threshold_ms=SLOW_QUERY_THRESHOLD_SECS * 1000,
+                query=short_stmt,
+            )
 
 
 def get_database_url(async_mode: bool = False) -> str:
@@ -49,6 +80,7 @@ sync_engine = create_engine(
     pool_timeout=30,  # Wait 30s before failing connection request
     pool_recycle=3600,  # Recycle connections after 1 hour
 )
+_register_slow_query_listener(sync_engine)
 
 # Synchronous session factory
 SyncSessionLocal = sessionmaker(
@@ -68,6 +100,7 @@ async_engine = create_async_engine(
     pool_timeout=30,  # Wait 30s before failing connection request
     pool_recycle=3600,  # Recycle connections after 1 hour
 )
+_register_slow_query_listener(async_engine)
 
 # Asynchronous session factory
 AsyncSessionLocal = async_sessionmaker(

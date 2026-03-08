@@ -18,6 +18,7 @@ from src.db.models import User
 from src.events.event_bus import get_event_bus
 from src.services.alert_manager import get_alert_manager
 from src.services.email_notifications import email_service
+from src.utils.search import sanitize_like_term
 
 router = APIRouter(prefix="/api/backorders", tags=["Backorder Management"])
 
@@ -172,8 +173,8 @@ async def list_backorders(
         # For now, just search internal notes
         filters.append(
             or_(
-                Backorder.notes.ilike(f"%{search}%"),
-                Backorder.internal_notes.ilike(f"%{search}%"),
+                Backorder.notes.ilike(f"%{sanitize_like_term(search)}%"),
+                Backorder.internal_notes.ilike(f"%{sanitize_like_term(search)}%"),
             )
         )
 

@@ -59,10 +59,7 @@ export default function SubmissionsPage() {
   async function handleExport() {
     try {
       const type = activeTab === "contact" ? "contact-submissions" : "demo-requests";
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/${type}?page=1&page_size=1000`, {
-        credentials: "include",
-      });
-      const data = await response.json();
+      const data = await apiClient.get<{ items: Record<string, unknown>[] }>(`/api/${type}?page=1&page_size=1000`);
 
       // Convert to CSV
       const items = data.items || [];

@@ -22,6 +22,7 @@ from src.config.database import get_async_db
 from src.db.demo_models import Order
 from src.db.inventory_models import InboundShipment, OutboundShipment, PurchaseOrder, Supplier
 from src.security.webhook_verification import (
+from src.utils.search import sanitize_like_term
     get_fedex_verifier,
     get_ups_verifier,
     get_usps_verifier,
@@ -200,7 +201,7 @@ async def list_inbound_shipments(
         query = query.where(InboundShipment.supplier_id == supplier_id)
 
     if tracking_number:
-        query = query.where(InboundShipment.tracking_number.ilike(f"%{tracking_number}%"))
+        query = query.where(InboundShipment.tracking_number.ilike(f"%{sanitize_like_term(tracking_number)}%"))
 
     # Count total
     count_query = select(func.count()).select_from(query.subquery())
@@ -320,7 +321,7 @@ async def list_outbound_shipments(
         query = query.where(OutboundShipment.order_id == order_id)
 
     if tracking_number:
-        query = query.where(OutboundShipment.tracking_number.ilike(f"%{tracking_number}%"))
+        query = query.where(OutboundShipment.tracking_number.ilike(f"%{sanitize_like_term(tracking_number)}%"))
 
     # Count total
     count_query = select(func.count()).select_from(query.subquery())

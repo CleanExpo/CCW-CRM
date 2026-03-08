@@ -22,6 +22,7 @@ from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.models import User
 from src.db.pos_models import (
+from src.utils.search import sanitize_like_term
     BankAccount,
     Location,
     POSTerminal,
@@ -508,9 +509,9 @@ async def list_pos_transactions(
     if search:
         query = query.where(
             or_(
-                POSTransaction.transaction_number.ilike(f"%{search}%"),
-                POSTransaction.payment_gateway_ref.ilike(f"%{search}%"),
-                POSTransaction.bank_statement_ref.ilike(f"%{search}%"),
+                POSTransaction.transaction_number.ilike(f"%{sanitize_like_term(search)}%"),
+                POSTransaction.payment_gateway_ref.ilike(f"%{sanitize_like_term(search)}%"),
+                POSTransaction.bank_statement_ref.ilike(f"%{sanitize_like_term(search)}%"),
             )
         )
 

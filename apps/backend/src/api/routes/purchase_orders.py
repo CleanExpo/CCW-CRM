@@ -22,6 +22,7 @@ from sqlalchemy.orm import selectinload
 from src.config.database import get_async_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
+from src.utils.search import sanitize_like_term
     ProductStockByLocation,
     PurchaseOrder,
     PurchaseOrderItem,
@@ -153,7 +154,7 @@ async def list_purchase_orders(
 
     # Apply filters
     if search:
-        query = query.where(PurchaseOrder.po_number.ilike(f"%{search}%"))
+        query = query.where(PurchaseOrder.po_number.ilike(f"%{sanitize_like_term(search)}%"))
 
     if status:
         query = query.where(PurchaseOrder.status == status)

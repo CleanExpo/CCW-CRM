@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_db
 from src.db.service_models import RequestType, ServiceRequest, ServiceStatus
+from src.utils.search import sanitize_like_term
 
 router = APIRouter(prefix="/api/service-requests", tags=["Service Requests"])
 
@@ -113,9 +114,9 @@ async def list_service_requests(
     if search:
         query = query.where(
             or_(
-                ServiceRequest.equipment_description.ilike(f"%{search}%"),
-                ServiceRequest.issue_description.ilike(f"%{search}%"),
-                ServiceRequest.assigned_technician.ilike(f"%{search}%"),
+                ServiceRequest.equipment_description.ilike(f"%{sanitize_like_term(search)}%"),
+                ServiceRequest.issue_description.ilike(f"%{sanitize_like_term(search)}%"),
+                ServiceRequest.assigned_technician.ilike(f"%{sanitize_like_term(search)}%"),
             )
         )
 

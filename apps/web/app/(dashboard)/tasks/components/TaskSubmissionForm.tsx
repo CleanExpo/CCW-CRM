@@ -8,6 +8,7 @@
 'use client'
 
 import { useState } from 'react'
+import { apiClient } from '@/lib/api/client'
 
 export function TaskSubmissionForm() {
   const [title, setTitle] = useState('')
@@ -25,20 +26,12 @@ export function TaskSubmissionForm() {
     setSuccess(false)
 
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description,
-          task_type: taskType,
-          priority,
-        }),
+      await apiClient.post('/api/tasks', {
+        title,
+        description,
+        task_type: taskType,
+        priority,
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to submit task')
-      }
 
       // Reset form
       setTitle('')

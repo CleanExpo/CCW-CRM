@@ -94,23 +94,46 @@ export default function InvoiceDetailPage() {
     }
   };
 
-  const handleDownloadPDF = async () => {
-    try {
-      // This would typically download a PDF - for now just show a toast
-      toast({
-        title: "Download Started",
-        description: "Invoice PDF is being generated",
-      });
-      // TODO: Implement actual PDF download
-      // const blob = await apiClient.get(`/api/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
-      // downloadBlob(blob, `invoice-${invoice?.invoice_number}.pdf`);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to download PDF",
-      });
+  const handleDownloadPDF = () => {
+    if (!invoice) return;
+    const printWindow = window.open("", "_blank", "width=800,height=600");
+    if (!printWindow) {
+      toast({ variant: "destructive", title: "Error", description: "Could not open print window. Please allow pop-ups." });
+      return;
     }
+    type LineItem = { description: string; quantity: number; unit_price: number | string; total: number | string };
+    const lines: LineItem[] = (invoice as unknown as { line_items?: LineItem[] }).line_items ?? [];
+    const itemRows = lines.map((item) =>
+      `<tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb">${item.description}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${item.quantity}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">$${Number(item.unit_price).toFixed(2)}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">$${Number(item.total).toFixed(2)}</td>
+      </tr>`
+    ).join("");
+    const invoiceDate = invoice.invoice_date ? format(new Date(invoice.invoice_date), "dd MMM yyyy") : "";
+    const dueDate = invoice.due_date ? format(new Date(invoice.due_date), "dd MMM yyyy") : "—";
+    printWindow.document.write(`<!DOCTYPE html><html><head>
+      <title>Invoice ${invoice.invoice_number}</title>
+      <style>body{font-family:sans-serif;padding:40px;color:#111}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px;border-bottom:2px solid #111}@media print{button{display:none}}</style>
+    </head><body>
+      <h1 style="margin:0">Invoice</h1>
+      <p style="color:#6b7280">${invoice.invoice_number}</p>
+      <p><strong>Customer:</strong> ${(invoice as unknown as { customer_name?: string }).customer_name ?? ""}</p>
+      <p><strong>Date:</strong> ${invoiceDate}</p>
+      <p><strong>Due:</strong> ${dueDate}</p>
+      <p><strong>Status:</strong> ${invoice.status}</p>
+      <hr/>
+      <table><thead><tr><th>Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>${itemRows}</tbody></table>
+      <div style="text-align:right;margin-top:20px">
+        <p>Subtotal: <strong>$${Number(invoice.subtotal ?? 0).toFixed(2)}</strong></p>
+        <p>Tax: <strong>$${Number(invoice.tax_amount ?? 0).toFixed(2)}</strong></p>
+        <p style="font-size:1.2em">Total: <strong>$${Number(invoice.total_amount ?? 0).toFixed(2)}</strong></p>
+      </div>
+      <script>window.onload=function(){window.print();window.close();}<\/script>
+    </body></html>`);
+    printWindow.document.close();
   };
 
   const handleFormSuccess = () => {

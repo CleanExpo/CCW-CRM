@@ -5,10 +5,14 @@ import hmac
 from datetime import datetime
 from typing import Annotated
 
+import httpx
+import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel
 
 from src.config.settings import Settings, get_settings
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/webhooks", tags=["Webhooks"])
 
@@ -75,9 +79,27 @@ async def handle_contact_form_webhook(
     # Parse event data
     event_data = await request.json()
 
-    # TODO: Forward to configured webhook URL
-    # For now, just log the event
-    print(f"Webhook received: {event_data}")
+    # Forward to configured webhook URL if set
+    forward_url = settings.webhook_contact_form_url
+    if forward_url:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(forward_url, json=event_data)
+                logger.info(
+                    "webhook_forwarded",
+                    event_type="contact.submitted",
+                    url=forward_url,
+                    status_code=resp.status_code,
+                )
+        except Exception as exc:
+            logger.warning(
+                "webhook_forward_failed",
+                event_type="contact.submitted",
+                url=forward_url,
+                error=str(exc),
+            )
+    else:
+        logger.debug("webhook_received_no_forward_url", event_type="contact.submitted")
 
     return {"status": "received", "event_id": event_data.get("event_id")}
 
@@ -120,9 +142,27 @@ async def handle_demo_request_webhook(
     # Parse event data
     event_data = await request.json()
 
-    # TODO: Forward to configured webhook URL
-    # For now, just log the event
-    print(f"Webhook received: {event_data}")
+    # Forward to configured webhook URL if set
+    forward_url = settings.webhook_demo_request_url
+    if forward_url:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(forward_url, json=event_data)
+                logger.info(
+                    "webhook_forwarded",
+                    event_type="demo.requested",
+                    url=forward_url,
+                    status_code=resp.status_code,
+                )
+        except Exception as exc:
+            logger.warning(
+                "webhook_forward_failed",
+                event_type="demo.requested",
+                url=forward_url,
+                error=str(exc),
+            )
+    else:
+        logger.debug("webhook_received_no_forward_url", event_type="demo.requested")
 
     return {"status": "received", "event_id": event_data.get("event_id")}
 

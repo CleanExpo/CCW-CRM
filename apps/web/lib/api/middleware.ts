@@ -59,18 +59,18 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Protected routes - TEMPORARILY DISABLED FOR TESTING
-  // const protectedPaths = ["/dashboard"];
-  // const isProtectedPath = protectedPaths.some((path) =>
-  //   request.nextUrl.pathname.startsWith(path)
-  // );
+  // Protected routes - require authentication
+  const protectedPaths = ["/dashboard"];
+  const isProtectedPath = protectedPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
 
-  // if (isProtectedPath && !user) {
-  //   const url = request.nextUrl.clone();
-  //   url.pathname = "/login";
-  //   url.searchParams.set("redirect", request.nextUrl.pathname);
-  //   return NextResponse.redirect(url);
-  // }
+  if (isProtectedPath && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirect", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
 
   // Redirect logged in users away from auth pages
   const authPaths = ["/login", "/register"];

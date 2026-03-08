@@ -6,6 +6,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func
+from sqlalchemy.orm import selectinload
 from pydantic import BaseModel, Field
 
 from src.config.database import get_async_db
@@ -170,23 +171,21 @@ async def get_customer_order_history(
         
         # Apply pagination and sorting (newest orders first)
         offset = (page - 1) * page_size
-        query = query.order_by(desc(Order.order_date)).offset(offset).limit(page_size)
-        
-        # Execute main query to get orders
+        query = (
+            query.order_by(desc(Order.order_date))
+            .offset(offset)
+            .limit(page_size)
+            .options(selectinload(Order.order_items).selectinload(OrderItem.product))
+        )
+
+        # Execute main query to get orders with items eagerly loaded (eliminates N+1)
         result = await db.execute(query)
         orders = result.scalars().all()
-        
-        # Fetch order items and products for each order
+
+        # Build order responses using eagerly-loaded items
         order_responses = []
         for order in orders:
-            # Join order items with products to get complete item details
-            items_query = (
-                select(OrderItem, Product)
-                .join(Product, OrderItem.product_id == Product.id)
-                .where(OrderItem.order_id == order.id)
-            )
-            items_result = await db.execute(items_query)
-            items_data = items_result.all()
+            items_data = [(item, item.product) for item in order.order_items]
             
             # Build order items response with product details
             order_items = []

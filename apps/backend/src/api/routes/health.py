@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_async_db
+from src.config.database import async_engine, get_async_db
 
 router = APIRouter()
 
@@ -131,5 +131,41 @@ async def readiness_check(
     return {
         "status": "ready",
         "message": "All dependencies are ready",
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/health/pool")
+async def connection_pool_health() -> dict:
+    """
+    Database connection pool health endpoint (CCW-PERF-003).
+
+    Returns real-time pool metrics to support capacity planning and
+    detect connection leaks before they cause outages.
+
+    Returns:
+        dict: Pool size, checked-out connections, overflow, and utilisation %
+    """
+    pool = async_engine.pool
+    pool_size: int = pool.size()
+    checked_out: int = pool.checkedout()
+    overflow: int = pool.overflow()
+    checkedin: int = pool.checkedin()
+    total_capacity = pool_size + max(overflow, 0)
+    utilisation_pct = round((checked_out / total_capacity) * 100, 1) if total_capacity else 0
+
+    status = "healthy"
+    if utilisation_pct >= 90:
+        status = "critical"
+    elif utilisation_pct >= 75:
+        status = "warning"
+
+    return {
+        "status": status,
+        "pool_size": pool_size,
+        "checked_out": checked_out,
+        "checked_in": checkedin,
+        "overflow": overflow,
+        "utilisation_pct": utilisation_pct,
         "timestamp": datetime.now().isoformat(),
     }

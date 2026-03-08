@@ -18,6 +18,7 @@ from src.config.database import get_async_db
 from src.db.demo_models import Product
 from src.db.i18n_models import Language, ProductTranslation, TranslationQueue
 from src.services.i18n_service import I18nService
+from src.utils.search import sanitize_like_term
 
 router = APIRouter(prefix="/api/translations", tags=["Translations"])
 
@@ -146,7 +147,7 @@ async def list_products_with_translations(
     # Apply filters
     if search:
         query = query.where(
-            (Product.name.ilike(f"%{search}%")) | (Product.sku.ilike(f"%{search}%"))
+            (Product.name.ilike(f"%{sanitize_like_term(search)}%")) | (Product.sku.ilike(f"%{sanitize_like_term(search)}%"))
         )
 
     if category:

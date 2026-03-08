@@ -22,6 +22,7 @@ from sqlalchemy.orm import selectinload
 
 from src.config.database import get_db
 from src.db.models_base import (
+from src.utils.search import sanitize_like_term
     AustralianState,
     AvailabilityStatus,
 )
@@ -183,7 +184,7 @@ async def list_contractors(
 
     # Apply specialisation filter
     if specialisation:
-        query = query.where(ContractorModel.specialisation.ilike(f"%{specialisation}%"))
+        query = query.where(ContractorModel.specialisation.ilike(f"%{sanitize_like_term(specialisation)}%"))
 
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
@@ -430,7 +431,7 @@ async def search_by_location(
     subquery = (
         select(AvailabilitySlotModel.contractor_id)
         .where(
-            AvailabilitySlotModel.suburb.ilike(f"%{suburb}%"),
+            AvailabilitySlotModel.suburb.ilike(f"%{sanitize_like_term(suburb)}%"),
             AvailabilitySlotModel.state == state,
         )
         .distinct()

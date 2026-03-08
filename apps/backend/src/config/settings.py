@@ -163,6 +163,16 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
+    def reject_skip_auth_in_production(self) -> "Settings":
+        """Raise immediately if SKIP_AUTH_ENFORCEMENT is enabled in production/staging (CCW-SEC-003)."""
+        if self.skip_auth_enforcement and self.environment in ("production", "staging"):
+            raise ValueError(
+                "SKIP_AUTH_ENFORCEMENT=true is not allowed in production or staging. "
+                "This bypasses all authentication. Unset this variable and restart."
+            )
+        return self
+
+    @model_validator(mode="after")
     def load_secrets_from_files(self) -> "Settings":
         """Load secrets from Docker secret files if environment variables point to them."""
         # Load JWT secret from file if JWT_SECRET_KEY_FILE is set
@@ -440,6 +450,13 @@ class Settings(BaseSettings):
         issues = []
 
         if self.is_production or self.is_staging:
+            # Reject SKIP_AUTH_ENFORCEMENT in non-development environments (CCW-SEC-003)
+            if self.skip_auth_enforcement:
+                issues.append(
+                    "SKIP_AUTH_ENFORCEMENT must not be enabled in production or staging. "
+                    "This flag bypasses all authentication and is ONLY for local development."
+                )
+
             # Check JWT secret
             if not self.jwt_secret_key or len(self.jwt_secret_key) < 32:
                 issues.append("JWT_SECRET_KEY must be at least 32 characters")

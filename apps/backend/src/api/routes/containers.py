@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 from src.api.deps import get_optional_user
 from src.config.database import get_async_db
 from src.db.container_models import (
+from src.utils.search import sanitize_like_term
     Backorder,
     Container,
     ContainerItem,
@@ -183,9 +184,9 @@ async def list_containers(
     if search:
         filters.append(
             or_(
-                Container.container_number.ilike(f"%{search}%"),
-                Container.vessel_name.ilike(f"%{search}%"),
-                Container.tracking_number.ilike(f"%{search}%"),
+                Container.container_number.ilike(f"%{sanitize_like_term(search)}%"),
+                Container.vessel_name.ilike(f"%{sanitize_like_term(search)}%"),
+                Container.tracking_number.ilike(f"%{sanitize_like_term(search)}%"),
             )
         )
 

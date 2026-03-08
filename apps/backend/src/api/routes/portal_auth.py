@@ -16,10 +16,13 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import structlog
 from src.config.database import get_async_db
 from src.db.demo_models import Customer
+from src.integrations.sendgrid.client import SendGridClient
 
 router = APIRouter(prefix="/api/portal/auth", tags=["Portal Auth"])
+logger = structlog.get_logger(__name__)
 
 # Environment configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
@@ -128,20 +131,34 @@ async def send_magic_link(
         token = create_magic_link_token(customer.id, customer.email)
         magic_link = f"{FRONTEND_URL}/portal/auth/verify?token={token}"
 
-        # TODO: Send email via SendGrid/notification service
-        # For now, log the magic link (development only)
-        print(f"[MAGIC LINK] Customer: {customer.email}")
-        print(f"[MAGIC LINK] Link: {magic_link}")
-        print(f"[MAGIC LINK] Valid for: {MAGIC_LINK_EXPIRE_MINUTES} minutes")
-
-        # In production:
-        # from src.services.notification_service import get_notification_service
-        # notification_service = get_notification_service()
-        # await notification_service.send_magic_link_email(
-        #     to_email=customer.email,
-        #     to_name=customer.contact_name or customer.company_name,
-        #     magic_link=magic_link,
-        # )
+        # Send magic link email via SendGrid
+        recipient_name = customer.contact_name or customer.company_name or "Valued Customer"
+        try:
+            email_client = SendGridClient()
+            await email_client.send_email(
+                to_email=customer.email,
+                subject="Your CCW Portal Access Link",
+                body_text=(
+                    f"Hi {recipient_name},\n\n"
+                    "Here is your magic link to access the CCW customer portal:\n\n"
+                    f"{magic_link}\n\n"
+                    f"This link expires in {MAGIC_LINK_EXPIRE_MINUTES} minutes.\n\n"
+                    "If you didn't request this link, you can safely ignore this email.\n\n"
+                    "The CCW Team"
+                ),
+                body_html=(
+                    f"<p>Hi {recipient_name},</p>"
+                    "<p>Click the button below to access your CCW customer portal:</p>"
+                    f'<p><a href="{magic_link}" style="display:inline-block;padding:12px 24px;'
+                    "background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;"
+                    f'font-weight:bold;">Access Portal</a></p>'
+                    f"<p><small>This link expires in {MAGIC_LINK_EXPIRE_MINUTES} minutes.</small></p>"
+                    "<p><small>If you didn't request this link, you can safely ignore this email.</small></p>"
+                ),
+            )
+        except Exception:
+            # Non-fatal: log and continue — response already returns success
+            logger.warning("magic_link_email_failed", email=customer.email)
 
     # Always return success (security: don't reveal if email exists)
     return MagicLinkResponse(

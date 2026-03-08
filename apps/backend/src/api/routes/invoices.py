@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.api.schemas.invoicing import (
+from src.utils.search import sanitize_like_term
     InvoiceCreate,
     InvoiceUpdate,
     InvoiceResponse,
@@ -66,8 +67,8 @@ async def list_invoices(
     if search:
         query = query.where(
             or_(
-                Invoice.invoice_number.ilike(f"%{search}%"),
-                Invoice.notes.ilike(f"%{search}%"),
+                Invoice.invoice_number.ilike(f"%{sanitize_like_term(search)}%"),
+                Invoice.notes.ilike(f"%{sanitize_like_term(search)}%"),
             )
         )
 
