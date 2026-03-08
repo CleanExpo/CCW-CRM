@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,29 +20,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { apiClient } from "@/lib/api/client";
-import { useLineItemCalculations } from "@/hooks/use-line-item-calculations";
-import { useAutosave } from "@/lib/hooks/use-autosave";
-import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
-import { SupplierSelect } from "./SupplierSelect";
-import { PurchaseOrderLineItems } from "./PurchaseOrderLineItems";
-import type { PurchaseOrder, PurchaseOrderItem, DeliveryLocation } from "../types";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import { useLineItemCalculations } from '@/hooks/use-line-item-calculations';
+import { useAutosave } from '@/lib/hooks/use-autosave';
+import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
+import { SupplierSelect } from './SupplierSelect';
+import { PurchaseOrderLineItems } from './PurchaseOrderLineItems';
+import type { PurchaseOrder, PurchaseOrderItem, DeliveryLocation } from '../types';
 
 const formSchema = z.object({
-  supplier_id: z.string().min(1, "Supplier is required"),
-  delivery_location: z.enum(["brisbane", "sydney", "melbourne"], {
-    required_error: "Delivery location is required",
+  supplier_id: z.string().min(1, 'Supplier is required'),
+  delivery_location: z.enum(['brisbane', 'sydney', 'melbourne'], {
+    required_error: 'Delivery location is required',
   }),
   expected_delivery_date: z.string().optional(),
   shipping_cost: z.string().optional(),
@@ -55,7 +55,7 @@ interface PurchaseOrderFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   purchaseOrder?: PurchaseOrder;
-  mode: "create" | "edit";
+  mode: 'create' | 'edit';
 }
 
 export function PurchaseOrderForm({
@@ -73,18 +73,18 @@ export function PurchaseOrderForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      supplier_id: purchaseOrder?.supplier_id || "",
-      delivery_location: purchaseOrder?.delivery_location || "brisbane",
+      supplier_id: purchaseOrder?.supplier_id || '',
+      delivery_location: purchaseOrder?.delivery_location || 'brisbane',
       expected_delivery_date: purchaseOrder?.expected_delivery_date
-        ? new Date(purchaseOrder.expected_delivery_date).toISOString().split("T")[0]
-        : "",
-      shipping_cost: purchaseOrder?.shipping_cost?.toString() || "",
-      notes: purchaseOrder?.notes || "",
+        ? new Date(purchaseOrder.expected_delivery_date).toISOString().split('T')[0]
+        : '',
+      shipping_cost: purchaseOrder?.shipping_cost?.toString() || '',
+      notes: purchaseOrder?.notes || '',
     },
   });
 
   // Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = mode === "edit" ? `po-form-${purchaseOrder?.id}` : "po-form-new";
+  const draftKey = mode === 'edit' ? `po-form-${purchaseOrder?.id}` : 'po-form-new';
   const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
     key: draftKey,
     formValues: {
@@ -93,37 +93,37 @@ export function PurchaseOrderForm({
     },
     onRestore: (draft) => {
       Object.keys(draft).forEach((key) => {
-        if (key !== "lineItems") {
-          form.setValue(key as keyof FormData, draft[key]);
+        if (key !== 'lineItems') {
+          form.setValue(key as keyof FormData, draft[key as keyof FormData]);
         }
       });
       if (Array.isArray(draft.lineItems) && draft.lineItems.length > 0) {
         setLineItems(draft.lineItems);
       }
     },
-    enabled: open && mode === "create",
+    enabled: open && mode === 'create',
     debounceMs: 2000,
   });
 
   // Initialize line items when editing
   useEffect(() => {
-    if (mode === "edit" && purchaseOrder?.items) {
+    if (mode === 'edit' && purchaseOrder?.items) {
       setLineItems(
         purchaseOrder.items.map((item) => ({
           ...item,
-          calculationMode: "unit_cost" as const, // Default mode
+          calculationMode: 'unit_cost' as const, // Default mode
         }))
       );
-    } else if (mode === "create" && lineItems.length === 0) {
+    } else if (mode === 'create' && lineItems.length === 0) {
       // Add first empty item for create mode
       setLineItems([
         {
-          product_id: "",
+          product_id: '',
           quantity: 1,
           quantity_received: 0,
           unit_cost: 0,
           subtotal: 0,
-          calculationMode: "unit_cost",
+          calculationMode: 'unit_cost',
         },
       ]);
     }
@@ -133,9 +133,9 @@ export function PurchaseOrderForm({
     // Validation
     if (lineItems.length === 0) {
       toast({
-        title: "Error",
-        description: "Please add at least one line item",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please add at least one line item',
+        variant: 'destructive',
       });
       return;
     }
@@ -146,9 +146,9 @@ export function PurchaseOrderForm({
 
     if (invalidItems.length > 0) {
       toast({
-        title: "Error",
-        description: "Please complete all line items with valid data",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please complete all line items with valid data',
+        variant: 'destructive',
       });
       return;
     }
@@ -161,9 +161,7 @@ export function PurchaseOrderForm({
         delivery_location: values.delivery_location,
         expected_delivery_date: values.expected_delivery_date || null,
         notes: values.notes || null,
-        shipping_cost: values.shipping_cost
-          ? parseFloat(values.shipping_cost)
-          : null,
+        shipping_cost: values.shipping_cost ? parseFloat(values.shipping_cost) : null,
         items: lineItems.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
@@ -171,17 +169,17 @@ export function PurchaseOrderForm({
         })),
       };
 
-      if (mode === "create") {
-        await apiClient.post("/api/purchase-orders", payload);
+      if (mode === 'create') {
+        await apiClient.post('/api/purchase-orders', payload);
         toast({
-          title: "Success",
-          description: "Purchase order created successfully",
+          title: 'Success',
+          description: 'Purchase order created successfully',
         });
       } else {
         await apiClient.put(`/api/purchase-orders/${purchaseOrder?.id}`, payload);
         toast({
-          title: "Success",
-          description: "Purchase order updated successfully",
+          title: 'Success',
+          description: 'Purchase order updated successfully',
         });
       }
 
@@ -189,11 +187,11 @@ export function PurchaseOrderForm({
       onOpenChange(false);
       router.refresh();
     } catch (error: unknown) {
-      console.error("Failed to save purchase order:", error);
+      console.error('Failed to save purchase order:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save purchase order",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save purchase order',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -201,7 +199,7 @@ export function PurchaseOrderForm({
   }
 
   // Calculate totals
-  const shippingCost = parseFloat(form.watch("shipping_cost") || "0");
+  const shippingCost = parseFloat(form.watch('shipping_cost') || '0');
   const totals = calculateTotalsForItems(
     lineItems.map((item) => ({
       product_id: item.product_id,
@@ -214,20 +212,20 @@ export function PurchaseOrderForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Create Purchase Order" : "Edit Purchase Order"}
+            {mode === 'create' ? 'Create Purchase Order' : 'Edit Purchase Order'}
           </DialogTitle>
           <DialogDescription>
-            {mode === "create"
-              ? "Create a new purchase order for supplier goods."
-              : "Update purchase order details."}
+            {mode === 'create'
+              ? 'Create a new purchase order for supplier goods.'
+              : 'Update purchase order details.'}
           </DialogDescription>
         </DialogHeader>
 
         {/* Draft Recovery Alert */}
-        {hasDraft && mode === "create" && draftMetadata && (
+        {hasDraft && mode === 'create' && draftMetadata && (
           <DraftRecoveryAlert
             savedAt={draftMetadata.savedAt}
             onRestore={loadDraft}
@@ -293,11 +291,7 @@ export function PurchaseOrderForm({
                   <FormItem>
                     <FormLabel>Expected Delivery Date</FormLabel>
                     <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        disabled={isLoading}
-                      />
+                      <Input type="date" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -351,11 +345,11 @@ export function PurchaseOrderForm({
             <PurchaseOrderLineItems
               items={lineItems}
               onChange={setLineItems}
-              selectedLocation={form.watch("delivery_location")}
+              selectedLocation={form.watch('delivery_location')}
             />
 
             {/* Totals Summary */}
-            <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+            <div className="bg-muted/50 space-y-2 rounded-lg border p-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal:</span>
                 <span className="font-medium">${totals.subtotal.toFixed(2)}</span>
@@ -368,7 +362,7 @@ export function PurchaseOrderForm({
                 <span className="text-muted-foreground">Shipping:</span>
                 <span className="font-medium">${shippingCost.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
+              <div className="flex justify-between border-t pt-2 text-lg font-bold">
                 <span>Total:</span>
                 <span>${grandTotal.toFixed(2)}</span>
               </div>
@@ -386,10 +380,10 @@ export function PurchaseOrderForm({
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading
-                  ? "Saving..."
-                  : mode === "create"
-                  ? "Create Purchase Order"
-                  : "Update Purchase Order"}
+                  ? 'Saving...'
+                  : mode === 'create'
+                    ? 'Create Purchase Order'
+                    : 'Update Purchase Order'}
               </Button>
             </div>
           </form>
