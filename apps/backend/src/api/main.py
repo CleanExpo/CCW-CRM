@@ -610,6 +610,13 @@ try:
 except ImportError:
     pass
 
+# Staff Copilot AI Agent — operational ERP/CRM queries (UNI-857)
+try:
+    from src.api.routes.ai import staff_copilot as ai_copilot
+    app.include_router(ai_copilot.router, tags=["Staff Copilot"])
+except ImportError:
+    pass
+
 # POS-Xero Reconciliation (depends on Xero integration)
 try:
     from src.api.routes import pos_xero_reconciliation

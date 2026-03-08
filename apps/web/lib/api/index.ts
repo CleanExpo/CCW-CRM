@@ -22,6 +22,8 @@ export { suppliersApi } from './suppliers';
 export { shipmentsApi } from './shipments';
 export { activitiesApi } from './activities';
 export { contactsApi } from './contacts';
+export { copilotApi } from './copilot';
+export type { CopilotQueryRequest, CopilotQueryResponse, CopilotMessage } from './copilot';
 
 // Auth types
 export type { User, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from './auth';

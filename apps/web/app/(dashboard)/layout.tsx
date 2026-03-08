@@ -5,6 +5,7 @@ import { PageTransition } from '@/components/transitions/PageTransition';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { WebSocketProvider } from '@/contexts/websocket-context';
 import { NotificationBell } from '@/components/layout/NotificationBell';
+import { StaffCopilotWidget } from '@/components/ai/StaffCopilotWidget';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -31,6 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <ChatWidget />
         <CommandPalette />
+        <StaffCopilotWidget moduleContext="general" />
       </div>
     </WebSocketProvider>
   );
