@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 import {
   LayoutDashboard,
   Package,
@@ -28,6 +29,7 @@ import {
   CreditCard,
   Scale,
   Receipt,
+  GitMerge,
   PackageSearch,
   PackageCheck,
   Timer,
@@ -44,12 +46,14 @@ import {
   HeartPulse,
   GitBranch,
   Tag,
+  Layers,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Products', href: '/products', icon: Package },
   { name: 'Inventory Overview', href: '/inventory', icon: Warehouse },
+  { name: 'Bill of Materials', href: '/inventory/bom', icon: Layers },
   { name: 'Stock List', href: '/inventory/stock', icon: PackageSearch },
   { name: 'Stock Transfers', href: '/inventory/transfers', icon: PackageCheck },
   { name: 'Reservations', href: '/inventory/reservations', icon: Timer },
@@ -71,12 +75,14 @@ const navigation = [
   { name: 'Reminders', href: '/workshop/reminders', icon: BellRing },
   { name: 'Activities', href: '/activities', icon: Calendar },
   { name: 'Orders', href: '/orders', icon: ShoppingCart },
+  { name: 'Fulfilment', href: '/orders/fulfilment', icon: PackageCheck },
   { name: 'POS Terminal', href: '/pos', icon: CreditCard },
   { name: 'Reconciliation', href: '/pos/reconciliation', icon: Scale },
   { name: 'Bank Feeds', href: '/bank-feeds', icon: Landmark },
   { name: 'Quotes', href: '/quotes', icon: FileText },
   { name: 'Invoices', href: '/invoices', icon: Receipt },
   { name: 'Purchase Orders', href: '/purchase-orders', icon: ClipboardList },
+  { name: 'Goods Receiving', href: '/purchase-orders/receiving', icon: PackageCheck },
   { name: 'Submissions', href: '/submissions', icon: ClipboardCheck },
   { name: 'Emails', href: '/emails', icon: Mail },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Bot },
@@ -86,6 +92,7 @@ const navigation = [
   { name: 'Marketing', href: '/marketing', icon: Megaphone },
   { name: 'FAQ', href: '/faq', icon: HelpCircle },
   { name: 'Alerts', href: '/alerts', icon: Bell },
+  { name: 'Workflows', href: '/workflows', icon: GitMerge },
   { name: 'Approvals', href: '/approvals', icon: CheckCircle },
   { name: 'Monitoring', href: '/monitoring', icon: Activity },
   { name: 'Billing', href: '/settings/billing', icon: CreditCard },
@@ -97,7 +104,7 @@ export function Sidebar() {
 
   return (
     <aside className="bg-muted/40 w-64 border-r">
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-14 items-center justify-between border-b px-4">
         <Link href="/" className="group flex items-center gap-2 font-semibold">
           <motion.span
             className="text-xl"
@@ -111,6 +118,7 @@ export function Sidebar() {
             Equipment ERP
           </span>
         </Link>
+        <NotificationBell />
       </div>
       <nav className="flex flex-col gap-1 p-4">
         {navigation.map((item, index) => {

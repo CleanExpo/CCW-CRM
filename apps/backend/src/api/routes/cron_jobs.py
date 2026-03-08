@@ -666,6 +666,43 @@ async def process_onboarding_emails(
     return {"status": "success", "sent": sent, "failed": failed, "ran_at": now.isoformat()}
 
 
+@router.post("/check-sla-breaches")
+async def check_sla_breaches(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """
+    Scan for SLA instances whose deadline has passed and fire escalation workflows.
+
+    UNI-174 ST-4: Called by Vercel Cron (e.g. every 15 minutes):
+
+    vercel.json:
+    ```json
+    {
+      "crons": [
+        {
+          "path": "/api/cron/check-sla-breaches",
+          "schedule": "*/15 * * * *"
+        }
+      ]
+    }
+    ```
+
+    Returns:
+        Count of newly breached SLA instances and the check timestamp.
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    from src.services.sla_service import get_sla_service
+
+    svc = get_sla_service()
+    count = await svc.check_sla_breaches(db)
+
+    logger.info("sla_breach_cron_complete", breached_count=count)
+    return {"breached_count": count, "checked_at": datetime.now(UTC).isoformat()}
+
+
 @router.post("/dead-letter-queue/{webhook_id}/retry")
 async def retry_dead_letter_webhook(
     webhook_id: str,
