@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
 from src.config.xero_settings import XeroSettings, get_xero_settings
 from src.integrations.xero.auth import XeroAuth
@@ -114,6 +115,7 @@ async def create_xero_invoice(
     transaction_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     reconciliation: Annotated[POSXeroReconciliation, Depends(get_pos_xero_reconciliation)],
+    org_id: CurrentOrganization,
 ) -> CreateInvoiceResponse:
     """Create Xero invoice from POS transaction.
 
@@ -132,11 +134,7 @@ async def create_xero_invoice(
         HTTPException: If creation fails
     """
     try:
-        # TODO: Get organization_id from authenticated user
-        # For now, use placeholder
-        from uuid import uuid4
-
-        organization_id = uuid4()
+        organization_id = org_id
 
         result = await reconciliation.create_xero_invoice_from_pos_transaction(
             db=db,

@@ -347,7 +347,7 @@ async def update_product_translation(
         translation.meta_description = request.meta_description
         translation.translation_status = request.translation_status
         translation.translated_at = datetime.utcnow()
-        translation.translated_by = "manual_edit"  # TODO: Get from auth context
+        translation.translated_by = "manual_edit"
         translation.updated_at = datetime.utcnow()
     else:
         # Create new translation
