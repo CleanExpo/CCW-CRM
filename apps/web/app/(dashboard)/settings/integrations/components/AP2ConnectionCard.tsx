@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   AlertCircle,
   CheckCircle2,
   ChevronRight,
   CreditCard,
+  ExternalLink,
   Loader2,
   Mic,
   ShoppingCart,
@@ -211,6 +213,13 @@ export function AP2ConnectionCard() {
             >
               <Zap className="mr-2 h-4 w-4" />
               Test Payment Flow
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Link href={'/settings/integrations/ap2' as any}>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                View Dashboard
+              </Link>
             </Button>
           </div>
 

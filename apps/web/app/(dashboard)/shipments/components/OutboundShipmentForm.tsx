@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -13,35 +13,35 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   outboundShipmentsApi,
   type OutboundShipment,
   type OutboundShipmentCreate,
   type OutboundShipmentStatus,
-} from "@/lib/api/shipments-outbound";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Calendar } from "lucide-react";
-import { useAutosave } from "@/lib/hooks/use-autosave";
-import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
+} from '@/lib/api/shipments-outbound';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Calendar } from 'lucide-react';
+import { useAutosave } from '@/lib/hooks/use-autosave';
+import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
 
 // Validation schema (for create)
 const createFormSchema = z.object({
-  order_id: z.string().uuid("Valid order ID required"),
-  carrier_name: z.string().max(100, "Maximum 100 characters").optional(),
-  carrier_service: z.string().max(100, "Maximum 100 characters").optional(),
-  tracking_number: z.string().max(100, "Maximum 100 characters").optional(),
-  origin_location: z.enum(["brisbane", "sydney", "melbourne"], {
-    required_error: "Origin warehouse location is required",
+  order_id: z.string().uuid('Valid order ID required'),
+  carrier_name: z.string().max(100, 'Maximum 100 characters').optional(),
+  carrier_service: z.string().max(100, 'Maximum 100 characters').optional(),
+  tracking_number: z.string().max(100, 'Maximum 100 characters').optional(),
+  origin_location: z.enum(['brisbane', 'sydney', 'melbourne'], {
+    required_error: 'Origin warehouse location is required',
   }),
   destination_address: z.string().optional(),
   shipped_date: z.string().optional(),
@@ -51,11 +51,11 @@ const createFormSchema = z.object({
 
 // Validation schema (for update - includes status field)
 const updateFormSchema = z.object({
-  carrier_name: z.string().max(100, "Maximum 100 characters").optional(),
-  carrier_service: z.string().max(100, "Maximum 100 characters").optional(),
-  tracking_number: z.string().max(100, "Maximum 100 characters").optional(),
+  carrier_name: z.string().max(100, 'Maximum 100 characters').optional(),
+  carrier_service: z.string().max(100, 'Maximum 100 characters').optional(),
+  tracking_number: z.string().max(100, 'Maximum 100 characters').optional(),
   status: z
-    .enum(["pending", "in_transit", "out_for_delivery", "delivered", "exception", "returned"])
+    .enum(['pending', 'in_transit', 'out_for_delivery', 'delivered', 'exception', 'returned'])
     .optional(),
   shipped_date: z.string().optional(),
   expected_delivery_date: z.string().optional(),
@@ -67,7 +67,7 @@ type CreateFormData = z.infer<typeof createFormSchema>;
 type UpdateFormData = z.infer<typeof updateFormSchema>;
 
 interface OutboundShipmentFormProps {
-  mode: "create" | "edit";
+  mode: 'create' | 'edit';
   initialData?: OutboundShipment;
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -75,31 +75,31 @@ interface OutboundShipmentFormProps {
 
 // Common carriers for dropdown
 const CARRIERS = [
-  { value: "australia-post", label: "Australia Post" },
-  { value: "fedex", label: "FedEx" },
-  { value: "dhl", label: "DHL" },
-  { value: "tnt", label: "TNT" },
-  { value: "ups", label: "UPS" },
-  { value: "startrack", label: "StarTrack" },
-  { value: "toll", label: "Toll" },
-  { value: "other", label: "Other" },
+  { value: 'australia-post', label: 'Australia Post' },
+  { value: 'fedex', label: 'FedEx' },
+  { value: 'dhl', label: 'DHL' },
+  { value: 'tnt', label: 'TNT' },
+  { value: 'ups', label: 'UPS' },
+  { value: 'startrack', label: 'StarTrack' },
+  { value: 'toll', label: 'Toll' },
+  { value: 'other', label: 'Other' },
 ];
 
 // Warehouse locations
 const WAREHOUSE_LOCATIONS = [
-  { value: "brisbane", label: "Brisbane Warehouse" },
-  { value: "sydney", label: "Sydney Warehouse" },
-  { value: "melbourne", label: "Melbourne Warehouse" },
+  { value: 'brisbane', label: 'Brisbane Warehouse' },
+  { value: 'sydney', label: 'Sydney Warehouse' },
+  { value: 'melbourne', label: 'Melbourne Warehouse' },
 ];
 
 // Shipment statuses for edit mode
 const SHIPMENT_STATUSES: { value: OutboundShipmentStatus; label: string }[] = [
-  { value: "pending", label: "Pending" },
-  { value: "in_transit", label: "In Transit" },
-  { value: "out_for_delivery", label: "Out for Delivery" },
-  { value: "delivered", label: "Delivered" },
-  { value: "exception", label: "Exception" },
-  { value: "returned", label: "Returned" },
+  { value: 'pending', label: 'Pending' },
+  { value: 'in_transit', label: 'In Transit' },
+  { value: 'out_for_delivery', label: 'Out for Delivery' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'exception', label: 'Exception' },
+  { value: 'returned', label: 'Returned' },
 ];
 
 export function OutboundShipmentForm({
@@ -112,49 +112,52 @@ export function OutboundShipmentForm({
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<CreateFormData | UpdateFormData>({
-    resolver: zodResolver(mode === "create" ? createFormSchema : updateFormSchema),
+    resolver: zodResolver(mode === 'create' ? createFormSchema : updateFormSchema),
     defaultValues:
-      mode === "edit" && initialData
+      mode === 'edit' && initialData
         ? {
-            carrier_name: initialData.carrier_name || "",
-            carrier_service: initialData.carrier_service || "",
-            tracking_number: initialData.tracking_number || "",
+            carrier_name: initialData.carrier_name || '',
+            carrier_service: initialData.carrier_service || '',
+            tracking_number: initialData.tracking_number || '',
             status: initialData.status,
             shipped_date: initialData.shipped_date
-              ? new Date(initialData.shipped_date).toISOString().split("T")[0]
-              : "",
+              ? new Date(initialData.shipped_date).toISOString().split('T')[0]
+              : '',
             expected_delivery_date: initialData.expected_delivery_date
-              ? new Date(initialData.expected_delivery_date).toISOString().split("T")[0]
-              : "",
+              ? new Date(initialData.expected_delivery_date).toISOString().split('T')[0]
+              : '',
             actual_delivery_date: initialData.actual_delivery_date
-              ? new Date(initialData.actual_delivery_date).toISOString().split("T")[0]
-              : "",
-            notes: initialData.notes || "",
+              ? new Date(initialData.actual_delivery_date).toISOString().split('T')[0]
+              : '',
+            notes: initialData.notes || '',
           }
         : {
-            order_id: "",
-            carrier_name: "",
-            carrier_service: "",
-            tracking_number: "",
-            origin_location: "brisbane",
-            destination_address: "",
-            shipped_date: "",
-            expected_delivery_date: "",
-            notes: "",
+            order_id: '',
+            carrier_name: '',
+            carrier_service: '',
+            tracking_number: '',
+            origin_location: 'brisbane',
+            destination_address: '',
+            shipped_date: '',
+            expected_delivery_date: '',
+            notes: '',
           },
   });
 
   // Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = mode === "edit" ? `shipment-form-${initialData?.id}` : "shipment-form-new";
+  const draftKey = mode === 'edit' ? `shipment-form-${initialData?.id}` : 'shipment-form-new';
   const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
     key: draftKey,
     formValues: form.watch(),
     onRestore: (draft) => {
       Object.keys(draft).forEach((key) => {
-        form.setValue(key as keyof (CreateFormData | UpdateFormData), draft[key]);
+        form.setValue(
+          key as keyof (CreateFormData | UpdateFormData),
+          draft[key as keyof typeof draft]
+        );
       });
     },
-    enabled: open && mode === "create",
+    enabled: mode === 'create',
     debounceMs: 2000,
   });
 
@@ -162,27 +165,27 @@ export function OutboundShipmentForm({
     setIsLoading(true);
 
     try {
-      if (mode === "create") {
+      if (mode === 'create') {
         await outboundShipmentsApi.create(values as OutboundShipmentCreate);
         toast({
-          title: "Success",
-          description: "Shipment created successfully",
+          title: 'Success',
+          description: 'Shipment created successfully',
         });
       } else if (initialData) {
         await outboundShipmentsApi.update(initialData.id, values);
         toast({
-          title: "Success",
-          description: "Shipment updated successfully",
+          title: 'Success',
+          description: 'Shipment updated successfully',
         });
       }
 
       clearDraft(); // Clear autosave draft on success
       onSuccess?.();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Operation failed";
+      const errorMessage = error instanceof Error ? error.message : 'Operation failed';
       toast({
-        variant: "destructive",
-        title: mode === "create" ? "Create Failed" : "Update Failed",
+        variant: 'destructive',
+        title: mode === 'create' ? 'Create Failed' : 'Update Failed',
         description: errorMessage,
       });
     } finally {
@@ -194,7 +197,7 @@ export function OutboundShipmentForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Draft Recovery Alert */}
-        {hasDraft && mode === "create" && draftMetadata && (
+        {hasDraft && mode === 'create' && draftMetadata && (
           <DraftRecoveryAlert
             savedAt={draftMetadata.savedAt}
             onRestore={loadDraft}
@@ -203,9 +206,9 @@ export function OutboundShipmentForm({
         )}
 
         {/* Create-only fields */}
-        {mode === "create" && (
+        {mode === 'create' && (
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground">Order & Location</h3>
+            <h3 className="text-muted-foreground text-sm font-medium">Order & Location</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -278,7 +281,7 @@ export function OutboundShipmentForm({
         )}
 
         {/* Edit-only fields */}
-        {mode === "edit" && (
+        {mode === 'edit' && (
           <div className="space-y-4">
             <FormField
               control={form.control}
@@ -313,7 +316,7 @@ export function OutboundShipmentForm({
 
         {/* Carrier Information */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Carrier Information</h3>
+          <h3 className="text-muted-foreground text-sm font-medium">Carrier Information</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
@@ -377,7 +380,7 @@ export function OutboundShipmentForm({
 
         {/* Dates */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Shipping Dates</h3>
+          <h3 className="text-muted-foreground text-sm font-medium">Shipping Dates</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <FormField
               control={form.control}
@@ -388,7 +391,7 @@ export function OutboundShipmentForm({
                   <FormControl>
                     <div className="relative">
                       <Input type="date" {...field} disabled={isLoading} />
-                      <Calendar className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Calendar className="text-muted-foreground pointer-events-none absolute top-2.5 right-3 h-4 w-4" />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -405,7 +408,7 @@ export function OutboundShipmentForm({
                   <FormControl>
                     <div className="relative">
                       <Input type="date" {...field} disabled={isLoading} />
-                      <Calendar className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Calendar className="text-muted-foreground pointer-events-none absolute top-2.5 right-3 h-4 w-4" />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -413,7 +416,7 @@ export function OutboundShipmentForm({
               )}
             />
 
-            {mode === "edit" && (
+            {mode === 'edit' && (
               <FormField
                 control={form.control}
                 name="actual_delivery_date"
@@ -423,7 +426,7 @@ export function OutboundShipmentForm({
                     <FormControl>
                       <div className="relative">
                         <Input type="date" {...field} disabled={isLoading} />
-                        <Calendar className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Calendar className="text-muted-foreground pointer-events-none absolute top-2.5 right-3 h-4 w-4" />
                       </div>
                     </FormControl>
                     <FormDescription>Auto-filled on delivered status</FormDescription>
@@ -464,7 +467,7 @@ export function OutboundShipmentForm({
           )}
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === "create" ? "Create Shipment" : "Update Shipment"}
+            {mode === 'create' ? 'Create Shipment' : 'Update Shipment'}
           </Button>
         </div>
       </form>

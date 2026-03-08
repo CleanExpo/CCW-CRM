@@ -9,13 +9,16 @@ import { ShopifySyncControls } from './components/ShopifySyncControls';
 import { SendGridConnectionCard } from './components/SendGridConnectionCard';
 import { Cin7ConnectionCard } from './components/Cin7ConnectionCard';
 import { Cin7SyncControls } from './components/Cin7SyncControls';
+import { Cin7WebhookSubscriptionsCard } from './components/Cin7WebhookSubscriptionsCard';
 import { AP2ConnectionCard } from './components/AP2ConnectionCard';
+import { Cin7ShadowSyncCard } from './components/Cin7ShadowSyncCard';
 import { useToast } from '@/hooks/use-toast';
 import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
 import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopify';
 import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/sendgrid';
 import { getCin7Status, type Cin7ConnectionStatus } from '@/lib/api/cin7';
-import { Settings, AlertCircle } from 'lucide-react';
+import { Settings, AlertCircle, BookOpen } from 'lucide-react';
+import Link from 'next/link';
 
 function IntegrationsContent() {
   const { toast } = useToast();
@@ -229,6 +232,38 @@ function IntegrationsContent() {
             />
             <Cin7SyncControls isConnected={cin7Status?.connected ?? false} />
           </div>
+          <Cin7WebhookSubscriptionsCard />
+        </div>
+
+        {/* Cin7 Shadow Sync — gap detection between Cin7 and ERP */}
+        <div>
+          <h2 className="mb-1 text-lg font-semibold">Cin7 Shadow Sync</h2>
+          <p className="text-muted-foreground mb-4 text-sm">
+            Detect and track gaps between Cin7 and the ERP without disrupting live data.
+          </p>
+          <Cin7ShadowSyncCard />
+        </div>
+
+        {/* Cin7 Financial / GL Integration */}
+        <div>
+          <h2 className="mb-1 text-lg font-semibold">Cin7 Financial / GL Integration</h2>
+          <p className="text-muted-foreground mb-4 text-sm">
+            Sync Chart of Accounts, manage journal entries and configure ERP-to-GL account mappings.
+          </p>
+          <Link href={'/settings/integrations/gl' as any}>
+            <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors">
+              <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+                <BookOpen className="text-primary h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium">Financial / GL Settings</p>
+                <p className="text-muted-foreground text-xs">
+                  Chart of Accounts, journal entries and account mappings
+                </p>
+              </div>
+              <span className="text-muted-foreground text-sm">View GL Settings →</span>
+            </div>
+          </Link>
         </div>
 
         {/* Google AP2 Integration */}
