@@ -44,6 +44,7 @@ from .routes import (
     cron_jobs,  # Scheduled task endpoints (Vercel Cron)
     customer_orders,
     customers,
+    auth_signup,
     demo_auth,
     demo_dashboard,
     demo_lists,
@@ -68,7 +69,7 @@ from .routes import (
     agents_monitor,  # Agent monitoring dashboard (UNI-1246)
     service_requests,
     warehouse,  # Warehouse operations feed (UNI-1251)
-    settings,  # Account and company settings
+    settings as settings_routes,  # Account and company settings
     shipments,
     suppliers,
     team,
@@ -82,10 +83,10 @@ try:
     from .routes.ai import ai_router, chat, generate, insights, inventory_forecast as ai_inventory_forecast
     from .routes import autonomous_dev, recommendations, search, test_data_gen
     _ai_routes_available = True
-except (ImportError, Exception):
+except ImportError:
     autonomous_dev = recommendations = search = test_data_gen = ai_inventory_forecast = None  # type: ignore[assignment]
 
-from .routes.integrations import ap2, cin7, cin7_crm, cin7_procurement, cin7_stream, cin7_sync, cin7_webhooks, elevenlabs, sendgrid, shopify, shopify_theme, xero
+from .routes.integrations import ap2, cin7, cin7_crm, cin7_line_items, cin7_procurement, cin7_stream, cin7_sync, cin7_webhooks, elevenlabs, sendgrid, shopify, shopify_theme, xero
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -397,6 +398,7 @@ app.include_router(public_stats.router, tags=["Public"])
 app.include_router(prometheus_metrics.router, tags=["Monitoring"])  # Prometheus metrics
 app.include_router(config.router, tags=["Configuration"])
 app.include_router(approvals.router, tags=["Approvals"])
+app.include_router(auth_signup.router, tags=["Signup"])
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
@@ -438,7 +440,7 @@ app.include_router(crm_health.router, tags=["CRM Health"])
 app.include_router(crm_onboarding.router, tags=["CRM Onboarding"])
 app.include_router(crm_personas.router, tags=["CRM Personas"])
 # Account and company settings
-app.include_router(settings.router, tags=["Settings"])
+app.include_router(settings_routes.router, tags=["Settings"])
 # Agent monitoring dashboard
 app.include_router(agents_monitor.router, tags=["Agent Monitoring"])
 app.include_router(warehouse.router, tags=["Warehouse"])
@@ -463,13 +465,13 @@ if _ai_routes_available:
 try:
     app.include_router(search.router)  # Semantic & hybrid search
     app.include_router(recommendations.router)  # Product recommendations
-except Exception:
+except (ImportError, AttributeError):
     pass  # Skip if AI dependencies not available
 
 # Autonomous Development
 try:
     app.include_router(autonomous_dev.router)
-except Exception:
+except (ImportError, AttributeError):
     pass  # Skip if AI dependencies not available
 
 # Autonomy Metrics
@@ -493,7 +495,84 @@ app.include_router(cin7_crm.router, tags=["Cin7 CRM Sync"])
 app.include_router(cin7_procurement.router, tags=["Cin7 Procurement Sync"])
 app.include_router(cin7_webhooks.router, tags=["Cin7 Webhooks"])
 app.include_router(cin7_stream.router, tags=["Cin7 Real-Time"])
+app.include_router(cin7_line_items.router, tags=["Cin7 Line Items"])
+
+# Cin7 Goods Receipt Notes (GRN workflow — UNI-1266)
+try:
+    from src.api.routes.integrations import cin7_grn
+    app.include_router(cin7_grn.router, tags=["Cin7 GRN"])
+except ImportError:
+    pass
+
+# Cin7 Webhook Subscription Management (UNI-1267)
+try:
+    from src.api.routes.integrations import cin7_webhook_subscriptions
+    app.include_router(cin7_webhook_subscriptions.router, tags=["Cin7 Webhook Subscriptions"])
+except ImportError:
+    pass  # Skip if dependencies not available
+
+# Cin7 Inventory Write-Back — adjustments, transfers, stock-takes (UNI-1265)
+try:
+    from src.api.routes.integrations import cin7_inventory_writeback
+    app.include_router(cin7_inventory_writeback.router, tags=["Cin7 Inventory Write-Back"])
+except ImportError:
+    pass
+
+# Cin7 BOM (Bill of Materials) + Production Runs (UNI-1268)
+try:
+    from src.db import cin7_bom_models as _cin7_bom_models  # noqa: F401 - registers models with SQLAlchemy metadata
+    from src.api.routes.integrations import cin7_bom
+    app.include_router(cin7_bom.router, tags=["Cin7 BOM"])
+except ImportError:
+    pass
+
+# Cin7 Sales Order Fulfilment Chain — pick/pack/ship + invoice + payments (UNI-1264)
+try:
+    from src.db import cin7_fulfilment_models as _cin7_fulfilment_models  # noqa: F401
+    from src.api.routes.integrations import cin7_fulfilment
+    app.include_router(cin7_fulfilment.router, tags=["Cin7 Fulfilment"])
+except ImportError:
+    pass
+
+# Cin7 Shadow Transition System Phase A — gap poller + detection (UNI-1260)
+try:
+    from src.db import cin7_shadow_models as _  # noqa: F401,F811 - registers models with SQLAlchemy metadata
+    from src.api.routes.integrations import cin7_shadow_sync
+    app.include_router(cin7_shadow_sync.router, tags=["Cin7 Shadow Sync"])
+except ImportError:
+    pass
+
+# Cin7 Financial/GL Integration — ChartOfAccounts, Journals, AccountMappings (UNI-1269)
+try:
+    from src.db import cin7_gl_models as _cin7_gl_models  # noqa: F401 - registers GL models with SQLAlchemy metadata
+    from src.api.routes.integrations import cin7_gl
+    app.include_router(cin7_gl.router, tags=["Cin7 Financial/GL"])
+except ImportError:
+    pass
+
 app.include_router(google_ai.router, tags=["Google AI"])
+
+# Workflow Automation, SLA, and In-App Notification models (UNI-174)
+import src.db.workflow_models  # noqa: F401 - registers tables with SQLAlchemy metadata
+
+# Workflow, SLA, and Notification API routes (UNI-174 ST-4)
+try:
+    from src.api.routes.workflows import router as workflows_router
+    app.include_router(workflows_router)
+except ImportError:
+    pass
+
+try:
+    from src.api.routes.sla import router as sla_router
+    app.include_router(sla_router)
+except ImportError:
+    pass
+
+try:
+    from src.api.routes.notifications import router as notifications_router
+    app.include_router(notifications_router)
+except ImportError:
+    pass
 
 # Cin7 AI agents (forecasting + anomaly detection)
 try:
@@ -516,6 +595,20 @@ try:
     app.include_router(toolshed.router, tags=["Toolshed"])
 except (ImportError, AttributeError):
     pass  # Skip if dependencies not available
+
+# Cin7 Shadow AI Agent — gap analysis + auto-resolution (UNI-1262)
+try:
+    from src.api.routes.ai import cin7_shadow_ai
+    app.include_router(cin7_shadow_ai.router, tags=["Cin7 Shadow AI"])
+except ImportError:
+    pass
+
+# Marketing AI Agent — campaign generation + audience analysis (UNI-857)
+try:
+    from src.api.routes.ai import marketing_ai
+    app.include_router(marketing_ai.router, tags=["AI Marketing"])
+except ImportError:
+    pass
 
 # POS-Xero Reconciliation (depends on Xero integration)
 try:
@@ -549,7 +642,7 @@ try:
     app.include_router(ws_bookings.router, tags=["Workshop"])
     app.include_router(ws_reminders.router, tags=["Workshop"])
     app.include_router(ws_dashboard.router, tags=["Workshop"])
-except (ImportError, Exception) as e:
+except (ImportError, AttributeError) as e:
     logger.warning("Workshop routes not available", error=str(e))
     pass
 

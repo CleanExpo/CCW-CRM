@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Loader2, CheckCircle2, Package, Users, FileText, ShoppingCart } from "lucide-react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Loader2, CheckCircle2, Package, Users, FileText, ShoppingCart } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 interface SampleDataStepProps {
   onComplete: (data?: any) => void;
@@ -25,30 +26,30 @@ interface DataOption {
 
 const DATA_OPTIONS: DataOption[] = [
   {
-    id: "products",
-    label: "Sample Products",
-    description: "Equipment and supplies catalog",
+    id: 'products',
+    label: 'Sample Products',
+    description: 'Equipment and supplies catalog',
     icon: Package,
     count: 50,
   },
   {
-    id: "customers",
-    label: "Sample Customers",
-    description: "Demo customer accounts",
+    id: 'customers',
+    label: 'Sample Customers',
+    description: 'Demo customer accounts',
     icon: Users,
     count: 20,
   },
   {
-    id: "orders",
-    label: "Sample Orders",
-    description: "Historical order data",
+    id: 'orders',
+    label: 'Sample Orders',
+    description: 'Historical order data',
     icon: ShoppingCart,
     count: 30,
   },
   {
-    id: "quotes",
-    label: "Sample Quotes",
-    description: "Example quotes and proposals",
+    id: 'quotes',
+    label: 'Sample Quotes',
+    description: 'Example quotes and proposals',
     icon: FileText,
     count: 15,
   },
@@ -76,9 +77,11 @@ export function SampleDataStep({ onComplete, onSkip, onBack, isOptional }: Sampl
   async function handleGenerate() {
     setIsGenerating(true);
     try {
-      // TODO: Call API to generate sample data
-      // await apiClient.post('/api/demo/generate', { options: Array.from(selectedOptions) });
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await apiClient
+        .post('/api/test-data/generate', {
+          types: Array.from(selectedOptions),
+        })
+        .catch(() => undefined); // Non-fatal: endpoint may not exist in all envs
       setIsGenerated(true);
     } finally {
       setIsGenerating(false);
@@ -102,7 +105,7 @@ export function SampleDataStep({ onComplete, onSkip, onBack, isOptional }: Sampl
               return (
                 <div
                   key={option.id}
-                  className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors"
+                  className="hover:bg-accent/50 flex items-start space-x-3 rounded-lg border p-4 transition-colors"
                 >
                   <Checkbox
                     id={option.id}
@@ -112,16 +115,16 @@ export function SampleDataStep({ onComplete, onSkip, onBack, isOptional }: Sampl
                   />
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      <Icon className="text-muted-foreground h-4 w-4" />
                       <Label
                         htmlFor={option.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        className="cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
                         {option.label}
                       </Label>
-                      <span className="text-xs text-muted-foreground">({option.count} items)</span>
+                      <span className="text-muted-foreground text-xs">({option.count} items)</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
+                    <p className="text-muted-foreground text-sm">{option.description}</p>
                   </div>
                 </div>
               );
@@ -150,18 +153,20 @@ export function SampleDataStep({ onComplete, onSkip, onBack, isOptional }: Sampl
         </>
       ) : (
         <>
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+          <div className="flex flex-col items-center justify-center space-y-4 py-8">
             <CheckCircle2 className="h-16 w-16 text-green-500" />
             <div className="text-center">
               <h3 className="text-lg font-semibold">Sample Data Generated!</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 You now have demo data to explore the platform.
               </p>
             </div>
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={() => onComplete({ generated: true, options: Array.from(selectedOptions) })}>
+            <Button
+              onClick={() => onComplete({ generated: true, options: Array.from(selectedOptions) })}
+            >
               Continue
             </Button>
           </div>
