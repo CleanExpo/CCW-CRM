@@ -16,10 +16,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config.database import get_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
+    ProductAttribute,
+    ProductBarcode,
     ProductStockByLocation,
+    ProductVariant,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    ReorderRule,
     StockAdjustment,
     StockReservation,
+    StockTake,
+    StockTakeItem,
     StockTransfer,
+    Supplier,
     StoreLocation,
 )
 
@@ -177,6 +186,336 @@ class ReserveStockRequest(BaseModel):
     location: str = Field(..., description="Store location")
     quantity: int = Field(..., gt=0, description="Quantity to reserve")
     expires_hours: int = Field(default=24, description="Hours until expiration")
+
+
+# ============================================
+# Summary & Settings Endpoints (must be before dynamic routes)
+# ============================================
+
+
+class InventorySummaryResponse(BaseModel):
+    """Inventory dashboard summary statistics."""
+
+    total_skus: int
+    total_stock_value: float
+    below_reorder_point: int
+    active_reservations: int
+
+
+class ReorderSettingsRequest(BaseModel):
+    """Request to update reorder settings for a product at a location."""
+
+    reorder_point: int = Field(..., ge=0, description="Stock level at which to reorder")
+    reorder_quantity: int = Field(..., ge=1, description="Quantity to reorder when triggered")
+
+
+@router.get("/summary", response_model=InventorySummaryResponse)
+async def get_inventory_summary(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> InventorySummaryResponse:
+    """Get inventory dashboard summary statistics.
+
+    Returns:
+        Summary with total SKUs, stock value, below-reorder count, and active reservations
+    """
+    # Count distinct products in stock
+    total_skus_stmt = select(func.count(func.distinct(ProductStockByLocation.product_id)))
+    total_skus_result = await db.execute(total_skus_stmt)
+    total_skus = total_skus_result.scalar() or 0
+
+    # Total stock value: sum(stock * product.price) joined with products
+    stock_value_stmt = (
+        select(func.sum(ProductStockByLocation.stock * Product.price))
+        .join(Product, ProductStockByLocation.product_id == Product.id)
+    )
+    stock_value_result = await db.execute(stock_value_stmt)
+    total_stock_value = float(stock_value_result.scalar() or 0.0)
+
+    # Count rows where reorder_point IS NOT NULL AND stock <= reorder_point
+    below_reorder_stmt = select(func.count()).where(
+        and_(
+            ProductStockByLocation.reorder_point.isnot(None),
+            ProductStockByLocation.stock <= ProductStockByLocation.reorder_point,
+        )
+    )
+    below_reorder_result = await db.execute(below_reorder_stmt)
+    below_reorder_point = below_reorder_result.scalar() or 0
+
+    # Count active reservations
+    active_reservations_stmt = select(func.count()).where(
+        StockReservation.status == "active"
+    )
+    active_reservations_result = await db.execute(active_reservations_stmt)
+    active_reservations = active_reservations_result.scalar() or 0
+
+    logger.info(
+        "Inventory summary fetched",
+        total_skus=total_skus,
+        total_stock_value=total_stock_value,
+        below_reorder_point=below_reorder_point,
+        active_reservations=active_reservations,
+    )
+
+    return InventorySummaryResponse(
+        total_skus=total_skus,
+        total_stock_value=total_stock_value,
+        below_reorder_point=below_reorder_point,
+        active_reservations=active_reservations,
+    )
+
+
+@router.patch("/reorder-settings/{product_id}/{location}")
+async def update_reorder_settings(
+    product_id: str,
+    location: str,
+    body: ReorderSettingsRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Update reorder point and quantity for a product at a location.
+
+    Args:
+        product_id: Product UUID
+        location: Store location (brisbane, sydney, melbourne)
+        body: Reorder settings to apply
+
+    Returns:
+        Updated stock record details
+    """
+    # Validate location
+    try:
+        StoreLocation(location)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid location. Must be one of: {', '.join([loc.value for loc in StoreLocation])}",
+        )
+
+    # Parse product_id
+    try:
+        product_uuid = UUID(product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid product_id format")
+
+    # Fetch the stock record
+    stmt = select(ProductStockByLocation).where(
+        and_(
+            ProductStockByLocation.product_id == product_uuid,
+            ProductStockByLocation.location == location,
+        )
+    )
+    result = await db.execute(stmt)
+    stock = result.scalar_one_or_none()
+
+    if not stock:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Stock record not found for product {product_id} at {location}",
+        )
+
+    # Apply updates
+    stock.reorder_point = body.reorder_point
+    stock.reorder_quantity = body.reorder_quantity
+
+    await db.commit()
+    await db.refresh(stock)
+
+    logger.info(
+        "Reorder settings updated",
+        product_id=product_id,
+        location=location,
+        reorder_point=body.reorder_point,
+        reorder_quantity=body.reorder_quantity,
+    )
+
+    return {
+        "success": True,
+        "product_id": product_id,
+        "location": location,
+        "reorder_point": stock.reorder_point,
+        "reorder_quantity": stock.reorder_quantity,
+        "stock": stock.stock,
+        "available": stock.available,
+    }
+
+
+# ============================================
+# Barcode Endpoints (must be before /{...} dynamic routes)
+# ============================================
+
+
+class BarcodeCreateRequest(BaseModel):
+    """Request body for adding a barcode to a product."""
+
+    product_id: str = Field(..., description="Product UUID")
+    barcode: str = Field(..., min_length=1, max_length=100, description="Barcode value")
+    barcode_type: str = Field(default="EAN13", description="EAN13 | UPC | QR | CODE128")
+
+
+class BarcodeProductResponse(BaseModel):
+    """Response for a barcode lookup."""
+
+    product_id: str
+    product_name: str
+    sku: str
+    barcodes: list[dict]
+    stock_by_location: list[dict]
+
+
+@router.get("/barcode/{code}", response_model=BarcodeProductResponse)
+async def lookup_by_barcode(
+    code: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> BarcodeProductResponse:
+    """Look up a product by barcode value.
+
+    Args:
+        code: Barcode string to look up
+
+    Returns:
+        Product details including all barcodes and stock by location
+
+    Raises:
+        404: If barcode not found
+    """
+    # Find the barcode record
+    barcode_stmt = select(ProductBarcode).where(ProductBarcode.barcode == code)
+    barcode_result = await db.execute(barcode_stmt)
+    barcode_row = barcode_result.scalar_one_or_none()
+
+    if not barcode_row:
+        raise HTTPException(status_code=404, detail=f"Barcode '{code}' not found")
+
+    product_id = barcode_row.product_id
+
+    # Fetch product details
+    product_stmt = select(Product).where(Product.id == product_id)
+    product_result = await db.execute(product_stmt)
+    product = product_result.scalar_one_or_none()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found for this barcode")
+
+    # Fetch all barcodes for this product
+    all_barcodes_stmt = select(ProductBarcode).where(ProductBarcode.product_id == product_id)
+    all_barcodes_result = await db.execute(all_barcodes_stmt)
+    all_barcodes = all_barcodes_result.scalars().all()
+
+    # Fetch stock by location
+    stock_stmt = select(ProductStockByLocation).where(
+        ProductStockByLocation.product_id == product_id
+    )
+    stock_result = await db.execute(stock_stmt)
+    stock_rows = stock_result.scalars().all()
+
+    logger.info("Barcode lookup successful", barcode=code, product_id=str(product_id))
+
+    return BarcodeProductResponse(
+        product_id=str(product_id),
+        product_name=product.name,
+        sku=product.sku,
+        barcodes=[
+            {"barcode": b.barcode, "barcode_type": b.barcode_type}
+            for b in all_barcodes
+        ],
+        stock_by_location=[
+            {"location": s.location, "stock_quantity": s.available}
+            for s in stock_rows
+        ],
+    )
+
+
+@router.post("/barcode", status_code=201)
+async def add_barcode(
+    body: BarcodeCreateRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Add a barcode to a product.
+
+    Args:
+        body: product_id, barcode value, and barcode_type
+
+    Returns:
+        Created barcode record
+
+    Raises:
+        409: If barcode already exists
+        404: If product not found
+    """
+    # Validate product_id format
+    try:
+        product_uuid = UUID(body.product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid product_id format")
+
+    # Check product exists
+    product_stmt = select(Product).where(Product.id == product_uuid)
+    product_result = await db.execute(product_stmt)
+    product = product_result.scalar_one_or_none()
+
+    if not product:
+        raise HTTPException(status_code=404, detail=f"Product '{body.product_id}' not found")
+
+    # Check barcode uniqueness
+    existing_stmt = select(ProductBarcode).where(ProductBarcode.barcode == body.barcode)
+    existing_result = await db.execute(existing_stmt)
+    existing = existing_result.scalar_one_or_none()
+
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Barcode '{body.barcode}' is already assigned to another product",
+        )
+
+    # Create new barcode record
+    new_barcode = ProductBarcode(
+        product_id=product_uuid,
+        barcode=body.barcode,
+        barcode_type=body.barcode_type,
+    )
+    db.add(new_barcode)
+    await db.commit()
+    await db.refresh(new_barcode)
+
+    logger.info(
+        "Barcode added",
+        barcode=body.barcode,
+        product_id=body.product_id,
+        barcode_type=body.barcode_type,
+    )
+
+    return {
+        "id": str(new_barcode.id),
+        "product_id": str(new_barcode.product_id),
+        "barcode": new_barcode.barcode,
+        "barcode_type": new_barcode.barcode_type,
+        "created_at": new_barcode.created_at.isoformat(),
+    }
+
+
+@router.delete("/barcode/{code}", status_code=204)
+async def remove_barcode(
+    code: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete a barcode record by barcode value.
+
+    Args:
+        code: Barcode string to delete
+
+    Raises:
+        404: If barcode not found
+    """
+    barcode_stmt = select(ProductBarcode).where(ProductBarcode.barcode == code)
+    barcode_result = await db.execute(barcode_stmt)
+    barcode_row = barcode_result.scalar_one_or_none()
+
+    if not barcode_row:
+        raise HTTPException(status_code=404, detail=f"Barcode '{code}' not found")
+
+    await db.delete(barcode_row)
+    await db.commit()
+
+    logger.info("Barcode removed", barcode=code)
 
 
 # ============================================
@@ -1255,3 +1594,603 @@ async def adjust_stock(
         "quantity_change": adjustment_req.quantity_change,
         "new_quantity": new_stock,
     }
+
+
+# ============================================
+# Stock Take / Cycle Count Endpoints
+# ============================================
+
+
+class StockTakeCreateRequest(BaseModel):
+    location: str
+
+
+class StockTakeItemInput(BaseModel):
+    product_id: str
+    counted_qty: int = Field(..., ge=0)
+
+
+class StockTakeSubmitRequest(BaseModel):
+    items: list[StockTakeItemInput]
+
+
+@router.post("/stock-take", status_code=201)
+async def create_stock_take(
+    body: StockTakeCreateRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Start a new stock-take session for a location."""
+    try:
+        StoreLocation(body.location)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid location: {body.location}")
+
+    take = StockTake(location=body.location, status="draft")
+    db.add(take)
+    await db.commit()
+    await db.refresh(take)
+    logger.info("Stock take started", id=str(take.id), location=body.location)
+    return {"id": str(take.id), "location": take.location, "status": take.status,
+            "created_at": take.created_at.isoformat()}
+
+
+@router.get("/stock-takes")
+async def list_stock_takes(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    location: str | None = Query(None),
+    status: str | None = Query(None),
+) -> list[dict]:
+    """List stock-take sessions, optionally filtered by location/status."""
+    stmt = select(StockTake).order_by(StockTake.created_at.desc())
+    if location:
+        stmt = stmt.where(StockTake.location == location)
+    if status:
+        stmt = stmt.where(StockTake.status == status)
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+    return [
+        {
+            "id": str(t.id),
+            "location": t.location,
+            "status": t.status,
+            "created_at": t.created_at.isoformat(),
+            "submitted_at": t.submitted_at.isoformat() if t.submitted_at else None,
+        }
+        for t in rows
+    ]
+
+
+@router.post("/stock-take/{take_id}/submit")
+async def submit_stock_take(
+    take_id: str,
+    body: StockTakeSubmitRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Submit a stock-take, applying variances as StockAdjustment records.
+
+    Runs atomically: all adjustments applied or none.
+    """
+    try:
+        take_uuid = UUID(take_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid take_id")
+
+    stmt = select(StockTake).where(StockTake.id == take_uuid)
+    result = await db.execute(stmt)
+    take = result.scalar_one_or_none()
+
+    if not take:
+        raise HTTPException(status_code=404, detail="Stock take not found")
+    if take.status == "submitted":
+        raise HTTPException(status_code=409, detail="Stock take already submitted")
+
+    now = datetime.now(UTC)
+
+    async with db.begin_nested():
+        for item_input in body.items:
+            try:
+                product_uuid = UUID(item_input.product_id)
+            except ValueError:
+                continue
+
+            # Get system stock level at this location
+            stock_stmt = select(ProductStockByLocation).where(
+                and_(
+                    ProductStockByLocation.product_id == product_uuid,
+                    ProductStockByLocation.location == take.location,
+                )
+            )
+            stock_result = await db.execute(stock_stmt)
+            stock = stock_result.scalar_one_or_none()
+            if not stock:
+                continue
+
+            system_qty = stock.stock
+            variance = item_input.counted_qty - system_qty
+
+            # Create StockTakeItem
+            take_item = StockTakeItem(
+                stock_take_id=take_uuid,
+                product_id=product_uuid,
+                system_qty=system_qty,
+                counted_qty=item_input.counted_qty,
+                variance=variance,
+            )
+            db.add(take_item)
+
+            # Apply variance as StockAdjustment if non-zero
+            if variance != 0:
+                new_stock = max(0, system_qty + variance)
+                stock.stock = new_stock
+                stock.last_counted_at = now
+
+                adj = StockAdjustment(
+                    product_id=product_uuid,
+                    location=take.location,
+                    quantity_change=variance,
+                    previous_quantity=system_qty,
+                    new_quantity=new_stock,
+                    adjustment_type="stock_count",
+                    reason=f"Stock take {take_id}",
+                )
+                db.add(adj)
+
+        take.status = "submitted"
+        take.submitted_at = now
+
+    await db.commit()
+    logger.info("Stock take submitted", id=take_id, items_count=len(body.items))
+    return {"success": True, "take_id": take_id, "items_processed": len(body.items)}
+
+
+# ============================================
+# Reorder Rules Endpoints
+# ============================================
+
+
+class ReorderRuleCreateRequest(BaseModel):
+    product_id: str
+    location: str
+    supplier_id: str | None = None
+    auto_approve_under_qty: int = Field(default=0, ge=0)
+    lead_time_days: int = Field(default=7, ge=0)
+    is_enabled: bool = True
+
+
+class ReorderRuleUpdateRequest(BaseModel):
+    supplier_id: str | None = None
+    auto_approve_under_qty: int | None = None
+    lead_time_days: int | None = None
+    is_enabled: bool | None = None
+
+
+@router.get("/reorder-rules")
+async def list_reorder_rules(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    location: str | None = Query(None),
+) -> list[dict]:
+    """List all reorder rules, optionally filtered by location."""
+    stmt = select(ReorderRule).order_by(ReorderRule.created_at.desc())
+    if location:
+        stmt = stmt.where(ReorderRule.location == location)
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+    return [
+        {
+            "id": str(r.id),
+            "product_id": str(r.product_id),
+            "location": r.location,
+            "supplier_id": str(r.supplier_id) if r.supplier_id else None,
+            "auto_approve_under_qty": r.auto_approve_under_qty,
+            "lead_time_days": r.lead_time_days,
+            "is_enabled": r.is_enabled,
+        }
+        for r in rows
+    ]
+
+
+@router.post("/reorder-rules", status_code=201)
+async def create_reorder_rule(
+    body: ReorderRuleCreateRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Create or upsert a reorder rule for a product+location."""
+    try:
+        product_uuid = UUID(body.product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid product_id")
+    supplier_uuid = UUID(body.supplier_id) if body.supplier_id else None
+
+    # Upsert by product+location unique constraint
+    existing_stmt = select(ReorderRule).where(
+        and_(ReorderRule.product_id == product_uuid, ReorderRule.location == body.location)
+    )
+    existing_result = await db.execute(existing_stmt)
+    rule = existing_result.scalar_one_or_none()
+
+    if rule:
+        rule.supplier_id = supplier_uuid
+        rule.auto_approve_under_qty = body.auto_approve_under_qty
+        rule.lead_time_days = body.lead_time_days
+        rule.is_enabled = body.is_enabled
+    else:
+        rule = ReorderRule(
+            product_id=product_uuid,
+            location=body.location,
+            supplier_id=supplier_uuid,
+            auto_approve_under_qty=body.auto_approve_under_qty,
+            lead_time_days=body.lead_time_days,
+            is_enabled=body.is_enabled,
+        )
+        db.add(rule)
+
+    await db.commit()
+    await db.refresh(rule)
+    return {
+        "id": str(rule.id),
+        "product_id": str(rule.product_id),
+        "location": rule.location,
+        "supplier_id": str(rule.supplier_id) if rule.supplier_id else None,
+        "auto_approve_under_qty": rule.auto_approve_under_qty,
+        "lead_time_days": rule.lead_time_days,
+        "is_enabled": rule.is_enabled,
+    }
+
+
+# ============================================
+# Reorder Alerts Endpoint
+# ============================================
+
+
+class ReorderAlertResponse(BaseModel):
+    product_id: str
+    sku: str
+    name: str
+    location: str
+    stock: int
+    reorder_point: int
+    reorder_quantity: int | None
+    supplier_id: str | None
+    supplier_name: str | None
+
+
+@router.get("/reorder-alerts", response_model=list[ReorderAlertResponse])
+async def get_reorder_alerts(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    location: str | None = Query(None),
+) -> list[ReorderAlertResponse]:
+    """Return products at or below their reorder point.
+
+    Joins with ReorderRule (if present) to include preferred supplier.
+    """
+    stmt = (
+        select(ProductStockByLocation, Product)
+        .join(Product, ProductStockByLocation.product_id == Product.id)
+        .where(
+            and_(
+                ProductStockByLocation.reorder_point.isnot(None),
+                ProductStockByLocation.stock <= ProductStockByLocation.reorder_point,
+            )
+        )
+        .order_by(ProductStockByLocation.stock.asc())
+    )
+    if location:
+        stmt = stmt.where(ProductStockByLocation.location == location)
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    alerts = []
+    for stock, product in rows:
+        # Try to find a matching ReorderRule for supplier info
+        rule_stmt = select(ReorderRule, Supplier).outerjoin(
+            Supplier, ReorderRule.supplier_id == Supplier.id
+        ).where(
+            and_(
+                ReorderRule.product_id == stock.product_id,
+                ReorderRule.location == stock.location,
+                ReorderRule.is_enabled.is_(True),
+            )
+        )
+        rule_result = await db.execute(rule_stmt)
+        rule_row = rule_result.first()
+        supplier_id = None
+        supplier_name = None
+        if rule_row:
+            rule, supplier = rule_row
+            if rule:
+                supplier_id = str(rule.supplier_id) if rule.supplier_id else None
+            if supplier:
+                supplier_name = supplier.company_name
+
+        alerts.append(
+            ReorderAlertResponse(
+                product_id=str(stock.product_id),
+                sku=product.sku,
+                name=product.name,
+                location=stock.location,
+                stock=stock.stock,
+                reorder_point=stock.reorder_point,
+                reorder_quantity=stock.reorder_quantity,
+                supplier_id=supplier_id,
+                supplier_name=supplier_name,
+            )
+        )
+
+    return alerts
+
+
+# ============================================
+# Auto-Reorder Endpoint
+# ============================================
+
+
+@router.post("/auto-reorder")
+async def trigger_auto_reorder(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    product_id: str = Query(...),
+    location: str = Query(...),
+) -> dict:
+    """Create a draft Purchase Order for a product at a location.
+
+    Uses the matching ReorderRule (if any) to determine supplier and quantity.
+    PO is auto-approved only when reorder_quantity <= auto_approve_under_qty.
+    """
+    try:
+        product_uuid = UUID(product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid product_id")
+
+    # Verify product exists
+    product_stmt = select(Product).where(Product.id == product_uuid)
+    product_result = await db.execute(product_stmt)
+    product = product_result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Fetch stock record
+    stock_stmt = select(ProductStockByLocation).where(
+        and_(
+            ProductStockByLocation.product_id == product_uuid,
+            ProductStockByLocation.location == location,
+        )
+    )
+    stock_result = await db.execute(stock_stmt)
+    stock = stock_result.scalar_one_or_none()
+    reorder_qty = (stock.reorder_quantity or 10) if stock else 10
+
+    # Fetch reorder rule (optional)
+    rule_stmt = select(ReorderRule).where(
+        and_(
+            ReorderRule.product_id == product_uuid,
+            ReorderRule.location == location,
+            ReorderRule.is_enabled.is_(True),
+        )
+    )
+    rule_result = await db.execute(rule_stmt)
+    rule = rule_result.scalar_one_or_none()
+
+    supplier_id = rule.supplier_id if rule else None
+    auto_approve = (
+        rule and rule.auto_approve_under_qty > 0 and reorder_qty <= rule.auto_approve_under_qty
+    )
+
+    # Generate PO number
+    from datetime import date
+    po_number = f"AUTO-{date.today().strftime('%Y%m%d')}-{product.sku[:6].upper()}"
+
+    po = PurchaseOrder(
+        po_number=po_number,
+        supplier_id=supplier_id,
+        delivery_location=location,
+        status="approved" if auto_approve else "draft",
+        notes=f"Auto-generated from reorder alert for {product.name}",
+    )
+    db.add(po)
+    await db.flush()
+
+    # Add single line item
+    item = PurchaseOrderItem(
+        purchase_order_id=po.id,
+        product_id=product_uuid,
+        quantity=reorder_qty,
+        quantity_received=0,
+        unit_cost=product.cost or 0,
+        subtotal=(product.cost or 0) * reorder_qty,
+    )
+    db.add(item)
+
+    po.subtotal = item.subtotal
+    po.total = item.subtotal
+
+    await db.commit()
+    logger.info("Auto-reorder PO created", po_number=po_number, product_id=product_id)
+
+    return {
+        "success": True,
+        "po_number": po_number,
+        "po_id": str(po.id),
+        "status": po.status,
+        "supplier_id": str(supplier_id) if supplier_id else None,
+        "quantity": reorder_qty,
+    }
+
+
+# ============================================
+# Product Attributes Endpoints
+# ============================================
+
+
+class ProductAttributeCreateRequest(BaseModel):
+    key: str = Field(..., min_length=1, max_length=100)
+    value: str = Field(..., min_length=1, max_length=500)
+    unit: str | None = None
+
+
+@router.get("/products/{product_id}/attributes")
+async def list_product_attributes(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[dict]:
+    """List all attributes for a product."""
+    try:
+        pid = UUID(product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid product_id")
+
+    stmt = select(ProductAttribute).where(ProductAttribute.product_id == pid)
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+    return [
+        {"id": str(a.id), "key": a.key, "value": a.value, "unit": a.unit,
+         "created_at": a.created_at.isoformat()}
+        for a in rows
+    ]
+
+
+@router.post("/products/{product_id}/attributes", status_code=201)
+async def add_product_attribute(
+    product_id: str,
+    body: ProductAttributeCreateRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Add an attribute to a product."""
+    try:
+        pid = UUID(product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid product_id")
+
+    attr = ProductAttribute(product_id=pid, key=body.key, value=body.value, unit=body.unit)
+    db.add(attr)
+    await db.commit()
+    await db.refresh(attr)
+    return {"id": str(attr.id), "key": attr.key, "value": attr.value, "unit": attr.unit}
+
+
+@router.delete("/products/{product_id}/attributes/{attribute_id}", status_code=204)
+async def delete_product_attribute(
+    product_id: str,
+    attribute_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete a product attribute."""
+    try:
+        pid = UUID(product_id)
+        aid = UUID(attribute_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
+    stmt = select(ProductAttribute).where(
+        and_(ProductAttribute.id == aid, ProductAttribute.product_id == pid)
+    )
+    result = await db.execute(stmt)
+    attr = result.scalar_one_or_none()
+    if not attr:
+        raise HTTPException(status_code=404, detail="Attribute not found")
+    await db.delete(attr)
+    await db.commit()
+
+
+# ============================================
+# Product Variants Endpoints
+# ============================================
+
+
+class ProductVariantCreateRequest(BaseModel):
+    variant_sku: str = Field(..., min_length=1, max_length=100)
+    name: str = Field(..., min_length=1, max_length=255)
+    attributes: dict | None = None
+    price_override: float | None = None
+    is_active: bool = True
+
+
+@router.get("/products/{product_id}/variants")
+async def list_product_variants(
+    product_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[dict]:
+    """List all variants for a product."""
+    try:
+        pid = UUID(product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid product_id")
+
+    stmt = select(ProductVariant).where(ProductVariant.product_id == pid)
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+    return [
+        {
+            "id": str(v.id),
+            "variant_sku": v.variant_sku,
+            "name": v.name,
+            "attributes": v.attributes,
+            "price_override": float(v.price_override) if v.price_override else None,
+            "is_active": v.is_active,
+            "created_at": v.created_at.isoformat(),
+        }
+        for v in rows
+    ]
+
+
+@router.post("/products/{product_id}/variants", status_code=201)
+async def create_product_variant(
+    product_id: str,
+    body: ProductVariantCreateRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Create a product variant."""
+    try:
+        pid = UUID(product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid product_id")
+
+    # Check SKU uniqueness
+    existing = await db.execute(
+        select(ProductVariant).where(ProductVariant.variant_sku == body.variant_sku)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail=f"Variant SKU '{body.variant_sku}' already exists")
+
+    variant = ProductVariant(
+        product_id=pid,
+        variant_sku=body.variant_sku,
+        name=body.name,
+        attributes=body.attributes,
+        price_override=body.price_override,
+        is_active=body.is_active,
+    )
+    db.add(variant)
+    await db.commit()
+    await db.refresh(variant)
+    return {
+        "id": str(variant.id),
+        "variant_sku": variant.variant_sku,
+        "name": variant.name,
+        "attributes": variant.attributes,
+        "price_override": float(variant.price_override) if variant.price_override else None,
+        "is_active": variant.is_active,
+    }
+
+
+@router.delete("/products/{product_id}/variants/{variant_id}", status_code=204)
+async def delete_product_variant(
+    product_id: str,
+    variant_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete a product variant."""
+    try:
+        pid = UUID(product_id)
+        vid = UUID(variant_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
+    stmt = select(ProductVariant).where(
+        and_(ProductVariant.id == vid, ProductVariant.product_id == pid)
+    )
+    result = await db.execute(stmt)
+    variant = result.scalar_one_or_none()
+    if not variant:
+        raise HTTPException(status_code=404, detail="Variant not found")
+    await db.delete(variant)
+    await db.commit()

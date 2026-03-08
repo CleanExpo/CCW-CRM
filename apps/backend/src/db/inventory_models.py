@@ -488,3 +488,214 @@ class CarrierConfiguration(Base):
 
     def __repr__(self) -> str:
         return f"<CarrierConfiguration(name={self.carrier_name}, active={self.is_active})>"
+
+
+class ProductBarcode(Base):
+    """Barcode records for products.
+
+    Side-table approach — keeps demo_models.py (Product) locked while
+    allowing multiple barcode formats per product.
+    """
+
+    __tablename__ = "product_barcodes"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # Foreign key to products table (defined in demo_models.py)
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Barcode value — unique across all products
+    barcode: str = Column(String(100), unique=True, nullable=False, index=True)
+
+    # Barcode format: EAN13 | UPC | QR | CODE128
+    barcode_type: str = Column(String(50), default="EAN13", nullable=False)
+
+    # Timestamp
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<ProductBarcode(product_id={self.product_id}, barcode={self.barcode}, type={self.barcode_type})>"
+
+
+class StockTake(Base):
+    """Cycle-count / stock-take session.
+
+    A stock-take records the physical count of all products at a location.
+    Submitting it applies variances as StockAdjustment records and stamps
+    last_counted_at on each ProductStockByLocation row.
+    """
+
+    __tablename__ = "stock_takes"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    location: str = Column(String(50), nullable=False, index=True)
+    status: str = Column(
+        String(50), default="draft", nullable=False, index=True
+    )  # draft | submitted
+
+    created_by: UUID | None = Column(PostgresUUID(as_uuid=True), nullable=True)
+    submitted_by: UUID | None = Column(PostgresUUID(as_uuid=True), nullable=True)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    submitted_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+
+    # Relationship
+    items = relationship("StockTakeItem", back_populates="stock_take", cascade="all, delete-orphan")
+
+    def __repr__(self) -> str:
+        return f"<StockTake(location={self.location}, status={self.status})>"
+
+
+class StockTakeItem(Base):
+    """One line in a stock-take session — per product."""
+
+    __tablename__ = "stock_take_items"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    stock_take_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("stock_takes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    system_qty: int = Column(Integer, nullable=False)   # qty at time of count
+    counted_qty: int = Column(Integer, nullable=False)  # physically counted
+    variance: int = Column(Integer, nullable=False)     # counted - system
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+
+    # Relationships
+    stock_take = relationship("StockTake", back_populates="items")
+    product = relationship("Product")
+
+    def __repr__(self) -> str:
+        return f"<StockTakeItem(stock_take_id={self.stock_take_id}, product_id={self.product_id}, variance={self.variance})>"
+
+
+class ReorderRule(Base):
+    """Reorder automation rule — links a product+location to a preferred supplier.
+
+    When auto-reorder is triggered for a product at a location this rule
+    determines which supplier to create the draft PO against.
+    """
+
+    __tablename__ = "reorder_rules"
+
+    __table_args__ = (
+        UniqueConstraint("product_id", "location", name="uq_reorder_rule_product_location"),
+    )
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    location: str = Column(String(50), nullable=False)
+    supplier_id: UUID | None = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("suppliers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Auto-approve a PO if quantity below this threshold (0 = always manual)
+    auto_approve_under_qty: int = Column(Integer, default=0, nullable=False)
+    lead_time_days: int = Column(Integer, default=7, nullable=False)
+    is_enabled: bool = Column(Boolean, default=True, nullable=False)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    # Relationships
+    supplier = relationship("Supplier")
+
+    def __repr__(self) -> str:
+        return f"<ReorderRule(product_id={self.product_id}, location={self.location}, supplier_id={self.supplier_id})>"
+
+
+class ProductAttribute(Base):
+    """Key-value attributes for a product (e.g., Colour=Red, Weight=5kg)."""
+
+    __tablename__ = "product_attributes"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    key: str = Column(String(100), nullable=False)
+    value: str = Column(String(500), nullable=False)
+    unit: str | None = Column(String(50), nullable=True)  # e.g., "kg", "cm"
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<ProductAttribute(product_id={self.product_id}, key={self.key}, value={self.value})>"
+
+
+class ProductVariant(Base):
+    """Product variant — e.g., size/colour combination with its own SKU."""
+
+    __tablename__ = "product_variants"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    variant_sku: str = Column(String(100), unique=True, nullable=False, index=True)
+    name: str = Column(String(255), nullable=False)
+    attributes: dict | None = Column(JSON, nullable=True)  # {"Colour": "Red", "Size": "L"}
+    price_override: Decimal | None = Column(Numeric(10, 2), nullable=True)
+    is_active: bool = Column(Boolean, default=True, nullable=False)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ProductVariant(product_id={self.product_id}, sku={self.variant_sku}, name={self.name})>"

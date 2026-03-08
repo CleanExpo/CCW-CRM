@@ -13,7 +13,9 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   ClipboardCheck,
+  ClipboardList,
   Clock,
+  FileEdit,
   MapPin,
   Package,
   RefreshCw,
@@ -21,6 +23,12 @@ import {
   Truck,
 } from 'lucide-react';
 import { inventoryApi } from '@/lib/api/inventory';
+import { warehouseApi } from '@/lib/api/warehouse';
+import {
+  cin7InventoryWritebackApi,
+  type StockAdjustmentRecord,
+  type StockTransferRecord,
+} from '@/lib/api/cin7-inventory-writeback';
 import { useToast } from '@/hooks/use-toast';
 import { StoreLocation } from '@/lib/types/inventory';
 import type { CreateStockTransferRequest } from '@/lib/types/inventory';
@@ -143,15 +151,59 @@ export default function WarehouseOpsPage() {
   });
   const [isTransferring, setIsTransferring] = useState(false);
 
+  // ── Stock Take tab state ──────────────────────────────────────────────────
+  const [stockTakeLocation, setStockTakeLocation] = useState<Location>('brisbane');
+  const [activeStockTake, setActiveStockTake] = useState<{
+    id: string;
+    location: string;
+    status: string;
+    created_at: string;
+  } | null>(null);
+  const [stockTakeInventory, setStockTakeInventory] = useState<LocationStockItem[]>([]);
+  const [stockTakeCounts, setStockTakeCounts] = useState<Record<string, number>>({});
+  const [isStartingTake, setIsStartingTake] = useState(false);
+  const [isSubmittingTake, setIsSubmittingTake] = useState(false);
+  const [recentStockTakes, setRecentStockTakes] = useState<
+    Array<{
+      id: string;
+      location: string;
+      status: string;
+      created_at: string;
+      submitted_at: string | null;
+    }>
+  >([]);
+  const [isLoadingTakes, setIsLoadingTakes] = useState(false);
+
+  // Write-Back tab state (UNI-1265)
+  const DEMO_LOCATIONS = ['Main Warehouse', 'Store Front', 'Returns'] as const;
+  const [adjForm, setAdjForm] = useState({
+    location_id: 'Main Warehouse',
+    product_id: '',
+    sku: '',
+    adjustment_qty: 0,
+    reason: '',
+  });
+  const [isAdjusting, setIsAdjusting] = useState(false);
+  const [wbTransferForm, setWbTransferForm] = useState({
+    from_location_id: 'Main Warehouse',
+    to_location_id: 'Store Front',
+    product_id: '',
+    sku: '',
+    quantity: 1,
+    reference: '',
+  });
+  const [isWbTransferring, setIsWbTransferring] = useState(false);
+  const [recentAdjustments, setRecentAdjustments] = useState<StockAdjustmentRecord[]>([]);
+  const [recentWbTransfers, setRecentWbTransfers] = useState<StockTransferRecord[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
   // ── Operations ──────────────────────────────────────────────────────────────
 
   const loadOps = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/warehouse/ops', { cache: 'no-store' });
-      if (!response.ok) throw new Error('Warehouse ops feed is unavailable.');
-      const payload = (await response.json()) as WarehouseOpsPayload;
+      const payload = (await warehouseApi.getOps()) as WarehouseOpsPayload;
       setData(payload);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load warehouse ops.');
@@ -236,6 +288,189 @@ export default function WarehouseOpsPage() {
       });
     } finally {
       setIsTransferring(false);
+    }
+  };
+
+  // ── Write-Back (UNI-1265) ────────────────────────────────────────────────────
+
+  const loadWriteBackHistory = useCallback(async () => {
+    setIsLoadingHistory(true);
+    try {
+      const [adjRes, tfrRes] = await Promise.all([
+        cin7InventoryWritebackApi.listStockAdjustments(10),
+        cin7InventoryWritebackApi.listStockTransfers(10),
+      ]);
+      setRecentAdjustments(adjRes.items);
+      setRecentWbTransfers(tfrRes.items);
+    } catch {
+      // Silently fail — demo mode may not have the backend running
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  const handleAdjustment = async () => {
+    if (!adjForm.sku.trim()) {
+      toast({ title: 'Error', description: 'SKU is required', variant: 'destructive' });
+      return;
+    }
+    if (adjForm.adjustment_qty === 0) {
+      toast({
+        title: 'Error',
+        description: 'Adjustment quantity cannot be zero',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsAdjusting(true);
+    try {
+      await cin7InventoryWritebackApi.createStockAdjustment({
+        location_id: adjForm.location_id,
+        product_id: adjForm.product_id || adjForm.sku,
+        sku: adjForm.sku,
+        adjustment_qty: adjForm.adjustment_qty,
+        reason: adjForm.reason || null,
+      });
+      toast({
+        title: 'Adjustment synced',
+        description: `${adjForm.adjustment_qty > 0 ? '+' : ''}${adjForm.adjustment_qty} units for ${adjForm.sku}`,
+      });
+      setAdjForm({
+        location_id: 'Main Warehouse',
+        product_id: '',
+        sku: '',
+        adjustment_qty: 0,
+        reason: '',
+      });
+      void loadWriteBackHistory();
+    } catch (err) {
+      toast({
+        title: 'Adjustment failed',
+        description: err instanceof Error ? err.message : 'Could not sync adjustment',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAdjusting(false);
+    }
+  };
+
+  const handleWbTransfer = async () => {
+    if (!wbTransferForm.sku.trim()) {
+      toast({ title: 'Error', description: 'SKU is required', variant: 'destructive' });
+      return;
+    }
+    if (wbTransferForm.from_location_id === wbTransferForm.to_location_id) {
+      toast({
+        title: 'Error',
+        description: 'Source and destination must differ',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsWbTransferring(true);
+    try {
+      await cin7InventoryWritebackApi.createStockTransfer({
+        from_location_id: wbTransferForm.from_location_id,
+        to_location_id: wbTransferForm.to_location_id,
+        product_id: wbTransferForm.product_id || wbTransferForm.sku,
+        sku: wbTransferForm.sku,
+        quantity: wbTransferForm.quantity,
+        reference: wbTransferForm.reference || null,
+      });
+      toast({
+        title: 'Transfer synced',
+        description: `${wbTransferForm.quantity} units of ${wbTransferForm.sku} transferred`,
+      });
+      setWbTransferForm({
+        from_location_id: 'Main Warehouse',
+        to_location_id: 'Store Front',
+        product_id: '',
+        sku: '',
+        quantity: 1,
+        reference: '',
+      });
+      void loadWriteBackHistory();
+    } catch (err) {
+      toast({
+        title: 'Transfer failed',
+        description: err instanceof Error ? err.message : 'Could not sync transfer',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsWbTransferring(false);
+    }
+  };
+
+  // ── Stock Take handlers ───────────────────────────────────────────────────
+
+  const loadStockTakes = useCallback(async () => {
+    setIsLoadingTakes(true);
+    try {
+      const takes = await inventoryApi.getStockTakes();
+      setRecentStockTakes(takes);
+    } catch {
+      // silently fail — backend may not be running
+    } finally {
+      setIsLoadingTakes(false);
+    }
+  }, []);
+
+  const handleStartStockTake = async () => {
+    setIsStartingTake(true);
+    try {
+      const take = await inventoryApi.startStockTake(stockTakeLocation);
+      setActiveStockTake(take);
+      const inv = await inventoryApi.getStockByLocation(stockTakeLocation, {
+        page: 1,
+        page_size: 100,
+      });
+      const items = (inv as unknown as LocationStockResponse).items;
+      setStockTakeInventory(items);
+      const initial: Record<string, number> = {};
+      items.forEach((item) => {
+        initial[item.product_id] = 0;
+      });
+      setStockTakeCounts(initial);
+      toast({
+        title: 'Stock take started',
+        description: `Session created for ${stockTakeLocation}`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to start',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsStartingTake(false);
+    }
+  };
+
+  const handleSubmitStockTake = async () => {
+    if (!activeStockTake) return;
+    setIsSubmittingTake(true);
+    try {
+      const items = Object.entries(stockTakeCounts).map(([product_id, counted_qty]) => ({
+        product_id,
+        counted_qty,
+      }));
+      const result = await inventoryApi.submitStockTake(activeStockTake.id, items);
+      toast({
+        title: 'Stock take submitted',
+        description: `${result.items_processed} items processed`,
+      });
+      setActiveStockTake(null);
+      setStockTakeInventory([]);
+      setStockTakeCounts({});
+      void loadStockTakes();
+    } catch (err) {
+      toast({
+        title: 'Submission failed',
+        description: err instanceof Error ? err.message : 'Could not submit',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingTake(false);
     }
   };
 
@@ -324,6 +559,14 @@ export default function WarehouseOpsPage() {
           <TabsTrigger value="transfers">
             <ArrowRightLeft className="mr-2 h-4 w-4" />
             Transfers
+          </TabsTrigger>
+          <TabsTrigger value="writeback" onClick={() => void loadWriteBackHistory()}>
+            <FileEdit className="mr-2 h-4 w-4" />
+            Write-Back
+          </TabsTrigger>
+          <TabsTrigger value="stock-take" onClick={() => void loadStockTakes()}>
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Stock Take
           </TabsTrigger>
         </TabsList>
 
@@ -765,6 +1008,470 @@ export default function WarehouseOpsPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* ── Write-Back Tab (UNI-1265) ─────────────────────────────────────── */}
+        <TabsContent value="writeback" className="mt-6 space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Stock Adjustment card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock Adjustment</CardTitle>
+                <CardDescription>
+                  Add or remove stock at a location and sync to Cin7.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="adj-location">Location</Label>
+                  <select
+                    id="adj-location"
+                    className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                    value={adjForm.location_id}
+                    onChange={(e) => setAdjForm((f) => ({ ...f, location_id: e.target.value }))}
+                  >
+                    {DEMO_LOCATIONS.map((loc) => (
+                      <option key={loc} value={loc}>
+                        {loc}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adj-sku">SKU</Label>
+                  <Input
+                    id="adj-sku"
+                    placeholder="e.g. TM-2000"
+                    value={adjForm.sku}
+                    onChange={(e) => setAdjForm((f) => ({ ...f, sku: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adj-product-id">Product ID (optional)</Label>
+                  <Input
+                    id="adj-product-id"
+                    placeholder="UUID or leave blank"
+                    value={adjForm.product_id}
+                    onChange={(e) => setAdjForm((f) => ({ ...f, product_id: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adj-qty">Quantity (+/-)</Label>
+                  <Input
+                    id="adj-qty"
+                    type="number"
+                    value={adjForm.adjustment_qty}
+                    onChange={(e) =>
+                      setAdjForm((f) => ({
+                        ...f,
+                        adjustment_qty: parseInt(e.target.value, 10) || 0,
+                      }))
+                    }
+                  />
+                  <p className="text-muted-foreground text-xs">Positive = add, negative = remove</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adj-reason">Reason (optional)</Label>
+                  <Input
+                    id="adj-reason"
+                    placeholder="e.g. Damaged goods write-off"
+                    value={adjForm.reason}
+                    onChange={(e) => setAdjForm((f) => ({ ...f, reason: e.target.value }))}
+                  />
+                </div>
+                <Button onClick={handleAdjustment} disabled={isAdjusting} className="w-full">
+                  {isAdjusting ? 'Syncing...' : 'Submit Adjustment'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Stock Transfer card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock Transfer (Cin7)</CardTitle>
+                <CardDescription>Move stock between Cin7 locations.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="wb-from">From Location</Label>
+                    <select
+                      id="wb-from"
+                      className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                      value={wbTransferForm.from_location_id}
+                      onChange={(e) =>
+                        setWbTransferForm((f) => ({ ...f, from_location_id: e.target.value }))
+                      }
+                    >
+                      {DEMO_LOCATIONS.map((loc) => (
+                        <option key={loc} value={loc}>
+                          {loc}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wb-to">To Location</Label>
+                    <select
+                      id="wb-to"
+                      className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                      value={wbTransferForm.to_location_id}
+                      onChange={(e) =>
+                        setWbTransferForm((f) => ({ ...f, to_location_id: e.target.value }))
+                      }
+                    >
+                      {DEMO_LOCATIONS.map((loc) => (
+                        <option key={loc} value={loc}>
+                          {loc}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wb-sku">SKU</Label>
+                  <Input
+                    id="wb-sku"
+                    placeholder="e.g. TM-2000"
+                    value={wbTransferForm.sku}
+                    onChange={(e) => setWbTransferForm((f) => ({ ...f, sku: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wb-product-id">Product ID (optional)</Label>
+                  <Input
+                    id="wb-product-id"
+                    placeholder="UUID or leave blank"
+                    value={wbTransferForm.product_id}
+                    onChange={(e) =>
+                      setWbTransferForm((f) => ({ ...f, product_id: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wb-qty">Quantity</Label>
+                  <Input
+                    id="wb-qty"
+                    type="number"
+                    min={1}
+                    value={wbTransferForm.quantity}
+                    onChange={(e) =>
+                      setWbTransferForm((f) => ({
+                        ...f,
+                        quantity: parseInt(e.target.value, 10) || 1,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wb-ref">Reference (optional)</Label>
+                  <Input
+                    id="wb-ref"
+                    placeholder="e.g. Restock store front"
+                    value={wbTransferForm.reference}
+                    onChange={(e) =>
+                      setWbTransferForm((f) => ({ ...f, reference: e.target.value }))
+                    }
+                  />
+                </div>
+                <Button onClick={handleWbTransfer} disabled={isWbTransferring} className="w-full">
+                  {isWbTransferring ? 'Syncing...' : 'Submit Transfer'}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent history table */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Recent Write-Backs</CardTitle>
+                  <CardDescription>
+                    Last 10 adjustments and transfers synced to Cin7.
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void loadWriteBackHistory()}
+                  disabled={isLoadingHistory}
+                >
+                  {isLoadingHistory ? 'Loading...' : 'Refresh'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {recentAdjustments.length === 0 && recentWbTransfers.length === 0 ? (
+                <p className="text-muted-foreground py-6 text-center text-sm">
+                  No write-back records yet. Submit an adjustment or transfer above.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-2 text-left font-medium">Type</th>
+                        <th className="py-2 text-left font-medium">SKU</th>
+                        <th className="py-2 text-left font-medium">Location(s)</th>
+                        <th className="py-2 text-right font-medium">Qty</th>
+                        <th className="py-2 text-center font-medium">Status</th>
+                        <th className="py-2 text-left font-medium">Cin7 ID</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {recentAdjustments.map((adj) => (
+                        <tr key={adj.id} className="hover:bg-muted/40">
+                          <td className="py-2">Adjustment</td>
+                          <td className="py-2 font-mono text-xs">{adj.sku}</td>
+                          <td className="py-2 text-xs">{adj.location_id}</td>
+                          <td className="py-2 text-right font-semibold">{adj.adjustment_qty}</td>
+                          <td className="py-2 text-center">
+                            <Badge
+                              variant={
+                                adj.status === 'synced'
+                                  ? 'secondary'
+                                  : adj.status === 'failed'
+                                    ? 'destructive'
+                                    : 'outline'
+                              }
+                            >
+                              {adj.status}
+                            </Badge>
+                          </td>
+                          <td className="text-muted-foreground py-2 font-mono text-xs">
+                            {adj.cin7_adjustment_id ?? '-'}
+                          </td>
+                        </tr>
+                      ))}
+                      {recentWbTransfers.map((tfr) => (
+                        <tr key={tfr.id} className="hover:bg-muted/40">
+                          <td className="py-2">Transfer</td>
+                          <td className="py-2 font-mono text-xs">{tfr.sku}</td>
+                          <td className="py-2 text-xs">
+                            {tfr.from_location_id} → {tfr.to_location_id}
+                          </td>
+                          <td className="py-2 text-right font-semibold">{tfr.quantity}</td>
+                          <td className="py-2 text-center">
+                            <Badge
+                              variant={
+                                tfr.status === 'synced'
+                                  ? 'secondary'
+                                  : tfr.status === 'failed'
+                                    ? 'destructive'
+                                    : 'outline'
+                              }
+                            >
+                              {tfr.status}
+                            </Badge>
+                          </td>
+                          <td className="text-muted-foreground py-2 font-mono text-xs">
+                            {tfr.cin7_transfer_id ?? '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Stock Take Tab ───────────────────────────────────────────────── */}
+        <TabsContent value="stock-take" className="mt-6 space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Start Stock Take</CardTitle>
+                <CardDescription>
+                  Create a physical count session for a warehouse location.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!activeStockTake ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="take-location">Location</Label>
+                      <select
+                        id="take-location"
+                        className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                        value={stockTakeLocation}
+                        onChange={(e) => setStockTakeLocation(e.target.value as Location)}
+                      >
+                        {LOCATIONS.map((loc) => (
+                          <option key={loc} value={loc} className="capitalize">
+                            {loc.charAt(0).toUpperCase() + loc.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <Button
+                      onClick={handleStartStockTake}
+                      disabled={isStartingTake}
+                      className="w-full"
+                    >
+                      {isStartingTake ? 'Starting…' : 'Start Stock Take'}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-muted/40 flex items-center justify-between rounded-lg px-4 py-2 text-sm">
+                      <span>
+                        Session:{' '}
+                        <span className="font-mono text-xs">{activeStockTake.id.slice(0, 8)}…</span>
+                      </span>
+                      <Badge variant="secondary" className="capitalize">
+                        {activeStockTake.location}
+                      </Badge>
+                    </div>
+                    <div className="max-h-96 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="py-2 text-left font-medium">SKU</th>
+                            <th className="py-2 text-left font-medium">Product</th>
+                            <th className="py-2 text-right font-medium">System</th>
+                            <th className="py-2 text-right font-medium">Counted</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {stockTakeInventory.map((item) => (
+                            <tr key={item.product_id} className="hover:bg-muted/40">
+                              <td className="py-2 font-mono text-xs">{item.product_sku}</td>
+                              <td className="py-2">{item.product_name}</td>
+                              <td className="py-2 text-right">{item.stock}</td>
+                              <td className="py-2 text-right">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  className="h-7 w-20 text-right text-sm"
+                                  value={stockTakeCounts[item.product_id] ?? 0}
+                                  onChange={(e) =>
+                                    setStockTakeCounts((c) => ({
+                                      ...c,
+                                      [item.product_id]: parseInt(e.target.value, 10) || 0,
+                                    }))
+                                  }
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleSubmitStockTake}
+                        disabled={isSubmittingTake}
+                        className="flex-1"
+                      >
+                        {isSubmittingTake ? 'Submitting…' : 'Submit Counts'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setActiveStockTake(null);
+                          setStockTakeInventory([]);
+                          setStockTakeCounts({});
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>How it works</CardTitle>
+                <CardDescription>Physical stock count process.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <div className="border-border/60 bg-muted/20 space-y-1 rounded-lg border p-4">
+                  <p className="font-semibold">1. Select location</p>
+                  <p className="text-muted-foreground text-xs">
+                    Choose the warehouse location to count.
+                  </p>
+                </div>
+                <div className="border-border/60 bg-muted/20 space-y-1 rounded-lg border p-4">
+                  <p className="font-semibold">2. Enter counts</p>
+                  <p className="text-muted-foreground text-xs">
+                    For each product, enter the physically counted quantity. System quantity is
+                    shown for reference.
+                  </p>
+                </div>
+                <div className="border-border/60 bg-muted/20 space-y-1 rounded-lg border p-4">
+                  <p className="font-semibold">3. Submit</p>
+                  <p className="text-muted-foreground text-xs">
+                    Variances are recorded and stock levels adjusted automatically.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent stock takes history */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Stock Take History</CardTitle>
+                  <CardDescription>Recent count sessions.</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void loadStockTakes()}
+                  disabled={isLoadingTakes}
+                >
+                  {isLoadingTakes ? 'Loading…' : 'Refresh'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {recentStockTakes.length === 0 ? (
+                <p className="text-muted-foreground py-6 text-center text-sm">
+                  No stock takes yet.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-2 text-left font-medium">ID</th>
+                        <th className="py-2 text-left font-medium">Location</th>
+                        <th className="py-2 text-left font-medium">Status</th>
+                        <th className="py-2 text-left font-medium">Started</th>
+                        <th className="py-2 text-left font-medium">Submitted</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {recentStockTakes.map((take) => (
+                        <tr key={take.id} className="hover:bg-muted/40">
+                          <td className="py-2 font-mono text-xs">{take.id.slice(0, 8)}…</td>
+                          <td className="py-2 capitalize">{take.location}</td>
+                          <td className="py-2">
+                            <Badge variant={take.status === 'submitted' ? 'secondary' : 'outline'}>
+                              {take.status}
+                            </Badge>
+                          </td>
+                          <td className="text-muted-foreground py-2 text-xs">
+                            {new Date(take.created_at).toLocaleString()}
+                          </td>
+                          <td className="text-muted-foreground py-2 text-xs">
+                            {take.submitted_at ? new Date(take.submitted_at).toLocaleString() : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -4,15 +4,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
+import { inventoryApi } from '@/lib/api/inventory';
 import { useToast } from '@/hooks/use-toast';
 import { ProductSchema } from '@/components/seo/JsonLd';
 import { ProductForm } from '../components/ProductForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Pencil, Package } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Pencil, Package, Plus, Trash2 } from 'lucide-react';
 
 type ProductCategory =
   | 'heavy_machinery'
@@ -58,6 +62,30 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
 
+  // Attributes state
+  const [attributes, setAttributes] = useState<
+    Array<{ id: string; key: string; value: string; unit: string | null }>
+  >([]);
+  const [attrKey, setAttrKey] = useState('');
+  const [attrValue, setAttrValue] = useState('');
+  const [attrUnit, setAttrUnit] = useState('');
+  const [savingAttr, setSavingAttr] = useState(false);
+
+  // Variants state
+  const [variants, setVariants] = useState<
+    Array<{
+      id: string;
+      variant_sku: string;
+      name: string;
+      price_override: number | null;
+      is_active: boolean;
+    }>
+  >([]);
+  const [variantSku, setVariantSku] = useState('');
+  const [variantName, setVariantName] = useState('');
+  const [variantPrice, setVariantPrice] = useState('');
+  const [savingVariant, setSavingVariant] = useState(false);
+
   const loadProduct = useCallback(async () => {
     setLoading(true);
     try {
@@ -75,6 +103,108 @@ export default function ProductDetailPage() {
   useEffect(() => {
     loadProduct();
   }, [loadProduct]);
+
+  const loadAttributes = useCallback(async () => {
+    try {
+      const data = await inventoryApi.getProductAttributes(params.id);
+      setAttributes(data);
+    } catch {
+      /* silent — attributes are optional */
+    }
+  }, [params.id]);
+
+  const loadVariants = useCallback(async () => {
+    try {
+      const data = await inventoryApi.getProductVariants(params.id);
+      setVariants(data);
+    } catch {
+      /* silent — variants are optional */
+    }
+  }, [params.id]);
+
+  useEffect(() => {
+    loadAttributes();
+    loadVariants();
+  }, [loadAttributes, loadVariants]);
+
+  const handleAddAttribute = async () => {
+    if (!attrKey.trim() || !attrValue.trim()) return;
+    setSavingAttr(true);
+    try {
+      await inventoryApi.addProductAttribute(
+        params.id,
+        attrKey.trim(),
+        attrValue.trim(),
+        attrUnit.trim() || undefined
+      );
+      setAttrKey('');
+      setAttrValue('');
+      setAttrUnit('');
+      loadAttributes();
+      toast({ title: 'Attribute added' });
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: e instanceof Error ? e.message : 'Failed to add attribute',
+      });
+    } finally {
+      setSavingAttr(false);
+    }
+  };
+
+  const handleDeleteAttribute = async (attrId: string) => {
+    try {
+      await inventoryApi.deleteProductAttribute(params.id, attrId);
+      loadAttributes();
+      toast({ title: 'Attribute removed' });
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: e instanceof Error ? e.message : 'Failed to remove attribute',
+      });
+    }
+  };
+
+  const handleAddVariant = async () => {
+    if (!variantSku.trim() || !variantName.trim()) return;
+    setSavingVariant(true);
+    try {
+      await inventoryApi.createProductVariant(params.id, {
+        variant_sku: variantSku.trim(),
+        name: variantName.trim(),
+        price_override: variantPrice ? parseFloat(variantPrice) : undefined,
+      });
+      setVariantSku('');
+      setVariantName('');
+      setVariantPrice('');
+      loadVariants();
+      toast({ title: 'Variant created' });
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: e instanceof Error ? e.message : 'Failed to create variant',
+      });
+    } finally {
+      setSavingVariant(false);
+    }
+  };
+
+  const handleDeleteVariant = async (variantId: string) => {
+    try {
+      await inventoryApi.deleteProductVariant(params.id, variantId);
+      loadVariants();
+      toast({ title: 'Variant removed' });
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: e instanceof Error ? e.message : 'Failed to remove variant',
+      });
+    }
+  };
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(value);
@@ -237,6 +367,176 @@ export default function ProductDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Attributes & Variants */}
+        <Tabs defaultValue="attributes">
+          <TabsList>
+            <TabsTrigger value="attributes">Attributes ({attributes.length})</TabsTrigger>
+            <TabsTrigger value="variants">Variants ({variants.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="attributes">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Product Attributes</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-end gap-2">
+                  <div className="min-w-[140px] flex-1 space-y-1">
+                    <Label className="text-xs">Key</Label>
+                    <Input
+                      placeholder="e.g. Colour"
+                      value={attrKey}
+                      onChange={(e) => setAttrKey(e.target.value)}
+                    />
+                  </div>
+                  <div className="min-w-[140px] flex-1 space-y-1">
+                    <Label className="text-xs">Value</Label>
+                    <Input
+                      placeholder="e.g. Red"
+                      value={attrValue}
+                      onChange={(e) => setAttrValue(e.target.value)}
+                    />
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <Label className="text-xs">Unit</Label>
+                    <Input
+                      placeholder="e.g. mm"
+                      value={attrUnit}
+                      onChange={(e) => setAttrUnit(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleAddAttribute}
+                    disabled={savingAttr || !attrKey.trim() || !attrValue.trim()}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {attributes.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No attributes added yet.</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-muted-foreground text-xs uppercase">
+                        <th className="py-1 text-left">Key</th>
+                        <th className="py-1 text-left">Value</th>
+                        <th className="py-1 text-left">Unit</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {attributes.map((a) => (
+                        <tr key={a.id} className="border-t">
+                          <td className="py-1.5 font-medium">{a.key}</td>
+                          <td className="py-1.5">{a.value}</td>
+                          <td className="text-muted-foreground py-1.5">{a.unit ?? '—'}</td>
+                          <td className="py-1.5 text-right">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDeleteAttribute(a.id)}
+                            >
+                              <Trash2 className="text-destructive h-3.5 w-3.5" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="variants">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Product Variants</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-end gap-2">
+                  <div className="min-w-[140px] flex-1 space-y-1">
+                    <Label className="text-xs">Variant SKU</Label>
+                    <Input
+                      placeholder="e.g. SKU-001-RED"
+                      value={variantSku}
+                      onChange={(e) => setVariantSku(e.target.value)}
+                    />
+                  </div>
+                  <div className="min-w-[140px] flex-1 space-y-1">
+                    <Label className="text-xs">Name</Label>
+                    <Input
+                      placeholder="e.g. Red Large"
+                      value={variantName}
+                      onChange={(e) => setVariantName(e.target.value)}
+                    />
+                  </div>
+                  <div className="w-36 space-y-1">
+                    <Label className="text-xs">Price Override (AUD)</Label>
+                    <Input
+                      type="number"
+                      placeholder="Optional"
+                      value={variantPrice}
+                      onChange={(e) => setVariantPrice(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleAddVariant}
+                    disabled={savingVariant || !variantSku.trim() || !variantName.trim()}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {variants.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No variants created yet.</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-muted-foreground text-xs uppercase">
+                        <th className="py-1 text-left">SKU</th>
+                        <th className="py-1 text-left">Name</th>
+                        <th className="py-1 text-left">Price</th>
+                        <th className="py-1 text-left">Status</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {variants.map((v) => (
+                        <tr key={v.id} className="border-t">
+                          <td className="py-1.5 font-mono text-xs">{v.variant_sku}</td>
+                          <td className="py-1.5">{v.name}</td>
+                          <td className="py-1.5">
+                            {v.price_override != null ? formatCurrency(v.price_override) : '—'}
+                          </td>
+                          <td className="py-1.5">
+                            <Badge
+                              variant={v.is_active ? 'default' : 'secondary'}
+                              className="text-xs"
+                            >
+                              {v.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </td>
+                          <td className="py-1.5 text-right">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDeleteVariant(v.id)}
+                            >
+                              <Trash2 className="text-destructive h-3.5 w-3.5" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit dialog */}
