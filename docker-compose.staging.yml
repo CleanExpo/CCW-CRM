@@ -16,7 +16,7 @@
 #   docker compose -f docker-compose.staging.yml logs -f
 #   docker compose -f docker-compose.staging.yml down
 
-version: "3.9"
+version: '3.9'
 
 services:
   # PostgreSQL Database
@@ -29,14 +29,18 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-starter_password}
       POSTGRES_DB: ${POSTGRES_DB:-starter_db_staging}
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+      POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./apps/backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "5432:5432"
+      - '5432:5432'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-starter_user} -d ${POSTGRES_DB:-starter_db_staging}"]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-starter_user} -d ${POSTGRES_DB:-starter_db_staging}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,10 +50,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: '2'
           memory: 2G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 512M
 
   # Redis Cache
@@ -67,9 +71,9 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - '6379:6379'
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -79,10 +83,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1"
+          cpus: '1'
           memory: 512M
         reservations:
-          cpus: "0.25"
+          cpus: '0.25'
           memory: 128M
 
   # Backend API (FastAPI)
@@ -91,13 +95,13 @@ services:
       context: ./apps/backend
       dockerfile: Dockerfile
       args:
-        PYTHON_VERSION: "3.12"
+        PYTHON_VERSION: '3.12'
     container_name: ccw-erp-backend-staging
     restart: unless-stopped
     environment:
       # Environment
       ENVIRONMENT: staging
-      DEBUG: "false"
+      DEBUG: 'false'
       LOG_LEVEL: INFO
 
       # Database
@@ -108,7 +112,7 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_staging_password}
       REDIS_DB: 0
-      CACHE_ENABLED: "true"
+      CACHE_ENABLED: 'true'
 
       # JWT
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
@@ -138,9 +142,9 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - '8000:8000'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -150,19 +154,20 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: '2'
           memory: 2G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 512M
 
   # Frontend Web (Next.js)
+  # Context is monorepo root so pnpm-lock.yaml + workspace files are available
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
       args:
-        NODE_VERSION: "20"
+        NODE_VERSION: '20'
         NEXT_PUBLIC_BACKEND_URL: https://api.staging.ccw-erp.com
     container_name: ccw-erp-web-staging
     restart: unless-stopped
@@ -174,9 +179,9 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - '3000:3000'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -186,10 +191,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: '2'
           memory: 1G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 256M
 
   # Nginx Reverse Proxy
@@ -203,13 +208,13 @@ services:
       - /var/www/certbot:/var/www/certbot:ro
       - nginx_logs:/var/log/nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     depends_on:
       - backend
       - web
     healthcheck:
-      test: ["CMD", "nginx", "-t"]
+      test: ['CMD', 'nginx', '-t']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -218,10 +223,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1"
+          cpus: '1'
           memory: 256M
         reservations:
-          cpus: "0.25"
+          cpus: '0.25'
           memory: 64M
 
 networks:
