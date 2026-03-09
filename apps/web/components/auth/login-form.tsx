@@ -126,7 +126,7 @@ export function LoginForm() {
           {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
 
-        <div className="mt-4 text-center text-sm text-slate-600 dark:text-slate-400">
+        <div className="mt-4 text-center text-sm text-slate-600">
           <p>Demo Credentials:</p>
           <p className="font-mono">admin@demo.com / demo123</p>
         </div>
