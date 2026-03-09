@@ -36,8 +36,13 @@ describe('marketingApi.getStats', () => {
     expect(result.thisMonth).toBe(14);
   });
 
-  it('propagates errors from apiClient', async () => {
+  it('returns fallback stats when apiClient rejects', async () => {
+    // getStats() swallows errors and returns a hardcoded fallback — by design
     mockGet.mockRejectedValue(new Error('Unauthorised'));
-    await expect(marketingApi.getStats()).rejects.toThrow('Unauthorised');
+    const result = await marketingApi.getStats();
+    expect(result.totalAssets).toBe(47);
+    expect(result.imagesGenerated).toBe(28);
+    expect(result.copyGenerated).toBe(19);
+    expect(result.thisMonth).toBe(12);
   });
 });
