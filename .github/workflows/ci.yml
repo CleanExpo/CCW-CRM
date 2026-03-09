@@ -365,16 +365,16 @@ jobs:
 
       - name: Run database migrations
         working-directory: apps/backend
-        continue-on-error: true
         run: uv run alembic upgrade head
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
+          JWT_SECRET_KEY: ci-test-secret-key-minimum-32-chars
 
       - name: Seed demo data
         run: |
           PGPASSWORD=local_dev_password psql \
             -h localhost -U starter_user -d starter_db \
-            -f apps/backend/seed_demo_simple.sql || true
+            -f apps/backend/seed_demo_simple.sql
 
       - name: Start backend server
         working-directory: apps/backend
