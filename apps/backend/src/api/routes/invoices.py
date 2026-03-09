@@ -1,6 +1,6 @@
 """Invoice API endpoints for UNI-173."""
 import uuid as _uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
@@ -18,8 +18,8 @@ from src.api.schemas.invoicing import (
     InvoiceUpdate,
     RevenueSummary,
     TaxByRate,
-    TaxSummary,
     TaxRateResponse,
+    TaxSummary,
 )
 from src.config.database import get_async_db
 from src.db.demo_models import Customer, Order, OrderItem
@@ -261,7 +261,7 @@ async def list_tax_rates(
 
     if not tax_rates:
         # Return a hardcoded default for Australian GST
-        default_dt = datetime.now(timezone.utc)
+        default_dt = datetime.now(UTC)
         return [
             TaxRateResponse(
                 id=_uuid.UUID("00000000-0000-0000-0000-000000000001"),

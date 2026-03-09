@@ -5,7 +5,7 @@ when purchase orders arrive at the warehouse. Syncs stock receipts back
 to Cin7 in demo mode (auto-marks as synced).
 """
 
-from datetime import UTC, datetime, date
+from datetime import UTC, date, datetime
 from typing import Annotated, Any
 from uuid import uuid4
 

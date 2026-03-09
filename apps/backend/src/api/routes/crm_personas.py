@@ -14,7 +14,7 @@ Personas:
   unclassified     — fallback
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 

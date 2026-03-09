@@ -13,7 +13,6 @@ from typing import Any
 
 from .models import ErrorClassification, ErrorType, Severity
 
-
 # ─── Error Classification Map ────────────────────────────────────────────
 
 # Maps exception types to (ErrorType, Severity, retryable, max_retries, backoff)

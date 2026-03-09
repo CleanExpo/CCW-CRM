@@ -28,8 +28,8 @@ from src.db.inventory_models import (
     StockTake,
     StockTakeItem,
     StockTransfer,
-    Supplier,
     StoreLocation,
+    Supplier,
 )
 
 logger = structlog.get_logger(__name__)

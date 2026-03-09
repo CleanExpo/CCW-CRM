@@ -16,9 +16,7 @@ from pydantic import BaseModel
 from src.ai.protocol.governor import get_protocol_governor
 from src.ai.protocol.message_bus import get_message_bus
 from src.ai.protocol.models import (
-    AgentCard,
     DelegationRequest,
-    ProtocolVersion,
 )
 
 logger = structlog.get_logger(__name__)

@@ -19,7 +19,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-
 # ─── Section 6: Permission Tiers ───────────────────────────────────────────
 
 

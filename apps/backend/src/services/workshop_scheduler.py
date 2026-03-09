@@ -10,12 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.workshop_models import (
     Equipment,
-    EquipmentServiceHistory,
     EquipmentStatus,
     ReminderStatus,
     ServiceReminder,
-    ServiceTemplate,
-    ServiceTemplateItem,
     WorkshopBooking,
 )
 from src.utils import get_logger

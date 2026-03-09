@@ -17,6 +17,7 @@ from stripe import (
     PaymentMethod,
     Subscription,
 )
+
 StripeError = stripe.StripeError
 
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 import enum
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
