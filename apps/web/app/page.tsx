@@ -82,7 +82,7 @@ export default async function Home() {
             <br />
             <span className="text-primary">Operations Platform</span>
           </h1>
-          <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg leading-relaxed md:text-xl">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 md:text-xl dark:text-slate-400">
             Orders, inventory, quotes and fulfilment across Brisbane, Sydney &amp; Melbourne — all
             in one place.
           </p>
@@ -114,7 +114,7 @@ export default async function Home() {
                   </div>
                   <h3 className="text-xl font-semibold">Orders &amp; Quotes</h3>
                 </div>
-                <p className="text-muted-foreground mb-5">
+                <p className="mb-5 text-slate-600 dark:text-slate-400">
                   <span className="text-foreground font-semibold">
                     {stats.active_orders} orders
                   </span>{' '}
@@ -149,7 +149,7 @@ export default async function Home() {
                   </div>
                   <h3 className="text-xl font-semibold">Customers</h3>
                 </div>
-                <p className="text-muted-foreground">
+                <p className="text-slate-600 dark:text-slate-400">
                   <span className="text-foreground font-semibold">
                     {stats.total_customers} active accounts
                   </span>{' '}
@@ -165,7 +165,7 @@ export default async function Home() {
                   </div>
                   <h3 className="text-xl font-semibold">Products</h3>
                 </div>
-                <p className="text-muted-foreground">
+                <p className="text-slate-600 dark:text-slate-400">
                   <span className="text-foreground font-semibold">
                     {stats.total_products} products
                   </span>{' '}
@@ -185,7 +185,7 @@ export default async function Home() {
                   </div>
                   <h3 className="text-xl font-semibold">Inventory &amp; Warehouse</h3>
                 </div>
-                <p className="text-muted-foreground mb-5">
+                <p className="mb-5 text-slate-600 dark:text-slate-400">
                   Stock levels, transfers and purchase orders across all three warehouses.{' '}
                   {stats.low_stock_alerts > 0 && (
                     <span className="inline-flex items-center gap-1 font-medium text-amber-700">
@@ -203,7 +203,7 @@ export default async function Home() {
                     <div key={loc.city} className="bg-muted/60 rounded-lg p-3 text-center">
                       <MapPin className="text-primary mx-auto mb-1.5 h-4 w-4" />
                       <div className="text-sm font-medium">{loc.city}</div>
-                      <div className="text-muted-foreground text-xs">{loc.label}</div>
+                      <div className="text-xs text-slate-700 dark:text-slate-300">{loc.label}</div>
                     </div>
                   ))}
                 </div>
@@ -217,7 +217,7 @@ export default async function Home() {
                   </div>
                   <h3 className="text-xl font-semibold">Reporting</h3>
                 </div>
-                <p className="text-muted-foreground">
+                <p className="text-slate-600 dark:text-slate-400">
                   Revenue, stock health, order status and performance dashboards tracking{' '}
                   <span className="text-foreground font-semibold">
                     $
@@ -256,7 +256,7 @@ export default async function Home() {
 
       {/* Footer */}
       <footer className="border-t">
-        <div className="text-muted-foreground container mx-auto px-6 py-8 text-center text-sm">
+        <div className="container mx-auto px-6 py-8 text-center text-sm text-slate-600 dark:text-slate-400">
           &copy; {new Date().getFullYear()} CCW Equipment Suppliers. Brisbane | Sydney | Melbourne
         </div>
       </footer>
