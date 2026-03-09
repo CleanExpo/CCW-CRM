@@ -243,7 +243,9 @@ export default async function Home() {
                     <LogIn className="text-primary h-5 w-5" />
                   </div>
                   <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-                  <CardDescription>Sign in to your account to access the platform</CardDescription>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">
+                    Sign in to your account to access the platform
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <LoginForm />
