@@ -3,35 +3,25 @@
  * Runs before all tests to create an authenticated session
  */
 
-import { test as setup, expect } from "@playwright/test";
+import { test as setup, expect } from '@playwright/test';
 
-const authFile = ".auth/user.json";
+const authFile = '.auth/user.json';
 
-setup("authenticate as admin user", async ({ page }) => {
+setup('authenticate as admin user', async ({ page }) => {
   // Navigate to login page
-  await page.goto("/login");
+  await page.goto('/login');
 
   // Fill in login credentials (using demo credentials from CLAUDE.md)
-  await page.fill('input[name="email"]', "admin@demo.com");
-  await page.fill('input[name="password"]', "demo123");
+  await page.fill('input[name="email"]', 'admin@demo.com');
+  await page.fill('input[name="password"]', 'demo123');
 
-  // Submit login form and wait for navigation
-  // Use Promise.all to wait for both the click and the subsequent navigation
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "networkidle" }),
-    page.click('button[type="submit"]'),
-  ]);
+  // Submit the form and wait for redirect to dashboard
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/.*dashboard/, { waitUntil: 'networkidle', timeout: 15_000 });
 
   // Verify we're on the dashboard
   await expect(page).toHaveURL(/.*dashboard/);
 
-  // Wait for dashboard to be fully loaded
-  await page.waitForLoadState("networkidle");
-
-  // Debug: Check what cookies we have
-  const cookies = await page.context().cookies();
-  console.log("Cookies after login:", JSON.stringify(cookies.map(c => ({name: c.name, domain: c.domain, path: c.path})), null, 2));
-
-  // Save authenticated state
+  // Save authenticated state for all subsequent E2E tests
   await page.context().storageState({ path: authFile });
 });
