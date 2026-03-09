@@ -1,17 +1,8 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { LoginForm } from "@/components/auth/login-form";
-import {
-  LiveStatsBar,
-  type PublicStats,
-} from "@/components/landing/LiveStatsBar";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LoginForm } from '@/components/auth/login-form';
+import { LiveStatsBar, type PublicStats } from '@/components/landing/LiveStatsBar';
 import {
   Package,
   Users,
@@ -23,10 +14,9 @@ import {
   CheckCircle2,
   LogIn,
   AlertTriangle,
-} from "lucide-react";
+} from 'lucide-react';
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 /**
  * Realistic demo stats shown when the backend is unreachable.
@@ -37,7 +27,7 @@ const DEMO_STATS: PublicStats = {
   total_customers: 45,
   active_orders: 32,
   pending_quotes: 12,
-  total_revenue_this_month: "124850",
+  total_revenue_this_month: '124850',
   low_stock_alerts: 7,
   product_categories: 8,
   warehouse_count: 3,
@@ -65,15 +55,13 @@ export default async function Home() {
   const stats: PublicStats = await getPublicStats();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="bg-background text-foreground min-h-screen">
       {/* Header */}
       <header className="border-b">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="container mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
-            <Package className="w-7 h-7 text-primary" />
-            <span className="text-xl font-bold tracking-tight">
-              CCW Equipment
-            </span>
+            <Package className="text-primary h-7 w-7" />
+            <span className="text-xl font-bold tracking-tight">CCW Equipment</span>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
@@ -88,21 +76,21 @@ export default async function Home() {
 
       <main>
         {/* Hero */}
-        <section className="container mx-auto px-6 py-20 md:py-28 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+        <section className="container mx-auto px-6 py-20 text-center md:py-28">
+          <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
             Equipment Supply
             <br />
             <span className="text-primary">Operations Platform</span>
           </h1>
-          <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Orders, inventory, quotes and fulfilment across Brisbane, Sydney
-            &amp; Melbourne — all in one place.
+          <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg leading-relaxed md:text-xl">
+            Orders, inventory, quotes and fulfilment across Brisbane, Sydney &amp; Melbourne — all
+            in one place.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Button size="lg" asChild>
               <Link href="#signin">
                 Get Started
-                <ChevronRight className="w-4 h-4 ml-1" />
+                <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
@@ -115,143 +103,129 @@ export default async function Home() {
         <LiveStatsBar stats={stats} />
 
         {/* Features Grid */}
-        <section className="border-t bg-muted/40">
+        <section className="bg-muted/40 border-t">
           <div className="container mx-auto px-6 py-16 md:py-20">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Orders & Quotes */}
-              <div className="lg:col-span-2 rounded-xl border bg-card p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg bg-primary/10">
-                    <ShoppingCart className="w-5 h-5 text-primary" />
+              <div className="bg-card rounded-xl border p-6 md:p-8 lg:col-span-2">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="bg-primary/10 rounded-lg p-2.5">
+                    <ShoppingCart className="text-primary h-5 w-5" />
                   </div>
-                  <h3 className="text-xl font-semibold">
-                    Orders &amp; Quotes
-                  </h3>
+                  <h3 className="text-xl font-semibold">Orders &amp; Quotes</h3>
                 </div>
                 <p className="text-muted-foreground mb-5">
                   <span className="text-foreground font-semibold">
                     {stats.active_orders} orders
-                  </span>{" "}
-                  in progress and{" "}
+                  </span>{' '}
+                  in progress and{' '}
                   <span className="text-foreground font-semibold">
                     {stats.pending_quotes} quotes
-                  </span>{" "}
-                  open. Create quotes, convert to orders, track fulfilment
-                  and manage line items across all product categories.
+                  </span>{' '}
+                  open. Create quotes, convert to orders, track fulfilment and manage line items
+                  across all product categories.
                 </p>
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600" />
                     <span>Quote-to-order conversion</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600" />
                     <span>Multi-location fulfilment</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600" />
                     <span>Order status tracking</span>
                   </div>
                 </div>
               </div>
 
               {/* Customers */}
-              <div className="rounded-xl border bg-card p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg bg-primary/10">
-                    <Users className="w-5 h-5 text-primary" />
+              <div className="bg-card rounded-xl border p-6 md:p-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="bg-primary/10 rounded-lg p-2.5">
+                    <Users className="text-primary h-5 w-5" />
                   </div>
                   <h3 className="text-xl font-semibold">Customers</h3>
                 </div>
                 <p className="text-muted-foreground">
                   <span className="text-foreground font-semibold">
                     {stats.total_customers} active accounts
-                  </span>{" "}
-                  with contact details, order history and account
-                  management.
+                  </span>{' '}
+                  with contact details, order history and account management.
                 </p>
               </div>
 
               {/* Products */}
-              <div className="rounded-xl border bg-card p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg bg-primary/10">
-                    <Package className="w-5 h-5 text-primary" />
+              <div className="bg-card rounded-xl border p-6 md:p-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="bg-primary/10 rounded-lg p-2.5">
+                    <Package className="text-primary h-5 w-5" />
                   </div>
                   <h3 className="text-xl font-semibold">Products</h3>
                 </div>
                 <p className="text-muted-foreground">
                   <span className="text-foreground font-semibold">
                     {stats.total_products} products
-                  </span>{" "}
-                  across{" "}
+                  </span>{' '}
+                  across{' '}
                   <span className="text-foreground font-semibold">
                     {stats.product_categories} categories
-                  </span>{" "}
-                  including heavy machinery, power tools, safety equipment
-                  and more.
+                  </span>{' '}
+                  including heavy machinery, power tools, safety equipment and more.
                 </p>
               </div>
 
               {/* Inventory & Warehouse */}
-              <div className="lg:col-span-2 rounded-xl border bg-card p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg bg-primary/10">
-                    <Warehouse className="w-5 h-5 text-primary" />
+              <div className="bg-card rounded-xl border p-6 md:p-8 lg:col-span-2">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="bg-primary/10 rounded-lg p-2.5">
+                    <Warehouse className="text-primary h-5 w-5" />
                   </div>
-                  <h3 className="text-xl font-semibold">
-                    Inventory &amp; Warehouse
-                  </h3>
+                  <h3 className="text-xl font-semibold">Inventory &amp; Warehouse</h3>
                 </div>
                 <p className="text-muted-foreground mb-5">
-                  Stock levels, transfers and purchase orders across all
-                  three warehouses.{" "}
+                  Stock levels, transfers and purchase orders across all three warehouses.{' '}
                   {stats.low_stock_alerts > 0 && (
-                    <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
-                      <AlertTriangle className="w-3.5 h-3.5" />
+                    <span className="inline-flex items-center gap-1 font-medium text-amber-700">
+                      <AlertTriangle className="h-3.5 w-3.5" />
                       {stats.low_stock_alerts} low stock alerts
                     </span>
                   )}
                 </p>
                 <div className="grid grid-cols-3 gap-4">
                   {[
-                    { city: "Brisbane", label: "HQ" },
-                    { city: "Sydney", label: "Branch" },
-                    { city: "Melbourne", label: "Branch" },
+                    { city: 'Brisbane', label: 'HQ' },
+                    { city: 'Sydney', label: 'Branch' },
+                    { city: 'Melbourne', label: 'Branch' },
                   ].map((loc) => (
-                    <div
-                      key={loc.city}
-                      className="text-center p-3 rounded-lg bg-muted/60"
-                    >
-                      <MapPin className="w-4 h-4 text-primary mx-auto mb-1.5" />
+                    <div key={loc.city} className="bg-muted/60 rounded-lg p-3 text-center">
+                      <MapPin className="text-primary mx-auto mb-1.5 h-4 w-4" />
                       <div className="text-sm font-medium">{loc.city}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {loc.label}
-                      </div>
+                      <div className="text-muted-foreground text-xs">{loc.label}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Reporting */}
-              <div className="rounded-xl border bg-card p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg bg-primary/10">
-                    <BarChart3 className="w-5 h-5 text-primary" />
+              <div className="bg-card rounded-xl border p-6 md:p-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="bg-primary/10 rounded-lg p-2.5">
+                    <BarChart3 className="text-primary h-5 w-5" />
                   </div>
                   <h3 className="text-xl font-semibold">Reporting</h3>
                 </div>
                 <p className="text-muted-foreground">
-                  Revenue, stock health, order status and performance
-                  dashboards tracking{" "}
+                  Revenue, stock health, order status and performance dashboards tracking{' '}
                   <span className="text-foreground font-semibold">
-                    ${Number(
-                      stats.total_revenue_this_month
-                    ).toLocaleString("en-AU", {
+                    $
+                    {Number(stats.total_revenue_this_month).toLocaleString('en-AU', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })}
-                  </span>{" "}
+                  </span>{' '}
                   this month with live data.
                 </p>
               </div>
@@ -262,16 +236,14 @@ export default async function Home() {
         {/* Sign In Section */}
         <section id="signin" className="border-t">
           <div className="container mx-auto px-6 py-16 md:py-20">
-            <div className="max-w-md mx-auto">
+            <div className="mx-auto max-w-md">
               <Card>
                 <CardHeader className="text-center">
-                  <div className="mx-auto mb-2 p-2.5 rounded-lg bg-primary/10 w-fit">
-                    <LogIn className="w-5 h-5 text-primary" />
+                  <div className="bg-primary/10 mx-auto mb-2 w-fit rounded-lg p-2.5">
+                    <LogIn className="text-primary h-5 w-5" />
                   </div>
                   <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-                  <CardDescription>
-                    Sign in to your account to access the platform
-                  </CardDescription>
+                  <CardDescription>Sign in to your account to access the platform</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <LoginForm />
@@ -284,9 +256,8 @@ export default async function Home() {
 
       {/* Footer */}
       <footer className="border-t">
-        <div className="container mx-auto px-6 py-8 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} CCW Equipment Suppliers. Brisbane |
-          Sydney | Melbourne
+        <div className="text-muted-foreground container mx-auto px-6 py-8 text-center text-sm">
+          &copy; {new Date().getFullYear()} CCW Equipment Suppliers. Brisbane | Sydney | Melbourne
         </div>
       </footer>
     </div>
