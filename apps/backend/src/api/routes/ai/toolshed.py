@@ -580,7 +580,7 @@ async def verify_quality(request: VerifyRequest) -> VerifyResponse:
             ts_stdout, _ = await asyncio.wait_for(ts_proc.communicate(), timeout=120)
             ts_output = ts_stdout.decode("utf-8", errors="replace")[-3000:]
             typescript_passed = ts_proc.returncode == 0
-        except asyncio.TimeoutError:
+        except TimeoutError:
             ts_output = "TIMEOUT after 120s"
             typescript_passed = False
         except Exception as exc:
@@ -598,7 +598,7 @@ async def verify_quality(request: VerifyRequest) -> VerifyResponse:
             lint_stdout, _ = await asyncio.wait_for(lint_proc.communicate(), timeout=120)
             lint_output = lint_stdout.decode("utf-8", errors="replace")[-3000:]
             eslint_passed = lint_proc.returncode == 0
-        except asyncio.TimeoutError:
+        except TimeoutError:
             lint_output = "TIMEOUT after 120s"
             eslint_passed = False
         except Exception as exc:
@@ -618,7 +618,7 @@ async def verify_quality(request: VerifyRequest) -> VerifyResponse:
             test_stdout, _ = await asyncio.wait_for(test_proc.communicate(), timeout=180)
             backend_output = test_stdout.decode("utf-8", errors="replace")[-4000:]
             backend_passed = test_proc.returncode == 0
-        except asyncio.TimeoutError:
+        except TimeoutError:
             backend_output = "TIMEOUT after 180s"
             backend_passed = False
         except Exception as exc:

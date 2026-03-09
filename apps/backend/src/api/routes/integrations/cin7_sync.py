@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config.cin7_settings import Cin7Settings, get_cin7_settings
 from src.config.database import get_async_db
 from src.db.cin7_models import Cin7SyncLog
-from src.integrations.cin7.client import Cin7Client, get_cin7_client
+from src.integrations.cin7.client import get_cin7_client
 from src.integrations.cin7.inventory_sync import Cin7InventorySyncer
 from src.integrations.cin7.product_sync import Cin7ProductSyncer
 

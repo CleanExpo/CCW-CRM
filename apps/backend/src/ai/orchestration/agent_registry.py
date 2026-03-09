@@ -61,7 +61,7 @@ class AgentMetadata(BaseModel):
 class AgentRegistry:
     """Central registry for AI agents."""
 
-    _instance: "AgentRegistry | None" = None
+    _instance: AgentRegistry | None = None
 
     def __new__(cls):
         """Singleton pattern."""

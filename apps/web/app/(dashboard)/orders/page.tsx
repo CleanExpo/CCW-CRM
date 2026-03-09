@@ -13,13 +13,14 @@ import { OrderForm } from './components/OrderForm';
 import { DeleteOrderDialog } from './components/DeleteOrderDialog';
 import { BulkDeleteOrdersDialog } from './components/BulkDeleteOrdersDialog';
 import { OrderDetailDialog } from './components/OrderDetailDialog';
-import { Pencil, Trash2, Plus, Eye, Download, Copy } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, Download, Copy, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Order } from './types';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
 import { exportOrdersToCSV, exportOrdersToPDF } from '@/lib/utils/csv-export';
+import { invoicesApi } from '@/lib/api/invoices';
 
 interface PaginatedResponse {
   items: Order[];
@@ -126,7 +127,7 @@ export default function OrdersPage() {
           ? `Copy of ${fullOrder.order_number}\n\n${fullOrder.notes}`
           : `Copy of ${fullOrder.order_number}`,
       };
-      setSelectedOrder(orderCopy as Order);
+      setSelectedOrder(orderCopy as unknown as Order);
       setFormOpen(true);
       toast({
         title: 'Order Duplicated',
@@ -192,6 +193,23 @@ export default function OrdersPage() {
 
   const handleBulkDelete = () => {
     setBulkDeleteDialogOpen(true);
+  };
+
+  const handleGenerateInvoice = async (order: Order) => {
+    try {
+      const invoice = await invoicesApi.generateFromOrder(order.id);
+      toast({
+        title: 'Invoice Generated',
+        description: `Invoice created — redirecting to invoice.`,
+      });
+      window.location.href = `/invoices/${invoice.id}`;
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to generate invoice',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSuccess = () => {
@@ -323,7 +341,7 @@ export default function OrdersPage() {
                   label: 'Order Date',
                   className: 'text-sm text-muted-foreground',
                   hideOnMobile: true,
-                  render: (order) => format(new Date(order.order_date), 'MMM dd, yyyy'),
+                  render: (order) => format(new Date(order.order_date ?? ''), 'MMM dd, yyyy'),
                 },
                 {
                   key: 'actions',
@@ -365,6 +383,19 @@ export default function OrdersPage() {
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
+                      {(order.status === 'confirmed' || order.status === 'delivered') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateInvoice(order);
+                          }}
+                          title="Generate Invoice"
+                        >
+                          <FileText className="h-4 w-4 text-blue-500" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"

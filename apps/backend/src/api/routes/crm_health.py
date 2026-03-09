@@ -13,7 +13,7 @@ Status thresholds:
 - Red    (0–39):   churned or dormant
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Annotated
 
 import structlog

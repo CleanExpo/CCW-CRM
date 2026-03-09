@@ -2,11 +2,10 @@
 
 import os
 from collections.abc import AsyncGenerator
-from datetime import UTC, datetime
 from typing import Any
 
 import structlog
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.base_agent import BaseAgent

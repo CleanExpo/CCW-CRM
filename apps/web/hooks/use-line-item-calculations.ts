@@ -7,15 +7,11 @@
  * Order forms.
  */
 
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  calculateLineTotal,
-  calculateUnitPrice,
-  calculateTotals,
-} from "@/lib/utils/calculations";
-import { apiClient } from "@/lib/api/client";
+import { useState, useEffect, useCallback } from 'react';
+import { calculateLineTotal, calculateUnitPrice, calculateTotals } from '@/lib/utils/calculations';
+import { apiClient } from '@/lib/api/client';
 
 /**
  * Business configuration from backend.
@@ -59,8 +55,8 @@ export interface UseLineItemCalculationsReturn {
  * Default business configuration (fallback).
  */
 const DEFAULT_CONFIG: BusinessConfig = {
-  taxRate: 0.10, // 10% GST
-  taxName: "GST",
+  taxRate: 0.1, // 10% GST
+  taxName: 'GST',
   quoteValidityDays: 30,
 };
 
@@ -94,11 +90,11 @@ export function useLineItemCalculations(): UseLineItemCalculationsReturn {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.get<BusinessConfig>("/api/config/business");
+      const response = await apiClient.get<BusinessConfig>('/api/config/business');
       setConfig(response);
     } catch (err: unknown) {
-      console.error("Failed to fetch business config:", err);
-      setError(err instanceof Error ? err.message : "Failed to load business configuration");
+      console.error('Failed to fetch business config:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load business configuration');
       // Keep using default config on error
     } finally {
       setLoading(false);
@@ -115,52 +111,42 @@ export function useLineItemCalculations(): UseLineItemCalculationsReturn {
    *
    * Mode A: Enter quantity → calculate line_total from unit_price
    */
-  const updateQuantity = useCallback(
-    (item: LineItem, quantity: number): LineItem => {
-      const newLineTotal = calculateLineTotal(quantity, item.unit_price);
-      return {
-        ...item,
-        quantity,
-        line_total: newLineTotal,
-      };
-    },
-    []
-  );
+  const updateQuantity = useCallback((item: LineItem, quantity: number): LineItem => {
+    const newLineTotal = calculateLineTotal(quantity, item.unit_price);
+    return {
+      ...item,
+      quantity,
+      line_total: newLineTotal,
+    };
+  }, []);
 
   /**
    * Update unit price and recalculate line total.
    *
    * Mode A: Enter unit_price → calculate line_total from quantity
    */
-  const updateUnitPrice = useCallback(
-    (item: LineItem, unitPrice: number): LineItem => {
-      const newLineTotal = calculateLineTotal(item.quantity, unitPrice);
-      return {
-        ...item,
-        unit_price: unitPrice,
-        line_total: newLineTotal,
-      };
-    },
-    []
-  );
+  const updateUnitPrice = useCallback((item: LineItem, unitPrice: number): LineItem => {
+    const newLineTotal = calculateLineTotal(item.quantity, unitPrice);
+    return {
+      ...item,
+      unit_price: unitPrice,
+      line_total: newLineTotal,
+    };
+  }, []);
 
   /**
    * Update line total and recalculate unit price (bidirectional).
    *
    * Mode B: Enter line_total → calculate unit_price from quantity
    */
-  const updateLineTotal = useCallback(
-    (item: LineItem, lineTotal: number): LineItem => {
-      const newUnitPrice =
-        item.quantity > 0 ? calculateUnitPrice(lineTotal, item.quantity) : 0;
-      return {
-        ...item,
-        line_total: lineTotal,
-        unit_price: newUnitPrice,
-      };
-    },
-    []
-  );
+  const updateLineTotal = useCallback((item: LineItem, lineTotal: number): LineItem => {
+    const newUnitPrice = item.quantity > 0 ? calculateUnitPrice(lineTotal, item.quantity) : 0;
+    return {
+      ...item,
+      line_total: lineTotal,
+      unit_price: newUnitPrice,
+    };
+  }, []);
 
   /**
    * Calculate subtotal, tax, and total for all line items.
@@ -195,15 +181,15 @@ export function useLineItemCalculations(): UseLineItemCalculationsReturn {
  * Type guard to check if an object is a valid LineItem.
  */
 export function isValidLineItem(item: unknown): item is LineItem {
-  return (
+  return !!(
     item &&
-    typeof item === "object" &&
-    "product_id" in item &&
-    "quantity" in item &&
-    "unit_price" in item &&
-    "line_total" in item &&
-    typeof item.quantity === "number" &&
-    typeof item.unit_price === "number" &&
-    typeof item.line_total === "number"
+    typeof item === 'object' &&
+    'product_id' in item &&
+    'quantity' in item &&
+    'unit_price' in item &&
+    'line_total' in item &&
+    typeof item.quantity === 'number' &&
+    typeof item.unit_price === 'number' &&
+    typeof item.line_total === 'number'
   );
 }

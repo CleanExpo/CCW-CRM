@@ -6,12 +6,11 @@ sync history, velocity analysis, and seasonal pattern detection.
 
 import math
 import statistics
-from collections import Counter
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.base_agent import BaseAgent

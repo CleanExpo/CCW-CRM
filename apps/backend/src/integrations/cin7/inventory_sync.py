@@ -10,7 +10,7 @@ from typing import Any, Literal
 from uuid import uuid4
 
 import structlog
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.cin7_models import Cin7ProductMapping, Cin7SyncLog, SyncDirection, SyncStatus

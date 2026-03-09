@@ -19,6 +19,7 @@ from src.db.crm_schemas import (
     Activity,
     ActivityComplete,
     ActivityCreate,
+    ActivityStats,
     ActivityType,
     ActivityUpdate,
     ActivityWithRelations,
@@ -86,6 +87,65 @@ async def list_activities(
         page=page,
         page_size=page_size,
         total_pages=(total + page_size - 1) // page_size,
+    )
+
+
+@router.get("/stats", response_model=ActivityStats)
+async def get_activity_stats(
+    db: AsyncSession = Depends(get_db),
+):
+    """Get aggregate statistics for activities dashboard."""
+    now = datetime.now(UTC)
+    seven_days_ago = datetime.fromtimestamp(now.timestamp() - 7 * 24 * 3600, tz=UTC)
+
+    # Total count
+    total_result = await db.execute(select(func.count()).select_from(ActivityModel))
+    total_activities = total_result.scalar_one()
+
+    # Count by activity_type
+    by_type_query = (
+        select(ActivityModel.activity_type, func.count().label("cnt"))
+        .group_by(ActivityModel.activity_type)
+    )
+    by_type_result = await db.execute(by_type_query)
+    by_type: dict[str, int] = {row.activity_type: row.cnt for row in by_type_result}
+
+    # Pending tasks: activity_type=task, not completed, has a due_date
+    pending_result = await db.execute(
+        select(func.count()).select_from(ActivityModel).where(
+            ActivityModel.activity_type == ActivityType.TASK.value,
+            ActivityModel.completed_at.is_(None),
+            ActivityModel.due_date.isnot(None),
+        )
+    )
+    pending_tasks = pending_result.scalar_one()
+
+    # Overdue tasks: activity_type=task, not completed, due_date < now
+    overdue_result = await db.execute(
+        select(func.count()).select_from(ActivityModel).where(
+            ActivityModel.activity_type == ActivityType.TASK.value,
+            ActivityModel.completed_at.is_(None),
+            ActivityModel.due_date.isnot(None),
+            ActivityModel.due_date < now,
+        )
+    )
+    overdue_tasks = overdue_result.scalar_one()
+
+    # Completed this week: completed_at >= 7 days ago
+    completed_week_result = await db.execute(
+        select(func.count()).select_from(ActivityModel).where(
+            ActivityModel.completed_at.isnot(None),
+            ActivityModel.completed_at >= seven_days_ago,
+        )
+    )
+    completed_this_week = completed_week_result.scalar_one()
+
+    return ActivityStats(
+        total_activities=total_activities,
+        by_type=by_type,
+        pending_tasks=pending_tasks,
+        overdue_tasks=overdue_tasks,
+        completed_this_week=completed_this_week,
     )
 
 

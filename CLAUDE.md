@@ -417,23 +417,30 @@ cd apps/web && pnpm dev
 
 ---
 
-## Recent Additions (2026-03-03)
+## Recent Additions (2026-03-09)
 
-**Completed since last CLAUDE.md update (2026-03-02 → 2026-03-03):**
+**Completed since last CLAUDE.md update (2026-03-03 → 2026-03-09):**
 
-- SEO: Full metadata, Organization/LocalBusiness/WebSite JSON-LD, FAQPage schema (10 Q&As), FAQ page (UNI-782/783/787/788/789)
-- SEO: Keyword-rich H1s on all portal pages (dashboard/products/customers/orders/quotes)
-- KPI Reports page: /reports with Sales + Inventory dashboards (UNI-484)
-- CSV export: All 4 modules now have Export CSV buttons (UNI-677)
-- Content docs: 8 files in docs/content/ (UNI-1124–1131)
-- MODEL_ROUTING.md updated with Imagen 4 + Gemini 2.5 Pro (UNI-1130)
-- Sidebar nav: Reports, Marketing, FAQ entries added to sidebar (UNI-1232)
-- Composite DB indexes: apps/backend/src/db/indexes.py — 3 composite indexes on order_items, orders, products (UNI-1231)
-- Product detail page: /products/[id]/page.tsx with ProductSchema JSON-LD + Edit modal (UNI-1233)
-- PDF export: exportToPDF() + exportOrdersToPDF() + exportQuotesToPDF() via browser print (UNI-1234)
+- Anti-Drift framework: `.claude/memory/` (6 files), hooks (SessionStart/UserPromptSubmit/PreCompact), 10x health check command, toolshed API
+- 6 Catalogs: `docs/catalogs/` — ROUTES.md, PAGES.md, AGENTS.md, PACKAGES.md, MODELS.md, INTEGRATIONS.md
+- Cin7 Wave 1: Line items sync (Cin7OrderLineItem + Cin7PurchaseOrderLineItem), GRN receiving page, inventory write-back, webhook subscriptions (UNI-1263/1265/1266/1267)
+- Cin7 Wave 2: Shadow transition (cin7_shadow_models.py, 5 endpoints), fulfilment chain (7 endpoints, orders/fulfilment/page.tsx), BOM integration (6 endpoints), GL integration (7 endpoints) (UNI-1260/1261/1262/1264/1268/1269)
+- AP2 integration: frontend dashboard — /settings/integrations/ap2, mandate + transaction endpoints (UNI-1241)
+- Workshop management: 6 models, 5 route modules, 6 frontend pages, dual-interval service scheduler (UNI-workshop)
+- CRM enhancements: /contacts/[id] detail page, ActivityTimeline fix, company name column (UNI-171)
+- Invoicing: invoice_date rename, partial status, payment methods, revenue/tax reports, print view, financial report tab, order-to-invoice generation (UNI-173 SUBs 1–6)
+- Workflow automation: WorkflowTemplate/Instance/SLA models, workflow_service.py + sla_service.py, workflows.py + sla.py + notifications.py routes, workflows/page.tsx builder UI, NotificationBell, TaskSLAPanel (UNI-174 all STs)
+- AI agents: Staff Copilot (staff_copilot_agent.py + routes), Cin7 Shadow AI agent, Marketing AI agent (3 endpoints) (UNI-857/1262)
+- Inventory: barcode scanner hook (useBarcodeScanner), ProductBarcode/StockTake/StockTakeItem/ReorderRule/ProductAttribute/ProductVariant models, all endpoints + frontend wired (UNI-172 SUBs 3–7)
+- CI/CD: ci.yml updated (coverage + E2E + PR comment bot), e2e-tests.yml removed, 4 new E2E specs (UNI-664)
+- Local test env fix: AgentMetadata forward ref, settings name collision, supabase/faker deps (UNI-1242)
+- Test suite: 51 new Vitest unit tests, 4 E2E Playwright specs, backend test fixes
 
 **Remaining / New Next Work:**
 
-- UNI-1235: AI Search — pgvector semantic search (requires schema change approval)
-- UNI-1236: Enhanced Shopify — metafields + real-time inventory sync (blocked by Shopify auth fix)
-- Google AP2: Frontend payment UI (backend integration exists)
+- UNI-172 SUB-8: Backend pytest tests for new inventory endpoints
+- UNI-173 SUB-7: Xero sync + dead file cleanup (blocked on Xero auth)
+- UNI-664 SUBs 2/4/5/6: GitHub Environments, branch protection, staging deploy, Vercel verification (require GitHub UI)
+- UNI-1235: AI Search — pgvector semantic search (requires demo_models.py schema change approval)
+- UNI-1236: Enhanced Shopify — metafields + real-time inventory sync (blocked by Shopify auth)
+- UNI-172 SUB-5/6 auto-reorder: ReorderRule + auto-PO creation fully wired (backend done, UI partial)

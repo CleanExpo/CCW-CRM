@@ -1,5 +1,7 @@
 """Invoice API endpoints for UNI-173."""
-from datetime import datetime
+import uuid as _uuid
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
@@ -14,10 +16,14 @@ from src.api.schemas.invoicing import (
     InvoiceResponse,
     InvoiceSummary,
     InvoiceUpdate,
+    RevenueSummary,
+    TaxByRate,
+    TaxRateResponse,
+    TaxSummary,
 )
 from src.config.database import get_async_db
-from src.db.demo_models import Customer
-from src.db.models.invoicing import Invoice, InvoiceItem
+from src.db.demo_models import Customer, Order, OrderItem
+from src.db.models.invoicing import Invoice, InvoiceItem, TaxRate
 
 router = APIRouter(prefix="/api/invoices", tags=["Invoices"])
 
@@ -52,6 +58,9 @@ async def list_invoices(
     status: str | None = None,
     customer_id: UUID | None = None,
     search: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    overdue_only: bool = False,
 ) -> InvoiceListResponse:
     """List invoices with pagination and filters."""
     query = select(Invoice).options(selectinload(Invoice.customer))
@@ -69,6 +78,18 @@ async def list_invoices(
                 Invoice.invoice_number.ilike(f"%{search}%"),
                 Invoice.notes.ilike(f"%{search}%"),
             )
+        )
+
+    if date_from:
+        query = query.where(Invoice.invoice_date >= date_from)
+
+    if date_to:
+        query = query.where(Invoice.invoice_date <= date_to)
+
+    if overdue_only:
+        query = query.where(
+            Invoice.due_date < date.today(),
+            Invoice.status.in_(["sent", "partial"]),
         )
 
     # Count total
@@ -92,7 +113,7 @@ async def list_invoices(
             invoice_number=inv.invoice_number,
             customer_id=inv.customer_id,
             customer_name=inv.customer.company_name if inv.customer else None,
-            issue_date=inv.issue_date,
+            invoice_date=inv.invoice_date,
             due_date=inv.due_date,
             status=inv.status,
             total=inv.total,
@@ -110,6 +131,272 @@ async def list_invoices(
         page_size=page_size,
         total_pages=(total + page_size - 1) // page_size,
     )
+
+
+@router.get("/reports/revenue", response_model=RevenueSummary)
+async def get_revenue_summary(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    date_from: date | None = None,
+    date_to: date | None = None,
+) -> RevenueSummary:
+    """Get revenue summary for financial dashboard."""
+    # Base query filtered by date range if provided
+    def apply_date_filters(q):  # type: ignore[no-untyped-def]
+        if date_from:
+            q = q.where(Invoice.invoice_date >= date_from)
+        if date_to:
+            q = q.where(Invoice.invoice_date <= date_to)
+        return q
+
+    # total_revenue: SUM of total where status NOT in ('draft', 'cancelled')
+    revenue_q = select(func.coalesce(func.sum(Invoice.total), 0)).where(
+        Invoice.status.notin_(["draft", "cancelled"])
+    )
+    revenue_q = apply_date_filters(revenue_q)
+    total_revenue = (await db.execute(revenue_q)).scalar() or Decimal("0")
+
+    # total_outstanding: SUM of amount_due where status in ('sent', 'partial', 'overdue')
+    outstanding_q = select(func.coalesce(func.sum(Invoice.amount_due), 0)).where(
+        Invoice.status.in_(["sent", "partial", "overdue"])
+    )
+    outstanding_q = apply_date_filters(outstanding_q)
+    total_outstanding = (await db.execute(outstanding_q)).scalar() or Decimal("0")
+
+    # total_overdue: SUM of amount_due where status = 'overdue'
+    overdue_q = select(func.coalesce(func.sum(Invoice.amount_due), 0)).where(
+        Invoice.status == "overdue"
+    )
+    overdue_q = apply_date_filters(overdue_q)
+    total_overdue = (await db.execute(overdue_q)).scalar() or Decimal("0")
+
+    # invoice_count: COUNT of all non-cancelled invoices
+    count_q = select(func.count(Invoice.id)).where(Invoice.status != "cancelled")
+    count_q = apply_date_filters(count_q)
+    invoice_count = (await db.execute(count_q)).scalar() or 0
+
+    # paid_invoice_count: COUNT where status = 'paid'
+    paid_q = select(func.count(Invoice.id)).where(Invoice.status == "paid")
+    paid_q = apply_date_filters(paid_q)
+    paid_invoice_count = (await db.execute(paid_q)).scalar() or 0
+
+    # overdue_invoice_count: COUNT where status = 'overdue'
+    overdue_count_q = select(func.count(Invoice.id)).where(Invoice.status == "overdue")
+    overdue_count_q = apply_date_filters(overdue_count_q)
+    overdue_invoice_count = (await db.execute(overdue_count_q)).scalar() or 0
+
+    # period_start: date_from or earliest invoice date
+    if date_from:
+        period_start = date_from
+    else:
+        earliest_q = select(func.min(Invoice.invoice_date))
+        period_start = (await db.execute(earliest_q)).scalar() or date.today()
+
+    period_end = date_to or date.today()
+
+    return RevenueSummary(
+        total_revenue=Decimal(str(total_revenue)),
+        total_outstanding=Decimal(str(total_outstanding)),
+        total_overdue=Decimal(str(total_overdue)),
+        invoice_count=int(invoice_count),
+        paid_invoice_count=int(paid_invoice_count),
+        overdue_invoice_count=int(overdue_invoice_count),
+        period_start=period_start,
+        period_end=period_end,
+    )
+
+
+@router.get("/reports/tax", response_model=TaxSummary)
+async def get_tax_summary(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    date_from: date | None = None,
+    date_to: date | None = None,
+) -> TaxSummary:
+    """Get tax collected summary grouped by tax rate."""
+    # Query invoice totals grouped by tax_rate, excluding draft/cancelled
+    group_q = (
+        select(
+            Invoice.tax_rate,
+            func.coalesce(func.sum(Invoice.tax_amount), 0).label("total_tax"),
+            func.count(Invoice.id).label("invoice_count"),
+        )
+        .where(Invoice.status.notin_(["draft", "cancelled"]))
+        .group_by(Invoice.tax_rate)
+        .order_by(Invoice.tax_rate)
+    )
+    if date_from:
+        group_q = group_q.where(Invoice.invoice_date >= date_from)
+    if date_to:
+        group_q = group_q.where(Invoice.invoice_date <= date_to)
+
+    rows = (await db.execute(group_q)).all()
+
+    tax_by_rate = [
+        TaxByRate(
+            tax_rate=Decimal(str(row.tax_rate)),
+            total_tax=Decimal(str(row.total_tax)),
+            invoice_count=int(row.invoice_count),
+        )
+        for row in rows
+    ]
+
+    total_tax_collected = sum(
+        (t.total_tax for t in tax_by_rate), Decimal("0")
+    )
+
+    return TaxSummary(
+        total_tax_collected=total_tax_collected,
+        tax_by_rate=tax_by_rate,
+    )
+
+
+@router.get("/tax-rates", response_model=list[TaxRateResponse])
+async def list_tax_rates(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> list[TaxRateResponse]:
+    """List all active tax rates. Returns a default if none exist."""
+    result = await db.execute(
+        select(TaxRate).where(TaxRate.is_active.is_(True)).order_by(TaxRate.rate)
+    )
+    tax_rates = result.scalars().all()
+
+    if not tax_rates:
+        # Return a hardcoded default for Australian GST
+        default_dt = datetime.now(UTC)
+        return [
+            TaxRateResponse(
+                id=_uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                name="GST",
+                rate=Decimal("10.00"),
+                country="AU",
+                is_default=True,
+                is_active=True,
+                created_at=default_dt,
+            )
+        ]
+
+    return [TaxRateResponse.model_validate(tr) for tr in tax_rates]
+
+
+@router.post("/from-order/{order_id}", response_model=InvoiceResponse, status_code=201)
+async def generate_invoice_from_order(
+    order_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> InvoiceResponse:
+    """Generate an invoice from a confirmed or delivered order."""
+    # 1. Load order with items and products
+    order_result = await db.execute(
+        select(Order)
+        .options(
+            selectinload(Order.order_items).selectinload(OrderItem.product)
+        )
+        .where(Order.id == order_id)
+    )
+    order = order_result.scalar_one_or_none()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # 2. Check order status
+    if order.status not in ("confirmed", "delivered"):
+        raise HTTPException(
+            status_code=400,
+            detail="Can only generate invoices for confirmed or delivered orders",
+        )
+
+    # 3. Check no existing invoice for this order
+    existing_result = await db.execute(
+        select(Invoice.id).where(Invoice.order_id == order_id).limit(1)
+    )
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=409,
+            detail="Invoice already exists for this order",
+        )
+
+    # 4. Generate invoice number
+    invoice_number = await generate_invoice_number(db)
+
+    # 5. Build invoice dates
+    today = date.today()
+    due_date = today + timedelta(days=30)
+
+    # 6. Pre-calculate item totals
+    gst_rate = Decimal("10.00")
+    gst_multiplier = gst_rate / Decimal("100")
+
+    items_data = []
+    for order_item in order.order_items:
+        product_name = (
+            order_item.product.name if order_item.product else f"Product {order_item.product_id}"
+        )
+        qty = Decimal(str(order_item.quantity))
+        unit_price = Decimal(str(order_item.unit_price))
+        item_subtotal = qty * unit_price
+        item_tax = item_subtotal * gst_multiplier
+        item_total = item_subtotal + item_tax
+        items_data.append(
+            {
+                "description": product_name,
+                "quantity": order_item.quantity,
+                "unit_price": unit_price,
+                "subtotal": item_subtotal,
+                "tax_amount": item_tax,
+                "total": item_total,
+                "product_id": order_item.product_id,
+            }
+        )
+
+    invoice_subtotal = sum(d["subtotal"] for d in items_data)
+    invoice_tax = sum(d["tax_amount"] for d in items_data)
+    invoice_total = invoice_subtotal + invoice_tax
+
+    # 7. Create Invoice record
+    invoice = Invoice(
+        invoice_number=invoice_number,
+        customer_id=order.customer_id,
+        order_id=order_id,
+        invoice_date=today,
+        due_date=due_date,
+        status="draft",
+        subtotal=invoice_subtotal,
+        tax_rate=gst_rate,
+        tax_amount=invoice_tax,
+        total=invoice_total,
+        amount_paid=Decimal("0.00"),
+        amount_due=invoice_total,
+        notes=f"Generated from order {order.order_number}",
+        payment_terms="Net 30",
+    )
+    db.add(invoice)
+    await db.flush()
+
+    # 8. Create InvoiceItem records
+    for item in items_data:
+        invoice_item = InvoiceItem(
+            invoice_id=invoice.id,
+            product_id=item["product_id"],
+            description=item["description"],
+            quantity=item["quantity"],
+            unit_price=item["unit_price"],
+            tax_rate=gst_rate,
+            tax_amount=item["tax_amount"],
+            subtotal=item["subtotal"],
+            total=item["total"],
+        )
+        db.add(invoice_item)
+
+    await db.commit()
+    await db.refresh(invoice)
+
+    # 9. Return full invoice with items
+    loaded_result = await db.execute(
+        select(Invoice)
+        .options(selectinload(Invoice.items))
+        .where(Invoice.id == invoice.id)
+    )
+    loaded_invoice = loaded_result.scalar_one()
+
+    return InvoiceResponse.model_validate(loaded_invoice)
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponse)
@@ -157,7 +444,7 @@ async def create_invoice(
         invoice_number=invoice_number,
         customer_id=data.customer_id,
         order_id=data.order_id,
-        issue_date=data.issue_date,
+        invoice_date=data.invoice_date,
         due_date=data.due_date,
         status="draft",
         subtotal=subtotal,
@@ -235,8 +522,8 @@ async def update_invoice(
             raise HTTPException(status_code=404, detail="Customer not found")
         invoice.customer_id = data.customer_id
 
-    if data.issue_date is not None:
-        invoice.issue_date = data.issue_date
+    if data.invoice_date is not None:
+        invoice.invoice_date = data.invoice_date
 
     if data.due_date is not None:
         invoice.due_date = data.due_date

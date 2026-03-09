@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from src.ai.agents.specialized.cin7_anomaly_agent import (
     Cin7AnomalyAgent,
-    calculate_sync_health_score,
 )
 
 logger = structlog.get_logger(__name__)

@@ -109,7 +109,7 @@ export default function QuotesPage() {
           ? `Copy of ${fullQuote.quote_number}\n\n${fullQuote.notes}`
           : `Copy of ${fullQuote.quote_number}`,
       };
-      setSelectedQuote(quoteCopy as Quote);
+      setSelectedQuote(quoteCopy as unknown as Quote);
       setFormOpen(true);
       toast({
         title: 'Quote Duplicated',
@@ -250,7 +250,7 @@ export default function QuotesPage() {
                   key: 'status',
                   label: 'Status',
                   render: (quote) => {
-                    const expired = isExpired(quote.valid_until);
+                    const expired = isExpired(quote.valid_until ?? null);
                     return (
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
@@ -290,7 +290,7 @@ export default function QuotesPage() {
                   label: 'Valid Until',
                   hideOnMobile: true,
                   render: (quote) => {
-                    const expired = isExpired(quote.valid_until);
+                    const expired = isExpired(quote.valid_until ?? null);
                     return (
                       <span
                         className={`text-sm ${expired ? 'text-destructive font-medium' : 'text-muted-foreground'}`}

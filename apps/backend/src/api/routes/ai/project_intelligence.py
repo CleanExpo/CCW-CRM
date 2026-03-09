@@ -6,13 +6,12 @@ Exposes the 10 PI agent skills as HTTP endpoints.
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from src.ai.agents.specialized.project_intelligence_agent import (
     ProjectIntelligenceAgent,
     ScanResult,
-    PrioritizedGap,
 )
 
 logger = structlog.get_logger(__name__)

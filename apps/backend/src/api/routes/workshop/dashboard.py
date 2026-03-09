@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
 from src.db.workshop_models import (
-    BookingStatus,
     Equipment,
     EquipmentStatus,
     ReminderStatus,

@@ -30,7 +30,7 @@ class OllamaClient:
     _client: Any = None
     _lock = asyncio.Lock()
 
-    def __new__(cls) -> "OllamaClient":
+    def __new__(cls) -> OllamaClient:
         """Ensure only one instance exists."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)

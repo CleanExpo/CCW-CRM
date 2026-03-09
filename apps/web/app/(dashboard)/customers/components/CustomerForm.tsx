@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,21 +20,27 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import { useAutosave } from "@/lib/hooks/use-autosave";
-import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { useAutosave } from '@/lib/hooks/use-autosave';
+import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
 
 const formSchema = z.object({
-  customer_number: z.string().min(1, "Customer number is required").max(50, "Customer number must be 50 characters or less"),
-  company_name: z.string().min(1, "Company name is required").max(255, "Company name must be 255 characters or less"),
+  customer_number: z
+    .string()
+    .min(1, 'Customer number is required')
+    .max(50, 'Customer number must be 50 characters or less'),
+  company_name: z
+    .string()
+    .min(1, 'Company name is required')
+    .max(255, 'Company name must be 255 characters or less'),
   contact_name: z.string().optional(),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -74,27 +80,27 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customer_number: "",
-      company_name: "",
-      contact_name: "",
-      email: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      postcode: "",
+      customer_number: '',
+      company_name: '',
+      contact_name: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      postcode: '',
       is_active: true,
     },
   });
 
   // Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = isEdit ? `customer-form-${customer?.id}` : "customer-form-new";
+  const draftKey = isEdit ? `customer-form-${customer?.id}` : 'customer-form-new';
   const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
     key: draftKey,
     formValues: form.watch(),
     onRestore: (draft) => {
       Object.keys(draft).forEach((key) => {
-        form.setValue(key as keyof FormData, draft[key]);
+        form.setValue(key as keyof FormData, draft[key as keyof FormData]);
       });
     },
     enabled: open && !isEdit, // Only autosave for new customers (not edits)
@@ -108,26 +114,26 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
         form.reset({
           customer_number: customer.customer_number,
           company_name: customer.company_name,
-          contact_name: customer.contact_name || "",
-          email: customer.email || "",
-          phone: customer.phone || "",
-          address: customer.address || "",
-          city: customer.city || "",
-          state: customer.state || "",
-          postcode: customer.postcode || "",
+          contact_name: customer.contact_name || '',
+          email: customer.email || '',
+          phone: customer.phone || '',
+          address: customer.address || '',
+          city: customer.city || '',
+          state: customer.state || '',
+          postcode: customer.postcode || '',
           is_active: customer.is_active,
         });
       } else {
         form.reset({
-          customer_number: "",
-          company_name: "",
-          contact_name: "",
-          email: "",
-          phone: "",
-          address: "",
-          city: "",
-          state: "",
-          postcode: "",
+          customer_number: '',
+          company_name: '',
+          contact_name: '',
+          email: '',
+          phone: '',
+          address: '',
+          city: '',
+          state: '',
+          postcode: '',
           is_active: true,
         });
       }
@@ -140,14 +146,14 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       if (isEdit) {
         await apiClient.put(`/api/customers/${customer.id}`, values);
         toast({
-          title: "Success",
-          description: "Customer updated successfully",
+          title: 'Success',
+          description: 'Customer updated successfully',
         });
       } else {
-        await apiClient.post("/api/customers", values);
+        await apiClient.post('/api/customers', values);
         toast({
-          title: "Success",
-          description: "Customer created successfully",
+          title: 'Success',
+          description: 'Customer created successfully',
         });
       }
       clearDraft(); // Clear autosave draft on success
@@ -157,11 +163,11 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       const message =
         error instanceof Error
           ? error.message
-          : `Failed to ${isEdit ? "update" : "create"} customer`;
+          : `Failed to ${isEdit ? 'update' : 'create'} customer`;
       toast({
-        title: "Error",
+        title: 'Error',
         description: message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -170,13 +176,13 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Customer" : "Create Customer"}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Customer' : 'Create Customer'}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the customer information below."
-              : "Add a new customer to your directory."}
+              ? 'Update the customer information below.'
+              : 'Add a new customer to your directory.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -201,9 +207,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                     <FormControl>
                       <Input placeholder="CUST-001" {...field} disabled={isEdit} />
                     </FormControl>
-                    {isEdit && (
-                      <FormDescription>Customer number cannot be changed</FormDescription>
-                    )}
+                    {isEdit && <FormDescription>Customer number cannot be changed</FormDescription>}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -275,11 +279,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="123 Main Street"
-                      className="min-h-[60px]"
-                      {...field}
-                    />
+                    <Textarea placeholder="123 Main Street" className="min-h-[60px]" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -342,10 +342,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -362,7 +359,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? "Saving..." : isEdit ? "Update Customer" : "Create Customer"}
+                {isLoading ? 'Saving...' : isEdit ? 'Update Customer' : 'Create Customer'}
               </Button>
             </div>
           </form>

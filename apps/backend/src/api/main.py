@@ -30,21 +30,22 @@ from .middleware.request_id import RequestIdMiddleware
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
     activities,  # CRM activities
+    agents_monitor,  # Agent monitoring dashboard (UNI-1246)
     approvals,
+    auth_signup,
     backorders,
     bank_feeds,
     billing,  # Stripe subscription billing
     config,
-    crm_health,      # CRM client health scoring (UNI-1114)
-    crm_onboarding,  # CRM onboarding sequences Day-1/7/30 (UNI-1113)
-    crm_personas,    # CRM persona tagging (UNI-1112)
     contacts,  # CRM contacts
     containers,
     contractors,  # Contractor availability management
+    crm_health,  # CRM client health scoring (UNI-1114)
+    crm_onboarding,  # CRM onboarding sequences Day-1/7/30 (UNI-1113)
+    crm_personas,  # CRM persona tagging (UNI-1112)
     cron_jobs,  # Scheduled task endpoints (Vercel Cron)
     customer_orders,
     customers,
-    auth_signup,
     demo_auth,
     demo_dashboard,
     demo_lists,
@@ -66,27 +67,43 @@ from .routes import (
     purchase_orders,
     quotes,
     reconciliation_dashboard,
-    agents_monitor,  # Agent monitoring dashboard (UNI-1246)
     service_requests,
-    warehouse,  # Warehouse operations feed (UNI-1251)
-    settings as settings_routes,  # Account and company settings
     shipments,
     suppliers,
     team,
     translations,
+    warehouse,  # Warehouse operations feed (UNI-1251)
     webhooks,
+)
+from .routes import (
+    settings as settings_routes,  # Account and company settings
 )
 
 # AI-dependent routes - conditional import (requires langchain/langgraph)
 _ai_routes_available = False
 try:
-    from .routes.ai import ai_router, chat, generate, insights, inventory_forecast as ai_inventory_forecast
     from .routes import autonomous_dev, recommendations, search, test_data_gen
+    from .routes.ai import ai_router, chat, generate, insights
+    from .routes.ai import inventory_forecast as ai_inventory_forecast
     _ai_routes_available = True
 except ImportError:
     autonomous_dev = recommendations = search = test_data_gen = ai_inventory_forecast = None  # type: ignore[assignment]
 
-from .routes.integrations import ap2, cin7, cin7_crm, cin7_line_items, cin7_procurement, cin7_stream, cin7_sync, cin7_webhooks, elevenlabs, sendgrid, shopify, shopify_theme, xero
+from .routes.integrations import (
+    ap2,
+    cin7,
+    cin7_crm,
+    cin7_line_items,
+    cin7_procurement,
+    cin7_stream,
+    cin7_sync,
+    cin7_webhooks,
+    elevenlabs,
+    sendgrid,
+    shopify,
+    shopify_theme,
+    xero,
+)
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -520,32 +537,32 @@ except ImportError:
 
 # Cin7 BOM (Bill of Materials) + Production Runs (UNI-1268)
 try:
-    from src.db import cin7_bom_models as _cin7_bom_models  # noqa: F401 - registers models with SQLAlchemy metadata
     from src.api.routes.integrations import cin7_bom
+    from src.db import cin7_bom_models as _cin7_bom_models  # noqa: F401 - registers models with SQLAlchemy metadata
     app.include_router(cin7_bom.router, tags=["Cin7 BOM"])
 except ImportError:
     pass
 
 # Cin7 Sales Order Fulfilment Chain — pick/pack/ship + invoice + payments (UNI-1264)
 try:
-    from src.db import cin7_fulfilment_models as _cin7_fulfilment_models  # noqa: F401
     from src.api.routes.integrations import cin7_fulfilment
+    from src.db import cin7_fulfilment_models as _cin7_fulfilment_models  # noqa: F401
     app.include_router(cin7_fulfilment.router, tags=["Cin7 Fulfilment"])
 except ImportError:
     pass
 
 # Cin7 Shadow Transition System Phase A — gap poller + detection (UNI-1260)
 try:
-    from src.db import cin7_shadow_models as _  # noqa: F401,F811 - registers models with SQLAlchemy metadata
     from src.api.routes.integrations import cin7_shadow_sync
+    from src.db import cin7_shadow_models as _  # noqa: F401,F811 - registers models with SQLAlchemy metadata
     app.include_router(cin7_shadow_sync.router, tags=["Cin7 Shadow Sync"])
 except ImportError:
     pass
 
 # Cin7 Financial/GL Integration — ChartOfAccounts, Journals, AccountMappings (UNI-1269)
 try:
-    from src.db import cin7_gl_models as _cin7_gl_models  # noqa: F401 - registers GL models with SQLAlchemy metadata
     from src.api.routes.integrations import cin7_gl
+    from src.db import cin7_gl_models as _cin7_gl_models  # noqa: F401 - registers GL models with SQLAlchemy metadata
     app.include_router(cin7_gl.router, tags=["Cin7 Financial/GL"])
 except ImportError:
     pass
@@ -576,7 +593,7 @@ except ImportError:
 
 # Cin7 AI agents (forecasting + anomaly detection)
 try:
-    from src.api.routes.ai import cin7_forecast, cin7_anomaly
+    from src.api.routes.ai import cin7_anomaly, cin7_forecast
     app.include_router(cin7_forecast.router, tags=["Cin7 AI Forecasting"])
     app.include_router(cin7_anomaly.router, tags=["Cin7 AI Anomaly Detection"])
 except (ImportError, AttributeError):
@@ -643,7 +660,11 @@ except (ImportError, AttributeError):
 
 # Workshop Management System
 try:
-    from src.api.routes.workshop import equipment as ws_equipment, templates as ws_templates, bookings as ws_bookings, reminders as ws_reminders, dashboard as ws_dashboard
+    from src.api.routes.workshop import bookings as ws_bookings
+    from src.api.routes.workshop import dashboard as ws_dashboard
+    from src.api.routes.workshop import equipment as ws_equipment
+    from src.api.routes.workshop import reminders as ws_reminders
+    from src.api.routes.workshop import templates as ws_templates
     app.include_router(ws_equipment.router, tags=["Workshop"])
     app.include_router(ws_templates.router, tags=["Workshop"])
     app.include_router(ws_bookings.router, tags=["Workshop"])

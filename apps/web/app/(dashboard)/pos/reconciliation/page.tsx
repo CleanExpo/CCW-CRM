@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -27,8 +27,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   RefreshCw,
   Link2,
@@ -41,14 +41,14 @@ import {
   Plus,
   Edit,
   Trash2,
-} from "lucide-react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { FilterPanel, type ReconciliationFilters } from "./components/FilterPanel";
-import { BulkActionsPanel } from "./components/BulkActionsPanel";
-import { ExportDialog } from "./components/ExportDialog";
-import { BankAccountDialog } from "./components/BankAccountDialog";
+} from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { FilterPanel, type ReconciliationFilters } from './components/FilterPanel';
+import { BulkActionsPanel } from './components/BulkActionsPanel';
+import { ExportDialog } from './components/ExportDialog';
+import { BankAccountDialog } from './components/BankAccountDialog';
 
 interface BankAccount {
   id: string;
@@ -56,8 +56,8 @@ interface BankAccount {
   account_number: string;
   bsb: string;
   bank_name: string;
-  account_type: "checking" | "savings" | "credit";
-  feed_provider: "xero" | "yodlee" | "basiq" | "manual";
+  account_type: 'checking' | 'savings' | 'credit';
+  feed_provider: 'xero' | 'yodlee' | 'basiq' | 'manual';
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -88,7 +88,7 @@ interface POSTransaction {
 
 interface ReconciliationAlert {
   type: string;
-  severity: "info" | "warning" | "critical";
+  severity: 'info' | 'warning' | 'critical';
   title: string;
   description: string;
   affected_count: number;
@@ -98,7 +98,7 @@ interface ReconciliationAlert {
 export default function ReconciliationPage() {
   const { toast } = useToast();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [unreconciledFeeds, setUnreconciledFeeds] = useState<BankFeed[]>([]);
   const [unreconciledPOS, setUnreconciledPOS] = useState<POSTransaction[]>([]);
   const [alerts, setAlerts] = useState<ReconciliationAlert[]>([]);
@@ -108,7 +108,7 @@ export default function ReconciliationPage() {
   const [matchDialogOpen, setMatchDialogOpen] = useState(false);
   const [selectedFeed, setSelectedFeed] = useState<BankFeed | null>(null);
   const [selectedPOS, setSelectedPOS] = useState<POSTransaction | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<ReconciliationFilters>({});
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -116,33 +116,33 @@ export default function ReconciliationPage() {
   const [editingBankAccount, setEditingBankAccount] = useState<BankAccount | null>(null);
 
   const formatCurrency = (amount: number | null) => {
-    if (amount === null) return "-";
-    return new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
+    if (amount === null) return '-';
+    return new Intl.NumberFormat('en-AU', {
+      style: 'currency',
+      currency: 'AUD',
     }).format(amount);
   };
 
   // Load bank accounts
   const loadAccounts = useCallback(async () => {
     try {
-      const data = await apiClient.get<BankAccount[]>("/api/bank-feeds/accounts");
+      const data = await apiClient.get<BankAccount[]>('/api/bank-feeds/accounts');
       setAccounts(data);
       if (data.length > 0 && !selectedAccount) {
         setSelectedAccount(data[0].id);
       }
     } catch (error) {
-      console.error("Failed to load accounts:", error);
+      console.error('Failed to load accounts:', error);
     }
   }, [selectedAccount]);
 
   // Load alerts
   const loadAlerts = useCallback(async () => {
     try {
-      const alertsData = await apiClient.get<ReconciliationAlert[]>("/api/bank-feeds/alerts");
+      const alertsData = await apiClient.get<ReconciliationAlert[]>('/api/bank-feeds/alerts');
       setAlerts(alertsData);
     } catch (error) {
-      console.error("Failed to load alerts:", error);
+      console.error('Failed to load alerts:', error);
     }
   }, []);
 
@@ -153,9 +153,7 @@ export default function ReconciliationPage() {
     setLoading(true);
     try {
       const [feeds, transactions] = await Promise.all([
-        apiClient.get<BankFeed[]>(
-          `/api/bank-feeds/unreconciled?account_id=${selectedAccount}`
-        ),
+        apiClient.get<BankFeed[]>(`/api/bank-feeds/unreconciled?account_id=${selectedAccount}`),
         apiClient.get<{ items: POSTransaction[] }>(
           `/api/pos/transactions?reconciliation_status=pending&page_size=100`
         ),
@@ -167,11 +165,11 @@ export default function ReconciliationPage() {
       // Load alerts
       await loadAlerts();
     } catch (error) {
-      console.error("Failed to load data:", error);
+      console.error('Failed to load data:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load reconciliation data",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load reconciliation data',
       });
     } finally {
       setLoading(false);
@@ -197,24 +195,24 @@ export default function ReconciliationPage() {
       const today = new Date();
       const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      await apiClient.post("/api/bank-feeds/sync", {
+      await apiClient.post('/api/bank-feeds/sync', {
         account_id: selectedAccount,
-        start_date: thirtyDaysAgo.toISOString().split("T")[0],
-        end_date: today.toISOString().split("T")[0],
+        start_date: thirtyDaysAgo.toISOString().split('T')[0],
+        end_date: today.toISOString().split('T')[0],
       });
 
       toast({
-        title: "Sync Complete",
-        description: "Bank feeds have been synchronized",
+        title: 'Sync Complete',
+        description: 'Bank feeds have been synchronized',
       });
 
       await loadUnreconciledData();
     } catch (error) {
-      console.error("Sync failed:", error);
+      console.error('Sync failed:', error);
       toast({
-        variant: "destructive",
-        title: "Sync Failed",
-        description: "Failed to sync bank feeds",
+        variant: 'destructive',
+        title: 'Sync Failed',
+        description: 'Failed to sync bank feeds',
       });
     } finally {
       setSyncing(false);
@@ -229,20 +227,20 @@ export default function ReconciliationPage() {
         total: number;
         created: number;
         failed: number;
-      }>("/api/pos/xero/bulk-invoices");
+      }>('/api/pos/xero/bulk-invoices');
 
       toast({
-        title: "Invoices Created",
-        description: `Created ${result.created} invoices. ${result.failed > 0 ? `${result.failed} failed.` : ""}`,
+        title: 'Invoices Created',
+        description: `Created ${result.created} invoices. ${result.failed > 0 ? `${result.failed} failed.` : ''}`,
       });
 
       await loadUnreconciledData();
     } catch (error) {
-      console.error("Bulk invoice creation failed:", error);
+      console.error('Bulk invoice creation failed:', error);
       toast({
-        variant: "destructive",
-        title: "Failed",
-        description: "Failed to create Xero invoices",
+        variant: 'destructive',
+        title: 'Failed',
+        description: 'Failed to create Xero invoices',
       });
     } finally {
       setCreatingInvoices(false);
@@ -261,13 +259,13 @@ export default function ReconciliationPage() {
     if (!selectedFeed || !selectedPOS) return;
 
     try {
-      await apiClient.post("/api/bank-feeds/reconcile", {
+      await apiClient.post('/api/bank-feeds/reconcile', {
         feed_id: selectedFeed.id,
         pos_transaction_id: selectedPOS.id,
       });
 
       toast({
-        title: "Reconciled",
+        title: 'Reconciled',
         description: `Matched ${selectedFeed.reference} to ${selectedPOS.transaction_number}`,
       });
 
@@ -275,9 +273,9 @@ export default function ReconciliationPage() {
       await loadUnreconciledData();
     } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Match Failed",
-        description: error.message || "Failed to reconcile transactions",
+        variant: 'destructive',
+        title: 'Match Failed',
+        description: error.message || 'Failed to reconcile transactions',
       });
     }
   };
@@ -305,22 +303,20 @@ export default function ReconciliationPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Reconciliation</h1>
-          <p className="text-muted-foreground">
-            Match bank transactions to POS sales
-          </p>
+          <p className="text-muted-foreground">Match bank transactions to POS sales</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setIsExportDialogOpen(true)} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="mr-2 h-4 w-4" />
             Export CSV
           </Button>
           <Button onClick={handleBulkCreateInvoices} disabled={creatingInvoices} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${creatingInvoices ? "animate-spin" : ""}`} />
-            {creatingInvoices ? "Creating..." : "Create Xero Invoices"}
+            <RefreshCw className={`mr-2 h-4 w-4 ${creatingInvoices ? 'animate-spin' : ''}`} />
+            {creatingInvoices ? 'Creating...' : 'Create Xero Invoices'}
           </Button>
           <Button onClick={handleSync} disabled={syncing || !selectedAccount}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "Syncing..." : "Sync Bank Feeds"}
+            <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Bank Feeds'}
           </Button>
         </div>
       </div>
@@ -330,9 +326,9 @@ export default function ReconciliationPage() {
         <div className="space-y-2">
           {alerts.map((alert, index) => {
             const severityColors = {
-              info: "bg-blue-50 border-blue-200 text-blue-900",
-              warning: "bg-yellow-50 border-yellow-200 text-yellow-900",
-              critical: "bg-red-50 border-red-200 text-red-900",
+              info: 'bg-blue-50 border-blue-200 text-blue-900',
+              warning: 'bg-yellow-50 border-yellow-200 text-yellow-900',
+              critical: 'bg-red-50 border-red-200 text-red-900',
             };
 
             const severityIcons = {
@@ -349,15 +345,19 @@ export default function ReconciliationPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold">{alert.title}</h3>
-                        <Badge variant={alert.severity === "critical" ? "destructive" : "secondary"}>
+                        <Badge
+                          variant={alert.severity === 'critical' ? 'destructive' : 'secondary'}
+                        >
                           {alert.severity.toUpperCase()}
                         </Badge>
                       </div>
-                      <p className="text-sm mt-1">{alert.description}</p>
+                      <p className="mt-1 text-sm">{alert.description}</p>
                       {alert.affected_count > 0 && (
-                        <p className="text-xs mt-2 opacity-70">
-                          Affected: {alert.affected_count} transaction{alert.affected_count !== 1 ? "s" : ""}
-                          {alert.total_amount > 0 && ` • Total: ${formatCurrency(alert.total_amount)}`}
+                        <p className="mt-2 text-xs opacity-70">
+                          Affected: {alert.affected_count} transaction
+                          {alert.affected_count !== 1 ? 's' : ''}
+                          {alert.total_amount > 0 &&
+                            ` • Total: ${formatCurrency(alert.total_amount)}`}
                         </p>
                       )}
                     </div>
@@ -372,7 +372,7 @@ export default function ReconciliationPage() {
       {/* Account Selector */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Building2 className="h-5 w-5" />
             Bank Account
           </CardTitle>
@@ -392,12 +392,11 @@ export default function ReconciliationPage() {
               </SelectContent>
             </Select>
             {selectedAccountData && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 <span className="font-medium">{selectedAccountData.bank_name}</span>
                 {selectedAccountData.last_feed_sync_at && (
                   <span className="ml-4">
-                    Last sync:{" "}
-                    {format(new Date(selectedAccountData.last_feed_sync_at), "PP p")}
+                    Last sync: {format(new Date(selectedAccountData.last_feed_sync_at), 'PP p')}
                   </span>
                 )}
               </div>
@@ -410,7 +409,7 @@ export default function ReconciliationPage() {
       <FilterPanel
         filters={filters}
         onFilterChange={setFilters}
-        bankAccounts={accounts.map(a => ({ id: a.id, account_name: a.account_name }))}
+        bankAccounts={accounts.map((a) => ({ id: a.id, account_name: a.account_name }))}
       />
 
       {/* Bulk Actions */}
@@ -423,24 +422,25 @@ export default function ReconciliationPage() {
             loadAlerts();
             loadUnreconciledData();
           }}
-          bankFeedData={unreconciledFeeds.map(f => ({ id: f.id, amount: f.credit || -f.debit || 0 }))}
-          posTransactionData={unreconciledPOS.map(t => ({ id: t.id, amount: t.amount }))}
+          bankFeedData={unreconciledFeeds.map((f) => ({
+            id: f.id,
+            amount: f.credit || -(f.debit ?? 0) || 0,
+          }))}
+          posTransactionData={unreconciledPOS.map((t) => ({ id: t.id, amount: t.amount }))}
         />
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-yellow-500/10">
+              <div className="rounded-lg bg-yellow-500/10 p-3">
                 <AlertTriangle className="h-6 w-6 text-yellow-500" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{unreconciledFeeds.length}</div>
-                <div className="text-sm text-muted-foreground">
-                  Unreconciled Bank Transactions
-                </div>
+                <div className="text-muted-foreground text-sm">Unreconciled Bank Transactions</div>
               </div>
             </div>
           </CardContent>
@@ -448,14 +448,12 @@ export default function ReconciliationPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-blue-500/10">
+              <div className="rounded-lg bg-blue-500/10 p-3">
                 <Link2 className="h-6 w-6 text-blue-500" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{unreconciledPOS.length}</div>
-                <div className="text-sm text-muted-foreground">
-                  Unmatched POS Transactions
-                </div>
+                <div className="text-muted-foreground text-sm">Unmatched POS Transactions</div>
               </div>
             </div>
           </CardContent>
@@ -463,14 +461,14 @@ export default function ReconciliationPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-green-500/10">
+              <div className="rounded-lg bg-green-500/10 p-3">
                 <CheckCircle2 className="h-6 w-6 text-green-500" />
               </div>
               <div>
                 <div className="text-2xl font-bold">
                   {unreconciledFeeds.filter((f) => findPotentialMatches(f).length > 0).length}
                 </div>
-                <div className="text-sm text-muted-foreground">Potential Auto-Matches</div>
+                <div className="text-muted-foreground text-sm">Potential Auto-Matches</div>
               </div>
             </div>
           </CardContent>
@@ -481,9 +479,7 @@ export default function ReconciliationPage() {
       <Card>
         <CardHeader>
           <CardTitle>Unreconciled Bank Transactions</CardTitle>
-          <CardDescription>
-            Click "Match" to link a bank transaction to a POS sale
-          </CardDescription>
+          <CardDescription>Click "Match" to link a bank transaction to a POS sale</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -493,8 +489,8 @@ export default function ReconciliationPage() {
               ))}
             </div>
           ) : unreconciledFeeds.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
+            <div className="text-muted-foreground py-8 text-center">
+              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 opacity-20" />
               <p>All bank transactions are reconciled</p>
             </div>
           ) : (
@@ -514,34 +510,24 @@ export default function ReconciliationPage() {
                   const matches = findPotentialMatches(feed);
                   return (
                     <TableRow key={feed.id}>
-                      <TableCell>
-                        {format(new Date(feed.transaction_date), "PP")}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {feed.reference || "-"}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {feed.description}
-                      </TableCell>
+                      <TableCell>{format(new Date(feed.transaction_date), 'PP')}</TableCell>
+                      <TableCell className="font-mono text-sm">{feed.reference || '-'}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{feed.description}</TableCell>
                       <TableCell className="text-right font-medium">
                         {formatCurrency(feed.credit)}
                       </TableCell>
                       <TableCell>
                         {matches.length > 0 ? (
                           <Badge variant="default" className="bg-green-500">
-                            {matches.length} match{matches.length > 1 ? "es" : ""}
+                            {matches.length} match{matches.length > 1 ? 'es' : ''}
                           </Badge>
                         ) : (
                           <Badge variant="secondary">No matches</Badge>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleMatchClick(feed)}
-                        >
-                          <Link2 className="h-4 w-4 mr-1" />
+                        <Button size="sm" variant="outline" onClick={() => handleMatchClick(feed)}>
+                          <Link2 className="mr-1 h-4 w-4" />
                           Match
                         </Button>
                       </TableCell>
@@ -571,23 +557,23 @@ export default function ReconciliationPage() {
                 <CardContent className="pt-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Reference:</span>{" "}
+                      <span className="text-muted-foreground">Reference:</span>{' '}
                       <span className="font-medium">{selectedFeed.reference}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Amount:</span>{" "}
+                      <span className="text-muted-foreground">Amount:</span>{' '}
                       <span className="font-medium text-green-600">
                         {formatCurrency(selectedFeed.credit)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Date:</span>{" "}
+                      <span className="text-muted-foreground">Date:</span>{' '}
                       <span className="font-medium">
-                        {format(new Date(selectedFeed.transaction_date), "PP")}
+                        {format(new Date(selectedFeed.transaction_date), 'PP')}
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Description:</span>{" "}
+                      <span className="text-muted-foreground">Description:</span>{' '}
                       <span className="font-medium">{selectedFeed.description}</span>
                     </div>
                   </div>
@@ -595,12 +581,12 @@ export default function ReconciliationPage() {
               </Card>
 
               <div className="flex items-center justify-center">
-                <ArrowRight className="h-6 w-6 text-muted-foreground" />
+                <ArrowRight className="text-muted-foreground h-6 w-6" />
               </div>
 
               {/* POS Transaction Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
                   placeholder="Search by transaction number or amount..."
                   value={searchTerm}
@@ -610,7 +596,7 @@ export default function ReconciliationPage() {
               </div>
 
               {/* POS Transactions List */}
-              <div className="max-h-[300px] overflow-y-auto border rounded-lg">
+              <div className="max-h-[300px] overflow-y-auto rounded-lg border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -624,21 +610,20 @@ export default function ReconciliationPage() {
                   <TableBody>
                     {filteredPOS.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
+                        <TableCell colSpan={5} className="py-8 text-center">
                           No matching transactions found
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredPOS.map((t) => {
                         const isMatch =
-                          selectedFeed.credit &&
-                          Math.abs(t.amount - selectedFeed.credit) < 0.11;
+                          selectedFeed.credit && Math.abs(t.amount - selectedFeed.credit) < 0.11;
                         return (
                           <TableRow
                             key={t.id}
                             className={`cursor-pointer ${
-                              selectedPOS?.id === t.id ? "bg-primary/10" : ""
-                            } ${isMatch ? "bg-green-50" : ""}`}
+                              selectedPOS?.id === t.id ? 'bg-primary/10' : ''
+                            } ${isMatch ? 'bg-green-50' : ''}`}
                             onClick={() => setSelectedPOS(t)}
                           >
                             <TableCell>
@@ -657,9 +642,7 @@ export default function ReconciliationPage() {
                                 </Badge>
                               )}
                             </TableCell>
-                            <TableCell>
-                              {format(new Date(t.created_at), "PP")}
-                            </TableCell>
+                            <TableCell>{format(new Date(t.created_at), 'PP')}</TableCell>
                             <TableCell className="uppercase">{t.payment_method}</TableCell>
                             <TableCell className="text-right font-medium">
                               {formatCurrency(t.amount)}
@@ -679,7 +662,7 @@ export default function ReconciliationPage() {
               Cancel
             </Button>
             <Button onClick={handleConfirmMatch} disabled={!selectedPOS}>
-              <CheckCircle2 className="h-4 w-4 mr-2" />
+              <CheckCircle2 className="mr-2 h-4 w-4" />
               Confirm Match
             </Button>
           </DialogFooter>
@@ -697,7 +680,7 @@ export default function ReconciliationPage() {
       <BankAccountDialog
         open={isBankAccountDialogOpen}
         onOpenChange={setIsBankAccountDialogOpen}
-        mode={editingBankAccount ? "edit" : "create"}
+        mode={editingBankAccount ? 'edit' : 'create'}
         account={editingBankAccount || undefined}
         onSuccess={() => {
           loadAccounts();

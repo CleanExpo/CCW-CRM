@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
-from src.db.workshop_models import Equipment, EquipmentStatus, ReminderStatus, ServiceReminder
+from src.db.workshop_models import ReminderStatus, ServiceReminder
 from src.services.workshop_scheduler import generate_reminders, get_due_equipment
 
 router = APIRouter(prefix="/api/workshop/reminders", tags=["Workshop"])
