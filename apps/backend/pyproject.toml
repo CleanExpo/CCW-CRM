@@ -65,6 +65,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+exclude = ["src/api/debug_main.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
