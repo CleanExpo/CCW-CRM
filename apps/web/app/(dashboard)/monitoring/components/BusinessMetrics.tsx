@@ -1,14 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   ShoppingCart,
   DollarSign,
@@ -18,8 +12,11 @@ import {
   TrendingUp,
   Package,
   Clock,
-} from "lucide-react";
-import { getBusinessMetrics, type BusinessMetrics as BusinessMetricsType } from "@/lib/api/monitoring";
+} from 'lucide-react';
+import {
+  getBusinessMetrics,
+  type BusinessMetrics as BusinessMetricsType,
+} from '@/lib/api/monitoring';
 
 export function BusinessMetrics() {
   const [metrics, setMetrics] = useState<BusinessMetricsType | null>(null);
@@ -38,8 +35,8 @@ export function BusinessMetrics() {
       const data = await getBusinessMetrics();
       setMetrics(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || "Failed to load business metrics");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load business metrics');
     } finally {
       setLoading(false);
     }
@@ -48,7 +45,7 @@ export function BusinessMetrics() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-sm text-muted-foreground">Loading business metrics...</div>
+        <div className="text-muted-foreground text-sm">Loading business metrics...</div>
       </div>
     );
   }
@@ -57,7 +54,7 @@ export function BusinessMetrics() {
     return (
       <Card className="border-destructive">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-destructive">
+          <div className="text-destructive flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
             <span className="text-sm">{error}</span>
           </div>
@@ -76,12 +73,12 @@ export function BusinessMetrics() {
     <div className="space-y-6">
       {/* POS Metrics */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">POS System</h3>
+        <h3 className="mb-3 text-lg font-semibold">POS System</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             icon={DollarSign}
             label="Today's Volume"
-            value={`$${pos.today.total_volume.toLocaleString("en-US", {
+            value={`$${pos.today.total_volume.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}`}
@@ -91,7 +88,7 @@ export function BusinessMetrics() {
           <MetricCard
             icon={TrendingUp}
             label="Average Transaction"
-            value={`$${pos.today.average_value.toLocaleString("en-US", {
+            value={`$${pos.today.average_value.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}`}
@@ -101,7 +98,7 @@ export function BusinessMetrics() {
             icon={ShoppingCart}
             label="This Week"
             value={pos.this_week.transaction_count.toLocaleString()}
-            subtext={`$${pos.this_week.total_volume.toLocaleString("en-US", {
+            subtext={`$${pos.this_week.total_volume.toLocaleString('en-US', {
               minimumFractionDigits: 2,
             })}`}
             status="neutral"
@@ -113,10 +110,10 @@ export function BusinessMetrics() {
             subtext={`${pos.failure_rate_percent.toFixed(1)}% failure rate`}
             status={
               pos.failure_rate_percent > 5
-                ? "critical"
+                ? 'critical'
                 : pos.failure_rate_percent > 2
-                ? "warning"
-                : "good"
+                  ? 'warning'
+                  : 'good'
             }
           />
         </div>
@@ -124,7 +121,7 @@ export function BusinessMetrics() {
 
       {/* Reconciliation Metrics */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">Bank Reconciliation</h3>
+        <h3 className="mb-3 text-lg font-semibold">Bank Reconciliation</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             icon={CheckCircle2}
@@ -133,10 +130,10 @@ export function BusinessMetrics() {
             subtext={`${reconciliation.reconciled_7d} of ${reconciliation.total_feeds_7d}`}
             status={
               reconciliation.success_rate_percent >= 95
-                ? "good"
+                ? 'good'
                 : reconciliation.success_rate_percent >= 80
-                ? "warning"
-                : "critical"
+                  ? 'warning'
+                  : 'critical'
             }
           />
           <MetricCard
@@ -145,10 +142,10 @@ export function BusinessMetrics() {
             value={reconciliation.unreconciled_total.toString()}
             status={
               reconciliation.unreconciled_total > 50
-                ? "warning"
+                ? 'warning'
                 : reconciliation.unreconciled_total > 100
-                ? "critical"
-                : "good"
+                  ? 'critical'
+                  : 'good'
             }
           />
           <MetricCard
@@ -168,7 +165,7 @@ export function BusinessMetrics() {
 
       {/* Order Metrics */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">Orders</h3>
+        <h3 className="mb-3 text-lg font-semibold">Orders</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             icon={Package}
@@ -180,7 +177,7 @@ export function BusinessMetrics() {
             icon={TrendingUp}
             label="This Week"
             value={orders.this_week.count.toString()}
-            subtext={`$${orders.this_week.total_value.toLocaleString("en-US", {
+            subtext={`$${orders.this_week.total_value.toLocaleString('en-US', {
               minimumFractionDigits: 2,
             })}`}
             status="neutral"
@@ -188,7 +185,7 @@ export function BusinessMetrics() {
           <MetricCard
             icon={DollarSign}
             label="Average Order Value"
-            value={`$${orders.this_week.average_value.toLocaleString("en-US", {
+            value={`$${orders.this_week.average_value.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}`}
@@ -209,25 +206,17 @@ export function BusinessMetrics() {
             <CardDescription>Current order distribution</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <StatusBadge label="Draft" count={orders.by_status.draft} variant="secondary" />
               <StatusBadge label="Pending" count={orders.by_status.pending} variant="default" />
-              <StatusBadge
-                label="Confirmed"
-                count={orders.by_status.confirmed}
-                variant="default"
-              />
+              <StatusBadge label="Confirmed" count={orders.by_status.confirmed} variant="default" />
               <StatusBadge
                 label="Processing"
                 count={orders.by_status.processing}
                 variant="default"
               />
               <StatusBadge label="Shipped" count={orders.by_status.shipped} variant="default" />
-              <StatusBadge
-                label="Delivered"
-                count={orders.by_status.delivered}
-                variant="outline"
-              />
+              <StatusBadge label="Delivered" count={orders.by_status.delivered} variant="outline" />
               <StatusBadge
                 label="Cancelled"
                 count={orders.by_status.cancelled}
@@ -252,33 +241,33 @@ function MetricCard({
   label: string;
   value: string;
   subtext?: string;
-  status: "good" | "warning" | "critical" | "neutral";
+  status: 'good' | 'warning' | 'critical' | 'neutral';
 }) {
   const statusColor = {
-    good: "text-green-600",
-    warning: "text-yellow-600",
-    critical: "text-red-600",
-    neutral: "text-foreground",
+    good: 'text-green-600',
+    warning: 'text-yellow-600',
+    critical: 'text-red-600',
+    neutral: 'text-foreground',
   }[status];
 
   const bgColor = {
-    good: "bg-green-500/10",
-    warning: "bg-yellow-500/10",
-    critical: "bg-red-500/10",
-    neutral: "bg-muted",
+    good: 'bg-green-500/10',
+    warning: 'bg-yellow-500/10',
+    critical: 'bg-red-500/10',
+    neutral: 'bg-muted',
   }[status];
 
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="mb-2 flex items-center gap-2">
           <div className={`rounded p-1.5 ${bgColor}`}>
             <Icon className={`h-4 w-4 ${statusColor}`} />
           </div>
-          <span className="text-xs text-muted-foreground truncate">{label}</span>
+          <span className="text-muted-foreground truncate text-xs">{label}</span>
         </div>
         <p className={`text-xl font-semibold ${statusColor}`}>{value}</p>
-        {subtext && <p className="text-xs text-muted-foreground mt-1">{subtext}</p>}
+        {subtext && <p className="text-muted-foreground mt-1 text-xs">{subtext}</p>}
       </CardContent>
     </Card>
   );
@@ -291,10 +280,10 @@ function StatusBadge({
 }: {
   label: string;
   count: number;
-  variant: "default" | "secondary" | "destructive" | "outline";
+  variant: 'default' | 'secondary' | 'destructive' | 'outline';
 }) {
   return (
-    <div className="flex flex-col items-center gap-1 p-2 rounded-lg border bg-card">
+    <div className="bg-card flex flex-col items-center gap-1 rounded-lg border p-2">
       <Badge variant={variant} className="text-xs">
         {label}
       </Badge>

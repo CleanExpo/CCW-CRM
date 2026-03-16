@@ -28,10 +28,10 @@ export type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'err
 
 export interface WebSocketMessage {
   type: string;
-  data?: any;
+  data?: unknown;
   channel?: string;
   timestamp?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface UseWebSocketOptions {
@@ -57,7 +57,7 @@ export interface UseWebSocketReturn {
   /** Unsubscribe from a channel */
   unsubscribe: (channel: string) => void;
   /** Send a message through WebSocket */
-  sendMessage: (message: any) => void;
+  sendMessage: (message: Record<string, unknown>) => void;
   /** Manually connect */
   connect: () => void;
   /** Manually disconnect */
@@ -93,11 +93,14 @@ export function useWebSocket(
     new Map()
   );
 
-  const log = useCallback((...args: any[]) => {
-    if (debug) {
-      console.log('[WebSocket]', ...args);
-    }
-  }, [debug]);
+  const log = useCallback(
+    (...args: unknown[]) => {
+      if (debug) {
+        console.log('[WebSocket]', ...args);
+      }
+    },
+    [debug]
+  );
 
   const getWebSocketUrl = useCallback(() => {
     // Determine WebSocket protocol based on page protocol
@@ -107,43 +110,52 @@ export function useWebSocket(
     return `${protocol}//${host}/ws/${clientId}`;
   }, [clientId]);
 
-  const sendMessage = useCallback((message: any) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
-      log('Sent message:', message);
-    } else {
-      log('Cannot send message: WebSocket not connected');
-    }
-  }, [log]);
+  const sendMessage = useCallback(
+    (message: Record<string, unknown>) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify(message));
+        log('Sent message:', message);
+      } else {
+        log('Cannot send message: WebSocket not connected');
+      }
+    },
+    [log]
+  );
 
-  const subscribe = useCallback((channel: string, handler: (message: WebSocketMessage) => void) => {
-    // Add handler to channel handlers map
-    if (!channelHandlersRef.current.has(channel)) {
-      channelHandlersRef.current.set(channel, new Set());
-    }
-    channelHandlersRef.current.get(channel)!.add(handler);
+  const subscribe = useCallback(
+    (channel: string, handler: (message: WebSocketMessage) => void) => {
+      // Add handler to channel handlers map
+      if (!channelHandlersRef.current.has(channel)) {
+        channelHandlersRef.current.set(channel, new Set());
+      }
+      channelHandlersRef.current.get(channel)!.add(handler);
 
-    // Send subscribe message to server
-    sendMessage({
-      action: 'subscribe',
-      channel,
-    });
+      // Send subscribe message to server
+      sendMessage({
+        action: 'subscribe',
+        channel,
+      });
 
-    log(`Subscribed to channel: ${channel}`);
-  }, [sendMessage, log]);
+      log(`Subscribed to channel: ${channel}`);
+    },
+    [sendMessage, log]
+  );
 
-  const unsubscribe = useCallback((channel: string) => {
-    // Remove all handlers for this channel
-    channelHandlersRef.current.delete(channel);
+  const unsubscribe = useCallback(
+    (channel: string) => {
+      // Remove all handlers for this channel
+      channelHandlersRef.current.delete(channel);
 
-    // Send unsubscribe message to server
-    sendMessage({
-      action: 'unsubscribe',
-      channel,
-    });
+      // Send unsubscribe message to server
+      sendMessage({
+        action: 'unsubscribe',
+        channel,
+      });
 
-    log(`Unsubscribed from channel: ${channel}`);
-  }, [sendMessage, log]);
+      log(`Unsubscribed from channel: ${channel}`);
+    },
+    [sendMessage, log]
+  );
 
   const startHeartbeat = useCallback(() => {
     if (heartbeatTimeoutRef.current) {
@@ -165,44 +177,49 @@ export function useWebSocket(
     }
   }, []);
 
-  const handleMessage = useCallback((event: MessageEvent) => {
-    try {
-      const message: WebSocketMessage = JSON.parse(event.data);
-      log('Received message:', message);
+  const handleMessage = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const message: WebSocketMessage = JSON.parse(event.data);
+        log('Received message:', message);
 
-      // Handle specific message types
-      if (message.type === 'connection') {
-        log('Connection confirmed:', message);
-        return;
-      }
-
-      if (message.type === 'subscription') {
-        log('Subscription confirmed:', message.channel, message.status);
-        return;
-      }
-
-      // Route message to channel handlers
-      if (message.channel) {
-        const handlers = channelHandlersRef.current.get(message.channel);
-        if (handlers) {
-          handlers.forEach(handler => {
-            try {
-              handler(message);
-            } catch (error) {
-              console.error(`Error in channel handler for ${message.channel}:`, error);
-            }
-          });
+        // Handle specific message types
+        if (message.type === 'connection') {
+          log('Connection confirmed:', message);
+          return;
         }
+
+        if (message.type === 'subscription') {
+          log('Subscription confirmed:', message.channel, message.status);
+          return;
+        }
+
+        // Route message to channel handlers
+        if (message.channel) {
+          const handlers = channelHandlersRef.current.get(message.channel);
+          if (handlers) {
+            handlers.forEach((handler) => {
+              try {
+                handler(message);
+              } catch (error) {
+                console.error(`Error in channel handler for ${message.channel}:`, error);
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
       }
-    } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
-    }
-  }, [log]);
+    },
+    [log]
+  );
 
   const connect = useCallback(() => {
     // Don't reconnect if already connected or connecting
-    if (wsRef.current?.readyState === WebSocket.OPEN ||
-        wsRef.current?.readyState === WebSocket.CONNECTING) {
+    if (
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
+    ) {
       return;
     }
 
@@ -249,7 +266,9 @@ export function useWebSocket(
             maxReconnectDelay
           );
 
-          log(`Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`);
+          log(
+            `Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`
+          );
 
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
@@ -307,6 +326,7 @@ export function useWebSocket(
     return () => {
       disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- connect/disconnect/autoConnect are stable refs; adding them would cause infinite reconnect loops
   }, [clientId]); // Only reconnect if clientId changes
 
   return {

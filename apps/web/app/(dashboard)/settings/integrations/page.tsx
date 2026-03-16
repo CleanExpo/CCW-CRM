@@ -130,6 +130,7 @@ function IntegrationsContent() {
       // Clean up URL
       window.history.replaceState({}, '', '/settings/integrations');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   return (

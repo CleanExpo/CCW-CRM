@@ -72,7 +72,7 @@ interface UseSSEReturn<T> {
   };
 }
 
-export function useSSE<T = any>({
+export function useSSE<T = unknown>({
   url,
   enabled = true,
   autoReconnect = true,
@@ -178,7 +178,9 @@ export function useSSE<T = any>({
           }));
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log(`Reconnecting to SSE... (attempt ${stats.reconnectAttempts + 1})`);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Reconnecting to SSE... (attempt ${stats.reconnectAttempts + 1})`);
+            }
             connect();
           }, reconnectDelay);
         } else if (stats.reconnectAttempts >= maxReconnectAttempts && maxReconnectAttempts > 0) {
@@ -221,6 +223,7 @@ export function useSSE<T = any>({
     return () => {
       close();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- connect/close are stable refs; adding them would cause infinite reconnect loops
   }, [enabled, url]); // Only reconnect when URL or enabled changes
 
   return {

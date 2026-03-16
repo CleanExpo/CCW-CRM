@@ -2,7 +2,7 @@
  * AI Insights API client
  */
 
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
 export interface DateRange {
   start_date?: string;
@@ -10,7 +10,7 @@ export interface DateRange {
 }
 
 export interface GenerateInsightsRequest {
-  category: "sales" | "inventory" | "customers" | "orders" | "all";
+  category: 'sales' | 'inventory' | 'customers' | 'orders' | 'all';
   date_range?: DateRange;
   filters?: Record<string, unknown>;
   user_id?: string;
@@ -22,7 +22,7 @@ export interface Insight {
   finding: string;
   impact: string;
   recommendation: string;
-  priority: "high" | "medium" | "low";
+  priority: 'high' | 'medium' | 'low';
   category: string;
   generated_at: string;
 }
@@ -33,8 +33,8 @@ export interface GenerateInsightsResponse {
   priority_insights: Insight[];
   total_insights: number;
   tools_used: string[];
-  summary: Record<string, any>;
-  metadata: Record<string, any>;
+  summary: Record<string, unknown>;
+  metadata: Record<string, unknown>;
 }
 
 export interface DashboardInsightsResponse {
@@ -56,21 +56,14 @@ export interface InsightHistoryResponse {
 export async function generateInsights(
   request: GenerateInsightsRequest
 ): Promise<GenerateInsightsResponse> {
-  return apiClient.post<GenerateInsightsResponse>(
-    "/api/ai/insights/generate",
-    request
-  );
+  return apiClient.post<GenerateInsightsResponse>('/api/ai/insights/generate', request);
 }
 
 /**
  * Get recent insights for dashboard display
  */
-export async function getDashboardInsights(
-  limit: number = 10
-): Promise<DashboardInsightsResponse> {
-  return apiClient.get<DashboardInsightsResponse>(
-    `/api/ai/insights/dashboard?limit=${limit}`
-  );
+export async function getDashboardInsights(limit: number = 10): Promise<DashboardInsightsResponse> {
+  return apiClient.get<DashboardInsightsResponse>(`/api/ai/insights/dashboard?limit=${limit}`);
 }
 
 /**
@@ -87,10 +80,8 @@ export async function getInsightHistory(
     page_size: page_size.toString(),
   });
 
-  if (category) params.append("category", category);
-  if (priority) params.append("priority", priority);
+  if (category) params.append('category', category);
+  if (priority) params.append('priority', priority);
 
-  return apiClient.get<InsightHistoryResponse>(
-    `/api/ai/insights/history?${params.toString()}`
-  );
+  return apiClient.get<InsightHistoryResponse>(`/api/ai/insights/history?${params.toString()}`);
 }

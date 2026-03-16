@@ -9,7 +9,7 @@ import { Loader2, CheckCircle2, Package, Users, FileText, ShoppingCart } from 'l
 import { apiClient } from '@/lib/api/client';
 
 interface SampleDataStepProps {
-  onComplete: (data?: any) => void;
+  onComplete: (data?: Record<string, unknown>) => void;
   onSkip: () => void;
   onBack: () => void;
   canGoBack: boolean;

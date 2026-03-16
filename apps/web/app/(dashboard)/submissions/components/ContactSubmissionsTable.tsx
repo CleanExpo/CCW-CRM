@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api/client";
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api/client';
 import {
   Table,
   TableBody,
@@ -9,20 +9,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Mail, Calendar } from "lucide-react";
-import { format } from "date-fns";
-import { SubmissionDetailDialog } from "./SubmissionDetailDialog";
-import { toast } from "sonner";
+} from '@/components/ui/select';
+import { Mail, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
+import { SubmissionDetailDialog } from './SubmissionDetailDialog';
+import { toast } from 'sonner';
 
 interface ContactSubmission {
   id: string;
@@ -32,7 +32,7 @@ interface ContactSubmission {
   subject: string | null;
   message: string;
   source: string;
-  status: "new" | "read" | "responded" | "closed";
+  status: 'new' | 'read' | 'responded' | 'closed';
   created_at: string;
   updated_at: string;
 }
@@ -46,10 +46,10 @@ interface PaginatedResponse {
 }
 
 const statusColors = {
-  new: "bg-blue-100 text-blue-800",
-  read: "bg-yellow-100 text-yellow-800",
-  responded: "bg-green-100 text-green-800",
-  closed: "bg-gray-100 text-gray-800",
+  new: 'bg-blue-100 text-blue-800',
+  read: 'bg-yellow-100 text-yellow-800',
+  responded: 'bg-green-100 text-green-800',
+  closed: 'bg-gray-100 text-gray-800',
 };
 
 interface ContactSubmissionsTableProps {
@@ -58,7 +58,11 @@ interface ContactSubmissionsTableProps {
   onDataChange?: () => void;
 }
 
-export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChange }: ContactSubmissionsTableProps) {
+export function ContactSubmissionsTable({
+  searchQuery,
+  statusFilter,
+  onDataChange,
+}: ContactSubmissionsTableProps) {
   const [data, setData] = useState<PaginatedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +72,7 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
 
   useEffect(() => {
     fetchSubmissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchQuery, statusFilter]);
 
   async function fetchSubmissions() {
@@ -83,8 +88,8 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
       }
       const response = await apiClient.get<PaginatedResponse>(url);
       setData(response);
-    } catch (err: any) {
-      setError(err.message || "Failed to load submissions");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load submissions');
     } finally {
       setLoading(false);
     }
@@ -95,11 +100,11 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
       await apiClient.patch(`/api/contact-submissions/${submissionId}/status`, {
         status: newStatus,
       });
-      toast.success("Status updated");
+      toast.success('Status updated');
       fetchSubmissions();
       onDataChange?.(); // Notify parent to refresh statistics
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to update status");
+      toast.error(error instanceof Error ? error.message : 'Failed to update status');
     }
   }
 
@@ -109,12 +114,12 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
   }
 
   if (loading && !data) {
-    return <div className="text-center py-8 text-muted-foreground">Loading submissions...</div>;
+    return <div className="text-muted-foreground py-8 text-center">Loading submissions...</div>;
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <p className="text-destructive mb-4">{error}</p>
         <Button onClick={fetchSubmissions} variant="outline">
           Retry
@@ -125,8 +130,8 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
 
   if (!data || data.items.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+      <div className="text-muted-foreground py-12 text-center">
+        <Mail className="mx-auto mb-4 h-12 w-12 opacity-50" />
         <p className="text-lg font-medium">No contact submissions yet</p>
         <p className="text-sm">Submissions from the Contact Us form will appear here</p>
       </div>
@@ -151,13 +156,13 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
               {data.items.map((submission) => (
                 <TableRow
                   key={submission.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="hover:bg-muted/50 cursor-pointer"
                   onClick={() => handleRowClick(submission.id)}
                 >
                   <TableCell className="font-medium">{submission.name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <Mail className="text-muted-foreground h-4 w-4" />
                       {submission.email}
                     </div>
                   </TableCell>
@@ -183,9 +188,9 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm">
                       <Calendar className="h-4 w-4" />
-                      {format(new Date(submission.created_at), "MMM d, yyyy")}
+                      {format(new Date(submission.created_at), 'MMM d, yyyy')}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -197,8 +202,8 @@ export function ContactSubmissionsTable({ searchQuery, statusFilter, onDataChang
         {/* Pagination */}
         {data.total_pages > 1 && (
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {(page - 1) * data.page_size + 1} to{" "}
+            <p className="text-muted-foreground text-sm">
+              Showing {(page - 1) * data.page_size + 1} to{' '}
               {Math.min(page * data.page_size, data.total)} of {data.total} submissions
             </p>
             <div className="flex gap-2">

@@ -109,6 +109,7 @@ export const CategorySalesChart = memo(function CategorySalesChart({
                 }
               />
               <Tooltip
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 content={(props: any) => (
                   <CustomTooltip active={props.active} payload={props.payload} />
                 )}

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,10 +12,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { CheckSquare, XSquare, Zap } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { bulkReconcile } from "@/lib/api/pos";
+} from '@/components/ui/alert-dialog';
+import { CheckSquare, XSquare, Zap } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { bulkReconcile } from '@/lib/api/pos';
 
 interface BulkActionsPanelProps {
   selectedItems: Set<string>;
@@ -70,9 +70,9 @@ export function BulkActionsPanel({
 
       if (matches.length === 0) {
         toast({
-          title: "No Matches Found",
-          description: "Could not find any matching POS transactions for the selected items.",
-          variant: "destructive",
+          title: 'No Matches Found',
+          description: 'Could not find any matching POS transactions for the selected items.',
+          variant: 'destructive',
         });
         setShowAutoMatchDialog(false);
         return;
@@ -82,18 +82,18 @@ export function BulkActionsPanel({
       const result = await bulkReconcile(matches);
 
       toast({
-        title: "Auto-Match Complete",
+        title: 'Auto-Match Complete',
         description: `Successfully matched ${result.matched_count} of ${selectedCount} transactions. ${result.failed_count} failed.`,
       });
 
       onClearSelection();
       onSuccess();
       setShowAutoMatchDialog(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to auto-match transactions",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to auto-match transactions',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -104,9 +104,10 @@ export function BulkActionsPanel({
     // For manual bulk reconcile, we need user to have already paired them
     // This is just a placeholder - in real implementation, user would select pairs
     toast({
-      title: "Not Implemented",
-      description: "Manual bulk reconcile requires pre-paired transactions. Use auto-match instead.",
-      variant: "destructive",
+      title: 'Not Implemented',
+      description:
+        'Manual bulk reconcile requires pre-paired transactions. Use auto-match instead.',
+      variant: 'destructive',
     });
     setShowReconcileDialog(false);
   };
@@ -122,9 +123,9 @@ export function BulkActionsPanel({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <CheckSquare className="h-5 w-5 text-primary" />
+                <CheckSquare className="text-primary h-5 w-5" />
                 <span className="font-medium">
-                  {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
+                  {selectedCount} {selectedCount === 1 ? 'item' : 'items'} selected
                 </span>
               </div>
             </div>
@@ -140,12 +141,7 @@ export function BulkActionsPanel({
                 Auto-Match Selected
               </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onClearSelection}
-                disabled={isLoading}
-              >
+              <Button variant="outline" size="sm" onClick={onClearSelection} disabled={isLoading}>
                 <XSquare className="mr-2 h-4 w-4" />
                 Clear Selection
               </Button>
@@ -161,8 +157,8 @@ export function BulkActionsPanel({
             <AlertDialogTitle>Auto-Match Transactions?</AlertDialogTitle>
             <AlertDialogDescription>
               This will attempt to automatically match {selectedCount} selected bank feed
-              {selectedCount === 1 ? "" : "s"} with POS transactions based on amount (within
-              $0.10 tolerance).
+              {selectedCount === 1 ? '' : 's'} with POS transactions based on amount (within $0.10
+              tolerance).
               <br />
               <br />
               Matches found will be automatically reconciled. Continue?
@@ -171,7 +167,7 @@ export function BulkActionsPanel({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleAutoMatch} disabled={isLoading}>
-              {isLoading ? "Processing..." : "Auto-Match"}
+              {isLoading ? 'Processing...' : 'Auto-Match'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -184,13 +180,13 @@ export function BulkActionsPanel({
             <AlertDialogTitle>Bulk Reconcile?</AlertDialogTitle>
             <AlertDialogDescription>
               This will reconcile {selectedCount} selected transaction
-              {selectedCount === 1 ? "" : "s"}. This action cannot be undone.
+              {selectedCount === 1 ? '' : 's'}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleBulkReconcile} disabled={isLoading}>
-              {isLoading ? "Processing..." : "Reconcile"}
+              {isLoading ? 'Processing...' : 'Reconcile'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

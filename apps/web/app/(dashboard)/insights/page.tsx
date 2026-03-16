@@ -32,6 +32,7 @@ export default function InsightsPage() {
 
   useEffect(() => {
     loadDashboardInsights();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDashboardInsights = async () => {
@@ -70,7 +71,7 @@ export default function InsightsPage() {
       const response = await generateInsights(request);
 
       if (response.summary?.error) {
-        throw new Error(response.summary.error);
+        throw new Error(String(response.summary.error));
       }
 
       toast({

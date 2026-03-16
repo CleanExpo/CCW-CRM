@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { apiClient } from "@/lib/api/client";
-import type { Supplier } from "../types";
-import { useRecentItems } from "@/lib/hooks/use-recent-items";
+} from '@/components/ui/select';
+import { apiClient } from '@/lib/api/client';
+import type { Supplier } from '../types';
+import { useRecentItems } from '@/lib/hooks/use-recent-items';
 
 interface SupplierSelectProps {
   value: string;
@@ -26,7 +26,7 @@ export function SupplierSelect({ value, onSelect, disabled }: SupplierSelectProp
   // PHASE 4: Recent suppliers cache - speeds up PO entry
   const { recentItems: recentSuppliers, addRecentItem: addRecentSupplier } =
     useRecentItems<Supplier>({
-      key: "recent-suppliers",
+      key: 'recent-suppliers',
       maxItems: 10,
     });
 
@@ -36,12 +36,12 @@ export function SupplierSelect({ value, onSelect, disabled }: SupplierSelectProp
         setLoading(true);
         setError(null);
         const response = await apiClient.get<{ items: Supplier[] }>(
-          "/api/suppliers?is_active=true&page_size=100"
+          '/api/suppliers?is_active=true&page_size=100'
         );
         setSuppliers(response.items || []);
-      } catch (err: any) {
-        console.error("Failed to load suppliers:", err);
-        setError(err.message || "Failed to load suppliers");
+      } catch (err: unknown) {
+        console.error('Failed to load suppliers:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load suppliers');
       } finally {
         setLoading(false);
       }
@@ -103,7 +103,7 @@ export function SupplierSelect({ value, onSelect, disabled }: SupplierSelectProp
                 🕒 {supplier.supplier_code} - {supplier.company_name}
               </SelectItem>
             ))}
-            <div className="border-t my-1" />
+            <div className="my-1 border-t" />
           </>
         )}
         {suppliers

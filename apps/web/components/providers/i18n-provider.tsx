@@ -5,15 +5,15 @@
  * in client components.
  */
 
-"use client";
+'use client';
 
-import { NextIntlClientProvider } from "next-intl";
-import { type ReactNode } from "react";
+import { NextIntlClientProvider } from 'next-intl';
+import { type ReactNode } from 'react';
 
 interface I18nProviderProps {
   children: ReactNode;
   locale: string;
-  messages: Record<string, any>;
+  messages: Record<string, string | Record<string, unknown>>;
 }
 
 export function I18nProvider({ children, locale, messages }: I18nProviderProps) {

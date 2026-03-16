@@ -85,6 +85,7 @@ export default function PurchaseOrdersPage() {
 
   useEffect(() => {
     loadPurchaseOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchQuery, statusFilter, locationFilter]);
 
   async function loadPurchaseOrders() {

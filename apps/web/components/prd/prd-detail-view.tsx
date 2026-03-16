@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import type { PRDDetail } from "@/types/prd";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import type { PRDDetail } from '@/types/prd';
 import {
   ArrowLeft,
   Download,
@@ -17,37 +17,40 @@ import {
   TestTube,
   Calendar,
   CheckCircle2,
-  Clock
-} from "lucide-react";
+  Clock,
+} from 'lucide-react';
 
 interface PRDDetailViewProps {
   prd: PRDDetail;
 }
 
 export function PRDDetailView({ prd }: PRDDetailViewProps) {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState('overview');
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
-  const renderSection = (title: string, content: any) => {
+  const renderSection = (
+    title: string,
+    content: string | Record<string, unknown> | null | undefined
+  ) => {
     if (!content) {
       return <p className="text-muted-foreground">Not generated</p>;
     }
 
-    if (typeof content === "string") {
+    if (typeof content === 'string') {
       return <div className="prose dark:prose-invert max-w-none">{content}</div>;
     }
 
     return (
-      <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
+      <pre className="bg-muted overflow-x-auto rounded-lg p-4 text-sm">
         {JSON.stringify(content, null, 2)}
       </pre>
     );
@@ -67,12 +70,12 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
             </Link>
           </div>
           <h1 className="text-3xl font-bold">Product Requirements Document</h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-4 text-sm">
             <span className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
               Generated {formatDate(prd.created_at)}
             </span>
-            <Badge variant={prd.status === "completed" ? "default" : "secondary"}>
+            <Badge variant={prd.status === 'completed' ? 'default' : 'secondary'}>
               {prd.status}
             </Badge>
           </div>
@@ -84,35 +87,35 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">{prd.total_user_stories}</div>
-            <div className="text-xs text-muted-foreground mt-1">User Stories</div>
+            <div className="text-primary text-2xl font-bold">{prd.total_user_stories}</div>
+            <div className="text-muted-foreground mt-1 text-xs">User Stories</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">{prd.total_api_endpoints}</div>
-            <div className="text-xs text-muted-foreground mt-1">API Endpoints</div>
+            <div className="text-primary text-2xl font-bold">{prd.total_api_endpoints}</div>
+            <div className="text-muted-foreground mt-1 text-xs">API Endpoints</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">{prd.total_test_scenarios}</div>
-            <div className="text-xs text-muted-foreground mt-1">Test Scenarios</div>
+            <div className="text-primary text-2xl font-bold">{prd.total_test_scenarios}</div>
+            <div className="text-muted-foreground mt-1 text-xs">Test Scenarios</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">{prd.total_sprints}</div>
-            <div className="text-xs text-muted-foreground mt-1">Sprints</div>
+            <div className="text-primary text-2xl font-bold">{prd.total_sprints}</div>
+            <div className="text-muted-foreground mt-1 text-xs">Sprints</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">{prd.estimated_duration_weeks}w</div>
-            <div className="text-xs text-muted-foreground mt-1">Est. Duration</div>
+            <div className="text-primary text-2xl font-bold">{prd.estimated_duration_weeks}w</div>
+            <div className="text-muted-foreground mt-1 text-xs">Est. Duration</div>
           </CardContent>
         </Card>
       </div>
@@ -121,27 +124,27 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className="mr-2 h-4 w-4" />
             Overview
           </TabsTrigger>
           <TabsTrigger value="features">
-            <Users className="h-4 w-4 mr-2" />
+            <Users className="mr-2 h-4 w-4" />
             Features
           </TabsTrigger>
           <TabsTrigger value="technical">
-            <Code className="h-4 w-4 mr-2" />
+            <Code className="mr-2 h-4 w-4" />
             Technical
           </TabsTrigger>
           <TabsTrigger value="testing">
-            <TestTube className="h-4 w-4 mr-2" />
+            <TestTube className="mr-2 h-4 w-4" />
             Testing
           </TabsTrigger>
           <TabsTrigger value="roadmap">
-            <Calendar className="h-4 w-4 mr-2" />
+            <Calendar className="mr-2 h-4 w-4" />
             Roadmap
           </TabsTrigger>
           <TabsTrigger value="raw">
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className="mr-2 h-4 w-4" />
             Raw Data
           </TabsTrigger>
         </TabsList>
@@ -153,9 +156,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
               <CardTitle>Original Requirements</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="prose dark:prose-invert max-w-none">
-                {prd.requirements}
-              </div>
+              <div className="prose dark:prose-invert max-w-none">{prd.requirements}</div>
             </CardContent>
           </Card>
 
@@ -164,9 +165,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
               <CardHeader>
                 <CardTitle>Executive Summary</CardTitle>
               </CardHeader>
-              <CardContent>
-                {renderSection("Executive Summary", prd.executive_summary)}
-              </CardContent>
+              <CardContent>{renderSection('Executive Summary', prd.executive_summary)}</CardContent>
             </Card>
           )}
 
@@ -175,9 +174,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
               <CardHeader>
                 <CardTitle>Problem Statement</CardTitle>
               </CardHeader>
-              <CardContent>
-                {renderSection("Problem Statement", prd.problem_statement)}
-              </CardContent>
+              <CardContent>{renderSection('Problem Statement', prd.problem_statement)}</CardContent>
             </Card>
           )}
 
@@ -186,9 +183,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
               <CardHeader>
                 <CardTitle>PRD Analysis</CardTitle>
               </CardHeader>
-              <CardContent>
-                {renderSection("Analysis", prd.prd_analysis)}
-              </CardContent>
+              <CardContent>{renderSection('Analysis', prd.prd_analysis)}</CardContent>
             </Card>
           )}
         </TabsContent>
@@ -202,9 +197,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
                 Detailed breakdown of features into user stories and acceptance criteria
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {renderSection("Features", prd.feature_decomposition)}
-            </CardContent>
+            <CardContent>{renderSection('Features', prd.feature_decomposition)}</CardContent>
           </Card>
         </TabsContent>
 
@@ -217,9 +210,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
                 Architecture, database schema, API endpoints, and security considerations
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {renderSection("Technical Spec", prd.technical_spec)}
-            </CardContent>
+            <CardContent>{renderSection('Technical Spec', prd.technical_spec)}</CardContent>
           </Card>
         </TabsContent>
 
@@ -232,9 +223,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
                 Unit, integration, and E2E test scenarios with coverage strategy
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {renderSection("Test Plan", prd.test_plan)}
-            </CardContent>
+            <CardContent>{renderSection('Test Plan', prd.test_plan)}</CardContent>
           </Card>
         </TabsContent>
 
@@ -247,9 +236,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
                 Sprint breakdown, milestones, timeline, and risk mitigation
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {renderSection("Roadmap", prd.roadmap)}
-            </CardContent>
+            <CardContent>{renderSection('Roadmap', prd.roadmap)}</CardContent>
           </Card>
         </TabsContent>
 
@@ -263,7 +250,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
+              <pre className="bg-muted overflow-x-auto rounded-lg p-4 text-sm">
                 {JSON.stringify(prd, null, 2)}
               </pre>
             </CardContent>

@@ -75,7 +75,7 @@ interface SystemAlert {
   severity: 'info' | 'warning' | 'error' | 'critical';
   title: string;
   message: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   acknowledged: boolean;
   acknowledged_at?: string;
@@ -206,7 +206,9 @@ export default function MonitoringPage() {
         chartQueries.map((q) => getRangeData({ query: q.query, duration, step }))
       );
 
-      const toChartData = (result: PromiseSettledResult<any>): ChartDataPoint[] => {
+      const toChartData = (
+        result: PromiseSettledResult<{ series?: Array<{ values?: TimeSeriesPoint[] }> }>
+      ): ChartDataPoint[] => {
         if (result.status !== 'fulfilled') return [];
         const values = result.value?.series?.[0]?.values || [];
         return values.map((v: TimeSeriesPoint) => ({
@@ -842,7 +844,14 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MetricTooltip({ active, payload, label, unit }: any) {
+interface MetricTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number; payload?: { time?: string } }>;
+  label?: string;
+  unit?: string;
+}
+
+function MetricTooltip({ active, payload, unit }: MetricTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-background rounded-lg border p-2.5 shadow-md">

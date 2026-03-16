@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from 'react';
 
 interface SearchState {
   search?: string;
   page?: number;
   filters?: Record<string, string | boolean | number>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- index signature needs `any` for dynamic property access across consumers
   [key: string]: any;
 }
 
@@ -49,7 +50,7 @@ export function useSearchState({ key, defaultState = {} }: UseSearchStateOptions
   const setState = useCallback(
     (newState: SearchState | ((prev: SearchState) => SearchState)) => {
       setStateInternal((prev) => {
-        const updated = typeof newState === "function" ? newState(prev) : newState;
+        const updated = typeof newState === 'function' ? newState(prev) : newState;
 
         try {
           sessionStorage.setItem(`search-state-${key}`, JSON.stringify(updated));
@@ -75,7 +76,7 @@ export function useSearchState({ key, defaultState = {} }: UseSearchStateOptions
 
   // Update specific field
   const updateField = useCallback(
-    (field: string, value: any) => {
+    (field: string, value: string | number | boolean) => {
       setState((prev) => ({ ...prev, [field]: value }));
     },
     [setState]

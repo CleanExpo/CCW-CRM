@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useState, useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -21,49 +21,49 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { QuoteLineItems, LineItem } from "./QuoteLineItems";
-import { Quote, Customer, QuoteItem } from "../types";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { QuoteLineItems, LineItem } from './QuoteLineItems';
+import { Quote, Customer, QuoteItem } from '../types';
 // PHASE 4: Autosave + Recent Items imports
-import { useAutosave } from "@/lib/hooks/use-autosave";
-import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
-import { useRecentItems } from "@/lib/hooks/use-recent-items";
+import { useAutosave } from '@/lib/hooks/use-autosave';
+import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
+import { useRecentItems } from '@/lib/hooks/use-recent-items';
 // PHASE C: AI Quote Assistant imports
-import { AIQuoteGenerator } from "@/components/ai/AIQuoteGenerator";
-import { Sparkles } from "lucide-react";
+import { AIQuoteGenerator } from '@/components/ai/AIQuoteGenerator';
+import { Sparkles } from 'lucide-react';
 
 const QUOTE_STATUSES = [
-  { value: "draft", label: "Draft" },
-  { value: "pending", label: "Pending" },
-  { value: "sent", label: "Sent" },
-  { value: "accepted", label: "Accepted" },
-  { value: "rejected", label: "Rejected" },
-  { value: "expired", label: "Expired" },
+  { value: 'draft', label: 'Draft' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'sent', label: 'Sent' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'expired', label: 'Expired' },
 ] as const;
 
 const formSchema = z.object({
-  customer_id: z.string().min(1, "Customer is required"),
-  fulfillment_location: z.string().min(1, "Fulfillment location is required"),
-  status: z.string().min(1, "Status is required"),
-  quote_date: z.string().min(1, "Quote date is required"),
+  customer_id: z.string().min(1, 'Customer is required'),
+  fulfillment_location: z.string().min(1, 'Fulfillment location is required'),
+  status: z.string().min(1, 'Status is required'),
+  quote_date: z.string().min(1, 'Quote date is required'),
   valid_until: z.string().optional(),
   notes: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-interface QuoteFormProps{
+interface QuoteFormProps {
   quote?: Quote | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -79,7 +79,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>("brisbane");
+  const [selectedLocation, setSelectedLocation] = useState<string>('brisbane');
   const [aiDialogOpen, setAiDialogOpen] = useState(false); // PHASE C: AI dialog state
   const { toast } = useToast();
   const isEdit = !!quote;
@@ -87,24 +87,24 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customer_id: "",
-      fulfillment_location: "brisbane",
-      status: "draft",
-      quote_date: new Date().toISOString().split("T")[0],
-      valid_until: "",
-      notes: "",
+      customer_id: '',
+      fulfillment_location: 'brisbane',
+      status: 'draft',
+      quote_date: new Date().toISOString().split('T')[0],
+      valid_until: '',
+      notes: '',
     },
   });
 
   // PHASE 4: Recent customers cache
   const { recentItems: recentCustomers, addRecentItem: addRecentCustomer } =
     useRecentItems<Customer>({
-      key: "recent-customers",
+      key: 'recent-customers',
       maxItems: 10,
     });
 
   // PHASE 4: Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = isEdit ? `quote-form-${quote?.id}` : "quote-form-new";
+  const draftKey = isEdit ? `quote-form-${quote?.id}` : 'quote-form-new';
   const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
     key: draftKey,
     formValues: {
@@ -113,12 +113,13 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
     },
     onRestore: (draft) => {
       // Restore form fields
-      if (draft.customer_id) form.setValue("customer_id", draft.customer_id);
-      if (draft.fulfillment_location) form.setValue("fulfillment_location", draft.fulfillment_location);
-      if (draft.status) form.setValue("status", draft.status);
-      if (draft.quote_date) form.setValue("quote_date", draft.quote_date);
-      if (draft.valid_until) form.setValue("valid_until", draft.valid_until);
-      if (draft.notes) form.setValue("notes", draft.notes);
+      if (draft.customer_id) form.setValue('customer_id', draft.customer_id);
+      if (draft.fulfillment_location)
+        form.setValue('fulfillment_location', draft.fulfillment_location);
+      if (draft.status) form.setValue('status', draft.status);
+      if (draft.quote_date) form.setValue('quote_date', draft.quote_date);
+      if (draft.valid_until) form.setValue('valid_until', draft.valid_until);
+      if (draft.notes) form.setValue('notes', draft.notes);
       // Restore line items
       if (Array.isArray(draft.lineItems) && draft.lineItems.length > 0) {
         setLineItems(draft.lineItems);
@@ -132,10 +133,12 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   useEffect(() => {
     async function loadCustomers() {
       try {
-        const response = await apiClient.get<CustomersResponse>("/api/customers?page=1&page_size=100");
+        const response = await apiClient.get<CustomersResponse>(
+          '/api/customers?page=1&page_size=100'
+        );
         setCustomers(response.items || []);
       } catch (error: unknown) {
-        console.error("Failed to load customers:", error);
+        console.error('Failed to load customers:', error);
       }
     }
     loadCustomers();
@@ -144,15 +147,19 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   // Reset form when quote changes or dialog opens
   useEffect(() => {
     if (quote) {
-      const location = quote.fulfillment_location || "brisbane";
+      const location = quote.fulfillment_location || 'brisbane';
       setSelectedLocation(location);
       form.reset({
         customer_id: quote.customer_id,
         fulfillment_location: location,
         status: quote.status,
-        quote_date: quote.quote_date ? new Date(quote.quote_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-        valid_until: quote.valid_until ? new Date(quote.valid_until).toISOString().split("T")[0] : "",
-        notes: quote.notes || "",
+        quote_date: quote.quote_date
+          ? new Date(quote.quote_date).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        valid_until: quote.valid_until
+          ? new Date(quote.valid_until).toISOString().split('T')[0]
+          : '',
+        notes: quote.notes || '',
       });
       // Convert decimal strings to numbers for proper calculations
       const rawItems: QuoteItem[] = quote.items || quote.quote_items || [];
@@ -170,16 +177,16 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       // Default valid_until to 30 days from now
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 30);
-      const validUntilDefault = futureDate.toISOString().split("T")[0];
+      const validUntilDefault = futureDate.toISOString().split('T')[0];
 
-      setSelectedLocation("brisbane");
+      setSelectedLocation('brisbane');
       form.reset({
-        customer_id: "",
-        fulfillment_location: "brisbane",
-        status: "draft",
-        quote_date: new Date().toISOString().split("T")[0],
+        customer_id: '',
+        fulfillment_location: 'brisbane',
+        status: 'draft',
+        quote_date: new Date().toISOString().split('T')[0],
         valid_until: validUntilDefault,
-        notes: "",
+        notes: '',
       });
       setLineItems([]);
     }
@@ -191,7 +198,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
     const errors: string[] = [];
 
     if (lineItems.length === 0) {
-      errors.push("At least one line item is required");
+      errors.push('At least one line item is required');
     }
 
     lineItems.forEach((item, index) => {
@@ -209,7 +216,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (validUntilDate < today) {
-        errors.push("Valid Until date must be in the future");
+        errors.push('Valid Until date must be in the future');
       }
     }
 
@@ -236,14 +243,14 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       if (isEdit && quote) {
         await apiClient.put(`/api/quotes/${quote.id}`, payload);
         toast({
-          title: "Success",
-          description: "Quote updated successfully",
+          title: 'Success',
+          description: 'Quote updated successfully',
         });
       } else {
-        await apiClient.post("/api/quotes", payload);
+        await apiClient.post('/api/quotes', payload);
         toast({
-          title: "Success",
-          description: "Quote created successfully",
+          title: 'Success',
+          description: 'Quote created successfully',
         });
       }
 
@@ -260,12 +267,10 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       onSuccess();
     } catch (error: unknown) {
       const message =
-        error instanceof Error
-          ? error.message
-          : `Failed to ${isEdit ? "update" : "create"} quote`;
+        error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} quote`;
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -276,261 +281,259 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   const total = lineItems.reduce((sum, item) => sum + item.line_total, 0);
 
   // PHASE C: Handler for AI-generated quote data
-  const handleAIQuoteGenerated = (aiQuoteData: any) => {
+  const handleAIQuoteGenerated = (aiQuoteData: Record<string, unknown>) => {
     // Pre-fill customer if provided
     if (aiQuoteData.customer_id) {
-      form.setValue("customer_id", aiQuoteData.customer_id);
+      form.setValue('customer_id', aiQuoteData.customer_id as string);
     }
 
     // Pre-fill notes with AI description
     if (aiQuoteData.notes) {
-      form.setValue("notes", aiQuoteData.notes);
+      form.setValue('notes', aiQuoteData.notes as string);
     }
 
     // Pre-fill line items
     if (aiQuoteData.items && Array.isArray(aiQuoteData.items)) {
-      const mappedItems = aiQuoteData.items.map((item: any) => ({
-        product_id: item.product_id,
-        product_name: item.name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        line_total: item.line_total,
+      const mappedItems = (aiQuoteData.items as Array<Record<string, unknown>>).map((item) => ({
+        product_id: item.product_id as string,
+        product_name: item.name as string,
+        quantity: item.quantity as number,
+        unit_price: item.unit_price as number,
+        line_total: item.line_total as number,
       }));
       setLineItems(mappedItems);
     }
 
     toast({
-      title: "Quote Pre-Filled",
-      description: `AI suggested ${aiQuoteData.items?.length || 0} products. Review and adjust as needed.`,
+      title: 'Quote Pre-Filled',
+      description: `AI suggested ${Array.isArray(aiQuoteData.items) ? aiQuoteData.items.length : 0} products. Review and adjust as needed.`,
     });
   };
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between w-full">
-            <span>{isEdit ? "Edit Quote" : "Create Quote"}</span>
-            {!isEdit && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAiDialogOpen(true)}
-                type="button"
-              >
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate with AI
-              </Button>
-            )}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Update the quote information and line items below."
-              : "Fill in the quote details and add line items to create a new quote."}
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* PHASE 4: Draft Recovery Alert */}
-        {hasDraft && !isEdit && draftMetadata && (
-          <DraftRecoveryAlert
-            savedAt={draftMetadata.savedAt}
-            onRestore={loadDraft}
-            onDiscard={clearDraft}
-            message="You have unsaved quote data. Would you like to restore it?"
-          />
-        )}
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Fulfillment Location Selection */}
-            <FormField
-              control={form.control}
-              name="fulfillment_location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fulfillment Location</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      setSelectedLocation(value);
-                    }}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="brisbane">Brisbane</SelectItem>
-                      <SelectItem value="sydney">Sydney</SelectItem>
-                      <SelectItem value="melbourne">Melbourne</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex w-full items-center justify-between">
+              <span>{isEdit ? 'Edit Quote' : 'Create Quote'}</span>
+              {!isEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAiDialogOpen(true)}
+                  type="button"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate with AI
+                </Button>
               )}
-            />
+            </DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? 'Update the quote information and line items below.'
+                : 'Fill in the quote details and add line items to create a new quote.'}
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="grid grid-cols-2 gap-4">
+          {/* PHASE 4: Draft Recovery Alert */}
+          {hasDraft && !isEdit && draftMetadata && (
+            <DraftRecoveryAlert
+              savedAt={draftMetadata.savedAt}
+              onRestore={loadDraft}
+              onDiscard={clearDraft}
+              message="You have unsaved quote data. Would you like to restore it?"
+            />
+          )}
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Fulfillment Location Selection */}
               <FormField
                 control={form.control}
-                name="customer_id"
+                name="fulfillment_location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Customer</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>Fulfillment Location</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setSelectedLocation(value);
+                      }}
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a customer" />
+                          <SelectValue placeholder="Select location" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* PHASE 4: Show recent customers first */}
-                        {recentCustomers.length > 0 && (
-                          <>
-                            {recentCustomers.map((customer) => (
-                              <SelectItem key={`recent-${customer.id}`} value={customer.id}>
-                                🕒 {customer.customer_number} - {customer.company_name}
+                        <SelectItem value="brisbane">Brisbane</SelectItem>
+                        <SelectItem value="sydney">Sydney</SelectItem>
+                        <SelectItem value="melbourne">Melbourne</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="customer_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a customer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {/* PHASE 4: Show recent customers first */}
+                          {recentCustomers.length > 0 && (
+                            <>
+                              {recentCustomers.map((customer) => (
+                                <SelectItem key={`recent-${customer.id}`} value={customer.id}>
+                                  🕒 {customer.customer_number} - {customer.company_name}
+                                </SelectItem>
+                              ))}
+                              <div className="my-1 border-t" />
+                            </>
+                          )}
+                          {customers
+                            .filter((c) => !recentCustomers.some((recent) => recent.id === c.id))
+                            .map((customer) => (
+                              <SelectItem key={customer.id} value={customer.id}>
+                                {customer.customer_number} - {customer.company_name}
                               </SelectItem>
                             ))}
-                            <div className="border-t my-1" />
-                          </>
-                        )}
-                        {customers
-                          .filter(
-                            (c) => !recentCustomers.some((recent) => recent.id === c.id)
-                          )
-                          .map((customer) => (
-                            <SelectItem key={customer.id} value={customer.id}>
-                              {customer.customer_number} - {customer.company_name}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {QUOTE_STATUSES.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {status.label}
                             </SelectItem>
                           ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="quote_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quote Date</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
+                        <Input type="date" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {QUOTE_STATUSES.map((status) => (
-                          <SelectItem key={status.value} value={status.value}>
-                            {status.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="valid_until"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valid Until</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="quote_date"
+                name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quote Date</FormLabel>
+                    <FormLabel>Notes</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Textarea
+                        placeholder="Quote notes or special terms..."
+                        className="resize-none"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="valid_until"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valid Until</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <QuoteLineItems
+                items={lineItems}
+                onChange={setLineItems}
+                errors={lineItemErrors}
+                selectedLocation={selectedLocation}
               />
-            </div>
 
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Quote notes or special terms..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <QuoteLineItems
-              items={lineItems}
-              onChange={setLineItems}
-              errors={lineItemErrors}
-              selectedLocation={selectedLocation}
-            />
-
-            {lineItems.length > 0 && (
-              <div className="rounded-lg border p-4 bg-muted/50">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-base font-bold">
-                    <span>Quote Total:</span>
-                    <span>${total.toFixed(2)}</span>
+              {lineItems.length > 0 && (
+                <div className="bg-muted/50 rounded-lg border p-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-base font-bold">
+                      <span>Quote Total:</span>
+                      <span>${total.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : isEdit ? "Update Quote" : "Create Quote"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Saving...' : isEdit ? 'Update Quote' : 'Create Quote'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
-    {/* PHASE C: AI Quote Assistant */}
-    <AIQuoteGenerator
-      open={aiDialogOpen}
-      onOpenChange={setAiDialogOpen}
-      customerId={form.watch("customer_id")}
-      onQuoteGenerated={handleAIQuoteGenerated}
-    />
+      {/* PHASE C: AI Quote Assistant */}
+      <AIQuoteGenerator
+        open={aiDialogOpen}
+        onOpenChange={setAiDialogOpen}
+        customerId={form.watch('customer_id')}
+        onQuoteGenerated={handleAIQuoteGenerated}
+      />
     </>
   );
 }

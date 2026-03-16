@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -22,15 +22,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -38,8 +38,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,20 +49,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { apiClient } from "@/lib/api/client";
-import { Plus, Edit, Trash2, Search, UserPlus } from "lucide-react";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import { Plus, Edit, Trash2, Search, UserPlus } from 'lucide-react';
 
 // Form validation schema
 const staffSchema = z.object({
-  staff_code: z.string()
-    .min(1, "Staff code is required")
-    .regex(/^[A-Z]{2,3}-[A-Z]+$/, "Format: QLD-JOHN or NSW-MARY"),
-  full_name: z.string().min(1, "Full name is required"),
-  email: z.string().email("Invalid email format").optional().or(z.literal("")),
-  phone: z.string().optional().or(z.literal("")),
-  primary_location_code: z.string().min(1, "Primary location is required"),
+  staff_code: z
+    .string()
+    .min(1, 'Staff code is required')
+    .regex(/^[A-Z]{2,3}-[A-Z]+$/, 'Format: QLD-JOHN or NSW-MARY'),
+  full_name: z.string().min(1, 'Full name is required'),
+  email: z.string().email('Invalid email format').optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  primary_location_code: z.string().min(1, 'Primary location is required'),
   is_active: z.boolean().default(true),
 });
 
@@ -93,8 +94,8 @@ export default function SalesStaffPage() {
   const [staff, setStaff] = useState<SalesStaff[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<SalesStaff | null>(null);
@@ -104,11 +105,11 @@ export default function SalesStaffPage() {
   const form = useForm<StaffFormData>({
     resolver: zodResolver(staffSchema),
     defaultValues: {
-      staff_code: "",
-      full_name: "",
-      email: "",
-      phone: "",
-      primary_location_code: "",
+      staff_code: '',
+      full_name: '',
+      email: '',
+      phone: '',
+      primary_location_code: '',
       is_active: true,
     },
   });
@@ -117,28 +118,29 @@ export default function SalesStaffPage() {
   useEffect(() => {
     loadStaff();
     loadLocations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadStaff() {
     try {
-      const response = await apiClient.get<{ data: SalesStaff[] }>("/api/pos/staff");
+      const response = await apiClient.get<{ data: SalesStaff[] }>('/api/pos/staff');
       setStaff(response.data || []);
     } catch (error) {
-      console.error("Failed to load sales staff:", error);
+      console.error('Failed to load sales staff:', error);
       toast({
-        title: "Error",
-        description: "Failed to load sales staff. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load sales staff. Please try again.',
+        variant: 'destructive',
       });
     }
   }
 
   async function loadLocations() {
     try {
-      const response = await apiClient.get<{ data: Location[] }>("/api/pos/locations");
+      const response = await apiClient.get<{ data: Location[] }>('/api/pos/locations');
       setLocations(response.data || []);
     } catch (error) {
-      console.error("Failed to load locations:", error);
+      console.error('Failed to load locations:', error);
     }
   }
 
@@ -150,14 +152,14 @@ export default function SalesStaffPage() {
         // Update existing staff
         await apiClient.put(`/api/pos/staff/${editingStaff.id}`, values);
         toast({
-          title: "Success",
+          title: 'Success',
           description: `${values.full_name} updated successfully.`,
         });
       } else {
         // Create new staff
-        await apiClient.post("/api/pos/staff", values);
+        await apiClient.post('/api/pos/staff', values);
         toast({
-          title: "Success",
+          title: 'Success',
           description: `${values.full_name} created successfully.`,
         });
       }
@@ -169,11 +171,12 @@ export default function SalesStaffPage() {
       setIsDialogOpen(false);
       setEditingStaff(null);
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save staff member. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'Failed to save staff member. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -189,7 +192,7 @@ export default function SalesStaffPage() {
       await apiClient.delete(`/api/pos/staff/${deletingStaff.id}`);
 
       toast({
-        title: "Success",
+        title: 'Success',
         description: `${deletingStaff.full_name} deleted successfully.`,
       });
 
@@ -199,11 +202,14 @@ export default function SalesStaffPage() {
       // Close dialog
       setIsDeleteDialogOpen(false);
       setDeletingStaff(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete staff member. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to delete staff member. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -215,8 +221,8 @@ export default function SalesStaffPage() {
     form.reset({
       staff_code: staffMember.staff_code,
       full_name: staffMember.full_name,
-      email: staffMember.email || "",
-      phone: staffMember.phone || "",
+      email: staffMember.email || '',
+      phone: staffMember.phone || '',
       primary_location_code: staffMember.primary_location_code,
       is_active: staffMember.is_active,
     });
@@ -226,11 +232,11 @@ export default function SalesStaffPage() {
   function handleCreate() {
     setEditingStaff(null);
     form.reset({
-      staff_code: "",
-      full_name: "",
-      email: "",
-      phone: "",
-      primary_location_code: "",
+      staff_code: '',
+      full_name: '',
+      email: '',
+      phone: '',
+      primary_location_code: '',
       is_active: true,
     });
     setIsDialogOpen(true);
@@ -248,15 +254,13 @@ export default function SalesStaffPage() {
       s.staff_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (s.email && s.email.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesLocation =
-      locationFilter === "all" ||
-      s.primary_location_code === locationFilter;
+    const matchesLocation = locationFilter === 'all' || s.primary_location_code === locationFilter;
 
     return matchesSearch && matchesLocation;
   });
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Sales Staff</h1>
@@ -275,11 +279,11 @@ export default function SalesStaffPage() {
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium mb-2 block">Search</label>
+              <label className="mb-2 block text-sm font-medium">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
                 <Input
                   placeholder="Search by name, code, or email..."
                   value={searchQuery}
@@ -290,7 +294,7 @@ export default function SalesStaffPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Location</label>
+              <label className="mb-2 block text-sm font-medium">Location</label>
               <Select value={locationFilter} onValueChange={setLocationFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="All locations" />
@@ -313,21 +317,19 @@ export default function SalesStaffPage() {
       <Card>
         <CardHeader>
           <CardTitle>Staff Members ({filteredStaff.length})</CardTitle>
-          <CardDescription>
-            Sales staff assigned to POS terminals and locations
-          </CardDescription>
+          <CardDescription>Sales staff assigned to POS terminals and locations</CardDescription>
         </CardHeader>
         <CardContent>
           {filteredStaff.length === 0 ? (
-            <div className="text-center py-12">
-              <UserPlus className="mx-auto h-12 w-12 text-muted-foreground" />
+            <div className="py-12 text-center">
+              <UserPlus className="text-muted-foreground mx-auto h-12 w-12" />
               <p className="mt-4 text-lg font-medium">No sales staff found</p>
               <p className="text-muted-foreground">
-                {searchQuery || locationFilter !== "all"
-                  ? "Try adjusting your filters"
-                  : "Get started by creating your first staff member"}
+                {searchQuery || locationFilter !== 'all'
+                  ? 'Try adjusting your filters'
+                  : 'Get started by creating your first staff member'}
               </p>
-              {!searchQuery && locationFilter === "all" && (
+              {!searchQuery && locationFilter === 'all' && (
                 <Button onClick={handleCreate} className="mt-4">
                   <Plus className="mr-2 h-4 w-4" />
                   Add First Staff Member
@@ -352,25 +354,22 @@ export default function SalesStaffPage() {
                   <TableRow key={staffMember.id}>
                     <TableCell className="font-medium">{staffMember.staff_code}</TableCell>
                     <TableCell>{staffMember.full_name}</TableCell>
-                    <TableCell>{staffMember.email || "—"}</TableCell>
-                    <TableCell>{staffMember.phone || "—"}</TableCell>
+                    <TableCell>{staffMember.email || '—'}</TableCell>
+                    <TableCell>{staffMember.phone || '—'}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {locations.find((l) => l.code === staffMember.primary_location_code)?.name || staffMember.primary_location_code}
+                        {locations.find((l) => l.code === staffMember.primary_location_code)
+                          ?.name || staffMember.primary_location_code}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={staffMember.is_active ? "default" : "secondary"}>
-                        {staffMember.is_active ? "Active" : "Inactive"}
+                      <Badge variant={staffMember.is_active ? 'default' : 'secondary'}>
+                        {staffMember.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(staffMember)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(staffMember)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -378,7 +377,7 @@ export default function SalesStaffPage() {
                           size="sm"
                           onClick={() => handleDeleteClick(staffMember)}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="text-destructive h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -394,19 +393,15 @@ export default function SalesStaffPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {editingStaff ? "Edit Staff Member" : "Add Staff Member"}
-            </DialogTitle>
+            <DialogTitle>{editingStaff ? 'Edit Staff Member' : 'Add Staff Member'}</DialogTitle>
             <DialogDescription>
-              {editingStaff
-                ? "Update staff member information"
-                : "Create a new sales staff member"}
+              {editingStaff ? 'Update staff member information' : 'Create a new sales staff member'}
             </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="staff_code"
@@ -414,15 +409,9 @@ export default function SalesStaffPage() {
                     <FormItem>
                       <FormLabel>Staff Code</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="QLD-JOHN"
-                          {...field}
-                          disabled={!!editingStaff}
-                        />
+                        <Input placeholder="QLD-JOHN" {...field} disabled={!!editingStaff} />
                       </FormControl>
-                      <FormDescription>
-                        Format: STATE-NAME (e.g., QLD-JOHN)
-                      </FormDescription>
+                      <FormDescription>Format: STATE-NAME (e.g., QLD-JOHN)</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -449,11 +438,7 @@ export default function SalesStaffPage() {
                     <FormItem>
                       <FormLabel>Email (Optional)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="john@example.com"
-                          {...field}
-                        />
+                        <Input type="email" placeholder="john@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -480,10 +465,7 @@ export default function SalesStaffPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Primary Location</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select location" />
@@ -497,9 +479,7 @@ export default function SalesStaffPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        Default location for routing sales
-                      </FormDescription>
+                      <FormDescription>Default location for routing sales</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -512,8 +492,8 @@ export default function SalesStaffPage() {
                     <FormItem>
                       <FormLabel>Status</FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(value === "true")}
-                        defaultValue={field.value ? "true" : "false"}
+                        onValueChange={(value) => field.onChange(value === 'true')}
+                        defaultValue={field.value ? 'true' : 'false'}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -545,11 +525,7 @@ export default function SalesStaffPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading
-                    ? "Saving..."
-                    : editingStaff
-                    ? "Update Staff"
-                    : "Create Staff"}
+                  {isLoading ? 'Saving...' : editingStaff ? 'Update Staff' : 'Create Staff'}
                 </Button>
               </DialogFooter>
             </form>
@@ -563,14 +539,12 @@ export default function SalesStaffPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {deletingStaff?.full_name} (
-              {deletingStaff?.staff_code}). This action cannot be undone.
+              This will permanently delete {deletingStaff?.full_name} ({deletingStaff?.staff_code}).
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeletingStaff(null)}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeletingStaff(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

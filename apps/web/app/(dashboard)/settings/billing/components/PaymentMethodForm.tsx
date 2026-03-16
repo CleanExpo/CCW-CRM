@@ -1,12 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { CreditCard, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { CreditCard, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentMethodFormProps {
   onSubmit: (paymentMethodId: string) => Promise<void>;
@@ -18,10 +25,10 @@ export function PaymentMethodForm({ onSubmit, onCancel }: PaymentMethodFormProps
   const [isLoading, setIsLoading] = useState(false);
 
   // Simplified version for MVP - in production, use Stripe Elements
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [cvc, setCvc] = useState("");
-  const [name, setName] = useState("");
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvc, setCvc] = useState('');
+  const [name, setName] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,14 +54,14 @@ export function PaymentMethodForm({ onSubmit, onCancel }: PaymentMethodFormProps
       await onSubmit(mockPaymentMethodId);
 
       toast({
-        title: "Payment Method Added",
-        description: "Your payment method has been securely saved",
+        title: 'Payment Method Added',
+        description: 'Your payment method has been securely saved',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to add payment method",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to add payment method',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -68,15 +75,13 @@ export function PaymentMethodForm({ onSubmit, onCancel }: PaymentMethodFormProps
           <CreditCard className="h-5 w-5" />
           Add Payment Method
         </CardTitle>
-        <CardDescription>
-          Your payment information is securely processed by Stripe
-        </CardDescription>
+        <CardDescription>Your payment information is securely processed by Stripe</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {/* Note: In production, replace this with Stripe CardElement */}
-          <div className="rounded-md border border-input bg-muted p-4">
-            <p className="text-sm text-muted-foreground mb-4">
+          <div className="border-input bg-muted rounded-md border p-4">
+            <p className="text-muted-foreground mb-4 text-sm">
               🔒 Stripe Elements integration placeholder
             </p>
 
@@ -133,7 +138,7 @@ export function PaymentMethodForm({ onSubmit, onCancel }: PaymentMethodFormProps
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             By providing your payment information, you authorize CCW ERP to charge your payment
             method for the subscription amount each billing period.
           </p>

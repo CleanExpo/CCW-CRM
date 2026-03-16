@@ -19,12 +19,12 @@
  * ```
  */
 
-import { useCallback, useState } from "react";
-import { apiClient } from "@/lib/api/client";
+import { useCallback, useState } from 'react';
+import { apiClient } from '@/lib/api/client';
 
 interface FormAutoFillOptions {
   /** Type of form: "order", "quote", "purchase_order", "customer" */
-  formType: "order" | "quote" | "purchase_order" | "customer";
+  formType: 'order' | 'quote' | 'purchase_order' | 'customer';
 
   /** Customer ID for order/quote forms */
   customerId?: string;
@@ -74,7 +74,7 @@ interface AutoFillSuggestions {
   /** Valid until date (for quotes) */
   valid_until?: string;
 
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface DuplicateCustomer {
@@ -116,9 +116,7 @@ interface UseFormAutoFillReturn {
   clear: () => void;
 }
 
-export function useFormAutoFill(
-  options: FormAutoFillOptions
-): UseFormAutoFillReturn {
+export function useFormAutoFill(options: FormAutoFillOptions): UseFormAutoFillReturn {
   const [suggestions, setSuggestions] = useState<AutoFillSuggestions | null>(null);
   const [confidence, setConfidence] = useState<Record<string, number>>({});
   const [source, setSource] = useState<Record<string, string>>({});
@@ -138,7 +136,7 @@ export function useFormAutoFill(
         source: Record<string, string>;
         duplicates: DuplicateCustomer[];
         message?: string | null;
-      }>("/api/ai/form-autofill", {
+      }>('/api/ai/form-autofill', {
         form_type: options.formType,
         customer_id: options.customerId,
         supplier_id: options.supplierId,
@@ -153,8 +151,8 @@ export function useFormAutoFill(
       setSource(response.source || {});
       setDuplicates(response.duplicates || []);
       setMessage(response.message || null);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch auto-fill suggestions");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch auto-fill suggestions');
       setSuggestions(null);
       setConfidence({});
       setSource({});

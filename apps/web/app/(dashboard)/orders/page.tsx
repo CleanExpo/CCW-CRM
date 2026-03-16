@@ -165,7 +165,7 @@ export default function OrdersPage() {
   };
 
   const handleExport = () => {
-    exportOrdersToCSV(orders);
+    exportOrdersToCSV(orders as unknown as Record<string, unknown>[]);
     toast({
       title: 'Export Successful',
       description: `Exported ${orders.length} orders to CSV`,
@@ -173,7 +173,7 @@ export default function OrdersPage() {
   };
 
   const handleExportPDF = () => {
-    exportOrdersToPDF(orders);
+    exportOrdersToPDF(orders as unknown as Record<string, unknown>[]);
     toast({ title: 'PDF Export', description: 'Print dialog opening…' });
   };
 
@@ -203,10 +203,10 @@ export default function OrdersPage() {
         description: `Invoice created — redirecting to invoice.`,
       });
       window.location.href = `/invoices/${invoice.id}`;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to generate invoice',
+        description: error instanceof Error ? error.message : 'Failed to generate invoice',
         variant: 'destructive',
       });
     }

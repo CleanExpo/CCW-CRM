@@ -121,7 +121,7 @@ export function exportCustomersToCSV(customers: Record<string, unknown>[]): void
 /**
  * Export orders to CSV
  */
-export function exportOrdersToCSV(orders: any[]): void {
+export function exportOrdersToCSV(orders: Record<string, unknown>[]): void {
   const headers = [
     'order_number',
     'customer_name',
@@ -135,10 +135,10 @@ export function exportOrdersToCSV(orders: any[]): void {
   const data = orders.map((order) => ({
     order_number: order.order_number,
     customer_name: order.customer_name || '',
-    order_date: new Date(order.order_date).toLocaleDateString(),
+    order_date: new Date(order.order_date as string).toLocaleDateString(),
     status: order.status,
     total: order.total,
-    item_count: order.item_count || order.items?.length || 0,
+    item_count: order.item_count || (order.items as unknown[] | undefined)?.length || 0,
     notes: order.notes || '',
   }));
 
@@ -232,7 +232,7 @@ export function exportToPDF(
 /**
  * Export orders to PDF (browser print)
  */
-export function exportOrdersToPDF(orders: any[]): void {
+export function exportOrdersToPDF(orders: Record<string, unknown>[]): void {
   const columns = [
     { key: 'order_number', label: 'Order #' },
     { key: 'customer_name', label: 'Customer' },
@@ -269,7 +269,7 @@ export function exportOrdersToPDF(orders: any[]): void {
 /**
  * Export quotes to PDF (browser print)
  */
-export function exportQuotesToPDF(quotes: any[]): void {
+export function exportQuotesToPDF(quotes: Record<string, unknown>[]): void {
   const columns = [
     { key: 'quote_number', label: 'Quote #' },
     { key: 'customer_name', label: 'Customer' },
@@ -407,7 +407,7 @@ export function exportPurchaseOrdersToCSV(orders: Record<string, unknown>[]): vo
 /**
  * Export quotes to CSV
  */
-export function exportQuotesToCSV(quotes: any[]): void {
+export function exportQuotesToCSV(quotes: Record<string, unknown>[]): void {
   const headers = [
     'quote_number',
     'customer_name',
@@ -422,11 +422,11 @@ export function exportQuotesToCSV(quotes: any[]): void {
   const data = quotes.map((quote) => ({
     quote_number: quote.quote_number,
     customer_name: quote.customer_name || '',
-    quote_date: new Date(quote.quote_date).toLocaleDateString(),
-    valid_until: new Date(quote.valid_until).toLocaleDateString(),
+    quote_date: new Date(quote.quote_date as string).toLocaleDateString(),
+    valid_until: new Date(quote.valid_until as string).toLocaleDateString(),
     status: quote.status,
     total: quote.total,
-    item_count: quote.item_count || quote.items?.length || 0,
+    item_count: quote.item_count || (quote.items as unknown[] | undefined)?.length || 0,
     notes: quote.notes || '',
   }));
 

@@ -50,7 +50,7 @@ interface ProductTranslation {
   sku: string;
   name: string;
   category: string;
-  translations: Record<string, any>;
+  translations: Record<string, unknown>;
 }
 
 interface TranslationEditDialogProps {
@@ -157,10 +157,10 @@ export function TranslationEditDialog({
         title: 'Translation Generated',
         description: 'AI-powered translation has been generated. Review and save if correct.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to generate translation',
+        description: error instanceof Error ? error.message : 'Failed to generate translation',
         variant: 'destructive',
       });
     } finally {
@@ -180,10 +180,10 @@ export function TranslationEditDialog({
 
       setOpen(false);
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save translation',
+        description: error instanceof Error ? error.message : 'Failed to save translation',
         variant: 'destructive',
       });
     } finally {

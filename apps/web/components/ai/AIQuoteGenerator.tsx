@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,19 +8,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Sparkles, Loader2 } from "lucide-react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Sparkles, Loader2 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AIQuoteGeneratorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   customerId?: string;
-  onQuoteGenerated: (quoteData: any) => void;
+  onQuoteGenerated: (quoteData: Record<string, unknown>) => void;
 }
 
 /**
@@ -44,40 +44,41 @@ export function AIQuoteGenerator({
   onQuoteGenerated,
 }: AIQuoteGeneratorProps) {
   const { toast } = useToast();
-  const [requirements, setRequirements] = useState("");
+  const [requirements, setRequirements] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = async () => {
     if (!requirements.trim()) {
       toast({
-        title: "Requirements needed",
-        description: "Please describe what the customer needs",
-        variant: "destructive",
+        title: 'Requirements needed',
+        description: 'Please describe what the customer needs',
+        variant: 'destructive',
       });
       return;
     }
 
     setIsGenerating(true);
     try {
-      const response = await apiClient.post("/api/ai/generate/quote", {
+      const response = await apiClient.post('/api/ai/generate/quote', {
         requirements: requirements.trim(),
         customer_id: customerId || null,
       });
 
       toast({
-        title: "Quote Generated",
-        description: "AI has suggested products and pricing. Review and adjust as needed.",
+        title: 'Quote Generated',
+        description: 'AI has suggested products and pricing. Review and adjust as needed.',
       });
 
-      onQuoteGenerated(response);
+      onQuoteGenerated(response as Record<string, unknown>);
       onOpenChange(false);
-      setRequirements(""); // Clear for next use
-    } catch (error: any) {
-      console.error("Failed to generate quote:", error);
+      setRequirements(''); // Clear for next use
+    } catch (error: unknown) {
+      console.error('Failed to generate quote:', error);
       toast({
-        title: "Generation Failed",
-        description: error.message || "AI quote generation failed. Please try again.",
-        variant: "destructive",
+        title: 'Generation Failed',
+        description:
+          error instanceof Error ? error.message : 'AI quote generation failed. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsGenerating(false);
@@ -86,7 +87,7 @@ export function AIQuoteGenerator({
 
   const handleCancel = () => {
     onOpenChange(false);
-    setRequirements("");
+    setRequirements('');
   };
 
   return (
@@ -94,7 +95,7 @@ export function AIQuoteGenerator({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkles className="text-primary h-5 w-5" />
             Generate Quote with AI
           </DialogTitle>
           <DialogDescription>
@@ -116,9 +117,9 @@ export function AIQuoteGenerator({
             />
           </div>
 
-          <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
-            <p className="font-medium mb-2">💡 Tips for best results:</p>
-            <ul className="list-disc list-inside space-y-1">
+          <div className="bg-muted text-muted-foreground rounded-lg p-4 text-sm">
+            <p className="mb-2 font-medium">💡 Tips for best results:</p>
+            <ul className="list-inside list-disc space-y-1">
               <li>Be specific about quantities and product types</li>
               <li>Mention the customer's business type if relevant</li>
               <li>Include any special requirements or constraints</li>
