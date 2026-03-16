@@ -205,6 +205,23 @@ export type {
   MarketingAIStats,
 } from './marketing';
 
+// Marketplace API client (multi-channel sync)
+export { marketplaceApi } from './marketplace';
+export type {
+  SetupField,
+  ChannelInfo,
+  ChannelListResponse,
+  ConnectResponse,
+  ProductListing,
+  SyncProductsResponse,
+  SyncStatusChannel,
+  SyncStatusResponse,
+  SyncInventoryResponse,
+  MarketplaceOrder,
+  OrderFeedResponse,
+  ChannelSetupFieldsResponse,
+} from './marketplace';
+
 // Cin7 Fulfilment API client (UNI-1264)
 export { cin7FulfilmentApi } from './cin7-fulfilment';
 export type {
@@ -270,3 +287,211 @@ export type {
   WorkflowTemplateCreateInput,
   WorkflowTemplateUpdateInput,
 } from './workflows';
+
+// Billing API client (Stripe subscription management)
+export { billingApi } from './billing';
+export type {
+  Subscription,
+  SubscriptionTier,
+  SubscriptionStatus,
+  BillingInterval,
+  SubscribeRequest,
+  UpdateSubscriptionRequest,
+  Invoice as BillingInvoice,
+  PaymentMethod,
+} from './billing';
+
+// Workshop API client (equipment servicing, bookings, reminders)
+export { workshopApi } from './workshop';
+export type {
+  Equipment,
+  EquipmentCreate,
+  EquipmentStatus,
+  ServiceTemplate,
+  ServiceTemplateItem,
+  WorkshopBooking,
+  BookingStatus,
+  ServiceReminder,
+  ReminderStatus,
+  DashboardData as WorkshopDashboardData,
+} from './workshop';
+
+// Invoices API client (UNI-173)
+export { invoicesApi } from './invoices';
+
+// AI Chat API client
+export {
+  createNewConversation,
+  sendMessage,
+  streamMessage,
+  getConversationHistory,
+  deleteConversation,
+} from './ai-chat';
+
+// AI Generate API client
+export { generateQuote, generateEmail, generateSummary } from './ai-generate';
+
+// AI Insights API client
+export { generateInsights, getDashboardInsights, getInsightHistory } from './ai-insights';
+
+// AP2 Payment API client
+export {
+  createIntentMandate,
+  createCartMandate,
+  createPaymentMandate,
+  verifyMandate,
+  executePayment,
+  getPaymentStatus,
+  listMandates,
+  listTransactions,
+  createVoiceSession,
+  processVoiceInput,
+} from './ap2';
+
+// Autonomy Metrics API client
+export { getAutonomyMetrics, getAutonomyHealth, getAutonomyAnomalies } from './autonomy';
+
+// Bank Feeds API client
+export {
+  listUnreconciledFeeds,
+  listBankAccounts,
+  getReconciliationStats,
+  getReconciliationAlerts,
+  syncBankFeeds,
+} from './bank-feeds';
+
+// Cin7 core API client
+export {
+  getCin7Status,
+  connectCin7,
+  disconnectCin7,
+  triggerCin7Sync,
+  getCin7SyncLogs,
+} from './cin7';
+
+// Cin7 BOM API client
+export { listBoms, syncBoms, getBom, listProductionRuns, createProductionRun } from './cin7-bom';
+
+// Cin7 GL API client
+export {
+  listAccounts as listGlAccounts,
+  syncChartOfAccounts,
+  listJournalEntries,
+  createJournalEntry,
+  postJournalEntry,
+  listAccountMappings,
+  upsertAccountMapping,
+} from './cin7-gl';
+
+// Cin7 GRN API client
+export { cin7GrnApi } from './cin7-grn';
+
+// Cin7 Inventory Write-back API client
+export { cin7InventoryWritebackApi } from './cin7-inventory-writeback';
+
+// Cin7 Shadow Sync API client
+export {
+  triggerShadowPoll,
+  getShadowStatus,
+  listSyncGaps,
+  getSyncGapsSummary,
+  updateGapStatus,
+} from './cin7-shadow';
+
+// Cin7 Shadow AI API client
+export { analyzeShadowGaps, autoResolveStaleShadowGaps, getShadowAiHealth } from './cin7-shadow-ai';
+
+// Cin7 Webhook Subscriptions API client
+export {
+  listWebhookSubscriptions,
+  createWebhookSubscription,
+  updateWebhookSubscription,
+  deleteWebhookSubscription,
+} from './cin7-webhook-subscriptions';
+
+// Contractors API client
+export { contractorAPI } from './contractors';
+
+// Monitoring API client
+export {
+  getAlerts,
+  createAlert,
+  acknowledgeAlert,
+  resolveAlert,
+  clearOldAlerts,
+  getBusinessMetrics,
+  getPOSMetrics,
+  getReconciliationMetrics,
+  getOrderMetrics,
+  getPerformanceStats,
+  getAllEndpointStats,
+  getSlowestEndpoints,
+  getErrorEndpoints,
+  getEndpointStats,
+  getHealth,
+  getMetrics,
+  getPrometheusAlerts,
+  getRangeData,
+} from './monitoring';
+
+// POS API client
+export {
+  getLocations as getPosLocations,
+  createLocation,
+  updateLocation,
+  deleteLocation,
+  getStaff,
+  createStaff,
+  updateStaff,
+  deleteStaff,
+  getTerminals,
+  getTransactions,
+} from './pos';
+
+// SendGrid API client
+export {
+  getSendGridStatus,
+  sendEmail,
+  listConversations,
+  getConversation,
+  simulateInboundEmail,
+} from './sendgrid';
+
+// Service Requests API client
+export {
+  getServiceRequests,
+  getServiceRequest,
+  createServiceRequest,
+  updateServiceRequest,
+  deleteServiceRequest,
+} from './service-requests';
+
+// Outbound Shipments API client
+export { outboundShipmentsApi } from './shipments-outbound';
+
+// Shopify API client
+export {
+  getShopifyStatus,
+  connectShopify,
+  disconnectShopify,
+  importShopifyOrder,
+  importRecentShopifyOrders,
+  syncProductInventory,
+  syncAllInventory,
+  syncProductToShopify,
+  isShopifyConnected,
+} from './shopify';
+
+// Team API client
+export { teamApi } from './team';
+
+// Xero API client
+export {
+  startXeroAuth,
+  getXeroStatus,
+  disconnectXero,
+  syncOrderToXero,
+  bulkSyncOrders,
+  getXeroInvoice,
+  isXeroConnected,
+} from './xero';
