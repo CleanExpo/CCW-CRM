@@ -145,7 +145,7 @@ export default function AlertsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">System Alerts</h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               {activeCount > 0
                 ? `${activeCount} active alert${activeCount > 1 ? 's' : ''}${criticalCount > 0 ? ` · ${criticalCount} critical` : ''}`
                 : 'No active alerts'}

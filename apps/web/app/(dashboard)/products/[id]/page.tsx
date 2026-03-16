@@ -541,7 +541,7 @@ export default function ProductDetailPage() {
 
       {/* Edit dialog */}
       <ProductForm
-        product={product as any}
+        product={product}
         open={editOpen}
         onOpenChange={setEditOpen}
         onSuccess={() => {

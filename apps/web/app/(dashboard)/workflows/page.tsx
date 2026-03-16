@@ -419,7 +419,7 @@ export default function WorkflowsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Workflow Automation</h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
             Automate business processes with trigger-based workflows
           </p>
         </div>

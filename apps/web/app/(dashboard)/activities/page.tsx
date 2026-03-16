@@ -406,7 +406,9 @@ export default function ActivitiesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Activities</h1>
-          <p className="text-muted-foreground">Track customer interactions and manage tasks</p>
+          <p className="text-neutral-600 dark:text-neutral-400">
+            Track customer interactions and manage tasks
+          </p>
         </div>
       </div>
 

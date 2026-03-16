@@ -367,7 +367,7 @@ export default function MarketingPage() {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-4xl font-semibold tracking-tight">AI Marketing Hub</h1>
-        <p className="text-muted-foreground mt-2 text-lg">
+        <p className="mt-2 text-lg text-neutral-600 dark:text-neutral-400">
           Generate professional marketing assets with AI-powered tools
         </p>
       </motion.div>

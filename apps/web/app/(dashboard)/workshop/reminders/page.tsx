@@ -29,6 +29,7 @@ export default function RemindersPage() {
   const [statusFilter, setStatusFilter] = useState('pending');
   const [generating, setGenerating] = useState(false);
   const [sendingAll, setSendingAll] = useState(false);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,6 +90,7 @@ export default function RemindersPage() {
   }
 
   async function handleSend(id: string) {
+    setActioningId(id);
     try {
       await workshopApi.sendReminder(id);
       toast({ title: 'Reminder sent' });
@@ -99,10 +101,13 @@ export default function RemindersPage() {
         description: error instanceof Error ? error.message : 'Failed',
         variant: 'destructive',
       });
+    } finally {
+      setActioningId(null);
     }
   }
 
   async function handleSuppress(id: string) {
+    setActioningId(id);
     try {
       await workshopApi.suppressReminder(id);
       toast({ title: 'Reminder suppressed' });
@@ -113,6 +118,8 @@ export default function RemindersPage() {
         description: error instanceof Error ? error.message : 'Failed',
         variant: 'destructive',
       });
+    } finally {
+      setActioningId(null);
     }
   }
 
@@ -121,7 +128,7 @@ export default function RemindersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Service Reminders</h1>
-          <p className="text-muted-foreground">{total} reminders</p>
+          <p className="text-neutral-600 dark:text-neutral-400">{total} reminders</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleGenerate} disabled={generating}>
@@ -155,7 +162,11 @@ export default function RemindersPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-muted-foreground">Loading reminders...</div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="bg-muted h-12 animate-pulse rounded-lg" />
+          ))}
+        </div>
       ) : reminders.length === 0 ? (
         <div className="text-muted-foreground py-12 text-center">
           No {statusFilter} reminders found.
@@ -211,14 +222,20 @@ export default function RemindersPage() {
                     <div className="flex gap-1">
                       {reminder.status === 'pending' && (
                         <>
-                          <Button variant="ghost" size="sm" onClick={() => handleSend(reminder.id)}>
-                            Send
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSend(reminder.id)}
+                            disabled={actioningId === reminder.id}
+                          >
+                            {actioningId === reminder.id ? 'Sending...' : 'Send'}
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-muted-foreground"
+                            className="text-neutral-600 dark:text-neutral-400"
                             onClick={() => handleSuppress(reminder.id)}
+                            disabled={actioningId === reminder.id}
                           >
                             Suppress
                           </Button>
