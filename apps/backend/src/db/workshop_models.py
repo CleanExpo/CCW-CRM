@@ -104,6 +104,8 @@ class ServiceTemplateItem(Base):
     quantity = Column(Integer, nullable=False, default=1)
     lead_time_days = Column(Integer, nullable=False, default=14)
     notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     template = relationship("ServiceTemplate", back_populates="items")
 
@@ -170,6 +172,7 @@ class EquipmentServiceHistory(Base):
     parts_used = Column(JSON, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     equipment = relationship("Equipment", back_populates="service_history")
     booking = relationship("WorkshopBooking", back_populates="service_history")

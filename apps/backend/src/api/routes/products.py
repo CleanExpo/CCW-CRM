@@ -311,7 +311,7 @@ async def update_product(
     return Product.model_validate(product)
 
 
-@router.delete("/{product_id}", status_code=204)
+@router.delete("/{product_id}", status_code=204, response_model=None)
 async def delete_product(
     product_id: UUID,
     db: AsyncSession = Depends(get_db),

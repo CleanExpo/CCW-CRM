@@ -483,11 +483,11 @@ async def update_approval_step(
     )
 
 
-@router.delete("/{approval_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{approval_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def cancel_approval(
     approval_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> None:
+):
     """
     Cancel an approval workflow.
 

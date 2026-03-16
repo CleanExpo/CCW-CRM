@@ -397,7 +397,7 @@ async def receive_goods(
     return PurchaseOrderItemResponse.model_validate(item)
 
 
-@router.delete("/{po_id}", status_code=204)
+@router.delete("/{po_id}", status_code=204, response_model=None)
 async def cancel_purchase_order(
     po_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],

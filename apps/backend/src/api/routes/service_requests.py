@@ -211,11 +211,11 @@ async def update_service_request(
     return ServiceRequestResponse.model_validate(service_request)
 
 
-@router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_service_request(
     request_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> None:
+):
     """Delete a service request."""
 
     query = select(ServiceRequest).where(ServiceRequest.id == request_id)

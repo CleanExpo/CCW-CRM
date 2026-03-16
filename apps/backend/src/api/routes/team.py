@@ -243,7 +243,7 @@ async def update_member_role(
     )
 
 
-@router.delete("/{user_id}", status_code=204)
+@router.delete("/{user_id}", status_code=204, response_model=None)
 @require_permission("team:remove")
 async def remove_team_member(
     user_id: UUID,

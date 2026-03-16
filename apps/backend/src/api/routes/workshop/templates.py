@@ -178,11 +178,11 @@ async def update_template(
     return TemplateResponse.model_validate(template)
 
 
-@router.delete("/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{template_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def deactivate_template(
     template_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> None:
+):
     """Deactivate a service template."""
     template = await db.get(ServiceTemplate, template_id)
     if not template:

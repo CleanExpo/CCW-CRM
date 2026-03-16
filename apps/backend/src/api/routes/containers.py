@@ -616,7 +616,7 @@ async def receive_container(
     return ContainerResponse(**container_dict)
 
 
-@router.delete("/{container_id}", status_code=204)
+@router.delete("/{container_id}", status_code=204, response_model=None)
 async def delete_container(
     container_id: UUID,
     db: AsyncSession = Depends(get_async_db),

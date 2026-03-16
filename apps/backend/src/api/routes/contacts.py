@@ -187,7 +187,7 @@ async def update_contact(
     return Contact.model_validate(contact)
 
 
-@router.delete("/{contact_id}", status_code=204)
+@router.delete("/{contact_id}", status_code=204, response_model=None)
 async def delete_contact(
     contact_id: UUID,
     db: AsyncSession = Depends(get_db),

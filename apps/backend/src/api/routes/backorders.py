@@ -680,7 +680,7 @@ async def fulfill_backorder(
     return BackorderResponse(**backorder_dict)
 
 
-@router.post("/{backorder_id}/notify", status_code=204)
+@router.post("/{backorder_id}/notify", status_code=204, response_model=None)
 async def notify_customer(
     backorder_id: UUID,
     notify_data: BackorderNotifyRequest,
@@ -745,7 +745,7 @@ async def notify_customer(
     # )
 
 
-@router.delete("/{backorder_id}", status_code=204)
+@router.delete("/{backorder_id}", status_code=204, response_model=None)
 async def cancel_backorder(
     backorder_id: UUID,
     db: AsyncSession = Depends(get_async_db),
