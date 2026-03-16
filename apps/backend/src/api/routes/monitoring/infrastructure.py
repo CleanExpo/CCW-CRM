@@ -48,7 +48,6 @@ async def get_infrastructure_metrics() -> dict:
     Returns basic resource usage stats.
     """
     import os
-    import sys
     import threading
 
     metrics: dict[str, float | int | None] = {

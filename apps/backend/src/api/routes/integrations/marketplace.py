@@ -14,7 +14,6 @@ from pydantic import BaseModel, Field
 
 from src.api.middleware.rate_limit import RateLimits, limiter
 from src.config.marketplace_settings import get_marketplace_settings
-from src.integrations.marketplace.base import ChannelOrder, ChannelProduct
 from src.integrations.marketplace.demo_channel import (
     EbayDemoChannel,
     FacebookDemoChannel,

@@ -9,12 +9,12 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
     Enum,
     Float,
     Integer,
-    JSON,
     String,
     Text,
 )
