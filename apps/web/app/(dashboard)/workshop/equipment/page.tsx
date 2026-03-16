@@ -63,7 +63,7 @@ export default function EquipmentPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Equipment Registry</h1>
-          <p className="text-muted-foreground">{total} machines registered</p>
+          <p className="text-neutral-600 dark:text-neutral-400">{total} machines registered</p>
         </div>
         <Button>
           <Plus className="mr-2 h-4 w-4" /> Add Equipment
@@ -117,7 +117,11 @@ export default function EquipmentPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="bg-muted h-12 animate-pulse rounded-lg" />
+          ))}
+        </div>
       ) : equipment.length === 0 ? (
         <div className="text-muted-foreground py-12 text-center">
           No equipment found. Add your first machine to get started.
@@ -168,7 +172,7 @@ export default function EquipmentPage() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <Link href={`/workshop/equipment/${eq.id}` as any}>
+                      <Link href={`/workshop/equipment/${eq.id}`}>
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>

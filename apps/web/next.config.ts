@@ -1,59 +1,63 @@
-import { withSentryConfig } from "@sentry/nextjs";
-import type { NextConfig } from "next";
+import { withSentryConfig } from '@sentry/nextjs';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@shared"],
+  transpilePackages: ['@shared'],
   // Enable standalone output for Docker builds
-  output: "standalone",
+  output: 'standalone',
   experimental: {
-    typedRoutes: true,
+    typedRoutes: false,
   },
   // Enable source maps for production (Sentry needs these)
   productionBrowserSourceMaps: true,
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "**.supabase.co",
+        protocol: 'https',
+        hostname: '**.supabase.co',
       },
       {
-        protocol: "https",
-        hostname: "cdn.shopify.com",
+        protocol: 'https',
+        hostname: 'cdn.shopify.com',
       },
       {
-        protocol: "https",
-        hostname: "cdn.shopifycdn.net",
+        protocol: 'https',
+        hostname: 'cdn.shopifycdn.net',
       },
       {
-        protocol: "https",
-        hostname: "placehold.co",
+        protocol: 'https',
+        hostname: 'placehold.co',
       },
       {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
       },
     ],
   },
   async headers() {
     return [
       {
-        source: "/api/:path*",
+        source: '/api/:path*',
         headers: [
-          { key: "Access-Control-Allow-Credentials", value: "true" },
+          { key: 'Access-Control-Allow-Credentials', value: 'true' },
           {
-            key: "Access-Control-Allow-Origin",
-            value: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000"
+            key: 'Access-Control-Allow-Origin',
+            value: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
           },
-          { key: "Access-Control-Allow-Methods", value: "GET,POST,PUT,DELETE,OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value:
+              'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
+          },
         ],
       },
       {
-        source: "/:path*",
+        source: '/:path*',
         headers: [
           {
-            key: "Content-Security-Policy",
+            key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
@@ -62,23 +66,23 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https: blob:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://localhost:8001 https://*.sentry.io",
               "frame-ancestors 'none'",
-            ].join("; "),
+            ].join('; '),
           },
           {
-            key: "X-Frame-Options",
-            value: "DENY",
+            key: 'X-Frame-Options',
+            value: 'DENY',
           },
           {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
           {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
           },
           {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
           },
         ],
       },

@@ -17,7 +17,7 @@ import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
 import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopify';
 import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/sendgrid';
 import { getCin7Status, type Cin7ConnectionStatus } from '@/lib/api/cin7';
-import { Settings, AlertCircle, BookOpen } from 'lucide-react';
+import { Settings, AlertCircle, BookOpen, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 function IntegrationsContent() {
@@ -250,7 +250,7 @@ function IntegrationsContent() {
           <p className="text-muted-foreground mb-4 text-sm">
             Sync Chart of Accounts, manage journal entries and configure ERP-to-GL account mappings.
           </p>
-          <Link href={'/settings/integrations/gl' as any}>
+          <Link href="/settings/integrations/gl">
             <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors">
               <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
                 <BookOpen className="text-primary h-5 w-5" />
@@ -262,6 +262,28 @@ function IntegrationsContent() {
                 </p>
               </div>
               <span className="text-muted-foreground text-sm">View GL Settings →</span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Multi-Channel Marketplace */}
+        <div>
+          <h2 className="mb-1 text-lg font-semibold">Multi-Channel Marketplace</h2>
+          <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
+            Sync products, inventory, and orders across Shopify, eBay, and Facebook Marketplace.
+          </p>
+          <Link href="/settings/integrations/marketplace">
+            <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors">
+              <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+                <Globe className="text-primary h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium">Marketplace Dashboard</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Connect channels, sync products, and view unified orders
+                </p>
+              </div>
+              <span className="text-sm text-neutral-500">Open Dashboard →</span>
             </div>
           </Link>
         </div>
