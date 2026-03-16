@@ -274,6 +274,26 @@ class Cin7CoreDemoClient:
                     "Status": "Authorised",
                     "Total": 285549.00,
                     "OrderDate": "2025-12-01",
+                    "Lines": [
+                        {
+                            "LineID": "line-s1-001",
+                            "SKU": "HM-EXC-001",
+                            "Name": "CAT 320 Excavator",
+                            "Quantity": 1,
+                            "Price": 285000.00,
+                            "Total": 285000.00,
+                            "TaxRate": 0.10,
+                        },
+                        {
+                            "LineID": "line-s1-002",
+                            "SKU": "PT-DRL-002",
+                            "Name": "Makita 18V Hammer Drill Kit",
+                            "Quantity": 1,
+                            "Price": 549.00,
+                            "Total": 549.00,
+                            "TaxRate": 0.10,
+                        },
+                    ],
                 },
                 {
                     "SaleID": "sale-002-uuid",
@@ -282,6 +302,17 @@ class Cin7CoreDemoClient:
                     "Status": "Draft",
                     "Total": 1098.00,
                     "OrderDate": "2025-12-10",
+                    "Lines": [
+                        {
+                            "LineID": "line-s2-001",
+                            "SKU": "PT-DRL-002",
+                            "Name": "Makita 18V Hammer Drill Kit",
+                            "Quantity": 2,
+                            "Price": 549.00,
+                            "Total": 1098.00,
+                            "TaxRate": 0.10,
+                        },
+                    ],
                 },
             ],
         }
@@ -304,6 +335,17 @@ class Cin7CoreDemoClient:
                     "Status": "Ordered",
                     "Total": 420000.00,
                     "OrderDate": "2025-11-15",
+                    "Lines": [
+                        {
+                            "LineID": "line-p1-001",
+                            "SKU": "HM-EXC-001",
+                            "Name": "CAT 320 Excavator",
+                            "Quantity": 2,
+                            "Price": 210000.00,
+                            "Total": 420000.00,
+                            "TaxRate": 0.10,
+                        },
+                    ],
                 },
             ],
         }
@@ -517,6 +559,26 @@ class Cin7OmniDemoClient:
                 "stage": "Dispatched",
                 "total": 285549.00,
                 "createdDate": "2025-12-01T09:00:00Z",
+                "lineItems": [
+                    {
+                        "id": 90001,
+                        "styleCode": "HM-EXC-001",
+                        "description": "CAT 320 Excavator",
+                        "qty": 1,
+                        "unitPrice": 285000.00,
+                        "total": 285000.00,
+                        "taxRate": 0.10,
+                    },
+                    {
+                        "id": 90002,
+                        "styleCode": "PT-DRL-002",
+                        "description": "Makita 18V Hammer Drill Kit",
+                        "qty": 1,
+                        "unitPrice": 549.00,
+                        "total": 549.00,
+                        "taxRate": 0.10,
+                    },
+                ],
             },
         ]
 
@@ -535,6 +597,17 @@ class Cin7OmniDemoClient:
                 "status": "Ordered",
                 "total": 420000.00,
                 "createdDate": "2025-11-15T08:00:00Z",
+                "lineItems": [
+                    {
+                        "id": 90010,
+                        "styleCode": "HM-EXC-001",
+                        "description": "CAT 320 Excavator",
+                        "qty": 2,
+                        "unitPrice": 210000.00,
+                        "total": 420000.00,
+                        "taxRate": 0.10,
+                    },
+                ],
             },
         ]
 

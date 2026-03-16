@@ -4,33 +4,33 @@
  */
 
 export enum StoreLocation {
-  BRISBANE = "brisbane",
-  SYDNEY = "sydney",
-  MELBOURNE = "melbourne",
+  BRISBANE = 'brisbane',
+  SYDNEY = 'sydney',
+  MELBOURNE = 'melbourne',
 }
 
 export enum TransferStatus {
-  PENDING = "pending",
-  IN_TRANSIT = "in_transit",
-  COMPLETED = "completed",
-  CANCELLED = "cancelled",
+  PENDING = 'pending',
+  IN_TRANSIT = 'in_transit',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
 }
 
 export enum ReservationStatus {
-  ACTIVE = "active",
-  FULFILLED = "fulfilled",
-  CANCELLED = "cancelled",
-  EXPIRED = "expired",
+  ACTIVE = 'active',
+  FULFILLED = 'fulfilled',
+  CANCELLED = 'cancelled',
+  EXPIRED = 'expired',
 }
 
 export enum AdjustmentType {
-  STOCK_COUNT = "stock_count",
-  DAMAGE = "damage",
-  THEFT = "theft",
-  CORRECTION = "correction",
-  TRANSFER = "transfer",
-  SALE = "sale",
-  RETURN = "return",
+  STOCK_COUNT = 'stock_count',
+  DAMAGE = 'damage',
+  THEFT = 'theft',
+  CORRECTION = 'correction',
+  TRANSFER = 'transfer',
+  SALE = 'sale',
+  RETURN = 'return',
 }
 
 export interface StockByLocation {
@@ -60,8 +60,8 @@ export interface InventoryItem {
 export interface StockTransfer {
   id: string;
   product_id: string;
-  product_name?: string;  // Populated by backend join
-  product_sku?: string;   // Populated by backend join
+  product_name?: string; // Populated by backend join
+  product_sku?: string; // Populated by backend join
   from_location: StoreLocation;
   to_location: StoreLocation;
   quantity: number;
@@ -79,10 +79,10 @@ export interface StockTransfer {
 export interface StockReservation {
   id: string;
   product_id: string;
-  product_name?: string;  // Populated by backend join
-  product_sku?: string;   // Populated by backend join
+  product_name?: string; // Populated by backend join
+  product_sku?: string; // Populated by backend join
   order_id: string;
-  order_number?: string;  // Populated by backend join
+  order_number?: string; // Populated by backend join
   location: StoreLocation;
   quantity: number;
   status: ReservationStatus;
@@ -98,8 +98,8 @@ export interface StockReservation {
 export interface StockAdjustment {
   id: string;
   product_id: string;
-  product_name?: string;  // Populated by backend join
-  product_sku?: string;   // Populated by backend join
+  product_name?: string; // Populated by backend join
+  product_sku?: string; // Populated by backend join
   location: StoreLocation;
   adjustment_type: AdjustmentType;
   quantity_change: number;
@@ -122,7 +122,7 @@ export interface StockAlert {
   available_stock: number;
   reorder_point: number;
   reorder_quantity: number;
-  severity: "critical" | "low" | "normal";
+  severity: 'critical' | 'low' | 'normal';
 }
 
 export interface StockHealth {
@@ -155,7 +155,7 @@ export interface CreateStockReservationRequest {
   order_id: string;
   location: StoreLocation;
   quantity: number;
-  expires_at?: string;  // ISO date string
+  expires_at?: string; // ISO date string
 }
 
 export interface CreateStockAdjustmentRequest {
@@ -246,6 +246,16 @@ export interface InventorySummary {
   active_reservations: number;
 }
 
+/**
+ * Dashboard summary from GET /api/inventory/summary
+ */
+export interface InventoryDashboardSummary {
+  total_skus: number;
+  total_stock_value: number;
+  below_reorder_point: number;
+  active_reservations: number;
+}
+
 export interface LocationStock {
   location: StoreLocation;
   total_stock: number;
@@ -253,6 +263,33 @@ export interface LocationStock {
   total_available: number;
   stock_value: number;
   product_count: number;
+}
+
+/**
+ * Location stock item — shape returned by GET /api/inventory/by-location
+ * (different from InventoryItem which has stock_by_location[])
+ */
+export interface LocationStockItem {
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  stock: number;
+  reserved: number;
+  available: number;
+  reorder_point?: number;
+  below_reorder_point: boolean;
+}
+
+/**
+ * Paginated response from GET /api/inventory/by-location
+ */
+export interface LocationStockResponse {
+  location: string;
+  items: LocationStockItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }
 
 /**

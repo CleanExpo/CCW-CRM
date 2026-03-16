@@ -830,6 +830,7 @@ async def sync_inventory_to_shopify_realtime(
 
         # Get product mapping to get Shopify IDs
         from sqlalchemy import select
+
         from src.db.shopify_models import ShopifyProductMapping
 
         stmt = select(ShopifyProductMapping).where(
@@ -903,6 +904,7 @@ async def sync_inventory_from_shopify_realtime(
     try:
         # Get product mapping
         from sqlalchemy import select
+
         from src.db.shopify_models import ShopifyProductMapping
 
         stmt = select(ShopifyProductMapping).where(
@@ -1050,6 +1052,7 @@ async def resolve_inventory_conflict(
 
         # Get product mapping
         from sqlalchemy import select
+
         from src.db.shopify_models import ShopifyProductMapping
 
         stmt = select(ShopifyProductMapping).where(
@@ -1159,8 +1162,9 @@ async def reconcile_inventory(
 
     try:
         from sqlalchemy import select
-        from src.db.shopify_models import ShopifyProductMapping
+
         from src.db.models.prd import Product
+        from src.db.shopify_models import ShopifyProductMapping
 
         # Get all mapped products
         stmt = select(ShopifyProductMapping).where(
@@ -1478,6 +1482,7 @@ async def sync_product_metafields(
         Sync result with synced metafield count and errors.
     """
     from uuid import UUID
+
     from src.db.shopify_models import ShopifyProductMapping
     from src.integrations.shopify.metafields import get_metafield_manager
     from src.services.sse_service import sse_service
@@ -1560,8 +1565,9 @@ async def get_inventory_sync_status(
     Returns:
         Sync health metrics and statistics
     """
+    from sqlalchemy import and_, func
+
     from src.db.shopify_extended_models import ShopifyInventorySync, ShopifyInventorySyncQueue
-    from sqlalchemy import func, and_
 
     logger.info("fetching_inventory_sync_status")
 
@@ -1685,6 +1691,7 @@ async def sync_translations_to_shopify(
         Sync result with synced languages
     """
     from uuid import UUID
+
     from src.db.shopify_models import ShopifyProductMapping
     from src.integrations.shopify.translations import get_translation_syncer
 
@@ -1753,6 +1760,7 @@ async def sync_translations_from_shopify(
         Sync result with synced languages
     """
     from uuid import UUID
+
     from src.db.shopify_models import ShopifyProductMapping
     from src.integrations.shopify.translations import get_translation_syncer
 

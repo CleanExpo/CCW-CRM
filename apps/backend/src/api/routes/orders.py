@@ -1215,7 +1215,7 @@ async def update_order_status_patch(
     )
 
 
-@router.delete("/{order_id}", status_code=204)
+@router.delete("/{order_id}", status_code=204, response_model=None)
 async def delete_order(
     order_id: UUID,
     db: AsyncSession = Depends(get_db),

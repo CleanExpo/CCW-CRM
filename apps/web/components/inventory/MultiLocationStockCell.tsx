@@ -1,12 +1,7 @@
-"use client";
+'use client';
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface StockByLocation {
   location: string;
@@ -21,29 +16,31 @@ interface MultiLocationStockCellProps {
 }
 
 export function MultiLocationStockCell({ productId, locations }: MultiLocationStockCellProps) {
-  const getStockColor = (available: number): "default" | "destructive" | "secondary" | "outline" => {
-    if (available === 0) return "destructive";
-    if (available <= 10) return "outline";
-    return "secondary";
+  const getStockColor = (
+    available: number
+  ): 'default' | 'destructive' | 'secondary' | 'outline' => {
+    if (available === 0) return 'destructive';
+    if (available <= 10) return 'outline';
+    return 'secondary';
   };
 
   const getLocationLabel = (location: string) => {
     const labels: Record<string, string> = {
-      brisbane: "BNE",
-      sydney: "SYD",
-      melbourne: "MEL",
+      brisbane: 'BNE',
+      sydney: 'SYD',
+      melbourne: 'MEL',
     };
     return labels[location.toLowerCase()] || location.charAt(0).toUpperCase();
   };
 
   // Sort locations: Brisbane, Sydney, Melbourne
-  const sortedLocations = [...locations].sort((a, b) => {
-    const order = ["brisbane", "sydney", "melbourne"];
+  const sortedLocations = [...(locations || [])].sort((a, b) => {
+    const order = ['brisbane', 'sydney', 'melbourne'];
     return order.indexOf(a.location.toLowerCase()) - order.indexOf(b.location.toLowerCase());
   });
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex flex-wrap items-center gap-2">
       <TooltipProvider>
         {sortedLocations.map((loc) => (
           <Tooltip key={loc.location}>
@@ -56,7 +53,7 @@ export function MultiLocationStockCell({ productId, locations }: MultiLocationSt
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <div className="text-sm space-y-1">
+              <div className="space-y-1 text-sm">
                 <p className="font-semibold capitalize">{loc.location}</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                   <span className="text-muted-foreground">On Hand:</span>

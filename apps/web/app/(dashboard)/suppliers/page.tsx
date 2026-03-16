@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { suppliersApi, type Supplier } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from 'react';
+import { suppliersApi, type Supplier } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -11,14 +11,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,16 +29,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
-import { SupplierForm } from "./components/SupplierForm";
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Search, Edit, Trash2, Download } from 'lucide-react';
+import { exportSuppliersToCSV } from '@/lib/utils/csv-export';
+import { SupplierForm } from './components/SupplierForm';
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -60,11 +61,11 @@ export default function SuppliersPage() {
       });
       setSuppliers(response.items);
       setTotalPages(response.total_pages);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to load suppliers",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to load suppliers',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -75,15 +76,15 @@ export default function SuppliersPage() {
     try {
       await suppliersApi.delete(id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Supplier "${name}" deleted successfully`,
       });
       fetchSuppliers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete supplier",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete supplier',
+        variant: 'destructive',
       });
     }
   }
@@ -110,34 +111,45 @@ export default function SuppliersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Suppliers</h1>
-          <p className="text-muted-foreground">
-            Manage your supplier directory
-          </p>
+          <p className="text-muted-foreground">Manage your supplier directory</p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Supplier
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Supplier</DialogTitle>
-            </DialogHeader>
-            <SupplierForm
-              mode="create"
-              onSuccess={handleCreateSuccess}
-              onCancel={() => setCreateDialogOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              exportSuppliersToCSV(suppliers as unknown as Record<string, unknown>[]);
+              toast({ title: 'Export Successful', description: 'Suppliers exported to CSV' });
+            }}
+            disabled={suppliers.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Supplier
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Supplier</DialogTitle>
+              </DialogHeader>
+              <SupplierForm
+                mode="create"
+                onSuccess={handleCreateSuccess}
+                onCancel={() => setCreateDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Search */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
             placeholder="Search suppliers..."
             value={searchTerm}
@@ -182,27 +194,21 @@ export default function SuppliersPage() {
             ) : (
               suppliers.map((supplier) => (
                 <TableRow key={supplier.id}>
-                  <TableCell className="font-medium">
-                    {supplier.supplier_code}
-                  </TableCell>
+                  <TableCell className="font-medium">{supplier.supplier_code}</TableCell>
                   <TableCell>{supplier.company_name}</TableCell>
                   <TableCell>{supplier.contact_name}</TableCell>
                   <TableCell>{supplier.email}</TableCell>
-                  <TableCell>{supplier.phone || "N/A"}</TableCell>
-                  <TableCell>{supplier.abn || "N/A"}</TableCell>
-                  <TableCell>{supplier.payment_terms || "N/A"}</TableCell>
+                  <TableCell>{supplier.phone || 'N/A'}</TableCell>
+                  <TableCell>{supplier.abn || 'N/A'}</TableCell>
+                  <TableCell>{supplier.payment_terms || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge variant={supplier.is_active ? "default" : "secondary"}>
-                      {supplier.is_active ? "Active" : "Inactive"}
+                    <Badge variant={supplier.is_active ? 'default' : 'secondary'}>
+                      {supplier.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditClick(supplier)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(supplier)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <AlertDialog>
@@ -215,16 +221,14 @@ export default function SuppliersPage() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Supplier</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete "{supplier.company_name}"?
-                              This action cannot be undone.
+                              Are you sure you want to delete "{supplier.company_name}"? This action
+                              cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() =>
-                                handleDelete(supplier.id, supplier.company_name)
-                              }
+                              onClick={() => handleDelete(supplier.id, supplier.company_name)}
                             >
                               Delete
                             </AlertDialogAction>
@@ -243,7 +247,7 @@ export default function SuppliersPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Page {page} of {totalPages}
           </p>
           <div className="flex gap-2">

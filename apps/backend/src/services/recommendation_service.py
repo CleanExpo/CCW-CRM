@@ -8,11 +8,11 @@ Provides intelligent product recommendations using multiple algorithms:
 """
 
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Any
 from uuid import UUID
 
 import structlog
-from sqlalchemy import and_, func, select, text
+from sqlalchemy import and_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.ai_search_models import (
@@ -23,7 +23,7 @@ from src.db.ai_search_models import (
     ProductRecommendation,
     RecommendationType,
 )
-from src.db.demo_models import Order, OrderItem, Product
+from src.db.demo_models import OrderItem, Product
 
 logger = structlog.get_logger(__name__)
 

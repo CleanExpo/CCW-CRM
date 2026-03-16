@@ -2,7 +2,7 @@
 
 Performance optimized with Redis caching.
 """
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -113,7 +113,7 @@ async def create_customer(
         "type": "metrics_updated",
         "metric": "total_customers",
         "change": "increment",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -121,7 +121,7 @@ async def create_customer(
         "title": "New Customer",
         "description": f"Customer {customer.company_name} created",
         "link": f"/customers/{customer.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Customer.model_validate(customer)
@@ -161,13 +161,13 @@ async def update_customer(
         "title": "Customer Updated",
         "description": f"Customer {customer.company_name} updated",
         "link": f"/customers/{customer.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Customer.model_validate(customer)
 
 
-@router.delete("/{customer_id}", status_code=204)
+@router.delete("/{customer_id}", status_code=204, response_model=None)
 async def delete_customer(
     customer_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -196,7 +196,7 @@ async def delete_customer(
         "type": "metrics_updated",
         "metric": "total_customers",
         "change": "decrement",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -204,7 +204,7 @@ async def delete_customer(
         "title": "Customer Deleted",
         "description": f"Customer {customer_name} deleted",
         "link": "/customers",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return None

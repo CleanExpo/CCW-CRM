@@ -1,0 +1,287 @@
+# Decisions Log — Append-Only
+
+## 2026-03-03 — Framework Overhaul Initiated
+
+- Decision: Implement anti-drift infrastructure using Claude Code hooks
+- Rationale: Context drift documented in GitHub issues #9796, #13919, #14258, #3537. Hooks re-inject critical state before every message.
+- Alternatives considered: PostCompact hook (not yet available in Claude Code)
+- Impact: All future sessions have CONSTITUTION.md injected before every user message
+
+## 2026-03-03 — 1:10 Agent:Skill Architecture Adopted
+
+- Decision: Every specialized agent must have exactly 10 documented skills
+- Rationale: Prevents agent sprawl, makes capabilities explicit and testable
+- Impact: New agents require removal of one skill if 11th skill needed
+
+## 2026-03-03 — Catalog System Established
+
+- Decision: 6 catalogs in docs/catalogs/ are the source of truth for all system components
+- Rationale: Prevents re-scanning codebase every session; agents read catalogs
+- Catalogs: ROUTES.md, PAGES.md, AGENTS.md, PACKAGES.md, MODELS.md, INTEGRATIONS.md
+
+## 2026-03-03 — Project Intelligence Agent Created
+
+- Decision: New AI agent specifically for meta-audit, gap analysis, PRD generation
+- Skills: scan-routes, scan-pages, scan-agents, scan-packages, cross-ref, dep-graph, prioritize, prd-generate, issue-sync, health
+- Files: apps/backend/src/ai/agents/specialized/project_intelligence_agent.py
+
+## 2026-03-03 — Gap Fixes: Contractors, Service Requests, Bank Feeds
+
+- Decision: Create frontend pages for 3 backend routes that had no frontend
+- Routes: contractors.py, service_requests.py, bank_feeds.py all have backend APIs
+- Frontend pages created with full CRUD (where applicable)
+
+## Agent Dispatch — 2026-03-03T09:31:50.568585
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T09:33:00.826975
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T09:33:18.892669
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T09:46:09.425808
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T09:46:16.686324
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T10:10:18.488888
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T10:15:23.414702
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T12:36:38.223597
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T12:36:43.341331
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T13:27:07.667965
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T13:27:13.058349
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T13:27:18.368890
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T13:34:48.175989
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T13:35:04.751011
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T17:25:16.379088
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T19:20:13.097391
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T19:49:56.181251
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T19:50:01.655783
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:28:27.566002
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:28:42.891426
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:29:02.844837
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:29:25.418357
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:29:34.524777
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:45:11.945127
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:45:37.054457
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:45:56.485475
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T20:46:20.437442
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T21:54:24.027603
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T21:54:47.262657
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T21:56:21.779971
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T21:56:57.241989
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T21:58:56.029028
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T21:59:19.894506
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T22:01:57.287148
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-03T22:02:14.261950
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-09T07:30:00.743461
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T17:19:08.379502
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T17:19:10.962082
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T17:23:52.281788
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T17:38:18.357270
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T18:34:26.456670
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T18:41:39.137167
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T18:46:26.822033
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T18:56:10.860110
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T19:08:07.988103
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T19:08:12.154725
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T19:21:08.287444
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-16T19:28:08.233882
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-17T05:34:17.019419
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-17T05:55:17.315739
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-17T05:59:11.978744
+
+- Type: unknown
+- Description:

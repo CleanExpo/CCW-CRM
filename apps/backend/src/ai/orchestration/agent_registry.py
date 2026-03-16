@@ -1,12 +1,17 @@
 """Agent Registry for managing and discovering AI agents."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import structlog
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from src.ai.protocol.models import AgentCard
 
 logger = structlog.get_logger(__name__)
 
@@ -49,12 +54,14 @@ class AgentMetadata(BaseModel):
     active_executions: int = 0
     total_executions: int = 0
     failed_executions: int = 0
+    # Protocol v1.0: Optional agent card for protocol governance
+    agent_card: AgentCard | None = None
 
 
 class AgentRegistry:
     """Central registry for AI agents."""
 
-    _instance: "AgentRegistry | None" = None
+    _instance: AgentRegistry | None = None
 
     def __new__(cls):
         """Singleton pattern."""
@@ -206,7 +213,9 @@ class AgentRegistry:
         logger.info(
             "Agent card registered",
             agent_id=agent_id,
-            permission_tier=card.permission_tier.value if hasattr(card, 'permission_tier') else "unknown",
+            permission_tier=card.permission_tier.value
+            if hasattr(card, "permission_tier")
+            else "unknown",
         )
         return True
 

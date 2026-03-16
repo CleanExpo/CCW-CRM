@@ -2,14 +2,14 @@
  * Monitoring API client functions.
  */
 
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
 // ─── Types ─────────────────────────────────────────────────────
 
 export interface Alert {
   id: number;
   type: string;
-  severity: "info" | "warning" | "error" | "critical";
+  severity: 'info' | 'warning' | 'error' | 'critical';
   title: string;
   message: string;
   metadata: Record<string, any>;
@@ -93,26 +93,26 @@ export async function getAlerts(params?: {
   acknowledged?: boolean;
 }): Promise<{ alerts: Alert[]; total: number }> {
   const searchParams = new URLSearchParams();
-  if (params?.alert_type) searchParams.set("alert_type", params.alert_type);
-  if (params?.severity) searchParams.set("severity", params.severity);
+  if (params?.alert_type) searchParams.set('alert_type', params.alert_type);
+  if (params?.severity) searchParams.set('severity', params.severity);
   if (params?.acknowledged !== undefined)
-    searchParams.set("acknowledged", params.acknowledged.toString());
+    searchParams.set('acknowledged', params.acknowledged.toString());
 
   const query = searchParams.toString();
-  const url = `/api/monitoring/alerts${query ? `?${query}` : ""}`;
+  const url = `/api/monitoring/alerts${query ? `?${query}` : ''}`;
 
   return apiClient.get(url);
 }
 
 export async function createAlert(data: {
   alert_type: string;
-  severity: "info" | "warning" | "error" | "critical";
+  severity: 'info' | 'warning' | 'error' | 'critical';
   title: string;
   message: string;
   metadata?: Record<string, any>;
   send_notification?: boolean;
 }): Promise<Alert> {
-  return apiClient.post("/api/monitoring/alerts", data);
+  return apiClient.post('/api/monitoring/alerts', data);
 }
 
 export async function acknowledgeAlert(alertId: number): Promise<{ success: boolean }> {
@@ -130,25 +130,25 @@ export async function clearOldAlerts(days: number = 30): Promise<{ cleared_count
 // ─── Business Metrics ──────────────────────────────────────────
 
 export async function getBusinessMetrics(): Promise<BusinessMetrics> {
-  return apiClient.get("/api/monitoring/business/summary");
+  return apiClient.get('/api/monitoring/business/summary');
 }
 
-export async function getPOSMetrics(): Promise<BusinessMetrics["pos"]> {
-  return apiClient.get("/api/monitoring/business/pos");
+export async function getPOSMetrics(): Promise<BusinessMetrics['pos']> {
+  return apiClient.get('/api/monitoring/business/pos');
 }
 
-export async function getReconciliationMetrics(): Promise<BusinessMetrics["reconciliation"]> {
-  return apiClient.get("/api/monitoring/business/reconciliation");
+export async function getReconciliationMetrics(): Promise<BusinessMetrics['reconciliation']> {
+  return apiClient.get('/api/monitoring/business/reconciliation');
 }
 
-export async function getOrderMetrics(): Promise<BusinessMetrics["orders"]> {
-  return apiClient.get("/api/monitoring/business/orders");
+export async function getOrderMetrics(): Promise<BusinessMetrics['orders']> {
+  return apiClient.get('/api/monitoring/business/orders');
 }
 
 // ─── API Performance ───────────────────────────────────────────
 
 export async function getPerformanceStats(): Promise<PerformanceStats> {
-  return apiClient.get("/api/monitoring/performance");
+  return apiClient.get('/api/monitoring/performance');
 }
 
 export async function getAllEndpointStats(
@@ -172,4 +172,59 @@ export async function getErrorEndpoints(
 export async function getEndpointStats(method: string, path: string): Promise<EndpointStats> {
   const params = new URLSearchParams({ method, path });
   return apiClient.get(`/api/monitoring/performance/endpoint?${params.toString()}`);
+}
+
+// ─── Infrastructure Health & Metrics ───────────────────────────
+
+export interface ServiceStatus {
+  job: string;
+  health: 'up' | 'down' | 'unknown';
+  lastScrape: string;
+  lastError: string;
+}
+
+export interface PrometheusAlert {
+  name: string;
+  severity: string;
+  state: string;
+  summary: string;
+  description: string;
+  activeAt: string;
+  value: string;
+}
+
+export interface TimeSeriesPoint {
+  time: string;
+  timestamp: number;
+  value: number;
+}
+
+export async function getHealth(): Promise<{
+  services: ServiceStatus[];
+  prometheus: 'up' | 'down';
+}> {
+  return apiClient.get('/api/monitoring/health');
+}
+
+export async function getMetrics(): Promise<{
+  metrics: Record<string, number | null>;
+}> {
+  return apiClient.get('/api/monitoring/metrics');
+}
+
+/** Get Prometheus infrastructure alerts + firing summary */
+export async function getPrometheusAlerts(): Promise<{
+  alerts: PrometheusAlert[];
+  summary: { total_rules: number; firing: number; pending: number };
+}> {
+  return apiClient.get('/api/monitoring/alerts');
+}
+
+export async function getRangeData(params: {
+  query: string;
+  duration: string;
+  step: string;
+}): Promise<{ series: Array<{ values: TimeSeriesPoint[] }> }> {
+  const searchParams = new URLSearchParams(params);
+  return apiClient.get(`/api/monitoring/range?${searchParams.toString()}`);
 }

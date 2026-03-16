@@ -7,10 +7,9 @@ and pattern matching.
 
 import re
 from typing import Any
-from uuid import UUID
 
 import structlog
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.base_agent import BaseAgent

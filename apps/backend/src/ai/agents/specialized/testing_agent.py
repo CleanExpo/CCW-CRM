@@ -187,7 +187,7 @@ class TestingAgent(BaseAgent):
         if not code_to_test and target_file:
             target_path = self.project_root / target_file
             if target_path.exists():
-                with open(target_path, "r", encoding="utf-8") as f:
+                with open(target_path, encoding="utf-8") as f:
                     code_to_test = f.read()
 
         prompt = f"""You are an expert at writing comprehensive tests.

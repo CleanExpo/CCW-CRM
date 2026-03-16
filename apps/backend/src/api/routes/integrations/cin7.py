@@ -10,7 +10,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.config.cin7_settings import Cin7Settings, get_cin7_settings
-from src.integrations.cin7.client import Cin7Client, get_cin7_client
+from src.integrations.cin7.client import get_cin7_client
 
 logger = structlog.get_logger(__name__)
 

@@ -5,7 +5,6 @@ PHASE 3: Multi-Language Product Sync - Task 3.2
 Handles syncing product translations between ERP and Shopify using GraphQL Translations API.
 """
 
-from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 

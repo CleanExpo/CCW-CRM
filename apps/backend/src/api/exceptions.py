@@ -3,7 +3,6 @@
 Ensures all errors return JSON responses, preventing HTML error pages.
 """
 import traceback
-from typing import Any
 
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError

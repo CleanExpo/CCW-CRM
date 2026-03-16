@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
+import { useCallback, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
 import {
   Phone,
   Mail,
@@ -17,12 +17,12 @@ import {
   Pencil,
   Trash2,
   MessageSquare,
-} from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+} from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
 
 export interface Activity {
   id: string;
-  activity_type: "call" | "email" | "meeting" | "note" | "task";
+  activity_type: 'call' | 'email' | 'meeting' | 'note' | 'task';
   subject: string;
   description: string | null;
   customer_id: string | null;
@@ -53,11 +53,11 @@ const activityIcons: Record<string, React.ReactNode> = {
 };
 
 const activityColors: Record<string, string> = {
-  call: "bg-blue-500",
-  email: "bg-green-500",
-  meeting: "bg-purple-500",
-  note: "bg-yellow-500",
-  task: "bg-orange-500",
+  call: 'bg-blue-500',
+  email: 'bg-green-500',
+  meeting: 'bg-purple-500',
+  note: 'bg-yellow-500',
+  task: 'bg-orange-500',
 };
 
 export function ActivityTimeline({
@@ -74,16 +74,13 @@ export function ActivityTimeline({
   const loadActivities = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<{ data: Activity[] }>(
-        `/api/activities/customer/${customerId}`
-      );
-      setActivities(response.data || []);
+      const response = await apiClient.get<Activity[]>(`/api/activities/customer/${customerId}`);
+      setActivities(response || []);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to load activities";
+      const message = error instanceof Error ? error.message : 'Failed to load activities';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
       setActivities([]);
@@ -100,16 +97,15 @@ export function ActivityTimeline({
     try {
       await apiClient.post(`/api/activities/${activity.id}/complete`);
       toast({
-        title: "Task completed",
-        description: "Activity marked as complete",
+        title: 'Task completed',
+        description: 'Activity marked as complete',
       });
       loadActivities();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to complete activity";
+      const message = error instanceof Error ? error.message : 'Failed to complete activity';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     }
@@ -133,8 +129,8 @@ export function ActivityTimeline({
 
   if (activities.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+      <div className="text-muted-foreground py-8 text-center">
+        <MessageSquare className="mx-auto mb-4 h-12 w-12 opacity-50" />
         <p>No activities recorded yet</p>
         <Button onClick={onAddActivity} variant="outline" className="mt-4">
           <Plus className="mr-2 h-4 w-4" />
@@ -155,7 +151,7 @@ export function ActivityTimeline({
 
       <div className="relative">
         {/* Timeline line */}
-        <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-muted" />
+        <div className="bg-muted absolute top-0 bottom-0 left-5 w-0.5" />
 
         {/* Activity items */}
         <div className="space-y-6">
@@ -164,48 +160,46 @@ export function ActivityTimeline({
               {/* Icon */}
               <div
                 className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full text-white ${
-                  activityColors[activity.activity_type] || "bg-gray-500"
+                  activityColors[activity.activity_type] || 'bg-gray-500'
                 }`}
               >
                 {activityIcons[activity.activity_type] || <FileText className="h-4 w-4" />}
               </div>
 
               {/* Content */}
-              <div className="flex-1 rounded-lg border bg-card p-4 shadow-sm">
+              <div className="bg-card flex-1 rounded-lg border p-4 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{activity.subject}</span>
-                      <Badge variant="outline" className="capitalize text-xs">
+                      <Badge variant="outline" className="text-xs capitalize">
                         {activity.activity_type}
                       </Badge>
-                      {activity.activity_type === "task" && !activity.completed_at && (
+                      {activity.activity_type === 'task' && !activity.completed_at && (
                         <Badge variant="secondary" className="text-xs">
                           <Clock className="mr-1 h-3 w-3" />
                           Pending
                         </Badge>
                       )}
                       {activity.completed_at && (
-                        <Badge variant="default" className="text-xs bg-green-500">
+                        <Badge variant="default" className="bg-green-500 text-xs">
                           <CheckCircle className="mr-1 h-3 w-3" />
                           Completed
                         </Badge>
                       )}
                     </div>
                     {activity.description && (
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      <p className="text-muted-foreground text-sm whitespace-pre-wrap">
                         {activity.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>{format(new Date(activity.created_at), "MMM dd, yyyy h:mm a")}</span>
-                      {activity.contact_name && (
-                        <span>Contact: {activity.contact_name}</span>
-                      )}
+                    <div className="text-muted-foreground flex items-center gap-4 text-xs">
+                      <span>{format(new Date(activity.created_at), 'MMM dd, yyyy h:mm a')}</span>
+                      {activity.contact_name && <span>Contact: {activity.contact_name}</span>}
                       {activity.due_date && (
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          Due: {format(new Date(activity.due_date), "MMM dd, yyyy")}
+                          Due: {format(new Date(activity.due_date), 'MMM dd, yyyy')}
                         </span>
                       )}
                     </div>
@@ -213,7 +207,7 @@ export function ActivityTimeline({
 
                   {/* Actions */}
                   <div className="flex items-center gap-1">
-                    {activity.activity_type === "task" && !activity.completed_at && (
+                    {activity.activity_type === 'task' && !activity.completed_at && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -237,7 +231,7 @@ export function ActivityTimeline({
                       onClick={() => onDeleteActivity(activity)}
                       title="Delete activity"
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="text-destructive h-4 w-4" />
                     </Button>
                   </div>
                 </div>

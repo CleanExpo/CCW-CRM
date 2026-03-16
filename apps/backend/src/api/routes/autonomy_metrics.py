@@ -7,9 +7,10 @@ Used by Grafana dashboard and monitoring tools.
 Part of Phase 5 (Autonomous Development Framework) - Week 3 monitoring.
 """
 
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from datetime import UTC
+
+from fastapi import APIRouter, Query
 
 from src.services.autonomy_audit import (
     AuditAction,
@@ -315,7 +316,7 @@ async def get_autonomy_health(
     GET /api/autonomy/health?window_hours=1
     ```
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     audit_service = get_audit_service()
     metrics = audit_service.get_metrics(window_hours=window_hours)
@@ -359,5 +360,5 @@ async def get_autonomy_health(
             "total_auto_merged": metrics.total_auto_merged,
         },
         "issues": issues,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }

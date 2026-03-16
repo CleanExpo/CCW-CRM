@@ -120,3 +120,8 @@ class SendGridSettings(BaseSettings):
 
 # Global settings instance
 sendgrid_settings = SendGridSettings()
+
+
+def get_sendgrid_settings() -> SendGridSettings:
+    """Get SendGrid settings instance (for dependency injection)."""
+    return sendgrid_settings

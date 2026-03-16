@@ -32,7 +32,6 @@ from pydantic import (
     model_validator,
 )
 
-
 # =============================================================================
 # ENUMS (as Literal types for Pydantic compatibility)
 # =============================================================================
@@ -164,7 +163,7 @@ class ProductStockByLocationBase(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_reserved_not_exceeds_stock(self) -> "ProductStockByLocationBase":
+    def validate_reserved_not_exceeds_stock(self) -> ProductStockByLocationBase:
         """Validate that reserved does not exceed total stock."""
         if self.reserved > self.stock:
             raise ValueError("Reserved quantity cannot exceed total stock")
@@ -282,7 +281,7 @@ class StockTransferBase(BaseModel):
     notes: str | None = Field(None, max_length=1000, description="Additional notes")
 
     @model_validator(mode="after")
-    def validate_different_locations(self) -> "StockTransferBase":
+    def validate_different_locations(self) -> StockTransferBase:
         """Ensure source and destination locations are different."""
         if self.from_location == self.to_location:
             raise ValueError("Source and destination locations must be different")
@@ -525,7 +524,7 @@ class StockAdjustmentCreate(StockAdjustmentBase):
     adjusted_by: UUID | None = Field(None, description="User making adjustment")
 
     @model_validator(mode="after")
-    def validate_quantity_consistency(self) -> "StockAdjustmentCreate":
+    def validate_quantity_consistency(self) -> StockAdjustmentCreate:
         """Validate that quantity change matches previous/new quantities."""
         expected_new = self.previous_quantity + self.quantity_change
         if expected_new != self.new_quantity:
@@ -761,7 +760,7 @@ class PurchaseOrderBase(BaseModel):
     notes: str | None = Field(None, description="Order notes")
 
     @model_validator(mode="after")
-    def validate_total_calculation(self) -> "PurchaseOrderBase":
+    def validate_total_calculation(self) -> PurchaseOrderBase:
         """Validate that total equals subtotal + tax + shipping."""
         expected = self.subtotal + self.tax + (self.shipping_cost or Decimal("0.00"))
         # Allow small floating point differences
@@ -861,7 +860,7 @@ class PurchaseOrderInDB(BaseModel):
     updated_at: datetime | None = Field(None, description="Record last update timestamp")
 
     # Nested relationships (optional - populated when joined)
-    items: list["PurchaseOrderItemInDB"] | None = Field(None, description="Order line items")
+    items: list[PurchaseOrderItemInDB] | None = Field(None, description="Order line items")
 
     @computed_field
     @property
@@ -932,7 +931,7 @@ class PurchaseOrderItemBase(BaseModel):
     subtotal: Decimal = Field(..., ge=0, decimal_places=2, description="Line subtotal")
 
     @model_validator(mode="after")
-    def validate_subtotal(self) -> "PurchaseOrderItemBase":
+    def validate_subtotal(self) -> PurchaseOrderItemBase:
         """Validate subtotal equals quantity * unit_cost."""
         expected = Decimal(str(self.quantity)) * self.unit_cost
         if abs(expected - self.subtotal) > Decimal("0.01"):

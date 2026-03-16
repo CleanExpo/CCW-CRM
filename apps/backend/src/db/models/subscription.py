@@ -2,12 +2,11 @@
 
 import enum
 from datetime import UTC, datetime
-from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Numeric, String
+from sqlalchemy import DateTime, Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.models_base import Base
 

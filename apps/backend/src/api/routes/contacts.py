@@ -3,7 +3,7 @@
 Provides full CRUD operations for managing contacts associated with customers.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -136,7 +136,7 @@ async def create_contact(
         "title": "New Contact",
         "description": f"Contact {contact.first_name} {contact.last_name} created",
         "link": f"/contacts/{contact.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Contact.model_validate(contact)
@@ -181,13 +181,13 @@ async def update_contact(
         "title": "Contact Updated",
         "description": f"Contact {contact.first_name} {contact.last_name} updated",
         "link": f"/contacts/{contact.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Contact.model_validate(contact)
 
 
-@router.delete("/{contact_id}", status_code=204)
+@router.delete("/{contact_id}", status_code=204, response_model=None)
 async def delete_contact(
     contact_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -215,7 +215,7 @@ async def delete_contact(
         "title": "Contact Deleted",
         "description": f"Contact {contact_name} deleted",
         "link": "/contacts",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return None
@@ -229,6 +229,12 @@ async def get_customer_contacts(
     db: AsyncSession = Depends(get_db),
 ):
     """Get all contacts for a specific customer."""
+    # Verify customer exists
+    customer_check = select(CustomerModel).where(CustomerModel.id == customer_id)
+    result = await db.execute(customer_check)
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Customer not found")
+
     query = select(ContactModel).where(ContactModel.customer_id == customer_id)
 
     if not include_inactive:

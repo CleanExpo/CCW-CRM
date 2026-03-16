@@ -1,19 +1,20 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { invoicesApi } from "@/lib/api/invoices";
-import type { Invoice } from "@/lib/types/invoices";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { InvoiceStatusBadge } from "../components/InvoiceStatusBadge";
-import { InvoiceForm } from "../components/InvoiceForm";
-import { DeleteInvoiceDialog } from "../components/DeleteInvoiceDialog";
-import { RecordPaymentDialog } from "../components/RecordPaymentDialog";
-import { format } from "date-fns";
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { invoicesApi } from '@/lib/api/invoices';
+import type { Invoice } from '@/lib/types/invoices';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { InvoiceStatusBadge } from '../components/InvoiceStatusBadge';
+import { InvoiceForm } from '../components/InvoiceForm';
+import { DeleteInvoiceDialog } from '../components/DeleteInvoiceDialog';
+import { RecordPaymentDialog } from '../components/RecordPaymentDialog';
+import { InvoicePrintView } from '../components/InvoicePrintView';
+import { format } from 'date-fns';
 import {
   ArrowLeft,
   Edit,
@@ -24,7 +25,7 @@ import {
   FileText,
   Calendar,
   User,
-} from "lucide-react";
+} from 'lucide-react';
 
 export default function InvoiceDetailPage() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function InvoiceDetailPage() {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [showPrintView, setShowPrintView] = useState(false);
 
   const loadInvoice = useCallback(async () => {
     setLoading(true);
@@ -44,14 +46,14 @@ export default function InvoiceDetailPage() {
       const data = await invoicesApi.get(invoiceId);
       setInvoice(data);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load invoice";
+      const message = error instanceof Error ? error.message : 'Failed to load invoice';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
       // Redirect back to invoices list if invoice not found
-      router.push("/invoices");
+      router.push('/invoices');
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,7 @@ export default function InvoiceDetailPage() {
   }, [loadInvoice]);
 
   const handleBack = () => {
-    router.push("/invoices");
+    router.push('/invoices');
   };
 
   const handleEdit = () => {
@@ -81,36 +83,25 @@ export default function InvoiceDetailPage() {
     try {
       await invoicesApi.send(invoiceId);
       toast({
-        title: "Invoice Sent",
-        description: "Invoice has been sent to the customer",
+        title: 'Invoice Sent',
+        description: 'Invoice has been sent to the customer',
       });
       loadInvoice(); // Reload to get updated status
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to send invoice",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to send invoice',
       });
     }
   };
 
-  const handleDownloadPDF = async () => {
-    try {
-      // This would typically download a PDF - for now just show a toast
-      toast({
-        title: "Download Started",
-        description: "Invoice PDF is being generated",
-      });
-      // TODO: Implement actual PDF download
-      // const blob = await apiClient.get(`/api/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
-      // downloadBlob(blob, `invoice-${invoice?.invoice_number}.pdf`);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to download PDF",
-      });
-    }
+  const handleDownloadPDF = () => {
+    setShowPrintView(true);
+    // Allow the print view to render before triggering the print dialog
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const handleFormSuccess = () => {
@@ -120,10 +111,10 @@ export default function InvoiceDetailPage() {
 
   const handleDeleteSuccess = () => {
     toast({
-      title: "Invoice Deleted",
-      description: "Invoice has been deleted successfully",
+      title: 'Invoice Deleted',
+      description: 'Invoice has been deleted successfully',
     });
-    router.push("/invoices");
+    router.push('/invoices');
   };
 
   const handlePaymentRecorded = () => {
@@ -132,7 +123,7 @@ export default function InvoiceDetailPage() {
   };
 
   const formatCurrency = (value: string | number) => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
+    const num = typeof value === 'string' ? parseFloat(value) : value;
     return `$${num.toFixed(2)}`;
   };
 
@@ -148,13 +139,13 @@ export default function InvoiceDetailPage() {
   if (!invoice) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <FileText className="h-12 w-12 text-muted-foreground" />
+        <FileText className="text-muted-foreground h-12 w-12" />
         <h3 className="mt-4 text-lg font-semibold">Invoice not found</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-sm">
           The invoice you're looking for doesn't exist.
         </p>
         <Button className="mt-4" onClick={handleBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Invoices
         </Button>
       </div>
@@ -167,15 +158,13 @@ export default function InvoiceDetailPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Invoice {invoice.invoice_number}
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight">Invoice {invoice.invoice_number}</h1>
             <p className="text-muted-foreground">
-              Created {format(new Date(invoice.created_at), "MMMM d, yyyy")}
+              Created {format(new Date(invoice.created_at), 'MMMM d, yyyy')}
             </p>
           </div>
         </div>
@@ -186,31 +175,31 @@ export default function InvoiceDetailPage() {
 
       {/* Action Buttons */}
       <div className="flex gap-2">
-        {invoice.status !== "paid" && invoice.status !== "cancelled" && (
+        {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
           <>
             <Button variant="default" onClick={handleEdit}>
-              <Edit className="h-4 w-4 mr-2" />
+              <Edit className="mr-2 h-4 w-4" />
               Edit
             </Button>
             <Button variant="outline" onClick={handleRecordPayment}>
-              <DollarSign className="h-4 w-4 mr-2" />
+              <DollarSign className="mr-2 h-4 w-4" />
               Record Payment
             </Button>
-            {invoice.status === "draft" && (
+            {invoice.status === 'draft' && (
               <Button variant="outline" onClick={handleSendInvoice}>
-                <Send className="h-4 w-4 mr-2" />
+                <Send className="mr-2 h-4 w-4" />
                 Send Invoice
               </Button>
             )}
           </>
         )}
         <Button variant="outline" onClick={handleDownloadPDF}>
-          <FileDown className="h-4 w-4 mr-2" />
+          <FileDown className="mr-2 h-4 w-4" />
           Download PDF
         </Button>
-        {(invoice.status === "draft" || invoice.status === "cancelled") && (
+        {(invoice.status === 'draft' || invoice.status === 'cancelled') && (
           <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </Button>
         )}
@@ -218,7 +207,7 @@ export default function InvoiceDetailPage() {
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Main Invoice Details */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="space-y-6 md:col-span-2">
           {/* Customer & Dates Card */}
           <Card>
             <CardHeader>
@@ -226,26 +215,26 @@ export default function InvoiceDetailPage() {
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-6">
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-2">
                   <User className="h-4 w-4" />
                   <span className="text-sm font-medium">Customer</span>
                 </div>
-                <p className="text-lg font-semibold">{invoice.customer_name || "—"}</p>
+                <p className="text-lg font-semibold">{invoice.customer_name || '—'}</p>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   <span className="text-sm font-medium">Invoice Date</span>
                 </div>
-                <p className="text-lg">{format(new Date(invoice.invoice_date), "MMM d, yyyy")}</p>
+                <p className="text-lg">{format(new Date(invoice.invoice_date), 'MMM d, yyyy')}</p>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   <span className="text-sm font-medium">Due Date</span>
                 </div>
                 <p className="text-lg font-semibold">
-                  {format(new Date(invoice.due_date), "MMM d, yyyy")}
+                  {format(new Date(invoice.due_date), 'MMM d, yyyy')}
                 </p>
               </div>
             </CardContent>
@@ -256,7 +245,7 @@ export default function InvoiceDetailPage() {
             <CardHeader>
               <CardTitle>Line Items</CardTitle>
               <CardDescription>
-                {invoice.items?.length || 0} item{invoice.items?.length !== 1 ? "s" : ""}
+                {invoice.items?.length || 0} item{invoice.items?.length !== 1 ? 's' : ''}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -265,11 +254,11 @@ export default function InvoiceDetailPage() {
                   {invoice.items.map((item, index) => (
                     <div
                       key={item.id || index}
-                      className="flex justify-between items-start p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                      className="hover:bg-accent/50 flex items-start justify-between rounded-lg border p-4 transition-colors"
                     >
                       <div className="flex-1 space-y-1">
                         <p className="font-semibold">{item.description}</p>
-                        <div className="flex gap-4 text-sm text-muted-foreground">
+                        <div className="text-muted-foreground flex gap-4 text-sm">
                           <span>Qty: {item.quantity}</span>
                           <span>×</span>
                           <span>{formatCurrency(item.unit_price)}</span>
@@ -277,16 +266,20 @@ export default function InvoiceDetailPage() {
                             <>
                               <span>|</span>
                               <span>
-                                Tax: {typeof item.tax_rate === "string" ? item.tax_rate : item.tax_rate.toFixed(2)}%
+                                Tax:{' '}
+                                {typeof item.tax_rate === 'string'
+                                  ? item.tax_rate
+                                  : item.tax_rate.toFixed(2)}
+                                %
                               </span>
                             </>
                           )}
                         </div>
                       </div>
-                      <div className="text-right space-y-1">
+                      <div className="space-y-1 text-right">
                         <p className="text-lg font-bold">{formatCurrency(item.total || 0)}</p>
                         {item.tax_amount && parseFloat(item.tax_amount.toString()) > 0 && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             +{formatCurrency(item.tax_amount)} tax
                           </p>
                         )}
@@ -295,9 +288,7 @@ export default function InvoiceDetailPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No line items
-                </div>
+                <div className="text-muted-foreground py-8 text-center">No line items</div>
               )}
             </CardContent>
           </Card>
@@ -309,9 +300,7 @@ export default function InvoiceDetailPage() {
                 <CardTitle>Notes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {invoice.notes}
-                </p>
+                <p className="text-muted-foreground text-sm whitespace-pre-wrap">{invoice.notes}</p>
               </CardContent>
             </Card>
           )}
@@ -350,8 +339,8 @@ export default function InvoiceDetailPage() {
                   <span
                     className={
                       parseFloat(invoice.amount_due.toString()) > 0
-                        ? "text-destructive"
-                        : "text-green-600"
+                        ? 'text-destructive'
+                        : 'text-green-600'
                     }
                   >
                     {formatCurrency(invoice.amount_due)}
@@ -360,7 +349,7 @@ export default function InvoiceDetailPage() {
               </div>
 
               {/* Payment Status Indicator */}
-              <div className="pt-4 border-t">
+              <div className="border-t pt-4">
                 {parseFloat(invoice.amount_due.toString()) === 0 ? (
                   <div className="flex items-center gap-2 text-green-600">
                     <div className="h-2 w-2 rounded-full bg-green-600" />
@@ -372,8 +361,8 @@ export default function InvoiceDetailPage() {
                     <span className="text-sm font-medium">Partially Paid</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="h-2 w-2 rounded-full bg-muted-foreground" />
+                  <div className="text-muted-foreground flex items-center gap-2">
+                    <div className="bg-muted-foreground h-2 w-2 rounded-full" />
                     <span className="text-sm font-medium">Unpaid</span>
                   </div>
                 )}
@@ -390,13 +379,13 @@ export default function InvoiceDetailPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Created</span>
                 <span className="font-medium">
-                  {format(new Date(invoice.created_at), "MMM d, yyyy")}
+                  {format(new Date(invoice.created_at), 'MMM d, yyyy')}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Last Updated</span>
                 <span className="font-medium">
-                  {format(new Date(invoice.updated_at), "MMM d, yyyy")}
+                  {format(new Date(invoice.updated_at), 'MMM d, yyyy')}
                 </span>
               </div>
               {invoice.order_id && (
@@ -429,6 +418,9 @@ export default function InvoiceDetailPage() {
         onOpenChange={setPaymentDialogOpen}
         onPaymentRecorded={handlePaymentRecorded}
       />
+
+      {/* Print View — hidden on screen, visible when printing */}
+      {showPrintView && <InvoicePrintView invoice={invoice} />}
     </div>
   );
 }

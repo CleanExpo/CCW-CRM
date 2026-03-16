@@ -1,12 +1,11 @@
 """Pydantic schemas for ERP API."""
-from datetime import date, datetime, time, timezone
+from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, field_serializer, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_serializer, field_validator, model_validator
 
-from src.db.demo_models import OrderStatus, QuoteStatus
-from src.db.demo_models import ProductCategory
+from src.db.demo_models import OrderStatus, ProductCategory, QuoteStatus
 
 
 # Organization schemas
@@ -293,17 +292,17 @@ class QuoteBase(BaseModel):
         if isinstance(value, datetime):
             # Ensure timezone aware
             if value.tzinfo is None:
-                return value.replace(tzinfo=timezone.utc)
+                return value.replace(tzinfo=UTC)
             return value
         if isinstance(value, date):
             # Convert date to datetime at midnight UTC
-            return datetime.combine(value, time.min, tzinfo=timezone.utc)
+            return datetime.combine(value, time.min, tzinfo=UTC)
         if isinstance(value, str):
             # Try parsing ISO format
             try:
                 dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
                 if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
+                    dt = dt.replace(tzinfo=UTC)
                 return dt
             except (ValueError, AttributeError):
                 pass
@@ -361,17 +360,17 @@ class QuoteUpdate(BaseModel):
         if isinstance(value, datetime):
             # Ensure timezone aware
             if value.tzinfo is None:
-                return value.replace(tzinfo=timezone.utc)
+                return value.replace(tzinfo=UTC)
             return value
         if isinstance(value, date):
             # Convert date to datetime at midnight UTC
-            return datetime.combine(value, time.min, tzinfo=timezone.utc)
+            return datetime.combine(value, time.min, tzinfo=UTC)
         if isinstance(value, str):
             # Try parsing ISO format
             try:
                 dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
                 if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
+                    dt = dt.replace(tzinfo=UTC)
                 return dt
             except (ValueError, AttributeError):
                 pass

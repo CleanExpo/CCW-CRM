@@ -8,7 +8,6 @@ https://developer.xero.com/documentation/webhooks/overview
 import base64
 import hashlib
 import hmac
-from typing import Any
 
 import structlog
 

@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 // PHASE 4: Search state persistence
-import { useSearchState } from "@/lib/hooks/use-search-state";
+import { useSearchState } from '@/lib/hooks/use-search-state';
 // PHASE 4: Last updated timestamps
-import { formatDistanceToNow } from "date-fns";
-import { Input } from "@/components/ui/input";
+import { formatDistanceToNow } from 'date-fns';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,13 +29,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, PackageCheck, X, Copy } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiClient } from "@/lib/api/client";
-import { PurchaseOrderForm } from "./components/PurchaseOrderForm";
-import { ReceiveGoodsDialog } from "./components/ReceiveGoodsDialog";
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Search, MoreHorizontal, PackageCheck, X, Copy, Download } from 'lucide-react';
+import { exportPurchaseOrdersToCSV } from '@/lib/utils/csv-export';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import { PurchaseOrderForm } from './components/PurchaseOrderForm';
+import { ReceiveGoodsDialog } from './components/ReceiveGoodsDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,9 +46,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import type { PurchaseOrder, PurchaseOrdersResponse } from "./types";
-import { STATUS_COLORS, STATUS_LABELS, LOCATION_LABELS } from "./types";
+} from '@/components/ui/alert-dialog';
+import type { PurchaseOrder, PurchaseOrdersResponse } from './types';
+import { STATUS_COLORS, STATUS_LABELS, LOCATION_LABELS } from './types';
 
 export default function PurchaseOrdersPage() {
   const { toast } = useToast();
@@ -58,23 +59,23 @@ export default function PurchaseOrdersPage() {
 
   // PHASE 4: Search state persistence - remembers search/filters/pagination
   const { state: searchState, updateField } = useSearchState({
-    key: "purchase-orders-list",
+    key: 'purchase-orders-list',
     defaultState: {
-      searchQuery: "",
-      statusFilter: "all",
-      locationFilter: "all",
+      searchQuery: '',
+      statusFilter: 'all',
+      locationFilter: 'all',
       page: 1,
     },
   });
 
-  const searchQuery = searchState.searchQuery || "";
-  const statusFilter = searchState.statusFilter || "all";
-  const locationFilter = searchState.locationFilter || "all";
+  const searchQuery = searchState.searchQuery || '';
+  const statusFilter = searchState.statusFilter || 'all';
+  const locationFilter = searchState.locationFilter || 'all';
   const page = searchState.page || 1;
-  const setSearchQuery = (value: string) => updateField("searchQuery", value);
-  const setStatusFilter = (value: string) => updateField("statusFilter", value);
-  const setLocationFilter = (value: string) => updateField("locationFilter", value);
-  const setPage = (value: number) => updateField("page", value);
+  const setSearchQuery = (value: string) => updateField('searchQuery', value);
+  const setStatusFilter = (value: string) => updateField('statusFilter', value);
+  const setLocationFilter = (value: string) => updateField('locationFilter', value);
+  const setPage = (value: number) => updateField('page', value);
 
   // Dialogs
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -91,13 +92,12 @@ export default function PurchaseOrdersPage() {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        page_size: "50",
+        page_size: '50',
       });
 
-      if (searchQuery) params.append("search", searchQuery);
-      if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
-      if (locationFilter && locationFilter !== "all")
-        params.append("location", locationFilter);
+      if (searchQuery) params.append('search', searchQuery);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      if (locationFilter && locationFilter !== 'all') params.append('location', locationFilter);
 
       const response = await apiClient.get<PurchaseOrdersResponse>(
         `/api/purchase-orders?${params.toString()}`
@@ -106,11 +106,11 @@ export default function PurchaseOrdersPage() {
       setPurchaseOrders(response.items || []);
       setTotalPages(response.total_pages || 1);
     } catch (error: unknown) {
-      console.error("Failed to load purchase orders:", error);
+      console.error('Failed to load purchase orders:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load purchase orders",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to load purchase orders',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -123,22 +123,22 @@ export default function PurchaseOrdersPage() {
 
     try {
       await apiClient.put(`/api/purchase-orders/${cancellingPO.id}`, {
-        status: "cancelled",
+        status: 'cancelled',
       });
 
       toast({
-        title: "Success",
-        description: "Purchase order cancelled successfully",
+        title: 'Success',
+        description: 'Purchase order cancelled successfully',
       });
 
       loadPurchaseOrders();
       setCancellingPO(null);
     } catch (error: unknown) {
-      console.error("Failed to cancel purchase order:", error);
+      console.error('Failed to cancel purchase order:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to cancel purchase order",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to cancel purchase order',
+        variant: 'destructive',
       });
     }
   }
@@ -152,43 +152,37 @@ export default function PurchaseOrdersPage() {
         ...fullPO,
         id: undefined, // Remove id to create new PO
         po_number: undefined, // Will be auto-generated
-        status: "draft", // Reset to draft
-        notes: fullPO.notes ? `Copy of ${fullPO.po_number}\n\n${fullPO.notes}` : `Copy of ${fullPO.po_number}`,
+        status: 'draft', // Reset to draft
+        notes: fullPO.notes
+          ? `Copy of ${fullPO.po_number}\n\n${fullPO.notes}`
+          : `Copy of ${fullPO.po_number}`,
       };
-      setEditingPO(poCopy as PurchaseOrder);
+      setEditingPO(poCopy as unknown as PurchaseOrder);
       setIsCreateOpen(true);
       toast({
-        title: "Purchase Order Duplicated",
-        description: "Review and modify the copy before saving",
+        title: 'Purchase Order Duplicated',
+        description: 'Review and modify the copy before saving',
       });
     } catch (error: unknown) {
-      console.error("Failed to duplicate purchase order:", error);
+      console.error('Failed to duplicate purchase order:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to duplicate purchase order",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to duplicate purchase order',
+        variant: 'destructive',
       });
     }
   }
 
   function canReceiveGoods(po: PurchaseOrder): boolean {
-    return (
-      po.status === "ordered" ||
-      po.status === "in_transit" ||
-      po.status === "approved"
-    );
+    return po.status === 'ordered' || po.status === 'in_transit' || po.status === 'approved';
   }
 
   function canCancel(po: PurchaseOrder): boolean {
-    return (
-      po.status === "draft" ||
-      po.status === "pending_approval" ||
-      po.status === "approved"
-    );
+    return po.status === 'draft' || po.status === 'pending_approval' || po.status === 'approved';
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -202,16 +196,29 @@ export default function PurchaseOrdersPage() {
             )}
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Purchase Order
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              exportPurchaseOrdersToCSV(purchaseOrders as unknown as Record<string, unknown>[]);
+              toast({ title: 'Export Successful', description: 'Purchase orders exported to CSV' });
+            }}
+            disabled={purchaseOrders.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Purchase Order
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center gap-4">
+        <div className="relative max-w-md flex-1">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Search by PO number..."
             value={searchQuery}
@@ -282,13 +289,13 @@ export default function PurchaseOrdersPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : purchaseOrders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
                   No purchase orders found
                 </TableCell>
               </TableRow>
@@ -298,27 +305,18 @@ export default function PurchaseOrdersPage() {
                   <TableCell className="font-medium">{po.po_number}</TableCell>
                   <TableCell>
                     <div className="font-medium">{po.supplier_name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {po.supplier_code}
-                    </div>
+                    <div className="text-muted-foreground text-sm">{po.supplier_code}</div>
                   </TableCell>
                   <TableCell>{LOCATION_LABELS[po.delivery_location]}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={STATUS_COLORS[po.status]}
-                    >
+                    <Badge variant="secondary" className={STATUS_COLORS[po.status]}>
                       {STATUS_LABELS[po.status]}
                     </Badge>
                   </TableCell>
                   <TableCell>{po.items?.length || 0} items</TableCell>
-                  <TableCell className="text-right font-medium">
-                    ${po.total.toFixed(2)}
-                  </TableCell>
+                  <TableCell className="text-right font-medium">${po.total.toFixed(2)}</TableCell>
                   <TableCell>
-                    {po.order_date
-                      ? new Date(po.order_date).toLocaleDateString()
-                      : "-"}
+                    {po.order_date ? new Date(po.order_date).toLocaleDateString() : '-'}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -330,9 +328,7 @@ export default function PurchaseOrdersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setEditingPO(po)}>
-                          Edit
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditingPO(po)}>Edit</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDuplicatePO(po)}>
                           <Copy className="mr-2 h-4 w-4" />
                           Duplicate
@@ -376,7 +372,7 @@ export default function PurchaseOrdersPage() {
           >
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             Page {page} of {totalPages}
           </span>
           <Button
@@ -431,17 +427,14 @@ export default function PurchaseOrdersPage() {
       )}
 
       {/* Cancel Confirmation Dialog */}
-      <AlertDialog
-        open={!!cancellingPO}
-        onOpenChange={(open) => !open && setCancellingPO(null)}
-      >
+      <AlertDialog open={!!cancellingPO} onOpenChange={(open) => !open && setCancellingPO(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Purchase Order?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel purchase order{" "}
-              <span className="font-medium">{cancellingPO?.po_number}</span>? This
-              action cannot be undone.
+              Are you sure you want to cancel purchase order{' '}
+              <span className="font-medium">{cancellingPO?.po_number}</span>? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

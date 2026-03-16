@@ -147,7 +147,7 @@ class ErrorResponse(BaseModel):
 # ============================================================================
 
 router = APIRouter(
-    prefix="/contractors",
+    prefix="/api/contractors",
     tags=["contractors"],
     responses={
         404: {"model": ErrorResponse, "description": "Contractor not found"},
@@ -306,6 +306,7 @@ async def update_contractor(
 @router.delete(
     "/{contractor_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="Delete contractor",
     description="Remove contractor from system",
 )

@@ -8,7 +8,7 @@ Handles syncing products in both directions:
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Literal
 
 import structlog
@@ -246,7 +246,7 @@ class BidirectionalProductSyncer:
         if not force and erp_updated_at > last_sync and shopify_updated_at.replace(tzinfo=None) > last_sync:
             # Conflict detected
             conflict = ProductSyncConflict(
-                message=f"Product updated in both systems since last sync",
+                message="Product updated in both systems since last sync",
                 product_id=mapping.product_id,
                 erp_updated_at=erp_updated_at,
                 shopify_updated_at=shopify_updated_at.replace(tzinfo=None),

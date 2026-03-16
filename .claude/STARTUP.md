@@ -1,4 +1,4 @@
-# 🚨 STARTUP INSTRUCTIONS — READ FIRST
+# STARTUP INSTRUCTIONS — READ FIRST
 
 > This file MUST be read at the start of every Claude Code session.
 > If you're seeing this, you're doing it right.
@@ -9,26 +9,45 @@ Before doing ANYTHING, read these files in order:
 
 1. `CLAUDE.md` (root) — Quick reference & architecture guide
 2. `.claude/CLAUDE.md` — Full system instructions & workflow
-3. `docs/IMPLEMENTATION-PROGRESS.md` — Current project status
-4. `.claude/.execution` — Active task state
 
 ## STEP 2: Confirm Understanding
 
 After reading, you should know:
-- [x] What CCW-Online ERP is (Equipment Supplier ERP)
-- [x] Tech stack (Next.js 15 + FastAPI + PostgreSQL)
+
+- [x] What CCW-ERP-CRM is (Equipment Supplier ERP/CRM)
+- [x] Tech stack (Next.js 15 + FastAPI + PostgreSQL + Supabase + Vercel)
 - [x] Monorepo structure (apps/web, apps/backend)
 - [x] What's forbidden (schema changes, auth changes, breaking API changes)
-- [x] What the workflow is (plan → approve → code → test)
-- [x] Current phase (Phase 1: i18n Complete, ready for Phase 2 or 4)
+- [x] What the workflow is (plan -> approve -> code -> test)
+- [x] Current state (deployed production app with Cin7 integration, AI agents, POS)
 
 ## STEP 3: Check Current State
 
 Run mental checklist:
+
 - Is there an active task? Check `.claude/.execution`
 - Is there an approved plan? Look for recent planning conversation
-- What was last done? Check git log or IMPLEMENTATION-PROGRESS.md
-- What phase are we in? Check IMPLEMENTATION-PROGRESS.md
+- What was last done? Check git log
+
+## STEP 3.5: Read Anti-Drift Memory Files
+
+ALWAYS read these files before any major decision:
+
+```bash
+cat .claude/memory/CONSTITUTION.md    # Immutable rules
+cat .claude/memory/current-state.md   # Active sprint + in-progress work
+cat .claude/memory/handoff.md         # Previous session context
+```
+
+Check catalog freshness (run if catalogs might be stale):
+
+- If any catalog in docs/catalogs/ has "Last Verified" > 7 days ago, run /pi-scan-\* to refresh it
+- Catalogs are the source of truth — don't re-scan codebase if catalogs are fresh
+
+If context snapshot exists (.claude/memory/context-snapshot.md has recent content):
+
+- Read it — context compaction occurred, memory was saved
+- Re-read CONSTITUTION.md + current-state.md immediately
 
 ## STEP 4: Wait for Instructions
 
@@ -43,18 +62,30 @@ Just say:
 
 ## QUICK REFERENCE
 
-**Project:** CCW-Online ERP
-**Type:** Full-stack Equipment Supplier ERP
-**Mode:** Development
-**Current Status:** Phase 1 (i18n) Complete ✅
+**Project:** CCW-ERP-CRM
+**Type:** Full-stack Equipment Supplier ERP/CRM
+**Mode:** Production (deployed)
+**Path:** D:\CCW-ERP-CRM
+
+**Current Status:**
+
+- Full CRUD (Products, Customers, Orders, Quotes) — complete
+- Cin7 Integration (7 phases) — complete
+- AI Agents (forecasting, anomaly detection) — complete
+- Agents Protocol v1.0 (multi-agent governance) — complete
+- POS system — complete
+- Supabase Cloud + Vercel deployment — complete
+- 321 integration test assertions, all passing
 
 **Tech Stack:**
-- Frontend: Next.js 15, React 19, TypeScript 5.7, Tailwind CSS v4
+
+- Frontend: Next.js 15, React 19, TypeScript 5.7, Tailwind CSS v4 (Vercel)
 - Backend: FastAPI (Python 3.12), SQLAlchemy 2.0, Pydantic v2
-- Database: PostgreSQL 15 (Docker)
+- Database: PostgreSQL 15 — Supabase Cloud (prod), Docker (local)
 - Package Manager: pnpm (monorepo with Turbo)
 
 **Commands:**
+
 - `/plan` — Create implementation plan (REQUIRED before coding)
 - `/spec` — Read project specification
 - `/test` — Run tests (frontend: pnpm test, backend: pytest)
@@ -62,6 +93,7 @@ Just say:
 - `/reset` — Re-read all configs
 
 **Forbidden (NEVER DO):**
+
 - Modifying database schema (apps/backend/src/db/demo_models.py)
 - Changing auth code (middleware.ts, demo_auth.py)
 - Breaking API contracts (existing endpoints)
@@ -70,29 +102,12 @@ Just say:
 - Assuming what user wants
 
 **Encouraged:**
+
 - Adding new components
 - Adding new API endpoints
 - Using existing patterns
 - Writing tests
 - Following existing code style
-
----
-
-## CURRENT PROJECT STATE
-
-**Phase 1: Multi-Language Foundation (i18n)** - ✅ COMPLETE (9/9 tasks)
-- Database schema (6 tables for translations)
-- AI-powered translation service (Ollama integration)
-- Translation Management Dashboard
-- 10 languages supported (3 fully translated)
-- Cookie-based language switcher
-- Demo page at `/demo/i18n`
-
-**Next Phases:**
-- Phase 2: Google AP2 Integration (7 tasks)
-- Phase 3: Enhanced Shopify Backend (5 tasks)
-- Phase 4: AI-Powered Search & Recommendations (8 tasks) ⭐ Recommended next
-- Phase 5: Autonomous Development Framework (4 tasks)
 
 ---
 

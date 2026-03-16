@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,58 +20,58 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles } from "lucide-react";
-import { useAutosave } from "@/lib/hooks/use-autosave";
-import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Sparkles } from 'lucide-react';
+import { useAutosave } from '@/lib/hooks/use-autosave';
+import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
 // PHASE C: AI Product Copy Generator
-import { AIProductCopyGenerator } from "@/components/ai/AIProductCopyGenerator";
+import { AIProductCopyGenerator } from '@/components/ai/AIProductCopyGenerator';
 
 const productCategories = [
-  "heavy_machinery",
-  "hand_tools",
-  "power_tools",
-  "safety_equipment",
-  "building_materials",
-  "electrical",
-  "plumbing",
-  "accessories",
+  'heavy_machinery',
+  'hand_tools',
+  'power_tools',
+  'safety_equipment',
+  'building_materials',
+  'electrical',
+  'plumbing',
+  'accessories',
 ] as const;
 
 const formSchema = z.object({
-  sku: z.string().min(1, "SKU is required").max(50, "SKU must be 50 characters or less"),
-  name: z.string().min(1, "Name is required").max(255, "Name must be 255 characters or less"),
+  sku: z.string().min(1, 'SKU is required').max(50, 'SKU must be 50 characters or less'),
+  name: z.string().min(1, 'Name is required').max(255, 'Name must be 255 characters or less'),
   description: z.string().optional(),
   category: z.enum(productCategories, {
-    required_error: "Please select a category",
+    required_error: 'Please select a category',
   }),
-  price: z.coerce.number().min(0, "Price must be 0 or greater"),
-  cost: z.coerce.number().min(0, "Cost must be 0 or greater"),
-  stock: z.coerce.number().int().min(0, "Stock must be 0 or greater"),
+  price: z.coerce.number().min(0, 'Price must be 0 or greater'),
+  cost: z.coerce.number().min(0, 'Cost must be 0 or greater'),
+  stock: z.coerce.number().int().min(0, 'Stock must be 0 or greater'),
   warehouse_location: z.string().optional(),
   is_active: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
-type ProductCategory = FormData["category"];
+type ProductCategory = FormData['category'];
 
 interface Product {
   id: string;
   sku: string;
   name: string;
-  description?: string;
+  description?: string | null;
   category: ProductCategory;
   price: number;
   cost: number;
@@ -88,14 +88,14 @@ interface ProductFormProps {
 }
 
 const categoryLabels: Record<ProductCategory, string> = {
-  heavy_machinery: "Heavy Machinery",
-  hand_tools: "Hand Tools",
-  power_tools: "Power Tools",
-  safety_equipment: "Safety Equipment",
-  building_materials: "Building Materials",
-  electrical: "Electrical",
-  plumbing: "Plumbing",
-  accessories: "Accessories",
+  heavy_machinery: 'Heavy Machinery',
+  hand_tools: 'Hand Tools',
+  power_tools: 'Power Tools',
+  safety_equipment: 'Safety Equipment',
+  building_materials: 'Building Materials',
+  electrical: 'Electrical',
+  plumbing: 'Plumbing',
+  accessories: 'Accessories',
 };
 
 export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductFormProps) {
@@ -107,29 +107,29 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      sku: "",
-      name: "",
-      description: "",
-      category: "power_tools",
+      sku: '',
+      name: '',
+      description: '',
+      category: 'power_tools',
       price: 0,
       cost: 0,
       stock: 0,
-      warehouse_location: "",
+      warehouse_location: '',
       is_active: true,
     },
   });
 
   // Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = isEdit ? `product-form-${product?.id}` : "product-form-new";
+  const draftKey = isEdit ? `product-form-${product?.id}` : 'product-form-new';
   const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
     key: draftKey,
     formValues: form.watch(),
     onRestore: (draft) => {
       Object.keys(draft).forEach((key) => {
-        form.setValue(key as keyof FormData, draft[key]);
+        form.setValue(key as keyof FormData, draft[key as keyof FormData]);
       });
     },
-    enabled: open && !isEdit,
+    enabled: !isEdit,
     debounceMs: 2000,
   });
 
@@ -140,24 +140,24 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
         form.reset({
           sku: product.sku,
           name: product.name,
-          description: product.description || "",
+          description: product.description || '',
           category: product.category,
           price: product.price,
           cost: product.cost,
           stock: product.stock,
-          warehouse_location: product.warehouse_location || "",
+          warehouse_location: product.warehouse_location || '',
           is_active: product.is_active,
         });
       } else {
         form.reset({
-          sku: "",
-          name: "",
-          description: "",
-          category: "power_tools",
+          sku: '',
+          name: '',
+          description: '',
+          category: 'power_tools',
           price: 0,
           cost: 0,
           stock: 0,
-          warehouse_location: "",
+          warehouse_location: '',
           is_active: true,
         });
       }
@@ -170,14 +170,14 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
       if (isEdit) {
         await apiClient.put(`/api/products/${product.id}`, values);
         toast({
-          title: "Success",
-          description: "Product updated successfully",
+          title: 'Success',
+          description: 'Product updated successfully',
         });
       } else {
-        await apiClient.post("/api/products", values);
+        await apiClient.post('/api/products', values);
         toast({
-          title: "Success",
-          description: "Product created successfully",
+          title: 'Success',
+          description: 'Product created successfully',
         });
       }
       clearDraft(); // Clear autosave draft on success
@@ -187,11 +187,11 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
       const message =
         error instanceof Error
           ? error.message
-          : `Failed to ${isEdit ? "update" : "create"} product`;
+          : `Failed to ${isEdit ? 'update' : 'create'} product`;
       toast({
-        title: "Error",
+        title: 'Error',
         description: message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -201,138 +201,117 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
   // PHASE C: Handler for AI-generated product copy
   const handleCopyGenerated = (generatedCopy: string, copyType: string) => {
     // Insert the generated copy into the description field
-    form.setValue("description", generatedCopy);
+    form.setValue('description', generatedCopy);
     toast({
-      title: "Copy Inserted",
+      title: 'Copy Inserted',
       description: `AI-generated ${copyType} has been added to the description field.`,
     });
   };
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Product" : "Create Product"}</DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Update the product information below."
-              : "Add a new product to your catalog."}
-          </DialogDescription>
-        </DialogHeader>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{isEdit ? 'Edit Product' : 'Create Product'}</DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? 'Update the product information below.'
+                : 'Add a new product to your catalog.'}
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Draft Recovery Alert */}
-        {hasDraft && !isEdit && draftMetadata && (
-          <DraftRecoveryAlert
-            savedAt={draftMetadata.savedAt}
-            onRestore={loadDraft}
-            onDiscard={clearDraft}
-          />
-        )}
+          {/* Draft Recovery Alert */}
+          {hasDraft && !isEdit && draftMetadata && (
+            <DraftRecoveryAlert
+              savedAt={draftMetadata.savedAt}
+              onRestore={loadDraft}
+              onDiscard={clearDraft}
+            />
+          )}
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="sku"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SKU *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="CCW-PT-001" {...field} disabled={isEdit} />
-                    </FormControl>
-                    {isEdit && (
-                      <FormDescription>SKU cannot be changed after creation</FormDescription>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="sku"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SKU *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
+                        <Input placeholder="CCW-PT-001" {...field} disabled={isEdit} />
                       </FormControl>
-                      <SelectContent>
-                        {Object.entries(categoryLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      {isEdit && (
+                        <FormDescription>SKU cannot be changed after creation</FormDescription>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(categoryLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Makita Cordless Drill Driver 18V" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product Name *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Makita Cordless Drill Driver 18V" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Description</FormLabel>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setAiDialogOpen(true)}
-                      className="h-auto p-1 text-xs"
-                    >
-                      <Sparkles className="mr-1 h-3 w-3" />
-                      Generate with AI
-                    </Button>
-                  </div>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Product description..."
-                      className="min-h-[80px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="price"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price (AUD) *</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Description</FormLabel>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAiDialogOpen(true)}
+                        className="h-auto p-1 text-xs"
+                      >
+                        <Sparkles className="mr-1 h-3 w-3" />
+                        Generate with AI
+                      </Button>
+                    </div>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
+                      <Textarea
+                        placeholder="Product description..."
+                        className="min-h-[80px]"
                         {...field}
                       />
                     </FormControl>
@@ -341,105 +320,111 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                 )}
               />
 
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price (AUD) *</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="cost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost (AUD) *</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="stock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stock Quantity *</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="0" placeholder="0" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="warehouse_location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Warehouse Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Bay A-09" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="cost"
+                name="is_active"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cost (AUD) *</FormLabel>
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Active Status</FormLabel>
+                      <FormDescription>
+                        Inactive products won&apos;t appear in catalogs and orders
+                      </FormDescription>
+                    </div>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        {...field}
-                      />
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="stock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stock Quantity *</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="0" placeholder="0" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isLoading ? 'Saving...' : isEdit ? 'Update Product' : 'Create Product'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
-              <FormField
-                control={form.control}
-                name="warehouse_location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Warehouse Location</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Bay A-09" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Active Status</FormLabel>
-                    <FormDescription>
-                      Inactive products won&apos;t appear in catalogs and orders
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? "Saving..." : isEdit ? "Update Product" : "Create Product"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-
-    {/* PHASE C: AI Product Copy Generator */}
-    <AIProductCopyGenerator
-      open={aiDialogOpen}
-      onOpenChange={setAiDialogOpen}
-      productName={form.watch("name")}
-      productCategory={form.watch("category")}
-      onCopyGenerated={handleCopyGenerated}
-    />
+      {/* PHASE C: AI Product Copy Generator */}
+      <AIProductCopyGenerator
+        open={aiDialogOpen}
+        onOpenChange={setAiDialogOpen}
+        productName={form.watch('name')}
+        productCategory={form.watch('category')}
+        onCopyGenerated={handleCopyGenerated}
+      />
     </>
   );
 }

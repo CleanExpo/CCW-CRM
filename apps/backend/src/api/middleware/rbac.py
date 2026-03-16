@@ -21,8 +21,9 @@ Usage:
         pass
 """
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Literal
+from typing import Literal
 
 import structlog
 from fastapi import HTTPException, Request

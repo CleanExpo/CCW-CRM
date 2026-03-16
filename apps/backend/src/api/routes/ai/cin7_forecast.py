@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 
 from src.ai.agents.specialized.cin7_forecasting_agent import (
     Cin7ForecastingAgent,
-    calculate_sync_velocity,
 )
 
 logger = structlog.get_logger(__name__)

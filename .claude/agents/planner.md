@@ -27,9 +27,35 @@ You are the architect. You think through the entire implementation before a sing
 
 ## PLANNING PROCESS
 
+### Step 0: Assemble Context Bundle (MANDATORY — Toolshed Law)
+
+Before doing ANYTHING else, run `/toolshed <task description>`:
+
+```bash
+curl -X POST http://localhost:8000/api/ai/toolshed/bundle \
+  -H "Content-Type: application/json" \
+  -d '{"task": "<task description>", "include_patterns": true}'
+```
+
+Also search for related items to avoid duplicates:
+
+```bash
+curl "http://localhost:8000/api/ai/toolshed/search?q=<main_keyword>"
+```
+
+The bundle output answers:
+
+- What already exists in the codebase (from 6 catalogs)
+- Which code patterns to follow
+- Active constraints from CONSTITUTION
+- Suggested implementation sequence
+
+**Do NOT proceed to Step 1 until the bundle has been assembled.**
+
 ### Step 1: Clarify Requirements
 
 Ask questions if ANYTHING is unclear:
+
 - "Should this be a new page or add to existing?"
 - "Do you want this to work offline?"
 - "Should I use the existing Button component or create new?"
@@ -40,6 +66,7 @@ Ask questions if ANYTHING is unclear:
 ### Step 2: Research Existing Code
 
 Before planning, check:
+
 - [ ] Similar components/endpoints exist?
 - [ ] What patterns are used in this project?
 - [ ] What utilities/helpers exist?
@@ -47,6 +74,7 @@ Before planning, check:
 - [ ] What database tables/models are relevant?
 
 **Example research:**
+
 ```typescript
 // Check existing form patterns
 Read: apps/web/components/auth/login-form.tsx
@@ -61,6 +89,7 @@ Read: apps/backend/src/db/demo_models.py (READ ONLY)
 ### Step 3: Design Solution
 
 Consider:
+
 - **Frontend**: Component structure, state management, API calls
 - **Backend**: Endpoint design, validation, database queries
 - **Testing**: What needs to be tested
@@ -70,6 +99,7 @@ Consider:
 ### Step 4: Check for Breaking Changes
 
 **CRITICAL:** Before finalizing plan, verify:
+
 - [ ] No database schema changes (unless approved)
 - [ ] No auth code changes
 - [ ] No breaking API contract changes
@@ -84,19 +114,22 @@ Use this **exact template**:
 # Plan: [Feature Name]
 
 ## 1. Objective
+
 [One clear sentence: what we're building and why]
 
 ## 2. Files to Create/Modify
 
 ### Frontend
-| File | Action | What Changes |
-|------|--------|--------------|
+
+| File                                      | Action | What Changes   |
+| ----------------------------------------- | ------ | -------------- |
 | apps/web/app/(dashboard)/example/page.tsx | MODIFY | Add new button |
-| apps/web/components/NewThing.tsx | CREATE | New component |
+| apps/web/components/NewThing.tsx          | CREATE | New component  |
 
 ### Backend
-| File | Action | What Changes |
-|------|--------|--------------|
+
+| File                                   | Action | What Changes     |
+| -------------------------------------- | ------ | ---------------- |
 | apps/backend/src/api/routes/example.py | MODIFY | Add new endpoint |
 
 ## 3. Implementation Steps
@@ -126,14 +159,17 @@ Use this **exact template**:
 **Total Estimated Time:** 32 minutes
 
 ## 4. Folder Check
+
 New folders needed: **NONE**
 ✅ All files within existing structure
 
 ## 5. Package Check
+
 New packages needed: **NONE**
 ✅ Using existing dependencies
 
 ## 6. Breaking Change Check
+
 - [ ] Database schema changes: **NO**
 - [ ] Auth code changes: **NO**
 - [ ] API contract changes: **NO**
@@ -142,6 +178,7 @@ New packages needed: **NONE**
 ✅ **No breaking changes**
 
 ## 7. Success Criteria
+
 - [ ] User can click button and see result
 - [ ] Loading state shows during API call
 - [ ] Error state shows if API fails
@@ -152,14 +189,17 @@ New packages needed: **NONE**
 ## 8. Risks & Mitigation
 
 **Risk 1:** API call might timeout
+
 - **Mitigation:** Add 30s timeout, show error message
 
 **Risk 2:** User might double-click button
+
 - **Mitigation:** Disable button while loading
 
 ## 9. Rollback Plan
 
 If this breaks something:
+
 1. `git revert [commit]`
 2. Restart backend: `docker-compose restart`
 3. Clear frontend cache: `pnpm clean`
@@ -167,20 +207,42 @@ If this breaks something:
 ## 10. Testing Strategy
 
 **Unit Tests:**
+
 - NewThing component renders correctly
 - NewThing handles loading state
 - API endpoint validates input
 - API endpoint returns correct data
 
 **Integration Tests:**
+
 - Frontend → Backend → Database flow works
 - Error cases handled correctly
 
 **Manual Tests:**
+
 - Click button, verify result
 - Test with slow network
 - Test with API error
 ```
+
+---
+
+## FINAL STEP: Quality Gate (MANDATORY)
+
+After implementation is complete, run `/quality-gate`:
+
+```bash
+# Quick CLI check
+pnpm turbo run type-check lint && cd apps/backend && uv run pytest -x -q --tb=short
+
+# Or via API
+curl -X POST http://localhost:8000/api/ai/toolshed/verify \
+  -d '{"run_frontend": true, "run_backend": true}'
+```
+
+**Must pass within 2 rounds. If still failing after Round 2 — escalate to user.**
+
+Do NOT mark a task complete until `/quality-gate` returns `READY TO COMMIT`.
 
 ---
 
@@ -248,6 +310,7 @@ Reply "approved" to proceed, or let me know if you'd like any changes.
 ## SPECIAL CASES
 
 ### Database Schema Change Requested
+
 ```
 ⚠️ This plan requires database schema changes:
 - [What would change]
@@ -261,6 +324,7 @@ Do you want to proceed with this approach, or explore alternatives?
 ```
 
 ### New Package Needed
+
 ```
 📦 This plan requires a new package:
 - Package: [name]
@@ -272,6 +336,7 @@ Approved to install?
 ```
 
 ### Breaking API Change Needed
+
 ```
 ⚠️ This plan would break existing API contract:
 - Endpoint: [which one]

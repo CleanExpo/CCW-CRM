@@ -1,5 +1,11 @@
 """Database models and utilities."""
 
+from src.db.crm_models import Activity, Contact
+from src.db.models.prd import (  # Import PRD models for relationship resolution
+    PRD,
+    AgentRun,
+    APIUsage,
+)
 from src.db.models_base import (
     AustralianState,
     AvailabilitySlot,
@@ -9,7 +15,6 @@ from src.db.models_base import (
     Document,
     User,
 )
-from src.db.models.prd import PRD, AgentRun, APIUsage  # Import PRD models for relationship resolution
 
 __all__ = [
     "Base",
@@ -22,4 +27,6 @@ __all__ = [
     "PRD",
     "AgentRun",
     "APIUsage",
+    "Contact",
+    "Activity",
 ]

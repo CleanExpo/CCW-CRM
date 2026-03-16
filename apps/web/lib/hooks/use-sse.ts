@@ -20,7 +20,7 @@
  * ```
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface UseSSEOptions {
   /** SSE endpoint URL */
@@ -53,7 +53,7 @@ interface UseSSEReturn<T> {
   data: T | null;
 
   /** Connection status */
-  status: "connecting" | "connected" | "disconnected" | "error";
+  status: 'connecting' | 'connected' | 'disconnected' | 'error';
 
   /** Error message if status is "error" */
   error: string | null;
@@ -83,8 +83,8 @@ export function useSSE<T = any>({
   onError,
 }: UseSSEOptions): UseSSEReturn<T> {
   const [data, setData] = useState<T | null>(null);
-  const [status, setStatus] = useState<"connecting" | "connected" | "disconnected" | "error">(
-    "disconnected"
+  const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>(
+    'disconnected'
   );
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -103,7 +103,7 @@ export function useSSE<T = any>({
       isManuallyClosedRef.current = true;
       eventSourceRef.current.close();
       eventSourceRef.current = null;
-      setStatus("disconnected");
+      setStatus('disconnected');
     }
 
     if (reconnectTimeoutRef.current) {
@@ -118,15 +118,15 @@ export function useSSE<T = any>({
 
     try {
       isManuallyClosedRef.current = false;
-      setStatus("connecting");
+      setStatus('connecting');
       setError(null);
 
       const eventSource = new EventSource(url);
       eventSourceRef.current = eventSource;
 
       // Connection opened
-      eventSource.addEventListener("connected", (event) => {
-        setStatus("connected");
+      eventSource.addEventListener('connected', (event) => {
+        setStatus('connected');
         setStats((prev) => ({
           ...prev,
           connectedAt: new Date(),
@@ -136,7 +136,7 @@ export function useSSE<T = any>({
       });
 
       // Message received
-      eventSource.addEventListener("message", (event) => {
+      eventSource.addEventListener('message', (event) => {
         try {
           const parsed = JSON.parse(event.data) as T;
           setData(parsed);
@@ -145,20 +145,20 @@ export function useSSE<T = any>({
             messagesReceived: prev.messagesReceived + 1,
           }));
         } catch (err) {
-          console.error("Failed to parse SSE message:", err);
+          console.error('Failed to parse SSE message:', err);
         }
       });
 
       // Heartbeat (keep-alive)
-      eventSource.addEventListener("heartbeat", () => {
+      eventSource.addEventListener('heartbeat', () => {
         // Silent heartbeat, just keeps connection alive
       });
 
       // Error occurred
       eventSource.onerror = (event) => {
-        console.error("SSE error:", event);
-        setStatus("error");
-        setError("Connection error");
+        console.error('SSE error:', event);
+        setStatus('error');
+        setError('Connection error');
 
         // Close current connection
         eventSource.close();
@@ -186,9 +186,9 @@ export function useSSE<T = any>({
         }
       };
     } catch (err) {
-      console.error("Failed to create EventSource:", err);
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "Failed to connect");
+      console.error('Failed to create EventSource:', err);
+      setStatus('error');
+      setError(err instanceof Error ? err.message : 'Failed to connect');
     }
   }, [
     enabled,
@@ -242,14 +242,14 @@ export interface InventoryUpdate {
   stock: number;
   reserved: number;
   available: number;
-  change_type: "stock_update" | "reservation" | "transfer" | "adjustment";
+  change_type: 'stock_update' | 'reservation' | 'transfer' | 'adjustment';
 }
 
 /**
  * Hook for subscribing to inventory updates.
  */
 export function useInventoryStream(location?: string) {
-  const url = location ? `/api/inventory-stream?location=${location}` : "/api/inventory-stream";
+  const url = location ? `/api/inventory-stream?location=${location}` : '/api/inventory-stream';
 
   return useSSE<InventoryUpdate>({
     url,
@@ -269,7 +269,7 @@ export interface LowStockAlert {
   location: string;
   stock: number;
   reorder_point: number;
-  alert_type: "low_stock";
+  alert_type: 'low_stock';
 }
 
 /**
@@ -277,7 +277,7 @@ export interface LowStockAlert {
  */
 export function useLowStockAlerts() {
   return useSSE<LowStockAlert>({
-    url: "/api/inventory-alerts",
+    url: '/api/inventory-alerts',
     enabled: true,
   });
 }
@@ -286,7 +286,7 @@ export function useLowStockAlerts() {
  * PHASE 4: Real-time order status updates
  */
 export interface OrderStatusUpdate {
-  type: "status_changed" | "fulfillment_updated" | "activity_added";
+  type: 'status_changed' | 'fulfillment_updated' | 'activity_added';
   order_id: string;
   order_number: string;
   previous_status?: string;
@@ -305,7 +305,7 @@ export interface OrderStatusUpdate {
  */
 export function useOrderStatusStream(enabled = true) {
   return useSSE<OrderStatusUpdate>({
-    url: "/api/orders/status-stream",
+    url: '/api/orders/status-stream',
     enabled,
     autoReconnect: true,
     reconnectDelay: 3000,
@@ -317,7 +317,7 @@ export function useOrderStatusStream(enabled = true) {
  * PHASE 4: Real-time POS failure alerts
  */
 export interface POSFailureAlert {
-  type: "failure_detected";
+  type: 'failure_detected';
   transaction_id: string;
   transaction_number: string;
   terminal_id: string | null;
@@ -334,7 +334,7 @@ export interface POSFailureAlert {
  * @param enabled - Enable/disable connection (default: true)
  */
 export function usePOSFailureAlerts(enabled = true) {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
   return useSSE<POSFailureAlert>({
     url: `${backendUrl}/api/monitoring/alerts/pos-failures/stream`,
     enabled,
@@ -348,9 +348,14 @@ export function usePOSFailureAlerts(enabled = true) {
  * PHASE 4: Real-time dashboard metrics updates
  */
 export interface DashboardMetricsUpdate {
-  type: "metrics_updated";
-  metric: "active_orders" | "total_products" | "total_customers" | "low_stock_alerts" | "pending_quotes";
-  change: "increment" | "decrement" | "status_change" | "update";
+  type: 'metrics_updated';
+  metric:
+    | 'active_orders'
+    | 'total_products'
+    | 'total_customers'
+    | 'low_stock_alerts'
+    | 'pending_quotes';
+  change: 'increment' | 'decrement' | 'status_change' | 'update';
   timestamp: string;
 }
 
@@ -361,7 +366,7 @@ export interface DashboardMetricsUpdate {
  * @param enabled - Enable/disable connection (default: true)
  */
 export function useDashboardMetricsStream(enabled = true) {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
   return useSSE<DashboardMetricsUpdate>({
     url: `${backendUrl}/api/dashboard/metrics-stream`,
     enabled,

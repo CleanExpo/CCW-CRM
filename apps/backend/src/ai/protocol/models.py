@@ -19,7 +19,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-
 # ─── Section 6: Permission Tiers ───────────────────────────────────────────
 
 
@@ -101,10 +100,7 @@ class Severity(str, Enum):
 
 
 class DelegationRule(BaseModel):
-    """Rule governing when an agent can delegate tasks (Section 3).
-
-    Defines which capabilities can be delegated and to which agents.
-    """
+    """Rule governing when an agent can delegate tasks (Section 3)."""
 
     capability: str = Field(description="Capability being delegated")
     allowed_delegates: list[str] = Field(
@@ -125,285 +121,130 @@ class DelegationRule(BaseModel):
 
 
 class AgentCard(BaseModel):
-    """Full agent manifest defining identity, capabilities, and boundaries (Section 1).
-
-    The AgentCard is the structured declaration of what an agent is, what it can do,
-    what it cannot do, and how it participates in the protocol.
-    """
+    """Full agent manifest defining identity, capabilities, and boundaries (Section 1)."""
 
     agent_id: str = Field(description="Unique agent identifier")
     name: str = Field(description="Human-readable agent name")
     version: str = Field(default="1.0.0", description="Agent version")
     description: str = Field(default="", description="What this agent does")
 
-    # Capabilities and boundaries
-    capabilities: list[str] = Field(
-        default_factory=list,
-        description="What this agent can do",
-    )
-    boundaries: list[str] = Field(
-        default_factory=list,
-        description="What this agent cannot/should not do",
-    )
+    capabilities: list[str] = Field(default_factory=list)
+    boundaries: list[str] = Field(default_factory=list)
 
-    # Input/output schema descriptions
-    inputs: dict[str, str] = Field(
-        default_factory=dict,
-        description="Expected inputs (key=name, value=description)",
-    )
-    outputs: dict[str, str] = Field(
-        default_factory=dict,
-        description="Expected outputs (key=name, value=description)",
-    )
+    inputs: dict[str, str] = Field(default_factory=dict)
+    outputs: dict[str, str] = Field(default_factory=dict)
 
-    # Delegation
-    delegation_rules: list[DelegationRule] = Field(
-        default_factory=list,
-        description="Rules governing task delegation",
-    )
+    delegation_rules: list[DelegationRule] = Field(default_factory=list)
+    permission_tier: PermissionTier = Field(default=PermissionTier.STANDARD)
 
-    # Permissions
-    permission_tier: PermissionTier = Field(
-        default=PermissionTier.STANDARD,
-        description="Permission level for this agent",
-    )
+    max_concurrent: int = Field(default=5)
+    timeout_seconds: int = Field(default=120)
 
-    # Operational limits
-    max_concurrent: int = Field(
-        default=5,
-        description="Maximum concurrent executions",
-    )
-    timeout_seconds: int = Field(
-        default=120,
-        description="Default execution timeout in seconds",
-    )
-
-    # Escalation configuration
-    escalation_triggers: list["EscalationTrigger"] = Field(
-        default_factory=list,
-        description="Conditions that trigger escalation",
-    )
+    escalation_triggers: list["EscalationTrigger"] = Field(default_factory=list)
 
 
 # ─── Section 2: Agent Messages ────────────────────────────────────────────
 
 
 class AgentMessage(BaseModel):
-    """Structured inter-agent message (Section 2).
+    """Structured inter-agent message (Section 2)."""
 
-    All agent-to-agent communication uses this format for traceability,
-    correlation tracking, and TTL enforcement.
-    """
-
-    message_id: str = Field(
-        default_factory=lambda: str(uuid4()),
-        description="Unique message identifier",
-    )
-    correlation_id: str = Field(
-        default_factory=lambda: str(uuid4()),
-        description="Traces the full request chain across agents",
-    )
+    message_id: str = Field(default_factory=lambda: str(uuid4()))
+    correlation_id: str = Field(default_factory=lambda: str(uuid4()))
     sender_id: str = Field(description="ID of the sending agent")
     recipient_id: str = Field(description="ID of the receiving agent")
     message_type: MessageType = Field(description="Type of message")
-    payload: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Message payload data",
-    )
-    timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        description="When the message was created",
-    )
-    priority: Priority = Field(
-        default=Priority.NORMAL,
-        description="Message priority",
-    )
-    ttl_seconds: int | None = Field(
-        default=None,
-        description="Time-to-live in seconds (None = no expiry)",
-    )
+    payload: dict[str, Any] = Field(default_factory=dict)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    priority: Priority = Field(default=Priority.NORMAL)
+    ttl_seconds: int | None = Field(default=None)
 
 
 # ─── Section 3: Delegation ────────────────────────────────────────────────
 
 
 class DelegationRequest(BaseModel):
-    """Formal delegation request between agents (Section 3).
-
-    Encapsulates the 5 delegation requirements:
-    1. Sender has delegation permission
-    2. Recipient has required capabilities
-    3. No circular delegation (chain check)
-    4. Recipient within capacity
-    5. Timeout within bounds
-    """
+    """Formal delegation request between agents (Section 3)."""
 
     delegator_id: str = Field(description="Agent requesting delegation")
     delegate_id: str = Field(description="Target agent for delegation")
     task: str = Field(description="Task to be delegated")
-    context: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Execution context for the delegated task",
-    )
-    required_capabilities: list[str] = Field(
-        default_factory=list,
-        description="Capabilities needed to execute the task",
-    )
-    timeout_seconds: int = Field(
-        default=120,
-        description="Timeout for the delegated task",
-    )
-    fallback_agent_id: str | None = Field(
-        default=None,
-        description="Agent to use if primary delegate fails",
-    )
-    chain: list[str] = Field(
-        default_factory=list,
-        description="Delegation chain for loop detection",
-    )
+    context: dict[str, Any] = Field(default_factory=dict)
+    required_capabilities: list[str] = Field(default_factory=list)
+    timeout_seconds: int = Field(default=120)
+    fallback_agent_id: str | None = Field(default=None)
+    chain: list[str] = Field(default_factory=list)
 
 
 # ─── Section 4: Escalation ────────────────────────────────────────────────
 
 
 class EscalationTrigger(BaseModel):
-    """Condition that triggers escalation to a higher authority (Section 4).
+    """Condition that triggers escalation (Section 4)."""
 
-    When an agent detects one of these conditions, it escalates the task
-    rather than attempting further processing.
-    """
-
-    trigger_type: EscalationTriggerType = Field(
-        description="Type of escalation trigger",
-    )
-    threshold: float = Field(
-        default=0.5,
-        description="Threshold value for the trigger (meaning varies by type)",
-    )
-    description: str = Field(
-        default="",
-        description="Human-readable description of this trigger",
-    )
+    trigger_type: EscalationTriggerType = Field(description="Type of escalation trigger")
+    threshold: float = Field(default=0.5)
+    description: str = Field(default="")
 
 
 # ─── Section 5: Handoff ──────────────────────────────────────────────────
 
 
 class HandoffPackage(BaseModel):
-    """Context package for agent-to-agent handoff (Section 5).
-
-    When one agent transfers a task to another, this package ensures
-    all necessary context, progress, and artifacts are preserved.
-    """
+    """Context package for agent-to-agent handoff (Section 5)."""
 
     source_agent_id: str = Field(description="Agent handing off")
     target_agent_id: str = Field(description="Agent receiving handoff")
-    task_summary: str = Field(description="Summary of the task being handed off")
-    context: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Full execution context",
-    )
-    progress: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Progress made so far (steps completed, partial results)",
-    )
-    artifacts: list[str] = Field(
-        default_factory=list,
-        description="References to outputs produced so far",
-    )
-    reason: str = Field(
-        default="",
-        description="Why the handoff is occurring",
-    )
-    timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        description="When the handoff was created",
-    )
+    task_summary: str = Field(description="Summary of the task")
+    context: dict[str, Any] = Field(default_factory=dict)
+    progress: dict[str, Any] = Field(default_factory=dict)
+    artifacts: list[str] = Field(default_factory=list)
+    reason: str = Field(default="")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # ─── Section 7: Error Classification ─────────────────────────────────────
 
 
 class ErrorClassification(BaseModel):
-    """Structured error classification with retry policy (Section 7).
-
-    Provides consistent error handling across all agents with
-    automatic retry logic based on error type.
-    """
+    """Structured error classification with retry policy (Section 7)."""
 
     error_type: ErrorType = Field(description="Classification of the error")
-    severity: Severity = Field(
-        default=Severity.MEDIUM,
-        description="Error severity level",
-    )
-    retryable: bool = Field(
-        default=False,
-        description="Whether this error can be retried",
-    )
-    max_retries: int = Field(
-        default=0,
-        description="Maximum number of retry attempts",
-    )
-    backoff_strategy: str = Field(
-        default="none",
-        description="Backoff strategy: none, linear, exponential",
-    )
+    severity: Severity = Field(default=Severity.MEDIUM)
+    retryable: bool = Field(default=False)
+    max_retries: int = Field(default=0)
+    backoff_strategy: str = Field(default="none")
     message: str = Field(description="Human-readable error message")
-    agent_id: str | None = Field(
-        default=None,
-        description="Agent that encountered the error",
-    )
-    timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        description="When the error occurred",
-    )
+    agent_id: str | None = Field(default=None)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # ─── Section 8: Confidence Scoring ───────────────────────────────────────
 
 
 class ConfidenceScore(BaseModel):
-    """Output confidence score with reasoning (Section 8).
+    """Output confidence score with reasoning (Section 8)."""
 
-    Agents attach confidence scores to their outputs to help
-    downstream consumers and the escalation system make decisions.
-    """
-
-    score: float = Field(
-        ge=0.0,
-        le=1.0,
-        description="Confidence score from 0.0 (no confidence) to 1.0 (full confidence)",
-    )
-    reasoning: str = Field(
-        default="",
-        description="Explanation of the confidence score",
-    )
-    factors: dict[str, float] = Field(
-        default_factory=dict,
-        description="Individual factor scores that contributed to the overall score",
-    )
+    score: float = Field(ge=0.0, le=1.0)
+    reasoning: str = Field(default="")
+    factors: dict[str, float] = Field(default_factory=dict)
 
 
 # ─── Section 13: Protocol Versioning ─────────────────────────────────────
 
 
 class ProtocolVersion(BaseModel):
-    """Protocol version tracking (Section 13).
+    """Protocol version tracking (Section 13)."""
 
-    Enables protocol evolution while maintaining backward compatibility.
-    """
-
-    major: int = Field(default=1, description="Major version (breaking changes)")
-    minor: int = Field(default=0, description="Minor version (new features)")
-    patch: int = Field(default=0, description="Patch version (bug fixes)")
+    major: int = Field(default=1)
+    minor: int = Field(default=0)
+    patch: int = Field(default=0)
 
     def __str__(self) -> str:
-        """Format as semver string."""
         return f"{self.major}.{self.minor}.{self.patch}"
 
     @classmethod
     def current(cls) -> "ProtocolVersion":
-        """Get the current protocol version."""
         return cls(major=1, minor=0, patch=0)
 
 

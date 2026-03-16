@@ -94,7 +94,7 @@ class RedisCache:
             keys = []
             async for key in self.client.scan_iter(match=pattern):
                 keys.append(key)
-            
+
             if keys:
                 return await self.client.delete(*keys)
             return 0

@@ -23,7 +23,7 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.dialects.postgresql import JSON, UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .models_base import Base
 

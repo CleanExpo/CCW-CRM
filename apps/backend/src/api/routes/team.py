@@ -167,9 +167,22 @@ async def invite_team_member(
     await db.commit()
     await db.refresh(user)
 
-    # TODO: Send invitation email with magic link
-    # from src.integrations.email import send_team_invitation_email
-    # await send_team_invitation_email(user.email, user.full_name, org_id)
+    # Send invitation email via SendGrid (non-critical — don't fail if email fails)
+    try:
+        from src.integrations.sendgrid.client import SendGridClient
+        sg = SendGridClient()
+        await sg.send_email(
+            to_email=user.email,
+            subject="You've been invited to CCW ERP",
+            body_text=(
+                f"Hi {user.full_name},\n\n"
+                f"You've been invited to join CCW ERP as a {invite_data.role}.\n"
+                f"Please log in to get started.\n\n"
+                f"— CCW Team"
+            ),
+        )
+    except Exception:
+        pass  # Email delivery is non-critical
 
     return TeamMemberResponse(
         id=user.id,
@@ -243,7 +256,7 @@ async def update_member_role(
     )
 
 
-@router.delete("/{user_id}", status_code=204)
+@router.delete("/{user_id}", status_code=204, response_model=None)
 @require_permission("team:remove")
 async def remove_team_member(
     user_id: UUID,

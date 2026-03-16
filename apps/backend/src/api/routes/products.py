@@ -10,7 +10,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
@@ -21,7 +20,6 @@ from src.db.schemas import (
     Product,
     ProductCreate,
     ProductUpdate,
-    ProductWithStock,
     StockByLocation,
 )
 from src.services.sse_service import sse_service
@@ -229,10 +227,11 @@ async def update_product(
     # PHASE: Enhanced Shopify Integration - Task 1.2: Automatic Metafield Sync
     # Check if product has Shopify mapping and sync metafields automatically
     try:
+        import structlog
+
         from src.db.shopify_models import ShopifyProductMapping
         from src.integrations.shopify.metafields import get_metafield_manager
         from src.services.sse_service import sse_service
-        import structlog
 
         logger = structlog.get_logger(__name__)
 
@@ -312,7 +311,7 @@ async def update_product(
     return Product.model_validate(product)
 
 
-@router.delete("/{product_id}", status_code=204)
+@router.delete("/{product_id}", status_code=204, response_model=None)
 async def delete_product(
     product_id: UUID,
     db: AsyncSession = Depends(get_db),

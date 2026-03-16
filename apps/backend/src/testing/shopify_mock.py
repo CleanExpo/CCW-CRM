@@ -6,11 +6,11 @@ Part of Phase 5 (Autonomous Development Framework) - Week 2 implementation.
 """
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable
-from unittest.mock import AsyncMock
+from typing import Any
 
 import structlog
 

@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Globe, Package, FileText, User, ShoppingBag, Filter } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from 'react';
+import { Globe, Package, FileText, User, ShoppingBag, Filter } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { ProductSearch } from "@/components/portal/ProductSearch";
-import { CartManager } from "@/components/portal/CartManager";
-import { CustomerLookup } from "@/components/portal/CustomerLookup";
-import { apiClient } from "@/lib/api/client";
-import { toast } from "sonner";
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { ProductSearch } from '@/components/portal/ProductSearch';
+import { CartManager } from '@/components/portal/CartManager';
+import { CustomerLookup } from '@/components/portal/CustomerLookup';
+import { apiClient } from '@/lib/api/client';
+import { toast } from 'sonner';
 
 interface Product {
   id: string;
@@ -86,9 +86,9 @@ export default function InternetPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [checkoutNotes, setCheckoutNotes] = useState("");
+  const [checkoutNotes, setCheckoutNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -108,50 +108,46 @@ export default function InternetPage() {
 
   const loadOrders = async () => {
     try {
-      const response = await apiClient.get<{ data: Order[] }>(
-        "/api/demo/orders?page_size=10"
-      );
+      const response = await apiClient.get<{ data: Order[] }>('/api/demo/orders?page_size=10');
       // Convert string totals to numbers
-      const ordersWithNumericTotals = (response.data || []).map(o => ({
+      const ordersWithNumericTotals = (response.data || []).map((o) => ({
         ...o,
-        total: typeof o.total === 'string' ? parseFloat(o.total) : o.total
+        total: typeof o.total === 'string' ? parseFloat(o.total) : o.total,
       }));
       setOrders(ordersWithNumericTotals);
     } catch (error) {
-      console.error("Failed to load orders:", error);
+      console.error('Failed to load orders:', error);
     }
   };
 
   const loadQuotes = async () => {
     try {
-      const response = await apiClient.get<{ data: Quote[] }>(
-        "/api/demo/quotes?page_size=10"
-      );
+      const response = await apiClient.get<{ data: Quote[] }>('/api/demo/quotes?page_size=10');
       // Convert string totals to numbers
-      const quotesWithNumericTotals = (response.data || []).map(q => ({
+      const quotesWithNumericTotals = (response.data || []).map((q) => ({
         ...q,
-        total: typeof q.total === 'string' ? parseFloat(q.total) : q.total
+        total: typeof q.total === 'string' ? parseFloat(q.total) : q.total,
       }));
       setQuotes(quotesWithNumericTotals);
     } catch (error) {
-      console.error("Failed to load quotes:", error);
+      console.error('Failed to load quotes:', error);
     }
   };
 
   const loadProducts = async (category?: string) => {
     try {
-      const categoryParam = category && category !== "all" ? `&category=${category}` : "";
+      const categoryParam = category && category !== 'all' ? `&category=${category}` : '';
       const response = await apiClient.get<{ data: Product[] }>(
         `/api/demo/products?page_size=20${categoryParam}`
       );
       // Convert string prices to numbers
-      const productsWithNumericPrices = (response.data || []).map(p => ({
+      const productsWithNumericPrices = (response.data || []).map((p) => ({
         ...p,
-        price: typeof p.price === 'string' ? parseFloat(p.price) : p.price
+        price: typeof p.price === 'string' ? parseFloat(p.price) : p.price,
       }));
       setProducts(productsWithNumericPrices);
     } catch (error) {
-      console.error("Failed to load products:", error);
+      console.error('Failed to load products:', error);
     }
   };
 
@@ -170,15 +166,13 @@ export default function InternetPage() {
       }
       setCartItems(
         cartItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         )
       );
       toast.success(`Added another ${product.name} to cart`);
     } else {
       if (product.stock === 0) {
-        toast.error("Product is out of stock");
+        toast.error('Product is out of stock');
         return;
       }
       setCartItems([
@@ -187,7 +181,7 @@ export default function InternetPage() {
           id: product.id,
           sku: product.sku,
           name: product.name,
-          price: typeof product.price === "string" ? parseFloat(product.price) : product.price,
+          price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
           quantity: 1,
           stock: product.stock,
         },
@@ -197,28 +191,24 @@ export default function InternetPage() {
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      )
-    );
+    setCartItems(cartItems.map((item) => (item.id === productId ? { ...item, quantity } : item)));
   };
 
   const handleRemoveItem = (productId: string) => {
     setCartItems(cartItems.filter((item) => item.id !== productId));
-    toast.success("Item removed from cart");
+    toast.success('Item removed from cart');
   };
 
   const handleClearCart = () => {
     setCartItems([]);
-    toast.success("Cart cleared");
+    toast.success('Cart cleared');
   };
 
   const noteTemplates = [
-    "Need bulk pricing",
-    "Call before delivery",
-    "Deliver to site address on file",
-    "Project deadline in 30 days",
+    'Need bulk pricing',
+    'Call before delivery',
+    'Deliver to site address on file',
+    'Project deadline in 30 days',
   ];
 
   const appendCheckoutNote = (template: string) => {
@@ -233,12 +223,12 @@ export default function InternetPage() {
 
   const handleRequestQuote = async () => {
     if (cartItems.length === 0) {
-      toast.error("Cart is empty");
+      toast.error('Cart is empty');
       return;
     }
 
     if (!selectedCustomer) {
-      toast.error("Select a customer to request a quote.");
+      toast.error('Select a customer to request a quote.');
       return;
     }
 
@@ -254,13 +244,13 @@ export default function InternetPage() {
           quantity: item.quantity,
           unit_price: item.price,
         })),
-        status: "pending",
+        status: 'pending',
         valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         notes: notes || undefined,
       };
 
       const response = await apiClient.post<{ id: string; quote_number: string }>(
-        "/api/quotes",
+        '/api/quotes',
         quoteData
       );
 
@@ -269,12 +259,11 @@ export default function InternetPage() {
       );
 
       setCartItems([]);
-      setCheckoutNotes("");
+      setCheckoutNotes('');
       loadQuotes();
     } catch (error) {
-      console.error("Quote request failed:", error);
-      const message =
-        error instanceof Error ? error.message : "Failed to request quote";
+      console.error('Quote request failed:', error);
+      const message = error instanceof Error ? error.message : 'Failed to request quote';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -283,22 +272,19 @@ export default function InternetPage() {
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
-      toast.error("Cart is empty");
+      toast.error('Cart is empty');
       return;
     }
 
     if (!selectedCustomer) {
-      toast.error("Select a customer to place an order.");
+      toast.error('Select a customer to place an order.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const subtotal = cartItems.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
+      const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const tax = subtotal * 0.1;
       const total = subtotal + tax;
       const notes = checkoutNotes.trim();
@@ -313,13 +299,13 @@ export default function InternetPage() {
         subtotal,
         tax,
         total,
-        status: "pending",
-        channel: "internet",
+        status: 'pending',
+        channel: 'internet',
         notes: notes || undefined,
       };
 
       const response = await apiClient.post<{ id: string; order_number: string }>(
-        "/api/orders",
+        '/api/orders',
         orderData
       );
 
@@ -328,12 +314,11 @@ export default function InternetPage() {
       );
 
       setCartItems([]);
-      setCheckoutNotes("");
+      setCheckoutNotes('');
       loadOrders();
     } catch (error) {
-      console.error("Order placement failed:", error);
-      const message =
-        error instanceof Error ? error.message : "Failed to place order";
+      console.error('Order placement failed:', error);
+      const message = error instanceof Error ? error.message : 'Failed to place order';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -342,38 +327,39 @@ export default function InternetPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      draft: "bg-gray-100 text-gray-700",
-      pending: "bg-yellow-100 text-yellow-700",
-      sent: "bg-blue-100 text-blue-700",
-      confirmed: "bg-blue-100 text-blue-700",
-      processing: "bg-purple-100 text-purple-700",
-      shipped: "bg-indigo-100 text-indigo-700",
-      delivered: "bg-green-100 text-green-700",
-      accepted: "bg-green-100 text-green-700",
-      rejected: "bg-red-100 text-red-700",
-      cancelled: "bg-red-100 text-red-700",
-      expired: "bg-gray-100 text-gray-700",
+      draft: 'bg-gray-100 text-gray-700',
+      pending: 'bg-yellow-100 text-yellow-700',
+      sent: 'bg-blue-100 text-blue-700',
+      confirmed: 'bg-blue-100 text-blue-700',
+      processing: 'bg-purple-100 text-purple-700',
+      shipped: 'bg-indigo-100 text-indigo-700',
+      delivered: 'bg-green-100 text-green-700',
+      accepted: 'bg-green-100 text-green-700',
+      rejected: 'bg-red-100 text-red-700',
+      cancelled: 'bg-red-100 text-red-700',
+      expired: 'bg-gray-100 text-gray-700',
     };
-    return colors[status] || "bg-gray-100 text-gray-700";
+    return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
   // Don't render interactive content until mounted on client to prevent hydration errors
   if (!mounted) {
     return (
-      <div className="container py-8 px-4">
+      <div className="container px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+          <h1 className="mb-2 flex items-center gap-2 text-3xl font-bold">
             <Globe className="h-8 w-8" />
-            Online Portal
+            Order Cleaning Equipment Online — Australia-Wide Shipping
           </h1>
           <p className="text-muted-foreground">
-            Browse products, track orders, and manage quotes online.
+            Browse professional carpet cleaning machines, chemicals, and restoration equipment.
+            Australia-wide delivery from CCW Online.
           </p>
         </div>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-            <p className="mt-4 text-muted-foreground">Loading portal...</p>
+            <p className="text-muted-foreground mt-4">Loading portal...</p>
           </div>
         </div>
       </div>
@@ -381,9 +367,9 @@ export default function InternetPage() {
   }
 
   return (
-    <div className="container py-8 px-4">
+    <div className="container px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+        <h1 className="mb-2 flex items-center gap-2 text-3xl font-bold">
           <Globe className="h-8 w-8" />
           Online Portal
         </h1>
@@ -395,32 +381,32 @@ export default function InternetPage() {
       <Tabs defaultValue="catalog" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="catalog">
-            <ShoppingBag className="h-4 w-4 mr-2" />
+            <ShoppingBag className="mr-2 h-4 w-4" />
             Catalog
           </TabsTrigger>
           <TabsTrigger value="orders">
-            <Package className="h-4 w-4 mr-2" />
+            <Package className="mr-2 h-4 w-4" />
             Orders ({orders.length})
           </TabsTrigger>
           <TabsTrigger value="quotes">
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className="mr-2 h-4 w-4" />
             Quotes ({quotes.length})
           </TabsTrigger>
           <TabsTrigger value="account">
-            <User className="h-4 w-4 mr-2" />
+            <User className="mr-2 h-4 w-4" />
             Account
           </TabsTrigger>
         </TabsList>
 
         {/* Product Catalog Tab */}
         <TabsContent value="catalog">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left: Filters & Products */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6 lg:col-span-2">
               {/* Filters */}
               <Card className="p-4">
                 <div className="flex items-center gap-4">
-                  <Filter className="h-5 w-5 text-muted-foreground" />
+                  <Filter className="text-muted-foreground h-5 w-5" />
                   <Select value={selectedCategory} onValueChange={handleCategoryChange}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="All Categories" />
@@ -450,24 +436,32 @@ export default function InternetPage() {
               </Card>
 
               {/* Product Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {products.map((product) => (
-                  <Card key={product.id} className="p-4 hover:shadow-lg transition-shadow">
+                  <Card key={product.id} className="p-4 transition-shadow hover:shadow-lg">
                     <div className="flex flex-col gap-3">
                       <div>
                         <p className="font-semibold">{product.name}</p>
-                        <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
+                        <p className="text-muted-foreground text-xs">SKU: {product.sku}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-muted-foreground line-clamp-2 text-sm">
                         {product.description}
                       </p>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-lg font-bold text-primary">
-                            ${(typeof product.price === "string" ? parseFloat(product.price) : product.price).toFixed(2)}
+                          <p className="text-primary text-lg font-bold">
+                            $
+                            {(typeof product.price === 'string'
+                              ? parseFloat(product.price)
+                              : product.price
+                            ).toFixed(2)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {product.stock > 10 ? "In stock" : product.stock > 0 ? `${product.stock} left` : "Out of stock"}
+                          <p className="text-muted-foreground text-xs">
+                            {product.stock > 10
+                              ? 'In stock'
+                              : product.stock > 0
+                                ? `${product.stock} left`
+                                : 'Out of stock'}
                           </p>
                         </div>
                         <Button
@@ -502,7 +496,7 @@ export default function InternetPage() {
 
               {cartItems.length > 0 && (
                 <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Checkout</h3>
+                  <h3 className="mb-4 text-lg font-semibold">Checkout</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="checkout_notes">Order notes (optional)</Label>
@@ -535,7 +529,7 @@ export default function InternetPage() {
                         className="w-full"
                         variant="outline"
                       >
-                        <FileText className="h-4 w-4 mr-2" />
+                        <FileText className="mr-2 h-4 w-4" />
                         Request Quote
                       </Button>
                       <Button
@@ -543,13 +537,13 @@ export default function InternetPage() {
                         disabled={isLoading || !selectedCustomer}
                         className="w-full"
                       >
-                        <Package className="h-4 w-4 mr-2" />
+                        <Package className="mr-2 h-4 w-4" />
                         Place Order
                       </Button>
                     </div>
 
                     {!selectedCustomer && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         Select a customer to enable checkout.
                       </p>
                     )}
@@ -563,7 +557,7 @@ export default function InternetPage() {
         {/* Orders Tab */}
         <TabsContent value="orders">
           <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4">Order History</h2>
+            <h2 className="mb-4 text-2xl font-bold">Your Cleaning Equipment Order History</h2>
             {orders.length > 0 ? (
               <div className="space-y-4">
                 {orders.map((order) => (
@@ -571,19 +565,21 @@ export default function InternetPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-semibold">{order.order_number}</p>
-                        <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+                        <p className="text-muted-foreground text-sm" suppressHydrationWarning>
                           {new Date(order.order_date).toLocaleDateString()}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-muted-foreground mt-1 text-xs">
                           {order.items?.length || 0} items
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge className={getStatusColor(order.status)}>
-                          {order.status}
-                        </Badge>
-                        <p className="text-lg font-bold mt-2">
-                          ${(typeof order.total === "string" ? parseFloat(order.total) : order.total).toFixed(2)}
+                        <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                        <p className="mt-2 text-lg font-bold">
+                          $
+                          {(typeof order.total === 'string'
+                            ? parseFloat(order.total)
+                            : order.total
+                          ).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -591,7 +587,7 @@ export default function InternetPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">
+              <p className="text-muted-foreground py-8 text-center">
                 No orders yet. Start shopping to place your first order!
               </p>
             )}
@@ -601,7 +597,7 @@ export default function InternetPage() {
         {/* Quotes Tab */}
         <TabsContent value="quotes">
           <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4">My Quotes</h2>
+            <h2 className="mb-4 text-2xl font-bold">My Equipment Quotes</h2>
             {quotes.length > 0 ? (
               <div className="space-y-4">
                 {quotes.map((quote) => (
@@ -609,19 +605,21 @@ export default function InternetPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-semibold">{quote.quote_number}</p>
-                        <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+                        <p className="text-muted-foreground text-sm" suppressHydrationWarning>
                           Created: {new Date(quote.quote_date).toLocaleDateString()}
                         </p>
-                        <p className="text-xs text-muted-foreground" suppressHydrationWarning>
+                        <p className="text-muted-foreground text-xs" suppressHydrationWarning>
                           Valid until: {new Date(quote.valid_until).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge className={getStatusColor(quote.status)}>
-                          {quote.status}
-                        </Badge>
-                        <p className="text-lg font-bold mt-2">
-                          ${(typeof quote.total === "string" ? parseFloat(quote.total) : quote.total).toFixed(2)}
+                        <Badge className={getStatusColor(quote.status)}>{quote.status}</Badge>
+                        <p className="mt-2 text-lg font-bold">
+                          $
+                          {(typeof quote.total === 'string'
+                            ? parseFloat(quote.total)
+                            : quote.total
+                          ).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -629,7 +627,7 @@ export default function InternetPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">
+              <p className="text-muted-foreground py-8 text-center">
                 No quotes yet. Request a quote for bulk orders!
               </p>
             )}
@@ -639,7 +637,7 @@ export default function InternetPage() {
         {/* Account Tab */}
         <TabsContent value="account">
           <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4">Account Information</h2>
+            <h2 className="mb-4 text-2xl font-bold">Account Information</h2>
             <p className="text-muted-foreground">
               Account management features coming soon. For now, contact support for account updates.
             </p>

@@ -2,7 +2,7 @@
  * Shared types for Orders module
  */
 
-import type { OrderStatus } from "@/../../packages/shared/src/types/orders";
+import type { OrderStatus } from '@/lib/api/orders';
 
 export interface Order {
   id: string;

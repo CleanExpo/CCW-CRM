@@ -1,8 +1,10 @@
 """Event bus for application-wide event handling."""
 
-import structlog
 from collections import defaultdict
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

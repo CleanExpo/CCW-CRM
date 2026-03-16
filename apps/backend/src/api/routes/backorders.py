@@ -680,7 +680,7 @@ async def fulfill_backorder(
     return BackorderResponse(**backorder_dict)
 
 
-@router.post("/{backorder_id}/notify", status_code=204)
+@router.post("/{backorder_id}/notify", status_code=204, response_model=None)
 async def notify_customer(
     backorder_id: UUID,
     notify_data: BackorderNotifyRequest,
@@ -731,21 +731,23 @@ async def notify_customer(
 
     await db.commit()
 
-    # TODO: Publish event when event bus is initialized
-    # event_bus = get_event_bus()
-    # await event_bus.publish(
-    #     "backorder.customer_notified",
-    #     payload={
-    #         "backorder_id": str(backorder.id),
-    #         "customer_id": str(backorder.customer_id),
-    #         "notification_type": notify_data.notification_type,
-    #         "email_sent": email_sent,
-    #     },
-    #     source="api",
-    # )
+    try:
+        from src.events import get_event_bus
+        event_bus = get_event_bus()
+        await event_bus.publish(
+            "backorder.customer_notified",
+            payload={
+                "backorder_id": str(backorder.id),
+                "customer_id": str(backorder.customer_id),
+                "notification_type": notify_data.notification_type,
+            },
+            source="api",
+        )
+    except Exception:
+        pass  # Event publishing is non-critical
 
 
-@router.delete("/{backorder_id}", status_code=204)
+@router.delete("/{backorder_id}", status_code=204, response_model=None)
 async def cancel_backorder(
     backorder_id: UUID,
     db: AsyncSession = Depends(get_async_db),

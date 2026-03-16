@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
@@ -18,6 +19,7 @@ from src.db.crm_schemas import (
     Activity,
     ActivityComplete,
     ActivityCreate,
+    ActivityStats,
     ActivityType,
     ActivityUpdate,
     ActivityWithRelations,
@@ -88,45 +90,95 @@ async def list_activities(
     )
 
 
+@router.get("/stats", response_model=ActivityStats)
+async def get_activity_stats(
+    db: AsyncSession = Depends(get_db),
+):
+    """Get aggregate statistics for activities dashboard."""
+    now = datetime.now(UTC)
+    seven_days_ago = datetime.fromtimestamp(now.timestamp() - 7 * 24 * 3600, tz=UTC)
+
+    # Total count
+    total_result = await db.execute(select(func.count()).select_from(ActivityModel))
+    total_activities = total_result.scalar_one()
+
+    # Count by activity_type
+    by_type_query = (
+        select(ActivityModel.activity_type, func.count().label("cnt"))
+        .group_by(ActivityModel.activity_type)
+    )
+    by_type_result = await db.execute(by_type_query)
+    by_type: dict[str, int] = {row.activity_type: row.cnt for row in by_type_result}
+
+    # Pending tasks: activity_type=task, not completed, has a due_date
+    pending_result = await db.execute(
+        select(func.count()).select_from(ActivityModel).where(
+            ActivityModel.activity_type == ActivityType.TASK.value,
+            ActivityModel.completed_at.is_(None),
+            ActivityModel.due_date.isnot(None),
+        )
+    )
+    pending_tasks = pending_result.scalar_one()
+
+    # Overdue tasks: activity_type=task, not completed, due_date < now
+    overdue_result = await db.execute(
+        select(func.count()).select_from(ActivityModel).where(
+            ActivityModel.activity_type == ActivityType.TASK.value,
+            ActivityModel.completed_at.is_(None),
+            ActivityModel.due_date.isnot(None),
+            ActivityModel.due_date < now,
+        )
+    )
+    overdue_tasks = overdue_result.scalar_one()
+
+    # Completed this week: completed_at >= 7 days ago
+    completed_week_result = await db.execute(
+        select(func.count()).select_from(ActivityModel).where(
+            ActivityModel.completed_at.isnot(None),
+            ActivityModel.completed_at >= seven_days_ago,
+        )
+    )
+    completed_this_week = completed_week_result.scalar_one()
+
+    return ActivityStats(
+        total_activities=total_activities,
+        by_type=by_type,
+        pending_tasks=pending_tasks,
+        overdue_tasks=overdue_tasks,
+        completed_this_week=completed_this_week,
+    )
+
+
 @router.get("/{activity_id}", response_model=ActivityWithRelations)
 async def get_activity(
     activity_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single activity by ID with related entity names."""
-    query = select(ActivityModel).where(ActivityModel.id == activity_id)
+    """Get a single activity by ID with related entity names (single query with joins)."""
+    query = (
+        select(ActivityModel)
+        .where(ActivityModel.id == activity_id)
+        .options(
+            joinedload(ActivityModel.customer),
+            joinedload(ActivityModel.contact),
+            joinedload(ActivityModel.order),
+            joinedload(ActivityModel.quote),
+        )
+    )
     result = await db.execute(query)
-    activity = result.scalar_one_or_none()
+    activity = result.unique().scalar_one_or_none()
 
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    # Get related entity names
+    # Build response from eagerly loaded relationships (single query, no N+1)
     activity_data = Activity.model_validate(activity).model_dump()
-
-    if activity.customer_id:
-        customer_query = select(CustomerModel).where(CustomerModel.id == activity.customer_id)
-        customer_result = await db.execute(customer_query)
-        customer = customer_result.scalar_one_or_none()
-        activity_data["customer_name"] = customer.company_name if customer else None
-
-    if activity.contact_id:
-        contact_query = select(ContactModel).where(ContactModel.id == activity.contact_id)
-        contact_result = await db.execute(contact_query)
-        contact = contact_result.scalar_one_or_none()
-        activity_data["contact_name"] = f"{contact.first_name} {contact.last_name}" if contact else None
-
-    if activity.order_id:
-        order_query = select(OrderModel).where(OrderModel.id == activity.order_id)
-        order_result = await db.execute(order_query)
-        order = order_result.scalar_one_or_none()
-        activity_data["order_number"] = order.order_number if order else None
-
-    if activity.quote_id:
-        quote_query = select(QuoteModel).where(QuoteModel.id == activity.quote_id)
-        quote_result = await db.execute(quote_query)
-        quote = quote_result.scalar_one_or_none()
-        activity_data["quote_number"] = quote.quote_number if quote else None
+    activity_data["customer_name"] = activity.customer.company_name if activity.customer else None
+    activity_data["contact_name"] = (
+        f"{activity.contact.first_name} {activity.contact.last_name}" if activity.contact else None
+    )
+    activity_data["order_number"] = activity.order.order_number if activity.order else None
+    activity_data["quote_number"] = activity.quote.quote_number if activity.quote else None
 
     return ActivityWithRelations(**activity_data)
 
@@ -178,7 +230,7 @@ async def create_activity(
         "title": f"New {activity.activity_type.title()}",
         "description": activity.subject,
         "link": f"/activities/{activity.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Activity.model_validate(activity)
@@ -215,7 +267,7 @@ async def update_activity(
     return Activity.model_validate(activity)
 
 
-@router.delete("/{activity_id}", status_code=204)
+@router.delete("/{activity_id}", status_code=204, response_model=None)
 async def delete_activity(
     activity_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -270,7 +322,7 @@ async def complete_activity(
         "activity_type": "activity_completed",
         "title": "Activity Completed",
         "description": activity.subject,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Activity.model_validate(activity)

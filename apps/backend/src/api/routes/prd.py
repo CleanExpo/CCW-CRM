@@ -8,6 +8,8 @@ import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.api.deps import get_current_user
 from src.api.schemas.prd import (
     AgentRunDetail,
     PRDCostSummary,
@@ -17,11 +19,9 @@ from src.api.schemas.prd import (
     PRDListResponse,
     PRDSummary,
 )
-from src.db.models.prd import PRD, AgentRun, APIUsage
-
-from src.api.deps import get_current_user
 from src.config.database import get_db
 from src.db.models import User
+from src.db.models.prd import PRD, AgentRun, APIUsage
 
 logger = structlog.get_logger(__name__)
 
@@ -256,12 +256,12 @@ async def list_prds(
     )
 
 
-@router.delete("/{prd_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{prd_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_prd(
     prd_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> None:
+):
     """
     Delete a PRD.
 

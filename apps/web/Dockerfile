@@ -1,5 +1,6 @@
-# CCW-Online ERP - Frontend Dockerfile
-# Multi-stage build for optimized production image
+# CCW-ERP-CRM — Frontend Dockerfile (monorepo-aware)
+# Build context MUST be the monorepo root: docker build -f apps/web/Dockerfile .
+# Multi-stage build for optimised production image
 
 # ==============================================================================
 # Stage 1: Dependencies
@@ -11,10 +12,15 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml* ./
+# Copy monorepo root manifests first (layer cache optimisation)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Install dependencies
+# Copy workspace package manifests so pnpm can resolve workspace deps
+COPY apps/web/package.json ./apps/web/package.json
+# Add any shared packages used by web
+COPY packages/ ./packages/
+
+# Install ALL workspace dependencies (hoisted to root node_modules)
 RUN pnpm install --frozen-lockfile
 
 # ==============================================================================
@@ -22,7 +28,6 @@ RUN pnpm install --frozen-lockfile
 # ==============================================================================
 FROM node:20-alpine AS builder
 
-# Install pnpm
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 WORKDIR /app
@@ -31,21 +36,31 @@ WORKDIR /app
 ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ARG NEXT_PUBLIC_SENTRY_DSN=""
 ARG NEXT_PUBLIC_ENVIRONMENT=production
+ARG NEXT_PUBLIC_SUPABASE_URL=""
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=""
 
-# Set environment variables
 ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy dependencies from deps stage
+# Copy installed node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 
-# Copy source code
-COPY . .
+# Copy monorepo config files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# Build the application
-RUN pnpm build
+# Copy shared packages source
+COPY packages/ ./packages/
+
+# Copy the web app source
+COPY apps/web/ ./apps/web/
+
+# Build just the web app via turbo
+RUN pnpm --filter=web run build
 
 # ==============================================================================
 # Stage 3: Runner (Production)
@@ -54,7 +69,6 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
@@ -64,20 +78,16 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy built application
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy the standalone output (requires output: "standalone" in next.config.ts)
+COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
 
-# Switch to non-root user
 USER nextjs
 
-# Expose port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Start the application
 CMD ["node", "server.js"]

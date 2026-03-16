@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -15,20 +15,28 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 const formSchema = z.object({
-  full_name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  company_name: z.string().min(2, "Company name must be at least 2 characters"),
+  full_name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  company_name: z.string().min(2, 'Company name must be at least 2 characters'),
   agree_terms: z.boolean().refine((val) => val === true, {
-    message: "You must agree to the terms and conditions",
+    message: 'You must agree to the terms and conditions',
   }),
 });
 
@@ -42,10 +50,10 @@ export default function SignupPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      full_name: "",
-      email: "",
-      password: "",
-      company_name: "",
+      full_name: '',
+      email: '',
+      password: '',
+      company_name: '',
       agree_terms: false,
     },
   });
@@ -54,31 +62,26 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Call signup API to create organization + user
-      // const response = await apiClient.post('/api/auth/signup', {
-      //   full_name: values.full_name,
-      //   email: values.email,
-      //   password: values.password,
-      //   company_name: values.company_name,
-      // });
-      //
-      // // Store auth token
-      // document.cookie = `token=${response.token}; path=/; max-age=604800`;
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await apiClient.post('/api/auth/signup', {
+        full_name: values.full_name,
+        email: values.email,
+        password: values.password,
+        company_name: values.company_name,
+      });
 
       toast({
-        title: "Account Created",
+        title: 'Account Created',
         description: "Welcome to CCW ERP! Let's get you set up.",
       });
 
       // Redirect to onboarding wizard
-      router.push("/onboarding" as any);
-    } catch (error: any) {
+      router.push('/onboarding');
+    } catch (error: unknown) {
       toast({
-        title: "Signup Failed",
-        description: error.message || "Failed to create account. Please try again.",
-        variant: "destructive",
+        title: 'Signup Failed',
+        description:
+          error instanceof Error ? error.message : 'Failed to create account. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -86,13 +89,11 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20 p-4">
+    <div className="from-background to-muted/20 flex min-h-screen items-center justify-center bg-gradient-to-br p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>
-            Start your 14-day free trial. No credit card required.
-          </CardDescription>
+          <CardDescription>Start your 14-day free trial. No credit card required.</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -140,9 +141,7 @@ export default function SignupPage() {
                     <FormControl>
                       <Input placeholder="Acme Corp" {...field} disabled={isLoading} />
                     </FormControl>
-                    <FormDescription>
-                      Your organization name (can be changed later)
-                    </FormDescription>
+                    <FormDescription>Your organization name (can be changed later)</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -172,7 +171,7 @@ export default function SignupPage() {
                 control={form.control}
                 name="agree_terms"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -182,12 +181,12 @@ export default function SignupPage() {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>
-                        I agree to the{" "}
-                        <Link href={"/terms" as any} className="underline hover:text-primary">
+                        I agree to the{' '}
+                        <Link href="/terms" className="hover:text-primary underline">
                           Terms of Service
-                        </Link>{" "}
-                        and{" "}
-                        <Link href={"/privacy" as any} className="underline hover:text-primary">
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="/privacy" className="hover:text-primary underline">
                           Privacy Policy
                         </Link>
                       </FormLabel>
@@ -206,9 +205,9 @@ export default function SignupPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-4">
-          <div className="text-sm text-muted-foreground text-center">
-            Already have an account?{" "}
-            <Link href="/login" className="underline hover:text-primary">
+          <div className="text-muted-foreground text-center text-sm">
+            Already have an account?{' '}
+            <Link href="/login" className="hover:text-primary underline">
               Sign in
             </Link>
           </div>

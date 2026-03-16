@@ -1,34 +1,57 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BentoGrid, BentoCard, BentoCardHeader, BentoCardTitle, BentoCardDescription, BentoCardContent } from "@/components/ui/bento-grid";
-import { BorderBeam } from "@/components/ui/border-beam";
-import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, FileText, Sparkles, ArrowRight } from "lucide-react";
-import { apiClient } from "@/lib/api/client";
-import { getDashboardInsights, type Insight } from "@/lib/api/ai-insights";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  BentoGrid,
+  BentoCard,
+  BentoCardHeader,
+  BentoCardTitle,
+  BentoCardDescription,
+  BentoCardContent,
+} from '@/components/ui/bento-grid';
+import { BorderBeam } from '@/components/ui/border-beam';
+import {
+  DollarSign,
+  ShoppingCart,
+  Package,
+  Users,
+  AlertTriangle,
+  FileText,
+  Sparkles,
+  ArrowRight,
+} from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
+import { getDashboardInsights, type Insight } from '@/lib/api/ai-insights';
 // PHASE 4: Real-time POS failure alerts + Dashboard metrics
-import { usePOSFailureAlerts, useDashboardMetricsStream, type POSFailureAlert, type DashboardMetricsUpdate } from "@/lib/hooks/use-sse";
-import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { InsightCard } from "@/components/insights/insight-card";
-import { RevenueChart } from "@/components/charts/RevenueChart";
-import { CategorySalesChart } from "@/components/charts/CategorySalesChart";
-import { StockHealthWidget } from "@/components/dashboard/StockHealthWidget";
-import { TransferSuggestionsWidget } from "@/components/dashboard/TransferSuggestionsWidget";
-import { OrderStatusBreakdownWidget } from "@/components/dashboard/OrderStatusBreakdownWidget";
-import { QuoteConversionWidget } from "@/components/dashboard/QuoteConversionWidget";
-import { RevenueByLocationWidget } from "@/components/dashboard/RevenueByLocationWidget";
+import {
+  usePOSFailureAlerts,
+  useDashboardMetricsStream,
+  type POSFailureAlert,
+  type DashboardMetricsUpdate,
+} from '@/lib/hooks/use-sse';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { InsightCard } from '@/components/insights/insight-card';
+import { RevenueChart } from '@/components/charts/RevenueChart';
+import { CategorySalesChart } from '@/components/charts/CategorySalesChart';
+import { StockHealthWidget } from '@/components/dashboard/StockHealthWidget';
+import { TransferSuggestionsWidget } from '@/components/dashboard/TransferSuggestionsWidget';
+import { OrderStatusBreakdownWidget } from '@/components/dashboard/OrderStatusBreakdownWidget';
+import { QuoteConversionWidget } from '@/components/dashboard/QuoteConversionWidget';
+import { RevenueByLocationWidget } from '@/components/dashboard/RevenueByLocationWidget';
 // PHASE C: AI Sales Insights Widget
-import { SalesInsightsWidget } from "@/components/dashboard/SalesInsightsWidget";
+import { SalesInsightsWidget } from '@/components/dashboard/SalesInsightsWidget';
 // PHASE C: AI Order Patterns Widget
-import { OrderPatternsWidget } from "@/components/dashboard/OrderPatternsWidget";
+import { OrderPatternsWidget } from '@/components/dashboard/OrderPatternsWidget';
 // PHASE 7: Cin7 Sync Status Widget
-import { Cin7SyncStatusWidget } from "@/components/dashboard/Cin7SyncStatusWidget";
-import { format } from "date-fns";
-import { motion } from "framer-motion";
+import { Cin7SyncStatusWidget } from '@/components/dashboard/Cin7SyncStatusWidget';
+// NODEJS-Updates: Agent performance metrics widget
+import { AgentMetricsWidget } from '@/components/dashboard/AgentMetricsWidget';
+import { format } from 'date-fns';
+import { motion } from 'framer-motion';
 
 interface DashboardMetrics {
   total_revenue_this_month: string;
@@ -92,7 +115,7 @@ export default function DashboardPage() {
 
   // PHASE 4: Real-time POS failure monitoring
   const [posFailureCount, setPosFailureCount] = useState(0);
-  const { data: posFailure, status: posAlertStatus} = usePOSFailureAlerts(true);
+  const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(true);
 
   // PHASE 4: Real-time dashboard metrics
   const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(true);
@@ -103,9 +126,11 @@ export default function DashboardPage() {
         // PHASE 4 OPTIMIZATION: Use aggregated endpoint (1 API call instead of 6)
         // Expected performance: 70% faster (5-8s → <2s)
         const [dashboardData, insightsData, posFailures] = await Promise.all([
-          apiClient.get<AggregatedDashboardData>("/api/dashboard/aggregated"),
+          apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
           getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
-          apiClient.get<{ alert_count: number }>("/api/monitoring/alerts/pos-failures?hours=24").catch(() => ({ alert_count: 0 })),
+          apiClient
+            .get<{ alert_count: number }>('/api/monitoring/alerts/pos-failures?hours=24')
+            .catch(() => ({ alert_count: 0 })),
         ]);
 
         // Destructure aggregated data
@@ -114,10 +139,10 @@ export default function DashboardPage() {
         setCategorySales(dashboardData.category_sales);
         setTopProducts(dashboardData.top_products);
         setActivity(dashboardData.recent_activity);
-        setInsights(insightsData.insights.filter((i) => i.priority === "high").slice(0, 3));
+        setInsights(insightsData.insights.filter((i) => i.priority === 'high').slice(0, 3));
         setPosFailureCount(posFailures.alert_count);
       } catch (error) {
-        console.error("Failed to load dashboard data:", error);
+        console.error('Failed to load dashboard data:', error);
         setMetrics(null);
         setRevenueData([]);
         setCategorySales([]);
@@ -135,12 +160,11 @@ export default function DashboardPage() {
   // PHASE 4: Handle real-time POS failure alerts
   useEffect(() => {
     if (posFailure) {
-      console.log("POS failure detected:", posFailure);
       setPosFailureCount((prev) => prev + 1);
       toast({
-        title: "POS Payment Failed",
+        title: 'POS Payment Failed',
         description: `Transaction ${posFailure.transaction_number} at ${posFailure.location_code} failed: ${posFailure.error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   }, [posFailure, toast]);
@@ -148,16 +172,16 @@ export default function DashboardPage() {
   // PHASE 4: Handle real-time dashboard metrics updates
   useEffect(() => {
     if (metricsUpdate) {
-      console.log("Dashboard metric updated:", metricsUpdate);
-
       // Refresh specific metrics based on the update
       async function refreshMetrics() {
         try {
-          const dashboardData = await apiClient.get<AggregatedDashboardData>("/api/dashboard/aggregated");
+          const dashboardData = await apiClient.get<AggregatedDashboardData>(
+            '/api/dashboard/aggregated'
+          );
           setMetrics(dashboardData.metrics);
           setActivity(dashboardData.recent_activity);
         } catch (error) {
-          console.error("Failed to refresh metrics:", error);
+          console.error('Failed to refresh metrics:', error);
         }
       }
 
@@ -168,9 +192,9 @@ export default function DashboardPage() {
   }, [metricsUpdate]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
+    return new Intl.NumberFormat('en-AU', {
+      style: 'currency',
+      currency: 'AUD',
     }).format(value);
   };
 
@@ -178,7 +202,9 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Equipment Supplier Operations &mdash; CCW Online
+          </h1>
           <p className="text-muted-foreground">Loading dashboard data...</p>
         </div>
       </div>
@@ -196,13 +222,17 @@ export default function DashboardPage() {
       >
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground text-lg mt-2">CCW Equipment — Real-time business overview</p>
+            <h1 className="text-4xl font-semibold tracking-tight">
+              Equipment Supplier Operations &mdash; CCW Online
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">
+              CCW Equipment — Real-time business overview
+            </p>
           </div>
           {/* PHASE 4: Live metrics indicator */}
-          {metricsStreamStatus === "connected" && (
+          {metricsStreamStatus === 'connected' && (
             <Badge variant="outline" className="text-xs">
-              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse mr-2" />
+              <div className="mr-2 h-2 w-2 animate-pulse rounded-full bg-green-500" />
               Live Metrics
             </Badge>
           )}
@@ -212,17 +242,19 @@ export default function DashboardPage() {
         {posFailureCount > 0 && (
           <Link href="/pos/reconciliation">
             <Card className="border-destructive/50 bg-destructive/10">
-              <CardContent className="pt-6 pb-4 px-4">
+              <CardContent className="px-4 pt-6 pb-4">
                 <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  <AlertTriangle className="text-destructive h-5 w-5" />
                   <div>
-                    <p className="text-sm font-medium text-destructive">
-                      {posFailureCount} POS {posFailureCount === 1 ? "Failure" : "Failures"}
+                    <p className="text-destructive text-sm font-medium">
+                      {posFailureCount} POS {posFailureCount === 1 ? 'Failure' : 'Failures'}
                     </p>
-                    <p className="text-xs text-muted-foreground">Last 24 hours</p>
+                    <p className="text-muted-foreground text-xs">Last 24 hours</p>
                   </div>
-                  {posAlertStatus === "connected" && (
-                    <Badge variant="outline" className="ml-2">Live</Badge>
+                  {posAlertStatus === 'connected' && (
+                    <Badge variant="outline" className="ml-2">
+                      Live
+                    </Badge>
                   )}
                 </div>
               </CardContent>
@@ -240,67 +272,69 @@ export default function DashboardPage() {
             <BentoCardDescription>Real-time business performance indicators</BentoCardDescription>
           </BentoCardHeader>
           <BentoCardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
               {/* Revenue */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <DollarSign className="w-4 h-4" />
+                <div className="text-muted-foreground flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
                   <span className="text-sm font-medium">Total Revenue</span>
                 </div>
-                <div className="text-3xl font-bold text-brand-primary">
-                  {formatCurrency(parseFloat(metrics?.total_revenue_this_month || "0"))}
+                <div className="text-brand-primary text-3xl font-bold">
+                  {formatCurrency(parseFloat(metrics?.total_revenue_this_month || '0'))}
                 </div>
-                <p className="text-xs text-muted-foreground">This month from delivered orders</p>
+                <p className="text-muted-foreground text-xs">This month from delivered orders</p>
               </div>
 
               {/* Active Orders */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <ShoppingCart className="w-4 h-4" />
+                <div className="text-muted-foreground flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4" />
                   <span className="text-sm font-medium">Active Orders</span>
                 </div>
                 <div className="text-3xl font-bold">{metrics?.active_orders || 0}</div>
-                <p className="text-xs text-muted-foreground">In progress</p>
+                <p className="text-muted-foreground text-xs">In progress</p>
               </div>
 
               {/* Products */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Package className="w-4 h-4" />
+                <div className="text-muted-foreground flex items-center gap-2">
+                  <Package className="h-4 w-4" />
                   <span className="text-sm font-medium">Total Products</span>
                 </div>
                 <div className="text-3xl font-bold">{metrics?.total_products || 0}</div>
-                <p className="text-xs text-muted-foreground">Active catalog items</p>
+                <p className="text-muted-foreground text-xs">Active catalog items</p>
               </div>
 
               {/* Customers */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Users className="w-4 h-4" />
+                <div className="text-muted-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4" />
                   <span className="text-sm font-medium">Total Customers</span>
                 </div>
                 <div className="text-3xl font-bold">{metrics?.total_customers || 0}</div>
-                <p className="text-xs text-muted-foreground">Active customers</p>
+                <p className="text-muted-foreground text-xs">Active customers</p>
               </div>
 
               {/* Low Stock */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-destructive">
-                  <AlertTriangle className="w-4 h-4" />
+                <div className="text-destructive flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
                   <span className="text-sm font-medium">Low Stock Alerts</span>
                 </div>
-                <div className="text-3xl font-bold text-destructive">{metrics?.low_stock_alerts || 0}</div>
-                <p className="text-xs text-muted-foreground">Items with stock ≤ 10</p>
+                <div className="text-destructive text-3xl font-bold">
+                  {metrics?.low_stock_alerts || 0}
+                </div>
+                <p className="text-muted-foreground text-xs">Items with stock ≤ 10</p>
               </div>
 
               {/* Pending Quotes */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <FileText className="w-4 h-4" />
+                <div className="text-muted-foreground flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
                   <span className="text-sm font-medium">Pending Quotes</span>
                 </div>
                 <div className="text-3xl font-bold">{metrics?.pending_quotes || 0}</div>
-                <p className="text-xs text-muted-foreground">Awaiting response</p>
+                <p className="text-muted-foreground text-xs">Awaiting response</p>
               </div>
             </div>
           </BentoCardContent>
@@ -338,15 +372,15 @@ export default function DashboardPage() {
               <BentoCardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-gradient-brand/10 border border-white/10">
-                      <Sparkles className="w-5 h-5 text-brand-primary" />
+                    <div className="bg-gradient-brand/10 rounded-lg border border-white/10 p-2">
+                      <Sparkles className="text-brand-primary h-5 w-5" />
                     </div>
                     <BentoCardTitle className="text-2xl">AI-Powered Insights</BentoCardTitle>
                   </div>
                   <Link href="/insights">
                     <Button variant="outline" size="sm">
                       View All
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
@@ -380,6 +414,11 @@ export default function DashboardPage() {
           <Cin7SyncStatusWidget />
         </BentoCard>
 
+        {/* NODEJS-Updates: Agent Performance Metrics - 1 column */}
+        <BentoCard variant="glass" span={1} className="min-h-[350px]">
+          <AgentMetricsWidget />
+        </BentoCard>
+
         {/* PHASE C: AI Order Patterns Widget - Spans 2 columns */}
         <BentoCard variant="glass" span={2} className="min-h-[450px]">
           <OrderPatternsWidget />
@@ -398,20 +437,25 @@ export default function DashboardPage() {
           </BentoCardHeader>
           <BentoCardContent>
             <div className="space-y-4">
-              {Array.isArray(topProducts) && topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-brand/20 text-sm font-semibold text-brand-primary border border-brand-primary/20">
-                      {index + 1}
+              {Array.isArray(topProducts) &&
+                topProducts.map((product, index) => (
+                  <div key={product.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gradient-brand/20 text-brand-primary border-brand-primary/20 flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{product.name}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {product.quantity_sold} units sold
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">{product.quantity_sold} units sold</p>
-                    </div>
+                    <span className="text-sm font-semibold">
+                      {formatCurrency(parseFloat(product.revenue))}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold">{formatCurrency(parseFloat(product.revenue))}</span>
-                </div>
-              ))}
+                ))}
             </div>
           </BentoCardContent>
         </BentoCard>
@@ -423,27 +467,31 @@ export default function DashboardPage() {
             <BentoCardDescription>Latest orders and quotes</BentoCardDescription>
           </BentoCardHeader>
           <BentoCardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.isArray(activity) && activity.slice(0, 6).map((item, index) => (
-                <div key={`${item.type}-${index}`} className="p-4 rounded-lg border border-white/10 bg-card/50 hover:bg-card/80 transition-colors">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{item.title}</span>
-                      {item.status && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-secondary capitalize">
-                          {item.status}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {item.description}
-                    </p>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(item.timestamp), "MMM dd, yyyy")}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {Array.isArray(activity) &&
+                activity.slice(0, 6).map((item, index) => (
+                  <div
+                    key={`${item.type}-${index}`}
+                    className="bg-card/50 hover:bg-card/80 rounded-lg border border-white/10 p-4 transition-colors"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{item.title}</span>
+                        {item.status && (
+                          <span className="bg-secondary rounded-full px-2 py-0.5 text-xs capitalize">
+                            {item.status}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground line-clamp-2 text-sm">
+                        {item.description}
+                      </p>
+                      <div className="text-muted-foreground text-xs">
+                        {format(new Date(item.timestamp), 'MMM dd, yyyy')}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </BentoCardContent>
         </BentoCard>

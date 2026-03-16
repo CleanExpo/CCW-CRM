@@ -1,5 +1,4 @@
 """Background job management API routes."""
-from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -27,11 +26,11 @@ async def create_job(
         input_data=job_data.input_data,  # SQLAlchemy JSON column handles serialization
         progress=0,
     )
-    
+
     db.add(job)
     await db.commit()
     await db.refresh(job)
-    
+
     return job
 
 
@@ -41,14 +40,14 @@ async def get_job(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> BackgroundJob:
     """Get job status and results."""
-    
+
     query = select(BackgroundJob).where(BackgroundJob.id == job_id)
     result = await db.execute(query)
     job = result.scalar_one_or_none()
-    
+
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     return job
 
 
@@ -60,38 +59,38 @@ async def list_jobs(
     limit: int = 50,
 ) -> list[BackgroundJob]:
     """List background jobs with optional filters."""
-    
+
     query = select(BackgroundJob).order_by(BackgroundJob.created_at.desc())
-    
+
     if status:
         query = query.where(BackgroundJob.status == status)
-    
+
     if job_type:
         query = query.where(BackgroundJob.job_type == job_type)
-    
+
     query = query.limit(limit)
-    
+
     result = await db.execute(query)
     jobs = result.scalars().all()
-    
+
     return list(jobs)
 
 
-@router.delete("/{job_id}", status_code=204)
+@router.delete("/{job_id}", status_code=204, response_model=None)
 async def delete_job(
     job_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> None:
     """Delete a background job."""
-    
+
     query = select(BackgroundJob).where(BackgroundJob.id == job_id)
     result = await db.execute(query)
     job = result.scalar_one_or_none()
-    
+
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     await db.delete(job)
     await db.commit()
-    
+
     return None

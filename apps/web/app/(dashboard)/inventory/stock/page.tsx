@@ -1,27 +1,35 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSearchState } from "@/lib/hooks/use-search-state";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useCallback, useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSearchState } from '@/lib/hooks/use-search-state';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Package, TrendingDown, AlertTriangle, DollarSign, Plus, Search } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import type { InventoryItem, StockByLocation, StoreLocation } from "@/lib/types/inventory";
-import { inventoryApi } from "@/lib/api/inventory";
-import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
-import { PaginationControls } from "@/components/ui/pagination-controls";
-import { StockTransferDialog } from "../components/StockTransferDialog";
-import { StockAdjustmentDialog } from "../components/StockAdjustmentDialog";
-import { format } from "date-fns";
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Package,
+  TrendingDown,
+  AlertTriangle,
+  DollarSign,
+  ScanBarcode,
+  Search,
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useBarcodeScanner } from '@/hooks/use-barcode-scanner';
+import type { InventoryItem, StockByLocation, StoreLocation } from '@/lib/types/inventory';
+import { inventoryApi } from '@/lib/api/inventory';
+import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
+import { PaginationControls } from '@/components/ui/pagination-controls';
+import { StockTransferDialog } from '../components/StockTransferDialog';
+import { StockAdjustmentDialog } from '../components/StockAdjustmentDialog';
+import { format } from 'date-fns';
 
 export default function InventoryStockPage() {
   const { toast } = useToast();
@@ -38,29 +46,29 @@ export default function InventoryStockPage() {
 
   // Search state persistence
   const { state: searchState, updateField } = useSearchState({
-    key: "inventory-stock-list",
-    defaultState: { page: 1, pageSize: 50, search: "", location: "all", stockStatus: "all" },
+    key: 'inventory-stock-list',
+    defaultState: { page: 1, pageSize: 50, search: '', location: 'all', stockStatus: 'all' },
   });
 
   const page = searchState.page || 1;
   const pageSize = searchState.pageSize || 50;
-  const searchQuery = searchState.search || "";
-  const locationFilter = searchState.location || "all";
-  const stockStatusFilter = searchState.stockStatus || "all";
+  const searchQuery = searchState.search || '';
+  const locationFilter = searchState.location || 'all';
+  const stockStatusFilter = searchState.stockStatus || 'all';
 
-  const setPage = (value: number) => updateField("page", value);
-  const setPageSize = (value: number) => updateField("pageSize", value);
+  const setPage = (value: number) => updateField('page', value);
+  const setPageSize = (value: number) => updateField('pageSize', value);
   const setSearchQuery = (value: string) => {
-    updateField("search", value);
-    updateField("page", 1); // Reset to first page on search
+    updateField('search', value);
+    updateField('page', 1); // Reset to first page on search
   };
   const setLocationFilter = (value: string) => {
-    updateField("location", value);
-    updateField("page", 1);
+    updateField('location', value);
+    updateField('page', 1);
   };
   const setStockStatusFilter = (value: string) => {
-    updateField("stockStatus", value);
-    updateField("page", 1);
+    updateField('stockStatus', value);
+    updateField('page', 1);
   };
 
   // Load inventory data
@@ -71,8 +79,8 @@ export default function InventoryStockPage() {
         page,
         page_size: pageSize,
         search: searchQuery || undefined,
-        location: locationFilter === "all" ? undefined : locationFilter,
-        low_stock: stockStatusFilter === "low" ? true : undefined,
+        location: locationFilter === 'all' ? undefined : locationFilter,
+        low_stock: stockStatusFilter === 'low' ? true : undefined,
       });
 
       setInventory(response.items);
@@ -80,11 +88,11 @@ export default function InventoryStockPage() {
       setTotalPages(response.total_pages);
       setLastUpdated(new Date());
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to load inventory";
-      console.error("Failed to load inventory:", error);
+      const message = error instanceof Error ? error.message : 'Failed to load inventory';
+      console.error('Failed to load inventory:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
       setInventory([]);
@@ -122,10 +130,10 @@ export default function InventoryStockPage() {
 
   // Get stock color based on availability and reorder point
   const getStockColor = (available: number, reorder?: number) => {
-    if (available === 0) return "text-destructive font-semibold";
-    if (reorder && available <= reorder) return "text-orange-600 font-semibold";
-    if (available <= 20) return "text-yellow-600 font-semibold";
-    return "text-green-600 font-semibold";
+    if (available === 0) return 'text-destructive font-semibold';
+    if (reorder && available <= reorder) return 'text-orange-600 font-semibold';
+    if (available <= 20) return 'text-yellow-600 font-semibold';
+    return 'text-green-600 font-semibold';
   };
 
   // Render stock cell for a specific location
@@ -141,13 +149,33 @@ export default function InventoryStockPage() {
           {stock.available} avail
         </div>
         {stock.reserved > 0 && (
-          <div className="text-xs text-muted-foreground">
-            {stock.reserved} reserved
-          </div>
+          <div className="text-muted-foreground text-xs">{stock.reserved} reserved</div>
         )}
       </div>
     );
   };
+
+  // Barcode scanner — on scan, set search to SKU
+  const handleBarcodeScan = useCallback(
+    async (code: string) => {
+      try {
+        const product = await inventoryApi.lookupByBarcode(code);
+        setSearchQuery(product.sku);
+        toast({
+          title: 'Barcode scanned',
+          description: `${product.product_name} (${product.sku})`,
+        });
+      } catch {
+        toast({
+          variant: 'destructive',
+          title: 'Barcode not found',
+          description: `No product matched barcode: ${code}`,
+        });
+      }
+    },
+    [toast]
+  );
+  useBarcodeScanner({ onScan: handleBarcodeScan });
 
   // Action handlers
   const handleTransfer = (item: InventoryItem) => {
@@ -167,62 +195,50 @@ export default function InventoryStockPage() {
   // Table columns
   const columns = [
     {
-      key: "sku",
-      label: "SKU",
+      key: 'sku',
+      label: 'SKU',
       render: (item: InventoryItem) => (
         <span className="font-mono text-sm font-semibold">{item.sku}</span>
       ),
     },
     {
-      key: "name",
-      label: "Product Name",
+      key: 'name',
+      label: 'Product Name',
+      render: (item: InventoryItem) => <span className="font-medium">{item.name}</span>,
+    },
+    {
+      key: 'brisbane',
+      label: 'Brisbane',
+      render: (item: InventoryItem) => renderStockCell(item, 'brisbane' as StoreLocation),
+    },
+    {
+      key: 'sydney',
+      label: 'Sydney',
+      render: (item: InventoryItem) => renderStockCell(item, 'sydney' as StoreLocation),
+    },
+    {
+      key: 'melbourne',
+      label: 'Melbourne',
+      render: (item: InventoryItem) => renderStockCell(item, 'melbourne' as StoreLocation),
+    },
+    {
+      key: 'total_available',
+      label: 'Total Available',
+      align: 'right' as const,
       render: (item: InventoryItem) => (
-        <span className="font-medium">{item.name}</span>
+        <span className={getStockColor(item.total_available)}>{item.total_available}</span>
       ),
     },
     {
-      key: "brisbane",
-      label: "Brisbane",
-      render: (item: InventoryItem) => renderStockCell(item, "brisbane" as StoreLocation),
-    },
-    {
-      key: "sydney",
-      label: "Sydney",
-      render: (item: InventoryItem) => renderStockCell(item, "sydney" as StoreLocation),
-    },
-    {
-      key: "melbourne",
-      label: "Melbourne",
-      render: (item: InventoryItem) => renderStockCell(item, "melbourne" as StoreLocation),
-    },
-    {
-      key: "total_available",
-      label: "Total Available",
-      align: "right" as const,
-      render: (item: InventoryItem) => (
-        <span className={getStockColor(item.total_available)}>
-          {item.total_available}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      label: "Actions",
-      align: "right" as const,
+      key: 'actions',
+      label: 'Actions',
+      align: 'right' as const,
       render: (item: InventoryItem) => (
         <div className="flex justify-end gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleTransfer(item)}
-          >
+          <Button size="sm" variant="outline" onClick={() => handleTransfer(item)}>
             Transfer
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleAdjust(item)}
-          >
+          <Button size="sm" variant="outline" onClick={() => handleAdjust(item)}>
             Adjust
           </Button>
         </div>
@@ -233,12 +249,14 @@ export default function InventoryStockPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Stock Inventory</h1>
-          <p className="text-muted-foreground">
-            Manage stock levels across all locations
-          </p>
+          <p className="text-muted-foreground">Manage stock levels across all locations</p>
+        </div>
+        <div className="text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+          <ScanBarcode className="h-4 w-4" />
+          <span>Scanner ready</span>
         </div>
       </div>
 
@@ -247,13 +265,11 @@ export default function InventoryStockPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalProducts}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all locations
-            </p>
+            <p className="text-muted-foreground text-xs">Across all locations</p>
           </CardContent>
         </Card>
 
@@ -264,35 +280,29 @@ export default function InventoryStockPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{stats.lowStockCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Below reorder point
-            </p>
+            <p className="text-muted-foreground text-xs">Below reorder point</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Critical Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <AlertTriangle className="text-destructive h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{stats.outOfStockCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Out of stock
-            </p>
+            <div className="text-destructive text-2xl font-bold">{stats.outOfStockCount}</div>
+            <p className="text-muted-foreground text-xs">Out of stock</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Stock Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.totalStockValue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              Current inventory value
-            </p>
+            <p className="text-muted-foreground text-xs">Current inventory value</p>
           </CardContent>
         </Card>
       </div>
@@ -301,14 +311,16 @@ export default function InventoryStockPage() {
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
-          <CardDescription>Search and filter inventory by location and stock status</CardDescription>
+          <CardDescription>
+            Search and filter inventory by location and stock status
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-4 md:flex-row">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
                 <Input
                   placeholder="Search by SKU or product name..."
                   value={searchQuery}
@@ -349,13 +361,11 @@ export default function InventoryStockPage() {
       {/* Inventory Table */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <div>
               <CardTitle>Stock Inventory</CardTitle>
               {lastUpdated && (
-                <CardDescription>
-                  Last updated: {format(lastUpdated, "h:mm:ss a")}
-                </CardDescription>
+                <CardDescription>Last updated: {format(lastUpdated, 'h:mm:ss a')}</CardDescription>
               )}
             </div>
           </div>
@@ -368,13 +378,13 @@ export default function InventoryStockPage() {
               ))}
             </div>
           ) : inventory.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="mx-auto h-12 w-12 text-muted-foreground" />
+            <div className="py-12 text-center">
+              <Package className="text-muted-foreground mx-auto h-12 w-12" />
               <h3 className="mt-4 text-lg font-semibold">No inventory found</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {searchQuery || locationFilter !== "all" || stockStatusFilter !== "all"
-                  ? "Try adjusting your filters to see more results"
-                  : "No products have been added to inventory yet"}
+              <p className="text-muted-foreground mt-2 text-sm">
+                {searchQuery || locationFilter !== 'all' || stockStatusFilter !== 'all'
+                  ? 'Try adjusting your filters to see more results'
+                  : 'No products have been added to inventory yet'}
               </p>
             </div>
           ) : (

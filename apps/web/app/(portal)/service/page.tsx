@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Wrench, Plus, Calendar, DollarSign, CheckCircle2, Clock } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from 'react';
+import { Wrench, Plus, Calendar, DollarSign, CheckCircle2, Clock } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -23,11 +23,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { apiClient } from "@/lib/api/client";
-import { toast } from "sonner";
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { apiClient } from '@/lib/api/client';
+import { toast } from 'sonner';
 
 interface ServiceRequest {
   id: string;
@@ -52,9 +52,9 @@ export default function ServicePage() {
   const [showNewRequestDialog, setShowNewRequestDialog] = useState(false);
 
   // New request form state
-  const [requestType, setRequestType] = useState<string>("repair");
-  const [equipmentDescription, setEquipmentDescription] = useState("");
-  const [issueDescription, setIssueDescription] = useState("");
+  const [requestType, setRequestType] = useState<string>('repair');
+  const [equipmentDescription, setEquipmentDescription] = useState('');
+  const [issueDescription, setIssueDescription] = useState('');
 
   useEffect(() => {
     loadServiceRequests();
@@ -63,17 +63,17 @@ export default function ServicePage() {
   const loadServiceRequests = async () => {
     try {
       const response = await apiClient.get<{ items: ServiceRequest[] }>(
-        "/api/service-requests?page_size=50"
+        '/api/service-requests?page_size=50'
       );
       setRequests(response.items || []);
     } catch (error) {
-      console.error("Failed to load service requests:", error);
+      console.error('Failed to load service requests:', error);
     }
   };
 
   const handleSubmitRequest = async () => {
     if (!equipmentDescription.trim() || !issueDescription.trim()) {
-      toast.error("Please fill in all required fields");
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -81,32 +81,28 @@ export default function ServicePage() {
 
     try {
       const requestData = {
-        customer_id: "mock-customer-id", // Replace with actual authenticated customer
+        customer_id: 'mock-customer-id', // Replace with actual authenticated customer
         request_type: requestType,
         equipment_description: equipmentDescription,
         issue_description: issueDescription,
         photos: null,
       };
 
-      const response = await apiClient.post<ServiceRequest>(
-        "/api/service-requests",
-        requestData
-      );
+      const response = await apiClient.post<ServiceRequest>('/api/service-requests', requestData);
 
       toast.success("Service request submitted successfully! We'll contact you soon.");
 
       // Reset form
-      setRequestType("repair");
-      setEquipmentDescription("");
-      setIssueDescription("");
+      setRequestType('repair');
+      setEquipmentDescription('');
+      setIssueDescription('');
       setShowNewRequestDialog(false);
 
       // Reload requests
       loadServiceRequests();
     } catch (error) {
-      console.error("Service request submission failed:", error);
-      const message =
-        error instanceof Error ? error.message : "Failed to submit service request";
+      console.error('Service request submission failed:', error);
+      const message = error instanceof Error ? error.message : 'Failed to submit service request';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -115,26 +111,26 @@ export default function ServicePage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      submitted: "bg-blue-100 text-blue-700",
-      quoted: "bg-yellow-100 text-yellow-700",
-      approved: "bg-green-100 text-green-700",
-      in_progress: "bg-purple-100 text-purple-700",
-      completed: "bg-emerald-100 text-emerald-700",
-      cancelled: "bg-red-100 text-red-700",
+      submitted: 'bg-blue-100 text-blue-700',
+      quoted: 'bg-yellow-100 text-yellow-700',
+      approved: 'bg-green-100 text-green-700',
+      in_progress: 'bg-purple-100 text-purple-700',
+      completed: 'bg-emerald-100 text-emerald-700',
+      cancelled: 'bg-red-100 text-red-700',
     };
-    return colors[status] || "bg-gray-100 text-gray-700";
+    return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "submitted":
+      case 'submitted':
         return <Clock className="h-4 w-4" />;
-      case "quoted":
+      case 'quoted':
         return <DollarSign className="h-4 w-4" />;
-      case "approved":
-      case "completed":
+      case 'approved':
+      case 'completed':
         return <CheckCircle2 className="h-4 w-4" />;
-      case "in_progress":
+      case 'in_progress':
         return <Wrench className="h-4 w-4" />;
       default:
         return null;
@@ -146,22 +142,23 @@ export default function ServicePage() {
   };
 
   return (
-    <div className="container py-8 px-4">
+    <div className="container px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+          <h1 className="mb-2 flex items-center gap-2 text-3xl font-bold">
             <Wrench className="h-8 w-8" />
-            Service Portal
+            Equipment Service &amp; Repair — CCW Authorised Service Centre
           </h1>
           <p className="text-muted-foreground">
-            Submit service requests, track repairs, and manage workshop projects.
+            Submit service requests for carpet cleaning machines, track repairs, and manage workshop
+            projects.
           </p>
         </div>
 
         <Dialog open={showNewRequestDialog} onOpenChange={setShowNewRequestDialog}>
           <DialogTrigger asChild>
             <Button size="lg">
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="mr-2 h-5 w-5" />
               New Service Request
             </Button>
           </DialogTrigger>
@@ -222,21 +219,18 @@ export default function ServicePage() {
                   className="mt-2"
                   disabled
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-muted-foreground mt-1 text-xs">
                   Photo upload feature coming soon
                 </p>
               </div>
             </div>
 
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowNewRequestDialog(false)}
-              >
+              <Button variant="outline" onClick={() => setShowNewRequestDialog(false)}>
                 Cancel
               </Button>
               <Button onClick={handleSubmitRequest} disabled={isLoading}>
-                {isLoading ? "Submitting..." : "Submit Request"}
+                {isLoading ? 'Submitting...' : 'Submit Request'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -245,18 +239,16 @@ export default function ServicePage() {
 
       <Tabs defaultValue="requests" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="requests">
-            My Requests ({requests.length})
-          </TabsTrigger>
+          <TabsTrigger value="requests">My Requests ({requests.length})</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
         </TabsList>
 
         {/* Service Requests Tab */}
         <TabsContent value="requests">
           {requests.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {requests.map((request) => (
-                <Card key={request.id} className="p-4 hover:shadow-lg transition-shadow">
+                <Card key={request.id} className="p-4 transition-shadow hover:shadow-lg">
                   <div className="space-y-3">
                     {/* Header */}
                     <div className="flex items-start justify-between">
@@ -267,11 +259,11 @@ export default function ServicePage() {
                             {request.status}
                           </span>
                         </Badge>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-muted-foreground mt-1 text-xs">
                           {formatRequestType(request.request_type)}
                         </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {new Date(request.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -280,28 +272,20 @@ export default function ServicePage() {
 
                     {/* Equipment */}
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground">
-                        Equipment
-                      </p>
-                      <p className="text-sm line-clamp-2">
-                        {request.equipment_description}
-                      </p>
+                      <p className="text-muted-foreground text-xs font-semibold">Equipment</p>
+                      <p className="line-clamp-2 text-sm">{request.equipment_description}</p>
                     </div>
 
                     {/* Issue */}
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground">
-                        Issue
-                      </p>
-                      <p className="text-sm line-clamp-3">
-                        {request.issue_description}
-                      </p>
+                      <p className="text-muted-foreground text-xs font-semibold">Issue</p>
+                      <p className="line-clamp-3 text-sm">{request.issue_description}</p>
                     </div>
 
                     {/* Technician */}
                     {request.assigned_technician && (
                       <div className="flex items-center gap-2 text-sm">
-                        <Wrench className="h-4 w-4 text-muted-foreground" />
+                        <Wrench className="text-muted-foreground h-4 w-4" />
                         <span>Assigned to {request.assigned_technician}</span>
                       </div>
                     )}
@@ -309,18 +293,16 @@ export default function ServicePage() {
                     {/* Scheduled Date */}
                     {request.scheduled_date && (
                       <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {new Date(request.scheduled_date).toLocaleDateString()}
-                        </span>
+                        <Calendar className="text-muted-foreground h-4 w-4" />
+                        <span>{new Date(request.scheduled_date).toLocaleDateString()}</span>
                       </div>
                     )}
 
                     {/* Quote */}
                     {request.quote_amount !== null && (
-                      <div className="flex items-center justify-between pt-2 border-t">
+                      <div className="flex items-center justify-between border-t pt-2">
                         <span className="text-sm font-semibold">Quote:</span>
-                        <span className="text-lg font-bold text-primary">
+                        <span className="text-primary text-lg font-bold">
                           ${request.quote_amount.toFixed(2)}
                         </span>
                       </div>
@@ -346,15 +328,13 @@ export default function ServicePage() {
           ) : (
             <Card className="p-12">
               <div className="flex flex-col items-center justify-center text-center">
-                <Wrench className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  No Service Requests Yet
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <Wrench className="text-muted-foreground mb-4 h-16 w-16" />
+                <h3 className="mb-2 text-lg font-semibold">No Service Requests Yet</h3>
+                <p className="text-muted-foreground mb-4 text-sm">
                   Submit your first service request to get started
                 </p>
                 <Button onClick={() => setShowNewRequestDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   New Service Request
                 </Button>
               </div>
@@ -365,31 +345,30 @@ export default function ServicePage() {
         {/* Timeline Tab */}
         <TabsContent value="timeline">
           <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4">Project Timeline</h2>
+            <h2 className="mb-4 text-2xl font-bold">Service Timeline &amp; Repair Progress</h2>
             <p className="text-muted-foreground">
               Detailed timeline view with status updates and photos coming soon.
             </p>
             <Separator className="my-6" />
             <div className="space-y-4">
               {requests
-                .filter((r) => r.status !== "submitted")
+                .filter((r) => r.status !== 'submitted')
                 .map((request) => (
                   <div key={request.id} className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
                         {getStatusIcon(request.status)}
                       </div>
-                      <div className="flex-1 w-px bg-border mt-2" />
+                      <div className="bg-border mt-2 w-px flex-1" />
                     </div>
                     <div className="flex-1 pb-8">
                       <p className="font-semibold">
-                        {formatRequestType(request.request_type)} -{" "}
-                        {request.status}
+                        {formatRequestType(request.request_type)} - {request.status}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {request.equipment_description}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-muted-foreground mt-1 text-xs">
                         {new Date(request.updated_at).toLocaleString()}
                       </p>
                     </div>

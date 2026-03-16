@@ -4,11 +4,11 @@
  * Activity type enum - types of customer interactions
  */
 export enum ActivityType {
-  CALL = "call",
-  EMAIL = "email",
-  MEETING = "meeting",
-  NOTE = "note",
-  TASK = "task",
+  CALL = 'call',
+  EMAIL = 'email',
+  MEETING = 'meeting',
+  NOTE = 'note',
+  TASK = 'task',
 }
 
 /**
@@ -86,10 +86,10 @@ export interface UpdateActivityRequest {
 
 /**
  * Paginated response for activities list endpoint
- * Note: Uses "items" not "data" to match backend pagination pattern
+ * Uses "data" to match backend CRM schema (PaginatedActivities.data)
  */
 export interface PaginatedActivities {
-  items: ActivityWithRelations[];
+  data: ActivityWithRelations[];
   total: number;
   page: number;
   page_size: number;
@@ -120,29 +120,29 @@ export interface ActivityTypeConfig {
  */
 export const ACTIVITY_TYPE_CONFIG: Record<ActivityType, ActivityTypeConfig> = {
   [ActivityType.CALL]: {
-    label: "Call",
-    icon: "Phone",
-    color: "text-blue-600",
+    label: 'Call',
+    icon: 'Phone',
+    color: 'text-blue-600',
   },
   [ActivityType.EMAIL]: {
-    label: "Email",
-    icon: "Mail",
-    color: "text-purple-600",
+    label: 'Email',
+    icon: 'Mail',
+    color: 'text-purple-600',
   },
   [ActivityType.MEETING]: {
-    label: "Meeting",
-    icon: "Calendar",
-    color: "text-green-600",
+    label: 'Meeting',
+    icon: 'Calendar',
+    color: 'text-green-600',
   },
   [ActivityType.NOTE]: {
-    label: "Note",
-    icon: "FileText",
-    color: "text-gray-600",
+    label: 'Note',
+    icon: 'FileText',
+    color: 'text-gray-600',
   },
   [ActivityType.TASK]: {
-    label: "Task",
-    icon: "CheckSquare",
-    color: "text-orange-600",
+    label: 'Task',
+    icon: 'CheckSquare',
+    color: 'text-orange-600',
   },
 };
 
@@ -177,14 +177,16 @@ export function isOverdue(activity: Activity): boolean {
 /**
  * Helper to get activity status label
  */
-export function getActivityStatus(activity: Activity): "completed" | "overdue" | "pending" | "active" {
+export function getActivityStatus(
+  activity: Activity
+): 'completed' | 'overdue' | 'pending' | 'active' {
   if (isCompleted(activity)) {
-    return "completed";
+    return 'completed';
   }
 
   if (isTask(activity)) {
-    return isOverdue(activity) ? "overdue" : "pending";
+    return isOverdue(activity) ? 'overdue' : 'pending';
   }
 
-  return "active";
+  return 'active';
 }

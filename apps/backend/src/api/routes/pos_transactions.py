@@ -10,7 +10,7 @@ Handles:
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,7 +22,6 @@ from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.models import User
 from src.db.pos_models import (
-    BankAccount,
     Location,
     POSTerminal,
     POSTransaction,
@@ -58,9 +57,9 @@ class POSTransactionCreate(BaseModel):
 
     # Links
     terminal_id: UUID
-    sales_staff_id: Optional[UUID] = None
-    customer_id: Optional[UUID] = None
-    order_id: Optional[UUID] = None
+    sales_staff_id: UUID | None = None
+    customer_id: UUID | None = None
+    order_id: UUID | None = None
 
     # Transaction details
     amount: Decimal = Field(..., gt=0, description="Transaction amount")
@@ -69,12 +68,12 @@ class POSTransactionCreate(BaseModel):
     )
 
     # Location routing
-    manual_location_code: Optional[str] = Field(
+    manual_location_code: str | None = Field(
         None, description="Manual location override (requires manager approval)"
     )
 
     # Items (for walk-in sales without order)
-    items: Optional[list[POSLineItem]] = Field(
+    items: list[POSLineItem] | None = Field(
         None, description="Line items for walk-in sale (if no order_id)"
     )
 
@@ -86,13 +85,13 @@ class POSTransactionResponse(BaseModel):
     transaction_number: str
 
     # Links
-    order_id: Optional[UUID] = None
-    terminal_id: Optional[UUID] = None
-    sales_staff_id: Optional[UUID] = None
+    order_id: UUID | None = None
+    terminal_id: UUID | None = None
+    sales_staff_id: UUID | None = None
 
     # Location
     location_code: str
-    resolved_location_code: Optional[str] = None
+    resolved_location_code: str | None = None
 
     # Transaction
     transaction_type: str
@@ -102,12 +101,12 @@ class POSTransactionResponse(BaseModel):
 
     # Payment
     payment_status: str
-    payment_gateway_ref: Optional[str] = None
+    payment_gateway_ref: str | None = None
 
     # Reconciliation
     reconciliation_status: str
-    bank_statement_ref: Optional[str] = None
-    xero_invoice_id: Optional[str] = None
+    bank_statement_ref: str | None = None
+    xero_invoice_id: str | None = None
 
     # Timestamps
     created_at: datetime
@@ -146,8 +145,8 @@ class LocationRoutingService:
         self,
         db: AsyncSession,
         terminal_id: UUID,
-        sales_staff_id: Optional[UUID] = None,
-        manual_location: Optional[str] = None,
+        sales_staff_id: UUID | None = None,
+        manual_location: str | None = None,
     ) -> str:
         """
         Resolve the final location code for a POS transaction.
@@ -344,8 +343,8 @@ async def create_pos_transaction(
         if pos_transaction.payment_status == "captured":
             try:
                 # Get organization from current user
-                from src.integrations.xero.pos_reconciliation import POSXeroReconciliation
                 from src.integrations.xero.auth import XeroAuth
+                from src.integrations.xero.pos_reconciliation import POSXeroReconciliation
 
                 xero_auth = XeroAuth()
                 xero_recon = POSXeroReconciliation(xero_auth)
@@ -457,15 +456,15 @@ async def get_pos_transaction(
 async def list_pos_transactions(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    location_code: Optional[str] = Query(None, description="Filter by location"),
-    sales_staff_id: Optional[UUID] = Query(None, description="Filter by sales staff"),
-    payment_status: Optional[str] = Query(None, description="Filter by payment status"),
-    reconciliation_status: Optional[str] = Query(
+    location_code: str | None = Query(None, description="Filter by location"),
+    sales_staff_id: UUID | None = Query(None, description="Filter by sales staff"),
+    payment_status: str | None = Query(None, description="Filter by payment status"),
+    reconciliation_status: str | None = Query(
         None, description="Filter by reconciliation status"
     ),
-    start_date: Optional[date] = Query(None, description="Filter by start date"),
-    end_date: Optional[date] = Query(None, description="Filter by end date"),
-    search: Optional[str] = Query(None, description="Search transaction number or reference"),
+    start_date: date | None = Query(None, description="Filter by start date"),
+    end_date: date | None = Query(None, description="Filter by end date"),
+    search: str | None = Query(None, description="Search transaction number or reference"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Page size"),
 ) -> PaginatedPOSTransactionsResponse:
@@ -584,7 +583,7 @@ async def list_sales_staff(
 async def list_terminals(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    location_code: Optional[str] = Query(None, description="Filter by location"),
+    location_code: str | None = Query(None, description="Filter by location"),
 ) -> list[dict]:
     """List POS terminals."""
     query = select(POSTerminal).where(POSTerminal.is_active == True)
@@ -613,16 +612,16 @@ class POSTerminalCreate(BaseModel):
     terminal_id: str = Field(..., description="Unique terminal code")
     location_code: str
     terminal_type: str = Field(default="physical", pattern="^(physical|virtual)$")
-    merchant_id: Optional[str] = None
+    merchant_id: str | None = None
 
 
 class POSTerminalUpdate(BaseModel):
     """Update a POS terminal."""
 
-    location_code: Optional[str] = None
-    terminal_type: Optional[str] = Field(None, pattern="^(physical|virtual)$")
-    merchant_id: Optional[str] = None
-    is_active: Optional[bool] = None
+    location_code: str | None = None
+    terminal_type: str | None = Field(None, pattern="^(physical|virtual)$")
+    merchant_id: str | None = None
+    is_active: bool | None = None
 
 
 @router.post("/terminals", response_model=dict, status_code=201)
@@ -711,7 +710,7 @@ async def update_terminal(
     }
 
 
-@router.delete("/terminals/{terminal_id}", status_code=204)
+@router.delete("/terminals/{terminal_id}", status_code=204, response_model=None)
 async def delete_terminal(
     terminal_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
@@ -738,15 +737,15 @@ class XeroInvoiceResponse(BaseModel):
     """Xero invoice creation response."""
 
     success: bool
-    pos_transaction_id: Optional[str] = None
-    transaction_number: Optional[str] = None
-    xero_invoice_id: Optional[str] = None
-    xero_invoice_number: Optional[str] = None
-    xero_payment_id: Optional[str] = None
-    amount: Optional[float] = None
-    status: Optional[str] = None
-    already_exists: Optional[bool] = None
-    error: Optional[str] = None
+    pos_transaction_id: str | None = None
+    transaction_number: str | None = None
+    xero_invoice_id: str | None = None
+    xero_invoice_number: str | None = None
+    xero_payment_id: str | None = None
+    amount: float | None = None
+    status: str | None = None
+    already_exists: bool | None = None
+    error: str | None = None
 
 
 class BulkXeroInvoiceResponse(BaseModel):
@@ -755,7 +754,7 @@ class BulkXeroInvoiceResponse(BaseModel):
     total: int
     created: int
     failed: int
-    errors: Optional[list[dict]] = None
+    errors: list[dict] | None = None
 
 
 @router.post(

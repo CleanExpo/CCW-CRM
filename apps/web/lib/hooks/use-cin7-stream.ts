@@ -5,17 +5,17 @@
  * Receives product, customer, sales, and inventory change notifications.
  */
 
-import { useSSE } from "./use-sse";
+import { useSSE } from './use-sse';
 
 /**
  * Cin7 sync event from SSE stream
  */
 export interface Cin7SyncEvent {
   event_type: string;
-  entity_type: "product" | "customer" | "sales" | "inventory";
+  entity_type: 'product' | 'customer' | 'sales' | 'inventory';
   entity_id?: string;
-  action: "created" | "updated" | "deleted" | "synced";
-  source: "core" | "omni";
+  action: 'created' | 'updated' | 'deleted' | 'synced';
+  source: 'core' | 'omni';
   records_affected?: number;
   timestamp: string;
 }
@@ -26,7 +26,7 @@ export interface Cin7SyncEvent {
  * @param enabled - Enable/disable connection (default: true)
  */
 export function useCin7Stream(enabled = true) {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
   return useSSE<Cin7SyncEvent>({
     url: `${backendUrl}/api/integrations/cin7/stream`,
     enabled,

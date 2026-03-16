@@ -1,21 +1,31 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, Package, Users, ShoppingCart, FileText, Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Menu,
+  X,
+  Home,
+  Package,
+  Users,
+  ShoppingCart,
+  FileText,
+  Settings,
+  LogOut,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/dashboard/products", icon: Package, label: "Products" },
-  { href: "/dashboard/customers", icon: Users, label: "Customers" },
-  { href: "/dashboard/orders", icon: ShoppingCart, label: "Orders" },
-  { href: "/dashboard/quotes", icon: FileText, label: "Quotes" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+  { href: '/dashboard', icon: Home, label: 'Dashboard' },
+  { href: '/dashboard/products', icon: Package, label: 'Products' },
+  { href: '/dashboard/customers', icon: Users, label: 'Customers' },
+  { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders' },
+  { href: '/dashboard/quotes', icon: FileText, label: 'Quotes' },
+  { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function MobileNav() {
@@ -28,16 +38,16 @@ export function MobileNav() {
         <motion.div
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          className="md:hidden fixed top-4 left-4 z-50"
+          className="fixed top-4 left-4 z-50 md:hidden"
         >
           <Button
             variant="ghost"
             size="icon"
-            className="bg-background/80 backdrop-blur-sm border shadow-md hover:shadow-lg transition-shadow"
+            className="bg-background/80 border shadow-md backdrop-blur-sm transition-shadow hover:shadow-lg"
           >
             <AnimatePresence mode="wait">
               <motion.div
-                key={open ? "close" : "menu"}
+                key={open ? 'close' : 'menu'}
                 initial={{ rotate: -90, opacity: 0 }}
                 animate={{ rotate: 0, opacity: 1 }}
                 exit={{ rotate: 90, opacity: 0 }}
@@ -51,8 +61,8 @@ export function MobileNav() {
         </motion.div>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 p-0">
-        <SheetHeader className="p-6 border-b">
-          <SheetTitle className="text-left text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <SheetHeader className="border-b p-6">
+          <SheetTitle className="from-primary to-primary/60 bg-gradient-to-r bg-clip-text text-left text-xl font-bold text-transparent">
             CCW ERP
           </SheetTitle>
         </SheetHeader>
@@ -66,40 +76,40 @@ export function MobileNav() {
                 key={item.href}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05, type: "spring", stiffness: 300 }}
+                transition={{ delay: index * 0.05, type: 'spring', stiffness: 300 }}
               >
                 <Link
-                  href={item.href as any}
+                  href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 relative overflow-hidden group",
-                    "hover:bg-accent hover:text-accent-foreground hover:scale-105",
-                    isActive && "bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
+                    'group relative flex items-center gap-3 overflow-hidden rounded-lg px-4 py-3 transition-all duration-200',
+                    'hover:bg-accent hover:text-accent-foreground hover:scale-105',
+                    isActive && 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md'
                   )}
                 >
                   {/* Active indicator */}
                   {isActive && (
                     <motion.div
                       layoutId="mobile-nav-indicator"
-                      className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full"
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      className="bg-primary-foreground absolute top-0 bottom-0 left-0 w-1 rounded-r-full"
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
                   )}
 
                   {/* Icon with animation */}
                   <motion.div
                     whileHover={{ scale: 1.2, rotate: 15 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 10 }}
                   >
                     <Icon className="h-5 w-5" />
                   </motion.div>
 
-                  <span className="font-medium relative z-10">{item.label}</span>
+                  <span className="relative z-10 font-medium">{item.label}</span>
 
                   {/* Hover effect */}
                   {!isActive && (
                     <motion.div
-                      className="absolute inset-0 bg-primary/5 rounded-lg"
+                      className="bg-primary/5 absolute inset-0 rounded-lg"
                       initial={{ scale: 0, opacity: 0 }}
                       whileHover={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 0.2 }}
@@ -111,13 +121,13 @@ export function MobileNav() {
           })}
 
           <motion.div
-            className="mt-6 pt-6 border-t"
+            className="mt-6 border-t pt-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: navItems.length * 0.05 + 0.1 }}
           >
             <motion.button
-              className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-200 hover:bg-destructive/10 text-destructive relative overflow-hidden group"
+              className="hover:bg-destructive/10 text-destructive group relative flex w-full items-center gap-3 overflow-hidden rounded-lg px-4 py-3 text-left transition-all duration-200"
               onClick={() => {
                 setOpen(false);
                 // Handle logout
@@ -127,7 +137,7 @@ export function MobileNav() {
             >
               <motion.div
                 whileHover={{ scale: 1.2, rotate: -15 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 10 }}
               >
                 <LogOut className="h-5 w-5" />
               </motion.div>
@@ -135,7 +145,7 @@ export function MobileNav() {
 
               {/* Hover background */}
               <motion.div
-                className="absolute inset-0 bg-destructive/5 rounded-lg"
+                className="bg-destructive/5 absolute inset-0 rounded-lg"
                 initial={{ scale: 0, opacity: 0 }}
                 whileHover={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.2 }}

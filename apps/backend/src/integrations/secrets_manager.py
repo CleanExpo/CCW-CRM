@@ -10,7 +10,6 @@ For local development, secrets are loaded from environment variables.
 import json
 import os
 from functools import lru_cache
-from typing import Any
 
 import structlog
 
