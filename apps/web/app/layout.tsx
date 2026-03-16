@@ -5,6 +5,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toast";
 import { RouteProgressBar } from "@/components/transitions/RouteProgressBar";
 import { I18nProvider } from "@/components/providers/i18n-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { CommandPalette } from "@/components/ui/command-palette";
 import { defaultLocale, type Locale, isValidLocale } from "@/i18n/config";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -60,11 +62,14 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <I18nProvider locale={locale} messages={messages}>
-          <RouteProgressBar />
-          {children}
-          <Toaster />
-        </I18nProvider>
+        <QueryProvider>
+          <I18nProvider locale={locale} messages={messages}>
+            <RouteProgressBar />
+            {children}
+            <Toaster />
+            <CommandPalette />
+          </I18nProvider>
+        </QueryProvider>
       </body>
     </html>
   );

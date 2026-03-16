@@ -287,6 +287,102 @@ class StripeClient:
         except Exception as e:
             raise Exception(f"Webhook verification failed: {str(e)}")
 
+    # Customer Portal
+
+    async def create_customer_portal_session(
+        self,
+        customer_id: str,
+        return_url: str,
+    ) -> dict:
+        """Create a customer portal session for self-service billing management.
+
+        Args:
+            customer_id: Stripe customer ID
+            return_url: URL to redirect after portal session
+
+        Returns:
+            Dictionary with portal session URL
+        """
+        try:
+            session = stripe.billing_portal.Session.create(
+                customer=customer_id,
+                return_url=return_url,
+            )
+            return {"url": session.url}
+        except StripeError as e:
+            raise Exception(f"Failed to create portal session: {str(e)}")
+
+    # Usage Reporting (for metered billing)
+
+    async def report_usage(
+        self,
+        subscription_item_id: str,
+        quantity: int,
+        timestamp: int | None = None,
+        action: str = "increment",
+    ) -> dict:
+        """Report usage for a metered subscription item.
+
+        Args:
+            subscription_item_id: Stripe subscription item ID
+            quantity: Quantity to report
+            timestamp: Unix timestamp (default: now)
+            action: "increment" or "set" (default: increment)
+
+        Returns:
+            Usage record object
+        """
+        try:
+            import time
+
+            usage_record = stripe.SubscriptionItem.create_usage_record(
+                subscription_item_id,
+                quantity=quantity,
+                timestamp=timestamp or int(time.time()),
+                action=action,
+            )
+            return usage_record
+        except StripeError as e:
+            raise Exception(f"Failed to report usage: {str(e)}")
+
+    async def list_usage_records(
+        self,
+        subscription_item_id: str,
+        limit: int = 10,
+    ) -> list[dict]:
+        """List usage records for a subscription item."""
+        try:
+            response = stripe.SubscriptionItem.list_usage_record_summaries(
+                subscription_item_id,
+                limit=limit,
+            )
+            return response.data
+        except StripeError as e:
+            raise Exception(f"Failed to list usage records: {str(e)}")
+
+    # Tax Configuration
+
+    async def enable_automatic_tax(
+        self,
+        customer_id: str,
+    ) -> dict:
+        """Enable Stripe Tax automatic calculation for customer.
+
+        Args:
+            customer_id: Stripe customer ID
+
+        Returns:
+            Updated customer object
+        """
+        try:
+            customer = stripe.Customer.modify(
+                customer_id,
+                tax={"automatic_tax": "supported"},
+            )
+            return customer
+        except StripeError as e:
+            raise Exception(f"Failed to enable automatic tax: {str(e)}")
+
     # Helper Methods
 
     @staticmethod

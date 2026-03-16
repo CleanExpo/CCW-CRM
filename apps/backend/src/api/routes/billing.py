@@ -389,6 +389,37 @@ async def list_invoices(
         raise HTTPException(status_code=400, detail=f"Failed to retrieve invoices: {str(e)}")
 
 
+@router.post("/portal")
+@require_permission("billing:read")
+async def create_portal_session(
+    org_id: CurrentOrganization,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Create a Stripe Customer Portal session for self-service billing management.
+
+    Returns:
+        Dictionary with portal URL to redirect user to
+    """
+    result = await db.execute(
+        select(Subscription).where(Subscription.organization_id == org_id)
+    )
+    subscription = result.scalar_one_or_none()
+
+    if not subscription or not subscription.stripe_customer_id:
+        raise HTTPException(status_code=404, detail="No Stripe customer found")
+
+    try:
+        # TODO: Get actual frontend URL from settings
+        return_url = "http://localhost:3000/settings/billing"
+        portal_session = await stripe_client.create_customer_portal_session(
+            subscription.stripe_customer_id,
+            return_url,
+        )
+        return portal_session
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to create portal session: {str(e)}")
+
+
 @router.post("/webhooks")
 async def handle_stripe_webhook(
     request: Request,

@@ -103,6 +103,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(default="", description="Anthropic API key (optional)")
     google_ai_api_key: str = Field(default="", description="Google AI API key (optional)")
     openrouter_api_key: str = Field(default="", description="OpenRouter API key (optional)")
+    openai_api_key: str = Field(default="", description="OpenAI API key for embeddings (optional)")
 
     # Email (SendGrid for password reset, etc.)
     sendgrid_api_key: str = Field(default="", description="SendGrid API key for transactional emails")  # noqa: E501

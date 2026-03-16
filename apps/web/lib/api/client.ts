@@ -3,7 +3,11 @@
  *
  * Replaces Supabase client with direct fetch calls to FastAPI.
  * Handles JWT authentication via cookies.
+ * Enhanced with retry logic, interceptors, and token refresh.
  */
+
+import { withRetry, type RetryConfig } from "./retry";
+import { interceptorManager } from "./interceptors";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -62,57 +66,126 @@ function decodeJWT(token: string): JWTPayload | null {
 }
 
 /**
- * Make an authenticated API request
+ * Check if token is expired
+ */
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = decodeJWT(token);
+    if (!payload || !payload.exp) return true;
+
+    const exp = payload.exp as number;
+    const now = Math.floor(Date.now() / 1000);
+
+    // Consider token expired if less than 5 minutes remaining
+    return exp - now < 300;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Refresh token if needed
+ */
+async function refreshTokenIfNeeded(): Promise<void> {
+  const token = getAuthToken();
+
+  if (!token || !isTokenExpired(token)) {
+    return; // Token is valid or doesn't exist
+  }
+
+  try {
+    // Call refresh endpoint
+    const response = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      // Refresh failed, redirect to login
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+  }
+}
+
+/**
+ * Make an authenticated API request with retry logic and interceptors
  */
 async function fetchApi<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retryConfig?: Partial<RetryConfig>
 ): Promise<T> {
-  const token = getAuthToken();
-
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...options.headers,
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-
-    // Extract user_id from JWT and add to X-User-Id header (for auth middleware)
-    const payload = decodeJWT(token);
-    if (payload && payload.user_id) {
-      headers["X-User-Id"] = payload.user_id;
-    }
-  }
-
   const url = endpoint.startsWith("http")
     ? endpoint
     : `${BACKEND_URL}${endpoint}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    credentials: "include", // Include cookies
-  });
+  // Execute request interceptors
+  await interceptorManager.executeRequest(url, options);
 
-  if (!response.ok) {
-    const error: ApiError = await response.json().catch(() => ({
-      detail: `HTTP ${response.status}: ${response.statusText}`,
-    }));
+  try {
+    // Refresh token if needed (before making request)
+    await refreshTokenIfNeeded();
 
-    throw new ApiClientError(
-      error.detail,
-      response.status,
-      error.error_code
-    );
+    // Make request with retry logic
+    const response = await withRetry(async () => {
+      const token = getAuthToken();
+
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        ...options.headers,
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+
+        // Extract user_id from JWT and add to X-User-Id header (for auth middleware)
+        const payload = decodeJWT(token);
+        if (payload && payload.user_id) {
+          headers["X-User-Id"] = payload.user_id;
+        }
+      }
+
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        credentials: "include", // Include cookies
+      });
+
+      if (!response.ok) {
+        const error: ApiError = await response.json().catch(() => ({
+          detail: `HTTP ${response.status}: ${response.statusText}`,
+        }));
+
+        const apiError = new ApiClientError(
+          error.detail,
+          response.status,
+          error.error_code
+        );
+
+        throw apiError;
+      }
+
+      return response;
+    }, retryConfig);
+
+    // Execute response interceptors
+    await interceptorManager.executeResponse(url, response);
+
+    // Handle 204 No Content
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return response.json();
+  } catch (error: any) {
+    // Execute error interceptors
+    await interceptorManager.executeError(url, error);
+    throw error;
   }
-
-  // Handle 204 No Content
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json();
 }
 
 /**

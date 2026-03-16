@@ -20,11 +20,13 @@ import { StockTransferDialog } from "@/app/(dashboard)/inventory/components/Stoc
 import { Pencil, Trash2, Plus, ArrowLeftRight, Download } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
-import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { exportProductsToCSV } from "@/lib/utils/csv-export";
 // PHASE 4: Last updated timestamps
 import { formatDistanceToNow } from "date-fns";
+import { ColumnDef } from "@tanstack/react-table";
 
 interface StockByLocation {
   location: string;
@@ -231,6 +233,161 @@ export default function ProductsPage() {
     setSelectedProductIds([]);
   };
 
+  const formatCategoryLabel = (category: ProductCategory) => {
+    return category ? category.replace(/_/g, " ") : "N/A";
+  };
+
+  // Define columns for TanStack Table
+  const columns: ColumnDef<Product>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            products.length > 0 &&
+            selectedProductIds.length === products.length
+          }
+          onCheckedChange={handleToggleSelectAll}
+          aria-label="Select all products"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedProductIds.includes(row.original.id)}
+          onCheckedChange={() => handleToggleSelectProduct(row.original.id)}
+          aria-label={`Select ${row.original.name}`}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "sku",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="SKU" />
+      ),
+      cell: ({ row }) => (
+        <span className="font-mono text-sm">{row.getValue("sku")}</span>
+      ),
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Name" />
+      ),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.getValue("name")}</span>
+      ),
+    },
+    {
+      accessorKey: "category",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Category" />
+      ),
+      cell: ({ row }) => (
+        <Badge variant="outline" className="capitalize">
+          {formatCategoryLabel(row.getValue("category"))}
+        </Badge>
+      ),
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id));
+      },
+    },
+    {
+      accessorKey: "price",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Price" />
+      ),
+      cell: ({ row }) => formatCurrency(row.getValue("price")),
+    },
+    {
+      id: "stock",
+      header: "Stock by Location",
+      cell: ({ row }) => {
+        const product = row.original;
+        return product.stock_by_location && product.stock_by_location.length > 0 ? (
+          <MultiLocationStockCell
+            productId={product.id}
+            locations={product.stock_by_location}
+          />
+        ) : (
+          <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
+            {product.stock}
+          </span>
+        );
+      },
+      enableSorting: false,
+    },
+    {
+      accessorKey: "warehouse_location",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Warehouse" />
+      ),
+      cell: ({ row }) => row.getValue("warehouse_location") || "N/A",
+    },
+    {
+      accessorKey: "is_active",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => (
+        <Badge variant={row.getValue("is_active") ? "default" : "secondary"}>
+          {row.getValue("is_active") ? "Active" : "Inactive"}
+        </Badge>
+      ),
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id));
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTransferStock(product);
+              }}
+              title="Transfer Stock"
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditProduct(product);
+              }}
+              title="Edit Product"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteProduct(product);
+              }}
+              title="Delete Product"
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -292,159 +449,25 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : products.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-lg font-medium text-muted-foreground">
-                No products found
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {search
-                  ? "Try adjusting your search criteria."
-                  : "Add your first product to get started."}
-              </p>
-              {!search && (
-                <Button onClick={handleAddProduct} className="mt-4">
+          <DataTable
+            columns={columns}
+            data={products}
+            loading={loading}
+            emptyMessage="No products found"
+            emptyDescription={
+              search
+                ? "Try adjusting your search criteria."
+                : "Add your first product to get started."
+            }
+            emptyAction={
+              !search && (
+                <Button onClick={handleAddProduct}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Product
                 </Button>
-              )}
-            </div>
-          ) : (
-            <ResponsiveTable
-              data={products}
-              keyExtractor={(product) => product.id}
-              columns={[
-                {
-                  key: "select",
-                  label: (
-                    <Checkbox
-                      checked={
-                        products.length > 0 &&
-                        selectedProductIds.length === products.length
-                      }
-                      onCheckedChange={handleToggleSelectAll}
-                      aria-label="Select all products"
-                    />
-                  ),
-                  className: "w-12",
-                  render: (product) => (
-                    <Checkbox
-                      checked={selectedProductIds.includes(product.id)}
-                      onCheckedChange={() => handleToggleSelectProduct(product.id)}
-                      aria-label={`Select ${product.name}`}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ),
-                },
-                {
-                  key: "sku",
-                  label: "SKU",
-                  className: "font-mono text-sm",
-                  render: (product) => product.sku,
-                },
-                {
-                  key: "name",
-                  label: "Name",
-                  className: "font-medium",
-                  render: (product) => product.name,
-                },
-                {
-                  key: "category",
-                  label: "Category",
-                  render: (product) => (
-                    <Badge variant="outline" className="capitalize">
-                      {product.category ? product.category.replace(/_/g, " ") : "N/A"}
-                    </Badge>
-                  ),
-                },
-                {
-                  key: "price",
-                  label: "Price",
-                  render: (product) => formatCurrency(product.price),
-                },
-                {
-                  key: "stock",
-                  label: "Stock by Location",
-                  render: (product) => (
-                    product.stock_by_location && product.stock_by_location.length > 0 ? (
-                      <MultiLocationStockCell
-                        productId={product.id}
-                        locations={product.stock_by_location}
-                      />
-                    ) : (
-                      <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
-                        {product.stock}
-                      </span>
-                    )
-                  ),
-                },
-                {
-                  key: "warehouse",
-                  label: "Warehouse",
-                  hideOnMobile: true,
-                  render: (product) => product.warehouse_location || "N/A",
-                },
-                {
-                  key: "status",
-                  label: "Status",
-                  render: (product) => (
-                    <Badge variant={product.is_active ? "default" : "secondary"}>
-                      {product.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  ),
-                },
-                {
-                  key: "actions",
-                  label: "Actions",
-                  className: "text-right",
-                  mobileLabel: "",
-                  render: (product) => (
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTransferStock(product);
-                        }}
-                        title="Transfer Stock"
-                      >
-                        <ArrowLeftRight className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditProduct(product);
-                        }}
-                        title="Edit Product"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteProduct(product);
-                        }}
-                        title="Delete Product"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          )}
+              )
+            }
+          />
 
           {!loading && products.length > 0 && (
             <PaginationControls

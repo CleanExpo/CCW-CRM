@@ -1,256 +1,240 @@
+/**
+ * Global Command Palette Component
+ * Cmd+K / Ctrl+K powered command palette for navigation and actions
+ */
+
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { Command } from "cmdk";
 import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
+  createNavigationCommands,
+  createActionCommands,
+  createSearchCommands,
+  createSettingsCommands,
+  COMMAND_GROUPS,
+} from "@/lib/command-palette/commands";
 import {
-  LayoutDashboard,
-  Package,
-  Users,
-  FileText,
-  ShoppingCart,
-  Truck,
-  Settings,
-  CreditCard,
-  UserPlus,
-  Building2,
-  Search,
-} from "lucide-react";
-
-interface Command {
-  id: string;
-  label: string;
-  description?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  action: () => void;
-  keywords?: string[];
-}
+  getRecentPages,
+  addRecentPage,
+  getPageTitleFromPath,
+  clearRecentPages,
+} from "@/lib/command-palette/recent-pages";
+import type { Command as CommandType, RecentPage } from "@/lib/command-palette/types";
+import { useCommandPalette } from "@/hooks/use-command-palette";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Clock, X } from "lucide-react";
 
 export function CommandPalette() {
   const router = useRouter();
-  const [open, setOpen] = React.useState(false);
+  const pathname = usePathname();
+  const { open, setOpen } = useCommandPalette();
+  const [search, setSearch] = useState("");
+  const [recentPages, setRecentPages] = useState<RecentPage[]>([]);
 
-  React.useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    };
+  // Load recent pages on mount and when palette opens
+  useEffect(() => {
+    if (open) {
+      setRecentPages(getRecentPages());
+    }
+  }, [open]);
 
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
+  // Track page visits
+  useEffect(() => {
+    if (pathname) {
+      const title = getPageTitleFromPath(pathname);
+      addRecentPage(pathname, title);
+    }
+  }, [pathname]);
 
-  const navigate = (path: string) => {
+  // Navigation handler
+  const navigate = useCallback(
+    (path: string) => {
+      setOpen(false);
+      router.push(path as any);
+      // Reset search after navigation
+      setTimeout(() => setSearch(""), 300);
+    },
+    [router, setOpen]
+  );
+
+  // Theme toggle (placeholder - integrate with your theme system)
+  const toggleTheme = useCallback(() => {
     setOpen(false);
-    router.push(path as any);
-  };
+    // TODO: Integrate with your theme toggle logic
+    console.log("Toggle theme");
+  }, [setOpen]);
 
-  const commands: Command[] = [
-    // Navigation
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      description: "View overview and metrics",
-      icon: LayoutDashboard,
-      action: () => navigate("/dashboard"),
-      keywords: ["home", "overview"],
-    },
-    {
-      id: "products",
-      label: "Products",
-      description: "Manage product catalog",
-      icon: Package,
-      action: () => navigate("/products"),
-      keywords: ["catalog", "items", "inventory"],
-    },
-    {
-      id: "customers",
-      label: "Customers",
-      description: "Manage customer accounts",
-      icon: Users,
-      action: () => navigate("/customers"),
-      keywords: ["clients", "accounts"],
-    },
-    {
-      id: "orders",
-      label: "Orders",
-      description: "View and manage orders",
-      icon: ShoppingCart,
-      action: () => navigate("/orders"),
-      keywords: ["sales", "purchases"],
-    },
-    {
-      id: "quotes",
-      label: "Quotes",
-      description: "Create and manage quotes",
-      icon: FileText,
-      action: () => navigate("/quotes"),
-      keywords: ["proposals", "estimates"],
-    },
-    {
-      id: "suppliers",
-      label: "Suppliers",
-      description: "Manage supplier relationships",
-      icon: Truck,
-      action: () => navigate("/suppliers"),
-      keywords: ["vendors"],
-    },
+  // Logout handler (placeholder - integrate with your auth system)
+  const logout = useCallback(() => {
+    setOpen(false);
+    // TODO: Integrate with your logout logic
+    router.push("/login");
+  }, [router, setOpen]);
 
-    // Quick Actions
-    {
-      id: "new-product",
-      label: "New Product",
-      description: "Create a new product",
-      icon: Package,
-      action: () => navigate("/products?action=new"),
-      keywords: ["create", "add"],
-    },
-    {
-      id: "new-customer",
-      label: "New Customer",
-      description: "Add a new customer",
-      icon: UserPlus,
-      action: () => navigate("/customers?action=new"),
-      keywords: ["create", "add"],
-    },
-    {
-      id: "new-quote",
-      label: "New Quote",
-      description: "Create a new quote",
-      icon: FileText,
-      action: () => navigate("/quotes?action=new"),
-      keywords: ["create", "add", "proposal"],
-    },
+  // Create all commands
+  const navigationCommands = createNavigationCommands(navigate);
+  const actionCommands = createActionCommands(navigate);
+  const searchCommands = createSearchCommands(navigate);
+  const settingsCommands = createSettingsCommands(navigate, toggleTheme, logout);
 
-    // Settings
-    {
-      id: "settings-account",
-      label: "Account Settings",
-      description: "Manage your account",
-      icon: Settings,
-      action: () => navigate("/settings/account"),
-      keywords: ["profile", "preferences"],
-    },
-    {
-      id: "settings-team",
-      label: "Team Management",
-      description: "Manage team members and roles",
-      icon: Users,
-      action: () => navigate("/settings/team"),
-      keywords: ["users", "permissions"],
-    },
-    {
-      id: "settings-company",
-      label: "Company Settings",
-      description: "Update company information",
-      icon: Building2,
-      action: () => navigate("/settings/company"),
-      keywords: ["organization", "business"],
-    },
-    {
-      id: "settings-billing",
-      label: "Billing & Subscription",
-      description: "Manage billing and plans",
-      icon: CreditCard,
-      action: () => navigate("/settings/billing"),
-      keywords: ["payment", "subscription", "plan"],
-    },
+  // Create recent commands from recent pages
+  const recentCommands: CommandType[] = recentPages.map((page) => ({
+    id: `recent-${page.path}`,
+    label: page.title,
+    description: page.path,
+    keywords: [page.title, page.path, "recent", "history"],
+    icon: Clock,
+    group: "recent",
+    action: () => navigate(page.path),
+  }));
+
+  // Combine all commands
+  const allCommands = [
+    ...recentCommands,
+    ...navigationCommands,
+    ...actionCommands,
+    ...searchCommands,
+    ...settingsCommands,
   ];
 
-  const navigationCommands = commands.filter(
-    (cmd) =>
-      ["dashboard", "products", "customers", "orders", "quotes", "suppliers"].includes(cmd.id)
-  );
+  // Group commands by category
+  const groupedCommands = COMMAND_GROUPS.map((groupConfig) => ({
+    ...groupConfig,
+    commands: allCommands.filter((cmd) => cmd.group === groupConfig.id),
+  })).filter((group) => group.commands.length > 0);
 
-  const actionCommands = commands.filter((cmd) =>
-    ["new-product", "new-customer", "new-quote"].includes(cmd.id)
-  );
-
-  const settingsCommands = commands.filter((cmd) => cmd.id.startsWith("settings-"));
+  // Clear recent pages handler
+  const handleClearRecent = useCallback(() => {
+    clearRecentPages();
+    setRecentPages([]);
+  }, []);
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="overflow-hidden p-0 shadow-2xl max-w-2xl">
+        <Command
+          className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+          shouldFilter={true}
+          filter={(value, search, keywords) => {
+            const normalizedSearch = search.toLowerCase().trim();
+            if (!normalizedSearch) return 1;
 
-        <CommandGroup heading="Navigation">
-          {navigationCommands.map((command) => {
-            const Icon = command.icon;
-            return (
-              <CommandItem
-                key={command.id}
-                onSelect={() => command.action()}
-                className="cursor-pointer"
+            // Search in label, description, and keywords
+            const label = value.toLowerCase();
+            const keywordString = keywords?.join(" ").toLowerCase() || "";
+
+            if (label.includes(normalizedSearch)) return 1;
+            if (keywordString.includes(normalizedSearch)) return 0.8;
+
+            // Fuzzy matching: check if all characters appear in order
+            let searchIndex = 0;
+            for (let i = 0; i < label.length && searchIndex < normalizedSearch.length; i++) {
+              if (label[i] === normalizedSearch[searchIndex]) {
+                searchIndex++;
+              }
+            }
+            if (searchIndex === normalizedSearch.length) return 0.6;
+
+            return 0;
+          }}
+        >
+          <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
+            <Command.Input
+              placeholder="Type a command or search..."
+              value={search}
+              onValueChange={setSearch}
+              className="flex h-12 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+              <span className="text-xs">ESC</span>
+            </kbd>
+          </div>
+
+          <Command.List className="max-h-[400px] overflow-y-auto overflow-x-hidden p-2">
+            <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
+              No results found.
+            </Command.Empty>
+
+            {groupedCommands.map((group) => (
+              <Command.Group
+                key={group.id}
+                heading={
+                  <div className="flex items-center justify-between">
+                    <span>{group.label}</span>
+                    {group.id === "recent" && recentPages.length > 0 && (
+                      <button
+                        onClick={handleClearRecent}
+                        className="text-xs hover:text-foreground transition-colors flex items-center gap-1"
+                        type="button"
+                      >
+                        <X className="h-3 w-3" />
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                }
+                className="[&_[cmdk-group-heading]]:flex [&_[cmdk-group-heading]]:items-center [&_[cmdk-group-heading]]:justify-between"
               >
-                <Icon className="mr-2 h-4 w-4" />
-                <div className="flex flex-col">
-                  <span>{command.label}</span>
-                  {command.description && (
-                    <span className="text-xs text-muted-foreground">{command.description}</span>
-                  )}
-                </div>
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
+                {group.commands.map((command) => {
+                  const Icon = command.icon;
+                  return (
+                    <Command.Item
+                      key={command.id}
+                      value={command.label}
+                      keywords={command.keywords}
+                      onSelect={() => command.action()}
+                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 gap-2"
+                    >
+                      {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                      <div className="flex-1 flex flex-col">
+                        <span className="font-medium">{command.label}</span>
+                        {command.description && (
+                          <span className="text-xs text-muted-foreground">
+                            {command.description}
+                          </span>
+                        )}
+                      </div>
+                      {command.shortcut && (
+                        <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                          {command.shortcut}
+                        </kbd>
+                      )}
+                    </Command.Item>
+                  );
+                })}
+              </Command.Group>
+            ))}
+          </Command.List>
 
-        <CommandSeparator />
-
-        <CommandGroup heading="Quick Actions">
-          {actionCommands.map((command) => {
-            const Icon = command.icon;
-            return (
-              <CommandItem
-                key={command.id}
-                onSelect={() => command.action()}
-                className="cursor-pointer"
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                <div className="flex flex-col">
-                  <span>{command.label}</span>
-                  {command.description && (
-                    <span className="text-xs text-muted-foreground">{command.description}</span>
-                  )}
-                </div>
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        <CommandGroup heading="Settings">
-          {settingsCommands.map((command) => {
-            const Icon = command.icon;
-            return (
-              <CommandItem
-                key={command.id}
-                onSelect={() => command.action()}
-                className="cursor-pointer"
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                <div className="flex flex-col">
-                  <span>{command.label}</span>
-                  {command.description && (
-                    <span className="text-xs text-muted-foreground">{command.description}</span>
-                  )}
-                </div>
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
-      </CommandList>
-    </CommandDialog>
+          <div className="border-t p-2 text-xs text-muted-foreground flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium">
+                  ↑↓
+                </kbd>
+                Navigate
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium">
+                  ↵
+                </kbd>
+                Select
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium">
+                  ESC
+                </kbd>
+                Close
+              </span>
+            </div>
+            <span className="text-[10px]">
+              {allCommands.length} commands available
+            </span>
+          </div>
+        </Command>
+      </DialogContent>
+    </Dialog>
   );
 }

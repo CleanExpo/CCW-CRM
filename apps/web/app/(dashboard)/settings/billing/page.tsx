@@ -34,11 +34,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { CreditCard, Download, Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CreditCard, Download, Calendar, CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
 import { billingApi, type Subscription, type SubscriptionTier, type BillingInterval } from "@/lib/api/billing";
+import { billingUsageApi, type UsageMetrics as UsageMetricsType } from "@/lib/api/billing-usage";
 import { PlanSelector } from "./components/PlanSelector";
 import { UsageMetrics } from "./components/UsageMetrics";
 import { PaymentMethodForm } from "./components/PaymentMethodForm";
+import { UsageAlerts } from "./components/UsageAlerts";
 
 export default function BillingPage() {
   const router = useRouter();
@@ -46,6 +48,7 @@ export default function BillingPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [currentUsage, setCurrentUsage] = useState<UsageMetricsType | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<{
     tier: SubscriptionTier;
     interval: BillingInterval;
@@ -55,6 +58,7 @@ export default function BillingPage() {
   useEffect(() => {
     fetchSubscription();
     fetchInvoices();
+    fetchUsage();
   }, []);
 
   async function fetchSubscription() {
@@ -79,6 +83,29 @@ export default function BillingPage() {
       setInvoices(data);
     } catch (error: any) {
       // Ignore errors for invoices (might not exist yet)
+    }
+  }
+
+  async function fetchUsage() {
+    try {
+      const data = await billingUsageApi.getCurrentUsage();
+      setCurrentUsage(data);
+    } catch (error: any) {
+      // Ignore errors for usage (might fail if not yet implemented)
+      console.error("Failed to fetch usage:", error);
+    }
+  }
+
+  async function openCustomerPortal() {
+    try {
+      const { url } = await billingApi.createPortalSession();
+      window.open(url, "_blank");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to open customer portal",
+        variant: "destructive",
+      });
     }
   }
 
@@ -192,6 +219,9 @@ export default function BillingPage() {
         </p>
       </div>
 
+      {/* Usage Alerts */}
+      <UsageAlerts />
+
       {/* Current Subscription Status */}
       <Card>
         <CardHeader>
@@ -251,6 +281,10 @@ export default function BillingPage() {
 
           {subscription.status === "active" && !subscription.canceled_at && (
             <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={openCustomerPortal}>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Manage Billing
+              </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -283,12 +317,16 @@ export default function BillingPage() {
         <h2 className="text-xl font-semibold mb-4">Usage & Limits</h2>
         <UsageMetrics
           subscription={subscription}
-          currentUsage={{
-            locations: 1, // TODO: Get actual usage from API
-            users: 2,
-            products: 150,
-            aiQuotes: 25,
-          }}
+          currentUsage={
+            currentUsage
+              ? {
+                  locations: currentUsage.locations,
+                  users: currentUsage.users,
+                  products: currentUsage.products,
+                  aiQuotes: currentUsage.ai_quotes,
+                }
+              : undefined
+          }
         />
       </div>
 

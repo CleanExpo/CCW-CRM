@@ -166,6 +166,11 @@ class Customer(Base):
     state: str | None = Column(String(50), nullable=True)
     postcode: str | None = Column(String(10), nullable=True)
 
+    # Vector embedding for semantic search (1536 dimensions for OpenAI text-embedding-3-small)
+    embedding: list[float] | None = Column(
+        Vector(1536), nullable=True, comment="Vector embedding for semantic search"
+    )
+
     # Xero integration fields
     xero_contact_id: str | None = Column(String(255), nullable=True)
     xero_synced_at: datetime | None = Column(DateTime(timezone=True), nullable=True)

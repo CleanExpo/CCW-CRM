@@ -29,6 +29,7 @@ import {
   BarChart3,
   FileBarChart,
   Shield,
+  Search,
 } from "lucide-react";
 
 const navigation = [
@@ -62,7 +63,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r bg-muted/40">
+    <aside className="w-64 border-r bg-muted/40 flex flex-col">
       <div className="flex h-14 items-center border-b px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold group">
           <motion.span
@@ -78,7 +79,7 @@ export function Sidebar() {
           </span>
         </Link>
       </div>
-      <nav className="flex flex-col gap-1 p-4">
+      <nav className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
         {navigation.map((item, index) => {
           const isActive = pathname === item.href;
           return (
@@ -131,6 +132,22 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Command Palette Hint */}
+      <div className="border-t p-4 mt-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-2 rounded-lg hover:bg-muted group"
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span className="flex-1">Quick search</span>
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 group-hover:bg-muted-foreground/10">
+            <span className="text-xs">⌘K</span>
+          </kbd>
+        </motion.div>
+      </div>
     </aside>
   );
 }

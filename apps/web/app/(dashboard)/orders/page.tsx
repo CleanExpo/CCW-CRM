@@ -16,7 +16,8 @@ import { OrderDetailDialog } from "./components/OrderDetailDialog";
 import { Pencil, Trash2, Plus, Eye, Download, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "./types";
-import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { DataTable } from "@/components/ui/data-table";
+import { createOrderColumns } from "./columns";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { format, formatDistanceToNow } from "date-fns"; // PHASE 4: Add timestamp display
 import { exportOrdersToCSV } from "@/lib/utils/csv-export";
@@ -197,6 +198,15 @@ export default function OrdersPage() {
     setSelectedOrderIds([]);
   };
 
+  const columns = createOrderColumns({
+    selectedOrderIds,
+    onToggleSelectAll: handleToggleSelectAll,
+    onToggleSelectOrder: handleToggleSelectOrder,
+    onEdit: handleEditOrder,
+    onDelete: handleDeleteOrder,
+    onDuplicate: handleDuplicateOrder,
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -246,144 +256,19 @@ export default function OrdersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : orders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-lg font-medium text-muted-foreground">
-                No orders found
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Create your first order to get started.
-              </p>
-              <Button onClick={handleAddOrder} className="mt-4">
+          <DataTable
+            columns={columns}
+            data={orders}
+            loading={loading}
+            emptyMessage="No orders found"
+            emptyDescription="Create your first order to get started."
+            emptyAction={
+              <Button onClick={handleAddOrder}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Order
               </Button>
-            </div>
-          ) : (
-            <ResponsiveTable
-              data={orders}
-              keyExtractor={(order) => order.id}
-              columns={[
-                {
-                  key: "select",
-                  label: (
-                    <Checkbox
-                      checked={
-                        orders.length > 0 &&
-                        selectedOrderIds.length === orders.length
-                      }
-                      onCheckedChange={handleToggleSelectAll}
-                      aria-label="Select all orders"
-                    />
-                  ),
-                  className: "w-12",
-                  render: (order) => (
-                    <Checkbox
-                      checked={selectedOrderIds.includes(order.id)}
-                      onCheckedChange={() => handleToggleSelectOrder(order.id)}
-                      aria-label={`Select order ${order.order_number}`}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ),
-                },
-                {
-                  key: "order_number",
-                  label: "Order #",
-                  className: "font-mono text-sm font-medium",
-                  render: (order) => order.order_number,
-                },
-                {
-                  key: "customer",
-                  label: "Customer",
-                  render: (order) => order.customer_name,
-                },
-                {
-                  key: "status",
-                  label: "Status",
-                  render: (order) => <OrderStatusBadge status={order.status} />,
-                },
-                {
-                  key: "items",
-                  label: "Items",
-                  hideOnMobile: true,
-                  render: (order) => order.item_count,
-                },
-                {
-                  key: "total",
-                  label: "Total",
-                  className: "font-semibold",
-                  render: (order) => `$${order.total}`,
-                },
-                {
-                  key: "order_date",
-                  label: "Order Date",
-                  className: "text-sm text-muted-foreground",
-                  hideOnMobile: true,
-                  render: (order) => format(new Date(order.order_date), "MMM dd, yyyy"),
-                },
-                {
-                  key: "actions",
-                  label: "Actions",
-                  className: "text-right",
-                  mobileLabel: "",
-                  render: (order) => (
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewDetails(order);
-                        }}
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditOrder(order);
-                        }}
-                        title="Edit Order"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicateOrder(order);
-                        }}
-                        title="Duplicate Order"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteOrder(order);
-                        }}
-                        title="Delete Order"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          )}
+            }
+          />
 
           {!loading && orders.length > 0 && (
             <PaginationControls

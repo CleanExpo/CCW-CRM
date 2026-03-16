@@ -99,4 +99,11 @@ export const billingApi = {
   async listInvoices(limit: number = 10): Promise<Invoice[]> {
     return apiClient.get<Invoice[]>(`/api/billing/invoices?limit=${limit}`);
   },
+
+  /**
+   * Create a Customer Portal session for self-service billing management.
+   */
+  async createPortalSession(): Promise<{ url: string }> {
+    return apiClient.post<{ url: string }>("/api/billing/portal", {});
+  },
 };

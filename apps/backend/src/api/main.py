@@ -26,11 +26,12 @@ from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import limiter
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
+    ai_quotes,  # AI-powered quote generation
     approvals,
     autonomous_dev,
     backorders,
     bank_feeds,
-    # billing,  # Disabled temporarily - requires stripe package
+    billing,  # ✅ Re-enabled with Stripe integration
     config,
     containers,
     customer_orders,
@@ -39,6 +40,7 @@ from .routes import (
     demo_dashboard,
     reconciliation_dashboard,
     demo_lists,
+    embeddings,  # Embedding generation and management
     health,
     inventory,
     jobs,
@@ -295,6 +297,10 @@ All errors return JSON with this format:
             "description": "Quote generation and management",
         },
         {
+            "name": "AI Quotes",
+            "description": "AI-powered quote generation from natural language",
+        },
+        {
             "name": "Purchase Orders",
             "description": "Supplier purchase order management",
         },
@@ -375,6 +381,7 @@ app.include_router(customers.router, tags=["Customers"])
 app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+app.include_router(ai_quotes.router, tags=["AI Quotes"])  # AI-powered quote generation
 # Background jobs router
 app.include_router(jobs.router, tags=["Background Jobs"])
 # Multi-store inventory router
@@ -391,8 +398,11 @@ app.include_router(webhooks.router, tags=["Webhooks"])
 app.include_router(suppliers.router, tags=["Suppliers"])
 # Team management router (multi-tenant user management)
 app.include_router(team.router, tags=["Team Management"])
-# Billing and subscription management router
-# app.include_router(billing.router, tags=["Billing"])  # Disabled - requires stripe
+# Billing and subscription management router (✅ RE-ENABLED)
+app.include_router(billing.router, tags=["Billing"])
+# Billing usage and metering router
+from .routes import billing_usage
+app.include_router(billing_usage.router, tags=["Billing Usage"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 # Shipment tracking router
@@ -409,6 +419,7 @@ app.include_router(generate.router, tags=["AI Generation"])
 app.include_router(test_data_gen.router)  # Test data generation for learning engine
 
 # AI Search & Recommendations (✅ IMPLEMENTED)
+app.include_router(embeddings.router)  # Embedding generation and management
 app.include_router(search.router)  # Semantic & hybrid search
 app.include_router(recommendations.router)  # Product recommendations
 
