@@ -140,9 +140,9 @@ export default function QuotesPage() {
   };
 
   // PHASE C: Handle quote created from Copilot
-  const handleCopilotQuoteCreated = (quoteData: any) => {
+  const handleCopilotQuoteCreated = (quoteData: Record<string, unknown>) => {
     // Pre-fill the quote form with copilot data
-    setSelectedQuote(quoteData as Quote);
+    setSelectedQuote(quoteData as unknown as Quote);
     setFormOpen(true);
     toast({
       title: 'Quote Ready',
@@ -151,7 +151,7 @@ export default function QuotesPage() {
   };
 
   const handleExport = () => {
-    exportQuotesToCSV(quotes);
+    exportQuotesToCSV(quotes as unknown as Record<string, unknown>[]);
     toast({
       title: 'Export Successful',
       description: `Exported ${quotes.length} quotes to CSV`,
@@ -159,7 +159,7 @@ export default function QuotesPage() {
   };
 
   const handleExportPDF = () => {
-    exportQuotesToPDF(quotes);
+    exportQuotesToPDF(quotes as unknown as Record<string, unknown>[]);
     toast({ title: 'PDF Export', description: 'Print dialog opening…' });
   };
 

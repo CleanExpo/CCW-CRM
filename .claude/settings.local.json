@@ -18,7 +18,8 @@
       "Bash(set:*)",
       "Bash(PYTHONIOENCODING=utf-8 PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python:*)",
       "Bash(PYTHONIOENCODING=utf-8 PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python -m pytest:*)",
-      "Bash(PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python:*)"
+      "Bash(PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python:*)",
+      "mcp__Desktop_Commander__read_file"
     ]
   }
 }

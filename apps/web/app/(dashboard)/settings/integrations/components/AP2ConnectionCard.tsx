@@ -215,8 +215,7 @@ export function AP2ConnectionCard() {
               Test Payment Flow
             </Button>
             <Button variant="outline" size="sm" asChild>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Link href={'/settings/integrations/ap2' as any}>
+              <Link href="/settings/integrations/ap2">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 View Dashboard
               </Link>

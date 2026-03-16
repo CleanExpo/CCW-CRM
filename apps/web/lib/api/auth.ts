@@ -4,8 +4,8 @@
  * Uses Supabase Auth for production, falls back to FastAPI backend for local dev.
  */
 
-import { getSupabase } from "@/lib/supabase/client";
-import { apiClient } from "./client";
+import { getSupabase } from '@/lib/supabase/client';
+import { apiClient } from './client';
 
 export interface User {
   id: string;
@@ -45,8 +45,8 @@ export interface RegisterResponse {
  */
 function isSupabaseAuthEnabled(): boolean {
   // Use Supabase Auth when NEXT_PUBLIC_SUPABASE_URL is configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  return supabaseUrl.length > 0 && supabaseUrl.includes("supabase.co");
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  return supabaseUrl.length > 0 && supabaseUrl.includes('supabase.co');
 }
 
 /**
@@ -70,26 +70,26 @@ export const authApi = {
         throw new Error(error.message);
       }
 
-      const token = data.session?.access_token || "";
+      const token = data.session?.access_token || '';
 
       // Store token based on "Keep me signed in" preference
-      if (token && typeof window !== "undefined") {
+      if (token && typeof window !== 'undefined') {
         if (rememberMe) {
-          localStorage.setItem("auth_token", token);
-          sessionStorage.removeItem("auth_token");
+          localStorage.setItem('auth_token', token);
+          sessionStorage.removeItem('auth_token');
         } else {
-          sessionStorage.setItem("auth_token", token);
-          localStorage.removeItem("auth_token");
+          sessionStorage.setItem('auth_token', token);
+          localStorage.removeItem('auth_token');
         }
       }
 
       return {
         access_token: token,
-        token_type: "bearer",
+        token_type: 'bearer',
         user: {
-          id: data.user?.id || "",
-          email: data.user?.email || "",
-          full_name: data.user?.user_metadata?.full_name || data.user?.email?.split("@")[0] || "",
+          id: data.user?.id || '',
+          email: data.user?.email || '',
+          full_name: data.user?.user_metadata?.full_name || data.user?.email?.split('@')[0] || '',
           is_active: true,
           is_admin: data.user?.user_metadata?.is_admin ?? true,
           created_at: data.user?.created_at || new Date().toISOString(),
@@ -99,18 +99,15 @@ export const authApi = {
 
     // FastAPI backend (local development)
     const { rememberMe: _, ...loginData } = credentials;
-    const response = await apiClient.post<LoginResponse>(
-      "/api/auth/login",
-      loginData
-    );
+    const response = await apiClient.post<LoginResponse>('/api/auth/login', loginData);
 
-    if (response.access_token && typeof window !== "undefined") {
+    if (response.access_token && typeof window !== 'undefined') {
       if (rememberMe) {
-        localStorage.setItem("auth_token", response.access_token);
-        sessionStorage.removeItem("auth_token");
+        localStorage.setItem('auth_token', response.access_token);
+        sessionStorage.removeItem('auth_token');
       } else {
-        sessionStorage.setItem("auth_token", response.access_token);
-        localStorage.removeItem("auth_token");
+        sessionStorage.setItem('auth_token', response.access_token);
+        localStorage.removeItem('auth_token');
       }
     }
 
@@ -134,18 +131,18 @@ export const authApi = {
 
       return {
         user: {
-          id: authData.user?.id || "",
-          email: authData.user?.email || "",
+          id: authData.user?.id || '',
+          email: authData.user?.email || '',
           full_name: data.full_name,
           is_active: true,
           is_admin: false,
           created_at: authData.user?.created_at || new Date().toISOString(),
         },
-        message: "User registered successfully",
+        message: 'User registered successfully',
       };
     }
 
-    return apiClient.post<RegisterResponse>("/api/auth/register", data);
+    return apiClient.post<RegisterResponse>('/api/auth/register', data);
   },
 
   /**
@@ -153,16 +150,16 @@ export const authApi = {
    */
   async logout(): Promise<void> {
     // Clear token from both storage locations
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("auth_token");
-      sessionStorage.removeItem("auth_token");
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_token');
     }
 
     if (isSupabaseAuthEnabled()) {
       await getSupabase().auth.signOut();
     } else {
       try {
-        await apiClient.post("/api/auth/logout");
+        await apiClient.post('/api/auth/logout');
       } catch {
         // Ignore errors - token is already cleared
       }
@@ -174,13 +171,15 @@ export const authApi = {
    */
   async getCurrentUser(): Promise<User | null> {
     if (isSupabaseAuthEnabled()) {
-      const { data: { user } } = await getSupabase().auth.getUser();
+      const {
+        data: { user },
+      } = await getSupabase().auth.getUser();
       if (!user) return null;
 
       return {
         id: user.id,
-        email: user.email || "",
-        full_name: user.user_metadata?.full_name || user.email?.split("@")[0],
+        email: user.email || '',
+        full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
         is_active: true,
         is_admin: user.user_metadata?.is_admin ?? true,
         created_at: user.created_at,
@@ -188,7 +187,7 @@ export const authApi = {
     }
 
     try {
-      return await apiClient.get<User>("/api/auth/me");
+      return await apiClient.get<User>('/api/auth/me');
     } catch {
       return null;
     }
@@ -206,8 +205,8 @@ export const authApi = {
       if (error) throw new Error(error.message);
 
       return {
-        id: authData.user?.id || "",
-        email: authData.user?.email || "",
+        id: authData.user?.id || '',
+        email: authData.user?.email || '',
         full_name: authData.user?.user_metadata?.full_name,
         is_active: true,
         is_admin: authData.user?.user_metadata?.is_admin ?? true,
@@ -215,7 +214,7 @@ export const authApi = {
       };
     }
 
-    return apiClient.patch<User>("/api/auth/me", data);
+    return apiClient.patch<User>('/api/auth/me', data);
   },
 
   /**
@@ -231,10 +230,10 @@ export const authApi = {
       });
 
       if (error) throw new Error(error.message);
-      return { message: "Password changed successfully" };
+      return { message: 'Password changed successfully' };
     }
 
-    return apiClient.post("/api/auth/change-password", {
+    return apiClient.post('/api/auth/change-password', {
       current_password: _currentPassword,
       new_password: newPassword,
     });
@@ -247,29 +246,28 @@ export const authApi = {
     if (isSupabaseAuthEnabled()) {
       const { error } = await getSupabase().auth.resetPasswordForEmail(email);
       if (error) throw new Error(error.message);
-      return { message: "If an account exists with that email, a password reset link has been sent." };
+      return {
+        message: 'If an account exists with that email, a password reset link has been sent.',
+      };
     }
 
-    return apiClient.post("/api/auth/forgot-password", { email });
+    return apiClient.post('/api/auth/forgot-password', { email });
   },
 
   /**
    * Reset password with token
    */
-  async resetPassword(
-    _token: string,
-    newPassword: string
-  ): Promise<{ message: string }> {
+  async resetPassword(_token: string, newPassword: string): Promise<{ message: string }> {
     if (isSupabaseAuthEnabled()) {
       const { error } = await getSupabase().auth.updateUser({
         password: newPassword,
       });
 
       if (error) throw new Error(error.message);
-      return { message: "Password has been reset successfully" };
+      return { message: 'Password has been reset successfully' };
     }
 
-    return apiClient.post("/api/auth/reset-password", {
+    return apiClient.post('/api/auth/reset-password', {
       token: _token,
       new_password: newPassword,
     });

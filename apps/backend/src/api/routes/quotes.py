@@ -385,7 +385,7 @@ async def update_quote(
     return quote_dict
 
 
-@router.delete("/{quote_id}", status_code=204)
+@router.delete("/{quote_id}", status_code=204, response_model=None)
 async def delete_quote(
     quote_id: UUID,
     db: AsyncSession = Depends(get_db),

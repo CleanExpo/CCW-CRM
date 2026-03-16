@@ -1,13 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import {
-  useMotionValue,
-  useSpring,
-  useInView,
-  useTransform,
-  motion,
-} from "framer-motion";
+import { useEffect, useRef } from 'react';
+import { useMotionValue, useSpring, useInView, useTransform, motion } from 'framer-motion';
 
 interface AnimatedCounterProps {
   /** Target number to count up to */
@@ -24,8 +18,8 @@ interface AnimatedCounterProps {
 
 export function AnimatedCounter({
   value,
-  prefix = "",
-  suffix = "",
+  prefix = '',
+  suffix = '',
   duration = 1.5,
   compact = false,
 }: AnimatedCounterProps) {
@@ -36,14 +30,14 @@ export function AnimatedCounter({
     stiffness: 100,
     duration: duration * 1000,
   });
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
 
   const display = useTransform(springValue, (latest) => {
     const rounded = Math.round(latest);
     if (compact && rounded >= 1000) {
       return `${prefix}${(rounded / 1000).toFixed(rounded >= 10000 ? 0 : 1)}K${suffix}`;
     }
-    return `${prefix}${new Intl.NumberFormat("en-AU").format(rounded)}${suffix}`;
+    return `${prefix}${new Intl.NumberFormat('en-AU').format(rounded)}${suffix}`;
   });
 
   useEffect(() => {

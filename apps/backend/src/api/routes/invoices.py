@@ -545,7 +545,7 @@ async def update_invoice(
     return InvoiceResponse.model_validate(invoice)
 
 
-@router.delete("/{invoice_id}", status_code=204)
+@router.delete("/{invoice_id}", status_code=204, response_model=None)
 async def delete_invoice(
     invoice_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],

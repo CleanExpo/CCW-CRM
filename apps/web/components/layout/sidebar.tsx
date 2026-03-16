@@ -131,7 +131,7 @@ export function Sidebar() {
               transition={{ delay: index * 0.05, type: 'spring', stiffness: 300, damping: 25 }}
             >
               <Link
-                href={item.href as any}
+                href={item.href}
                 className={cn(
                   'group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2 text-sm transition-all',
                   isActive

@@ -99,6 +99,7 @@ from .routes.integrations import (
     cin7_sync,
     cin7_webhooks,
     elevenlabs,
+    marketplace,
     sendgrid,
     shopify,
     shopify_theme,
@@ -496,6 +497,13 @@ from .routes import autonomy_metrics
 
 app.include_router(autonomy_metrics.router, tags=["Autonomy Metrics"])
 
+# Analytics Metrics
+try:
+    from .routes import analytics
+    app.include_router(analytics.router, tags=["Analytics"])
+except ImportError:
+    pass
+
 # Translation management router (✅ IMPLEMENTED)
 app.include_router(translations.router, tags=["Translation Management"])
 
@@ -506,6 +514,7 @@ app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
 app.include_router(ap2.router, tags=["AP2 Integration"])
+app.include_router(marketplace.router, tags=["Marketplace Integration"])
 app.include_router(cin7.router, tags=["Cin7 Integration"])
 app.include_router(cin7_sync.router, tags=["Cin7 Sync"])
 app.include_router(cin7_crm.router, tags=["Cin7 CRM Sync"])
@@ -651,10 +660,11 @@ app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashbo
 
 # Monitoring routers (system alerts, business metrics, performance)
 try:
-    from src.api.routes.monitoring import alerts, business_metrics, performance
+    from src.api.routes.monitoring import alerts, business_metrics, infrastructure, performance
     app.include_router(alerts.router)
     app.include_router(business_metrics.router)
     app.include_router(performance.router)
+    app.include_router(infrastructure.router)
 except (ImportError, AttributeError):
     pass  # Monitoring routes not available
 

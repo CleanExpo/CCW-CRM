@@ -267,7 +267,7 @@ async def update_activity(
     return Activity.model_validate(activity)
 
 
-@router.delete("/{activity_id}", status_code=204)
+@router.delete("/{activity_id}", status_code=204, response_model=None)
 async def delete_activity(
     activity_id: UUID,
     db: AsyncSession = Depends(get_db),

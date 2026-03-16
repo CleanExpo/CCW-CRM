@@ -273,11 +273,11 @@ async def update_workflow_template(
     return await _build_template_response(template, db)
 
 
-@router.delete("/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_workflow_template(
     template_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> None:
+):
     """Delete a workflow template (cascade deletes actions)."""
     template = await _get_template_with_actions(template_id, db)
     await db.delete(template)

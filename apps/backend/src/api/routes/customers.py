@@ -167,7 +167,7 @@ async def update_customer(
     return Customer.model_validate(customer)
 
 
-@router.delete("/{customer_id}", status_code=204)
+@router.delete("/{customer_id}", status_code=204, response_model=None)
 async def delete_customer(
     customer_id: UUID,
     db: AsyncSession = Depends(get_db),

@@ -65,6 +65,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+exclude = ["src/api/debug_main.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
@@ -122,6 +123,7 @@ markers = [
     "asyncio: mark test as async",
     "integration: mark test as integration test",
     "unit: mark test as unit test",
+    "performance: mark test as performance/benchmark test",
 ]
 
 [tool.coverage.run]
@@ -136,6 +138,7 @@ omit = [
 [tool.coverage.report]
 precision = 2
 show_missing = true
+fail_under = 15
 skip_covered = false
 exclude_lines = [
     "pragma: no cover",

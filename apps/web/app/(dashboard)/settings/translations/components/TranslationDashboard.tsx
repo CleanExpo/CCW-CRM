@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CoverageStats } from "./CoverageStats";
-import { ProductList } from "./ProductList";
-import { BulkTranslateDialog } from "./BulkTranslateDialog";
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CoverageStats } from './CoverageStats';
+import { ProductList } from './ProductList';
+import { BulkTranslateDialog } from './BulkTranslateDialog';
 
 interface Language {
   code: string;
@@ -33,27 +33,28 @@ export function TranslationDashboard() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [coverage, setCoverage] = useState<CoverageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     loadDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadDashboardData() {
     setIsLoading(true);
     try {
       const [languagesData, coverageData] = await Promise.all([
-        apiClient.get<Language[]>("/api/translations/languages"),
-        apiClient.get<CoverageData[]>("/api/translations/coverage"),
+        apiClient.get<Language[]>('/api/translations/languages'),
+        apiClient.get<CoverageData[]>('/api/translations/coverage'),
       ]);
 
       setLanguages(languagesData);
       setCoverage(coverageData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to load dashboard data",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to load dashboard data',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -62,9 +63,9 @@ export function TranslationDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-2">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="space-y-2 text-center">
+          <div className="border-primary mx-auto h-12 w-12 animate-spin rounded-full border-b-2"></div>
           <p className="text-muted-foreground">Loading translation dashboard...</p>
         </div>
       </div>
@@ -76,7 +77,7 @@ export function TranslationDashboard() {
       {/* Header with Quick Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {languages.length} languages supported · {coverage.length} language reports available
           </p>
         </div>
@@ -109,9 +110,7 @@ export function TranslationDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Product Translations</CardTitle>
-              <CardDescription>
-                View and manage translations for all products
-              </CardDescription>
+              <CardDescription>View and manage translations for all products</CardDescription>
             </CardHeader>
             <CardContent>
               <ProductList languages={languages} onRefresh={loadDashboardData} />
@@ -123,15 +122,13 @@ export function TranslationDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Review Queue</CardTitle>
-              <CardDescription>
-                AI-generated translations pending human review
-              </CardDescription>
+              <CardDescription>AI-generated translations pending human review</CardDescription>
             </CardHeader>
             <CardContent>
               <ProductList
                 languages={languages}
                 onRefresh={loadDashboardData}
-                defaultFilter={{ translation_status: "ai_generated" }}
+                defaultFilter={{ translation_status: 'ai_generated' }}
               />
             </CardContent>
           </Card>

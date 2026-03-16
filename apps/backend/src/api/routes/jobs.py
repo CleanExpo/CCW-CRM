@@ -76,7 +76,7 @@ async def list_jobs(
     return list(jobs)
 
 
-@router.delete("/{job_id}", status_code=204)
+@router.delete("/{job_id}", status_code=204, response_model=None)
 async def delete_job(
     job_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],

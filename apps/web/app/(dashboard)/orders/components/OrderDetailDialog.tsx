@@ -156,8 +156,6 @@ export function OrderDetailDialog({
     // Only process updates for THIS order
     if (statusUpdate.order_id !== orderId) return;
 
-    console.log('Real-time order update received:', statusUpdate);
-
     // Show toast notification for status changes
     if (statusUpdate.type === 'status_changed') {
       toast({

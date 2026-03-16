@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   return NextResponse.json({
     score: 100,
-    grade: "A",
+    grade: 'A',
     details: {
       success_rate: 100,
       success_score: 100,

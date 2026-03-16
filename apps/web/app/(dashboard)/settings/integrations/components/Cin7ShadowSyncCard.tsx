@@ -281,8 +281,7 @@ export function Cin7ShadowSyncCard() {
 
         {/* Link to full dashboard */}
         <div className="flex justify-end">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <Link href={'/settings/integrations/shadow' as any}>
+          <Link href="/settings/integrations/shadow">
             <Button variant="outline" size="sm" className="h-7 gap-1 px-2 text-xs">
               <ExternalLink className="h-3.5 w-3.5" />
               View Full Dashboard

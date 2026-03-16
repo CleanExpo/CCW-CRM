@@ -398,7 +398,7 @@ export default function ProductsPage() {
                         asChild
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Link href={`/products/${product.id}` as any}>
+                        <Link href={`/products/${product.id}`}>
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>

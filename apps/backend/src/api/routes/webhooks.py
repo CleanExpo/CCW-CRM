@@ -5,10 +5,14 @@ import hmac
 from datetime import datetime
 from typing import Annotated
 
+import httpx
+import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel
 
 from src.config.settings import Settings, get_settings
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/webhooks", tags=["Webhooks"])
 
@@ -33,6 +37,35 @@ def verify_webhook_signature(
         hashlib.sha256,
     ).hexdigest()
     return hmac.compare_digest(signature, expected_signature)
+
+
+async def _forward_webhook(event_data: dict, forward_url: str) -> bool:
+    """Forward webhook payload to a configured URL.
+
+    Returns True if forwarding succeeded, False otherwise.
+    """
+    if not forward_url:
+        return False
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(forward_url, json=event_data)
+            response.raise_for_status()
+            logger.info(
+                "webhook_forwarded",
+                url=forward_url,
+                status_code=response.status_code,
+                event_type=event_data.get("event_type"),
+            )
+            return True
+    except httpx.HTTPError as exc:
+        logger.warning(
+            "webhook_forward_failed",
+            url=forward_url,
+            error=str(exc),
+            event_type=event_data.get("event_type"),
+        )
+        return False
 
 
 @router.post("/contact-form")
@@ -75,11 +108,17 @@ async def handle_contact_form_webhook(
     # Parse event data
     event_data = await request.json()
 
-    # TODO: Forward to configured webhook URL
-    # For now, just log the event
-    print(f"Webhook received: {event_data}")
+    logger.info("webhook_received", event_type="contact.submitted", event_id=event_data.get("event_id"))
 
-    return {"status": "received", "event_id": event_data.get("event_id")}
+    # Forward to configured webhook URL if set
+    forward_url = getattr(settings, "webhook_forward_url", "")
+    forwarded = await _forward_webhook(event_data, forward_url)
+
+    return {
+        "status": "received",
+        "event_id": event_data.get("event_id"),
+        "forwarded": forwarded,
+    }
 
 
 @router.post("/demo-request")
@@ -120,11 +159,17 @@ async def handle_demo_request_webhook(
     # Parse event data
     event_data = await request.json()
 
-    # TODO: Forward to configured webhook URL
-    # For now, just log the event
-    print(f"Webhook received: {event_data}")
+    logger.info("webhook_received", event_type="demo.requested", event_id=event_data.get("event_id"))
 
-    return {"status": "received", "event_id": event_data.get("event_id")}
+    # Forward to configured webhook URL if set
+    forward_url = getattr(settings, "webhook_forward_url", "")
+    forwarded = await _forward_webhook(event_data, forward_url)
+
+    return {
+        "status": "received",
+        "event_id": event_data.get("event_id"),
+        "forwarded": forwarded,
+    }
 
 
 @router.get("/test")

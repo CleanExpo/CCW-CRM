@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { X, Plus, Calculator } from "lucide-react";
-import { LocationAwareProductSelect } from "@/components/inventory/LocationAwareProductSelect";
-import { useLineItemCalculations } from "@/hooks/use-line-item-calculations";
-import { formatCurrency } from "@/lib/utils/calculations";
-import type { PurchaseOrderItem } from "../types";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { X, Plus, Calculator } from 'lucide-react';
+import { LocationAwareProductSelect } from '@/components/inventory/LocationAwareProductSelect';
+import { useLineItemCalculations } from '@/hooks/use-line-item-calculations';
+import { formatCurrency } from '@/lib/utils/calculations';
+import type { PurchaseOrderItem } from '../types';
 
 interface PurchaseOrderLineItemsProps {
   items: PurchaseOrderItem[];
@@ -25,12 +25,12 @@ export function PurchaseOrderLineItems({
 
   const handleAddItem = () => {
     const newItem: PurchaseOrderItem = {
-      product_id: "",
+      product_id: '',
       quantity: 1,
       quantity_received: 0,
       unit_cost: 0,
       subtotal: 0,
-      calculationMode: "unit_cost", // Default to unit cost entry mode
+      calculationMode: 'unit_cost', // Default to unit cost entry mode
     };
     onChange([...items, newItem]);
   };
@@ -40,7 +40,10 @@ export function PurchaseOrderLineItems({
     onChange(newItems);
   };
 
-  const handleProductChange = (index: number, product: any) => {
+  const handleProductChange = (
+    index: number,
+    product: { id: string; name: string; sku: string; cost?: number }
+  ) => {
     const newItems = [...items];
     const item = newItems[index];
 
@@ -72,7 +75,7 @@ export function PurchaseOrderLineItems({
 
     // Recalculate based on current mode
     let updated;
-    if (item.calculationMode === "unit_cost") {
+    if (item.calculationMode === 'unit_cost') {
       updated = updateQuantity(lineItem, qty);
     } else {
       // In subtotal mode, changing quantity recalculates unit_cost
@@ -145,7 +148,7 @@ export function PurchaseOrderLineItems({
     // Toggle between modes
     newItems[index] = {
       ...item,
-      calculationMode: item.calculationMode === "unit_cost" ? "subtotal" : "unit_cost",
+      calculationMode: item.calculationMode === 'unit_cost' ? 'subtotal' : 'unit_cost',
     };
     onChange(newItems);
   };
@@ -163,7 +166,7 @@ export function PurchaseOrderLineItems({
       </div>
 
       {errors && errors.length > 0 && (
-        <div className="text-sm text-destructive">
+        <div className="text-destructive text-sm">
           {errors.map((error, i) => (
             <div key={i}>{error}</div>
           ))}
@@ -172,14 +175,8 @@ export function PurchaseOrderLineItems({
 
       {items.length === 0 ? (
         <div className="rounded-md border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground">No items added yet</p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleAddItem}
-            className="mt-2"
-          >
+          <p className="text-muted-foreground text-sm">No items added yet</p>
+          <Button type="button" variant="ghost" size="sm" onClick={handleAddItem} className="mt-2">
             <Plus className="mr-2 h-4 w-4" />
             Add your first item
           </Button>
@@ -187,32 +184,23 @@ export function PurchaseOrderLineItems({
       ) : (
         <div className="space-y-3">
           {items.map((item, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-12 gap-3 items-start rounded-md border p-3"
-            >
+            <div key={index} className="grid grid-cols-12 items-start gap-3 rounded-md border p-3">
               {/* Product Selection - 5 cols */}
               <div className="col-span-5">
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  Product
-                </label>
+                <label className="text-muted-foreground mb-1 block text-xs">Product</label>
                 <LocationAwareProductSelect
                   selectedLocation={selectedLocation}
                   value={item.product_id}
                   onSelect={(product) => handleProductChange(index, product)}
                 />
                 {item.product_sku && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    SKU: {item.product_sku}
-                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">SKU: {item.product_sku}</p>
                 )}
               </div>
 
               {/* Quantity - 2 cols */}
               <div className="col-span-2">
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  Quantity
-                </label>
+                <label className="text-muted-foreground mb-1 block text-xs">Quantity</label>
                 <Input
                   type="number"
                   min="1"
@@ -223,15 +211,15 @@ export function PurchaseOrderLineItems({
 
               {/* Unit Cost - 2 cols */}
               <div className="col-span-2">
-                <label className="text-xs text-muted-foreground mb-1 flex items-center justify-between">
+                <label className="text-muted-foreground mb-1 flex items-center justify-between text-xs">
                   <span>Unit Cost</span>
-                  {item.calculationMode === "subtotal" && (
-                    <span className="text-[10px] bg-blue-100 text-blue-800 px-1 rounded">
+                  {item.calculationMode === 'subtotal' && (
+                    <span className="rounded bg-blue-100 px-1 text-[10px] text-blue-800">
                       Calculated
                     </span>
                   )}
                 </label>
-                {item.calculationMode === "unit_cost" ? (
+                {item.calculationMode === 'unit_cost' ? (
                   <Input
                     type="number"
                     step="0.01"
@@ -240,7 +228,7 @@ export function PurchaseOrderLineItems({
                     onChange={(e) => handleUnitCostChange(index, e.target.value)}
                   />
                 ) : (
-                  <div className="flex items-center h-9 px-3 rounded-md border bg-muted text-sm font-medium">
+                  <div className="bg-muted flex h-9 items-center rounded-md border px-3 text-sm font-medium">
                     ${item.unit_cost.toFixed(2)}
                   </div>
                 )}
@@ -248,15 +236,15 @@ export function PurchaseOrderLineItems({
 
               {/* Subtotal - 2 cols */}
               <div className="col-span-2">
-                <label className="text-xs text-muted-foreground mb-1 flex items-center justify-between">
+                <label className="text-muted-foreground mb-1 flex items-center justify-between text-xs">
                   <span>Subtotal</span>
-                  {item.calculationMode === "unit_cost" && (
-                    <span className="text-[10px] bg-blue-100 text-blue-800 px-1 rounded">
+                  {item.calculationMode === 'unit_cost' && (
+                    <span className="rounded bg-blue-100 px-1 text-[10px] text-blue-800">
                       Calculated
                     </span>
                   )}
                 </label>
-                {item.calculationMode === "subtotal" ? (
+                {item.calculationMode === 'subtotal' ? (
                   <Input
                     type="number"
                     step="0.01"
@@ -265,7 +253,7 @@ export function PurchaseOrderLineItems({
                     onChange={(e) => handleSubtotalChange(index, e.target.value)}
                   />
                 ) : (
-                  <div className="flex items-center h-9 px-3 rounded-md border bg-muted text-sm font-medium">
+                  <div className="bg-muted flex h-9 items-center rounded-md border px-3 text-sm font-medium">
                     {formatCurrency(item.subtotal)}
                   </div>
                 )}
@@ -279,9 +267,9 @@ export function PurchaseOrderLineItems({
                   size="sm"
                   onClick={() => handleToggleCalculationMode(index)}
                   title={
-                    item.calculationMode === "unit_cost"
-                      ? "Switch to subtotal entry mode"
-                      : "Switch to unit cost entry mode"
+                    item.calculationMode === 'unit_cost'
+                      ? 'Switch to subtotal entry mode'
+                      : 'Switch to unit cost entry mode'
                   }
                   className="h-9 w-9 p-0"
                 >
@@ -300,11 +288,9 @@ export function PurchaseOrderLineItems({
             </div>
           ))}
 
-          <div className="flex justify-end pt-4 border-t">
+          <div className="flex justify-end border-t pt-4">
             <div className="text-right">
-              <div className="text-sm text-muted-foreground">
-                Subtotal (before tax & shipping)
-              </div>
+              <div className="text-muted-foreground text-sm">Subtotal (before tax & shipping)</div>
               <div className="text-2xl font-bold">{formatCurrency(total)}</div>
             </div>
           </div>

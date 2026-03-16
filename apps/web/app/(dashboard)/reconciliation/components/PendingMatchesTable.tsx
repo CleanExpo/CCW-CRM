@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -14,9 +14,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
-import { SuggestionCard } from "./SuggestionCard";
+} from '@/components/ui/table';
+import { ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { SuggestionCard } from './SuggestionCard';
 
 interface PendingFeed {
   feed_id: string;
@@ -50,9 +50,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
   const [feeds, setFeeds] = useState<PendingFeed[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [selectedMatches, setSelectedMatches] = useState<
-    Map<string, string>
-  >(new Map()); // feed_id -> pos_transaction_id
+  const [selectedMatches, setSelectedMatches] = useState<Map<string, string>>(new Map()); // feed_id -> pos_transaction_id
   const [isBulkApproving, setIsBulkApproving] = useState(false);
   const { toast } = useToast();
 
@@ -60,14 +58,14 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
     try {
       setIsLoading(true);
       const data = await apiClient.get<PendingFeed[]>(
-        "/api/reconciliation/pending?with_suggestions_only=true&limit=50"
+        '/api/reconciliation/pending?with_suggestions_only=true&limit=50'
       );
       setFeeds(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error loading pending feeds",
-        description: error.message || "Failed to load data",
-        variant: "destructive",
+        title: 'Error loading pending feeds',
+        description: error instanceof Error ? error.message : 'Failed to load data',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -76,6 +74,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
 
   useEffect(() => {
     fetchPendingFeeds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleRow = (feedId: string) => {
@@ -103,9 +102,9 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
   const handleBulkApprove = async () => {
     if (selectedMatches.size === 0) {
       toast({
-        title: "No matches selected",
-        description: "Please select at least one match to approve",
-        variant: "destructive",
+        title: 'No matches selected',
+        description: 'Please select at least one match to approve',
+        variant: 'destructive',
       });
       return;
     }
@@ -120,14 +119,17 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
         })
       );
 
-      const result = await apiClient.post<BulkApprovalResponse>("/api/reconciliation/bulk-approve", {
-        approvals,
-      });
+      const result = await apiClient.post<BulkApprovalResponse>(
+        '/api/reconciliation/bulk-approve',
+        {
+          approvals,
+        }
+      );
 
       toast({
-        title: "Bulk approval complete",
+        title: 'Bulk approval complete',
         description: `Approved ${result.approved} matches. ${
-          result.failed > 0 ? `Failed: ${result.failed}` : ""
+          result.failed > 0 ? `Failed: ${result.failed}` : ''
         }`,
       });
 
@@ -135,11 +137,11 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
       setSelectedMatches(new Map());
       await fetchPendingFeeds();
       onReconciled?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Bulk approval failed",
-        description: error.message || "Failed to approve matches",
-        variant: "destructive",
+        title: 'Bulk approval failed',
+        description: error instanceof Error ? error.message : 'Failed to approve matches',
+        variant: 'destructive',
       });
     } finally {
       setIsBulkApproving(false);
@@ -149,7 +151,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
   if (isLoading) {
     return (
       <Card className="p-6">
-        <div className="text-center text-muted-foreground">Loading pending feeds...</div>
+        <div className="text-muted-foreground text-center">Loading pending feeds...</div>
       </Card>
     );
   }
@@ -157,7 +159,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
   if (feeds.length === 0) {
     return (
       <Card className="p-6">
-        <div className="text-center text-muted-foreground">
+        <div className="text-muted-foreground text-center">
           No pending feeds with AI suggestions. All caught up! 🎉
         </div>
       </Card>
@@ -166,21 +168,15 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
 
   return (
     <Card>
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-4">
           <h3 className="font-semibold">Pending Matches with AI Suggestions</h3>
           <Badge variant="secondary">{feeds.length} items</Badge>
         </div>
         {selectedMatches.size > 0 && (
-          <Button
-            size="sm"
-            onClick={handleBulkApprove}
-            disabled={isBulkApproving}
-          >
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            {isBulkApproving
-              ? "Approving..."
-              : `Approve ${selectedMatches.size} Selected`}
+          <Button size="sm" onClick={handleBulkApprove} disabled={isBulkApproving}>
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            {isBulkApproving ? 'Approving...' : `Approve ${selectedMatches.size} Selected`}
           </Button>
         )}
       </div>
@@ -201,7 +197,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
           <TableBody>
             {feeds.map((feed) => (
               <>
-                <TableRow key={feed.feed_id} className="cursor-pointer hover:bg-muted/50">
+                <TableRow key={feed.feed_id} className="hover:bg-muted/50 cursor-pointer">
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -218,17 +214,15 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
                   </TableCell>
                   <TableCell>{formatDate(feed.transaction_date)}</TableCell>
                   <TableCell>{feed.bank_account_name}</TableCell>
-                  <TableCell className="max-w-md truncate">
-                    {feed.description || "-"}
-                  </TableCell>
-                  <TableCell>{feed.reference || "-"}</TableCell>
+                  <TableCell className="max-w-md truncate">{feed.description || '-'}</TableCell>
+                  <TableCell>{feed.reference || '-'}</TableCell>
                   <TableCell className="text-right font-medium">
                     ${feed.amount.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline">
                       {feed.match_suggestions.length} suggestion
-                      {feed.match_suggestions.length !== 1 ? "s" : ""}
+                      {feed.match_suggestions.length !== 1 ? 's' : ''}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -237,8 +231,8 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
                 {expandedRows.has(feed.feed_id) && (
                   <TableRow>
                     <TableCell colSpan={7} className="bg-muted/30">
-                      <div className="p-4 space-y-3">
-                        <h4 className="font-medium text-sm">AI Match Suggestions</h4>
+                      <div className="space-y-3 p-4">
+                        <h4 className="text-sm font-medium">AI Match Suggestions</h4>
                         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                           {feed.match_suggestions.map((suggestion) => (
                             <SuggestionCard
@@ -246,14 +240,10 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
                               suggestion={suggestion}
                               feedAmount={feed.amount}
                               isSelected={
-                                selectedMatches.get(feed.feed_id) ===
-                                suggestion.pos_transaction_id
+                                selectedMatches.get(feed.feed_id) === suggestion.pos_transaction_id
                               }
                               onSelect={() =>
-                                handleSelectMatch(
-                                  feed.feed_id,
-                                  suggestion.pos_transaction_id
-                                )
+                                handleSelectMatch(feed.feed_id, suggestion.pos_transaction_id)
                               }
                             />
                           ))}
@@ -273,9 +263,9 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 }

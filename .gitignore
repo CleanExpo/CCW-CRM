@@ -68,6 +68,7 @@ htmlcov/
 test-results/
 playwright-report/
 playwright/.cache/
+.auth/
 
 # Databases
 *.db
@@ -138,6 +139,10 @@ supabase/.temp
 
 # Docker
 .docker/
+
+# Local agent/solution libraries (not part of project)
+.claude/agents-lib/
+lib/
 
 # Misc
 *.tsbuildinfo

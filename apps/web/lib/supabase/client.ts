@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Lazy-initialized Supabase client.
@@ -16,9 +16,9 @@ export function getSupabase(): SupabaseClient {
 
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error(
-        "Supabase environment variables are not configured. " +
-          "Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, " +
-          "or use FastAPI auth for local development."
+        'Supabase environment variables are not configured. ' +
+          'Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, ' +
+          'or use FastAPI auth for local development.'
       );
     }
 

@@ -73,7 +73,9 @@ export default async function AgentDashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="mb-2 text-4xl font-bold">Agent Dashboard</h1>
-        <p className="text-gray-600">Real-time monitoring of the autonomous agentic layer</p>
+        <p className="text-muted-foreground">
+          Real-time monitoring of the autonomous agentic layer
+        </p>
       </div>
 
       {/* Overview Stats */}
@@ -126,9 +128,9 @@ function AgentStatsSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="animate-pulse rounded-lg bg-white p-6 shadow">
-          <div className="mb-2 h-4 w-1/2 rounded bg-gray-200" />
-          <div className="h-8 w-3/4 rounded bg-gray-200" />
+        <div key={i} className="bg-card animate-pulse rounded-lg p-6 shadow">
+          <div className="bg-muted mb-2 h-4 w-1/2 rounded" />
+          <div className="bg-muted h-8 w-3/4 rounded" />
         </div>
       ))}
     </div>
@@ -139,9 +141,9 @@ function AgentListSkeleton() {
   return (
     <div className="space-y-2">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="animate-pulse rounded-lg bg-white p-4 shadow">
-          <div className="mb-2 h-4 w-1/3 rounded bg-gray-200" />
-          <div className="h-3 w-1/2 rounded bg-gray-200" />
+        <div key={i} className="bg-card animate-pulse rounded-lg p-4 shadow">
+          <div className="bg-muted mb-2 h-4 w-1/3 rounded" />
+          <div className="bg-muted h-3 w-1/2 rounded" />
         </div>
       ))}
     </div>
@@ -152,9 +154,9 @@ function TaskHistorySkeleton() {
   return (
     <div className="space-y-2">
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="animate-pulse rounded-lg bg-white p-4 shadow">
-          <div className="mb-2 h-4 w-2/3 rounded bg-gray-200" />
-          <div className="h-3 w-1/3 rounded bg-gray-200" />
+        <div key={i} className="bg-card animate-pulse rounded-lg p-4 shadow">
+          <div className="bg-muted mb-2 h-4 w-2/3 rounded" />
+          <div className="bg-muted h-3 w-1/3 rounded" />
         </div>
       ))}
     </div>
@@ -163,8 +165,8 @@ function TaskHistorySkeleton() {
 
 function PerformanceTrendsSkeleton() {
   return (
-    <div className="animate-pulse rounded-lg bg-white p-6 shadow">
-      <div className="h-64 rounded bg-gray-200" />
+    <div className="bg-card animate-pulse rounded-lg p-6 shadow">
+      <div className="bg-muted h-64 rounded" />
     </div>
   );
 }
@@ -173,10 +175,10 @@ function LearningInsightsSkeleton() {
   return (
     <div className="space-y-3">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="animate-pulse rounded-lg bg-white p-4 shadow">
-          <div className="mb-2 h-5 w-2/3 rounded bg-gray-200" />
-          <div className="mb-2 h-4 w-full rounded bg-gray-200" />
-          <div className="h-4 w-5/6 rounded bg-gray-200" />
+        <div key={i} className="bg-card animate-pulse rounded-lg p-4 shadow">
+          <div className="bg-muted mb-2 h-5 w-2/3 rounded" />
+          <div className="bg-muted mb-2 h-4 w-full rounded" />
+          <div className="bg-muted h-4 w-5/6 rounded" />
         </div>
       ))}
     </div>

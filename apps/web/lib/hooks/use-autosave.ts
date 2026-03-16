@@ -15,8 +15,8 @@
  * ```
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { DraftStorage } from "@/lib/utils/draft-storage";
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { DraftStorage } from '@/lib/utils/draft-storage';
 
 interface UseAutosaveOptions<T> {
   /** Unique key for this form draft (e.g., 'order-form', 'quote-form-{id}') */
@@ -61,7 +61,7 @@ interface UseAutosaveReturn<T> {
   isAutosaving: boolean;
 }
 
-export function useAutosave<T extends Record<string, any>>({
+export function useAutosave<T extends Record<string, unknown>>({
   key,
   formValues,
   onRestore,
@@ -114,7 +114,7 @@ export function useAutosave<T extends Record<string, any>>({
 
     // Don't save if form is empty
     const hasData = Object.values(filteredData).some((value) => {
-      if (value === null || value === undefined || value === "") return false;
+      if (value === null || value === undefined || value === '') return false;
       if (Array.isArray(value) && value.length === 0) return false;
       return true;
     });
@@ -178,7 +178,7 @@ export function useAutosave<T extends Record<string, any>>({
         // Final save on unmount
         const filteredData = filterData(formValues);
         const hasData = Object.values(filteredData).some((value) => {
-          if (value === null || value === undefined || value === "") return false;
+          if (value === null || value === undefined || value === '') return false;
           if (Array.isArray(value) && value.length === 0) return false;
           return true;
         });

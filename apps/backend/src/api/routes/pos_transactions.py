@@ -710,7 +710,7 @@ async def update_terminal(
     }
 
 
-@router.delete("/terminals/{terminal_id}", status_code=204)
+@router.delete("/terminals/{terminal_id}", status_code=204, response_model=None)
 async def delete_terminal(
     terminal_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],

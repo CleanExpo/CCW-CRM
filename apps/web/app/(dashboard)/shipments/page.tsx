@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { shipmentsApi, type Shipment, type ShipmentStatus } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from 'react';
+import { shipmentsApi, type Shipment, type ShipmentStatus } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,32 +22,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit, Trash2, Package } from "lucide-react";
-import { ShipmentForm } from "./components/ShipmentForm";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
+import { ShipmentForm } from './components/ShipmentForm';
 
 const STATUS_COLORS: Record<ShipmentStatus, string> = {
-  pending: "bg-yellow-500",
-  in_transit: "bg-blue-500",
-  delivered: "bg-green-500",
-  cancelled: "bg-red-500",
-  returned: "bg-orange-500",
+  pending: 'bg-yellow-500',
+  in_transit: 'bg-blue-500',
+  delivered: 'bg-green-500',
+  cancelled: 'bg-red-500',
+  returned: 'bg-orange-500',
 };
 
 export default function ShipmentsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ShipmentStatus | "all">("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ShipmentStatus | 'all'>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -56,6 +56,7 @@ export default function ShipmentsPage() {
 
   useEffect(() => {
     fetchShipments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchTerm, statusFilter]);
 
   async function fetchShipments() {
@@ -65,15 +66,15 @@ export default function ShipmentsPage() {
         page,
         page_size: 50,
         search: searchTerm || undefined,
-        status: statusFilter !== "all" ? statusFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
       });
       setShipments(response.items);
       setTotalPages(response.total_pages);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to load shipments",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to load shipments',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -84,15 +85,15 @@ export default function ShipmentsPage() {
     try {
       await shipmentsApi.delete(id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Shipment "${shipmentNumber}" deleted successfully`,
       });
       fetchShipments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete shipment",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete shipment',
+        variant: 'destructive',
       });
     }
   }
@@ -114,7 +115,7 @@ export default function ShipmentsPage() {
   }
 
   function formatDate(dateString: string | undefined) {
-    if (!dateString) return "N/A";
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
   }
 
@@ -123,13 +124,11 @@ export default function ShipmentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
             <Package className="h-8 w-8" />
             Shipments
           </h1>
-          <p className="text-muted-foreground">
-            Track and manage shipments and deliveries
-          </p>
+          <p className="text-muted-foreground">Track and manage shipments and deliveries</p>
         </div>
         <Button onClick={handleCreateShipment}>
           <Plus className="mr-2 h-4 w-4" />
@@ -140,7 +139,7 @@ export default function ShipmentsPage() {
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
             placeholder="Search by shipment number or tracking..."
             value={searchTerm}
@@ -153,8 +152,8 @@ export default function ShipmentsPage() {
         </div>
         <Select
           value={statusFilter}
-          onValueChange={(value: any) => {
-            setStatusFilter(value);
+          onValueChange={(value) => {
+            setStatusFilter(value as ShipmentStatus | 'all');
             setPage(1);
           }}
         >
@@ -204,23 +203,16 @@ export default function ShipmentsPage() {
             ) : (
               shipments.map((shipment) => (
                 <TableRow key={shipment.id}>
-                  <TableCell className="font-medium">
-                    {shipment.shipment_number}
-                  </TableCell>
-                  <TableCell>{shipment.order_number || "N/A"}</TableCell>
-                  <TableCell>{shipment.customer_name || "N/A"}</TableCell>
+                  <TableCell className="font-medium">{shipment.shipment_number}</TableCell>
+                  <TableCell>{shipment.order_number || 'N/A'}</TableCell>
+                  <TableCell>{shipment.customer_name || 'N/A'}</TableCell>
                   <TableCell>{shipment.carrier_name}</TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {shipment.tracking_number}
-                  </TableCell>
+                  <TableCell className="font-mono text-sm">{shipment.tracking_number}</TableCell>
                   <TableCell>{formatDate(shipment.shipped_date)}</TableCell>
                   <TableCell>{formatDate(shipment.estimated_delivery_date)}</TableCell>
                   <TableCell>
-                    <Badge
-                      className={STATUS_COLORS[shipment.status]}
-                      variant="default"
-                    >
-                      {shipment.status.replace("_", " ").toUpperCase()}
+                    <Badge className={STATUS_COLORS[shipment.status]} variant="default">
+                      {shipment.status.replace('_', ' ').toUpperCase()}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -242,20 +234,14 @@ export default function ShipmentsPage() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Shipment</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete shipment "
-                              {shipment.shipment_number}"? This action cannot be
-                              undone.
+                              Are you sure you want to delete shipment "{shipment.shipment_number}"?
+                              This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() =>
-                                handleDelete(
-                                  shipment.id,
-                                  shipment.shipment_number
-                                )
-                              }
+                              onClick={() => handleDelete(shipment.id, shipment.shipment_number)}
                             >
                               Delete
                             </AlertDialogAction>
@@ -274,7 +260,7 @@ export default function ShipmentsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Page {page} of {totalPages}
           </p>
           <div className="flex gap-2">

@@ -492,7 +492,7 @@ async def add_barcode(
     }
 
 
-@router.delete("/barcode/{code}", status_code=204)
+@router.delete("/barcode/{code}", status_code=204, response_model=None)
 async def remove_barcode(
     code: str,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -2067,7 +2067,7 @@ async def add_product_attribute(
     return {"id": str(attr.id), "key": attr.key, "value": attr.value, "unit": attr.unit}
 
 
-@router.delete("/products/{product_id}/attributes/{attribute_id}", status_code=204)
+@router.delete("/products/{product_id}/attributes/{attribute_id}", status_code=204, response_model=None)
 async def delete_product_attribute(
     product_id: str,
     attribute_id: str,
@@ -2172,7 +2172,7 @@ async def create_product_variant(
     }
 
 
-@router.delete("/products/{product_id}/variants/{variant_id}", status_code=204)
+@router.delete("/products/{product_id}/variants/{variant_id}", status_code=204, response_model=None)
 async def delete_product_variant(
     product_id: str,
     variant_id: str,

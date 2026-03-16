@@ -140,7 +140,9 @@ export default function ServiceRequestsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Service Requests</h1>
-          <p className="text-muted-foreground">Manage equipment repair and maintenance requests</p>
+          <p className="text-neutral-600 dark:text-neutral-400">
+            Manage equipment repair and maintenance requests
+          </p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />

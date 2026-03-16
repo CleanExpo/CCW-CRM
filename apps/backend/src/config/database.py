@@ -107,6 +107,10 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Get asynchronous database session (FastAPI dependency).
 
+    Automatically rolls back the session on unhandled exceptions so that
+    a failed ``await db.commit()`` in any route never leaves the connection
+    in a dirty state.
+
     Yields:
         Async database session
 
@@ -121,6 +125,9 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
+        except Exception:
+            await session.rollback()
+            raise
         finally:
             await session.close()
 

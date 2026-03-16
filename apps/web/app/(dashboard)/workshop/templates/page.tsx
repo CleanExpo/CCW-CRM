@@ -13,6 +13,7 @@ export default function ServiceTemplatesPage() {
   const [templates, setTemplates] = useState<ServiceTemplate[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,6 +33,7 @@ export default function ServiceTemplatesPage() {
   }, [toast]);
 
   async function handleDeactivate(id: string) {
+    setDeactivatingId(id);
     try {
       await workshopApi.deactivateTemplate(id);
       toast({ title: 'Template deactivated' });
@@ -42,6 +44,8 @@ export default function ServiceTemplatesPage() {
         description: error instanceof Error ? error.message : 'Failed',
         variant: 'destructive',
       });
+    } finally {
+      setDeactivatingId(null);
     }
   }
 
@@ -54,7 +58,7 @@ export default function ServiceTemplatesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Service Templates</h1>
-          <p className="text-muted-foreground">{total} active templates</p>
+          <p className="text-neutral-600 dark:text-neutral-400">{total} active templates</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={load}>
@@ -67,7 +71,11 @@ export default function ServiceTemplatesPage() {
       </div>
 
       {loading ? (
-        <div className="text-muted-foreground">Loading templates...</div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-muted h-24 animate-pulse rounded-lg" />
+          ))}
+        </div>
       ) : templates.length === 0 ? (
         <div className="py-12 text-center">
           <ClipboardList className="text-muted-foreground/30 mx-auto mb-3 h-12 w-12" />
@@ -103,8 +111,13 @@ export default function ServiceTemplatesPage() {
                     <span className="text-muted-foreground text-sm">
                       {template.estimated_hours}h est.
                     </span>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeactivate(template.id)}>
-                      Deactivate
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeactivate(template.id)}
+                      disabled={deactivatingId === template.id}
+                    >
+                      {deactivatingId === template.id ? 'Deactivating...' : 'Deactivate'}
                     </Button>
                   </div>
                 </div>

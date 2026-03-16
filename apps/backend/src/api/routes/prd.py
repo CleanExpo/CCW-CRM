@@ -256,12 +256,12 @@ async def list_prds(
     )
 
 
-@router.delete("/{prd_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{prd_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_prd(
     prd_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> None:
+):
     """
     Delete a PRD.
 

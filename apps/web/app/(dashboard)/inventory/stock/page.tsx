@@ -173,6 +173,7 @@ export default function InventoryStockPage() {
         });
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [toast]
   );
   useBarcodeScanner({ onScan: handleBarcodeScan });

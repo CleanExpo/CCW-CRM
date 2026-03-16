@@ -96,7 +96,9 @@ export default function ContractorsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Contractors</h1>
-          <p className="text-muted-foreground">Manage your contractor network and availability</p>
+          <p className="text-neutral-600 dark:text-neutral-400">
+            Manage your contractor network and availability
+          </p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />

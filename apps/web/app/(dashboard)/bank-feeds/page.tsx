@@ -132,7 +132,7 @@ export default function BankFeedsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Bank Feeds</h1>
-          <p className="text-muted-foreground">
+          <p className="text-neutral-600 dark:text-neutral-400">
             Reconciliation overview and unmatched transaction review
           </p>
         </div>

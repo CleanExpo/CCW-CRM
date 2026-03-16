@@ -1,15 +1,9 @@
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
 /**
  * Quote status enum matching backend
  */
-export type QuoteStatus =
-  | "draft"
-  | "pending"
-  | "sent"
-  | "accepted"
-  | "rejected"
-  | "expired";
+export type QuoteStatus = 'draft' | 'pending' | 'sent' | 'accepted' | 'rejected' | 'expired';
 
 /**
  * Quote item interface
@@ -84,7 +78,7 @@ export interface QuoteListParams {
   status?: QuoteStatus;
   customer_id?: string;
   sort_by?: string;
-  sort_order?: "asc" | "desc";
+  sort_order?: 'asc' | 'desc';
 }
 
 /**
@@ -104,7 +98,7 @@ export interface PaginatedQuotes {
 export interface GenerateQuoteRequest {
   customer_id: string;
   requirements: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 /**
@@ -116,13 +110,13 @@ export const quotesApi = {
    */
   async list(params: QuoteListParams = {}): Promise<PaginatedQuotes> {
     const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
-    if (params.search) queryParams.append("search", params.search);
-    if (params.status) queryParams.append("status", params.status);
-    if (params.customer_id) queryParams.append("customer_id", params.customer_id);
-    if (params.sort_by) queryParams.append("sort_by", params.sort_by);
-    if (params.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.customer_id) queryParams.append('customer_id', params.customer_id);
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params.sort_order) queryParams.append('sort_order', params.sort_order);
 
     return apiClient.get<PaginatedQuotes>(`/api/quotes?${queryParams.toString()}`);
   },
@@ -138,7 +132,7 @@ export const quotesApi = {
    * Create a new quote
    */
   async create(data: QuoteCreate): Promise<Quote> {
-    return apiClient.post<Quote>("/api/quotes", data);
+    return apiClient.post<Quote>('/api/quotes', data);
   },
 
   /**
@@ -168,6 +162,6 @@ export const quotesApi = {
    * Generate AI-powered quote
    */
   async generate(data: GenerateQuoteRequest): Promise<Quote> {
-    return apiClient.post<Quote>("/api/quotes/generate", data);
+    return apiClient.post<Quote>('/api/quotes/generate', data);
   },
 };

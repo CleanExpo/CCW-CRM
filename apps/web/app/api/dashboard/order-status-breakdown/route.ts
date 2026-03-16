@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase/server';
 
 export async function GET() {
   try {
     const supabase = createServerClient();
-    const { data: orders } = await supabase.from("orders").select("status");
+    const { data: orders } = await supabase.from('orders').select('status');
 
     const breakdown: Record<string, number> = {};
     let totalActive = 0;
     for (const order of orders ?? []) {
       breakdown[order.status] = (breakdown[order.status] || 0) + 1;
-      if (!["delivered", "cancelled"].includes(order.status)) {
+      if (!['delivered', 'cancelled'].includes(order.status)) {
         totalActive++;
       }
     }
@@ -27,9 +27,6 @@ export async function GET() {
       by_status: byStatus,
     });
   } catch {
-    return NextResponse.json(
-      { total_active_orders: 0, by_status: [] },
-      { status: 500 }
-    );
+    return NextResponse.json({ total_active_orders: 0, by_status: [] }, { status: 500 });
   }
 }

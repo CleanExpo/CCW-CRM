@@ -271,11 +271,11 @@ export default function ReconciliationPage() {
 
       setMatchDialogOpen(false);
       await loadUnreconciledData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: 'destructive',
         title: 'Match Failed',
-        description: error.message || 'Failed to reconcile transactions',
+        description: error instanceof Error ? error.message : 'Failed to reconcile transactions',
       });
     }
   };

@@ -268,10 +268,7 @@ export const inventoryApi = {
     return apiClient.post('/api/inventory/stock-take', { location });
   },
 
-  async getStockTakes(params?: {
-    location?: string;
-    status?: string;
-  }): Promise<
+  async getStockTakes(params?: { location?: string; status?: string }): Promise<
     Array<{
       id: string;
       location: string;
@@ -296,9 +293,7 @@ export const inventoryApi = {
 
   // ── Reorder Rules ───────────────────────────────────────────────────────────
 
-  async getReorderRules(
-    location?: string
-  ): Promise<
+  async getReorderRules(location?: string): Promise<
     Array<{
       id: string;
       product_id: string;
@@ -326,9 +321,7 @@ export const inventoryApi = {
 
   // ── Reorder Alerts ──────────────────────────────────────────────────────────
 
-  async getReorderAlerts(
-    location?: string
-  ): Promise<
+  async getReorderAlerts(location?: string): Promise<
     Array<{
       product_id: string;
       sku: string;
@@ -386,9 +379,7 @@ export const inventoryApi = {
 
   // ── Product Variants ────────────────────────────────────────────────────────
 
-  async getProductVariants(
-    productId: string
-  ): Promise<
+  async getProductVariants(productId: string): Promise<
     Array<{
       id: string;
       variant_sku: string;

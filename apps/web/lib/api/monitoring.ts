@@ -12,7 +12,7 @@ export interface Alert {
   severity: 'info' | 'warning' | 'error' | 'critical';
   title: string;
   message: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   acknowledged: boolean;
   acknowledged_at?: string;
@@ -109,7 +109,7 @@ export async function createAlert(data: {
   severity: 'info' | 'warning' | 'error' | 'critical';
   title: string;
   message: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   send_notification?: boolean;
 }): Promise<Alert> {
   return apiClient.post('/api/monitoring/alerts', data);

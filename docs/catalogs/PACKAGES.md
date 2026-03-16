@@ -1,10 +1,10 @@
 # Packages Catalog — CCW ERP/CRM
 
-# Last Updated: 2026-03-03
+# Last Updated: 2026-03-17
 
-# Frontend Total: 22 direct + 19 dev = 41 packages
+# Frontend Total: 30 direct + 25 dev = 55 packages
 
-# Backend Total: 36 direct + 7 dev = 43 packages
+# Backend Total: 34 direct + 8 dev = 42 packages
 
 # Source: apps/web/package.json + apps/backend/pyproject.toml
 
@@ -12,834 +12,134 @@
 
 ## Frontend Packages (apps/web/package.json)
 
-### Direct Dependencies
-
-### PKG-001: next
-
-- **Version**: 16.1.6
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Framework
-- **Purpose**: Next.js 15/16 App Router framework for SSR/SSG/RSC
-- **Status**: Active — DO NOT UPGRADE without approval
-- **Last Verified**: 2026-03-03
-
-### PKG-002: react
-
-- **Version**: ^19.0.0
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Framework
-- **Purpose**: React 19 UI library
-- **Status**: Active — DO NOT UPGRADE without approval
-- **Last Verified**: 2026-03-03
-
-### PKG-003: react-dom
-
-- **Version**: ^19.0.0
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Framework
-- **Purpose**: React DOM renderer
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-004: typescript (dev)
-
-- **Version**: ^5.7.2
-- **Ecosystem**: Frontend
-- **Type**: Dev
-- **Category**: Language
-- **Purpose**: TypeScript 5.7 type checking
-- **Status**: Active — DO NOT UPGRADE without approval
-- **Last Verified**: 2026-03-03
-
-### PKG-005: tailwindcss
-
-- **Version**: ^4.0.0
-- **Ecosystem**: Frontend
-- **Type**: Dev
-- **Category**: Styling
-- **Purpose**: Tailwind CSS v4 utility-first CSS framework
-- **Status**: Active — DO NOT UPGRADE without approval
-- **Last Verified**: 2026-03-03
-
-### PKG-006: @radix-ui/react-alert-dialog
-
-- **Version**: ^1.1.15
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components (shadcn/ui primitives)
-- **Purpose**: Alert dialog primitive for delete confirmations
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-007: @radix-ui/react-avatar
-
-- **Version**: ^1.1.2
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Avatar component primitive
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-008: @radix-ui/react-checkbox
-
-- **Version**: ^1.3.3
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Checkbox primitive
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-009: @radix-ui/react-dialog
-
-- **Version**: ^1.1.15
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Modal dialog primitive used across all CRUD forms
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-010: @radix-ui/react-dropdown-menu
-
-- **Version**: ^2.1.4
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Dropdown menu primitive
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-011: @radix-ui/react-label
-
-- **Version**: ^2.1.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Form label primitive
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-012: @radix-ui/react-popover
-
-- **Version**: ^1.1.15
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Popover primitive for date pickers, tooltips
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-013: @radix-ui/react-scroll-area
-
-- **Version**: ^1.2.10
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Custom scrollbar component
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-014: @radix-ui/react-select
-
-- **Version**: ^2.1.4
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Select/dropdown primitive for form fields
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-015: @radix-ui/react-separator
-
-- **Version**: ^1.1.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Horizontal/vertical divider primitive
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-016: @radix-ui/react-slot
-
-- **Version**: ^1.2.4
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Slot primitive used by shadcn/ui Button (asChild pattern)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-017: @radix-ui/react-switch
-
-- **Version**: ^1.1.2
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Toggle switch primitive
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-018: @radix-ui/react-tabs
-
-- **Version**: ^1.1.2
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Tabs primitive used in settings, reports pages
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-019: @radix-ui/react-toast
-
-- **Version**: ^1.2.4
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Toast notifications for API feedback
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-020: @radix-ui/react-tooltip
-
-- **Version**: ^1.1.6
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Tooltip primitive
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-021: @sentry/nextjs
-
-- **Version**: ^10.38.0
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Monitoring / Error Tracking
-- **Purpose**: Sentry error tracking and performance monitoring for Next.js
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-022: @supabase/supabase-js
-
-- **Version**: ^2.95.3
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Database / Auth
-- **Purpose**: Supabase client for production auth and database access
-- **Status**: Active — Core auth dependency
-- **Last Verified**: 2026-03-03
-
-### PKG-023: class-variance-authority
-
-- **Version**: ^0.7.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Styling / CVA
-- **Purpose**: Type-safe component variants (used by shadcn/ui)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-024: clsx
-
-- **Version**: ^2.1.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Utility
-- **Purpose**: Conditional className merging
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-025: cmdk
-
-- **Version**: ^1.1.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI Components
-- **Purpose**: Command palette component (CMD+K)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-026: date-fns
-
-- **Version**: ^4.1.0
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Utility / Date
-- **Purpose**: Date formatting and manipulation
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-027: framer-motion
-
-- **Version**: ^12.25.0
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Animation
-- **Purpose**: Physics-based animations for sidebar, dashboard components
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-028: lucide-react
-
-- **Version**: ^0.468.0
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Icons
-- **Purpose**: Icon library used throughout the UI
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-029: next-intl
-
-- **Version**: ^4.8.2
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: i18n
-- **Purpose**: Internationalization for 10 supported languages
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-030: react-hook-form
-
-- **Version**: ^7.54.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Forms
-- **Purpose**: Form state management — standard pattern for all CRUD forms
-- **Status**: Active — Core form library
-- **Last Verified**: 2026-03-03
-
-### PKG-031: @hookform/resolvers
-
-- **Version**: ^3.9.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Forms / Validation
-- **Purpose**: Zod resolver for React Hook Form validation
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-032: reactflow
-
-- **Version**: ^11.11.4
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI / Visualization
-- **Purpose**: Node-based graph visualization (agent flows, workflow diagrams)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-033: recharts
-
-- **Version**: ^3.5.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Charts / Analytics
-- **Purpose**: Chart library for dashboard, KPI reports, inventory forecasts
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-034: sonner
-
-- **Version**: ^2.0.7
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: UI / Notifications
-- **Purpose**: Toast notification system (alternative/supplement to Radix toast)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-035: tailwind-merge
-
-- **Version**: ^2.6.0
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Styling
-- **Purpose**: Merges Tailwind classes without conflicts (used in cn() utility)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-036: zod
-
-- **Version**: ^3.24.1
-- **Ecosystem**: Frontend
-- **Type**: Direct
-- **Category**: Validation
-- **Purpose**: Schema validation for all form inputs — standard validation library
-- **Status**: Active — Core validation library
-- **Last Verified**: 2026-03-03
-
-### Dev Dependencies
-
-### PKG-D001: vitest
-
-- **Version**: ^2.1.8
-- **Ecosystem**: Frontend
-- **Type**: Dev
-- **Category**: Testing
-- **Purpose**: Unit test runner
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-D002: @playwright/test
-
-- **Version**: ^1.49.1
-- **Ecosystem**: Frontend
-- **Type**: Dev
-- **Category**: Testing / E2E
-- **Purpose**: End-to-end browser testing
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-D003: @testing-library/react
-
-- **Version**: ^16.1.0
-- **Ecosystem**: Frontend
-- **Type**: Dev
-- **Category**: Testing
-- **Purpose**: React component testing utilities
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-D004: eslint
-
-- **Version**: ^9.17.0
-- **Ecosystem**: Frontend
-- **Type**: Dev
-- **Category**: Linting
-- **Purpose**: ESLint code quality enforcement
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-D005: @pact-foundation/pact
-
-- **Version**: ^16.0.4
-- **Ecosystem**: Frontend
-- **Type**: Dev
-- **Category**: Testing / Contract
-- **Purpose**: Consumer-driven contract testing between frontend and backend
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-D006: @lhci/cli
-
-- **Version**: ^0.15.1
-- **Ecosystem**: Frontend
-- **Type**: Dev
-- **Category**: Testing / Performance
-- **Purpose**: Lighthouse CI for performance regression testing
-- **Status**: Active
-- **Last Verified**: 2026-03-03
+### Direct Dependencies (30)
+
+| #   | Package                       | Version  | Category      | Purpose                                               |
+| --- | ----------------------------- | -------- | ------------- | ----------------------------------------------------- |
+| 1   | next                          | 16.1.6   | Framework     | Next.js App Router — DO NOT UPGRADE without approval  |
+| 2   | react                         | ^19.0.0  | Framework     | React 19 UI library — DO NOT UPGRADE without approval |
+| 3   | react-dom                     | ^19.0.0  | Framework     | React DOM renderer                                    |
+| 4   | @hookform/resolvers           | ^3.9.1   | Forms         | Zod resolver for React Hook Form                      |
+| 5   | @radix-ui/react-alert-dialog  | ^1.1.15  | UI (shadcn)   | Alert dialog for delete confirmations                 |
+| 6   | @radix-ui/react-avatar        | ^1.1.2   | UI (shadcn)   | Avatar component                                      |
+| 7   | @radix-ui/react-checkbox      | ^1.3.3   | UI (shadcn)   | Checkbox primitive                                    |
+| 8   | @radix-ui/react-dialog        | ^1.1.15  | UI (shadcn)   | Modal dialog for CRUD forms                           |
+| 9   | @radix-ui/react-dropdown-menu | ^2.1.4   | UI (shadcn)   | Dropdown menu                                         |
+| 10  | @radix-ui/react-label         | ^2.1.1   | UI (shadcn)   | Form label                                            |
+| 11  | @radix-ui/react-popover       | ^1.1.15  | UI (shadcn)   | Popover for date pickers                              |
+| 12  | @radix-ui/react-scroll-area   | ^1.2.10  | UI (shadcn)   | Custom scrollbar                                      |
+| 13  | @radix-ui/react-select        | ^2.1.4   | UI (shadcn)   | Select/dropdown                                       |
+| 14  | @radix-ui/react-separator     | ^1.1.1   | UI (shadcn)   | Divider                                               |
+| 15  | @radix-ui/react-slot          | ^1.2.4   | UI (shadcn)   | Slot primitive (asChild)                              |
+| 16  | @radix-ui/react-switch        | ^1.1.2   | UI (shadcn)   | Toggle switch                                         |
+| 17  | @radix-ui/react-tabs          | ^1.1.2   | UI (shadcn)   | Tabs for settings/reports                             |
+| 18  | @radix-ui/react-toast         | ^1.2.4   | UI (shadcn)   | Toast notifications                                   |
+| 19  | @radix-ui/react-tooltip       | ^1.1.6   | UI (shadcn)   | Tooltips                                              |
+| 20  | @sentry/nextjs                | ^10.38.0 | Monitoring    | Sentry error tracking                                 |
+| 21  | @supabase/supabase-js         | ^2.95.3  | Auth/DB       | Supabase client for prod auth                         |
+| 22  | class-variance-authority      | ^0.7.1   | Styling       | Type-safe component variants (shadcn)                 |
+| 23  | clsx                          | ^2.1.1   | Utility       | Conditional className merging                         |
+| 24  | cmdk                          | ^1.1.1   | UI            | Command palette (CMD+K)                               |
+| 25  | date-fns                      | ^4.1.0   | Utility       | Date formatting/manipulation                          |
+| 26  | framer-motion                 | ^12.25.0 | Animation     | Physics-based animations                              |
+| 27  | lucide-react                  | ^0.468.0 | Icons         | Icon library                                          |
+| 28  | next-intl                     | ^4.8.2   | i18n          | Internationalization (10 languages)                   |
+| 29  | react-hook-form               | ^7.54.1  | Forms         | Form state management — core library                  |
+| 30  | react-markdown                | ^10.1.0  | Content       | Markdown rendering                                    |
+| 31  | reactflow                     | ^11.11.4 | Visualization | Node-based graph (agent flows)                        |
+| 32  | recharts                      | ^3.5.1   | Charts        | Dashboard/KPI charts                                  |
+| 33  | sonner                        | ^2.0.7   | Notifications | Toast system                                          |
+| 34  | tailwind-merge                | ^2.6.0   | Styling       | Tailwind class merge (cn() utility)                   |
+| 35  | zod                           | ^3.24.1  | Validation    | Schema validation — core library                      |
+
+### Dev Dependencies (25)
+
+| #   | Package                          | Version  | Category         | Purpose                                           |
+| --- | -------------------------------- | -------- | ---------------- | ------------------------------------------------- |
+| 1   | typescript                       | ^5.7.2   | Language         | TypeScript — DO NOT UPGRADE without approval      |
+| 2   | tailwindcss                      | ^4.0.0   | Styling          | Tailwind CSS v4 — DO NOT UPGRADE without approval |
+| 3   | vitest                           | ^2.1.8   | Testing          | Unit test runner                                  |
+| 4   | @playwright/test                 | ^1.49.1  | Testing/E2E      | End-to-end browser testing                        |
+| 5   | @testing-library/react           | ^16.1.0  | Testing          | React component testing                           |
+| 6   | @testing-library/jest-dom        | ^6.6.3   | Testing          | DOM assertion matchers                            |
+| 7   | @testing-library/user-event      | ^14.6.1  | Testing          | User interaction simulation                       |
+| 8   | @vitest/coverage-v8              | ^2.1.8   | Testing          | Code coverage                                     |
+| 9   | @pact-foundation/pact            | ^16.0.4  | Testing/Contract | Consumer-driven contract testing                  |
+| 10  | @percy/playwright                | ^1.0.10  | Testing/Visual   | Visual regression testing                         |
+| 11  | @axe-core/playwright             | ^4.11.0  | Testing/A11y     | Accessibility testing                             |
+| 12  | axe-core                         | ^4.11.0  | Testing/A11y     | Accessibility engine                              |
+| 13  | @lhci/cli                        | ^0.15.1  | Testing/Perf     | Lighthouse CI                                     |
+| 14  | eslint                           | ^9.17.0  | Linting          | Code quality enforcement                          |
+| 15  | eslint-config-next               | 15.1.0   | Linting          | Next.js ESLint config                             |
+| 16  | @eslint/eslintrc                 | ^3.2.0   | Linting          | ESLint config support                             |
+| 17  | @eslint/js                       | ^9.17.0  | Linting          | ESLint JS rules                                   |
+| 18  | @typescript-eslint/eslint-plugin | ^8.18.0  | Linting          | TS ESLint plugin                                  |
+| 19  | @typescript-eslint/parser        | ^8.18.0  | Linting          | TS ESLint parser                                  |
+| 20  | prettier                         | ^3.4.2   | Formatting       | Code formatter                                    |
+| 21  | prettier-plugin-tailwindcss      | ^0.7.2   | Formatting       | Tailwind class sorting                            |
+| 22  | @vitejs/plugin-react             | ^4.3.4   | Build            | Vite React plugin                                 |
+| 23  | @tailwindcss/postcss             | ^4.1.18  | Build            | Tailwind PostCSS plugin                           |
+| 24  | autoprefixer                     | ^10.4.20 | Build            | CSS autoprefixer                                  |
+| 25  | postcss                          | ^8.4.49  | Build            | CSS processor                                     |
+| 26  | jsdom                            | ^25.0.1  | Testing          | DOM environment for tests                         |
+| 27  | @types/node                      | ^22.10.0 | Types            | Node.js type definitions                          |
+| 28  | @types/react                     | ^19.0.1  | Types            | React type definitions                            |
+| 29  | @types/react-dom                 | ^19.0.1  | Types            | React DOM type definitions                        |
+| 30  | @types/uuid                      | ^10.0.0  | Types            | UUID type definitions                             |
 
 ---
 
 ## Backend Packages (apps/backend/pyproject.toml)
 
-### Direct Dependencies
-
-### PKG-F001: fastapi
-
-- **Version**: >=0.115.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Framework
-- **Purpose**: FastAPI web framework for all API endpoints
-- **Status**: Active — DO NOT UPGRADE without approval
-- **Last Verified**: 2026-03-03
-
-### PKG-F002: uvicorn[standard]
-
-- **Version**: >=0.32.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Server
-- **Purpose**: ASGI server for running FastAPI
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F003: sqlalchemy
-
-- **Version**: >=2.0.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: ORM
-- **Purpose**: SQLAlchemy 2.0 async ORM — all DB operations
-- **Status**: Active — DO NOT UPGRADE without approval
-- **Last Verified**: 2026-03-03
-
-### PKG-F004: asyncpg
-
-- **Version**: >=0.29.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Database Driver
-- **Purpose**: Async PostgreSQL driver for SQLAlchemy
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F005: psycopg2-binary
-
-- **Version**: >=2.9.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Database Driver
-- **Purpose**: Sync PostgreSQL driver for Alembic migrations
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F006: pgvector
-
-- **Version**: >=0.3.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Database / AI
-- **Purpose**: Vector similarity search extension for semantic search (UNI-1235)
-- **Status**: Active (installed; schema feature pending approval)
-- **Last Verified**: 2026-03-03
-
-### PKG-F007: alembic
-
-- **Version**: >=1.13.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Database Migrations
-- **Purpose**: Database schema migrations
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F008: redis
-
-- **Version**: >=5.0.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Caching
-- **Purpose**: Redis async client for response caching
-- **Status**: Active (optional — gracefully disabled if Redis unavailable)
-- **Last Verified**: 2026-03-03
-
-### PKG-F009: python-jose[cryptography]
-
-- **Version**: >=3.3.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Auth / JWT
-- **Purpose**: JWT token generation and validation — DO NOT MODIFY usage
-- **Status**: Active — Core auth dependency
-- **Last Verified**: 2026-03-03
-
-### PKG-F010: passlib[bcrypt]
-
-- **Version**: >=1.7.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Auth / Security
-- **Purpose**: Password hashing with bcrypt — DO NOT MODIFY usage
-- **Status**: Active — Core auth dependency
-- **Last Verified**: 2026-03-03
-
-### PKG-F011: stripe
-
-- **Version**: >=7.0.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Payments
-- **Purpose**: Stripe payment processing (billing router currently disabled)
-- **Status**: Installed but billing router disabled in main.py
-- **Last Verified**: 2026-03-03
-
-### PKG-F012: pydantic
-
-- **Version**: >=2.9.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Validation / Serialization
-- **Purpose**: Pydantic v2 for all request/response validation and settings
-- **Status**: Active — DO NOT UPGRADE without approval
-- **Last Verified**: 2026-03-03
-
-### PKG-F013: pydantic-settings
-
-- **Version**: >=2.6.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Configuration
-- **Purpose**: Environment-based settings via Pydantic BaseSettings
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F014: email-validator
-
-- **Version**: >=2.0.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Validation
-- **Purpose**: Email format validation for Pydantic email fields
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F015: python-dotenv
-
-- **Version**: >=1.0.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Configuration
-- **Purpose**: .env file loading for local development
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F016: httpx
-
-- **Version**: >=0.27.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: HTTP Client
-- **Purpose**: Async HTTP client for all integrations (Cin7, Shopify, Xero, etc.)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F017: pyyaml
-
-- **Version**: >=6.0.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Configuration / Serialization
-- **Purpose**: YAML parsing for config files
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F018: structlog
-
-- **Version**: >=24.4.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Logging
-- **Purpose**: Structured JSON logging throughout the application
-- **Status**: Active — Standard logging library
-- **Last Verified**: 2026-03-03
-
-### PKG-F019: python-multipart
-
-- **Version**: >=0.0.12
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: File Upload
-- **Purpose**: Multipart form data parsing for file uploads
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F020: slowapi
-
-- **Version**: >=0.1.9
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Rate Limiting
-- **Purpose**: Rate limiting middleware (100 req/min default, 10 for auth)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F021: sendgrid
-
-- **Version**: >=6.11.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Email
-- **Purpose**: SendGrid email delivery integration
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F022: fastapi-mail
-
-- **Version**: >=1.4.1
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Email
-- **Purpose**: Email notifications for system alerts
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F023: prometheus-fastapi-instrumentator
-
-- **Version**: >=7.0.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Monitoring / Metrics
-- **Purpose**: Auto-instrumented Prometheus metrics for FastAPI endpoints
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F024: prometheus-client
-
-- **Version**: >=0.19.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Monitoring / Metrics
-- **Purpose**: Prometheus Python client for custom metrics
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F025: apscheduler
-
-- **Version**: >=3.10.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Job Scheduling
-- **Purpose**: Background job scheduling for cron tasks
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F026: langchain
-
-- **Version**: >=0.1.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: AI / LLM
-- **Purpose**: LangChain framework for AI agent chains and prompts
-- **Status**: Active (AI routes conditional on availability)
-- **Last Verified**: 2026-03-03
-
-### PKG-F027: langchain-community
-
-- **Version**: >=0.0.20
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: AI / LLM
-- **Purpose**: LangChain community integrations (tools, retrievers)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F028: langchain-core
-
-- **Version**: >=0.1.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: AI / LLM
-- **Purpose**: Core LangChain abstractions (runnables, schemas)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F029: langgraph
-
-- **Version**: >=0.0.20
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: AI / Orchestration
-- **Purpose**: LangGraph for stateful multi-agent orchestration graphs
-- **Status**: Active (required for all AI agent routes)
-- **Last Verified**: 2026-03-03
-
-### PKG-F030: ollama
-
-- **Version**: >=0.1.6
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: AI / LLM
-- **Purpose**: Ollama local LLM for code generation (Development Agent)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F031: anthropic
-
-- **Version**: >=0.39.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: AI / LLM
-- **Purpose**: Anthropic Claude API for code generation tasks
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-F032: sse-starlette
-
-- **Version**: >=3.2.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Real-Time / SSE
-- **Purpose**: Server-Sent Events for real-time inventory and dashboard streams
-- **Status**: Active — Used by all SSE stream routes
-- **Last Verified**: 2026-03-03
-
-### PKG-F033: sentry-sdk[fastapi]
-
-- **Version**: >=2.52.0
-- **Ecosystem**: Backend
-- **Type**: Direct
-- **Category**: Monitoring / Error Tracking
-- **Purpose**: Sentry error tracking and performance monitoring for FastAPI
-- **Status**: Active (initialized on startup; gracefully handles missing config)
-- **Last Verified**: 2026-03-03
-
-### Dev Dependencies (pyproject.toml [project.optional-dependencies] dev)
-
-### PKG-FD001: pytest
-
-- **Version**: >=8.3.0
-- **Ecosystem**: Backend
-- **Type**: Dev
-- **Category**: Testing
-- **Purpose**: Test runner for all backend tests (321 integration assertions)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-FD002: pytest-asyncio
-
-- **Version**: >=0.24.0
-- **Ecosystem**: Backend
-- **Type**: Dev
-- **Category**: Testing
-- **Purpose**: Async test support for FastAPI/SQLAlchemy tests
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-FD003: pytest-cov
-
-- **Version**: >=5.0.0
-- **Ecosystem**: Backend
-- **Type**: Dev
-- **Category**: Testing
-- **Purpose**: Code coverage reporting
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-FD004: respx
-
-- **Version**: >=0.21.0
-- **Ecosystem**: Backend
-- **Type**: Dev
-- **Category**: Testing / HTTP Mocking
-- **Purpose**: Mock httpx requests for integration tests
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-FD005: mypy
-
-- **Version**: >=1.13.0
-- **Ecosystem**: Backend
-- **Type**: Dev
-- **Category**: Type Checking
-- **Purpose**: Static type checking
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-FD006: ruff
-
-- **Version**: >=0.7.0
-- **Ecosystem**: Backend
-- **Type**: Dev
-- **Category**: Linting
-- **Purpose**: Fast Python linter and formatter (replaces flake8/isort)
-- **Status**: Active
-- **Last Verified**: 2026-03-03
-
-### PKG-FD007: requests
-
-- **Version**: >=2.31.0
-- **Ecosystem**: Backend
-- **Type**: Dev
-- **Category**: Testing
-- **Purpose**: Sync HTTP client for integration tests
-- **Status**: Active
-- **Last Verified**: 2026-03-03
+### Direct Dependencies (34)
+
+| #   | Package                           | Version   | Category         | Purpose                                                |
+| --- | --------------------------------- | --------- | ---------------- | ------------------------------------------------------ |
+| 1   | fastapi                           | >=0.115.0 | Framework        | FastAPI — DO NOT UPGRADE without approval              |
+| 2   | uvicorn[standard]                 | >=0.32.0  | Server           | ASGI server                                            |
+| 3   | sqlalchemy                        | >=2.0.0   | ORM              | SQLAlchemy 2.0 async — DO NOT UPGRADE without approval |
+| 4   | asyncpg                           | >=0.29.0  | DB Driver        | Async PostgreSQL driver                                |
+| 5   | psycopg2-binary                   | >=2.9.0   | DB Driver        | Sync PostgreSQL driver (migrations)                    |
+| 6   | pgvector                          | >=0.3.0   | DB/AI            | Vector similarity search                               |
+| 7   | alembic                           | >=1.13.0  | Migrations       | Database schema migrations                             |
+| 8   | redis                             | >=5.0.0   | Caching          | Redis async client                                     |
+| 9   | python-jose[cryptography]         | >=3.3.0   | Auth             | JWT tokens — DO NOT MODIFY                             |
+| 10  | passlib[bcrypt]                   | >=1.7.0   | Auth             | Password hashing — DO NOT MODIFY                       |
+| 11  | stripe                            | >=7.0.0   | Payments         | Stripe payment processing                              |
+| 12  | pydantic                          | >=2.9.0   | Validation       | Pydantic v2 — DO NOT UPGRADE without approval          |
+| 13  | pydantic-settings                 | >=2.6.0   | Configuration    | Environment-based settings                             |
+| 14  | email-validator                   | >=2.0.0   | Validation       | Email format validation                                |
+| 15  | python-dotenv                     | >=1.0.0   | Configuration    | .env file loading                                      |
+| 16  | httpx                             | >=0.27.0  | HTTP Client      | Async HTTP for all integrations                        |
+| 17  | pyyaml                            | >=6.0.0   | Configuration    | YAML parsing                                           |
+| 18  | structlog                         | >=24.4.0  | Logging          | Structured JSON logging                                |
+| 19  | python-multipart                  | >=0.0.12  | File Upload      | Multipart form data parsing                            |
+| 20  | slowapi                           | >=0.1.9   | Rate Limiting    | Rate limiting middleware                               |
+| 21  | sendgrid                          | >=6.11.0  | Email            | SendGrid delivery                                      |
+| 22  | fastapi-mail                      | >=1.4.1   | Email            | Email notifications                                    |
+| 23  | prometheus-fastapi-instrumentator | >=7.0.0   | Monitoring       | Auto-instrumented Prometheus metrics                   |
+| 24  | prometheus-client                 | >=0.19.0  | Monitoring       | Custom Prometheus metrics                              |
+| 25  | apscheduler                       | >=3.10.0  | Scheduling       | Background job scheduling                              |
+| 26  | langchain                         | >=0.1.0   | AI/LLM           | LangChain agent framework                              |
+| 27  | langchain-community               | >=0.0.20  | AI/LLM           | LangChain community integrations                       |
+| 28  | langchain-core                    | >=0.1.0   | AI/LLM           | Core LangChain abstractions                            |
+| 29  | langgraph                         | >=0.0.20  | AI/Orchestration | Stateful multi-agent graphs                            |
+| 30  | ollama                            | >=0.1.6   | AI/LLM           | Local LLM for code generation                          |
+| 31  | anthropic                         | >=0.39.0  | AI/LLM           | Claude API                                             |
+| 32  | sse-starlette                     | >=3.2.0   | Real-Time        | Server-Sent Events                                     |
+| 33  | sentry-sdk[fastapi]               | >=2.52.0  | Monitoring       | Error tracking                                         |
+| 34  | supabase                          | >=2.0.0   | DB/Auth          | Supabase client                                        |
+
+### Dev Dependencies (8)
+
+| #   | Package        | Version  | Category      | Purpose                         |
+| --- | -------------- | -------- | ------------- | ------------------------------- |
+| 1   | pytest         | >=8.3.0  | Testing       | Test runner                     |
+| 2   | pytest-asyncio | >=0.24.0 | Testing       | Async test support              |
+| 3   | pytest-cov     | >=5.0.0  | Testing       | Code coverage                   |
+| 4   | respx          | >=0.21.0 | Testing       | HTTP mocking                    |
+| 5   | mypy           | >=1.13.0 | Type Checking | Static type checking            |
+| 6   | ruff           | >=0.7.0  | Linting       | Fast Python linter/formatter    |
+| 7   | httpx          | >=0.27.0 | Testing       | HTTP client (also direct dep)   |
+| 8   | requests       | >=2.31.0 | Testing       | Sync HTTP for integration tests |
+| 9   | faker          | >=28.0.0 | Testing       | Fake data for load tests        |

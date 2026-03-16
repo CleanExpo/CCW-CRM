@@ -160,7 +160,6 @@ export default function DashboardPage() {
   // PHASE 4: Handle real-time POS failure alerts
   useEffect(() => {
     if (posFailure) {
-      console.log('POS failure detected:', posFailure);
       setPosFailureCount((prev) => prev + 1);
       toast({
         title: 'POS Payment Failed',
@@ -173,8 +172,6 @@ export default function DashboardPage() {
   // PHASE 4: Handle real-time dashboard metrics updates
   useEffect(() => {
     if (metricsUpdate) {
-      console.log('Dashboard metric updated:', metricsUpdate);
-
       // Refresh specific metrics based on the update
       async function refreshMetrics() {
         try {

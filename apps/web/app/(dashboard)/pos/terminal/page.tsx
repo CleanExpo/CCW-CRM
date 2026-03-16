@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -15,33 +15,34 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { apiClient } from "@/lib/api/client";
-import { Loader2, CreditCard, DollarSign, Banknote, Building2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import { Loader2, CreditCard, DollarSign, Banknote, Building2 } from 'lucide-react';
 
 // Form validation schema
 const transactionSchema = z.object({
-  amount: z.string()
-    .min(1, "Amount is required")
+  amount: z
+    .string()
+    .min(1, 'Amount is required')
     .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-      message: "Amount must be greater than 0",
+      message: 'Amount must be greater than 0',
     }),
-  payment_method: z.enum(["eftpos", "amex", "cash", "bank_transfer"], {
-    required_error: "Please select a payment method",
+  payment_method: z.enum(['eftpos', 'amex', 'cash', 'bank_transfer'], {
+    required_error: 'Please select a payment method',
   }),
-  sales_staff_id: z.string().min(1, "Please select sales staff"),
-  terminal_id: z.string().min(1, "Terminal not configured"),
+  sales_staff_id: z.string().min(1, 'Please select sales staff'),
+  terminal_id: z.string().min(1, 'Terminal not configured'),
   customer_id: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -87,11 +88,11 @@ export default function POSTerminalPage() {
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      amount: "",
-      payment_method: "eftpos",
-      sales_staff_id: "",
-      terminal_id: "",
-      notes: "",
+      amount: '',
+      payment_method: 'eftpos',
+      sales_staff_id: '',
+      terminal_id: '',
+      notes: '',
     },
   });
 
@@ -100,49 +101,50 @@ export default function POSTerminalPage() {
     loadSalesStaff();
     loadTerminals();
     loadRecentTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update terminal when selected
+  const watchedTerminalId = form.watch('terminal_id');
   useEffect(() => {
-    const terminalId = form.watch("terminal_id");
-    if (terminalId) {
-      const terminal = terminals.find((t) => t.id === terminalId);
+    if (watchedTerminalId) {
+      const terminal = terminals.find((t) => t.id === watchedTerminalId);
       setSelectedTerminal(terminal || null);
     }
-  }, [form.watch("terminal_id"), terminals]);
+  }, [watchedTerminalId, terminals]);
 
   async function loadSalesStaff() {
     try {
-      const response = await apiClient.get<{ data: SalesStaff[] }>("/api/pos/staff");
+      const response = await apiClient.get<{ data: SalesStaff[] }>('/api/pos/staff');
       setSalesStaff(response.data || []);
     } catch (error) {
-      console.error("Failed to load sales staff:", error);
+      console.error('Failed to load sales staff:', error);
     }
   }
 
   async function loadTerminals() {
     try {
-      const response = await apiClient.get<{ data: POSTerminal[] }>("/api/pos/terminals");
+      const response = await apiClient.get<{ data: POSTerminal[] }>('/api/pos/terminals');
       const activeTerminals = (response.data || []).filter((t) => t.is_active);
       setTerminals(activeTerminals);
 
       // Auto-select first terminal
       if (activeTerminals.length > 0) {
-        form.setValue("terminal_id", activeTerminals[0].id);
+        form.setValue('terminal_id', activeTerminals[0].id);
       }
     } catch (error) {
-      console.error("Failed to load terminals:", error);
+      console.error('Failed to load terminals:', error);
     }
   }
 
   async function loadRecentTransactions() {
     try {
       const response = await apiClient.get<{ data: Transaction[] }>(
-        "/api/pos/transactions?limit=5"
+        '/api/pos/transactions?limit=5'
       );
       setRecentTransactions(response.data || []);
     } catch (error) {
-      console.error("Failed to load recent transactions:", error);
+      console.error('Failed to load recent transactions:', error);
     }
   }
 
@@ -158,46 +160,44 @@ export default function POSTerminalPage() {
         notes: values.notes,
       };
 
-      const response = await apiClient.post<Transaction>(
-        "/api/pos/transactions",
-        payload
-      );
+      const response = await apiClient.post<Transaction>('/api/pos/transactions', payload);
 
-      if (response.payment_status === "captured") {
+      if (response.payment_status === 'captured') {
         toast({
-          title: "Payment Successful",
+          title: 'Payment Successful',
           description: `Transaction ${response.transaction_number} completed. Amount: $${response.amount.toFixed(2)}`,
         });
 
         // Reset form
         form.reset({
-          amount: "",
-          payment_method: "eftpos",
+          amount: '',
+          payment_method: 'eftpos',
           sales_staff_id: values.sales_staff_id, // Keep same staff
           terminal_id: values.terminal_id, // Keep same terminal
-          notes: "",
+          notes: '',
         });
 
         // Reload recent transactions
         loadRecentTransactions();
-      } else if (response.payment_status === "pending") {
+      } else if (response.payment_status === 'pending') {
         toast({
-          title: "Payment Pending",
+          title: 'Payment Pending',
           description: `Transaction ${response.transaction_number} is pending reconciliation.`,
-          variant: "default",
+          variant: 'default',
         });
       } else {
         toast({
-          title: "Payment Failed",
-          description: "The payment was declined. Please try again.",
-          variant: "destructive",
+          title: 'Payment Failed',
+          description: 'The payment was declined. Please try again.',
+          variant: 'destructive',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to process payment. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'Failed to process payment. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsProcessing(false);
@@ -207,13 +207,13 @@ export default function POSTerminalPage() {
   // Get payment method icon
   function getPaymentIcon(method: string) {
     switch (method) {
-      case "eftpos":
+      case 'eftpos':
         return <CreditCard className="h-4 w-4" />;
-      case "amex":
+      case 'amex':
         return <CreditCard className="h-4 w-4" />;
-      case "cash":
+      case 'cash':
         return <Banknote className="h-4 w-4" />;
-      case "bank_transfer":
+      case 'bank_transfer':
         return <Building2 className="h-4 w-4" />;
       default:
         return <DollarSign className="h-4 w-4" />;
@@ -223,16 +223,16 @@ export default function POSTerminalPage() {
   // Format payment method label
   function formatPaymentMethod(method: string) {
     const labels: Record<string, string> = {
-      eftpos: "EFTPOS",
-      amex: "AMEX",
-      cash: "Cash",
-      bank_transfer: "Bank Transfer",
+      eftpos: 'EFTPOS',
+      amex: 'AMEX',
+      cash: 'Cash',
+      bank_transfer: 'Bank Transfer',
     };
     return labels[method] || method;
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">POS Terminal</h1>
@@ -247,14 +247,12 @@ export default function POSTerminalPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Payment Form */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>New Transaction</CardTitle>
-            <CardDescription>
-              Enter transaction details and process payment
-            </CardDescription>
+            <CardDescription>Enter transaction details and process payment</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -266,10 +264,7 @@ export default function POSTerminalPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Terminal</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select terminal" />
@@ -295,10 +290,7 @@ export default function POSTerminalPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Sales Staff</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select sales staff" />
@@ -331,7 +323,7 @@ export default function POSTerminalPage() {
                       <FormLabel>Amount (AUD)</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <DollarSign className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
                           <Input
                             type="number"
                             step="0.01"
@@ -353,10 +345,7 @@ export default function POSTerminalPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Payment Method</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select payment method" />
@@ -390,10 +379,10 @@ export default function POSTerminalPage() {
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        {field.value === "eftpos" && "95% approval rate, 2s processing"}
-                        {field.value === "amex" && "90% approval rate, 1s processing"}
-                        {field.value === "cash" && "Immediate capture"}
-                        {field.value === "bank_transfer" && "Pending reconciliation"}
+                        {field.value === 'eftpos' && '95% approval rate, 2s processing'}
+                        {field.value === 'amex' && '90% approval rate, 1s processing'}
+                        {field.value === 'cash' && 'Immediate capture'}
+                        {field.value === 'bank_transfer' && 'Pending reconciliation'}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -408,10 +397,7 @@ export default function POSTerminalPage() {
                     <FormItem>
                       <FormLabel>Notes (Optional)</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Transaction notes"
-                          {...field}
-                        />
+                        <Input placeholder="Transaction notes" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -419,12 +405,7 @@ export default function POSTerminalPage() {
                 />
 
                 {/* Submit Button */}
-                <Button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="w-full"
-                  size="lg"
-                >
+                <Button type="submit" disabled={isProcessing} className="w-full" size="lg">
                   {isProcessing ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -432,7 +413,7 @@ export default function POSTerminalPage() {
                     </>
                   ) : (
                     <>
-                      {getPaymentIcon(form.watch("payment_method"))}
+                      {getPaymentIcon(form.watch('payment_method'))}
                       <span className="ml-2">Process Payment</span>
                     </>
                   )}
@@ -451,7 +432,7 @@ export default function POSTerminalPage() {
           <CardContent>
             <div className="space-y-4">
               {recentTransactions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
+                <p className="text-muted-foreground py-4 text-center text-sm">
                   No recent transactions
                 </p>
               ) : (
@@ -462,25 +443,23 @@ export default function POSTerminalPage() {
                   >
                     <div className="space-y-1">
                       <p className="text-sm font-medium">{txn.transaction_number}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
                         {getPaymentIcon(txn.payment_method)}
                         <span>{formatPaymentMethod(txn.payment_method)}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {new Date(txn.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <div className="text-right space-y-1">
-                      <p className="text-sm font-bold">
-                        ${txn.amount.toFixed(2)}
-                      </p>
+                    <div className="space-y-1 text-right">
+                      <p className="text-sm font-bold">${txn.amount.toFixed(2)}</p>
                       <Badge
                         variant={
-                          txn.payment_status === "captured"
-                            ? "default"
-                            : txn.payment_status === "pending"
-                            ? "secondary"
-                            : "destructive"
+                          txn.payment_status === 'captured'
+                            ? 'default'
+                            : txn.payment_status === 'pending'
+                              ? 'secondary'
+                              : 'destructive'
                         }
                       >
                         {txn.payment_status}

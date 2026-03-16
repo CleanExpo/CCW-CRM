@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -20,9 +20,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Search, ChevronLeft, ChevronRight, Languages } from "lucide-react";
-import { TranslationEditDialog } from "./TranslationEditDialog";
+} from '@/components/ui/table';
+import { Search, ChevronLeft, ChevronRight, Languages } from 'lucide-react';
+import { TranslationEditDialog } from './TranslationEditDialog';
 
 interface Language {
   code: string;
@@ -61,12 +61,13 @@ export function ProductList({ languages, onRefresh, defaultFilter }: ProductList
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState("");
-  const [languageFilter, setLanguageFilter] = useState(defaultFilter?.language_code || "all");
-  const [statusFilter, setStatusFilter] = useState(defaultFilter?.translation_status || "all");
+  const [search, setSearch] = useState('');
+  const [languageFilter, setLanguageFilter] = useState(defaultFilter?.language_code || 'all');
+  const [statusFilter, setStatusFilter] = useState(defaultFilter?.translation_status || 'all');
 
   useEffect(() => {
     loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, languageFilter, statusFilter]);
 
   async function loadProducts() {
@@ -74,12 +75,12 @@ export function ProductList({ languages, onRefresh, defaultFilter }: ProductList
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        page_size: "20",
+        page_size: '20',
       });
 
-      if (search) params.append("search", search);
-      if (languageFilter !== "all") params.append("language_code", languageFilter);
-      if (statusFilter !== "all") params.append("translation_status", statusFilter);
+      if (search) params.append('search', search);
+      if (languageFilter !== 'all') params.append('language_code', languageFilter);
+      if (statusFilter !== 'all') params.append('translation_status', statusFilter);
 
       const response = await apiClient.get<{
         data: ProductTranslation[];
@@ -91,11 +92,11 @@ export function ProductList({ languages, onRefresh, defaultFilter }: ProductList
 
       setProducts(response.data);
       setTotalPages(response.total_pages);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to load products",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to load products',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -108,14 +109,17 @@ export function ProductList({ languages, onRefresh, defaultFilter }: ProductList
   }
 
   function getStatusBadge(status: string) {
-    const variants: Record<string, { variant: any; label: string }> = {
-      pending: { variant: "secondary", label: "Pending" },
-      ai_generated: { variant: "default", label: "AI Generated" },
-      human_reviewed: { variant: "outline", label: "Reviewed" },
-      approved: { variant: "default", label: "Approved" },
+    const variants: Record<
+      string,
+      { variant: 'default' | 'secondary' | 'outline' | 'destructive'; label: string }
+    > = {
+      pending: { variant: 'secondary', label: 'Pending' },
+      ai_generated: { variant: 'default', label: 'AI Generated' },
+      human_reviewed: { variant: 'outline', label: 'Reviewed' },
+      approved: { variant: 'default', label: 'Approved' },
     };
 
-    const config = variants[status] || { variant: "secondary", label: status };
+    const config = variants[status] || { variant: 'secondary', label: status };
 
     return (
       <Badge variant={config.variant} className="text-xs">
@@ -129,12 +133,12 @@ export function ProductList({ languages, onRefresh, defaultFilter }: ProductList
       {/* Filters */}
       <div className="flex gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Search by product name or SKU..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             className="pl-10"
           />
         </div>
@@ -168,18 +172,18 @@ export function ProductList({ languages, onRefresh, defaultFilter }: ProductList
 
       {/* Products Table */}
       {isLoading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <div className="py-12 text-center">
+          <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
           <p className="text-muted-foreground mt-2">Loading products...</p>
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Languages className="h-12 w-12 mx-auto mb-4 opacity-20" />
+        <div className="text-muted-foreground py-12 text-center">
+          <Languages className="mx-auto mb-4 h-12 w-12 opacity-20" />
           <p>No products found matching your filters</p>
         </div>
       ) : (
         <>
-          <div className="border rounded-lg">
+          <div className="rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -199,7 +203,7 @@ export function ProductList({ languages, onRefresh, defaultFilter }: ProductList
                   <TableRow key={product.id}>
                     <TableCell className="font-mono text-xs">{product.sku}</TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-muted-foreground text-sm">
                       {product.category}
                     </TableCell>
                     {languages.slice(0, 4).map((lang) => (
@@ -231,7 +235,7 @@ export function ProductList({ languages, onRefresh, defaultFilter }: ProductList
 
           {/* Pagination */}
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Page {page} of {totalPages}
             </p>
             <div className="flex gap-2">

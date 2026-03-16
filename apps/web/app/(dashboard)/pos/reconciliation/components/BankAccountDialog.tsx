@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -21,34 +21,32 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 import {
   createBankAccount,
   updateBankAccount,
   type BankAccount,
   type BankAccountCreateData,
   type BankAccountUpdateData,
-} from "@/lib/api/pos";
+} from '@/lib/api/pos';
 
 const bankAccountSchema = z.object({
-  account_name: z.string().min(1, "Account name is required"),
-  account_number: z.string().min(1, "Account number is required"),
-  bsb: z
-    .string()
-    .regex(/^\d{3}-\d{3}$/, "BSB must be in format XXX-XXX (e.g., 123-456)"),
-  bank_name: z.string().min(1, "Bank name is required"),
-  account_type: z.enum(["checking", "savings", "credit"]),
-  feed_provider: z.enum(["xero", "yodlee", "basiq", "manual"]),
+  account_name: z.string().min(1, 'Account name is required'),
+  account_number: z.string().min(1, 'Account number is required'),
+  bsb: z.string().regex(/^\d{3}-\d{3}$/, 'BSB must be in format XXX-XXX (e.g., 123-456)'),
+  bank_name: z.string().min(1, 'Bank name is required'),
+  account_type: z.enum(['checking', 'savings', 'credit']),
+  feed_provider: z.enum(['xero', 'yodlee', 'basiq', 'manual']),
   is_active: z.boolean(),
 });
 
@@ -57,7 +55,7 @@ type BankAccountFormData = z.infer<typeof bankAccountSchema>;
 interface BankAccountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode: "create" | "edit";
+  mode: 'create' | 'edit';
   account?: BankAccount;
   onSuccess: () => void;
 }
@@ -75,18 +73,18 @@ export function BankAccountDialog({
   const form = useForm<BankAccountFormData>({
     resolver: zodResolver(bankAccountSchema),
     defaultValues: {
-      account_name: "",
-      account_number: "",
-      bsb: "",
-      bank_name: "",
-      account_type: "checking",
-      feed_provider: "manual",
+      account_name: '',
+      account_number: '',
+      bsb: '',
+      bank_name: '',
+      account_type: 'checking',
+      feed_provider: 'manual',
       is_active: true,
     },
   });
 
   useEffect(() => {
-    if (mode === "edit" && account) {
+    if (mode === 'edit' && account) {
       form.reset({
         account_name: account.account_name,
         account_number: account.account_number,
@@ -98,12 +96,12 @@ export function BankAccountDialog({
       });
     } else {
       form.reset({
-        account_name: "",
-        account_number: "",
-        bsb: "",
-        bank_name: "",
-        account_type: "checking",
-        feed_provider: "manual",
+        account_name: '',
+        account_number: '',
+        bsb: '',
+        bank_name: '',
+        account_type: 'checking',
+        feed_provider: 'manual',
         is_active: true,
       });
     }
@@ -112,27 +110,27 @@ export function BankAccountDialog({
   async function onSubmit(data: BankAccountFormData) {
     setIsLoading(true);
     try {
-      if (mode === "create") {
+      if (mode === 'create') {
         await createBankAccount(data as BankAccountCreateData);
         toast({
-          title: "Success",
-          description: "Bank account created successfully",
+          title: 'Success',
+          description: 'Bank account created successfully',
         });
       } else if (account) {
         await updateBankAccount(account.id, data as BankAccountUpdateData);
         toast({
-          title: "Success",
-          description: "Bank account updated successfully",
+          title: 'Success',
+          description: 'Bank account updated successfully',
         });
       }
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save bank account",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save bank account',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -143,13 +141,11 @@ export function BankAccountDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>
-            {mode === "create" ? "Add Bank Account" : "Edit Bank Account"}
-          </DialogTitle>
+          <DialogTitle>{mode === 'create' ? 'Add Bank Account' : 'Edit Bank Account'}</DialogTitle>
           <DialogDescription>
-            {mode === "create"
-              ? "Add a new bank account for reconciliation"
-              : "Update bank account information"}
+            {mode === 'create'
+              ? 'Add a new bank account for reconciliation'
+              : 'Update bank account information'}
           </DialogDescription>
         </DialogHeader>
 
@@ -195,9 +191,9 @@ export function BankAccountDialog({
                         placeholder="123-456"
                         {...field}
                         onChange={(e) => {
-                          let value = e.target.value.replace(/[^0-9-]/g, "");
-                          if (value.length === 3 && !value.includes("-")) {
-                            value = value + "-";
+                          let value = e.target.value.replace(/[^0-9-]/g, '');
+                          if (value.length === 3 && !value.includes('-')) {
+                            value = value + '-';
                           }
                           field.onChange(value);
                         }}
@@ -219,9 +215,7 @@ export function BankAccountDialog({
                   <FormControl>
                     <Input placeholder="1234567890" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    Full account number (will be masked in display)
-                  </FormDescription>
+                  <FormDescription>Full account number (will be masked in display)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -296,10 +290,7 @@ export function BankAccountDialog({
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -315,11 +306,7 @@ export function BankAccountDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading
-                  ? "Saving..."
-                  : mode === "create"
-                  ? "Create Account"
-                  : "Update Account"}
+                {isLoading ? 'Saving...' : mode === 'create' ? 'Create Account' : 'Update Account'}
               </Button>
             </DialogFooter>
           </form>

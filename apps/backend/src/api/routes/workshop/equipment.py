@@ -268,11 +268,11 @@ async def update_equipment(
     return EquipmentResponse.model_validate(equipment)
 
 
-@router.delete("/{equipment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{equipment_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def retire_equipment(
     equipment_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> None:
+):
     """Retire equipment (soft delete)."""
     equipment = await db.get(Equipment, equipment_id)
     if not equipment:

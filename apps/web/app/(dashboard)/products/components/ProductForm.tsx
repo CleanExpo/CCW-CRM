@@ -71,7 +71,7 @@ interface Product {
   id: string;
   sku: string;
   name: string;
-  description?: string;
+  description?: string | null;
   category: ProductCategory;
   price: number;
   cost: number;

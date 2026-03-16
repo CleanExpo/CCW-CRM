@@ -161,7 +161,7 @@ async def list_all_payments(
     )
 
 
-@router.delete("/payments/{payment_id}", status_code=204)
+@router.delete("/payments/{payment_id}", status_code=204, response_model=None)
 async def delete_payment(
     payment_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],

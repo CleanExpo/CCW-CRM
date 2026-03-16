@@ -85,7 +85,9 @@ export default function WorkshopSchedulePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Workshop Schedule</h1>
-          <p className="text-muted-foreground">Manage bookings across all workshop locations</p>
+          <p className="text-neutral-600 dark:text-neutral-400">
+            Manage bookings across all workshop locations
+          </p>
         </div>
         <div className="flex gap-2">
           <select
@@ -126,7 +128,11 @@ export default function WorkshopSchedulePage() {
 
       {/* Week Grid */}
       {loading ? (
-        <div className="text-muted-foreground">Loading bookings...</div>
+        <div className="grid grid-cols-7 gap-2">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <div key={i} className="bg-muted min-h-[120px] animate-pulse rounded-lg" />
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-7 gap-2">
           {weekDates.map((date) => {

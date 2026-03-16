@@ -75,7 +75,7 @@ export default function SignupPage() {
       });
 
       // Redirect to onboarding wizard
-      router.push('/onboarding' as any);
+      router.push('/onboarding');
     } catch (error: unknown) {
       toast({
         title: 'Signup Failed',
@@ -182,11 +182,11 @@ export default function SignupPage() {
                     <div className="space-y-1 leading-none">
                       <FormLabel>
                         I agree to the{' '}
-                        <Link href={'/terms' as any} className="hover:text-primary underline">
+                        <Link href="/terms" className="hover:text-primary underline">
                           Terms of Service
                         </Link>{' '}
                         and{' '}
-                        <Link href={'/privacy' as any} className="hover:text-primary underline">
+                        <Link href="/privacy" className="hover:text-primary underline">
                           Privacy Policy
                         </Link>
                       </FormLabel>

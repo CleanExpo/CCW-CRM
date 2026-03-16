@@ -5,7 +5,7 @@
  * and auto-refreshes every 30 seconds.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 import {
   getAutonomyMetrics,
   getAutonomyHealth,
@@ -13,7 +13,7 @@ import {
   type AutonomyMetrics,
   type AutonomyHealth,
   type AutonomyAnomalies,
-} from "@/lib/api/autonomy";
+} from '@/lib/api/autonomy';
 
 /** Polling interval in milliseconds (30 seconds) */
 const POLL_INTERVAL_MS = 30_000;
@@ -27,9 +27,7 @@ interface UseAutonomyMetricsReturn {
   refresh: () => Promise<void>;
 }
 
-export function useAutonomyMetrics(
-  windowHours: number = 24
-): UseAutonomyMetricsReturn {
+export function useAutonomyMetrics(windowHours: number = 24): UseAutonomyMetricsReturn {
   const [metrics, setMetrics] = useState<AutonomyMetrics | null>(null);
   const [health, setHealth] = useState<AutonomyHealth | null>(null);
   const [anomalies, setAnomalies] = useState<AutonomyAnomalies | null>(null);
@@ -49,7 +47,7 @@ export function useAutonomyMetrics(
       setAnomalies(anomaliesData);
       setError(null);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load autonomy metrics");
+      setError(err instanceof Error ? err.message : 'Failed to load autonomy metrics');
     } finally {
       setLoading(false);
     }

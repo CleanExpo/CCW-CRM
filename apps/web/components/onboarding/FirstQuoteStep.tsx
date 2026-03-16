@@ -29,7 +29,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface FirstQuoteStepProps {
-  onComplete: (data?: any) => void;
+  onComplete: (data?: Record<string, unknown>) => void;
   onBack: () => void;
   canGoBack: boolean;
 }

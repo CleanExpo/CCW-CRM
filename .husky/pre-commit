@@ -1,1 +1,8 @@
 pnpm lint-staged
+
+# Check lockfile integrity when package.json or pnpm-lock.yaml are staged
+STAGED_FILES=$(git diff --cached --name-only)
+if echo "$STAGED_FILES" | grep -qE '(package\.json|pnpm-lock\.yaml)'; then
+  echo "📦 Lockfile-related files staged — verifying integrity..."
+  bash scripts/dependency-checks.sh
+fi

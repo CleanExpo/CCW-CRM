@@ -15,7 +15,18 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContactForm } from './components/ContactForm';
 import { DeleteContactDialog } from './components/DeleteContactDialog';
-import { Pencil, Trash2, Plus, User, Building2, Mail, Phone, ExternalLink } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  User,
+  Building2,
+  Mail,
+  Phone,
+  ExternalLink,
+  Download,
+} from 'lucide-react';
+import { exportContactsToCSV } from '@/lib/utils/csv-export';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { PaginationControls } from '@/components/ui/pagination-controls';
@@ -302,10 +313,23 @@ export default function ContactsPage() {
                 )}
               </CardDescription>
             </div>
-            <Button onClick={() => setFormOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Contact
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  exportContactsToCSV(contacts as unknown as Record<string, unknown>[]);
+                  toast({ title: 'Export Successful', description: 'Contacts exported to CSV' });
+                }}
+                disabled={contacts.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button onClick={() => setFormOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Contact
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useState } from 'react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -23,20 +23,20 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Sparkles, Loader2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Edit, Sparkles, Loader2 } from 'lucide-react';
 
 interface Language {
   code: string;
@@ -50,7 +50,7 @@ interface ProductTranslation {
   sku: string;
   name: string;
   category: string;
-  translations: Record<string, any>;
+  translations: Record<string, unknown>;
 }
 
 interface TranslationEditDialogProps {
@@ -60,21 +60,25 @@ interface TranslationEditDialogProps {
 }
 
 const translationSchema = z.object({
-  name: z.string().min(1, "Product name is required"),
+  name: z.string().min(1, 'Product name is required'),
   description: z.string().optional(),
-  short_description: z.string().max(500, "Max 500 characters").optional(),
-  meta_title: z.string().max(60, "Max 60 characters").optional(),
-  meta_description: z.string().max(160, "Max 160 characters").optional(),
-  translation_status: z.enum(["pending", "ai_generated", "human_reviewed", "approved"]),
+  short_description: z.string().max(500, 'Max 500 characters').optional(),
+  meta_title: z.string().max(60, 'Max 60 characters').optional(),
+  meta_description: z.string().max(160, 'Max 160 characters').optional(),
+  translation_status: z.enum(['pending', 'ai_generated', 'human_reviewed', 'approved']),
 });
 
 type TranslationFormData = z.infer<typeof translationSchema>;
 
-export function TranslationEditDialog({ product, languages, onSuccess }: TranslationEditDialogProps) {
+export function TranslationEditDialog({
+  product,
+  languages,
+  onSuccess,
+}: TranslationEditDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>(
-    languages.find((l) => l.code !== "en")?.code || "zh-CN"
+    languages.find((l) => l.code !== 'en')?.code || 'zh-CN'
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -82,12 +86,12 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
   const form = useForm<TranslationFormData>({
     resolver: zodResolver(translationSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      short_description: "",
-      meta_title: "",
-      meta_description: "",
-      translation_status: "human_reviewed",
+      name: '',
+      description: '',
+      short_description: '',
+      meta_title: '',
+      meta_description: '',
+      translation_status: 'human_reviewed',
     },
   });
 
@@ -104,21 +108,25 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
 
       form.reset({
         name: translation.name,
-        description: translation.description || "",
-        short_description: translation.short_description || "",
-        meta_title: translation.meta_title || "",
-        meta_description: translation.meta_description || "",
-        translation_status: translation.translation_status as any,
+        description: translation.description || '',
+        short_description: translation.short_description || '',
+        meta_title: translation.meta_title || '',
+        meta_description: translation.meta_description || '',
+        translation_status: translation.translation_status as
+          | 'pending'
+          | 'approved'
+          | 'ai_generated'
+          | 'human_reviewed',
       });
     } catch (error) {
       // Translation doesn't exist yet
       form.reset({
         name: product.name, // Start with source name
-        description: "",
-        short_description: "",
-        meta_title: "",
-        meta_description: "",
-        translation_status: "pending",
+        description: '',
+        short_description: '',
+        meta_title: '',
+        meta_description: '',
+        translation_status: 'pending',
       });
     }
   }
@@ -138,22 +146,22 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
 
       form.reset({
         name: result.translation.name,
-        description: result.translation.description || "",
-        short_description: result.translation.short_description || "",
-        meta_title: result.translation.meta_title || "",
-        meta_description: result.translation.meta_description || "",
-        translation_status: "ai_generated",
+        description: result.translation.description || '',
+        short_description: result.translation.short_description || '',
+        meta_title: result.translation.meta_title || '',
+        meta_description: result.translation.meta_description || '',
+        translation_status: 'ai_generated',
       });
 
       toast({
-        title: "Translation Generated",
-        description: "AI-powered translation has been generated. Review and save if correct.",
+        title: 'Translation Generated',
+        description: 'AI-powered translation has been generated. Review and save if correct.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate translation",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to generate translation',
+        variant: 'destructive',
       });
     } finally {
       setIsGenerating(false);
@@ -166,17 +174,17 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
       await apiClient.put(`/api/translations/products/${product.id}/${selectedLanguage}`, data);
 
       toast({
-        title: "Translation Saved",
+        title: 'Translation Saved',
         description: `Translation for ${product.name} in ${selectedLanguage} has been saved successfully`,
       });
 
       setOpen(false);
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save translation",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save translation',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -202,7 +210,7 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Translation</DialogTitle>
           <DialogDescription>
@@ -211,7 +219,7 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
         </DialogHeader>
 
         {/* Language Selector */}
-        <div className="flex items-center gap-4 pb-4 border-b">
+        <div className="flex items-center gap-4 border-b pb-4">
           <label className="text-sm font-medium">Target Language:</label>
           <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
             <SelectTrigger className="w-[250px]">
@@ -219,7 +227,7 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
             </SelectTrigger>
             <SelectContent>
               {languages
-                .filter((l) => l.code !== "en")
+                .filter((l) => l.code !== 'en')
                 .map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
                     {lang.native_name}
@@ -239,12 +247,12 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
           >
             {isGenerating ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating...
               </>
             ) : (
               <>
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Sparkles className="mr-2 h-4 w-4" />
                 AI Generate
               </>
             )}
@@ -289,9 +297,7 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>
-                        {field.value?.length || 0} / 500 characters
-                      </FormDescription>
+                      <FormDescription>{field.value?.length || 0} / 500 characters</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -389,11 +395,16 @@ export function TranslationEditDialog({ product, languages, onSuccess }: Transla
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isLoading}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save Translation"}
+                {isLoading ? 'Saving...' : 'Save Translation'}
               </Button>
             </DialogFooter>
           </form>

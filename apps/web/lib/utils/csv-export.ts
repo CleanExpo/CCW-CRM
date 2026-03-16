@@ -121,7 +121,7 @@ export function exportCustomersToCSV(customers: Record<string, unknown>[]): void
 /**
  * Export orders to CSV
  */
-export function exportOrdersToCSV(orders: any[]): void {
+export function exportOrdersToCSV(orders: Record<string, unknown>[]): void {
   const headers = [
     'order_number',
     'customer_name',
@@ -135,10 +135,10 @@ export function exportOrdersToCSV(orders: any[]): void {
   const data = orders.map((order) => ({
     order_number: order.order_number,
     customer_name: order.customer_name || '',
-    order_date: new Date(order.order_date).toLocaleDateString(),
+    order_date: new Date(order.order_date as string).toLocaleDateString(),
     status: order.status,
     total: order.total,
-    item_count: order.item_count || order.items?.length || 0,
+    item_count: order.item_count || (order.items as unknown[] | undefined)?.length || 0,
     notes: order.notes || '',
   }));
 
@@ -232,7 +232,7 @@ export function exportToPDF(
 /**
  * Export orders to PDF (browser print)
  */
-export function exportOrdersToPDF(orders: any[]): void {
+export function exportOrdersToPDF(orders: Record<string, unknown>[]): void {
   const columns = [
     { key: 'order_number', label: 'Order #' },
     { key: 'customer_name', label: 'Customer' },
@@ -269,7 +269,7 @@ export function exportOrdersToPDF(orders: any[]): void {
 /**
  * Export quotes to PDF (browser print)
  */
-export function exportQuotesToPDF(quotes: any[]): void {
+export function exportQuotesToPDF(quotes: Record<string, unknown>[]): void {
   const columns = [
     { key: 'quote_number', label: 'Quote #' },
     { key: 'customer_name', label: 'Customer' },
@@ -310,9 +310,104 @@ export function exportQuotesToPDF(quotes: any[]): void {
 }
 
 /**
+ * Export contacts to CSV
+ */
+export function exportContactsToCSV(contacts: Record<string, unknown>[]): void {
+  const headers = [
+    'first_name',
+    'last_name',
+    'email',
+    'phone',
+    'mobile',
+    'job_title',
+    'department',
+    'is_primary',
+    'is_active',
+  ];
+
+  const data = contacts.map((c) => ({
+    first_name: c.first_name || '',
+    last_name: c.last_name || '',
+    email: c.email || '',
+    phone: c.phone || '',
+    mobile: c.mobile || '',
+    job_title: c.job_title || '',
+    department: c.department || '',
+    is_primary: c.is_primary ? 'Yes' : 'No',
+    is_active: c.is_active ? 'Yes' : 'No',
+  }));
+
+  const csv = convertToCSV(data, headers);
+  const timestamp = new Date().toISOString().split('T')[0];
+  downloadCSV(csv, `contacts-export-${timestamp}.csv`);
+}
+
+/**
+ * Export suppliers to CSV
+ */
+export function exportSuppliersToCSV(suppliers: Record<string, unknown>[]): void {
+  const headers = [
+    'supplier_code',
+    'company_name',
+    'contact_name',
+    'email',
+    'phone',
+    'abn',
+    'payment_terms',
+    'is_active',
+  ];
+
+  const data = suppliers.map((s) => ({
+    supplier_code: s.supplier_code || '',
+    company_name: s.company_name || '',
+    contact_name: s.contact_name || '',
+    email: s.email || '',
+    phone: s.phone || '',
+    abn: s.abn || '',
+    payment_terms: s.payment_terms || '',
+    is_active: s.is_active ? 'Yes' : 'No',
+  }));
+
+  const csv = convertToCSV(data, headers);
+  const timestamp = new Date().toISOString().split('T')[0];
+  downloadCSV(csv, `suppliers-export-${timestamp}.csv`);
+}
+
+/**
+ * Export purchase orders to CSV
+ */
+export function exportPurchaseOrdersToCSV(orders: Record<string, unknown>[]): void {
+  const headers = [
+    'po_number',
+    'supplier_name',
+    'delivery_location',
+    'status',
+    'total',
+    'order_date',
+    'expected_delivery',
+  ];
+
+  const data = orders.map((po) => ({
+    po_number: po.po_number || '',
+    supplier_name: po.supplier_name || '',
+    delivery_location: po.delivery_location || '',
+    status: po.status || '',
+    total: po.total != null ? Number(po.total).toFixed(2) : '',
+    order_date: po.order_date ? new Date(po.order_date as string).toLocaleDateString() : '',
+    expected_delivery: po.expected_delivery
+      ? new Date(po.expected_delivery as string).toLocaleDateString()
+      : '',
+  }));
+
+  const csv = convertToCSV(data, headers);
+  const timestamp = new Date().toISOString().split('T')[0];
+  downloadCSV(csv, `purchase-orders-export-${timestamp}.csv`);
+}
+
+/**
  * Export quotes to CSV
  */
-export function exportQuotesToCSV(quotes: any[]): void {
+export function exportQuotesToCSV(quotes: Record<string, unknown>[]): void {
   const headers = [
     'quote_number',
     'customer_name',
@@ -327,11 +422,11 @@ export function exportQuotesToCSV(quotes: any[]): void {
   const data = quotes.map((quote) => ({
     quote_number: quote.quote_number,
     customer_name: quote.customer_name || '',
-    quote_date: new Date(quote.quote_date).toLocaleDateString(),
-    valid_until: new Date(quote.valid_until).toLocaleDateString(),
+    quote_date: new Date(quote.quote_date as string).toLocaleDateString(),
+    valid_until: new Date(quote.valid_until as string).toLocaleDateString(),
     status: quote.status,
     total: quote.total,
-    item_count: quote.item_count || quote.items?.length || 0,
+    item_count: quote.item_count || (quote.items as unknown[] | undefined)?.length || 0,
     notes: quote.notes || '',
   }));
 

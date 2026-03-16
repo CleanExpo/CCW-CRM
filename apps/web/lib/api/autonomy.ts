@@ -5,7 +5,7 @@
  * Provides agent performance metrics, health status, and anomaly detection.
  */
 
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,7 +28,7 @@ export interface AutonomyMetrics {
 }
 
 export interface AutonomyHealth {
-  status: "healthy" | "degraded" | "unhealthy";
+  status: 'healthy' | 'degraded' | 'unhealthy';
   metrics: {
     success_rate: number;
     error_rate: number;
@@ -51,26 +51,14 @@ export interface AutonomyAnomalies {
 // API Functions
 // ---------------------------------------------------------------------------
 
-export async function getAutonomyMetrics(
-  windowHours: number = 24
-): Promise<AutonomyMetrics> {
-  return apiClient.get<AutonomyMetrics>(
-    `/api/autonomy/metrics?window_hours=${windowHours}`
-  );
+export async function getAutonomyMetrics(windowHours: number = 24): Promise<AutonomyMetrics> {
+  return apiClient.get<AutonomyMetrics>(`/api/autonomy/metrics?window_hours=${windowHours}`);
 }
 
-export async function getAutonomyHealth(
-  windowHours: number = 1
-): Promise<AutonomyHealth> {
-  return apiClient.get<AutonomyHealth>(
-    `/api/autonomy/health?window_hours=${windowHours}`
-  );
+export async function getAutonomyHealth(windowHours: number = 1): Promise<AutonomyHealth> {
+  return apiClient.get<AutonomyHealth>(`/api/autonomy/health?window_hours=${windowHours}`);
 }
 
-export async function getAutonomyAnomalies(
-  windowHours: number = 24
-): Promise<AutonomyAnomalies> {
-  return apiClient.get<AutonomyAnomalies>(
-    `/api/autonomy/anomalies?window_hours=${windowHours}`
-  );
+export async function getAutonomyAnomalies(windowHours: number = 24): Promise<AutonomyAnomalies> {
+  return apiClient.get<AutonomyAnomalies>(`/api/autonomy/anomalies?window_hours=${windowHours}`);
 }

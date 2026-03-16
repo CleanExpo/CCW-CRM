@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, CheckCircle, DollarSign, Loader2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, CheckCircle, DollarSign, Loader2 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 interface MetricsOverview {
   total_runs: number;
@@ -29,13 +30,12 @@ export default function AnalyticsDashboardPage() {
 
   const fetchMetrics = async () => {
     try {
-      const response = await fetch("/api/analytics/metrics/overview?time_range=7d");
-      if (response.ok) {
-        const data = await response.json();
-        setMetrics(data);
-      }
+      const data = await apiClient.get<MetricsOverview>(
+        '/api/analytics/metrics/overview?time_range=7d'
+      );
+      setMetrics(data);
     } catch (error) {
-      console.error("Failed to fetch metrics:", error);
+      console.error('Failed to fetch metrics:', error);
     } finally {
       setLoading(false);
     }
@@ -43,15 +43,15 @@ export default function AnalyticsDashboardPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4 flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   if (!metrics) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
             <CardTitle>Error Loading Metrics</CardTitle>
@@ -63,7 +63,7 @@ export default function AnalyticsDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold">Analytics Dashboard</h1>
         <p className="text-muted-foreground mt-2">
@@ -72,15 +72,15 @@ export default function AnalyticsDashboardPage() {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Runs</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <Activity className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.total_runs}</div>
-            <p className="text-xs text-muted-foreground">Last 7 days</p>
+            <p className="text-muted-foreground text-xs">Last 7 days</p>
           </CardContent>
         </Card>
 
@@ -91,9 +91,7 @@ export default function AnalyticsDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.success_rate}%</div>
-            <p className="text-xs text-muted-foreground">
-              {metrics.completed_runs} completed
-            </p>
+            <p className="text-muted-foreground text-xs">{metrics.completed_runs} completed</p>
           </CardContent>
         </Card>
 
@@ -104,18 +102,18 @@ export default function AnalyticsDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.active_runs}</div>
-            <p className="text-xs text-muted-foreground">Currently running</p>
+            <p className="text-muted-foreground text-xs">Currently running</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${metrics.total_cost_usd.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {(metrics.total_input_tokens + metrics.total_output_tokens).toLocaleString()} tokens
             </p>
           </CardContent>
@@ -123,7 +121,7 @@ export default function AnalyticsDashboardPage() {
       </div>
 
       {/* Additional metrics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Agent Performance</CardTitle>
@@ -139,9 +137,7 @@ export default function AnalyticsDashboardPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Failed Runs</span>
-                <span className="text-xl font-semibold text-red-600">
-                  {metrics.failed_runs}
-                </span>
+                <span className="text-xl font-semibold text-red-600">{metrics.failed_runs}</span>
               </div>
             </div>
           </CardContent>

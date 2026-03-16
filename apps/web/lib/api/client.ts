@@ -11,7 +11,7 @@
  * - Automatic token refresh on 401
  */
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
 /** Default request timeout in milliseconds */
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -23,7 +23,7 @@ const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY_MS = 500;
 
 /** HTTP methods that are safe to retry (idempotent) */
-const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const RETRYABLE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 export interface ApiError {
   detail: string;
@@ -37,7 +37,7 @@ export class ApiClientError extends Error {
     public errorCode?: string
   ) {
     super(message);
-    this.name = "ApiClientError";
+    this.name = 'ApiClientError';
   }
 }
 
@@ -46,23 +46,23 @@ export class ApiClientError extends Error {
  * Tries localStorage first (more reliable for cross-port access), then falls back to cookies
  */
 function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
 
   // Try localStorage first (persistent "Keep me signed in")
-  const localStorageToken = localStorage.getItem("auth_token");
+  const localStorageToken = localStorage.getItem('auth_token');
   if (localStorageToken) return localStorageToken;
 
   // Try sessionStorage (session-only, clears on browser close)
-  const sessionToken = sessionStorage.getItem("auth_token");
+  const sessionToken = sessionStorage.getItem('auth_token');
   if (sessionToken) return sessionToken;
 
   // Fallback to cookies (for backward compatibility)
-  const cookies = document.cookie.split("; ");
-  const tokenCookie = cookies.find((c) => c.startsWith("auth_token="));
+  const cookies = document.cookie.split('; ');
+  const tokenCookie = cookies.find((c) => c.startsWith('auth_token='));
 
   if (!tokenCookie) return null;
 
-  return tokenCookie.split("=")[1];
+  return tokenCookie.split('=')[1];
 }
 
 /**
@@ -75,13 +75,13 @@ interface JWTPayload {
 
 function decodeJWT(token: string): JWTPayload | null {
   try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
       atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
     );
     return JSON.parse(jsonPayload) as JWTPayload;
   } catch {
@@ -95,22 +95,22 @@ function decodeJWT(token: string): JWTPayload | null {
  */
 async function attemptTokenRefresh(): Promise<boolean> {
   // Token refresh requires browser APIs (localStorage/sessionStorage)
-  if (typeof window === "undefined") return false;
+  if (typeof window === 'undefined') return false;
 
   try {
     const response = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
+      method: 'POST',
+      credentials: 'include',
     });
 
     if (response.ok) {
       const data = await response.json();
       if (data.access_token) {
         // Store the new token in the same location as the original
-        if (localStorage.getItem("auth_token")) {
-          localStorage.setItem("auth_token", data.access_token);
-        } else if (sessionStorage.getItem("auth_token")) {
-          sessionStorage.setItem("auth_token", data.access_token);
+        if (localStorage.getItem('auth_token')) {
+          localStorage.setItem('auth_token', data.access_token);
+        } else if (sessionStorage.getItem('auth_token')) {
+          sessionStorage.setItem('auth_token', data.access_token);
         }
         return true;
       }
@@ -124,11 +124,7 @@ async function attemptTokenRefresh(): Promise<boolean> {
 /**
  * Determine whether a failed request should be retried.
  */
-function shouldRetry(
-  method: string,
-  status: number | null,
-  retryCount: number
-): boolean {
+function shouldRetry(method: string, status: number | null, retryCount: number): boolean {
   if (retryCount >= MAX_RETRIES) return false;
 
   // Network error (status is null) — always retry
@@ -159,35 +155,33 @@ async function fetchApi<T>(
   timeout: number = DEFAULT_TIMEOUT_MS
 ): Promise<T> {
   const requestId =
-    typeof crypto !== "undefined" && crypto.randomUUID
+    typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
       : `req-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-  const method = (options.method || "GET").toUpperCase();
+  const method = (options.method || 'GET').toUpperCase();
 
   const buildHeaders = (): HeadersInit => {
     const token = getAuthToken();
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "X-Request-ID": requestId,
+      'Content-Type': 'application/json',
+      'X-Request-ID': requestId,
       ...(options.headers as Record<string, string> | undefined),
     };
 
     if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token}`;
 
       const payload = decodeJWT(token);
       if (payload && payload.user_id) {
-        headers["X-User-Id"] = payload.user_id;
+        headers['X-User-Id'] = payload.user_id;
       }
     }
 
     return headers;
   };
 
-  const url = endpoint.startsWith("http")
-    ? endpoint
-    : `${BACKEND_URL}${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${BACKEND_URL}${endpoint}`;
 
   let lastError: ApiClientError | null = null;
 
@@ -206,7 +200,7 @@ async function fetchApi<T>(
         ...options,
         method,
         headers: buildHeaders(),
-        credentials: "include",
+        credentials: 'include',
         signal: controller.signal,
       });
 
@@ -250,14 +244,14 @@ async function fetchApi<T>(
       // Timeout via AbortController (SSR-safe: DOMException may not exist in Node.js)
       if (
         error &&
-        typeof error === "object" &&
-        "name" in error &&
-        (error as { name: string }).name === "AbortError"
+        typeof error === 'object' &&
+        'name' in error &&
+        (error as { name: string }).name === 'AbortError'
       ) {
         throw new ApiClientError(
           `Request timeout after ${timeout}ms [${requestId}]`,
           408,
-          "REQUEST_TIMEOUT"
+          'REQUEST_TIMEOUT'
         );
       }
 
@@ -271,7 +265,7 @@ async function fetchApi<T>(
         lastError = new ApiClientError(
           `Network error: ${(error as Error).message} [${requestId}]`,
           0,
-          "NETWORK_ERROR"
+          'NETWORK_ERROR'
         );
         continue;
       }
@@ -280,13 +274,13 @@ async function fetchApi<T>(
       throw new ApiClientError(
         `Network error: ${(error as Error).message} [${requestId}]`,
         0,
-        "NETWORK_ERROR"
+        'NETWORK_ERROR'
       );
     }
   }
 
   // If we exhausted retries, throw the last error
-  throw lastError ?? new ApiClientError("Request failed after retries", 0, "RETRY_EXHAUSTED");
+  throw lastError ?? new ApiClientError('Request failed after retries', 0, 'RETRY_EXHAUSTED');
 }
 
 /**
@@ -297,7 +291,7 @@ export const apiClient = {
    * GET request
    */
   get: <T>(endpoint: string, options?: RequestInit) =>
-    fetchApi<T>(endpoint, { ...options, method: "GET" }),
+    fetchApi<T>(endpoint, { ...options, method: 'GET' }),
 
   /**
    * POST request
@@ -305,7 +299,7 @@ export const apiClient = {
   post: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
     fetchApi<T>(endpoint, {
       ...options,
-      method: "POST",
+      method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     }),
 
@@ -315,7 +309,7 @@ export const apiClient = {
   put: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
     fetchApi<T>(endpoint, {
       ...options,
-      method: "PUT",
+      method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     }),
 
@@ -325,7 +319,7 @@ export const apiClient = {
   patch: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
     fetchApi<T>(endpoint, {
       ...options,
-      method: "PATCH",
+      method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
     }),
 
@@ -333,7 +327,7 @@ export const apiClient = {
    * DELETE request
    */
   delete: <T>(endpoint: string, options?: RequestInit) =>
-    fetchApi<T>(endpoint, { ...options, method: "DELETE" }),
+    fetchApi<T>(endpoint, { ...options, method: 'DELETE' }),
 };
 
 /**

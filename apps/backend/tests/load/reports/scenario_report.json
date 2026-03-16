@@ -18,46 +18,16 @@
       "ConnectError": 8800
     },
     "slowest_scenarios": [
-      [
-        "order_pending_to_confirmed_30",
-        3480.2350997924805
-      ],
-      [
-        "product_concurrent_read_132",
-        3436.7740154266357
-      ],
-      [
-        "product_concurrent_read_130",
-        3353.2652854919434
-      ],
-      [
-        "product_zero_stock_40",
-        3352.7729511260986
-      ],
-      [
-        "product_concurrent_read_140",
-        3346.7743396759033
-      ],
-      [
-        "product_concurrent_create_110",
-        3339.4768238067627
-      ],
-      [
-        "product_empty_optionals_46",
-        3313.13157081604
-      ],
-      [
-        "product_concurrent_read_128",
-        3303.0941486358643
-      ],
-      [
-        "product_concurrent_read_134",
-        3301.121234893799
-      ],
-      [
-        "product_concurrent_read_38",
-        3298.224925994873
-      ]
+      ["order_pending_to_confirmed_30", 3480.2350997924805],
+      ["product_concurrent_read_132", 3436.7740154266357],
+      ["product_concurrent_read_130", 3353.2652854919434],
+      ["product_zero_stock_40", 3352.7729511260986],
+      ["product_concurrent_read_140", 3346.7743396759033],
+      ["product_concurrent_create_110", 3339.4768238067627],
+      ["product_empty_optionals_46", 3313.13157081604],
+      ["product_concurrent_read_128", 3303.0941486358643],
+      ["product_concurrent_read_134", 3301.121234893799],
+      ["product_concurrent_read_38", 3298.224925994873]
     ]
   },
   "results": [

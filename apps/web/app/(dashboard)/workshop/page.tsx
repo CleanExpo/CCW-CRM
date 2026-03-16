@@ -51,11 +51,11 @@ export default function WorkshopDashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Workshop Dashboard</h1>
-          <p className="text-muted-foreground">
+          <p className="text-neutral-600 dark:text-neutral-400">
             Truckmount service management across all locations
           </p>
         </div>
-        <Link href={'/workshop/schedule' as any}>
+        <Link href="/workshop/schedule">
           <Button>
             <CalendarDays className="mr-2 h-4 w-4" /> View Schedule
           </Button>
@@ -80,7 +80,14 @@ export default function WorkshopDashboardPage() {
       </div>
 
       {loading ? (
-        <div className="text-muted-foreground">Loading dashboard...</div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-muted h-24 animate-pulse rounded-lg" />
+            ))}
+          </div>
+          <div className="bg-muted h-64 animate-pulse rounded-lg" />
+        </div>
       ) : dashboard ? (
         <>
           {/* KPI Cards */}
@@ -122,7 +129,7 @@ export default function WorkshopDashboardPage() {
                 </div>
                 {dashboard.overdue_equipment_count > 0 && (
                   <Link
-                    href={'/workshop/equipment?overdue_only=true' as any}
+                    href="/workshop/equipment?overdue_only=true"
                     className="text-xs text-red-500 hover:underline"
                   >
                     View overdue
@@ -139,7 +146,7 @@ export default function WorkshopDashboardPage() {
               <CardContent>
                 <div className="text-3xl font-bold">{dashboard.pending_reminders_count}</div>
                 <Link
-                  href={'/workshop/reminders' as any}
+                  href="/workshop/reminders"
                   className="text-muted-foreground text-xs hover:underline"
                 >
                   Manage

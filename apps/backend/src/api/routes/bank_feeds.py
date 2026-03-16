@@ -348,7 +348,7 @@ async def update_bank_account(
     }
 
 
-@router.delete("/accounts/{account_id}", status_code=204)
+@router.delete("/accounts/{account_id}", status_code=204, response_model=None)
 async def delete_bank_account(
     account_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],

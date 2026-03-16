@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-const PROMETHEUS_URL = process.env.PROMETHEUS_URL || "http://localhost:9090";
+const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://localhost:9090';
 
 interface PrometheusAlert {
   labels: Record<string, string>;
   annotations: Record<string, string>;
-  state: "firing" | "pending" | "inactive";
+  state: 'firing' | 'pending' | 'inactive';
   activeAt: string;
   value: string;
 }
@@ -28,7 +28,7 @@ interface AlertRule {
 export async function GET() {
   try {
     const res = await fetch(`${PROMETHEUS_URL}/api/v1/rules`, {
-      cache: "no-store",
+      cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -54,21 +54,21 @@ export async function GET() {
 
     for (const group of groups) {
       for (const rule of group.rules || []) {
-        if (rule.type !== "alerting") continue;
+        if (rule.type !== 'alerting') continue;
         totalRules++;
 
         for (const alert of rule.alerts || []) {
-          if (alert.state === "firing") firingCount++;
-          if (alert.state === "pending") pendingCount++;
+          if (alert.state === 'firing') firingCount++;
+          if (alert.state === 'pending') pendingCount++;
 
           alerts.push({
             name: rule.name,
-            severity: alert.labels?.severity || rule.labels?.severity || "unknown",
+            severity: alert.labels?.severity || rule.labels?.severity || 'unknown',
             state: alert.state,
-            summary: alert.annotations?.summary || rule.annotations?.summary || "",
-            description: alert.annotations?.description || rule.annotations?.description || "",
-            activeAt: alert.activeAt || "",
-            value: alert.value || "",
+            summary: alert.annotations?.summary || rule.annotations?.summary || '',
+            description: alert.annotations?.description || rule.annotations?.description || '',
+            activeAt: alert.activeAt || '',
+            value: alert.value || '',
           });
         }
       }
@@ -83,13 +83,13 @@ export async function GET() {
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
-    console.error("Error fetching alerts:", error);
+  } catch (error: unknown) {
+    console.error('Error fetching alerts:', error);
     return NextResponse.json({
       alerts: [],
       summary: { total_rules: 0, firing: 0, pending: 0 },
       timestamp: new Date().toISOString(),
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

@@ -1,15 +1,19 @@
-"use client";
+'use client';
 
-import { memo } from "react";
-import { Bot, AlertTriangle, CheckCircle2, XCircle, Activity, ShieldAlert } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useAutonomyMetrics } from "@/lib/hooks/use-autonomy-metrics";
+import { memo } from 'react';
+import { Bot, AlertTriangle, CheckCircle2, XCircle, Activity, ShieldAlert } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useAutonomyMetrics } from '@/lib/hooks/use-autonomy-metrics';
 
 const STATUS_STYLES: Record<string, { color: string; bgColor: string; label: string }> = {
-  healthy: { color: "text-green-600", bgColor: "bg-green-100 border-green-300", label: "Healthy" },
-  degraded: { color: "text-yellow-600", bgColor: "bg-yellow-100 border-yellow-300", label: "Degraded" },
-  unhealthy: { color: "text-red-600", bgColor: "bg-red-100 border-red-300", label: "Unhealthy" },
+  healthy: { color: 'text-green-600', bgColor: 'bg-green-100 border-green-300', label: 'Healthy' },
+  degraded: {
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100 border-yellow-300',
+    label: 'Degraded',
+  },
+  unhealthy: { color: 'text-red-600', bgColor: 'bg-red-100 border-red-300', label: 'Unhealthy' },
 };
 
 function formatPercent(value: number): string {
@@ -52,7 +56,7 @@ export const AgentMetricsWidget = memo(function AgentMetricsWidget() {
     );
   }
 
-  const statusStyle = STATUS_STYLES[health?.status ?? "healthy"];
+  const statusStyle = STATUS_STYLES[health?.status ?? 'healthy'];
 
   return (
     <Card>
@@ -78,31 +82,35 @@ export const AgentMetricsWidget = memo(function AgentMetricsWidget() {
             {/* Key Metrics Grid */}
             <div className="mb-4 grid grid-cols-3 gap-3 text-center">
               <div className="rounded-lg border p-2">
-                <p className="text-xs text-muted-foreground">Success Rate</p>
-                <p className={`text-lg font-bold ${metrics.auto_merge_success_rate >= 0.9 ? "text-green-600" : metrics.auto_merge_success_rate >= 0.7 ? "text-yellow-600" : "text-red-600"}`}>
+                <p className="text-muted-foreground text-xs">Success Rate</p>
+                <p
+                  className={`text-lg font-bold ${metrics.auto_merge_success_rate >= 0.9 ? 'text-green-600' : metrics.auto_merge_success_rate >= 0.7 ? 'text-yellow-600' : 'text-red-600'}`}
+                >
                   {formatPercent(metrics.auto_merge_success_rate)}
                 </p>
               </div>
               <div className="rounded-lg border p-2">
-                <p className="text-xs text-muted-foreground">Test Pass</p>
-                <p className={`text-lg font-bold ${metrics.test_pass_rate >= 0.95 ? "text-green-600" : metrics.test_pass_rate >= 0.8 ? "text-yellow-600" : "text-red-600"}`}>
+                <p className="text-muted-foreground text-xs">Test Pass</p>
+                <p
+                  className={`text-lg font-bold ${metrics.test_pass_rate >= 0.95 ? 'text-green-600' : metrics.test_pass_rate >= 0.8 ? 'text-yellow-600' : 'text-red-600'}`}
+                >
                   {formatPercent(metrics.test_pass_rate)}
                 </p>
               </div>
               <div className="rounded-lg border p-2">
-                <p className="text-xs text-muted-foreground">Avg Duration</p>
+                <p className="text-muted-foreground text-xs">Avg Duration</p>
                 <p className="text-lg font-bold">{formatDuration(metrics.avg_duration_ms)}</p>
               </div>
             </div>
 
             {/* Action Summary */}
-            <div className="space-y-2 mb-4">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="mb-4 space-y-2">
+              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
                 Actions (24h)
               </p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Activity className="text-muted-foreground h-3.5 w-3.5" />
                   <span className="text-muted-foreground">Total:</span>
                   <span className="font-medium">{metrics.total_actions}</span>
                 </div>
@@ -126,8 +134,8 @@ export const AgentMetricsWidget = memo(function AgentMetricsWidget() {
 
             {/* Risk Distribution */}
             {Object.keys(metrics.risk_distribution).length > 0 && (
-              <div className="space-y-2 mb-4">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="mb-4 space-y-2">
+                <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
                   Risk Distribution
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -145,13 +153,13 @@ export const AgentMetricsWidget = memo(function AgentMetricsWidget() {
         {/* Anomalies */}
         {anomalies && anomalies.has_anomalies && (
           <div className="space-y-2">
-            <p className="text-xs font-medium text-destructive uppercase tracking-wider flex items-center gap-1">
+            <p className="text-destructive flex items-center gap-1 text-xs font-medium tracking-wider uppercase">
               <AlertTriangle className="h-3 w-3" />
               Anomalies Detected ({anomalies.anomaly_count})
             </p>
             <div className="space-y-1">
               {anomalies.anomalies.slice(0, 3).map((anomaly, idx) => (
-                <p key={idx} className="text-xs text-destructive/80 truncate">
+                <p key={idx} className="text-destructive/80 truncate text-xs">
                   {anomaly}
                 </p>
               ))}
@@ -161,10 +169,10 @@ export const AgentMetricsWidget = memo(function AgentMetricsWidget() {
 
         {/* No data state */}
         {metrics && metrics.total_actions === 0 && (
-          <div className="text-center py-4 text-muted-foreground">
-            <Bot className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <div className="text-muted-foreground py-4 text-center">
+            <Bot className="mx-auto mb-2 h-8 w-8 opacity-50" />
             <p className="text-sm">No agent activity</p>
-            <p className="text-xs mt-1">Metrics will appear when agents execute tasks</p>
+            <p className="mt-1 text-xs">Metrics will appear when agents execute tasks</p>
           </div>
         )}
       </CardContent>

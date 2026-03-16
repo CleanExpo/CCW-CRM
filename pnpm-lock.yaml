@@ -27,6 +27,9 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.1
+      eslint-formatter-compact:
+        specifier: ^9.0.1
+        version: 9.0.1
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -1389,7 +1392,6 @@ packages:
   '@pact-foundation/pact-core@17.1.0':
     resolution: {integrity: sha512-0yAUBpLP9ggibw3uX8FW8gHj6zbxCiGNDh1K9oG9b6opzqD3ZsGD8YaKYOHOLTQSoQRsB//Kkeztvi4IfWO3iQ==}
     engines: {node: '>=20'}
-    cpu: [x64, ia32, arm64]
     os: [darwin, linux, win32]
 
   '@pact-foundation/pact@16.0.4':
@@ -3936,6 +3938,10 @@ packages:
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
+
+  eslint-formatter-compact@9.0.1:
+    resolution: {integrity: sha512-mBAti2tb403dQGMyilQTYHU80stem3N7jdtKW+tmn5gj3JNF7ki0rgCZtJFw4iMayTH862FTUIqCdp70ug0S0Q==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   eslint-import-resolver-node@0.3.9:
     resolution: {integrity: sha512-WFj2isz22JahUv+B788TlO3N6zL3nNJGU8CcZbPZvVEkBPaJdCV4vy5wyghty5ROFbCRnm132v8BScu5/1BQ8g==}
@@ -10895,6 +10901,8 @@ snapshots:
   eslint-config-prettier@9.1.2(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.1(jiti@2.6.1)
+
+  eslint-formatter-compact@9.0.1: {}
 
   eslint-import-resolver-node@0.3.9:
     dependencies:
