@@ -27,6 +27,9 @@ import { SalesInsightsWidget } from "@/components/dashboard/SalesInsightsWidget"
 import { OrderPatternsWidget } from "@/components/dashboard/OrderPatternsWidget";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+// NEW: Enhanced UI Components
+import { GlassButton } from "@/components/ui/glass-button";
+import { Typewriter } from "@/components/ui/typewriter-text";
 
 interface DashboardMetrics {
   total_revenue_this_month: string;
@@ -192,18 +195,34 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
         className="flex items-start justify-between"
       >
-        <div className="flex items-center gap-3">
-          <div>
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3">
             <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground text-lg mt-2">CCW Equipment — Real-time business overview</p>
+            {/* PHASE 4: Live metrics indicator */}
+            {metricsStreamStatus === "connected" && (
+              <Badge variant="outline" className="text-xs">
+                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse mr-2" />
+                Live Metrics
+              </Badge>
+            )}
           </div>
-          {/* PHASE 4: Live metrics indicator */}
-          {metricsStreamStatus === "connected" && (
-            <Badge variant="outline" className="text-xs">
-              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse mr-2" />
-              Live Metrics
-            </Badge>
-          )}
+
+          {/* Enhanced: Dynamic Welcome Message with Typewriter */}
+          <div className="mt-2">
+            <Typewriter
+              text={[
+                "Welcome back! Track your inventory in real-time",
+                `${metrics?.active_orders || 0} active orders • ${metrics?.pending_quotes || 0} pending quotes`,
+                "AI-powered insights available to optimize your operations",
+                `${metrics?.total_products || 0} products in catalog • ${metrics?.total_customers || 0} active customers`
+              ]}
+              speed={50}
+              loop={true}
+              deleteSpeed={30}
+              delay={3000}
+              className="text-muted-foreground text-lg"
+            />
+          </div>
         </div>
 
         {/* PHASE 4: POS Failure Alert Badge */}
@@ -229,10 +248,66 @@ export default function DashboardPage() {
         )}
       </motion.div>
 
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <Card className="bg-gradient-brand/5 border-brand-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Quick Actions</h3>
+                <p className="text-sm text-muted-foreground">Common tasks to streamline your workflow</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/products">
+                <GlassButton contentClassName="flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  New Product
+                </GlassButton>
+              </Link>
+              <Link href="/orders">
+                <GlassButton contentClassName="flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Create Order
+                </GlassButton>
+              </Link>
+              <Link href="/customers">
+                <GlassButton contentClassName="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Add Customer
+                </GlassButton>
+              </Link>
+              <Link href="/quotes/generate">
+                <GlassButton contentClassName="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Generate Quote
+                </GlassButton>
+              </Link>
+              <Link href="/insights">
+                <GlassButton contentClassName="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  AI Insights
+                </GlassButton>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Bento Grid Dashboard */}
       <BentoGrid columns={3} gap="lg">
         {/* Metrics Overview - Spans 3 columns */}
-        <BentoCard variant="glass" span={3}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="col-span-3"
+        >
+          <BentoCard variant="glass" span={3}>
           <BentoCardHeader>
             <BentoCardTitle className="text-2xl">Key Metrics</BentoCardTitle>
             <BentoCardDescription>Real-time business performance indicators</BentoCardDescription>
@@ -303,36 +378,78 @@ export default function DashboardPage() {
             </div>
           </BentoCardContent>
         </BentoCard>
+        </motion.div>
 
         {/* Revenue Chart - Spans 2 columns */}
-        <BentoCard variant="glass" span={2} className="min-h-[400px]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="col-span-2"
+        >
+          <BentoCard variant="glass" span={2} className="min-h-[400px]">
           <RevenueChart data={revenueData} />
         </BentoCard>
+        </motion.div>
 
         {/* Stock Health Widget - 1 column */}
-        <BentoCard variant="gradient" span={1} className="min-h-[400px]">
-          <StockHealthWidget />
-        </BentoCard>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="col-span-1"
+        >
+          <BentoCard variant="gradient" span={1} className="min-h-[400px]">
+            <StockHealthWidget />
+          </BentoCard>
+        </motion.div>
 
         {/* Category Sales Chart - 1 column */}
-        <BentoCard variant="glass" span={1} className="min-h-[350px]">
-          <CategorySalesChart data={categorySales} />
-        </BentoCard>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="col-span-1"
+        >
+          <BentoCard variant="glass" span={1} className="min-h-[350px]">
+            <CategorySalesChart data={categorySales} />
+          </BentoCard>
+        </motion.div>
 
         {/* Order Status Breakdown - 1 column */}
-        <BentoCard variant="elevated" span={1} className="min-h-[350px]">
-          <OrderStatusBreakdownWidget />
-        </BentoCard>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
+          className="col-span-1"
+        >
+          <BentoCard variant="elevated" span={1} className="min-h-[350px]">
+            <OrderStatusBreakdownWidget />
+          </BentoCard>
+        </motion.div>
 
         {/* Quote Conversion - 1 column */}
-        <BentoCard variant="glass" span={1} className="min-h-[350px]">
-          <QuoteConversionWidget />
-        </BentoCard>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="col-span-1"
+        >
+          <BentoCard variant="glass" span={1} className="min-h-[350px]">
+            <QuoteConversionWidget />
+          </BentoCard>
+        </motion.div>
 
         {/* AI Insights - Spans 2 columns with Border Beam */}
         {insights.length > 0 && (
-          <BorderBeam>
-            <BentoCard variant="glass" span={2} glowOnHover className="min-h-[350px]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
+            className="col-span-2"
+          >
+            <BorderBeam>
+              <BentoCard variant="glass" span={2} glowOnHover className="min-h-[350px]">
               <BentoCardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -342,10 +459,10 @@ export default function DashboardPage() {
                     <BentoCardTitle className="text-2xl">AI-Powered Insights</BentoCardTitle>
                   </div>
                   <Link href="/insights">
-                    <Button variant="outline" size="sm">
+                    <GlassButton size="sm" contentClassName="flex items-center gap-2">
                       View All
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                      <ArrowRight className="w-4 h-4" />
+                    </GlassButton>
                   </Link>
                 </div>
                 <BentoCardDescription>
@@ -361,56 +478,98 @@ export default function DashboardPage() {
               </BentoCardContent>
             </BentoCard>
           </BorderBeam>
+          </motion.div>
         )}
 
         {/* PHASE C: AI Sales Insights Widget - Spans 2 columns */}
-        <BentoCard variant="elevated" span={2} className="min-h-[400px]">
-          <SalesInsightsWidget />
-        </BentoCard>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="col-span-2"
+        >
+          <BentoCard variant="elevated" span={2} className="min-h-[400px]">
+            <SalesInsightsWidget />
+          </BentoCard>
+        </motion.div>
 
         {/* Transfer Suggestions - 1 column */}
-        <BentoCard variant="glass" span={1} className="min-h-[350px]">
-          <TransferSuggestionsWidget />
-        </BentoCard>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.55 }}
+          className="col-span-1"
+        >
+          <BentoCard variant="glass" span={1} className="min-h-[350px]">
+            <TransferSuggestionsWidget />
+          </BentoCard>
+        </motion.div>
 
         {/* PHASE C: AI Order Patterns Widget - Spans 2 columns */}
-        <BentoCard variant="glass" span={2} className="min-h-[450px]">
-          <OrderPatternsWidget />
-        </BentoCard>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="col-span-2"
+        >
+          <BentoCard variant="glass" span={2} className="min-h-[450px]">
+            <OrderPatternsWidget />
+          </BentoCard>
+        </motion.div>
 
         {/* Revenue by Location - Spans 3 columns */}
-        <BentoCard variant="glass" span={3} className="min-h-[350px]">
-          <RevenueByLocationWidget />
-        </BentoCard>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.65 }}
+          className="col-span-3"
+        >
+          <BentoCard variant="glass" span={3} className="min-h-[350px]">
+            <RevenueByLocationWidget />
+          </BentoCard>
+        </motion.div>
 
         {/* Top Products - 1 column */}
-        <BentoCard variant="elevated" span={1} className="min-h-[350px]">
-          <BentoCardHeader>
-            <BentoCardTitle>Top 5 Products</BentoCardTitle>
-            <BentoCardDescription>By revenue</BentoCardDescription>
-          </BentoCardHeader>
-          <BentoCardContent>
-            <div className="space-y-4">
-              {Array.isArray(topProducts) && topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-brand/20 text-sm font-semibold text-brand-primary border border-brand-primary/20">
-                      {index + 1}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+          className="col-span-1"
+        >
+          <BentoCard variant="elevated" span={1} className="min-h-[350px]">
+            <BentoCardHeader>
+              <BentoCardTitle>Top 5 Products</BentoCardTitle>
+              <BentoCardDescription>By revenue</BentoCardDescription>
+            </BentoCardHeader>
+            <BentoCardContent>
+              <div className="space-y-4">
+                {Array.isArray(topProducts) && topProducts.map((product, index) => (
+                  <div key={product.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-brand/20 text-sm font-semibold text-brand-primary border border-brand-primary/20">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.quantity_sold} units sold</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">{product.quantity_sold} units sold</p>
-                    </div>
+                    <span className="text-sm font-semibold">{formatCurrency(parseFloat(product.revenue))}</span>
                   </div>
-                  <span className="text-sm font-semibold">{formatCurrency(parseFloat(product.revenue))}</span>
-                </div>
-              ))}
-            </div>
-          </BentoCardContent>
-        </BentoCard>
+                ))}
+              </div>
+            </BentoCardContent>
+          </BentoCard>
+        </motion.div>
 
         {/* Recent Activity - Spans 3 columns */}
-        <BentoCard variant="glass" span={3}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.75 }}
+          className="col-span-3"
+        >
+          <BentoCard variant="glass" span={3}>
           <BentoCardHeader>
             <BentoCardTitle className="text-2xl">Recent Activity</BentoCardTitle>
             <BentoCardDescription>Latest orders and quotes</BentoCardDescription>
@@ -440,6 +599,7 @@ export default function DashboardPage() {
             </div>
           </BentoCardContent>
         </BentoCard>
+        </motion.div>
       </BentoGrid>
     </div>
   );

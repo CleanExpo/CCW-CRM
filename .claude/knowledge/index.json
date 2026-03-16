@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-16",
+  "categories": [
+    {
+      "name": "frontend",
+      "description": "Frontend development patterns, frameworks, and best practices",
+      "entries": [
+        {
+          "id": "frontend-001",
+          "title": "Next.js 15 Modern Frontend Patterns for 2026 SaaS Applications",
+          "path": "domains/frontend/frontend-001-nextjs15-modern-patterns-2026.md",
+          "created": "2026-03-16",
+          "expires": "2026-06-16",
+          "confidence": 0.91,
+          "tier": "V1",
+          "tags": [
+            "next.js",
+            "react",
+            "typescript",
+            "shadcn-ui",
+            "tanstack",
+            "performance",
+            "testing",
+            "architecture"
+          ],
+          "summary": "Comprehensive research on Next.js 15 + React 19 patterns including Server Components, PPR, state management (TanStack Query, Zustand), shadcn/ui design systems, testing strategies, and performance optimization for production SaaS applications."
+        }
+      ]
+    }
+  ]
+}

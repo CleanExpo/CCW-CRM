@@ -26,6 +26,9 @@ import {
   Activity,
   CreditCard,
   Scale,
+  BarChart3,
+  FileBarChart,
+  Shield,
 } from "lucide-react";
 
 const navigation = [
@@ -49,7 +52,10 @@ const navigation = [
   { name: "Alerts", href: "/alerts", icon: Bell },
   { name: "Approvals", href: "/approvals", icon: CheckCircle },
   { name: "Monitoring", href: "/monitoring", icon: Activity },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Reports", href: "/reports", icon: FileBarChart },
   { name: "Settings", href: "/settings/integrations", icon: Settings },
+  { name: "Admin", href: "/admin", icon: Shield },
 ];
 
 export function Sidebar() {

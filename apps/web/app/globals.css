@@ -595,4 +595,63 @@
     background-size: 200% 100%;
     animation: shimmer 2s linear infinite;
   }
+
+  /* ============================================
+     GLASS BUTTON EFFECTS
+     ============================================ */
+  .glass-button-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  .glass-button {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.05)
+    );
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-button:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15),
+      rgba(255, 255, 255, 0.08)
+    );
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
+  }
+
+  .glass-button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.3);
+  }
+
+  .glass-button-shadow {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--brand-primary) / 0.3),
+      hsl(var(--brand-secondary) / 0.3)
+    );
+    filter: blur(20px);
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-button-wrap:hover .glass-button-shadow {
+    opacity: 1;
+  }
+
+  .glass-button-text {
+    position: relative;
+    z-index: 1;
+  }
 }
