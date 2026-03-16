@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "eslint-formatter-compact": "^9.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "prettier": "^3.4.2",
