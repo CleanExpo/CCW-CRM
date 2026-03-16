@@ -1,8 +1,8 @@
 # Models Catalog — CCW ERP/CRM Database
 
-# Last Updated: 2026-03-03
+# Last Updated: 2026-03-17
 
-# Total Models: 36
+# Total Models: 120
 
 # Source: apps/backend/src/db/
 
@@ -16,366 +16,1002 @@
 
 - **Table**: organizations
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), name (unique), slug (unique), is_active (bool), created_at, updated_at
-- **Relationships**: users (one-to-many, via FK on users table)
-- **Domain**: Auth / Multi-tenancy
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-002: Product
 
 - **Table**: products
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), organization_id (FK nullable), sku (unique), name, description, category (ProductCategory enum string), price (Numeric), cost (Numeric), stock (int), warehouse_location, embedding (Vector 1536 — pgvector), is_active, created_at, updated_at
-- **Relationships**: order_items (one-to-many), quote_items (one-to-many), translations (one-to-many, cascade delete)
-- **Enums**: ProductCategory: HEAVY_MACHINERY, HAND_TOOLS, POWER_TOOLS, SAFETY_EQUIPMENT, BUILDING_MATERIALS, ELECTRICAL, PLUMBING, ACCESSORIES
-- **Domain**: Inventory / Catalog
+- **Enums**: ProductCategory (heavy_machinery, hand_tools, power_tools, safety_equipment, building_materials, electrical, plumbing, accessories)
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-003: Customer
 
 - **Table**: customers
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), organization_id (FK nullable), customer_number (unique), company_name, contact_name, email, phone, address, city, state, postcode, xero_contact_id, xero_synced_at, is_active, created_at, updated_at
-- **Relationships**: orders (one-to-many), quotes (one-to-many)
-- **Domain**: CRM
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-004: Order
 
 - **Table**: orders
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), organization_id (FK nullable), order_number (unique), customer_id (FK CASCADE), status (OrderStatus enum), total (Numeric), notes, xero_invoice_id, xero_synced_at, xero_sync_status, order_date, created_at, updated_at, fulfillment_location, tracking_number, carrier_name, shipped_date, estimated_delivery_date
-- **Relationships**: customer (many-to-one), order_items (one-to-many cascade delete), shipments (one-to-many), activities (one-to-many cascade delete)
-- **Enums**: OrderStatus: draft, pending, confirmed, processing, shipped, delivered, cancelled
-- **Domain**: Orders
+- **Enums**: OrderStatus (draft, pending, confirmed, processing, shipped, delivered, cancelled)
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-005: OrderItem
 
 - **Table**: order_items
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), order_id (FK CASCADE), product_id (FK CASCADE), quantity (int), unit_price (Numeric), line_total (Numeric), created_at, updated_at
-- **Relationships**: order (many-to-one), product (many-to-one)
-- **Indexes**: ix_order_items_order_product (composite, from indexes.py)
-- **Domain**: Orders
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-006: OrderActivity
 
 - **Table**: order_activity
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), order_id (FK CASCADE), event_type, message, created_by, meta_data (JSON), created_at
-- **Relationships**: order (many-to-one)
-- **Domain**: Orders / Audit Trail
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-007: Quote
 
 - **Table**: quotes
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), organization_id (FK nullable), quote_number (unique), customer_id (FK CASCADE), status (QuoteStatus enum), total (Numeric), notes, valid_until, quote_date, created_at, updated_at
-- **Relationships**: customer (many-to-one), quote_items (one-to-many cascade delete)
-- **Enums**: QuoteStatus: draft, pending, sent, accepted, rejected, expired
-- **Domain**: Orders
+- **Enums**: QuoteStatus (draft, pending, sent, accepted, rejected, expired)
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-008: QuoteItem
 
 - **Table**: quote_items
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), quote_id (FK CASCADE), product_id (FK CASCADE), quantity (int), unit_price (Numeric), line_total (Numeric), created_at, updated_at
-- **Relationships**: quote (many-to-one), product (many-to-one)
-- **Domain**: Orders
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-009: ConversationHistory
 
 - **Table**: conversation_history
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), conversation_id (UUID), role (user/assistant), content, user_id (UUID nullable), created_at
-- **Domain**: AI / Chat
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-010: AgentExecution
 
 - **Table**: agent_executions
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), agent_id, agent_name, task, context_snapshot, status, result, error, execution_time_ms, tokens_used, estimated_cost_usd, initiated_by, parent_execution_id (UUID nullable), user_id (UUID nullable), created_at, completed_at
-- **Domain**: AI / Audit Trail
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-011: AIGeneratedContent
 
 - **Table**: ai_generated_content
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), content_type, title, content, content_metadata, entity_type, entity_id (UUID nullable), user_id (UUID nullable), created_at
-- **Domain**: AI / Content
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
 
 ### MODEL-012: BackgroundJob
 
 - **Table**: background_jobs
 - **File**: `apps/backend/src/db/demo_models.py` (LOCKED)
-- **Fields**: id (UUID PK), job_type, status (JobStatus enum), input_data (JSON), output_data (JSON), progress (0–100), error_message, created_at, updated_at, started_at, completed_at
-- **Enums**: JobStatus: pending, processing, completed, failed, cancelled
-- **Domain**: Infrastructure / Background Processing
+- **Enums**: JobStatus (pending, processing, completed, failed, cancelled)
 - **Status**: Active — SCHEMA LOCKED
-- **Last Verified**: 2026-03-03
+
+---
+
+## Base Models (models_base.py)
+
+### MODEL-013: User
+
+- **Table**: users
+- **File**: `apps/backend/src/db/models_base.py`
+- **Status**: Active
+
+### MODEL-014: Contractor
+
+- **Table**: contractors
+- **File**: `apps/backend/src/db/models_base.py`
+- **Status**: Active
+
+### MODEL-015: AvailabilitySlot
+
+- **Table**: availability_slots
+- **File**: `apps/backend/src/db/models_base.py`
+- **Status**: Active
+
+### MODEL-016: Document
+
+- **Table**: documents
+- **File**: `apps/backend/src/db/models_base.py`
+- **Status**: Active
 
 ---
 
 ## Cin7 Integration Models (cin7_models.py)
 
-### MODEL-013: Cin7Connection
+### MODEL-017: Cin7Connection
 
 - **Table**: cin7_connections
 - **File**: `apps/backend/src/db/cin7_models.py`
-- **Fields**: id (UUID PK), organization_id (UUID nullable), account_name (unique), connection_type (core/omni/both), core_account_id, core_application_key, omni_username, omni_api_key, is_active, last_sync_at, last_product_sync_at, last_customer_sync_at, last_inventory_sync_at, sync_settings (JSONB), created_at, updated_at
-- **Domain**: Integration / Cin7
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-014: Cin7ProductMapping
+### MODEL-018: Cin7ProductMapping
 
 - **Table**: cin7_product_mappings
 - **File**: `apps/backend/src/db/cin7_models.py`
-- **Fields**: id (UUID PK), product_id (UUID FK-like), cin7_core_product_id, cin7_omni_product_id (int), cin7_sku, last_synced_at, sync_status, created_at, updated_at
-- **Domain**: Integration / Cin7
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-015: Cin7CustomerMapping
+### MODEL-019: Cin7CustomerMapping
 
 - **Table**: cin7_customer_mappings
 - **File**: `apps/backend/src/db/cin7_models.py`
-- **Fields**: id (UUID PK), customer_id (UUID), cin7_core_customer_id, cin7_omni_contact_id (int), cin7_customer_name, last_synced_at, sync_status, created_at, updated_at
-- **Domain**: Integration / Cin7
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-016: Cin7OrderMapping
+### MODEL-020: Cin7OrderMapping
 
 - **Table**: cin7_order_mappings
 - **File**: `apps/backend/src/db/cin7_models.py`
-- **Fields**: id (UUID PK), order_id (UUID), cin7_core_sale_id, cin7_omni_order_id (int), cin7_order_number, last_synced_at, sync_status, created_at, updated_at
-- **Domain**: Integration / Cin7
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-017: Cin7QuoteMapping
+### MODEL-021: Cin7QuoteMapping
 
 - **Table**: cin7_quote_mappings
 - **File**: `apps/backend/src/db/cin7_models.py`
-- **Fields**: id (UUID PK), quote_id (UUID), cin7_omni_quote_id (int, Omni-only — Core has no quotes API), cin7_quote_reference, last_synced_at, sync_status, created_at, updated_at
-- **Domain**: Integration / Cin7
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-018: Cin7SupplierMapping
+### MODEL-022: Cin7SupplierMapping
 
 - **Table**: cin7_supplier_mappings
 - **File**: `apps/backend/src/db/cin7_models.py`
-- **Fields**: id (UUID PK), supplier_id (UUID), cin7_core_supplier_id, cin7_omni_supplier_id (int), cin7_supplier_name, last_synced_at, sync_status, created_at, updated_at
-- **Domain**: Integration / Cin7
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-019: Cin7PurchaseOrderMapping
+### MODEL-023: Cin7PurchaseOrderMapping
 
 - **Table**: cin7_purchase_order_mappings
 - **File**: `apps/backend/src/db/cin7_models.py`
-- **Fields**: id (UUID PK), purchase_order_id (UUID), cin7_core_purchase_id, cin7_omni_po_id (int), cin7_po_number, last_synced_at, sync_status, created_at, updated_at
-- **Domain**: Integration / Cin7
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-020: Cin7SyncLog
+### MODEL-024: Cin7WebhookSubscription
+
+- **Table**: cin7_webhook_subscriptions
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+### MODEL-025: Cin7SyncLog
 
 - **Table**: cin7_sync_logs
 - **File**: `apps/backend/src/db/cin7_models.py`
-- **Fields**: id (UUID PK), connection_id (UUID nullable FK), sync_type (products/customers/sales/inventory), direction (SyncDirection enum), api_source (core/omni), status (SyncStatus enum), records_processed, records_created, records_updated, records_failed, error_message, details (JSONB), started_at, completed_at
-- **Enums**: SyncDirection: cin7_to_erp, erp_to_cin7, bidirectional; SyncStatus: pending, in_progress, completed, failed, partial
-- **Domain**: Integration / Cin7 / Audit
 - **Status**: Active
-- **Last Verified**: 2026-03-03
+
+### MODEL-026: Cin7OrderLineItem
+
+- **Table**: cin7_order_line_items
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+### MODEL-027: Cin7PurchaseOrderLineItem
+
+- **Table**: cin7_purchase_order_line_items
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+### MODEL-028: Cin7GoodsReceipt
+
+- **Table**: cin7_goods_receipts
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+### MODEL-029: Cin7GoodsReceiptLine
+
+- **Table**: cin7_goods_receipt_lines
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+### MODEL-030: Cin7StockAdjustment
+
+- **Table**: cin7_stock_adjustments
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+### MODEL-031: Cin7StockTransfer
+
+- **Table**: cin7_stock_transfers
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+### MODEL-032: Cin7StockTake
+
+- **Table**: cin7_stock_takes
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+### MODEL-033: Cin7StockTakeLine
+
+- **Table**: cin7_stock_take_lines
+- **File**: `apps/backend/src/db/cin7_models.py`
+- **Status**: Active
+
+---
+
+## Cin7 Shadow Models (cin7_shadow_models.py)
+
+### MODEL-034: Cin7ShadowSync
+
+- **Table**: cin7_shadow_syncs
+- **File**: `apps/backend/src/db/cin7_shadow_models.py`
+- **Status**: Active
+
+### MODEL-035: Cin7SyncGap
+
+- **Table**: cin7_sync_gaps
+- **File**: `apps/backend/src/db/cin7_shadow_models.py`
+- **Status**: Active
+
+---
+
+## Cin7 BOM Models (cin7_bom_models.py)
+
+### MODEL-036: Cin7BomMaster
+
+- **Table**: cin7_bom_masters
+- **File**: `apps/backend/src/db/cin7_bom_models.py`
+- **Status**: Active
+
+### MODEL-037: Cin7BomComponent
+
+- **Table**: cin7_bom_components
+- **File**: `apps/backend/src/db/cin7_bom_models.py`
+- **Status**: Active
+
+### MODEL-038: Cin7ProductionRun
+
+- **Table**: cin7_production_runs
+- **File**: `apps/backend/src/db/cin7_bom_models.py`
+- **Status**: Active
+
+---
+
+## Cin7 Fulfilment Models (cin7_fulfilment_models.py)
+
+### MODEL-039: Cin7Fulfilment
+
+- **Table**: cin7_fulfilments
+- **File**: `apps/backend/src/db/cin7_fulfilment_models.py`
+- **Status**: Active
+
+### MODEL-040: Cin7Invoice
+
+- **Table**: cin7_invoices
+- **File**: `apps/backend/src/db/cin7_fulfilment_models.py`
+- **Status**: Active
+
+### MODEL-041: Cin7Payment
+
+- **Table**: cin7_payments
+- **File**: `apps/backend/src/db/cin7_fulfilment_models.py`
+- **Status**: Active
+
+---
+
+## Cin7 GL Models (cin7_gl_models.py)
+
+### MODEL-042: Cin7ChartOfAccount
+
+- **Table**: cin7_chart_of_accounts
+- **File**: `apps/backend/src/db/cin7_gl_models.py`
+- **Status**: Active
+
+### MODEL-043: Cin7JournalEntry
+
+- **Table**: cin7_journal_entries
+- **File**: `apps/backend/src/db/cin7_gl_models.py`
+- **Status**: Active
+
+### MODEL-044: Cin7JournalLine
+
+- **Table**: cin7_journal_lines
+- **File**: `apps/backend/src/db/cin7_gl_models.py`
+- **Status**: Active
+
+### MODEL-045: Cin7AccountMapping
+
+- **Table**: cin7_account_mappings
+- **File**: `apps/backend/src/db/cin7_gl_models.py`
+- **Status**: Active
 
 ---
 
 ## POS Models (pos_models.py)
 
-### MODEL-021: Location
+### MODEL-046: Location
 
 - **Table**: locations
 - **File**: `apps/backend/src/db/pos_models.py`
-- **Fields**: id (UUID PK), code (unique), name, location_type (physical/virtual), address, city, state, postal_code, country (default Australia), timezone (default Australia/Brisbane), is_active, created_at, updated_at
-- **Relationships**: sales_staff (one-to-many), pos_terminals (one-to-many), bank_accounts (one-to-many), pos_transactions (one-to-many via location_code and resolved_location_code)
-- **Domain**: POS / Multi-Location
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-022: SalesStaff
+### MODEL-047: SalesStaff
 
 - **Table**: sales_staff
 - **File**: `apps/backend/src/db/pos_models.py`
-- **Fields**: id (UUID PK), staff_code (unique), full_name, email, phone, primary_location_code (FK to locations), can_sell_at_locations (Array of strings), is_active, created_at, updated_at
-- **Relationships**: primary_location (many-to-one), pos_transactions (one-to-many)
-- **Domain**: POS / HR
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-023: POSTerminal
+### MODEL-048: POSTerminal
 
 - **Table**: pos_terminals
 - **File**: `apps/backend/src/db/pos_models.py`
-- **Fields**: id (UUID PK), terminal_id (unique), location_code (FK), terminal_type (eftpos/amex/virtual), merchant_id, terminal_config (JSONB), is_active, last_ping_at, created_at, updated_at
-- **Relationships**: location (many-to-one), pos_transactions (one-to-many)
-- **Domain**: POS
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-024: BankAccount
+### MODEL-049: BankAccount
 
 - **Table**: bank_accounts
 - **File**: `apps/backend/src/db/pos_models.py`
-- **Fields**: id (UUID PK), account_name, account_number, bsb, bank_name, location_code (FK nullable), account_type (checking/savings/merchant), currency (default AUD), feed_provider, feed_account_id, last_feed_sync_at, feed_sync_status, sync_interval_hours, webhook_enabled, webhook_secret, sync_retry_count, last_sync_error, is_active, created_at, updated_at
-- **Relationships**: location (many-to-one nullable), bank_feeds (one-to-many cascade delete)
-- **Domain**: Financial / POS / Bank Feeds
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-025: POSTransaction
+### MODEL-050: POSTransaction
 
 - **Table**: pos_transactions
 - **File**: `apps/backend/src/db/pos_models.py`
-- **Fields**: id (UUID PK), transaction_number (unique), order_id (FK nullable), terminal_id (FK nullable), sales_staff_id (FK nullable), location_code (FK), resolved_location_code (FK nullable), transaction_type (sale/refund/void), payment_method (eftpos/amex/bank_transfer/cash), amount (Numeric), currency (AUD), payment_status (pending/authorized/captured/failed/refunded), payment_gateway_ref, payment_gateway_response (JSONB), bank_statement_ref, xero_invoice_id, cin7_transaction_id, reconciliation_status (pending/matched/discrepancy/resolved), reconciled_at, reconciled_by, created_at, updated_at
-- **Relationships**: terminal, sales_staff, location, resolved_location, bank_feeds
-- **Domain**: Financial / POS
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-026: BankFeed
+### MODEL-051: BankFeed
 
 - **Table**: bank_feeds
 - **File**: `apps/backend/src/db/pos_models.py`
-- **Fields**: id (UUID PK), bank_account_id (FK CASCADE), transaction_date, description, reference, debit (Numeric), credit (Numeric), balance (Numeric), matched_pos_transaction_id (FK nullable), match_confidence (Numeric 0–1), match_status (pending/auto_matched/manual_matched/no_match), matched_at, matched_by, raw_data (JSONB), match_suggestions (JSONB array), created_at, updated_at
-- **Relationships**: bank_account (many-to-one), matched_pos_transaction (many-to-one nullable)
-- **Domain**: Financial / Reconciliation
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
 ---
 
 ## Webhook Models (webhook_models.py)
 
-### MODEL-027: WebhookEvent
+### MODEL-052: WebhookEvent
 
 - **Table**: webhook_events
 - **File**: `apps/backend/src/db/webhook_models.py`
-- **Fields**: id (UUID PK), source (shopify/xero/sendgrid/stripe/fedex/ups/usps/contact_form/demo_request/cin7/other), event_type, event_id (idempotency key), payload (JSON), headers (JSON nullable), status (WebhookStatus enum), retry_count, max_retries (default 3), next_retry_at (nullable), error_message, error_details (JSON), processing_result (JSON), received_at, started_processing_at, completed_at
-- **Indexes**: ix_webhook_events_source_event_id (unique composite — idempotency), ix_webhook_events_status_next_retry (for retry polling)
-- **Enums**: WebhookStatus: pending, processing, completed, failed, dead_letter; WebhookSource: shopify, xero, sendgrid, stripe, fedex, ups, usps, contact_form, demo_request, cin7, other
-- **Domain**: Integration / Webhooks / Event Processing
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
-### MODEL-028: WebhookMetrics
+### MODEL-053: WebhookMetrics
 
 - **Table**: webhook_metrics
 - **File**: `apps/backend/src/db/webhook_models.py`
-- **Fields**: id (UUID PK), period_type (hourly/daily/weekly), period_start, period_end, source, total_received, total_completed, total_failed, total_dead_letter, avg_processing_time_ms, max_processing_time_ms, reliability_rate (float), calculated_at
-- **Indexes**: ix_webhook_metrics_source_period (unique composite)
-- **Domain**: Monitoring / Webhooks
 - **Status**: Active
-- **Last Verified**: 2026-03-03
 
 ---
 
-## Additional DB Model Files (inferred from db/ directory listing)
+## CRM Models (crm_models.py)
 
-### MODEL-029: i18n / ProductTranslation (i18n_models.py)
+### MODEL-054: Contact
 
-- **File**: `apps/backend/src/db/i18n_models.py`
-- **Domain**: i18n / Translations
-- **Notes**: ProductTranslation model for 10-language support; imported by demo_models.py
-- **Status**: Active
-
-### MODEL-030: Inventory / OutboundShipment (inventory_models.py)
-
-- **File**: `apps/backend/src/db/inventory_models.py`
-- **Domain**: Inventory / Logistics
-- **Notes**: Multi-location inventory tracking, OutboundShipment; imported by demo_models.py
-- **Status**: Active
-
-### MODEL-031: CRM Models (crm_models.py)
-
+- **Table**: contacts
 - **File**: `apps/backend/src/db/crm_models.py`
-- **Domain**: CRM / Contacts / Activities
-- **Notes**: Contact, Activity, ServiceRequest models
 - **Status**: Active
 
-### MODEL-032: AP2 Models (ap2_models.py)
+### MODEL-055: Activity
 
+- **Table**: activities
+- **File**: `apps/backend/src/db/crm_models.py`
+- **Status**: Active
+
+---
+
+## Customer Health Models (customer_health_models.py)
+
+### MODEL-056: CustomerPersona
+
+- **Table**: customer_personas
+- **File**: `apps/backend/src/db/customer_health_models.py`
+- **Status**: Active
+
+### MODEL-057: OnboardingSequence
+
+- **Table**: onboarding_sequences
+- **File**: `apps/backend/src/db/customer_health_models.py`
+- **Status**: Active
+
+### MODEL-058: OnboardingTouchpoint
+
+- **Table**: onboarding_touchpoints
+- **File**: `apps/backend/src/db/customer_health_models.py`
+- **Status**: Active
+
+---
+
+## Inventory Models (inventory_models.py)
+
+### MODEL-059: ProductStockByLocation
+
+- **Table**: product_stock_by_location
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-060: StockTransfer
+
+- **Table**: stock_transfers
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-061: StockReservation
+
+- **Table**: stock_reservations
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-062: StockAdjustment
+
+- **Table**: stock_adjustments
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-063: Supplier
+
+- **Table**: suppliers
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-064: PurchaseOrder
+
+- **Table**: purchase_orders
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-065: PurchaseOrderItem
+
+- **Table**: purchase_order_items
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-066: InboundShipment
+
+- **Table**: inbound_shipments
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-067: OutboundShipment
+
+- **Table**: outbound_shipments
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-068: CarrierConfiguration
+
+- **Table**: carrier_configurations
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-069: ProductBarcode
+
+- **Table**: product_barcodes
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-070: StockTake
+
+- **Table**: stock_takes
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-071: StockTakeItem
+
+- **Table**: stock_take_items
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-072: ReorderRule
+
+- **Table**: reorder_rules
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-073: ProductAttribute
+
+- **Table**: product_attributes
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+### MODEL-074: ProductVariant
+
+- **Table**: product_variants
+- **File**: `apps/backend/src/db/inventory_models.py`
+- **Status**: Active
+
+---
+
+## i18n Models (i18n_models.py)
+
+### MODEL-075: Language
+
+- **Table**: languages
+- **File**: `apps/backend/src/db/i18n_models.py`
+- **Status**: Active
+
+### MODEL-076: ProductTranslation
+
+- **Table**: product_translations
+- **File**: `apps/backend/src/db/i18n_models.py`
+- **Status**: Active
+
+### MODEL-077: CategoryTranslation
+
+- **Table**: category_translations
+- **File**: `apps/backend/src/db/i18n_models.py`
+- **Status**: Active
+
+### MODEL-078: UITranslation
+
+- **Table**: ui_translations
+- **File**: `apps/backend/src/db/i18n_models.py`
+- **Status**: Active
+
+### MODEL-079: EmailTemplateTranslation
+
+- **Table**: email_template_translations
+- **File**: `apps/backend/src/db/i18n_models.py`
+- **Status**: Active
+
+### MODEL-080: TranslationQueue
+
+- **Table**: translation_queue
+- **File**: `apps/backend/src/db/i18n_models.py`
+- **Status**: Active
+
+---
+
+## Invoicing Models (models/invoicing.py)
+
+### MODEL-081: TaxRate
+
+- **Table**: tax_rates
+- **File**: `apps/backend/src/db/models/invoicing.py`
+- **Status**: Active
+
+### MODEL-082: Invoice
+
+- **Table**: invoices
+- **File**: `apps/backend/src/db/models/invoicing.py`
+- **Status**: Active
+
+### MODEL-083: InvoiceItem
+
+- **Table**: invoice_items
+- **File**: `apps/backend/src/db/models/invoicing.py`
+- **Status**: Active
+
+### MODEL-084: InvoicePayment
+
+- **Table**: invoice_payments
+- **File**: `apps/backend/src/db/models/invoicing.py`
+- **Status**: Active
+
+---
+
+## PRD Models (models/prd.py)
+
+### MODEL-085: PRD
+
+- **Table**: prds
+- **File**: `apps/backend/src/db/models/prd.py`
+- **Status**: Active
+
+### MODEL-086: AgentRun
+
+- **Table**: agent_runs
+- **File**: `apps/backend/src/db/models/prd.py`
+- **Status**: Active
+
+### MODEL-087: APIUsage
+
+- **Table**: api_usage
+- **File**: `apps/backend/src/db/models/prd.py`
+- **Status**: Active
+
+---
+
+## Subscription Models (models/subscription.py)
+
+### MODEL-088: Subscription
+
+- **Table**: subscriptions
+- **File**: `apps/backend/src/db/models/subscription.py`
+- **Status**: Active
+
+---
+
+## AP2 Models (ap2_models.py)
+
+### MODEL-089: AP2Connection
+
+- **Table**: ap2_connections
 - **File**: `apps/backend/src/db/ap2_models.py`
-- **Domain**: Integration / Google AP2 Payments
 - **Status**: Active
 
-### MODEL-033: Approvals Models (approvals_models.py)
+### MODEL-090: AP2Mandate
 
+- **Table**: ap2_mandates
+- **File**: `apps/backend/src/db/ap2_models.py`
+- **Status**: Active
+
+### MODEL-091: AP2Transaction
+
+- **Table**: ap2_transactions
+- **File**: `apps/backend/src/db/ap2_models.py`
+- **Status**: Active
+
+### MODEL-092: AP2VoiceSession
+
+- **Table**: ap2_voice_sessions
+- **File**: `apps/backend/src/db/ap2_models.py`
+- **Status**: Active
+
+### MODEL-093: AP2AgentInteraction
+
+- **Table**: ap2_agent_interactions
+- **File**: `apps/backend/src/db/ap2_models.py`
+- **Status**: Active
+
+### MODEL-094: AP2WebhookLog
+
+- **Table**: ap2_webhook_logs
+- **File**: `apps/backend/src/db/ap2_models.py`
+- **Status**: Active
+
+---
+
+## Approvals Models (approvals_models.py)
+
+### MODEL-095: Approval
+
+- **Table**: approvals
 - **File**: `apps/backend/src/db/approvals_models.py`
-- **Domain**: Workflow / Approvals
 - **Status**: Active
 
-### MODEL-034: Container Models (container_models.py)
+### MODEL-096: ApprovalStep
 
+- **Table**: approval_steps
+- **File**: `apps/backend/src/db/approvals_models.py`
+- **Status**: Active
+
+---
+
+## Container Models (container_models.py)
+
+### MODEL-097: Container
+
+- **Table**: containers
 - **File**: `apps/backend/src/db/container_models.py`
-- **Domain**: Logistics / Container Tracking
 - **Status**: Active
 
-### MODEL-035: Email Audit Models (email_audit_models.py)
+### MODEL-098: ContainerItem
 
+- **Table**: container_items
+- **File**: `apps/backend/src/db/container_models.py`
+- **Status**: Active
+
+### MODEL-099: Backorder
+
+- **Table**: backorders
+- **File**: `apps/backend/src/db/container_models.py`
+- **Status**: Active
+
+---
+
+## Email Models (email_models.py + email_audit_models.py)
+
+### MODEL-100: EmailConversation
+
+- **Table**: email_conversations
+- **File**: `apps/backend/src/db/email_models.py`
+- **Status**: Active
+
+### MODEL-101: EmailMessage
+
+- **Table**: email_messages
+- **File**: `apps/backend/src/db/email_models.py`
+- **Status**: Active
+
+### MODEL-102: EmailTemplate
+
+- **Table**: email_templates
+- **File**: `apps/backend/src/db/email_models.py`
+- **Status**: Active
+
+### MODEL-103: EmailWebhookLog
+
+- **Table**: email_webhook_logs
+- **File**: `apps/backend/src/db/email_models.py`
+- **Status**: Active
+
+### MODEL-104: EmailLog
+
+- **Table**: email_logs
 - **File**: `apps/backend/src/db/email_audit_models.py`
-- **Domain**: GDPR Compliance / Email Audit (ISS-037)
 - **Status**: Active
 
-### MODEL-036: Shopify Models (shopify_models.py + shopify_extended_models.py)
+### MODEL-105: EmailConsent
 
-- **File**: `apps/backend/src/db/shopify_models.py`, `apps/backend/src/db/shopify_extended_models.py`
-- **Domain**: Integration / Shopify
+- **Table**: email_consents
+- **File**: `apps/backend/src/db/email_audit_models.py`
 - **Status**: Active
 
-### MODEL-037: Xero Models (xero_models.py)
+---
 
+## Shopify Models (shopify_models.py + shopify_extended_models.py)
+
+### MODEL-106: ShopifyConnection
+
+- **Table**: shopify_connections
+- **File**: `apps/backend/src/db/shopify_models.py`
+- **Status**: Active
+
+### MODEL-107: ShopifyProductMapping
+
+- **Table**: shopify_product_mappings
+- **File**: `apps/backend/src/db/shopify_models.py`
+- **Status**: Active
+
+### MODEL-108: ShopifyOrderMapping
+
+- **Table**: shopify_order_mappings
+- **File**: `apps/backend/src/db/shopify_models.py`
+- **Status**: Active
+
+### MODEL-109: ShopifyWebhookLog
+
+- **Table**: shopify_webhook_logs
+- **File**: `apps/backend/src/db/shopify_models.py`
+- **Status**: Active
+
+### MODEL-110: ShopifyProductSyncLog
+
+- **Table**: shopify_product_sync_logs
+- **File**: `apps/backend/src/db/shopify_models.py`
+- **Status**: Active
+
+### MODEL-111: ShopifyMetafield
+
+- **Table**: shopify_metafields
+- **File**: `apps/backend/src/db/shopify_extended_models.py`
+- **Status**: Active
+
+### MODEL-112: ShopifyInventorySync
+
+- **Table**: shopify_inventory_syncs
+- **File**: `apps/backend/src/db/shopify_extended_models.py`
+- **Status**: Active
+
+### MODEL-113: ShopifyThemeEndpoint
+
+- **Table**: shopify_theme_endpoints
+- **File**: `apps/backend/src/db/shopify_extended_models.py`
+- **Status**: Active
+
+### MODEL-114: ShopifyProductTranslation
+
+- **Table**: shopify_product_translations
+- **File**: `apps/backend/src/db/shopify_extended_models.py`
+- **Status**: Active
+
+### MODEL-115: ShopifyInventorySyncQueue
+
+- **Table**: shopify_inventory_sync_queue
+- **File**: `apps/backend/src/db/shopify_extended_models.py`
+- **Status**: Active
+
+---
+
+## Xero Models (xero_models.py)
+
+### MODEL-116: XeroConnection
+
+- **Table**: xero_connections
 - **File**: `apps/backend/src/db/xero_models.py`
-- **Domain**: Integration / Xero
 - **Status**: Active
 
-### MODEL-038: Portal Forms Models (portal_forms_models.py)
+### MODEL-117: Payment
 
+- **Table**: payments
+- **File**: `apps/backend/src/db/xero_models.py`
+- **Status**: Active
+
+---
+
+## Portal Forms Models (portal_forms_models.py)
+
+### MODEL-118: ContactSubmission
+
+- **Table**: contact_submissions
 - **File**: `apps/backend/src/db/portal_forms_models.py`
-- **Domain**: Customer Portal / Forms
 - **Status**: Active
 
-### MODEL-039: AI Search Models (ai_search_models.py)
+### MODEL-119: DemoRequest
 
-- **File**: `apps/backend/src/db/ai_search_models.py`
-- **Domain**: AI / Search
+- **Table**: demo_requests
+- **File**: `apps/backend/src/db/portal_forms_models.py`
 - **Status**: Active
 
-### MODEL-040: Service Models (service_models.py)
+---
 
+## Submission Notes (submission_notes_models.py)
+
+### MODEL-120: SubmissionNote
+
+- **Table**: submission_notes
+- **File**: `apps/backend/src/db/submission_notes_models.py`
+- **Status**: Active
+
+---
+
+## Service Models (service_models.py)
+
+### MODEL-121: ServiceRequest
+
+- **Table**: service_requests
 - **File**: `apps/backend/src/db/service_models.py`
-- **Domain**: CRM / Service Requests
+- **Status**: Active
+
+---
+
+## AI Models (ai_models.py)
+
+### MODEL-122: LearningPattern
+
+- **Table**: learning_patterns
+- **File**: `apps/backend/src/db/ai_models.py`
+- **Status**: Active
+
+### MODEL-123: LearningInsight
+
+- **Table**: learning_insights
+- **File**: `apps/backend/src/db/ai_models.py`
+- **Status**: Active
+
+### MODEL-124: PromptVariant
+
+- **Table**: prompt_variants
+- **File**: `apps/backend/src/db/ai_models.py`
+- **Status**: Active
+
+---
+
+## AI Search Models (ai_search_models.py)
+
+### MODEL-125: ProductEmbedding
+
+- **Table**: product_embeddings
+- **File**: `apps/backend/src/db/ai_search_models.py`
+- **Status**: Active
+
+### MODEL-126: ProductRecommendation
+
+- **Table**: product_recommendations
+- **File**: `apps/backend/src/db/ai_search_models.py`
+- **Status**: Active
+
+### MODEL-127: CustomerProductInteraction
+
+- **Table**: customer_product_interactions
+- **File**: `apps/backend/src/db/ai_search_models.py`
+- **Status**: Active
+
+### MODEL-128: ProductCoOccurrence
+
+- **Table**: product_co_occurrences
+- **File**: `apps/backend/src/db/ai_search_models.py`
+- **Status**: Active
+
+### MODEL-129: SearchQuery
+
+- **Table**: search_queries
+- **File**: `apps/backend/src/db/ai_search_models.py`
+- **Status**: Active
+
+### MODEL-130: VoiceSearchSession
+
+- **Table**: voice_search_sessions
+- **File**: `apps/backend/src/db/ai_search_models.py`
+- **Status**: Active
+
+---
+
+## Marketplace Models (marketplace_models.py)
+
+### MODEL-131: MarketplaceConnection
+
+- **Table**: marketplace_connections
+- **File**: `apps/backend/src/db/marketplace_models.py`
+- **Status**: Active
+
+### MODEL-132: MarketplaceProductListing
+
+- **Table**: marketplace_product_listings
+- **File**: `apps/backend/src/db/marketplace_models.py`
+- **Status**: Active
+
+### MODEL-133: MarketplaceOrder
+
+- **Table**: marketplace_orders
+- **File**: `apps/backend/src/db/marketplace_models.py`
+- **Status**: Active
+
+### MODEL-134: MarketplaceInventorySync
+
+- **Table**: marketplace_inventory_syncs
+- **File**: `apps/backend/src/db/marketplace_models.py`
+- **Status**: Active
+
+### MODEL-135: MarketplaceSyncLog
+
+- **Table**: marketplace_sync_logs
+- **File**: `apps/backend/src/db/marketplace_models.py`
+- **Status**: Active
+
+---
+
+## Workflow Models (workflow_models.py)
+
+### MODEL-136: WorkflowTemplate
+
+- **Table**: workflow_templates
+- **File**: `apps/backend/src/db/workflow_models.py`
+- **Status**: Active
+
+### MODEL-137: WorkflowTemplateAction
+
+- **Table**: workflow_template_actions
+- **File**: `apps/backend/src/db/workflow_models.py`
+- **Status**: Active
+
+### MODEL-138: WorkflowInstance
+
+- **Table**: workflow_instances
+- **File**: `apps/backend/src/db/workflow_models.py`
+- **Status**: Active
+
+### MODEL-139: SLARule
+
+- **Table**: sla_rules
+- **File**: `apps/backend/src/db/workflow_models.py`
+- **Status**: Active
+
+### MODEL-140: SLAInstance
+
+- **Table**: sla_instances
+- **File**: `apps/backend/src/db/workflow_models.py`
+- **Status**: Active
+
+### MODEL-141: InAppNotification
+
+- **Table**: in_app_notifications
+- **File**: `apps/backend/src/db/workflow_models.py`
+- **Status**: Active
+
+---
+
+## Workshop Models (workshop_models.py)
+
+### MODEL-142: Equipment
+
+- **Table**: workshop_equipment
+- **File**: `apps/backend/src/db/workshop_models.py`
+- **Status**: Active
+
+### MODEL-143: ServiceTemplate
+
+- **Table**: service_templates
+- **File**: `apps/backend/src/db/workshop_models.py`
+- **Status**: Active
+
+### MODEL-144: ServiceTemplateItem
+
+- **Table**: service_template_items
+- **File**: `apps/backend/src/db/workshop_models.py`
+- **Status**: Active
+
+### MODEL-145: WorkshopBooking
+
+- **Table**: workshop_bookings
+- **File**: `apps/backend/src/db/workshop_models.py`
+- **Status**: Active
+
+### MODEL-146: ServiceReminder
+
+- **Table**: service_reminders
+- **File**: `apps/backend/src/db/workshop_models.py`
+- **Status**: Active
+
+### MODEL-147: EquipmentServiceHistory
+
+- **Table**: equipment_service_history
+- **File**: `apps/backend/src/db/workshop_models.py`
 - **Status**: Active
 
 ---
@@ -383,8 +1019,8 @@
 ## Composite Indexes (indexes.py)
 
 - **File**: `apps/backend/src/db/indexes.py`
-- **Registered**: Yes (imported in main.py with noqa comment)
+- **Registered**: Yes (imported in main.py)
 - **Indexes**:
-  - `ix_order_items_order_product` — order_items(order_id, product_id) — accelerates order line-item lookups (UNI-1231)
-  - `ix_orders_customer_status` — orders(customer_id, status) — accelerates customer order filtering (UNI-1231)
-  - `ix_products_category_active` — products(category, is_active) — accelerates catalog browsing by category (UNI-1231)
+  - `ix_order_items_order_product` — order_items(order_id, product_id)
+  - `ix_orders_customer_status` — orders(customer_id, status)
+  - `ix_products_category_active` — products(category, is_active)
