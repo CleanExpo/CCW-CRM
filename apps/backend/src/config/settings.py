@@ -236,6 +236,11 @@ class Settings(BaseSettings):
     alert_email_to: str = Field(default="", description="Email address to send system alerts")
     slack_webhook_url: str = Field(default="", description="Slack webhook URL for system alerts")
 
+    # Webhook Forwarding
+    webhook_forward_url: str = Field(
+        default="", description="URL to forward incoming webhook events to"
+    )
+
     # Monitoring Configuration
     alert_check_interval_minutes: int = Field(
         default=5, description="Alert check interval in minutes"

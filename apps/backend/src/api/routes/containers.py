@@ -564,8 +564,16 @@ async def receive_container(
 
     await db.commit()
 
-    # TODO: Add stock to warehouse inventory
-    # This will be implemented when we add ProductStockByLocation updates
+    # Update product stock levels from received quantities
+    for container_item in container.items:
+        if container_item.quantity_received and container_item.quantity_received > 0:
+            product_result = await db.execute(
+                select(Product).where(Product.id == container_item.product_id)
+            )
+            product = product_result.scalar_one_or_none()
+            if product:
+                available_qty = container_item.quantity_received - (container_item.quantity_damaged or 0)
+                product.stock = (product.stock or 0) + available_qty
 
     # Publish event to trigger backorder fulfillment
     event_bus = get_event_bus()
