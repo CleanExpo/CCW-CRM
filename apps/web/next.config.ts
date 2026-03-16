@@ -1,4 +1,3 @@
-import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -86,25 +85,32 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Sentry webpack plugin options
-const sentryOptions = {
-  // Upload source maps during production build
-  silent: true,
+// Sentry webpack plugin options — only wrap if @sentry/nextjs is installed
+let exportedConfig: NextConfig = nextConfig;
 
-  // Suppress logging
-  widenClientFileUpload: true,
+try {
+  // Dynamic require to avoid build failure when Sentry isn't installed
+  const { withSentryConfig } = require("@sentry/nextjs");
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
+  const sentryOptions = {
+    // Upload source maps during production build
+    silent: true,
+    // Suppress logging
+    widenClientFileUpload: true,
+    // Automatically tree-shake Sentry logger statements to reduce bundle size
+    disableLogger: true,
+    // Transpile SDK to be compatible with IE11
+    transpileClientSDK: true,
+    // Hide source maps from generated client bundles
+    hideSourceMaps: true,
+    // Automatically annotate React components to show in breadcrumbs
+    autoInstrumentServerFunctions: true,
+  };
 
-  // Transpile SDK to be compatible with IE11
-  transpileClientSDK: true,
+  exportedConfig = withSentryConfig(nextConfig, sentryOptions);
+} catch {
+  // @sentry/nextjs not installed — skip Sentry integration
+  console.info("[next.config] @sentry/nextjs not found, Sentry integration disabled");
+}
 
-  // Hide source maps from generated client bundles
-  hideSourceMaps: true,
-
-  // Automatically annotate React components to show in breadcrumbs
-  autoInstrumentServerFunctions: true,
-};
-
-export default withSentryConfig(nextConfig, sentryOptions);
+export default exportedConfig;
