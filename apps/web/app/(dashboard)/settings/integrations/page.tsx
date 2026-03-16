@@ -270,7 +270,7 @@ function IntegrationsContent() {
         {/* Multi-Channel Marketplace */}
         <div>
           <h2 className="mb-1 text-lg font-semibold">Multi-Channel Marketplace</h2>
-          <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-muted-foreground mb-4 text-sm">
             Sync products, inventory, and orders across Shopify, eBay, and Facebook Marketplace.
           </p>
           <Link href="/settings/integrations/marketplace">
@@ -280,11 +280,11 @@ function IntegrationsContent() {
               </div>
               <div className="flex-1">
                 <p className="font-medium">Marketplace Dashboard</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                <p className="text-muted-foreground text-xs">
                   Connect channels, sync products, and view unified orders
                 </p>
               </div>
-              <span className="text-sm text-neutral-500">Open Dashboard →</span>
+              <span className="text-muted-foreground text-sm">Open Dashboard →</span>
             </div>
           </Link>
         </div>

@@ -277,7 +277,7 @@ export default function MonitoringPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">System Monitoring</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-muted-foreground text-sm">
             Infrastructure health and performance metrics
           </p>
         </div>

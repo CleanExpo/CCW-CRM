@@ -73,7 +73,7 @@ export default async function AgentDashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="mb-2 text-4xl font-bold">Agent Dashboard</h1>
-        <p className="text-neutral-600 dark:text-neutral-400">
+        <p className="text-muted-foreground">
           Real-time monitoring of the autonomous agentic layer
         </p>
       </div>
