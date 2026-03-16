@@ -140,6 +140,10 @@ supabase/.temp
 # Docker
 .docker/
 
+# Local agent/solution libraries (not part of project)
+.claude/agents-lib/
+lib/
+
 # Misc
 *.tsbuildinfo
 .vercel
