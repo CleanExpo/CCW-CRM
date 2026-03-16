@@ -105,7 +105,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cat D:/CCW-ERP-CRM/.claude/memory/CONSTITUTION.md && echo '---' && cat D:/CCW-ERP-CRM/.claude/memory/current-state.md"
+            "command": "type .claude\\memory\\CONSTITUTION.md && echo --- && type .claude\\memory\\current-state.md"
           }
         ]
       }
@@ -115,7 +115,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python D:/CCW-ERP-CRM/.claude/hooks/inject-compass.py"
+            "command": "python .claude/hooks/inject-compass.py"
           }
         ]
       }
@@ -125,7 +125,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python D:/CCW-ERP-CRM/.claude/hooks/pre-compact-save.py"
+            "command": "python .claude/hooks/pre-compact-save.py"
           }
         ]
       }
@@ -136,7 +136,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python D:/CCW-ERP-CRM/.claude/hooks/validate-agent-dispatch.py"
+            "command": "python .claude/hooks/validate-agent-dispatch.py"
           }
         ]
       }

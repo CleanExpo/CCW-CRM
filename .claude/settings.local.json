@@ -16,9 +16,9 @@
       "WebFetch(domain:api.cin7.com)",
       "Bash(python -c:*)",
       "Bash(set:*)",
-      "Bash(PYTHONIOENCODING=utf-8 PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python:*)",
-      "Bash(PYTHONIOENCODING=utf-8 PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python -m pytest:*)",
-      "Bash(PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python:*)"
+      "Bash(PYTHONIOENCODING=utf-8 PYTHONPATH=\"apps/backend\" python:*)",
+      "Bash(PYTHONIOENCODING=utf-8 PYTHONPATH=\"apps/backend\" python -m pytest:*)",
+      "Bash(PYTHONPATH=\"apps/backend\" python:*)"
     ]
   }
 }
