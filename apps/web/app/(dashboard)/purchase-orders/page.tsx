@@ -31,7 +31,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, MoreHorizontal, PackageCheck, X, Copy } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, PackageCheck, X, Copy, Download } from 'lucide-react';
+import { exportPurchaseOrdersToCSV } from '@/lib/utils/csv-export';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api/client';
 import { PurchaseOrderForm } from './components/PurchaseOrderForm';
@@ -195,10 +196,23 @@ export default function PurchaseOrdersPage() {
             )}
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Purchase Order
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              exportPurchaseOrdersToCSV(purchaseOrders as unknown as Record<string, unknown>[]);
+              toast({ title: 'Export Successful', description: 'Purchase orders exported to CSV' });
+            }}
+            disabled={purchaseOrders.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Purchase Order
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

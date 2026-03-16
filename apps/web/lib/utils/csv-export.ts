@@ -310,6 +310,101 @@ export function exportQuotesToPDF(quotes: any[]): void {
 }
 
 /**
+ * Export contacts to CSV
+ */
+export function exportContactsToCSV(contacts: Record<string, unknown>[]): void {
+  const headers = [
+    'first_name',
+    'last_name',
+    'email',
+    'phone',
+    'mobile',
+    'job_title',
+    'department',
+    'is_primary',
+    'is_active',
+  ];
+
+  const data = contacts.map((c) => ({
+    first_name: c.first_name || '',
+    last_name: c.last_name || '',
+    email: c.email || '',
+    phone: c.phone || '',
+    mobile: c.mobile || '',
+    job_title: c.job_title || '',
+    department: c.department || '',
+    is_primary: c.is_primary ? 'Yes' : 'No',
+    is_active: c.is_active ? 'Yes' : 'No',
+  }));
+
+  const csv = convertToCSV(data, headers);
+  const timestamp = new Date().toISOString().split('T')[0];
+  downloadCSV(csv, `contacts-export-${timestamp}.csv`);
+}
+
+/**
+ * Export suppliers to CSV
+ */
+export function exportSuppliersToCSV(suppliers: Record<string, unknown>[]): void {
+  const headers = [
+    'supplier_code',
+    'company_name',
+    'contact_name',
+    'email',
+    'phone',
+    'abn',
+    'payment_terms',
+    'is_active',
+  ];
+
+  const data = suppliers.map((s) => ({
+    supplier_code: s.supplier_code || '',
+    company_name: s.company_name || '',
+    contact_name: s.contact_name || '',
+    email: s.email || '',
+    phone: s.phone || '',
+    abn: s.abn || '',
+    payment_terms: s.payment_terms || '',
+    is_active: s.is_active ? 'Yes' : 'No',
+  }));
+
+  const csv = convertToCSV(data, headers);
+  const timestamp = new Date().toISOString().split('T')[0];
+  downloadCSV(csv, `suppliers-export-${timestamp}.csv`);
+}
+
+/**
+ * Export purchase orders to CSV
+ */
+export function exportPurchaseOrdersToCSV(orders: Record<string, unknown>[]): void {
+  const headers = [
+    'po_number',
+    'supplier_name',
+    'delivery_location',
+    'status',
+    'total',
+    'order_date',
+    'expected_delivery',
+  ];
+
+  const data = orders.map((po) => ({
+    po_number: po.po_number || '',
+    supplier_name: po.supplier_name || '',
+    delivery_location: po.delivery_location || '',
+    status: po.status || '',
+    total: po.total != null ? Number(po.total).toFixed(2) : '',
+    order_date: po.order_date ? new Date(po.order_date as string).toLocaleDateString() : '',
+    expected_delivery: po.expected_delivery
+      ? new Date(po.expected_delivery as string).toLocaleDateString()
+      : '',
+  }));
+
+  const csv = convertToCSV(data, headers);
+  const timestamp = new Date().toISOString().split('T')[0];
+  downloadCSV(csv, `purchase-orders-export-${timestamp}.csv`);
+}
+
+/**
  * Export quotes to CSV
  */
 export function exportQuotesToCSV(quotes: any[]): void {
