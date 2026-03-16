@@ -4,21 +4,21 @@ Reconciliation Dashboard API endpoints (Phase 3).
 Provides aggregated views and bulk operations for bank feed reconciliation.
 """
 
-from datetime import date, datetime, timedelta
-from typing import Annotated, Optional
+from datetime import date, datetime
+from typing import Annotated
 from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.agents.specialized.reconciliation_agent import ReconciliationAgent
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.models import User
-from src.db.pos_models import BankAccount, BankFeed, POSTransaction
+from src.db.pos_models import BankAccount, BankFeed
 from src.monitoring import metrics
 from src.services.bank_feed_service import BankFeedService
 
@@ -38,7 +38,7 @@ class DashboardSummary(BaseModel):
     auto_match_rate: float = Field(..., description="Auto-match rate (0.0-1.0)")
     pending_amount: float = Field(..., description="Total pending amount (AUD)")
     matched_today: int = Field(..., description="Feeds matched today")
-    last_sync_at: Optional[datetime] = Field(None, description="Last sync timestamp")
+    last_sync_at: datetime | None = Field(None, description="Last sync timestamp")
 
 
 class PendingFeedItem(BaseModel):
@@ -46,8 +46,8 @@ class PendingFeedItem(BaseModel):
 
     feed_id: str
     transaction_date: date
-    description: Optional[str]
-    reference: Optional[str]
+    description: str | None
+    reference: str | None
     amount: float
     bank_account_name: str
     match_suggestions: list[dict] = Field(default_factory=list)
@@ -78,7 +78,7 @@ class BulkApproveResponse(BaseModel):
 async def get_dashboard_summary(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    account_id: Optional[UUID] = Query(None, description="Filter by bank account"),
+    account_id: UUID | None = Query(None, description="Filter by bank account"),
 ) -> DashboardSummary:
     """
     Get reconciliation dashboard summary statistics.
@@ -187,7 +187,7 @@ async def get_dashboard_summary(
 async def get_pending_feeds(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    account_id: Optional[UUID] = Query(None, description="Filter by bank account"),
+    account_id: UUID | None = Query(None, description="Filter by bank account"),
     with_suggestions_only: bool = Query(False, description="Only show feeds with AI suggestions"),
     limit: int = Query(50, ge=1, le=200, description="Max results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),

@@ -20,13 +20,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/",
         "/health",
         "/ready",
+        "/metrics",  # Prometheus metrics endpoint (must be public for scraping)
         "/docs",
         "/openapi.json",
         "/api/auth/login",
+        "/api/auth/signup",
         "/api/auth/refresh",
         "/api/auth/logout",
         "/api/auth/forgot-password",
         "/api/auth/reset-password",
+        "/api/public/stats",  # Landing page showcase data (aggregate counts only)
     }
 
     async def dispatch(
@@ -43,13 +46,51 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.PUBLIC_PATHS:
             return await call_next(request)
 
-        # Check for API key authentication
-        api_key = request.headers.get("Authorization", "").replace("Bearer ", "")
+        # Check for JWT token in cookie (HttpOnly auth_token from login)
+        auth_token_cookie = request.cookies.get("auth_token")
+        if auth_token_cookie:
+            # Validate JWT token from cookie
+            try:
+                from src.auth.jwt import decode_access_token
+                payload = decode_access_token(auth_token_cookie)
+                request.state.user_id = payload.get("user_id")
+                request.state.organization_id = payload.get("organization_id")
+                request.state.auth_type = "jwt_cookie"
+                logger.debug(f"JWT cookie auth successful for user {payload.get('user_id')}")
+                return await call_next(request)
+            except Exception as e:
+                logger.warning(f"Invalid JWT cookie: {e}")
+                # Continue to check other auth methods
+        else:
+            logger.debug("No auth_token cookie found")
 
-        if api_key == settings.backend_api_key and settings.backend_api_key:
-            # API key authentication successful
-            request.state.auth_type = "api_key"
-            return await call_next(request)
+        # Check for JWT Bearer token or API key in Authorization header
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.replace("Bearer ", "").strip()
+
+            # First, try to validate as JWT token
+            try:
+                from src.auth.jwt import decode_access_token
+                payload = decode_access_token(token)
+                request.state.user_id = payload.get("user_id")
+                request.state.email = payload.get("sub")
+                request.state.organization_id = payload.get("organization_id")
+                request.state.auth_type = "jwt_bearer"
+                logger.debug(
+                    f"JWT Bearer auth successful for user {payload.get('user_id')}"
+                )
+                return await call_next(request)
+            except Exception as e:
+                logger.debug(f"JWT Bearer validation failed: {e}")
+                # Not a valid JWT, check if it's a fixed API key
+
+            # If JWT validation failed, check if it's the fixed API key
+            if token == settings.backend_api_key and settings.backend_api_key:
+                # API key authentication successful
+                request.state.auth_type = "api_key"
+                logger.debug("API key auth successful")
+                return await call_next(request)
 
         # Check for user ID header (set by frontend after Supabase auth)
         user_id = request.headers.get("X-User-Id")

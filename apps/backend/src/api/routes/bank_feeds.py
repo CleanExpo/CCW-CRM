@@ -1,7 +1,7 @@
 """Bank Feed API endpoints for reconciliation."""
 
 from datetime import date, timedelta
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
 import structlog
@@ -176,9 +176,9 @@ async def reconcile_bank_feed(
 async def list_unreconciled_feeds(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    account_id: Optional[UUID] = Query(None, description="Filter by account"),
-    start_date: Optional[date] = Query(None, description="Start date"),
-    end_date: Optional[date] = Query(None, description="End date"),
+    account_id: UUID | None = Query(None, description="Filter by account"),
+    start_date: date | None = Query(None, description="Start date"),
+    end_date: date | None = Query(None, description="End date"),
 ) -> list[dict]:
     """
     List unreconciled bank feed transactions.
@@ -250,20 +250,20 @@ class BankAccountCreate(BaseModel):
     bank_name: str
     account_type: str = Field(default="checking", pattern="^(checking|savings|credit)$")
     feed_provider: str = Field(default="manual", pattern="^(xero|yodlee|basiq|manual)$")
-    location_code: Optional[str] = None
+    location_code: str | None = None
 
 
 class BankAccountUpdate(BaseModel):
     """Update a bank account."""
 
-    account_name: Optional[str] = None
-    account_number: Optional[str] = None
-    bsb: Optional[str] = Field(None, pattern=r"^\d{3}-\d{3}$", description="BSB format: XXX-XXX")
-    bank_name: Optional[str] = None
-    account_type: Optional[str] = Field(None, pattern="^(checking|savings|credit)$")
-    feed_provider: Optional[str] = Field(None, pattern="^(xero|yodlee|basiq|manual)$")
-    location_code: Optional[str] = None
-    is_active: Optional[bool] = None
+    account_name: str | None = None
+    account_number: str | None = None
+    bsb: str | None = Field(None, pattern=r"^\d{3}-\d{3}$", description="BSB format: XXX-XXX")
+    bank_name: str | None = None
+    account_type: str | None = Field(None, pattern="^(checking|savings|credit)$")
+    feed_provider: str | None = Field(None, pattern="^(xero|yodlee|basiq|manual)$")
+    location_code: str | None = None
+    is_active: bool | None = None
 
 
 @router.post("/accounts", response_model=dict, status_code=201)
@@ -563,10 +563,10 @@ async def bulk_reconcile_transactions(
 async def export_reconciliation_data(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    account_id: Optional[UUID] = Query(None, description="Filter by account"),
-    start_date: Optional[date] = Query(None, description="Start date"),
-    end_date: Optional[date] = Query(None, description="End date"),
-    status: Optional[str] = Query(None, description="matched, unmatched, all"),
+    account_id: UUID | None = Query(None, description="Filter by account"),
+    start_date: date | None = Query(None, description="Start date"),
+    end_date: date | None = Query(None, description="End date"),
+    status: str | None = Query(None, description="matched, unmatched, all"),
 ) -> dict:
     """
     Export reconciliation data as CSV.
@@ -576,6 +576,7 @@ async def export_reconciliation_data(
     """
     import csv
     import io
+
     from src.db.pos_models import POSTransaction
 
     # Build query for bank feeds
@@ -659,7 +660,7 @@ class WebhookPayload(BaseModel):
     account_id: str = Field(..., description="Provider's account ID")
     event_type: str = Field(..., description="Event type (e.g., 'transaction.created')")
     data: dict = Field(..., description="Event data from provider")
-    signature: Optional[str] = Field(None, description="HMAC signature for verification")
+    signature: str | None = Field(None, description="HMAC signature for verification")
 
 
 @router.post("/webhook/{provider}")
@@ -772,8 +773,8 @@ def _verify_webhook_signature(data: dict, signature: str, secret: str) -> bool:
     Returns:
         True if signature is valid
     """
-    import hmac
     import hashlib
+    import hmac
     import json
 
     # Serialize data to consistent JSON string

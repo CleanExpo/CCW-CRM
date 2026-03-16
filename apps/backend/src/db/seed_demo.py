@@ -238,8 +238,6 @@ async def create_orders(
             customer_id=customer.id,
             status=status,
             order_date=order_date,
-            subtotal=Decimal(0),
-            tax=Decimal(0),
             total=Decimal(0),
         )
         db.add(order)
@@ -269,8 +267,6 @@ async def create_orders(
         tax = (subtotal * Decimal("0.10")).quantize(Decimal("0.01"))  # 10% GST
         total = subtotal + tax
 
-        order.subtotal = subtotal
-        order.tax = tax
         order.total = total
 
         orders.append(order)
@@ -311,8 +307,6 @@ async def create_quotes(
             status=status,
             quote_date=quote_date,
             valid_until=valid_until,
-            subtotal=Decimal(0),
-            tax=Decimal(0),
             total=Decimal(0),
         )
         db.add(quote)

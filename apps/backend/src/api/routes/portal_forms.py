@@ -186,7 +186,7 @@ async def list_contact_submissions(
     submissions = result.scalars().all()
 
     return {
-        "items": [ContactSubmissionResponse.model_validate(s) for s in submissions],
+        "items": [ContactSubmissionResponse.model_validate(s).model_dump() for s in submissions],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -272,7 +272,7 @@ async def list_demo_requests(
     requests = result.scalars().all()
 
     return {
-        "items": [DemoRequestResponse.model_validate(r) for r in requests],
+        "items": [DemoRequestResponse.model_validate(r).model_dump() for r in requests],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -512,4 +512,4 @@ async def list_submission_notes(
     result = await db.execute(query)
     notes = result.scalars().all()
 
-    return [NoteResponse.model_validate(note) for note in notes]
+    return [NoteResponse.model_validate(note).model_dump() for note in notes]

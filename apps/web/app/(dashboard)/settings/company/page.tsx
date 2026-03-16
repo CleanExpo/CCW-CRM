@@ -1,94 +1,118 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { Building2, MapPin, FileText, CreditCard } from "lucide-react";
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { Building2, MapPin, FileText, CreditCard, Loader2 } from 'lucide-react';
+import { settingsApi } from '@/lib/api/settings';
 
 // Australian states
 const AUSTRALIAN_STATES = [
-  { value: "NSW", label: "New South Wales" },
-  { value: "VIC", label: "Victoria" },
-  { value: "QLD", label: "Queensland" },
-  { value: "WA", label: "Western Australia" },
-  { value: "SA", label: "South Australia" },
-  { value: "TAS", label: "Tasmania" },
-  { value: "ACT", label: "Australian Capital Territory" },
-  { value: "NT", label: "Northern Territory" },
+  { value: 'NSW', label: 'New South Wales' },
+  { value: 'VIC', label: 'Victoria' },
+  { value: 'QLD', label: 'Queensland' },
+  { value: 'WA', label: 'Western Australia' },
+  { value: 'SA', label: 'South Australia' },
+  { value: 'TAS', label: 'Tasmania' },
+  { value: 'ACT', label: 'Australian Capital Territory' },
+  { value: 'NT', label: 'Northern Territory' },
 ];
 
 export default function CompanySettingsPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
-  // Company information
-  const [companyName, setCompanyName] = useState("CCW Equipment Supplies");
-  const [tradingName, setTradingName] = useState("");
-  const [abn, setAbn] = useState("51 824 753 556");
-  const [acn, setAcn] = useState("");
+  // Company information (persisted via API)
+  const [companyName, setCompanyName] = useState('CCW Equipment Supplies');
+  const [tradingName, setTradingName] = useState('');
+  const [abn, setAbn] = useState('51 824 753 556');
+  const [acn, setAcn] = useState('');
 
-  // Address
-  const [address, setAddress] = useState("123 Industrial Drive");
-  const [city, setCity] = useState("Brisbane");
-  const [state, setState] = useState("QLD");
-  const [postcode, setPostcode] = useState("4000");
-  const [country, setCountry] = useState("AU");
+  // Address (UI state — not persisted in current schema)
+  const [address, setAddress] = useState('123 Industrial Drive');
+  const [city, setCity] = useState('Brisbane');
+  const [state, setState] = useState('QLD');
+  const [postcode, setPostcode] = useState('4000');
 
-  // Contact
-  const [phone, setPhone] = useState("+61 7 3000 0000");
-  const [email, setEmail] = useState("contact@ccw.com.au");
-  const [website, setWebsite] = useState("https://ccw.com.au");
+  // Contact (UI state — not persisted in current schema)
+  const [phone, setPhone] = useState('+61 7 3000 0000');
+  const [email, setEmail] = useState('contact@ccw.com.au');
+  const [website, setWebsite] = useState('https://ccw.com.au');
 
-  // Financial
-  const [taxNumber, setTaxNumber] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [bsb, setBsb] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
+  // Financial (UI state — not persisted in current schema)
+  const [bankName, setBankName] = useState('');
+  const [bsb, setBsb] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+
+  // Load current company settings on mount
+  useEffect(() => {
+    async function loadCompany() {
+      try {
+        const company = await settingsApi.getCompany();
+        setCompanyName(company.name);
+      } catch {
+        // Use defaults if not available
+      } finally {
+        setIsFetching(false);
+      }
+    }
+    loadCompany();
+  }, []);
 
   async function handleUpdateCompany(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // TODO: API call to update company information
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const updated = await settingsApi.updateCompany({ name: companyName });
+      setCompanyName(updated.name);
 
       toast({
-        title: "Company Updated",
-        description: "Company information has been updated successfully",
+        title: 'Company Updated',
+        description: 'Company information has been updated successfully',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update company information",
-        variant: "destructive",
+        title: 'Update Failed',
+        description:
+          error instanceof Error ? error.message : 'Failed to update company information',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   }
 
+  if (isFetching) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
           <Building2 className="h-8 w-8" />
           Company Settings
         </h1>
         <p className="text-muted-foreground">
-          Manage your organization's information and settings
+          Manage your organization&apos;s information and settings
         </p>
       </div>
 
@@ -100,9 +124,7 @@ export default function CompanySettingsPage() {
               <Building2 className="h-5 w-5" />
               Company Information
             </CardTitle>
-            <CardDescription>
-              Basic information about your organization
-            </CardDescription>
+            <CardDescription>Basic information about your organization</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -138,7 +160,7 @@ export default function CompanySettingsPage() {
                   placeholder="51 824 753 556"
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">Australian Business Number</p>
+                <p className="text-muted-foreground text-xs">Australian Business Number</p>
               </div>
 
               <div className="space-y-2">
@@ -150,7 +172,7 @@ export default function CompanySettingsPage() {
                   placeholder="123 456 789"
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">Australian Company Number</p>
+                <p className="text-muted-foreground text-xs">Australian Company Number</p>
               </div>
             </div>
           </CardContent>
@@ -163,9 +185,7 @@ export default function CompanySettingsPage() {
               <MapPin className="h-5 w-5" />
               Business Address
             </CardTitle>
-            <CardDescription>
-              Primary business address for invoicing and shipping
-            </CardDescription>
+            <CardDescription>Primary business address for invoicing and shipping</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -228,9 +248,7 @@ export default function CompanySettingsPage() {
               <FileText className="h-5 w-5" />
               Contact Information
             </CardTitle>
-            <CardDescription>
-              Public contact details for customers and suppliers
-            </CardDescription>
+            <CardDescription>Public contact details for customers and suppliers</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -247,9 +265,9 @@ export default function CompanySettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="contactEmail">Email Address</Label>
                 <Input
-                  id="email"
+                  id="contactEmail"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -280,26 +298,9 @@ export default function CompanySettingsPage() {
               <CreditCard className="h-5 w-5" />
               Financial Information
             </CardTitle>
-            <CardDescription>
-              Banking details for payments and invoicing
-            </CardDescription>
+            <CardDescription>Banking details for payments and invoicing</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="taxNumber">Tax File Number (TFN)</Label>
-              <Input
-                id="taxNumber"
-                value={taxNumber}
-                onChange={(e) => setTaxNumber(e.target.value)}
-                placeholder="123 456 789"
-                disabled={isLoading}
-                type="password"
-              />
-              <p className="text-xs text-muted-foreground">
-                Stored securely and encrypted
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="bankName">Bank Name</Label>
@@ -341,7 +342,7 @@ export default function CompanySettingsPage() {
         {/* Save Button */}
         <div className="flex justify-end">
           <Button type="submit" size="lg" disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Company Settings"}
+            {isLoading ? 'Saving...' : 'Save Company Settings'}
           </Button>
         </div>
       </form>

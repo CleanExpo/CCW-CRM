@@ -2,7 +2,7 @@
 
 Performance optimized with Redis caching.
 """
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_db
-from src.db.erp_models import Customer as CustomerModel
+from src.db.demo_models import Customer as CustomerModel
 from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
 from src.services.sse_service import sse_service
 
@@ -58,7 +58,7 @@ async def list_customers(
     customers = result.scalars().all()
 
     return {
-        "items": [Customer.model_validate(c) for c in customers],
+        "items": [Customer.model_validate(c).model_dump() for c in customers],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -113,7 +113,7 @@ async def create_customer(
         "type": "metrics_updated",
         "metric": "total_customers",
         "change": "increment",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -121,7 +121,7 @@ async def create_customer(
         "title": "New Customer",
         "description": f"Customer {customer.company_name} created",
         "link": f"/customers/{customer.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Customer.model_validate(customer)
@@ -161,7 +161,7 @@ async def update_customer(
         "title": "Customer Updated",
         "description": f"Customer {customer.company_name} updated",
         "link": f"/customers/{customer.id}",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return Customer.model_validate(customer)
@@ -196,7 +196,7 @@ async def delete_customer(
         "type": "metrics_updated",
         "metric": "total_customers",
         "change": "decrement",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     await sse_service.publish("dashboard-activity", {
@@ -204,7 +204,7 @@ async def delete_customer(
         "title": "Customer Deleted",
         "description": f"Customer {customer_name} deleted",
         "link": "/customers",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return None

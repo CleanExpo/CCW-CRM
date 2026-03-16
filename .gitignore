@@ -74,15 +74,62 @@ playwright/.cache/
 *.sqlite
 *.sqlite3
 
-# Secrets
+# Secrets - COMPREHENSIVE EXCLUSIONS
+# Secret files
 *secret*.yaml
 *secrets*.yaml
+*secret*.json
+*secrets*.json
+
+# Secret directory (keep README and .gitkeep)
+secrets/*.txt
+secrets/*.key
+secrets/*.pem
+secrets/*.env
+!secrets/README.md
+!secrets/.gitkeep
+
+# Credential files
+*_credentials.json
+*_credentials.yaml
+credentials.json
+credentials.yaml
+service-account*.json
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# API keys that might be stored locally
+.api-key
+.api-keys
+api-keys.txt
+api_keys.txt
+
+# OAuth tokens
+token.json
+tokens.json
+.oauth-token
+oauth_tokens.json
+
+# AWS credentials (besides standard ~/.aws)
+aws-credentials
+.aws-credentials
+
+# Generated secrets output
+secrets_output.txt
+generated_secrets.txt
 
 # Linear API (project management - not part of application)
 scripts/*linear*.py
 scripts/*linear*.js
 !scripts/*.example.py
 !scripts/*.example.js
+!scripts/update_linear_deployment_prep.py
+!scripts/get_linear_priorities.py
 .linear-api-key
 
 # Supabase
@@ -104,3 +151,5 @@ shopify-scraper/
 # Backups (contain sensitive data)
 backups/
 **/backups/
+.planning/linear-sync.mjs
+scripts/linear-project-status.mjs

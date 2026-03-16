@@ -51,47 +51,53 @@ export function ResponsiveTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item) => (
-              <TableRow
-                key={keyExtractor(item)}
-                onClick={() => onRowClick?.(item)}
-                className={onRowClick ? "cursor-pointer" : ""}
-              >
-                {columns.map((column) => (
-                  <TableCell key={column.key} className={column.className}>
-                    {column.render(item)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {data.map((item) => {
+              const rowKey = keyExtractor(item);
+              return (
+                <TableRow
+                  key={rowKey}
+                  onClick={() => onRowClick?.(item)}
+                  className={onRowClick ? "cursor-pointer" : ""}
+                >
+                  {columns.map((column) => (
+                    <TableCell key={`${rowKey}-${column.key}`} className={column.className}>
+                      {column.render(item)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
 
       {/* Mobile Cards - hidden on desktop */}
       <div className="md:hidden space-y-3">
-        {data.map((item) => (
-          <Card
-            key={keyExtractor(item)}
-            className={cn(
-              "p-4 space-y-3",
-              onRowClick && "cursor-pointer hover:bg-accent transition-colors",
-              mobileCardClassName
-            )}
-            onClick={() => onRowClick?.(item)}
-          >
-            {columns
-              .filter((column) => !column.hideOnMobile)
-              .map((column) => (
-                <div key={column.key} className="flex justify-between items-start gap-4">
-                  <span className="text-sm font-medium text-muted-foreground min-w-[100px]">
-                    {column.mobileLabel || column.label}
-                  </span>
-                  <div className="text-sm text-right flex-1">{column.render(item)}</div>
-                </div>
-              ))}
-          </Card>
-        ))}
+        {data.map((item) => {
+          const rowKey = keyExtractor(item);
+          return (
+            <Card
+              key={rowKey}
+              className={cn(
+                "p-4 space-y-3",
+                onRowClick && "cursor-pointer hover:bg-accent transition-colors",
+                mobileCardClassName
+              )}
+              onClick={() => onRowClick?.(item)}
+            >
+              {columns
+                .filter((column) => !column.hideOnMobile)
+                .map((column) => (
+                  <div key={`${rowKey}-${column.key}`} className="flex justify-between items-start gap-4">
+                    <span className="text-sm font-medium text-muted-foreground min-w-[100px]">
+                      {column.mobileLabel || column.label}
+                    </span>
+                    <div className="text-sm text-right flex-1">{column.render(item)}</div>
+                  </div>
+                ))}
+            </Card>
+          );
+        })}
       </div>
     </>
   );

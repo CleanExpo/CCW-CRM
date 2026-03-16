@@ -1,32 +1,31 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 // PHASE 4: Real-time inventory updates
-import { useInventoryStream, type InventoryUpdate } from "@/lib/hooks/use-sse";
-import { RealTimeIndicator } from "@/components/ui/real-time-indicator";
+import { useInventoryStream, type InventoryUpdate } from '@/lib/hooks/use-sse';
+import { RealTimeIndicator } from '@/components/ui/real-time-indicator';
 // PHASE 4: Search state persistence
-import { useSearchState } from "@/lib/hooks/use-search-state";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ProductForm } from "./components/ProductForm";
-import { DeleteProductDialog } from "./components/DeleteProductDialog";
-import { BulkDeleteProductsDialog } from "./components/BulkDeleteProductsDialog";
-import { MultiLocationStockCell } from "@/components/inventory/MultiLocationStockCell";
-import { StockTransferDialog } from "@/app/(dashboard)/inventory/components/StockTransferDialog";
-import { Pencil, Trash2, Plus, ArrowLeftRight, Download } from "lucide-react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { DataTable } from "@/components/ui/data-table";
-import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import { PaginationControls } from "@/components/ui/pagination-controls";
-import { exportProductsToCSV } from "@/lib/utils/csv-export";
+import { useSearchState } from '@/lib/hooks/use-search-state';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ProductForm } from './components/ProductForm';
+import { DeleteProductDialog } from './components/DeleteProductDialog';
+import { BulkDeleteProductsDialog } from './components/BulkDeleteProductsDialog';
+import { MultiLocationStockCell } from '@/components/inventory/MultiLocationStockCell';
+import { StockTransferDialog } from '@/app/(dashboard)/inventory/components/StockTransferDialog';
+import Link from 'next/link';
+import { Pencil, Trash2, Plus, ArrowLeftRight, Download, Eye } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
+import { PaginationControls } from '@/components/ui/pagination-controls';
+import { exportProductsToCSV } from '@/lib/utils/csv-export';
 // PHASE 4: Last updated timestamps
-import { formatDistanceToNow } from "date-fns";
-import { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceToNow } from 'date-fns';
 
 interface StockByLocation {
   location: string;
@@ -36,14 +35,14 @@ interface StockByLocation {
 }
 
 type ProductCategory =
-  | "heavy_machinery"
-  | "hand_tools"
-  | "power_tools"
-  | "safety_equipment"
-  | "building_materials"
-  | "electrical"
-  | "plumbing"
-  | "accessories";
+  | 'heavy_machinery'
+  | 'hand_tools'
+  | 'power_tools'
+  | 'safety_equipment'
+  | 'building_materials'
+  | 'electrical'
+  | 'plumbing'
+  | 'accessories';
 
 interface Product {
   id: string;
@@ -72,22 +71,22 @@ export default function ProductsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
 
   // PHASE 4: Search state persistence - remembers search/pagination on navigation
   const { state: searchState, updateField } = useSearchState({
-    key: "products-list",
-    defaultState: { search: "", page: 1, pageSize: 50 },
+    key: 'products-list',
+    defaultState: { search: '', page: 1, pageSize: 50 },
   });
 
-  const search = searchState.search || "";
+  const search = searchState.search || '';
   const page = searchState.page || 1;
   const pageSize = searchState.pageSize || 50;
-  const setSearch = (value: string) => updateField("search", value);
-  const setPage = (value: number) => updateField("page", value);
-  const setPageSize = (value: number) => updateField("pageSize", value);
+  const setSearch = useCallback((value: string) => updateField('search', value), [updateField]);
+  const setPage = useCallback((value: number) => updateField('page', value), [updateField]);
+  const setPageSize = useCallback((value: number) => updateField('pageSize', value), [updateField]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
@@ -95,11 +94,7 @@ export default function ProductsPage() {
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   // PHASE 4: Real-time inventory updates via SSE
-  const {
-    data: inventoryUpdate,
-    status: sseStatus,
-    stats: sseStats,
-  } = useInventoryStream();
+  const { data: inventoryUpdate, status: sseStatus, stats: sseStats } = useInventoryStream();
 
   // Update product stock in real-time when SSE event received
   useEffect(() => {
@@ -136,7 +131,7 @@ export default function ProductsPage() {
       // After: 50 products = 1 API call (98% reduction)
       const data = await apiClient.get<PaginatedResponse>(
         `/api/products?page=${page}&page_size=${pageSize}&include_stock=true${
-          debouncedSearch ? `&search=${debouncedSearch}` : ""
+          debouncedSearch ? `&search=${debouncedSearch}` : ''
         }`
       );
 
@@ -145,12 +140,11 @@ export default function ProductsPage() {
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to load products";
-      console.error("Failed to load products:", error);
+      const message = error instanceof Error ? error.message : 'Failed to load products';
+      console.error('Failed to load products:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
       setProducts([]);
@@ -167,16 +161,16 @@ export default function ProductsPage() {
       setPage(1);
     }, 300);
     return () => clearTimeout(debounce);
-  }, [search]);
+  }, [search, setPage]);
 
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
+    return new Intl.NumberFormat('en-AU', {
+      style: 'currency',
+      currency: 'AUD',
     }).format(value);
   };
 
@@ -203,16 +197,14 @@ export default function ProductsPage() {
   const handleExport = () => {
     exportProductsToCSV(products as unknown as Record<string, unknown>[]);
     toast({
-      title: "Export Successful",
+      title: 'Export Successful',
       description: `Exported ${products.length} products to CSV`,
     });
   };
 
   const handleToggleSelectProduct = (productId: string) => {
     setSelectedProductIds((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
     );
   };
 
@@ -233,171 +225,16 @@ export default function ProductsPage() {
     setSelectedProductIds([]);
   };
 
-  const formatCategoryLabel = (category: ProductCategory) => {
-    return category ? category.replace(/_/g, " ") : "N/A";
-  };
-
-  // Define columns for TanStack Table
-  const columns: ColumnDef<Product>[] = [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            products.length > 0 &&
-            selectedProductIds.length === products.length
-          }
-          onCheckedChange={handleToggleSelectAll}
-          aria-label="Select all products"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={selectedProductIds.includes(row.original.id)}
-          onCheckedChange={() => handleToggleSelectProduct(row.original.id)}
-          aria-label={`Select ${row.original.name}`}
-          onClick={(e) => e.stopPropagation()}
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "sku",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="SKU" />
-      ),
-      cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.getValue("sku")}</span>
-      ),
-    },
-    {
-      accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
-      ),
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("name")}</span>
-      ),
-    },
-    {
-      accessorKey: "category",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Category" />
-      ),
-      cell: ({ row }) => (
-        <Badge variant="outline" className="capitalize">
-          {formatCategoryLabel(row.getValue("category"))}
-        </Badge>
-      ),
-      filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id));
-      },
-    },
-    {
-      accessorKey: "price",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Price" />
-      ),
-      cell: ({ row }) => formatCurrency(row.getValue("price")),
-    },
-    {
-      id: "stock",
-      header: "Stock by Location",
-      cell: ({ row }) => {
-        const product = row.original;
-        return product.stock_by_location && product.stock_by_location.length > 0 ? (
-          <MultiLocationStockCell
-            productId={product.id}
-            locations={product.stock_by_location}
-          />
-        ) : (
-          <span className={product.stock <= 10 ? "text-destructive font-semibold" : ""}>
-            {product.stock}
-          </span>
-        );
-      },
-      enableSorting: false,
-    },
-    {
-      accessorKey: "warehouse_location",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Warehouse" />
-      ),
-      cell: ({ row }) => row.getValue("warehouse_location") || "N/A",
-    },
-    {
-      accessorKey: "is_active",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => (
-        <Badge variant={row.getValue("is_active") ? "default" : "secondary"}>
-          {row.getValue("is_active") ? "Active" : "Inactive"}
-        </Badge>
-      ),
-      filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id));
-      },
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const product = row.original;
-        return (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleTransferStock(product);
-              }}
-              title="Transfer Stock"
-            >
-              <ArrowLeftRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditProduct(product);
-              }}
-              title="Edit Product"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteProduct(product);
-              }}
-              title="Delete Product"
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
-        );
-      },
-      enableSorting: false,
-      enableHiding: false,
-    },
-  ];
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Cleaning Equipment Inventory</h1>
             <p className="text-muted-foreground">
               {selectedProductIds.length > 0
                 ? `${selectedProductIds.length} selected`
-                : "Manage your product catalog"}
+                : 'Manage your product catalog'}
             </p>
           </div>
           {/* PHASE 4: Real-time connection indicator */}
@@ -405,10 +242,7 @@ export default function ProductsPage() {
         </div>
         <div className="flex gap-2">
           {selectedProductIds.length > 0 && (
-            <Button
-              variant="destructive"
-              onClick={handleBulkDelete}
-            >
+            <Button variant="destructive" onClick={handleBulkDelete}>
               <Trash2 className="mr-2 h-4 w-4" />
               Delete Selected ({selectedProductIds.length})
             </Button>
@@ -432,7 +266,7 @@ export default function ProductsPage() {
               <CardDescription>
                 {total} products in inventory
                 {lastUpdated && (
-                  <span className="ml-2 text-xs text-muted-foreground">
+                  <span className="text-muted-foreground ml-2 text-xs">
                     • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                   </span>
                 )}
@@ -449,25 +283,164 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={products}
-            loading={loading}
-            emptyMessage="No products found"
-            emptyDescription={
-              search
-                ? "Try adjusting your search criteria."
-                : "Add your first product to get started."
-            }
-            emptyAction={
-              !search && (
-                <Button onClick={handleAddProduct}>
+          {loading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-muted-foreground text-lg font-medium">No products found</p>
+              <p className="text-muted-foreground mt-2 text-sm">
+                {search
+                  ? 'Try adjusting your search criteria.'
+                  : 'Add your first product to get started.'}
+              </p>
+              {!search && (
+                <Button onClick={handleAddProduct} className="mt-4">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Product
                 </Button>
-              )
-            }
-          />
+              )}
+            </div>
+          ) : (
+            <ResponsiveTable
+              data={products}
+              keyExtractor={(product) => product.id}
+              columns={[
+                {
+                  key: 'select',
+                  label: (
+                    <Checkbox
+                      checked={products.length > 0 && selectedProductIds.length === products.length}
+                      onCheckedChange={handleToggleSelectAll}
+                      aria-label="Select all products"
+                    />
+                  ),
+                  className: 'w-12',
+                  render: (product) => (
+                    <Checkbox
+                      checked={selectedProductIds.includes(product.id)}
+                      onCheckedChange={() => handleToggleSelectProduct(product.id)}
+                      aria-label={`Select ${product.name}`}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ),
+                },
+                {
+                  key: 'sku',
+                  label: 'SKU',
+                  className: 'font-mono text-sm',
+                  render: (product) => product.sku,
+                },
+                {
+                  key: 'name',
+                  label: 'Name',
+                  className: 'font-medium',
+                  render: (product) => product.name,
+                },
+                {
+                  key: 'category',
+                  label: 'Category',
+                  render: (product) => (
+                    <Badge variant="outline" className="capitalize">
+                      {product.category ? product.category.replace(/_/g, ' ') : 'N/A'}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: 'price',
+                  label: 'Price',
+                  render: (product) => formatCurrency(product.price),
+                },
+                {
+                  key: 'stock',
+                  label: 'Stock by Location',
+                  render: (product) =>
+                    product.stock_by_location && product.stock_by_location.length > 0 ? (
+                      <MultiLocationStockCell
+                        productId={product.id}
+                        locations={product.stock_by_location}
+                      />
+                    ) : (
+                      <span className={product.stock <= 10 ? 'text-destructive font-semibold' : ''}>
+                        {product.stock}
+                      </span>
+                    ),
+                },
+                {
+                  key: 'warehouse',
+                  label: 'Warehouse',
+                  hideOnMobile: true,
+                  render: (product) => product.warehouse_location || 'N/A',
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  render: (product) => (
+                    <Badge variant={product.is_active ? 'default' : 'secondary'}>
+                      {product.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: 'actions',
+                  label: 'Actions',
+                  className: 'text-right',
+                  mobileLabel: '',
+                  render: (product) => (
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="View Product"
+                        asChild
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Link href={`/products/${product.id}` as any}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTransferStock(product);
+                        }}
+                        title="Transfer Stock"
+                      >
+                        <ArrowLeftRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditProduct(product);
+                        }}
+                        title="Edit Product"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteProduct(product);
+                        }}
+                        title="Delete Product"
+                      >
+                        <Trash2 className="text-destructive h-4 w-4" />
+                      </Button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          )}
 
           {!loading && products.length > 0 && (
             <PaginationControls

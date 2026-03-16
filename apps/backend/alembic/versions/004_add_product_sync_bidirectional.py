@@ -27,11 +27,39 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Add bidirectional sync support."""
 
-    # Add sync_direction column to shopify_product_mappings
-    op.add_column(
-        'shopify_product_mappings',
-        sa.Column('sync_direction', sa.String(20), nullable=True)
-    )
+    # Create shopify_product_mappings table if it doesn't exist
+    # This table was missing from earlier migrations
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS shopify_product_mappings (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            product_id UUID NOT NULL,
+            shopify_product_id INTEGER NOT NULL,
+            shopify_variant_id INTEGER,
+            sku VARCHAR(255),
+            sync_status VARCHAR(50) DEFAULT 'pending',
+            last_synced_at TIMESTAMP WITH TIME ZONE,
+            shopify_data JSONB,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+        )
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_shopify_product_mappings_product_id ON shopify_product_mappings(product_id)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_shopify_product_mappings_shopify_product_id ON shopify_product_mappings(shopify_product_id)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_shopify_product_mappings_shopify_variant_id ON shopify_product_mappings(shopify_variant_id)")
+
+    # Add sync_direction column to shopify_product_mappings (if not exists)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'shopify_product_mappings'
+                AND column_name = 'sync_direction'
+            ) THEN
+                ALTER TABLE shopify_product_mappings ADD COLUMN sync_direction VARCHAR(20);
+            END IF;
+        END $$;
+    """)
 
     # Create shopify_product_sync_logs table
     op.create_table(

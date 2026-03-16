@@ -4,11 +4,11 @@ This implementation generates a comprehensive PRD in a single API call to Claude
 avoiding the complexity of multiple sub-agents.
 """
 
-import anthropic
-from datetime import datetime
-from typing import Any
-import structlog
 import json
+from typing import Any
+
+import anthropic
+import structlog
 
 from src.config import get_settings
 
@@ -159,11 +159,9 @@ Important guidelines:
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",  # Using Sonnet for more reliable JSON
+            model="claude-opus-4-6",  # Using Opus for enhanced reasoning
             max_tokens=8000,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         # Parse response
@@ -186,7 +184,7 @@ Important guidelines:
                 error=str(e),
                 response_start=response_text[:500],
                 response_end=response_text[-500:],
-                response_length=len(response_text)
+                response_length=len(response_text),
             )
             raise
 
@@ -203,7 +201,7 @@ Important guidelines:
             "TechnicalSpec.md",
             "TestPlan.md",
             "Roadmap.md",
-            "UserStories.md"
+            "UserStories.md",
         ]
 
         logger.info(
@@ -225,18 +223,12 @@ Important guidelines:
                 "total_test_scenarios": total_test_scenarios,
                 "total_sprints": total_sprints,
                 "estimated_duration_weeks": estimated_duration_weeks,
-            }
+            },
         }
 
     except json.JSONDecodeError as e:
         logger.error("Failed to parse Claude response as JSON", error=str(e))
-        return {
-            "success": False,
-            "error": f"Failed to parse AI response: {str(e)}"
-        }
+        return {"success": False, "error": f"Failed to parse AI response: {str(e)}"}
     except Exception as e:
         logger.error("PRD generation failed", error=str(e))
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}

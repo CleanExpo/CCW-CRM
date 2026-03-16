@@ -8,6 +8,10 @@ import enum
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+try:
+    from pgvector.sqlalchemy import Vector
+except ImportError:
+    from sqlalchemy import LargeBinary as Vector  # Fallback when pgvector not installed
 from sqlalchemy import (
     ARRAY,
     Boolean,
@@ -22,8 +26,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.orm import relationship
-from pgvector.sqlalchemy import Vector
 
 from src.db.models_base import Base
 

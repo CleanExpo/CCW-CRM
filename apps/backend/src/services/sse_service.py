@@ -29,7 +29,8 @@ import asyncio
 import json
 import time
 from collections import defaultdict
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 from uuid import uuid4
 
 import structlog
@@ -176,7 +177,7 @@ class SSEService:
                             "event": "message",
                             "data": json.dumps(event["data"]),
                         }
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         # No event, continue loop for heartbeat/disconnect check
                         continue
 

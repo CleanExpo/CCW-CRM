@@ -6,7 +6,6 @@ These endpoints are called directly from Shopify theme liquid/JavaScript code.
 """
 
 from typing import Annotated
-from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -16,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
-from src.db.demo_models import Customer, Order, Product
+from src.db.demo_models import Customer, Product
 from src.db.shopify_extended_models import ShopifyThemeEndpoint
 
 logger = structlog.get_logger(__name__)

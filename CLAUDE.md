@@ -1,150 +1,208 @@
-# CCW-Online-ERP - Architecture Guide for Development
+## Anti-Drift Infrastructure (Read This First)
 
-> 🚨 **IMPORTANT**: Before reading this file, read `.claude/STARTUP.md` first.
->
+This project uses automated Claude Code hooks to combat context drift:
+
+- **SessionStart**: Auto-injects CONSTITUTION.md + current-state.md at session start
+- **UserPromptSubmit**: Re-injects compass check (6 prohibitions + current state) before EVERY message
+- **PreCompact**: Saves state to .claude/memory/context-snapshot.md before compaction occurs
+- **PreToolUse (Task)**: Logs all agent dispatches to decisions-log.md
+
+**IF hooks fire**, you will see "COMPASS CHECK (auto-injected)" before the user's message — this is correct.
+
+**IF you missed hook injection** (rare — restart Claude Code), manually run:
+
+```bash
+cat .claude/memory/CONSTITUTION.md
+cat .claude/memory/current-state.md
+```
+
+State files in .claude/memory/ — read these before every major decision:
+
+- `CONSTITUTION.md` — immutable rules (same rules every session)
+- `current-state.md` — active sprint, in-progress work
+- `decisions-log.md` — architectural decisions audit log
+- `handoff.md` — cross-session context handoff
+
+**5 Governing Laws:**
+
+1. **Anti-Drift Law**: State on disk. Hooks re-inject. Orchestrator never compacts.
+2. **1:10 Agent:Skill Law**: Every agent has exactly 10 skills. No more, no less.
+3. **Catalog Law**: Check docs/catalogs/ before adding anything. Update after adding.
+4. **10x Health Check Law**: Run /health-check-10x after every major change.
+5. **Smart-Not-Fast Law**: /plan → approve → implement → /test → report. Always.
+
+---
+
+# CCW-ERP-CRM - Architecture Guide for Development
+
 > **Claude Framework**: This project uses a comprehensive Claude Code framework located in `.claude/`:
+>
 > - `.claude/STARTUP.md` - Read this FIRST every session
 > - `.claude/CLAUDE.md` - Full system instructions & workflow
 > - `.claude/agents/` - Orchestrator, Planner, Coder, Reviewer agents
 > - `.claude/commands/` - /plan, /spec, /test, /audit, /reset commands
-> - `.claude/.directives` - Auto-enforced rules
-> - `.claude/.execution` - Current state tracking
+> - `.claude/rules/` - Auto-enforced rules
 >
 > This file (root CLAUDE.md) is your quick reference. For detailed instructions, see `.claude/CLAUDE.md`.
 
 ---
 
 ## Project Overview
-This is a **full-stack Equipment Supplier ERP** built for CCW's internal business operations, based on the NodeJS-Starter-V1 template.
 
-**Current Status**: Working MVP with read-only views. The task is to add full CRUD operations (Create, Read, Update, Delete) to all modules.
+This is a **full-stack Equipment Supplier ERP/CRM** built for CCW's internal business operations.
+
+**Current Status**: Deployed production application on Vercel (frontend) + Supabase Cloud (database/auth). Full CRUD operations, Cin7 inventory integration (7 phases), AI agent framework, multi-agent governance protocol, POS system, and real-time sync are all complete. SEO schema layer (JSON-LD), FAQ page, Stripe billing, KPI Reports page, and CSV export on all modules are also complete.
 
 **Tech Stack**:
+
 - **Frontend**: Next.js 15, React 19, TypeScript 5.7, Tailwind CSS v4, shadcn/ui
 - **Backend**: FastAPI (Python 3.12), SQLAlchemy 2.0, Pydantic v2
-- **Database**: PostgreSQL 15 (via Docker)
+- **Database**: PostgreSQL 15 — Supabase Cloud (production), Docker (local dev)
+- **Deployment**: Vercel (frontend), Supabase Cloud (DB + Auth)
 - **Package Manager**: pnpm
 - **Build Tool**: Turbo (monorepo orchestration)
-- **State Management**: React hooks (no Redux/Zustand needed for MVP)
+- **State Management**: React hooks (no Redux/Zustand)
 - **Form Validation**: Zod (frontend) + Pydantic (backend)
 - **Forms**: React Hook Form
+- **HTTP Client**: httpx (async, for integrations)
+- **Logging**: structlog (structured logging)
 
 ---
 
 ## Architecture Overview
 
 ### Monorepo Structure
+
 ```
-C:\CCW-Online-ERP/
+D:\CCW-ERP-CRM/
 ├── apps/
-│   ├── web/                              # Next.js 15 Frontend
+│   ├── web/                              # Next.js 15 Frontend (Vercel)
 │   │   ├── app/
 │   │   │   ├── (auth)/                   # Authentication pages
 │   │   │   │   └── login/page.tsx        # Login page
 │   │   │   └── (dashboard)/              # Protected dashboard routes
 │   │   │       ├── layout.tsx            # Dashboard layout with sidebar
 │   │   │       ├── dashboard/page.tsx    # Main dashboard with metrics
-│   │   │       ├── products/page.tsx     # Products list (read-only)
-│   │   │       ├── customers/page.tsx    # Customers list (read-only)
-│   │   │       ├── orders/page.tsx       # Orders list (read-only)
-│   │   │       └── quotes/page.tsx       # Quotes list (read-only)
+│   │   │       ├── products/page.tsx     # Products CRUD
+│   │   │       ├── customers/page.tsx    # Customers CRUD
+│   │   │       ├── orders/page.tsx       # Orders CRUD + line items
+│   │   │       ├── quotes/page.tsx       # Quotes CRUD + line items
+│   │   │       ├── pos/page.tsx          # Point of Sale
+│   │   │       └── settings/             # Settings & integrations
+│   │   │           └── integrations/     # Cin7, Xero, Shopify config
 │   │   ├── components/
 │   │   │   ├── auth/
-│   │   │   │   └── login-form.tsx        # ⭐ REFERENCE PATTERN FOR FORMS
+│   │   │   │   └── login-form.tsx        # REFERENCE PATTERN FOR FORMS
+│   │   │   ├── dashboard/               # Dashboard widgets (Cin7 sync, etc.)
 │   │   │   ├── layout/
 │   │   │   │   └── sidebar.tsx           # Navigation sidebar
-│   │   │   └── ui/                       # shadcn/ui components (installed)
+│   │   │   └── ui/                       # shadcn/ui components
 │   │   ├── lib/
-│   │   │   └── api/
-│   │   │       ├── client.ts             # ⭐ API client for all requests
-│   │   │       └── auth.ts               # Auth API methods
-│   │   └── middleware.ts                 # 🚨 DO NOT MODIFY - JWT auth
+│   │   │   ├── api/
+│   │   │   │   ├── client.ts             # API client for all requests
+│   │   │   │   ├── auth.ts               # Auth API methods
+│   │   │   │   └── cin7.ts               # Cin7 integration API
+│   │   │   └── hooks/                    # Custom hooks (SSE, Cin7 stream)
+│   │   └── middleware.ts                 # DO NOT MODIFY - JWT auth
 │   └── backend/                          # FastAPI Backend
 │       ├── src/
-│       │   ├── api/routes/
-│       │   │   ├── demo_lists.py         # ⭐ Products, Customers, Orders, Quotes list endpoints
-│       │   │   ├── demo_dashboard.py     # Dashboard metrics and charts
-│       │   │   └── demo_auth.py          # 🚨 DO NOT MODIFY - Authentication endpoints
+│       │   ├── api/
+│       │   │   ├── main.py               # App entry, router registration
+│       │   │   └── routes/
+│       │   │       ├── demo_lists.py     # Products, Customers, Orders, Quotes
+│       │   │       ├── demo_dashboard.py # Dashboard metrics
+│       │   │       ├── demo_auth.py      # DO NOT MODIFY - Auth endpoints
+│       │   │       ├── integrations/     # Cin7, Xero, Shopify routes
+│       │   │       │   ├── cin7.py       # Connection management
+│       │   │       │   ├── cin7_sync.py  # Product/inventory sync
+│       │   │       │   ├── cin7_crm.py   # Customer/order/quote sync
+│       │   │       │   ├── cin7_procurement.py  # Supplier/PO sync
+│       │   │       │   ├── cin7_webhooks.py     # Webhook receiver
+│       │   │       │   └── cin7_stream.py       # SSE + polling
+│       │   │       └── ai/               # AI agent endpoints
+│       │   │           ├── cin7_forecast.py
+│       │   │           └── cin7_anomaly.py
+│       │   ├── integrations/
+│       │   │   └── cin7/                 # Cin7 integration (7 phases)
+│       │   │       ├── client.py         # Core + Omni API clients
+│       │   │       ├── demo_client.py    # Mock data for demo mode
+│       │   │       ├── product_sync.py   # Bidirectional product sync
+│       │   │       ├── inventory_sync.py # Multi-location stock sync
+│       │   │       ├── customer_sync.py  # Customer sync
+│       │   │       ├── sales_sync.py     # Order + quote sync
+│       │   │       ├── supplier_sync.py  # Supplier sync
+│       │   │       ├── purchase_sync.py  # Purchase order sync
+│       │   │       ├── change_detector.py # Polling-based change detection
+│       │   │       └── event_dispatcher.py # SSE event routing
+│       │   ├── ai/
+│       │   │   └── agents/specialized/   # AI agents (forecasting, anomaly)
 │       │   ├── db/
-│       │   │   ├── demo_models.py        # 🚨 DO NOT MODIFY - SQLAlchemy models
-│       │   │   └── seed_demo.py          # Seed data script
+│       │   │   ├── demo_models.py        # DO NOT MODIFY - Core SQLAlchemy models
+│       │   │   ├── cin7_models.py        # Cin7 mapping/sync models
+│       │   │   ├── pos_models.py         # POS transaction models
+│       │   │   └── webhook_models.py     # Webhook event models
 │       │   └── config/
-│       │       └── database.py           # DB connection
-│       └── tests/                        # Pytest tests
-├── docker-compose.yml                    # PostgreSQL container
+│       │       ├── database.py           # DB connection
+│       │       └── cin7_settings.py      # Cin7 integration config
+│       └── tests/
+│           ├── integration/              # Cin7 integration tests (321 assertions)
+│           └── api/                      # API endpoint tests
+├── .claude/                              # Claude Code framework (read-only)
+├── docs/                                 # Documentation & specs
+├── scripts/                              # Utility scripts
+├── docker-compose.yml                    # PostgreSQL container (local dev)
 ├── package.json                          # Root package.json with scripts
 └── pnpm-workspace.yaml                   # pnpm workspace config
 ```
 
 ---
 
-## 🚨 Critical Development Guardrails
+## Critical Development Guardrails
 
 ### NEVER DO THESE (Breaking Changes):
 
 #### 1. **Database Schema Changes**
-- ❌ **DO NOT** modify `apps/backend/src/db/demo_models.py` (SQLAlchemy models)
-- ❌ **DO NOT** add, remove, or rename database columns
-- ❌ **DO NOT** change table names
-- ❌ **DO NOT** create new Alembic migrations
-- ❌ **DO NOT** modify enum types (OrderStatus, QuoteStatus, ProductCategory)
 
-**Why**: Database is shared with production-like data. Schema changes require careful planning, approval, and migration strategy. Making schema changes without approval could corrupt data or break the existing system.
+- DO NOT modify `apps/backend/src/db/demo_models.py` (core SQLAlchemy models)
+- DO NOT add, remove, or rename database columns on core tables
+- DO NOT change table names
+- DO NOT modify enum types (OrderStatus, QuoteStatus, ProductCategory)
 
-**Exception**: Only with explicit user approval and migration strategy.
+**Exception**: Only with explicit user approval and migration strategy. New integration models (like cin7_models.py) are fine.
 
 #### 2. **Authentication & Security**
-- ❌ **DO NOT** modify `apps/web/middleware.ts` (JWT auth middleware)
-- ❌ **DO NOT** change `apps/backend/src/api/routes/demo_auth.py` (auth endpoints)
-- ❌ **DO NOT** modify password hashing logic (passlib/bcrypt)
-- ❌ **DO NOT** change token generation or validation
-- ❌ **DO NOT** disable authentication checks or bypass security
 
-**Why**: Security-critical code. Any changes could expose vulnerabilities, allow unauthorized access, or leak sensitive user data.
+- DO NOT modify `apps/web/middleware.ts` (JWT auth middleware)
+- DO NOT change `apps/backend/src/api/routes/demo_auth.py` (auth endpoints)
+- DO NOT modify password hashing logic (passlib/bcrypt)
+- DO NOT change token generation or validation
+- DO NOT disable authentication checks or bypass security
 
 #### 3. **API Contracts (Existing Endpoints)**
-- ❌ **DO NOT** change response structure of existing endpoints
-- ❌ **DO NOT** rename existing API routes (e.g., `/api/products` → `/api/items`)
-- ❌ **DO NOT** change required request parameters to optional or vice versa
-- ❌ **DO NOT** remove fields from API responses
 
-**Why**: Frontend depends on specific API contracts. Breaking changes will crash the UI, cause data display errors, or break pagination.
+- DO NOT change response structure of existing endpoints
+- DO NOT rename existing API routes
+- DO NOT change required request parameters to optional or vice versa
+- DO NOT remove fields from API responses
 
 **Exception**: You CAN add optional parameters or new fields to responses. You CAN create entirely new endpoints.
 
 #### 4. **Dependencies & Package Versions**
-- ❌ **DO NOT** upgrade Next.js, React, FastAPI, or other major frameworks without approval
-- ❌ **DO NOT** add large dependencies (>5MB) without justification
-- ❌ **DO NOT** remove existing dependencies that are in use
-- ❌ **DO NOT** change Python or Node.js version requirements
 
-**Why**: Version upgrades can introduce breaking changes, require code refactoring, or cause build failures. Large dependencies slow down builds and increase bundle size.
+- DO NOT upgrade Next.js, React, FastAPI, or other major frameworks without approval
+- DO NOT add large dependencies (>5MB) without justification
+- DO NOT remove existing dependencies that are in use
 
 ---
 
-### ✅ ENCOURAGED CHANGES (Safe to Make):
+### ENCOURAGED CHANGES (Safe to Make):
 
-1. **Frontend Components**
-   - ✅ Add new components in `apps/web/components/`
-   - ✅ Add new page components in `apps/web/app/(dashboard)/[module]/components/`
-   - ✅ Use existing shadcn/ui components (Button, Dialog, Form, Input, etc.)
-   - ✅ Follow existing component patterns (see `login-form.tsx`)
-
-2. **API Calls**
-   - ✅ Add new API client methods in `apps/web/lib/api/`
-   - ✅ Use `apiClient.get()`, `apiClient.post()`, `apiClient.put()`, `apiClient.delete()` from `client.ts`
-   - ✅ Add proper TypeScript types for requests and responses
-
-3. **Styling**
-   - ✅ Use Tailwind utility classes
-   - ✅ Use CSS variables from design system (e.g., `bg-primary`, `text-muted-foreground`)
-   - ✅ Follow spacing scale: `space-y-4`, `gap-6`, `p-4`, etc.
-   - ✅ Use responsive breakpoints: `md:grid-cols-2`, `lg:flex-row`, etc.
-
-4. **Testing**
-   - ✅ Add Vitest tests for new components in `apps/web/__tests__/`
-   - ✅ Add Pytest tests for new backend logic in `apps/backend/tests/`
-   - ✅ Test critical paths (form submission, API calls, delete confirmations)
+1. **Frontend Components** — Add in `apps/web/components/` or page-level `components/`
+2. **API Calls** — Add new API client methods in `apps/web/lib/api/`
+3. **New Endpoints** — Add in `apps/backend/src/api/routes/`
+4. **Integration Modules** — Add in `apps/backend/src/integrations/`
+5. **Tests** — Add in `apps/web/__tests__/` or `apps/backend/tests/`
+6. **Styling** — Use Tailwind utilities and design system tokens (`bg-primary`, etc.)
 
 ---
 
@@ -155,6 +213,7 @@ C:\CCW-Online-ERP/
 **Location**: `apps/web/app/(dashboard)/[module]/components/[ModuleName]Form.tsx`
 
 **Pattern** (based on `login-form.tsx`):
+
 ```typescript
 "use client";
 
@@ -165,28 +224,19 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 
-// 1. Define Zod schema for validation
 const formSchema = z.object({
   field1: z.string().min(1, "Field is required"),
   field2: z.string().email("Invalid email format"),
-  field3: z.number().positive("Must be positive"),
-  // ... more fields
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-// 2. Component with proper TypeScript types
 interface ModuleFormProps {
   mode: "create" | "edit";
   initialData?: FormData;
@@ -198,64 +248,42 @@ export function ModuleForm({ mode, initialData, onSuccess }: ModuleFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // 3. React Hook Form setup
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      field1: "",
-      field2: "",
-      field3: 0,
-    },
+    defaultValues: initialData || { field1: "", field2: "" },
   });
 
-  // 4. Submit handler with error handling
   async function onSubmit(values: FormData) {
     setIsLoading(true);
     try {
       if (mode === "create") {
         await apiClient.post("/api/endpoint", values);
-        toast({
-          title: "Success",
-          description: "Created successfully",
-        });
+        toast({ title: "Success", description: "Created successfully" });
       } else {
         await apiClient.put(`/api/endpoint/${initialData?.id}`, values);
-        toast({
-          title: "Success",
-          description: "Updated successfully",
-        });
+        toast({ title: "Success", description: "Updated successfully" });
       }
       onSuccess?.();
-      router.refresh(); // Refresh server components to show new data
+      router.refresh();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Operation failed",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Operation failed", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   }
 
-  // 5. Render form with shadcn/ui components
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="field1"
+        <FormField control={form.control} name="field1"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Field Label</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter value" {...field} />
-              </FormControl>
+              <FormControl><Input placeholder="Enter value" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        {/* More fields... */}
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Saving..." : mode === "create" ? "Create" : "Update"}
         </Button>
@@ -267,358 +295,152 @@ export function ModuleForm({ mode, initialData, onSuccess }: ModuleFormProps) {
 
 ### API Client Pattern
 
-**Location**: `apps/web/lib/api/client.ts`
-
-**Usage**:
 ```typescript
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from '@/lib/api/client';
 
-// GET request
-const products = await apiClient.get<Product[]>("/api/products");
+// apiClient automatically handles JWT token from cookies, JSON serialization,
+// and throws ApiClientError on failure.
+// Base URL: process.env.NEXT_PUBLIC_BACKEND_URL (defaults to http://localhost:8000)
 
-// GET with query parameters
-const filteredProducts = await apiClient.get<PaginatedResponse>(
-  "/api/products?page=1&page_size=50&search=drill"
-);
-
-// POST request
-const newProduct = await apiClient.post("/api/products", {
-  sku: "SKU-001",
-  name: "Product Name",
-  price: 99.99,
-  stock: 100,
-});
-
-// PUT request
+const products = await apiClient.get<Product[]>('/api/products');
+const newProduct = await apiClient.post('/api/products', data);
 const updated = await apiClient.put(`/api/products/${id}`, data);
-
-// DELETE request
 await apiClient.delete(`/api/products/${id}`);
 ```
 
-**Important Notes**:
-- `apiClient` automatically handles JWT token from cookies
-- `apiClient` automatically handles JSON serialization/deserialization
-- `apiClient` throws `ApiClientError` on failure (catch it and show user-friendly message)
-- Base URL comes from `process.env.NEXT_PUBLIC_BACKEND_URL` (defaults to http://localhost:8000)
-
 ### Backend Endpoint Pattern
 
-**Existing Endpoints** (in `apps/backend/src/api/routes/demo_lists.py`):
 ```python
 from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.config.database import get_async_db
-from src.db.demo_models import Product
 
-router = APIRouter(prefix="/api", tags=["Demo Lists"])
+router = APIRouter(prefix="/api", tags=["Module"])
 
-@router.get("/products")
-async def list_products(
+@router.get("/items")
+async def list_items(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     search: str | None = None,
-    category: str | None = None,
 ) -> PaginatedResponse:
-    """List products with pagination and search."""
-    query = select(Product)
-
-    # Apply filters
-    if search:
-        query = query.where(
-            or_(
-                Product.name.ilike(f"%{search}%"),
-                Product.sku.ilike(f"%{search}%"),
-            )
-        )
-
-    if category:
-        query = query.where(Product.category == category)
-
-    # Count total
-    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
-    total = count_result.scalar() or 0
-
-    # Apply pagination
-    query = query.order_by(Product.name).limit(page_size).offset((page - 1) * page_size)
-
-    # Execute and return
-    result = await db.execute(query)
-    products = result.scalars().all()
-
-    return PaginatedResponse(
-        data=products,
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size,
-    )
-
-# Similar patterns for POST, PUT, DELETE...
+    # async/await, Pydantic models, proper error handling
+    ...
 ```
 
-**If adding new endpoints** (generally not needed, existing ones should work):
-- Use async/await pattern throughout
-- Use Pydantic models for request validation and response serialization
-- Use SQLAlchemy async session (`get_async_db` dependency)
-- Return proper HTTP status codes (201 for create, 204 for delete, 200 for get/update)
-- Add comprehensive error handling
+### Integration Pattern (Cin7 example, reusable for new integrations)
+
+```
+config/settings.py -> integrations/[name]/client.py (demo/live) -> api/routes/integrations/[name].py
+```
+
+- Settings: Pydantic BaseSettings, `mode: demo|live`, global singleton
+- Client: httpx.AsyncClient, async context manager, demo/live routing
+- Demo: structlog logging, realistic mock data matching real API shapes
+- DB: Base from models_base.py, UUID PKs, Mapped[] type hints
 
 ---
 
 ## Database Schema Reference
 
-**Tables** (in `demo_models.py` - **DO NOT MODIFY**):
+**Core Tables** (in `demo_models.py` - DO NOT MODIFY):
 
-1. **organizations** - Organization/tenant data
-   - id (UUID, primary key), name, slug, is_active, created_at, updated_at
+| Table         | Key Fields                                                                         |
+| ------------- | ---------------------------------------------------------------------------------- |
+| organizations | id (UUID), name, slug, is_active                                                   |
+| users         | id (UUID), email (unique), hashed_password, full_name, organization_id (FK)        |
+| products      | id (UUID), sku (unique), name, category (ProductCategory enum), price, cost, stock |
+| customers     | id (UUID), customer_number (unique), company_name, contact_name, email             |
+| orders        | id (UUID), order_number (ORD-YYYY-NNN), customer_id (FK), status (OrderStatus)     |
+| order_items   | id (UUID), order_id (FK, cascade), product_id (FK), quantity, unit_price           |
+| quotes        | id (UUID), quote_number (Q-YYYY-NNN), customer_id (FK), status (QuoteStatus)       |
+| quote_items   | id (UUID), quote_id (FK, cascade), product_id (FK), quantity, unit_price           |
 
-2. **users** - User accounts
-   - id (UUID), email (unique), hashed_password, full_name, organization_id (FK to organizations), is_active, created_at, updated_at
+**Enums**: OrderStatus (draft/pending/confirmed/processing/shipped/delivered/cancelled), QuoteStatus (draft/pending/sent/accepted/rejected/expired), ProductCategory (heavy_machinery/hand_tools/power_tools/safety_equipment/building_materials/electrical/plumbing/accessories)
 
-3. **products** - Product catalog
-   - id (UUID), sku (unique), name, description, category (enum: ProductCategory), price (decimal), cost (decimal), stock (integer), warehouse_location, is_active, created_at, updated_at
-
-4. **customers** - Customer directory
-   - id (UUID), customer_number (unique), company_name, contact_name, email, phone, address, city, state, postal_code, country, is_active, created_at, updated_at
-
-5. **orders** - Sales orders
-   - id (UUID), order_number (unique, format: ORD-YYYY-NNN), customer_id (FK to customers), order_date, status (enum: OrderStatus), notes, total (calculated from items), created_at, updated_at
-
-6. **order_items** - Order line items
-   - id (UUID), order_id (FK to orders, cascade delete), product_id (FK to products), quantity, unit_price, subtotal (calculated: quantity × unit_price), created_at, updated_at
-
-7. **quotes** - Customer quotes
-   - id (UUID), quote_number (unique, format: Q-YYYY-NNN), customer_id (FK to customers), quote_date, valid_until, status (enum: QuoteStatus), notes, total (calculated from items), created_at, updated_at
-
-8. **quote_items** - Quote line items
-   - id (UUID), quote_id (FK to quotes, cascade delete), product_id (FK to products), quantity, unit_price, subtotal (calculated: quantity × unit_price), created_at, updated_at
-
-**Enums**:
-- **OrderStatus**: draft, pending, confirmed, processing, shipped, delivered, cancelled
-- **QuoteStatus**: draft, pending, sent, accepted, rejected, expired
-- **ProductCategory**: heavy_machinery, hand_tools, power_tools, safety_equipment, building_materials, electrical, plumbing, accessories
-
-**Key Relationships**:
-- Orders → Customer (many-to-one)
-- Order Items → Order (many-to-one, cascade delete)
-- Order Items → Product (many-to-one)
-- Quotes → Customer (many-to-one)
-- Quote Items → Quote (many-to-one, cascade delete)
-- Quote Items → Product (many-to-one)
+**Integration Models** (cin7_models.py): Cin7Connection, Cin7ProductMapping, Cin7SyncLog, Cin7CustomerMapping, Cin7OrderMapping, Cin7QuoteMapping, Cin7SupplierMapping, Cin7PurchaseOrderMapping
 
 ---
 
 ## Testing Requirements
 
-### When to Run Tests
-
 **Before marking task complete** (MANDATORY):
+
 ```bash
-# From project root
-pnpm turbo run type-check    # MUST PASS - no TypeScript errors
-pnpm turbo run lint          # MUST PASS - no ESLint errors
-pnpm turbo run test          # MUST PASS - all Vitest + Pytest tests passing
+pnpm turbo run type-check    # No TypeScript errors
+pnpm turbo run lint          # No ESLint errors
+pnpm turbo run test          # All Vitest + Pytest tests passing
 ```
-
-**During development** (optional but recommended):
-```bash
-# Watch mode for frontend tests
-pnpm test:watch --filter=web
-
-# Watch mode for backend tests (if you have pytest-watch installed)
-cd apps/backend && pytest-watch
-```
-
-### Test Coverage Expectations
-
-**Minimum Coverage** (for MVP):
-- **Critical paths**: Form submissions work, API calls succeed, Delete confirmations prevent accidental deletion
-- **Edge cases**: Validation errors display properly, Network errors show user-friendly messages, Empty states render correctly
-- **No need for 100% coverage**, but all user-facing features should be tested
 
 **Test Location**:
-- Frontend: `apps/web/__tests__/components/[module]/`
-  - Example: `apps/web/__tests__/components/products/ProductForm.test.tsx`
+
+- Frontend: `apps/web/__tests__/`
 - Backend: `apps/backend/tests/`
-  - Example: `apps/backend/tests/api/test_products.py`
-
-**Example Test** (Vitest):
-```typescript
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { ProductForm } from "@/app/(dashboard)/products/components/ProductForm";
-
-describe("ProductForm", () => {
-  test("shows validation error for empty SKU", async () => {
-    render(<ProductForm mode="create" />);
-
-    const submitButton = screen.getByRole("button", { name: /create/i });
-    fireEvent.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText(/sku is required/i)).toBeInTheDocument();
-    });
-  });
-
-  test("creates product successfully", async () => {
-    render(<ProductForm mode="create" />);
-
-    // Fill in form fields
-    fireEvent.change(screen.getByLabelText(/sku/i), { target: { value: "TEST-001" } });
-    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "Test Product" } });
-
-    // Submit
-    fireEvent.click(screen.getByRole("button", { name: /create/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/created successfully/i)).toBeInTheDocument();
-    });
-  });
-});
-```
-
----
-
-## Common Pitfalls & How to Avoid Them
-
-### 1. Forgetting Loading States
-**Problem**: Form submits but no visual feedback, user clicks submit button multiple times, causes duplicate API calls
-
-**Solution**: Always set `isLoading` state, disable button during submission
-```typescript
-const [isLoading, setIsLoading] = useState(false);
-
-async function onSubmit(data) {
-  setIsLoading(true);
-  try {
-    await apiClient.post("/api/products", data);
-  } finally {
-    setIsLoading(false);
-  }
-}
-
-// In JSX:
-<Button type="submit" disabled={isLoading}>
-  {isLoading ? "Saving..." : "Save"}
-</Button>
-```
-
-### 2. Not Handling Errors Properly
-**Problem**: API error occurs, page crashes or shows cryptic error message, user doesn't know what went wrong
-
-**Solution**: Wrap API calls in try-catch, show user-friendly error messages via toast
-```typescript
-try {
-  await apiClient.post("/api/products", data);
-  toast({ title: "Success", description: "Product created" });
-} catch (error: any) {
-  toast({
-    title: "Error",
-    description: error.message || "Something went wrong. Please try again.",
-    variant: "destructive",
-  });
-}
-```
-
-### 3. Missing Confirmation Dialogs for Delete
-**Problem**: User accidentally clicks delete button, data is immediately deleted, no way to undo
-
-**Solution**: Always use AlertDialog for destructive actions
-```typescript
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-
-<AlertDialog>
-  <AlertDialogTrigger asChild>
-    <Button variant="destructive">Delete</Button>
-  </AlertDialogTrigger>
-  <AlertDialogContent>
-    <AlertDialogHeader>
-      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-      <AlertDialogDescription>
-        This action cannot be undone. This will permanently delete {productName}.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-    <AlertDialogFooter>
-      <AlertDialogCancel>Cancel</AlertDialogCancel>
-      <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
-```
-
-### 4. Not Refreshing Data After Mutations
-**Problem**: Create/Update/Delete succeeds on backend, but list page doesn't update
-
-**Solution**: Use `router.refresh()` or manually re-fetch
-```typescript
-import { useRouter } from "next/navigation";
-
-const router = useRouter();
-
-async function onSubmit(data) {
-  await apiClient.post("/api/products", data);
-  router.refresh(); // Re-fetches server components
-}
-```
-
-### 5. Hardcoding Colors
-**Problem**: Inconsistent styling, doesn't respect dark mode
-
-**Solution**: Use design tokens
-```typescript
-// ❌ Bad
-<div className="bg-blue-500 text-white">
-
-// ✅ Good
-<div className="bg-primary text-primary-foreground">
-```
+- Integration: `apps/backend/tests/integration/` (321 assertions, all passing)
 
 ---
 
 ## Environment Setup
 
-### Start Services
+### Local Development
+
 ```bash
 docker compose up -d                    # PostgreSQL
 cd apps/backend && uvicorn src.api.main:app --reload
 cd apps/web && pnpm dev
-# OR: pnpm dev (starts all)
+# OR: pnpm dev (starts all via Turbo)
 ```
 
-### Login Credentials
+### Production
+
+- **Frontend**: Vercel (auto-deploys from main branch)
+- **Database**: Supabase Cloud (PostgreSQL)
+- **Auth**: Supabase Auth (production) / JWT (local dev)
+
+### Login Credentials (local dev)
+
 - **admin@demo.com** / **demo123**
 - sales@demo.com / demo123
 - warehouse@demo.com / demo123
 
 ---
 
-## Success Criteria
+## Common Pitfalls
 
-Complete when:
-1. Products: Full CRUD with validation
-2. Customers: Full CRUD
-3. Orders: CRUD + line items + status
-4. Quotes: CRUD + line items + status + convert-to-order
-5. All deletes have confirmations
-6. All forms have loading/error states
-7. All pages have empty states
-8. Type-check passes
-9. Lint passes
-10. Tests pass
-11. Manual testing verified
-12. Completion marker added to PROMPT.md
+1. **Loading states** — Always disable submit button during API calls
+2. **Error handling** — Wrap API calls in try-catch, show toast on failure
+3. **Delete confirmation** — Always use AlertDialog for destructive actions
+4. **Data refresh** — Call `router.refresh()` after mutations
+5. **Design tokens** — Use `bg-primary` not `bg-blue-500`
 
-**Focus**: Working MVP, not perfection. Functional CRUD, good UX, code quality.
+---
+
+## Recent Additions (2026-03-09)
+
+**Completed since last CLAUDE.md update (2026-03-03 → 2026-03-09):**
+
+- Anti-Drift framework: `.claude/memory/` (6 files), hooks (SessionStart/UserPromptSubmit/PreCompact), 10x health check command, toolshed API
+- 6 Catalogs: `docs/catalogs/` — ROUTES.md, PAGES.md, AGENTS.md, PACKAGES.md, MODELS.md, INTEGRATIONS.md
+- Cin7 Wave 1: Line items sync (Cin7OrderLineItem + Cin7PurchaseOrderLineItem), GRN receiving page, inventory write-back, webhook subscriptions (UNI-1263/1265/1266/1267)
+- Cin7 Wave 2: Shadow transition (cin7_shadow_models.py, 5 endpoints), fulfilment chain (7 endpoints, orders/fulfilment/page.tsx), BOM integration (6 endpoints), GL integration (7 endpoints) (UNI-1260/1261/1262/1264/1268/1269)
+- AP2 integration: frontend dashboard — /settings/integrations/ap2, mandate + transaction endpoints (UNI-1241)
+- Workshop management: 6 models, 5 route modules, 6 frontend pages, dual-interval service scheduler (UNI-workshop)
+- CRM enhancements: /contacts/[id] detail page, ActivityTimeline fix, company name column (UNI-171)
+- Invoicing: invoice_date rename, partial status, payment methods, revenue/tax reports, print view, financial report tab, order-to-invoice generation (UNI-173 SUBs 1–6)
+- Workflow automation: WorkflowTemplate/Instance/SLA models, workflow_service.py + sla_service.py, workflows.py + sla.py + notifications.py routes, workflows/page.tsx builder UI, NotificationBell, TaskSLAPanel (UNI-174 all STs)
+- AI agents: Staff Copilot (staff_copilot_agent.py + routes), Cin7 Shadow AI agent, Marketing AI agent (3 endpoints) (UNI-857/1262)
+- Inventory: barcode scanner hook (useBarcodeScanner), ProductBarcode/StockTake/StockTakeItem/ReorderRule/ProductAttribute/ProductVariant models, all endpoints + frontend wired (UNI-172 SUBs 3–7)
+- CI/CD: ci.yml updated (coverage + E2E + PR comment bot), e2e-tests.yml removed, 4 new E2E specs (UNI-664)
+- Local test env fix: AgentMetadata forward ref, settings name collision, supabase/faker deps (UNI-1242)
+- Test suite: 51 new Vitest unit tests, 4 E2E Playwright specs, backend test fixes
+
+**Remaining / New Next Work:**
+
+- UNI-172 SUB-8: Backend pytest tests for new inventory endpoints
+- UNI-173 SUB-7: Xero sync + dead file cleanup (blocked on Xero auth)
+- UNI-664 SUBs 2/4/5/6: GitHub Environments, branch protection, staging deploy, Vercel verification (require GitHub UI)
+- UNI-1235: AI Search — pgvector semantic search (requires demo_models.py schema change approval)
+- UNI-1236: Enhanced Shopify — metafields + real-time inventory sync (blocked by Shopify auth)
+- UNI-172 SUB-5/6 auto-reorder: ReorderRule + auto-PO creation fully wired (backend done, UI partial)

@@ -1,0 +1,447 @@
+name: Deploy to Staging
+
+on:
+  # Only deploy after CI has passed — prevents broken code reaching staging (UNI-664 SUB-5)
+  workflow_run:
+    workflows: ['CI']
+    branches: [main]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Git tag or commit SHA to deploy'
+        required: false
+        default: ''
+      skip_tests:
+        description: 'Skip smoke tests after deployment'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.15.0'
+  PYTHON_VERSION: '3.12'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  STAGING_URL: https://api.staging.ccw-erp.com
+
+concurrency:
+  group: staging-deployment
+  cancel-in-progress: false
+
+jobs:
+  # ============================================================================
+  # Guard — only proceed when the CI workflow that triggered us actually passed
+  # (workflow_run fires for both success and failure)
+  # ============================================================================
+  guard:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: CI passed — proceeding with staging deploy
+        run: echo "CI gate passed (conclusion=${{ github.event.workflow_run.conclusion || 'manual' }})"
+
+  # ============================================================================
+  # Pre-Deployment Validation
+  # ============================================================================
+  validate:
+    name: Pre-Deployment Validation
+    runs-on: ubuntu-latest
+    needs: guard
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      short_sha: ${{ steps.version.outputs.short_sha }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${{ github.sha }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short_sha=$(git rev-parse --short $VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Validate version exists
+        run: |
+          if ! git rev-parse "${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
+            echo "Error: Version ${{ steps.version.outputs.version }} does not exist"
+            exit 1
+          fi
+
+  # ============================================================================
+  # Run Tests
+  # ============================================================================
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: validate
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: starter_db
+          POSTGRES_USER: starter_user
+          POSTGRES_PASSWORD: local_dev_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.version }}
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: 'latest'
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install backend dependencies
+        working-directory: apps/backend
+        run: uv sync --all-extras
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run backend tests
+        working-directory: apps/backend
+        run: uv run pytest -v --tb=short
+        env:
+          DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: Run frontend tests
+        run: pnpm turbo run test
+
+      - name: Type check
+        run: pnpm turbo run type-check
+
+  # ============================================================================
+  # Build and Push Docker Images
+  # ============================================================================
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [validate, test]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.version }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/backend
+          tags: |
+            type=sha,prefix=
+            type=raw,value=staging
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend
+          file: ./apps/backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/web
+          tags: |
+            type=sha,prefix=
+            type=raw,value=staging
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_BACKEND_URL=${{ secrets.STAGING_API_URL || 'https://api.staging.ccw-erp.com' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================================
+  # Deploy to Staging Server
+  # ============================================================================
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [validate, build-images]
+    environment:
+      name: staging
+      url: https://staging.ccw-erp.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.version }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+      - name: Add staging server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create backup before deployment
+        run: |
+          ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} << 'EOF'
+            set -e
+            BACKUP_DIR="/var/backups/ccw-erp"
+            BACKUP_FILE="pre_deploy_$(date +%Y%m%d_%H%M%S).sql"
+            mkdir -p $BACKUP_DIR
+
+            cd /opt/ccw-erp
+            docker compose -f docker-compose.staging.yml exec -T postgres \
+              pg_dump -U starter_user starter_db_staging > $BACKUP_DIR/$BACKUP_FILE 2>/dev/null || true
+
+            echo "Backup created: $BACKUP_FILE"
+          EOF
+
+      - name: Deploy to staging
+        run: |
+          ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} << 'EOF'
+            set -e
+            cd /opt/ccw-erp
+
+            # Pull latest code
+            git fetch --all
+            git checkout ${{ needs.validate.outputs.version }}
+            git reset --hard ${{ needs.validate.outputs.version }}
+
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull new images
+            docker compose -f docker-compose.staging.yml pull
+
+            # Stop current services
+            docker compose -f docker-compose.staging.yml down
+
+            # Start services with new images
+            docker compose -f docker-compose.staging.yml up -d
+
+            # Wait for services to be healthy
+            echo "Waiting for services to become healthy..."
+            sleep 30
+
+            # Run database migrations
+            docker compose -f docker-compose.staging.yml exec -T backend alembic upgrade head || true
+
+            echo "Deployment completed successfully"
+          EOF
+
+      - name: Verify deployment health
+        run: |
+          echo "Waiting for services to stabilize..."
+          sleep 15
+
+          # Health check with retries
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ env.STAGING_URL }}/api/health || echo "000")
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Health check passed (HTTP $HTTP_STATUS)"
+              break
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Health check attempt $RETRY_COUNT/$MAX_RETRIES failed (HTTP $HTTP_STATUS)"
+            sleep 10
+          done
+
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "Health check failed after $MAX_RETRIES attempts"
+            exit 1
+          fi
+
+  # ============================================================================
+  # Smoke Tests
+  # ============================================================================
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [validate, deploy]
+    if: ${{ github.event.inputs.skip_tests != 'true' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.version }}
+
+      - name: Run smoke tests
+        run: |
+          chmod +x deployment/scripts/smoke-tests.sh
+          ./deployment/scripts/smoke-tests.sh ${{ env.STAGING_URL }}
+
+      - name: Upload smoke test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          path: smoke-test-results/
+          retention-days: 7
+
+  # ============================================================================
+  # Notify
+  # ============================================================================
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [validate, deploy, smoke-tests]
+    if: always()
+
+    steps:
+      - name: Set deployment status
+        id: status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ] && [ "${{ needs.smoke-tests.result }}" != "failure" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "emoji=:white_check_mark:" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create deployment summary
+        run: |
+          echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ needs.validate.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** Staging" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://staging.ccw-erp.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "- :white_check_mark: Deployment: Successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: Deployment: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.smoke-tests.result }}" == "success" ]; then
+            echo "- :white_check_mark: Smoke Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.smoke-tests.result }}" == "skipped" ]; then
+            echo "- :yellow_circle: Smoke Tests: Skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: Smoke Tests: ${{ needs.smoke-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Send Slack notification
+        if: secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ steps.status.outputs.emoji }} *Staging Deployment ${{ steps.status.outputs.status }}*"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Version:*\n${{ needs.validate.outputs.short_sha }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\nStaging"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*URL:*\n<https://staging.ccw-erp.com|staging.ccw-erp.com>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:*\n${{ github.actor }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

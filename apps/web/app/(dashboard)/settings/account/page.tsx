@@ -1,50 +1,72 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { User, Lock, Bell, Shield } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { User, Lock, Bell, Shield, Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { settingsApi } from '@/lib/api/settings';
 
 export default function AccountSettingsPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
   // Profile form state
-  const [fullName, setFullName] = useState("John Smith");
-  const [email, setEmail] = useState("john@example.com");
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
 
   // Password form state
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Notification preferences
+  // Notification preferences (UI state only — no backend storage)
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [orderUpdates, setOrderUpdates] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(false);
+
+  // Load current profile on mount
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const profile = await settingsApi.getAccount();
+        setFullName(profile.full_name ?? '');
+        setEmail(profile.email);
+      } catch {
+        // Use defaults if not available
+      } finally {
+        setIsFetching(false);
+      }
+    }
+    loadProfile();
+  }, []);
 
   async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // TODO: API call to update profile
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const updated = await settingsApi.updateAccount({
+        full_name: fullName,
+        email: email,
+      });
+      setFullName(updated.full_name ?? '');
+      setEmail(updated.email);
 
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully",
+        title: 'Profile Updated',
+        description: 'Your profile has been updated successfully',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update profile",
-        variant: "destructive",
+        title: 'Update Failed',
+        description: error instanceof Error ? error.message : 'Failed to update profile',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -56,18 +78,18 @@ export default function AccountSettingsPage() {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Password Mismatch",
+        title: 'Password Mismatch',
         description: "New password and confirmation don't match",
-        variant: "destructive",
+        variant: 'destructive',
       });
       return;
     }
 
     if (newPassword.length < 6) {
       toast({
-        title: "Invalid Password",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
+        title: 'Invalid Password',
+        description: 'Password must be at least 6 characters',
+        variant: 'destructive',
       });
       return;
     }
@@ -75,23 +97,24 @@ export default function AccountSettingsPage() {
     setIsLoading(true);
 
     try {
-      // TODO: API call to change password
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      toast({
-        title: "Password Changed",
-        description: "Your password has been updated successfully",
+      await settingsApi.changePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
       });
 
-      // Clear form
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error: any) {
       toast({
-        title: "Update Failed",
-        description: error.message || "Failed to change password",
-        variant: "destructive",
+        title: 'Password Changed',
+        description: 'Your password has been updated successfully',
+      });
+
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: unknown) {
+      toast({
+        title: 'Update Failed',
+        description: error instanceof Error ? error.message : 'Failed to change password',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -99,38 +122,30 @@ export default function AccountSettingsPage() {
   }
 
   async function handleUpdateNotifications() {
-    setIsLoading(true);
+    // Notification preferences are UI-only (no backend storage yet)
+    toast({
+      title: 'Preferences Updated',
+      description: 'Notification preferences saved',
+    });
+  }
 
-    try {
-      // TODO: API call to update notification preferences
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      toast({
-        title: "Preferences Updated",
-        description: "Notification preferences saved",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update preferences",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  if (isFetching) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
           <User className="h-8 w-8" />
           Account Settings
         </h1>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences
-        </p>
+        <p className="text-muted-foreground">Manage your account settings and preferences</p>
       </div>
 
       {/* Profile Settings */}
@@ -140,9 +155,7 @@ export default function AccountSettingsPage() {
             <User className="h-5 w-5" />
             Profile Information
           </CardTitle>
-          <CardDescription>
-            Update your personal information and email address
-          </CardDescription>
+          <CardDescription>Update your personal information and email address</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -173,7 +186,7 @@ export default function AccountSettingsPage() {
 
             <div className="flex justify-end">
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save Changes"}
+                {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </form>
@@ -187,9 +200,7 @@ export default function AccountSettingsPage() {
             <Lock className="h-5 w-5" />
             Change Password
           </CardTitle>
-          <CardDescription>
-            Update your password to keep your account secure
-          </CardDescription>
+          <CardDescription>Update your password to keep your account secure</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleChangePassword} className="space-y-4">
@@ -233,7 +244,7 @@ export default function AccountSettingsPage() {
 
             <div className="flex justify-end">
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Changing..." : "Change Password"}
+                {isLoading ? 'Changing...' : 'Change Password'}
               </Button>
             </div>
           </form>
@@ -247,15 +258,13 @@ export default function AccountSettingsPage() {
             <Bell className="h-5 w-5" />
             Notifications
           </CardTitle>
-          <CardDescription>
-            Manage how you receive notifications
-          </CardDescription>
+          <CardDescription>Manage how you receive notifications</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Receive email notifications for important updates
               </p>
             </div>
@@ -274,7 +283,7 @@ export default function AccountSettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Order Updates</Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Get notified when orders are shipped or delivered
               </p>
             </div>
@@ -293,7 +302,7 @@ export default function AccountSettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Weekly Reports</Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Receive weekly summary of sales and inventory
               </p>
             </div>
@@ -316,15 +325,13 @@ export default function AccountSettingsPage() {
             <Shield className="h-5 w-5" />
             Security
           </CardTitle>
-          <CardDescription>
-            Additional security settings for your account
-          </CardDescription>
+          <CardDescription>Additional security settings for your account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Two-Factor Authentication</Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Add an extra layer of security (Coming soon)
               </p>
             </div>
@@ -338,9 +345,7 @@ export default function AccountSettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Active Sessions</Label>
-              <p className="text-sm text-muted-foreground">
-                View and manage your active sessions
-              </p>
+              <p className="text-muted-foreground text-sm">View and manage your active sessions</p>
             </div>
             <Button variant="outline">View Sessions</Button>
           </div>

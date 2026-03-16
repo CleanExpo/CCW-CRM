@@ -7,7 +7,7 @@ from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .models import Base
+from .models_base import Base
 
 
 class EmailConversation(Base):

@@ -314,7 +314,7 @@ class RecommendationAgent(BaseAgent):
                     "message": "Interaction tracked successfully",
                 }
 
-        except ValueError as e:
+        except ValueError:
             return {"error": f"Invalid interaction type: {interaction_type}"}
         except Exception as e:
             logger.error("Failed to track interaction", error=str(e))
@@ -355,7 +355,7 @@ class RecommendationAgent(BaseAgent):
                     "results": results,
                 }
 
-        except ValueError as e:
+        except ValueError:
             return {"error": f"Invalid recommendation type: {recommendation_type}"}
         except Exception as e:
             logger.error("Precomputation failed", error=str(e))

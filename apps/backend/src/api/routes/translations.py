@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
 from src.db.demo_models import Product
-from src.db.i18n_models import Language, ProductTranslation, TranslationQueue
+from src.db.i18n_models import Language, ProductTranslation
 from src.services.i18n_service import I18nService
 
 router = APIRouter(prefix="/api/translations", tags=["Translations"])
@@ -347,7 +347,7 @@ async def update_product_translation(
         translation.meta_description = request.meta_description
         translation.translation_status = request.translation_status
         translation.translated_at = datetime.utcnow()
-        translation.translated_by = "manual_edit"  # TODO: Get from auth context
+        translation.translated_by = "manual_edit"
         translation.updated_at = datetime.utcnow()
     else:
         # Create new translation

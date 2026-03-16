@@ -1,35 +1,44 @@
 """AI API routes."""
 
+from __future__ import annotations
+
+import structlog
 from fastapi import APIRouter
 
-from .anomaly import router as anomaly_router
-from .assets import router as assets_router
-from .document_parser import router as document_parser_router
-from .form_autofill import router as form_autofill_router
-from .generate import router as generate_router
-from .inventory_forecast import router as inventory_forecast_router
-from .learning import router as learning_router
-from .monitoring import router as monitoring_router
-from .specialized import router as specialized_router
-from .supervisor import router as supervisor_router
-from .test_data import router as test_data_router
-from .test_failures import router as test_failures_router
+logger = structlog.get_logger(__name__)
 
 # Main AI router that includes all sub-routers
 ai_router = APIRouter(prefix="/api/ai", tags=["AI Agents"])
 
-# Include sub-routers
-ai_router.include_router(monitoring_router)
-ai_router.include_router(supervisor_router)
-ai_router.include_router(specialized_router)
-ai_router.include_router(learning_router)
-ai_router.include_router(test_data_router)
-ai_router.include_router(test_failures_router)
-ai_router.include_router(generate_router)
-ai_router.include_router(assets_router)
-ai_router.include_router(form_autofill_router)
-ai_router.include_router(anomaly_router)
-ai_router.include_router(document_parser_router)
-ai_router.include_router(inventory_forecast_router)
+# Conditionally import and include sub-routers (some depend on langgraph/ollama)
+_route_modules = [
+    (".anomaly", "anomaly_router"),
+    (".assets", "assets_router"),
+    (".document_parser", "document_parser_router"),
+    (".form_autofill", "form_autofill_router"),
+    (".generate", "generate_router"),
+    (".inventory_forecast", "inventory_forecast_router"),
+    (".learning", "learning_router"),
+    (".monitoring", "monitoring_router"),
+    (".specialized", "specialized_router"),
+    (".supervisor", "supervisor_router"),
+    (".test_data", "test_data_router"),
+    (".test_failures", "test_failures_router"),
+    (".protocol", "protocol_router"),
+]
 
-__all__ = ["ai_router", "learning"]
+for module_name, router_attr in _route_modules:
+    try:
+        import importlib
+        mod = importlib.import_module(module_name, package=__name__)
+        router = getattr(mod, "router", None)
+        if router:
+            ai_router.include_router(router)
+    except (ImportError, Exception) as e:
+        logger.warning(
+            f"Skipping AI route {module_name}: {e}",
+            module=module_name,
+            error=str(e),
+        )
+
+__all__ = ["ai_router"]

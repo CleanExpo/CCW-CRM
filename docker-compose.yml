@@ -6,9 +6,8 @@ services:
       POSTGRES_DB: starter_db
       POSTGRES_USER: starter_user
       POSTGRES_PASSWORD: local_dev_password
-      POSTGRES_HOST_AUTH_METHOD: trust  # Simplified for local development
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
@@ -19,6 +18,17 @@ services:
       retries: 5
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
 
   redis:
     image: redis:7-alpine
@@ -32,31 +42,66 @@ services:
       retries: 5
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
 
-  # Backend service (optional - can be run locally for development)
-  # Uncomment if you want to run the entire stack in Docker
-  # backend:
-  #   build:
-  #     context: ./apps/backend
-  #     dockerfile: Dockerfile
-  #   container_name: nodejs-starter-backend
-  #   environment:
-  #     DATABASE_URL: postgresql://starter_user:local_dev_password@postgres:5432/starter_db
-  #     REDIS_URL: redis://redis:6379
-  #     AI_PROVIDER: ${AI_PROVIDER:-ollama}
-  #     OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - starter-network
-  #   volumes:
-  #     - ./apps/backend:/app
-  #   command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+  # Backend service (running in Docker)
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: nodejs-starter-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://starter_user:local_dev_password@postgres:5432/starter_db
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      ENVIRONMENT: development
+      DEBUG: "True"
+      LOG_LEVEL: DEBUG
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:3005","http://localhost:3006","http://localhost:3007","http://localhost:3011","http://localhost:8080","http://10.252.22.111:3006","http://10.252.22.111:3007","http://192.168.2.65:3011"]'
+      # Sentry Error Tracking (optional in development)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-1.0}
+      SENTRY_PROFILES_SAMPLE_RATE: ${SENTRY_PROFILES_SAMPLE_RATE:-1.0}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-development}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - starter-network
+    volumes:
+      - ./apps/backend/src:/app/src
+      - ./apps/backend/alembic:/app/alembic
+      - ./apps/backend/alembic.ini:/app/alembic.ini
+    command: uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
 
   # Monitoring Stack
   prometheus:
@@ -77,6 +122,17 @@ services:
       - "9090:9090"
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
 
   grafana:
     image: grafana/grafana:10.2.2
@@ -98,6 +154,17 @@ services:
       - prometheus
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
 
   alertmanager:
     image: prom/alertmanager:v0.26.0
@@ -115,6 +182,17 @@ services:
       - "9093:9093"
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
@@ -129,20 +207,71 @@ services:
         condition: service_healthy
     networks:
       - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
 
   redis-exporter:
     image: oliver006/redis_exporter:v1.55.0
     container_name: ccw-redis-exporter
     restart: unless-stopped
     environment:
-      REDIS_ADDR: "redis:6379"
+      REDIS_ADDR: "redis://redis:6379"
     ports:
-      - "9121:9121"
+      - "9122:9121"  # External 9122 to avoid conflict with native process on 9121
     depends_on:
       redis:
         condition: service_healthy
     networks:
       - starter-network
+    # Note: No healthcheck needed as Prometheus monitors redis_up metric
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  # Container metrics exporter (cAdvisor)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: ccw-cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - starter-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+      restart_policy:
+        condition: unless-stopped
+        delay: 5s
 
 volumes:
   postgres_data:

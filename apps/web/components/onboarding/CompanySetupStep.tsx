@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -13,22 +13,23 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 const formSchema = z.object({
-  company_name: z.string().min(2, "Company name must be at least 2 characters"),
-  industry: z.string().min(1, "Please select an industry"),
-  company_size: z.string().min(1, "Please select company size"),
-  country: z.string().default("AU"),
+  company_name: z.string().min(2, 'Company name must be at least 2 characters'),
+  industry: z.string().min(1, 'Please select an industry'),
+  company_size: z.string().min(1, 'Please select company size'),
+  country: z.string().default('AU'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -46,18 +47,25 @@ export function CompanySetupStep({ onComplete, data }: CompanySetupStepProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: data || {
-      company_name: "",
-      industry: "",
-      company_size: "",
-      country: "AU",
+      company_name: '',
+      industry: '',
+      company_size: '',
+      country: 'AU',
     },
   });
 
   async function onSubmit(values: FormData) {
     setIsLoading(true);
     try {
-      // TODO: Save company info via API
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Non-fatal: user can update company info from Settings later
+      await apiClient
+        .patch('/api/auth/me', {
+          company_name: values.company_name,
+          industry: values.industry,
+          company_size: values.company_size,
+          country: values.country,
+        })
+        .catch(() => undefined);
       onComplete(values);
     } finally {
       setIsLoading(false);
@@ -88,7 +96,11 @@ export function CompanySetupStep({ onComplete, data }: CompanySetupStepProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Industry *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select your industry" />
@@ -114,7 +126,11 @@ export function CompanySetupStep({ onComplete, data }: CompanySetupStepProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Company Size *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select company size" />

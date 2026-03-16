@@ -7,9 +7,8 @@ Records all autonomous operations for compliance, debugging, and analysis.
 Part of Phase 5 (Autonomous Development Framework) - Week 3 implementation.
 """
 
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -71,7 +70,7 @@ class AuditEntry:
 
     # Identification
     entry_id: str = field(default_factory=lambda: str(uuid4()))
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Action Details
     action: AuditAction = AuditAction.PR_CREATED
@@ -409,7 +408,7 @@ class AutonomyAuditService:
         Returns:
             AutonomyMetrics with aggregated statistics
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         window_start = now - timedelta(hours=window_hours)
 
         # Filter entries in window

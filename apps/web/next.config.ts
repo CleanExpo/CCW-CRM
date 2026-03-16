@@ -1,17 +1,16 @@
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@shared"],
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Enable standalone output for Docker builds
+  output: "standalone",
   experimental: {
     typedRoutes: true,
   },
+  // Enable source maps for production (Sentry needs these)
+  productionBrowserSourceMaps: true,
   images: {
     remotePatterns: [
       {
@@ -61,7 +60,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://localhost:8001",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://localhost:8001 https://*.sentry.io",
               "frame-ancestors 'none'",
             ].join("; "),
           },
@@ -87,4 +86,25 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry webpack plugin options
+const sentryOptions = {
+  // Upload source maps during production build
+  silent: true,
+
+  // Suppress logging
+  widenClientFileUpload: true,
+
+  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
+
+  // Transpile SDK to be compatible with IE11
+  transpileClientSDK: true,
+
+  // Hide source maps from generated client bundles
+  hideSourceMaps: true,
+
+  // Automatically annotate React components to show in breadcrumbs
+  autoInstrumentServerFunctions: true,
+};
+
+export default withSentryConfig(nextConfig, sentryOptions);

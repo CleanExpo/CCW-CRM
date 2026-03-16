@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { OrderStatus } from "@/../../packages/shared/src/types/orders";
+import type { OrderStatus } from "@/lib/api/orders";
 
 /**
  * Color mapping for order statuses with dark mode support

@@ -146,6 +146,7 @@ async def login(
         max_age=settings.jwt_expire_minutes * 60,  # Convert minutes to seconds
         samesite="lax",
         secure=settings.should_use_secure_cookies,  # Auto-enabled in production
+        domain="localhost",  # Allow cookie to work across localhost ports (3011 -> 8000)
     )
 
     # Set refresh token cookie (30 days)
@@ -157,6 +158,7 @@ async def login(
         samesite="lax",
         secure=settings.should_use_secure_cookies,  # Auto-enabled in production
         path="/api/auth/refresh",  # Only send to refresh endpoint
+        domain="localhost",  # Allow cookie to work across localhost ports
     )
 
     return LoginResponse(

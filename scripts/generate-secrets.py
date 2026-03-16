@@ -4,18 +4,39 @@ Generate secure secrets for production deployment.
 
 This script generates cryptographically secure secrets for:
 - JWT signing
-- Encryption keys
+- Encryption keys (Fernet AES-256)
 - Database passwords
+- Redis passwords
 - API keys
 
 Usage:
+    # Display secrets to console
     python scripts/generate-secrets.py
+
+    # Write secrets to files (Docker secrets format)
+    python scripts/generate-secrets.py --output-dir secrets/
+
+    # Generate JSON for AWS Secrets Manager
+    python scripts/generate-secrets.py --json > secrets.json
+
+    # Quiet mode (just output the secrets)
+    python scripts/generate-secrets.py --quiet
 """
 
+import argparse
+import json
+import os
 import secrets
 import string
+import sys
+from pathlib import Path
 
-from cryptography.fernet import Fernet
+try:
+    from cryptography.fernet import Fernet
+
+    CRYPTOGRAPHY_AVAILABLE = True
+except ImportError:
+    CRYPTOGRAPHY_AVAILABLE = False
 
 
 def generate_jwt_secret(length: int = 64) -> str:
@@ -35,21 +56,41 @@ def generate_encryption_key() -> str:
 
     Returns:
         Base64-encoded Fernet key
+
+    Raises:
+        ImportError: If cryptography library not installed
     """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError(
+            "cryptography library required for encryption key generation. "
+            "Install with: pip install cryptography"
+        )
     return Fernet.generate_key().decode()
 
 
-def generate_database_password(length: int = 32) -> str:
-    """Generate strong database password.
+def generate_password(length: int = 32) -> str:
+    """Generate strong password.
 
     Args:
         length: Length of password (default: 32 characters)
 
     Returns:
-        Random password with letters, digits, and special characters
+        Random password with letters, digits, and safe special characters
     """
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*()-_=+[]{}|;:,.<>?"
-    return "".join(secrets.choice(alphabet) for _ in range(length))
+    # Use subset of special chars that work well in all contexts (URLs, shells, etc.)
+    alphabet = string.ascii_letters + string.digits + "!@#$%_-"
+    # Ensure at least one of each type
+    password = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%_-"),
+    ]
+    # Fill rest randomly
+    password.extend(secrets.choice(alphabet) for _ in range(length - 4))
+    # Shuffle to avoid predictable positions
+    secrets.SystemRandom().shuffle(password)
+    return "".join(password)
 
 
 def generate_api_key(prefix: str = "sk", length: int = 48) -> str:
@@ -66,99 +107,218 @@ def generate_api_key(prefix: str = "sk", length: int = 48) -> str:
     return f"{prefix}_{random_part}"
 
 
-def main():
-    """Generate and display all secrets."""
-    print("=" * 80)
-    print("PRODUCTION SECRETS GENERATION")
-    print("=" * 80)
-    print()
-    print("⚠️  CRITICAL: Store these secrets securely!")
-    print("   - Use AWS Secrets Manager, HashiCorp Vault, or similar")
-    print("   - Never commit these to version control")
-    print("   - Rotate regularly (every 90 days recommended)")
-    print()
-    print("=" * 80)
-    print()
+def generate_all_secrets() -> dict[str, str]:
+    """Generate all required secrets.
 
-    # Generate secrets
-    jwt_secret = generate_jwt_secret()
-    encryption_key = generate_encryption_key()
-    db_password = generate_database_password()
-    sendgrid_api_key_placeholder = generate_api_key("sg", 48)
-    xero_client_secret = generate_jwt_secret(32)
-    ap2_client_secret = generate_jwt_secret(32)
+    Returns:
+        Dictionary of secret names to values
+    """
+    return {
+        # Core authentication
+        "JWT_SECRET_KEY": generate_jwt_secret(64),
+        # Encryption
+        "ENCRYPTION_KEY": generate_encryption_key() if CRYPTOGRAPHY_AVAILABLE else "",
+        # Database
+        "POSTGRES_PASSWORD": generate_password(32),
+        # Redis
+        "REDIS_PASSWORD": generate_password(24),
+        # Grafana admin
+        "GRAFANA_ADMIN_PASSWORD": generate_password(24),
+        # Webhook secrets
+        "WEBHOOK_SECRET": generate_jwt_secret(32),
+        "XERO_WEBHOOK_KEY": generate_jwt_secret(32),
+        "STRIPE_WEBHOOK_SECRET": generate_jwt_secret(32),
+        "SHOPIFY_WEBHOOK_SECRET": generate_jwt_secret(32),
+    }
 
-    # Display in .env format
-    print("# Copy these to your .env.production file")
-    print("#" * 80)
-    print()
 
+def write_secret_files(secrets_dict: dict[str, str], output_dir: str) -> list[str]:
+    """Write secrets to individual files (Docker secrets format).
+
+    Args:
+        secrets_dict: Dictionary of secret names to values
+        output_dir: Directory to write files to
+
+    Returns:
+        List of created file paths
+    """
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    created_files = []
+    file_mapping = {
+        "JWT_SECRET_KEY": "jwt_secret.txt",
+        "ENCRYPTION_KEY": "encryption_key.txt",
+        "POSTGRES_PASSWORD": "postgres_password.txt",
+        "REDIS_PASSWORD": "redis_password.txt",
+        "GRAFANA_ADMIN_PASSWORD": "grafana_admin_password.txt",
+        "WEBHOOK_SECRET": "webhook_secret.txt",
+    }
+
+    for env_var, filename in file_mapping.items():
+        if env_var in secrets_dict and secrets_dict[env_var]:
+            file_path = output_path / filename
+            file_path.write_text(secrets_dict[env_var], encoding="utf-8")
+            created_files.append(str(file_path))
+
+            # Set restrictive permissions on Unix
+            if os.name != "nt":  # Not Windows
+                os.chmod(file_path, 0o600)
+
+    return created_files
+
+
+def output_console(secrets_dict: dict[str, str], quiet: bool = False) -> None:
+    """Output secrets to console in .env format.
+
+    Args:
+        secrets_dict: Dictionary of secret names to values
+        quiet: If True, only output the secrets without extra text
+    """
+    if not quiet:
+        print("=" * 80)
+        print("PRODUCTION SECRETS GENERATION")
+        print("=" * 80)
+        print()
+        print("CRITICAL: Store these secrets securely!")
+        print("   - Use AWS Secrets Manager, HashiCorp Vault, or Docker secrets")
+        print("   - Never commit these to version control")
+        print("   - Rotate regularly (every 90 days recommended)")
+        print()
+        print("=" * 80)
+        print()
+        print("# Copy these to your .env.production file or secrets manager")
+        print("#" * 80)
+        print()
+
+    # JWT Authentication
     print("# JWT Authentication")
-    print(f"JWT_SECRET_KEY={jwt_secret}")
-    print(f"JWT_ALGORITHM=HS256")
-    print(f"JWT_EXPIRE_MINUTES=480")
-    print(f"JWT_REFRESH_EXPIRE_DAYS=30")
+    print(f"JWT_SECRET_KEY={secrets_dict['JWT_SECRET_KEY']}")
     print()
 
-    print("# Encryption")
-    print(f"ENCRYPTION_KEY={encryption_key}")
-    print()
+    # Encryption
+    if secrets_dict.get("ENCRYPTION_KEY"):
+        print("# Encryption (Fernet AES-256)")
+        print(f"ENCRYPTION_KEY={secrets_dict['ENCRYPTION_KEY']}")
+        print()
+    elif not quiet:
+        print("# Encryption (cryptography library not installed)")
+        print("# ENCRYPTION_KEY=<install cryptography: pip install cryptography>")
+        print()
 
+    # Database
+    db_password = secrets_dict["POSTGRES_PASSWORD"]
     print("# Database")
-    print(f"DATABASE_URL=postgresql+asyncpg://ccw_erp_user:{db_password}@localhost:5432/ccw_erp_prod")
     print(f"POSTGRES_PASSWORD={db_password}")
+    print(f"DATABASE_URL=postgresql+asyncpg://ccw_erp_user:{db_password}@<HOST>:5432/ccw_erp_prod")
     print()
 
-    print("# SendGrid (Email)")
-    print(f"SENDGRID_API_KEY=<YOUR_ACTUAL_SENDGRID_KEY>")
-    print(f"# Example format: SENDGRID_API_KEY={sendgrid_api_key_placeholder}")
-    print(f"SENDGRID_FROM_EMAIL=noreply@ccw-erp.com")
-    print(f"SENDGRID_FROM_NAME=CCW Equipment ERP")
+    # Redis
+    print("# Redis")
+    print(f"REDIS_PASSWORD={secrets_dict['REDIS_PASSWORD']}")
     print()
 
-    print("# Xero Integration")
-    print(f"XERO_CLIENT_ID=<YOUR_XERO_CLIENT_ID>")
-    print(f"XERO_CLIENT_SECRET={xero_client_secret}")
-    print(f"XERO_REDIRECT_URI=https://your-domain.com/api/integrations/xero/callback")
-    print(f"XERO_WEBHOOK_KEY={generate_jwt_secret(32)}")
+    # Grafana
+    print("# Grafana")
+    print(f"GRAFANA_ADMIN_PASSWORD={secrets_dict['GRAFANA_ADMIN_PASSWORD']}")
     print()
 
-    print("# Google AP2 Integration")
-    print(f"AP2_CLIENT_ID=<YOUR_AP2_CLIENT_ID>")
-    print(f"AP2_CLIENT_SECRET={ap2_client_secret}")
-    print(f"AP2_WEBHOOK_SECRET={generate_jwt_secret(32)}")
+    # Webhooks
+    print("# Webhook Secrets")
+    print(f"WEBHOOK_SECRET={secrets_dict['WEBHOOK_SECRET']}")
+    print(f"XERO_WEBHOOK_KEY={secrets_dict['XERO_WEBHOOK_KEY']}")
+    print(f"STRIPE_WEBHOOK_SECRET={secrets_dict['STRIPE_WEBHOOK_SECRET']}")
+    print(f"SHOPIFY_WEBHOOK_SECRET={secrets_dict['SHOPIFY_WEBHOOK_SECRET']}")
     print()
 
-    print("# Carrier Webhooks")
-    print(f"FEDEX_WEBHOOK_SECRET={generate_jwt_secret(32)}")
-    print(f"UPS_WEBHOOK_SECRET={generate_jwt_secret(32)}")
-    print(f"USPS_WEBHOOK_SECRET={generate_jwt_secret(32)}")
-    print()
+    if not quiet:
+        print("#" * 80)
+        print()
+        print("Secrets generated successfully!")
+        print()
+        print("NEXT STEPS:")
+        print("1. Store in AWS Secrets Manager: aws secretsmanager create-secret ...")
+        print("   OR create Docker secret files: python scripts/generate-secrets.py --output-dir secrets/")
+        print("2. Update deployment configuration to load from secrets")
+        print("3. Set up secret rotation schedule (90 days)")
+        print("4. Clear terminal history: history -c")
+        print()
+        print("=" * 80)
 
-    print("# Redis (Rate Limiting & Caching)")
-    print(f"REDIS_URL=redis://localhost:6379/0")
-    print(f"REDIS_PASSWORD={generate_database_password(24)}")
-    print()
 
-    print("# Security")
-    print(f"ENVIRONMENT=production")
-    print(f"DEBUG=false")
-    print(f"SECURE_COOKIES=true")
-    print(f"CORS_ORIGINS=https://your-domain.com")
-    print()
+def output_json(secrets_dict: dict[str, str]) -> None:
+    """Output secrets as JSON for AWS Secrets Manager.
 
-    print("#" * 80)
-    print()
-    print("✅ Secrets generated successfully!")
-    print()
-    print("NEXT STEPS:")
-    print("1. Copy these values to your secrets manager (AWS Secrets Manager recommended)")
-    print("2. Update your deployment configuration to load from secrets manager")
-    print("3. Set up secret rotation (see docs/SECRETS_MANAGEMENT.md)")
-    print("4. Delete this output from your terminal history")
-    print()
-    print("=" * 80)
+    Args:
+        secrets_dict: Dictionary of secret names to values
+    """
+    # Filter out empty values
+    filtered = {k: v for k, v in secrets_dict.items() if v}
+    print(json.dumps(filtered, indent=2))
+
+
+def main() -> int:
+    """Main entry point.
+
+    Returns:
+        Exit code (0 for success)
+    """
+    parser = argparse.ArgumentParser(
+        description="Generate secure secrets for production deployment",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python scripts/generate-secrets.py                     # Display to console
+  python scripts/generate-secrets.py --output-dir secrets/  # Write to files
+  python scripts/generate-secrets.py --json              # Output JSON for AWS
+  python scripts/generate-secrets.py --quiet             # Minimal output
+        """,
+    )
+    parser.add_argument(
+        "--output-dir",
+        "-o",
+        help="Write secrets to files in this directory (Docker secrets format)",
+    )
+    parser.add_argument(
+        "--json",
+        "-j",
+        action="store_true",
+        help="Output as JSON (for AWS Secrets Manager)",
+    )
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Quiet mode - only output secrets without extra text",
+    )
+
+    args = parser.parse_args()
+
+    # Generate all secrets
+    try:
+        secrets_dict = generate_all_secrets()
+    except ImportError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+    # Output based on arguments
+    if args.output_dir:
+        created_files = write_secret_files(secrets_dict, args.output_dir)
+        if not args.quiet:
+            print(f"Created {len(created_files)} secret files in {args.output_dir}:")
+            for f in created_files:
+                print(f"  - {f}")
+            print()
+            print("IMPORTANT: Set restrictive permissions on these files!")
+            print("  Linux/macOS: chmod 600 secrets/*.txt")
+            print("  Windows: Use icacls to restrict access")
+    elif args.json:
+        output_json(secrets_dict)
+    else:
+        output_console(secrets_dict, quiet=args.quiet)
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

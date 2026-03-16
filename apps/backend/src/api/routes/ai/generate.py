@@ -1,8 +1,8 @@
 """AI Content Generation API endpoints."""
 
-from typing import Annotated, Any
-from datetime import datetime
 import os
+from datetime import datetime
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -345,6 +345,100 @@ async def generate_image(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate image: {str(e)}",
+        )
+
+
+class GenerateProductCopyRequest(BaseModel):
+    """Request to generate AI-powered product copy."""
+
+    product_name: str = Field(..., description="Name of the product")
+    product_category: str = Field(..., description="Product category (e.g. power_tools, safety_equipment)")
+    copy_type: str = Field(..., description="Type of copy: description | features | marketing | technical")
+    key_info: str | None = Field(None, description="Additional key information, specs, or selling points")
+
+
+class GenerateProductCopyResponse(BaseModel):
+    """Response with generated product copy."""
+
+    generated_copy: str = Field(..., description="The AI-generated copy text")
+    copy_type: str = Field(..., description="The type of copy that was generated")
+    product_name: str = Field(..., description="The product name used in generation")
+    created_at: str = Field(..., description="ISO timestamp of generation")
+
+
+@router.post("/product-copy", response_model=GenerateProductCopyResponse)
+async def generate_product_copy(
+    request: GenerateProductCopyRequest,
+) -> GenerateProductCopyResponse:
+    """Generate AI-powered product copy (description, features, marketing, technical).
+
+    Args:
+        request: Product copy generation request
+
+    Returns:
+        Generated product copy and metadata
+
+    Raises:
+        HTTPException: If OpenAI is not configured or generation fails
+    """
+    if not OPENAI_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service not configured. Please set OPENAI_API_KEY environment variable.",
+        )
+
+    logger.info(
+        "Generating product copy",
+        product_name=request.product_name,
+        copy_type=request.copy_type,
+    )
+
+    try:
+        system_prompts = {
+            "description": "You are an expert product copywriter for industrial equipment suppliers. Write a compelling product description in 2-3 paragraphs.",
+            "features": "You are a technical writer for industrial equipment. List 5-8 key features and benefits as concise bullet points.",
+            "marketing": "You are a sales copywriter for construction and cleaning equipment suppliers. Write persuasive marketing copy in 1-2 paragraphs.",
+            "technical": "You are a technical documentation writer for industrial equipment. Write precise technical specifications and usage notes.",
+        }
+
+        system_content = system_prompts.get(
+            request.copy_type,
+            system_prompts["description"],
+        )
+
+        user_prompt = (
+            f"Product: {request.product_name}\n"
+            f"Category: {request.product_category}\n"
+            f"Additional info: {request.key_info or 'None provided'}\n\n"
+            f"Generate the requested copy."
+        )
+
+        response = openai.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": user_prompt},
+            ],
+            max_tokens=600,
+            temperature=0.7,
+        )
+
+        result = response.choices[0].message.content.strip()
+
+        logger.info("Product copy generated successfully", content_length=len(result))
+
+        return GenerateProductCopyResponse(
+            generated_copy=result,
+            copy_type=request.copy_type,
+            product_name=request.product_name,
+            created_at=datetime.utcnow().isoformat(),
+        )
+
+    except Exception as e:
+        logger.error("Error generating product copy", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate product copy: {str(e)}",
         )
 
 

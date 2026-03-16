@@ -47,6 +47,10 @@
     ]
   },
   "dependencies": {
+    "@composio/core": "^0.6.3",
+    "@composio/openai-agents": "^0.6.3",
+    "@openai/agents": "^0.4.10",
+    "dotenv": "^17.3.1",
     "mcp-linear": "^0.1.8"
   }
 }

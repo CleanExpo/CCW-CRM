@@ -7,10 +7,8 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    Boolean,
     Column,
     DateTime,
-    Enum,
     ForeignKey,
     Integer,
     String,
@@ -19,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
-from .models import Base
+from .models_base import Base
 
 
 class ApprovalStatus(str, enum.Enum):

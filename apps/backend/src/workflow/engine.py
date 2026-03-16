@@ -1,11 +1,15 @@
 """Workflow execution engine."""
+from __future__ import annotations
 
 import re
 import uuid
 from datetime import datetime
 from typing import Any
 
-from src.ai.orchestration.supervisor_agent import get_supervisor_agent
+try:
+    from src.ai.orchestration.supervisor_agent import get_supervisor_agent
+except ImportError:
+    get_supervisor_agent = None  # type: ignore[assignment]
 from src.utils import get_logger
 from src.workflow.models import (
     EdgeType,
@@ -110,9 +114,7 @@ class WorkflowEngine:
         """Execute a single node."""
         context.current_node_id = node.id
         await self.storage.update_execution(context.execution_id, context)
-        await self._add_log(
-            context, node.id, f"Executing {node.type.value} node: {node.label}"
-        )
+        await self._add_log(context, node.id, f"Executing {node.type.value} node: {node.label}")
 
         try:
             # Resolve input variables
@@ -201,7 +203,7 @@ class WorkflowEngine:
         logger.info("LLM node execution (placeholder)", node_id=node.id)
         return {
             "response": f"LLM response for: {node.config.get('prompt', '')}",
-            "model": node.config.get("model", "claude-sonnet"),
+            "model": node.config.get("model", "claude-opus-4-6"),
         }
 
     async def _execute_agent_node(

@@ -27,7 +27,7 @@ const COLORS = [
 // PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
 export const CategorySalesChart = memo(function CategorySalesChart({ data }: CategorySalesChartProps) {
   // Transform data for recharts
-  const chartData = data.map((item, index) => ({
+  const chartData = (data || []).map((item, index) => ({
     category: item.category.replace(/_/g, " "),
     value: parseFloat(item.value),
     percentage: item.percentage,
@@ -93,7 +93,7 @@ export const CategorySalesChart = memo(function CategorySalesChart({ data }: Cat
                   }).format(value)
                 }
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={(props: any) => <CustomTooltip active={props.active} payload={props.payload} />} />
               <Legend wrapperStyle={{ paddingTop: "10px" }} />
               <Bar dataKey="value" name="Sales" radius={[8, 8, 0, 0]}>
                 {chartData.map((entry, index) => (

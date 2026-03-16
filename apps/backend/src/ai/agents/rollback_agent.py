@@ -7,9 +7,8 @@ Part of Phase 5 (Autonomous Development Framework) - Week 2 implementation.
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 import structlog
@@ -136,7 +135,7 @@ class RollbackAgent:
         # Check cooldown period
         if self.last_rollback_time:
             time_since_last = (
-                datetime.now(timezone.utc) - self.last_rollback_time
+                datetime.now(UTC) - self.last_rollback_time
             ).total_seconds()
             if time_since_last < self.ROLLBACK_COOLDOWN:
                 logger.warning(
@@ -266,7 +265,7 @@ class RollbackAgent:
         Returns:
             RollbackResult with execution details
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         logs: list[str] = []
 
         logger.info(
@@ -281,23 +280,23 @@ class RollbackAgent:
 
         try:
             # 1. Perform safety checks
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Safety checks started")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Safety checks started")
             await self._perform_safety_checks(plan.safety_checks, dry_run)
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Safety checks passed")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Safety checks passed")
 
             # 2. Execute rollback steps
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Rollback execution started")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Rollback execution started")
             await self._execute_rollback_steps(plan, dry_run, logs)
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Rollback execution completed")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Rollback execution completed")
 
             # 3. Verify rollback success
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Verification started")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Verification started")
             verification_passed = await self._verify_rollback(plan.verification_steps, dry_run)
             logs.append(
-                f"[{datetime.now(timezone.utc).isoformat()}] Verification {'passed' if verification_passed else 'failed'}"
+                f"[{datetime.now(UTC).isoformat()}] Verification {'passed' if verification_passed else 'failed'}"
             )
 
-            end_time = datetime.now(timezone.utc)
+            end_time = datetime.now(UTC)
             duration = (end_time - start_time).total_seconds()
 
             # Record success
@@ -333,14 +332,14 @@ class RollbackAgent:
             return result
 
         except Exception as e:
-            end_time = datetime.now(timezone.utc)
+            end_time = datetime.now(UTC)
             duration = (end_time - start_time).total_seconds()
 
             # Record failure
             rollbacks_failed.inc()
 
             error_msg = f"Rollback failed: {str(e)}"
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] ERROR: {error_msg}")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] ERROR: {error_msg}")
 
             logger.error(
                 "Rollback failed",
@@ -419,7 +418,7 @@ class RollbackAgent:
         """
         for step in plan.rollback_steps:
             logger.debug("Executing rollback step", step=step, dry_run=dry_run)
-            logs.append(f"[{datetime.now(timezone.utc).isoformat()}] Executing: {step}")
+            logs.append(f"[{datetime.now(UTC).isoformat()}] Executing: {step}")
             await asyncio.sleep(0.2)  # Simulate execution time
             # In real implementation:
             # - Run git commands

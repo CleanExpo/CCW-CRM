@@ -1,7 +1,7 @@
 """AI Marketing Assets Management API endpoints."""
 
-from typing import Any
 from datetime import datetime, timedelta
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field

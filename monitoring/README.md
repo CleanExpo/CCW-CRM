@@ -131,40 +131,87 @@ View active alerts and silences
 
 ## Grafana Dashboards
 
-### Pre-configured Dashboards
+### Auto-Provisioned Dashboards
 
-1. **API Performance Dashboard**
-   - Request rate by endpoint
-   - Response time (p95, p99)
-   - Error rate
-   - Success rate gauge
-   - Active requests
+All dashboards are automatically loaded on Grafana startup via provisioning. No manual import required.
 
-2. **System Resources Dashboard** (create manually)
-   - CPU usage
-   - Memory usage
-   - Disk I/O
-   - Network traffic
+| Dashboard | UID | Description |
+|-----------|-----|-------------|
+| **System Overview** | `ccw-system-overview` | Service health, API rates, response times, error rates |
+| **Database Performance** | `ccw-database-performance` | PostgreSQL connections, transactions, cache, locks |
+| **Container Resources** | `ccw-container-resources` | CPU, memory, network, disk I/O per container |
+| **Application Metrics** | `ccw-application-metrics` | Orders, quotes, auth, cache, background jobs |
+| **Redis Metrics** | `redis-metrics` | Cache hit rate, memory, operations, evictions |
+| **API Performance** | - | Request rates, response times by endpoint |
+| **Business Metrics** | - | Orders, revenue, POS transactions, bank feeds |
 
-3. **Database Performance Dashboard** (create manually)
-   - Query rate
-   - Slow queries
-   - Connection pool
-   - Database size
+### Dashboard Features
 
-4. **Business Metrics Dashboard** (create manually)
-   - Orders per hour
-   - Revenue trends
-   - Active users
-   - Subscription metrics
+**System Overview Dashboard:**
+- Service health status (Backend, PostgreSQL, Redis)
+- Request rate by HTTP method
+- Response time percentiles (P50, P95, P99)
+- Error rates (4xx, 5xx)
+- Slowest endpoints table
+- Service uptime timeline
 
-### Importing Dashboards
+**Database Performance Dashboard:**
+- Connection pool usage with max limit
+- Transaction commit/rollback rates
+- Row operations (insert/update/delete/fetch)
+- Buffer cache hit rate
+- Database locks over time
+- Database size growth trend
+- Connections by state (pie chart)
 
-1. Navigate to Grafana (http://localhost:3001)
-2. Click **+** → **Import**
-3. Upload dashboard JSON from `grafana/dashboards/`
-4. Select Prometheus datasource
-5. Click **Import**
+**Container Resources Dashboard:**
+- Running container count
+- Total CPU and memory usage
+- Network Rx/Tx rates
+- Per-container CPU and memory
+- Container restart counts (24h)
+- Memory limit utilization
+- Host system CPU and memory
+
+**Application Metrics Dashboard:**
+- Orders and quotes created (24h)
+- Quote conversion rate
+- Authentication success rate
+- Cache hit rate
+- Background job queue depth
+- API endpoint response times
+- Cache hits vs misses
+- Revenue tracking
+
+### Dashboard File Locations
+
+```
+monitoring/grafana/
+├── dashboards/                    # Dashboard JSON files
+│   ├── system-overview.json
+│   ├── postgresql_metrics.json
+│   ├── container-resources.json
+│   ├── application-metrics.json
+│   ├── redis_metrics.json
+│   ├── api-performance-dashboard.json
+│   └── business_metrics.json
+└── provisioning/
+    ├── dashboards/
+    │   └── dashboards.yml         # Dashboard provisioning config
+    └── datasources/
+        └── datasources.yml        # Prometheus datasource config
+```
+
+### Accessing Dashboards
+
+After starting the monitoring stack, dashboards are available at:
+- http://localhost:3001 (Grafana)
+- Navigate to Dashboards → Browse → CCW ERP folder
+- Or use direct links with dashboard UIDs:
+  - System Overview: http://localhost:3001/d/ccw-system-overview
+  - Database: http://localhost:3001/d/ccw-database-performance
+  - Containers: http://localhost:3001/d/ccw-container-resources
+  - Application: http://localhost:3001/d/ccw-application-metrics
 
 ### Creating Custom Dashboards
 
@@ -499,6 +546,19 @@ Monitoring overhead:
 
 ---
 
-**Last Updated:** February 3, 2026
+**Last Updated:** February 12, 2026
 **Stack Version:** Prometheus 2.x, Grafana 10.x, Sentry Latest
 **Maintenance:** Operations Team
+
+---
+
+## Changelog
+
+### ISS-039: Grafana Dashboard Provisioning (2026-02-12)
+- Added auto-provisioning for all dashboards (no manual import required)
+- Created System Overview dashboard with service health and API metrics
+- Enhanced Database Performance dashboard with comprehensive PostgreSQL metrics
+- Created Container Resources dashboard for Docker container monitoring
+- Created Application Metrics dashboard for business operations monitoring
+- Fixed docker-compose volume mounts for proper provisioning
+- All dashboards organized under "CCW ERP" folder in Grafana

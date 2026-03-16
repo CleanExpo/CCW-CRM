@@ -94,7 +94,7 @@ class RedisCache:
             keys = []
             async for key in self.client.scan_iter(match=pattern):
                 keys.append(key)
-            
+
             if keys:
                 return await self.client.delete(*keys)
             return 0
@@ -125,8 +125,15 @@ _cache_instance: RedisCache | None = None
 
 
 def get_cache() -> RedisCache:
-    """Get global cache instance."""
+    """Get global cache instance with settings from environment."""
     global _cache_instance
     if _cache_instance is None:
-        _cache_instance = RedisCache()
+        from src.config.settings import get_settings
+
+        settings = get_settings()
+        _cache_instance = RedisCache(
+            host=settings.redis_host,
+            port=settings.redis_port,
+            db=settings.redis_db,
+        )
     return _cache_instance

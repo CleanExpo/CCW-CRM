@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+out
+build
+dist
+
+# Development
+.git
+.gitignore
+*.md
+README.md
+CHANGELOG.md
+
+# Test files
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+coverage
+.nyc_output
+test-results
+playwright-report
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files (will be injected at runtime)
+.env
+.env.*
+!.env.example
+
+# Debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log

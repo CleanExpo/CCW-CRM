@@ -37,7 +37,7 @@ export function MultiLocationStockCell({ productId, locations }: MultiLocationSt
   };
 
   // Sort locations: Brisbane, Sydney, Melbourne
-  const sortedLocations = [...locations].sort((a, b) => {
+  const sortedLocations = [...(locations || [])].sort((a, b) => {
     const order = ["brisbane", "sydney", "melbourne"];
     return order.indexOf(a.location.toLowerCase()) - order.indexOf(b.location.toLowerCase());
   });

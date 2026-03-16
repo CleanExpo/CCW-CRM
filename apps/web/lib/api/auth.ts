@@ -1,9 +1,10 @@
 /**
  * Authentication API
  *
- * Handles login, logout, registration, and user management.
+ * Uses Supabase Auth for production, falls back to FastAPI backend for local dev.
  */
 
+import { getSupabase } from "@/lib/supabase/client";
 import { apiClient } from "./client";
 
 export interface User {
@@ -19,6 +20,7 @@ export interface User {
 export interface LoginRequest {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface LoginResponse {
@@ -39,6 +41,15 @@ export interface RegisterResponse {
 }
 
 /**
+ * Check if we should use Supabase Auth (production) or FastAPI (local dev)
+ */
+function isSupabaseAuthEnabled(): boolean {
+  // Use Supabase Auth when NEXT_PUBLIC_SUPABASE_URL is configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  return supabaseUrl.length > 0 && supabaseUrl.includes("supabase.co");
+}
+
+/**
  * Authentication API methods
  */
 export const authApi = {
@@ -46,14 +57,61 @@ export const authApi = {
    * Login with email and password
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
+    const { rememberMe = true } = credentials;
+
+    if (isSupabaseAuthEnabled()) {
+      // Supabase Auth
+      const { data, error } = await getSupabase().auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const token = data.session?.access_token || "";
+
+      // Store token based on "Keep me signed in" preference
+      if (token && typeof window !== "undefined") {
+        if (rememberMe) {
+          localStorage.setItem("auth_token", token);
+          sessionStorage.removeItem("auth_token");
+        } else {
+          sessionStorage.setItem("auth_token", token);
+          localStorage.removeItem("auth_token");
+        }
+      }
+
+      return {
+        access_token: token,
+        token_type: "bearer",
+        user: {
+          id: data.user?.id || "",
+          email: data.user?.email || "",
+          full_name: data.user?.user_metadata?.full_name || data.user?.email?.split("@")[0] || "",
+          is_active: true,
+          is_admin: data.user?.user_metadata?.is_admin ?? true,
+          created_at: data.user?.created_at || new Date().toISOString(),
+        },
+      };
+    }
+
+    // FastAPI backend (local development)
+    const { rememberMe: _, ...loginData } = credentials;
     const response = await apiClient.post<LoginResponse>(
       "/api/auth/login",
-      credentials
+      loginData
     );
 
-    // Store token in cookie
-    if (response.access_token) {
-      document.cookie = `auth_token=${response.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+    if (response.access_token && typeof window !== "undefined") {
+      if (rememberMe) {
+        localStorage.setItem("auth_token", response.access_token);
+        sessionStorage.removeItem("auth_token");
+      } else {
+        sessionStorage.setItem("auth_token", response.access_token);
+        localStorage.removeItem("auth_token");
+      }
     }
 
     return response;
@@ -63,6 +121,30 @@ export const authApi = {
    * Register a new user
    */
   async register(data: RegisterRequest): Promise<RegisterResponse> {
+    if (isSupabaseAuthEnabled()) {
+      const { data: authData, error } = await getSupabase().auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: { full_name: data.full_name },
+        },
+      });
+
+      if (error) throw new Error(error.message);
+
+      return {
+        user: {
+          id: authData.user?.id || "",
+          email: authData.user?.email || "",
+          full_name: data.full_name,
+          is_active: true,
+          is_admin: false,
+          created_at: authData.user?.created_at || new Date().toISOString(),
+        },
+        message: "User registered successfully",
+      };
+    }
+
     return apiClient.post<RegisterResponse>("/api/auth/register", data);
   },
 
@@ -70,14 +152,20 @@ export const authApi = {
    * Logout (clear auth token)
    */
   async logout(): Promise<void> {
-    // Clear token cookie
-    document.cookie = "auth_token=; path=/; max-age=0";
+    // Clear token from both storage locations
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth_token");
+      sessionStorage.removeItem("auth_token");
+    }
 
-    // Optionally call backend logout endpoint if it exists
-    try {
-      await apiClient.post("/api/auth/logout");
-    } catch {
-      // Ignore errors - token is already cleared
+    if (isSupabaseAuthEnabled()) {
+      await getSupabase().auth.signOut();
+    } else {
+      try {
+        await apiClient.post("/api/auth/logout");
+      } catch {
+        // Ignore errors - token is already cleared
+      }
     }
   },
 
@@ -85,10 +173,23 @@ export const authApi = {
    * Get current user
    */
   async getCurrentUser(): Promise<User | null> {
+    if (isSupabaseAuthEnabled()) {
+      const { data: { user } } = await getSupabase().auth.getUser();
+      if (!user) return null;
+
+      return {
+        id: user.id,
+        email: user.email || "",
+        full_name: user.user_metadata?.full_name || user.email?.split("@")[0],
+        is_active: true,
+        is_admin: user.user_metadata?.is_admin ?? true,
+        created_at: user.created_at,
+      };
+    }
+
     try {
       return await apiClient.get<User>("/api/auth/me");
-    } catch (error) {
-      // Not authenticated
+    } catch {
       return null;
     }
   },
@@ -97,6 +198,23 @@ export const authApi = {
    * Update current user profile
    */
   async updateProfile(data: Partial<User>): Promise<User> {
+    if (isSupabaseAuthEnabled()) {
+      const { data: authData, error } = await getSupabase().auth.updateUser({
+        data: { full_name: data.full_name },
+      });
+
+      if (error) throw new Error(error.message);
+
+      return {
+        id: authData.user?.id || "",
+        email: authData.user?.email || "",
+        full_name: authData.user?.user_metadata?.full_name,
+        is_active: true,
+        is_admin: authData.user?.user_metadata?.is_admin ?? true,
+        created_at: authData.user?.created_at || new Date().toISOString(),
+      };
+    }
+
     return apiClient.patch<User>("/api/auth/me", data);
   },
 
@@ -104,11 +222,20 @@ export const authApi = {
    * Change password
    */
   async changePassword(
-    currentPassword: string,
+    _currentPassword: string,
     newPassword: string
   ): Promise<{ message: string }> {
+    if (isSupabaseAuthEnabled()) {
+      const { error } = await getSupabase().auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw new Error(error.message);
+      return { message: "Password changed successfully" };
+    }
+
     return apiClient.post("/api/auth/change-password", {
-      current_password: currentPassword,
+      current_password: _currentPassword,
       new_password: newPassword,
     });
   },
@@ -117,6 +244,12 @@ export const authApi = {
    * Request password reset
    */
   async requestPasswordReset(email: string): Promise<{ message: string }> {
+    if (isSupabaseAuthEnabled()) {
+      const { error } = await getSupabase().auth.resetPasswordForEmail(email);
+      if (error) throw new Error(error.message);
+      return { message: "If an account exists with that email, a password reset link has been sent." };
+    }
+
     return apiClient.post("/api/auth/forgot-password", { email });
   },
 
@@ -124,11 +257,20 @@ export const authApi = {
    * Reset password with token
    */
   async resetPassword(
-    token: string,
+    _token: string,
     newPassword: string
   ): Promise<{ message: string }> {
+    if (isSupabaseAuthEnabled()) {
+      const { error } = await getSupabase().auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw new Error(error.message);
+      return { message: "Password has been reset successfully" };
+    }
+
     return apiClient.post("/api/auth/reset-password", {
-      token,
+      token: _token,
       new_password: newPassword,
     });
   },

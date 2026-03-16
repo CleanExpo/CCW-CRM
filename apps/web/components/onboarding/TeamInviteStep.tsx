@@ -1,19 +1,20 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, X } from "lucide-react";
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Plus, X } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 interface TeamInviteStepProps {
   onComplete: (data?: any) => void;
@@ -31,14 +32,14 @@ interface TeamMemberInvite {
 export function TeamInviteStep({ onComplete, onSkip, onBack, isOptional }: TeamInviteStepProps) {
   const [isInviting, setIsInviting] = useState(false);
   const [invites, setInvites] = useState<TeamMemberInvite[]>([]);
-  const [currentEmail, setCurrentEmail] = useState("");
-  const [currentRole, setCurrentRole] = useState("member");
+  const [currentEmail, setCurrentEmail] = useState('');
+  const [currentRole, setCurrentRole] = useState('member');
 
   const handleAdd = () => {
     if (currentEmail && currentRole) {
       setInvites([...invites, { email: currentEmail, role: currentRole }]);
-      setCurrentEmail("");
-      setCurrentRole("member");
+      setCurrentEmail('');
+      setCurrentRole('member');
     }
   };
 
@@ -54,9 +55,12 @@ export function TeamInviteStep({ onComplete, onSkip, onBack, isOptional }: TeamI
 
     setIsInviting(true);
     try {
-      // TODO: Send team invites via API
-      // await teamApi.inviteBulk(invites);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Non-fatal: proceed even if some invites fail
+      await Promise.allSettled(
+        invites.map((invite) =>
+          apiClient.post('/api/team/invite', { email: invite.email, role: invite.role })
+        )
+      );
       onComplete({ invites });
     } finally {
       setIsInviting(false);
@@ -72,8 +76,8 @@ export function TeamInviteStep({ onComplete, onSkip, onBack, isOptional }: TeamI
       </Alert>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2 space-y-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="space-y-2 md:col-span-2">
             <Label htmlFor="email">Email Address</Label>
             <Input
               id="email"
@@ -81,7 +85,7 @@ export function TeamInviteStep({ onComplete, onSkip, onBack, isOptional }: TeamI
               placeholder="teammate@company.com"
               value={currentEmail}
               onChange={(e) => setCurrentEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               disabled={isInviting}
             />
           </div>
@@ -113,7 +117,7 @@ export function TeamInviteStep({ onComplete, onSkip, onBack, isOptional }: TeamI
         </div>
 
         {invites.length > 0 && (
-          <div className="rounded-lg border divide-y">
+          <div className="divide-y rounded-lg border">
             {invites.map((invite, index) => (
               <div key={index} className="flex items-center justify-between p-3">
                 <div className="flex items-center gap-2">
@@ -134,7 +138,7 @@ export function TeamInviteStep({ onComplete, onSkip, onBack, isOptional }: TeamI
         )}
 
         {invites.length === 0 && (
-          <div className="text-center py-8 text-sm text-muted-foreground">
+          <div className="text-muted-foreground py-8 text-center text-sm">
             No team members added yet. Add email addresses above.
           </div>
         )}
@@ -152,7 +156,9 @@ export function TeamInviteStep({ onComplete, onSkip, onBack, isOptional }: TeamI
           )}
           <Button onClick={handleSendInvites} disabled={isInviting}>
             {isInviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {invites.length > 0 ? `Send ${invites.length} Invite${invites.length > 1 ? "s" : ""}` : "Continue"}
+            {invites.length > 0
+              ? `Send ${invites.length} Invite${invites.length > 1 ? 's' : ''}`
+              : 'Continue'}
           </Button>
         </div>
       </div>

@@ -13,21 +13,21 @@ Outputs comprehensive PRD documents ready for development.
 from __future__ import annotations
 
 import json
-from typing import Any, Optional
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
+import structlog
 from pydantic import BaseModel, Field
 
 from src.ai.base_agent import BaseAgent
 from src.config import get_settings
-import structlog
 
-from .analysis_agent import PRDAnalysisAgent, PRDAnalysis
+from .analysis_agent import PRDAnalysis, PRDAnalysisAgent
 from .feature_decomposer import FeatureDecomposer, FeatureDecomposition
-from .tech_spec_generator import TechnicalSpecGenerator, TechnicalSpec
-from .test_generator import TestScenarioGenerator, TestPlan
-from .roadmap_planner import RoadmapPlanner, Roadmap
+from .roadmap_planner import Roadmap, RoadmapPlanner
+from .tech_spec_generator import TechnicalSpec, TechnicalSpecGenerator
+from .test_generator import TestPlan, TestScenarioGenerator
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -44,9 +44,7 @@ class PRDResult(BaseModel):
     roadmap: Roadmap
 
     # Generated Documents
-    documents_generated: list[str] = Field(
-        description="Paths to generated document files"
-    )
+    documents_generated: list[str] = Field(description="Paths to generated document files")
 
     # Summary
     total_user_stories: int
@@ -57,7 +55,7 @@ class PRDResult(BaseModel):
 
     # Metadata
     generated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-    model_used: str = "claude-opus-4-5-20251101"
+    model_used: str = "claude-opus-4-6"
 
 
 class PRDOrchestrator(BaseAgent):
@@ -131,8 +129,7 @@ class PRDOrchestrator(BaseAgent):
             # Phase 1: Requirements Analysis
             logger.info("Phase 1/5: Analyzing requirements...")
             analysis_result = await self.analysis_agent.execute(
-                task_description=requirements,
-                context=context
+                task_description=requirements, context=context
             )
             if not analysis_result["success"]:
                 raise Exception(f"Analysis failed: {analysis_result.get('error')}")
@@ -147,8 +144,7 @@ class PRDOrchestrator(BaseAgent):
             # Phase 2: Feature Decomposition
             logger.info("Phase 2/5: Decomposing features into user stories...")
             decomp_result = await self.feature_decomposer.execute(
-                prd_analysis=prd_analysis,
-                context=context
+                prd_analysis=prd_analysis, context=context
             )
             if not decomp_result["success"]:
                 raise Exception(f"Feature decomposition failed: {decomp_result.get('error')}")
@@ -165,7 +161,7 @@ class PRDOrchestrator(BaseAgent):
             tech_result = await self.tech_spec_generator.execute(
                 prd_analysis=prd_analysis,
                 feature_decomposition=feature_decomposition,
-                context=context
+                context=context,
             )
             if not tech_result["success"]:
                 raise Exception(f"Technical spec generation failed: {tech_result.get('error')}")
@@ -183,7 +179,7 @@ class PRDOrchestrator(BaseAgent):
                 prd_analysis=prd_analysis,
                 feature_decomposition=feature_decomposition,
                 tech_spec=tech_spec,
-                context=context
+                context=context,
             )
             if not test_result["success"]:
                 raise Exception(f"Test plan generation failed: {test_result.get('error')}")
@@ -204,7 +200,7 @@ class PRDOrchestrator(BaseAgent):
                 feature_decomposition=feature_decomposition,
                 tech_spec=tech_spec,
                 test_plan=test_plan,
-                context=context
+                context=context,
             )
             if not roadmap_result["success"]:
                 raise Exception(f"Roadmap planning failed: {roadmap_result.get('error')}")
@@ -306,13 +302,8 @@ class PRDOrchestrator(BaseAgent):
 
         # 3. Feature List JSON (feature_list.json) - for InitializerAgent
         feature_json_path = output_dir / "feature_list.json"
-        feature_json_content = self.feature_decomposer.to_feature_list_json(
-            feature_decomposition
-        )
-        feature_json_path.write_text(
-            json.dumps(feature_json_content, indent=2),
-            encoding="utf-8"
-        )
+        feature_json_content = self.feature_decomposer.to_feature_list_json(feature_decomposition)
+        feature_json_path.write_text(json.dumps(feature_json_content, indent=2), encoding="utf-8")
         generated_files.append(str(feature_json_path))
 
         # 4. Technical Specification (tech_spec.md)
@@ -342,8 +333,7 @@ class PRDOrchestrator(BaseAgent):
     ) -> str:
         """Generate PRD markdown document."""
         epic_list = "\n".join(
-            f"- **{epic.name}**: {epic.description}"
-            for epic in feature_decomposition.epics
+            f"- **{epic.name}**: {epic.description}" for epic in feature_decomposition.epics
         )
 
         return f"""# Product Requirements Document (PRD)
@@ -371,11 +361,11 @@ class PRDOrchestrator(BaseAgent):
 
 ## Functional Requirements
 
-{chr(10).join(f"{i+1}. {req}" for i, req in enumerate(prd_analysis.functional_requirements))}
+{chr(10).join(f"{i + 1}. {req}" for i, req in enumerate(prd_analysis.functional_requirements))}
 
 ## Non-Functional Requirements
 
-{chr(10).join(f"{i+1}. {req}" for i, req in enumerate(prd_analysis.non_functional_requirements))}
+{chr(10).join(f"{i + 1}. {req}" for i, req in enumerate(prd_analysis.non_functional_requirements))}
 
 ## Feature Epics
 
@@ -411,10 +401,7 @@ class PRDOrchestrator(BaseAgent):
         epics_content = []
 
         for epic in feature_decomposition.epics:
-            stories = [
-                s for s in feature_decomposition.user_stories
-                if s.epic == epic.id
-            ]
+            stories = [s for s in feature_decomposition.user_stories if s.epic == epic.id]
 
             stories_text = []
             for story in stories:
@@ -464,7 +451,7 @@ class PRDOrchestrator(BaseAgent):
 
 ## Critical Path
 
-{chr(10).join(f"{i+1}. {story_id}" for i, story_id in enumerate(feature_decomposition.critical_path))}
+{chr(10).join(f"{i + 1}. {story_id}" for i, story_id in enumerate(feature_decomposition.critical_path))}
 """
 
     def _generate_tech_spec_markdown(self, tech_spec: TechnicalSpec) -> str:
@@ -476,8 +463,14 @@ class PRDOrchestrator(BaseAgent):
                 f"- **{col['name']}** ({col['type']}): {col.get('description', '')} `{col.get('constraints', '')}`"
                 for col in table.columns
             )
-            indexes_text = "\n".join(f"- {idx}" for idx in table.indexes) if table.indexes else "None"
-            relationships_text = "\n".join(f"- {rel}" for rel in table.relationships) if table.relationships else "None"
+            indexes_text = (
+                "\n".join(f"- {idx}" for idx in table.indexes) if table.indexes else "None"
+            )
+            relationships_text = (
+                "\n".join(f"- {rel}" for rel in table.relationships)
+                if table.relationships
+                else "None"
+            )
 
             db_tables.append(f"""### {table.name}
 
@@ -501,8 +494,8 @@ class PRDOrchestrator(BaseAgent):
 {ep.description}
 
 - **Authentication Required**: {ep.auth_required}
-- **Rate Limit**: {ep.rate_limit or 'None'}
-- **Related Story**: {ep.related_user_story or 'N/A'}
+- **Rate Limit**: {ep.rate_limit or "None"}
+- **Related Story**: {ep.related_user_story or "N/A"}
 """)
 
         return f"""# Technical Specification

@@ -5,13 +5,12 @@ Uses fuzzy matching and pattern learning to suggest POS transaction matches
 for bank feed entries with improved accuracy.
 """
 
-from datetime import date, datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 import structlog
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.pos_models import BankFeed, POSTransaction

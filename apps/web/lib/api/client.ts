@@ -3,13 +3,27 @@
  *
  * Replaces Supabase client with direct fetch calls to FastAPI.
  * Handles JWT authentication via cookies.
- * Enhanced with retry logic, interceptors, and token refresh.
+ *
+ * Enhancements:
+ * - X-Request-ID header for distributed tracing
+ * - Automatic retry with exponential backoff on 5xx / network errors
+ * - AbortController timeout (30s default)
+ * - Automatic token refresh on 401
  */
 
-import { withRetry, type RetryConfig } from "./retry";
-import { interceptorManager } from "./interceptors";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+/** Default request timeout in milliseconds */
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+/** Maximum number of retries for transient failures */
+const MAX_RETRIES = 3;
+
+/** Initial retry delay in milliseconds (doubles each attempt) */
+const INITIAL_RETRY_DELAY_MS = 500;
+
+/** HTTP methods that are safe to retry (idempotent) */
+const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export interface ApiError {
   detail: string;
@@ -28,11 +42,21 @@ export class ApiClientError extends Error {
 }
 
 /**
- * Get JWT token from cookies (browser-side)
+ * Get JWT token from localStorage or cookies (browser-side)
+ * Tries localStorage first (more reliable for cross-port access), then falls back to cookies
  */
 function getAuthToken(): string | null {
-  if (typeof document === "undefined") return null;
+  if (typeof window === "undefined") return null;
 
+  // Try localStorage first (persistent "Keep me signed in")
+  const localStorageToken = localStorage.getItem("auth_token");
+  if (localStorageToken) return localStorageToken;
+
+  // Try sessionStorage (session-only, clears on browser close)
+  const sessionToken = sessionStorage.getItem("auth_token");
+  if (sessionToken) return sessionToken;
+
+  // Fallback to cookies (for backward compatibility)
   const cookies = document.cookie.split("; ");
   const tokenCookie = cookies.find((c) => c.startsWith("auth_token="));
 
@@ -66,126 +90,203 @@ function decodeJWT(token: string): JWTPayload | null {
 }
 
 /**
- * Check if token is expired
+ * Attempt to refresh the JWT access token using the refresh endpoint.
+ * Returns true if the token was successfully refreshed.
  */
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = decodeJWT(token);
-    if (!payload || !payload.exp) return true;
-
-    const exp = payload.exp as number;
-    const now = Math.floor(Date.now() / 1000);
-
-    // Consider token expired if less than 5 minutes remaining
-    return exp - now < 300;
-  } catch {
-    return true;
-  }
-}
-
-/**
- * Refresh token if needed
- */
-async function refreshTokenIfNeeded(): Promise<void> {
-  const token = getAuthToken();
-
-  if (!token || !isTokenExpired(token)) {
-    return; // Token is valid or doesn't exist
-  }
+async function attemptTokenRefresh(): Promise<boolean> {
+  // Token refresh requires browser APIs (localStorage/sessionStorage)
+  if (typeof window === "undefined") return false;
 
   try {
-    // Call refresh endpoint
     const response = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
       method: "POST",
       credentials: "include",
     });
 
-    if (!response.ok) {
-      // Refresh failed, redirect to login
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
+    if (response.ok) {
+      const data = await response.json();
+      if (data.access_token) {
+        // Store the new token in the same location as the original
+        if (localStorage.getItem("auth_token")) {
+          localStorage.setItem("auth_token", data.access_token);
+        } else if (sessionStorage.getItem("auth_token")) {
+          sessionStorage.setItem("auth_token", data.access_token);
+        }
+        return true;
       }
     }
-  } catch (error) {
-    console.error("Token refresh failed:", error);
+    return false;
+  } catch {
+    return false;
   }
 }
 
 /**
- * Make an authenticated API request with retry logic and interceptors
+ * Determine whether a failed request should be retried.
+ */
+function shouldRetry(
+  method: string,
+  status: number | null,
+  retryCount: number
+): boolean {
+  if (retryCount >= MAX_RETRIES) return false;
+
+  // Network error (status is null) — always retry
+  if (status === null) return true;
+
+  // Only retry idempotent methods on server errors
+  if (status >= 500 && status < 600 && RETRYABLE_METHODS.has(method.toUpperCase())) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Sleep for the exponential backoff delay.
+ */
+function retryDelay(attempt: number): Promise<void> {
+  const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+/**
+ * Make an authenticated API request with retry, timeout, and request tracing.
  */
 async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {},
-  retryConfig?: Partial<RetryConfig>
+  timeout: number = DEFAULT_TIMEOUT_MS
 ): Promise<T> {
+  const requestId =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `req-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  const method = (options.method || "GET").toUpperCase();
+
+  const buildHeaders = (): HeadersInit => {
+    const token = getAuthToken();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "X-Request-ID": requestId,
+      ...(options.headers as Record<string, string> | undefined),
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+
+      const payload = decodeJWT(token);
+      if (payload && payload.user_id) {
+        headers["X-User-Id"] = payload.user_id;
+      }
+    }
+
+    return headers;
+  };
+
   const url = endpoint.startsWith("http")
     ? endpoint
     : `${BACKEND_URL}${endpoint}`;
 
-  // Execute request interceptors
-  await interceptorManager.executeRequest(url, options);
+  let lastError: ApiClientError | null = null;
 
-  try {
-    // Refresh token if needed (before making request)
-    await refreshTokenIfNeeded();
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    // Wait before retry (skip on first attempt)
+    if (attempt > 0) {
+      await retryDelay(attempt - 1);
+    }
 
-    // Make request with retry logic
-    const response = await withRetry(async () => {
-      const token = getAuthToken();
+    // Create a fresh AbortController for each attempt
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-        ...options.headers,
-      };
+    try {
+      const response = await fetch(url, {
+        ...options,
+        method,
+        headers: buildHeaders(),
+        credentials: "include",
+        signal: controller.signal,
+      });
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+      clearTimeout(timeoutId);
 
-        // Extract user_id from JWT and add to X-User-Id header (for auth middleware)
-        const payload = decodeJWT(token);
-        if (payload && payload.user_id) {
-          headers["X-User-Id"] = payload.user_id;
+      // --- 401 Unauthorized: attempt token refresh (once) ---
+      if (response.status === 401 && attempt === 0) {
+        const refreshed = await attemptTokenRefresh();
+        if (refreshed) {
+          // Retry immediately with the new token (counts as attempt 1)
+          continue;
         }
       }
 
-      const response = await fetch(url, {
-        ...options,
-        headers,
-        credentials: "include", // Include cookies
-      });
+      // --- 5xx server error: maybe retry ---
+      if (response.status >= 500 && shouldRetry(method, response.status, attempt)) {
+        const error: ApiError = await response.json().catch(() => ({
+          detail: `HTTP ${response.status}: ${response.statusText}`,
+        }));
+        lastError = new ApiClientError(error.detail, response.status, error.error_code);
+        continue;
+      }
 
+      // --- Non-OK response: throw ---
       if (!response.ok) {
         const error: ApiError = await response.json().catch(() => ({
           detail: `HTTP ${response.status}: ${response.statusText}`,
         }));
-
-        const apiError = new ApiClientError(
-          error.detail,
-          response.status,
-          error.error_code
-        );
-
-        throw apiError;
+        throw new ApiClientError(error.detail, response.status, error.error_code);
       }
 
-      return response;
-    }, retryConfig);
+      // --- 204 No Content ---
+      if (response.status === 204) {
+        return {} as T;
+      }
 
-    // Execute response interceptors
-    await interceptorManager.executeResponse(url, response);
+      return response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
 
-    // Handle 204 No Content
-    if (response.status === 204) {
-      return {} as T;
+      // Timeout via AbortController (SSR-safe: DOMException may not exist in Node.js)
+      if (
+        error &&
+        typeof error === "object" &&
+        "name" in error &&
+        (error as { name: string }).name === "AbortError"
+      ) {
+        throw new ApiClientError(
+          `Request timeout after ${timeout}ms [${requestId}]`,
+          408,
+          "REQUEST_TIMEOUT"
+        );
+      }
+
+      // Already an ApiClientError (from non-OK handling above) — rethrow
+      if (error instanceof ApiClientError) {
+        throw error;
+      }
+
+      // Network error — retry if eligible
+      if (shouldRetry(method, null, attempt)) {
+        lastError = new ApiClientError(
+          `Network error: ${(error as Error).message} [${requestId}]`,
+          0,
+          "NETWORK_ERROR"
+        );
+        continue;
+      }
+
+      // Exhausted retries or non-retryable
+      throw new ApiClientError(
+        `Network error: ${(error as Error).message} [${requestId}]`,
+        0,
+        "NETWORK_ERROR"
+      );
     }
-
-    return response.json();
-  } catch (error: any) {
-    // Execute error interceptors
-    await interceptorManager.executeError(url, error);
-    throw error;
   }
+
+  // If we exhausted retries, throw the last error
+  throw lastError ?? new ApiClientError("Request failed after retries", 0, "RETRY_EXHAUSTED");
 }
 
 /**

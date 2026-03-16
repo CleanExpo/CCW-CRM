@@ -5,7 +5,6 @@ Uses Fernet (symmetric encryption) with AES-256 for encrypting tokens,
 API keys, and other sensitive data at rest.
 """
 
-import base64
 import os
 from typing import Any
 

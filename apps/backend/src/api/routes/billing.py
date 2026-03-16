@@ -10,18 +10,20 @@ Provides Stripe-based subscription management:
 - Handle Stripe webhooks
 """
 
+import os
 from datetime import datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Request
-from pydantic import BaseModel, EmailStr, Field
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.middleware.rbac import require_permission
 from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
+from src.db.demo_models import Organization
 from src.db.models.subscription import (
     BillingInterval,
     Subscription,
@@ -29,7 +31,6 @@ from src.db.models.subscription import (
     SubscriptionTier,
     get_tier_config,
 )
-from src.db.demo_models import Organization
 from src.integrations.stripe.client import StripeClient
 
 router = APIRouter(prefix="/api/billing", tags=["Billing"])
@@ -125,8 +126,35 @@ class InvoiceResponse(BaseModel):
     period_end: datetime | None
 
 
-# Initialize Stripe client (will use STRIPE_SECRET_KEY from environment)
-stripe_client = StripeClient()
+# Initialize Stripe client lazily (requires STRIPE_SECRET_KEY in environment)
+try:
+    stripe_client: StripeClient | None = StripeClient()
+except ValueError:
+    stripe_client = None  # Stripe not configured — billing endpoints will return 503
+
+
+def _require_stripe() -> StripeClient:
+    """Return the Stripe client or raise 503 if not configured."""
+    if stripe_client is None:
+        raise HTTPException(status_code=503, detail="Stripe billing is not configured")
+    return stripe_client
+
+
+def _get_stripe_price_id(tier: SubscriptionTier, interval: BillingInterval) -> str:
+    """Look up the Stripe Price ID for a given tier + billing interval from env vars.
+
+    Expected env var format: STRIPE_{TIER}_{INTERVAL}_PRICE_ID
+    e.g. STRIPE_STARTER_MONTHLY_PRICE_ID, STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID
+    """
+    env_key = f"STRIPE_{tier.value.upper()}_{interval.value.upper()}_PRICE_ID"
+    price_id = os.getenv(env_key)
+    if not price_id:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Stripe Price ID not configured for {tier.value} {interval.value}. "
+                   f"Set {env_key} in environment.",
+        )
+    return price_id
 
 
 @router.get("", response_model=SubscriptionResponse)
@@ -181,6 +209,8 @@ async def subscribe(
     if not organization:
         raise HTTPException(status_code=404, detail="Organization not found")
 
+    client = _require_stripe()
+
     # Get or create subscription record
     result = await db.execute(
         select(Subscription).where(Subscription.organization_id == org_id)
@@ -190,39 +220,57 @@ async def subscribe(
     # Get tier configuration
     config = get_tier_config(request.tier, request.billing_interval)
 
+    # Resolve Stripe Price ID — raises 503 if not configured in env
+    price_id = _get_stripe_price_id(request.tier, request.billing_interval)
+
     try:
         # Create or get Stripe customer
         if subscription and subscription.stripe_customer_id:
-            stripe_customer = await stripe_client.get_customer(subscription.stripe_customer_id)
+            stripe_customer = await client.get_customer(subscription.stripe_customer_id)
         else:
-            stripe_customer = await stripe_client.create_customer(
-                email=f"billing@{organization.slug}.example.com",  # TODO: Use actual billing email
+            stripe_customer = await client.create_customer(
+                email=f"billing@{organization.slug}.ccw-erp.com",
                 name=organization.name,
                 metadata={"organization_id": str(org_id)},
             )
 
-        # Attach payment method
-        await stripe_client.attach_payment_method(
+        # Attach payment method and set as default
+        await client.attach_payment_method(
             request.payment_method_id,
             stripe_customer.id,
         )
 
-        # Create Stripe subscription
-        # Note: In production, you'd have Stripe Price IDs configured for each tier/interval
-        # For now, we'll store the price in our database and handle it manually
-        stripe_subscription = None  # TODO: Create actual Stripe subscription with Price ID
+        # Create the real Stripe subscription
+        stripe_sub = await client.create_subscription(
+            customer_id=stripe_customer.id,
+            price_id=price_id,
+            trial_period_days=request.trial_days if request.trial_days > 0 else None,
+            metadata={"organization_id": str(org_id), "tier": request.tier.value},
+        )
+
+        # Determine status and period dates from Stripe response
+        is_trialing = stripe_sub["status"] == "trialing"
+        period_start = datetime.fromtimestamp(stripe_sub["current_period_start"])
+        period_end = datetime.fromtimestamp(stripe_sub["current_period_end"])
+        new_status = SubscriptionStatus.TRIAL if is_trialing else SubscriptionStatus.ACTIVE
+        trial_end_dt = (
+            datetime.fromtimestamp(stripe_sub["trial_end"])
+            if stripe_sub.get("trial_end")
+            else None
+        )
 
         # Update or create subscription record
         if subscription:
             subscription.tier = request.tier
             subscription.billing_interval = request.billing_interval
-            subscription.status = SubscriptionStatus.ACTIVE
+            subscription.status = new_status
             subscription.stripe_customer_id = stripe_customer.id
+            subscription.stripe_subscription_id = stripe_sub["id"]
             subscription.stripe_payment_method_id = request.payment_method_id
             subscription.price_cents = config["price_cents"]
-            subscription.trial_ends_at = None
-            subscription.current_period_start = datetime.utcnow()
-            subscription.current_period_end = datetime.utcnow() + timedelta(days=30)
+            subscription.trial_ends_at = trial_end_dt
+            subscription.current_period_start = period_start
+            subscription.current_period_end = period_end
             # Update limits
             subscription.max_locations = config["max_locations"]
             subscription.max_users = config["max_users"]
@@ -236,13 +284,15 @@ async def subscribe(
             subscription = Subscription(
                 organization_id=org_id,
                 tier=request.tier,
-                status=SubscriptionStatus.ACTIVE,
+                status=new_status,
                 billing_interval=request.billing_interval,
                 stripe_customer_id=stripe_customer.id,
+                stripe_subscription_id=stripe_sub["id"],
                 stripe_payment_method_id=request.payment_method_id,
                 price_cents=config["price_cents"],
-                current_period_start=datetime.utcnow(),
-                current_period_end=datetime.utcnow() + timedelta(days=30),
+                trial_ends_at=trial_end_dt,
+                current_period_start=period_start,
+                current_period_end=period_end,
                 **{k: v for k, v in config.items() if k.startswith("max_") or k.startswith("has_")},
             )
             db.add(subscription)
@@ -296,7 +346,19 @@ async def update_subscription(
     subscription.has_api_access = config["has_api_access"]
     subscription.has_white_label = config["has_white_label"]
 
-    # TODO: Update Stripe subscription with new price
+    # Update the Stripe subscription with the new price if one exists
+    if subscription.stripe_subscription_id:
+        try:
+            client = _require_stripe()
+            new_price_id = _get_stripe_price_id(subscription.tier, subscription.billing_interval)
+            await client.update_subscription(
+                subscription.stripe_subscription_id,
+                price_id=new_price_id,
+            )
+        except HTTPException:
+            # If Stripe not configured or price ID missing, skip remote update
+            # Local DB record is still updated
+            pass
 
     await db.commit()
     await db.refresh(subscription)
@@ -326,7 +388,8 @@ async def cancel_subscription(
     try:
         # Cancel Stripe subscription if exists
         if subscription.stripe_subscription_id:
-            await stripe_client.cancel_subscription(
+            client = _require_stripe()
+            await client.cancel_subscription(
                 subscription.stripe_subscription_id,
                 immediately=immediately,
             )
@@ -366,7 +429,8 @@ async def list_invoices(
         return []
 
     try:
-        invoices = await stripe_client.list_invoices(
+        client = _require_stripe()
+        invoices = await client.list_invoices(
             subscription.stripe_customer_id,
             limit=limit,
         )
@@ -442,7 +506,8 @@ async def handle_stripe_webhook(
 
     try:
         # Verify webhook signature
-        event = stripe_client.verify_webhook_signature(payload, stripe_signature)
+        client = _require_stripe()
+        event = client.verify_webhook_signature(payload, stripe_signature)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -483,6 +548,29 @@ async def handle_stripe_webhook(
                 subscription.status = SubscriptionStatus.CANCELED
                 subscription.canceled_at = datetime.utcnow()
                 await db.commit()
+
+    elif event_type == "invoice.payment_succeeded":
+        # Update period dates after successful payment
+        customer_id = data["customer"]
+        result = await db.execute(
+            select(Subscription).where(Subscription.stripe_customer_id == customer_id)
+        )
+        subscription = result.scalar_one_or_none()
+
+        if subscription:
+            subscription.status = SubscriptionStatus.ACTIVE
+            # Update period from the subscription object on the invoice
+            sub_data = data.get("subscription")
+            if sub_data and isinstance(sub_data, dict):
+                if sub_data.get("current_period_start"):
+                    subscription.current_period_start = datetime.fromtimestamp(
+                        sub_data["current_period_start"]
+                    )
+                if sub_data.get("current_period_end"):
+                    subscription.current_period_end = datetime.fromtimestamp(
+                        sub_data["current_period_end"]
+                    )
+            await db.commit()
 
     elif event_type == "invoice.payment_failed":
         # Mark subscription as past_due

@@ -4,24 +4,28 @@ Pull Request Automation Workflow.
 Handles automated PR creation, review, and merging with risk-based approval.
 Part of Phase 5 (Autonomous Development Framework) - Week 3 implementation.
 """
+from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 import structlog
 
-from src.ai.agents.risk_assessor import RiskAssessor, RiskLevel, ApprovalPolicy
-from src.services.circuit_breaker import CircuitBreakerManager, CircuitBreakerException
+try:
+    from src.ai.agents.risk_assessor import ApprovalPolicy, RiskAssessor, RiskLevel
+except ImportError:
+    ApprovalPolicy = None  # type: ignore[assignment, misc]
+    RiskAssessor = None  # type: ignore[assignment, misc]
+    RiskLevel = None  # type: ignore[assignment, misc]
 from src.monitoring.metrics import (
+    auto_merge_rejections,
     auto_merges_attempted,
     auto_merges_successful,
-    auto_merge_rejections,
     protected_file_violations,
 )
+from src.services.circuit_breaker import CircuitBreakerManager
 
 logger = structlog.get_logger(__name__)
 
@@ -73,7 +77,7 @@ class AutoMergeResult:
     approval_policy: ApprovalPolicy
     reasoning: str
     safety_checks: dict[str, bool] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -219,9 +223,9 @@ class PRAutomationWorkflow:
         # For now, return mock PR data
         pr_data = {
             "number": 123,
-            "url": f"https://github.com/org/repo/pull/123",
+            "url": "https://github.com/org/repo/pull/123",
             "state": "open",
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         # Record lifecycle event
@@ -428,7 +432,7 @@ class PRAutomationWorkflow:
         auto_merges_successful.labels(risk_level="unknown").inc()
 
         # Track merge time for rate limiting
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         self.recent_merges.append(now)
         self.last_merge_time = now
 
@@ -448,7 +452,7 @@ class PRAutomationWorkflow:
         Returns:
             True if within rate limit
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Remove merges older than 1 hour
         self.recent_merges = [
@@ -484,7 +488,7 @@ class PRAutomationWorkflow:
         event = PRLifecycleEvent(
             pr_number=pr_number,
             event_type=event_type,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data=data,
         )
         self.lifecycle_events.append(event)

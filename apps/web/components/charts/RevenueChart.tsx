@@ -16,7 +16,7 @@ interface RevenueChartProps {
 // PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
 export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartProps) {
   // Transform data for recharts (convert revenue string to number)
-  const chartData = data.map((point) => ({
+  const chartData = (data || []).map((point) => ({
     month: point.month,
     revenue: parseFloat(point.revenue),
   }));
@@ -74,7 +74,7 @@ export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartPro
                   }).format(value)
                 }
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={(props: any) => <CustomTooltip active={props.active} payload={props.payload} />} />
               <Legend wrapperStyle={{ paddingTop: "20px" }} />
               <Line
                 type="monotone"

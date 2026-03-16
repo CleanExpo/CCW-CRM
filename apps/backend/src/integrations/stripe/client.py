@@ -8,7 +8,6 @@ Provides methods for:
 """
 
 import os
-from datetime import datetime
 from typing import Any
 
 import stripe
@@ -16,12 +15,10 @@ from stripe import (
     Customer,
     Invoice,
     PaymentMethod,
-    Price,
-    Product,
     Subscription,
-    WebhookEndpoint,
 )
-from stripe.error import StripeError
+
+StripeError = stripe.StripeError
 
 
 class StripeClient:

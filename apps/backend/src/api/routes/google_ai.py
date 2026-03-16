@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 from src.api.deps import get_optional_user
 from src.db.models import User
-from src.integrations.google import get_google_ai_client, generate_text_with_google
+from src.integrations.google import generate_text_with_google, get_google_ai_client
 
 logger = structlog.get_logger(__name__)
 

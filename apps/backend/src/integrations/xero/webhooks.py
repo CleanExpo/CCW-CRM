@@ -7,11 +7,13 @@ Enhanced with:
 - Signature verification (HMAC-SHA256)
 - Replay attack protection
 - Rate limiting
+- ISS-036: Transaction boundaries and retry support via WebhookService
 """
 
 import base64
 import hashlib
 import hmac
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -29,12 +31,23 @@ from src.integrations.xero.webhook_security import (
     get_xero_webhook_verifier,
     is_webhook_duplicate,
 )
+from src.services.webhook_service import (
+    WebhookProcessingError,
+    WebhookService,
+)
 
 logger = structlog.get_logger(__name__)
 
 
 class XeroWebhookHandler:
-    """Handles incoming webhooks from Xero."""
+    """Handles incoming webhooks from Xero.
+
+    ISS-036: Enhanced with WebhookService for:
+    - Idempotency via firstEventSequence
+    - Transaction boundaries (commit only on success)
+    - Retry mechanism for failed webhooks
+    - Persistent tracking replacing in-memory cache
+    """
 
     def __init__(
         self,
@@ -42,6 +55,7 @@ class XeroWebhookHandler:
         payment_sync: XeroPaymentSync,
         customer_sync: XeroCustomerSync,
         xero_auth: XeroAuth,
+        db: AsyncSession | None = None,
     ):
         """Initialize webhook handler.
 
@@ -50,11 +64,21 @@ class XeroWebhookHandler:
             payment_sync: XeroPaymentSync instance for processing payment webhooks
             customer_sync: XeroCustomerSync instance for processing contact webhooks
             xero_auth: XeroAuth instance for getting active connection
+            db: Database session for webhook tracking (ISS-036)
         """
         self.webhook_key = webhook_key
         self.payment_sync = payment_sync
         self.customer_sync = customer_sync
         self.xero_auth = xero_auth
+        self._db = db
+        self._webhook_service: WebhookService | None = None
+
+    def _get_webhook_service(self, db: AsyncSession) -> WebhookService:
+        """Get or create webhook service for transaction-safe processing."""
+        if self._webhook_service is None or self._db != db:
+            self._db = db
+            self._webhook_service = WebhookService(db)
+        return self._webhook_service
 
     def verify_signature(self, request_body: bytes, signature: str) -> bool:
         """Verify Xero webhook signature.
@@ -90,7 +114,12 @@ class XeroWebhookHandler:
         request: Request,
         db: AsyncSession,
     ) -> dict[str, Any]:
-        """Handle incoming Xero webhook.
+        """Handle incoming Xero webhook with transaction safety.
+
+        ISS-036: Now uses WebhookService for:
+        1. Persistent idempotency checking (replaces in-memory cache)
+        2. Transaction boundaries
+        3. Retry mechanism for failed events
 
         Args:
             request: FastAPI request object
@@ -131,14 +160,22 @@ class XeroWebhookHandler:
             logger.error("Failed to parse webhook payload", error=str(e))
             raise HTTPException(status_code=400, detail="Invalid JSON payload") from e
 
-        # Replay attack protection - check for duplicate event IDs
+        # Get first event sequence for idempotency
         first_event_id = payload.get("firstEventSequence")
+
+        # ISS-036: Use persistent idempotency check instead of in-memory cache
+        # Legacy check kept for backward compatibility during transition
         if first_event_id and is_webhook_duplicate(str(first_event_id)):
             logger.warning(
-                "Duplicate webhook detected (replay attack?)",
+                "Duplicate webhook detected by legacy cache",
                 first_event_id=first_event_id,
             )
-            raise HTTPException(status_code=409, detail="Duplicate webhook event")
+            # Don't raise exception - WebhookService will handle duplicate properly
+            return {
+                "received": True,
+                "status": "duplicate",
+                "message": "Webhook already processed",
+            }
 
         logger.info(
             "Received Xero webhook",
@@ -148,24 +185,54 @@ class XeroWebhookHandler:
             first_event_sequence=first_event_id,
         )
 
-        # Process events
+        # ISS-036: Process each event with transaction safety
+        webhook_service = self._get_webhook_service(db)
         results = []
-        for event in payload.get("events", []):
-            try:
-                result = await self._process_event(db, event)
-                results.append(result)
-            except Exception as e:
-                logger.error(
-                    "Failed to process webhook event",
-                    event_type=event.get("eventType"),
-                    error=str(e),
-                )
-                results.append({"success": False, "error": str(e)})
+
+        for idx, event in enumerate(payload.get("events", [])):
+            event_category = event.get("eventCategory", "UNKNOWN")
+            event_type = event.get("eventType", "UNKNOWN")
+            resource_id = event.get("resourceId", "unknown")
+
+            # Create unique event ID for this specific event
+            if first_event_id:
+                event_id = f"{first_event_id}_{idx}"
+            else:
+                timestamp = datetime.now(UTC).timestamp()
+                event_id = f"xero_{event_category}_{resource_id}_{timestamp}"
+
+            # Create handler for this event
+            async def process_xero_event(
+                event_payload: dict[str, Any],
+                session: AsyncSession,
+            ) -> dict[str, Any]:
+                """Process a single Xero event with transaction safety."""
+                return await self._process_event(session, event_payload)
+
+            # Process event with WebhookService
+            event_result = await webhook_service.process_webhook(
+                source="xero",
+                event_type=f"{event_category}.{event_type}",
+                event_id=event_id,
+                payload=event,
+                handler=process_xero_event,
+                headers=dict(request.headers),
+                max_retries=3,
+            )
+
+            results.append({
+                "event_id": event_id,
+                "status": event_result["status"],
+                "success": event_result["status"] in ("success", "duplicate"),
+                "will_retry": event_result.get("will_retry", False),
+            })
 
         return {
             "received": True,
             "event_count": len(payload.get("events", [])),
             "results": results,
+            "succeeded": sum(1 for r in results if r["success"]),
+            "failed": sum(1 for r in results if not r["success"]),
         }
 
     async def _process_event(
@@ -206,11 +273,16 @@ class XeroWebhookHandler:
                     resource_id=resource_id,
                     error=str(e),
                 )
-                return {
-                    "success": False,
-                    "event_type": event_type,
-                    "error": str(e),
-                }
+                # ISS-036: Raise WebhookProcessingError to trigger retry
+                raise WebhookProcessingError(
+                    f"Invoice event processing failed: {str(e)}",
+                    retriable=True,
+                    details={
+                        "resource_id": resource_id,
+                        "event_category": event_category,
+                        "event_type": event_type,
+                    },
+                ) from e
 
         # Handle CONTACT events (for customer sync)
         elif event_category == "CONTACT" and event_type in ["CREATE", "UPDATE"]:
@@ -224,11 +296,16 @@ class XeroWebhookHandler:
                     resource_id=resource_id,
                     error=str(e),
                 )
-                return {
-                    "success": False,
-                    "event_type": event_type,
-                    "error": str(e),
-                }
+                # ISS-036: Raise WebhookProcessingError to trigger retry
+                raise WebhookProcessingError(
+                    f"Contact event processing failed: {str(e)}",
+                    retriable=True,
+                    details={
+                        "resource_id": resource_id,
+                        "event_category": event_category,
+                        "event_type": event_type,
+                    },
+                ) from e
 
         # Unhandled event type
         else:

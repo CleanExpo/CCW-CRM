@@ -9,12 +9,12 @@ This package contains workflow orchestration for:
 """
 
 from src.workflows.pr_automation import (
-    PRAutomationWorkflow,
     AutoMergeDecision,
-    PROutcome,
-    PRContext,
     AutoMergeResult,
+    PRAutomationWorkflow,
+    PRContext,
     PRLifecycleEvent,
+    PROutcome,
     create_pr_workflow,
 )
 

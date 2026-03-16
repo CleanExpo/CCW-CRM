@@ -1,23 +1,22 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { apiClient } from "@/lib/api/client";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { QuoteForm } from "./components/QuoteForm";
-import { DeleteQuoteDialog } from "./components/DeleteQuoteDialog";
-import { ConvertToOrderDialog } from "./components/ConvertToOrderDialog";
-import { Pencil, Trash2, Plus, ArrowRight, Copy, Sparkles, Wand2 } from "lucide-react";
+import { useCallback, useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { apiClient } from '@/lib/api/client';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { QuoteForm } from './components/QuoteForm';
+import { DeleteQuoteDialog } from './components/DeleteQuoteDialog';
+import { ConvertToOrderDialog } from './components/ConvertToOrderDialog';
+import { Pencil, Trash2, Plus, ArrowRight, Copy, Sparkles, Download } from 'lucide-react';
+import { exportQuotesToCSV, exportQuotesToPDF } from '@/lib/utils/csv-export';
 // PHASE C: Quote Copilot Chat
-import { QuoteCopilotChat } from "@/components/ai/QuoteCopilotChat";
-import { useToast } from "@/hooks/use-toast";
-import { Quote } from "./types";
-import { DataTable } from "@/components/ui/data-table";
-import { createQuoteColumns } from "./columns";
-import { format, formatDistanceToNow } from "date-fns"; // PHASE 4: Add timestamp display
+import { QuoteCopilotChat } from '@/components/ai/QuoteCopilotChat';
+import { useToast } from '@/hooks/use-toast';
+import { Quote } from './types';
+import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
+import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
 
 interface PaginatedResponse {
   items: Quote[];
@@ -27,17 +26,16 @@ interface PaginatedResponse {
   total_pages: number;
 }
 
-const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  draft: "secondary",
-  pending: "outline",
-  sent: "default",
-  accepted: "default",
-  rejected: "destructive",
-  expired: "secondary",
+const statusColors: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  draft: 'secondary',
+  pending: 'outline',
+  sent: 'default',
+  accepted: 'default',
+  rejected: 'destructive',
+  expired: 'secondary',
 };
 
 export default function QuotesPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [total, setTotal] = useState(0);
@@ -52,18 +50,15 @@ export default function QuotesPage() {
   const loadQuotes = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<PaginatedResponse>(
-        "/api/quotes?page=1&page_size=50"
-      );
+      const response = await apiClient.get<PaginatedResponse>('/api/quotes?page=1&page_size=50');
       setQuotes(response.items);
       setTotal(response.total);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to load quotes";
-      console.error("Failed to load quotes:", error);
+      const message = error instanceof Error ? error.message : 'Failed to load quotes';
+      console.error('Failed to load quotes:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
       setQuotes([]);
@@ -90,12 +85,11 @@ export default function QuotesPage() {
       setSelectedQuote(fullQuote);
       setFormOpen(true);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to load quote details";
-      console.error("Failed to load quote details:", error);
+      const message = error instanceof Error ? error.message : 'Failed to load quote details';
+      console.error('Failed to load quote details:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     }
@@ -110,21 +104,22 @@ export default function QuotesPage() {
         ...fullQuote,
         id: undefined, // Remove id to create new quote
         quote_number: undefined, // Will be auto-generated
-        status: "draft", // Reset to draft
-        notes: fullQuote.notes ? `Copy of ${fullQuote.quote_number}\n\n${fullQuote.notes}` : `Copy of ${fullQuote.quote_number}`,
+        status: 'draft', // Reset to draft
+        notes: fullQuote.notes
+          ? `Copy of ${fullQuote.quote_number}\n\n${fullQuote.notes}`
+          : `Copy of ${fullQuote.quote_number}`,
       };
-      setSelectedQuote(quoteCopy as Quote);
+      setSelectedQuote(quoteCopy as unknown as Quote);
       setFormOpen(true);
       toast({
-        title: "Quote Duplicated",
-        description: "Review and modify the copy before saving",
+        title: 'Quote Duplicated',
+        description: 'Review and modify the copy before saving',
       });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to duplicate quote";
+      const message = error instanceof Error ? error.message : 'Failed to duplicate quote';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     }
@@ -150,9 +145,22 @@ export default function QuotesPage() {
     setSelectedQuote(quoteData as Quote);
     setFormOpen(true);
     toast({
-      title: "Quote Ready",
-      description: "Copilot has prepared your quote. Review and save to finalize.",
+      title: 'Quote Ready',
+      description: 'Copilot has prepared your quote. Review and save to finalize.',
     });
+  };
+
+  const handleExport = () => {
+    exportQuotesToCSV(quotes);
+    toast({
+      title: 'Export Successful',
+      description: `Exported ${quotes.length} quotes to CSV`,
+    });
+  };
+
+  const handleExportPDF = () => {
+    exportQuotesToPDF(quotes);
+    toast({ title: 'PDF Export', description: 'Print dialog opening…' });
   };
 
   const isExpired = (validUntil: string | null) => {
@@ -160,30 +168,26 @@ export default function QuotesPage() {
     return new Date(validUntil) < new Date();
   };
 
-  const columns = createQuoteColumns({
-    onEdit: handleEditQuote,
-    onDelete: handleDeleteQuote,
-    onDuplicate: handleDuplicateQuote,
-    onConvertToOrder: handleConvertToOrder,
-  });
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quotes</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Equipment Quotes</h1>
           <p className="text-muted-foreground">Manage customer quotations</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportPDF} disabled={quotes.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button variant="outline" onClick={handleExport} disabled={quotes.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
           {/* PHASE C: Quote Copilot Button */}
           <Button variant="outline" onClick={() => setCopilotOpen(true)}>
             <Sparkles className="mr-2 h-4 w-4" />
             Copilot
-          </Button>
-          {/* AI Quote Generator Button */}
-          <Button variant="outline" onClick={() => router.push("/dashboard/quotes/ai-generate" as any)}>
-            <Wand2 className="mr-2 h-4 w-4" />
-            Generate with AI
           </Button>
           <Button onClick={handleAddQuote}>
             <Plus className="mr-2 h-4 w-4" />
@@ -200,7 +204,7 @@ export default function QuotesPage() {
               <CardDescription>
                 {total} quotes in system
                 {lastUpdated && (
-                  <span className="ml-2 text-xs text-muted-foreground">
+                  <span className="text-muted-foreground ml-2 text-xs">
                     • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                   </span>
                 )}
@@ -209,19 +213,152 @@ export default function QuotesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={quotes}
-            loading={loading}
-            emptyMessage="No quotes found"
-            emptyDescription="Create your first quote to get started."
-            emptyAction={
-              <Button onClick={handleAddQuote}>
+          {loading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : !quotes || quotes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-muted-foreground text-lg font-medium">No quotes found</p>
+              <p className="text-muted-foreground mt-2 text-sm">
+                Create your first quote to get started.
+              </p>
+              <Button onClick={handleAddQuote} className="mt-4">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Quote
               </Button>
-            }
-          />
+            </div>
+          ) : (
+            <ResponsiveTable
+              data={quotes}
+              keyExtractor={(quote) => quote.id}
+              columns={[
+                {
+                  key: 'quote_number',
+                  label: 'Quote #',
+                  className: 'font-mono text-sm font-medium',
+                  render: (quote) => quote.quote_number,
+                },
+                {
+                  key: 'customer',
+                  label: 'Customer',
+                  render: (quote) => quote.customer_name,
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  render: (quote) => {
+                    const expired = isExpired(quote.valid_until ?? null);
+                    return (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                          variant={statusColors[quote.status] || 'outline'}
+                          className="capitalize"
+                        >
+                          {quote.status}
+                        </Badge>
+                        {expired && quote.status !== 'expired' && (
+                          <Badge variant="destructive">Expired</Badge>
+                        )}
+                      </div>
+                    );
+                  },
+                },
+                {
+                  key: 'items',
+                  label: 'Items',
+                  hideOnMobile: true,
+                  render: (quote) => quote.item_count,
+                },
+                {
+                  key: 'total',
+                  label: 'Total',
+                  className: 'font-semibold',
+                  render: (quote) => `$${quote.total}`,
+                },
+                {
+                  key: 'quote_date',
+                  label: 'Quote Date',
+                  className: 'text-sm text-muted-foreground',
+                  hideOnMobile: true,
+                  render: (quote) => format(new Date(quote.quote_date), 'MMM dd, yyyy'),
+                },
+                {
+                  key: 'valid_until',
+                  label: 'Valid Until',
+                  hideOnMobile: true,
+                  render: (quote) => {
+                    const expired = isExpired(quote.valid_until ?? null);
+                    return (
+                      <span
+                        className={`text-sm ${expired ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
+                      >
+                        {quote.valid_until
+                          ? format(new Date(quote.valid_until), 'MMM dd, yyyy')
+                          : 'N/A'}
+                      </span>
+                    );
+                  },
+                },
+                {
+                  key: 'actions',
+                  label: 'Actions',
+                  className: 'text-right',
+                  mobileLabel: '',
+                  render: (quote) => (
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {quote.status.toLowerCase() === 'accepted' && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleConvertToOrder(quote);
+                          }}
+                        >
+                          <ArrowRight className="mr-1 h-3 w-3" />
+                          Convert
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditQuote(quote);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicateQuote(quote);
+                        }}
+                        title="Duplicate Quote"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteQuote(quote);
+                        }}
+                      >
+                        <Trash2 className="text-destructive h-4 w-4" />
+                      </Button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          )}
         </CardContent>
       </Card>
 
