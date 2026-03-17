@@ -149,6 +149,9 @@ lib/
 .vercel
 .cache
 
+# Git worktrees
+.worktrees/
+
 # Example/test projects (if not needed)
 my-app/
 shopify-scraper/
