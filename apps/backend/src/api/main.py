@@ -66,6 +66,7 @@ from .routes import (
     public_stats,  # Public landing page stats (no auth required)
     purchase_orders,
     quotes,
+    reconciliation,
     reconciliation_dashboard,
     service_requests,
     shipments,
@@ -656,6 +657,7 @@ app.include_router(email_audit.router, tags=["Email Audit"])
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
+app.include_router(reconciliation.router, tags=["Reconciliation"])
 app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashboard"])
 
 # Monitoring routers (system alerts, business metrics, performance)
