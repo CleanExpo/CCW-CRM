@@ -95,7 +95,6 @@ const navigation = [
   { name: 'Workflows', href: '/workflows', icon: GitMerge },
   { name: 'Approvals', href: '/approvals', icon: CheckCircle },
   { name: 'Monitoring', href: '/monitoring', icon: Activity },
-  { name: 'Billing', href: '/settings/billing', icon: CreditCard },
   { name: 'Settings', href: '/settings/integrations', icon: Settings },
 ];
 

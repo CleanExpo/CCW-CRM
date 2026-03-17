@@ -32,10 +32,8 @@ from .routes import (
     activities,  # CRM activities
     agents_monitor,  # Agent monitoring dashboard (UNI-1246)
     approvals,
-    auth_signup,
     backorders,
     bank_feeds,
-    billing,  # Stripe subscription billing
     config,
     contacts,  # CRM contacts
     containers,
@@ -57,8 +55,6 @@ from .routes import (
     invoices,  # Invoices for UNI-173
     jobs,
     orders,
-    portal_auth,
-    portal_forms,
     pos_transactions,
     prd,
     products,
@@ -438,18 +434,12 @@ app.include_router(jobs.router, tags=["Background Jobs"])
 app.include_router(inventory.router, tags=["Multi-Store Inventory"])
 # Service requests router
 app.include_router(service_requests.router, tags=["Service Requests"])
-# Customer portal authentication
-app.include_router(portal_auth.router, tags=["Portal Auth"])
-# Portal forms (contact submissions, demo requests)
-app.include_router(portal_forms.router, tags=["Portal Forms"])
 # Webhooks
 app.include_router(webhooks.router, tags=["Webhooks"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])
 # Team management router (multi-tenant user management)
 app.include_router(team.router, tags=["Team Management"])
-# Billing and subscription management router
-app.include_router(billing.router, tags=["Billing"])
 # Contractor availability management router
 app.include_router(contractors.router, tags=["Contractors"])
 # Cron job endpoints (Vercel Cron / scheduled tasks)

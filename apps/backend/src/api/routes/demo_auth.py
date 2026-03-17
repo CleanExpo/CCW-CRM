@@ -60,14 +60,6 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(min_length=8, description="New password (min 8 characters)")
 
 
-class RegisterRequest(BaseModel):
-    """Registration request model."""
-
-    email: EmailStr
-    password: str = Field(min_length=8, description="Password (min 8 characters)")
-    full_name: str | None = None
-
-
 class ChangePasswordRequest(BaseModel):
     """Change password request model."""
 
@@ -405,57 +397,6 @@ async def reset_password(
     await db.commit()
 
     return {"message": "Password has been reset successfully"}
-
-
-@router.post("/register")
-@limiter.limit(RateLimits.REGISTER)
-async def register(
-    request: Request,
-    data: RegisterRequest,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> dict:
-    """
-    Register a new user.
-
-    Creates a new user account with email and password.
-    Rate limited to prevent abuse.
-    """
-    # Check if user already exists
-    result = await db.execute(select(User).where(User.email == data.email))
-    existing_user = result.scalar_one_or_none()
-
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
-
-    # Hash password
-    hashed_password = get_password_hash(data.password)
-
-    # Create new user
-    new_user = User(
-        email=data.email,
-        hashed_password=hashed_password,
-        full_name=data.full_name,
-        is_active=True,
-        is_admin=False,
-    )
-
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-
-    return {
-        "user": {
-            "id": str(new_user.id),
-            "email": new_user.email,
-            "full_name": new_user.full_name,
-            "is_admin": new_user.is_admin,
-        },
-        "message": "User registered successfully",
-    }
-
 
 @router.patch("/me")
 async def update_profile(
