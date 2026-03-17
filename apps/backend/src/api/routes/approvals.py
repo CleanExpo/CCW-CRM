@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.routes.demo_auth import get_current_user
 from src.config.database import get_async_db
 from src.db.approvals_models import (
     Approval,
@@ -517,6 +518,164 @@ async def cancel_approval(
     await db.commit()
 
     logger.info("Approval workflow cancelled", approval_id=str(approval_id))
+
+
+# ---------------------------------------------------------------------------
+# GAP-020: Get Pending Approvals for Current User
+# ---------------------------------------------------------------------------
+
+
+@router.get("/pending-my-approval", response_model=PaginatedApprovalResponse)
+async def get_pending_my_approval(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: dict = Depends(get_current_user),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+) -> PaginatedApprovalResponse:
+    """
+    Get pending approvals for the current authenticated user.
+
+    Returns approvals where the current step is assigned to this user and status is pending.
+    Requires JWT authentication.
+    """
+    user_id = UUID(current_user["id"])
+
+    # Query for pending approvals where current user has a pending step
+    query = (
+        select(Approval)
+        .join(ApprovalStep)
+        .where(
+            Approval.status == ApprovalStatus.PENDING,
+            ApprovalStep.approver_id == user_id,
+            ApprovalStep.status == ApprovalStatus.PENDING,
+            ApprovalStep.step_number == Approval.current_step,
+        )
+    )
+
+    # Count total
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar() or 0
+
+    # Apply pagination
+    query = query.order_by(Approval.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+
+    # Execute
+    result = await db.execute(query)
+    approvals = result.scalars().all()
+
+    # Get steps for each approval
+    approval_responses = []
+    for approval in approvals:
+        steps_result = await db.execute(
+            select(ApprovalStep).where(ApprovalStep.approval_id == approval.id).order_by(ApprovalStep.step_number)
+        )
+        steps = steps_result.scalars().all()
+        approval_responses.append(_build_approval_response(approval, steps))
+
+    logger.info("Pending approvals for current user retrieved", user_id=str(user_id), total=total)
+
+    return PaginatedApprovalResponse(
+        data=approval_responses,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
+
+
+# ---------------------------------------------------------------------------
+# GAP-021: Bulk Approve
+# ---------------------------------------------------------------------------
+
+
+class BulkApproveRequest(BaseModel):
+    """Request to bulk approve multiple approvals."""
+
+    approval_ids: list[UUID] = Field(..., description="List of approval IDs to approve")
+    comment: str | None = Field(None, max_length=5000, description="Optional comment for all approvals")
+
+
+class BulkApproveResponse(BaseModel):
+    """Response from bulk approve operation."""
+
+    approved: int = Field(description="Number of approvals successfully approved")
+    failed: list[str] = Field(default_factory=list, description="List of approval IDs that failed")
+
+
+@router.post("/bulk-approve", response_model=BulkApproveResponse)
+async def bulk_approve(
+    request: BulkApproveRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> BulkApproveResponse:
+    """
+    Approve multiple approvals at once.
+
+    Attempts to approve all provided approval IDs. Returns count of successful approvals
+    and list of failed approval IDs.
+    """
+    approved_count = 0
+    failed_ids = []
+
+    for approval_id in request.approval_ids:
+        try:
+            # Get approval
+            approval_result = await db.execute(select(Approval).where(Approval.id == approval_id))
+            approval = approval_result.scalar_one_or_none()
+
+            if not approval:
+                failed_ids.append(f"{approval_id}: Not found")
+                continue
+
+            # Get current step
+            step_result = await db.execute(
+                select(ApprovalStep).where(
+                    ApprovalStep.approval_id == approval_id,
+                    ApprovalStep.step_number == approval.current_step,
+                )
+            )
+            step = step_result.scalar_one_or_none()
+
+            if not step:
+                failed_ids.append(f"{approval_id}: Current step not found")
+                continue
+
+            if step.status != ApprovalStatus.PENDING:
+                failed_ids.append(f"{approval_id}: Step already reviewed")
+                continue
+
+            # Update step
+            step.status = ApprovalStatus.APPROVED
+            step.comments = request.comment
+            step.reviewed_at = datetime.now(UTC)
+
+            # Update approval workflow
+            if approval.current_step >= approval.total_steps:
+                # All steps approved - mark approval as complete
+                approval.status = ApprovalStatus.APPROVED
+                approval.completed_at = datetime.now(UTC)
+            else:
+                # Advance to next step
+                approval.current_step += 1
+
+            approved_count += 1
+
+        except Exception as e:
+            failed_ids.append(f"{approval_id}: {str(e)}")
+            logger.error("Bulk approve failed for approval", approval_id=str(approval_id), error=str(e))
+
+    await db.commit()
+
+    logger.info(
+        "Bulk approve completed",
+        total_requested=len(request.approval_ids),
+        approved=approved_count,
+        failed=len(failed_ids),
+    )
+
+    return BulkApproveResponse(
+        approved=approved_count,
+        failed=failed_ids,
+    )
 
 
 # Helper Functions

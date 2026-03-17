@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { PurchaseOrder, PurchaseOrdersResponse } from './types';
 import { STATUS_COLORS, STATUS_LABELS, LOCATION_LABELS } from './types';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 export default function PurchaseOrdersPage() {
   const { toast } = useToast();
@@ -183,269 +184,274 @@ export default function PurchaseOrdersPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Purchase Orders</h1>
-          <p className="text-muted-foreground">
-            Manage supplier orders and goods receiving
-            {lastUpdated && (
-              <span className="ml-2 text-xs">
-                • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
-              </span>
-            )}
-          </p>
+    <ErrorBoundary>
+      <div className="space-y-6 p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Purchase Orders</h1>
+            <p className="text-muted-foreground">
+              Manage supplier orders and goods receiving
+              {lastUpdated && (
+                <span className="ml-2 text-xs">
+                  • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                exportPurchaseOrdersToCSV(purchaseOrders as unknown as Record<string, unknown>[]);
+                toast({
+                  title: 'Export Successful',
+                  description: 'Purchase orders exported to CSV',
+                });
+              }}
+              disabled={purchaseOrders.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button onClick={() => setIsCreateOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Purchase Order
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              exportPurchaseOrdersToCSV(purchaseOrders as unknown as Record<string, unknown>[]);
-              toast({ title: 'Export Successful', description: 'Purchase orders exported to CSV' });
-            }}
-            disabled={purchaseOrders.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Purchase Order
-          </Button>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative max-w-md flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
-            placeholder="Search by PO number..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
+        {/* Filters */}
+        <div className="flex items-center gap-4">
+          <div className="relative max-w-md flex-1">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <Input
+              placeholder="Search by PO number..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              className="pl-9"
+            />
+          </div>
+
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              setStatusFilter(value);
               setPage(1);
             }}
-            className="pl-9"
-          />
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="pending_approval">Pending Approval</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="ordered">Ordered</SelectItem>
+              <SelectItem value="in_transit">In Transit</SelectItem>
+              <SelectItem value="received">Received</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={locationFilter}
+            onValueChange={(value) => {
+              setLocationFilter(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              <SelectItem value="brisbane">Brisbane</SelectItem>
+              <SelectItem value="sydney">Sydney</SelectItem>
+              <SelectItem value="melbourne">Melbourne</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => {
-            setStatusFilter(value);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="pending_approval">Pending Approval</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="ordered">Ordered</SelectItem>
-            <SelectItem value="in_transit">In Transit</SelectItem>
-            <SelectItem value="received">Received</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={locationFilter}
-          onValueChange={(value) => {
-            setLocationFilter(value);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by location" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            <SelectItem value="brisbane">Brisbane</SelectItem>
-            <SelectItem value="sydney">Sydney</SelectItem>
-            <SelectItem value="melbourne">Melbourne</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>PO Number</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Items</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead>Order Date</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+        {/* Table */}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
-                  Loading...
-                </TableCell>
+                <TableHead>PO Number</TableHead>
+                <TableHead>Supplier</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Items</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead>Order Date</TableHead>
+                <TableHead className="w-[70px]"></TableHead>
               </TableRow>
-            ) : purchaseOrders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
-                  No purchase orders found
-                </TableCell>
-              </TableRow>
-            ) : (
-              purchaseOrders.map((po) => (
-                <TableRow key={po.id}>
-                  <TableCell className="font-medium">{po.po_number}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{po.supplier_name}</div>
-                    <div className="text-muted-foreground text-sm">{po.supplier_code}</div>
-                  </TableCell>
-                  <TableCell>{LOCATION_LABELS[po.delivery_location]}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className={STATUS_COLORS[po.status]}>
-                      {STATUS_LABELS[po.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{po.items?.length || 0} items</TableCell>
-                  <TableCell className="text-right font-medium">${po.total.toFixed(2)}</TableCell>
-                  <TableCell>
-                    {po.order_date ? new Date(po.order_date).toLocaleDateString() : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setEditingPO(po)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDuplicatePO(po)}>
-                          <Copy className="mr-2 h-4 w-4" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        {canReceiveGoods(po) && (
-                          <DropdownMenuItem onClick={() => setReceivingPO(po)}>
-                            <PackageCheck className="mr-2 h-4 w-4" />
-                            Receive Goods
-                          </DropdownMenuItem>
-                        )}
-                        {canCancel(po) && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => setCancellingPO(po)}
-                              className="text-destructive"
-                            >
-                              <X className="mr-2 h-4 w-4" />
-                              Cancel Order
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
+                    Loading...
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
-          <span className="text-muted-foreground text-sm">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page === totalPages}
-          >
-            Next
-          </Button>
+              ) : purchaseOrders.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
+                    No purchase orders found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                purchaseOrders.map((po) => (
+                  <TableRow key={po.id}>
+                    <TableCell className="font-medium">{po.po_number}</TableCell>
+                    <TableCell>
+                      <div className="font-medium">{po.supplier_name}</div>
+                      <div className="text-muted-foreground text-sm">{po.supplier_code}</div>
+                    </TableCell>
+                    <TableCell>{LOCATION_LABELS[po.delivery_location]}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className={STATUS_COLORS[po.status]}>
+                        {STATUS_LABELS[po.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{po.items?.length || 0} items</TableCell>
+                    <TableCell className="text-right font-medium">${po.total.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {po.order_date ? new Date(po.order_date).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setEditingPO(po)}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDuplicatePO(po)}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          {canReceiveGoods(po) && (
+                            <DropdownMenuItem onClick={() => setReceivingPO(po)}>
+                              <PackageCheck className="mr-2 h-4 w-4" />
+                              Receive Goods
+                            </DropdownMenuItem>
+                          )}
+                          {canCancel(po) && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setCancellingPO(po)}
+                                className="text-destructive"
+                              >
+                                <X className="mr-2 h-4 w-4" />
+                                Cancel Order
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
-      )}
 
-      {/* Create/Edit Dialog */}
-      {isCreateOpen && (
-        <PurchaseOrderForm
-          open={isCreateOpen}
-          onOpenChange={(open) => {
-            setIsCreateOpen(open);
-            if (!open) loadPurchaseOrders();
-          }}
-          mode="create"
-        />
-      )}
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-muted-foreground text-sm">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
 
-      {editingPO && (
-        <PurchaseOrderForm
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditingPO(null);
-              loadPurchaseOrders();
-            }
-          }}
-          purchaseOrder={editingPO}
-          mode="edit"
-        />
-      )}
+        {/* Create/Edit Dialog */}
+        {isCreateOpen && (
+          <PurchaseOrderForm
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open) loadPurchaseOrders();
+            }}
+            mode="create"
+          />
+        )}
 
-      {/* Receive Goods Dialog */}
-      {receivingPO && (
-        <ReceiveGoodsDialog
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) {
-              setReceivingPO(null);
-              loadPurchaseOrders();
-            }
-          }}
-          purchaseOrder={receivingPO}
-        />
-      )}
+        {editingPO && (
+          <PurchaseOrderForm
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) {
+                setEditingPO(null);
+                loadPurchaseOrders();
+              }
+            }}
+            purchaseOrder={editingPO}
+            mode="edit"
+          />
+        )}
 
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={!!cancellingPO} onOpenChange={(open) => !open && setCancellingPO(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Purchase Order?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel purchase order{' '}
-              <span className="font-medium">{cancellingPO?.po_number}</span>? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No, keep it</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelPO} className="bg-destructive">
-              Yes, cancel order
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        {/* Receive Goods Dialog */}
+        {receivingPO && (
+          <ReceiveGoodsDialog
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) {
+                setReceivingPO(null);
+                loadPurchaseOrders();
+              }
+            }}
+            purchaseOrder={receivingPO}
+          />
+        )}
+
+        {/* Cancel Confirmation Dialog */}
+        <AlertDialog open={!!cancellingPO} onOpenChange={(open) => !open && setCancellingPO(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancel Purchase Order?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to cancel purchase order{' '}
+                <span className="font-medium">{cancellingPO?.po_number}</span>? This action cannot
+                be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No, keep it</AlertDialogCancel>
+              <AlertDialogAction onClick={handleCancelPO} className="bg-destructive">
+                Yes, cancel order
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -26,6 +26,7 @@ import { PaginationControls } from '@/components/ui/pagination-controls';
 import { exportProductsToCSV } from '@/lib/utils/csv-export';
 // PHASE 4: Last updated timestamps
 import { formatDistanceToNow } from 'date-fns';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 interface StockByLocation {
   location: string;
@@ -226,269 +227,275 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Cleaning Equipment Inventory</h1>
-            <p className="text-muted-foreground">
-              {selectedProductIds.length > 0
-                ? `${selectedProductIds.length} selected`
-                : 'Manage your product catalog'}
-            </p>
-          </div>
-          {/* PHASE 4: Real-time connection indicator */}
-          <RealTimeIndicator status={sseStatus} messagesReceived={sseStats.messagesReceived} />
-        </div>
-        <div className="flex gap-2">
-          {selectedProductIds.length > 0 && (
-            <Button variant="destructive" onClick={handleBulkDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Selected ({selectedProductIds.length})
-            </Button>
-          )}
-          <Button variant="outline" onClick={handleExport} disabled={products.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button onClick={handleAddProduct}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+    <ErrorBoundary>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <div>
-              <CardTitle>Product Catalog</CardTitle>
-              <CardDescription>
-                {total} products in inventory
-                {lastUpdated && (
-                  <span className="text-muted-foreground ml-2 text-xs">
-                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
-                  </span>
-                )}
-              </CardDescription>
-            </div>
-          </div>
-          <div className="mt-4">
-            <Input
-              placeholder="Search products by name or SKU..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-md"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : products.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground text-lg font-medium">No products found</p>
-              <p className="text-muted-foreground mt-2 text-sm">
-                {search
-                  ? 'Try adjusting your search criteria.'
-                  : 'Add your first product to get started.'}
+              <h1 className="text-3xl font-bold tracking-tight">Cleaning Equipment Inventory</h1>
+              <p className="text-muted-foreground">
+                {selectedProductIds.length > 0
+                  ? `${selectedProductIds.length} selected`
+                  : 'Manage your product catalog'}
               </p>
-              {!search && (
-                <Button onClick={handleAddProduct} className="mt-4">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Product
-                </Button>
-              )}
             </div>
-          ) : (
-            <ResponsiveTable
-              data={products}
-              keyExtractor={(product) => product.id}
-              columns={[
-                {
-                  key: 'select',
-                  label: (
-                    <Checkbox
-                      checked={products.length > 0 && selectedProductIds.length === products.length}
-                      onCheckedChange={handleToggleSelectAll}
-                      aria-label="Select all products"
-                    />
-                  ),
-                  className: 'w-12',
-                  render: (product) => (
-                    <Checkbox
-                      checked={selectedProductIds.includes(product.id)}
-                      onCheckedChange={() => handleToggleSelectProduct(product.id)}
-                      aria-label={`Select ${product.name}`}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ),
-                },
-                {
-                  key: 'sku',
-                  label: 'SKU',
-                  className: 'font-mono text-sm',
-                  render: (product) => product.sku,
-                },
-                {
-                  key: 'name',
-                  label: 'Name',
-                  className: 'font-medium',
-                  render: (product) => product.name,
-                },
-                {
-                  key: 'category',
-                  label: 'Category',
-                  render: (product) => (
-                    <Badge variant="outline" className="capitalize">
-                      {product.category ? product.category.replace(/_/g, ' ') : 'N/A'}
-                    </Badge>
-                  ),
-                },
-                {
-                  key: 'price',
-                  label: 'Price',
-                  render: (product) => formatCurrency(product.price),
-                },
-                {
-                  key: 'stock',
-                  label: 'Stock by Location',
-                  render: (product) =>
-                    product.stock_by_location && product.stock_by_location.length > 0 ? (
-                      <MultiLocationStockCell
-                        productId={product.id}
-                        locations={product.stock_by_location}
+            {/* PHASE 4: Real-time connection indicator */}
+            <RealTimeIndicator status={sseStatus} messagesReceived={sseStats.messagesReceived} />
+          </div>
+          <div className="flex gap-2">
+            {selectedProductIds.length > 0 && (
+              <Button variant="destructive" onClick={handleBulkDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Selected ({selectedProductIds.length})
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleExport} disabled={products.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button onClick={handleAddProduct}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Product Catalog</CardTitle>
+                <CardDescription>
+                  {total} products in inventory
+                  {lastUpdated && (
+                    <span className="text-muted-foreground ml-2 text-xs">
+                      • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                    </span>
+                  )}
+                </CardDescription>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Input
+                placeholder="Search products by name or SKU..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-md"
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-muted-foreground text-lg font-medium">No products found</p>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  {search
+                    ? 'Try adjusting your search criteria.'
+                    : 'Add your first product to get started.'}
+                </p>
+                {!search && (
+                  <Button onClick={handleAddProduct} className="mt-4">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Product
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <ResponsiveTable
+                data={products}
+                keyExtractor={(product) => product.id}
+                columns={[
+                  {
+                    key: 'select',
+                    label: (
+                      <Checkbox
+                        checked={
+                          products.length > 0 && selectedProductIds.length === products.length
+                        }
+                        onCheckedChange={handleToggleSelectAll}
+                        aria-label="Select all products"
                       />
-                    ) : (
-                      <span className={product.stock <= 10 ? 'text-destructive font-semibold' : ''}>
-                        {product.stock}
-                      </span>
                     ),
-                },
-                {
-                  key: 'warehouse',
-                  label: 'Warehouse',
-                  hideOnMobile: true,
-                  render: (product) => product.warehouse_location || 'N/A',
-                },
-                {
-                  key: 'status',
-                  label: 'Status',
-                  render: (product) => (
-                    <Badge variant={product.is_active ? 'default' : 'secondary'}>
-                      {product.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  ),
-                },
-                {
-                  key: 'actions',
-                  label: 'Actions',
-                  className: 'text-right',
-                  mobileLabel: '',
-                  render: (product) => (
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="View Product"
-                        asChild
+                    className: 'w-12',
+                    render: (product) => (
+                      <Checkbox
+                        checked={selectedProductIds.includes(product.id)}
+                        onCheckedChange={() => handleToggleSelectProduct(product.id)}
+                        aria-label={`Select ${product.name}`}
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <Link href={`/products/${product.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTransferStock(product);
-                        }}
-                        title="Transfer Stock"
-                      >
-                        <ArrowLeftRight className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditProduct(product);
-                        }}
-                        title="Edit Product"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteProduct(product);
-                        }}
-                        title="Delete Product"
-                      >
-                        <Trash2 className="text-destructive h-4 w-4" />
-                      </Button>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          )}
+                      />
+                    ),
+                  },
+                  {
+                    key: 'sku',
+                    label: 'SKU',
+                    className: 'font-mono text-sm',
+                    render: (product) => product.sku,
+                  },
+                  {
+                    key: 'name',
+                    label: 'Name',
+                    className: 'font-medium',
+                    render: (product) => product.name,
+                  },
+                  {
+                    key: 'category',
+                    label: 'Category',
+                    render: (product) => (
+                      <Badge variant="outline" className="capitalize">
+                        {product.category ? product.category.replace(/_/g, ' ') : 'N/A'}
+                      </Badge>
+                    ),
+                  },
+                  {
+                    key: 'price',
+                    label: 'Price',
+                    render: (product) => formatCurrency(product.price),
+                  },
+                  {
+                    key: 'stock',
+                    label: 'Stock by Location',
+                    render: (product) =>
+                      product.stock_by_location && product.stock_by_location.length > 0 ? (
+                        <MultiLocationStockCell
+                          productId={product.id}
+                          locations={product.stock_by_location}
+                        />
+                      ) : (
+                        <span
+                          className={product.stock <= 10 ? 'text-destructive font-semibold' : ''}
+                        >
+                          {product.stock}
+                        </span>
+                      ),
+                  },
+                  {
+                    key: 'warehouse',
+                    label: 'Warehouse',
+                    hideOnMobile: true,
+                    render: (product) => product.warehouse_location || 'N/A',
+                  },
+                  {
+                    key: 'status',
+                    label: 'Status',
+                    render: (product) => (
+                      <Badge variant={product.is_active ? 'default' : 'secondary'}>
+                        {product.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    ),
+                  },
+                  {
+                    key: 'actions',
+                    label: 'Actions',
+                    className: 'text-right',
+                    mobileLabel: '',
+                    render: (product) => (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="View Product"
+                          asChild
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Link href={`/products/${product.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTransferStock(product);
+                          }}
+                          title="Transfer Stock"
+                        >
+                          <ArrowLeftRight className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditProduct(product);
+                          }}
+                          title="Edit Product"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProduct(product);
+                          }}
+                          title="Delete Product"
+                        >
+                          <Trash2 className="text-destructive h-4 w-4" />
+                        </Button>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            )}
 
-          {!loading && products.length > 0 && (
-            <PaginationControls
-              currentPage={page}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={total}
-              onPageChange={setPage}
-              onPageSizeChange={(newSize) => {
-                setPageSize(newSize);
-                setPage(1); // Reset to first page when changing page size
-              }}
-            />
-          )}
-        </CardContent>
-      </Card>
+            {!loading && products.length > 0 && (
+              <PaginationControls
+                currentPage={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={total}
+                onPageChange={setPage}
+                onPageSizeChange={(newSize) => {
+                  setPageSize(newSize);
+                  setPage(1); // Reset to first page when changing page size
+                }}
+              />
+            )}
+          </CardContent>
+        </Card>
 
-      <ProductForm
-        product={selectedProduct}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSuccess={handleSuccess}
-      />
-
-      <DeleteProductDialog
-        product={selectedProduct}
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onSuccess={handleSuccess}
-      />
-
-      <BulkDeleteProductsDialog
-        productIds={selectedProductIds}
-        open={bulkDeleteDialogOpen}
-        onOpenChange={setBulkDeleteDialogOpen}
-        onSuccess={handleSuccess}
-      />
-
-      {selectedProduct && (
-        <StockTransferDialog
-          open={transferDialogOpen}
-          onOpenChange={setTransferDialogOpen}
-          productId={selectedProduct.id}
-          productName={selectedProduct.name}
-          productSku={selectedProduct.sku}
+        <ProductForm
+          product={selectedProduct}
+          open={formOpen}
+          onOpenChange={setFormOpen}
           onSuccess={handleSuccess}
         />
-      )}
-    </div>
+
+        <DeleteProductDialog
+          product={selectedProduct}
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onSuccess={handleSuccess}
+        />
+
+        <BulkDeleteProductsDialog
+          productIds={selectedProductIds}
+          open={bulkDeleteDialogOpen}
+          onOpenChange={setBulkDeleteDialogOpen}
+          onSuccess={handleSuccess}
+        />
+
+        {selectedProduct && (
+          <StockTransferDialog
+            open={transferDialogOpen}
+            onOpenChange={setTransferDialogOpen}
+            productId={selectedProduct.id}
+            productName={selectedProduct.name}
+            productSku={selectedProduct.sku}
+            onSuccess={handleSuccess}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }

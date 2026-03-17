@@ -41,6 +41,7 @@ import { approvalsApi } from '@/lib/api/approvals';
 import { slaApi } from '@/lib/api/sla';
 import type { Approval, ApprovalStep, CreateApprovalRequest } from '@/lib/api/approvals';
 import type { SLAInstance } from '@/lib/api/sla';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 const STATUS_CONFIG: Record<
   string,
@@ -367,49 +368,53 @@ function ApprovalStepRow({
     approval.status === 'pending';
 
   return (
-    <div className="bg-background/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-sm">
-      <StepIcon className={`h-4 w-4 shrink-0 ${stepCfg.color}`} />
-      <span className="font-medium">Step {step.step_number}</span>
-      {step.approver_role && <span className="text-muted-foreground">· {step.approver_role}</span>}
-      <Badge variant="outline" className={`text-xs ${stepCfg.color}`}>
-        {stepCfg.label}
-      </Badge>
-      {step.comments && (
-        <span
-          className="text-muted-foreground max-w-48 truncate text-xs italic"
-          title={step.comments}
-        >
-          &quot;{step.comments}&quot;
-        </span>
-      )}
-      {step.reviewed_at && (
-        <span className="text-muted-foreground text-xs">
-          {new Date(step.reviewed_at).toLocaleDateString()}
-        </span>
-      )}
-      {isActionable && (
-        <div className="ml-auto flex items-center gap-1.5">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950"
-            onClick={() => onReview('approve', step.id, `Step ${step.step_number}`)}
+    <ErrorBoundary>
+      <div className="bg-background/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-sm">
+        <StepIcon className={`h-4 w-4 shrink-0 ${stepCfg.color}`} />
+        <span className="font-medium">Step {step.step_number}</span>
+        {step.approver_role && (
+          <span className="text-muted-foreground">· {step.approver_role}</span>
+        )}
+        <Badge variant="outline" className={`text-xs ${stepCfg.color}`}>
+          {stepCfg.label}
+        </Badge>
+        {step.comments && (
+          <span
+            className="text-muted-foreground max-w-48 truncate text-xs italic"
+            title={step.comments}
           >
-            <ThumbsUp className="mr-1 h-3.5 w-3.5" />
-            Approve
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-            onClick={() => onReview('reject', step.id, `Step ${step.step_number}`)}
-          >
-            <ThumbsDown className="mr-1 h-3.5 w-3.5" />
-            Reject
-          </Button>
-        </div>
-      )}
-    </div>
+            &quot;{step.comments}&quot;
+          </span>
+        )}
+        {step.reviewed_at && (
+          <span className="text-muted-foreground text-xs">
+            {new Date(step.reviewed_at).toLocaleDateString()}
+          </span>
+        )}
+        {isActionable && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950"
+              onClick={() => onReview('approve', step.id, `Step ${step.step_number}`)}
+            >
+              <ThumbsUp className="mr-1 h-3.5 w-3.5" />
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+              onClick={() => onReview('reject', step.id, `Step ${step.step_number}`)}
+            >
+              <ThumbsDown className="mr-1 h-3.5 w-3.5" />
+              Reject
+            </Button>
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 
