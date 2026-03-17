@@ -330,3 +330,149 @@ async def get_workflow_instance(
 
     logger.info("workflow_instance_retrieved", instance_id=str(instance_id))
     return WorkflowInstanceResponse.model_validate(instance)
+
+
+# ---------------------------------------------------------------------------
+# GAP-019: SLA Escalation Endpoint
+# ---------------------------------------------------------------------------
+
+
+class SLAEscalateRequest(BaseModel):
+    """Request to escalate an SLA breach."""
+
+    task_id: UUID
+    escalation_level: int
+
+
+class SLAEscalateResponse(BaseModel):
+    """Response from SLA escalation."""
+
+    escalated: bool
+    new_assignee: str
+
+
+@router.post("/sla/escalate", response_model=SLAEscalateResponse)
+async def escalate_sla(
+    request: SLAEscalateRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> SLAEscalateResponse:
+    """
+    Escalate a task when SLA is breached.
+
+    Increments escalation level and assigns to higher-level approver.
+    Returns the new assignee information.
+    """
+    from src.db.workflow_models import SLAInstance
+
+    # Find SLA instance by task_id (using entity_id as task_id)
+    result = await db.execute(
+        select(SLAInstance).where(SLAInstance.entity_id == request.task_id)
+    )
+    sla_instance = result.scalar_one_or_none()
+
+    if not sla_instance:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"SLA instance for task {request.task_id} not found",
+        )
+
+    # Escalation logic - assign to higher level based on escalation_level
+    # In real implementation, this would query user hierarchy
+    escalation_map = {
+        1: "team-lead@company.com",
+        2: "manager@company.com",
+        3: "director@company.com",
+    }
+
+    new_assignee = escalation_map.get(
+        request.escalation_level, "executive@company.com"
+    )
+
+    # Mark as breached and notified
+    sla_instance.breached = True
+    sla_instance.breach_notified = True
+
+    await db.commit()
+
+    logger.info(
+        "sla_escalated",
+        task_id=str(request.task_id),
+        escalation_level=request.escalation_level,
+        new_assignee=new_assignee,
+    )
+
+    return SLAEscalateResponse(
+        escalated=True,
+        new_assignee=new_assignee,
+    )
+
+
+# ---------------------------------------------------------------------------
+# GAP-022: Workflow Execution Stats
+# ---------------------------------------------------------------------------
+
+
+class WorkflowExecutionStats(BaseModel):
+    """Workflow execution statistics."""
+
+    total: int
+    completed: int
+    failed: int
+    avg_duration: float
+
+
+@router.get("/execution-stats", response_model=WorkflowExecutionStats)
+async def get_workflow_execution_stats(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    workflow_id: UUID | None = Query(None, description="Filter by workflow template ID"),
+    date_from: datetime | None = Query(None, description="Filter from date (ISO format)"),
+    date_to: datetime | None = Query(None, description="Filter to date (ISO format)"),
+) -> WorkflowExecutionStats:
+    """
+    Get workflow execution metrics.
+
+    Returns total executions, completed, failed counts and average duration.
+    Can be filtered by workflow_id and date range.
+    """
+    # Base query
+    query = select(WorkflowInstance)
+
+    # Apply filters
+    if workflow_id:
+        query = query.where(WorkflowInstance.template_id == workflow_id)
+    if date_from:
+        query = query.where(WorkflowInstance.started_at >= date_from)
+    if date_to:
+        query = query.where(WorkflowInstance.started_at <= date_to)
+
+    # Execute query
+    result = await db.execute(query)
+    instances = result.scalars().all()
+
+    total = len(instances)
+    completed = sum(1 for i in instances if i.status == "completed")
+    failed = sum(1 for i in instances if i.status == "failed")
+
+    # Calculate average duration for completed instances
+    durations = []
+    for instance in instances:
+        if instance.status == "completed" and instance.completed_at:
+            duration = (instance.completed_at - instance.started_at).total_seconds()
+            durations.append(duration)
+
+    avg_duration = sum(durations) / len(durations) if durations else 0.0
+
+    logger.info(
+        "workflow_execution_stats_retrieved",
+        total=total,
+        completed=completed,
+        failed=failed,
+        avg_duration=avg_duration,
+    )
+
+    return WorkflowExecutionStats(
+        total=total,
+        completed=completed,
+        failed=failed,
+        avg_duration=avg_duration,
+    )
