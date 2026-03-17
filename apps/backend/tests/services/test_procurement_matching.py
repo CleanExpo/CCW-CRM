@@ -190,7 +190,7 @@ class TestMatchPoGrnInvoice:
 
     def test_confidence_calculation(self):
         """Test confidence score calculation."""
-        # 2 products, 1 variance = 50% confidence
+        # 2 products, 1 variance = 75% confidence (1 - 1/4)
         product_id_1 = uuid4()
         product_id_2 = uuid4()
 
@@ -210,7 +210,7 @@ class TestMatchPoGrnInvoice:
         result = match_po_grn_invoice(po_items, grn_items, invoice_items)
 
         assert result.variance_count == 1
-        assert 0.4 <= result.confidence <= 0.6  # ~50% confidence
+        assert 0.7 <= result.confidence <= 0.8  # ~75% confidence
 
 
 class TestGetVarianceSummary:

@@ -203,12 +203,12 @@ def match_po_grn_invoice(
     if variance_count == 0:
         match_status = MatchStatus.FULL_MATCH
         confidence = 1.0
-    elif variance_count < total_items:
-        match_status = MatchStatus.PARTIAL_MATCH
-        confidence = 1.0 - (variance_count / total_items)
-    else:
+    elif variance_count > total_items * 2:  # Multiple variances per item = total failure
         match_status = MatchStatus.NO_MATCH
         confidence = 0.0
+    else:
+        match_status = MatchStatus.PARTIAL_MATCH
+        confidence = max(0.0, 1.0 - (variance_count / (total_items * 2)))
 
     return MatchResult(
         match_status=match_status,

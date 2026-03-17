@@ -1,5 +1,22 @@
 # Decisions Log — Append-Only
 
+## 2026-03-17 — Gap Remediation Phase 2 Complete (Batches 2C & 2D)
+
+- Decision: Implemented 7 remaining endpoints for workflows, approvals, invoicing, and reconciliation
+- Batches: 2C (Workflow & Approvals - 4 endpoints), 2D (Financial & Tax - 3 endpoints)
+- Endpoints:
+  - GAP-019: POST /api/workflows/sla/escalate
+  - GAP-020: GET /api/approvals/pending-my-approval (requires JWT auth)
+  - GAP-021: POST /api/approvals/bulk-approve
+  - GAP-022: GET /api/workflows/execution-stats
+  - GAP-023: POST /api/invoices/tax/calculate
+  - GAP-024: GET /api/reconciliation/match-suggestions
+  - GAP-025: POST /api/reconciliation/auto-match
+- Impact: Created new reconciliation.py router, registered in main.py, added 21 integration tests
+- Files modified: workflows.py, approvals.py, invoices.py, reconciliation.py (new), main.py
+- Tests: test_gap_batch_2c_2d.py (7 test classes, 21 tests + 2 summary tests)
+- Commits: 6629ef5 (Batch 2C), 2a96874 (Batch 2D)
+
 ## 2026-03-03 — Framework Overhaul Initiated
 
 - Decision: Implement anti-drift infrastructure using Claude Code hooks
@@ -342,6 +359,11 @@
 - Description:
 
 ## Agent Dispatch — 2026-03-17T12:39:07.481589
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-17T12:47:12.742038
 
 - Type: unknown
 - Description:
