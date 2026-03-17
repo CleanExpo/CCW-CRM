@@ -23,6 +23,7 @@ import type {
   PaginatedServiceRequestsResponse,
   ServiceStatus,
 } from '@/lib/api/service-requests';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   submitted: 'secondary',
@@ -136,196 +137,200 @@ export default function ServiceRequestsPage() {
     dateStr ? new Date(dateStr).toLocaleDateString('en-AU') : '—';
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Service Requests</h1>
-          <p className="text-neutral-600 dark:text-neutral-400">
-            Manage equipment repair and maintenance requests
-          </p>
-        </div>
-        <Button onClick={handleAdd}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Request
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Service Request Queue</CardTitle>
-          <CardDescription>{total} requests total</CardDescription>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Input
-              placeholder="Search equipment or issue..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-md"
-            />
-            <Select
-              value={statusFilter}
-              onValueChange={(val) => {
-                setStatusFilter(val);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="submitted">Submitted</SelectItem>
-                <SelectItem value="under_review">Under Review</SelectItem>
-                <SelectItem value="quote_sent">Quote Sent</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+    <ErrorBoundary>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Service Requests</h1>
+            <p className="text-neutral-600 dark:text-neutral-400">
+              Manage equipment repair and maintenance requests
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : requests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Wrench className="text-muted-foreground mb-4 h-12 w-12" />
-              <p className="text-muted-foreground text-lg font-medium">No service requests found</p>
-              <p className="text-muted-foreground mt-2 text-sm">
-                {search || statusFilter !== 'all'
-                  ? 'Try adjusting your search or filter.'
-                  : 'Create your first service request to get started.'}
-              </p>
-              {!search && statusFilter === 'all' && (
-                <Button onClick={handleAdd} className="mt-4">
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Request
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-md border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b">
-                    <th className="px-4 py-3 text-left font-medium">Type</th>
-                    <th className="px-4 py-3 text-left font-medium">Equipment</th>
-                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                    <th className="px-4 py-3 text-left font-medium">Technician</th>
-                    <th className="px-4 py-3 text-left font-medium">Scheduled</th>
-                    <th className="px-4 py-3 text-right font-medium">Quote</th>
-                    <th className="px-4 py-3 text-right font-medium">Approved</th>
-                    <th className="px-4 py-3 text-right font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {requests.map((request) => (
-                    <tr key={request.id} className="hover:bg-muted/30 border-b transition-colors">
-                      <td className="px-4 py-3">
-                        <Badge variant="outline">
-                          {REQUEST_TYPE_LABELS[request.request_type] ?? request.request_type}
-                        </Badge>
-                      </td>
-                      <td className="max-w-xs px-4 py-3">
-                        <p className="truncate font-medium">
-                          {request.equipment_description.slice(0, 60)}
-                          {request.equipment_description.length > 60 ? '...' : ''}
-                        </p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {request.issue_description.slice(0, 50)}
-                          {request.issue_description.length > 50 ? '...' : ''}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={STATUS_COLORS[request.status] ?? 'secondary'}>
-                          {STATUS_LABELS[request.status] ?? request.status}
-                        </Badge>
-                      </td>
-                      <td className="text-muted-foreground px-4 py-3">
-                        {request.assigned_technician || '—'}
-                      </td>
-                      <td className="text-muted-foreground px-4 py-3">
-                        {formatDate(request.scheduled_date)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono">
-                        {formatCurrency(request.quote_amount)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono">
-                        {formatCurrency(request.approved_amount)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(request)}
-                            title="Edit Request"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(request)}
-                            title="Delete Request"
-                          >
-                            <Trash2 className="text-destructive h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <Button onClick={handleAdd}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Request
+          </Button>
+        </div>
 
-          {!loading && totalPages > 1 && (
-            <div className="text-muted-foreground mt-4 flex items-center justify-between text-sm">
-              <span>
-                Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  Next
-                </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Request Queue</CardTitle>
+            <CardDescription>{total} requests total</CardDescription>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Input
+                placeholder="Search equipment or issue..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-md"
+              />
+              <Select
+                value={statusFilter}
+                onValueChange={(val) => {
+                  setStatusFilter(val);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="submitted">Submitted</SelectItem>
+                  <SelectItem value="under_review">Under Review</SelectItem>
+                  <SelectItem value="quote_sent">Quote Sent</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : requests.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Wrench className="text-muted-foreground mb-4 h-12 w-12" />
+                <p className="text-muted-foreground text-lg font-medium">
+                  No service requests found
+                </p>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  {search || statusFilter !== 'all'
+                    ? 'Try adjusting your search or filter.'
+                    : 'Create your first service request to get started.'}
+                </p>
+                {!search && statusFilter === 'all' && (
+                  <Button onClick={handleAdd} className="mt-4">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Request
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50 border-b">
+                      <th className="px-4 py-3 text-left font-medium">Type</th>
+                      <th className="px-4 py-3 text-left font-medium">Equipment</th>
+                      <th className="px-4 py-3 text-left font-medium">Status</th>
+                      <th className="px-4 py-3 text-left font-medium">Technician</th>
+                      <th className="px-4 py-3 text-left font-medium">Scheduled</th>
+                      <th className="px-4 py-3 text-right font-medium">Quote</th>
+                      <th className="px-4 py-3 text-right font-medium">Approved</th>
+                      <th className="px-4 py-3 text-right font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requests.map((request) => (
+                      <tr key={request.id} className="hover:bg-muted/30 border-b transition-colors">
+                        <td className="px-4 py-3">
+                          <Badge variant="outline">
+                            {REQUEST_TYPE_LABELS[request.request_type] ?? request.request_type}
+                          </Badge>
+                        </td>
+                        <td className="max-w-xs px-4 py-3">
+                          <p className="truncate font-medium">
+                            {request.equipment_description.slice(0, 60)}
+                            {request.equipment_description.length > 60 ? '...' : ''}
+                          </p>
+                          <p className="text-muted-foreground truncate text-xs">
+                            {request.issue_description.slice(0, 50)}
+                            {request.issue_description.length > 50 ? '...' : ''}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={STATUS_COLORS[request.status] ?? 'secondary'}>
+                            {STATUS_LABELS[request.status] ?? request.status}
+                          </Badge>
+                        </td>
+                        <td className="text-muted-foreground px-4 py-3">
+                          {request.assigned_technician || '—'}
+                        </td>
+                        <td className="text-muted-foreground px-4 py-3">
+                          {formatDate(request.scheduled_date)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono">
+                          {formatCurrency(request.quote_amount)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono">
+                          {formatCurrency(request.approved_amount)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(request)}
+                              title="Edit Request"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(request)}
+                              title="Delete Request"
+                            >
+                              <Trash2 className="text-destructive h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-      <ServiceRequestForm
-        serviceRequest={selectedRequest}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSuccess={handleSuccess}
-      />
+            {!loading && totalPages > 1 && (
+              <div className="text-muted-foreground mt-4 flex items-center justify-between text-sm">
+                <span>
+                  Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <DeleteServiceRequestDialog
-        serviceRequest={selectedRequest}
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onSuccess={handleSuccess}
-      />
-    </div>
+        <ServiceRequestForm
+          serviceRequest={selectedRequest}
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSuccess={handleSuccess}
+        />
+
+        <DeleteServiceRequestDialog
+          serviceRequest={selectedRequest}
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onSuccess={handleSuccess}
+        />
+      </div>
+    </ErrorBoundary>
   );
 }

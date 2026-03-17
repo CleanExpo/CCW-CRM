@@ -629,3 +629,101 @@ async def cancel_invoice(
     await db.refresh(invoice)
 
     return InvoiceResponse.model_validate(invoice)
+
+
+# ---------------------------------------------------------------------------
+# GAP-023: Tax Calculation
+# ---------------------------------------------------------------------------
+
+
+class LineItemTax(BaseModel):
+    """Line item for tax calculation."""
+
+    description: str
+    quantity: int
+    unit_price: Decimal
+    tax_rate: Decimal = Decimal("10.00")  # Default GST
+
+
+class TaxCalculationRequest(BaseModel):
+    """Request for tax calculation."""
+
+    invoice_id: UUID | None = Field(None, description="Calculate tax for existing invoice")
+    line_items: list[LineItemTax] | None = Field(None, description="Or provide line items directly")
+
+
+class TaxBreakdown(BaseModel):
+    """Detailed tax breakdown."""
+
+    gst: Decimal = Field(default=Decimal("0.00"), description="GST amount")
+    pst: Decimal = Field(default=Decimal("0.00"), description="PST amount (if applicable)")
+    other: Decimal = Field(default=Decimal("0.00"), description="Other taxes")
+
+
+class TaxCalculationResponse(BaseModel):
+    """Response from tax calculation."""
+
+    subtotal: Decimal
+    tax: Decimal
+    total: Decimal
+    breakdown: TaxBreakdown
+
+
+@router.post("/tax/calculate", response_model=TaxCalculationResponse)
+async def calculate_tax(
+    request: TaxCalculationRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> TaxCalculationResponse:
+    """
+    Calculate GST/PST per line item.
+
+    Can either calculate for an existing invoice or for provided line items.
+    Returns subtotal, tax, total, and detailed breakdown.
+    """
+    if request.invoice_id:
+        # Load existing invoice
+        result = await db.execute(
+            select(Invoice)
+            .options(selectinload(Invoice.items))
+            .where(Invoice.id == request.invoice_id)
+        )
+        invoice = result.scalar_one_or_none()
+
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+
+        subtotal = invoice.subtotal
+        tax = invoice.tax_amount
+        total = invoice.total
+
+    elif request.line_items:
+        # Calculate from provided line items
+        subtotal = Decimal("0.00")
+        tax = Decimal("0.00")
+
+        for item in request.line_items:
+            item_subtotal = Decimal(str(item.quantity)) * item.unit_price
+            item_tax = item_subtotal * (item.tax_rate / Decimal("100"))
+            subtotal += item_subtotal
+            tax += item_tax
+
+        total = subtotal + tax
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Must provide either invoice_id or line_items"
+        )
+
+    # For Australian context, all tax is GST
+    breakdown = TaxBreakdown(
+        gst=tax,
+        pst=Decimal("0.00"),
+        other=Decimal("0.00"),
+    )
+
+    return TaxCalculationResponse(
+        subtotal=subtotal,
+        tax=tax,
+        total=total,
+        breakdown=breakdown,
+    )

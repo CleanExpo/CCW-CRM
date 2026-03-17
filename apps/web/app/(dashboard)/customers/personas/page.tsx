@@ -15,6 +15,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 interface PersonaRecord {
   customer_id: string;
@@ -146,149 +147,153 @@ export default function PersonasPage() {
   const summaryEntries = Object.entries(PERSONA_CONFIG).filter(([key]) => key !== 'unclassified');
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <ErrorBoundary>
+      <div className="flex flex-1 flex-col gap-6 p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+              <Tag className="text-primary h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Customer Personas</h1>
+              <p className="text-muted-foreground text-sm">
+                Auto-classification by behaviour using order data
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={handleClassifyAll} disabled={classifying || loading}>
+              <Zap className="mr-2 h-4 w-4" />
+              {classifying ? 'Classifying...' : 'Re-classify All'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Summary cards */}
+        <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+          {loading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="pt-4">
+                    <Skeleton className="h-12 w-full" />
+                  </CardContent>
+                </Card>
+              ))
+            : summaryEntries.map(([key, cfg]) => (
+                <Card
+                  key={key}
+                  className={`border ${cfg.bg} cursor-pointer transition-shadow hover:shadow-md`}
+                  onClick={() => setPersonaFilter(key === personaFilter ? 'all' : key)}
+                >
+                  <CardHeader className="px-4 pt-4 pb-1">
+                    <CardDescription className={`text-xs ${cfg.color}`}>
+                      {cfg.label}
+                    </CardDescription>
+                    <CardTitle className={`text-2xl ${cfg.color}`}>{summary[key] ?? 0}</CardTitle>
+                  </CardHeader>
+                </Card>
+              ))}
+        </div>
+
+        {/* Filter */}
         <div className="flex items-center gap-3">
-          <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-            <Tag className="text-primary h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Customer Personas</h1>
-            <p className="text-muted-foreground text-sm">
-              Auto-classification by behaviour using order data
-            </p>
-          </div>
+          <Select value={personaFilter} onValueChange={setPersonaFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by persona" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All personas</SelectItem>
+              {Object.entries(PERSONA_CONFIG).map(([key, cfg]) => (
+                <SelectItem key={key} value={key}>
+                  {cfg.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-muted-foreground text-sm">{data?.total ?? 0} customers</span>
+          {personaFilter !== 'all' && (
+            <Button variant="ghost" size="sm" onClick={() => setPersonaFilter('all')}>
+              Clear filter
+            </Button>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={handleClassifyAll} disabled={classifying || loading}>
-            <Zap className="mr-2 h-4 w-4" />
-            {classifying ? 'Classifying...' : 'Re-classify All'}
-          </Button>
-        </div>
-      </div>
 
-      {/* Summary cards */}
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-        {loading
-          ? Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="pt-4">
-                  <Skeleton className="h-12 w-full" />
-                </CardContent>
-              </Card>
-            ))
-          : summaryEntries.map(([key, cfg]) => (
-              <Card
-                key={key}
-                className={`border ${cfg.bg} cursor-pointer transition-shadow hover:shadow-md`}
-                onClick={() => setPersonaFilter(key === personaFilter ? 'all' : key)}
-              >
-                <CardHeader className="px-4 pt-4 pb-1">
-                  <CardDescription className={`text-xs ${cfg.color}`}>{cfg.label}</CardDescription>
-                  <CardTitle className={`text-2xl ${cfg.color}`}>{summary[key] ?? 0}</CardTitle>
-                </CardHeader>
-              </Card>
-            ))}
-      </div>
-
-      {/* Filter */}
-      <div className="flex items-center gap-3">
-        <Select value={personaFilter} onValueChange={setPersonaFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by persona" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All personas</SelectItem>
-            {Object.entries(PERSONA_CONFIG).map(([key, cfg]) => (
-              <SelectItem key={key} value={key}>
-                {cfg.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <span className="text-muted-foreground text-sm">{data?.total ?? 0} customers</span>
-        {personaFilter !== 'all' && (
-          <Button variant="ghost" size="sm" onClick={() => setPersonaFilter('all')}>
-            Clear filter
-          </Button>
-        )}
-      </div>
-
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/30 border-b">
-                  <th className="px-4 py-3 text-left font-medium">Company</th>
-                  <th className="px-4 py-3 text-center font-medium">Persona</th>
-                  <th className="px-4 py-3 text-center font-medium">Confidence</th>
-                  <th className="px-4 py-3 text-left font-medium">Reason</th>
-                  <th className="px-4 py-3 text-center font-medium">Classified</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <tr key={i} className="border-b">
-                      {Array.from({ length: 5 }).map((_, j) => (
-                        <td key={j} className="px-4 py-3">
-                          <Skeleton className="h-4 w-full" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : data?.items.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-muted-foreground px-4 py-12 text-center">
-                      No persona records found. Click &quot;Re-classify All&quot; to generate.
-                    </td>
+        {/* Table */}
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/30 border-b">
+                    <th className="px-4 py-3 text-left font-medium">Company</th>
+                    <th className="px-4 py-3 text-center font-medium">Persona</th>
+                    <th className="px-4 py-3 text-center font-medium">Confidence</th>
+                    <th className="px-4 py-3 text-left font-medium">Reason</th>
+                    <th className="px-4 py-3 text-center font-medium">Classified</th>
                   </tr>
-                ) : (
-                  data?.items.map((row) => {
-                    const cfg = PERSONA_CONFIG[row.persona] ?? PERSONA_CONFIG.unclassified;
-                    return (
-                      <tr
-                        key={row.customer_id}
-                        className="hover:bg-muted/30 border-b transition-colors"
-                      >
-                        <td className="px-4 py-3 font-medium">{row.company_name}</td>
-                        <td className="px-4 py-3 text-center">
-                          <Badge variant="outline" className={`border ${cfg.bg} ${cfg.color}`}>
-                            {cfg.label}
-                          </Badge>
-                        </td>
-                        <td
-                          className={`px-4 py-3 text-center font-medium capitalize ${CONFIDENCE_COLOR[row.confidence] ?? ''}`}
-                        >
-                          {row.confidence}
-                        </td>
-                        <td
-                          className="text-muted-foreground max-w-64 truncate px-4 py-3 text-xs"
-                          title={row.reason}
-                        >
-                          {row.reason}
-                        </td>
-                        <td className="text-muted-foreground px-4 py-3 text-center text-xs">
-                          {row.classified_at
-                            ? new Date(row.classified_at).toLocaleDateString()
-                            : '—'}
-                        </td>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i} className="border-b">
+                        {Array.from({ length: 5 }).map((_, j) => (
+                          <td key={j} className="px-4 py-3">
+                            <Skeleton className="h-4 w-full" />
+                          </td>
+                        ))}
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+                    ))
+                  ) : data?.items.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-muted-foreground px-4 py-12 text-center">
+                        No persona records found. Click &quot;Re-classify All&quot; to generate.
+                      </td>
+                    </tr>
+                  ) : (
+                    data?.items.map((row) => {
+                      const cfg = PERSONA_CONFIG[row.persona] ?? PERSONA_CONFIG.unclassified;
+                      return (
+                        <tr
+                          key={row.customer_id}
+                          className="hover:bg-muted/30 border-b transition-colors"
+                        >
+                          <td className="px-4 py-3 font-medium">{row.company_name}</td>
+                          <td className="px-4 py-3 text-center">
+                            <Badge variant="outline" className={`border ${cfg.bg} ${cfg.color}`}>
+                              {cfg.label}
+                            </Badge>
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-center font-medium capitalize ${CONFIDENCE_COLOR[row.confidence] ?? ''}`}
+                          >
+                            {row.confidence}
+                          </td>
+                          <td
+                            className="text-muted-foreground max-w-64 truncate px-4 py-3 text-xs"
+                            title={row.reason}
+                          >
+                            {row.reason}
+                          </td>
+                          <td className="text-muted-foreground px-4 py-3 text-center text-xs">
+                            {row.classified_at
+                              ? new Date(row.classified_at).toLocaleDateString()
+                              : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { workshopApi, type DashboardData } from '@/lib/api/workshop';
 import { CalendarDays, AlertTriangle, Bell, Wrench, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 const LOCATIONS = ['all', 'brisbane', 'sydney', 'melbourne'];
 
@@ -47,185 +48,187 @@ export default function WorkshopDashboardPage() {
   }, [loadDashboard]);
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Workshop Dashboard</h1>
-          <p className="text-neutral-600 dark:text-neutral-400">
-            Truckmount service management across all locations
-          </p>
-        </div>
-        <Link href="/workshop/schedule">
-          <Button>
-            <CalendarDays className="mr-2 h-4 w-4" /> View Schedule
-          </Button>
-        </Link>
-      </div>
-
-      {/* Location Tabs */}
-      <div className="flex gap-2">
-        {LOCATIONS.map((loc) => (
-          <button
-            key={loc}
-            onClick={() => setLocation(loc)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium capitalize transition-colors ${
-              location === loc
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            {loc === 'all' ? 'All Locations' : loc}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-muted h-24 animate-pulse rounded-lg" />
-            ))}
+    <ErrorBoundary>
+      <div className="space-y-6 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Workshop Dashboard</h1>
+            <p className="text-neutral-600 dark:text-neutral-400">
+              Truckmount service management across all locations
+            </p>
           </div>
-          <div className="bg-muted h-64 animate-pulse rounded-lg" />
+          <Link href="/workshop/schedule">
+            <Button>
+              <CalendarDays className="mr-2 h-4 w-4" /> View Schedule
+            </Button>
+          </Link>
         </div>
-      ) : dashboard ? (
-        <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-muted-foreground text-sm font-medium">
-                  Today&apos;s Jobs
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{dashboard.today.count}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-muted-foreground text-sm font-medium">
-                  This Week
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{dashboard.this_week.booking_count}</div>
-              </CardContent>
-            </Card>
-            <Card className={dashboard.overdue_equipment_count > 0 ? 'border-red-300' : ''}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-muted-foreground flex items-center gap-1 text-sm font-medium">
-                  {dashboard.overdue_equipment_count > 0 && (
-                    <AlertTriangle className="h-4 w-4 text-red-500" />
-                  )}
-                  Overdue Equipment
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div
-                  className={`text-3xl font-bold ${dashboard.overdue_equipment_count > 0 ? 'text-red-600' : ''}`}
-                >
-                  {dashboard.overdue_equipment_count}
-                </div>
-                {dashboard.overdue_equipment_count > 0 && (
-                  <Link
-                    href="/workshop/equipment?overdue_only=true"
-                    className="text-xs text-red-500 hover:underline"
+
+        {/* Location Tabs */}
+        <div className="flex gap-2">
+          {LOCATIONS.map((loc) => (
+            <button
+              key={loc}
+              onClick={() => setLocation(loc)}
+              className={`rounded-lg px-4 py-2 text-sm font-medium capitalize transition-colors ${
+                location === loc
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {loc === 'all' ? 'All Locations' : loc}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-muted h-24 animate-pulse rounded-lg" />
+              ))}
+            </div>
+            <div className="bg-muted h-64 animate-pulse rounded-lg" />
+          </div>
+        ) : dashboard ? (
+          <>
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-muted-foreground text-sm font-medium">
+                    Today&apos;s Jobs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{dashboard.today.count}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-muted-foreground text-sm font-medium">
+                    This Week
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{dashboard.this_week.booking_count}</div>
+                </CardContent>
+              </Card>
+              <Card className={dashboard.overdue_equipment_count > 0 ? 'border-red-300' : ''}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-muted-foreground flex items-center gap-1 text-sm font-medium">
+                    {dashboard.overdue_equipment_count > 0 && (
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                    )}
+                    Overdue Equipment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div
+                    className={`text-3xl font-bold ${dashboard.overdue_equipment_count > 0 ? 'text-red-600' : ''}`}
                   >
-                    View overdue
+                    {dashboard.overdue_equipment_count}
+                  </div>
+                  {dashboard.overdue_equipment_count > 0 && (
+                    <Link
+                      href="/workshop/equipment?overdue_only=true"
+                      className="text-xs text-red-500 hover:underline"
+                    >
+                      View overdue
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-muted-foreground flex items-center gap-1 text-sm font-medium">
+                    <Bell className="h-4 w-4" /> Pending Reminders
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{dashboard.pending_reminders_count}</div>
+                  <Link
+                    href="/workshop/reminders"
+                    className="text-muted-foreground text-xs hover:underline"
+                  >
+                    Manage
                   </Link>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Today's Jobs */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" /> Today&apos;s Jobs
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {dashboard.today.bookings.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No jobs scheduled today.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {dashboard.today.bookings.map((booking) => (
+                      <div
+                        key={booking.id}
+                        className="flex items-center justify-between border-b py-2 last:border-0"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Wrench className="text-muted-foreground h-4 w-4" />
+                          <div>
+                            <div className="text-sm font-medium">{booking.booking_number}</div>
+                            <div className="text-muted-foreground text-xs">
+                              {new Date(booking.scheduled_date).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                              {' · '}
+                              {booking.location}
+                            </div>
+                          </div>
+                        </div>
+                        <Badge className={STATUS_COLORS[booking.status] || ''}>
+                          {booking.status.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-muted-foreground flex items-center gap-1 text-sm font-medium">
-                  <Bell className="h-4 w-4" /> Pending Reminders
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{dashboard.pending_reminders_count}</div>
-                <Link
-                  href="/workshop/reminders"
-                  className="text-muted-foreground text-xs hover:underline"
-                >
-                  Manage
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
 
-          {/* Today's Jobs */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" /> Today&apos;s Jobs
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {dashboard.today.bookings.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No jobs scheduled today.</p>
-              ) : (
-                <div className="space-y-2">
-                  {dashboard.today.bookings.map((booking) => (
-                    <div
-                      key={booking.id}
-                      className="flex items-center justify-between border-b py-2 last:border-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Wrench className="text-muted-foreground h-4 w-4" />
-                        <div>
-                          <div className="text-sm font-medium">{booking.booking_number}</div>
-                          <div className="text-muted-foreground text-xs">
-                            {new Date(booking.scheduled_date).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
+            {/* Upcoming 30 Days Mini-Calendar */}
+            {Object.keys(dashboard.upcoming_30_days).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Upcoming 30 Days</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(dashboard.upcoming_30_days)
+                      .sort()
+                      .map(([date, count]) => (
+                        <div
+                          key={date}
+                          className="bg-muted flex min-w-[48px] flex-col items-center rounded p-2"
+                        >
+                          <span className="text-muted-foreground text-xs">
+                            {new Date(date).toLocaleDateString([], {
+                              month: 'short',
+                              day: 'numeric',
                             })}
-                            {' · '}
-                            {booking.location}
-                          </div>
+                          </span>
+                          <span className="text-sm font-bold">{count}</span>
                         </div>
-                      </div>
-                      <Badge className={STATUS_COLORS[booking.status] || ''}>
-                        {booking.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Upcoming 30 Days Mini-Calendar */}
-          {Object.keys(dashboard.upcoming_30_days).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Upcoming 30 Days</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-1">
-                  {Object.entries(dashboard.upcoming_30_days)
-                    .sort()
-                    .map(([date, count]) => (
-                      <div
-                        key={date}
-                        className="bg-muted flex min-w-[48px] flex-col items-center rounded p-2"
-                      >
-                        <span className="text-muted-foreground text-xs">
-                          {new Date(date).toLocaleDateString([], {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                        <span className="text-sm font-bold">{count}</span>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      ) : null}
-    </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        ) : null}
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -19,6 +19,7 @@ import { RecordPaymentDialog } from './components/RecordPaymentDialog';
 import { InvoiceForm } from './components/InvoiceForm';
 import { DeleteInvoiceDialog } from './components/DeleteInvoiceDialog';
 import { FinancialReportTab } from './components/FinancialReportTab';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 export default function InvoicesPage() {
   const router = useRouter();
@@ -240,170 +241,172 @@ export default function InvoicesPage() {
   const stats = getSummaryStats();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-          <p className="text-muted-foreground">Manage customer invoices and payments</p>
-        </div>
-        <Button onClick={handleCreateInvoice}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Invoice
-        </Button>
-      </div>
-
-      <Tabs defaultValue="invoices">
-        <TabsList>
-          <TabsTrigger value="invoices">
-            <FileText className="mr-2 h-4 w-4" />
-            Invoices
-          </TabsTrigger>
-          <TabsTrigger value="reports">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Reports
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="invoices" className="mt-6 space-y-6">
-          {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
-                <FileText className="text-muted-foreground h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{total}</div>
-                <p className="text-muted-foreground text-xs">
-                  {stats.paidCount} paid, {stats.overdueCount} overdue
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="text-muted-foreground h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
-                <p className="text-muted-foreground text-xs">From all invoices</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
-                <DollarSign className="text-destructive h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-destructive text-2xl font-bold">
-                  ${stats.totalOutstanding.toFixed(2)}
-                </div>
-                <p className="text-muted-foreground text-xs">Amount due</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
-                <FileText className="text-muted-foreground h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {total > 0 ? ((stats.paidCount / total) * 100).toFixed(0) : 0}%
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  {stats.paidCount} of {total} paid
-                </p>
-              </CardContent>
-            </Card>
+    <ErrorBoundary>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+            <p className="text-muted-foreground">Manage customer invoices and payments</p>
           </div>
+          <Button onClick={handleCreateInvoice}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Invoice
+          </Button>
+        </div>
 
-          {/* Invoices Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>All Invoices</CardTitle>
-              <CardDescription>
-                {lastUpdated && (
-                  <span className="text-muted-foreground text-xs">
-                    Last updated: {format(lastUpdated, 'h:mm:ss a')}
-                  </span>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : invoices.length === 0 ? (
-                <div className="py-12 text-center">
-                  <FileText className="text-muted-foreground mx-auto h-12 w-12" />
-                  <h3 className="mt-4 text-lg font-semibold">No invoices found</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">
-                    Get started by creating your first invoice
+        <Tabs defaultValue="invoices">
+          <TabsList>
+            <TabsTrigger value="invoices">
+              <FileText className="mr-2 h-4 w-4" />
+              Invoices
+            </TabsTrigger>
+            <TabsTrigger value="reports">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Reports
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="invoices" className="mt-6 space-y-6">
+            {/* Summary Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
+                  <FileText className="text-muted-foreground h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{total}</div>
+                  <p className="text-muted-foreground text-xs">
+                    {stats.paidCount} paid, {stats.overdueCount} overdue
                   </p>
-                  <Button className="mt-4" onClick={handleCreateInvoice}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Invoice
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <ResponsiveTable
-                    data={invoices}
-                    columns={columns}
-                    keyExtractor={(invoice) => invoice.id}
-                  />
-                  <div className="mt-4">
-                    <PaginationControls
-                      currentPage={page}
-                      pageSize={pageSize}
-                      totalItems={total}
-                      totalPages={totalPages}
-                      onPageChange={setPage}
-                      onPageSizeChange={setPageSize}
-                    />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                  <DollarSign className="text-muted-foreground h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
+                  <p className="text-muted-foreground text-xs">From all invoices</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+                  <DollarSign className="text-destructive h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-destructive text-2xl font-bold">
+                    ${stats.totalOutstanding.toFixed(2)}
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  <p className="text-muted-foreground text-xs">Amount due</p>
+                </CardContent>
+              </Card>
 
-        <TabsContent value="reports" className="mt-6">
-          <FinancialReportTab />
-        </TabsContent>
-      </Tabs>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
+                  <FileText className="text-muted-foreground h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {total > 0 ? ((stats.paidCount / total) * 100).toFixed(0) : 0}%
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    {stats.paidCount} of {total} paid
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-      {/* Dialogs */}
-      {selectedInvoice && (
-        <>
-          <RecordPaymentDialog
-            invoice={selectedInvoice}
-            open={paymentDialogOpen}
-            onOpenChange={setPaymentDialogOpen}
-            onPaymentRecorded={handlePaymentRecorded}
-          />
-          <DeleteInvoiceDialog
-            invoice={selectedInvoice}
-            open={deleteDialogOpen}
-            onOpenChange={setDeleteDialogOpen}
-            onSuccess={handleDeleteSuccess}
-          />
-        </>
-      )}
+            {/* Invoices Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>All Invoices</CardTitle>
+                <CardDescription>
+                  {lastUpdated && (
+                    <span className="text-muted-foreground text-xs">
+                      Last updated: {format(lastUpdated, 'h:mm:ss a')}
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ) : invoices.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <FileText className="text-muted-foreground mx-auto h-12 w-12" />
+                    <h3 className="mt-4 text-lg font-semibold">No invoices found</h3>
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      Get started by creating your first invoice
+                    </p>
+                    <Button className="mt-4" onClick={handleCreateInvoice}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Invoice
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <ResponsiveTable
+                      data={invoices}
+                      columns={columns}
+                      keyExtractor={(invoice) => invoice.id}
+                    />
+                    <div className="mt-4">
+                      <PaginationControls
+                        currentPage={page}
+                        pageSize={pageSize}
+                        totalItems={total}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                        onPageSizeChange={setPageSize}
+                      />
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      {/* Create/Edit Invoice Form */}
-      <InvoiceForm
-        invoice={editingInvoice}
-        open={formDialogOpen}
-        onOpenChange={setFormDialogOpen}
-        onSuccess={handleFormSuccess}
-      />
-    </div>
+          <TabsContent value="reports" className="mt-6">
+            <FinancialReportTab />
+          </TabsContent>
+        </Tabs>
+
+        {/* Dialogs */}
+        {selectedInvoice && (
+          <>
+            <RecordPaymentDialog
+              invoice={selectedInvoice}
+              open={paymentDialogOpen}
+              onOpenChange={setPaymentDialogOpen}
+              onPaymentRecorded={handlePaymentRecorded}
+            />
+            <DeleteInvoiceDialog
+              invoice={selectedInvoice}
+              open={deleteDialogOpen}
+              onOpenChange={setDeleteDialogOpen}
+              onSuccess={handleDeleteSuccess}
+            />
+          </>
+        )}
+
+        {/* Create/Edit Invoice Form */}
+        <InvoiceForm
+          invoice={editingInvoice}
+          open={formDialogOpen}
+          onOpenChange={setFormDialogOpen}
+          onSuccess={handleFormSuccess}
+        />
+      </div>
+    </ErrorBoundary>
   );
 }
