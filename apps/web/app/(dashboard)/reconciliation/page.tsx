@@ -8,32 +8,33 @@
  * - Bulk approval workflow
  */
 
-import { Suspense } from "react";
-import { ReconciliationDashboard } from "./components/ReconciliationDashboard";
+import { Suspense } from 'react';
+import { ReconciliationDashboard } from './components/ReconciliationDashboard';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 export const metadata = {
-  title: "Reconciliation Dashboard | CCW ERP",
-  description: "Bank feed reconciliation with AI-powered match suggestions",
+  title: 'Reconciliation Dashboard | CCW ERP',
+  description: 'Bank feed reconciliation with AI-powered match suggestions',
 };
 
 export default function ReconciliationPage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Bank Feed Reconciliation
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Review and approve AI-suggested transaction matches
-          </p>
+    <ErrorBoundary>
+      <div className="flex flex-col gap-6 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Bank Feed Reconciliation</h1>
+            <p className="text-muted-foreground mt-2">
+              Review and approve AI-suggested transaction matches
+            </p>
+          </div>
         </div>
-      </div>
 
-      <Suspense fallback={<DashboardSkeleton />}>
-        <ReconciliationDashboard />
-      </Suspense>
-    </div>
+        <Suspense fallback={<DashboardSkeleton />}>
+          <ReconciliationDashboard />
+        </Suspense>
+      </div>
+    </ErrorBoundary>
   );
 }
 
@@ -43,12 +44,12 @@ function DashboardSkeleton() {
       {/* Stats cards skeleton */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+          <div key={i} className="bg-muted h-32 animate-pulse rounded-lg" />
         ))}
       </div>
 
       {/* Table skeleton */}
-      <div className="h-96 bg-muted animate-pulse rounded-lg" />
+      <div className="bg-muted h-96 animate-pulse rounded-lg" />
     </div>
   );
 }

@@ -56,6 +56,7 @@ import {
 import { PlanSelector } from './components/PlanSelector';
 import { UsageMetrics } from './components/UsageMetrics';
 import { PaymentMethodForm } from './components/PaymentMethodForm';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 // Demo fallback subscription for when backend is unavailable (demo mode)
 const DEMO_SUBSCRIPTION: Subscription = {
@@ -228,20 +229,22 @@ function CurrentPlanSkeleton() {
 
 function UsageSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {[0, 1, 2, 3].map((i) => (
-        <Card key={i}>
-          <CardHeader className="pb-2">
-            <Skeleton className="h-4 w-4" />
-            <Skeleton className="h-4 w-24" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="mt-2 h-1.5 w-full" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <ErrorBoundary>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-24" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="mt-2 h-1.5 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </ErrorBoundary>
   );
 }
 

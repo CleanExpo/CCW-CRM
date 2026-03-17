@@ -21,6 +21,7 @@ import { PaginationControls } from '@/components/ui/pagination-controls';
 import { exportCustomersToCSV } from '@/lib/utils/csv-export';
 // PHASE 4: Last updated timestamps
 import { formatDistanceToNow } from 'date-fns';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 interface Customer {
   id: string;
@@ -161,235 +162,239 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Customer Accounts</h1>
-          <p className="text-muted-foreground">
-            {selectedCustomerIds.length > 0
-              ? `${selectedCustomerIds.length} selected`
-              : 'Manage your customer relationships'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {selectedCustomerIds.length > 0 && (
-            <Button variant="destructive" onClick={handleBulkDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Selected ({selectedCustomerIds.length})
+    <ErrorBoundary>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Customer Accounts</h1>
+            <p className="text-muted-foreground">
+              {selectedCustomerIds.length > 0
+                ? `${selectedCustomerIds.length} selected`
+                : 'Manage your customer relationships'}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {selectedCustomerIds.length > 0 && (
+              <Button variant="destructive" onClick={handleBulkDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Selected ({selectedCustomerIds.length})
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleExport} disabled={customers.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
             </Button>
-          )}
-          <Button variant="outline" onClick={handleExport} disabled={customers.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button onClick={handleAddCustomer}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Customer
-          </Button>
+            <Button onClick={handleAddCustomer}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Customer
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Customer Directory</CardTitle>
-              <CardDescription>
-                {total} customers in database
-                {lastUpdated && (
-                  <span className="text-muted-foreground ml-2 text-xs">
-                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
-                  </span>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Customer Directory</CardTitle>
+                <CardDescription>
+                  {total} customers in database
+                  {lastUpdated && (
+                    <span className="text-muted-foreground ml-2 text-xs">
+                      • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                    </span>
+                  )}
+                </CardDescription>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Input
+                placeholder="Search customers by name, email, or company..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-md"
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : !customers || customers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-muted-foreground text-lg font-medium">No customers found</p>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  {search
+                    ? 'Try adjusting your search criteria.'
+                    : 'Add your first customer to get started.'}
+                </p>
+                {!search && (
+                  <Button onClick={handleAddCustomer} className="mt-4">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Customer
+                  </Button>
                 )}
-              </CardDescription>
-            </div>
-          </div>
-          <div className="mt-4">
-            <Input
-              placeholder="Search customers by name, email, or company..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-md"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : !customers || customers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground text-lg font-medium">No customers found</p>
-              <p className="text-muted-foreground mt-2 text-sm">
-                {search
-                  ? 'Try adjusting your search criteria.'
-                  : 'Add your first customer to get started.'}
-              </p>
-              {!search && (
-                <Button onClick={handleAddCustomer} className="mt-4">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Customer
-                </Button>
-              )}
-            </div>
-          ) : (
-            <ResponsiveTable
-              data={customers}
-              keyExtractor={(customer) => customer.id}
-              columns={[
-                {
-                  key: 'select',
-                  label: (
-                    <Checkbox
-                      checked={
-                        customers.length > 0 && selectedCustomerIds.length === customers.length
-                      }
-                      onCheckedChange={handleToggleSelectAll}
-                      aria-label="Select all customers"
-                    />
-                  ),
-                  className: 'w-12',
-                  render: (customer) => (
-                    <Checkbox
-                      checked={selectedCustomerIds.includes(customer.id)}
-                      onCheckedChange={() => handleToggleSelectCustomer(customer.id)}
-                      aria-label={`Select ${customer.company_name}`}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ),
-                },
-                {
-                  key: 'customer_number',
-                  label: 'Customer #',
-                  className: 'font-mono text-sm',
-                  render: (customer) => customer.customer_number,
-                },
-                {
-                  key: 'company',
-                  label: 'Company',
-                  className: 'font-medium',
-                  render: (customer) => customer.company_name,
-                },
-                {
-                  key: 'contact',
-                  label: 'Contact',
-                  render: (customer) => customer.contact_name,
-                },
-                {
-                  key: 'email',
-                  label: 'Email',
-                  className: 'text-sm',
-                  render: (customer) => customer.email,
-                },
-                {
-                  key: 'phone',
-                  label: 'Phone',
-                  className: 'text-sm',
-                  hideOnMobile: true,
-                  render: (customer) => customer.phone || 'N/A',
-                },
-                {
-                  key: 'location',
-                  label: 'Location',
-                  hideOnMobile: true,
-                  render: (customer) =>
-                    customer.city && customer.state ? `${customer.city}, ${customer.state}` : 'N/A',
-                },
-                {
-                  key: 'status',
-                  label: 'Status',
-                  render: (customer) => (
-                    <Badge variant={customer.is_active ? 'default' : 'secondary'}>
-                      {customer.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  ),
-                },
-                {
-                  key: 'actions',
-                  label: 'Actions',
-                  className: 'text-right',
-                  mobileLabel: '',
-                  render: (customer) => (
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewDetails(customer);
-                        }}
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditCustomer(customer);
-                        }}
-                        title="Edit Customer"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteCustomer(customer);
-                        }}
-                        title="Delete Customer"
-                      >
-                        <Trash2 className="text-destructive h-4 w-4" />
-                      </Button>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          )}
+              </div>
+            ) : (
+              <ResponsiveTable
+                data={customers}
+                keyExtractor={(customer) => customer.id}
+                columns={[
+                  {
+                    key: 'select',
+                    label: (
+                      <Checkbox
+                        checked={
+                          customers.length > 0 && selectedCustomerIds.length === customers.length
+                        }
+                        onCheckedChange={handleToggleSelectAll}
+                        aria-label="Select all customers"
+                      />
+                    ),
+                    className: 'w-12',
+                    render: (customer) => (
+                      <Checkbox
+                        checked={selectedCustomerIds.includes(customer.id)}
+                        onCheckedChange={() => handleToggleSelectCustomer(customer.id)}
+                        aria-label={`Select ${customer.company_name}`}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ),
+                  },
+                  {
+                    key: 'customer_number',
+                    label: 'Customer #',
+                    className: 'font-mono text-sm',
+                    render: (customer) => customer.customer_number,
+                  },
+                  {
+                    key: 'company',
+                    label: 'Company',
+                    className: 'font-medium',
+                    render: (customer) => customer.company_name,
+                  },
+                  {
+                    key: 'contact',
+                    label: 'Contact',
+                    render: (customer) => customer.contact_name,
+                  },
+                  {
+                    key: 'email',
+                    label: 'Email',
+                    className: 'text-sm',
+                    render: (customer) => customer.email,
+                  },
+                  {
+                    key: 'phone',
+                    label: 'Phone',
+                    className: 'text-sm',
+                    hideOnMobile: true,
+                    render: (customer) => customer.phone || 'N/A',
+                  },
+                  {
+                    key: 'location',
+                    label: 'Location',
+                    hideOnMobile: true,
+                    render: (customer) =>
+                      customer.city && customer.state
+                        ? `${customer.city}, ${customer.state}`
+                        : 'N/A',
+                  },
+                  {
+                    key: 'status',
+                    label: 'Status',
+                    render: (customer) => (
+                      <Badge variant={customer.is_active ? 'default' : 'secondary'}>
+                        {customer.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    ),
+                  },
+                  {
+                    key: 'actions',
+                    label: 'Actions',
+                    className: 'text-right',
+                    mobileLabel: '',
+                    render: (customer) => (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewDetails(customer);
+                          }}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCustomer(customer);
+                          }}
+                          title="Edit Customer"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCustomer(customer);
+                          }}
+                          title="Delete Customer"
+                        >
+                          <Trash2 className="text-destructive h-4 w-4" />
+                        </Button>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            )}
 
-          {!loading && customers.length > 0 && (
-            <PaginationControls
-              currentPage={page}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={total}
-              onPageChange={setPage}
-              onPageSizeChange={(newSize) => {
-                setPageSize(newSize);
-                setPage(1);
-              }}
-            />
-          )}
-        </CardContent>
-      </Card>
+            {!loading && customers.length > 0 && (
+              <PaginationControls
+                currentPage={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={total}
+                onPageChange={setPage}
+                onPageSizeChange={(newSize) => {
+                  setPageSize(newSize);
+                  setPage(1);
+                }}
+              />
+            )}
+          </CardContent>
+        </Card>
 
-      <CustomerForm
-        customer={selectedCustomer}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSuccess={handleSuccess}
-      />
+        <CustomerForm
+          customer={selectedCustomer}
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSuccess={handleSuccess}
+        />
 
-      <DeleteCustomerDialog
-        customer={selectedCustomer}
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onSuccess={handleSuccess}
-      />
+        <DeleteCustomerDialog
+          customer={selectedCustomer}
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onSuccess={handleSuccess}
+        />
 
-      <BulkDeleteCustomersDialog
-        customerIds={selectedCustomerIds}
-        open={bulkDeleteDialogOpen}
-        onOpenChange={setBulkDeleteDialogOpen}
-        onSuccess={handleSuccess}
-      />
-    </div>
+        <BulkDeleteCustomersDialog
+          customerIds={selectedCustomerIds}
+          open={bulkDeleteDialogOpen}
+          onOpenChange={setBulkDeleteDialogOpen}
+          onSuccess={handleSuccess}
+        />
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -9,6 +9,7 @@ import { TaskSubmissionForm } from './components/TaskSubmissionForm';
 import { TaskList } from './components/TaskList';
 import { QueueStats } from './components/QueueStats';
 import { TaskSLAPanel } from './components/TaskSLAPanel';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 export const metadata = {
   title: 'Task Queue | Agentic Layer',
@@ -58,40 +59,44 @@ export default async function TaskQueuePage() {
   const stats = await fetchQueueStats();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 text-4xl font-bold">Task Queue</h1>
-        <p className="text-gray-600">Submit tasks to the agentic layer for autonomous execution</p>
-      </div>
-
-      {/* Queue Stats */}
-      <div className="mb-8">
-        <QueueStats stats={stats} />
-      </div>
-
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Task Submission Form */}
-        <div className="lg:col-span-1">
-          <div className="rounded-lg bg-white p-6 shadow-md">
-            <h2 className="mb-4 text-xl font-semibold">Submit New Task</h2>
-            <TaskSubmissionForm />
-          </div>
+    <ErrorBoundary>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="mb-2 text-4xl font-bold">Task Queue</h1>
+          <p className="text-gray-600">
+            Submit tasks to the agentic layer for autonomous execution
+          </p>
         </div>
 
-        {/* Task List */}
-        <div className="space-y-6 lg:col-span-2">
-          <div>
-            <h2 className="mb-4 text-xl font-semibold">Task Queue</h2>
-            <Suspense fallback={<TaskListSkeleton />}>
-              <TaskList />
-            </Suspense>
+        {/* Queue Stats */}
+        <div className="mb-8">
+          <QueueStats stats={stats} />
+        </div>
+
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Task Submission Form */}
+          <div className="lg:col-span-1">
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <h2 className="mb-4 text-xl font-semibold">Submit New Task</h2>
+              <TaskSubmissionForm />
+            </div>
           </div>
-          {/* SLA Deadlines Panel — UNI-174 ST-7 */}
-          <TaskSLAPanel />
+
+          {/* Task List */}
+          <div className="space-y-6 lg:col-span-2">
+            <div>
+              <h2 className="mb-4 text-xl font-semibold">Task Queue</h2>
+              <Suspense fallback={<TaskListSkeleton />}>
+                <TaskList />
+              </Suspense>
+            </div>
+            {/* SLA Deadlines Panel — UNI-174 ST-7 */}
+            <TaskSLAPanel />
+          </div>
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
 
