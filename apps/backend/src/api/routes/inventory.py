@@ -2194,3 +2194,361 @@ async def delete_product_variant(
         raise HTTPException(status_code=404, detail="Variant not found")
     await db.delete(variant)
     await db.commit()
+
+
+# ============================================================================
+# Batch 2B: Inventory Gap Endpoints (GAP-013, GAP-016, GAP-017, GAP-018)
+# ============================================================================
+
+
+class AutoReorderRequest(BaseModel):
+    """Request for auto-reorder."""
+
+    product_id: UUID
+
+
+class AutoReorderResponse(BaseModel):
+    """Response from auto-reorder."""
+
+    purchase_order_id: UUID | None
+    created: bool
+
+
+class BulkAdjustmentItem(BaseModel):
+    """Single adjustment in bulk operation."""
+
+    product_id: UUID
+    quantity: int
+    reason: str
+
+
+class BulkAdjustRequest(BaseModel):
+    """Request for bulk stock adjustments."""
+
+    adjustments: list[BulkAdjustmentItem]
+
+
+class BulkAdjustResponse(BaseModel):
+    """Response from bulk adjustment."""
+
+    adjusted: int
+    failed: list[str]
+
+
+class StockTakeResponse(BaseModel):
+    """Response for stock take."""
+
+    id: str
+    status: str
+    location: str | None
+    created_at: str
+
+
+class CycleCountRequest(BaseModel):
+    """Request to generate cycle count schedule."""
+
+    frequency: str = Field(description="daily, weekly, monthly")
+    abc_class: str = Field(description="A, B, C classification")
+
+
+class CycleCountResponse(BaseModel):
+    """Response from cycle count generation."""
+
+    schedule_id: UUID
+    items: int
+
+
+@router.post("/auto-reorder", response_model=AutoReorderResponse)
+async def auto_reorder(
+    request: AutoReorderRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> AutoReorderResponse:
+    """GAP-013: Create PO when stock < reorder_point.
+
+    Checks all locations for a product and creates a purchase order
+    if any location is below reorder point.
+    """
+    # Check if product exists
+    result = await db.execute(
+        select(Product).where(Product.id == request.product_id)
+    )
+    product = result.scalar_one_or_none()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Check stock levels across all locations
+    stock_result = await db.execute(
+        select(ProductStockByLocation).where(
+            ProductStockByLocation.product_id == request.product_id
+        )
+    )
+    stock_locations = stock_result.scalars().all()
+
+    # Find locations below reorder point
+    low_stock_locations = [
+        loc for loc in stock_locations
+        if loc.available < loc.reorder_point
+    ]
+
+    if not low_stock_locations:
+        logger.info(
+            "auto_reorder_skipped",
+            product_id=str(request.product_id),
+            reason="stock_sufficient"
+        )
+        return AutoReorderResponse(
+            purchase_order_id=None,
+            created=False
+        )
+
+    # Calculate total quantity needed
+    total_needed = sum(
+        loc.reorder_point - loc.available
+        for loc in low_stock_locations
+    )
+
+    # Find default supplier for this product (first supplier)
+    supplier_result = await db.execute(
+        select(Supplier).limit(1)
+    )
+    supplier = supplier_result.scalar_one_or_none()
+
+    if not supplier:
+        raise HTTPException(
+            status_code=400,
+            detail="No supplier configured for auto-reorder"
+        )
+
+    # Create purchase order
+    from uuid import uuid4
+
+    po = PurchaseOrder(
+        id=uuid4(),
+        supplier_id=supplier.id,
+        po_number=f"PO-AUTO-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+        status="pending",
+        order_date=datetime.utcnow(),
+        expected_date=datetime.utcnow() + timedelta(days=7),
+        notes=f"Auto-generated for low stock on product {product.name}",
+    )
+    db.add(po)
+
+    # Add line item
+    po_item = PurchaseOrderItem(
+        id=uuid4(),
+        purchase_order_id=po.id,
+        product_id=request.product_id,
+        quantity=total_needed,
+        unit_cost=product.cost or 0.0,
+    )
+    db.add(po_item)
+
+    await db.commit()
+    await db.refresh(po)
+
+    logger.info(
+        "auto_reorder_created",
+        product_id=str(request.product_id),
+        po_id=str(po.id),
+        quantity=total_needed
+    )
+
+    return AutoReorderResponse(
+        purchase_order_id=po.id,
+        created=True
+    )
+
+
+@router.post("/bulk-adjust", response_model=BulkAdjustResponse)
+async def bulk_adjust(
+    request: BulkAdjustRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> BulkAdjustResponse:
+    """GAP-016: Bulk stock adjustments.
+
+    Applies multiple stock adjustments in a single transaction.
+    """
+    if not request.adjustments:
+        return BulkAdjustResponse(adjusted=0, failed=[])
+
+    adjusted = 0
+    failed: list[str] = []
+
+    for adj in request.adjustments:
+        try:
+            # Verify product exists
+            result = await db.execute(
+                select(Product).where(Product.id == adj.product_id)
+            )
+            product = result.scalar_one_or_none()
+
+            if not product:
+                failed.append(f"{adj.product_id}: Product not found")
+                continue
+
+            # Create stock adjustment record
+            from uuid import uuid4
+
+            adjustment = StockAdjustment(
+                id=uuid4(),
+                product_id=adj.product_id,
+                quantity=adj.quantity,
+                reason=adj.reason,
+                adjusted_at=datetime.utcnow(),
+            )
+            db.add(adjustment)
+
+            # Update stock in default location (or could iterate all locations)
+            stock_result = await db.execute(
+                select(ProductStockByLocation).where(
+                    ProductStockByLocation.product_id == adj.product_id
+                ).limit(1)
+            )
+            stock = stock_result.scalar_one_or_none()
+
+            if stock:
+                stock.available = max(0, stock.available + adj.quantity)
+                stock.on_hand = max(0, stock.on_hand + adj.quantity)
+
+            adjusted += 1
+
+        except Exception as e:
+            logger.error(
+                "bulk_adjust_item_failed",
+                product_id=str(adj.product_id),
+                error=str(e)
+            )
+            failed.append(f"{adj.product_id}: {str(e)}")
+
+    await db.commit()
+
+    logger.info(
+        "bulk_adjust_complete",
+        adjusted=adjusted,
+        failed_count=len(failed)
+    )
+
+    return BulkAdjustResponse(
+        adjusted=adjusted,
+        failed=failed
+    )
+
+
+@router.get("/stock-takes/active", response_model=list[StockTakeResponse])
+async def list_active_stock_takes(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[StockTakeResponse]:
+    """GAP-017: List active stock takes.
+
+    Returns all stock takes that are in progress or pending.
+    """
+    result = await db.execute(
+        select(StockTake).where(
+            StockTake.status.in_(["pending", "in_progress"])
+        ).order_by(StockTake.scheduled_date.desc())
+    )
+    stock_takes = result.scalars().all()
+
+    return [
+        StockTakeResponse(
+            id=str(st.id),
+            status=st.status,
+            location=st.location.value if st.location else None,
+            created_at=st.scheduled_date.isoformat() if st.scheduled_date else datetime.utcnow().isoformat()
+        )
+        for st in stock_takes
+    ]
+
+
+@router.post("/cycle-count/generate", response_model=CycleCountResponse)
+async def generate_cycle_count(
+    request: CycleCountRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> CycleCountResponse:
+    """GAP-018: Generate cycle count schedule.
+
+    Creates a cycle count schedule based on frequency and ABC classification.
+    """
+    # Validate frequency
+    valid_frequencies = ["daily", "weekly", "monthly"]
+    if request.frequency not in valid_frequencies:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid frequency. Must be one of: {', '.join(valid_frequencies)}"
+        )
+
+    # Validate ABC class
+    valid_classes = ["A", "B", "C"]
+    if request.abc_class not in valid_classes:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid ABC class. Must be one of: {', '.join(valid_classes)}"
+        )
+
+    # Get products for this ABC class
+    # For simplicity, we'll select high-value products for A, medium for B, low for C
+    if request.abc_class == "A":
+        # A-class: top 20% of products by value (cost * stock)
+        query = select(Product).order_by(
+            (Product.cost * Product.stock).desc()
+        ).limit(20)
+    elif request.abc_class == "B":
+        # B-class: next 30% of products
+        query = select(Product).order_by(
+            (Product.cost * Product.stock).desc()
+        ).offset(20).limit(30)
+    else:
+        # C-class: remaining products
+        query = select(Product).order_by(
+            (Product.cost * Product.stock).desc()
+        ).offset(50).limit(50)
+
+    result = await db.execute(query)
+    products = result.scalars().all()
+
+    # Create stock take schedule
+    from uuid import uuid4
+
+    schedule_date = datetime.utcnow()
+
+    if request.frequency == "weekly":
+        schedule_date += timedelta(days=7)
+    elif request.frequency == "monthly":
+        schedule_date += timedelta(days=30)
+    else:
+        schedule_date += timedelta(days=1)
+
+    stock_take = StockTake(
+        id=uuid4(),
+        status="pending",
+        scheduled_date=schedule_date,
+        notes=f"Cycle count for {request.abc_class}-class items ({request.frequency})"
+    )
+    db.add(stock_take)
+
+    # Add items to stock take
+    for product in products:
+        item = StockTakeItem(
+            id=uuid4(),
+            stock_take_id=stock_take.id,
+            product_id=product.id,
+            expected_quantity=product.stock,
+        )
+        db.add(item)
+
+    await db.commit()
+    await db.refresh(stock_take)
+
+    logger.info(
+        "cycle_count_generated",
+        schedule_id=str(stock_take.id),
+        frequency=request.frequency,
+        abc_class=request.abc_class,
+        items_count=len(products)
+    )
+
+    return CycleCountResponse(
+        schedule_id=stock_take.id,
+        items=len(products)
+    )
