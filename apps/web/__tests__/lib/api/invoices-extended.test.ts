@@ -55,9 +55,9 @@ describe('invoicesApiExtended.calculateTax', () => {
     const result = await invoicesApiExtended.calculateTax(invoiceData);
 
     expect(mockPost).toHaveBeenCalledWith('/api/invoices/tax/calculate', invoiceData);
-    expect(result.total).toBe(1120.00);
-    expect(result.gst).toBe(50.00);
-    expect(result.pst).toBe(70.00);
+    expect((result as any).total).toBe(1120.00);
+    expect((result as any).gst).toBe(50.00);
+    expect((result as any).pst).toBe(70.00);
   });
 
   it('calculates GST only for GST-exempt provinces', async () => {
@@ -75,8 +75,8 @@ describe('invoicesApiExtended.calculateTax', () => {
       province: 'AB',
     });
 
-    expect(result.pst).toBe(0.00);
-    expect(result.total).toBe(1050.00);
+    expect((result as any).pst).toBe(0.00);
+    expect((result as any).total).toBe(1050.00);
   });
 
   it('handles tax-exempt items with EXEMPT tax code', async () => {
@@ -93,8 +93,8 @@ describe('invoicesApiExtended.calculateTax', () => {
       line_items: [{ amount: 1000.00, tax_code: 'EXEMPT' }],
     });
 
-    expect(result.total).toBe(1000.00);
-    expect(result.gst).toBe(0.00);
+    expect((result as any).total).toBe(1000.00);
+    expect((result as any).gst).toBe(0.00);
   });
 
   it('propagates errors on invalid tax codes', async () => {

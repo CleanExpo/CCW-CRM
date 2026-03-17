@@ -36,7 +36,7 @@ function ReconciliationPageTest() {
     const data = await apiClient.get(
       `/api/reconciliation/match-suggestions?transaction_id=${txnId}`
     );
-    setSuggestions(data);
+    setSuggestions(data as any[]);
     setLoading(false);
   };
 

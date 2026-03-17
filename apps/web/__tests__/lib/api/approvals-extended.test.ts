@@ -47,14 +47,14 @@ describe('approvalsApiExtended.getPendingMyApproval', () => {
     const result = await approvalsApiExtended.getPendingMyApproval();
 
     expect(mockGet).toHaveBeenCalledWith('/api/approvals/pending-my-approval');
-    expect(result).toHaveLength(2);
-    expect(result[0].approval_type).toBe('purchase_order');
+    expect(result as any[]).toHaveLength(2);
+    expect((result as any[])[0].approval_type).toBe('purchase_order');
   });
 
   it('returns empty array when user has no pending approvals', async () => {
     mockGet.mockResolvedValue([]);
     const result = await approvalsApiExtended.getPendingMyApproval();
-    expect(result).toEqual([]);
+    expect(result as any[]).toEqual([]);
   });
 
   it('throws error when not authenticated', async () => {
@@ -84,7 +84,7 @@ describe('approvalsApiExtended.bulkApprove', () => {
       approval_ids: ['appr-1', 'appr-2', 'appr-3'],
       comments: undefined,
     });
-    expect(result.approved_count).toBe(3);
+    expect((result as any).approved_count).toBe(3);
   });
 
   it('includes optional comments in bulk approve request', async () => {
@@ -111,6 +111,6 @@ describe('approvalsApiExtended.bulkApprove', () => {
     mockPost.mockResolvedValue(mockResult);
 
     const result = await approvalsApiExtended.bulkApprove(['appr-1', 'appr-2', 'appr-3']);
-    expect(result.failed_count).toBe(1);
+    expect((result as any).failed_count).toBe(1);
   });
 });

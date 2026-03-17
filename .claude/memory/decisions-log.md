@@ -1,5 +1,28 @@
 # Decisions Log — Append-Only
 
+## 2026-03-17 — Gap Remediation Phase 5 Complete (Test Coverage Expansion)
+
+- Decision: Implemented strategic test coverage for Phases 2-4 features (30 new tests)
+- Batches: 5A (Frontend - 10 files), 5B (Backend - 7 files), 5C (E2E - 5 specs)
+- Frontend Unit Tests (10 files, 45 test cases):
+  - reconciliation.test.ts: match suggestions + auto-match (6 tests)
+  - workflows-extended.test.ts: SLA escalation + execution stats (6 tests)
+  - approvals-extended.test.ts: pending-my-approval + bulk approve (7 tests)
+  - invoices-extended.test.ts: tax calculation (5 tests)
+  - 6 page integration tests: orders, quotes, reconciliation, approvals, workflows, billing (21 tests)
+- Backend Integration Tests (7 files, 31 test cases):
+  - 4 API endpoint tests: workflows, approvals, reconciliation, invoices (22 tests)
+  - 3 service tests: procurement matching, tax calculator, auto-reorder (9 tests)
+- E2E Playwright Specs (5 files, 19 test cases):
+  - reconciliation.spec.ts: bank transaction matching flow (3 tests)
+  - approvals.spec.ts: approval workflow + bulk approve (4 tests)
+  - workflows.spec.ts: workflow creation + SLA escalation (4 tests)
+  - invoices.spec.ts: invoice creation + tax calculation (4 tests)
+  - error-handling.spec.ts: ErrorBoundary + EmptyState integration (4 tests)
+- Impact: Strategic sampling approach (30 tests vs 224 gap items) — high-value coverage
+- Test Counts: Frontend 63→73, Backend 82→89, E2E 0→5
+- Commits: 28361f8 (Batch 5A), fb8bb09 (Batch 5B), 1c4854d (Batch 5C)
+
 ## 2026-03-17 — Gap Remediation Phase 2 Complete (Batches 2C & 2D)
 
 - Decision: Implemented 7 remaining endpoints for workflows, approvals, invoicing, and reconciliation
@@ -369,6 +392,16 @@
 - Description:
 
 ## Agent Dispatch — 2026-03-17T12:54:53.369216
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-17T13:05:08.352949
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-17T13:14:10.933741
 
 - Type: unknown
 - Description:

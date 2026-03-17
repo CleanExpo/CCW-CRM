@@ -53,7 +53,7 @@ describe('workflowsApiExtended.escalateSLA', () => {
       task_id: 'task-123',
       escalation_level: 2,
     });
-    expect(result.new_assignee).toBe('manager-1');
+    expect((result as any).new_assignee).toBe('manager-1');
   });
 
   it('handles escalation to level 1 (first escalation)', async () => {
@@ -82,7 +82,7 @@ describe('workflowsApiExtended.getExecutionStats', () => {
     const result = await workflowsApiExtended.getExecutionStats();
 
     expect(mockGet).toHaveBeenCalledWith('/api/workflows/execution-stats');
-    expect(result.total_executions).toBe(150);
+    expect((result as any).total_executions).toBe(150);
   });
 
   it('calls GET /api/workflows/execution-stats with template_id filter', async () => {
@@ -102,6 +102,6 @@ describe('workflowsApiExtended.getExecutionStats', () => {
     });
 
     const result = await workflowsApiExtended.getExecutionStats('new-template');
-    expect(result.total_executions).toBe(0);
+    expect((result as any).total_executions).toBe(0);
   });
 });

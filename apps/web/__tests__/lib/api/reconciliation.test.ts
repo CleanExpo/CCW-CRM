@@ -47,14 +47,14 @@ describe('reconciliationApi.getMatchSuggestions', () => {
     const result = await reconciliationApi.getMatchSuggestions('txn-123');
 
     expect(mockGet).toHaveBeenCalledWith('/api/reconciliation/match-suggestions?transaction_id=txn-123');
-    expect(result).toEqual(mockSuggestions);
-    expect(result).toHaveLength(2);
+    expect(result as any).toEqual(mockSuggestions);
+    expect(result as any[]).toHaveLength(2);
   });
 
   it('returns empty array when no matches found', async () => {
     mockGet.mockResolvedValue([]);
     const result = await reconciliationApi.getMatchSuggestions('txn-no-match');
-    expect(result).toEqual([]);
+    expect(result as any[]).toEqual([]);
   });
 });
 
@@ -71,7 +71,7 @@ describe('reconciliationApi.autoMatch', () => {
       transaction_id: 'txn-123',
       match_id: 'match-1',
     });
-    expect(result.status).toBe('matched');
+    expect((result as any).status).toBe('matched');
   });
 
   it('propagates errors on failed match', async () => {

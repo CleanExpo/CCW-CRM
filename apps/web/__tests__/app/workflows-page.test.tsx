@@ -26,8 +26,8 @@ function WorkflowsPageTest() {
   const [stats, setStats] = React.useState<any>(null);
 
   React.useEffect(() => {
-    apiClient.get('/api/workflows/templates').then(setTemplates);
-    apiClient.get('/api/workflows/execution-stats').then(setStats);
+    apiClient.get('/api/workflows/templates').then((data) => setTemplates(data as any[]));
+    apiClient.get('/api/workflows/execution-stats').then((data) => setStats(data as any));
   }, []);
 
   return (
