@@ -956,3 +956,30 @@
 - **Domain**: Dev / i18n
 - **Status**: Active
 - **Last Verified**: 2026-03-17
+
+### PAGE-100: Mobile Order — New
+
+- **Route**: /mobile/order/new
+- **File**: `apps/web/app/(mobile)/order/new/page.tsx`
+- **In Sidebar**: No (linked from Mobile Orders settings)
+- **Domain**: Mobile
+- **Status**: Active
+- **Last Verified**: 2026-03-24
+
+### PAGE-101: Guest Order Approval
+
+- **Route**: /guest/order/[token]
+- **File**: `apps/web/app/(guest)/order/[token]/page.tsx`
+- **In Sidebar**: No (public, no auth)
+- **Domain**: Mobile / Guest
+- **Status**: Active
+- **Last Verified**: 2026-03-24
+
+### PAGE-102: Mobile Orders Settings
+
+- **Route**: /settings/mobile
+- **File**: `apps/web/app/(dashboard)/settings/mobile/page.tsx`
+- **In Sidebar**: Yes (Camera icon)
+- **Domain**: Settings / Mobile
+- **Status**: Active
+- **Last Verified**: 2026-03-24

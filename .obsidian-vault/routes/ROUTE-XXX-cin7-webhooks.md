@@ -26,6 +26,7 @@ idempotency and retry, then emits events to the EventBus.
 
 ## Endpoints
 
+
 ## Database Models Used
 
 See code for model references
@@ -35,6 +36,7 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
+
 
 <!-- END AUTO-GENERATED -->
 
@@ -60,6 +62,6 @@ No related pages yet
 
 ## Change History
 
-| Date       | Change                   | Author             |
-| ---------- | ------------------------ | ------------------ |
+| Date | Change | Author |
+|------|--------|--------|
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

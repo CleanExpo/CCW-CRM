@@ -24,13 +24,14 @@ The actual orchestration is performed by the /sync-linear command skill.
 This API provides programmatic access to sync state and progress.
 
 Endpoints:
-GET /api/ai/gap-sync/status/{sync_id} - Get sync status
-GET /api/ai/gap-sync/list - List all syncs
-POST /api/ai/gap-sync/{sync_id}/cancel - Cancel a running sync
+  GET /api/ai/gap-sync/status/{sync_id} - Get sync status
+  GET /api/ai/gap-sync/list - List all syncs
+  POST /api/ai/gap-sync/{sync_id}/cancel - Cancel a running sync
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
+
 
 ## Database Models Used
 
@@ -41,6 +42,7 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
+
 
 <!-- END AUTO-GENERATED -->
 
@@ -66,6 +68,6 @@ No related pages yet
 
 ## Change History
 
-| Date       | Change                   | Author             |
-| ---------- | ------------------------ | ------------------ |
+| Date | Change | Author |
+|------|--------|--------|
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

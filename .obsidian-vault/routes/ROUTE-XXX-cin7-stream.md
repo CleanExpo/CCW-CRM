@@ -20,7 +20,7 @@ Cin7 real-time SSE stream and polling endpoints.
 
 Provides Server-Sent Events stream for real-time Cin7 sync events,
 plus manual polling trigger and status endpoints. Follows the pattern
-established by `dashboard_stream.py`.
+established by ``dashboard_stream.py``.
 
 Frontend usage::
 
@@ -34,6 +34,7 @@ Frontend usage::
 
 ## Endpoints
 
+
 ## Database Models Used
 
 See code for model references
@@ -43,6 +44,7 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
+
 
 <!-- END AUTO-GENERATED -->
 
@@ -68,6 +70,6 @@ No related pages yet
 
 ## Change History
 
-| Date       | Change                   | Author             |
-| ---------- | ------------------------ | ------------------ |
+| Date | Change | Author |
+|------|--------|--------|
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

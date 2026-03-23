@@ -19,12 +19,13 @@ last_verified: '2026-03-23'
 Cin7 Inventory Write-Back API (UNI-1265).
 
 Endpoints for stock adjustments, stock transfers, and stock-takes
-that are written back to Cin7. In demo mode the records are
+that are written back to Cin7.  In demo mode the records are
 marked as synced immediately with a generated Cin7 ID.
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
+
 
 ## Database Models Used
 
@@ -35,6 +36,7 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
+
 
 <!-- END AUTO-GENERATED -->
 
@@ -60,6 +62,6 @@ No related pages yet
 
 ## Change History
 
-| Date       | Change                   | Author             |
-| ---------- | ------------------------ | ------------------ |
+| Date | Change | Author |
+|------|--------|--------|
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

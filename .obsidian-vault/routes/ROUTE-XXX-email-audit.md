@@ -19,7 +19,6 @@ last_verified: '2026-03-23'
 Email Audit Trail API routes for GDPR compliance and email tracking.
 
 Provides endpoints for:
-
 - SendGrid webhook handling (delivery, opens, clicks, bounces)
 - Email history queries
 - GDPR data export
@@ -32,6 +31,7 @@ ISS-037: Email audit trail implementation
 
 ## Endpoints
 
+
 ## Database Models Used
 
 See code for model references
@@ -41,6 +41,7 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
+
 
 <!-- END AUTO-GENERATED -->
 
@@ -66,6 +67,6 @@ No related pages yet
 
 ## Change History
 
-| Date       | Change                   | Author             |
-| ---------- | ------------------------ | ------------------ |
+| Date | Change | Author |
+|------|--------|--------|
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

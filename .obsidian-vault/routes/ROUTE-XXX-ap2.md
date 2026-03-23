@@ -19,7 +19,6 @@ last_verified: '2026-03-23'
 Google Agent Payments Protocol (AP2) API endpoints.
 
 Provides API routes for AP2 integration including:
-
 - Mandate creation and verification
 - Payment processing
 - Voice commerce
@@ -30,6 +29,7 @@ Provides API routes for AP2 integration including:
 
 ## Endpoints
 
+
 ## Database Models Used
 
 See code for model references
@@ -39,6 +39,7 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
+
 
 <!-- END AUTO-GENERATED -->
 
@@ -64,6 +65,6 @@ No related pages yet
 
 ## Change History
 
-| Date       | Change                   | Author             |
-| ---------- | ------------------------ | ------------------ |
+| Date | Change | Author |
+|------|--------|--------|
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

@@ -19,7 +19,6 @@ last_verified: '2026-03-23'
 Cin7 Financial/GL Integration API endpoints.
 
 Provides routes for:
-
 - Chart of Accounts: list and sync from Cin7
 - Journal Entries: list, create manual entries, post drafts
 - Account Mappings: list and upsert ERP-to-GL mappings
@@ -30,6 +29,7 @@ In demo mode all operations use realistic mock data; no real Cin7 calls.
 
 ## Endpoints
 
+
 ## Database Models Used
 
 See code for model references
@@ -39,6 +39,7 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
+
 
 <!-- END AUTO-GENERATED -->
 
@@ -64,6 +65,6 @@ No related pages yet
 
 ## Change History
 
-| Date       | Change                   | Author             |
-| ---------- | ------------------------ | ------------------ |
+| Date | Change | Author |
+|------|--------|--------|
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

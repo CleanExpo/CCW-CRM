@@ -19,13 +19,14 @@ last_verified: '2026-03-23'
 AI Marketing API endpoints.
 
 Provides 3 endpoints:
-POST /api/ai/marketing/generate-campaign
-POST /api/ai/marketing/analyze-audience
-GET /api/ai/marketing/stats
+  POST /api/ai/marketing/generate-campaign
+  POST /api/ai/marketing/analyze-audience
+  GET  /api/ai/marketing/stats
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
+
 
 ## Database Models Used
 
@@ -36,6 +37,7 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
+
 
 <!-- END AUTO-GENERATED -->
 
@@ -61,6 +63,6 @@ No related pages yet
 
 ## Change History
 
-| Date       | Change                   | Author             |
-| ---------- | ------------------------ | ------------------ |
+| Date | Change | Author |
+|------|--------|--------|
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

@@ -1310,3 +1310,14 @@
 - **Status**: Active (conditional)
 - **Registered**: Conditional
 - **Last Verified**: 2026-03-17
+
+### ROUTE-112: Mobile Photo-to-Order
+
+- **File**: `apps/backend/src/api/routes/mobile/guest_orders.py`
+- **Prefix**: /api
+- **Endpoints**: POST /mobile/photo-upload, POST /mobile/guest-orders, GET /guest/order/{token}, POST /guest/order/{token}/approve, POST /guest/order/{token}/decline, GET /mobile/customer-links, POST /mobile/customer-links
+- **Count**: 7
+- **Auth**: JWT Required (tradesperson endpoints), Public (guest endpoints)
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-24
