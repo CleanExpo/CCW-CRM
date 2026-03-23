@@ -16,6 +16,7 @@ import { QuoteCopilotChat } from '@/components/ai/QuoteCopilotChat';
 import { useToast } from '@/hooks/use-toast';
 import { Quote } from './types';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -41,6 +42,9 @@ export default function QuotesPage() {
   const { toast } = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
@@ -52,9 +56,12 @@ export default function QuotesPage() {
   const loadQuotes = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<PaginatedResponse>('/api/quotes?page=1&page_size=50');
+      const response = await apiClient.get<PaginatedResponse>(
+        `/api/quotes?page=${page}&page_size=${pageSize}`
+      );
       setQuotes(response.items);
       setTotal(response.total);
+      setTotalPages(response.total_pages);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to load quotes';
       console.error('Failed to load quotes:', error);
@@ -69,7 +76,7 @@ export default function QuotesPage() {
       setLoading(false);
       setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
-  }, [toast]);
+  }, [page, pageSize, toast]);
 
   useEffect(() => {
     loadQuotes();
@@ -360,6 +367,21 @@ export default function QuotesPage() {
                   },
                 ]}
               />
+            )}
+            {totalPages > 1 && (
+              <div className="mt-4">
+                <PaginationControls
+                  currentPage={page}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  totalItems={total}
+                  onPageChange={setPage}
+                  onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setPage(1);
+                  }}
+                />
+              </div>
             )}
           </CardContent>
         </Card>

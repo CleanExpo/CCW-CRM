@@ -2,6 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -125,6 +136,7 @@ export default function WarehouseOpsPage() {
     reference: '',
   });
   const [isWbTransferring, setIsWbTransferring] = useState(false);
+  const [wbTransferConfirmOpen, setWbTransferConfirmOpen] = useState(false);
   const [recentAdjustments, setRecentAdjustments] = useState<StockAdjustmentRecord[]>([]);
   const [recentWbTransfers, setRecentWbTransfers] = useState<StockTransferRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -1118,9 +1130,37 @@ export default function WarehouseOpsPage() {
                       }
                     />
                   </div>
-                  <Button onClick={handleWbTransfer} disabled={isWbTransferring} className="w-full">
-                    {isWbTransferring ? 'Syncing...' : 'Submit Transfer'}
-                  </Button>
+                  <AlertDialog open={wbTransferConfirmOpen} onOpenChange={setWbTransferConfirmOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button disabled={isWbTransferring} className="w-full">
+                        {isWbTransferring ? 'Syncing...' : 'Submit Transfer'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Stock Transfer</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Transfer {wbTransferForm.quantity} unit
+                          {wbTransferForm.quantity !== 1 ? 's' : ''} of{' '}
+                          <strong>{wbTransferForm.sku || wbTransferForm.product_id}</strong> from{' '}
+                          <strong>{wbTransferForm.from_location_id}</strong> to{' '}
+                          <strong>{wbTransferForm.to_location_id}</strong>. This action cannot be
+                          undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            setWbTransferConfirmOpen(false);
+                            handleWbTransfer();
+                          }}
+                        >
+                          Confirm Transfer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardContent>
               </Card>
             </div>

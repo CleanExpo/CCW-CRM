@@ -42,6 +42,7 @@ import { slaApi } from '@/lib/api/sla';
 import type { Approval, ApprovalStep, CreateApprovalRequest } from '@/lib/api/approvals';
 import type { SLAInstance } from '@/lib/api/sla';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 
 const STATUS_CONFIG: Record<
   string,
@@ -458,6 +459,7 @@ export default function ApprovalsPage() {
   const { toast } = useToast();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -468,24 +470,26 @@ export default function ApprovalsPage() {
 
   const { state: searchState, updateField } = useSearchState({
     key: 'approvals-list',
-    defaultState: { page: 1, statusFilter: 'all', typeFilter: 'all' },
+    defaultState: { page: 1, pageSize: 50, statusFilter: 'all', typeFilter: 'all' },
   });
 
   const statusFilter = (searchState.statusFilter as string) ?? 'all';
   const typeFilter = (searchState.typeFilter as string) ?? 'all';
   const page = (searchState.page as number) ?? 1;
+  const pageSize = (searchState.pageSize as number) ?? 50;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await approvalsApi.list({
         page,
-        page_size: 50,
+        page_size: pageSize,
         status_filter: statusFilter !== 'all' ? statusFilter : undefined,
         approval_type: typeFilter !== 'all' ? typeFilter : undefined,
       });
       setApprovals(res.data);
       setTotal(res.total);
+      setTotalPages(res.total_pages);
     } catch (error: unknown) {
       toast({
         variant: 'destructive',
@@ -495,7 +499,7 @@ export default function ApprovalsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, typeFilter, toast]);
+  }, [page, pageSize, statusFilter, typeFilter, toast]);
 
   // Load SLA instances — best-effort, silently swallowed on error
   const loadSlaInstances = useCallback(async () => {
@@ -745,6 +749,20 @@ export default function ApprovalsPage() {
           })
         )}
       </div>
+
+      {totalPages > 1 && (
+        <PaginationControls
+          currentPage={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={total}
+          onPageChange={(p) => updateField('page', p)}
+          onPageSizeChange={(size) => {
+            updateField('pageSize', size);
+            updateField('page', 1);
+          }}
+        />
+      )}
 
       {/* Dialogs */}
       <ReviewStepDialog
