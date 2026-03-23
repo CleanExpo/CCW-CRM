@@ -723,6 +723,15 @@ try:
 except (ImportError, AttributeError) as e:
     logger.warning("Mobile order routes not available", error=str(e))
 
+# Shadow / Observation Mode (1-month parallel observation alongside client's live system)
+try:
+    from src.api.routes import shadow_mode, shadow_analytics
+    import src.db.shadow_session_models as _shadow_session_models  # noqa: F401 - registers tables
+    app.include_router(shadow_mode.router, tags=["Shadow Mode"])
+    app.include_router(shadow_analytics.router, tags=["Shadow Analytics"])
+except (ImportError, AttributeError) as e:
+    logger.warning("Shadow mode routes not available", error=str(e))
+
 # Real-Time Infrastructure - SSE Streams (Phase 4)
 from src.api.routes import dashboard_stream, inventory_stream
 

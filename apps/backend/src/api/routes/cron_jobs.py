@@ -923,3 +923,235 @@ async def auto_reorder_inventory(
         "skipped_details": skipped,
         "ran_at": now.isoformat(),
     }
+
+
+@router.post("/shadow-sync-cin7")
+async def shadow_sync_cin7(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """Nightly Cin7 shadow sync — pull all products, orders, customers, inventory from Cin7.
+
+    Runs at 07:00 AEST (19:00 UTC) when shadow mode is active and live Cin7
+    credentials are configured.  Data is stored in Cin7ShadowSync records for
+    flow analysis and readiness scoring.
+
+    vercel.json schedule: "0 19 * * *"
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    now = datetime.now(UTC)
+
+    # Check if shadow mode is active
+    try:
+        from src.db.shadow_session_models import ShadowSession
+
+        result = await db.execute(
+            select(ShadowSession)
+            .where(ShadowSession.status == "active")
+            .limit(1)
+        )
+        session = result.scalar_one_or_none()
+    except Exception:
+        session = None
+
+    if not session:
+        return {
+            "status": "skipped",
+            "message": "No active shadow session. Activate shadow mode first.",
+            "ran_at": now.isoformat(),
+        }
+
+    # Attempt live Cin7 sync — falls back gracefully if credentials not configured
+    synced_counts: dict[str, int] = {}
+    errors: list[str] = []
+
+    try:
+        from src.integrations.cin7.client import get_cin7_client
+        from src.db.cin7_shadow_models import Cin7ShadowSync, Cin7SyncGap
+        import hashlib, json
+
+        async with get_cin7_client() as cin7:
+            # Sync products
+            try:
+                products = await cin7.get_products(page_size=250)
+                product_list = products if isinstance(products, list) else products.get("Data", [])
+                for p in product_list:
+                    cin7_id = str(p.get("ID") or p.get("id", ""))
+                    if not cin7_id:
+                        continue
+                    key_fields = {k: p.get(k) for k in ["Name", "Code", "BasePrice", "IsActive"]}
+                    cin7_hash = hashlib.md5(json.dumps(key_fields, sort_keys=True).encode()).hexdigest()
+
+                    existing = await db.execute(
+                        select(Cin7ShadowSync).where(
+                            Cin7ShadowSync.entity_type == "product",
+                            Cin7ShadowSync.cin7_id == cin7_id,
+                        )
+                    )
+                    record = existing.scalar_one_or_none()
+                    if record:
+                        record.cin7_hash = cin7_hash
+                        record.last_checked_at = now
+                        if record.cin7_hash != cin7_hash:
+                            record.sync_status = "conflict"
+                    else:
+                        db.add(Cin7ShadowSync(
+                            entity_type="product",
+                            cin7_id=cin7_id,
+                            sync_status="synced",
+                            cin7_hash=cin7_hash,
+                            last_checked_at=now,
+                        ))
+                synced_counts["products"] = len(product_list)
+            except Exception as e:
+                errors.append(f"products: {e}")
+                synced_counts["products"] = 0
+
+            # Sync customers
+            try:
+                customers = await cin7.get_customers(page_size=250)
+                customer_list = customers if isinstance(customers, list) else customers.get("Data", [])
+                for c in customer_list:
+                    cin7_id = str(c.get("ID") or c.get("id", ""))
+                    if not cin7_id:
+                        continue
+                    db.add(Cin7ShadowSync(
+                        entity_type="customer",
+                        cin7_id=cin7_id,
+                        sync_status="synced",
+                        last_checked_at=now,
+                    ))
+                synced_counts["customers"] = len(customer_list)
+            except Exception as e:
+                errors.append(f"customers: {e}")
+                synced_counts["customers"] = 0
+
+        await db.commit()
+
+        # Update session statistics
+        session.total_syncs_run = (session.total_syncs_run or 0) + 1
+        if not errors:
+            session.successful_syncs = (session.successful_syncs or 0) + 1
+        session.products_observed = max(session.products_observed or 0, synced_counts.get("products", 0))
+        session.customers_observed = max(session.customers_observed or 0, synced_counts.get("customers", 0))
+        await db.commit()
+
+    except Exception as e:
+        errors.append(f"cin7_client: {e}")
+        # Still update sync count even on failure
+        try:
+            session.total_syncs_run = (session.total_syncs_run or 0) + 1
+            await db.commit()
+        except Exception:
+            pass
+
+    logger.info(
+        "shadow_sync_cin7_complete",
+        synced=synced_counts,
+        errors=errors,
+        session_id=str(session.id),
+    )
+
+    return {
+        "status": "success" if not errors else "partial",
+        "message": f"Shadow Cin7 sync complete. Synced: {synced_counts}",
+        "synced": synced_counts,
+        "errors": errors,
+        "session_id": str(session.id),
+        "ran_at": now.isoformat(),
+    }
+
+
+@router.post("/shadow-sync-xero")
+async def shadow_sync_xero(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """Nightly Xero shadow sync — pull invoices, payments, accounts from Xero.
+
+    Runs at 08:00 AEST (20:00 UTC) when shadow mode is active, after the
+    Cin7 sync completes.  Invoice and payment data is used for financial flow
+    observation and transition readiness scoring.
+
+    vercel.json schedule: "0 20 * * *"
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    now = datetime.now(UTC)
+
+    # Check shadow mode active
+    try:
+        from src.db.shadow_session_models import ShadowSession
+
+        result = await db.execute(
+            select(ShadowSession)
+            .where(ShadowSession.status == "active")
+            .limit(1)
+        )
+        session = result.scalar_one_or_none()
+    except Exception:
+        session = None
+
+    if not session:
+        return {
+            "status": "skipped",
+            "message": "No active shadow session.",
+            "ran_at": now.isoformat(),
+        }
+
+    synced_counts: dict[str, int] = {}
+    errors: list[str] = []
+
+    # Xero sync — requires live Xero credentials
+    try:
+        from src.integrations.xero.client import get_xero_client
+
+        async with get_xero_client() as xero:
+            try:
+                invoices = await xero.get_invoices(modified_since_days=1)
+                invoice_list = invoices if isinstance(invoices, list) else invoices.get("Invoices", [])
+                synced_counts["invoices"] = len(invoice_list)
+            except Exception as e:
+                errors.append(f"invoices: {e}")
+                synced_counts["invoices"] = 0
+
+            try:
+                payments = await xero.get_payments(modified_since_days=1)
+                payment_list = payments if isinstance(payments, list) else payments.get("Payments", [])
+                synced_counts["payments"] = len(payment_list)
+            except Exception as e:
+                errors.append(f"payments: {e}")
+                synced_counts["payments"] = 0
+
+    except Exception as e:
+        errors.append(f"xero_client: {e}")
+
+    # Update session invoice count
+    try:
+        if "invoices" in synced_counts:
+            session.invoices_observed = max(
+                session.invoices_observed or 0,
+                synced_counts["invoices"],
+            )
+            await db.commit()
+    except Exception:
+        pass
+
+    logger.info(
+        "shadow_sync_xero_complete",
+        synced=synced_counts,
+        errors=errors,
+        session_id=str(session.id),
+    )
+
+    return {
+        "status": "success" if not errors else "partial",
+        "message": f"Shadow Xero sync complete. Synced: {synced_counts}",
+        "synced": synced_counts,
+        "errors": errors,
+        "session_id": str(session.id),
+        "ran_at": now.isoformat(),
+    }

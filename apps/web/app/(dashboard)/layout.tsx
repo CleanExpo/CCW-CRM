@@ -6,6 +6,7 @@ import { CommandPalette } from '@/components/ui/command-palette';
 import { WebSocketProvider } from '@/contexts/websocket-context';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { StaffCopilotWidget } from '@/components/ai/StaffCopilotWidget';
+import { ShadowModeBanner } from '@/components/layout/ShadowModeBanner';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <MobileNav />
 
         <div className="flex flex-1 flex-col">
+          {/* Shadow Mode Banner — shown when shadow observation is active */}
+          <ShadowModeBanner />
+
           {/* Desktop top bar with notification bell */}
           <header className="hidden h-12 shrink-0 items-center justify-end border-b px-6 md:flex">
             <NotificationBell />

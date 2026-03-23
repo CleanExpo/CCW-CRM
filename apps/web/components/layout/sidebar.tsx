@@ -48,6 +48,8 @@ import {
   Tag,
   Layers,
   Camera,
+  Eye,
+  UserCog,
 } from 'lucide-react';
 
 const navigation = [
@@ -97,6 +99,8 @@ const navigation = [
   { name: 'Approvals', href: '/approvals', icon: CheckCircle },
   { name: 'Monitoring', href: '/monitoring', icon: Activity },
   { name: 'Mobile Orders', href: '/settings/mobile', icon: Camera },
+  { name: 'Shadow Mode', href: '/settings/shadow', icon: Eye },
+  { name: 'Client Onboarding', href: '/settings/onboarding', icon: UserCog },
   { name: 'Settings', href: '/settings/integrations', icon: Settings },
 ];
 
