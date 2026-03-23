@@ -31,6 +31,40 @@ State files in .claude/memory/ — read these before every major decision:
 4. **10x Health Check Law**: Run /health-check-10x after every major change.
 5. **Smart-Not-Fast Law**: /plan → approve → implement → /test → report. Always.
 
+## Obsidian Vault (Living Documentation)
+
+This project uses an **auto-generated Obsidian knowledge graph** at `.obsidian-vault/` for living documentation:
+
+- **Auto-generated docs**: 225+ entity docs with YAML frontmatter (routes, pages, models, components)
+- **Bidirectional links**: Wikilinks connect routes ↔ pages ↔ models ↔ integrations
+- **Graph visualization**: Visual impact analysis (see what breaks if you change X)
+- **Drift prevention**: Pre-commit hooks block commits with undocumented files
+- **Sync command**: `/sync-vault` or `python scripts/vault-generator.py --entity-types all`
+
+**Quick usage:**
+
+```bash
+# Sync vault after code changes (incremental, < 5s)
+python scripts/vault-generator.py --entity-types routes,pages --incremental
+
+# Detect drift (ghost entries, undocumented files)
+python scripts/audit-vault.py
+
+# Query vault (find routes using specific model)
+# Open .obsidian-vault/ in Obsidian, run Dataview queries in _index/
+```
+
+**Vault structure:**
+
+- `routes/` — 121 route docs (ROUTE-XXX-\*.md)
+- `pages/` — 76 page docs (PAGE-XXX-\*.md)
+- `models/` — 28 model docs (MODEL-XXX-\*.md)
+- `_index/` — Pre-built Dataview queries (stale-docs, orphaned-routes, model-usage)
+- `catalogs/` → symlink to `docs/catalogs/` (single source of truth)
+- `memory/` → symlink to `.claude/memory/` (state files)
+
+**Before adding routes/pages/models**: Check vault + catalogs. **After adding**: Run `/sync-vault`.
+
 ---
 
 # CCW-ERP-CRM - Architecture Guide for Development

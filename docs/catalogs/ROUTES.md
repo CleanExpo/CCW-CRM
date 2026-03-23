@@ -8,6 +8,8 @@
 
 # Source: apps/backend/src/api/routes/
 
+# Obsidian Vault: Synced 2026-03-24 | 121 route docs | Run `python scripts/audit-vault.py` to verify
+
 ---
 
 ## Route Entries

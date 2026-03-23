@@ -6,6 +6,8 @@
 
 # Source: apps/web/app/
 
+# Obsidian Vault: Synced 2026-03-24 | 76 page docs | Run `python scripts/audit-vault.py` to verify
+
 ---
 
 ## Page Entries
