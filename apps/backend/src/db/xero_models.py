@@ -3,8 +3,8 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .models_base import Base
@@ -37,7 +37,7 @@ class XeroConnection(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     # Scopes granted
-    scopes: Mapped[dict] = mapped_column(JSON, nullable=False, default=list)
+    scopes: Mapped[dict] = mapped_column(JSONB, nullable=False, default=list)
 
     # Connection status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

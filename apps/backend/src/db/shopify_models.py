@@ -6,8 +6,8 @@ Models for storing Shopify connection details and sync state.
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .models_base import Base  # Use existing Base class
@@ -49,8 +49,8 @@ class ShopifyConnection(Base):
     email: Mapped[str | None] = mapped_column(String(255))
     phone: Mapped[str | None] = mapped_column(String(50))
 
-    # Sync settings (JSON)
-    sync_settings: Mapped[dict | None] = mapped_column(JSON)
+    # Sync settings (JSONB)
+    sync_settings: Mapped[dict | None] = mapped_column(JSONB)
     # Example: {"auto_import_orders": true, "auto_sync_inventory": true, "inventory_location_id": 123}  # noqa: E501
 
     # Timestamps
@@ -106,7 +106,7 @@ class ShopifyProductMapping(Base):
     )  # to_shopify, from_shopify
 
     # Shopify data snapshot (for comparison)
-    shopify_data: Mapped[dict | None] = mapped_column(JSON)
+    shopify_data: Mapped[dict | None] = mapped_column(JSONB)
     # Example: {"title": "...", "price": "99.99", "inventory_quantity": 10}
 
     # Timestamps
@@ -171,7 +171,7 @@ class ShopifyOrderMapping(Base):
     # fulfilled, partial, null, etc.
 
     # Shopify data snapshot
-    shopify_data: Mapped[dict | None] = mapped_column(JSON)
+    shopify_data: Mapped[dict | None] = mapped_column(JSONB)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -213,8 +213,8 @@ class ShopifyWebhookLog(Base):
     shop_domain: Mapped[str] = mapped_column(String(255), index=True)
 
     # Request details
-    payload: Mapped[dict] = mapped_column(JSON)
-    headers: Mapped[dict | None] = mapped_column(JSON)
+    payload: Mapped[dict] = mapped_column(JSONB)
+    headers: Mapped[dict | None] = mapped_column(JSONB)
 
     # Processing state
     processed: Mapped[bool] = mapped_column(Boolean, default=False)
