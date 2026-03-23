@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
   experimental: {
     typedRoutes: false,
   },
-  // Enable source maps for production (Sentry needs these)
-  productionBrowserSourceMaps: true,
+  // Disable browser source maps in production (Sentry uses server-side upload only)
+  productionBrowserSourceMaps: false,
   images: {
     remotePatterns: [
       {

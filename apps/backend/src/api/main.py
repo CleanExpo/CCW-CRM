@@ -115,6 +115,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging(debug=settings.debug)
     logger.info("Starting application", environment=settings.environment)
 
+    # Validate production secrets at startup — fail fast on misconfiguration
+    secret_issues = settings.validate_production_secrets()
+    if secret_issues:
+        for issue in secret_issues:
+            logger.error("Production secret misconfiguration", issue=issue)
+        if settings.is_production:
+            raise RuntimeError(
+                f"Production startup blocked — {len(secret_issues)} secret(s) misconfigured: "
+                + "; ".join(secret_issues)
+            )
+
     # Initialize Sentry for error tracking
     try:
         from src.integrations.sentry_client import initialize_sentry
