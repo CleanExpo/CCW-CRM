@@ -14,6 +14,7 @@ from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.models import User
 from src.db.pos_models import BankAccount, BankFeed
+from src.db.webhook_models import WebhookEvent, WebhookStatus
 from src.monitoring import metrics
 from src.services.bank_feed_service import BankFeedService
 from src.services.reconciliation_alerts import ReconciliationAlertsService
@@ -91,14 +92,14 @@ async def sync_bank_feeds(
             return BankFeedSyncResponse(**result)
         else:
             # Sync all active accounts
-            result = await db.execute(
+            accounts_result = await db.execute(
                 select(BankAccount).where(
                     BankAccount.is_active == True,  # noqa: E712
                     BankAccount.feed_provider.isnot(None),
                     BankAccount.feed_provider != "manual",
                 )
             )
-            accounts = result.scalars().all()
+            accounts = accounts_result.scalars().all()
 
             total_transactions = 0
             successful_syncs = 0
@@ -119,7 +120,7 @@ async def sync_bank_feeds(
                 except Exception as e:
                     failed_syncs += 1
                     # Track failed sync
-                    metrics.bank_feed_sync_failures.labels(
+                    metrics.bank_feed_sync_failure.labels(
                         provider=account.feed_provider or "xero"
                     ).inc()
                     logger.error(
@@ -579,7 +580,7 @@ async def export_reconciliation_data(
     start_date: date | None = Query(None, description="Start date"),
     end_date: date | None = Query(None, description="End date"),
     status: str | None = Query(None, description="matched, unmatched, all"),
-) -> dict:
+):
     """
     Export reconciliation data as CSV.
 
@@ -631,10 +632,10 @@ async def export_reconciliation_data(
         amount = float(feed.credit) if feed.credit else float(-feed.debit) if feed.debit else 0
         discrepancy = ""
 
-        if feed.pos_transaction_id:
+        if feed.matched_pos_transaction_id:
             # Get POS transaction to calculate discrepancy
             pos_result = await db.execute(
-                select(POSTransaction).where(POSTransaction.id == feed.pos_transaction_id)
+                select(POSTransaction).where(POSTransaction.id == feed.matched_pos_transaction_id)
             )
             pos_trans = pos_result.scalar_one_or_none()
             if pos_trans:
@@ -645,7 +646,7 @@ async def export_reconciliation_data(
             str(feed.id),
             feed.description,
             f"{amount:.2f}",
-            str(feed.pos_transaction_id) if feed.pos_transaction_id else "",
+            str(feed.matched_pos_transaction_id) if feed.matched_pos_transaction_id else "",
             feed.match_status,
             discrepancy,
             feed.reference or "",
@@ -673,6 +674,7 @@ class WebhookPayload(BaseModel):
     event_type: str = Field(..., description="Event type (e.g., 'transaction.created')")
     data: dict = Field(..., description="Event data from provider")
     signature: str | None = Field(None, description="HMAC signature for verification")
+    event_id: str | None = Field(None, description="Provider's unique event ID for idempotency")
 
 
 @router.post("/webhook/{provider}")
@@ -734,6 +736,26 @@ async def bank_feed_webhook(
             logger.warning("Invalid webhook signature")
             raise HTTPException(status_code=401, detail="Invalid signature")
 
+    # Idempotency: skip duplicate events if event_id provided
+    if payload.event_id:
+        existing = await db.execute(
+            select(WebhookEvent).where(
+                WebhookEvent.source == f"bank_feed_{provider}",
+                WebhookEvent.event_id == payload.event_id,
+            )
+        )
+        if existing.scalar_one_or_none() is not None:
+            logger.info(
+                "Duplicate bank feed webhook — skipping",
+                provider=provider,
+                event_id=payload.event_id,
+            )
+            return {
+                "status": "duplicate",
+                "event_id": payload.event_id,
+                "event_type": payload.event_type,
+            }
+
     # Trigger immediate sync for this account
     try:
         service = BankFeedService(db)
@@ -753,6 +775,18 @@ async def bank_feed_webhook(
             account_id=str(account.id),
             transactions_synced=sync_result["transactions_synced"],
         )
+
+        # Persist event for idempotency (only after successful sync)
+        if payload.event_id:
+            event_record = WebhookEvent(
+                source=f"bank_feed_{provider}",
+                event_type=payload.event_type,
+                event_id=payload.event_id,
+                payload=payload.data,
+                status=WebhookStatus.COMPLETED.value,
+            )
+            db.add(event_record)
+            await db.commit()
 
         # Track webhook success metric
         metrics.bank_feed_webhook_received.labels(provider=provider).inc()

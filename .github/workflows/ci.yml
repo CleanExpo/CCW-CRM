@@ -83,10 +83,9 @@ jobs:
         working-directory: apps/backend
         run: uv run ruff check src/
 
-      # Type checking (enable when mypy errors are fixed)
-      # - name: Type check with mypy
-      #   working-directory: apps/backend
-      #   run: uv run mypy src/
+      - name: Type check with mypy
+        working-directory: apps/backend
+        run: uv run mypy src/ --ignore-missing-imports
 
       - name: Run database migrations
         working-directory: apps/backend

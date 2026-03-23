@@ -616,7 +616,7 @@ async def get_pending_approvals_v2(
     Returns list of pending approvals with SLA deadlines and priority.
     Designed for approval dashboard widgets.
     """
-    from decimal import Decimal as D
+    from decimal import Decimal
     from uuid import uuid4
 
     # Mock implementation (in production, query from Approval + ApprovalStep tables)
@@ -629,7 +629,7 @@ async def get_pending_approvals_v2(
             subject="PO-20260317-0001: Office Supplies ($1,250)",
             requested_by="Sarah Johnson",
             requested_at=current_time - timedelta(hours=3),
-            amount=D("1250.00"),
+            amount=Decimal("1250.00"),
             priority="medium",
             sla_deadline=current_time + timedelta(hours=21),
         ),
@@ -639,7 +639,7 @@ async def get_pending_approvals_v2(
             subject="Invoice #INV-2026-0542: Client XYZ ($15,000)",
             requested_by="Mike Chen",
             requested_at=current_time - timedelta(days=2),
-            amount=D("15000.00"),
+            amount=Decimal("15000.00"),
             priority="urgent",
             sla_deadline=current_time - timedelta(hours=2),  # Overdue!
         ),
@@ -649,7 +649,7 @@ async def get_pending_approvals_v2(
             subject="Travel Expenses - Q1 2026 ($850)",
             requested_by="Emily Davis",
             requested_at=current_time - timedelta(hours=8),
-            amount=D("850.00"),
+            amount=Decimal("850.00"),
             priority="low",
             sla_deadline=current_time + timedelta(hours=40),
         ),
