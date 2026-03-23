@@ -756,3 +756,170 @@ async def retry_dead_letter_webhook(
         "message": f"Webhook retry {retry_result['status']}",
         "result": retry_result,
     }
+
+
+# ============================================================================
+# Sprint 4: Inventory Auto-Reorder Cron Job
+# ============================================================================
+
+
+@router.post("/auto-reorder-inventory")
+async def auto_reorder_inventory(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """
+    Scan inventory for products below reorder point and create draft POs.
+
+    For each product where stock < reorder_point:
+    - Looks up the matching ReorderRule for that product + location
+    - Creates a draft PurchaseOrder against the linked supplier
+    - Adds a PurchaseOrderItem with the default reorder quantity
+
+    Schedule: daily at 7 AM AEST (0 21 * * * UTC)
+
+    vercel.json:
+    ```json
+    {
+      "crons": [
+        {
+          "path": "/api/cron/auto-reorder-inventory",
+          "schedule": "0 21 * * *"
+        }
+      ]
+    }
+    ```
+
+    Returns:
+        Summary of POs created and products skipped.
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    from decimal import Decimal
+
+    from src.db.demo_models import Product
+    from src.db.inventory_models import PurchaseOrder, PurchaseOrderItem, ReorderRule
+
+    now = datetime.now(UTC)
+    po_sequence_base = int(now.strftime("%Y%m%d"))
+
+    # 1. Find products below their reorder point
+    stmt = select(Product).where(
+        Product.reorder_point.isnot(None),
+        Product.stock < Product.reorder_point,
+        Product.is_active == True,  # noqa: E712
+    )
+    result = await db.execute(stmt)
+    low_stock_products = result.scalars().all()
+
+    if not low_stock_products:
+        logger.info("auto_reorder_cron: no products below reorder point")
+        return {
+            "status": "success",
+            "message": "No products below reorder point",
+            "pos_created": 0,
+            "products_checked": 0,
+        }
+
+    logger.info("auto_reorder_cron: found low-stock products", count=len(low_stock_products))
+
+    created_pos: list[dict] = []
+    skipped: list[dict] = []
+
+    for i, product in enumerate(low_stock_products):
+        # 2. Look up enabled ReorderRule for this product
+        rule_result = await db.execute(
+            select(ReorderRule).where(
+                ReorderRule.product_id == product.id,
+                ReorderRule.is_enabled == True,  # noqa: E712
+            )
+        )
+        rule = rule_result.scalars().first()
+
+        if not rule or not rule.supplier_id:
+            skipped.append({"sku": product.sku, "reason": "no enabled reorder rule or supplier"})
+            continue
+
+        # 3. Determine order quantity — target: bring stock up to 2× reorder_point
+        reorder_point = product.reorder_point or 0
+        qty_to_order = max(1, (reorder_point * 2) - (product.stock or 0))
+
+        # 4. Create draft PO
+        po_number = f"AUTO-PO-{po_sequence_base}-{i + 1:03d}"
+        expected_delivery = now + timedelta(days=rule.lead_time_days)
+
+        # Check for duplicate PO number (same product reordered today)
+        existing_po = await db.execute(
+            select(PurchaseOrder).where(PurchaseOrder.po_number == po_number)
+        )
+        if existing_po.scalar_one_or_none():
+            skipped.append({"sku": product.sku, "reason": f"PO {po_number} already exists today"})
+            continue
+
+        unit_cost = Decimal(str(product.cost or product.price or 0))
+        line_subtotal = (unit_cost * Decimal(qty_to_order)).quantize(Decimal("0.01"))
+        gst = (line_subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
+        po_total = line_subtotal + gst
+
+        po = PurchaseOrder(
+            po_number=po_number,
+            supplier_id=rule.supplier_id,
+            delivery_location=rule.location,
+            status="draft",
+            order_date=now,
+            expected_delivery_date=expected_delivery,
+            subtotal=line_subtotal,
+            tax=gst,
+            total=po_total,
+            notes=f"Auto-created by reorder cron — {product.sku} stock={product.stock} reorder_point={product.reorder_point}",
+        )
+        db.add(po)
+        await db.flush()
+
+        po_item = PurchaseOrderItem(
+            purchase_order_id=po.id,
+            product_id=product.id,
+            quantity=qty_to_order,
+            quantity_received=0,
+            unit_cost=unit_cost,
+            subtotal=line_subtotal,
+        )
+        db.add(po_item)
+
+        created_pos.append({
+            "po_number": po_number,
+            "sku": product.sku,
+            "product_name": product.name,
+            "current_stock": product.stock,
+            "reorder_point": product.reorder_point,
+            "qty_ordered": qty_to_order,
+            "supplier_id": str(rule.supplier_id),
+            "total": float(po_total),
+        })
+
+        logger.info(
+            "auto_reorder_po_created",
+            po_number=po_number,
+            sku=product.sku,
+            qty=qty_to_order,
+        )
+
+    await db.commit()
+
+    logger.info(
+        "auto_reorder_cron_complete",
+        pos_created=len(created_pos),
+        skipped=len(skipped),
+    )
+
+    return {
+        "status": "success",
+        "message": f"Created {len(created_pos)} draft POs for {len(low_stock_products)} low-stock products",
+        "products_checked": len(low_stock_products),
+        "pos_created": len(created_pos),
+        "skipped": len(skipped),
+        "purchase_orders": created_pos,
+        "skipped_details": skipped,
+        "ran_at": now.isoformat(),
+    }

@@ -1,8 +1,10 @@
 """API routes for service request management."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
@@ -10,6 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_db
 from src.db.service_models import RequestType, ServiceRequest, ServiceStatus
+from src.db.workflow_models import SLAInstance, SLARule
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/service-requests", tags=["Service Requests"])
 
@@ -86,6 +91,35 @@ async def create_service_request(
     db.add(service_request)
     await db.commit()
     await db.refresh(service_request)
+
+    # Auto-create SLA instance if a matching rule exists for service_request entity type
+    try:
+        sla_rule_result = await db.execute(
+            select(SLARule).where(
+                SLARule.entity_type == "service_request",
+                SLARule.is_active == True,  # noqa: E712
+            ).limit(1)
+        )
+        sla_rule = sla_rule_result.scalar_one_or_none()
+        if sla_rule:
+            from datetime import timedelta
+            sla_instance = SLAInstance(
+                sla_rule_id=sla_rule.id,
+                entity_id=service_request.id,
+                entity_type="service_request",
+                deadline=datetime.now(UTC) + timedelta(hours=sla_rule.sla_hours),
+            )
+            db.add(sla_instance)
+            await db.commit()
+            logger.info(
+                "service_request_sla_created",
+                request_id=str(service_request.id),
+                sla_rule_id=str(sla_rule.id),
+                sla_hours=sla_rule.sla_hours,
+            )
+    except Exception as e:
+        # SLA creation is non-critical — log and continue
+        logger.warning("service_request_sla_creation_failed", error=str(e))
 
     return ServiceRequestResponse.model_validate(service_request)
 
@@ -230,3 +264,61 @@ async def delete_service_request(
 
     await db.delete(service_request)
     await db.commit()
+
+
+@router.get("/{request_id}/sla")
+async def get_service_request_sla(
+    request_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """
+    Get SLA status for a service request.
+
+    Returns active and breached SLA deadlines linked to this service request.
+    Useful for the service requests table and detail page to show time remaining.
+    """
+    query = select(ServiceRequest).where(ServiceRequest.id == request_id)
+    result = await db.execute(query)
+    service_request = result.scalar_one_or_none()
+
+    if not service_request:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Service request {request_id} not found",
+        )
+
+    sla_result = await db.execute(
+        select(SLAInstance, SLARule)
+        .join(SLARule, SLAInstance.sla_rule_id == SLARule.id)
+        .where(SLAInstance.entity_id == request_id)
+        .order_by(SLAInstance.deadline.asc())
+    )
+    rows = sla_result.all()
+
+    now = datetime.now(UTC)
+    sla_items = []
+    for instance, rule in rows:
+        deadline_aware = instance.deadline
+        if deadline_aware.tzinfo is None:
+            from datetime import timezone
+            deadline_aware = deadline_aware.replace(tzinfo=timezone.utc)
+        minutes_remaining = int((deadline_aware - now).total_seconds() / 60)
+        sla_items.append({
+            "instance_id": str(instance.id),
+            "rule_name": rule.name,
+            "sla_hours": rule.sla_hours,
+            "deadline": instance.deadline.isoformat(),
+            "breached": instance.breached,
+            "breach_notified": instance.breach_notified,
+            "minutes_remaining": minutes_remaining,
+            "status": "breached" if instance.breached else (
+                "warning" if minutes_remaining < 60 else "on_track"
+            ),
+        })
+
+    return {
+        "service_request_id": str(request_id),
+        "sla_count": len(sla_items),
+        "has_breach": any(s["breached"] for s in sla_items),
+        "slas": sla_items,
+    }
