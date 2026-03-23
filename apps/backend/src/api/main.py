@@ -32,6 +32,7 @@ from .routes import (
     activities,  # CRM activities
     agents_monitor,  # Agent monitoring dashboard (UNI-1246)
     approvals,
+    audit_trail,  # Entity-level audit trail
     backorders,
     bank_feeds,
     billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
@@ -414,6 +415,7 @@ app.include_router(public_stats.router, tags=["Public"])
 app.include_router(prometheus_metrics.router, tags=["Monitoring"])  # Prometheus metrics
 app.include_router(config.router, tags=["Configuration"])
 app.include_router(approvals.router, tags=["Approvals"])
+app.include_router(audit_trail.router, tags=["Audit Trail"])
 # app.include_router(auth_signup.router, tags=["Signup"])  # TODO: auth_signup not implemented yet
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
