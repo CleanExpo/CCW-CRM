@@ -194,7 +194,7 @@ class Cin7JournalLine(Base):
     )
     account_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("cin7_chart_of_accounts.id"),
+        ForeignKey("cin7_chart_of_accounts.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
     )

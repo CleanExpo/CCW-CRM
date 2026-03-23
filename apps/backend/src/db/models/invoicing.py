@@ -46,10 +46,10 @@ class Invoice(Base):
         String(50), unique=True, nullable=False, index=True
     )
     order_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("orders.id"), nullable=True, index=True
+        ForeignKey("orders.id", ondelete="SET NULL"), nullable=True, index=True
     )
     customer_id: Mapped[UUID] = mapped_column(
-        ForeignKey("customers.id"), nullable=False, index=True
+        ForeignKey("customers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
 
     # Invoice details
@@ -77,7 +77,7 @@ class Invoice(Base):
         default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
     )
     created_by: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
     # Relationships
@@ -113,7 +113,7 @@ class InvoiceItem(Base):
 
     # Item details
     product_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("products.id"), nullable=True, index=True
+        ForeignKey("products.id", ondelete="SET NULL"), nullable=True, index=True
     )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -155,7 +155,7 @@ class InvoicePayment(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     invoice_id: Mapped[UUID] = mapped_column(
-        ForeignKey("invoices.id"), nullable=False, index=True
+        ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # Payment details
@@ -170,7 +170,7 @@ class InvoicePayment(Base):
     # Metadata
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC), nullable=False)
     created_by: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
     # Relationships

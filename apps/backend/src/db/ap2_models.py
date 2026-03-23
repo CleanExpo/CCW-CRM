@@ -176,7 +176,7 @@ class AP2Mandate(Base):
 
     # Chain references
     parent_mandate_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("ap2_mandates.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("ap2_mandates.id", ondelete="SET NULL"), nullable=True
     )
 
     # Expiry
@@ -247,7 +247,7 @@ class AP2Transaction(Base):
 
     # Order reference
     order_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("orders.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True
     )
 
     # Status tracking
@@ -316,10 +316,10 @@ class AP2VoiceSession(Base):
 
     # Order reference
     mandate_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("ap2_mandates.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("ap2_mandates.id", ondelete="SET NULL"), nullable=True
     )
     order_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("orders.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True
     )
 
     # Session lifecycle
@@ -381,10 +381,10 @@ class AP2AgentInteraction(Base):
 
     # Order reference
     mandate_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("ap2_mandates.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("ap2_mandates.id", ondelete="SET NULL"), nullable=True
     )
     order_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("orders.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True
     )
 
     # Performance tracking
@@ -436,10 +436,10 @@ class AP2WebhookLog(Base):
 
     # Related entities
     mandate_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("ap2_mandates.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("ap2_mandates.id", ondelete="SET NULL"), nullable=True
     )
     transaction_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("ap2_transactions.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("ap2_transactions.id", ondelete="SET NULL"), nullable=True
     )
 
     # Timestamps

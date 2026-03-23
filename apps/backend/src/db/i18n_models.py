@@ -149,7 +149,7 @@ class TranslationQueue(Base):
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     entity_type = Column(String(50), nullable=False, index=True)
     entity_id = Column(PGUUID(as_uuid=True), nullable=False, index=True)
-    target_language = Column(String(10), ForeignKey("languages.code"), nullable=False)
+    target_language = Column(String(10), ForeignKey("languages.code", ondelete="RESTRICT"), nullable=False)
     status = Column(String(50), nullable=False, default="pending", index=True)
     priority = Column(Integer, nullable=False, default=5)
     error_message = Column(Text)

@@ -303,7 +303,7 @@ class PurchaseOrder(Base):
     id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
     po_number: str = Column(String(50), unique=True, nullable=False, index=True)
     supplier_id: UUID = Column(
-        PostgresUUID(as_uuid=True), ForeignKey("suppliers.id"), nullable=False, index=True
+        PostgresUUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     delivery_location: str = Column(String(50), nullable=False, index=True)  # brisbane, sydney, melbourne  # noqa: E501
     status: str = Column(String(50), default="draft", nullable=False, index=True)
@@ -329,7 +329,7 @@ class PurchaseOrder(Base):
         DateTime(timezone=True), onupdate=func.now(), nullable=True
     )
     created_by_id: UUID | None = Column(
-        PostgresUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+        PostgresUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
     # Relationships
@@ -354,7 +354,7 @@ class PurchaseOrderItem(Base):
         index=True,
     )
     product_id: UUID = Column(
-        PostgresUUID(as_uuid=True), ForeignKey("products.id"), nullable=False, index=True
+        PostgresUUID(as_uuid=True), ForeignKey("products.id", ondelete="RESTRICT"), nullable=False, index=True
     )
 
     quantity: int = Column(Integer, nullable=False)
@@ -385,10 +385,10 @@ class InboundShipment(Base):
     id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
     shipment_number: str = Column(String(50), unique=True, nullable=False, index=True)
     purchase_order_id: UUID | None = Column(
-        PostgresUUID(as_uuid=True), ForeignKey("purchase_orders.id"), nullable=True, index=True
+        PostgresUUID(as_uuid=True), ForeignKey("purchase_orders.id", ondelete="SET NULL"), nullable=True, index=True
     )
     supplier_id: UUID = Column(
-        PostgresUUID(as_uuid=True), ForeignKey("suppliers.id"), nullable=False, index=True
+        PostgresUUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
 
     carrier_name: str | None = Column(String(100), nullable=True)
@@ -432,7 +432,7 @@ class OutboundShipment(Base):
     id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
     shipment_number: str = Column(String(50), unique=True, nullable=False, index=True)
     order_id: UUID = Column(
-        PostgresUUID(as_uuid=True), ForeignKey("orders.id"), nullable=False, index=True
+        PostgresUUID(as_uuid=True), ForeignKey("orders.id", ondelete="RESTRICT"), nullable=False, index=True
     )
 
     carrier_name: str | None = Column(String(100), nullable=True)
