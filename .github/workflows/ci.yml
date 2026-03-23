@@ -97,7 +97,7 @@ jobs:
       - name: Run tests with coverage
         id: test
         working-directory: apps/backend
-        run: uv run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=40 -v
+        run: uv run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=50 -v
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
           REDIS_URL: redis://localhost:6379/0
