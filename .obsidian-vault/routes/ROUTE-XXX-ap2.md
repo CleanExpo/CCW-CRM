@@ -1,0 +1,69 @@
+---
+type: 'route'
+id: 'ROUTE-XXX'
+file: 'apps/backend/src/api/routes/integrations/ap2.py'
+prefix: '/api/integrations/ap2'
+domain: 'CRM'
+auth: 'JWT'
+status: 'Active'
+endpoint_count: 0
+registered: true
+links: []
+last_verified: '2026-03-23'
+---
+
+# ROUTE-XXX: Ap2
+
+## Overview
+
+Google Agent Payments Protocol (AP2) API endpoints.
+
+Provides API routes for AP2 integration including:
+
+- Mandate creation and verification
+- Payment processing
+- Voice commerce
+- Agent-to-agent commerce
+- Webhook handling
+
+<!-- AUTO-GENERATED -->
+
+## Endpoints
+
+## Database Models Used
+
+See code for model references
+
+## Dependencies
+
+- External APIs: None
+- Internal services: Database
+- Background tasks: None
+
+<!-- END AUTO-GENERATED -->
+
+<!-- HUMAN-CURATED -->
+
+## Architecture Notes
+
+Add notes about design decisions, gotchas, or special considerations here.
+
+## Testing Notes
+
+Add notes about test coverage, edge cases, or manual testing steps here.
+
+## Known Issues
+
+Document any known issues, TODOs, or technical debt here.
+
+<!-- END HUMAN-CURATED -->
+
+## Related Pages
+
+No related pages yet
+
+## Change History
+
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
+| 2026-03-23 | Auto-generated from code | vault-generator.py |
