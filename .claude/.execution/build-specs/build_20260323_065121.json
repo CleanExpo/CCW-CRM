@@ -1,0 +1,31 @@
+{
+  "task_id": "build_20260323_065121",
+  "created_at": "2026-03-23T06:51:21.574031+00:00",
+  "stage": "failed",
+  "spec": {
+    "what": "Add something",
+    "where": "somewhere",
+    "who": "user",
+    "when": "sometime",
+    "should_see": ["something appears"],
+    "dont_do": [],
+    "success": []
+  },
+  "confidence": 0.35000000000000003,
+  "warnings": [
+    "Only 1 observable outcome specified. Consider adding more specific behaviors.",
+    "WHERE field is vague. Specify the exact page or component.",
+    "WHAT field is very brief. Consider adding more detail.",
+    "WHO field is generic. Specify the exact user role.",
+    "No success criteria specified. Consider adding measurable outcomes."
+  ],
+  "suggestions": [
+    "Consider adding constraints (DON'T DO) to avoid common pitfalls.",
+    "Specify exact URL path in WHERE field (e.g., '/products' instead of 'somewhere').",
+    "Provide more detail in your description. Include context about why this change is needed."
+  ],
+  "approved": false,
+  "approved_at": null,
+  "autonomous_task_id": null,
+  "error": "Rejected by user: Too vague, please be more specific about what and where"
+}

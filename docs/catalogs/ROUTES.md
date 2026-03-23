@@ -2,9 +2,9 @@
 
 # Last Updated: 2026-03-17
 
-# Total Route Files: 105
+# Total Route Files: 106
 
-# Total Endpoints: ~635 (across all route files)
+# Total Endpoints: ~640 (across all route files)
 
 # Source: apps/backend/src/api/routes/
 
@@ -445,12 +445,13 @@
 
 - **File**: `apps/backend/src/api/routes/invoices.py`
 - **Prefix**: /api
-- **Endpoints**: GET "", GET /reports/revenue, GET /reports/tax, GET /tax-rates, POST /from-order/{order_id}, GET /{id}, POST "", PUT /{id}, DELETE /{id}, POST /{id}/send, POST /{id}/cancel
-- **Count**: 11
+- **Endpoints**: GET "", GET /reports/revenue, GET /reports/tax, GET /tax-rates, POST /from-order/{order_id}, GET /{id}, POST "", PUT /{id}, DELETE /{id}, POST /{id}/send, POST /{id}/cancel, **POST /tax/calculate** (GAP-025)
+- **Count**: 12
 - **Auth**: JWT Required
-- **Status**: Active (UNI-173)
+- **Status**: Active (UNI-173, GAP-025)
 - **Registered**: Yes
 - **Last Verified**: 2026-03-17
+- **Notes**: `/tax/calculate` uses `tax_calculator.py` service for jurisdiction-aware tax calculation (AU GST, CA GST/PST/HST)
 
 ### ROUTE-039: Invoice Payments
 
@@ -462,6 +463,19 @@
 - **Status**: Active (UNI-173)
 - **Registered**: Yes
 - **Last Verified**: 2026-03-17
+
+### ROUTE-039A: Billing & Payment Methods
+
+- **File**: `apps/backend/src/api/routes/billing.py`
+- **Prefix**: /api/billing
+- **Endpoints**: POST /payment-methods (GAP-010), GET /payment-methods/enum (GAP-011), POST /dunning/send-letter (GAP-012), GET /subscription-health (GAP-013), POST /retry-failed-payment (GAP-014)
+- **Count**: 5
+- **Auth**: JWT Required
+- **Status**: Active (Phase 2 Batch 2A)
+- **Registered**: Yes
+- **Last Verified**: 2026-03-17
+- **Dependencies**: Uses `dunning.py` service (GAP-029) for automated overdue invoice reminders
+- **Notes**: `/dunning/send-letter` implements 4-level escalation (Friendly/Formal/Final/Collections). Mock payment processing - integrate with Stripe/PayPal in production.
 
 ### ROUTE-040: POS Transactions
 
@@ -485,7 +499,19 @@
 - **Registered**: Yes
 - **Last Verified**: 2026-03-17
 
-### ROUTE-042: Reconciliation Dashboard
+### ROUTE-042: Reconciliation (AI-Powered Matching)
+
+- **File**: `apps/backend/src/api/routes/reconciliation.py`
+- **Prefix**: /api
+- **Endpoints**: **GET /match-suggestions** (GAP-026), **POST /auto-match** (GAP-027)
+- **Count**: 2
+- **Auth**: JWT Required
+- **Status**: Active (GAP-026, GAP-027)
+- **Registered**: Yes
+- **Last Verified**: 2026-03-17
+- **Notes**: AI-powered invoice-payment matching with confidence scoring. `/match-suggestions` provides match candidates, `/auto-match` auto-reconciles high-confidence pairs (≥95%)
+
+### ROUTE-043: Reconciliation Dashboard
 
 - **File**: `apps/backend/src/api/routes/reconciliation_dashboard.py`
 - **Prefix**: /api
@@ -496,7 +522,7 @@
 - **Registered**: Yes
 - **Last Verified**: 2026-03-17
 
-### ROUTE-043: POS Xero Reconciliation
+### ROUTE-044: POS Xero Reconciliation
 
 - **File**: `apps/backend/src/api/routes/pos_xero_reconciliation.py`
 - **Prefix**: /api
@@ -507,7 +533,7 @@
 - **Registered**: Conditional (try/except)
 - **Last Verified**: 2026-03-17
 
-### ROUTE-044: Billing
+### ROUTE-045: Billing
 
 - **File**: `apps/backend/src/api/routes/billing.py`
 - **Prefix**: /api

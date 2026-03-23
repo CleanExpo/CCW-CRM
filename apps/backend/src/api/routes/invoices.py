@@ -6,6 +6,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -632,98 +633,114 @@ async def cancel_invoice(
 
 
 # ---------------------------------------------------------------------------
-# GAP-023: Tax Calculation
+# GAP-025 / RA-193: Tax Calculation (Batch 2D)
 # ---------------------------------------------------------------------------
 
+from src.services.tax_calculator import calculate_tax as calc_tax_pure
 
-class LineItemTax(BaseModel):
+
+class TaxLineItem(BaseModel):
     """Line item for tax calculation."""
 
-    description: str
-    quantity: int
-    unit_price: Decimal
-    tax_rate: Decimal = Decimal("10.00")  # Default GST
+    amount: Decimal = Field(description="Line item amount before tax")
+    quantity: int = Field(ge=1, description="Quantity")
+    is_tax_exempt: bool = Field(default=False, description="Whether item is tax exempt")
+    product_category: str | None = Field(default=None, description="Product category for exemption check")
 
 
 class TaxCalculationRequest(BaseModel):
     """Request for tax calculation."""
 
-    invoice_id: UUID | None = Field(None, description="Calculate tax for existing invoice")
-    line_items: list[LineItemTax] | None = Field(None, description="Or provide line items directly")
+    line_items: list[TaxLineItem] = Field(description="Line items to calculate tax for")
+    jurisdiction: str = Field(default="AU", description="Tax jurisdiction (AU, CA-ON, CA-BC, etc.)")
+    customer_type: str = Field(default="B2C", description="Customer type: B2C or B2B")
 
 
-class TaxBreakdown(BaseModel):
-    """Detailed tax breakdown."""
+class TaxLineItemResult(BaseModel):
+    """Tax calculation result for a single line item."""
 
-    gst: Decimal = Field(default=Decimal("0.00"), description="GST amount")
-    pst: Decimal = Field(default=Decimal("0.00"), description="PST amount (if applicable)")
-    other: Decimal = Field(default=Decimal("0.00"), description="Other taxes")
+    amount: Decimal
+    quantity: int
+    subtotal: Decimal
+    tax_amount: Decimal
+    total: Decimal
 
 
 class TaxCalculationResponse(BaseModel):
-    """Response from tax calculation."""
+    """Response from tax calculation using tax_calculator service."""
 
-    subtotal: Decimal
-    tax: Decimal
-    total: Decimal
-    breakdown: TaxBreakdown
+    subtotal: Decimal = Field(description="Total before tax")
+    tax_breakdown: dict[str, Decimal] = Field(description="Tax breakdown by type (GST, PST, HST)")
+    total_tax: Decimal = Field(description="Total tax amount")
+    grand_total: Decimal = Field(description="Subtotal + total tax")
+    line_items: list[TaxLineItemResult] = Field(description="Per-item breakdown")
 
 
 @router.post("/tax/calculate", response_model=TaxCalculationResponse)
-async def calculate_tax(
+async def calculate_tax_endpoint(
     request: TaxCalculationRequest,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> TaxCalculationResponse:
     """
-    Calculate GST/PST per line item.
+    Calculate GST/PST/HST tax for invoice line items (GAP-025).
 
-    Can either calculate for an existing invoice or for provided line items.
-    Returns subtotal, tax, total, and detailed breakdown.
+    Uses tax_calculator service for jurisdiction-aware tax calculation.
+    Supports Australia (GST 10%) and Canadian provinces (GST/PST/HST).
     """
-    if request.invoice_id:
-        # Load existing invoice
-        result = await db.execute(
-            select(Invoice)
-            .options(selectinload(Invoice.items))
-            .where(Invoice.id == request.invoice_id)
-        )
-        invoice = result.scalar_one_or_none()
+    # Calculate per-item results and accumulate tax
+    line_item_results = []
+    subtotal = Decimal("0.00")
+    total_gst = Decimal("0.00")
+    total_pst = Decimal("0.00")
+    total_hst = Decimal("0.00")
+    total_tax = Decimal("0.00")
 
-        if not invoice:
-            raise HTTPException(status_code=404, detail="Invoice not found")
+    is_b2b = request.customer_type.upper() == "B2B"
 
-        subtotal = invoice.subtotal
-        tax = invoice.tax_amount
-        total = invoice.total
+    for item in request.line_items:
+        # Calculate item subtotal
+        item_subtotal = item.amount * Decimal(str(item.quantity))
+        subtotal += item_subtotal
 
-    elif request.line_items:
-        # Calculate from provided line items
-        subtotal = Decimal("0.00")
-        tax = Decimal("0.00")
+        # Calculate tax for this line item (respects per-item category)
+        category = item.product_category or "general"
 
-        for item in request.line_items:
-            item_subtotal = Decimal(str(item.quantity)) * item.unit_price
-            item_tax = item_subtotal * (item.tax_rate / Decimal("100"))
-            subtotal += item_subtotal
-            tax += item_tax
-
-        total = subtotal + tax
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail="Must provide either invoice_id or line_items"
+        tax_result = calc_tax_pure(
+            subtotal=item_subtotal,
+            jurisdiction=request.jurisdiction,
+            product_category=category,
+            is_b2b=is_b2b,
         )
 
-    # For Australian context, all tax is GST
-    breakdown = TaxBreakdown(
-        gst=tax,
-        pst=Decimal("0.00"),
-        other=Decimal("0.00"),
-    )
+        # Accumulate tax by type
+        total_gst += tax_result.gst
+        total_pst += tax_result.pst
+        total_hst += tax_result.hst
+        total_tax += tax_result.total_tax
+
+        line_item_results.append(
+            TaxLineItemResult(
+                amount=item.amount,
+                quantity=item.quantity,
+                subtotal=item_subtotal,
+                tax_amount=tax_result.total_tax,
+                total=item_subtotal + tax_result.total_tax,
+            )
+        )
+
+    # Build tax breakdown from accumulated values
+    tax_breakdown: dict[str, Decimal] = {}
+    if total_gst > Decimal("0"):
+        tax_breakdown["GST"] = total_gst
+    if total_pst > Decimal("0"):
+        tax_breakdown["PST"] = total_pst
+    if total_hst > Decimal("0"):
+        tax_breakdown["HST"] = total_hst
 
     return TaxCalculationResponse(
         subtotal=subtotal,
-        tax=tax,
-        total=total,
-        breakdown=breakdown,
+        tax_breakdown=tax_breakdown,
+        total_tax=total_tax,
+        grand_total=subtotal + total_tax,
+        line_items=line_item_results,
     )

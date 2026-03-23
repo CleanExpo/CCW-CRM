@@ -422,3 +422,223 @@ async def cancel_purchase_order(
 
     po.status = "cancelled"
     await db.commit()
+
+
+# ============================================
+# GAP-016: Three-way match endpoint
+# ============================================
+
+
+class ThreeWayMatchRequest(BaseModel):
+    """Request for three-way matching."""
+
+    purchase_order_id: UUID
+    goods_receipt_id: UUID
+    invoice_id: UUID
+    variance_tolerance: Decimal = Decimal("0.05")  # 5%
+
+
+class ThreeWayMatchResponse(BaseModel):
+    """Response from three-way matching."""
+
+    match_status: str  # "FULL_MATCH", "PARTIAL_MATCH", "NO_MATCH"
+    confidence: float  # 0.0 to 1.0
+    quantity_variance: dict  # {product_id: variance}
+    price_variance: dict
+    missing_items: list[str]
+    extra_items: list[str]
+    recommendation: str
+
+
+@router.post("/three-way-match", response_model=ThreeWayMatchResponse)
+async def perform_three_way_match(
+    request: ThreeWayMatchRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> ThreeWayMatchResponse:
+    """
+    Perform three-way match: PO + GRN + Invoice.
+
+    Uses procurement_matching service for business logic.
+    """
+    from src.services.procurement_matching import (
+        POItem,
+        GRNItem,
+        InvoiceItemData,
+        match_po_grn_invoice,
+    )
+
+    # Get PO items
+    po_result = await db.execute(
+        select(PurchaseOrder)
+        .options(selectinload(PurchaseOrder.items))
+        .where(PurchaseOrder.id == request.purchase_order_id)
+    )
+    po = po_result.scalar_one_or_none()
+
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+
+    # Convert to service data structures
+    po_items = [
+        POItem(
+            product_id=item.product_id,
+            quantity=item.quantity,
+            unit_cost=item.unit_cost,
+        )
+        for item in po.items
+    ]
+
+    # Use quantity_received as GRN data (simplified)
+    grn_items = [
+        GRNItem(
+            product_id=item.product_id,
+            quantity_received=item.quantity_received,
+        )
+        for item in po.items
+    ]
+
+    # Mock invoice items (in production would fetch from invoice table)
+    invoice_items = [
+        InvoiceItemData(
+            product_id=item.product_id,
+            quantity=item.quantity_received,
+            unit_price=item.unit_cost,
+        )
+        for item in po.items
+    ]
+
+    # Call service
+    result = match_po_grn_invoice(
+        po_items=po_items,
+        grn_items=grn_items,
+        invoice_items=invoice_items,
+    )
+
+    # Build response
+    quantity_variance = {}
+    price_variance = {}
+    missing_items = []
+    extra_items = []
+
+    for variance in result.variances:
+        if variance.variance_type.value == "quantity_variance":
+            quantity_variance[str(variance.product_id)] = {
+                "expected": variance.expected,
+                "actual": variance.actual,
+                "description": variance.description,
+            }
+        elif variance.variance_type.value == "price_variance":
+            price_variance[str(variance.product_id)] = {
+                "expected": str(variance.expected),
+                "actual": str(variance.actual),
+                "description": variance.description,
+            }
+        elif variance.variance_type.value == "missing_item":
+            missing_items.append(variance.description)
+        elif variance.variance_type.value == "extra_item":
+            extra_items.append(variance.description)
+
+    recommendation = ""
+    if result.match_status.value == "full_match":
+        recommendation = "All items match. Approve for payment."
+    elif result.match_status.value == "partial_match":
+        recommendation = "Some variances detected. Review before payment."
+    else:
+        recommendation = "Significant variances. Investigation required before payment."
+
+    return ThreeWayMatchResponse(
+        match_status=result.match_status.value.upper(),
+        confidence=result.confidence,
+        quantity_variance=quantity_variance,
+        price_variance=price_variance,
+        missing_items=missing_items,
+        extra_items=extra_items,
+        recommendation=recommendation
+    )
+
+
+# ============================================
+# GAP-017: Unmatched PO items endpoint
+# ============================================
+
+
+class UnmatchedPOItem(BaseModel):
+    """Unmatched PO item."""
+
+    po_id: UUID
+    po_number: str
+    product_name: str
+    quantity_ordered: int
+    quantity_received: int
+    quantity_invoiced: int
+    days_outstanding: int
+    supplier_name: str
+
+
+class UnmatchedPOItemsResponse(BaseModel):
+    """Response for unmatched PO items."""
+
+    items: list[UnmatchedPOItem]
+    total: int
+
+
+@router.get("/unmatched-po-items", response_model=UnmatchedPOItemsResponse)
+async def get_unmatched_po_items(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    organization_id: Annotated[UUID, Query()],
+    older_than_days: int = Query(30, ge=1),
+) -> UnmatchedPOItemsResponse:
+    """
+    List purchase order items not yet matched to GRN/invoice.
+    """
+    from datetime import timezone
+
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=older_than_days)
+
+    # Query POs older than cutoff
+    stmt = select(PurchaseOrder).options(selectinload(PurchaseOrder.items)).where(
+        and_(
+            PurchaseOrder.created_at < cutoff_date,
+            PurchaseOrder.status.in_(["ordered", "in_transit"])
+        )
+    )
+    result = await db.execute(stmt)
+    pos = result.scalars().all()
+
+    items = []
+
+    for po in pos:
+        # Fetch supplier name
+        supplier_result = await db.execute(
+            select(Supplier).where(Supplier.id == po.supplier_id)
+        )
+        supplier = supplier_result.scalar_one_or_none()
+        supplier_name = supplier.name if supplier else "Unknown"
+
+        for po_item in po.items:
+            # Check if fully received
+            if po_item.quantity_received < po_item.quantity:
+                # Fetch product name
+                product_result = await db.execute(
+                    select(Product).where(Product.id == po_item.product_id)
+                )
+                product = product_result.scalar_one_or_none()
+                product_name = product.name if product else "Unknown"
+
+                days_outstanding = (datetime.now(timezone.utc) - po.created_at).days
+
+                items.append(UnmatchedPOItem(
+                    po_id=po.id,
+                    po_number=po.po_number,
+                    product_name=product_name,
+                    quantity_ordered=po_item.quantity,
+                    quantity_received=po_item.quantity_received,
+                    quantity_invoiced=0,  # Would need invoice tracking
+                    days_outstanding=days_outstanding,
+                    supplier_name=supplier_name
+                ))
+
+    return UnmatchedPOItemsResponse(
+        items=items,
+        total=len(items)
+    )

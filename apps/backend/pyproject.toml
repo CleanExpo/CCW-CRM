@@ -43,6 +43,7 @@ dependencies = [
     "langgraph>=0.0.20",
     "ollama>=0.1.6",
     "anthropic>=0.39.0", # Claude API for code generation
+    "openai>=1.58.1", # OpenAI API for LLM-based requirement extraction
     "sse-starlette>=3.2.0",
     "sentry-sdk[fastapi]>=2.52.0",
     # Supabase client (state store, RAG storage, migrations)

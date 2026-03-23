@@ -74,6 +74,52 @@
       "uniqueItems": true,
       "description": "List of remaining phases"
     },
+    "approval_gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate_id", "phase", "name", "status"],
+        "properties": {
+          "gate_id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3,
+            "description": "Gate identifier (1, 2, or 3)"
+          },
+          "phase": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Phase after which this gate is triggered"
+          },
+          "name": {
+            "type": "string",
+            "enum": ["Discovery Review", "Design Approval", "Implementation Review"],
+            "description": "Human-readable gate name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected"],
+            "description": "Current gate status"
+          },
+          "approved_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when gate was approved/rejected"
+          },
+          "approved_by": {
+            "type": "string",
+            "description": "User who approved/rejected the gate"
+          },
+          "feedback": {
+            "type": "string",
+            "description": "User feedback if gate was rejected"
+          }
+        }
+      },
+      "description": "Approval gates for manual review at phase transitions",
+      "default": []
+    },
     "metadata": {
       "type": "object",
       "properties": {

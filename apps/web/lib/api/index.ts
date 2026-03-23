@@ -351,6 +351,25 @@ export {
 // Autonomy Metrics API client
 export { getAutonomyMetrics, getAutonomyHealth, getAutonomyAnomalies } from './autonomy';
 
+// Autonomous Execution API client (Phase 6: Execution Dashboard)
+export { autonomousApi } from './autonomous';
+export type {
+  TaskStatus,
+  GateStatus,
+  ApprovalGate,
+  TaskMetadata,
+  TaskState,
+  AutonomousEvent,
+  StartAutonomousRequest,
+  StartAutonomousResponse,
+  GetTaskStatusResponse,
+  ApproveGateRequest,
+  RejectGateRequest,
+  ApproveGateResponse,
+  RejectGateResponse,
+  ListGatesResponse,
+} from './autonomous';
+
 // Bank Feeds API client
 export {
   listUnreconciledFeeds,

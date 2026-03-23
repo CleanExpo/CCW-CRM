@@ -30,83 +30,14 @@ import {
   type StockTransferRecord,
 } from '@/lib/api/cin7-inventory-writeback';
 import { useToast } from '@/hooks/use-toast';
-import { StoreLocation } from '@/lib/types/inventory';
-import type { CreateStockTransferRequest } from '@/lib/types/inventory';
+import {
+  StoreLocation,
+  type CreateStockTransferRequest,
+  type LocationStockItem,
+  type LocationStockResponse,
+  type WarehouseOpsPayload,
+} from '@/lib/types/inventory';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
-
-interface LocationStockItem {
-  product_id: string;
-  product_name: string;
-  product_sku: string;
-  stock: number;
-  reserved: number;
-  available: number;
-  reorder_point: number | null;
-  below_reorder_point: boolean;
-}
-
-interface LocationStockResponse {
-  location: string;
-  items: LocationStockItem[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
-
-type ReceivingShipment = {
-  id: string;
-  supplier: string;
-  container: string;
-  eta: string;
-  dock: string;
-  items: number;
-  status: string;
-  priority: string;
-};
-
-type PickOrder = {
-  id: string;
-  customer: string;
-  zone: string;
-  lines: number;
-  promised: string;
-  status: string;
-  priority: string;
-};
-
-type ReturnCase = {
-  id: string;
-  customer: string;
-  reason: string;
-  items: number;
-  sla: string;
-  status: string;
-};
-
-type Guidance = {
-  title: string;
-  detail: string;
-  impact: string;
-};
-
-type WarehouseOpsPayload = {
-  updatedAt: string;
-  metrics: {
-    inboundToday: number;
-    inboundDocked: number;
-    inboundScheduled: number;
-    picksDueToday: number;
-    rushPicks: number;
-    returnsOpen: number;
-    returnSlaRisk: number;
-    onTimeRate: number;
-  };
-  receivingQueue: ReceivingShipment[];
-  pickQueue: PickOrder[];
-  returnsQueue: ReturnCase[];
-  aiGuidance: Guidance[];
-};
 
 const LOCATIONS = ['brisbane', 'sydney', 'melbourne'] as const;
 type Location = (typeof LOCATIONS)[number];

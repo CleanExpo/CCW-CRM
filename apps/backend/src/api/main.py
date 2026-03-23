@@ -34,6 +34,7 @@ from .routes import (
     approvals,
     backorders,
     bank_feeds,
+    billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
     config,
     contacts,  # CRM contacts
     containers,
@@ -413,7 +414,7 @@ app.include_router(public_stats.router, tags=["Public"])
 app.include_router(prometheus_metrics.router, tags=["Monitoring"])  # Prometheus metrics
 app.include_router(config.router, tags=["Configuration"])
 app.include_router(approvals.router, tags=["Approvals"])
-app.include_router(auth_signup.router, tags=["Signup"])
+# app.include_router(auth_signup.router, tags=["Signup"])  # TODO: auth_signup not implemented yet
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
@@ -428,6 +429,8 @@ app.include_router(quotes.router, tags=["Quotes"])
 # Invoicing & Payments (UNI-173)
 app.include_router(invoices.router, tags=["Invoices"])
 app.include_router(invoice_payments.router, tags=["Invoice Payments"])
+# Billing & Payment Methods (Phase 2 Batch 2A)
+app.include_router(billing.router, tags=["Billing"])
 # Background jobs router
 app.include_router(jobs.router, tags=["Background Jobs"])
 # Multi-store inventory router
@@ -487,6 +490,41 @@ except (ImportError, AttributeError):
 from .routes import autonomy_metrics
 
 app.include_router(autonomy_metrics.router, tags=["Autonomy Metrics"])
+
+# Command Parser (Phase 1: /build command infrastructure)
+try:
+    from .routes.ai import command_parser
+    app.include_router(command_parser.router, tags=["Command Parser"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
+
+# Build Command (Phase 2: /build command handler)
+try:
+    from .routes.ai import build_command
+    app.include_router(build_command.router, tags=["Build Command"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
+
+# Approval Gates (Phase 3: approval gate system)
+try:
+    from .routes.ai import approval_gates
+    app.include_router(approval_gates.router, tags=["Approval Gates"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
+
+# Gap Sync (Phase 4: gap-to-linear orchestrator)
+try:
+    from .routes.ai import gap_sync
+    app.include_router(gap_sync.router, tags=["Gap Sync"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
+
+# Requirement Verification (Phase 5: requirement tracing)
+try:
+    from .routes.ai import requirement_verification
+    app.include_router(requirement_verification.router, tags=["Requirement Verification"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
 
 # Analytics Metrics
 try:
