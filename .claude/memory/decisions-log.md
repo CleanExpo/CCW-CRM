@@ -3,18 +3,21 @@
 ## 2026-03-24 — Multi-Initiative Autonomous Sprint (Health Scan + Training Audit + Mobile Photo-to-Order)
 
 ### Health Scan (Initiative 2) — COMPLETE
+
 - 8 domain health audits written: Backend (B+/85), Frontend (B+/87), Database (B/82), Integration (B/81), DevOps, Security, Performance, Testing
 - Executive summary: `docs/health-scan-2026-03-24/00-executive-summary.md`
 - Linear issues CSV: `docs/health-scan-2026-03-24/linear-issues.csv` (31 prioritised issues)
 - Critical findings: broad except handlers (211), N+1 queries on orders, missing error.tsx boundaries, 38 JSON→JSONB migrations needed, no circuit breakers on integrations
 
 ### Training Audit (Initiative 3) — COMPLETE
+
 - 6 role-specific quick-start guides: sales, warehouse, finance, workshop, customer service, admin
 - 1 AI features guide (`07-ai-features-guide.md`) covering 23 agents
 - 90-day roadmap targeting: time-to-productivity 2 weeks → 3 days; AI adoption 5% → 40%+
 - Location: `docs/training-audit-2026-03-24/`
 
 ### Mobile Photo-to-Order (Initiative 4) — COMPLETE
+
 - Decision: PWA over native app (faster, single codebase, no App Store delays)
 - Decision: Token-based guest portal (no customer auth required, secured by unique token)
 - Decision: Demo mode for AI recognition when OPENAI_API_KEY not set
@@ -487,81 +490,141 @@
 - Description:
 
 ## Agent Dispatch — 2026-03-24T04:51:09.312495
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T04:51:17.278830
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T04:51:26.802543
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T04:55:12.225790
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T04:55:27.463193
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T04:55:53.670114
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:24:05.228869
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:34:52.979273
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:34:52.980274
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:34:52.981273
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:34:52.982272
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:37:12.049579
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:49:19.663960
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:55:40.683787
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:55:52.007832
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:56:05.486015
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:56:17.312205
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T05:56:30.479604
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T07:33:42.032023
+
 - Type: unknown
-- Description: 
+- Description:
 
 ## Agent Dispatch — 2026-03-24T07:33:47.630464
+
 - Type: unknown
-- Description: 
+- Description:
+
+## Agent Dispatch — 2026-03-24T09:06:48.311427
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-24T09:24:38.660868
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-24T09:24:45.890999
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-24T09:28:15.883863
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-24T09:28:23.424852
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-24T09:48:42.725489
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-24T09:48:46.289886
+
+- Type: unknown
+- Description:
+
+## Agent Dispatch — 2026-03-24T09:48:51.052271
+
+- Type: unknown
+- Description:
