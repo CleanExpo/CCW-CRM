@@ -53,6 +53,26 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Mobile order routes — allow camera for photo capture
+      {
+        source: '/mobile/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(self), microphone=(), geolocation=()',
+          },
+        ],
+      },
+      // Guest order portal — allow camera for mobile devices viewing their order
+      {
+        source: '/guest/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(self), microphone=(), geolocation=()',
+          },
+        ],
+      },
       {
         source: '/:path*',
         headers: [
