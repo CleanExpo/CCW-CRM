@@ -16,48 +16,7 @@ export const metadata = {
   description: 'Submit and monitor tasks for autonomous execution',
 };
 
-interface QueueStatsData {
-  total_tasks: number;
-  pending: number;
-  in_progress: number;
-  completed: number;
-  failed: number;
-}
-
-async function fetchQueueStats(): Promise<QueueStatsData> {
-  try {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const res = await fetch(`${backendUrl}/api/tasks/stats/summary`, {
-      cache: 'no-store',
-      next: { revalidate: 0 },
-    });
-
-    if (!res.ok) {
-      return {
-        total_tasks: 0,
-        pending: 0,
-        in_progress: 0,
-        completed: 0,
-        failed: 0,
-      };
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error('Failed to fetch queue stats:', error);
-    return {
-      total_tasks: 0,
-      pending: 0,
-      in_progress: 0,
-      completed: 0,
-      failed: 0,
-    };
-  }
-}
-
-export default async function TaskQueuePage() {
-  const stats = await fetchQueueStats();
-
+export default function TaskQueuePage() {
   return (
     <ErrorBoundary>
       <div className="container mx-auto px-4 py-8">
@@ -70,7 +29,7 @@ export default async function TaskQueuePage() {
 
         {/* Queue Stats */}
         <div className="mb-8">
-          <QueueStats stats={stats} />
+          <QueueStats />
         </div>
 
         {/* Two Column Layout */}

@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
 import type { Location, POSTerminal } from '../../types';
 
 const terminalSchema = z.object({
@@ -109,17 +110,10 @@ export function TerminalDialog({
         is_active: data.is_active,
       };
 
-      const url = mode === 'create' ? '/api/pos/terminals' : `/api/pos/terminals/${terminal?.id}`;
-
-      const response = await fetch(url, {
-        method: mode === 'create' ? 'POST' : 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to save terminal');
+      if (mode === 'create') {
+        await apiClient.post('/api/pos/terminals', payload);
+      } else {
+        await apiClient.put(`/api/pos/terminals/${terminal?.id}`, payload);
       }
 
       toast({

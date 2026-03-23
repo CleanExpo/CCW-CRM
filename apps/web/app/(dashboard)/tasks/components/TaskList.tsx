@@ -1,8 +1,7 @@
-/**
- * TaskList Component
- *
- * Displays list of tasks in the queue with status and details.
- */
+'use client';
+
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api/client';
 
 interface Task {
   id: string;
@@ -17,31 +16,22 @@ interface Task {
   created_at: string;
 }
 
-async function fetchTasks(statusFilter?: string): Promise<{ tasks: Task[]; total: number }> {
-  try {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const url = statusFilter
-      ? `${backendUrl}/api/tasks?status_filter=${statusFilter}&page_size=50`
-      : `${backendUrl}/api/tasks?page_size=50`;
+export function TaskList() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [total, setTotal] = useState(0);
 
-    const res = await fetch(url, {
-      cache: 'no-store',
-      next: { revalidate: 0 },
-    });
-
-    if (!res.ok) {
-      return { tasks: [], total: 0 };
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error('Failed to fetch tasks:', error);
-    return { tasks: [], total: 0 };
-  }
-}
-
-export async function TaskList() {
-  const { tasks, total } = await fetchTasks();
+  useEffect(() => {
+    apiClient
+      .get<{ tasks: Task[]; total: number }>('/api/tasks?page_size=50')
+      .then(({ tasks, total }) => {
+        setTasks(tasks);
+        setTotal(total);
+      })
+      .catch(() => {
+        setTasks([]);
+        setTotal(0);
+      });
+  }, []);
 
   if (tasks.length === 0) {
     return (
