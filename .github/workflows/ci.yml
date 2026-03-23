@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@02f6c237bd2518259fed6c71566509edfb3f2b74 # v4
         with:
           version: 'latest'
 
@@ -128,7 +128,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v4
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -174,7 +174,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v4
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -269,10 +269,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@e4db8464a088ece1b920f60402e813ea4de65b8f # v3
 
       - name: Build backend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           context: ./apps/backend
           file: ./apps/backend/Dockerfile
@@ -282,7 +282,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build frontend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           context: .
           file: ./apps/web/Dockerfile
@@ -331,7 +331,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v4
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -342,7 +342,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@02f6c237bd2518259fed6c71566509edfb3f2b74 # v4
         with:
           version: 'latest'
 
@@ -432,7 +432,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v4
         with:
           version: ${{ env.PNPM_VERSION }}
 
