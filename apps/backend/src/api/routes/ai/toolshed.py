@@ -5,10 +5,13 @@ Inspired by Stripe's Minions framework: assembles task-specific context bundles
 from the 6 catalog files before any agent runs, enabling one-shot execution.
 
 Endpoints:
-  POST /api/ai/toolshed/bundle   — Assemble context bundle for a task
-  GET  /api/ai/toolshed/search   — Full-text search across all catalogs
-  GET  /api/ai/toolshed/pattern  — Return canonical code pattern by type
-  POST /api/ai/toolshed/verify   — Run type-check + lint + pytest quality gate
+  POST /api/ai/toolshed/bundle        — Assemble context bundle for a task
+  GET  /api/ai/toolshed/search        — Full-text search across all catalogs
+  GET  /api/ai/toolshed/pattern       — Return canonical code pattern by type
+  POST /api/ai/toolshed/verify        — Run type-check + lint + pytest quality gate
+  POST /api/ai/toolshed/vault/sync    — Sync Obsidian vault with codebase
+  GET  /api/ai/toolshed/vault/drift   — Detect documentation drift
+  GET  /api/ai/toolshed/vault/query   — Query vault frontmatter metadata
 """
 from __future__ import annotations
 
@@ -369,6 +372,51 @@ class VerifyResponse(BaseModel):
     summary: str
 
 
+class VaultSyncRequest(BaseModel):
+    entity_types: list[str] = Field(
+        default=["routes", "pages", "models"],
+        description="Entity types to sync: routes, pages, models, components, api-clients, integrations, all"
+    )
+    incremental: bool = Field(default=True, description="Incremental (git diff) or full scan")
+    verify_only: bool = Field(default=False, description="Dry-run mode - show what would be generated")
+
+
+class VaultSyncResponse(BaseModel):
+    synced: dict[str, int] = Field(description="Count of files processed per entity type")
+    created: list[str] = Field(description="File paths created")
+    updated: list[str] = Field(description="File paths updated")
+    skipped: list[str] = Field(description="File paths skipped (verify-only or no changes)")
+    errors: list[str] = Field(description="Error messages")
+    duration_ms: int = Field(description="Total duration in milliseconds")
+
+
+class VaultDriftItem(BaseModel):
+    type: str = Field(description="ghost | undocumented | stale | broken_link")
+    entity_type: str = Field(description="routes | pages | models | etc")
+    file_path: str | None = Field(description="File path if applicable")
+    vault_doc: str | None = Field(description="Vault doc path if applicable")
+    reason: str = Field(description="Human-readable reason")
+
+
+class VaultDriftResponse(BaseModel):
+    ghost_entries: list[VaultDriftItem] = Field(description="Documented but file doesn't exist")
+    undocumented: list[VaultDriftItem] = Field(description="File exists but no vault entry")
+    stale: list[VaultDriftItem] = Field(description="last_verified > 30 days ago")
+    broken_links: list[VaultDriftItem] = Field(description="Wikilinks to non-existent entities")
+    summary: str = Field(description="Human-readable summary")
+
+
+class VaultQueryRequest(BaseModel):
+    query: str = Field(description="Query expression (e.g., 'domain = CRM', 'status = Active')")
+    entity_type: str | None = Field(default=None, description="Limit to: routes | pages | models | components")
+    linked_to: str | None = Field(default=None, description="Find entities linking to this ID (e.g., 'ROUTE-086')")
+
+
+class VaultQueryResponse(BaseModel):
+    results: list[dict] = Field(description="Matching entities with their frontmatter")
+    count: int = Field(description="Total result count")
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -656,3 +704,75 @@ async def verify_quality(request: VerifyRequest) -> VerifyResponse:
         backend_tests_output=backend_output,
         summary=summary,
     )
+
+
+# ---------------------------------------------------------------------------
+# Vault Endpoints
+# ---------------------------------------------------------------------------
+
+from .toolshed_vault import sync_vault, detect_vault_drift, query_vault
+
+
+@router.post("/vault/sync")
+async def sync_obsidian_vault(request: VaultSyncRequest) -> VaultSyncResponse:
+    """
+    Sync Obsidian vault with codebase by running vault-generator.py.
+
+    Generates markdown documentation with frontmatter from source code (routes,
+    pages, models, components). Preserves HUMAN-CURATED content blocks while
+    updating AUTO-GENERATED sections.
+
+    Use --incremental for fast sync (git diff) or --full for complete rescan.
+    """
+    result = await sync_vault(
+        entity_types=request.entity_types,
+        incremental=request.incremental,
+        verify_only=request.verify_only,
+    )
+
+    return VaultSyncResponse(**result)
+
+
+@router.get("/vault/drift")
+async def check_vault_drift() -> VaultDriftResponse:
+    """
+    Detect documentation drift by comparing vault docs vs filesystem.
+
+    Returns:
+    - Ghost entries: Documented but file doesn't exist
+    - Undocumented: File exists but no vault entry
+    - Stale: last_verified > 30 days ago
+    - Broken links: Wikilinks to non-existent entities
+
+    Run this before starting work to identify missing documentation.
+    """
+    result = detect_vault_drift()
+
+    return VaultDriftResponse(
+        ghost_entries=[VaultDriftItem(**item) for item in result["ghost_entries"]],
+        undocumented=[VaultDriftItem(**item) for item in result["undocumented"]],
+        stale=[VaultDriftItem(**item) for item in result["stale"]],
+        broken_links=[VaultDriftItem(**item) for item in result["broken_links"]],
+        summary=result["summary"],
+    )
+
+
+@router.get("/vault/query")
+async def query_vault_metadata(
+    query: str = Query(description="Query expression (e.g., 'domain = CRM')"),
+    entity_type: str | None = Query(default=None, description="Limit to entity type"),
+    linked_to: str | None = Query(default=None, description="Find entities linking to this ID"),
+) -> VaultQueryResponse:
+    """
+    Query vault frontmatter metadata (Dataview-style queries).
+
+    Examples:
+    - GET /vault/query?query=domain%20=%20CRM
+    - GET /vault/query?query=status%20=%20Active&entity_type=routes
+    - GET /vault/query?linked_to=ROUTE-086
+
+    Returns matching entities with their frontmatter metadata.
+    """
+    result = query_vault(query, entity_type, linked_to)
+
+    return VaultQueryResponse(**result)
