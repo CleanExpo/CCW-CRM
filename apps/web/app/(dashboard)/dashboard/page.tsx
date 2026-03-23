@@ -22,6 +22,7 @@ import {
   FileText,
   Sparkles,
   ArrowRight,
+  Camera,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { getDashboardInsights, type Insight } from '@/lib/api/ai-insights';
@@ -456,6 +457,33 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 ))}
+            </div>
+          </BentoCardContent>
+        </BentoCard>
+
+        {/* Mobile Photo-to-Order CTA */}
+        <BentoCard variant="default" span={1}>
+          <BentoCardHeader>
+            <div className="flex items-center gap-2">
+              <Camera className="text-primary h-5 w-5" />
+              <BentoCardTitle>Photo to Order</BentoCardTitle>
+            </div>
+            <BentoCardDescription>
+              Snap a photo, AI identifies products instantly
+            </BentoCardDescription>
+          </BentoCardHeader>
+          <BentoCardContent>
+            <div className="space-y-3">
+              <p className="text-muted-foreground text-sm">
+                Tradespeople can photograph cleaning equipment on-site. Our AI recognises it and
+                creates a quote for customer approval — no catalogue browsing needed.
+              </p>
+              <Link href="/settings/mobile">
+                <Button size="sm" className="w-full">
+                  <Camera className="mr-2 h-4 w-4" />
+                  Manage Mobile Orders
+                </Button>
+              </Link>
             </div>
           </BentoCardContent>
         </BentoCard>
