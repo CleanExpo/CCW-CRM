@@ -83,17 +83,15 @@ Download from [obsidian.md](https://obsidian.md)
 
 ### 4. Run a Dataview Query
 
-- Open `_index/stale-docs.md` (create if doesn't exist yet)
-- Paste query:
-
-```dataview
-TABLE last_verified, status
-FROM "routes" OR "pages"
-WHERE last_verified < date(today) - dur(30 days)
-SORT last_verified ASC
-```
-
+- Open `_index/stale-docs.md` (already created)
 - See all docs not verified in 30+ days
+- Pre-built queries available:
+  - `stale-docs.md` - Documentation > 30 days old
+  - `orphaned-routes.md` - Routes with no frontend
+  - `missing-tests.md` - Pages without tests
+  - `model-usage.md` - Find all routes using a model
+  - `integration-health.md` - Integration status
+  - `active-routes-by-domain.md` - Routes grouped by domain
 
 ---
 
@@ -174,14 +172,33 @@ Output:
 Automatically runs before each commit. Blocks if vault is out of sync:
 
 ```
-❌ Vault audit failed. Missing vault entry for apps/backend/src/api/routes/new_route.py
-Run /sync-vault to fix
+======================================================================
+COMMIT BLOCKED: Vault audit failed
+======================================================================
+
+Documentation drift detected. Please run:
+  /sync-vault all
+
+Or bypass this check (emergency only):
+  git commit --no-verify -m "your message"
 ```
+
+The hook runs `python scripts/audit-vault.py --strict` which checks for:
+
+- Ghost entries (documented but file missing)
+- Undocumented files (file exists but no vault doc)
+- Stale documentation (> 30 days old)
 
 **Bypass (emergency only):**
 
 ```bash
 git commit --no-verify -m "message"
+```
+
+**Manual audit:**
+
+```bash
+python scripts/audit-vault.py  # Non-strict mode (informational)
 ```
 
 ---
@@ -283,14 +300,26 @@ python scripts/vault-generator.py --entity-types routes --incremental
    - `catalogs/ROUTES.md`
    - `memory/CONSTITUTION.md`
    - `memory/current-state.md`
+   - `_index/stale-docs.md`
+   - `_index/orphaned-routes.md`
 
 2. **Pin queries**: Create `_index/my-queries.md` with frequently-used Dataview queries
 
 3. **Use Ctrl+O** (Quick Switcher): Faster than file explorer for navigation
 
-4. **Daily notes**: Create `06-daily-notes/2026-03-23.md` to track session work
+4. **Daily notes**: Create `06-daily-notes/2026-03-24.md` to track session work
 
 5. **Canvas view**: Use Obsidian Canvas plugin to visually plan features
+
+6. **Pre-built queries**: Use `_index/*.md` files for common audit tasks
+   - Check stale docs weekly
+   - Review orphaned routes monthly
+   - Find model usage before schema changes
+
+7. **Graph filters**: Use search filters in graph view
+   - `path:routes/ tag:#crm` - CRM routes only
+   - `path:pages/ -path:settings/` - Pages excluding settings
+   - `file:ROUTE-015` - Specific route and its connections
 
 ---
 
