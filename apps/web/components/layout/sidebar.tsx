@@ -47,6 +47,7 @@ import {
   GitBranch,
   Tag,
   Layers,
+  Camera,
 } from 'lucide-react';
 
 const navigation = [
@@ -95,6 +96,7 @@ const navigation = [
   { name: 'Workflows', href: '/workflows', icon: GitMerge },
   { name: 'Approvals', href: '/approvals', icon: CheckCircle },
   { name: 'Monitoring', href: '/monitoring', icon: Activity },
+  { name: 'Mobile Orders', href: '/settings/mobile', icon: Camera },
   { name: 'Settings', href: '/settings/integrations', icon: Settings },
 ];
 
@@ -114,7 +116,7 @@ export function Sidebar() {
             ⚙️
           </motion.span>
           <span className="from-primary to-primary/60 group-hover:from-primary/80 group-hover:to-primary/40 bg-gradient-to-r bg-clip-text text-transparent transition-all">
-            Equipment ERP
+            CCW Online
           </span>
         </Link>
         <NotificationBell />

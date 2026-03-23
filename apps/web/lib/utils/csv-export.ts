@@ -203,7 +203,7 @@ export function exportToPDF(
 <body>
   <div class="header">
     <div>
-      <div class="branding">CCW Online — Equipment ERP</div>
+      <div class="branding">CCW Online</div>
       <h1>${title}</h1>
     </div>
     <div class="meta">
@@ -217,7 +217,7 @@ export function exportToPDF(
     </thead>
     <tbody>${rows}</tbody>
   </table>
-  <div class="footer">CCW Online Equipment ERP — Confidential</div>
+  <div class="footer">CCW Online — Confidential</div>
   <script>window.onload = function() { window.print(); };<\/script>
 </body>
 </html>`;
@@ -407,6 +407,42 @@ export function exportPurchaseOrdersToCSV(orders: Record<string, unknown>[]): vo
 /**
  * Export quotes to CSV
  */
+export function exportInvoicesToCSV(invoices: Record<string, unknown>[]): void {
+  const headers = [
+    'invoice_number',
+    'customer_name',
+    'invoice_date',
+    'due_date',
+    'status',
+    'subtotal',
+    'tax_total',
+    'total',
+    'amount_paid',
+    'amount_due',
+    'item_count',
+    'notes',
+  ];
+
+  const data = invoices.map((invoice) => ({
+    invoice_number: invoice.invoice_number,
+    customer_name: invoice.customer_name || '',
+    invoice_date: new Date(invoice.invoice_date as string).toLocaleDateString('en-AU'),
+    due_date: new Date(invoice.due_date as string).toLocaleDateString('en-AU'),
+    status: invoice.status,
+    subtotal: invoice.subtotal,
+    tax_total: invoice.tax_total,
+    total: invoice.total,
+    amount_paid: invoice.amount_paid,
+    amount_due: invoice.amount_due,
+    item_count: invoice.item_count || (invoice.items as unknown[] | undefined)?.length || 0,
+    notes: invoice.notes || '',
+  }));
+
+  const csv = convertToCSV(data, headers);
+  const timestamp = new Date().toISOString().split('T')[0];
+  downloadCSV(csv, `invoices-export-${timestamp}.csv`);
+}
+
 export function exportQuotesToCSV(quotes: Record<string, unknown>[]): void {
   const headers = [
     'quote_number',

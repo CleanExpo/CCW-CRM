@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSearchState } from '@/lib/hooks/use-search-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Eye, DollarSign, FileText, Edit, Trash2, BarChart3 } from 'lucide-react';
+import { Plus, Eye, DollarSign, FileText, Edit, Trash2, BarChart3, Download } from 'lucide-react';
+import { exportInvoicesToCSV } from '@/lib/utils/csv-export';
 import { useToast } from '@/hooks/use-toast';
 import type { Invoice, InvoiceSummary } from '@/lib/types/invoices';
 import { invoicesApi } from '@/lib/api/invoices';
@@ -248,10 +249,20 @@ export default function InvoicesPage() {
             <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
             <p className="text-muted-foreground">Manage customer invoices and payments</p>
           </div>
-          <Button onClick={handleCreateInvoice}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Invoice
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => exportInvoicesToCSV(invoices as unknown as Record<string, unknown>[])}
+              disabled={invoices.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button onClick={handleCreateInvoice}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Invoice
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="invoices">

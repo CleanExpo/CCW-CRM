@@ -60,7 +60,7 @@ export function MobileNav() {
           </Button>
         </motion.div>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0">
+      <SheetContent side="left" className="w-full p-0 sm:w-64">
         <SheetHeader className="border-b p-6">
           <SheetTitle className="from-primary to-primary/60 bg-gradient-to-r bg-clip-text text-left text-xl font-bold text-transparent">
             CCW ERP
