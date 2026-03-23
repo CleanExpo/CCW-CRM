@@ -59,18 +59,20 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Protected routes - TEMPORARILY DISABLED FOR TESTING
-  // const protectedPaths = ["/dashboard"];
-  // const isProtectedPath = protectedPaths.some((path) =>
-  //   request.nextUrl.pathname.startsWith(path)
-  // );
+  // Protected routes — all paths except explicitly public ones require authentication
+  const publicPaths = ["/login", "/register", "/guest", "/faq", "/"];
+  const isPublicPath = publicPaths.some(
+    (path) =>
+      request.nextUrl.pathname === path ||
+      request.nextUrl.pathname.startsWith(path + "/")
+  );
 
-  // if (isProtectedPath && !user) {
-  //   const url = request.nextUrl.clone();
-  //   url.pathname = "/login";
-  //   url.searchParams.set("redirect", request.nextUrl.pathname);
-  //   return NextResponse.redirect(url);
-  // }
+  if (!isPublicPath && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirect", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
 
   // Redirect logged in users away from auth pages
   const authPaths = ["/login", "/register"];

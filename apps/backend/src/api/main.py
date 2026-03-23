@@ -285,9 +285,9 @@ All errors return JSON with this format:
     """,
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
     contact={
         "name": "CCW ERP Support",
         "url": "https://ccw-erp.example.com/support",
@@ -713,6 +713,13 @@ try:
 except (ImportError, AttributeError) as e:
     logger.warning("Workshop routes not available", error=str(e))
     pass
+
+# Mobile Photo-to-Order
+try:
+    from src.api.routes.mobile import guest_orders as mobile_guest_orders
+    app.include_router(mobile_guest_orders.router, tags=["Mobile Orders"])
+except (ImportError, AttributeError) as e:
+    logger.warning("Mobile order routes not available", error=str(e))
 
 # Real-Time Infrastructure - SSE Streams (Phase 4)
 from src.api.routes import dashboard_stream, inventory_stream

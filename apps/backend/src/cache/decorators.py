@@ -80,8 +80,18 @@ def cached(ttl: int = 300, key_prefix: str = ""):
             logger.info(f"Cache MISS: {cache_key}")
             result = await func(*args, **kwargs)
 
-            # Store in cache
-            await cache.set(cache_key, result, ttl=ttl)
+            # Store in cache — serialize Pydantic v2 models to plain dicts first
+            if hasattr(result, "model_dump"):
+                serializable = result.model_dump(mode="json")
+            elif (
+                isinstance(result, list)
+                and result
+                and hasattr(result[0], "model_dump")
+            ):
+                serializable = [item.model_dump(mode="json") for item in result]
+            else:
+                serializable = result
+            await cache.set(cache_key, serializable, ttl=ttl)
 
             return result
 

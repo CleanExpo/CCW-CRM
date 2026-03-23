@@ -90,9 +90,6 @@ jobs:
 
       - name: Run database migrations
         working-directory: apps/backend
-        # continue-on-error: alembic may fail if extensions like pgvector are unavailable.
-        # Tests that need the DB will still partially pass; tracked in UNI-1242.
-        continue-on-error: true
         run: uv run alembic upgrade head
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
@@ -100,11 +97,7 @@ jobs:
       - name: Run tests with coverage
         id: test
         working-directory: apps/backend
-        # continue-on-error: pre-existing test failures are tracked in UNI-1242.
-        # Ruff lint (above) still gates code quality. Tests are non-blocking until
-        # the full DB migration + fixture setup is wired properly in CI.
-        continue-on-error: true
-        run: uv run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=15 -v
+        run: uv run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=40 -v
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
           REDIS_URL: redis://localhost:6379/0
