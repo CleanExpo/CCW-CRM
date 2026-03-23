@@ -21,8 +21,6 @@ from src.db.inventory_models import (
     ProductBarcode,
     ProductStockByLocation,
     ProductVariant,
-    PurchaseOrder,
-    PurchaseOrderItem,
     ReorderRule,
     StockAdjustment,
     StockReservation,
@@ -2040,102 +2038,6 @@ async def get_reorder_alerts(
 
 
 # ============================================
-# Auto-Reorder Endpoint
-# ============================================
-
-
-@router.post("/auto-reorder")
-async def trigger_auto_reorder(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    product_id: str = Query(...),
-    location: str = Query(...),
-) -> dict:
-    """Create a draft Purchase Order for a product at a location.
-
-    Uses the matching ReorderRule (if any) to determine supplier and quantity.
-    PO is auto-approved only when reorder_quantity <= auto_approve_under_qty.
-    """
-    try:
-        product_uuid = UUID(product_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid product_id")
-
-    # Verify product exists
-    product_stmt = select(Product).where(Product.id == product_uuid)
-    product_result = await db.execute(product_stmt)
-    product = product_result.scalar_one_or_none()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    # Fetch stock record
-    stock_stmt = select(ProductStockByLocation).where(
-        and_(
-            ProductStockByLocation.product_id == product_uuid,
-            ProductStockByLocation.location == location,
-        )
-    )
-    stock_result = await db.execute(stock_stmt)
-    stock = stock_result.scalar_one_or_none()
-    reorder_qty = (stock.reorder_quantity or 10) if stock else 10
-
-    # Fetch reorder rule (optional)
-    rule_stmt = select(ReorderRule).where(
-        and_(
-            ReorderRule.product_id == product_uuid,
-            ReorderRule.location == location,
-            ReorderRule.is_enabled.is_(True),
-        )
-    )
-    rule_result = await db.execute(rule_stmt)
-    rule = rule_result.scalar_one_or_none()
-
-    supplier_id = rule.supplier_id if rule else None
-    auto_approve = (
-        rule and rule.auto_approve_under_qty > 0 and reorder_qty <= rule.auto_approve_under_qty
-    )
-
-    # Generate PO number
-    from datetime import date
-    po_number = f"AUTO-{date.today().strftime('%Y%m%d')}-{product.sku[:6].upper()}"
-
-    po = PurchaseOrder(
-        po_number=po_number,
-        supplier_id=supplier_id,
-        delivery_location=location,
-        status="approved" if auto_approve else "draft",
-        notes=f"Auto-generated from reorder alert for {product.name}",
-    )
-    db.add(po)
-    await db.flush()
-
-    # Add single line item
-    item = PurchaseOrderItem(
-        purchase_order_id=po.id,
-        product_id=product_uuid,
-        quantity=reorder_qty,
-        quantity_received=0,
-        unit_cost=product.cost or 0,
-        subtotal=(product.cost or 0) * reorder_qty,
-    )
-    db.add(item)
-
-    po.subtotal = item.subtotal
-    po.total = item.subtotal
-
-    await db.commit()
-    logger.info("Auto-reorder PO created", po_number=po_number, product_id=product_id)
-
-    return {
-        "success": True,
-        "po_number": po_number,
-        "po_id": str(po.id),
-        "status": po.status,
-        "supplier_id": str(supplier_id) if supplier_id else None,
-        "quantity": reorder_qty,
-    }
-
-
-# ============================================
 # Product Attributes Endpoints
 # ============================================
 
@@ -2330,8 +2232,9 @@ async def trigger_auto_reorder(
 
     Uses auto_reorder service for business logic.
     """
-    from src.services.auto_reorder import should_reorder, calculate_reorder_quantity
     from uuid import uuid4
+
+    from src.services.auto_reorder import should_reorder
 
     # Get products to check
     stmt = select(Product).where(Product.organization_id == request.organization_id)
@@ -2484,7 +2387,6 @@ async def get_active_stock_takes(
     """
     Get active stock take sessions.
     """
-    from uuid import uuid4
 
     # Query active stock takes
     stmt = select(StockTake).where(
