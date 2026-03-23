@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.api.routes.demo_auth import get_current_user
 from src.config.database import get_async_db
@@ -180,8 +181,8 @@ async def list_approvals(
 
     Supports filtering by status, type, requester, and approver.
     """
-    # Base query
-    query = select(Approval)
+    # Base query — eager-load steps to avoid N+1
+    query = select(Approval).options(selectinload(Approval.steps))
 
     # Apply filters
     if status_filter:
@@ -204,18 +205,14 @@ async def list_approvals(
     # Apply pagination and ordering
     query = query.order_by(Approval.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
 
-    # Execute
+    # Execute — steps already loaded via selectinload
     result = await db.execute(query)
     approvals = result.scalars().all()
 
-    # Get steps for each approval
-    approval_responses = []
-    for approval in approvals:
-        steps_result = await db.execute(
-            select(ApprovalStep).where(ApprovalStep.approval_id == approval.id).order_by(ApprovalStep.step_number)
-        )
-        steps = steps_result.scalars().all()
-        approval_responses.append(_build_approval_response(approval, steps))
+    approval_responses = [
+        _build_approval_response(approval, sorted(approval.steps, key=lambda s: s.step_number))
+        for approval in approvals
+    ]
 
     logger.info("Approvals listed", total=total, page=page, filters_applied=bool(status_filter or approval_type))
 
@@ -240,9 +237,10 @@ async def get_pending_approvals(
 
     Returns approvals where the current step is assigned to the approver and status is pending.
     """
-    # Query for pending approvals where approver has a pending step
+    # Query for pending approvals where approver has a pending step — eager-load steps
     query = (
         select(Approval)
+        .options(selectinload(Approval.steps))
         .join(ApprovalStep)
         .where(
             Approval.status == ApprovalStatus.PENDING,
@@ -259,18 +257,14 @@ async def get_pending_approvals(
     # Apply pagination
     query = query.order_by(Approval.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
 
-    # Execute
+    # Execute — steps already loaded via selectinload
     result = await db.execute(query)
     approvals = result.scalars().all()
 
-    # Get steps for each approval
-    approval_responses = []
-    for approval in approvals:
-        steps_result = await db.execute(
-            select(ApprovalStep).where(ApprovalStep.approval_id == approval.id).order_by(ApprovalStep.step_number)
-        )
-        steps = steps_result.scalars().all()
-        approval_responses.append(_build_approval_response(approval, steps))
+    approval_responses = [
+        _build_approval_response(approval, sorted(approval.steps, key=lambda s: s.step_number))
+        for approval in approvals
+    ]
 
     logger.info("Pending approvals retrieved", approver_id=str(approver_id), total=total)
 
