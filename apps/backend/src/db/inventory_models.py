@@ -9,7 +9,6 @@ from decimal import Decimal
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     CheckConstraint,
     Column,
@@ -21,6 +20,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID  # noqa: N811
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -405,7 +405,7 @@ class InboundShipment(Base):
     expected_delivery_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
     actual_delivery_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
 
-    tracking_events: dict | None = Column(JSON, nullable=True)  # Carrier tracking history
+    tracking_events: dict | None = Column(JSONB, nullable=True)  # Carrier tracking history
     last_tracking_update: datetime | None = Column(DateTime(timezone=True), nullable=True)
 
     notes: str | None = Column(Text, nullable=True)
@@ -449,7 +449,7 @@ class OutboundShipment(Base):
     expected_delivery_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
     actual_delivery_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
 
-    tracking_events: dict | None = Column(JSON, nullable=True)
+    tracking_events: dict | None = Column(JSONB, nullable=True)
     last_tracking_update: datetime | None = Column(DateTime(timezone=True), nullable=True)
 
     notes: str | None = Column(Text, nullable=True)
@@ -477,7 +477,7 @@ class CarrierConfiguration(Base):
     api_key_encrypted: str | None = Column(Text, nullable=True)
     api_endpoint: str | None = Column(String(255), nullable=True)
     is_active: bool = Column(Boolean, default=True, nullable=False)
-    supported_services: dict | None = Column(JSON, nullable=True)  # List of service types
+    supported_services: dict | None = Column(JSONB, nullable=True)  # List of service types
     webhook_secret: str | None = Column(String(255), nullable=True)
     created_at: datetime = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -683,7 +683,7 @@ class ProductVariant(Base):
     )
     variant_sku: str = Column(String(100), unique=True, nullable=False, index=True)
     name: str = Column(String(255), nullable=False)
-    attributes: dict | None = Column(JSON, nullable=True)  # {"Colour": "Red", "Size": "L"}
+    attributes: dict | None = Column(JSONB, nullable=True)  # {"Colour": "Red", "Size": "L"}
     price_override: Decimal | None = Column(Numeric(10, 2), nullable=True)
     is_active: bool = Column(Boolean, default=True, nullable=False)
 

@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     Column,
     DateTime,
@@ -16,6 +15,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import relationship
 
@@ -169,7 +169,7 @@ class EquipmentServiceHistory(Base):
     hours_at_service = Column(Float, nullable=True)
     next_service_date = Column(DateTime(timezone=True), nullable=True)
     next_service_hours = Column(Float, nullable=True)
-    parts_used = Column(JSON, nullable=True)
+    parts_used = Column(JSONB, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
