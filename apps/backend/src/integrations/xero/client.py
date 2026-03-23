@@ -9,6 +9,8 @@ from datetime import date
 import httpx
 import structlog
 
+from src.integrations.http_utils import retry_with_backoff
+
 logger = structlog.get_logger(__name__)
 
 
@@ -75,7 +77,7 @@ class XeroClient:
         url = f"{self.BASE_URL}{endpoint}"
         headers = self._get_headers()
 
-        try:
+        async def _do_request() -> dict:
             response = await self._http_client.request(
                 method=method,
                 url=url,
@@ -84,8 +86,10 @@ class XeroClient:
                 params=params,
             )
             response.raise_for_status()
-
             return response.json()
+
+        try:
+            return await retry_with_backoff(_do_request, integration_name="xero")
 
         except httpx.HTTPStatusError as e:
             error_data = {}

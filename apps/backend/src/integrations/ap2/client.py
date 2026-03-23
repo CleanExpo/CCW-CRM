@@ -15,6 +15,7 @@ import httpx
 import structlog
 
 from src.config.ap2_settings import get_ap2_settings
+from src.integrations.http_utils import retry_with_backoff
 
 logger = structlog.get_logger(__name__)
 
@@ -402,6 +403,15 @@ class AP2LiveClient(BaseAP2Client):
             },
         )
 
+    async def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
+        """Make an HTTP request with exponential backoff retry."""
+        async def _do() -> dict[str, Any]:
+            response = await self.http_client.request(method, path, **kwargs)
+            response.raise_for_status()
+            return response.json()
+
+        return await retry_with_backoff(_do, integration_name="ap2")
+
     async def create_intent_mandate(
         self,
         intent_description: str,
@@ -423,12 +433,8 @@ class AP2LiveClient(BaseAP2Client):
             "metadata": metadata or {},
         }
 
-        response = await self.http_client.post("/mandates", json=payload)
-        response.raise_for_status()
-
-        data = response.json()
+        data = await self._request("POST", "/mandates", json=payload)
         logger.info("AP2: Intent mandate created", mandate_id=data.get("mandate_id"))
-
         return data
 
     async def create_cart_mandate(
@@ -454,12 +460,8 @@ class AP2LiveClient(BaseAP2Client):
             "ttl_seconds": self.settings.mandate_ttl_seconds,
         }
 
-        response = await self.http_client.post("/mandates", json=payload)
-        response.raise_for_status()
-
-        data = response.json()
+        data = await self._request("POST", "/mandates", json=payload)
         logger.info("AP2: Cart mandate created", mandate_id=data.get("mandate_id"))
-
         return data
 
     async def create_payment_mandate(
@@ -485,12 +487,8 @@ class AP2LiveClient(BaseAP2Client):
             "ttl_seconds": self.settings.mandate_ttl_seconds,
         }
 
-        response = await self.http_client.post("/mandates", json=payload)
-        response.raise_for_status()
-
-        data = response.json()
+        data = await self._request("POST", "/mandates", json=payload)
         logger.info("AP2: Payment mandate created", mandate_id=data.get("mandate_id"))
-
         return data
 
     async def verify_mandate_signature(
@@ -509,16 +507,12 @@ class AP2LiveClient(BaseAP2Client):
         }
 
         try:
-            response = await self.http_client.post("/mandates/verify", json=payload)
-            response.raise_for_status()
-            data = response.json()
-
+            data = await self._request("POST", "/mandates/verify", json=payload)
             verified = data.get("verified", False)
             logger.info("AP2: Signature verification result", verified=verified)
-
             return verified
 
-        except httpx.HTTPError as e:
+        except (httpx.HTTPError, Exception) as e:
             logger.error("AP2: Signature verification failed", error=str(e))
             return False
 
@@ -535,12 +529,8 @@ class AP2LiveClient(BaseAP2Client):
             "order_id": order_id,
         }
 
-        response = await self.http_client.post("/transactions/execute", json=payload)
-        response.raise_for_status()
-
-        data = response.json()
+        data = await self._request("POST", "/transactions/execute", json=payload)
         logger.info("AP2: Payment executed", transaction_id=data.get("transaction_id"))
-
         return data
 
     async def get_transaction_status(
@@ -550,12 +540,8 @@ class AP2LiveClient(BaseAP2Client):
         """Get transaction status via Google AP2 API."""
         logger.info("AP2: Getting transaction status", transaction_id=transaction_id)
 
-        response = await self.http_client.get(f"/transactions/{transaction_id}")
-        response.raise_for_status()
-
-        data = response.json()
+        data = await self._request("GET", f"/transactions/{transaction_id}")
         logger.info("AP2: Transaction status retrieved", status=data.get("status"))
-
         return data
 
     async def process_voice_input(
@@ -577,12 +563,8 @@ class AP2LiveClient(BaseAP2Client):
             "language": language,
         }
 
-        response = await self.http_client.post("/voice/process", json=payload)
-        response.raise_for_status()
-
-        data = response.json()
+        data = await self._request("POST", "/voice/process", json=payload)
         logger.info("AP2: Voice input processed", intent=data.get("intent"))
-
         return data
 
     async def close(self):
