@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +25,7 @@ from src.api.schemas.invoicing import (
 from src.config.database import get_async_db
 from src.db.demo_models import Customer, Order, OrderItem
 from src.db.models.invoicing import Invoice, InvoiceItem, TaxRate
+from src.services.email_notifications import email_service
 
 router = APIRouter(prefix="/api/invoices", tags=["Invoices"])
 
@@ -573,9 +574,10 @@ async def delete_invoice(
 @router.post("/{invoice_id}/send", response_model=InvoiceResponse)
 async def send_invoice(
     invoice_id: UUID,
+    background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> InvoiceResponse:
-    """Mark invoice as sent."""
+    """Mark invoice as sent and email customer."""
     result = await db.execute(
         select(Invoice)
         .options(selectinload(Invoice.items))
@@ -597,6 +599,21 @@ async def send_invoice(
 
     await db.commit()
     await db.refresh(invoice)
+
+    # Send invoice notification email (non-blocking)
+    if invoice.customer_id:
+        cust_result = await db.execute(select(Customer).where(Customer.id == invoice.customer_id))
+        customer = cust_result.scalar_one_or_none()
+        if customer and customer.email:
+            due_date_str = invoice.due_date.strftime("%d/%m/%Y") if invoice.due_date else "—"
+            background_tasks.add_task(
+                email_service.send_invoice_issued_notification,
+                invoice_number=invoice.invoice_number,
+                customer_email=customer.email,
+                customer_name=customer.company_name or customer.contact_name or "Valued Customer",
+                total=float(invoice.total or 0),
+                due_date=due_date_str,
+            )
 
     return InvoiceResponse.model_validate(invoice)
 

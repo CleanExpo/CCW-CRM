@@ -5,7 +5,7 @@ Performance optimized with cache invalidation on writes.
 from datetime import UTC, datetime, time, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +28,9 @@ from src.db.schemas import (
     QuoteItem,
     QuoteUpdate,
 )
+from src.db.demo_models import Customer as CustomerModel
 from src.monitoring import metrics
+from src.services.email_notifications import email_service
 from src.services.sse_service import sse_service
 from src.utils.calculations import calculate_line_total, calculate_totals
 
@@ -432,6 +434,7 @@ async def delete_quote(
 async def update_quote_status(
     quote_id: UUID,
     status_update: StatusUpdate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -468,6 +471,21 @@ async def update_quote_status(
     # Track business metrics for status changes
     if status_update.status == "sent":
         metrics.quotes_created.labels(status="sent").inc()
+        # Send quote notification email (non-blocking)
+        cust_result = await db.execute(
+            select(CustomerModel).where(CustomerModel.id == quote.customer_id)
+        )
+        customer = cust_result.scalar_one_or_none()
+        if customer and customer.email:
+            valid_until_str = quote.valid_until.strftime("%d/%m/%Y") if quote.valid_until else None
+            background_tasks.add_task(
+                email_service.send_quote_sent_notification,
+                quote_number=quote.quote_number,
+                customer_email=customer.email,
+                customer_name=customer.company_name or customer.contact_name or "Valued Customer",
+                total=float(quote.total or 0),
+                valid_until=valid_until_str,
+            )
     elif status_update.status == "accepted":
         metrics.quotes_converted.inc()
 

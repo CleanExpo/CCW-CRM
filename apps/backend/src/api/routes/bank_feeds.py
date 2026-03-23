@@ -179,7 +179,9 @@ async def list_unreconciled_feeds(
     account_id: UUID | None = Query(None, description="Filter by account"),
     start_date: date | None = Query(None, description="Start date"),
     end_date: date | None = Query(None, description="End date"),
-) -> list[dict]:
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+) -> dict:
     """
     List unreconciled bank feed transactions.
 
@@ -196,24 +198,34 @@ async def list_unreconciled_feeds(
     if end_date:
         query = query.where(BankFeed.transaction_date <= end_date)
 
-    query = query.order_by(BankFeed.transaction_date.desc()).limit(100)
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar_one()
+
+    query = query.order_by(BankFeed.transaction_date.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
 
     result = await db.execute(query)
     feeds = result.scalars().all()
 
-    return [
-        {
-            "id": feed.id,
-            "bank_account_id": feed.bank_account_id,
-            "transaction_date": feed.transaction_date.isoformat(),
-            "description": feed.description,
-            "reference": feed.reference,
-            "credit": float(feed.credit) if feed.credit else None,
-            "debit": float(feed.debit) if feed.debit else None,
-            "balance": float(feed.balance) if feed.balance else None,
-        }
-        for feed in feeds
-    ]
+    return {
+        "items": [
+            {
+                "id": feed.id,
+                "bank_account_id": feed.bank_account_id,
+                "transaction_date": feed.transaction_date.isoformat(),
+                "description": feed.description,
+                "reference": feed.reference,
+                "credit": float(feed.credit) if feed.credit else None,
+                "debit": float(feed.debit) if feed.debit else None,
+                "balance": float(feed.balance) if feed.balance else None,
+            }
+            for feed in feeds
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
 
 
 @router.get("/accounts")

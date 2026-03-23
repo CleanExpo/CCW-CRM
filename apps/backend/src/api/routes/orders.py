@@ -12,6 +12,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
+from fastapi import BackgroundTasks
 from src.api.deps import get_optional_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
@@ -31,6 +32,7 @@ from src.db.schemas import (
     PaginatedResponse,
 )
 from src.monitoring import metrics
+from src.services.email_notifications import email_service
 from src.services.sse_service import sse_service
 from src.utils.calculations import calculate_line_total, calculate_totals
 
@@ -560,6 +562,7 @@ async def get_order_activity(
 @router.post("", response_model=Order, status_code=201)
 async def create_order(
     order_data: OrderCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ):
@@ -678,6 +681,19 @@ async def create_order(
     customer_result = await db.execute(customer_query)
     customer = customer_result.scalar_one_or_none()
     customer_name = customer.company_name if customer else "Unknown Customer"
+    customer_email = customer.email if customer and customer.email else None
+
+    # Send order confirmation email (non-blocking background task)
+    if customer_email:
+        background_tasks.add_task(
+            email_service.send_order_confirmation,
+            order_number=order_number,
+            customer_email=customer_email,
+            customer_name=customer_name,
+            total=float(total),
+            item_count=len(order_data.items),
+            status=order_data.status,
+        )
 
     # Publish to order-updates channel
     await sse_service.publish("order-updates", {
