@@ -161,3 +161,12 @@ backups/
 **/backups/
 .planning/linear-sync.mjs
 scripts/linear-project-status.mjs
+
+# Obsidian vault - local only
+.obsidian-vault/.obsidian/workspace*.json
+.obsidian-vault/.obsidian/workspaces.json
+.obsidian-vault/.obsidian/hotkeys.json
+.obsidian-vault/.obsidian/cache/
+.obsidian-vault/.obsidian/plugins/*/
+.obsidian-vault/.obsidian/.trash/
+.obsidian-vault/scratchpad/
