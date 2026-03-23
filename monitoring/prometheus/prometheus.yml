@@ -19,6 +19,8 @@ rule_files:
 scrape_configs:
   - job_name: 'ccw-erp-backend'
     metrics_path: '/metrics'
+    authorization:
+      credentials_file: /etc/prometheus/metrics_token
     static_configs:
       - targets:
           - 'backend:8000'

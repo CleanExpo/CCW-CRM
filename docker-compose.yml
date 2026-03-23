@@ -72,6 +72,8 @@ services:
       DEBUG: 'True'
       LOG_LEVEL: DEBUG
       CORS_ORIGINS: '["http://localhost:3000","http://localhost:3005","http://localhost:3006","http://localhost:3007","http://localhost:3011","http://localhost:8080","http://10.252.22.111:3006","http://10.252.22.111:3007","http://192.168.2.65:3011"]'
+      # Metrics endpoint token (optional in development — required in production)
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
       # Sentry Error Tracking (optional in development)
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-1.0}
