@@ -5,7 +5,9 @@ export default function LoginPage() {
   return (
     <Card className="w-full">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-center text-2xl font-bold">CCW Online</CardTitle>
+        <CardTitle className="text-center text-2xl font-bold" as="h1">
+          CCW Online
+        </CardTitle>
         <CardDescription className="text-center">
           Sign in to your account to continue
         </CardDescription>
