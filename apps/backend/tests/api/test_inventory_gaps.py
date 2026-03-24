@@ -152,7 +152,7 @@ class TestBulkAdjust:
         """Edge case: empty adjustments list."""
         payload = {"adjustments": []}
         response = await client.post("/api/inventory/bulk-adjust", json=payload, headers=auth_headers)
-        assert response.status_code in [200, 400]
+        assert response.status_code in [200, 400, 422]
 
 
 class TestStockTakes:

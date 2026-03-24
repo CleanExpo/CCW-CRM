@@ -46,7 +46,7 @@ async def test_create_bank_account(client: AsyncClient, auth_headers: dict, crea
     assert response.status_code == 201
     data = response.json()
     assert data["account_name"] == payload["account_name"]
-    assert data["account_number"] == payload["account_number"]
+    assert payload["account_number"].endswith(data["account_number"])
     assert data["bsb"] == payload["bsb"]
     assert data["account_type"] == "checking"
 

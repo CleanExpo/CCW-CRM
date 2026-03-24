@@ -46,11 +46,10 @@ class TestUNI172EndpointExistence:
 
     def test_reorder_settings_endpoint_exists(self):
         """PATCH /api/inventory/reorder-settings/{product_id}/{location} exists."""
-        response = client.patch(
-            f"/api/inventory/reorder-settings/{_uid()}/brisbane",
-            json={"reorder_point": 10, "reorder_quantity": 20},
-        )
-        assert response.status_code != 404, "reorder-settings endpoint missing"
+        openapi = client.get("/openapi.json").json()
+        paths = openapi.get("paths", {})
+        assert "/api/inventory/reorder-settings/{product_id}/{location}" in paths, "reorder-settings endpoint missing"
+        assert "patch" in paths["/api/inventory/reorder-settings/{product_id}/{location}"]
 
     def test_barcode_lookup_endpoint_exists(self):
         """GET /api/inventory/barcode/{code} exists."""
@@ -64,8 +63,10 @@ class TestUNI172EndpointExistence:
 
     def test_barcode_delete_endpoint_exists(self):
         """DELETE /api/inventory/barcode/{code} exists."""
-        response = client.delete("/api/inventory/barcode/1234567890")
-        assert response.status_code != 404, "barcode delete endpoint missing"
+        openapi = client.get("/openapi.json").json()
+        paths = openapi.get("paths", {})
+        assert "/api/inventory/barcode/{code}" in paths, "barcode delete endpoint missing"
+        assert "delete" in paths["/api/inventory/barcode/{code}"]
 
     def test_stock_take_create_endpoint_exists(self):
         """POST /api/inventory/stock-take exists."""
@@ -502,46 +503,41 @@ class TestUNI172Summary:
     """Confirm all 21 UNI-172 inventory endpoints are registered."""
 
     def test_all_uni172_endpoints_registered(self):
-        """All 21 UNI-172 endpoints exist (not 404) in inventory router."""
-        endpoints = [
-            ("GET", "/api/inventory/summary"),
-            ("PATCH", f"/api/inventory/reorder-settings/{_uid()}/brisbane"),
-            ("GET", "/api/inventory/barcode/TEST-CODE"),
-            ("POST", "/api/inventory/barcode"),
-            ("DELETE", "/api/inventory/barcode/TEST-CODE"),
-            ("POST", "/api/inventory/stock-take"),
-            ("GET", "/api/inventory/stock-takes"),
-            ("POST", f"/api/inventory/stock-take/{_uid()}/submit"),
-            ("GET", "/api/inventory/reorder-rules"),
-            ("POST", "/api/inventory/reorder-rules"),
-            ("GET", "/api/inventory/reorder-alerts"),
-            ("GET", f"/api/inventory/products/{_uid()}/attributes"),
-            ("POST", f"/api/inventory/products/{_uid()}/attributes"),
-            ("DELETE", f"/api/inventory/products/{_uid()}/attributes/{_uid()}"),
-            ("GET", f"/api/inventory/products/{_uid()}/variants"),
-            ("POST", f"/api/inventory/products/{_uid()}/variants"),
-            ("DELETE", f"/api/inventory/products/{_uid()}/variants/{_uid()}"),
-            ("POST", "/api/inventory/auto-reorder"),
-            ("POST", "/api/inventory/bulk-adjust"),
-            ("GET", "/api/inventory/stock-takes/active"),
-            ("POST", "/api/inventory/cycle-count/generate"),
+        """All 21 UNI-172 inventory endpoints exist in the router OpenAPI schema."""
+        openapi = client.get("/openapi.json").json()
+        paths = openapi.get("paths", {})
+
+        # (method, path_template) — uses OpenAPI path parameter placeholders
+        expected = [
+            ("get", "/api/inventory/summary"),
+            ("patch", "/api/inventory/reorder-settings/{product_id}/{location}"),
+            ("get", "/api/inventory/barcode/{code}"),
+            ("post", "/api/inventory/barcode"),
+            ("delete", "/api/inventory/barcode/{code}"),
+            ("post", "/api/inventory/stock-take"),
+            ("get", "/api/inventory/stock-takes"),
+            ("post", "/api/inventory/stock-take/{take_id}/submit"),
+            ("get", "/api/inventory/reorder-rules"),
+            ("post", "/api/inventory/reorder-rules"),
+            ("get", "/api/inventory/reorder-alerts"),
+            ("get", "/api/inventory/products/{product_id}/attributes"),
+            ("post", "/api/inventory/products/{product_id}/attributes"),
+            ("delete", "/api/inventory/products/{product_id}/attributes/{attribute_id}"),
+            ("get", "/api/inventory/products/{product_id}/variants"),
+            ("post", "/api/inventory/products/{product_id}/variants"),
+            ("delete", "/api/inventory/products/{product_id}/variants/{variant_id}"),
+            ("post", "/api/inventory/auto-reorder"),
+            ("post", "/api/inventory/bulk-adjust"),
+            ("get", "/api/inventory/stock-takes/active"),
+            ("post", "/api/inventory/cycle-count/generate"),
         ]
 
-        not_found = []
-        for method, url in endpoints:
-            if method == "GET":
-                r = client.get(url)
-            elif method == "POST":
-                r = client.post(url, json={})
-            elif method == "PATCH":
-                r = client.patch(url, json={})
-            elif method == "DELETE":
-                r = client.delete(url)
-            else:
-                continue
+        missing = []
+        for method, path_template in expected:
+            if path_template not in paths:
+                missing.append(f"{method.upper()} {path_template} (path not found)")
+            elif method not in paths[path_template]:
+                missing.append(f"{method.upper()} {path_template} (method not registered)")
 
-            if r.status_code == 404:
-                not_found.append(f"{method} {url}")
-
-        assert not not_found, f"Missing endpoints: {not_found}"
-        print(f"All {len(endpoints)} UNI-172 inventory endpoints are registered.")
+        assert not missing, f"Missing endpoints: {missing}"
+        print(f"All {len(expected)} UNI-172 inventory endpoints are registered.")
