@@ -1,7 +1,7 @@
 """Add technician_certifications and certification_alerts tables for IICRC tracking.
 
 Revision ID: 00d_add_certification_tables
-Revises: 00c_add_equipment_lifecycle_tables
+Revises: 00c_equipment_lifecycle
 Create Date: 2026-03-25
 """
 from typing import Sequence, Union
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "00d_add_certification_tables"
-down_revision: Union[str, Sequence[str], None] = "00c_add_equipment_lifecycle_tables"
+down_revision: Union[str, Sequence[str], None] = "00c_equipment_lifecycle"
 branch_labels = None
 depends_on = None
 

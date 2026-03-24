@@ -56,6 +56,7 @@ class WarrantyAlertResponse(BaseModel):
     serial_number: str
     product_id: UUID | None
     customer_id: UUID | None
+    days_until_expiry: int | None = None
 
     model_config = {"from_attributes": True}
 
@@ -97,10 +98,9 @@ async def register_equipment_unit(
     """
     # Auto-calculate warranty expiry if months provided
     warranty_expiry = payload.warranty_expiry
-    if warranty_expiry is None and payload.purchase_date and payload.warranty_months:
-        warranty_expiry = payload.purchase_date + timedelta(
-            days=payload.warranty_months * 30
-        )
+    if warranty_expiry is None and payload.warranty_months:
+        base_date = payload.purchase_date or datetime.now(UTC)
+        warranty_expiry = base_date + timedelta(days=payload.warranty_months * 30)
 
     unit = EquipmentUnit(
         serial_number=payload.serial_number,
@@ -188,6 +188,7 @@ async def get_warranty_alerts(
                 serial_number=unit.serial_number,
                 product_id=unit.product_id,
                 customer_id=unit.customer_id,
+                days_until_expiry=days_left,
             )
         )
 
@@ -201,30 +202,45 @@ async def get_equipment_stats(
     """Return aggregate equipment stats for the dashboard Urgent Today card."""
     now = datetime.now(UTC)
 
-    total_result = await db.execute(
-        select(func.count(EquipmentUnit.id)).where(EquipmentUnit.is_active)
-    )
+    total_result = await db.execute(select(func.count(EquipmentUnit.id)))
     total = total_result.scalar() or 0
 
-    expiring_30_result = await db.execute(
+    active_result = await db.execute(
+        select(func.count(EquipmentUnit.id)).where(EquipmentUnit.is_active)
+    )
+    active = active_result.scalar() or 0
+
+    expiring_soon_result = await db.execute(
         select(func.count(EquipmentUnit.id))
         .where(EquipmentUnit.is_active)
         .where(EquipmentUnit.warranty_expiry.isnot(None))
         .where(EquipmentUnit.warranty_expiry <= now + timedelta(days=30))
         .where(EquipmentUnit.warranty_expiry >= now)
     )
-    expiring_30 = expiring_30_result.scalar() or 0
+    expiring_soon = expiring_soon_result.scalar() or 0
 
-    expired_result = await db.execute(
-        select(func.count(EquipmentUnit.id))
+    # Warranty alerts list: units with warranty expiring within 90 days
+    alerts_result = await db.execute(
+        select(EquipmentUnit)
         .where(EquipmentUnit.is_active)
         .where(EquipmentUnit.warranty_expiry.isnot(None))
-        .where(EquipmentUnit.warranty_expiry < now)
+        .where(EquipmentUnit.warranty_expiry <= now + timedelta(days=90))
+        .order_by(EquipmentUnit.warranty_expiry)
+        .limit(20)
     )
-    expired = expired_result.scalar() or 0
+    alert_units = alerts_result.scalars().all()
+    warranty_alerts = [
+        {
+            "serial_number": u.serial_number,
+            "warranty_expiry": u.warranty_expiry.isoformat() if u.warranty_expiry else None,
+            "days_until_expiry": (u.warranty_expiry - now).days if u.warranty_expiry else None,
+        }
+        for u in alert_units
+    ]
 
     return {
         "total_units": total,
-        "warranties_expiring_30_days": expiring_30,
-        "warranties_expired": expired,
+        "active_units": active,
+        "expiring_soon": expiring_soon,
+        "warranty_alerts": warranty_alerts,
     }

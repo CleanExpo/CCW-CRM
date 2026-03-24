@@ -1,10 +1,10 @@
 # Routes Catalog — CCW ERP/CRM
 
-# Last Updated: 2026-03-17
+# Last Updated: 2026-03-25
 
-# Total Route Files: 106
+# Total Route Files: 110
 
-# Total Endpoints: ~640 (across all route files)
+# Total Endpoints: ~660 (across all route files)
 
 # Source: apps/backend/src/api/routes/
 
@@ -1321,3 +1321,47 @@
 - **Status**: Active
 - **Registered**: True
 - **Last Verified**: 2026-03-24
+
+### ROUTE-113: Equipment Lifecycle
+
+- **File**: `apps/backend/src/api/routes/equipment_lifecycle.py`
+- **Prefix**: /api/equipment
+- **Endpoints**: GET /units, POST /units, GET /units/{serial}, GET /warranty-alerts, GET /stats
+- **Count**: 5
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25
+
+### ROUTE-114: IICRC Certifications
+
+- **File**: `apps/backend/src/api/routes/certifications.py`
+- **Prefix**: /api/certifications
+- **Endpoints**: GET /, POST /, GET /expiring, POST /{id}/renew, GET /stats
+- **Count**: 5
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25
+
+### ROUTE-115: Customer Pricing Tiers
+
+- **File**: `apps/backend/src/api/routes/pricing.py`
+- **Prefix**: /api/pricing
+- **Endpoints**: GET /tiers, POST /tiers, PUT /customers/{id}/pricing-tier, GET /calculate, GET /customers/{id}/tier
+- **Count**: 5
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25
+
+### ROUTE-116: Australian GST/BAS Report
+
+- **File**: `apps/backend/src/api/routes/invoices.py` (added endpoint)
+- **Prefix**: /api/invoices
+- **Endpoints**: GET /reports/bas
+- **Count**: 1
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25

@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.config.database import get_async_db
-from src.db.demo_models import Customer, Product
+from src.db.demo_models import Customer, Product  # noqa: F401 (Customer used for FK check)
 from src.db.pricing_models import CustomerPricingAssignment, PricingTier
 
 router = APIRouter(prefix="/api/pricing", tags=["Pricing Tiers"])
@@ -113,6 +113,13 @@ async def assign_customer_tier(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> CustomerTierResponse:
     """Assign or update a pricing tier for a customer."""
+    # Verify customer exists
+    customer_result = await db.execute(
+        select(Customer).where(Customer.id == customer_id)
+    )
+    if not customer_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Customer not found")
+
     # Verify tier exists
     tier_result = await db.execute(
         select(PricingTier).where(PricingTier.id == payload.tier_id)
@@ -156,10 +163,10 @@ async def assign_customer_tier(
 
 @router.get("/calculate")
 async def calculate_customer_price(
-    customer_id: UUID,
-    product_id: UUID,
-    qty: int = Query(1, ge=1),
     db: Annotated[AsyncSession, Depends(get_async_db)],
+    customer_id: UUID = Query(...),
+    product_id: UUID = Query(...),
+    qty: int = Query(1, ge=1),
 ) -> PriceCalculationResponse:
     """Calculate the discounted price for a customer + product + quantity combo."""
     # Get product list price
@@ -205,11 +212,11 @@ async def calculate_customer_price(
     )
 
 
-@router.get("/customers/{customer_id}/tier", response_model=CustomerTierResponse | None)
+@router.get("/customers/{customer_id}/tier", response_model=CustomerTierResponse)
 async def get_customer_tier(
     customer_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> CustomerTierResponse | None:
+) -> CustomerTierResponse:
     """Get the active pricing tier for a customer."""
     result = await db.execute(
         select(CustomerPricingAssignment)
@@ -218,7 +225,7 @@ async def get_customer_tier(
     )
     assignment = result.scalar_one_or_none()
     if not assignment or not assignment.tier:
-        return None
+        raise HTTPException(status_code=404, detail="No pricing tier assigned to this customer")
 
     return CustomerTierResponse(
         customer_id=customer_id,

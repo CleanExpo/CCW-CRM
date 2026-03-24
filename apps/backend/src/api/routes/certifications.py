@@ -213,13 +213,20 @@ async def get_certification_stats(
     total_result = await db.execute(select(func.count(TechnicianCertification.id)))
     total = total_result.scalar() or 0
 
-    expiring_60_result = await db.execute(
+    active_result = await db.execute(
+        select(func.count(TechnicianCertification.id)).where(
+            TechnicianCertification.status == "active"
+        )
+    )
+    active = active_result.scalar() or 0
+
+    expiring_soon_result = await db.execute(
         select(func.count(TechnicianCertification.id))
         .where(TechnicianCertification.expiry_date.isnot(None))
         .where(TechnicianCertification.expiry_date <= now + timedelta(days=60))
         .where(TechnicianCertification.expiry_date >= now)
     )
-    expiring_60 = expiring_60_result.scalar() or 0
+    expiring_soon = expiring_soon_result.scalar() or 0
 
     expired_result = await db.execute(
         select(func.count(TechnicianCertification.id))
@@ -228,10 +235,30 @@ async def get_certification_stats(
     )
     expired = expired_result.scalar() or 0
 
+    # Expiring alerts list: certs expiring within 60 days
+    alerts_result = await db.execute(
+        select(TechnicianCertification)
+        .where(TechnicianCertification.expiry_date.isnot(None))
+        .where(TechnicianCertification.expiry_date >= now)
+        .where(TechnicianCertification.expiry_date <= now + timedelta(days=60))
+        .order_by(TechnicianCertification.expiry_date)
+        .limit(20)
+    )
+    alert_certs = alerts_result.scalars().all()
+    expiring_alerts = [
+        {
+            "id": str(c.id),
+            "cert_type": c.cert_type,
+            "expiry_date": c.expiry_date.isoformat() if c.expiry_date else None,
+            "days_until_expiry": (c.expiry_date - now).days if c.expiry_date else None,
+        }
+        for c in alert_certs
+    ]
+
     return {
-        "total_certifications": total,
-        "expiring_within_60_days": expiring_60,
+        "total": total,
+        "active": active,
+        "expiring_soon": expiring_soon,
         "expired": expired,
-        "iicrc_cert_types": IICRC_CERT_TYPES,
-        "cert_bodies": CERT_BODIES,
+        "expiring_alerts": expiring_alerts,
     }
