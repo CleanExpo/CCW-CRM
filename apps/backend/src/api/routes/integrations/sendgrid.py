@@ -6,13 +6,14 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
 from src.config.sendgrid_settings import SendGridSettings, sendgrid_settings
 from src.db.email_models import EmailConversation, EmailMessage, EmailWebhookLog
+from src.db.integration_credential_models import IntegrationCredential
 from src.integrations.sendgrid.client import SendGridClient
 from src.integrations.sendgrid.processor import EmailProcessor
 
@@ -21,6 +22,14 @@ logger = structlog.get_logger(__name__)
 
 
 # Pydantic models for requests/responses
+class SendGridConfigureRequest(BaseModel):
+    """Credentials to configure the SendGrid integration."""
+
+    api_key: str = Field(min_length=1, description="SendGrid API key (starts with SG.)")
+    from_email: str = Field(default="", description="Sender email address")
+    from_name: str = Field(default="", description="Sender display name")
+
+
 class SendEmailRequest(BaseModel):
     """Request model for sending an email."""
 
@@ -66,22 +75,90 @@ def get_sendgrid_settings() -> SendGridSettings:
 
 @router.get("/status")
 async def get_connection_status(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     settings: Annotated[SendGridSettings, Depends(get_sendgrid_settings)],
 ) -> dict:
     """Get SendGrid connection status.
 
-    Returns:
-        Connection status and configuration details
+    Checks DB for a saved API key first, then falls back to env var mode.
     """
     logger.info("checking_sendgrid_status")
 
+    result = await db.execute(
+        select(IntegrationCredential).where(
+            IntegrationCredential.integration_name == "sendgrid",
+            IntegrationCredential.is_active.is_(True),
+        )
+    )
+    cred = result.scalar_one_or_none()
+    stored = cred.get_credentials() if cred else {}
+    has_real_key = bool(stored.get("api_key") and not stored["api_key"].startswith("demo_"))
+
+    if has_real_key:
+        return {
+            "connected": True,
+            "mode": "live",
+            "from_email": stored.get("from_email") or settings.from_email,
+            "from_name": stored.get("from_name") or settings.from_name,
+        }
+
+    if settings.mode == "demo":
+        return {
+            "connected": True,
+            "mode": "demo",
+            "from_email": settings.from_email,
+            "from_name": settings.from_name,
+        }
+
+    return {
+        "connected": False,
+        "mode": "not_configured",
+        "message": "Enter your SendGrid API key to enable email integration",
+    }
+
+
+@router.post("/configure")
+async def configure_sendgrid(
+    request: SendGridConfigureRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Save SendGrid API key to the database.
+
+    Creates or updates the SendGrid credential record.
+    """
+    logger.info("configuring_sendgrid_credentials")
+
+    result = await db.execute(
+        select(IntegrationCredential).where(
+            IntegrationCredential.integration_name == "sendgrid"
+        )
+    )
+    cred = result.scalar_one_or_none()
+
+    if cred:
+        cred.set_credentials({
+            "api_key": request.api_key,
+            "from_email": request.from_email,
+            "from_name": request.from_name,
+        })
+        cred.is_active = True
+    else:
+        cred = IntegrationCredential(integration_name="sendgrid", is_active=True)
+        cred.set_credentials({
+            "api_key": request.api_key,
+            "from_email": request.from_email,
+            "from_name": request.from_name,
+        })
+        db.add(cred)
+
+    await db.commit()
+
+    logger.info("sendgrid_credentials_saved")
     return {
         "connected": True,
-        "mode": settings.mode,
-        "from_email": settings.from_email,
-        "from_name": settings.from_name,
-        "ai_auto_response_enabled": settings.ai_auto_response_enabled,
-        "ai_confidence_threshold": settings.ai_confidence_threshold,
+        "mode": "live",
+        "from_email": request.from_email,
+        "message": "SendGrid credentials saved successfully",
     }
 
 

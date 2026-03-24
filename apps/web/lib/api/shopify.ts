@@ -5,14 +5,14 @@
  * Handles order imports and inventory sync operations.
  */
 
-import { apiClient, ApiClientError } from "./client";
+import { apiClient, ApiClientError } from './client';
 
 /**
  * Shopify connection status response
  */
 export interface ShopifyConnectionStatus {
   connected: boolean;
-  mode: "demo" | "live";
+  mode: 'demo' | 'live' | 'not_configured';
   shop_domain?: string;
   shop_name?: string;
   last_order_sync?: string;
@@ -20,12 +20,20 @@ export interface ShopifyConnectionStatus {
   message?: string;
 }
 
+export interface ShopifyConfigureRequest {
+  shop_domain: string;
+  access_token: string;
+  api_key?: string;
+  api_secret?: string;
+  webhook_secret?: string;
+}
+
 /**
  * Order import result
  */
 export interface ShopifyOrderImportResult {
   success: boolean;
-  mode?: "demo" | "live";
+  mode?: 'demo' | 'live';
   order_id: string;
   order_number: string;
   customer_id: string;
@@ -39,7 +47,7 @@ export interface ShopifyOrderImportResult {
  */
 export interface ShopifyBulkImportResult {
   success: boolean;
-  mode?: "demo" | "live";
+  mode?: 'demo' | 'live';
   imported_count: number;
   orders: Array<{
     id: string;
@@ -54,7 +62,7 @@ export interface ShopifyBulkImportResult {
  */
 export interface ShopifyInventorySyncResult {
   success: boolean;
-  mode?: "demo" | "live";
+  mode?: 'demo' | 'live';
   product_id: string;
   sku: string;
   stock: number;
@@ -68,7 +76,7 @@ export interface ShopifyInventorySyncResult {
  */
 export interface ShopifyBulkInventorySyncResult {
   success: boolean;
-  mode?: "demo" | "live";
+  mode?: 'demo' | 'live';
   total: number;
   synced: number;
   failed: number;
@@ -80,7 +88,7 @@ export interface ShopifyBulkInventorySyncResult {
  */
 export interface ShopifyProductSyncResult {
   success: boolean;
-  mode?: "demo" | "live";
+  mode?: 'demo' | 'live';
   product_id: string;
   sku: string;
   shopify_product_id?: number;
@@ -93,7 +101,7 @@ export interface ShopifyProductSyncResult {
  */
 export interface ShopifyConnectResponse {
   success: boolean;
-  mode: "demo" | "live";
+  mode: 'demo' | 'live';
   shop_domain: string;
   shop_name?: string;
   message?: string;
@@ -103,18 +111,23 @@ export interface ShopifyConnectResponse {
  * Get Shopify connection status
  */
 export async function getShopifyStatus(): Promise<ShopifyConnectionStatus> {
-  return apiClient.get<ShopifyConnectionStatus>(
-    "/api/integrations/shopify/status"
-  );
+  return apiClient.get<ShopifyConnectionStatus>('/api/integrations/shopify/status');
+}
+
+/**
+ * Save Shopify store credentials to the database
+ */
+export async function configureShopify(
+  data: ShopifyConfigureRequest
+): Promise<ShopifyConnectionStatus> {
+  return apiClient.post<ShopifyConnectionStatus>('/api/integrations/shopify/configure', data);
 }
 
 /**
  * Connect to Shopify store
  */
 export async function connectShopify(): Promise<ShopifyConnectResponse> {
-  return apiClient.post<ShopifyConnectResponse>(
-    "/api/integrations/shopify/connect"
-  );
+  return apiClient.post<ShopifyConnectResponse>('/api/integrations/shopify/connect');
 }
 
 /**
@@ -122,7 +135,7 @@ export async function connectShopify(): Promise<ShopifyConnectResponse> {
  */
 export async function disconnectShopify(): Promise<{ success: boolean; message: string }> {
   return apiClient.post<{ success: boolean; message: string }>(
-    "/api/integrations/shopify/disconnect"
+    '/api/integrations/shopify/disconnect'
   );
 }
 
@@ -131,9 +144,7 @@ export async function disconnectShopify(): Promise<{ success: boolean; message: 
  *
  * @param orderId - Shopify order ID to import
  */
-export async function importShopifyOrder(
-  orderId: string
-): Promise<ShopifyOrderImportResult> {
+export async function importShopifyOrder(orderId: string): Promise<ShopifyOrderImportResult> {
   return apiClient.post<ShopifyOrderImportResult>(
     `/api/integrations/shopify/import-order/${orderId}`
   );
@@ -154,7 +165,7 @@ export async function importRecentShopifyOrders(
   });
 
   if (createdAfter) {
-    params.append("created_after", createdAfter);
+    params.append('created_after', createdAfter);
   }
 
   return apiClient.post<ShopifyBulkImportResult>(
@@ -167,9 +178,7 @@ export async function importRecentShopifyOrders(
  *
  * @param productId - ERP product ID (UUID string)
  */
-export async function syncProductInventory(
-  productId: string
-): Promise<ShopifyInventorySyncResult> {
+export async function syncProductInventory(productId: string): Promise<ShopifyInventorySyncResult> {
   return apiClient.post<ShopifyInventorySyncResult>(
     `/api/integrations/shopify/sync-inventory/${productId}`
   );
@@ -180,7 +189,7 @@ export async function syncProductInventory(
  */
 export async function syncAllInventory(): Promise<ShopifyBulkInventorySyncResult> {
   return apiClient.post<ShopifyBulkInventorySyncResult>(
-    "/api/integrations/shopify/sync-all-inventory"
+    '/api/integrations/shopify/sync-all-inventory'
   );
 }
 
@@ -189,9 +198,7 @@ export async function syncAllInventory(): Promise<ShopifyBulkInventorySyncResult
  *
  * @param productId - ERP product ID (UUID string)
  */
-export async function syncProductToShopify(
-  productId: string
-): Promise<ShopifyProductSyncResult> {
+export async function syncProductToShopify(productId: string): Promise<ShopifyProductSyncResult> {
   return apiClient.post<ShopifyProductSyncResult>(
     `/api/integrations/shopify/sync-product/${productId}`
   );

@@ -1,17 +1,22 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle2, ExternalLink, RefreshCw, Unplug, XCircle } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  AlertCircle,
+  CheckCircle2,
+  ExternalLink,
+  KeyRound,
+  RefreshCw,
+  Unplug,
+  XCircle,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,11 +27,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import type { ShopifyConnectionStatus } from "@/lib/api/shopify";
-import { connectShopify, disconnectShopify } from "@/lib/api/shopify";
+} from '@/components/ui/alert-dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import type { ShopifyConnectionStatus } from '@/lib/api/shopify';
+import { configureShopify, connectShopify, disconnectShopify } from '@/lib/api/shopify';
+
+const configureSchema = z.object({
+  shop_domain: z
+    .string()
+    .min(1, 'Shop domain is required')
+    .regex(/\.myshopify\.com$|^[a-z0-9-]+$/, {
+      message: 'Enter your store handle (e.g. my-store) or full domain (my-store.myshopify.com)',
+    }),
+  access_token: z.string().min(1, 'Access token is required'),
+  api_key: z.string().optional(),
+  api_secret: z.string().optional(),
+});
+
+type ConfigureFormValues = z.infer<typeof configureSchema>;
 
 interface ShopifyConnectionCardProps {
   status: ShopifyConnectionStatus | null;
@@ -40,36 +69,75 @@ export function ShopifyConnectionCard({
   onStatusChange,
 }: ShopifyConnectionCardProps) {
   const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [editingCredentials, setEditingCredentials] = useState(false);
 
   const isConnected = status?.connected ?? false;
-  const isDemo = status?.mode === "demo";
+  const isDemo = status?.mode === 'demo';
+  const isNotConfigured = !status || status.mode === 'not_configured';
+  const showForm = isNotConfigured || editingCredentials;
+
+  const form = useForm<ConfigureFormValues>({
+    resolver: zodResolver(configureSchema),
+    defaultValues: {
+      shop_domain: '',
+      access_token: '',
+      api_key: '',
+      api_secret: '',
+    },
+  });
+
+  const handleSave = async (values: ConfigureFormValues) => {
+    setSaving(true);
+    try {
+      // Normalise domain: add .myshopify.com if just a handle
+      const domain = values.shop_domain.includes('.')
+        ? values.shop_domain
+        : `${values.shop_domain}.myshopify.com`;
+
+      await configureShopify({
+        shop_domain: domain,
+        access_token: values.access_token,
+        api_key: values.api_key || undefined,
+        api_secret: values.api_secret || undefined,
+      });
+      toast({
+        title: 'Credentials Saved',
+        description: 'Shopify store credentials saved. Click Connect to activate.',
+      });
+      setEditingCredentials(false);
+      onStatusChange();
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: error instanceof Error ? error.message : 'Failed to save credentials',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleConnect = async () => {
     setConnecting(true);
     try {
       const response = await connectShopify();
-
-      if (response.mode === "demo") {
-        toast({
-          title: "Demo Mode Active",
-          description: response.message || "Shopify demo mode is now active",
-        });
-      } else {
-        toast({
-          title: "Connected to Shopify",
-          description: `Successfully connected to ${response.shop_name}`,
-        });
-      }
-
+      toast({
+        title: response.mode === 'demo' ? 'Demo Mode Active' : 'Connected to Shopify',
+        description:
+          response.mode === 'demo'
+            ? 'Running in demo mode'
+            : `Connected to ${response.shop_name || response.shop_domain}`,
+      });
       onStatusChange();
     } catch (error: unknown) {
       toast({
-        variant: "destructive",
-        title: "Connection Failed",
-        description: error instanceof Error ? error.message : "Failed to connect to Shopify",
+        variant: 'destructive',
+        title: 'Connection Failed',
+        description: error instanceof Error ? error.message : 'Failed to connect to Shopify',
       });
     } finally {
       setConnecting(false);
@@ -80,18 +148,13 @@ export function ShopifyConnectionCard({
     setDisconnecting(true);
     try {
       await disconnectShopify();
-
-      toast({
-        title: "Disconnected",
-        description: "Shopify integration has been disconnected",
-      });
-
+      toast({ title: 'Disconnected', description: 'Shopify integration disconnected' });
       onStatusChange();
     } catch (error: unknown) {
       toast({
-        variant: "destructive",
-        title: "Disconnect Failed",
-        description: error instanceof Error ? error.message : "Failed to disconnect from Shopify",
+        variant: 'destructive',
+        title: 'Disconnect Failed',
+        description: error instanceof Error ? error.message : 'Failed to disconnect',
       });
     } finally {
       setDisconnecting(false);
@@ -102,16 +165,9 @@ export function ShopifyConnectionCard({
     setRefreshing(true);
     try {
       await onStatusChange();
-      toast({
-        title: "Status Refreshed",
-        description: "Connection status has been updated",
-      });
-    } catch (error: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Refresh Failed",
-        description: error instanceof Error ? error.message : "Failed to refresh status",
-      });
+      toast({ title: 'Status Refreshed' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Refresh Failed' });
     } finally {
       setRefreshing(false);
     }
@@ -141,7 +197,6 @@ export function ShopifyConnectionCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Shopify logo */}
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
               <svg viewBox="0 0 24 24" className="h-6 w-6 fill-green-600">
                 <path d="M16.93 0H7.07a1.2 1.2 0 0 0-1.2 1.2v21.6c0 .66.54 1.2 1.2 1.2h9.86c.66 0 1.2-.54 1.2-1.2V1.2c0-.66-.54-1.2-1.2-1.2zm-4.93 21.9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM16 15H8V3h8v12z" />
@@ -153,9 +208,7 @@ export function ShopifyConnectionCard({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isDemo && isConnected && (
-              <Badge variant="secondary">Demo Mode</Badge>
-            )}
+            {isDemo && isConnected && <Badge variant="secondary">Demo Mode</Badge>}
             {isConnected ? (
               <Badge variant="default" className="flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
@@ -164,14 +217,16 @@ export function ShopifyConnectionCard({
             ) : (
               <Badge variant="outline" className="flex items-center gap-1">
                 <XCircle className="h-3 w-3" />
-                Disconnected
+                {isNotConfigured ? 'Not Configured' : 'Disconnected'}
               </Badge>
             )}
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
-        {isConnected ? (
+        {/* ── Connected state ── */}
+        {isConnected && !editingCredentials && (
           <>
             <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950">
               <div className="flex items-start gap-2">
@@ -181,40 +236,30 @@ export function ShopifyConnectionCard({
                     {status?.shop_name || status?.shop_domain}
                   </p>
                   <p className="text-xs text-green-700 dark:text-green-300">
-                    {isDemo
-                      ? "Demo mode - No real API calls will be made"
-                      : "Connected to Shopify store"}
+                    {isDemo ? 'Demo mode — no real API calls' : 'Connected to Shopify store'}
                   </p>
                 </div>
               </div>
             </div>
 
             {status?.last_order_sync && (
-              <div className="text-sm text-muted-foreground">
-                Last order sync:{" "}
-                {new Date(status.last_order_sync).toLocaleString()}
+              <div className="text-muted-foreground text-sm">
+                Last order sync: {new Date(status.last_order_sync).toLocaleString()}
               </div>
             )}
 
-            {status?.last_inventory_sync && (
-              <div className="text-sm text-muted-foreground">
-                Last inventory sync:{" "}
-                {new Date(status.last_inventory_sync).toLocaleString()}
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleRefresh}
-                variant="outline"
-                size="sm"
-                disabled={refreshing}
-              >
-                <RefreshCw
-                  className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                />
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleRefresh} variant="outline" size="sm" disabled={refreshing}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh Status
               </Button>
+
+              {!isDemo && (
+                <Button variant="outline" size="sm" onClick={() => setEditingCredentials(true)}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Edit Credentials
+                </Button>
+              )}
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -227,51 +272,104 @@ export function ShopifyConnectionCard({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Disconnect Shopify?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will stop order imports and inventory sync. You can
-                      reconnect at any time.
+                      This will stop order imports and inventory sync. Your credentials will be
+                      preserved and you can reconnect at any time.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDisconnect}>
-                      Disconnect
-                    </AlertDialogAction>
+                    <AlertDialogAction onClick={handleDisconnect}>Disconnect</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
           </>
-        ) : (
+        )}
+
+        {/* ── Credential form ── */}
+        {showForm && (
           <>
-            <div className="rounded-lg border border-muted-foreground/20 bg-muted/50 p-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div className="flex-1 text-sm text-muted-foreground">
-                  <p className="font-medium">No active Shopify connection</p>
+            {isNotConfigured && (
+              <div className="border-muted-foreground/20 bg-muted/50 flex items-start gap-2 rounded-lg border p-3">
+                <AlertCircle className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+                <div className="text-muted-foreground text-sm">
+                  <p className="font-medium">Enter your Shopify store details</p>
                   <p className="mt-1 text-xs">
-                    Connect to enable order imports and inventory sync.
+                    Find your Admin API access token at Shopify Admin → Apps → Develop apps.
                   </p>
                 </div>
               </div>
-            </div>
+            )}
 
-            <Button
-              onClick={handleConnect}
-              disabled={connecting}
-              className="w-full"
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              {connecting ? "Connecting..." : "Connect to Shopify"}
-            </Button>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="shop_domain"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Shop Domain</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="my-store or my-store.myshopify.com"
+                          autoComplete="off"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="access_token"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Admin API Access Token</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="shpat_xxxxxxxxxx..."
+                          autoComplete="new-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
-              <p className="font-medium">What happens when you connect:</p>
-              <ul className="mt-2 ml-4 list-disc space-y-1">
-                <li>Orders from Shopify will be imported automatically</li>
-                <li>Inventory levels will sync from ERP to Shopify</li>
-                <li>Customer information will be synchronized</li>
-              </ul>
-            </div>
+                <Separator />
+
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={saving} className="flex-1">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {saving ? 'Saving...' : 'Save Credentials'}
+                  </Button>
+                  {editingCredentials && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setEditingCredentials(false)}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+
+                {!editingCredentials && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled={connecting}
+                    onClick={handleConnect}
+                  >
+                    {connecting ? 'Connecting...' : 'Connect (Demo Mode)'}
+                  </Button>
+                )}
+              </form>
+            </Form>
           </>
         )}
       </CardContent>

@@ -4,7 +4,7 @@
  * Handles all API calls to SendGrid email integration endpoints.
  */
 
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
 // ============================================
 // Types
@@ -12,11 +12,18 @@ import { apiClient } from "./client";
 
 export interface SendGridConnectionStatus {
   connected: boolean;
-  mode: "demo" | "live";
-  from_email: string;
-  from_name: string;
-  ai_auto_response_enabled: boolean;
-  ai_confidence_threshold: number;
+  mode: 'demo' | 'live' | 'not_configured';
+  from_email?: string;
+  from_name?: string;
+  ai_auto_response_enabled?: boolean;
+  ai_confidence_threshold?: number;
+  message?: string;
+}
+
+export interface SendGridConfigureRequest {
+  api_key: string;
+  from_email?: string;
+  from_name?: string;
 }
 
 export interface EmailConversation {
@@ -25,7 +32,7 @@ export interface EmailConversation {
   subject: string;
   customer_email: string;
   customer_name: string | null;
-  status: "open" | "responded" | "escalated" | "closed";
+  status: 'open' | 'responded' | 'escalated' | 'closed';
   intent: string | null;
   message_count: number;
   first_message_at: string;
@@ -34,7 +41,7 @@ export interface EmailConversation {
 
 export interface EmailMessage {
   id: string;
-  direction: "inbound" | "outbound";
+  direction: 'inbound' | 'outbound';
   from_email: string;
   to_email: string;
   subject: string;
@@ -58,7 +65,7 @@ export interface SendEmailRequest {
 export interface SendEmailResult {
   success: boolean;
   message_id: string;
-  mode: "demo" | "live";
+  mode: 'demo' | 'live';
 }
 
 export interface SimulateEmailResult {
@@ -96,7 +103,13 @@ export interface ConversationResponse {
  * Get current SendGrid connection status
  */
 export async function getSendGridStatus(): Promise<SendGridConnectionStatus> {
-  return apiClient.get<SendGridConnectionStatus>("/api/integrations/sendgrid/status");
+  return apiClient.get<SendGridConnectionStatus>('/api/integrations/sendgrid/status');
+}
+
+export async function configureSendGrid(
+  data: SendGridConfigureRequest
+): Promise<SendGridConnectionStatus> {
+  return apiClient.post<SendGridConnectionStatus>('/api/integrations/sendgrid/configure', data);
 }
 
 // ============================================
@@ -108,7 +121,7 @@ export async function getSendGridStatus(): Promise<SendGridConnectionStatus> {
  * @param emailData - Email details (to, subject, body)
  */
 export async function sendEmail(emailData: SendEmailRequest): Promise<SendEmailResult> {
-  return apiClient.post<SendEmailResult>("/api/integrations/sendgrid/send", emailData);
+  return apiClient.post<SendEmailResult>('/api/integrations/sendgrid/send', emailData);
 }
 
 // ============================================
@@ -125,8 +138,8 @@ export async function listConversations(
   limit: number = 50
 ): Promise<ConversationsResponse> {
   const params = new URLSearchParams();
-  if (status) params.append("status_filter", status);
-  params.append("limit", limit.toString());
+  if (status) params.append('status_filter', status);
+  params.append('limit', limit.toString());
 
   return apiClient.get<ConversationsResponse>(
     `/api/integrations/sendgrid/conversations?${params.toString()}`
@@ -176,38 +189,42 @@ export async function isSendGridConnected(): Promise<boolean> {
 /**
  * Get status badge color based on conversation status
  */
-export function getStatusColor(status: string): "default" | "secondary" | "destructive" | "outline" {
+export function getStatusColor(
+  status: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
-    case "open":
-      return "secondary";
-    case "responded":
-      return "default";
-    case "escalated":
-      return "destructive";
-    case "closed":
-      return "outline";
+    case 'open':
+      return 'secondary';
+    case 'responded':
+      return 'default';
+    case 'escalated':
+      return 'destructive';
+    case 'closed':
+      return 'outline';
     default:
-      return "secondary";
+      return 'secondary';
   }
 }
 
 /**
  * Get intent badge color
  */
-export function getIntentColor(intent: string): "default" | "secondary" | "destructive" | "outline" {
+export function getIntentColor(
+  intent: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (intent) {
-    case "order_inquiry":
-      return "default";
-    case "stock_check":
-      return "secondary";
-    case "quote_request":
-      return "default";
-    case "complaint":
-      return "destructive";
-    case "support":
-      return "secondary";
+    case 'order_inquiry':
+      return 'default';
+    case 'stock_check':
+      return 'secondary';
+    case 'quote_request':
+      return 'default';
+    case 'complaint':
+      return 'destructive';
+    case 'support':
+      return 'secondary';
     default:
-      return "outline";
+      return 'outline';
   }
 }
 
@@ -215,9 +232,9 @@ export function getIntentColor(intent: string): "default" | "secondary" | "destr
  * Format intent text for display
  */
 export function formatIntent(intent: string | null): string {
-  if (!intent) return "Unknown";
+  if (!intent) return 'Unknown';
   return intent
-    .split("_")
+    .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    .join(' ');
 }
