@@ -6,7 +6,6 @@ opportunity identification from the nightly shadow sync data.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import structlog
@@ -16,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
 from src.db.cin7_shadow_models import Cin7ShadowSync, Cin7SyncGap
-from src.db.shadow_session_models import ShadowSession
 
 logger = structlog.get_logger(__name__)
 
@@ -66,7 +64,7 @@ async def list_observed_patterns(
                     Cin7ShadowSync.entity_type,
                     func.count(Cin7ShadowSync.id).label("count"),
                     func.sum(
-                        (Cin7ShadowSync.sync_status == "synced").cast(type_=type(1))
+                        (Cin7ShadowSync.sync_status == "synced").cast(type_=int)
                     ).label("synced_count"),
                 ).group_by(Cin7ShadowSync.entity_type)
             )

@@ -367,14 +367,13 @@ async def escalate_sla(
     Uses sla_escalation service for escalation logic.
     Supports manual override or auto-assignment based on escalation rules.
     """
-    from datetime import timedelta
 
     from src.services.sla_escalation import (
-        calculate_escalation_level,
-        get_escalation_assignee,
         Organization,
         Task,
         User,
+        calculate_escalation_level,
+        get_escalation_assignee,
     )
 
     # Mock workflow instance data (in production, fetch from WorkflowInstance table)
@@ -504,7 +503,6 @@ async def get_workflow_execution_stats(
     Returns comprehensive metrics including SLA compliance, top workflow types,
     and performance data for the specified time period.
     """
-    from datetime import timedelta
 
     # Calculate date range
     end_date = datetime.now(UTC)

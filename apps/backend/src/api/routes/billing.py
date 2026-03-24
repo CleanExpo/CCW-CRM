@@ -23,7 +23,6 @@ from src.config.database import get_async_db
 from src.db.demo_models import Customer
 from src.db.models.invoicing import Invoice
 from src.services.dunning import (
-    DunningLevel,
     calculate_days_overdue,
     generate_dunning_letter,
     get_dunning_level,

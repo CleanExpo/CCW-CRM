@@ -710,7 +710,7 @@ async def verify_quality(request: VerifyRequest) -> VerifyResponse:
 # Vault Endpoints
 # ---------------------------------------------------------------------------
 
-from .toolshed_vault import sync_vault, detect_vault_drift, query_vault
+from .toolshed_vault import detect_vault_drift, query_vault, sync_vault
 
 
 @router.post("/vault/sync")

@@ -18,7 +18,7 @@ from typing import Annotated
 from uuid import UUID, uuid4
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

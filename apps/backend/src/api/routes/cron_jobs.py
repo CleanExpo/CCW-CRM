@@ -968,9 +968,11 @@ async def shadow_sync_cin7(
     errors: list[str] = []
 
     try:
+        import hashlib
+        import json
+
+        from src.db.cin7_shadow_models import Cin7ShadowSync
         from src.integrations.cin7.client import get_cin7_client
-        from src.db.cin7_shadow_models import Cin7ShadowSync, Cin7SyncGap
-        import hashlib, json
 
         async with get_cin7_client() as cin7:
             # Sync products

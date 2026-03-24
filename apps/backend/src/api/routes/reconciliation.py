@@ -9,7 +9,7 @@ from typing import Annotated
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -196,8 +196,9 @@ async def auto_match_transactions(
     4. Create reconciliation records in a reconciliations table
     5. Wrap everything in a transaction for atomicity
     """
-    from src.db.models.invoicing import Invoice
     from sqlalchemy import update
+
+    from src.db.models.invoicing import Invoice
 
     # Get high-confidence suggestions
     suggestions_response = await get_match_suggestions(

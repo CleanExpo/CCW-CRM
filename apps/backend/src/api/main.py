@@ -736,8 +736,8 @@ except (ImportError, AttributeError) as e:
 
 # Shadow / Observation Mode (1-month parallel observation alongside client's live system)
 try:
-    from src.api.routes import shadow_mode, shadow_analytics
     import src.db.shadow_session_models as _shadow_session_models  # noqa: F401 - registers tables
+    from src.api.routes import shadow_analytics, shadow_mode
     app.include_router(shadow_mode.router, tags=["Shadow Mode"])
     app.include_router(shadow_analytics.router, tags=["Shadow Analytics"])
 except (ImportError, AttributeError) as e:

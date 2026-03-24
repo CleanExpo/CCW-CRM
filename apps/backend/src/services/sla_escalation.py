@@ -6,16 +6,15 @@ Uses Pure Function TDD pattern - core logic is testable without DB.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
 from uuid import UUID
 
 import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.workflow_models import SLAInstance, SLARule
+from src.db.workflow_models import SLAInstance
 
 logger = structlog.get_logger(__name__)
 

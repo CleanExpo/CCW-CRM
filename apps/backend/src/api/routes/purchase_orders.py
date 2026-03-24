@@ -8,7 +8,7 @@ Provides full CRUD operations for purchase orders including:
 - Automatic stock updates on receipt
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
@@ -461,9 +461,9 @@ async def perform_three_way_match(
     Uses procurement_matching service for business logic.
     """
     from src.services.procurement_matching import (
-        POItem,
         GRNItem,
         InvoiceItemData,
+        POItem,
         match_po_grn_invoice,
     )
 
@@ -591,9 +591,8 @@ async def get_unmatched_po_items(
     """
     List purchase order items not yet matched to GRN/invoice.
     """
-    from datetime import timezone
 
-    cutoff_date = datetime.now(timezone.utc) - timedelta(days=older_than_days)
+    cutoff_date = datetime.now(UTC) - timedelta(days=older_than_days)
 
     # Query POs older than cutoff
     stmt = select(PurchaseOrder).options(selectinload(PurchaseOrder.items)).where(
@@ -625,7 +624,7 @@ async def get_unmatched_po_items(
                 product = product_result.scalar_one_or_none()
                 product_name = product.name if product else "Unknown"
 
-                days_outstanding = (datetime.now(timezone.utc) - po.created_at).days
+                days_outstanding = (datetime.now(UTC) - po.created_at).days
 
                 items.append(UnmatchedPOItem(
                     po_id=po.id,

@@ -3,15 +3,14 @@
 Provides three-way matching and unmatched PO items tracking.
 """
 
-from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy import and_, or_, select
+from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db

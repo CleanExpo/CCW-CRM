@@ -13,12 +13,10 @@ Workflow:
 """
 
 import asyncio
-import base64
 import os
 import time
-from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import httpx
 import structlog

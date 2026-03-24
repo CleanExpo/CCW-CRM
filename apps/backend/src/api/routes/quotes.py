@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_db
 from src.config.settings import Settings, get_settings
+from src.db.demo_models import Customer as CustomerModel
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
@@ -28,7 +29,6 @@ from src.db.schemas import (
     QuoteItem,
     QuoteUpdate,
 )
-from src.db.demo_models import Customer as CustomerModel
 from src.monitoring import metrics
 from src.services.email_notifications import email_service
 from src.services.sse_service import sse_service

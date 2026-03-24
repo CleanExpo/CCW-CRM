@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import structlog
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from src.services.requirement_tracer import RequirementTrace, TraceabilityMatrix, get_tracer
+from src.services.requirement_tracer import TraceabilityMatrix, get_tracer
 
 logger = structlog.get_logger(__name__)
 
@@ -135,8 +135,8 @@ async def get_traceability_matrix(task_id: str) -> GetMatrixResponse:
         HTTPException 500: If failed to load matrix
     """
     try:
-        from pathlib import Path
         import json
+        from pathlib import Path
 
         # Matrix path
         # requirement_verification.py is at: apps/backend/src/api/routes/ai/requirement_verification.py

@@ -15,8 +15,7 @@ Endpoints:
 """
 from __future__ import annotations
 
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -149,7 +148,7 @@ async def start_build(request: BuildStartRequest) -> BuildStartResponse:
     description = request.description.strip()
 
     # Generate task ID
-    task_id = f"build_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+    task_id = f"build_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
 
     logger.info(
         "Starting build",
@@ -179,7 +178,7 @@ async def start_build(request: BuildStartRequest) -> BuildStartResponse:
         # Create build spec
         build_spec = BuildSpec(
             task_id=task_id,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             stage="awaiting_approval",
             spec=spec,
             confidence=confidence,
@@ -290,7 +289,7 @@ async def approve_build(request: BuildApproveRequest) -> BuildApproveResponse:
     if request.approved:
         # APPROVED: Trigger /autonomous execution
         build_spec.approved = True
-        build_spec.approved_at = datetime.now(timezone.utc).isoformat()
+        build_spec.approved_at = datetime.now(UTC).isoformat()
         build_spec.stage = "executing"
 
         # TODO: Trigger /autonomous workflow here

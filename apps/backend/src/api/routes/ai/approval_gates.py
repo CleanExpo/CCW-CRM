@@ -17,7 +17,7 @@ Endpoints:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -174,7 +174,7 @@ async def approve_gate(task_id: str, request: ApproveGateRequest) -> ApproveGate
 
         # Approve the gate
         gate["status"] = "approved"
-        gate["approved_at"] = datetime.now(timezone.utc).isoformat()
+        gate["approved_at"] = datetime.now(UTC).isoformat()
         gate["approved_by"] = request.approved_by
 
         # Save updated state
@@ -285,7 +285,7 @@ async def reject_gate(task_id: str, request: RejectGateRequest) -> RejectGateRes
 
         # Reject the gate
         gate["status"] = "rejected"
-        gate["approved_at"] = datetime.now(timezone.utc).isoformat()
+        gate["approved_at"] = datetime.now(UTC).isoformat()
         gate["approved_by"] = request.rejected_by
         gate["feedback"] = request.feedback
 
@@ -417,7 +417,7 @@ def _log_gate_event(
     log_path = _EXECUTION_DIR / "execution-log.jsonl"
 
     event_data = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "event": event,
         "task_id": task_id,
         "gate_id": gate_id,

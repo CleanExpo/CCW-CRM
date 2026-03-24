@@ -17,13 +17,12 @@ import secrets
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, String, Text
+from sqlalchemy import Column, DateTime, Enum, Float, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from src.db.models_base import Base
-
 
 # ---------------------------------------------------------------------------
 # Enums

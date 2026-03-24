@@ -6,10 +6,9 @@ Uses Pure Function TDD pattern - core logic is testable without DB.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any
 from uuid import UUID
 
 import structlog

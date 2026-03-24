@@ -300,8 +300,7 @@ async def get_service_request_sla(
     for instance, rule in rows:
         deadline_aware = instance.deadline
         if deadline_aware.tzinfo is None:
-            from datetime import timezone
-            deadline_aware = deadline_aware.replace(tzinfo=timezone.utc)
+            deadline_aware = deadline_aware.replace(tzinfo=UTC)
         minutes_remaining = int((deadline_aware - now).total_seconds() / 60)
         sla_items.append({
             "instance_id": str(instance.id),

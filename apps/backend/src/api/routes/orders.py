@@ -6,13 +6,12 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from fastapi import BackgroundTasks
 from src.api.deps import get_optional_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_db

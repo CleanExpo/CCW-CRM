@@ -8,8 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
-from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import structlog
 from sqlalchemy import select
