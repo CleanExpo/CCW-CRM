@@ -59,6 +59,7 @@ from .routes import (
     orders,
     pos_transactions,
     prd,
+    procurement,
     products,
     prometheus_metrics,  # Prometheus metrics endpoint
     public_stats,  # Public landing page stats (no auth required)
@@ -471,6 +472,8 @@ app.include_router(agents_monitor.router, tags=["Agent Monitoring"])
 app.include_router(warehouse.router, tags=["Warehouse"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
+# Procurement three-way match and unmatched PO items
+app.include_router(procurement.router, tags=["Procurement"])
 # Shipment tracking router
 app.include_router(shipments.router, tags=["Shipment Tracking"])
 # Container tracking and backorder management

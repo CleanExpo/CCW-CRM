@@ -79,16 +79,16 @@ VALUES
 ON CONFLICT (sku) DO NOTHING;
 
 -- Create customers
-INSERT INTO customers (id, customer_number, company_name, contact_name, email, phone, address, city, state, postal_code, country, is_active, created_at, updated_at)
+INSERT INTO customers (id, customer_number, company_name, contact_name, email, phone, address, city, state, postcode, is_active, created_at, updated_at)
 VALUES
-  ('c0000000-0000-0000-0000-000000000001', 'CUST-000001', 'Smith Brothers Construction', 'John Smith', 'john@smithbros.com.au', '+61 7 3000 0001', '123 Construction St', 'Brisbane', 'QLD', '4000', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000002', 'CUST-000002', 'Johnson & Sons Electrical', 'Mike Johnson', 'mike@johnsonelectrical.com.au', '+61 2 9000 0002', '456 Electric Ave', 'Sydney', 'NSW', '2000', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000003', 'CUST-000003', 'Williams Plumbing Co', 'Sarah Williams', 'sarah@williamsplumbing.com.au', '+61 3 8000 0003', '789 Pipe Lane', 'Melbourne', 'VIC', '3000', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000004', 'CUST-000004', 'Brown Industries HVAC', 'David Brown', 'david@brownhvac.com.au', '+61 7 3000 0004', '321 Climate Dr', 'Gold Coast', 'QLD', '4217', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000005', 'CUST-000005', 'Garcia General Contracting', 'Maria Garcia', 'maria@garciacontracting.com.au', '+61 2 9000 0005', '654 Build Blvd', 'Newcastle', 'NSW', '2300', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000006', 'CUST-000006', 'Miller Group Landscaping', 'Tom Miller', 'tom@millergroup.com.au', '+61 3 8000 0006', '987 Garden Rd', 'Geelong', 'VIC', '3220', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000007', 'CUST-000007', 'Davis Construction Corp', 'Lisa Davis', 'lisa@davisconstruction.com.au', '+61 8 6000 0007', '147 Steel St', 'Perth', 'WA', '6000', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000008', 'CUST-000008', 'Rodriguez & Partners', 'Carlos Rodriguez', 'carlos@rodriguezpartners.com.au', '+61 8 8000 0008', '258 Trade Ave', 'Adelaide', 'SA', '5000', 'Australia', true, NOW(), NOW())
+  ('c0000000-0000-0000-0000-000000000001', 'CUST-000001', 'Smith Brothers Construction', 'John Smith', 'john@smithbros.com.au', '+61 7 3000 0001', '123 Construction St', 'Brisbane', 'QLD', '4000', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000002', 'CUST-000002', 'Johnson & Sons Electrical', 'Mike Johnson', 'mike@johnsonelectrical.com.au', '+61 2 9000 0002', '456 Electric Ave', 'Sydney', 'NSW', '2000', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000003', 'CUST-000003', 'Williams Plumbing Co', 'Sarah Williams', 'sarah@williamsplumbing.com.au', '+61 3 8000 0003', '789 Pipe Lane', 'Melbourne', 'VIC', '3000', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000004', 'CUST-000004', 'Brown Industries HVAC', 'David Brown', 'david@brownhvac.com.au', '+61 7 3000 0004', '321 Climate Dr', 'Gold Coast', 'QLD', '4217', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000005', 'CUST-000005', 'Garcia General Contracting', 'Maria Garcia', 'maria@garciacontracting.com.au', '+61 2 9000 0005', '654 Build Blvd', 'Newcastle', 'NSW', '2300', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000006', 'CUST-000006', 'Miller Group Landscaping', 'Tom Miller', 'tom@millergroup.com.au', '+61 3 8000 0006', '987 Garden Rd', 'Geelong', 'VIC', '3220', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000007', 'CUST-000007', 'Davis Construction Corp', 'Lisa Davis', 'lisa@davisconstruction.com.au', '+61 8 6000 0007', '147 Steel St', 'Perth', 'WA', '6000', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000008', 'CUST-000008', 'Rodriguez & Partners', 'Carlos Rodriguez', 'carlos@rodriguezpartners.com.au', '+61 8 8000 0008', '258 Trade Ave', 'Adelaide', 'SA', '5000', true, NOW(), NOW())
 ON CONFLICT (customer_number) DO NOTHING;
 
 -- Create orders (demo the performance improvement!)
@@ -150,11 +150,11 @@ UPDATE orders o SET
   total = COALESCE((SELECT SUM(line_total) * 1.10 FROM order_items WHERE order_id = o.id), 0);
 
 -- Create quotes
-INSERT INTO quotes (id, quote_number, customer_id, quote_date, valid_until, status, notes, subtotal, tax, total, created_at, updated_at)
+INSERT INTO quotes (id, quote_number, customer_id, quote_date, valid_until, status, notes, total, created_at, updated_at)
 VALUES
-  ('02000000-0000-0000-0000-000000000001', 'QT-2026-001', 'c0000000-0000-0000-0000-000000000006', '2026-02-01', '2026-03-03', 'sent', 'Landscaping equipment quote', 0, 0, 0, NOW(), NOW()),
-  ('02000000-0000-0000-0000-000000000002', 'QT-2026-002', 'c0000000-0000-0000-0000-000000000007', '2026-02-05', '2026-03-07', 'accepted', 'Heavy machinery rental quote', 0, 0, 0, NOW(), NOW()),
-  ('02000000-0000-0000-0000-000000000003', 'QT-2026-003', 'c0000000-0000-0000-0000-000000000008', '2026-02-08', '2026-03-10', 'draft', 'Construction materials bulk order', 0, 0, 0, NOW(), NOW())
+  ('02000000-0000-0000-0000-000000000001', 'QT-2026-001', 'c0000000-0000-0000-0000-000000000006', '2026-02-01', '2026-03-03', 'sent', 'Landscaping equipment quote', 0, NOW(), NOW()),
+  ('02000000-0000-0000-0000-000000000002', 'QT-2026-002', 'c0000000-0000-0000-0000-000000000007', '2026-02-05', '2026-03-07', 'accepted', 'Heavy machinery rental quote', 0, NOW(), NOW()),
+  ('02000000-0000-0000-0000-000000000003', 'QT-2026-003', 'c0000000-0000-0000-0000-000000000008', '2026-02-08', '2026-03-10', 'draft', 'Construction materials bulk order', 0, NOW(), NOW())
 ON CONFLICT (quote_number) DO NOTHING;
 
 -- Create quote items
@@ -175,10 +175,8 @@ VALUES
   (gen_random_uuid(), '02000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003', 300, 31.49, 9447.00, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
--- Update quote totals
+-- Update quote totals (quotes table only has total column, no subtotal/tax)
 UPDATE quotes q SET
-  subtotal = COALESCE((SELECT SUM(line_total) FROM quote_items WHERE quote_id = q.id), 0),
-  tax = COALESCE((SELECT SUM(line_total) * 0.10 FROM quote_items WHERE quote_id = q.id), 0),
   total = COALESCE((SELECT SUM(line_total) * 1.10 FROM quote_items WHERE quote_id = q.id), 0);
 
 -- Display summary

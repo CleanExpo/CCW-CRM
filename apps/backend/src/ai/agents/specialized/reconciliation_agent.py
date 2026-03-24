@@ -192,6 +192,10 @@ class ReconciliationAgent:
         str1_clean = str1.upper().replace(" ", "")
         str2_clean = str2.upper().replace(" ", "")
 
+        # Substring match — one string fully contained in the other
+        if str1_clean in str2_clean or str2_clean in str1_clean:
+            return True
+
         # Simple overlap ratio
         common = sum(1 for c in str1_clean if c in str2_clean)
         overlap = common / max(len(str1_clean), len(str2_clean))
