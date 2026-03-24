@@ -13,9 +13,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.config.database import get_async_db
-from src.db.workflow_models import WorkflowInstance, WorkflowTemplate, WorkflowTemplateAction
+from src.db.workflow_models import WorkflowInstance, WorkflowTemplate
 
 logger = structlog.get_logger(__name__)
 
@@ -152,9 +153,11 @@ async def _get_template_with_actions(
     template_id: UUID,
     db: AsyncSession,
 ) -> WorkflowTemplate:
-    """Fetch a template by PK; raise 404 if missing."""
+    """Fetch a template by PK with actions eager-loaded; raise 404 if missing."""
     result = await db.execute(
-        select(WorkflowTemplate).where(WorkflowTemplate.id == template_id)
+        select(WorkflowTemplate)
+        .options(selectinload(WorkflowTemplate.actions))
+        .where(WorkflowTemplate.id == template_id)
     )
     template = result.scalar_one_or_none()
     if not template:
@@ -168,15 +171,10 @@ async def _get_template_with_actions(
 async def _build_template_response(
     template: WorkflowTemplate, db: AsyncSession
 ) -> WorkflowTemplateResponse:
-    """Build a WorkflowTemplateResponse with actions eagerly loaded."""
-    actions_result = await db.execute(
-        select(WorkflowTemplateAction)
-        .where(WorkflowTemplateAction.template_id == template.id)
-        .order_by(WorkflowTemplateAction.order)
-    )
-    actions = actions_result.scalars().all()
+    """Build a WorkflowTemplateResponse from an already-eager-loaded template."""
+    # actions must be loaded via selectinload before calling this function
+    actions = sorted(template.actions, key=lambda a: a.order)
     action_responses = [WorkflowTemplateActionResponse.model_validate(a) for a in actions]
-
     response = WorkflowTemplateResponse.model_validate(template)
     response.actions = action_responses
     return response
@@ -193,7 +191,9 @@ async def list_workflow_templates(
 ) -> list[WorkflowTemplateResponse]:
     """List all workflow templates ordered by creation date (newest first)."""
     result = await db.execute(
-        select(WorkflowTemplate).order_by(WorkflowTemplate.created_at.desc())
+        select(WorkflowTemplate)
+        .options(selectinload(WorkflowTemplate.actions))
+        .order_by(WorkflowTemplate.created_at.desc())
     )
     templates = result.scalars().all()
 
@@ -225,6 +225,8 @@ async def create_workflow_template(
     db.add(template)
     await db.commit()
     await db.refresh(template)
+    # Explicitly load actions relationship so _build_template_response can use it
+    await db.refresh(template, attribute_names=["actions"])
 
     logger.info(
         "workflow_template_created",
@@ -268,6 +270,7 @@ async def update_workflow_template(
 
     await db.commit()
     await db.refresh(template)
+    await db.refresh(template, attribute_names=["actions"])
 
     logger.info("workflow_template_updated", template_id=str(template_id))
     return await _build_template_response(template, db)
