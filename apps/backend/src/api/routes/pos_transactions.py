@@ -611,7 +611,7 @@ class POSTerminalCreate(BaseModel):
 
     terminal_id: str = Field(..., description="Unique terminal code")
     location_code: str
-    terminal_type: str = Field(default="physical", pattern="^(physical|virtual)$")
+    terminal_type: str = Field(default="physical", pattern="^(physical|virtual|eftpos|amex|visa|mastercard|debit)$")
     merchant_id: str | None = None
 
 
@@ -619,7 +619,7 @@ class POSTerminalUpdate(BaseModel):
     """Update a POS terminal."""
 
     location_code: str | None = None
-    terminal_type: str | None = Field(None, pattern="^(physical|virtual)$")
+    terminal_type: str | None = Field(None, pattern="^(physical|virtual|eftpos|amex|visa|mastercard|debit)$")
     merchant_id: str | None = None
     is_active: bool | None = None
 

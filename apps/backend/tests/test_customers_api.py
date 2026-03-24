@@ -162,7 +162,8 @@ class TestCustomerCreate:
         customer = {
             "customer_number": "CUST-TEST-DUP-001",  # Required field
             "company_name": "Duplicate Email Test",
-            "email": "admin@demo.com",  # Assuming this exists
+            # Use an email from seed data (seed_demo_simple.sql) that exists in customers table
+            "email": "john@smithbros.com.au",
             "phone": "0414 567 890",
             "address": "789 Duplicate Street",
             "city": "Melbourne",

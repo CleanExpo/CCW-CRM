@@ -53,8 +53,10 @@ class TestUNI172EndpointExistence:
 
     def test_barcode_lookup_endpoint_exists(self):
         """GET /api/inventory/barcode/{code} exists."""
-        response = client.get("/api/inventory/barcode/1234567890")
-        assert response.status_code != 404, "barcode lookup endpoint missing"
+        openapi = client.get("/openapi.json").json()
+        paths = openapi.get("paths", {})
+        assert "/api/inventory/barcode/{code}" in paths, "barcode lookup endpoint missing"
+        assert "get" in paths["/api/inventory/barcode/{code}"]
 
     def test_barcode_create_endpoint_exists(self):
         """POST /api/inventory/barcode exists."""

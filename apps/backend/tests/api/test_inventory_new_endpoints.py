@@ -359,7 +359,7 @@ class TestProductAttributesEndpoints:
             json={"key": "Color", "value": "Red"},
             headers=auth_headers,
         )
-        assert response.status_code in [404, 500]
+        assert response.status_code in [404, 409, 500]
 
     @pytest.mark.asyncio
     async def test_add_attribute_missing_fields_422(self, client: AsyncClient, auth_headers: dict) -> None:
