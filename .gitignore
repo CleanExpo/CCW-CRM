@@ -142,7 +142,7 @@ supabase/.temp
 
 # Local agent/solution libraries (not part of project)
 .claude/agents-lib/
-lib/
+/lib/
 
 # Misc
 *.tsbuildinfo

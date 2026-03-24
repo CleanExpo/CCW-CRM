@@ -1,7 +1,7 @@
 """Add mobile photo-to-order tables
 
 Revision ID: 006_add_mobile_order_tables
-Revises: 005_add_shopify_extended_tables
+Revises: 005
 Create Date: 2026-03-24
 
 Adds three tables supporting the mobile photo-to-order workflow:
@@ -15,7 +15,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '006_add_mobile_order_tables'
-down_revision = '005_add_shopify_extended_tables'
+down_revision = '005'
 branch_labels = None
 depends_on = None
 

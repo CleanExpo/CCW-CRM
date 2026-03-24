@@ -257,7 +257,7 @@ export function GuestOrderClient({ initialOrder, token }: GuestOrderClientProps)
               <h2 className="font-semibold text-slate-900">Delivery Address</h2>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-              {Object.values(order.delivery_address).map((line, i) => (
+              {(Object.values(order.delivery_address) as string[]).map((line, i) => (
                 <p key={i} className="text-sm text-slate-700">
                   {line}
                 </p>
