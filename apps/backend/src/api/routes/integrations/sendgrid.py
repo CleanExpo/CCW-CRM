@@ -10,7 +10,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.config.sendgrid_settings import SendGridSettings, sendgrid_settings
 from src.db.email_models import EmailConversation, EmailMessage, EmailWebhookLog
 from src.integrations.sendgrid.client import SendGridClient
@@ -127,7 +127,7 @@ async def send_email(
 
 @router.get("/conversations")
 async def list_conversations(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     status_filter: str | None = None,
     limit: int = 50,
 ) -> dict:
@@ -177,7 +177,7 @@ async def list_conversations(
 @router.get("/conversations/{conversation_id}")
 async def get_conversation(
     conversation_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Get conversation details with all messages.
 
@@ -243,7 +243,7 @@ async def get_conversation(
 @router.post("/webhook/inbound")
 async def handle_inbound_webhook(
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     settings: Annotated[SendGridSettings, Depends(get_sendgrid_settings)],
 ) -> dict:
     """Handle inbound email webhook from SendGrid Inbound Parse.
@@ -305,7 +305,7 @@ async def handle_inbound_webhook(
 @router.post("/webhook/events")
 async def handle_event_webhook(
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     settings: Annotated[SendGridSettings, Depends(get_sendgrid_settings)],
 ) -> dict:
     """Handle SendGrid Event Webhook (delivery, opens, clicks, bounces).
@@ -398,7 +398,7 @@ async def handle_event_webhook(
 
 @router.post("/demo/simulate-inbound")
 async def simulate_inbound_email(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     settings: Annotated[SendGridSettings, Depends(get_sendgrid_settings)],
     email_number: int = 1,
 ) -> dict:

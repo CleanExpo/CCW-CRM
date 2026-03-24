@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.service_models import RequestType, ServiceRequest, ServiceStatus
 from src.db.workflow_models import SLAInstance, SLARule
 
@@ -75,7 +75,7 @@ class PaginatedServiceRequestsResponse(BaseModel):
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_service_request(
     request: ServiceRequestCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ServiceRequestResponse:
     """Create a new service request."""
 
@@ -126,7 +126,7 @@ async def create_service_request(
 
 @router.get("")
 async def list_service_requests(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     customer_id: UUID | None = None,
@@ -181,7 +181,7 @@ async def list_service_requests(
 @router.get("/{request_id}")
 async def get_service_request(
     request_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ServiceRequestResponse:
     """Get a single service request by ID."""
 
@@ -202,7 +202,7 @@ async def get_service_request(
 async def update_service_request(
     request_id: UUID,
     updates: ServiceRequestUpdate,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ServiceRequestResponse:
     """Update a service request."""
 
@@ -248,7 +248,7 @@ async def update_service_request(
 @router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_service_request(
     request_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ):
     """Delete a service request."""
 
@@ -269,7 +269,7 @@ async def delete_service_request(
 @router.get("/{request_id}/sla")
 async def get_service_request_sla(
     request_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """
     Get SLA status for a service request.

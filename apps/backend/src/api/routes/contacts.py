@@ -11,7 +11,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.decorators import cached, invalidate_cache
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.crm_models import Contact as ContactModel
 from src.db.crm_schemas import (
     Contact,
@@ -34,7 +34,7 @@ async def list_contacts(
     search: str | None = None,
     customer_id: UUID | None = None,
     is_active: bool | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List contacts with pagination and filters."""
     query = select(ContactModel)
@@ -82,7 +82,7 @@ async def list_contacts(
 @router.get("/{contact_id}", response_model=ContactWithCustomer)
 async def get_contact(
     contact_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single contact by ID with customer details."""
     query = select(ContactModel).where(ContactModel.id == contact_id)
@@ -110,7 +110,7 @@ async def get_contact(
 @router.post("", response_model=Contact, status_code=201)
 async def create_contact(
     contact_data: ContactCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Create a new contact."""
     # Validate customer_id if provided
@@ -146,7 +146,7 @@ async def create_contact(
 async def update_contact(
     contact_id: UUID,
     contact_data: ContactUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Update a contact."""
     query = select(ContactModel).where(ContactModel.id == contact_id)
@@ -190,7 +190,7 @@ async def update_contact(
 @router.delete("/{contact_id}", status_code=204, response_model=None)
 async def delete_contact(
     contact_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Soft delete a contact (set is_active to False)."""
     query = select(ContactModel).where(ContactModel.id == contact_id)
@@ -226,7 +226,7 @@ async def delete_contact(
 async def get_customer_contacts(
     customer_id: UUID,
     include_inactive: bool = False,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get all contacts for a specific customer."""
     # Verify customer exists
@@ -251,7 +251,7 @@ async def get_customer_contacts(
 @router.post("/{contact_id}/set-primary", response_model=Contact)
 async def set_primary_contact(
     contact_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Set a contact as the primary contact for their customer."""
     query = select(ContactModel).where(ContactModel.id == contact_id)

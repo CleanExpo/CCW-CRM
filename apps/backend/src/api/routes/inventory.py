@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
     ProductAttribute,
@@ -176,7 +176,7 @@ class CycleCountGenerateResponse(BaseModel):
 @router.get("", response_model=InventoryListResponse)
 @router.get("/", response_model=InventoryListResponse, include_in_schema=False)
 async def list_all_inventory(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     location: str | None = Query(None, description="Filter by location"),
     low_stock_only: bool = Query(False, description="Only show low stock items"),
     page: int = Query(1, ge=1),
@@ -328,7 +328,7 @@ class ReorderSettingsRequest(BaseModel):
 
 @router.get("/summary", response_model=InventorySummaryResponse)
 async def get_inventory_summary(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> InventorySummaryResponse:
     """Get inventory dashboard summary statistics.
 
@@ -386,7 +386,7 @@ async def update_reorder_settings(
     product_id: str,
     location: str,
     body: ReorderSettingsRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Update reorder point and quantity for a product at a location.
 
@@ -481,7 +481,7 @@ class BarcodeProductResponse(BaseModel):
 @router.get("/barcode/{code}", response_model=BarcodeProductResponse)
 async def lookup_by_barcode(
     code: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> BarcodeProductResponse:
     """Look up a product by barcode value.
 
@@ -544,7 +544,7 @@ async def lookup_by_barcode(
 @router.post("/barcode", status_code=201)
 async def add_barcode(
     body: BarcodeCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Add a barcode to a product.
 
@@ -612,7 +612,7 @@ async def add_barcode(
 @router.delete("/barcode/{code}", status_code=204, response_model=None)
 async def remove_barcode(
     code: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> None:
     """Delete a barcode record by barcode value.
 
@@ -643,7 +643,7 @@ async def remove_barcode(
 @router.get("/product/{product_id}/locations")
 async def get_product_stock_by_locations(
     product_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ProductStockResponse:
     """Get stock levels for a product across all locations.
 
@@ -700,7 +700,7 @@ async def get_product_stock_by_locations(
 @router.get("/by-location")
 async def get_stock_by_location(
     location: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     low_stock_only: bool = False,
@@ -783,7 +783,7 @@ async def get_stock_by_location(
 
 @router.get("/low-stock")
 async def get_low_stock_products(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     threshold: int = Query(10, ge=0, description="Stock threshold"),
 ) -> dict:
     """Get products with low stock across all locations.
@@ -834,7 +834,7 @@ async def get_low_stock_products(
 
 @router.get("/stock-health")
 async def get_stock_health(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     threshold: int = Query(20, ge=0, description="Low stock threshold"),
 ) -> dict:
     """Get comprehensive stock health analysis across all locations.
@@ -914,7 +914,7 @@ async def get_stock_health(
 
 @router.get("/transfer-suggestions")
 async def get_transfer_suggestions(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     min_quantity: int = Query(5, ge=1, description="Minimum transfer quantity"),
 ) -> dict:
     """Generate intelligent stock transfer suggestions to optimize distribution.
@@ -1078,7 +1078,7 @@ async def get_transfer_suggestions(
 @router.post("/transfer")
 async def create_stock_transfer(
     transfer_req: StockTransferRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Create a stock transfer between locations.
 
@@ -1323,7 +1323,7 @@ async def create_stock_transfer(
 
 @router.get("/transfers")
 async def get_stock_transfers(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     product_id: UUID | None = None,
     location: str | None = None,
     status: str | None = None,
@@ -1405,7 +1405,7 @@ async def get_stock_transfers(
 @router.post("/reserve")
 async def reserve_stock(
     reservation_req: ReserveStockRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Reserve stock for an order at a specific location.
 
@@ -1482,7 +1482,7 @@ async def reserve_stock(
 @router.post("/release/{reservation_id}")
 async def release_reservation(
     reservation_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Release a stock reservation (e.g., when order is cancelled).
 
@@ -1549,7 +1549,7 @@ async def release_reservation(
 @router.post("/adjust")
 async def adjust_stock(
     adjustment_req: StockAdjustmentRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Adjust stock level at a location (for corrections, damages, etc.).
 
@@ -1734,7 +1734,7 @@ class StockTakeSubmitRequest(BaseModel):
 @router.post("/stock-take", status_code=201)
 async def create_stock_take(
     body: StockTakeCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Start a new stock-take session for a location."""
     try:
@@ -1753,7 +1753,7 @@ async def create_stock_take(
 
 @router.get("/stock-takes")
 async def list_stock_takes(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     location: str | None = Query(None),
     status: str | None = Query(None),
 ) -> list[dict]:
@@ -1781,7 +1781,7 @@ async def list_stock_takes(
 async def submit_stock_take(
     take_id: str,
     body: StockTakeSubmitRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Submit a stock-take, applying variances as StockAdjustment records.
 
@@ -1883,7 +1883,7 @@ class ReorderRuleUpdateRequest(BaseModel):
 
 @router.get("/reorder-rules")
 async def list_reorder_rules(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     location: str | None = Query(None),
 ) -> list[dict]:
     """List all reorder rules, optionally filtered by location."""
@@ -1909,7 +1909,7 @@ async def list_reorder_rules(
 @router.post("/reorder-rules", status_code=201)
 async def create_reorder_rule(
     body: ReorderRuleCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Create or upsert a reorder rule for a product+location."""
     try:
@@ -1973,7 +1973,7 @@ class ReorderAlertResponse(BaseModel):
 
 @router.get("/reorder-alerts", response_model=list[ReorderAlertResponse])
 async def get_reorder_alerts(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     location: str | None = Query(None),
 ) -> list[ReorderAlertResponse]:
     """Return products at or below their reorder point.
@@ -2051,7 +2051,7 @@ class ProductAttributeCreateRequest(BaseModel):
 @router.get("/products/{product_id}/attributes")
 async def list_product_attributes(
     product_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[dict]:
     """List all attributes for a product."""
     try:
@@ -2073,7 +2073,7 @@ async def list_product_attributes(
 async def add_product_attribute(
     product_id: str,
     body: ProductAttributeCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Add an attribute to a product."""
     try:
@@ -2092,7 +2092,7 @@ async def add_product_attribute(
 async def delete_product_attribute(
     product_id: str,
     attribute_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> None:
     """Delete a product attribute."""
     try:
@@ -2128,7 +2128,7 @@ class ProductVariantCreateRequest(BaseModel):
 @router.get("/products/{product_id}/variants")
 async def list_product_variants(
     product_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[dict]:
     """List all variants for a product."""
     try:
@@ -2157,7 +2157,7 @@ async def list_product_variants(
 async def create_product_variant(
     product_id: str,
     body: ProductVariantCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Create a product variant."""
     try:
@@ -2197,7 +2197,7 @@ async def create_product_variant(
 async def delete_product_variant(
     product_id: str,
     variant_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> None:
     """Delete a product variant."""
     try:
@@ -2225,7 +2225,7 @@ async def delete_product_variant(
 @router.post("/auto-reorder", response_model=AutoReorderResponse)
 async def trigger_auto_reorder(
     request: AutoReorderRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> AutoReorderResponse:
     """
     Trigger auto-reorder for products below reorder point.
@@ -2306,7 +2306,7 @@ async def trigger_auto_reorder(
 @router.post("/bulk-adjust", response_model=BulkAdjustResponse)
 async def bulk_adjust_inventory(
     request: BulkAdjustRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> BulkAdjustResponse:
     """
     Bulk adjust inventory quantities (e.g., stock take results).
@@ -2382,7 +2382,7 @@ async def bulk_adjust_inventory(
 @router.get("/stock-takes/active", response_model=ActiveStockTakesResponse)
 async def get_active_stock_takes(
     organization_id: Annotated[UUID, Query()],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ActiveStockTakesResponse:
     """
     Get active stock take sessions.
@@ -2447,7 +2447,7 @@ async def get_active_stock_takes(
 @router.post("/cycle-count/generate", response_model=CycleCountGenerateResponse)
 async def generate_cycle_count_schedule(
     request: CycleCountGenerateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> CycleCountGenerateResponse:
     """
     Generate cycle count schedule for ABC classification.

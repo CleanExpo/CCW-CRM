@@ -22,7 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.email_audit_models import EmailPurpose, EmailStatus
 from src.services.email_audit_service import EmailAuditService
 
@@ -155,7 +155,7 @@ def _verify_sendgrid_signature(
 @router.post("/webhooks/sendgrid/events")
 async def handle_sendgrid_events(
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Handle SendGrid Event Webhook for delivery tracking.
 
@@ -247,7 +247,7 @@ async def handle_sendgrid_events(
 
 @router.get("/history", response_model=EmailHistoryListResponse)
 async def get_email_history(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     email: str | None = Query(None, description="Filter by recipient email"),
     customer_id: str | None = Query(None, description="Filter by customer ID"),
     user_id: str | None = Query(None, description="Filter by sending user ID"),
@@ -321,7 +321,7 @@ async def get_email_history(
 @router.get("/history/{email_id}")
 async def get_email_detail(
     email_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Get detailed information about a specific email.
 
@@ -379,7 +379,7 @@ async def get_email_detail(
 
 @router.get("/gdpr/export")
 async def get_gdpr_export(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     email: str | None = Query(None, description="Email address to export"),
     customer_id: str | None = Query(None, description="Customer ID to export"),
 ) -> GDPRExportResponse:
@@ -422,7 +422,7 @@ async def get_gdpr_export(
 @router.get("/consent/{email}", response_model=ConsentResponse)
 async def get_consent_status(
     email: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ConsentResponse:
     """Get consent status for an email address.
 
@@ -456,7 +456,7 @@ async def get_consent_status(
 @router.post("/consent/update")
 async def update_consent(
     request: ConsentUpdateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ConsentResponse:
     """Update marketing consent for an email address.
 
@@ -500,7 +500,7 @@ async def update_consent(
 async def process_unsubscribe(
     email: str = Query(..., description="Email to unsubscribe"),
     reason: str | None = Query(None, description="Unsubscribe reason"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> dict:
     """Process an unsubscribe request.
 
@@ -526,7 +526,7 @@ async def process_unsubscribe(
 
 @router.get("/stats", response_model=EmailStatsResponse)
 async def get_email_stats(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     organization_id: str | None = Query(None, description="Filter by organization"),
     start_date: datetime | None = Query(None, description="Start of date range"),
     end_date: datetime | None = Query(None, description="End of date range"),
@@ -560,7 +560,7 @@ async def get_email_stats(
 
 @router.get("/suppression-list")
 async def get_suppression_list(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
 ) -> dict:
@@ -623,7 +623,7 @@ async def get_suppression_list(
 async def check_can_send(
     email: str = Query(..., description="Email to check"),
     purpose: str = Query("transactional", description="Email purpose"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> dict:
     """Check if an email can be sent to this address.
 

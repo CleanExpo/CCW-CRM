@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.cache.decorators import invalidate_cache
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.config.settings import Settings, get_settings
 from src.db.demo_models import Customer as CustomerModel
 from src.db.demo_models import Order as OrderModel
@@ -88,7 +88,7 @@ async def list_quotes(
     search: str | None = None,
     status: str | None = None,
     customer_id: UUID | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List quotes with pagination and filters."""
     # Build query
@@ -140,7 +140,7 @@ async def list_quotes(
 @router.get("/{quote_id}")
 async def get_quote(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single quote by ID."""
     query = (
@@ -166,7 +166,7 @@ async def get_quote(
 @router.post("", response_model=Quote, status_code=201)
 async def create_quote(
     quote_data: QuoteCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     settings: Settings = Depends(get_settings),
 ):
     """Create a new quote with items."""
@@ -277,7 +277,7 @@ async def create_quote(
 async def update_quote(
     quote_id: UUID,
     quote_data: QuoteUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     settings: Settings = Depends(get_settings),
 ):
     """Update a quote."""
@@ -390,7 +390,7 @@ async def update_quote(
 @router.delete("/{quote_id}", status_code=204, response_model=None)
 async def delete_quote(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Delete a quote and its items."""
     # Get existing quote
@@ -435,7 +435,7 @@ async def update_quote_status(
     quote_id: UUID,
     status_update: StatusUpdate,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Update quote status (PATCH endpoint accepting JSON body).
@@ -502,7 +502,7 @@ async def update_quote_status(
 async def generate_quote_with_ai(
     requirements: str,
     customer_id: UUID | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     settings: Settings = Depends(get_settings),
 ):
     """Generate a quote using AI from natural language requirements.
@@ -560,7 +560,7 @@ async def generate_quote_with_ai(
 @router.post("/{quote_id}/convert-to-order", response_model=Order, status_code=201)
 async def convert_quote_to_order(
     quote_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Convert a quote to an order."""
     # Get existing quote with items

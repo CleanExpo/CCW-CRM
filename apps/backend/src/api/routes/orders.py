@@ -14,7 +14,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from src.api.deps import get_optional_user
 from src.cache.decorators import invalidate_cache
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.config.settings import Settings, get_settings
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderActivity as OrderActivityModel
@@ -411,7 +411,7 @@ async def list_orders(
     search: str | None = None,
     status: str | None = None,
     customer_id: UUID | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List orders with pagination and filters."""
     # Build query
@@ -487,7 +487,7 @@ async def list_orders(
 @router.get("/{order_id}")
 async def get_order(
     order_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single order by ID."""
     query = (
@@ -544,7 +544,7 @@ async def get_order(
 @router.get("/{order_id}/activity", response_model=list[OrderActivity])
 async def get_order_activity(
     order_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get audit trail for an order."""
     query = (
@@ -562,7 +562,7 @@ async def get_order_activity(
 async def create_order(
     order_data: OrderCreate,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     settings: Settings = Depends(get_settings),
 ):
     """Create a new order with items."""
@@ -752,7 +752,7 @@ async def create_order(
 async def update_order(
     order_id: UUID,
     order_data: OrderUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     settings: Settings = Depends(get_settings),
     current_user: User | None = Depends(get_optional_user),
 ):
@@ -1069,7 +1069,7 @@ async def update_order_status(
     order_id: UUID,
     status: str = Query(..., description="New status"),
     fulfillment_location: str = Query("brisbane", description="Fulfillment location"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User | None = Depends(get_optional_user),
 ):
     """Update order status and deduct stock when confirming with pessimistic locking."""
@@ -1211,7 +1211,7 @@ async def update_order_status(
 async def update_order_status_patch(
     order_id: UUID,
     status_update: StatusUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User | None = Depends(get_optional_user),
 ):
     """
@@ -1233,7 +1233,7 @@ async def update_order_status_patch(
 @router.delete("/{order_id}", status_code=204, response_model=None)
 async def delete_order(
     order_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User | None = Depends(get_optional_user),
 ) -> None:
     """Delete an order and its items."""
