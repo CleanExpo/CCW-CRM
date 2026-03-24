@@ -72,7 +72,8 @@ async def test_supplier(db_session: AsyncSession) -> Supplier:
     """Create test supplier."""
     supplier = Supplier(
         id=uuid4(),
-        name="Test Supplier",
+        supplier_code=f"SUP-{uuid4().hex[:8].upper()}",
+        company_name="Test Supplier",
         contact_name="John Doe",
         email="john@supplier.test",
     )
