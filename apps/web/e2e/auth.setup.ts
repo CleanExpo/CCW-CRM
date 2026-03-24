@@ -12,7 +12,7 @@ setup('authenticate as admin user', async ({ page }) => {
   await page.goto('/login');
 
   // Fill in login credentials (using demo credentials from CLAUDE.md)
-  await page.fill('input[name="email"]', 'admin@demo.com');
+  await page.fill('input[name="email"]', 'admin@ccwonline.com.au');
   await page.fill('input[name="password"]', 'demo123');
 
   // Submit the form and wait for redirect to dashboard

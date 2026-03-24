@@ -81,7 +81,12 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="admin@demo.com" autoComplete="email" {...field} />
+                <Input
+                  type="email"
+                  placeholder="admin@ccwonline.com.au"
+                  autoComplete="email"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -126,9 +131,12 @@ export function LoginForm() {
           {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
 
-        <div className="mt-4 text-center text-sm text-slate-600">
-          <p>Demo Credentials:</p>
-          <p className="font-mono">admin@demo.com / demo123</p>
+        <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-center text-xs text-slate-500">
+          <p className="mb-1 font-medium text-slate-600">CCW Staff Logins (password: demo123)</p>
+          <p className="font-mono">admin@ccwonline.com.au — Chris Wilson (Owner)</p>
+          <p className="font-mono">sales@ccwonline.com.au — Sarah Chen (Sales)</p>
+          <p className="font-mono">warehouse@ccwonline.com.au — Mark Thompson (Warehouse)</p>
+          <p className="font-mono">accounts@ccwonline.com.au — Lisa Park (Accounts)</p>
         </div>
       </form>
     </Form>
