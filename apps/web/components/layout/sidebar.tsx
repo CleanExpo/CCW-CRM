@@ -52,6 +52,8 @@ import {
   UserCog,
   ChevronDown,
   ChevronRight,
+  Cpu,
+  MessageCircle,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -138,6 +140,8 @@ const navGroups: NavGroup[] = [
     label: 'AI & Reports',
     items: [
       { name: 'AI Assistant', href: '/ai-assistant', icon: Bot },
+      { name: 'AI Ops Centre', href: '/ai-ops', icon: Cpu },
+      { name: 'AI Query', href: '/ai-query', icon: MessageCircle },
       { name: 'PRD Generator', href: '/prd/generate', icon: Sparkles },
       { name: 'Insights', href: '/insights', icon: TrendingUp },
       { name: 'Reports', href: '/reports', icon: BarChart3 },

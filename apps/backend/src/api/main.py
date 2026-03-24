@@ -700,6 +700,28 @@ try:
 except ImportError:
     pass
 
+# Sprint 3 — AI Autonomy Layer
+# Autonomous Ops Agent — Claude Sonnet 4.6 ERP decision engine
+try:
+    from src.api.routes.ai import autonomous_ops
+    app.include_router(autonomous_ops.router, tags=["Autonomous Ops"])
+except ImportError:
+    pass
+
+# NL ERP Query Agent — natural language → SQL → answer
+try:
+    from src.api.routes.ai import query as ai_query
+    app.include_router(ai_query.router, tags=["NL ERP Query"])
+except ImportError:
+    pass
+
+# Document Extraction — Claude Vision invoice/PO OCR
+try:
+    from src.api.routes import documents as document_extraction
+    app.include_router(document_extraction.router, tags=["Document Extraction"])
+except ImportError:
+    pass
+
 # POS-Xero Reconciliation (depends on Xero integration)
 try:
     from src.api.routes import pos_xero_reconciliation
