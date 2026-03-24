@@ -315,7 +315,7 @@ export default function InvoicesPage() {
                   <div className="text-destructive text-2xl font-bold">
                     ${stats.totalOutstanding.toFixed(2)}
                   </div>
-                  <p className="text-muted-foreground text-xs">Amount due</p>
+                  <p className="text-muted-foreground text-xs">Outstanding balance</p>
                 </CardContent>
               </Card>
 

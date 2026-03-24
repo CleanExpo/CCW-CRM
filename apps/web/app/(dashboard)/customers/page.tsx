@@ -208,7 +208,7 @@ export default function CustomersPage() {
             </div>
             <div className="mt-4">
               <Input
-                placeholder="Search customers by name, email, or company..."
+                placeholder="Search contractors, cleaning businesses, or trade accounts..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="max-w-md"

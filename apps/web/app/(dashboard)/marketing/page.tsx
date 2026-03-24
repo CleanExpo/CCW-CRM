@@ -133,7 +133,7 @@ function CampaignDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Enter your product details and let AI generate the copy.
+            Enter your cleaning equipment product details and let AI generate the copy.
           </DialogDescription>
         </DialogHeader>
 
@@ -411,7 +411,7 @@ export default function MarketingPage() {
             <BentoCardHeader>
               <BentoCardTitle className="text-white">Quick Actions</BentoCardTitle>
               <BentoCardDescription className="text-white/80">
-                Common marketing tasks and templates
+                Common CCW marketing tasks and templates
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>

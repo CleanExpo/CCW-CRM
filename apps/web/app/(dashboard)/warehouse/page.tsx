@@ -118,9 +118,14 @@ export default function WarehouseOpsPage() {
   const [isLoadingTakes, setIsLoadingTakes] = useState(false);
 
   // Write-Back tab state (UNI-1265)
-  const DEMO_LOCATIONS = ['Main Warehouse', 'Store Front', 'Returns'] as const;
+  const DEMO_LOCATIONS = [
+    'Brisbane Warehouse',
+    'Sydney Distribution',
+    'Melbourne Depot',
+    'Returns Bay',
+  ] as const;
   const [adjForm, setAdjForm] = useState({
-    location_id: 'Main Warehouse',
+    location_id: 'Brisbane Warehouse',
     product_id: '',
     sku: '',
     adjustment_qty: 0,
@@ -128,8 +133,8 @@ export default function WarehouseOpsPage() {
   });
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [wbTransferForm, setWbTransferForm] = useState({
-    from_location_id: 'Main Warehouse',
-    to_location_id: 'Store Front',
+    from_location_id: 'Brisbane Warehouse',
+    to_location_id: 'Sydney Distribution',
     product_id: '',
     sku: '',
     quantity: 1,
@@ -280,7 +285,7 @@ export default function WarehouseOpsPage() {
         description: `${adjForm.adjustment_qty > 0 ? '+' : ''}${adjForm.adjustment_qty} units for ${adjForm.sku}`,
       });
       setAdjForm({
-        location_id: 'Main Warehouse',
+        location_id: 'Brisbane Warehouse',
         product_id: '',
         sku: '',
         adjustment_qty: 0,
@@ -326,8 +331,8 @@ export default function WarehouseOpsPage() {
         description: `${wbTransferForm.quantity} units of ${wbTransferForm.sku} transferred`,
       });
       setWbTransferForm({
-        from_location_id: 'Main Warehouse',
-        to_location_id: 'Store Front',
+        from_location_id: 'Brisbane Warehouse',
+        to_location_id: 'Sydney Distribution',
         product_id: '',
         sku: '',
         quantity: 1,

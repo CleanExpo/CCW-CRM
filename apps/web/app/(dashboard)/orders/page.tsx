@@ -170,7 +170,7 @@ export default function OrdersPage() {
     exportOrdersToCSV(orders as unknown as Record<string, unknown>[]);
     toast({
       title: 'Export Successful',
-      description: `Exported ${orders.length} orders to CSV`,
+      description: `Exported ${orders.length} equipment orders to CSV`,
     });
   };
 

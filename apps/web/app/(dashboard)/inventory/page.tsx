@@ -380,7 +380,7 @@ export default function InventoryPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{stockHealth.low.length}</div>
-              <p className="text-muted-foreground text-xs">6-10 units available</p>
+              <p className="text-muted-foreground text-xs">6–10 units — monitor reorder point</p>
             </CardContent>
           </Card>
 
@@ -497,7 +497,7 @@ export default function InventoryPage() {
               <Input
                 value={scanInput}
                 onChange={(e) => setScanInput(e.target.value)}
-                placeholder="Scan barcode or type and press Enter"
+                placeholder="Scan equipment barcode or enter SKU..."
                 className="max-w-sm"
                 aria-label="Barcode scan input"
               />

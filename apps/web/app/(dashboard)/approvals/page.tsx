@@ -329,7 +329,7 @@ function CreateApprovalDialog({
             <Label htmlFor="create-notes">Notes (optional)</Label>
             <Textarea
               id="create-notes"
-              placeholder="Additional context or instructions..."
+              placeholder="e.g., equipment urgency, delivery timeline, customer requirements..."
               value={form.notes ?? ''}
               onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
               rows={3}

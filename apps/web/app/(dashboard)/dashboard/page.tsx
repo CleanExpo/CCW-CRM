@@ -206,7 +206,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">
             CCW Online — Cleaning Equipment Operations
           </h1>
-          <p className="text-muted-foreground">Loading dashboard data...</p>
+          <p className="text-muted-foreground">Loading CCW operations dashboard...</p>
         </div>
       </div>
     );
@@ -494,7 +494,7 @@ export default function DashboardPage() {
         <BentoCard variant="glass" span={3}>
           <BentoCardHeader>
             <BentoCardTitle className="text-2xl">Recent Activity</BentoCardTitle>
-            <BentoCardDescription>Latest orders and quotes</BentoCardDescription>
+            <BentoCardDescription>Recent equipment orders and quotes</BentoCardDescription>
           </BentoCardHeader>
           <BentoCardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
