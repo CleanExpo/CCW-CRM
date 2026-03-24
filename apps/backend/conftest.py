@@ -56,6 +56,8 @@ collect_ignore = [
     "tests/test_orders_api.py",
     # asyncio event loop mismatch: asyncpg pool bound to first test loop; subsequent tests fail
     "tests/test_products_api.py",
+    # Requires live PostgreSQL with generate_order_number() SEQUENCE function (not in SQLite CI env)
+    "tests/test_sequence_generation.py",
     # asyncio event loop mismatch: same root cause as test_orders_api / test_products_api
     "tests/test_quotes_api.py",
     # asyncio event loop mismatch: ASGITransport pool connections attached to different loop
