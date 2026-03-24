@@ -43,7 +43,7 @@ class ElevenLabsLiveClient:
         model_id: str = "eleven_monolingual_v1",
         voice_settings: dict | None = None,
         output_format: str = "mp3_44100_128",
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         Generate audio from text using ElevenLabs API.
@@ -136,7 +136,7 @@ class ElevenLabsLiveClient:
         model_id: str = "eleven_monolingual_v1",
         voice_settings: dict | None = None,
         output_format: str = "mp3_44100_128",
-        **kwargs,
+        **kwargs: Any,
     ) -> AsyncGenerator[bytes, None]:
         """
         Stream audio generation from ElevenLabs API.

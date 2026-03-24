@@ -126,7 +126,7 @@ def _backoff_delay(attempt: int, base: float, maximum: float, jitter: bool) -> f
     delay = min(base * (2**attempt), maximum)
     if jitter:
         delay *= 0.5 + random.random() * 0.5  # noqa: S311 — not cryptographic
-    return delay
+    return float(delay)
 
 
 def _parse_retry_after(response: httpx.Response) -> float:

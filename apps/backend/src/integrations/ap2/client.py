@@ -8,7 +8,7 @@ import asyncio
 import random
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 import httpx
@@ -408,9 +408,9 @@ class AP2LiveClient(BaseAP2Client):
         async def _do() -> dict[str, Any]:
             response = await self.http_client.request(method, path, **kwargs)
             response.raise_for_status()
-            return response.json()
+            return cast(dict[str, Any], response.json())
 
-        return await retry_with_backoff(_do, integration_name="ap2")
+        return cast(dict[str, Any], await retry_with_backoff(_do, integration_name="ap2"))
 
     async def create_intent_mandate(
         self,
@@ -510,7 +510,7 @@ class AP2LiveClient(BaseAP2Client):
             data = await self._request("POST", "/mandates/verify", json=payload)
             verified = data.get("verified", False)
             logger.info("AP2: Signature verification result", verified=verified)
-            return verified
+            return bool(verified)
 
         except (httpx.HTTPError, Exception) as e:
             logger.error("AP2: Signature verification failed", error=str(e))

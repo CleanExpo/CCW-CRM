@@ -1,6 +1,7 @@
 """Demo ElevenLabs client for testing without API calls."""
 
 import base64
+from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import uuid4
 
@@ -27,7 +28,7 @@ class ElevenLabsDemoClient:
         voice_id: str | None = None,
         model_id: str | None = None,
         voice_settings: dict | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         Generate audio from text (demo mode - returns mock data).
@@ -83,8 +84,8 @@ class ElevenLabsDemoClient:
         voice_id: str | None = None,
         model_id: str | None = None,
         voice_settings: dict | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> AsyncGenerator[bytes, None]:
         """
         Stream audio generation (demo mode - yields mock chunks).
 
@@ -112,7 +113,7 @@ class ElevenLabsDemoClient:
 
         for i in range(0, len(mock_audio), chunk_size):
             chunk = mock_audio[i : i + chunk_size]
-            yield chunk
+            yield chunk.encode("utf-8")
 
         logger.info("demo_audio_stream_complete", audio_id=audio_id)
 

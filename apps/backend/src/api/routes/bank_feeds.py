@@ -6,6 +6,7 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -580,7 +581,7 @@ async def export_reconciliation_data(
     start_date: date | None = Query(None, description="Start date"),
     end_date: date | None = Query(None, description="End date"),
     status: str | None = Query(None, description="matched, unmatched, all"),
-):
+) -> Response:
     """
     Export reconciliation data as CSV.
 
