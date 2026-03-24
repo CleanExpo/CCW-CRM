@@ -204,7 +204,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Equipment Supplier Operations &mdash; CCW Online
+            CCW Online — Cleaning Equipment Operations
           </h1>
           <p className="text-muted-foreground">Loading dashboard data...</p>
         </div>
@@ -224,10 +224,10 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-4xl font-semibold tracking-tight">
-              Equipment Supplier Operations &mdash; CCW Online
+              CCW Online — Cleaning Equipment Operations
             </h1>
             <p className="text-muted-foreground mt-2 text-lg">
-              CCW Equipment — Real-time business overview
+              Real-time overview — truckmounts, restoration gear, hard floor care &amp; accessories
             </p>
           </div>
           {/* PHASE 4: Live metrics indicator */}
@@ -269,8 +269,10 @@ export default function DashboardPage() {
         {/* Metrics Overview - Spans 3 columns */}
         <BentoCard variant="glass" span={3}>
           <BentoCardHeader>
-            <BentoCardTitle className="text-2xl">Key Metrics</BentoCardTitle>
-            <BentoCardDescription>Real-time business performance indicators</BentoCardDescription>
+            <BentoCardTitle className="text-2xl">Business Performance</BentoCardTitle>
+            <BentoCardDescription>
+              Real-time trading metrics across all locations
+            </BentoCardDescription>
           </BentoCardHeader>
           <BentoCardContent>
             <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
@@ -300,10 +302,10 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center gap-2">
                   <Package className="h-4 w-4" />
-                  <span className="text-sm font-medium">Total Products</span>
+                  <span className="text-sm font-medium">Equipment SKUs</span>
                 </div>
                 <div className="text-3xl font-bold">{metrics?.total_products || 0}</div>
-                <p className="text-muted-foreground text-xs">Active catalog items</p>
+                <p className="text-muted-foreground text-xs">Active cleaning equipment lines</p>
               </div>
 
               {/* Customers */}

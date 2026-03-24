@@ -170,7 +170,7 @@ export default function CustomersPage() {
             <p className="text-muted-foreground">
               {selectedCustomerIds.length > 0
                 ? `${selectedCustomerIds.length} selected`
-                : 'Manage your customer relationships'}
+                : 'Manage cleaning contractors and trade businesses'}
             </p>
           </div>
           <div className="flex gap-2">
@@ -195,9 +195,9 @@ export default function CustomersPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Customer Directory</CardTitle>
+                <CardTitle>Contractor &amp; Business Directory</CardTitle>
                 <CardDescription>
-                  {total} customers in database
+                  {total} cleaning businesses and trade contractors on file
                   {lastUpdated && (
                     <span className="text-muted-foreground ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
@@ -228,7 +228,7 @@ export default function CustomersPage() {
                 <p className="text-muted-foreground mt-2 text-sm">
                   {search
                     ? 'Try adjusting your search criteria.'
-                    : 'Add your first customer to get started.'}
+                    : 'Register your first cleaning business or contractor to get started.'}
                 </p>
                 {!search && (
                   <Button onClick={handleAddCustomer} className="mt-4">

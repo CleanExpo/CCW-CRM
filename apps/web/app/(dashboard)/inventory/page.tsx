@@ -275,8 +275,8 @@ export default function InventoryPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold tracking-tight">Inventory Management</h1>
-        <p className="text-muted-foreground">Loading inventory data...</p>
+        <h1 className="text-3xl font-bold tracking-tight">Equipment Inventory Management</h1>
+        <p className="text-muted-foreground">Loading equipment inventory...</p>
       </div>
     );
   }
@@ -288,8 +288,10 @@ export default function InventoryPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Inventory Management</h1>
-            <p className="text-muted-foreground">Multi-location stock tracking and management</p>
+            <h1 className="text-3xl font-bold tracking-tight">Equipment Inventory Management</h1>
+            <p className="text-muted-foreground">
+              Multi-location stock tracking — Brisbane, Sydney &amp; Melbourne
+            </p>
           </div>
         </div>
 
@@ -302,7 +304,7 @@ export default function InventoryPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{summaryLoading ? '—' : summary.total_skus}</div>
-              <p className="text-muted-foreground text-xs">Distinct products in stock</p>
+              <p className="text-muted-foreground text-xs">Distinct cleaning equipment SKUs</p>
             </CardContent>
           </Card>
 
@@ -315,7 +317,7 @@ export default function InventoryPage() {
               <div className="text-2xl font-bold">
                 {summaryLoading ? '—' : formatCurrency(summary.total_stock_value)}
               </div>
-              <p className="text-muted-foreground text-xs">Total inventory value</p>
+              <p className="text-muted-foreground text-xs">Total equipment stock value</p>
             </CardContent>
           </Card>
 
@@ -338,7 +340,7 @@ export default function InventoryPage() {
               >
                 {summaryLoading ? '—' : summary.below_reorder_point}
               </div>
-              <p className="text-muted-foreground text-xs">Lines below reorder point</p>
+              <p className="text-muted-foreground text-xs">Equipment lines below reorder point</p>
             </CardContent>
           </Card>
 
@@ -351,7 +353,9 @@ export default function InventoryPage() {
               <div className="text-2xl font-bold">
                 {summaryLoading ? '—' : summary.active_reservations}
               </div>
-              <p className="text-muted-foreground text-xs">Stock reserved for orders</p>
+              <p className="text-muted-foreground text-xs">
+                Equipment reserved for customer orders
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -403,8 +407,8 @@ export default function InventoryPage() {
                     Reorder Alerts
                   </CardTitle>
                   <CardDescription>
-                    Products below their reorder point — auto-reorder available where a rule is
-                    configured
+                    Equipment below reorder point — auto-reorder purchase order available where a
+                    rule is configured
                   </CardDescription>
                 </div>
                 <Button
@@ -426,7 +430,7 @@ export default function InventoryPage() {
                     <thead>
                       <tr className="border-b">
                         <th className="py-2 text-left font-medium">SKU</th>
-                        <th className="py-2 text-left font-medium">Product</th>
+                        <th className="py-2 text-left font-medium">Equipment</th>
                         <th className="py-2 text-left font-medium">Location</th>
                         <th className="py-2 text-right font-medium">Stock</th>
                         <th className="py-2 text-right font-medium">Reorder Pt</th>

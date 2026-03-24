@@ -236,7 +236,7 @@ export default function ProductsPage() {
               <p className="text-muted-foreground">
                 {selectedProductIds.length > 0
                   ? `${selectedProductIds.length} selected`
-                  : 'Manage your product catalog'}
+                  : 'Manage your cleaning equipment catalog'}
               </p>
             </div>
             {/* PHASE 4: Real-time connection indicator */}
@@ -264,9 +264,9 @@ export default function ProductsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Product Catalog</CardTitle>
+                <CardTitle>Cleaning Equipment Catalog</CardTitle>
                 <CardDescription>
-                  {total} products in inventory
+                  {total} equipment SKUs in stock
                   {lastUpdated && (
                     <span className="text-muted-foreground ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
@@ -277,7 +277,7 @@ export default function ProductsPage() {
             </div>
             <div className="mt-4">
               <Input
-                placeholder="Search products by name or SKU..."
+                placeholder="Search by equipment name, model, or SKU..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="max-w-md"
@@ -293,11 +293,11 @@ export default function ProductsPage() {
               </div>
             ) : products.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-muted-foreground text-lg font-medium">No products found</p>
+                <p className="text-muted-foreground text-lg font-medium">No equipment found</p>
                 <p className="text-muted-foreground mt-2 text-sm">
                   {search
                     ? 'Try adjusting your search criteria.'
-                    : 'Add your first product to get started.'}
+                    : 'Add your first cleaning equipment item to get started.'}
                 </p>
                 {!search && (
                   <Button onClick={handleAddProduct} className="mt-4">

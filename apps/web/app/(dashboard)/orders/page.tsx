@@ -228,7 +228,7 @@ export default function OrdersPage() {
             <p className="text-muted-foreground">
               {selectedOrderIds.length > 0
                 ? `${selectedOrderIds.length} selected`
-                : 'Manage sales orders and fulfillment'}
+                : 'Manage cleaning equipment sales orders and dispatch'}
             </p>
           </div>
           <div className="flex gap-2">
@@ -257,9 +257,9 @@ export default function OrdersPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Sales Orders</CardTitle>
+                <CardTitle>Equipment Sales Orders</CardTitle>
                 <CardDescription>
-                  {total} orders in system
+                  {total} equipment orders on file
                   {lastUpdated && (
                     <span className="text-muted-foreground ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
@@ -279,8 +279,8 @@ export default function OrdersPage() {
             ) : orders.length === 0 ? (
               <EmptyState
                 icon={ShoppingCart}
-                title="No orders yet"
-                description="Create your first order to get started."
+                title="No equipment orders yet"
+                description="Create your first cleaning equipment order to get started."
                 action={{
                   label: 'Create Order',
                   onClick: handleAddOrder,
