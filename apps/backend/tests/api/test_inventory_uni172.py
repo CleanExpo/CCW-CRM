@@ -117,10 +117,11 @@ class TestUNI172EndpointExistence:
 
     def test_product_attributes_delete_endpoint_exists(self):
         """DELETE /api/inventory/products/{product_id}/attributes/{attribute_id} exists."""
-        response = client.delete(
-            f"/api/inventory/products/{_uid()}/attributes/{_uid()}"
-        )
-        assert response.status_code != 404, "product attributes delete endpoint missing"
+        openapi = client.get("/openapi.json").json()
+        paths = openapi.get("paths", {})
+        assert "/api/inventory/products/{product_id}/attributes/{attribute_id}" in paths, \
+            "product attributes delete endpoint missing"
+        assert "delete" in paths["/api/inventory/products/{product_id}/attributes/{attribute_id}"]
 
     def test_product_variants_list_endpoint_exists(self):
         """GET /api/inventory/products/{product_id}/variants exists."""

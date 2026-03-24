@@ -309,8 +309,8 @@ def _filter_relevant_sections(content: str, keywords: list[str], max_lines: int 
                 relevant_indices.add(j)
 
     if not relevant_indices:
-        # No matches — return the catalog header (first 20 lines) so agent knows it exists
-        return lines[:20]
+        # No matches — return the catalog header so agent knows it exists (respect max_lines)
+        return lines[:min(20, max_lines)]
 
     result: list[str] = []
     prev_idx = -2
