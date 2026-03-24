@@ -14,8 +14,12 @@ export default function ReportsPage() {
     <ErrorBoundary>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">KPI Reports</h1>
-          <p className="text-muted-foreground">Sales performance and inventory health analytics</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Equipment Sales &amp; Inventory KPIs
+          </h1>
+          <p className="text-muted-foreground">
+            Cleaning equipment sales performance and inventory health analytics
+          </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

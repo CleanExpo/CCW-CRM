@@ -146,7 +146,7 @@ export default function AlertsPage() {
               <Bell className={`h-5 w-5 ${criticalCount > 0 ? 'text-red-600' : 'text-primary'}`} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">System Alerts</h1>
+              <h1 className="text-2xl font-bold tracking-tight">System &amp; Inventory Alerts</h1>
               <p className="text-sm text-neutral-600 dark:text-neutral-400">
                 {activeCount > 0
                   ? `${activeCount} active alert${activeCount > 1 ? 's' : ''}${criticalCount > 0 ? ` · ${criticalCount} critical` : ''}`
@@ -247,7 +247,9 @@ export default function AlertsPage() {
               <CardContent className="py-12 text-center">
                 <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-green-500/50" />
                 <p className="text-muted-foreground font-medium">No active alerts</p>
-                <p className="text-muted-foreground mt-1 text-sm">System is operating normally.</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  All equipment and inventory systems operating normally.
+                </p>
               </CardContent>
             </Card>
           ) : (

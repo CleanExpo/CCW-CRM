@@ -420,9 +420,9 @@ export default function WorkflowsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Workflow Automation</h1>
+            <h1 className="text-2xl font-bold">Equipment Order Workflow Automation</h1>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Automate business processes with trigger-based workflows
+              Automate equipment ordering, approvals, and fulfilment with trigger-based workflows
             </p>
           </div>
           <Button onClick={handleNew}>
@@ -463,7 +463,7 @@ export default function WorkflowsPage() {
                 <GitMerge className="text-muted-foreground mb-3 h-10 w-10" />
                 <p className="font-medium">No workflows yet</p>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Create your first workflow to automate business processes.
+                  Create your first workflow to automate equipment ordering and fulfilment.
                 </p>
                 <Button className="mt-4" onClick={handleNew}>
                   <Plus className="mr-2 h-4 w-4" />

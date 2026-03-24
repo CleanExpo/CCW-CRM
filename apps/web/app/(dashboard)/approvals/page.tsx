@@ -542,7 +542,7 @@ export default function ApprovalsPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Approval Workflows</h1>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Multi-step approval chains for orders, quotes, and purchase orders
+              Multi-step approval chains for equipment orders, quotes, and purchase requests
               {pendingCount > 0 &&
                 ` · ${pendingCount} pending action${pendingCount > 1 ? 's' : ''}`}
             </p>
@@ -647,7 +647,8 @@ export default function ApprovalsPage() {
               <ClipboardCheck className="text-muted-foreground/30 mx-auto mb-3 h-12 w-12" />
               <p className="text-muted-foreground">No approval workflows found</p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Approval requests for orders, quotes and purchase orders will appear here.
+                Approval requests for cleaning equipment orders, quotes, and purchase orders will
+                appear here.
               </p>
               <Button
                 variant="outline"
