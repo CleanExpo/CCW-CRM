@@ -36,6 +36,7 @@ from .routes import (
     backorders,
     bank_feeds,
     billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
+    certifications,  # IICRC/ISSA/ARCR certification tracking (Sprint 2)
     config,
     contacts,  # CRM contacts
     containers,
@@ -44,6 +45,7 @@ from .routes import (
     crm_onboarding,  # CRM onboarding sequences Day-1/7/30 (UNI-1113)
     crm_personas,  # CRM persona tagging (UNI-1112)
     cron_jobs,  # Scheduled task endpoints (Vercel Cron)
+    equipment_lifecycle,  # Equipment serial numbers + warranty tracking (Sprint 2)
     customer_orders,
     customers,
     demo_auth,
@@ -63,6 +65,7 @@ from .routes import (
     products,
     prometheus_metrics,  # Prometheus metrics endpoint
     public_stats,  # Public landing page stats (no auth required)
+    pricing,  # Customer trade pricing tiers (Sprint 2)
     purchase_orders,
     quotes,
     reconciliation,
@@ -465,6 +468,10 @@ app.include_router(cron_jobs.router, tags=["Cron Jobs"])
 app.include_router(crm_health.router, tags=["CRM Health"])
 app.include_router(crm_onboarding.router, tags=["CRM Onboarding"])
 app.include_router(crm_personas.router, tags=["CRM Personas"])
+# Sprint 2 — Industry DNA: Equipment lifecycle, IICRC certifications, pricing tiers
+app.include_router(equipment_lifecycle.router, tags=["Equipment Lifecycle"])
+app.include_router(certifications.router, tags=["Certifications"])
+app.include_router(pricing.router, tags=["Pricing Tiers"])
 # Account and company settings
 app.include_router(settings_routes.router, tags=["Settings"])
 # Agent monitoring dashboard
@@ -622,6 +629,11 @@ except ImportError:
     pass
 
 app.include_router(google_ai.router, tags=["Google AI"])
+
+# Sprint 2 — Industry DNA models (register with SQLAlchemy metadata)
+import src.db.equipment_lifecycle_models  # noqa: F401
+import src.db.certification_models  # noqa: F401
+import src.db.pricing_models  # noqa: F401
 
 # Workflow Automation, SLA, and In-App Notification models (UNI-174)
 import src.db.workflow_models  # noqa: F401 - registers tables with SQLAlchemy metadata
