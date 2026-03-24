@@ -17,7 +17,8 @@ dependencies = [
     # Caching
     "redis>=5.0.0", # Redis async client for caching
     # Authentication
-    "python-jose[cryptography]>=3.3.0", # JWT tokens
+    "python-jose[cryptography]>=3.3.0", # JWT tokens — CVE-2024-33664/33663 mitigated by algorithms=["HS256"]
+    "cryptography>=42.0.0", # Pin to avoid CVE-2023-49083 and related issues
     "passlib[bcrypt]>=1.7.0", # Password hashing
     # Billing
     "stripe>=7.0.0", # Stripe payment processing
