@@ -12,7 +12,6 @@ from __future__ import annotations
 import os
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 from typing import Any
 from uuid import uuid4
 

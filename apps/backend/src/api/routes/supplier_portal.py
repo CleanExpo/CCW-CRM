@@ -13,8 +13,7 @@ Operates in demo mode when no real supplier auth is present.
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -212,7 +211,7 @@ async def confirm_purchase_order_delivery(
         "confirmed_delivery_date": body.confirmed_delivery_date,
         "status": "confirmed",
         "notes": body.notes,
-        "confirmed_at": datetime.now(timezone.utc).isoformat(),
+        "confirmed_at": datetime.now(UTC).isoformat(),
     }
 
 

@@ -16,9 +16,8 @@ in production they would scope data to the authenticated portal user's customer_
 
 from __future__ import annotations
 
-import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -303,7 +302,7 @@ async def create_service_request(
         "description": body.description,
         "preferred_contact": body.preferred_contact,
         "status": "open",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "reference_number": f"SR-{request_id.upper()}",
     }
     DEMO_SERVICE_REQUESTS.append(record)

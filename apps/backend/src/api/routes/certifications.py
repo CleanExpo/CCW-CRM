@@ -11,8 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config.database import get_async_db
 from src.db.certification_models import (
     CERT_BODIES,
-    IICRC_CERT_TYPES,
-    CertificationAlert,
     TechnicianCertification,
 )
 

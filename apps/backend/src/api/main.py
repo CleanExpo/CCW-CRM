@@ -45,13 +45,13 @@ from .routes import (
     crm_onboarding,  # CRM onboarding sequences Day-1/7/30 (UNI-1113)
     crm_personas,  # CRM persona tagging (UNI-1112)
     cron_jobs,  # Scheduled task endpoints (Vercel Cron)
-    equipment_lifecycle,  # Equipment serial numbers + warranty tracking (Sprint 2)
     customer_orders,
     customers,
     demo_auth,
     demo_dashboard,
     demo_lists,
     email_audit,  # Email audit trail for GDPR compliance (ISS-037)
+    equipment_lifecycle,  # Equipment serial numbers + warranty tracking (Sprint 2)
     google_ai,
     health,
     inventory,
@@ -61,11 +61,11 @@ from .routes import (
     orders,
     pos_transactions,
     prd,
+    pricing,  # Customer trade pricing tiers (Sprint 2)
     procurement,
     products,
     prometheus_metrics,  # Prometheus metrics endpoint
     public_stats,  # Public landing page stats (no auth required)
-    pricing,  # Customer trade pricing tiers (Sprint 2)
     purchase_orders,
     quotes,
     reconciliation,
@@ -631,8 +631,8 @@ except ImportError:
 app.include_router(google_ai.router, tags=["Google AI"])
 
 # Sprint 2 — Industry DNA models (register with SQLAlchemy metadata)
-import src.db.equipment_lifecycle_models  # noqa: F401
 import src.db.certification_models  # noqa: F401
+import src.db.equipment_lifecycle_models  # noqa: F401
 import src.db.pricing_models  # noqa: F401
 
 # Workflow Automation, SLA, and In-App Notification models (UNI-174)

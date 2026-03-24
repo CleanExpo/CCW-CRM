@@ -7,10 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.config.database import get_async_db
-from src.db.equipment_lifecycle_models import EquipmentUnit, WarrantyAlert
+from src.db.equipment_lifecycle_models import EquipmentUnit
 
 router = APIRouter(prefix="/api/equipment", tags=["Equipment Lifecycle"])
 
