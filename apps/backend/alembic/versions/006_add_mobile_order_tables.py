@@ -22,36 +22,6 @@ depends_on = None
 
 def upgrade() -> None:
     # ---------------------------------------------------------------------------
-    # Enums
-    # ---------------------------------------------------------------------------
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'link_status') THEN
-                CREATE TYPE link_status AS ENUM ('active', 'suspended', 'revoked');
-            END IF;
-        END $$;
-    """)
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'recognition_status') THEN
-                CREATE TYPE recognition_status AS ENUM (
-                    'pending', 'processing', 'completed', 'failed', 'low_confidence'
-                );
-            END IF;
-        END $$;
-    """)
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'guest_order_status') THEN
-                CREATE TYPE guest_order_status AS ENUM (
-                    'pending', 'viewed', 'approved', 'payment_pending',
-                    'paid', 'dispatched', 'declined', 'expired', 'cancelled'
-                );
-            END IF;
-        END $$;
-    """)
-
-    # ---------------------------------------------------------------------------
     # tradesperson_customer_links
     # ---------------------------------------------------------------------------
     op.create_table(
