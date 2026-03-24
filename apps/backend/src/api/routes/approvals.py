@@ -277,6 +277,69 @@ async def get_pending_approvals(
     )
 
 
+# ---------------------------------------------------------------------------
+# GAP-020: Get Pending Approvals for Current User (registered before /{approval_id} to prevent route shadowing)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/pending-my-approval", response_model=PaginatedApprovalResponse)
+async def get_pending_my_approval(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: dict = Depends(get_current_user),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+) -> PaginatedApprovalResponse:
+    """
+    Get pending approvals for the current authenticated user.
+
+    Returns approvals where the current step is assigned to this user and status is pending.
+    Requires JWT authentication.
+    """
+    user_id = UUID(current_user["id"])
+
+    # Query for pending approvals where current user has a pending step
+    query = (
+        select(Approval)
+        .join(ApprovalStep)
+        .where(
+            Approval.status == ApprovalStatus.PENDING,
+            ApprovalStep.approver_id == user_id,
+            ApprovalStep.status == ApprovalStatus.PENDING,
+            ApprovalStep.step_number == Approval.current_step,
+        )
+    )
+
+    # Count total
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar() or 0
+
+    # Apply pagination
+    query = query.order_by(Approval.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+
+    # Execute
+    result = await db.execute(query)
+    approvals = result.scalars().all()
+
+    # Get steps for each approval
+    approval_responses = []
+    for approval in approvals:
+        steps_result = await db.execute(
+            select(ApprovalStep).where(ApprovalStep.approval_id == approval.id).order_by(ApprovalStep.step_number)
+        )
+        steps = steps_result.scalars().all()
+        approval_responses.append(_build_approval_response(approval, steps))
+
+    logger.info("Pending approvals for current user retrieved", user_id=str(user_id), total=total)
+
+    return PaginatedApprovalResponse(
+        data=approval_responses,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
+
+
 @router.get("/{approval_id}", response_model=ApprovalResponse)
 async def get_approval(
     approval_id: UUID,
@@ -513,69 +576,6 @@ async def cancel_approval(
     await db.commit()
 
     logger.info("Approval workflow cancelled", approval_id=str(approval_id))
-
-
-# ---------------------------------------------------------------------------
-# GAP-020: Get Pending Approvals for Current User
-# ---------------------------------------------------------------------------
-
-
-@router.get("/pending-my-approval", response_model=PaginatedApprovalResponse)
-async def get_pending_my_approval(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    current_user: dict = Depends(get_current_user),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
-) -> PaginatedApprovalResponse:
-    """
-    Get pending approvals for the current authenticated user.
-
-    Returns approvals where the current step is assigned to this user and status is pending.
-    Requires JWT authentication.
-    """
-    user_id = UUID(current_user["id"])
-
-    # Query for pending approvals where current user has a pending step
-    query = (
-        select(Approval)
-        .join(ApprovalStep)
-        .where(
-            Approval.status == ApprovalStatus.PENDING,
-            ApprovalStep.approver_id == user_id,
-            ApprovalStep.status == ApprovalStatus.PENDING,
-            ApprovalStep.step_number == Approval.current_step,
-        )
-    )
-
-    # Count total
-    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
-    total = count_result.scalar() or 0
-
-    # Apply pagination
-    query = query.order_by(Approval.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
-
-    # Execute
-    result = await db.execute(query)
-    approvals = result.scalars().all()
-
-    # Get steps for each approval
-    approval_responses = []
-    for approval in approvals:
-        steps_result = await db.execute(
-            select(ApprovalStep).where(ApprovalStep.approval_id == approval.id).order_by(ApprovalStep.step_number)
-        )
-        steps = steps_result.scalars().all()
-        approval_responses.append(_build_approval_response(approval, steps))
-
-    logger.info("Pending approvals for current user retrieved", user_id=str(user_id), total=total)
-
-    return PaginatedApprovalResponse(
-        data=approval_responses,
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size,
-    )
 
 
 # ---------------------------------------------------------------------------

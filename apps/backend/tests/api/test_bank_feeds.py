@@ -13,7 +13,7 @@ from tests.fixtures.pos_data import create_bank_account_payload, create_bank_fee
 @pytest.mark.asyncio
 async def test_list_bank_accounts(client: AsyncClient, auth_headers: dict):
     """Test listing all bank accounts."""
-    response = await client.get("/api/bank/accounts", headers=auth_headers)
+    response = await client.get("/api/bank-feeds/accounts", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -25,7 +25,7 @@ async def test_list_bank_accounts_filters_by_location(
 ):
     """Test filtering bank accounts by location."""
     response = await client.get(
-        "/api/bank/accounts",
+        "/api/bank-feeds/accounts",
         params={"location_code": create_test_location.code},
         headers=auth_headers,
     )
@@ -42,7 +42,7 @@ async def test_create_bank_account(client: AsyncClient, auth_headers: dict, crea
     """Test creating a new bank account."""
     payload = create_bank_account_payload(location_code=create_test_location.code)
 
-    response = await client.post("/api/bank/accounts", json=payload, headers=auth_headers)
+    response = await client.post("/api/bank-feeds/accounts", json=payload, headers=auth_headers)
     assert response.status_code == 201
     data = response.json()
     assert data["account_name"] == payload["account_name"]
@@ -61,7 +61,7 @@ async def test_create_bank_account_invalid_bsb_format(
         bsb="invalid",  # Invalid BSB format (should be XXX-XXX)
     )
 
-    response = await client.post("/api/bank/accounts", json=payload, headers=auth_headers)
+    response = await client.post("/api/bank-feeds/accounts", json=payload, headers=auth_headers)
     assert response.status_code == 422  # Validation error
 
 
@@ -76,7 +76,7 @@ async def test_update_bank_account(
     }
 
     response = await client.put(
-        f"/api/bank/accounts/{create_test_bank_account.id}",
+        f"/api/bank-feeds/accounts/{create_test_bank_account.id}",
         json=update_payload,
         headers=auth_headers,
     )
@@ -93,7 +93,7 @@ async def test_update_bank_account_not_found(client: AsyncClient, auth_headers: 
     update_payload = {"account_name": "Updated Account"}
 
     response = await client.put(
-        f"/api/bank/accounts/{non_existent_id}", json=update_payload, headers=auth_headers
+        f"/api/bank-feeds/accounts/{non_existent_id}", json=update_payload, headers=auth_headers
     )
     assert response.status_code == 404
 
@@ -104,12 +104,12 @@ async def test_delete_bank_account(
 ):
     """Test deactivating a bank account."""
     response = await client.delete(
-        f"/api/bank/accounts/{create_test_bank_account.id}", headers=auth_headers
+        f"/api/bank-feeds/accounts/{create_test_bank_account.id}", headers=auth_headers
     )
     assert response.status_code == 204
 
     # Verify account is deactivated (is_active = False)
-    get_response = await client.get("/api/bank/accounts", headers=auth_headers)
+    get_response = await client.get("/api/bank-feeds/accounts", headers=auth_headers)
     accounts = get_response.json()
     deleted_account = next(
         (a for a in accounts if a["id"] == str(create_test_bank_account.id)), None
@@ -123,14 +123,14 @@ async def test_delete_bank_account(
 async def test_delete_bank_account_not_found(client: AsyncClient, auth_headers: dict):
     """Test deleting non-existent bank account returns 404."""
     non_existent_id = str(uuid4())
-    response = await client.delete(f"/api/bank/accounts/{non_existent_id}", headers=auth_headers)
+    response = await client.delete(f"/api/bank-feeds/accounts/{non_existent_id}", headers=auth_headers)
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_reconciliation_stats(client: AsyncClient, auth_headers: dict):
     """Test getting reconciliation statistics."""
-    response = await client.get("/api/bank/stats", headers=auth_headers)
+    response = await client.get("/api/bank-feeds/stats", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     # Should contain stats keys
@@ -140,7 +140,7 @@ async def test_get_reconciliation_stats(client: AsyncClient, auth_headers: dict)
 @pytest.mark.asyncio
 async def test_get_reconciliation_alerts(client: AsyncClient, auth_headers: dict):
     """Test getting reconciliation alerts."""
-    response = await client.get("/api/bank/alerts", headers=auth_headers)
+    response = await client.get("/api/bank-feeds/alerts", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     # Should return list of alerts
@@ -151,7 +151,7 @@ async def test_get_reconciliation_alerts(client: AsyncClient, auth_headers: dict
 async def test_export_reconciliation_data(client: AsyncClient, auth_headers: dict):
     """Test exporting reconciliation data as CSV."""
     response = await client.get(
-        "/api/bank/export",
+        "/api/bank-feeds/export",
         params={
             "start_date": "2025-01-01",
             "end_date": "2025-12-31",

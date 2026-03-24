@@ -1,6 +1,35 @@
 -- CCW ERP Demo Data Seed Script
 -- Run this to populate database with demo data for owner presentation
 
+-- Create sequences and functions for order/quote number generation
+-- (These are not in Alembic migrations — applied here for CI compatibility)
+CREATE SEQUENCE IF NOT EXISTS order_number_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS quote_number_seq START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE FUNCTION generate_order_number()
+RETURNS TEXT AS $$
+DECLARE
+    current_year INTEGER;
+    next_num INTEGER;
+BEGIN
+    current_year := EXTRACT(YEAR FROM CURRENT_DATE);
+    next_num := nextval('order_number_seq');
+    RETURN 'ORD-' || current_year::TEXT || '-' || LPAD(next_num::TEXT, 6, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION generate_quote_number()
+RETURNS TEXT AS $$
+DECLARE
+    current_year INTEGER;
+    next_num INTEGER;
+BEGIN
+    current_year := EXTRACT(YEAR FROM CURRENT_DATE);
+    next_num := nextval('quote_number_seq');
+    RETURN 'Q-' || current_year::TEXT || '-' || LPAD(next_num::TEXT, 6, '0');
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create demo user (password: demo123, hashed with bcrypt)
 INSERT INTO users (id, email, hashed_password, full_name, is_active, is_admin, created_at, updated_at)
 VALUES

@@ -31,14 +31,6 @@ def anyio_backend() -> str:
     return "asyncio"
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> asyncio.AbstractEventLoop:
-    """Create a single event loop for async tests to avoid cross-loop DB errors."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
