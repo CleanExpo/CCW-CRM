@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
@@ -35,7 +37,7 @@ DEMO_SUPPLIER_PROFILE = {
     "currency": "AUD",
 }
 
-DEMO_PURCHASE_ORDERS = [
+DEMO_PURCHASE_ORDERS: list[dict[str, Any]] = [
     {
         "po_id": "po-demo-001",
         "po_number": "PO-2026-0031",
@@ -119,7 +121,7 @@ DEMO_PURCHASE_ORDERS = [
     },
 ]
 
-DEMO_PAYMENT_HISTORY = [
+DEMO_PAYMENT_HISTORY: list[dict[str, Any]] = [
     {
         "payment_id": "pmt-sup-001",
         "po_number": "PO-2026-0008",

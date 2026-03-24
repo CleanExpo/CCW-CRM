@@ -115,14 +115,14 @@ async def assign_customer_tier(
     """Assign or update a pricing tier for a customer."""
     # Verify customer exists
     customer_result = await db.execute(
-        select(Customer).where(Customer.id == customer_id)
+        select(Customer).where(Customer.id == customer_id)  # type: ignore[arg-type]
     )
     if not customer_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Customer not found")
 
     # Verify tier exists
     tier_result = await db.execute(
-        select(PricingTier).where(PricingTier.id == payload.tier_id)
+        select(PricingTier).where(PricingTier.id == payload.tier_id)  # type: ignore[arg-type]
     )
     tier = tier_result.scalar_one_or_none()
     if not tier:
@@ -131,7 +131,7 @@ async def assign_customer_tier(
     # Upsert assignment
     existing_result = await db.execute(
         select(CustomerPricingAssignment).where(
-            CustomerPricingAssignment.customer_id == customer_id
+            CustomerPricingAssignment.customer_id == customer_id  # type: ignore[arg-type]
         )
     )
     assignment = existing_result.scalar_one_or_none()
@@ -171,7 +171,7 @@ async def calculate_customer_price(
     """Calculate the discounted price for a customer + product + quantity combo."""
     # Get product list price
     product_result = await db.execute(
-        select(Product).where(Product.id == product_id)
+        select(Product).where(Product.id == product_id)  # type: ignore[arg-type]
     )
     product = product_result.scalar_one_or_none()
     if not product:
@@ -182,7 +182,7 @@ async def calculate_customer_price(
     # Get customer pricing assignment
     assignment_result = await db.execute(
         select(CustomerPricingAssignment)
-        .where(CustomerPricingAssignment.customer_id == customer_id)
+        .where(CustomerPricingAssignment.customer_id == customer_id)  # type: ignore[arg-type]
         .options(selectinload(CustomerPricingAssignment.tier))
     )
     assignment = assignment_result.scalar_one_or_none()
@@ -220,7 +220,7 @@ async def get_customer_tier(
     """Get the active pricing tier for a customer."""
     result = await db.execute(
         select(CustomerPricingAssignment)
-        .where(CustomerPricingAssignment.customer_id == customer_id)
+        .where(CustomerPricingAssignment.customer_id == customer_id)  # type: ignore[arg-type]
         .options(selectinload(CustomerPricingAssignment.tier))
     )
     assignment = result.scalar_one_or_none()

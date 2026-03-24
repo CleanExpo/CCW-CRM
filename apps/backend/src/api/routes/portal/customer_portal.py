@@ -141,7 +141,7 @@ DEMO_INVOICES = [
     },
 ]
 
-DEMO_CERTIFICATIONS = [
+DEMO_CERTIFICATIONS: list[dict[str, Any]] = [
     {
         "cert_id": "cert-demo-001",
         "cert_type": "IICRC WRT",
