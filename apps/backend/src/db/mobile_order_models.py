@@ -17,7 +17,7 @@ import secrets
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, DateTime, Enum, Float, Integer, String, Text
+from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
@@ -196,11 +196,13 @@ class GuestOrderToken(Base):
     # References
     link_id: UUID | None = Column(
         PGUUID(as_uuid=True),
+        ForeignKey("tradesperson_customer_links.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
     recognition_image_id: UUID | None = Column(
         PGUUID(as_uuid=True),
+        ForeignKey("product_recognition_images.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
