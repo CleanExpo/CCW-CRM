@@ -1,3 +1,5 @@
+import structlog
+
 """
 Team Management API endpoints.
 
@@ -7,6 +9,8 @@ Provides team member management for multi-tenant organizations:
 - Update member roles (RBAC integration)
 - Remove members
 """
+
+logger = structlog.get_logger(__name__)
 
 from typing import Annotated
 from uuid import UUID
@@ -181,8 +185,8 @@ async def invite_team_member(
                 f"— CCW Team"
             ),
         )
-    except Exception:
-        pass  # Email delivery is non-critical
+    except Exception as exc:
+        logger.debug("welcome_email_failed", error=str(exc))  # non-critical
 
     return TeamMemberResponse(
         id=user.id,

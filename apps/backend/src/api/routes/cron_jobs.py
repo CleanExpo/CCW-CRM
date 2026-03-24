@@ -1046,8 +1046,8 @@ async def shadow_sync_cin7(
         try:
             session.total_syncs_run = (session.total_syncs_run or 0) + 1
             await db.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("shadow_sync_cin7_commit_error", error=str(exc))
 
     logger.info(
         "shadow_sync_cin7_complete",
@@ -1139,8 +1139,8 @@ async def shadow_sync_xero(
                 synced_counts["invoices"],
             )
             await db.commit()
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("shadow_sync_xero_commit_error", error=str(exc))
 
     logger.info(
         "shadow_sync_xero_complete",

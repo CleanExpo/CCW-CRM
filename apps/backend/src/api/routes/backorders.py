@@ -4,11 +4,14 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+logger = structlog.get_logger(__name__)
 
 from src.api.deps import get_optional_user
 from src.config.database import get_async_db
@@ -743,8 +746,8 @@ async def notify_customer(
             },
             source="api",
         )
-    except Exception:
-        pass  # Event publishing is non-critical
+    except Exception as exc:
+        logger.debug("event_publish_failed", error=str(exc))  # non-critical
 
 
 @router.delete("/{backorder_id}", status_code=204, response_model=None)

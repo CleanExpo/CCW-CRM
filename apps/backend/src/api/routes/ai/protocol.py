@@ -143,8 +143,8 @@ async def get_agent_card(agent_id: str) -> dict[str, Any]:
                 "health_score": metadata.health_score,
                 "status": metadata.status.value,
             }
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("agent_protocol_card_error", agent_id=agent_id, error=str(exc))
 
     raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")
 
