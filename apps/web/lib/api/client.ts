@@ -166,6 +166,9 @@ async function fetchApi<T>(
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Request-ID': requestId,
+      // Defense-in-depth: browsers do not send this header automatically on cross-origin requests,
+      // so its presence confirms the request originated from our JS code (not a CSRF form).
+      'X-Requested-With': 'XMLHttpRequest',
       ...(options.headers as Record<string, string> | undefined),
     };
 
