@@ -10,7 +10,6 @@ import { apiClient } from '@/lib/api/client';
 interface Profile {
   company_name: string;
   contact_name: string;
-  pricing_tier: string;
   account_since: string;
 }
 
@@ -108,8 +107,7 @@ export default function PortalHomePage() {
         </h1>
         {profile && (
           <p className="mt-0.5 text-sm text-slate-500">
-            {profile.company_name} · {profile.pricing_tier} Account · Customer since{' '}
-            {new Date(profile.account_since).getFullYear()}
+            {profile.company_name} · Customer since {new Date(profile.account_since).getFullYear()}
           </p>
         )}
       </div>

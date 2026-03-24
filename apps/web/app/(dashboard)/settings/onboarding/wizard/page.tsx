@@ -10,7 +10,7 @@ import {
   Users,
   Link2,
   Warehouse,
-  Tag,
+  Bell,
   Rocket,
   Upload,
 } from 'lucide-react';
@@ -58,11 +58,11 @@ const STEPS = [
   },
   {
     id: 5,
-    title: 'Pricing Tiers',
-    subtitle: 'Trade account discounts',
-    icon: Tag,
+    title: 'Alert Thresholds',
+    subtitle: 'Stock, invoice & warranty alerts',
+    icon: Bell,
     description:
-      'Configure your customer pricing tiers (Bronze, Silver, Gold, Platinum). Discounts automatically apply to orders and quotes.',
+      'Set minimum stock levels that trigger reorder alerts, overdue invoice thresholds, and warranty expiry advance warnings — so nothing slips through.',
   },
 ];
 
@@ -322,77 +322,79 @@ function StepWarehouses({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-function StepPricing({ onComplete }: { onComplete: () => void }) {
-  const DEFAULT_TIERS = [
-    { name: 'Bronze', discount: 0, min_spend: 0 },
-    { name: 'Silver', discount: 5, min_spend: 10000 },
-    { name: 'Gold', discount: 10, min_spend: 30000 },
-    { name: 'Platinum', discount: 15, min_spend: 75000 },
+function StepAlerts({ onComplete }: { onComplete: () => void }) {
+  const [stockDaysWarning, setStockDaysWarning] = useState('7');
+  const [invoiceOverdueDays, setInvoiceOverdueDays] = useState('7');
+  const [warrantyExpiryDays, setWarrantyExpiryDays] = useState('60');
+  const [certExpiryDays, setCertExpiryDays] = useState('60');
+  const [alertEmail, setAlertEmail] = useState('');
+
+  const ALERT_ROWS = [
+    {
+      label: 'Low stock warning',
+      desc: 'Alert when stock drops below reorder point',
+      value: stockDaysWarning,
+      unit: 'days supply remaining',
+      setter: setStockDaysWarning,
+    },
+    {
+      label: 'Overdue invoice alert',
+      desc: 'Flag invoices that have not been paid',
+      value: invoiceOverdueDays,
+      unit: 'days past due date',
+      setter: setInvoiceOverdueDays,
+    },
+    {
+      label: 'Warranty expiry notice',
+      desc: 'Warn before equipment warranty expires',
+      value: warrantyExpiryDays,
+      unit: 'days in advance',
+      setter: setWarrantyExpiryDays,
+    },
+    {
+      label: 'IICRC cert expiry notice',
+      desc: 'Warn before customer technician certs expire',
+      value: certExpiryDays,
+      unit: 'days in advance',
+      setter: setCertExpiryDays,
+    },
   ];
-  const [tiers, setTiers] = useState(DEFAULT_TIERS);
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-600">
-        Set discount percentages for each pricing tier. Minimum annual spend determines tier
-        qualification. Adjust to match your current trade account policy.
-      </p>
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50">
-            <tr>
-              {['Tier', 'Discount %', 'Min Annual Spend (AUD)'].map((h) => (
-                <th
-                  key={h}
-                  className="px-4 py-2 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {tiers.map((tier, i) => (
-              <tr key={tier.name} className="border-t">
-                <td className="px-4 py-2 font-medium">{tier.name}</td>
-                <td className="px-4 py-2">
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      max={50}
-                      value={tier.discount}
-                      onChange={(e) => {
-                        const updated = [...tiers];
-                        updated[i].discount = Number(e.target.value);
-                        setTiers(updated);
-                      }}
-                      className="w-16 text-center"
-                    />
-                    <span className="text-slate-400">%</span>
-                  </div>
-                </td>
-                <td className="px-4 py-2">
-                  <div className="flex items-center gap-1">
-                    <span className="text-slate-400">$</span>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={tier.min_spend}
-                      onChange={(e) => {
-                        const updated = [...tiers];
-                        updated[i].min_spend = Number(e.target.value);
-                        setTiers(updated);
-                      }}
-                      className="w-24"
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="space-y-3">
+        {ALERT_ROWS.map((row) => (
+          <div key={row.label} className="flex items-center justify-between rounded-lg border p-3">
+            <div className="flex-1">
+              <p className="text-sm font-medium">{row.label}</p>
+              <p className="text-xs text-slate-500">{row.desc}</p>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Input
+                type="number"
+                min={1}
+                max={365}
+                value={row.value}
+                onChange={(e) => row.setter(e.target.value)}
+                className="w-16 text-center"
+              />
+              <span className="w-28 text-xs text-slate-500">{row.unit}</span>
+            </div>
+          </div>
+        ))}
       </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="alert-email">Send alerts to (email)</Label>
+        <Input
+          id="alert-email"
+          type="email"
+          placeholder="manager@ccwonline.com.au"
+          value={alertEmail}
+          onChange={(e) => setAlertEmail(e.target.value)}
+        />
+      </div>
+
       <Button className="w-full" onClick={onComplete}>
         Save & Finish <ChevronRight className="ml-2 h-4 w-4" />
       </Button>
@@ -481,7 +483,7 @@ export default function CCWSetupWizardPage() {
           {currentStep === 2 && <StepTeam onComplete={completeStep} />}
           {currentStep === 3 && <StepXero onComplete={completeStep} />}
           {currentStep === 4 && <StepWarehouses onComplete={completeStep} />}
-          {currentStep === 5 && <StepPricing onComplete={completeStep} />}
+          {currentStep === 5 && <StepAlerts onComplete={completeStep} />}
         </CardContent>
       </Card>
 

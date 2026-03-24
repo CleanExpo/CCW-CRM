@@ -40,7 +40,6 @@ DEMO_PROFILE = {
     "email": "james@brisbanecarpetcare.com.au",
     "phone": "+61 7 3222 1234",
     "address": "14 Industrial Ave, Coopers Plains QLD 4108",
-    "pricing_tier": "Silver",
     "account_since": "2021-06-15",
 }
 
