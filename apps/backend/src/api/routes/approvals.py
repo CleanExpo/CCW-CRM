@@ -340,6 +340,106 @@ async def get_pending_my_approval(
     )
 
 
+# ---------------------------------------------------------------------------
+# GAP-022 / RA-190: GET /api/approvals/pending-my-approval-v2 (registered before /{approval_id})
+# ---------------------------------------------------------------------------
+
+
+class PendingApproval(BaseModel):
+    """Pending approval item."""
+
+    id: UUID
+    workflow_type: str = Field(..., description="purchase_order, invoice, expense_report")
+    subject: str
+    requested_by: str
+    requested_at: datetime
+    amount: Decimal | None
+    priority: str = Field(..., description="low, medium, high, urgent")
+    sla_deadline: datetime | None
+
+
+class PendingApprovalsResponse(BaseModel):
+    """Response for pending approvals."""
+
+    approvals: list[PendingApproval]
+    total: int
+    overdue: int
+
+
+@router.get("/pending-my-approval-v2", response_model=PendingApprovalsResponse)
+async def get_pending_approvals_v2(
+    user_id: Annotated[UUID, Query()],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    limit: int = Query(50, ge=1, le=100),
+) -> PendingApprovalsResponse:
+    """
+    Get approvals pending for specific user (v2 endpoint).
+
+    Returns list of pending approvals with SLA deadlines and priority.
+    Designed for approval dashboard widgets.
+    """
+    from decimal import Decimal
+    from uuid import uuid4
+
+    # Mock implementation (in production, query from Approval + ApprovalStep tables)
+    current_time = datetime.now(UTC)
+
+    approvals = [
+        PendingApproval(
+            id=uuid4(),
+            workflow_type="purchase_order",
+            subject="PO-20260317-0001: Office Supplies ($1,250)",
+            requested_by="Sarah Johnson",
+            requested_at=current_time - timedelta(hours=3),
+            amount=Decimal("1250.00"),
+            priority="medium",
+            sla_deadline=current_time + timedelta(hours=21),
+        ),
+        PendingApproval(
+            id=uuid4(),
+            workflow_type="invoice",
+            subject="Invoice #INV-2026-0542: Client XYZ ($15,000)",
+            requested_by="Mike Chen",
+            requested_at=current_time - timedelta(days=2),
+            amount=Decimal("15000.00"),
+            priority="urgent",
+            sla_deadline=current_time - timedelta(hours=2),  # Overdue!
+        ),
+        PendingApproval(
+            id=uuid4(),
+            workflow_type="expense_report",
+            subject="Travel Expenses - Q1 2026 ($850)",
+            requested_by="Emily Davis",
+            requested_at=current_time - timedelta(hours=8),
+            amount=Decimal("850.00"),
+            priority="low",
+            sla_deadline=current_time + timedelta(hours=40),
+        ),
+    ]
+
+    # Count overdue approvals
+    overdue_count = sum(
+        1 for a in approvals if a.sla_deadline and a.sla_deadline < current_time
+    )
+
+    # Apply limit
+    limited_approvals = approvals[:limit]
+
+    logger.info(
+        "pending_approvals_v2_retrieved",
+        user_id=str(user_id),
+        total=len(approvals),
+        overdue=overdue_count,
+        returned=len(limited_approvals),
+    )
+
+    return PendingApprovalsResponse(
+        approvals=limited_approvals,
+        total=len(approvals),
+        overdue=overdue_count,
+    )
+
+
 @router.get("/{approval_id}", response_model=ApprovalResponse)
 async def get_approval(
     approval_id: UUID,
@@ -576,106 +676,6 @@ async def cancel_approval(
     await db.commit()
 
     logger.info("Approval workflow cancelled", approval_id=str(approval_id))
-
-
-# ---------------------------------------------------------------------------
-# GAP-022 / RA-190: GET /api/approvals/pending-my-approval (New Version)
-# ---------------------------------------------------------------------------
-
-
-class PendingApproval(BaseModel):
-    """Pending approval item."""
-
-    id: UUID
-    workflow_type: str = Field(..., description="purchase_order, invoice, expense_report")
-    subject: str
-    requested_by: str
-    requested_at: datetime
-    amount: Decimal | None
-    priority: str = Field(..., description="low, medium, high, urgent")
-    sla_deadline: datetime | None
-
-
-class PendingApprovalsResponse(BaseModel):
-    """Response for pending approvals."""
-
-    approvals: list[PendingApproval]
-    total: int
-    overdue: int
-
-
-@router.get("/pending-my-approval-v2", response_model=PendingApprovalsResponse)
-async def get_pending_approvals_v2(
-    user_id: Annotated[UUID, Query()],
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    limit: int = Query(50, ge=1, le=100),
-) -> PendingApprovalsResponse:
-    """
-    Get approvals pending for specific user (v2 endpoint).
-
-    Returns list of pending approvals with SLA deadlines and priority.
-    Designed for approval dashboard widgets.
-    """
-    from decimal import Decimal
-    from uuid import uuid4
-
-    # Mock implementation (in production, query from Approval + ApprovalStep tables)
-    current_time = datetime.now(UTC)
-
-    approvals = [
-        PendingApproval(
-            id=uuid4(),
-            workflow_type="purchase_order",
-            subject="PO-20260317-0001: Office Supplies ($1,250)",
-            requested_by="Sarah Johnson",
-            requested_at=current_time - timedelta(hours=3),
-            amount=Decimal("1250.00"),
-            priority="medium",
-            sla_deadline=current_time + timedelta(hours=21),
-        ),
-        PendingApproval(
-            id=uuid4(),
-            workflow_type="invoice",
-            subject="Invoice #INV-2026-0542: Client XYZ ($15,000)",
-            requested_by="Mike Chen",
-            requested_at=current_time - timedelta(days=2),
-            amount=Decimal("15000.00"),
-            priority="urgent",
-            sla_deadline=current_time - timedelta(hours=2),  # Overdue!
-        ),
-        PendingApproval(
-            id=uuid4(),
-            workflow_type="expense_report",
-            subject="Travel Expenses - Q1 2026 ($850)",
-            requested_by="Emily Davis",
-            requested_at=current_time - timedelta(hours=8),
-            amount=Decimal("850.00"),
-            priority="low",
-            sla_deadline=current_time + timedelta(hours=40),
-        ),
-    ]
-
-    # Count overdue approvals
-    overdue_count = sum(
-        1 for a in approvals if a.sla_deadline and a.sla_deadline < current_time
-    )
-
-    # Apply limit
-    limited_approvals = approvals[:limit]
-
-    logger.info(
-        "pending_approvals_v2_retrieved",
-        user_id=str(user_id),
-        total=len(approvals),
-        overdue=overdue_count,
-        returned=len(limited_approvals),
-    )
-
-    return PendingApprovalsResponse(
-        approvals=limited_approvals,
-        total=len(approvals),
-        overdue=overdue_count,
-    )
 
 
 # ---------------------------------------------------------------------------
