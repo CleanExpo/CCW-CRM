@@ -235,10 +235,10 @@ export default function GenerateQuotePage() {
           <CardContent>
             <div className="grid gap-2">
               {[
-                'Quote for 5 drilling machines for mining company',
-                'Need 10 safety helmets and 20 pairs of gloves for construction site',
-                'Quote for power tools: 3 electric drills, 2 angle grinders, 1 circular saw',
-                'Heavy machinery for warehouse: 2 forklifts and 1 pallet jack',
+                'Quote for 2 TruckMount carpet cleaning machines for a commercial cleaning company',
+                'Need 3 portable extractors and 5 litres of pre-spray solution for a carpet cleaner startup',
+                'Quote for water damage restoration kit: 4 air movers, 2 dehumidifiers, moisture meter',
+                'Hard floor care package: 1 scrubbing machine and 10L of neutral floor cleaner',
               ].map((example, idx) => (
                 <Button
                   key={idx}
