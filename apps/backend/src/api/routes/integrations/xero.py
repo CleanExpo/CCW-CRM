@@ -225,6 +225,20 @@ async def get_connection_status(
             "message": "Running in demo mode - no real Xero connection",
         }
 
+    # Live mode — check if real OAuth app credentials are configured
+    _demo_prefixes = ("demo_", "")
+    has_real_credentials = bool(
+        settings.client_id
+        and not any(settings.client_id.startswith(p) for p in _demo_prefixes)
+    )
+
+    if not has_real_credentials:
+        return {
+            "connected": False,
+            "mode": "not_configured",
+            "message": "Set XERO_CLIENT_ID and XERO_CLIENT_SECRET environment variables to enable Xero integration",
+        }
+
     return {
         "connected": False,
         "mode": "live",

@@ -4,7 +4,7 @@
  * Handles all API calls to Xero integration endpoints.
  */
 
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
 // ============================================
 // Types
@@ -12,14 +12,14 @@ import { apiClient } from "./client";
 
 export interface XeroConnectionStatus {
   connected: boolean;
-  mode: "demo" | "live";
+  mode: 'demo' | 'live' | 'not_configured';
   tenant_name?: string;
   tenant_id?: string;
   message?: string;
 }
 
 export interface XeroAuthResponse {
-  mode: "demo" | "live";
+  mode: 'demo' | 'live';
   message?: string;
   authorization_url: string;
   state: string;
@@ -28,7 +28,7 @@ export interface XeroAuthResponse {
 
 export interface XeroSyncResult {
   success: boolean;
-  mode?: "demo" | "live";
+  mode?: 'demo' | 'live';
   order_id: string;
   order_number: string;
   xero_invoice_id: string;
@@ -63,23 +63,21 @@ export interface XeroInvoiceDetails {
  * Returns authorization URL to redirect user to
  */
 export async function startXeroAuth(): Promise<XeroAuthResponse> {
-  return apiClient.get<XeroAuthResponse>("/api/integrations/xero/authorize");
+  return apiClient.get<XeroAuthResponse>('/api/integrations/xero/authorize');
 }
 
 /**
  * Get current Xero connection status
  */
 export async function getXeroStatus(): Promise<XeroConnectionStatus> {
-  return apiClient.get<XeroConnectionStatus>("/api/integrations/xero/status");
+  return apiClient.get<XeroConnectionStatus>('/api/integrations/xero/status');
 }
 
 /**
  * Disconnect Xero integration
  */
 export async function disconnectXero(): Promise<{ success: boolean; message: string }> {
-  return apiClient.post<{ success: boolean; message: string }>(
-    "/api/integrations/xero/disconnect"
-  );
+  return apiClient.post<{ success: boolean; message: string }>('/api/integrations/xero/disconnect');
 }
 
 // ============================================
