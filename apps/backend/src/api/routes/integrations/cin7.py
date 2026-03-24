@@ -4,17 +4,93 @@ Provides routes for managing Cin7 Core and Omni connections,
 testing connectivity, and previewing data before sync.
 """
 
-from typing import Annotated, Any
+from datetime import UTC, datetime
+from typing import Annotated, Any, Literal
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.cin7_settings import Cin7Settings, get_cin7_settings
+from src.config.database import get_async_db
+from src.db.cin7_models import Cin7Connection
 from src.integrations.cin7.client import get_cin7_client
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/integrations/cin7", tags=["Cin7 Integration"])
+
+_DEMO_CREDENTIAL_PREFIXES = ("demo_", "")
+
+
+class Cin7ConfigureRequest(BaseModel):
+    """Credentials to configure the Cin7 integration."""
+
+    core_account_id: str = Field(min_length=1, description="Cin7 Core account ID")
+    core_application_key: str = Field(min_length=1, description="Cin7 Core application key")
+    omni_username: str | None = Field(default=None, description="Cin7 Omni username (optional)")
+    omni_api_key: str | None = Field(default=None, description="Cin7 Omni API key (optional)")
+
+
+class Cin7StatusResponse(BaseModel):
+    """Current Cin7 connection status returned to the frontend."""
+
+    connected: bool
+    mode: Literal["demo", "live", "not_configured"]
+    core_connected: bool
+    omni_connected: bool
+    last_sync: str | None = None
+    message: str | None = None
+
+
+def _is_real_credential(value: str | None) -> bool:
+    """Return True if value looks like a real (non-demo) credential."""
+    if not value:
+        return False
+    return not any(value.startswith(prefix) for prefix in _DEMO_CREDENTIAL_PREFIXES)
+
+
+async def _get_active_connection(db: AsyncSession) -> Cin7Connection | None:
+    """Fetch the default active Cin7Connection record, or None."""
+    result = await db.execute(
+        select(Cin7Connection).where(
+            Cin7Connection.account_name == "default",
+            Cin7Connection.is_active.is_(True),
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def _build_status(
+    conn: Cin7Connection | None,
+    settings: Cin7Settings,
+) -> Cin7StatusResponse:
+    """Build a Cin7StatusResponse from DB record + env settings."""
+    if conn and _is_real_credential(conn.core_account_id):
+        return Cin7StatusResponse(
+            connected=True,
+            mode="live",
+            core_connected=bool(conn.core_account_id and conn.core_application_key),
+            omni_connected=_is_real_credential(conn.omni_api_key),
+            last_sync=conn.last_sync_at.isoformat() if conn.last_sync_at else None,
+        )
+    if settings.mode == "demo":
+        return Cin7StatusResponse(
+            connected=True,
+            mode="demo",
+            core_connected=True,
+            omni_connected=True,
+            message="Demo mode active — no real API calls",
+        )
+    return Cin7StatusResponse(
+        connected=False,
+        mode="not_configured",
+        core_connected=False,
+        omni_connected=False,
+        message="Enter your Cin7 credentials to connect",
+    )
 
 
 @router.get("/test")
@@ -39,25 +115,134 @@ async def test_cin7_connection(
 
 @router.get("/status")
 async def get_cin7_status(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     settings: Annotated[Cin7Settings, Depends(get_cin7_settings)],
-) -> dict[str, Any]:
-    """Get current Cin7 integration status and configuration.
+) -> Cin7StatusResponse:
+    """Get current Cin7 connection status.
 
-    Returns the current mode, sync toggles, and API endpoints configured.
-    Does not make any external API calls.
+    Checks the database for saved credentials first, then falls back to
+    environment variable mode (demo/live). Returns a status suitable for
+    the frontend connection card.
     """
-    return {
-        "mode": settings.mode,
-        "core_api_url": settings.core_api_url,
-        "omni_api_url": settings.omni_api_url,
-        "sync_config": {
-            "products": settings.sync_products,
-            "customers": settings.sync_customers,
-            "sales": settings.sync_sales,
-            "inventory": settings.sync_inventory,
-        },
-        "timeout": settings.api_timeout,
-    }
+    conn = await _get_active_connection(db)
+    return await _build_status(conn, settings)
+
+
+@router.post("/configure")
+async def configure_cin7(
+    request: Cin7ConfigureRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[Cin7Settings, Depends(get_cin7_settings)],
+) -> Cin7StatusResponse:
+    """Save Cin7 API credentials to the database.
+
+    Creates or updates the default Cin7Connection record with the supplied
+    credentials. Call POST /connect after this to activate the integration.
+    """
+    logger.info("configuring_cin7_credentials")
+
+    result = await db.execute(
+        select(Cin7Connection).where(Cin7Connection.account_name == "default")
+    )
+    conn = result.scalar_one_or_none()
+
+    if conn:
+        conn.core_account_id = request.core_account_id
+        conn.core_application_key = request.core_application_key
+        conn.omni_username = request.omni_username
+        conn.omni_api_key = request.omni_api_key
+        conn.is_active = True
+        conn.updated_at = datetime.now(UTC)
+        conn.connection_type = "both" if request.omni_api_key else "core"
+    else:
+        conn = Cin7Connection(
+            account_name="default",
+            connection_type="both" if request.omni_api_key else "core",
+            core_account_id=request.core_account_id,
+            core_application_key=request.core_application_key,
+            omni_username=request.omni_username,
+            omni_api_key=request.omni_api_key,
+            is_active=True,
+        )
+        db.add(conn)
+
+    await db.commit()
+    await db.refresh(conn)
+
+    logger.info("cin7_credentials_saved", connection_type=conn.connection_type)
+    return Cin7StatusResponse(
+        connected=True,
+        mode="live",
+        core_connected=True,
+        omni_connected=bool(request.omni_api_key),
+        message="Credentials saved. Cin7 integration is now active.",
+    )
+
+
+@router.post("/connect")
+async def connect_cin7(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    settings: Annotated[Cin7Settings, Depends(get_cin7_settings)],
+) -> Cin7StatusResponse:
+    """Activate the Cin7 connection.
+
+    In demo mode, enables the demo integration without credentials.
+    In live mode, requires saved credentials (call POST /configure first).
+    """
+    logger.info("connecting_cin7", mode=settings.mode)
+
+    result = await db.execute(
+        select(Cin7Connection).where(Cin7Connection.account_name == "default")
+    )
+    conn = result.scalar_one_or_none()
+
+    if conn and _is_real_credential(conn.core_account_id):
+        conn.is_active = True
+        await db.commit()
+        return Cin7StatusResponse(
+            connected=True,
+            mode="live",
+            core_connected=True,
+            omni_connected=_is_real_credential(conn.omni_api_key),
+            message="Cin7 integration connected",
+        )
+
+    if settings.mode == "demo":
+        return Cin7StatusResponse(
+            connected=True,
+            mode="demo",
+            core_connected=True,
+            omni_connected=True,
+            message="Demo mode active",
+        )
+
+    raise HTTPException(
+        status_code=400,
+        detail="No credentials configured. Use POST /api/integrations/cin7/configure first.",
+    )
+
+
+@router.post("/disconnect")
+async def disconnect_cin7(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict[str, str]:
+    """Deactivate the Cin7 connection.
+
+    Marks the saved connection as inactive. Credentials are preserved and
+    can be re-activated by calling POST /connect.
+    """
+    logger.info("disconnecting_cin7")
+
+    result = await db.execute(
+        select(Cin7Connection).where(Cin7Connection.account_name == "default")
+    )
+    conn = result.scalar_one_or_none()
+
+    if conn:
+        conn.is_active = False
+        await db.commit()
+
+    return {"status": "disconnected"}
 
 
 @router.get("/locations")

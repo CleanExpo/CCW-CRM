@@ -1,17 +1,24 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle2, ExternalLink, RefreshCw, Unplug, XCircle } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  KeyRound,
+  RefreshCw,
+  Unplug,
+  XCircle,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,11 +29,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import type { Cin7ConnectionStatus } from "@/lib/api/cin7";
-import { connectCin7, disconnectCin7 } from "@/lib/api/cin7";
+} from '@/components/ui/alert-dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import type { Cin7ConnectionStatus } from '@/lib/api/cin7';
+import { configureCin7, connectCin7, disconnectCin7 } from '@/lib/api/cin7';
+
+const configureSchema = z.object({
+  core_account_id: z.string().min(1, 'Account ID is required'),
+  core_application_key: z.string().min(1, 'Application Key is required'),
+  omni_username: z.string().optional(),
+  omni_api_key: z.string().optional(),
+});
+
+type ConfigureFormValues = z.infer<typeof configureSchema>;
 
 interface Cin7ConnectionCardProps {
   status: Cin7ConnectionStatus | null;
@@ -34,45 +60,71 @@ interface Cin7ConnectionCardProps {
   onStatusChange: () => void;
 }
 
-export function Cin7ConnectionCard({
-  status,
-  loading,
-  onStatusChange,
-}: Cin7ConnectionCardProps) {
+export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7ConnectionCardProps) {
   const { toast } = useToast();
-  const [connecting, setConnecting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showOmni, setShowOmni] = useState(false);
+  const [editingCredentials, setEditingCredentials] = useState(false);
 
   const isConnected = status?.connected ?? false;
-  const isDemo = status?.mode === "demo";
+  const isDemo = status?.mode === 'demo';
+  const isNotConfigured = !status || status.mode === 'not_configured';
+  const showForm = isNotConfigured || editingCredentials;
 
-  const handleConnect = async () => {
-    setConnecting(true);
+  const form = useForm<ConfigureFormValues>({
+    resolver: zodResolver(configureSchema),
+    defaultValues: {
+      core_account_id: '',
+      core_application_key: '',
+      omni_username: '',
+      omni_api_key: '',
+    },
+  });
+
+  const handleSave = async (values: ConfigureFormValues) => {
+    setSaving(true);
     try {
-      const response = await connectCin7();
-
-      if (response.mode === "demo") {
-        toast({
-          title: "Demo Mode Active",
-          description: response.message || "Cin7 demo mode is now active",
-        });
-      } else {
-        toast({
-          title: "Connected to Cin7",
-          description: "Successfully connected to Cin7 inventory system",
-        });
-      }
-
+      await configureCin7({
+        core_account_id: values.core_account_id,
+        core_application_key: values.core_application_key,
+        omni_username: values.omni_username || undefined,
+        omni_api_key: values.omni_api_key || undefined,
+      });
+      toast({
+        title: 'Credentials Saved',
+        description: 'Cin7 integration is now active',
+      });
+      setEditingCredentials(false);
       onStatusChange();
     } catch (error: unknown) {
       toast({
-        variant: "destructive",
-        title: "Connection Failed",
-        description: error instanceof Error ? error.message : "Failed to connect to Cin7",
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: error instanceof Error ? error.message : 'Failed to save credentials',
       });
     } finally {
-      setConnecting(false);
+      setSaving(false);
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      await connectCin7();
+      toast({
+        title: isDemo ? 'Demo Mode Active' : 'Connected to Cin7',
+        description: isDemo
+          ? 'Running in demo mode — no real API calls'
+          : 'Cin7 integration connected',
+      });
+      onStatusChange();
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Connection Failed',
+        description: error instanceof Error ? error.message : 'Failed to connect to Cin7',
+      });
     }
   };
 
@@ -80,18 +132,13 @@ export function Cin7ConnectionCard({
     setDisconnecting(true);
     try {
       await disconnectCin7();
-
-      toast({
-        title: "Disconnected",
-        description: "Cin7 integration has been disconnected",
-      });
-
+      toast({ title: 'Disconnected', description: 'Cin7 integration has been disconnected' });
       onStatusChange();
     } catch (error: unknown) {
       toast({
-        variant: "destructive",
-        title: "Disconnect Failed",
-        description: error instanceof Error ? error.message : "Failed to disconnect from Cin7",
+        variant: 'destructive',
+        title: 'Disconnect Failed',
+        description: error instanceof Error ? error.message : 'Failed to disconnect from Cin7',
       });
     } finally {
       setDisconnecting(false);
@@ -102,16 +149,9 @@ export function Cin7ConnectionCard({
     setRefreshing(true);
     try {
       await onStatusChange();
-      toast({
-        title: "Status Refreshed",
-        description: "Connection status has been updated",
-      });
-    } catch (error: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Refresh Failed",
-        description: error instanceof Error ? error.message : "Failed to refresh status",
-      });
+      toast({ title: 'Status Refreshed' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Refresh Failed' });
     } finally {
       setRefreshing(false);
     }
@@ -141,7 +181,6 @@ export function Cin7ConnectionCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Cin7 logo placeholder */}
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-500/10">
               <svg viewBox="0 0 24 24" className="h-6 w-6 fill-indigo-600">
                 <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -152,18 +191,20 @@ export function Cin7ConnectionCard({
             </div>
             <div>
               <CardTitle>Cin7 Inventory</CardTitle>
-              <CardDescription>Sync products, orders & stock</CardDescription>
+              <CardDescription>Sync products, orders &amp; stock</CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isDemo && isConnected && (
-              <Badge variant="secondary">Demo Mode</Badge>
-            )}
+            {isDemo && isConnected && <Badge variant="secondary">Demo Mode</Badge>}
             {isConnected && status?.core_connected && (
-              <Badge variant="outline" className="text-xs">Core</Badge>
+              <Badge variant="outline" className="text-xs">
+                Core
+              </Badge>
             )}
             {isConnected && status?.omni_connected && (
-              <Badge variant="outline" className="text-xs">Omni</Badge>
+              <Badge variant="outline" className="text-xs">
+                Omni
+              </Badge>
             )}
             {isConnected ? (
               <Badge variant="default" className="flex items-center gap-1">
@@ -173,14 +214,16 @@ export function Cin7ConnectionCard({
             ) : (
               <Badge variant="outline" className="flex items-center gap-1">
                 <XCircle className="h-3 w-3" />
-                Disconnected
+                {isNotConfigured ? 'Not Configured' : 'Disconnected'}
               </Badge>
             )}
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
-        {isConnected ? (
+        {/* ── Connected state ── */}
+        {isConnected && !editingCredentials && (
           <>
             <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-900 dark:bg-indigo-950">
               <div className="flex items-start gap-2">
@@ -191,32 +234,31 @@ export function Cin7ConnectionCard({
                   </p>
                   <p className="text-xs text-indigo-700 dark:text-indigo-300">
                     {isDemo
-                      ? "Demo mode - No real API calls will be made"
-                      : "Connected to Cin7 inventory management"}
+                      ? 'Demo mode — no real API calls will be made'
+                      : 'Connected to Cin7 inventory management'}
                   </p>
                 </div>
               </div>
             </div>
 
             {status?.last_sync && (
-              <div className="text-sm text-muted-foreground">
-                Last sync:{" "}
-                {new Date(status.last_sync).toLocaleString()}
+              <div className="text-muted-foreground text-sm">
+                Last sync: {new Date(status.last_sync).toLocaleString()}
               </div>
             )}
 
-            <div className="flex gap-2">
-              <Button
-                onClick={handleRefresh}
-                variant="outline"
-                size="sm"
-                disabled={refreshing}
-              >
-                <RefreshCw
-                  className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                />
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleRefresh} variant="outline" size="sm" disabled={refreshing}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh Status
               </Button>
+
+              {!isDemo && (
+                <Button variant="outline" size="sm" onClick={() => setEditingCredentials(true)}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Edit Credentials
+                </Button>
+              )}
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -229,52 +271,176 @@ export function Cin7ConnectionCard({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Disconnect Cin7?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will stop product, inventory, and order sync with Cin7. You can
-                      reconnect at any time.
+                      This will stop product, inventory, and order sync with Cin7. Your credentials
+                      will be preserved and you can reconnect at any time.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDisconnect}>
-                      Disconnect
-                    </AlertDialogAction>
+                    <AlertDialogAction onClick={handleDisconnect}>Disconnect</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
           </>
-        ) : (
+        )}
+
+        {/* ── Credential form (not configured OR editing) ── */}
+        {showForm && (
           <>
-            <div className="rounded-lg border border-muted-foreground/20 bg-muted/50 p-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div className="flex-1 text-sm text-muted-foreground">
-                  <p className="font-medium">No active Cin7 connection</p>
+            {!isNotConfigured && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
+                <p className="text-xs text-amber-900 dark:text-amber-100">
+                  Updating your credentials will replace the existing connection.
+                </p>
+              </div>
+            )}
+
+            {isNotConfigured && (
+              <div className="border-muted-foreground/20 bg-muted/50 flex items-start gap-2 rounded-lg border p-3">
+                <AlertCircle className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+                <div className="text-muted-foreground text-sm">
+                  <p className="font-medium">Enter your Cin7 API credentials</p>
                   <p className="mt-1 text-xs">
-                    Connect to enable product, inventory, and order sync.
+                    Find these in your Cin7 Core account under Settings → API.
                   </p>
                 </div>
               </div>
-            </div>
+            )}
 
-            <Button
-              onClick={handleConnect}
-              disabled={connecting}
-              className="w-full"
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              {connecting ? "Connecting..." : "Connect to Cin7"}
-            </Button>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
+                {/* Cin7 Core credentials */}
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                    Cin7 Core (required)
+                  </p>
+                  <FormField
+                    control={form.control}
+                    name="core_account_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account ID</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g. 12345678-abcd-..."
+                            autoComplete="off"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="core_application_key"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Application Key</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Paste your application key"
+                            autoComplete="new-password"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
-              <p className="font-medium">What happens when you connect:</p>
-              <ul className="mt-2 ml-4 list-disc space-y-1">
-                <li>Products and pricing will sync from Cin7</li>
-                <li>Inventory levels update in real-time</li>
-                <li>Customer and order data will synchronize</li>
-                <li>Purchase orders sync with suppliers</li>
-              </ul>
-            </div>
+                {/* Cin7 Omni credentials (collapsible) */}
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowOmni((v) => !v)}
+                    className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between text-xs font-semibold tracking-wide uppercase"
+                  >
+                    <span>Cin7 Omni (optional)</span>
+                    {showOmni ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {showOmni && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="omni_username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Omni Username</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Cin7 Omni username"
+                                autoComplete="off"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="omni_api_key"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Omni API Key</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="password"
+                                placeholder="Paste your Omni API key"
+                                autoComplete="new-password"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={saving} className="flex-1">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {saving ? 'Saving...' : 'Save & Connect'}
+                  </Button>
+                  {editingCredentials && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setEditingCredentials(false)}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </Form>
+
+            {isNotConfigured && !isDemo && (
+              <>
+                <Separator />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground w-full"
+                  onClick={handleConnect}
+                >
+                  Use demo mode instead
+                </Button>
+              </>
+            )}
           </>
         )}
       </CardContent>
