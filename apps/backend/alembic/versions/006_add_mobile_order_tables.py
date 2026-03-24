@@ -25,18 +25,30 @@ def upgrade() -> None:
     # Enums
     # ---------------------------------------------------------------------------
     op.execute("""
-        CREATE TYPE link_status AS ENUM ('active', 'suspended', 'revoked')
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'link_status') THEN
+                CREATE TYPE link_status AS ENUM ('active', 'suspended', 'revoked');
+            END IF;
+        END $$;
     """)
     op.execute("""
-        CREATE TYPE recognition_status AS ENUM (
-            'pending', 'processing', 'completed', 'failed', 'low_confidence'
-        )
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'recognition_status') THEN
+                CREATE TYPE recognition_status AS ENUM (
+                    'pending', 'processing', 'completed', 'failed', 'low_confidence'
+                );
+            END IF;
+        END $$;
     """)
     op.execute("""
-        CREATE TYPE guest_order_status AS ENUM (
-            'pending', 'viewed', 'approved', 'payment_pending',
-            'paid', 'dispatched', 'declined', 'expired', 'cancelled'
-        )
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'guest_order_status') THEN
+                CREATE TYPE guest_order_status AS ENUM (
+                    'pending', 'viewed', 'approved', 'payment_pending',
+                    'paid', 'dispatched', 'declined', 'expired', 'cancelled'
+                );
+            END IF;
+        END $$;
     """)
 
     # ---------------------------------------------------------------------------
