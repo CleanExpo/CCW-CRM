@@ -28,19 +28,46 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # workflow_instances: composite index for status + template filtering
-    op.execute(
-        'CREATE INDEX IF NOT EXISTS idx_workflow_instances_status_template '
-        'ON workflow_instances (status, template_id)'
-    )
+    # Table may not exist on fresh CI DB (no dedicated CREATE TABLE migration)
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = 'workflow_instances'
+            ) THEN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes
+                    WHERE tablename = 'workflow_instances'
+                      AND indexname = 'idx_workflow_instances_status_template'
+                ) THEN
+                    EXECUTE 'CREATE INDEX idx_workflow_instances_status_template '
+                            'ON workflow_instances (status, template_id)';
+                END IF;
+            END IF;
+        END $$;
+    """)
 
     # in_app_notifications: composite index for unread-per-user query
-    # Query: SELECT COUNT(*) FROM in_app_notifications WHERE user_id=? AND is_read=false
-    op.execute(
-        'CREATE INDEX IF NOT EXISTS idx_notifications_user_read '
-        'ON in_app_notifications (user_id, is_read)'
-    )
+    # Table may not exist on fresh CI DB
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = 'in_app_notifications'
+            ) THEN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes
+                    WHERE tablename = 'in_app_notifications'
+                      AND indexname = 'idx_notifications_user_read'
+                ) THEN
+                    EXECUTE 'CREATE INDEX idx_notifications_user_read '
+                            'ON in_app_notifications (user_id, is_read)';
+                END IF;
+            END IF;
+        END $$;
+    """)
 
-    # products.name trigram: omitted from migration 003
+    # products.name trigram: omitted from migration 003 (products table always exists)
     op.execute('CREATE EXTENSION IF NOT EXISTS pg_trgm')
     op.execute(
         'CREATE INDEX IF NOT EXISTS idx_products_name_trgm '
