@@ -51,7 +51,7 @@ const DEMO_GRNS: GoodsReceipt[] = [
     supplier_name: 'TruckMount Supplies Co',
     received_by: 'John Smith',
     received_date: '2026-03-01',
-    location_id: 'Main Warehouse',
+    location_id: 'Brisbane Warehouse',
     notes: 'Partial shipment - remaining items on backorder',
     status: 'synced',
     cin7_receipt_id: 'DEMO-GRN-PO-2026-001-143022',
@@ -97,7 +97,7 @@ const DEMO_GRNS: GoodsReceipt[] = [
     supplier_name: 'Safety Equipment Wholesale',
     received_by: null,
     received_date: '2026-03-03',
-    location_id: 'Main Warehouse',
+    location_id: 'Brisbane Warehouse',
     notes: null,
     status: 'draft',
     cin7_receipt_id: null,
@@ -150,7 +150,7 @@ export default function GoodsReceivingPage() {
     po_reference: '',
     supplier_name: '',
     received_date: new Date().toISOString().split('T')[0],
-    location_id: 'Main Warehouse',
+    location_id: 'Brisbane Warehouse',
     notes: '',
   });
   const [isCreating, setIsCreating] = useState(false);
@@ -219,7 +219,7 @@ export default function GoodsReceivingPage() {
         po_reference: '',
         supplier_name: '',
         received_date: new Date().toISOString().split('T')[0],
-        location_id: 'Main Warehouse',
+        location_id: 'Brisbane Warehouse',
         notes: '',
       });
       loadGrns();
@@ -552,10 +552,10 @@ export default function GoodsReceivingPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Main Warehouse">Main Warehouse</SelectItem>
-                  <SelectItem value="Brisbane">Brisbane</SelectItem>
-                  <SelectItem value="Sydney">Sydney</SelectItem>
-                  <SelectItem value="Melbourne">Melbourne</SelectItem>
+                  <SelectItem value="Brisbane Warehouse">Brisbane Warehouse</SelectItem>
+                  <SelectItem value="Sydney Distribution">Sydney Distribution</SelectItem>
+                  <SelectItem value="Melbourne Depot">Melbourne Depot</SelectItem>
+                  <SelectItem value="Returns Bay">Returns Bay</SelectItem>
                 </SelectContent>
               </Select>
             </div>
