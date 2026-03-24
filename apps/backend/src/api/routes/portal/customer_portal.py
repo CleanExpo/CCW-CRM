@@ -40,6 +40,7 @@ DEMO_PROFILE = {
     "phone": "+61 7 3222 1234",
     "address": "14 Industrial Ave, Coopers Plains QLD 4108",
     "account_since": "2021-06-15",
+    "pricing_tier": "Gold",
 }
 
 DEMO_ORDERS = [
