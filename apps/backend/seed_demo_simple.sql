@@ -4,7 +4,7 @@
 -- Create demo user (password: demo123, hashed with bcrypt)
 INSERT INTO users (id, email, hashed_password, full_name, is_active, is_admin, created_at, updated_at)
 VALUES
-  ('00000000-0000-0000-0000-000000000001', 'admin@demo.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5.dQjI3gJ3Mq.', 'Admin User', true, true, NOW(), NOW())
+  ('00000000-0000-0000-0000-000000000001', 'admin@demo.com', '$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe', 'Admin User', true, true, NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
 
 -- Create products
