@@ -251,6 +251,90 @@ async def get_tax_summary(
     )
 
 
+@router.get("/reports/bas")
+async def get_bas_report(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    date_from: date | None = None,
+    date_to: date | None = None,
+    period: str | None = None,
+) -> dict:
+    """Generate an Australian GST/BAS (Business Activity Statement) summary.
+
+    Returns:
+    - 1A: GST collected on sales (taxable invoices)
+    - 1B: Input tax credits (not tracked — manual entry required)
+    - Taxable sales total
+    - Total invoices in period
+
+    Args:
+        date_from / date_to: Explicit date range.
+        period: Shorthand period selector (e.g. "2026-Q1", "2026-03").
+    """
+    from datetime import date as dt_date
+
+    # Resolve period shorthand
+    if period and not date_from and not date_to:
+        if "-Q" in period:
+            year_str, q_str = period.split("-Q")
+            year = int(year_str)
+            q = int(q_str)
+            quarter_start_month = (q - 1) * 3 + 1
+            date_from = dt_date(year, quarter_start_month, 1)
+            # End of quarter
+            end_month = quarter_start_month + 2
+            import calendar
+            date_to = dt_date(year, end_month, calendar.monthrange(year, end_month)[1])
+        else:
+            # Monthly: "2026-03"
+            import calendar
+            year, month = int(period.split("-")[0]), int(period.split("-")[1])
+            date_from = dt_date(year, month, 1)
+            date_to = dt_date(year, month, calendar.monthrange(year, month)[1])
+
+    # Build query — exclude draft and cancelled invoices
+    stmt = select(
+        func.coalesce(func.sum(Invoice.subtotal), 0).label("taxable_sales"),
+        func.coalesce(func.sum(Invoice.tax_amount), 0).label("gst_collected"),
+        func.coalesce(func.sum(Invoice.total), 0).label("total_sales"),
+        func.count(Invoice.id).label("invoice_count"),
+    ).where(Invoice.status.notin_(["draft", "cancelled"]))
+
+    if date_from:
+        stmt = stmt.where(Invoice.invoice_date >= date_from)
+    if date_to:
+        stmt = stmt.where(Invoice.invoice_date <= date_to)
+
+    row = (await db.execute(stmt)).one()
+
+    # Zero-rated / export sales (future: filter by customer country)
+    export_sales = Decimal("0.00")
+
+    gst_collected = Decimal(str(row.gst_collected))
+    taxable_sales = Decimal(str(row.taxable_sales))
+    total_sales = Decimal(str(row.total_sales))
+
+    # Net GST payable (1A - 1B)
+    # 1B (input tax credits) are not tracked in this system — set to 0
+    gst_credits = Decimal("0.00")
+    net_gst = gst_collected - gst_credits
+
+    return {
+        "period": period,
+        "date_from": date_from.isoformat() if date_from else None,
+        "date_to": date_to.isoformat() if date_to else None,
+        # BAS labels
+        "label_1a_gst_collected": str(gst_collected),
+        "label_1b_gst_credits": str(gst_credits),
+        "label_net_gst_payable": str(net_gst),
+        # Supporting figures
+        "taxable_sales": str(taxable_sales),
+        "export_sales": str(export_sales),
+        "total_sales_incl_gst": str(total_sales),
+        "invoice_count": int(row.invoice_count),
+        "note": "GST credits (1B) require purchase invoice data — enter manually in your BAS.",
+    }
+
+
 @router.get("/tax-rates", response_model=list[TaxRateResponse])
 async def list_tax_rates(
     db: Annotated[AsyncSession, Depends(get_async_db)],
