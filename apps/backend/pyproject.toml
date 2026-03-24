@@ -203,12 +203,6 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
-    # Skip test files whose backend modules are not yet implemented
-    "--ignore=tests/integration/test_api_endpoints.py",
-    "--ignore=tests/integration/test_webhooks.py",
-    "--ignore=tests/services/test_auto_reorder_integration.py",
-    "--ignore=tests/services/test_procurement_matching_integration.py",
-    "--ignore=tests/services/test_tax_calculator_integration.py",
 ]
 markers = [
     "asyncio: mark test as async",
