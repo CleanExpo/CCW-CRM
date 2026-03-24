@@ -2,9 +2,9 @@
 
 # Last Updated: 2026-03-25
 
-# Total Route Files: 110
+# Total Route Files: 115
 
-# Total Endpoints: ~660 (across all route files)
+# Total Endpoints: ~679 (across all route files)
 
 # Source: apps/backend/src/api/routes/
 
@@ -1361,6 +1361,61 @@
 - **Prefix**: /api/invoices
 - **Endpoints**: GET /reports/bas
 - **Count**: 1
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25
+
+### ROUTE-117: Autonomous Operations (Sprint 3)
+
+- **File**: `apps/backend/src/api/routes/ai/autonomous_ops.py`
+- **Prefix**: /api/ai/autonomous
+- **Endpoints**: POST /run, GET /log, GET /health
+- **Count**: 3
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25
+
+### ROUTE-118: Natural Language ERP Query (Sprint 3)
+
+- **File**: `apps/backend/src/api/routes/ai/query.py`
+- **Prefix**: /api/ai/query
+- **Endpoints**: POST /, GET /stream, GET /examples
+- **Count**: 3
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25
+
+### ROUTE-119: Document Extraction (Sprint 3)
+
+- **File**: `apps/backend/src/api/routes/documents.py`
+- **Prefix**: /api/documents
+- **Endpoints**: POST /extract-invoice, POST /extract-po, POST /extract-and-create
+- **Count**: 3
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25
+
+### ROUTE-120: Customer Self-Service Portal (Sprint 4)
+
+- **File**: `apps/backend/src/api/routes/portal/customer_portal.py`
+- **Prefix**: /api/portal
+- **Endpoints**: GET /profile, GET /orders, GET /orders/{id}, GET /invoices, GET /invoices/{id}, GET /certifications, POST /service-requests, GET /service-requests
+- **Count**: 8
+- **Auth**: JWT Required
+- **Status**: Active
+- **Registered**: True
+- **Last Verified**: 2026-03-25
+
+### ROUTE-121: Supplier Self-Service Portal (Sprint 4)
+
+- **File**: `apps/backend/src/api/routes/supplier_portal.py`
+- **Prefix**: /api/supplier-portal
+- **Endpoints**: GET /profile, GET /purchase-orders, GET /purchase-orders/{id}, PUT /purchase-orders/{id}/confirm, GET /payment-history
+- **Count**: 5
 - **Auth**: JWT Required
 - **Status**: Active
 - **Registered**: True

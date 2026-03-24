@@ -722,6 +722,19 @@ try:
 except ImportError:
     pass
 
+# Sprint 4 — Customer & Supplier Portals
+try:
+    from src.api.routes.portal import customer_portal
+    app.include_router(customer_portal.router, tags=["Customer Portal"])
+except ImportError:
+    pass
+
+try:
+    from src.api.routes import supplier_portal
+    app.include_router(supplier_portal.router, tags=["Supplier Portal"])
+except ImportError:
+    pass
+
 # POS-Xero Reconciliation (depends on Xero integration)
 try:
     from src.api.routes import pos_xero_reconciliation
