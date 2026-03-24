@@ -1,6 +1,6 @@
 """add workflow, notification, and products.name indexes
 
-Revision ID: 007_add_workflow_notification_indexes
+Revision ID: 007
 Revises: 006_add_mobile_order_tables
 Create Date: 2026-03-24 00:00:00.000000
 
@@ -20,7 +20,7 @@ from typing import Sequence, Union
 from alembic import op
 
 
-revision: str = '007_add_workflow_notification_indexes'
+revision: str = '007'
 down_revision: Union[str, None] = '006_add_mobile_order_tables'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
