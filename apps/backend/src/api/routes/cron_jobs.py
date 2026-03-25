@@ -1066,6 +1066,51 @@ async def shadow_sync_cin7(
     }
 
 
+@router.post("/run-autonomous-ops")
+async def run_autonomous_ops_cron(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """Hourly autonomous ops run — stock, invoices, bank feeds, SLA breaches.
+
+    Claude Sonnet 4.6 reviews ERP state and creates draft POs, sends payment
+    reminders, flags unmatched transactions, and escalates SLA breaches.
+
+    vercel.json schedule: "0 * * * *"
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    now = datetime.now(UTC)
+    try:
+        from src.ai.agents.specialized.autonomous_ops_agent import AutonomousOpsAgent
+
+        agent = AutonomousOpsAgent()
+        result = await agent.execute(
+            task="run",
+            context={"trigger": "scheduled_hourly", "db": db},
+        )
+        logger.info(
+            "autonomous_ops_cron_complete",
+            run_id=result.get("run_id"),
+            actions_taken=result.get("actions_taken", 0),
+        )
+        return {
+            "status": "success",
+            "run_id": result.get("run_id"),
+            "actions_taken": result.get("actions_taken", 0),
+            "summary": result.get("summary", ""),
+            "ran_at": now.isoformat(),
+        }
+    except Exception as exc:
+        logger.error("autonomous_ops_cron_error", error=str(exc))
+        return {
+            "status": "error",
+            "error": str(exc),
+            "ran_at": now.isoformat(),
+        }
+
+
 @router.post("/shadow-sync-xero")
 async def shadow_sync_xero(
     db: Annotated[AsyncSession, Depends(get_async_db)],
