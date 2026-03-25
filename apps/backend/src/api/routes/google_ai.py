@@ -291,6 +291,110 @@ async def generate_embeddings(
         )
 
 
+class VisionAnalyzeRequest(BaseModel):
+    """Request for product attribute extraction from an image URL."""
+
+    image_url: str = Field(..., description="Publicly accessible image URL")
+    product_name: str | None = Field(default=None, max_length=255, description="Optional product name for context")
+    category: str | None = Field(default=None, max_length=100, description="Optional product category for context")
+
+
+class ExtractedAttribute(BaseModel):
+    """A single extracted product attribute."""
+
+    key: str
+    value: str
+    unit: str | None = None
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+class VisionAnalyzeResponse(BaseModel):
+    """Extracted product attributes from image analysis."""
+
+    attributes: list[ExtractedAttribute]
+    summary: str
+    model_used: str
+
+
+@router.post("/vision-analyze", response_model=VisionAnalyzeResponse)
+async def vision_analyze_product(
+    body: VisionAnalyzeRequest,
+    _: Annotated[User | None, Depends(get_optional_user)] = None,
+) -> VisionAnalyzeResponse:
+    """
+    Extract product attributes from an image using Gemini Vision.
+
+    Analyses the product image and returns structured key-value attributes
+    (e.g., dimensions, materials, voltage, weight) suitable for the product
+    attributes table.
+    """
+    try:
+        client = get_google_ai_client()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google AI API is not configured.",
+        )
+
+    context_parts = []
+    if body.product_name:
+        context_parts.append(f"Product: {body.product_name}")
+    if body.category:
+        context_parts.append(f"Category: {body.category}")
+    context_hint = ". ".join(context_parts)
+
+    prompt = (
+        f"Analyse this product image{(f' ({context_hint})') if context_hint else ''}. "
+        "Extract all visible or inferrable product attributes as a structured JSON array. "
+        "Each attribute should have: key (snake_case name), value (string), unit (optional, e.g. 'kg', 'cm', 'V'), "
+        "and confidence (0.0–1.0). "
+        "Also provide a brief one-sentence summary of what you see. "
+        'Return ONLY valid JSON in this format: {"attributes": [...], "summary": "..."}'
+    )
+
+    try:
+        raw = await client.vision_analysis(
+            image_url=body.image_url,
+            prompt=prompt,
+            model="models/gemini-2.5-flash",
+        )
+    except Exception as e:
+        logger.error("google_ai_vision_error", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Vision analysis failed: {str(e)}",
+        )
+
+    # Parse the JSON response from Gemini
+    import json
+    import re
+
+    try:
+        # Strip markdown code fences if present
+        cleaned = re.sub(r"```(?:json)?\s*|\s*```", "", raw.get("text", "{}")).strip()
+        parsed = json.loads(cleaned)
+        attrs = [
+            ExtractedAttribute(
+                key=a.get("key", "unknown"),
+                value=str(a.get("value", "")),
+                unit=a.get("unit"),
+                confidence=float(a.get("confidence", 0.7)),
+            )
+            for a in parsed.get("attributes", [])
+        ]
+        summary = parsed.get("summary", "No summary available.")
+    except (json.JSONDecodeError, KeyError, ValueError):
+        # Fallback: return raw text as a single attribute
+        attrs = [ExtractedAttribute(key="description", value=raw.get("text", ""), confidence=0.5)]
+        summary = "Could not parse structured attributes."
+
+    return VisionAnalyzeResponse(
+        attributes=attrs,
+        summary=summary,
+        model_used="gemini-2.5-flash",
+    )
+
+
 @router.get("/health")
 async def google_ai_health_check():
     """

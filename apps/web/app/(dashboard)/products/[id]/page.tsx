@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Pencil, Package, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Package, Plus, Trash2, Sparkles } from 'lucide-react';
 
 type ProductCategory =
   | 'heavy_machinery'
@@ -70,6 +70,8 @@ export default function ProductDetailPage() {
   const [attrValue, setAttrValue] = useState('');
   const [attrUnit, setAttrUnit] = useState('');
   const [savingAttr, setSavingAttr] = useState(false);
+  const [extractingAttrs, setExtractingAttrs] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState('');
 
   // Variants state
   const [variants, setVariants] = useState<
@@ -150,6 +152,46 @@ export default function ProductDetailPage() {
       });
     } finally {
       setSavingAttr(false);
+    }
+  };
+
+  const handleExtractAttributes = async () => {
+    if (!imageUrlInput.trim()) return;
+    setExtractingAttrs(true);
+    try {
+      const result = await apiClient.post<{
+        attributes: Array<{ key: string; value: string; unit?: string; confidence: number }>;
+        summary: string;
+      }>('/api/google-ai/vision-analyze', {
+        image_url: imageUrlInput.trim(),
+        product_name: product?.name,
+        category: product?.category,
+      });
+      let added = 0;
+      for (const attr of result.attributes) {
+        if (attr.confidence >= 0.5 && attr.key && attr.value) {
+          try {
+            await inventoryApi.addProductAttribute(params.id, attr.key, attr.value, attr.unit);
+            added++;
+          } catch {
+            /* skip duplicates */
+          }
+        }
+      }
+      setImageUrlInput('');
+      loadAttributes();
+      toast({
+        title: 'Attributes Extracted',
+        description: `Added ${added} attribute${added !== 1 ? 's' : ''} from image. ${result.summary}`,
+      });
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Extraction Failed',
+        description: e instanceof Error ? e.message : 'Could not extract attributes from image.',
+      });
+    } finally {
+      setExtractingAttrs(false);
     }
   };
 
@@ -381,6 +423,32 @@ export default function ProductDetailPage() {
                 <CardTitle className="text-base">Product Attributes</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* AI Vision extraction */}
+                <div className="rounded-lg border border-dashed p-3">
+                  <p className="text-muted-foreground mb-2 text-xs font-medium">
+                    Extract attributes from a product image (Gemini Vision)
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Paste image URL…"
+                      value={imageUrlInput}
+                      onChange={(e) => setImageUrlInput(e.target.value)}
+                      className="text-sm"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleExtractAttributes}
+                      disabled={extractingAttrs || !imageUrlInput.trim()}
+                    >
+                      <Sparkles
+                        className={`mr-1.5 h-3.5 w-3.5 ${extractingAttrs ? 'animate-pulse' : ''}`}
+                      />
+                      {extractingAttrs ? 'Extracting…' : 'Extract'}
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="flex flex-wrap items-end gap-2">
                   <div className="min-w-[140px] flex-1 space-y-1">
                     <Label className="text-xs">Key</Label>
