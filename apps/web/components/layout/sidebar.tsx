@@ -54,6 +54,7 @@ import {
   ChevronRight,
   Cpu,
   MessageCircle,
+  Store,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -146,6 +147,7 @@ const navGroups: NavGroup[] = [
       { name: 'Insights', href: '/insights', icon: TrendingUp },
       { name: 'Reports', href: '/reports', icon: BarChart3 },
       { name: 'Marketing', href: '/marketing', icon: Megaphone },
+      { name: 'Marketplace', href: '/marketplace', icon: Store },
     ],
   },
   {
