@@ -20,9 +20,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/",
         "/health",
         "/ready",
-        "/metrics",  # Prometheus metrics endpoint (must be public for scraping)
-        "/docs",
-        "/openapi.json",
         "/api/auth/login",
         "/api/auth/signup",
         "/api/auth/refresh",
@@ -31,6 +28,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/api/auth/reset-password",
         "/api/public/stats",  # Landing page showcase data (aggregate counts only)
     }
+
+    # Path prefixes that don't require authentication
+    PUBLIC_PATH_PREFIXES = (
+        "/api/guest/",   # Guest order approval portal (token-secured, no JWT)
+        "/api/public/",  # Public stats endpoints
+    )
 
     async def dispatch(
         self,
@@ -42,8 +45,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # Skip auth for public paths
+        # Skip auth for public paths (exact match)
         if request.url.path in self.PUBLIC_PATHS:
+            return await call_next(request)
+
+        # Skip auth for public path prefixes
+        if any(request.url.path.startswith(prefix) for prefix in self.PUBLIC_PATH_PREFIXES):
             return await call_next(request)
 
         # Check for JWT token in cookie (HttpOnly auth_token from login)
@@ -91,13 +98,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 request.state.auth_type = "api_key"
                 logger.debug("API key auth successful")
                 return await call_next(request)
-
-        # Check for user ID header (set by frontend after Supabase auth)
-        user_id = request.headers.get("X-User-Id")
-        if user_id:
-            request.state.user_id = user_id
-            request.state.auth_type = "user"
-            return await call_next(request)
 
         # Only skip auth if explicitly enabled via environment variable
         if settings.skip_auth_enforcement:

@@ -16,6 +16,7 @@ Usage:
 
 import structlog
 from fastapi import APIRouter, Query, Request
+from sse_starlette.sse import EventSourceResponse
 
 from src.services.sse_service import sse_service
 
@@ -42,7 +43,7 @@ async def shutdown_sse_service():
 async def inventory_stream(
     request: Request,
     location: str | None = Query(None, description="Filter by location"),
-):
+) -> EventSourceResponse:
     """
     Subscribe to real-time inventory updates via Server-Sent Events.
 
@@ -120,7 +121,7 @@ async def publish_inventory_update(
     reserved: int,
     available: int,
     change_type: str = "stock_update",
-):
+) -> None:
     """
     Publish inventory update to all subscribed clients.
 
@@ -163,7 +164,7 @@ async def publish_low_stock_alert(
     location: str,
     stock: int,
     reorder_point: int,
-):
+) -> None:
     """
     Publish low stock alert.
 

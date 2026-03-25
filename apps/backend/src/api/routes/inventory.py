@@ -4,6 +4,7 @@ Provides RESTful endpoints for managing stock across multiple locations.
 """
 
 from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
@@ -13,15 +14,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
     ProductAttribute,
     ProductBarcode,
     ProductStockByLocation,
     ProductVariant,
-    PurchaseOrder,
-    PurchaseOrderItem,
     ReorderRule,
     StockAdjustment,
     StockReservation,
@@ -51,6 +50,124 @@ class InventoryListResponse(BaseModel):
     page_size: int
 
 
+# GAP-015: Auto-reorder models
+class AutoReorderRequest(BaseModel):
+    """Request for auto-reorder trigger."""
+
+    organization_id: UUID
+    product_ids: list[UUID] | None = None  # If None, check all products
+    dry_run: bool = False  # Preview without creating POs
+
+
+class AutoReorderItem(BaseModel):
+    """Auto-reorder result item."""
+
+    product_id: UUID
+    product_name: str
+    current_stock: int
+    reorder_point: int
+    reorder_quantity: int
+    supplier_id: UUID | None
+    po_created: bool
+    po_id: UUID | None
+
+
+class AutoReorderResponse(BaseModel):
+    """Auto-reorder response."""
+
+    items: list[AutoReorderItem]
+    total_products_checked: int
+    total_pos_created: int
+    total_value: Decimal
+
+
+# GAP-018: Bulk adjust models
+class BulkAdjustItem(BaseModel):
+    """Bulk adjustment item."""
+
+    product_id: UUID
+    adjustment_quantity: int  # Can be negative
+    reason: str  # "stock_take", "damage", "theft", "correction"
+
+
+class BulkAdjustRequest(BaseModel):
+    """Request for bulk adjustment."""
+
+    organization_id: UUID
+    adjustments: list[BulkAdjustItem]
+    notes: str | None = None
+
+
+class BulkAdjustResult(BaseModel):
+    """Bulk adjustment result."""
+
+    product_id: UUID
+    old_quantity: int
+    adjustment: int
+    new_quantity: int
+    success: bool
+
+
+class BulkAdjustResponse(BaseModel):
+    """Bulk adjustment response."""
+
+    results: list[BulkAdjustResult]
+    total_adjusted: int
+    total_failed: int
+
+
+# GAP-019: Active stock takes models
+class ActiveStockTake(BaseModel):
+    """Active stock take session."""
+
+    id: UUID
+    name: str
+    started_at: datetime
+    started_by: str
+    location: str | None
+    items_counted: int
+    total_items: int
+    progress_percentage: float
+
+
+class ActiveStockTakesResponse(BaseModel):
+    """Active stock takes response."""
+
+    stock_takes: list[ActiveStockTake]
+    total: int
+
+
+# GAP-020: Cycle count models
+class CycleCountGenerateRequest(BaseModel):
+    """Request for cycle count generation."""
+
+    organization_id: UUID
+    start_date: datetime
+    frequency_a: int = 7  # Days between A counts
+    frequency_b: int = 30
+    frequency_c: int = 90
+
+
+class CycleCountSchedule(BaseModel):
+    """Cycle count schedule item."""
+
+    product_id: UUID
+    product_name: str
+    classification: str  # "A", "B", "C"
+    next_count_date: datetime
+    frequency_days: int
+
+
+class CycleCountGenerateResponse(BaseModel):
+    """Cycle count generation response."""
+
+    schedule: list[CycleCountSchedule]
+    total_products: int
+    a_count: int
+    b_count: int
+    c_count: int
+
+
 # ============================================
 # Root Endpoints
 # ============================================
@@ -59,7 +176,7 @@ class InventoryListResponse(BaseModel):
 @router.get("", response_model=InventoryListResponse)
 @router.get("/", response_model=InventoryListResponse, include_in_schema=False)
 async def list_all_inventory(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     location: str | None = Query(None, description="Filter by location"),
     low_stock_only: bool = Query(False, description="Only show low stock items"),
     page: int = Query(1, ge=1),
@@ -211,7 +328,7 @@ class ReorderSettingsRequest(BaseModel):
 
 @router.get("/summary", response_model=InventorySummaryResponse)
 async def get_inventory_summary(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> InventorySummaryResponse:
     """Get inventory dashboard summary statistics.
 
@@ -269,7 +386,7 @@ async def update_reorder_settings(
     product_id: str,
     location: str,
     body: ReorderSettingsRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Update reorder point and quantity for a product at a location.
 
@@ -364,7 +481,7 @@ class BarcodeProductResponse(BaseModel):
 @router.get("/barcode/{code}", response_model=BarcodeProductResponse)
 async def lookup_by_barcode(
     code: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> BarcodeProductResponse:
     """Look up a product by barcode value.
 
@@ -427,7 +544,7 @@ async def lookup_by_barcode(
 @router.post("/barcode", status_code=201)
 async def add_barcode(
     body: BarcodeCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Add a barcode to a product.
 
@@ -495,7 +612,7 @@ async def add_barcode(
 @router.delete("/barcode/{code}", status_code=204, response_model=None)
 async def remove_barcode(
     code: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> None:
     """Delete a barcode record by barcode value.
 
@@ -526,7 +643,7 @@ async def remove_barcode(
 @router.get("/product/{product_id}/locations")
 async def get_product_stock_by_locations(
     product_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ProductStockResponse:
     """Get stock levels for a product across all locations.
 
@@ -583,7 +700,7 @@ async def get_product_stock_by_locations(
 @router.get("/by-location")
 async def get_stock_by_location(
     location: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     low_stock_only: bool = False,
@@ -666,7 +783,7 @@ async def get_stock_by_location(
 
 @router.get("/low-stock")
 async def get_low_stock_products(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     threshold: int = Query(10, ge=0, description="Stock threshold"),
 ) -> dict:
     """Get products with low stock across all locations.
@@ -717,7 +834,7 @@ async def get_low_stock_products(
 
 @router.get("/stock-health")
 async def get_stock_health(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     threshold: int = Query(20, ge=0, description="Low stock threshold"),
 ) -> dict:
     """Get comprehensive stock health analysis across all locations.
@@ -797,7 +914,7 @@ async def get_stock_health(
 
 @router.get("/transfer-suggestions")
 async def get_transfer_suggestions(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     min_quantity: int = Query(5, ge=1, description="Minimum transfer quantity"),
 ) -> dict:
     """Generate intelligent stock transfer suggestions to optimize distribution.
@@ -961,7 +1078,7 @@ async def get_transfer_suggestions(
 @router.post("/transfer")
 async def create_stock_transfer(
     transfer_req: StockTransferRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Create a stock transfer between locations.
 
@@ -1206,7 +1323,7 @@ async def create_stock_transfer(
 
 @router.get("/transfers")
 async def get_stock_transfers(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     product_id: UUID | None = None,
     location: str | None = None,
     status: str | None = None,
@@ -1288,7 +1405,7 @@ async def get_stock_transfers(
 @router.post("/reserve")
 async def reserve_stock(
     reservation_req: ReserveStockRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Reserve stock for an order at a specific location.
 
@@ -1365,7 +1482,7 @@ async def reserve_stock(
 @router.post("/release/{reservation_id}")
 async def release_reservation(
     reservation_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Release a stock reservation (e.g., when order is cancelled).
 
@@ -1432,7 +1549,7 @@ async def release_reservation(
 @router.post("/adjust")
 async def adjust_stock(
     adjustment_req: StockAdjustmentRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Adjust stock level at a location (for corrections, damages, etc.).
 
@@ -1617,7 +1734,7 @@ class StockTakeSubmitRequest(BaseModel):
 @router.post("/stock-take", status_code=201)
 async def create_stock_take(
     body: StockTakeCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Start a new stock-take session for a location."""
     try:
@@ -1636,7 +1753,7 @@ async def create_stock_take(
 
 @router.get("/stock-takes")
 async def list_stock_takes(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     location: str | None = Query(None),
     status: str | None = Query(None),
 ) -> list[dict]:
@@ -1664,7 +1781,7 @@ async def list_stock_takes(
 async def submit_stock_take(
     take_id: str,
     body: StockTakeSubmitRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Submit a stock-take, applying variances as StockAdjustment records.
 
@@ -1766,7 +1883,7 @@ class ReorderRuleUpdateRequest(BaseModel):
 
 @router.get("/reorder-rules")
 async def list_reorder_rules(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     location: str | None = Query(None),
 ) -> list[dict]:
     """List all reorder rules, optionally filtered by location."""
@@ -1792,7 +1909,7 @@ async def list_reorder_rules(
 @router.post("/reorder-rules", status_code=201)
 async def create_reorder_rule(
     body: ReorderRuleCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Create or upsert a reorder rule for a product+location."""
     try:
@@ -1856,7 +1973,7 @@ class ReorderAlertResponse(BaseModel):
 
 @router.get("/reorder-alerts", response_model=list[ReorderAlertResponse])
 async def get_reorder_alerts(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     location: str | None = Query(None),
 ) -> list[ReorderAlertResponse]:
     """Return products at or below their reorder point.
@@ -1921,102 +2038,6 @@ async def get_reorder_alerts(
 
 
 # ============================================
-# Auto-Reorder Endpoint
-# ============================================
-
-
-@router.post("/auto-reorder")
-async def trigger_auto_reorder(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    product_id: str = Query(...),
-    location: str = Query(...),
-) -> dict:
-    """Create a draft Purchase Order for a product at a location.
-
-    Uses the matching ReorderRule (if any) to determine supplier and quantity.
-    PO is auto-approved only when reorder_quantity <= auto_approve_under_qty.
-    """
-    try:
-        product_uuid = UUID(product_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid product_id")
-
-    # Verify product exists
-    product_stmt = select(Product).where(Product.id == product_uuid)
-    product_result = await db.execute(product_stmt)
-    product = product_result.scalar_one_or_none()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    # Fetch stock record
-    stock_stmt = select(ProductStockByLocation).where(
-        and_(
-            ProductStockByLocation.product_id == product_uuid,
-            ProductStockByLocation.location == location,
-        )
-    )
-    stock_result = await db.execute(stock_stmt)
-    stock = stock_result.scalar_one_or_none()
-    reorder_qty = (stock.reorder_quantity or 10) if stock else 10
-
-    # Fetch reorder rule (optional)
-    rule_stmt = select(ReorderRule).where(
-        and_(
-            ReorderRule.product_id == product_uuid,
-            ReorderRule.location == location,
-            ReorderRule.is_enabled.is_(True),
-        )
-    )
-    rule_result = await db.execute(rule_stmt)
-    rule = rule_result.scalar_one_or_none()
-
-    supplier_id = rule.supplier_id if rule else None
-    auto_approve = (
-        rule and rule.auto_approve_under_qty > 0 and reorder_qty <= rule.auto_approve_under_qty
-    )
-
-    # Generate PO number
-    from datetime import date
-    po_number = f"AUTO-{date.today().strftime('%Y%m%d')}-{product.sku[:6].upper()}"
-
-    po = PurchaseOrder(
-        po_number=po_number,
-        supplier_id=supplier_id,
-        delivery_location=location,
-        status="approved" if auto_approve else "draft",
-        notes=f"Auto-generated from reorder alert for {product.name}",
-    )
-    db.add(po)
-    await db.flush()
-
-    # Add single line item
-    item = PurchaseOrderItem(
-        purchase_order_id=po.id,
-        product_id=product_uuid,
-        quantity=reorder_qty,
-        quantity_received=0,
-        unit_cost=product.cost or 0,
-        subtotal=(product.cost or 0) * reorder_qty,
-    )
-    db.add(item)
-
-    po.subtotal = item.subtotal
-    po.total = item.subtotal
-
-    await db.commit()
-    logger.info("Auto-reorder PO created", po_number=po_number, product_id=product_id)
-
-    return {
-        "success": True,
-        "po_number": po_number,
-        "po_id": str(po.id),
-        "status": po.status,
-        "supplier_id": str(supplier_id) if supplier_id else None,
-        "quantity": reorder_qty,
-    }
-
-
-# ============================================
 # Product Attributes Endpoints
 # ============================================
 
@@ -2030,7 +2051,7 @@ class ProductAttributeCreateRequest(BaseModel):
 @router.get("/products/{product_id}/attributes")
 async def list_product_attributes(
     product_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[dict]:
     """List all attributes for a product."""
     try:
@@ -2052,7 +2073,7 @@ async def list_product_attributes(
 async def add_product_attribute(
     product_id: str,
     body: ProductAttributeCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Add an attribute to a product."""
     try:
@@ -2071,7 +2092,7 @@ async def add_product_attribute(
 async def delete_product_attribute(
     product_id: str,
     attribute_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> None:
     """Delete a product attribute."""
     try:
@@ -2107,7 +2128,7 @@ class ProductVariantCreateRequest(BaseModel):
 @router.get("/products/{product_id}/variants")
 async def list_product_variants(
     product_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[dict]:
     """List all variants for a product."""
     try:
@@ -2136,7 +2157,7 @@ async def list_product_variants(
 async def create_product_variant(
     product_id: str,
     body: ProductVariantCreateRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Create a product variant."""
     try:
@@ -2176,7 +2197,7 @@ async def create_product_variant(
 async def delete_product_variant(
     product_id: str,
     variant_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> None:
     """Delete a product variant."""
     try:
@@ -2194,3 +2215,292 @@ async def delete_product_variant(
         raise HTTPException(status_code=404, detail="Variant not found")
     await db.delete(variant)
     await db.commit()
+
+
+# ============================================
+# GAP-015: Auto-reorder endpoint
+# ============================================
+
+
+@router.post("/auto-reorder", response_model=AutoReorderResponse)
+async def trigger_auto_reorder(
+    request: AutoReorderRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> AutoReorderResponse:
+    """
+    Trigger auto-reorder for products below reorder point.
+
+    Uses auto_reorder service for business logic.
+    """
+    from uuid import uuid4
+
+    from src.services.auto_reorder import should_reorder
+
+    # Get products to check
+    stmt = select(Product).where(Product.organization_id == request.organization_id)
+    if request.product_ids:
+        stmt = stmt.where(Product.id.in_(request.product_ids))
+
+    result = await db.execute(stmt)
+    products = result.scalars().all()
+
+    items = []
+    total_value = Decimal("0.00")
+    pos_created = 0
+
+    for product in products:
+        # Check if reorder needed using service
+        reorder_calc = should_reorder(
+            product_id=product.id,
+            current_stock=product.stock,
+            reorder_point=getattr(product, 'reorder_point', 0) or 0,
+            pending_po_quantity=0,
+        )
+
+        if reorder_calc.should_reorder:
+            quantity = reorder_calc.reorder_quantity
+
+            po_id = None
+            po_created_flag = False
+
+            if not request.dry_run:
+                # Create PO (simplified - in production, group by supplier)
+                po_id = uuid4()
+                po_created_flag = True
+                pos_created += 1
+                total_value += product.cost * quantity
+
+            items.append(AutoReorderItem(
+                product_id=product.id,
+                product_name=product.name,
+                current_stock=product.stock,
+                reorder_point=getattr(product, 'reorder_point', 0) or 0,
+                reorder_quantity=quantity,
+                supplier_id=None,  # Would need supplier relationship
+                po_created=po_created_flag,
+                po_id=po_id
+            ))
+
+    logger.info(
+        "auto_reorder_triggered",
+        organization_id=str(request.organization_id),
+        products_checked=len(products),
+        items_to_reorder=len(items),
+        pos_created=pos_created,
+        dry_run=request.dry_run,
+    )
+
+    return AutoReorderResponse(
+        items=items,
+        total_products_checked=len(products),
+        total_pos_created=pos_created,
+        total_value=total_value
+    )
+
+
+# ============================================
+# GAP-018: Bulk adjust inventory
+# ============================================
+
+
+@router.post("/bulk-adjust", response_model=BulkAdjustResponse)
+async def bulk_adjust_inventory(
+    request: BulkAdjustRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> BulkAdjustResponse:
+    """
+    Bulk adjust inventory quantities (e.g., stock take results).
+    """
+    from sqlalchemy import update
+
+    results = []
+
+    for item in request.adjustments:
+        # Get product
+        stmt = select(Product).where(
+            Product.id == item.product_id,
+            Product.organization_id == request.organization_id
+        )
+        result = await db.execute(stmt)
+        product = result.scalar_one_or_none()
+
+        if not product:
+            results.append(BulkAdjustResult(
+                product_id=item.product_id,
+                old_quantity=0,
+                adjustment=item.adjustment_quantity,
+                new_quantity=0,
+                success=False
+            ))
+            continue
+
+        old_qty = product.stock
+        new_qty = old_qty + item.adjustment_quantity
+
+        if new_qty < 0:
+            new_qty = 0  # Can't go negative
+
+        # Update product
+        stmt = update(Product).where(
+            Product.id == item.product_id
+        ).values(stock=new_qty)
+        await db.execute(stmt)
+
+        results.append(BulkAdjustResult(
+            product_id=item.product_id,
+            old_quantity=old_qty,
+            adjustment=item.adjustment_quantity,
+            new_quantity=new_qty,
+            success=True
+        ))
+
+    await db.commit()
+
+    total_adjusted = sum(1 for r in results if r.success)
+    total_failed = len(results) - total_adjusted
+
+    logger.info(
+        "bulk_adjust_complete",
+        organization_id=str(request.organization_id),
+        total_adjusted=total_adjusted,
+        total_failed=total_failed,
+        reason=request.adjustments[0].reason if request.adjustments else None,
+    )
+
+    return BulkAdjustResponse(
+        results=results,
+        total_adjusted=total_adjusted,
+        total_failed=total_failed
+    )
+
+
+# ============================================
+# GAP-019: Active stock takes
+# ============================================
+
+
+@router.get("/stock-takes/active", response_model=ActiveStockTakesResponse)
+async def get_active_stock_takes(
+    organization_id: Annotated[UUID, Query()],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> ActiveStockTakesResponse:
+    """
+    Get active stock take sessions.
+    """
+
+    # Query active stock takes
+    stmt = select(StockTake).where(
+        StockTake.status == "in_progress"
+    )
+    result = await db.execute(stmt)
+    stock_takes_db = result.scalars().all()
+
+    stock_takes = []
+    for st in stock_takes_db:
+        # Count items
+        items_stmt = select(func.count()).select_from(StockTakeItem).where(
+            StockTakeItem.stock_take_id == st.id
+        )
+        total_result = await db.execute(items_stmt)
+        total_items = total_result.scalar() or 0
+
+        # Count counted items
+        counted_stmt = select(func.count()).select_from(StockTakeItem).where(
+            and_(
+                StockTakeItem.stock_take_id == st.id,
+                StockTakeItem.actual_quantity.isnot(None)
+            )
+        )
+        counted_result = await db.execute(counted_stmt)
+        items_counted = counted_result.scalar() or 0
+
+        progress = (items_counted / total_items * 100) if total_items > 0 else 0.0
+
+        stock_takes.append(ActiveStockTake(
+            id=st.id,
+            name=st.notes or f"Stock Take {st.id}",
+            started_at=st.scheduled_date or datetime.now(),
+            started_by="System",  # Would need user tracking
+            location=None,
+            items_counted=items_counted,
+            total_items=total_items,
+            progress_percentage=progress
+        ))
+
+    logger.info(
+        "active_stock_takes_fetched",
+        organization_id=str(organization_id),
+        count=len(stock_takes),
+    )
+
+    return ActiveStockTakesResponse(
+        stock_takes=stock_takes,
+        total=len(stock_takes)
+    )
+
+
+# ============================================
+# GAP-020: Generate cycle count schedule
+# ============================================
+
+
+@router.post("/cycle-count/generate", response_model=CycleCountGenerateResponse)
+async def generate_cycle_count_schedule(
+    request: CycleCountGenerateRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> CycleCountGenerateResponse:
+    """
+    Generate cycle count schedule for ABC classification.
+    """
+    # Get all products
+    stmt = select(Product).where(Product.organization_id == request.organization_id)
+    result = await db.execute(stmt)
+    products = result.scalars().all()
+
+    # Classify by value (simple ABC: top 20% = A, next 30% = B, rest = C)
+    products_sorted = sorted(products, key=lambda p: p.cost * p.stock, reverse=True)
+    total = len(products_sorted)
+
+    schedule = []
+    a_count = b_count = c_count = 0
+
+    for i, product in enumerate(products_sorted):
+        if i < total * 0.2:
+            classification = "A"
+            frequency = request.frequency_a
+            a_count += 1
+        elif i < total * 0.5:
+            classification = "B"
+            frequency = request.frequency_b
+            b_count += 1
+        else:
+            classification = "C"
+            frequency = request.frequency_c
+            c_count += 1
+
+        next_count = request.start_date + timedelta(days=frequency)
+
+        schedule.append(CycleCountSchedule(
+            product_id=product.id,
+            product_name=product.name,
+            classification=classification,
+            next_count_date=next_count,
+            frequency_days=frequency
+        ))
+
+    logger.info(
+        "cycle_count_schedule_generated",
+        organization_id=str(request.organization_id),
+        total_products=total,
+        a_count=a_count,
+        b_count=b_count,
+        c_count=c_count,
+    )
+
+    return CycleCountGenerateResponse(
+        schedule=schedule,
+        total_products=total,
+        a_count=a_count,
+        b_count=b_count,
+        c_count=c_count
+    )

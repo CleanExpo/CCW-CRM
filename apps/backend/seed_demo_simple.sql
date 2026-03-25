@@ -1,117 +1,157 @@
 -- CCW ERP Demo Data Seed Script
 -- Run this to populate database with demo data for owner presentation
 
--- Create demo user (password: demo123, hashed with bcrypt)
+-- Create sequences and functions for order/quote number generation
+-- (These are not in Alembic migrations — applied here for CI compatibility)
+CREATE SEQUENCE IF NOT EXISTS order_number_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS quote_number_seq START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE FUNCTION generate_order_number()
+RETURNS TEXT AS $$
+DECLARE
+    current_year INTEGER;
+    next_num INTEGER;
+BEGIN
+    current_year := EXTRACT(YEAR FROM CURRENT_DATE);
+    next_num := nextval('order_number_seq');
+    RETURN 'ORD-' || current_year::TEXT || '-' || LPAD(next_num::TEXT, 6, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION generate_quote_number()
+RETURNS TEXT AS $$
+DECLARE
+    current_year INTEGER;
+    next_num INTEGER;
+BEGIN
+    current_year := EXTRACT(YEAR FROM CURRENT_DATE);
+    next_num := nextval('quote_number_seq');
+    RETURN 'Q-' || current_year::TEXT || '-' || LPAD(next_num::TEXT, 6, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create CCW staff users (all passwords: demo123, hashed with bcrypt rounds=12)
+-- Each staff member has their own login with appropriate access level
 INSERT INTO users (id, email, hashed_password, full_name, is_active, is_admin, created_at, updated_at)
 VALUES
-  ('00000000-0000-0000-0000-000000000001', 'admin@demo.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5.dQjI3gJ3Mq.', 'Admin User', true, true, NOW(), NOW())
+  -- Owner / System Admin
+  ('00000000-0000-0000-0000-000000000001', 'admin@ccwonline.com.au',     '$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe', 'Chris Wilson',   true, true,  NOW(), NOW()),
+  -- Sales Manager
+  ('00000000-0000-0000-0000-000000000002', 'sales@ccwonline.com.au',     '$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe', 'Sarah Chen',     true, false, NOW(), NOW()),
+  -- Warehouse / Inventory Manager
+  ('00000000-0000-0000-0000-000000000003', 'warehouse@ccwonline.com.au', '$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe', 'Mark Thompson',  true, false, NOW(), NOW()),
+  -- Accounts / Finance
+  ('00000000-0000-0000-0000-000000000004', 'accounts@ccwonline.com.au',  '$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe', 'Lisa Park',      true, false, NOW(), NOW()),
+  -- Legacy dev login (kept for backward compatibility)
+  ('00000000-0000-0000-0000-000000000005', 'admin@demo.com',             '$2b$12$t3c9inySNVTxAI7j56GTze4IO7GMKfaQu.sZ/VdvOytqjFMScBgwe', 'Admin User',     true, true,  NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
 
--- Create products
+-- Create products (CCW Online — professional cleaning equipment, chemicals, accessories)
 INSERT INTO products (id, sku, name, description, category, price, cost, stock, warehouse_location, is_active, created_at, updated_at)
 VALUES
-  -- Heavy Machinery
-  ('10000000-0000-0000-0000-000000000001', 'HM-001', 'Excavator 320D', 'Heavy duty excavator for large construction projects', 'heavy_machinery', 125000.00, 95000.00, 3, 'Brisbane Yard A1', true, NOW(), NOW()),
-  ('10000000-0000-0000-0000-000000000002', 'HM-002', 'Bulldozer D6', 'Powerful bulldozer for earthmoving', 'heavy_machinery', 145000.00, 110000.00, 2, 'Sydney Yard B2', true, NOW(), NOW()),
-  ('10000000-0000-0000-0000-000000000003', 'HM-003', 'Backhoe Loader 580', 'Versatile backhoe loader', 'heavy_machinery', 89000.00, 68000.00, 5, 'Melbourne Yard C3', true, NOW(), NOW()),
+  -- Heavy Machinery — TruckMount carpet extractors
+  ('10000000-0000-0000-0000-000000000001', 'TM-PRO-570',    'TruckMount Pro 570 — Carpet Extractor',        'High-performance truckmount carpet extractor, 2,000 PSI, 570CFM blower, direct-drive. Suits restoration contractors.', 'heavy_machinery', 18500.00, 13200.00,  4, 'Brisbane Rack A1',    true, NOW(), NOW()),
+  ('10000000-0000-0000-0000-000000000002', 'TM-HEAT-650',   'TruckMount Heat Master 650 — Hot Water Extractor', 'Commercial truckmount with on-board heat exchanger. 220°C cleaning temp, 650CFM, auto-fill.', 'heavy_machinery', 24900.00, 18500.00,  2, 'Sydney Rack B1',      true, NOW(), NOW()),
+  ('10000000-0000-0000-0000-000000000003', 'WD-DRYMATIC-40','Drymatic 40 — Low-Grain Refrigerant Dehumidifier', 'Water damage restoration dehumidifier. 40L/day, LGR technology, ±2°C accuracy. IICRC S500 compliant.', 'heavy_machinery', 4200.00,  3100.00,   8, 'Melbourne Rack C1',   true, NOW(), NOW()),
 
-  -- Power Tools
-  ('20000000-0000-0000-0000-000000000001', 'PT-001', 'Cordless Drill 18V', 'Professional cordless drill with 2 batteries', 'power_tools', 189.99, 95.00, 45, 'Brisbane Shelf 12', true, NOW(), NOW()),
-  ('20000000-0000-0000-0000-000000000002', 'PT-002', 'Impact Driver 20V', 'High-torque impact driver', 'power_tools', 229.99, 115.00, 38, 'Sydney Shelf 15', true, NOW(), NOW()),
-  ('20000000-0000-0000-0000-000000000003', 'PT-003', 'Circular Saw 7-1/4"', 'Professional circular saw', 'power_tools', 149.99, 75.00, 52, 'Melbourne Shelf 8', true, NOW(), NOW()),
-  ('20000000-0000-0000-0000-000000000004', 'PT-004', 'Angle Grinder 4-1/2"', 'Compact angle grinder', 'power_tools', 99.99, 50.00, 67, 'Brisbane Shelf 14', true, NOW(), NOW()),
+  -- Power Tools — portable extractors and scrubbers
+  ('20000000-0000-0000-0000-000000000001', 'EXTRACT-PORT-5G',  '5-Gallon Portable Carpet Extractor',       'Commercial-grade portable extractor, 5-gal dual tanks, 120 PSI, 3-stage vacuum motor. Ideal for upholstery.', 'power_tools', 2200.00,  1580.00, 12, 'Brisbane Rack A2',   true, NOW(), NOW()),
+  ('20000000-0000-0000-0000-000000000002', 'SCRUB-DISC-17',    '17" Single-Disc Floor Scrubber',           '17-inch rotary floor scrubber, 1.5HP motor, variable speed. Suitable for tile, timber, VCT.', 'power_tools', 1850.00,  1320.00,  6, 'Sydney Rack B2',     true, NOW(), NOW()),
+  ('20000000-0000-0000-0000-000000000003', 'AIRSCRUB-570CFM',  'Air Scrubber 570CFM — HEPA Filtration',    'Negative air machine / air scrubber, HEPA 99.97% @ 0.3μm, 570CFM. Essential for mould/fire restoration.', 'power_tools', 1650.00,  1150.00,  9, 'Melbourne Rack C2',  true, NOW(), NOW()),
+  ('20000000-0000-0000-0000-000000000004', 'AXIAL-FAN-AIRMOVE', 'Air Mover Axial Fan — 900CFM',            'Centrifugal air mover, 900CFM, stackable design, 3-speed. Accelerates drying on water damage jobs.', 'power_tools',  420.00,   285.00, 32, 'Brisbane Rack A3',   true, NOW(), NOW()),
 
-  -- Hand Tools
-  ('30000000-0000-0000-0000-000000000001', 'HT-001', 'Hammer Claw 16oz', 'Professional claw hammer', 'hand_tools', 24.99, 12.00, 120, 'Brisbane Bin 45', true, NOW(), NOW()),
-  ('30000000-0000-0000-0000-000000000002', 'HT-002', 'Screwdriver Set 11pc', 'Professional screwdriver set', 'hand_tools', 39.99, 20.00, 95, 'Sydney Bin 23', true, NOW(), NOW()),
-  ('30000000-0000-0000-0000-000000000003', 'HT-003', 'Wrench Set SAE', 'SAE wrench set 12 pieces', 'hand_tools', 89.99, 45.00, 73, 'Melbourne Bin 12', true, NOW(), NOW()),
+  -- Hand Tools — wands, hoses, spray tools
+  ('30000000-0000-0000-0000-000000000001', 'WAND-SS-12',       '12" S-Bend Stainless Wand',                'Professional 12-inch S-bend cleaning wand, 316 stainless, dual jet spray bar. Fits most truckmounts.', 'hand_tools',   180.00,    95.00, 28, 'Brisbane Bin B1',    true, NOW(), NOW()),
+  ('30000000-0000-0000-0000-000000000002', 'HOSE-SOLN-15M',    '15m Solution Hose — 300 PSI Rated',        '15-metre solution hose, 300 PSI burst pressure, 1/4" fittings. For truckmount and portable use.', 'hand_tools',   140.00,    82.00, 40, 'Sydney Bin B2',      true, NOW(), NOW()),
+  ('30000000-0000-0000-0000-000000000003', 'SPOTPRO-KIT',      'Spot & Stain Pro Upholstery Kit',          'Complete spot cleaning kit: hand tool, upholstery wand, 5m solution line, 5m vacuum hose, carry bag.', 'hand_tools',  1820.00,  1200.00,  7, 'Melbourne Bin C1',   true, NOW(), NOW()),
 
-  -- Safety Equipment
-  ('40000000-0000-0000-0000-000000000001', 'SF-001', 'Hard Hat Class E', 'ANSI certified hard hat', 'safety_equipment', 29.99, 15.00, 200, 'Brisbane Safety A1', true, NOW(), NOW()),
-  ('40000000-0000-0000-0000-000000000002', 'SF-002', 'Safety Glasses Clear', 'Anti-fog safety glasses', 'safety_equipment', 12.99, 6.00, 350, 'Sydney Safety B2', true, NOW(), NOW()),
-  ('40000000-0000-0000-0000-000000000003', 'SF-003', 'Work Gloves Leather', 'Premium leather work gloves', 'safety_equipment', 19.99, 10.00, 180, 'Melbourne Safety C1', true, NOW(), NOW()),
+  -- Safety Equipment — PPE for restoration technicians
+  ('40000000-0000-0000-0000-000000000001', 'PPE-RESP-N95',     'N95 Respirator Masks — Box of 20',         'P2/N95 particulate respirators, NIOSH approved. Required for mould and restoration work.', 'safety_equipment',  38.00,    18.00, 180, 'Brisbane Safety A1', true, NOW(), NOW()),
+  ('40000000-0000-0000-0000-000000000002', 'PPE-TYVEK-L',      'Tyvek Disposable Suit — Size L',           'DuPont Tyvek coverall, Type 5/6, elastic wrists, front zip. Mould and chemical protection.', 'safety_equipment',  12.50,     6.20, 240, 'Sydney Safety B1',   true, NOW(), NOW()),
+  ('40000000-0000-0000-0000-000000000003', 'PPE-GLOVE-NITRIL', 'Nitrile Gloves — Box 100 (Medium)',        'Disposable powder-free nitrile gloves, 4-mil. Chemical resistant. Box of 100.', 'safety_equipment',  18.00,     9.50, 310, 'Melbourne Safety C1',true, NOW(), NOW()),
 
-  -- Building Materials
-  ('50000000-0000-0000-0000-000000000001', 'BM-001', 'Cement Portland 94lb', 'Type I Portland cement', 'building_materials', 14.99, 8.00, 450, 'Brisbane Materials M1', true, NOW(), NOW()),
-  ('50000000-0000-0000-0000-000000000002', 'BM-002', 'Lumber 2x4x8', 'Kiln dried lumber', 'building_materials', 8.99, 5.00, 800, 'Sydney Materials M2', true, NOW(), NOW()),
-  ('50000000-0000-0000-0000-000000000003', 'BM-003', 'Plywood 4x8 1/2"', 'Construction grade plywood', 'building_materials', 34.99, 20.00, 320, 'Melbourne Materials M3', true, NOW(), NOW()),
+  -- Building Materials — used as placeholder for consumable supplies
+  ('50000000-0000-0000-0000-000000000001', 'PAD-BUFF-17',      '17" Floor Buffing Pads — Pack of 5',       'White buffing / polishing pads, 17-inch. For rotary scrubbers on VCT, marble, timber.', 'building_materials',  45.00,    22.00,  85, 'Brisbane Supplies M1',true, NOW(), NOW()),
+  ('50000000-0000-0000-0000-000000000002', 'PAD-STRIP-17',     '17" Black Stripping Pads — Pack of 5',     'Black heavy-duty stripping pads, 17-inch. Removes old wax and coatings from hard floors.', 'building_materials',  48.00,    24.00,  72, 'Sydney Supplies M2',  true, NOW(), NOW()),
+  ('50000000-0000-0000-0000-000000000003', 'POLY-BARRIER-20M', 'Containment Poly Sheeting 4mil 20m Roll',  '4-mil polyethylene sheeting, 20-metre roll, 3.6m wide. Mould remediation containment barrier.', 'building_materials',  62.00,    34.00,  45, 'Melbourne Supplies M3',true, NOW(), NOW()),
 
-  -- Electrical
-  ('60000000-0000-0000-0000-000000000001', 'EL-001', 'Wire Romex 12/2 250ft', 'Indoor electrical wire', 'electrical', 89.99, 55.00, 125, 'Brisbane Electrical E1', true, NOW(), NOW()),
-  ('60000000-0000-0000-0000-000000000002', 'EL-002', 'Outlet 15A Duplex', 'Standard duplex outlet', 'electrical', 3.99, 2.00, 500, 'Sydney Electrical E2', true, NOW(), NOW()),
+  -- Electrical — n/a for CCW; mapped to chemical solutions (concentrated products)
+  ('60000000-0000-0000-0000-000000000001', 'CHEM-PRECON-5L',   'Pre-Conditioner Encap Solution 5L',        'Encapsulation pre-conditioner, dilution 1:10. Breaks down traffic-lane soils before extraction.', 'electrical',  58.00,    30.00, 120, 'Brisbane Chem E1',   true, NOW(), NOW()),
+  ('60000000-0000-0000-0000-000000000002', 'CHEM-RINSE-5L',    'pH Balanced Rinse Agent 5L',               'Neutralising fibre rinse, pH 4.5–5.0. Prevents re-soiling after hot water extraction.', 'electrical',  52.00,    27.00, 135, 'Sydney Chem E2',     true, NOW(), NOW()),
 
-  -- Plumbing
-  ('70000000-0000-0000-0000-000000000001', 'PL-001', 'PVC Pipe 2" 10ft', 'Schedule 40 PVC pipe', 'plumbing', 12.99, 7.00, 280, 'Brisbane Plumbing P1', true, NOW(), NOW()),
-  ('70000000-0000-0000-0000-000000000002', 'PL-002', 'Faucet Kitchen Single', 'Single handle kitchen faucet', 'plumbing', 149.99, 85.00, 45, 'Sydney Plumbing P2', true, NOW(), NOW()),
+  -- Plumbing — mapped to deodorisers and specialty chemicals
+  ('70000000-0000-0000-0000-000000000001', 'CHEM-DEOD-5L',     'Odour Eliminator Pro 5L — Enzyme Formula', 'Enzyme-based odour eliminator. Destroys urine, pet, smoke, and organic odour sources at molecular level.', 'plumbing',  75.00,    40.00, 98, 'Brisbane Chem P1',  true, NOW(), NOW()),
+  ('70000000-0000-0000-0000-000000000002', 'CHEM-MOULD-RTU-1L','Mould Remediation Spray RTU 1L',            'Ready-to-use antimicrobial mould treatment. ARTG listed, kills 99.99% of surface mould/bacteria.', 'plumbing',  28.00,    14.00, 210, 'Sydney Chem P2',    true, NOW(), NOW()),
 
-  -- Accessories
-  ('80000000-0000-0000-0000-000000000001', 'AC-001', 'Tool Belt Leather', 'Professional leather tool belt', 'accessories', 79.99, 40.00, 65, 'Brisbane Accessories ACC1', true, NOW(), NOW()),
-  ('80000000-0000-0000-0000-000000000002', 'AC-002', 'Tool Box 26"', 'Heavy duty tool box', 'accessories', 59.99, 30.00, 48, 'Sydney Accessories ACC2', true, NOW(), NOW())
+  -- Accessories — carrying equipment, brushes, consumables
+  ('80000000-0000-0000-0000-000000000001', 'ACC-UPHOLST-KIT',  'Upholstery Cleaning Attachment Kit',       'Full upholstery kit: triangular hand tool, 5-jet spray bar, detail brush, crevice tool. Universal fittings.', 'accessories', 820.00,  510.00, 14, 'Brisbane Acc ACC1', true, NOW(), NOW()),
+  ('80000000-0000-0000-0000-000000000002', 'ACC-HOSE-VAC-10M', '10m Vacuum Hose 2" — Anti-Static',        '10-metre 2-inch anti-static vacuum hose with cuffs. For truckmount and portable extractors.', 'accessories', 185.00,  110.00, 22, 'Sydney Acc ACC2',   true, NOW(), NOW())
 ON CONFLICT (sku) DO NOTHING;
 
--- Create customers
-INSERT INTO customers (id, customer_number, company_name, contact_name, email, phone, address, city, state, postal_code, country, is_active, created_at, updated_at)
+-- Create customers (CCW Online clients — professional cleaning & restoration contractors)
+INSERT INTO customers (id, customer_number, company_name, contact_name, email, phone, address, city, state, postcode, is_active, created_at, updated_at)
 VALUES
-  ('c0000000-0000-0000-0000-000000000001', 'CUST-000001', 'Smith Brothers Construction', 'John Smith', 'john@smithbros.com.au', '+61 7 3000 0001', '123 Construction St', 'Brisbane', 'QLD', '4000', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000002', 'CUST-000002', 'Johnson & Sons Electrical', 'Mike Johnson', 'mike@johnsonelectrical.com.au', '+61 2 9000 0002', '456 Electric Ave', 'Sydney', 'NSW', '2000', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000003', 'CUST-000003', 'Williams Plumbing Co', 'Sarah Williams', 'sarah@williamsplumbing.com.au', '+61 3 8000 0003', '789 Pipe Lane', 'Melbourne', 'VIC', '3000', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000004', 'CUST-000004', 'Brown Industries HVAC', 'David Brown', 'david@brownhvac.com.au', '+61 7 3000 0004', '321 Climate Dr', 'Gold Coast', 'QLD', '4217', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000005', 'CUST-000005', 'Garcia General Contracting', 'Maria Garcia', 'maria@garciacontracting.com.au', '+61 2 9000 0005', '654 Build Blvd', 'Newcastle', 'NSW', '2300', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000006', 'CUST-000006', 'Miller Group Landscaping', 'Tom Miller', 'tom@millergroup.com.au', '+61 3 8000 0006', '987 Garden Rd', 'Geelong', 'VIC', '3220', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000007', 'CUST-000007', 'Davis Construction Corp', 'Lisa Davis', 'lisa@davisconstruction.com.au', '+61 8 6000 0007', '147 Steel St', 'Perth', 'WA', '6000', 'Australia', true, NOW(), NOW()),
-  ('c0000000-0000-0000-0000-000000000008', 'CUST-000008', 'Rodriguez & Partners', 'Carlos Rodriguez', 'carlos@rodriguezpartners.com.au', '+61 8 8000 0008', '258 Trade Ave', 'Adelaide', 'SA', '5000', 'Australia', true, NOW(), NOW())
+  ('c0000000-0000-0000-0000-000000000001', 'CUST-000001', 'Brisbane Carpet Care Pty Ltd',         'James Nguyen',    'james@brisbanecarpetcare.com.au',  '+61 7 3222 1234', '14 Industrial Ave',    'Coopers Plains',  'QLD', '4108', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000002', 'CUST-000002', 'Sydney Flood & Restoration Co',        'Emma Tran',       'emma@sydneyfloodrestore.com.au',   '+61 2 9411 5678', '8 Commerce St',        'Alexandria',      'NSW', '2015', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000003', 'CUST-000003', 'Melbourne Steam Clean Professionals',  'David Okafor',    'david@melbsteamclean.com.au',      '+61 3 9555 2233', '27 Factory Rd',        'Dandenong',       'VIC', '3175', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000004', 'CUST-000004', 'Gold Coast Mould Remediation',         'Aisha Patel',     'aisha@gcmould.com.au',             '+61 7 5577 3344', '3 Renovation Lane',    'Burleigh Heads',  'QLD', '4220', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000005', 'CUST-000005', 'Newcastle Flood Response Services',    'Tom Barker',      'tom@newcastleflood.com.au',        '+61 2 4922 8877', '55 Harbour Dr',        'Newcastle',       'NSW', '2300', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000006', 'CUST-000006', 'Geelong Commercial Cleaning Group',    'Sandra Ho',       'sandra@geelongccg.com.au',         '+61 3 5222 4455', '12 Industrial Blvd',   'Geelong',         'VIC', '3220', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000007', 'CUST-000007', 'Perth Carpet & Upholstery Specialists','Ryan Mitchell',   'ryan@perthuphol.com.au',           '+61 8 6244 6677', '78 Commerce Way',      'Malaga',          'WA',  '6090', true, NOW(), NOW()),
+  ('c0000000-0000-0000-0000-000000000008', 'CUST-000008', 'Adelaide Restoration & Drying Pros',   'Fatima Khalil',   'fatima@adelaiderestoration.com.au','+61 8 8233 9988', '31 Trade Park Dr',     'Gepps Cross',     'SA',  '5094', true, NOW(), NOW())
 ON CONFLICT (customer_number) DO NOTHING;
 
 -- Create orders (demo the performance improvement!)
 INSERT INTO orders (id, order_number, customer_id, order_date, status, notes, subtotal, tax, total, created_at, updated_at)
 VALUES
-  ('01000000-0000-0000-0000-000000000001', 'ORD-2026-001', 'c0000000-0000-0000-0000-000000000001', '2026-01-15', 'delivered', 'Large construction site order', 0, 0, 0, NOW(), NOW()),
-  ('01000000-0000-0000-0000-000000000002', 'ORD-2026-002', 'c0000000-0000-0000-0000-000000000002', '2026-01-18', 'shipped', 'Electrical supplies for apartment complex', 0, 0, 0, NOW(), NOW()),
-  ('01000000-0000-0000-0000-000000000003', 'ORD-2026-003', 'c0000000-0000-0000-0000-000000000003', '2026-01-22', 'processing', 'Plumbing equipment urgent order', 0, 0, 0, NOW(), NOW()),
-  ('01000000-0000-0000-0000-000000000004', 'ORD-2026-004', 'c0000000-0000-0000-0000-000000000004', '2026-02-01', 'confirmed', 'HVAC installation materials', 0, 0, 0, NOW(), NOW()),
-  ('01000000-0000-0000-0000-000000000005', 'ORD-2026-005', 'c0000000-0000-0000-0000-000000000005', '2026-02-05', 'pending', 'General contractor supply order', 0, 0, 0, NOW(), NOW()),
-  ('01000000-0000-0000-0000-000000000006', 'ORD-2026-006', 'c0000000-0000-0000-0000-000000000001', '2026-02-08', 'draft', 'Follow-up order for Smith Brothers', 0, 0, 0, NOW(), NOW())
+  ('01000000-0000-0000-0000-000000000001', 'ORD-2026-001', 'c0000000-0000-0000-0000-000000000001', '2026-01-15', 'delivered', 'TruckMount + consumables — fleet upgrade for Brisbane Carpet Care', 0, 0, 0, NOW(), NOW()),
+  ('01000000-0000-0000-0000-000000000002', 'ORD-2026-002', 'c0000000-0000-0000-0000-000000000002', '2026-01-18', 'shipped', 'Water damage drying equipment — flood response job Alexandria', 0, 0, 0, NOW(), NOW()),
+  ('01000000-0000-0000-0000-000000000003', 'ORD-2026-003', 'c0000000-0000-0000-0000-000000000003', '2026-01-22', 'processing', 'Commercial scrubber + chemicals — contract renewal Melbourne', 0, 0, 0, NOW(), NOW()),
+  ('01000000-0000-0000-0000-000000000004', 'ORD-2026-004', 'c0000000-0000-0000-0000-000000000004', '2026-02-01', 'confirmed', 'Mould remediation kit — post-storm Gold Coast project', 0, 0, 0, NOW(), NOW()),
+  ('01000000-0000-0000-0000-000000000005', 'ORD-2026-005', 'c0000000-0000-0000-0000-000000000005', '2026-02-05', 'pending', 'Portable extractors + chemicals — Newcastle expansion order', 0, 0, 0, NOW(), NOW()),
+  ('01000000-0000-0000-0000-000000000006', 'ORD-2026-006', 'c0000000-0000-0000-0000-000000000001', '2026-02-08', 'draft', 'Follow-up consumables order — Brisbane Carpet Care', 0, 0, 0, NOW(), NOW())
 ON CONFLICT (order_number) DO NOTHING;
 
--- Create order items (THIS IS WHERE THE 97% PERFORMANCE IMPROVEMENT SHOWS!)
+-- Create order items (CCW products ordered by cleaning/restoration contractors)
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, line_total, created_at, updated_at)
 VALUES
-  -- Order 1: Large construction order (10 items - would have taken 35 seconds before, now <1 second!)
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 2, 125000.00, 250000.00, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 10, 189.99, 1899.90, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 8, 149.99, 1199.92, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 25, 24.99, 624.75, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 50, 29.99, 1499.50, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000002', 75, 12.99, 974.25, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 100, 14.99, 1499.00, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 200, 8.99, 1798.00, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', 15, 79.99, 1199.85, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002', 12, 59.99, 719.88, NOW(), NOW()),
+  -- Order 1: Brisbane Carpet Care — TruckMount fleet upgrade (demonstrates order value)
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 1, 18500.00, 18500.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 2, 180.00,     360.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002', 4, 140.00,     560.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000001', 6,  58.00,     348.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', 6,  52.00,     312.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 2,  38.00,      76.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002', 2, 185.00,     370.00, NOW(), NOW()),
 
-  -- Order 2: Electrical supplies
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000002', '60000000-0000-0000-0000-000000000001', 20, 89.99, 1799.80, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000002', '60000000-0000-0000-0000-000000000002', 150, 3.99, 598.50, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', 5, 189.99, 949.95, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000004', 8, 99.99, 799.92, NOW(), NOW()),
+  -- Order 2: Sydney Flood & Restoration — drying equipment for flood job
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 2, 4200.00,  8400.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000004', 8,  420.00,  3360.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000003', 2, 1650.00,  3300.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000001', 4,   38.00,    152.00, NOW(), NOW()),
 
-  -- Order 3: Plumbing order
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000001', 50, 12.99, 649.50, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000002', 10, 149.99, 1499.90, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 6, 89.99, 539.94, NOW(), NOW()),
+  -- Order 3: Melbourne Steam Clean — commercial scrubber + chemicals
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000002', 1, 1850.00,  1850.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000001', 4,   45.00,    180.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000002', 4,   48.00,    192.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000003', '60000000-0000-0000-0000-000000000001', 3,   58.00,    174.00, NOW(), NOW()),
 
-  -- Order 4: HVAC order
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000001', 12, 189.99, 2279.88, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000002', 8, 39.99, 319.92, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000003', 30, 19.99, 599.70, NOW(), NOW()),
+  -- Order 4: Gold Coast Mould — mould remediation kit post-storm
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000003', 1, 1650.00,  1650.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000004', '70000000-0000-0000-0000-000000000002',12,   28.00,    336.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000004', '50000000-0000-0000-0000-000000000003', 5,   62.00,    310.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000002',20,   12.50,    250.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000003', 4,   18.00,     72.00, NOW(), NOW()),
 
-  -- Order 5: General contractor order
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000005', '50000000-0000-0000-0000-000000000003', 75, 34.99, 2624.25, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000005', '50000000-0000-0000-0000-000000000002', 150, 8.99, 1348.50, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000005', '30000000-0000-0000-0000-000000000001', 40, 24.99, 999.60, NOW(), NOW()),
+  -- Order 5: Newcastle Flood — portable extractors expansion
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000001', 3, 2200.00,  6600.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000005', '70000000-0000-0000-0000-000000000001', 4,   75.00,    300.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000005', '60000000-0000-0000-0000-000000000001', 4,   58.00,    232.00, NOW(), NOW()),
 
-  -- Order 6: Draft order (in progress)
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000002', 5, 229.99, 1149.95, NOW(), NOW()),
-  (gen_random_uuid(), '01000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000003', 3, 149.99, 449.97, NOW(), NOW())
+  -- Order 6: Draft — Brisbane Carpet Care repeat consumables order
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000006', '60000000-0000-0000-0000-000000000001', 8,  58.00,    464.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000006', '60000000-0000-0000-0000-000000000002', 8,  52.00,    416.00, NOW(), NOW()),
+  (gen_random_uuid(), '01000000-0000-0000-0000-000000000006', '70000000-0000-0000-0000-000000000001', 4,  75.00,    300.00, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- Update order totals (calculate from items)
@@ -121,35 +161,35 @@ UPDATE orders o SET
   total = COALESCE((SELECT SUM(line_total) * 1.10 FROM order_items WHERE order_id = o.id), 0);
 
 -- Create quotes
-INSERT INTO quotes (id, quote_number, customer_id, quote_date, valid_until, status, notes, subtotal, tax, total, created_at, updated_at)
+INSERT INTO quotes (id, quote_number, customer_id, quote_date, valid_until, status, notes, total, created_at, updated_at)
 VALUES
-  ('02000000-0000-0000-0000-000000000001', 'QT-2026-001', 'c0000000-0000-0000-0000-000000000006', '2026-02-01', '2026-03-03', 'sent', 'Landscaping equipment quote', 0, 0, 0, NOW(), NOW()),
-  ('02000000-0000-0000-0000-000000000002', 'QT-2026-002', 'c0000000-0000-0000-0000-000000000007', '2026-02-05', '2026-03-07', 'accepted', 'Heavy machinery rental quote', 0, 0, 0, NOW(), NOW()),
-  ('02000000-0000-0000-0000-000000000003', 'QT-2026-003', 'c0000000-0000-0000-0000-000000000008', '2026-02-08', '2026-03-10', 'draft', 'Construction materials bulk order', 0, 0, 0, NOW(), NOW())
+  ('02000000-0000-0000-0000-000000000001', 'QT-2026-001', 'c0000000-0000-0000-0000-000000000006', '2026-02-01', '2026-03-03', 'sent',     'Annual chemical supply contract — Geelong Commercial Cleaning', 0, NOW(), NOW()),
+  ('02000000-0000-0000-0000-000000000002', 'QT-2026-002', 'c0000000-0000-0000-0000-000000000007', '2026-02-05', '2026-03-07', 'accepted', 'TruckMount Heat Master + accessories — Perth Carpet upgrade',   0, NOW(), NOW()),
+  ('02000000-0000-0000-0000-000000000003', 'QT-2026-003', 'c0000000-0000-0000-0000-000000000008', '2026-02-08', '2026-03-10', 'draft',    'Flood drying kit — Adelaide Restoration enquiry',              0, NOW(), NOW())
 ON CONFLICT (quote_number) DO NOTHING;
 
 -- Create quote items
 INSERT INTO quote_items (id, quote_id, product_id, quantity, unit_price, line_total, created_at, updated_at)
 VALUES
-  -- Quote 1: Landscaping
-  (gen_random_uuid(), '02000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 6, 180.49, 1082.94, NOW(), NOW()),
-  (gen_random_uuid(), '02000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000003', 4, 85.49, 341.96, NOW(), NOW()),
-  (gen_random_uuid(), '02000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002', 8, 56.99, 455.92, NOW(), NOW()),
+  -- Quote 1: Geelong Commercial — annual chemical supply
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000001', 24,  55.00,  1320.00, NOW(), NOW()),
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', 24,  49.00,  1176.00, NOW(), NOW()),
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000001', '70000000-0000-0000-0000-000000000001', 12,  72.00,   864.00, NOW(), NOW()),
 
-  -- Quote 2: Heavy machinery (accepted - ready to convert to order!)
-  (gen_random_uuid(), '02000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 1, 138250.00, 138250.00, NOW(), NOW()),
-  (gen_random_uuid(), '02000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 2, 84650.00, 169300.00, NOW(), NOW()),
+  -- Quote 2: Perth Carpet — TruckMount Heat Master (accepted — ready to convert!)
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002',  1, 24900.00, 24900.00, NOW(), NOW()),
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001',  2,   180.00,   360.00, NOW(), NOW()),
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000002',  2,   185.00,   370.00, NOW(), NOW()),
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000001',  1,   820.00,   820.00, NOW(), NOW()),
 
-  -- Quote 3: Bulk materials
-  (gen_random_uuid(), '02000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000001', 500, 13.49, 6745.00, NOW(), NOW()),
-  (gen_random_uuid(), '02000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000002', 1000, 8.09, 8090.00, NOW(), NOW()),
-  (gen_random_uuid(), '02000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003', 300, 31.49, 9447.00, NOW(), NOW())
+  -- Quote 3: Adelaide Restoration — flood drying kit (draft)
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003',  3,  4200.00, 12600.00, NOW(), NOW()),
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000004', 10,   420.00,  4200.00, NOW(), NOW()),
+  (gen_random_uuid(), '02000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003',  2,  1650.00,  3300.00, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
--- Update quote totals
+-- Update quote totals (quotes table only has total column, no subtotal/tax)
 UPDATE quotes q SET
-  subtotal = COALESCE((SELECT SUM(line_total) FROM quote_items WHERE quote_id = q.id), 0),
-  tax = COALESCE((SELECT SUM(line_total) * 0.10 FROM quote_items WHERE quote_id = q.id), 0),
   total = COALESCE((SELECT SUM(line_total) * 1.10 FROM quote_items WHERE quote_id = q.id), 0);
 
 -- Display summary
@@ -173,9 +213,12 @@ BEGIN
   RAISE NOTICE 'Orders: % (with % line items demonstrating 97%% performance improvement!)', order_count, (SELECT COUNT(*) FROM order_items);
   RAISE NOTICE 'Quotes: % (with % line items)', quote_count, (SELECT COUNT(*) FROM quote_items);
   RAISE NOTICE '';
-  RAISE NOTICE 'Demo Credentials:';
-  RAISE NOTICE '  Email: admin@demo.com';
-  RAISE NOTICE '  Password: demo123';
+  RAISE NOTICE 'CCW Staff Credentials (all passwords: demo123):';
+  RAISE NOTICE '  admin@ccwonline.com.au   — Chris Wilson  (Owner / Admin)';
+  RAISE NOTICE '  sales@ccwonline.com.au   — Sarah Chen    (Sales Manager)';
+  RAISE NOTICE '  warehouse@ccwonline.com.au — Mark Thompson (Warehouse)';
+  RAISE NOTICE '  accounts@ccwonline.com.au  — Lisa Park    (Accounts)';
+  RAISE NOTICE '  admin@demo.com           — Admin User   (Legacy dev login)';
   RAISE NOTICE '';
   RAISE NOTICE 'Access: http://localhost:3005';
   RAISE NOTICE '===========================================';

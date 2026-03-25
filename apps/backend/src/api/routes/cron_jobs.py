@@ -756,3 +756,404 @@ async def retry_dead_letter_webhook(
         "message": f"Webhook retry {retry_result['status']}",
         "result": retry_result,
     }
+
+
+# ============================================================================
+# Sprint 4: Inventory Auto-Reorder Cron Job
+# ============================================================================
+
+
+@router.post("/auto-reorder-inventory")
+async def auto_reorder_inventory(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """
+    Scan inventory for products below reorder point and create draft POs.
+
+    For each product where stock < reorder_point:
+    - Looks up the matching ReorderRule for that product + location
+    - Creates a draft PurchaseOrder against the linked supplier
+    - Adds a PurchaseOrderItem with the default reorder quantity
+
+    Schedule: daily at 7 AM AEST (0 21 * * * UTC)
+
+    vercel.json:
+    ```json
+    {
+      "crons": [
+        {
+          "path": "/api/cron/auto-reorder-inventory",
+          "schedule": "0 21 * * *"
+        }
+      ]
+    }
+    ```
+
+    Returns:
+        Summary of POs created and products skipped.
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    from decimal import Decimal
+
+    from src.db.demo_models import Product
+    from src.db.inventory_models import PurchaseOrder, PurchaseOrderItem, ReorderRule
+
+    now = datetime.now(UTC)
+    po_sequence_base = int(now.strftime("%Y%m%d"))
+
+    # 1. Find products below their reorder point
+    stmt = select(Product).where(
+        Product.reorder_point.isnot(None),
+        Product.stock < Product.reorder_point,
+        Product.is_active == True,  # noqa: E712
+    )
+    result = await db.execute(stmt)
+    low_stock_products = result.scalars().all()
+
+    if not low_stock_products:
+        logger.info("auto_reorder_cron: no products below reorder point")
+        return {
+            "status": "success",
+            "message": "No products below reorder point",
+            "pos_created": 0,
+            "products_checked": 0,
+        }
+
+    logger.info("auto_reorder_cron: found low-stock products", count=len(low_stock_products))
+
+    created_pos: list[dict] = []
+    skipped: list[dict] = []
+
+    for i, product in enumerate(low_stock_products):
+        # 2. Look up enabled ReorderRule for this product
+        rule_result = await db.execute(
+            select(ReorderRule).where(
+                ReorderRule.product_id == product.id,
+                ReorderRule.is_enabled == True,  # noqa: E712
+            )
+        )
+        rule = rule_result.scalars().first()
+
+        if not rule or not rule.supplier_id:
+            skipped.append({"sku": product.sku, "reason": "no enabled reorder rule or supplier"})
+            continue
+
+        # 3. Determine order quantity — target: bring stock up to 2× reorder_point
+        reorder_point = product.reorder_point or 0
+        qty_to_order = max(1, (reorder_point * 2) - (product.stock or 0))
+
+        # 4. Create draft PO
+        po_number = f"AUTO-PO-{po_sequence_base}-{i + 1:03d}"
+        expected_delivery = now + timedelta(days=rule.lead_time_days)
+
+        # Check for duplicate PO number (same product reordered today)
+        existing_po = await db.execute(
+            select(PurchaseOrder).where(PurchaseOrder.po_number == po_number)
+        )
+        if existing_po.scalar_one_or_none():
+            skipped.append({"sku": product.sku, "reason": f"PO {po_number} already exists today"})
+            continue
+
+        unit_cost = Decimal(str(product.cost or product.price or 0))
+        line_subtotal = (unit_cost * Decimal(qty_to_order)).quantize(Decimal("0.01"))
+        gst = (line_subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
+        po_total = line_subtotal + gst
+
+        po = PurchaseOrder(
+            po_number=po_number,
+            supplier_id=rule.supplier_id,
+            delivery_location=rule.location,
+            status="draft",
+            order_date=now,
+            expected_delivery_date=expected_delivery,
+            subtotal=line_subtotal,
+            tax=gst,
+            total=po_total,
+            notes=f"Auto-created by reorder cron — {product.sku} stock={product.stock} reorder_point={product.reorder_point}",
+        )
+        db.add(po)
+        await db.flush()
+
+        po_item = PurchaseOrderItem(
+            purchase_order_id=po.id,
+            product_id=product.id,
+            quantity=qty_to_order,
+            quantity_received=0,
+            unit_cost=unit_cost,
+            subtotal=line_subtotal,
+        )
+        db.add(po_item)
+
+        created_pos.append({
+            "po_number": po_number,
+            "sku": product.sku,
+            "product_name": product.name,
+            "current_stock": product.stock,
+            "reorder_point": product.reorder_point,
+            "qty_ordered": qty_to_order,
+            "supplier_id": str(rule.supplier_id),
+            "total": float(po_total),
+        })
+
+        logger.info(
+            "auto_reorder_po_created",
+            po_number=po_number,
+            sku=product.sku,
+            qty=qty_to_order,
+        )
+
+    await db.commit()
+
+    logger.info(
+        "auto_reorder_cron_complete",
+        pos_created=len(created_pos),
+        skipped=len(skipped),
+    )
+
+    return {
+        "status": "success",
+        "message": f"Created {len(created_pos)} draft POs for {len(low_stock_products)} low-stock products",
+        "products_checked": len(low_stock_products),
+        "pos_created": len(created_pos),
+        "skipped": len(skipped),
+        "purchase_orders": created_pos,
+        "skipped_details": skipped,
+        "ran_at": now.isoformat(),
+    }
+
+
+@router.post("/shadow-sync-cin7")
+async def shadow_sync_cin7(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """Nightly Cin7 shadow sync — pull all products, orders, customers, inventory from Cin7.
+
+    Runs at 07:00 AEST (19:00 UTC) when shadow mode is active and live Cin7
+    credentials are configured.  Data is stored in Cin7ShadowSync records for
+    flow analysis and readiness scoring.
+
+    vercel.json schedule: "0 19 * * *"
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    now = datetime.now(UTC)
+
+    # Check if shadow mode is active
+    try:
+        from src.db.shadow_session_models import ShadowSession
+
+        result = await db.execute(
+            select(ShadowSession)
+            .where(ShadowSession.status == "active")
+            .limit(1)
+        )
+        session = result.scalar_one_or_none()
+    except Exception:
+        session = None
+
+    if not session:
+        return {
+            "status": "skipped",
+            "message": "No active shadow session. Activate shadow mode first.",
+            "ran_at": now.isoformat(),
+        }
+
+    # Attempt live Cin7 sync — falls back gracefully if credentials not configured
+    synced_counts: dict[str, int] = {}
+    errors: list[str] = []
+
+    try:
+        import hashlib
+        import json
+
+        from src.db.cin7_shadow_models import Cin7ShadowSync
+        from src.integrations.cin7.client import get_cin7_client
+
+        async with get_cin7_client() as cin7:
+            # Sync products
+            try:
+                products = await cin7.get_products(page_size=250)
+                product_list = products if isinstance(products, list) else products.get("Data", [])
+                for p in product_list:
+                    cin7_id = str(p.get("ID") or p.get("id", ""))
+                    if not cin7_id:
+                        continue
+                    key_fields = {k: p.get(k) for k in ["Name", "Code", "BasePrice", "IsActive"]}
+                    cin7_hash = hashlib.md5(json.dumps(key_fields, sort_keys=True).encode()).hexdigest()
+
+                    existing = await db.execute(
+                        select(Cin7ShadowSync).where(
+                            Cin7ShadowSync.entity_type == "product",
+                            Cin7ShadowSync.cin7_id == cin7_id,
+                        )
+                    )
+                    record = existing.scalar_one_or_none()
+                    if record:
+                        record.cin7_hash = cin7_hash
+                        record.last_checked_at = now
+                        if record.cin7_hash != cin7_hash:
+                            record.sync_status = "conflict"
+                    else:
+                        db.add(Cin7ShadowSync(
+                            entity_type="product",
+                            cin7_id=cin7_id,
+                            sync_status="synced",
+                            cin7_hash=cin7_hash,
+                            last_checked_at=now,
+                        ))
+                synced_counts["products"] = len(product_list)
+            except Exception as e:
+                errors.append(f"products: {e}")
+                synced_counts["products"] = 0
+
+            # Sync customers
+            try:
+                customers = await cin7.get_customers(page_size=250)
+                customer_list = customers if isinstance(customers, list) else customers.get("Data", [])
+                for c in customer_list:
+                    cin7_id = str(c.get("ID") or c.get("id", ""))
+                    if not cin7_id:
+                        continue
+                    db.add(Cin7ShadowSync(
+                        entity_type="customer",
+                        cin7_id=cin7_id,
+                        sync_status="synced",
+                        last_checked_at=now,
+                    ))
+                synced_counts["customers"] = len(customer_list)
+            except Exception as e:
+                errors.append(f"customers: {e}")
+                synced_counts["customers"] = 0
+
+        await db.commit()
+
+        # Update session statistics
+        session.total_syncs_run = (session.total_syncs_run or 0) + 1
+        if not errors:
+            session.successful_syncs = (session.successful_syncs or 0) + 1
+        session.products_observed = max(session.products_observed or 0, synced_counts.get("products", 0))
+        session.customers_observed = max(session.customers_observed or 0, synced_counts.get("customers", 0))
+        await db.commit()
+
+    except Exception as e:
+        errors.append(f"cin7_client: {e}")
+        # Still update sync count even on failure
+        try:
+            session.total_syncs_run = (session.total_syncs_run or 0) + 1
+            await db.commit()
+        except Exception as exc:
+            logger.warning("shadow_sync_cin7_commit_error", error=str(exc))
+
+    logger.info(
+        "shadow_sync_cin7_complete",
+        synced=synced_counts,
+        errors=errors,
+        session_id=str(session.id),
+    )
+
+    return {
+        "status": "success" if not errors else "partial",
+        "message": f"Shadow Cin7 sync complete. Synced: {synced_counts}",
+        "synced": synced_counts,
+        "errors": errors,
+        "session_id": str(session.id),
+        "ran_at": now.isoformat(),
+    }
+
+
+@router.post("/shadow-sync-xero")
+async def shadow_sync_xero(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """Nightly Xero shadow sync — pull invoices, payments, accounts from Xero.
+
+    Runs at 08:00 AEST (20:00 UTC) when shadow mode is active, after the
+    Cin7 sync completes.  Invoice and payment data is used for financial flow
+    observation and transition readiness scoring.
+
+    vercel.json schedule: "0 20 * * *"
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    now = datetime.now(UTC)
+
+    # Check shadow mode active
+    try:
+        from src.db.shadow_session_models import ShadowSession
+
+        result = await db.execute(
+            select(ShadowSession)
+            .where(ShadowSession.status == "active")
+            .limit(1)
+        )
+        session = result.scalar_one_or_none()
+    except Exception:
+        session = None
+
+    if not session:
+        return {
+            "status": "skipped",
+            "message": "No active shadow session.",
+            "ran_at": now.isoformat(),
+        }
+
+    synced_counts: dict[str, int] = {}
+    errors: list[str] = []
+
+    # Xero sync — requires live Xero credentials
+    try:
+        from src.integrations.xero.client import get_xero_client
+
+        async with get_xero_client() as xero:
+            try:
+                invoices = await xero.get_invoices(modified_since_days=1)
+                invoice_list = invoices if isinstance(invoices, list) else invoices.get("Invoices", [])
+                synced_counts["invoices"] = len(invoice_list)
+            except Exception as e:
+                errors.append(f"invoices: {e}")
+                synced_counts["invoices"] = 0
+
+            try:
+                payments = await xero.get_payments(modified_since_days=1)
+                payment_list = payments if isinstance(payments, list) else payments.get("Payments", [])
+                synced_counts["payments"] = len(payment_list)
+            except Exception as e:
+                errors.append(f"payments: {e}")
+                synced_counts["payments"] = 0
+
+    except Exception as e:
+        errors.append(f"xero_client: {e}")
+
+    # Update session invoice count
+    try:
+        if "invoices" in synced_counts:
+            session.invoices_observed = max(
+                session.invoices_observed or 0,
+                synced_counts["invoices"],
+            )
+            await db.commit()
+    except Exception as exc:
+        logger.warning("shadow_sync_xero_commit_error", error=str(exc))
+
+    logger.info(
+        "shadow_sync_xero_complete",
+        synced=synced_counts,
+        errors=errors,
+        session_id=str(session.id),
+    )
+
+    return {
+        "status": "success" if not errors else "partial",
+        "message": f"Shadow Xero sync complete. Synced: {synced_counts}",
+        "synced": synced_counts,
+        "errors": errors,
+        "session_id": str(session.id),
+        "ran_at": now.isoformat(),
+    }

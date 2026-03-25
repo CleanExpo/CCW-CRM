@@ -5,7 +5,8 @@ from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -24,6 +25,7 @@ from src.api.schemas.invoicing import (
 from src.config.database import get_async_db
 from src.db.demo_models import Customer, Order, OrderItem
 from src.db.models.invoicing import Invoice, InvoiceItem, TaxRate
+from src.services.email_notifications import email_service
 
 router = APIRouter(prefix="/api/invoices", tags=["Invoices"])
 
@@ -247,6 +249,90 @@ async def get_tax_summary(
         total_tax_collected=total_tax_collected,
         tax_by_rate=tax_by_rate,
     )
+
+
+@router.get("/reports/bas")
+async def get_bas_report(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    date_from: date | None = None,
+    date_to: date | None = None,
+    period: str | None = None,
+) -> dict:
+    """Generate an Australian GST/BAS (Business Activity Statement) summary.
+
+    Returns:
+    - 1A: GST collected on sales (taxable invoices)
+    - 1B: Input tax credits (not tracked — manual entry required)
+    - Taxable sales total
+    - Total invoices in period
+
+    Args:
+        date_from / date_to: Explicit date range.
+        period: Shorthand period selector (e.g. "2026-Q1", "2026-03").
+    """
+    from datetime import date as dt_date
+
+    # Resolve period shorthand
+    if period and not date_from and not date_to:
+        if "-Q" in period:
+            year_str, q_str = period.split("-Q")
+            year = int(year_str)
+            q = int(q_str)
+            quarter_start_month = (q - 1) * 3 + 1
+            date_from = dt_date(year, quarter_start_month, 1)
+            # End of quarter
+            end_month = quarter_start_month + 2
+            import calendar
+            date_to = dt_date(year, end_month, calendar.monthrange(year, end_month)[1])
+        else:
+            # Monthly: "2026-03"
+            import calendar
+            year, month = int(period.split("-")[0]), int(period.split("-")[1])
+            date_from = dt_date(year, month, 1)
+            date_to = dt_date(year, month, calendar.monthrange(year, month)[1])
+
+    # Build query — exclude draft and cancelled invoices
+    stmt = select(
+        func.coalesce(func.sum(Invoice.subtotal), 0).label("taxable_sales"),
+        func.coalesce(func.sum(Invoice.tax_amount), 0).label("gst_collected"),
+        func.coalesce(func.sum(Invoice.total), 0).label("total_sales"),
+        func.count(Invoice.id).label("invoice_count"),
+    ).where(Invoice.status.notin_(["draft", "cancelled"]))
+
+    if date_from:
+        stmt = stmt.where(Invoice.invoice_date >= date_from)
+    if date_to:
+        stmt = stmt.where(Invoice.invoice_date <= date_to)
+
+    row = (await db.execute(stmt)).one()
+
+    # Zero-rated / export sales (future: filter by customer country)
+    export_sales = Decimal("0.00")
+
+    gst_collected = Decimal(str(row.gst_collected))
+    taxable_sales = Decimal(str(row.taxable_sales))
+    total_sales = Decimal(str(row.total_sales))
+
+    # Net GST payable (1A - 1B)
+    # 1B (input tax credits) are not tracked in this system — set to 0
+    gst_credits = Decimal("0.00")
+    net_gst = gst_collected - gst_credits
+
+    return {
+        "period": period,
+        "date_from": date_from.isoformat() if date_from else None,
+        "date_to": date_to.isoformat() if date_to else None,
+        # BAS labels
+        "label_1a_gst_collected": str(gst_collected),
+        "label_1b_gst_credits": str(gst_credits),
+        "label_net_gst_payable": str(net_gst),
+        # Supporting figures
+        "taxable_sales": str(taxable_sales),
+        "export_sales": str(export_sales),
+        "total_sales_incl_gst": str(total_sales),
+        "invoice_count": int(row.invoice_count),
+        "note": "GST credits (1B) require purchase invoice data — enter manually in your BAS.",
+    }
 
 
 @router.get("/tax-rates", response_model=list[TaxRateResponse])
@@ -572,9 +658,10 @@ async def delete_invoice(
 @router.post("/{invoice_id}/send", response_model=InvoiceResponse)
 async def send_invoice(
     invoice_id: UUID,
+    background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> InvoiceResponse:
-    """Mark invoice as sent."""
+    """Mark invoice as sent and email customer."""
     result = await db.execute(
         select(Invoice)
         .options(selectinload(Invoice.items))
@@ -596,6 +683,21 @@ async def send_invoice(
 
     await db.commit()
     await db.refresh(invoice)
+
+    # Send invoice notification email (non-blocking)
+    if invoice.customer_id:
+        cust_result = await db.execute(select(Customer).where(Customer.id == invoice.customer_id))
+        customer = cust_result.scalar_one_or_none()
+        if customer and customer.email:
+            due_date_str = invoice.due_date.strftime("%d/%m/%Y") if invoice.due_date else "—"
+            background_tasks.add_task(
+                email_service.send_invoice_issued_notification,
+                invoice_number=invoice.invoice_number,
+                customer_email=customer.email,
+                customer_name=customer.company_name or customer.contact_name or "Valued Customer",
+                total=float(invoice.total or 0),
+                due_date=due_date_str,
+            )
 
     return InvoiceResponse.model_validate(invoice)
 
@@ -629,3 +731,117 @@ async def cancel_invoice(
     await db.refresh(invoice)
 
     return InvoiceResponse.model_validate(invoice)
+
+
+# ---------------------------------------------------------------------------
+# GAP-025 / RA-193: Tax Calculation (Batch 2D)
+# ---------------------------------------------------------------------------
+
+from src.services.tax_calculator import calculate_tax as calc_tax_pure
+
+
+class TaxLineItem(BaseModel):
+    """Line item for tax calculation."""
+
+    amount: Decimal = Field(description="Line item amount before tax")
+    quantity: int = Field(ge=1, description="Quantity")
+    is_tax_exempt: bool = Field(default=False, description="Whether item is tax exempt")
+    product_category: str | None = Field(default=None, description="Product category for exemption check")
+
+
+class TaxCalculationRequest(BaseModel):
+    """Request for tax calculation."""
+
+    line_items: list[TaxLineItem] = Field(description="Line items to calculate tax for")
+    jurisdiction: str = Field(default="AU", description="Tax jurisdiction (AU, CA-ON, CA-BC, etc.)")
+    customer_type: str = Field(default="B2C", description="Customer type: B2C or B2B")
+
+
+class TaxLineItemResult(BaseModel):
+    """Tax calculation result for a single line item."""
+
+    amount: Decimal
+    quantity: int
+    subtotal: Decimal
+    tax_amount: Decimal
+    total: Decimal
+
+
+class TaxCalculationResponse(BaseModel):
+    """Response from tax calculation using tax_calculator service."""
+
+    subtotal: Decimal = Field(description="Total before tax")
+    tax_breakdown: dict[str, Decimal] = Field(description="Tax breakdown by type (GST, PST, HST)")
+    total_tax: Decimal = Field(description="Total tax amount")
+    grand_total: Decimal = Field(description="Subtotal + total tax")
+    line_items: list[TaxLineItemResult] = Field(description="Per-item breakdown")
+
+
+@router.post("/tax/calculate", response_model=TaxCalculationResponse)
+async def calculate_tax_endpoint(
+    request: TaxCalculationRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> TaxCalculationResponse:
+    """
+    Calculate GST/PST/HST tax for invoice line items (GAP-025).
+
+    Uses tax_calculator service for jurisdiction-aware tax calculation.
+    Supports Australia (GST 10%) and Canadian provinces (GST/PST/HST).
+    """
+    # Calculate per-item results and accumulate tax
+    line_item_results = []
+    subtotal = Decimal("0.00")
+    total_gst = Decimal("0.00")
+    total_pst = Decimal("0.00")
+    total_hst = Decimal("0.00")
+    total_tax = Decimal("0.00")
+
+    is_b2b = request.customer_type.upper() == "B2B"
+
+    for item in request.line_items:
+        # Calculate item subtotal
+        item_subtotal = item.amount * Decimal(str(item.quantity))
+        subtotal += item_subtotal
+
+        # Calculate tax for this line item (respects per-item category)
+        category = item.product_category or "general"
+
+        tax_result = calc_tax_pure(
+            subtotal=item_subtotal,
+            jurisdiction=request.jurisdiction,
+            product_category=category,
+            is_b2b=is_b2b,
+        )
+
+        # Accumulate tax by type
+        total_gst += tax_result.gst
+        total_pst += tax_result.pst
+        total_hst += tax_result.hst
+        total_tax += tax_result.total_tax
+
+        line_item_results.append(
+            TaxLineItemResult(
+                amount=item.amount,
+                quantity=item.quantity,
+                subtotal=item_subtotal,
+                tax_amount=tax_result.total_tax,
+                total=item_subtotal + tax_result.total_tax,
+            )
+        )
+
+    # Build tax breakdown from accumulated values
+    tax_breakdown: dict[str, Decimal] = {}
+    if total_gst > Decimal("0"):
+        tax_breakdown["GST"] = total_gst
+    if total_pst > Decimal("0"):
+        tax_breakdown["PST"] = total_pst
+    if total_hst > Decimal("0"):
+        tax_breakdown["HST"] = total_hst
+
+    return TaxCalculationResponse(
+        subtotal=subtotal,
+        tax_breakdown=tax_breakdown,
+        total_tax=total_tax,
+        grand_total=subtotal + total_tax,
+        line_items=line_item_results,
+    )

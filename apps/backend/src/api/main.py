@@ -32,10 +32,11 @@ from .routes import (
     activities,  # CRM activities
     agents_monitor,  # Agent monitoring dashboard (UNI-1246)
     approvals,
-    auth_signup,
+    audit_trail,  # Entity-level audit trail
     backorders,
     bank_feeds,
-    billing,  # Stripe subscription billing
+    billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
+    certifications,  # IICRC/ISSA/ARCR certification tracking (Sprint 2)
     config,
     contacts,  # CRM contacts
     containers,
@@ -50,6 +51,7 @@ from .routes import (
     demo_dashboard,
     demo_lists,
     email_audit,  # Email audit trail for GDPR compliance (ISS-037)
+    equipment_lifecycle,  # Equipment serial numbers + warranty tracking (Sprint 2)
     google_ai,
     health,
     inventory,
@@ -57,15 +59,16 @@ from .routes import (
     invoices,  # Invoices for UNI-173
     jobs,
     orders,
-    portal_auth,
-    portal_forms,
     pos_transactions,
     prd,
+    pricing,  # Customer trade pricing tiers (Sprint 2)
+    procurement,
     products,
     prometheus_metrics,  # Prometheus metrics endpoint
     public_stats,  # Public landing page stats (no auth required)
     purchase_orders,
     quotes,
+    reconciliation,
     reconciliation_dashboard,
     service_requests,
     shipments,
@@ -115,6 +118,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager."""
     setup_logging(debug=settings.debug)
     logger.info("Starting application", environment=settings.environment)
+
+    # Validate production secrets at startup — fail fast on misconfiguration
+    secret_issues = settings.validate_production_secrets()
+    if secret_issues:
+        for issue in secret_issues:
+            logger.error("Production secret misconfiguration", issue=issue)
+        if settings.is_production:
+            raise RuntimeError(
+                f"Production startup blocked — {len(secret_issues)} secret(s) misconfigured: "
+                + "; ".join(secret_issues)
+            )
 
     # Initialize Sentry for error tracking
     try:
@@ -287,9 +301,9 @@ All errors return JSON with this format:
     """,
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
     contact={
         "name": "CCW ERP Support",
         "url": "https://ccw-erp.example.com/support",
@@ -416,7 +430,8 @@ app.include_router(public_stats.router, tags=["Public"])
 app.include_router(prometheus_metrics.router, tags=["Monitoring"])  # Prometheus metrics
 app.include_router(config.router, tags=["Configuration"])
 app.include_router(approvals.router, tags=["Approvals"])
-app.include_router(auth_signup.router, tags=["Signup"])
+app.include_router(audit_trail.router, tags=["Audit Trail"])
+# app.include_router(auth_signup.router, tags=["Signup"])  # TODO: auth_signup not implemented yet
 app.include_router(demo_auth.router, tags=["Authentication"])
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
@@ -431,24 +446,20 @@ app.include_router(quotes.router, tags=["Quotes"])
 # Invoicing & Payments (UNI-173)
 app.include_router(invoices.router, tags=["Invoices"])
 app.include_router(invoice_payments.router, tags=["Invoice Payments"])
+# Billing & Payment Methods (Phase 2 Batch 2A)
+app.include_router(billing.router, tags=["Billing"])
 # Background jobs router
 app.include_router(jobs.router, tags=["Background Jobs"])
 # Multi-store inventory router
 app.include_router(inventory.router, tags=["Multi-Store Inventory"])
 # Service requests router
 app.include_router(service_requests.router, tags=["Service Requests"])
-# Customer portal authentication
-app.include_router(portal_auth.router, tags=["Portal Auth"])
-# Portal forms (contact submissions, demo requests)
-app.include_router(portal_forms.router, tags=["Portal Forms"])
 # Webhooks
 app.include_router(webhooks.router, tags=["Webhooks"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])
 # Team management router (multi-tenant user management)
 app.include_router(team.router, tags=["Team Management"])
-# Billing and subscription management router
-app.include_router(billing.router, tags=["Billing"])
 # Contractor availability management router
 app.include_router(contractors.router, tags=["Contractors"])
 # Cron job endpoints (Vercel Cron / scheduled tasks)
@@ -457,6 +468,10 @@ app.include_router(cron_jobs.router, tags=["Cron Jobs"])
 app.include_router(crm_health.router, tags=["CRM Health"])
 app.include_router(crm_onboarding.router, tags=["CRM Onboarding"])
 app.include_router(crm_personas.router, tags=["CRM Personas"])
+# Sprint 2 — Industry DNA: Equipment lifecycle, IICRC certifications, pricing tiers
+app.include_router(equipment_lifecycle.router, tags=["Equipment Lifecycle"])
+app.include_router(certifications.router, tags=["Certifications"])
+app.include_router(pricing.router, tags=["Pricing Tiers"])
 # Account and company settings
 app.include_router(settings_routes.router, tags=["Settings"])
 # Agent monitoring dashboard
@@ -464,6 +479,8 @@ app.include_router(agents_monitor.router, tags=["Agent Monitoring"])
 app.include_router(warehouse.router, tags=["Warehouse"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
+# Procurement three-way match and unmatched PO items
+app.include_router(procurement.router, tags=["Procurement"])
 # Shipment tracking router
 app.include_router(shipments.router, tags=["Shipment Tracking"])
 # Container tracking and backorder management
@@ -496,6 +513,41 @@ except (ImportError, AttributeError):
 from .routes import autonomy_metrics
 
 app.include_router(autonomy_metrics.router, tags=["Autonomy Metrics"])
+
+# Command Parser (Phase 1: /build command infrastructure)
+try:
+    from .routes.ai import command_parser
+    app.include_router(command_parser.router, tags=["Command Parser"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
+
+# Build Command (Phase 2: /build command handler)
+try:
+    from .routes.ai import build_command
+    app.include_router(build_command.router, tags=["Build Command"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
+
+# Approval Gates (Phase 3: approval gate system)
+try:
+    from .routes.ai import approval_gates
+    app.include_router(approval_gates.router, tags=["Approval Gates"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
+
+# Gap Sync (Phase 4: gap-to-linear orchestrator)
+try:
+    from .routes.ai import gap_sync
+    app.include_router(gap_sync.router, tags=["Gap Sync"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
+
+# Requirement Verification (Phase 5: requirement tracing)
+try:
+    from .routes.ai import requirement_verification
+    app.include_router(requirement_verification.router, tags=["Requirement Verification"])
+except (ImportError, AttributeError):
+    pass  # Skip if AI dependencies not available
 
 # Analytics Metrics
 try:
@@ -578,6 +630,11 @@ except ImportError:
 
 app.include_router(google_ai.router, tags=["Google AI"])
 
+# Sprint 2 — Industry DNA models (register with SQLAlchemy metadata)
+import src.db.certification_models  # noqa: F401
+import src.db.equipment_lifecycle_models  # noqa: F401
+import src.db.pricing_models  # noqa: F401
+
 # Workflow Automation, SLA, and In-App Notification models (UNI-174)
 import src.db.workflow_models  # noqa: F401 - registers tables with SQLAlchemy metadata
 
@@ -643,6 +700,41 @@ try:
 except ImportError:
     pass
 
+# Sprint 3 — AI Autonomy Layer
+# Autonomous Ops Agent — Claude Sonnet 4.6 ERP decision engine
+try:
+    from src.api.routes.ai import autonomous_ops
+    app.include_router(autonomous_ops.router, tags=["Autonomous Ops"])
+except ImportError:
+    pass
+
+# NL ERP Query Agent — natural language → SQL → answer
+try:
+    from src.api.routes.ai import query as ai_query
+    app.include_router(ai_query.router, tags=["NL ERP Query"])
+except ImportError:
+    pass
+
+# Document Extraction — Claude Vision invoice/PO OCR
+try:
+    from src.api.routes import documents as document_extraction
+    app.include_router(document_extraction.router, tags=["Document Extraction"])
+except ImportError:
+    pass
+
+# Sprint 4 — Customer & Supplier Portals
+try:
+    from src.api.routes.portal import customer_portal
+    app.include_router(customer_portal.router, tags=["Customer Portal"])
+except ImportError:
+    pass
+
+try:
+    from src.api.routes import supplier_portal
+    app.include_router(supplier_portal.router, tags=["Supplier Portal"])
+except ImportError:
+    pass
+
 # POS-Xero Reconciliation (depends on Xero integration)
 try:
     from src.api.routes import pos_xero_reconciliation
@@ -656,6 +748,7 @@ app.include_router(email_audit.router, tags=["Email Audit"])
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
+app.include_router(reconciliation.router, tags=["Reconciliation"])
 app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashboard"])
 
 # Monitoring routers (system alerts, business metrics, performance)
@@ -683,6 +776,22 @@ try:
 except (ImportError, AttributeError) as e:
     logger.warning("Workshop routes not available", error=str(e))
     pass
+
+# Mobile Photo-to-Order
+try:
+    from src.api.routes.mobile import guest_orders as mobile_guest_orders
+    app.include_router(mobile_guest_orders.router, tags=["Mobile Orders"])
+except (ImportError, AttributeError) as e:
+    logger.warning("Mobile order routes not available", error=str(e))
+
+# Shadow / Observation Mode (1-month parallel observation alongside client's live system)
+try:
+    import src.db.shadow_session_models as _shadow_session_models  # noqa: F401 - registers tables
+    from src.api.routes import shadow_analytics, shadow_mode
+    app.include_router(shadow_mode.router, tags=["Shadow Mode"])
+    app.include_router(shadow_analytics.router, tags=["Shadow Analytics"])
+except (ImportError, AttributeError) as e:
+    logger.warning("Shadow mode routes not available", error=str(e))
 
 # Real-Time Infrastructure - SSE Streams (Phase 4)
 from src.api.routes import dashboard_stream, inventory_stream

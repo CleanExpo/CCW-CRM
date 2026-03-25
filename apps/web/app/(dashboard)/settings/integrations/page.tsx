@@ -19,6 +19,7 @@ import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/send
 import { getCin7Status, type Cin7ConnectionStatus } from '@/lib/api/cin7';
 import { Settings, AlertCircle, BookOpen, Globe } from 'lucide-react';
 import Link from 'next/link';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 function IntegrationsContent() {
   const { toast } = useToast();
@@ -134,197 +135,204 @@ function IntegrationsContent() {
   }, [searchParams]);
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-            <Settings className="text-primary h-5 w-5" />
+    <ErrorBoundary>
+      <div className="flex flex-1 flex-col gap-6 p-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+              <Settings className="text-primary h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+              <p className="text-muted-foreground text-sm">
+                Connect your ERP with external services
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* Demo Mode Banner */}
+        {((xeroStatus?.mode === 'demo' && xeroStatus?.connected) ||
+          (shopifyStatus?.mode === 'demo' && shopifyStatus?.connected) ||
+          (sendgridStatus?.mode === 'demo' && sendgridStatus?.connected) ||
+          (cin7Status?.mode === 'demo' && cin7Status?.connected)) && (
+          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
+            <AlertCircle className="mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                Demo Mode Active
+              </p>
+              <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
+                {[
+                  xeroStatus?.mode === 'demo' && xeroStatus?.connected && 'Xero',
+                  shopifyStatus?.mode === 'demo' && shopifyStatus?.connected && 'Shopify',
+                  sendgridStatus?.mode === 'demo' && sendgridStatus?.connected && 'SendGrid',
+                  cin7Status?.mode === 'demo' && cin7Status?.connected && 'Cin7',
+                ]
+                  .filter(Boolean)
+                  .join(', ')}{' '}
+                {[
+                  xeroStatus?.mode === 'demo' && xeroStatus?.connected,
+                  shopifyStatus?.mode === 'demo' && shopifyStatus?.connected,
+                  sendgridStatus?.mode === 'demo' && sendgridStatus?.connected,
+                  cin7Status?.mode === 'demo' && cin7Status?.connected,
+                ].filter(Boolean).length > 1
+                  ? 'integrations are'
+                  : 'integration is'}{' '}
+                running in demo mode. No real API calls are made. All operations use realistic mock
+                data for testing. Switch to live mode when ready by updating your environment
+                variables.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Integrations Grid */}
+        <div className="space-y-8">
+          {/* Xero Integration */}
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
-            <p className="text-muted-foreground text-sm">Connect your ERP with external services</p>
+            <h2 className="mb-4 text-lg font-semibold">Xero Accounting</h2>
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+              <XeroConnectionCard
+                status={xeroStatus}
+                loading={loading}
+                onStatusChange={loadXeroStatus}
+              />
+              <XeroSyncControls isConnected={xeroStatus?.connected ?? false} />
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Demo Mode Banner */}
-      {((xeroStatus?.mode === 'demo' && xeroStatus?.connected) ||
-        (shopifyStatus?.mode === 'demo' && shopifyStatus?.connected) ||
-        (sendgridStatus?.mode === 'demo' && sendgridStatus?.connected) ||
-        (cin7Status?.mode === 'demo' && cin7Status?.connected)) && (
-        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
-          <AlertCircle className="mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-400" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Demo Mode Active</p>
-            <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
-              {[
-                xeroStatus?.mode === 'demo' && xeroStatus?.connected && 'Xero',
-                shopifyStatus?.mode === 'demo' && shopifyStatus?.connected && 'Shopify',
-                sendgridStatus?.mode === 'demo' && sendgridStatus?.connected && 'SendGrid',
-                cin7Status?.mode === 'demo' && cin7Status?.connected && 'Cin7',
-              ]
-                .filter(Boolean)
-                .join(', ')}{' '}
-              {[
-                xeroStatus?.mode === 'demo' && xeroStatus?.connected,
-                shopifyStatus?.mode === 'demo' && shopifyStatus?.connected,
-                sendgridStatus?.mode === 'demo' && sendgridStatus?.connected,
-                cin7Status?.mode === 'demo' && cin7Status?.connected,
-              ].filter(Boolean).length > 1
-                ? 'integrations are'
-                : 'integration is'}{' '}
-              running in demo mode. No real API calls are made. All operations use realistic mock
-              data for testing. Switch to live mode when ready by updating your environment
-              variables.
+          {/* Shopify Integration */}
+          <div>
+            <h2 className="mb-4 text-lg font-semibold">Shopify E-commerce</h2>
+            <div className="grid gap-6 md:grid-cols-1">
+              <ShopifyConnectionCard
+                status={shopifyStatus}
+                loading={loading}
+                onStatusChange={loadShopifyStatus}
+              />
+              <ShopifySyncControls isConnected={shopifyStatus?.connected ?? false} />
+            </div>
+          </div>
+
+          {/* SendGrid Integration */}
+          <div>
+            <h2 className="mb-4 text-lg font-semibold">SendGrid Email Management</h2>
+            <div className="grid gap-6 md:grid-cols-1">
+              <SendGridConnectionCard
+                status={sendgridStatus}
+                loading={loading}
+                onStatusChange={loadSendGridStatus}
+              />
+            </div>
+          </div>
+
+          {/* Cin7 Integration */}
+          <div>
+            <h2 className="mb-4 text-lg font-semibold">Cin7 Inventory Management</h2>
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+              <Cin7ConnectionCard
+                status={cin7Status}
+                loading={loading}
+                onStatusChange={loadCin7Status}
+              />
+              <Cin7SyncControls isConnected={cin7Status?.connected ?? false} />
+            </div>
+            <Cin7WebhookSubscriptionsCard />
+          </div>
+
+          {/* Cin7 Shadow Sync — gap detection between Cin7 and ERP */}
+          <div>
+            <h2 className="mb-1 text-lg font-semibold">Cin7 Shadow Sync</h2>
+            <p className="text-muted-foreground mb-4 text-sm">
+              Detect and track gaps between Cin7 and the ERP without disrupting live data.
             </p>
+            <Cin7ShadowSyncCard />
           </div>
-        </div>
-      )}
 
-      {/* Integrations Grid */}
-      <div className="space-y-8">
-        {/* Xero Integration */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Xero Accounting</h2>
-          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            <XeroConnectionCard
-              status={xeroStatus}
-              loading={loading}
-              onStatusChange={loadXeroStatus}
-            />
-            <XeroSyncControls isConnected={xeroStatus?.connected ?? false} />
-          </div>
-        </div>
-
-        {/* Shopify Integration */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Shopify E-commerce</h2>
-          <div className="grid gap-6 md:grid-cols-1">
-            <ShopifyConnectionCard
-              status={shopifyStatus}
-              loading={loading}
-              onStatusChange={loadShopifyStatus}
-            />
-            <ShopifySyncControls isConnected={shopifyStatus?.connected ?? false} />
-          </div>
-        </div>
-
-        {/* SendGrid Integration */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">SendGrid Email Management</h2>
-          <div className="grid gap-6 md:grid-cols-1">
-            <SendGridConnectionCard
-              status={sendgridStatus}
-              loading={loading}
-              onStatusChange={loadSendGridStatus}
-            />
-          </div>
-        </div>
-
-        {/* Cin7 Integration */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Cin7 Inventory Management</h2>
-          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            <Cin7ConnectionCard
-              status={cin7Status}
-              loading={loading}
-              onStatusChange={loadCin7Status}
-            />
-            <Cin7SyncControls isConnected={cin7Status?.connected ?? false} />
-          </div>
-          <Cin7WebhookSubscriptionsCard />
-        </div>
-
-        {/* Cin7 Shadow Sync — gap detection between Cin7 and ERP */}
-        <div>
-          <h2 className="mb-1 text-lg font-semibold">Cin7 Shadow Sync</h2>
-          <p className="text-muted-foreground mb-4 text-sm">
-            Detect and track gaps between Cin7 and the ERP without disrupting live data.
-          </p>
-          <Cin7ShadowSyncCard />
-        </div>
-
-        {/* Cin7 Financial / GL Integration */}
-        <div>
-          <h2 className="mb-1 text-lg font-semibold">Cin7 Financial / GL Integration</h2>
-          <p className="text-muted-foreground mb-4 text-sm">
-            Sync Chart of Accounts, manage journal entries and configure ERP-to-GL account mappings.
-          </p>
-          <Link href="/settings/integrations/gl">
-            <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors">
-              <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                <BookOpen className="text-primary h-5 w-5" />
+          {/* Cin7 Financial / GL Integration */}
+          <div>
+            <h2 className="mb-1 text-lg font-semibold">Cin7 Financial / GL Integration</h2>
+            <p className="text-muted-foreground mb-4 text-sm">
+              Sync Chart of Accounts, manage journal entries and configure ERP-to-GL account
+              mappings.
+            </p>
+            <Link href="/settings/integrations/gl">
+              <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors">
+                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+                  <BookOpen className="text-primary h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">Financial / GL Settings</p>
+                  <p className="text-muted-foreground text-xs">
+                    Chart of Accounts, journal entries and account mappings
+                  </p>
+                </div>
+                <span className="text-muted-foreground text-sm">View GL Settings →</span>
               </div>
-              <div className="flex-1">
-                <p className="font-medium">Financial / GL Settings</p>
-                <p className="text-muted-foreground text-xs">
-                  Chart of Accounts, journal entries and account mappings
-                </p>
+            </Link>
+          </div>
+
+          {/* Multi-Channel Marketplace */}
+          <div>
+            <h2 className="mb-1 text-lg font-semibold">Multi-Channel Marketplace</h2>
+            <p className="text-muted-foreground mb-4 text-sm">
+              Sync products, inventory, and orders across Shopify, eBay, and Facebook Marketplace.
+            </p>
+            <Link href="/settings/integrations/marketplace">
+              <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors">
+                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+                  <Globe className="text-primary h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">Marketplace Dashboard</p>
+                  <p className="text-muted-foreground text-xs">
+                    Connect channels, sync products, and view unified orders
+                  </p>
+                </div>
+                <span className="text-muted-foreground text-sm">Open Dashboard →</span>
               </div>
-              <span className="text-muted-foreground text-sm">View GL Settings →</span>
+            </Link>
+          </div>
+
+          {/* Google AP2 Integration */}
+          <div>
+            <h2 className="mb-4 text-lg font-semibold">Google Agent Payments (AP2)</h2>
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+              <AP2ConnectionCard />
             </div>
-          </Link>
+          </div>
         </div>
 
-        {/* Multi-Channel Marketplace */}
-        <div>
-          <h2 className="mb-1 text-lg font-semibold">Multi-Channel Marketplace</h2>
-          <p className="text-muted-foreground mb-4 text-sm">
-            Sync products, inventory, and orders across Shopify, eBay, and Facebook Marketplace.
-          </p>
-          <Link href="/settings/integrations/marketplace">
-            <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors">
-              <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                <Globe className="text-primary h-5 w-5" />
+        {/* Coming Soon Section */}
+        <div className="mt-6">
+          <h2 className="mb-4 text-lg font-semibold">Coming Soon</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                name: 'QuickBooks',
+                description: 'Alternative accounting software',
+                icon: '📊',
+              },
+            ].map((integration) => (
+              <div
+                key={integration.name}
+                className="flex items-center gap-3 rounded-lg border border-dashed p-4 opacity-50"
+              >
+                <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-lg text-2xl">
+                  {integration.icon}
+                </div>
+                <div>
+                  <p className="font-medium">{integration.name}</p>
+                  <p className="text-muted-foreground text-xs">{integration.description}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-medium">Marketplace Dashboard</p>
-                <p className="text-muted-foreground text-xs">
-                  Connect channels, sync products, and view unified orders
-                </p>
-              </div>
-              <span className="text-muted-foreground text-sm">Open Dashboard →</span>
-            </div>
-          </Link>
-        </div>
-
-        {/* Google AP2 Integration */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Google Agent Payments (AP2)</h2>
-          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            <AP2ConnectionCard />
+            ))}
           </div>
         </div>
       </div>
-
-      {/* Coming Soon Section */}
-      <div className="mt-6">
-        <h2 className="mb-4 text-lg font-semibold">Coming Soon</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              name: 'QuickBooks',
-              description: 'Alternative accounting software',
-              icon: '📊',
-            },
-          ].map((integration) => (
-            <div
-              key={integration.name}
-              className="flex items-center gap-3 rounded-lg border border-dashed p-4 opacity-50"
-            >
-              <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-lg text-2xl">
-                {integration.icon}
-              </div>
-              <div>
-                <p className="font-medium">{integration.name}</p>
-                <p className="text-muted-foreground text-xs">{integration.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    </ErrorBoundary>
   );
 }
 

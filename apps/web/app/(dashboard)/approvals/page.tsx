@@ -41,6 +41,8 @@ import { approvalsApi } from '@/lib/api/approvals';
 import { slaApi } from '@/lib/api/sla';
 import type { Approval, ApprovalStep, CreateApprovalRequest } from '@/lib/api/approvals';
 import type { SLAInstance } from '@/lib/api/sla';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 
 const STATUS_CONFIG: Record<
   string,
@@ -327,7 +329,7 @@ function CreateApprovalDialog({
             <Label htmlFor="create-notes">Notes (optional)</Label>
             <Textarea
               id="create-notes"
-              placeholder="Additional context or instructions..."
+              placeholder="e.g., equipment urgency, delivery timeline, customer requirements..."
               value={form.notes ?? ''}
               onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
               rows={3}
@@ -367,49 +369,53 @@ function ApprovalStepRow({
     approval.status === 'pending';
 
   return (
-    <div className="bg-background/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-sm">
-      <StepIcon className={`h-4 w-4 shrink-0 ${stepCfg.color}`} />
-      <span className="font-medium">Step {step.step_number}</span>
-      {step.approver_role && <span className="text-muted-foreground">· {step.approver_role}</span>}
-      <Badge variant="outline" className={`text-xs ${stepCfg.color}`}>
-        {stepCfg.label}
-      </Badge>
-      {step.comments && (
-        <span
-          className="text-muted-foreground max-w-48 truncate text-xs italic"
-          title={step.comments}
-        >
-          &quot;{step.comments}&quot;
-        </span>
-      )}
-      {step.reviewed_at && (
-        <span className="text-muted-foreground text-xs">
-          {new Date(step.reviewed_at).toLocaleDateString()}
-        </span>
-      )}
-      {isActionable && (
-        <div className="ml-auto flex items-center gap-1.5">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950"
-            onClick={() => onReview('approve', step.id, `Step ${step.step_number}`)}
+    <ErrorBoundary>
+      <div className="bg-background/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-sm">
+        <StepIcon className={`h-4 w-4 shrink-0 ${stepCfg.color}`} />
+        <span className="font-medium">Step {step.step_number}</span>
+        {step.approver_role && (
+          <span className="text-muted-foreground">· {step.approver_role}</span>
+        )}
+        <Badge variant="outline" className={`text-xs ${stepCfg.color}`}>
+          {stepCfg.label}
+        </Badge>
+        {step.comments && (
+          <span
+            className="text-muted-foreground max-w-48 truncate text-xs italic"
+            title={step.comments}
           >
-            <ThumbsUp className="mr-1 h-3.5 w-3.5" />
-            Approve
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-            onClick={() => onReview('reject', step.id, `Step ${step.step_number}`)}
-          >
-            <ThumbsDown className="mr-1 h-3.5 w-3.5" />
-            Reject
-          </Button>
-        </div>
-      )}
-    </div>
+            &quot;{step.comments}&quot;
+          </span>
+        )}
+        {step.reviewed_at && (
+          <span className="text-muted-foreground text-xs">
+            {new Date(step.reviewed_at).toLocaleDateString()}
+          </span>
+        )}
+        {isActionable && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950"
+              onClick={() => onReview('approve', step.id, `Step ${step.step_number}`)}
+            >
+              <ThumbsUp className="mr-1 h-3.5 w-3.5" />
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+              onClick={() => onReview('reject', step.id, `Step ${step.step_number}`)}
+            >
+              <ThumbsDown className="mr-1 h-3.5 w-3.5" />
+              Reject
+            </Button>
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 
@@ -453,6 +459,7 @@ export default function ApprovalsPage() {
   const { toast } = useToast();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -463,24 +470,26 @@ export default function ApprovalsPage() {
 
   const { state: searchState, updateField } = useSearchState({
     key: 'approvals-list',
-    defaultState: { page: 1, statusFilter: 'all', typeFilter: 'all' },
+    defaultState: { page: 1, pageSize: 50, statusFilter: 'all', typeFilter: 'all' },
   });
 
   const statusFilter = (searchState.statusFilter as string) ?? 'all';
   const typeFilter = (searchState.typeFilter as string) ?? 'all';
   const page = (searchState.page as number) ?? 1;
+  const pageSize = (searchState.pageSize as number) ?? 50;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await approvalsApi.list({
         page,
-        page_size: 50,
+        page_size: pageSize,
         status_filter: statusFilter !== 'all' ? statusFilter : undefined,
         approval_type: typeFilter !== 'all' ? typeFilter : undefined,
       });
       setApprovals(res.data);
       setTotal(res.total);
+      setTotalPages(res.total_pages);
     } catch (error: unknown) {
       toast({
         variant: 'destructive',
@@ -490,7 +499,7 @@ export default function ApprovalsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, typeFilter, toast]);
+  }, [page, pageSize, statusFilter, typeFilter, toast]);
 
   // Load SLA instances — best-effort, silently swallowed on error
   const loadSlaInstances = useCallback(async () => {
@@ -533,7 +542,7 @@ export default function ApprovalsPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Approval Workflows</h1>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Multi-step approval chains for orders, quotes, and purchase orders
+              Multi-step approval chains for equipment orders, quotes, and purchase requests
               {pendingCount > 0 &&
                 ` · ${pendingCount} pending action${pendingCount > 1 ? 's' : ''}`}
             </p>
@@ -638,7 +647,8 @@ export default function ApprovalsPage() {
               <ClipboardCheck className="text-muted-foreground/30 mx-auto mb-3 h-12 w-12" />
               <p className="text-muted-foreground">No approval workflows found</p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Approval requests for orders, quotes and purchase orders will appear here.
+                Approval requests for cleaning equipment orders, quotes, and purchase orders will
+                appear here.
               </p>
               <Button
                 variant="outline"
@@ -740,6 +750,20 @@ export default function ApprovalsPage() {
           })
         )}
       </div>
+
+      {totalPages > 1 && (
+        <PaginationControls
+          currentPage={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={total}
+          onPageChange={(p) => updateField('page', p)}
+          onPageSizeChange={(size) => {
+            updateField('pageSize', size);
+            updateField('page', 1);
+          }}
+        />
+      )}
 
       {/* Dialogs */}
       <ReviewStepDialog

@@ -9,14 +9,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { QuoteForm } from './components/QuoteForm';
 import { DeleteQuoteDialog } from './components/DeleteQuoteDialog';
 import { ConvertToOrderDialog } from './components/ConvertToOrderDialog';
-import { Pencil, Trash2, Plus, ArrowRight, Copy, Sparkles, Download } from 'lucide-react';
+import { Pencil, Trash2, Plus, ArrowRight, Copy, Sparkles, Download, FileText } from 'lucide-react';
 import { exportQuotesToCSV, exportQuotesToPDF } from '@/lib/utils/csv-export';
 // PHASE C: Quote Copilot Chat
 import { QuoteCopilotChat } from '@/components/ai/QuoteCopilotChat';
 import { useToast } from '@/hooks/use-toast';
 import { Quote } from './types';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface PaginatedResponse {
   items: Quote[];
@@ -39,6 +42,9 @@ export default function QuotesPage() {
   const { toast } = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
@@ -50,9 +56,12 @@ export default function QuotesPage() {
   const loadQuotes = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<PaginatedResponse>('/api/quotes?page=1&page_size=50');
+      const response = await apiClient.get<PaginatedResponse>(
+        `/api/quotes?page=${page}&page_size=${pageSize}`
+      );
       setQuotes(response.items);
       setTotal(response.total);
+      setTotalPages(response.total_pages);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to load quotes';
       console.error('Failed to load quotes:', error);
@@ -67,7 +76,7 @@ export default function QuotesPage() {
       setLoading(false);
       setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
-  }, [toast]);
+  }, [page, pageSize, toast]);
 
   useEffect(() => {
     loadQuotes();
@@ -169,226 +178,242 @@ export default function QuotesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Equipment Quotes</h1>
-          <p className="text-muted-foreground">Manage customer quotations</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportPDF} disabled={quotes.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Export PDF
-          </Button>
-          <Button variant="outline" onClick={handleExport} disabled={quotes.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          {/* PHASE C: Quote Copilot Button */}
-          <Button variant="outline" onClick={() => setCopilotOpen(true)}>
-            <Sparkles className="mr-2 h-4 w-4" />
-            Copilot
-          </Button>
-          <Button onClick={handleAddQuote}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Quote
-          </Button>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Quotations</CardTitle>
-              <CardDescription>
-                {total} quotes in system
-                {lastUpdated && (
-                  <span className="text-muted-foreground ml-2 text-xs">
-                    • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
-                  </span>
-                )}
-              </CardDescription>
-            </div>
+    <ErrorBoundary>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Equipment Quotes</h1>
+            <p className="text-muted-foreground">Manage customer quotations</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportPDF} disabled={quotes.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button variant="outline" onClick={handleExport} disabled={quotes.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            {/* PHASE C: Quote Copilot Button */}
+            <Button variant="outline" onClick={() => setCopilotOpen(true)}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Copilot
+            </Button>
+            <Button onClick={handleAddQuote}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Quote
+            </Button>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Quotations</CardTitle>
+                <CardDescription>
+                  {total} quotes in system
+                  {lastUpdated && (
+                    <span className="text-muted-foreground ml-2 text-xs">
+                      • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                    </span>
+                  )}
+                </CardDescription>
+              </div>
             </div>
-          ) : !quotes || quotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground text-lg font-medium">No quotes found</p>
-              <p className="text-muted-foreground mt-2 text-sm">
-                Create your first quote to get started.
-              </p>
-              <Button onClick={handleAddQuote} className="mt-4">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Quote
-              </Button>
-            </div>
-          ) : (
-            <ResponsiveTable
-              data={quotes}
-              keyExtractor={(quote) => quote.id}
-              columns={[
-                {
-                  key: 'quote_number',
-                  label: 'Quote #',
-                  className: 'font-mono text-sm font-medium',
-                  render: (quote) => quote.quote_number,
-                },
-                {
-                  key: 'customer',
-                  label: 'Customer',
-                  render: (quote) => quote.customer_name,
-                },
-                {
-                  key: 'status',
-                  label: 'Status',
-                  render: (quote) => {
-                    const expired = isExpired(quote.valid_until ?? null);
-                    return (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge
-                          variant={statusColors[quote.status] || 'outline'}
-                          className="capitalize"
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : !quotes || quotes.length === 0 ? (
+              <EmptyState
+                icon={FileText}
+                title="No quotes yet"
+                description="Create your first quote to get started."
+                action={{
+                  label: 'Create Quote',
+                  onClick: handleAddQuote,
+                }}
+              />
+            ) : (
+              <ResponsiveTable
+                data={quotes}
+                keyExtractor={(quote) => quote.id}
+                columns={[
+                  {
+                    key: 'quote_number',
+                    label: 'Quote #',
+                    className: 'font-mono text-sm font-medium',
+                    render: (quote) => quote.quote_number,
+                  },
+                  {
+                    key: 'customer',
+                    label: 'Customer',
+                    render: (quote) => quote.customer_name,
+                  },
+                  {
+                    key: 'status',
+                    label: 'Status',
+                    render: (quote) => {
+                      const expired = isExpired(quote.valid_until ?? null);
+                      return (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant={statusColors[quote.status] || 'outline'}
+                            className="capitalize"
+                          >
+                            {quote.status}
+                          </Badge>
+                          {expired && quote.status !== 'expired' && (
+                            <Badge variant="destructive">Expired</Badge>
+                          )}
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    key: 'items',
+                    label: 'Items',
+                    hideOnMobile: true,
+                    render: (quote) => quote.item_count,
+                  },
+                  {
+                    key: 'total',
+                    label: 'Total',
+                    className: 'font-semibold',
+                    render: (quote) => `$${quote.total}`,
+                  },
+                  {
+                    key: 'quote_date',
+                    label: 'Quote Date',
+                    className: 'text-sm text-muted-foreground',
+                    hideOnMobile: true,
+                    render: (quote) => format(new Date(quote.quote_date), 'MMM dd, yyyy'),
+                  },
+                  {
+                    key: 'valid_until',
+                    label: 'Valid Until',
+                    hideOnMobile: true,
+                    render: (quote) => {
+                      const expired = isExpired(quote.valid_until ?? null);
+                      return (
+                        <span
+                          className={`text-sm ${expired ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
                         >
-                          {quote.status}
-                        </Badge>
-                        {expired && quote.status !== 'expired' && (
-                          <Badge variant="destructive">Expired</Badge>
+                          {quote.valid_until
+                            ? format(new Date(quote.valid_until), 'MMM dd, yyyy')
+                            : 'N/A'}
+                        </span>
+                      );
+                    },
+                  },
+                  {
+                    key: 'actions',
+                    label: 'Actions',
+                    className: 'text-right',
+                    mobileLabel: '',
+                    render: (quote) => (
+                      <div className="flex flex-wrap justify-end gap-2">
+                        {quote.status.toLowerCase() === 'accepted' && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleConvertToOrder(quote);
+                            }}
+                          >
+                            <ArrowRight className="mr-1 h-3 w-3" />
+                            Convert
+                          </Button>
                         )}
-                      </div>
-                    );
-                  },
-                },
-                {
-                  key: 'items',
-                  label: 'Items',
-                  hideOnMobile: true,
-                  render: (quote) => quote.item_count,
-                },
-                {
-                  key: 'total',
-                  label: 'Total',
-                  className: 'font-semibold',
-                  render: (quote) => `$${quote.total}`,
-                },
-                {
-                  key: 'quote_date',
-                  label: 'Quote Date',
-                  className: 'text-sm text-muted-foreground',
-                  hideOnMobile: true,
-                  render: (quote) => format(new Date(quote.quote_date), 'MMM dd, yyyy'),
-                },
-                {
-                  key: 'valid_until',
-                  label: 'Valid Until',
-                  hideOnMobile: true,
-                  render: (quote) => {
-                    const expired = isExpired(quote.valid_until ?? null);
-                    return (
-                      <span
-                        className={`text-sm ${expired ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
-                      >
-                        {quote.valid_until
-                          ? format(new Date(quote.valid_until), 'MMM dd, yyyy')
-                          : 'N/A'}
-                      </span>
-                    );
-                  },
-                },
-                {
-                  key: 'actions',
-                  label: 'Actions',
-                  className: 'text-right',
-                  mobileLabel: '',
-                  render: (quote) => (
-                    <div className="flex flex-wrap justify-end gap-2">
-                      {quote.status.toLowerCase() === 'accepted' && (
                         <Button
-                          variant="default"
+                          variant="ghost"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleConvertToOrder(quote);
+                            handleEditQuote(quote);
                           }}
                         >
-                          <ArrowRight className="mr-1 h-3 w-3" />
-                          Convert
+                          <Pencil className="h-4 w-4" />
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditQuote(quote);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicateQuote(quote);
-                        }}
-                        title="Duplicate Quote"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteQuote(quote);
-                        }}
-                      >
-                        <Trash2 className="text-destructive h-4 w-4" />
-                      </Button>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          )}
-        </CardContent>
-      </Card>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicateQuote(quote);
+                          }}
+                          title="Duplicate Quote"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteQuote(quote);
+                          }}
+                        >
+                          <Trash2 className="text-destructive h-4 w-4" />
+                        </Button>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            )}
+            {totalPages > 1 && (
+              <div className="mt-4">
+                <PaginationControls
+                  currentPage={page}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  totalItems={total}
+                  onPageChange={setPage}
+                  onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <QuoteForm
-        quote={selectedQuote}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSuccess={handleSuccess}
-      />
+        <QuoteForm
+          quote={selectedQuote}
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSuccess={handleSuccess}
+        />
 
-      <DeleteQuoteDialog
-        quote={selectedQuote}
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onSuccess={handleSuccess}
-      />
+        <DeleteQuoteDialog
+          quote={selectedQuote}
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onSuccess={handleSuccess}
+        />
 
-      <ConvertToOrderDialog
-        quote={selectedQuote}
-        open={convertDialogOpen}
-        onOpenChange={setConvertDialogOpen}
-        onSuccess={handleSuccess}
-      />
+        <ConvertToOrderDialog
+          quote={selectedQuote}
+          open={convertDialogOpen}
+          onOpenChange={setConvertDialogOpen}
+          onSuccess={handleSuccess}
+        />
 
-      {/* PHASE C: Quote Copilot Chat */}
-      <QuoteCopilotChat
-        open={copilotOpen}
-        onOpenChange={setCopilotOpen}
-        onQuoteCreated={handleCopilotQuoteCreated}
-      />
-    </div>
+        {/* PHASE C: Quote Copilot Chat */}
+        <QuoteCopilotChat
+          open={copilotOpen}
+          onOpenChange={setCopilotOpen}
+          onQuoteCreated={handleCopilotQuoteCreated}
+        />
+      </div>
+    </ErrorBoundary>
   );
 }

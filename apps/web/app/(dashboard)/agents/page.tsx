@@ -17,58 +17,7 @@ export const metadata = {
   description: 'Monitor autonomous agent performance and metrics',
 };
 
-interface AgentStatsData {
-  total_agents: number;
-  active_agents: number;
-  total_tasks: number;
-  successful_tasks: number;
-  failed_tasks: number;
-  success_rate: number;
-  avg_iterations: number;
-  avg_duration_seconds: number;
-}
-
-async function fetchAgentStats(): Promise<AgentStatsData> {
-  try {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const res = await fetch(`${backendUrl}/api/agents/stats`, {
-      cache: 'no-store',
-      next: { revalidate: 0 },
-    });
-
-    if (!res.ok) {
-      // Fallback to mock data if API fails
-      return {
-        total_agents: 7,
-        active_agents: 3,
-        total_tasks: 135,
-        successful_tasks: 120,
-        failed_tasks: 15,
-        success_rate: 0.89,
-        avg_iterations: 1.5,
-        avg_duration_seconds: 180,
-      };
-    }
-
-    return res.json();
-  } catch (error) {
-    // Fallback mock data on error
-    return {
-      total_agents: 7,
-      active_agents: 3,
-      total_tasks: 135,
-      successful_tasks: 120,
-      failed_tasks: 15,
-      success_rate: 0.89,
-      avg_iterations: 1.5,
-      avg_duration_seconds: 180,
-    };
-  }
-}
-
-export default async function AgentDashboardPage() {
-  const stats = await fetchAgentStats();
-
+export default function AgentDashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -80,9 +29,7 @@ export default async function AgentDashboardPage() {
 
       {/* Overview Stats */}
       <div className="mb-8">
-        <Suspense fallback={<AgentStatsSkeleton />}>
-          <AgentStats stats={stats} />
-        </Suspense>
+        <AgentStats />
       </div>
 
       {/* Main Content Grid */}
@@ -124,19 +71,6 @@ export default async function AgentDashboardPage() {
 }
 
 // Loading skeletons
-function AgentStatsSkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="bg-card animate-pulse rounded-lg p-6 shadow">
-          <div className="bg-muted mb-2 h-4 w-1/2 rounded" />
-          <div className="bg-muted h-8 w-3/4 rounded" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function AgentListSkeleton() {
   return (
     <div className="space-y-2">

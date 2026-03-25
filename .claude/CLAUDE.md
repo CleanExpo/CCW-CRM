@@ -32,6 +32,32 @@ This project has automated anti-drift protection via Claude Code hooks.
 3. Read .claude/memory/current-state.md
 4. Continue from where the snapshot says
 
+### Obsidian Vault (Living Documentation Layer)
+
+The project has an **auto-generated knowledge graph** at `.obsidian-vault/`:
+
+**What it is:**
+
+- 225+ markdown docs with YAML frontmatter (routes, pages, models)
+- Bidirectional wikilinks: `[[ROUTE-001]]` ↔ `[[PAGE-023]]` ↔ `[[MODEL-015]]`
+- Dataview queries in `_index/` for discovery (stale docs, orphaned routes, model usage)
+- Graph view for visual impact analysis
+
+**How to use:**
+
+- **Before adding routes/pages/models**: Check vault + `docs/catalogs/`
+- **After adding**: Run `/sync-vault` or `python scripts/vault-generator.py --entity-types routes,pages`
+- **Detect drift**: `python scripts/audit-vault.py` (finds undocumented files)
+- **Explore**: Open `.obsidian-vault/` in Obsidian, use graph view + Dataview queries
+
+**Integration:**
+
+- Pre-commit hook blocks commits with undocumented files
+- Toolshed API endpoints: `/api/ai/toolshed/vault/sync`, `/vault/drift`, `/vault/query`
+- Auto-preserves human-curated content in `<!-- HUMAN-CURATED -->` blocks
+
+**Vault sync status**: Run `python scripts/audit-vault.py` to verify all entities documented.
+
 ---
 
 # CCW-Online ERP — SYSTEM INSTRUCTIONS

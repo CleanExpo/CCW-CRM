@@ -12,6 +12,7 @@ import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
+  Award,
   Building2,
   Mail,
   Phone,
@@ -23,6 +24,7 @@ import {
   Plus,
   Pencil,
   Trash2,
+  Tag,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils/calculations';
@@ -82,6 +84,26 @@ interface Contact {
   is_active: boolean;
 }
 
+interface Certification {
+  id: string;
+  cert_body: string;
+  cert_type: string;
+  cert_number: string | null;
+  technician_name: string | null;
+  expiry_date: string | null;
+  status: string;
+  days_until_expiry: number | null;
+}
+
+interface PricingTier {
+  customer_id: string;
+  tier_id: string;
+  tier_name: string;
+  discount_pct: string;
+  effective_date: string;
+  notes: string | null;
+}
+
 const statusColors: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   draft: 'secondary',
   pending: 'outline',
@@ -106,6 +128,8 @@ export default function CustomerDetailPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [pricingTier, setPricingTier] = useState<PricingTier | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Contact dialog states
@@ -141,6 +165,26 @@ export default function CustomerDetailPage() {
       // Load customer contacts (endpoint returns plain array)
       const contactsData = await apiClient.get<Contact[]>(`/api/contacts/customer/${customerId}`);
       setContacts(contactsData || []);
+
+      // Load IICRC certifications
+      try {
+        const certData = await apiClient.get<Certification[]>(
+          `/api/certifications?customer_id=${customerId}&page_size=100`
+        );
+        setCertifications(certData || []);
+      } catch {
+        setCertifications([]);
+      }
+
+      // Load pricing tier
+      try {
+        const tierData = await apiClient.get<PricingTier | null>(
+          `/api/pricing/customers/${customerId}/tier`
+        );
+        setPricingTier(tierData);
+      } catch {
+        setPricingTier(null);
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to load customer data';
       toast({
@@ -261,6 +305,12 @@ export default function CustomerDetailPage() {
             <Badge variant={customer.is_active ? 'default' : 'secondary'}>
               {customer.is_active ? 'Active' : 'Inactive'}
             </Badge>
+            {pricingTier && (
+              <Badge variant="outline" className="gap-1">
+                <Tag className="h-3 w-3" />
+                {pricingTier.tier_name} ({parseFloat(pricingTier.discount_pct).toFixed(0)}% off)
+              </Badge>
+            )}
           </div>
           <p className="text-muted-foreground">{customer.customer_number}</p>
         </div>
@@ -380,6 +430,10 @@ export default function CustomerDetailPage() {
           <TabsTrigger value="quotes">Quotes ({quotes.length})</TabsTrigger>
           <TabsTrigger value="contacts">Contacts ({contacts.length})</TabsTrigger>
           <TabsTrigger value="activities">Activities</TabsTrigger>
+          <TabsTrigger value="certifications">
+            <Award className="mr-1 h-4 w-4" />
+            Certifications ({certifications.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="orders" className="space-y-4">
@@ -615,6 +669,103 @@ export default function CustomerDetailPage() {
                 onDeleteActivity={handleDeleteActivity}
                 refreshTrigger={activityRefreshTrigger}
               />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="certifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>IICRC Certifications</CardTitle>
+              <CardDescription>
+                Industry certifications held by this customer&apos;s technicians
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {certifications.length === 0 ? (
+                <div className="text-muted-foreground py-8 text-center">
+                  <Award className="mx-auto mb-4 h-12 w-12 opacity-50" />
+                  <p>No certifications on record</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="px-4 py-3 text-left font-medium">Body</th>
+                        <th className="px-4 py-3 text-left font-medium">Certification</th>
+                        <th className="px-4 py-3 text-left font-medium">Technician</th>
+                        <th className="px-4 py-3 text-left font-medium">Cert #</th>
+                        <th className="px-4 py-3 text-left font-medium">Expires</th>
+                        <th className="px-4 py-3 text-center font-medium">Status</th>
+                        <th className="px-4 py-3 text-right font-medium">Days Left</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {certifications.map((cert) => {
+                        const isExpiring =
+                          cert.days_until_expiry !== null && cert.days_until_expiry <= 60;
+                        const isExpired =
+                          cert.days_until_expiry !== null && cert.days_until_expiry < 0;
+                        return (
+                          <tr key={cert.id} className="hover:bg-muted/50 border-b">
+                            <td className="px-4 py-3">
+                              <Badge variant="outline" className="text-xs">
+                                {cert.cert_body}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium">{cert.cert_type}</td>
+                            <td className="text-muted-foreground px-4 py-3 text-sm">
+                              {cert.technician_name || '-'}
+                            </td>
+                            <td className="text-muted-foreground px-4 py-3 font-mono text-xs">
+                              {cert.cert_number || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              {cert.expiry_date
+                                ? format(new Date(cert.expiry_date), 'dd MMM yyyy')
+                                : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <Badge
+                                variant={
+                                  cert.status === 'active'
+                                    ? isExpiring
+                                      ? 'outline'
+                                      : 'default'
+                                    : 'destructive'
+                                }
+                                className="capitalize"
+                              >
+                                {cert.status}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm">
+                              {cert.days_until_expiry !== null ? (
+                                <span
+                                  className={
+                                    isExpired
+                                      ? 'text-destructive font-semibold'
+                                      : isExpiring
+                                        ? 'font-semibold text-amber-600'
+                                        : 'text-muted-foreground'
+                                  }
+                                >
+                                  {isExpired
+                                    ? `${Math.abs(cert.days_until_expiry)}d overdue`
+                                    : `${cert.days_until_expiry}d`}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

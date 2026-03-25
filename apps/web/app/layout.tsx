@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import './globals.css';
@@ -36,6 +36,11 @@ async function getMessages(locale: Locale) {
   }
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://ccwonline.com.au'),
   title: {
@@ -61,6 +66,7 @@ export const metadata: Metadata = {
     'cleaning equipment supplier Australia',
     'bulk cleaning chemicals Australia',
   ],
+  manifest: '/manifest.json',
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
   },

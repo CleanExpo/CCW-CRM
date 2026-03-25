@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Equipment Supplier ERP - Full-stack Python FastAPI + Next.js",
 
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "claude-sonnet-4-6",
   "maxTokens": 64000,
 
   "permissions": {

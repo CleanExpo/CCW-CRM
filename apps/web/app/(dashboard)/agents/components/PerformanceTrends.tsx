@@ -1,40 +1,21 @@
-/**
- * PerformanceTrends Component
- *
- * Displays performance trends over time with simple visualization.
- */
+'use client';
 
-interface DataPoint {
-  date: string;
-  tasks_completed: number;
-  success_rate: number;
-}
+import { useEffect, useState } from 'react';
+import { agentsApi, type PerformanceTrends as PerformanceTrendsData } from '@/lib/api/agents';
 
 interface PerformanceTrendsProps {
   days?: number;
 }
 
-async function fetchPerformanceTrends(days: number): Promise<{ data_points: DataPoint[] } | null> {
-  try {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const res = await fetch(`${backendUrl}/api/agents/performance/trends?days=${days}`, {
-      cache: 'no-store',
-      next: { revalidate: 0 },
-    });
+export function PerformanceTrends({ days = 7 }: PerformanceTrendsProps) {
+  const [trends, setTrends] = useState<PerformanceTrendsData | null>(null);
 
-    if (!res.ok) {
-      return null;
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error('Failed to fetch performance trends:', error);
-    return null;
-  }
-}
-
-export async function PerformanceTrends({ days = 7 }: PerformanceTrendsProps) {
-  const trends = await fetchPerformanceTrends(days);
+  useEffect(() => {
+    agentsApi
+      .getPerformanceTrends(days)
+      .then(setTrends)
+      .catch(() => setTrends(null));
+  }, [days]);
 
   if (!trends || !trends.data_points) {
     return (
@@ -44,8 +25,8 @@ export async function PerformanceTrends({ days = 7 }: PerformanceTrendsProps) {
     );
   }
 
-  const dataPoints: DataPoint[] = trends.data_points.slice(0, days).reverse();
-  const maxTasks = Math.max(...dataPoints.map((d: DataPoint) => d.tasks_completed), 1);
+  const dataPoints = trends.data_points.slice(0, days).reverse();
+  const maxTasks = Math.max(...dataPoints.map((d) => d.tasks_completed), 1);
 
   return (
     <div className="rounded-lg bg-white p-6 shadow">
@@ -54,9 +35,8 @@ export async function PerformanceTrends({ days = 7 }: PerformanceTrendsProps) {
         <p className="text-sm text-gray-600">Task completion and success rate trends</p>
       </div>
 
-      {/* Simple bar chart */}
       <div className="space-y-3">
-        {dataPoints.map((point: DataPoint, idx: number) => {
+        {dataPoints.map((point, idx) => {
           const barWidth = (point.tasks_completed / maxTasks) * 100;
           const successRateColor =
             point.success_rate > 0.85
@@ -68,7 +48,7 @@ export async function PerformanceTrends({ days = 7 }: PerformanceTrendsProps) {
           return (
             <div key={idx} className="flex items-center space-x-3">
               <div className="w-20 text-xs text-gray-500">
-                {new Date(point.date).toLocaleDateString('en-US', {
+                {new Date(point.date).toLocaleDateString('en-AU', {
                   month: 'short',
                   day: 'numeric',
                 })}
@@ -93,7 +73,6 @@ export async function PerformanceTrends({ days = 7 }: PerformanceTrendsProps) {
         })}
       </div>
 
-      {/* Legend */}
       <div className="mt-6 flex items-center justify-between border-t pt-4 text-xs text-gray-500">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
@@ -106,10 +85,7 @@ export async function PerformanceTrends({ days = 7 }: PerformanceTrendsProps) {
           </div>
         </div>
         <div>
-          Avg:{' '}
-          {(dataPoints.reduce((acc: number, d: DataPoint) => acc + d.tasks_completed, 0) /
-            dataPoints.length) |
-            0}{' '}
+          Avg: {(dataPoints.reduce((acc, d) => acc + d.tasks_completed, 0) / dataPoints.length) | 0}{' '}
           tasks/day
         </div>
       </div>

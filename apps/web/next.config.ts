@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
   experimental: {
     typedRoutes: false,
   },
-  // Enable source maps for production (Sentry needs these)
-  productionBrowserSourceMaps: true,
+  // Disable browser source maps in production (Sentry uses server-side upload only)
+  productionBrowserSourceMaps: false,
   images: {
     remotePatterns: [
       {
@@ -36,6 +36,20 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    const connectSrcParts = [
+      "'self'",
+      'https://*.supabase.co',
+      'wss://*.supabase.co',
+      backendUrl,
+      'https://*.sentry.io',
+      ...(process.env.NODE_ENV === 'development' ? ['http://localhost:8001'] : []),
+    ];
+    const hsts =
+      process.env.NODE_ENV === 'production'
+        ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]
+        : [];
+
     return [
       {
         source: '/api/:path*',
@@ -53,6 +67,26 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Mobile order routes — allow camera for photo capture
+      {
+        source: '/mobile/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(self), microphone=(), geolocation=()',
+          },
+        ],
+      },
+      // Guest order portal — allow camera for mobile devices viewing their order
+      {
+        source: '/guest/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(self), microphone=(), geolocation=()',
+          },
+        ],
+      },
       {
         source: '/:path*',
         headers: [
@@ -64,7 +98,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://localhost:8001 https://*.sentry.io",
+              `connect-src ${connectSrcParts.join(' ')}`,
               "frame-ancestors 'none'",
             ].join('; '),
           },
@@ -84,6 +118,7 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+          ...hsts,
         ],
       },
     ];

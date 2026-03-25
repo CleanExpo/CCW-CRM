@@ -305,7 +305,7 @@ export default function ContactsPage() {
                 Contacts
               </CardTitle>
               <CardDescription>
-                Manage contacts and relationships
+                Manage trade contacts and cleaning business representatives
                 {lastUpdated && (
                   <span className="ml-2 text-xs">
                     (Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })})
@@ -362,7 +362,7 @@ export default function ContactsPage() {
               <p className="text-muted-foreground mb-4">
                 {search
                   ? 'Try adjusting your search terms'
-                  : 'Get started by creating your first contact'}
+                  : 'Add your first trade contact or cleaning business representative'}
               </p>
               {!search && (
                 <Button onClick={() => setFormOpen(true)}>

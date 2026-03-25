@@ -102,6 +102,10 @@ class Settings(BaseSettings):
 
     # API
     backend_api_key: str = Field(default="")
+    frontend_url: str = Field(
+        default="http://localhost:3000",
+        description="Frontend application URL (used for guest approval links, emails)",
+    )
     skip_auth_enforcement: bool = Field(
         default=False,
         description="Skip authentication enforcement (ONLY for local testing, NEVER in production)",

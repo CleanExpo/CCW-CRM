@@ -6,11 +6,13 @@ and syncing inventory.
 PHASE: Enhanced Shopify Integration - Task 1.3: Bulk metafield sync endpoints.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
+from uuid import uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -295,6 +297,66 @@ async def get_connection_status(
             if connection.last_inventory_sync
             else None
         ),
+    }
+
+
+class ShopifyConfigureRequest(BaseModel):
+    """Credentials to configure the Shopify integration."""
+
+    shop_domain: str = Field(min_length=1, description="e.g. my-store.myshopify.com")
+    access_token: str = Field(min_length=1, description="Shopify Admin API access token")
+    api_key: str = Field(default="", description="Shopify API key (optional)")
+    api_secret: str = Field(default="", description="Shopify API secret (optional)")
+    webhook_secret: str = Field(default="", description="Webhook HMAC secret (optional)")
+
+
+@router.post("/configure")
+async def configure_shopify(
+    request: ShopifyConfigureRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Save Shopify credentials to the database.
+
+    Creates or updates the ShopifyConnection record. The store is NOT
+    contacted during this call — use POST /connect to validate and activate.
+    """
+    logger.info("configuring_shopify_credentials", shop_domain=request.shop_domain)
+
+    result = await db.execute(
+        select(ShopifyConnection).where(
+            ShopifyConnection.shop_domain == request.shop_domain
+        )
+    )
+    conn = result.scalars().first()
+
+    if conn:
+        conn.access_token = request.access_token
+        conn.api_key = request.api_key
+        conn.api_secret = request.api_secret
+        conn.webhook_secret = request.webhook_secret
+        conn.is_active = True
+    else:
+        conn = ShopifyConnection(
+            id=uuid4(),
+            shop_domain=request.shop_domain,
+            shop_name=request.shop_domain,
+            access_token=request.access_token,
+            api_key=request.api_key,
+            api_secret=request.api_secret,
+            webhook_secret=request.webhook_secret,
+            is_active=True,
+        )
+        db.add(conn)
+
+    await db.commit()
+    await db.refresh(conn)
+
+    logger.info("shopify_credentials_saved", shop_domain=conn.shop_domain)
+    return {
+        "connected": True,
+        "mode": "live",
+        "shop_domain": conn.shop_domain,
+        "message": "Credentials saved. Use Connect to verify and activate.",
     }
 
 

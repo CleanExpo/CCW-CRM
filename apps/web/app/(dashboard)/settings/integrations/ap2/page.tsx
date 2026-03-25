@@ -47,6 +47,7 @@ import {
   type AP2MandateResponse,
   type AP2TransactionListItem,
 } from '@/lib/api/ap2';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 // ─── Demo fallback data ────────────────────────────────────────────────────────
 
@@ -415,15 +416,17 @@ function PaymentWizard({
 
 function TableSkeleton({ rows = 4, cols = 4 }: { rows?: number; cols?: number }) {
   return (
-    <div className="space-y-2">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex gap-4">
-          {Array.from({ length: cols }).map((_, j) => (
-            <Skeleton key={j} className="h-4 flex-1" />
-          ))}
-        </div>
-      ))}
-    </div>
+    <ErrorBoundary>
+      <div className="space-y-2">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex gap-4">
+            {Array.from({ length: cols }).map((_, j) => (
+              <Skeleton key={j} className="h-4 flex-1" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </ErrorBoundary>
   );
 }
 

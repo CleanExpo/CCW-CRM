@@ -1,8 +1,8 @@
 # Models Catalog — CCW ERP/CRM Database
 
-# Last Updated: 2026-03-17
+# Last Updated: 2026-03-25
 
-# Total Models: 120
+# Total Models: 126
 
 # Source: apps/backend/src/db/
 
@@ -1012,6 +1012,66 @@
 
 - **Table**: equipment_service_history
 - **File**: `apps/backend/src/db/workshop_models.py`
+- **Status**: Active
+
+---
+
+## Equipment Lifecycle Models (equipment_lifecycle_models.py) — Sprint 2
+
+### MODEL-148: EquipmentUnit
+
+- **Table**: equipment_units
+- **File**: `apps/backend/src/db/equipment_lifecycle_models.py`
+- **Key Fields**: serial_number (unique), product_id FK, customer_id FK, order_id FK, warranty_expiry, warranty_months, is_active
+- **Migration**: `00c_equipment_lifecycle`
+- **Status**: Active
+
+### MODEL-149: WarrantyAlert
+
+- **Table**: warranty_alerts
+- **File**: `apps/backend/src/db/equipment_lifecycle_models.py`
+- **Key Fields**: unit_id FK, alert_type, alert_date, resolved, resolved_at
+- **Migration**: `00c_equipment_lifecycle`
+- **Status**: Active
+
+---
+
+## Certification Models (certification_models.py) — Sprint 2
+
+### MODEL-150: TechnicianCertification
+
+- **Table**: technician_certifications
+- **File**: `apps/backend/src/db/certification_models.py`
+- **Key Fields**: customer_id FK, cert_body, cert_type, cert_number, technician_name, issue_date, expiry_date, status
+- **Migration**: `00d_add_certification_tables`
+- **Status**: Active
+
+### MODEL-151: CertificationAlert
+
+- **Table**: certification_alerts
+- **File**: `apps/backend/src/db/certification_models.py`
+- **Key Fields**: cert_id FK, days_until_expiry, notified, notified_at
+- **Migration**: `00d_add_certification_tables`
+- **Status**: Active
+
+---
+
+## Pricing Tier Models (pricing_models.py) — Sprint 2
+
+### MODEL-152: PricingTier
+
+- **Table**: pricing_tiers
+- **File**: `apps/backend/src/db/pricing_models.py`
+- **Key Fields**: name (unique), discount_pct, min_annual_spend, description
+- **Migration**: `00e_add_pricing_tier_tables`
+- **Status**: Active
+
+### MODEL-153: CustomerPricingAssignment
+
+- **Table**: customer_pricing_assignments
+- **File**: `apps/backend/src/db/pricing_models.py`
+- **Key Fields**: customer_id FK (unique), tier_id FK, effective_date, notes
+- **Migration**: `00e_add_pricing_tier_tables`
 - **Status**: Active
 
 ---

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.cache.decorators import cached, invalidate_cache
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.crm_models import Activity as ActivityModel
 from src.db.crm_models import Contact as ContactModel
 from src.db.crm_schemas import (
@@ -44,7 +44,7 @@ async def list_activities(
     order_id: UUID | None = None,
     quote_id: UUID | None = None,
     include_completed: bool = True,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List activities with pagination and filters."""
     query = select(ActivityModel)
@@ -92,7 +92,7 @@ async def list_activities(
 
 @router.get("/stats", response_model=ActivityStats)
 async def get_activity_stats(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get aggregate statistics for activities dashboard."""
     now = datetime.now(UTC)
@@ -152,7 +152,7 @@ async def get_activity_stats(
 @router.get("/{activity_id}", response_model=ActivityWithRelations)
 async def get_activity(
     activity_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single activity by ID with related entity names (single query with joins)."""
     query = (
@@ -186,7 +186,7 @@ async def get_activity(
 @router.post("", response_model=Activity, status_code=201)
 async def create_activity(
     activity_data: ActivityCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Log a new activity."""
     # Validate related entities if provided
@@ -240,7 +240,7 @@ async def create_activity(
 async def update_activity(
     activity_id: UUID,
     activity_data: ActivityUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Update an activity."""
     query = select(ActivityModel).where(ActivityModel.id == activity_id)
@@ -270,7 +270,7 @@ async def update_activity(
 @router.delete("/{activity_id}", status_code=204, response_model=None)
 async def delete_activity(
     activity_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Delete an activity."""
     query = select(ActivityModel).where(ActivityModel.id == activity_id)
@@ -294,7 +294,7 @@ async def delete_activity(
 async def complete_activity(
     activity_id: UUID,
     complete_data: ActivityComplete | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Mark an activity as complete."""
     query = select(ActivityModel).where(ActivityModel.id == activity_id)
@@ -334,7 +334,7 @@ async def get_customer_activities(
     customer_id: UUID,
     limit: int = Query(20, ge=1, le=100),
     activity_type: ActivityType | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get activities for a specific customer (timeline view)."""
     query = select(ActivityModel).where(ActivityModel.customer_id == customer_id)
@@ -354,7 +354,7 @@ async def get_customer_activities(
 async def get_contact_activities(
     contact_id: UUID,
     limit: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get activities for a specific contact (timeline view)."""
     query = (
@@ -374,7 +374,7 @@ async def get_contact_activities(
 async def get_pending_tasks(
     limit: int = Query(10, ge=1, le=50),
     include_overdue: bool = True,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get pending tasks (activities with due dates that are not completed)."""
     query = (

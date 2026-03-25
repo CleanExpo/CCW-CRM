@@ -20,7 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.models_base import (
     AustralianState,
     AvailabilityStatus,
@@ -167,7 +167,7 @@ async def list_contractors(
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     state: AustralianState | None = Query(None, description="Filter by Australian state (e.g., QLD, NSW)"),
     specialisation: str | None = Query(None, description="Filter by specialisation"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> ContractorList:
     """
     List contractors with optional filtering.
@@ -221,7 +221,7 @@ async def list_contractors(
 )
 async def get_contractor(
     contractor_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Contractor:
     """Get contractor by ID."""
     query = (
@@ -250,7 +250,7 @@ async def get_contractor(
 )
 async def create_contractor(
     contractor: ContractorCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Contractor:
     """Create new contractor."""
     new_contractor = ContractorModel(
@@ -278,7 +278,7 @@ async def create_contractor(
 async def update_contractor(
     contractor_id: UUID,
     updates: ContractorUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Contractor:
     """Update contractor."""
     # Get existing contractor
@@ -312,7 +312,7 @@ async def update_contractor(
 )
 async def delete_contractor(
     contractor_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Delete contractor (cascades to availability slots)."""
     query = select(ContractorModel).where(ContractorModel.id == contractor_id)
@@ -341,7 +341,7 @@ async def delete_contractor(
 async def add_availability_slot(
     contractor_id: UUID,
     slot: AvailabilitySlotCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> AvailabilitySlot:
     """Add availability slot."""
     # Check if contractor exists
@@ -385,7 +385,7 @@ async def add_availability_slot(
 async def get_contractor_availability(
     contractor_id: UUID,
     status_filter: AvailabilityStatus | None = Query(None, alias="status", description="Filter by status"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> list[AvailabilitySlot]:
     """Get contractor availability."""
     # Check if contractor exists
@@ -424,7 +424,7 @@ async def search_by_location(
     state: AustralianState = Query(AustralianState.QLD, description="Australian state (default: QLD)"),
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> ContractorList:
     """Search contractors by location."""
     # Query contractors with matching availability slots

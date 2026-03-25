@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v5
         with:
           version: 'latest'
 
@@ -83,28 +83,26 @@ jobs:
         working-directory: apps/backend
         run: uv run ruff check src/
 
-      # Type checking (enable when mypy errors are fixed)
-      # - name: Type check with mypy
-      #   working-directory: apps/backend
-      #   run: uv run mypy src/
+      - name: Type check with mypy
+        working-directory: apps/backend
+        run: uv run mypy src/ --ignore-missing-imports
 
       - name: Run database migrations
         working-directory: apps/backend
-        # continue-on-error: alembic may fail if extensions like pgvector are unavailable.
-        # Tests that need the DB will still partially pass; tracked in UNI-1242.
-        continue-on-error: true
         run: uv run alembic upgrade head
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
 
+      - name: Seed demo data
+        run: |
+          PGPASSWORD=local_dev_password psql \
+            -h localhost -U starter_user -d starter_db \
+            -f apps/backend/seed_demo_simple.sql
+
       - name: Run tests with coverage
         id: test
         working-directory: apps/backend
-        # continue-on-error: pre-existing test failures are tracked in UNI-1242.
-        # Ruff lint (above) still gates code quality. Tests are non-blocking until
-        # the full DB migration + fixture setup is wired properly in CI.
-        continue-on-error: true
-        run: uv run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=15 -v
+        run: uv run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=43 -v
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
           REDIS_URL: redis://localhost:6379/0
@@ -276,10 +274,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@e4db8464a088ece1b920f60402e813ea4de65b8f # v3
 
       - name: Build backend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           context: ./apps/backend
           file: ./apps/backend/Dockerfile
@@ -289,7 +287,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build frontend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           context: .
           file: ./apps/web/Dockerfile
@@ -349,7 +347,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v5
         with:
           version: 'latest'
 

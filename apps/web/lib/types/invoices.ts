@@ -19,6 +19,13 @@ export enum PaymentMethod {
   OTHER = "other",
 }
 
+/**
+ * Alias for PaymentMethod enum
+ * @deprecated Use PaymentMethod instead
+ */
+export const PaymentMethodEnum = PaymentMethod;
+export type PaymentMethodEnum = PaymentMethod;
+
 export interface InvoiceItem {
   id: string;
   invoice_id: string;

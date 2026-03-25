@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.cache.decorators import cached
 from src.config.database import get_async_db
 from src.db.demo_models import (
     Customer,
@@ -35,7 +36,7 @@ router = APIRouter(prefix="/api/dashboard", tags=["Demo Dashboard"])
 
 
 @router.get("/aggregated")
-# # @cached(ttl=60, key_prefix="dashboard_aggregated")  # Disabled - Pydantic serialization issue
+@cached(ttl=60, key_prefix="dashboard_aggregated")
 async def get_aggregated_dashboard(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ):
@@ -148,7 +149,7 @@ class AggregatedDashboardData(BaseModel):
 
 
 @router.get("/metrics", response_model=DashboardMetrics)
-# # @cached(ttl=60, key_prefix="dashboard_metrics")  # Disabled - cache interferes with auth
+@cached(ttl=60, key_prefix="dashboard_metrics")
 async def get_dashboard_metrics(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> DashboardMetrics:
@@ -212,7 +213,7 @@ async def get_dashboard_metrics(
 
 
 @router.get("/charts/revenue", response_model=list[RevenueDataPoint])
-# # @cached(ttl=300, key_prefix="dashboard_revenue")  # Temporarily disabled - caching issue with Pydantic models
+@cached(ttl=300, key_prefix="dashboard_revenue")
 async def get_revenue_chart(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[RevenueDataPoint]:
@@ -271,7 +272,7 @@ async def get_revenue_chart(
 
 
 @router.get("/charts/categories", response_model=list[CategoryDataPoint])
-# @cached(ttl=300, key_prefix="dashboard_categories")  # 5 minute cache
+@cached(ttl=300, key_prefix="dashboard_categories")
 async def get_category_distribution(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[CategoryDataPoint]:
@@ -310,7 +311,7 @@ async def get_category_distribution(
 
 
 @router.get("/charts/top-products", response_model=list[TopProductDataPoint])
-# # @cached(ttl=300, key_prefix="dashboard_top_products")  # Temporarily disabled - caching issue with Pydantic models
+@cached(ttl=300, key_prefix="dashboard_top_products")
 async def get_top_products(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[TopProductDataPoint]:
@@ -341,7 +342,7 @@ async def get_top_products(
 
 
 @router.get("/charts/inventory", response_model=list[InventoryDataPoint])
-# @cached(ttl=120, key_prefix="dashboard_inventory")  # 2 minute cache
+@cached(ttl=120, key_prefix="dashboard_inventory")
 async def get_inventory_status(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[InventoryDataPoint]:
@@ -386,7 +387,7 @@ async def get_inventory_status(
 
 
 @router.get("/activity", response_model=list[ActivityItem])
-# @cached(ttl=30, key_prefix="dashboard_activity")  # 30 second cache - activity feed should be fresh
+@cached(ttl=30, key_prefix="dashboard_activity")
 async def get_recent_activity(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     limit: int = 20,
@@ -476,7 +477,7 @@ class OrderStatusBreakdown(BaseModel):
 
 
 @router.get("/order-status-breakdown", response_model=OrderStatusBreakdown)
-# @cached(ttl=60, key_prefix="dashboard_order_status")  # 1 minute cache
+@cached(ttl=60, key_prefix="dashboard_order_status")
 async def get_order_status_breakdown(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> OrderStatusBreakdown:
@@ -536,7 +537,7 @@ class QuoteConversionData(BaseModel):
 
 
 @router.get("/quote-conversion", response_model=QuoteConversionData)
-# @cached(ttl=120, key_prefix="dashboard_quote_conversion")  # 2 minute cache
+@cached(ttl=120, key_prefix="dashboard_quote_conversion")
 async def get_quote_conversion(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> QuoteConversionData:
@@ -605,7 +606,7 @@ class RevenueByLocationData(BaseModel):
 
 
 @router.get("/revenue-by-location", response_model=RevenueByLocationData)
-# @cached(ttl=300, key_prefix="dashboard_revenue_location")  # 5 minute cache
+@cached(ttl=300, key_prefix="dashboard_revenue_location")
 async def get_revenue_by_location(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> RevenueByLocationData:

@@ -12,11 +12,21 @@ import { apiClient } from './client';
  */
 export interface Cin7ConnectionStatus {
   connected: boolean;
-  mode: 'demo' | 'live';
+  mode: 'demo' | 'live' | 'not_configured';
   core_connected: boolean;
   omni_connected: boolean;
   last_sync?: string;
   message?: string;
+}
+
+/**
+ * Credentials for configuring the Cin7 integration
+ */
+export interface Cin7ConfigureRequest {
+  core_account_id: string;
+  core_application_key: string;
+  omni_username?: string;
+  omni_api_key?: string;
 }
 
 /**
@@ -84,6 +94,13 @@ export interface Cin7SyncHealth {
  */
 export async function getCin7Status(): Promise<Cin7ConnectionStatus> {
   return apiClient.get<Cin7ConnectionStatus>('/api/integrations/cin7/status');
+}
+
+/**
+ * Save Cin7 credentials to the database (creates or updates the connection record)
+ */
+export async function configureCin7(data: Cin7ConfigureRequest): Promise<Cin7ConnectionStatus> {
+  return apiClient.post<Cin7ConnectionStatus>('/api/integrations/cin7/configure', data);
 }
 
 /**

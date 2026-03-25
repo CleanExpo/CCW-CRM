@@ -79,20 +79,20 @@ When user invokes `/autonomous <task>`:
 Check these before proceeding:
 
 ☐ `.claude/.execution/` directory exists
-  → If not: "Let me initialize the execution system first..."
-  → Run: `.\scripts\autonomous\init-execution.ps1` (via description)
+→ If not: "Let me initialize the execution system first..."
+→ Run: `.\scripts\autonomous\init-execution.ps1` (via description)
 
 ☐ No active task in progress
-  → If exists: "There's an active task. Resume or cancel?"
-  → Options: Resume current task | Cancel and start new
+→ If exists: "There's an active task. Resume or cancel?"
+→ Options: Resume current task | Cancel and start new
 
 ☐ Task description is clear
-  → If unclear: "I need more detail. What specifically should I build?"
-  → Ask clarifying questions
+→ If unclear: "I need more detail. What specifically should I build?"
+→ Ask clarifying questions
 
 ☐ Approval mode set
-  → Default: manual (require user approval at each phase)
-  → Auto: Only for safe, non-breaking changes
+→ Default: manual (require user approval at each phase)
+→ Auto: Only for safe, non-breaking changes
 
 ### Step 3: Create Task State
 
@@ -109,6 +109,35 @@ Generate `current-task.json`:
   "approval_mode": "manual",
   "phases_completed": [],
   "phases_remaining": [1, 2, 3, 4, 5],
+  "approval_gates": [
+    {
+      "gate_id": 1,
+      "phase": 1,
+      "name": "Discovery Review",
+      "status": "pending",
+      "approved_at": null,
+      "approved_by": null,
+      "feedback": null
+    },
+    {
+      "gate_id": 2,
+      "phase": 2,
+      "name": "Design Approval",
+      "status": "pending",
+      "approved_at": null,
+      "approved_by": null,
+      "feedback": null
+    },
+    {
+      "gate_id": 3,
+      "phase": 4,
+      "name": "Implementation Review",
+      "status": "pending",
+      "approved_at": null,
+      "approved_by": null,
+      "feedback": null
+    }
+  ],
   "metadata": {
     "estimated_total_time_minutes": 0,
     "elapsed_time_minutes": 0,
@@ -138,6 +167,7 @@ Create `execution-log.jsonl`:
 **Estimated Phases:** 5
 
 ### Execution Pipeline:
+
 1. ⏳ Phase 1: Discovery (5-10 min)
 2. ⏳ Phase 2: Architecture (10-15 min)
 3. ⏳ Phase 3: Build (20-40 min)
@@ -174,11 +204,13 @@ Starting now...
 ```
 
 Update task state:
+
 - `current_phase`: N
 - `current_agent`: [agent name]
 - `status`: "in_progress"
 
 Log event:
+
 ```jsonl
 {"timestamp":"...","event":"phase_started","task_id":"...","phase":N,"agent":"...","message":"Beginning Phase N"}
 ```
@@ -216,6 +248,7 @@ Use schema: `.claude/.execution/schemas/handoff.schema.json`
 ### Step 3: Monitor Progress
 
 While agent is working:
+
 - Check for progress updates
 - Log significant events
 - Update task state metadata (elapsed_time_minutes)
@@ -253,6 +286,7 @@ Use schema: `.claude/.execution/schemas/validation-report.schema.json`
 **Validation:** PASSED
 
 **Key Outputs:**
+
 - [Output 1]
 - [Output 2]
 
@@ -264,11 +298,13 @@ Use schema: `.claude/.execution/schemas/validation-report.schema.json`
 ```
 
 Update task state:
+
 - Add N to `phases_completed`
 - Remove N from `phases_remaining`
 - Set `current_phase`: N+1
 
 Log event:
+
 ```jsonl
 {"timestamp":"...","event":"phase_completed","task_id":"...","phase":N,"agent":"...","duration_seconds":X}
 {"timestamp":"...","event":"validation_passed","task_id":"...","phase":N,"checks_passed":Y,"checks_failed":0}
@@ -283,6 +319,7 @@ Log event:
 **Validator:** Found [X] issue(s)
 
 **Blocking Issues:**
+
 - [Issue 1]
 - [Issue 2]
 
@@ -296,12 +333,14 @@ Log event:
 ```
 
 Log event:
+
 ```jsonl
 {"timestamp":"...","event":"validation_failed","task_id":"...","phase":N,"checks_passed":Y,"checks_failed":X}
 {"timestamp":"...","event":"phase_retry","task_id":"...","phase":N,"attempt":2}
 ```
 
 **Retry Logic:**
+
 - Max 2 retries per phase
 - On 3rd failure: Escalate to user
 
@@ -314,6 +353,7 @@ Log event:
 **Validation:** PASSED (with [X] warning(s))
 
 **Warnings:**
+
 - [Warning 1]
 - [Warning 2]
 
@@ -333,12 +373,14 @@ These are non-blocking but worth noting.
 **Discovery Agent Objective:** Analyze codebase for patterns and constraints
 
 **Validation Checks:**
+
 - Discovery report completeness
 - All relevant files identified
 - Constraints properly documented
 - Patterns accurately described
 
 **Handoff to Phase 2:**
+
 - Codebase structure
 - Existing patterns to follow
 - Forbidden changes (database, auth, etc.)
@@ -349,6 +391,7 @@ These are non-blocking but worth noting.
 **Architect Agent Objective:** Design solution architecture
 
 **Validation Checks:**
+
 - Design follows existing patterns
 - No forbidden changes (database schema, auth, breaking APIs)
 - All components clearly specified
@@ -357,18 +400,22 @@ These are non-blocking but worth noting.
 
 **Approval Gate:**
 If breaking changes detected OR new folders needed:
+
 ```markdown
 ## ⚠️ Approval Required
 
 Phase 2 identified actions requiring approval:
 
 **Breaking Changes:**
+
 - [List breaking changes]
 
 **New Folders:**
+
 - [List new folders]
 
 **New Packages:**
+
 - [List new packages]
 
 **Proceed with these changes?**
@@ -376,6 +423,7 @@ Reply "approved" to continue, or "cancel" to abort.
 ```
 
 **Handoff to Phase 3:**
+
 - Component specifications
 - Files to create (with templates)
 - Files to modify (with change descriptions)
@@ -386,6 +434,7 @@ Reply "approved" to continue, or "cancel" to abort.
 **Builder Agent Objective:** Implement code according to architecture
 
 **Continuous Validation:**
+
 - Validator runs after each file created/modified
 - TypeScript compilation checked continuously
 - Tests run as they're written
@@ -393,17 +442,21 @@ Reply "approved" to continue, or "cancel" to abort.
 
 **Progress Updates:**
 Every 5 minutes or 2 files:
+
 ```markdown
 📊 Build Progress: [X]/[Y] files complete
 
 **Completed:**
+
 - [File 1] ✓
 - [File 2] ✓
 
 **In Progress:**
+
 - [Current file]
 
 **Remaining:**
+
 - [File 3]
 - [File 4]
 
@@ -411,6 +464,7 @@ Every 5 minutes or 2 files:
 ```
 
 **Handoff to Phase 4:**
+
 - All files created/modified
 - Intermediate test results
 - Any blockers encountered
@@ -421,6 +475,7 @@ Every 5 minutes or 2 files:
 **Builder Agent Objective:** Complete implementation and pass all tests
 
 **Final Validation:**
+
 - All planned files created/modified
 - All tests passing (100%)
 - TypeScript compilation succeeds
@@ -430,6 +485,7 @@ Every 5 minutes or 2 files:
 
 **Strict Gate:**
 This is the **deployment readiness gate**. Nothing proceeds to Phase 5 unless:
+
 - ✅ All tests pass
 - ✅ No TypeScript errors
 - ✅ No lint errors
@@ -439,6 +495,7 @@ This is the **deployment readiness gate**. Nothing proceeds to Phase 5 unless:
 If ANY criterion fails: **RETRY** (do not proceed to Phase 5)
 
 **Handoff to Phase 5:**
+
 - Complete file change list
 - Test results summary
 - Quality check results
@@ -449,6 +506,7 @@ If ANY criterion fails: **RETRY** (do not proceed to Phase 5)
 **Finalizer Agent Objective:** Verify deployment readiness and create completion report
 
 **Validation Checks:**
+
 - Deployment checklist complete
 - Documentation updated
 - Rollback plan exists
@@ -456,6 +514,7 @@ If ANY criterion fails: **RETRY** (do not proceed to Phase 5)
 - Performance impact acceptable
 
 **Completion Report:**
+
 ```markdown
 ## ✅ Autonomous Execution Complete
 
@@ -465,34 +524,42 @@ If ANY criterion fails: **RETRY** (do not proceed to Phase 5)
 **Status:** COMPLETED
 
 ### Files Changed:
+
 **Created ([X]):**
+
 - [file 1]
 - [file 2]
 
 **Modified ([Y]):**
+
 - [file 3]
 - [file 4]
 
 ### Quality Report:
+
 - ✅ All tests passing ([X]/[X])
 - ✅ Type check: PASS
 - ✅ Lint: PASS
 - ✅ No breaking changes
 
 ### Deployment Readiness:
+
 - ✅ Ready for deployment
 - ✅ Rollback plan: [description]
 - ✅ Documentation updated
 
 ### Warnings:
+
 [None | List warnings]
 
 ### Next Steps:
+
 [Recommended follow-up actions]
 
 ---
 
 **Execution Summary:**
+
 - Phases Completed: 5/5
 - Total Time: [X] minutes
 - Validation Retries: [Y]
@@ -553,6 +620,7 @@ C. Keep paused for later
 ```
 
 Update task state:
+
 - `status`: "paused"
 - Log event
 
@@ -566,6 +634,7 @@ After 3 validation failures on same phase:
 **Agent:** [agent name]
 **Attempts:** 3/3
 **Persistent Issues:**
+
 - [Issue 1]
 - [Issue 2]
 
@@ -605,10 +674,12 @@ When user says "resume" or `/autonomous --resume [task_id]`:
 ☐ Phase can be resumed (not corrupted)
 
 If state is corrupted:
+
 ```markdown
 ## ⚠️ Cannot Resume
 
 Task state appears corrupted. I found:
+
 - [What's missing/broken]
 
 **Options:**
@@ -627,6 +698,7 @@ C. Cancel
 **Resuming from:** Phase [N]
 **Agent:** [agent name]
 **Progress:**
+
 - Phases completed: [1, 2, ...]
 - Phases remaining: [N, N+1, ...]
 
@@ -647,6 +719,7 @@ Continue execution from current phase.
 ### Manual Approval Mode (Default)
 
 **Behavior:**
+
 - Pause after each phase validation
 - Wait for user to say "proceed" / "continue" / "approved"
 - User can inspect handoffs and validation reports
@@ -657,6 +730,7 @@ Continue execution from current phase.
 ### Auto Approval Mode
 
 **Behavior:**
+
 - Continue automatically through phases
 - Only pause for:
   - Breaking changes
@@ -666,13 +740,207 @@ Continue execution from current phase.
 - User can still cancel with "stop" / "cancel"
 
 **When to use:**
+
 - Simple tasks (add component, fix bug)
 - Non-breaking changes only
 - User trusts the system
 
 **Enable with:**
+
 ```
 /autonomous --auto "task description"
+```
+
+---
+
+## APPROVAL GATES
+
+Approval gates provide user review checkpoints at critical phase transitions. Gates are **only active in manual approval mode**.
+
+### The 3 Gates
+
+**Gate 1: Discovery Review** (after Phase 1)
+
+- **Purpose**: Review codebase analysis before design begins
+- **User sees**: Discovery findings, identified patterns, constraints
+- **User decides**: "Proceed" (approve) or "Revise" (reject with feedback)
+
+**Gate 2: Design Approval** (after Phase 2)
+
+- **Purpose**: Review architecture before implementation
+- **User sees**: Component specs, file list, breaking changes
+- **User decides**: "Approve design" or "Reject with feedback"
+
+**Gate 3: Implementation Review** (after Phase 4 Build Final)
+
+- **Purpose**: Review implementation before finalize
+- **User sees**: Code changes, test results, quality checks
+- **User decides**: "Approve for deployment" or "Reject for fixes"
+
+### Gate Behavior
+
+**When manual approval mode is active:**
+
+After each gate phase completes:
+
+```markdown
+## 🚪 Gate [N]: [Gate Name]
+
+**Phase [N] Complete. Approval Required.**
+
+**What was accomplished:**
+[Phase output summary]
+
+**Key artifacts:**
+
+- Handoff document: `.claude/.execution/phase-handoffs/phase-[N]-[name].json`
+- Validation report: `.claude/.execution/validation-reports/phase-[N]-validation.json`
+
+**Options:**
+A. Approve → Proceed to Phase [N+1]
+B. Reject → Provide feedback, agent will revise Phase [N]
+
+**Reply:**
+
+- "approve" to proceed
+- "reject: [feedback]" to send back for revision
+```
+
+**When gate is approved:**
+
+```markdown
+## ✅ Gate [N] Approved
+
+**Approved by:** [user]
+**Timestamp:** [ISO 8601]
+
+Proceeding to Phase [N+1]...
+```
+
+Update task state:
+
+- `approval_gates[gate_id-1].status`: "approved"
+- `approval_gates[gate_id-1].approved_at`: timestamp
+- `approval_gates[gate_id-1].approved_by`: user
+
+Log event:
+
+```jsonl
+{"timestamp":"...","event":"gate_approved","task_id":"...","gate_id":N,"user":"..."}
+```
+
+**When gate is rejected:**
+
+```markdown
+## 🔄 Gate [N] Rejected
+
+**Rejected by:** [user]
+**Feedback:** [user feedback]
+
+Task paused. Agent will revise Phase [N] based on your feedback.
+
+**Next steps:**
+
+- Analyze feedback
+- Revise Phase [N] work
+- Re-present at Gate [N] for approval
+```
+
+Update task state:
+
+- `approval_gates[gate_id-1].status`: "rejected"
+- `approval_gates[gate_id-1].approved_at`: timestamp
+- `approval_gates[gate_id-1].approved_by`: user
+- `approval_gates[gate_id-1].feedback`: feedback text
+- `status`: "paused"
+
+Log event:
+
+```jsonl
+{"timestamp":"...","event":"gate_rejected","task_id":"...","gate_id":N,"user":"...","feedback":"..."}
+```
+
+**Return to phase:**
+
+- Set `current_phase` back to N
+- Set `current_agent` back to phase N agent
+- Remove N from `phases_completed`
+- Add N to `phases_remaining`
+- Delegate to agent with feedback context
+
+### Gate API Endpoints
+
+Gates are managed via approval_gates API:
+
+**Approve:**
+
+```
+POST /api/ai/autonomous/gates/{task_id}/approve
+{
+  "gate_id": 1,
+  "approved_by": "user"
+}
+```
+
+**Reject:**
+
+```
+POST /api/ai/autonomous/gates/{task_id}/reject
+{
+  "gate_id": 1,
+  "feedback": "Design is too complex. Simplify the architecture.",
+  "rejected_by": "user"
+}
+```
+
+**List:**
+
+```
+GET /api/ai/autonomous/gates/{task_id}
+```
+
+Returns all gates with current status (pending/approved/rejected).
+
+### Auto Approval Mode Behavior
+
+In auto approval mode:
+
+- Gates are **skipped** unless breaking changes are detected
+- If breaking changes: Pause at Gate 2 (Design Approval)
+- User must explicitly approve breaking changes
+- Gates 1 and 3 are bypassed in auto mode
+
+### Gate Validation
+
+Before presenting a gate to the user:
+
+1. Phase must have completed successfully
+2. Validation report must exist and show PASS
+3. Handoff document must be complete
+4. No critical errors in phase execution
+
+If any validation fails: **Retry phase** (do not present gate)
+
+### Gate Escalation
+
+If gate is rejected 3 times for same phase:
+
+```markdown
+## ⚠️ Gate [N] - Max Rejections Exceeded
+
+**Phase [N] has been rejected 3 times.**
+
+**Persistent issues:**
+
+- [Issue 1]
+- [Issue 2]
+
+**Options:**
+A. Manual intervention (you fix it, I'll continue)
+B. Cancel execution
+C. Skip gate and proceed (not recommended)
+
+**What would you like to do?**
 ```
 
 ---
@@ -680,16 +948,19 @@ Continue execution from current phase.
 ## COORDINATION WITH EXISTING AGENTS
 
 **Lead Agent vs Orchestrator:**
+
 - Orchestrator: Gates and safety checks
 - Lead Agent: Multi-phase execution coordination
 - Lead operates AFTER Orchestrator approves
 
 **Lead Agent vs Planner:**
+
 - Planner: Single-phase task planning
 - Lead Agent: Multi-phase autonomous execution
 - Lead uses Planner patterns but extends to 5 phases
 
 **Workflow:**
+
 ```
 User Request
     ↓
@@ -710,6 +981,7 @@ Lead reports completion
 Log all significant events to `execution-log.jsonl`:
 
 **Event Types:**
+
 - `task_started`
 - `phase_started`
 - `phase_completed`
@@ -728,6 +1000,7 @@ Log all significant events to `execution-log.jsonl`:
 - `error`
 
 **Format:**
+
 ```json
 {
   "timestamp": "ISO 8601",
@@ -745,6 +1018,7 @@ Log all significant events to `execution-log.jsonl`:
 ## RESPONSE TEMPLATES
 
 ### Starting Execution
+
 ```markdown
 ## 🚀 Autonomous Execution Started
 
@@ -765,6 +1039,7 @@ Phase 5 → Finalize (verify deployment)
 ```
 
 ### Phase Complete
+
 ```markdown
 ## ✅ Phase [N] Complete
 
@@ -777,6 +1052,7 @@ Phase 5 → Finalize (verify deployment)
 ```
 
 ### Execution Complete
+
 ```markdown
 ## 🎉 Autonomous Execution Complete!
 

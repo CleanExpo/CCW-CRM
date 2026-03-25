@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.decorators import cached, invalidate_cache
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.demo_models import Customer as CustomerModel
 from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
 from src.services.sse_service import sse_service
@@ -25,7 +25,7 @@ async def list_customers(
     page_size: int = Query(50, ge=1, le=100),
     search: str | None = None,
     is_active: bool | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List customers with pagination and filters. Cached for 5 minutes."""
     # Build query
@@ -69,7 +69,7 @@ async def list_customers(
 @router.get("/{customer_id}", response_model=Customer)
 async def get_customer(
     customer_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single customer by ID."""
     query = select(CustomerModel).where(CustomerModel.id == customer_id)
@@ -85,7 +85,7 @@ async def get_customer(
 @router.post("", response_model=Customer, status_code=201)
 async def create_customer(
     customer_data: CustomerCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Create a new customer."""
     # Check if customer number already exists
@@ -131,7 +131,7 @@ async def create_customer(
 async def update_customer(
     customer_id: UUID,
     customer_data: CustomerUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Update a customer."""
     # Get existing customer
@@ -170,7 +170,7 @@ async def update_customer(
 @router.delete("/{customer_id}", status_code=204, response_model=None)
 async def delete_customer(
     customer_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Soft delete a customer (set is_active to False)."""
     # Get existing customer

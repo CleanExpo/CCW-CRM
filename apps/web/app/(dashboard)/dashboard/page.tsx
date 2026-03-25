@@ -22,6 +22,10 @@ import {
   FileText,
   Sparkles,
   ArrowRight,
+  Camera,
+  Award,
+  Wrench,
+  Clock,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { getDashboardInsights, type Insight } from '@/lib/api/ai-insights';
@@ -103,6 +107,38 @@ interface AggregatedDashboardData {
   recent_activity: ActivityItem[];
 }
 
+interface UrgentItem {
+  type: 'warranty' | 'certification' | 'invoice' | 'stock';
+  label: string;
+  detail: string;
+  daysLeft?: number;
+  href: string;
+}
+
+interface WarrantyAlert {
+  serial_number: string;
+  product_name: string | null;
+  company_name: string | null;
+  days_until_expiry: number;
+}
+
+interface CertAlert {
+  cert_type: string;
+  technician_name: string | null;
+  company_name: string | null;
+  days_until_expiry: number;
+}
+
+interface EquipmentStats {
+  expiring_soon: number;
+  warranty_alerts: WarrantyAlert[];
+}
+
+interface CertStats {
+  expiring_soon: number;
+  expiring_alerts: CertAlert[];
+}
+
 export default function DashboardPage() {
   const { toast } = useToast();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -111,6 +147,7 @@ export default function DashboardPage() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [urgentItems, setUrgentItems] = useState<UrgentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // PHASE 4: Real-time POS failure monitoring
@@ -125,13 +162,20 @@ export default function DashboardPage() {
       try {
         // PHASE 4 OPTIMIZATION: Use aggregated endpoint (1 API call instead of 6)
         // Expected performance: 70% faster (5-8s → <2s)
-        const [dashboardData, insightsData, posFailures] = await Promise.all([
-          apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
-          getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
-          apiClient
-            .get<{ alert_count: number }>('/api/monitoring/alerts/pos-failures?hours=24')
-            .catch(() => ({ alert_count: 0 })),
-        ]);
+        const [dashboardData, insightsData, posFailures, warrantyStats, certStats] =
+          await Promise.all([
+            apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
+            getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
+            apiClient
+              .get<{ alert_count: number }>('/api/monitoring/alerts/pos-failures?hours=24')
+              .catch(() => ({ alert_count: 0 })),
+            apiClient
+              .get<EquipmentStats>('/api/equipment/stats')
+              .catch(() => ({ expiring_soon: 0, warranty_alerts: [] })),
+            apiClient
+              .get<CertStats>('/api/certifications/stats')
+              .catch(() => ({ expiring_soon: 0, expiring_alerts: [] })),
+          ]);
 
         // Destructure aggregated data
         setMetrics(dashboardData.metrics);
@@ -141,6 +185,36 @@ export default function DashboardPage() {
         setActivity(dashboardData.recent_activity);
         setInsights(insightsData.insights.filter((i) => i.priority === 'high').slice(0, 3));
         setPosFailureCount(posFailures.alert_count);
+
+        // Build urgent items list
+        const urgent: UrgentItem[] = [];
+        (warrantyStats.warranty_alerts || []).slice(0, 3).forEach((w) => {
+          urgent.push({
+            type: 'warranty',
+            label: `Warranty expiring: ${w.product_name || w.serial_number}`,
+            detail: w.company_name ? `Customer: ${w.company_name}` : w.serial_number,
+            daysLeft: w.days_until_expiry,
+            href: '/warehouse/equipment',
+          });
+        });
+        (certStats.expiring_alerts || []).slice(0, 3).forEach((c) => {
+          urgent.push({
+            type: 'certification',
+            label: `${c.cert_type} expiring`,
+            detail: c.technician_name || c.company_name || 'Unknown technician',
+            daysLeft: c.days_until_expiry,
+            href: '/customers',
+          });
+        });
+        if (dashboardData.metrics.low_stock_alerts > 0) {
+          urgent.push({
+            type: 'stock',
+            label: `${dashboardData.metrics.low_stock_alerts} products below reorder point`,
+            detail: 'Review inventory levels',
+            href: '/warehouse',
+          });
+        }
+        setUrgentItems(urgent);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
         setMetrics(null);
@@ -203,9 +277,9 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Equipment Supplier Operations &mdash; CCW Online
+            CCW Online — Cleaning Equipment Operations
           </h1>
-          <p className="text-muted-foreground">Loading dashboard data...</p>
+          <p className="text-muted-foreground">Loading CCW operations dashboard...</p>
         </div>
       </div>
     );
@@ -223,10 +297,10 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-4xl font-semibold tracking-tight">
-              Equipment Supplier Operations &mdash; CCW Online
+              CCW Online — Cleaning Equipment Operations
             </h1>
             <p className="text-muted-foreground mt-2 text-lg">
-              CCW Equipment — Real-time business overview
+              Real-time overview — truckmounts, restoration gear, hard floor care &amp; accessories
             </p>
           </div>
           {/* PHASE 4: Live metrics indicator */}
@@ -263,13 +337,70 @@ export default function DashboardPage() {
         )}
       </motion.div>
 
+      {/* Urgent Today Card */}
+      {urgentItems.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <Card className="border-amber-200 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                <CardTitle className="text-base text-amber-900 dark:text-amber-100">
+                  Urgent Today — {urgentItems.length} item{urgentItems.length !== 1 ? 's' : ''} need
+                  attention
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+                {urgentItems.map((item, idx) => (
+                  <Link key={idx} href={item.href}>
+                    <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-white/70 p-3 transition-colors hover:bg-white dark:border-amber-700 dark:bg-amber-950/30">
+                      <span className="mt-0.5 shrink-0">
+                        {item.type === 'warranty' && <Wrench className="h-4 w-4 text-amber-600" />}
+                        {item.type === 'certification' && (
+                          <Award className="h-4 w-4 text-amber-600" />
+                        )}
+                        {item.type === 'stock' && <Package className="h-4 w-4 text-amber-600" />}
+                        {item.type === 'invoice' && <Clock className="h-4 w-4 text-amber-600" />}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-amber-900 dark:text-amber-100">
+                          {item.label}
+                        </p>
+                        <p className="truncate text-xs text-amber-700 dark:text-amber-300">
+                          {item.detail}
+                        </p>
+                        {item.daysLeft !== undefined && (
+                          <Badge
+                            variant="outline"
+                            className="mt-1 border-amber-300 text-xs text-amber-700"
+                          >
+                            {item.daysLeft <= 0 ? 'Expired' : `${item.daysLeft}d remaining`}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Bento Grid Dashboard */}
       <BentoGrid columns={3} gap="lg">
         {/* Metrics Overview - Spans 3 columns */}
         <BentoCard variant="glass" span={3}>
           <BentoCardHeader>
-            <BentoCardTitle className="text-2xl">Key Metrics</BentoCardTitle>
-            <BentoCardDescription>Real-time business performance indicators</BentoCardDescription>
+            <BentoCardTitle className="text-2xl">Business Performance</BentoCardTitle>
+            <BentoCardDescription>
+              Real-time trading metrics across all locations
+            </BentoCardDescription>
           </BentoCardHeader>
           <BentoCardContent>
             <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
@@ -299,10 +430,10 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center gap-2">
                   <Package className="h-4 w-4" />
-                  <span className="text-sm font-medium">Total Products</span>
+                  <span className="text-sm font-medium">Equipment SKUs</span>
                 </div>
                 <div className="text-3xl font-bold">{metrics?.total_products || 0}</div>
-                <p className="text-muted-foreground text-xs">Active catalog items</p>
+                <p className="text-muted-foreground text-xs">Active cleaning equipment lines</p>
               </div>
 
               {/* Customers */}
@@ -460,11 +591,38 @@ export default function DashboardPage() {
           </BentoCardContent>
         </BentoCard>
 
+        {/* Mobile Photo-to-Order CTA */}
+        <BentoCard variant="default" span={1}>
+          <BentoCardHeader>
+            <div className="flex items-center gap-2">
+              <Camera className="text-primary h-5 w-5" />
+              <BentoCardTitle>Photo to Order</BentoCardTitle>
+            </div>
+            <BentoCardDescription>
+              Snap a photo, AI identifies products instantly
+            </BentoCardDescription>
+          </BentoCardHeader>
+          <BentoCardContent>
+            <div className="space-y-3">
+              <p className="text-muted-foreground text-sm">
+                Tradespeople can photograph cleaning equipment on-site. Our AI recognises it and
+                creates a quote for customer approval — no catalogue browsing needed.
+              </p>
+              <Link href="/settings/mobile">
+                <Button size="sm" className="w-full">
+                  <Camera className="mr-2 h-4 w-4" />
+                  Manage Mobile Orders
+                </Button>
+              </Link>
+            </div>
+          </BentoCardContent>
+        </BentoCard>
+
         {/* Recent Activity - Spans 3 columns */}
         <BentoCard variant="glass" span={3}>
           <BentoCardHeader>
             <BentoCardTitle className="text-2xl">Recent Activity</BentoCardTitle>
-            <BentoCardDescription>Latest orders and quotes</BentoCardDescription>
+            <BentoCardDescription>Recent equipment orders and quotes</BentoCardDescription>
           </BentoCardHeader>
           <BentoCardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

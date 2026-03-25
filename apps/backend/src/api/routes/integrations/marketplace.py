@@ -173,8 +173,8 @@ async def list_marketplace_channels(request: Request):
             try:
                 instance = ch_cls()
                 setup_fields = instance.get_setup_fields()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("channel_setup_fields_error", channel_type=ch_type, error=str(exc))
 
         connected = ch_type in engine.active_channels
         channels.append(

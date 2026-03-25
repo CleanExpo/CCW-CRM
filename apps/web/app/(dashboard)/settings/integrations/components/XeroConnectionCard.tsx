@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,14 +15,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { CheckCircle2, XCircle, ExternalLink, Unplug, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import {
-  startXeroAuth,
-  disconnectXero,
-  type XeroConnectionStatus,
-} from "@/lib/api/xero";
+} from '@/components/ui/alert-dialog';
+import { AlertCircle, CheckCircle2, XCircle, ExternalLink, Unplug, RefreshCw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { startXeroAuth, disconnectXero, type XeroConnectionStatus } from '@/lib/api/xero';
 
 interface XeroConnectionCardProps {
   status: XeroConnectionStatus | null;
@@ -41,10 +37,10 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
       const authResponse = await startXeroAuth();
 
       // Show instructions in demo mode
-      if (authResponse.mode === "demo") {
+      if (authResponse.mode === 'demo') {
         toast({
-          title: "Demo Mode Active",
-          description: authResponse.instructions || "Xero integration is in demo mode.",
+          title: 'Demo Mode Active',
+          description: authResponse.instructions || 'Xero integration is in demo mode.',
         });
         // In demo mode, connection is already "established"
         onStatusChange();
@@ -54,9 +50,9 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
       }
     } catch (error: unknown) {
       toast({
-        variant: "destructive",
-        title: "Connection Failed",
-        description: error instanceof Error ? error.message : "Failed to start Xero authorization",
+        variant: 'destructive',
+        title: 'Connection Failed',
+        description: error instanceof Error ? error.message : 'Failed to start Xero authorization',
       });
     } finally {
       setConnecting(false);
@@ -68,15 +64,15 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
     try {
       await disconnectXero();
       toast({
-        title: "Disconnected",
-        description: "Xero integration has been disconnected",
+        title: 'Disconnected',
+        description: 'Xero integration has been disconnected',
       });
       onStatusChange();
     } catch (error: unknown) {
       toast({
-        variant: "destructive",
-        title: "Disconnection Failed",
-        description: error instanceof Error ? error.message : "Failed to disconnect Xero",
+        variant: 'destructive',
+        title: 'Disconnection Failed',
+        description: error instanceof Error ? error.message : 'Failed to disconnect Xero',
       });
     } finally {
       setDisconnecting(false);
@@ -88,10 +84,10 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
               <svg
                 viewBox="0 0 24 24"
-                className="h-6 w-6 fill-primary"
+                className="fill-primary h-6 w-6"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm6.341 14.887c-1.309 0-2.134-.877-2.134-2.134 0-1.258.825-2.134 2.134-2.134 1.309 0 2.134.876 2.134 2.134 0 1.257-.825 2.134-2.134 2.134zm-4.536 3.096c-1.551 0-2.617-1.066-2.617-2.617 0-1.55 1.066-2.616 2.617-2.616s2.616 1.066 2.616 2.616c0 1.551-1.065 2.617-2.616 2.617zm-8.27-3.096c-1.309 0-2.134-.877-2.134-2.134 0-1.258.825-2.134 2.134-2.134 1.309 0 2.134.876 2.134 2.134 0 1.257-.825 2.134-2.134 2.134zm4.536-7.632c-1.551 0-2.617-1.066-2.617-2.617 0-1.55 1.066-2.616 2.617-2.616s2.616 1.066 2.616 2.616c0 1.551-1.065 2.617-2.616 2.617z" />
@@ -111,17 +107,18 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
   }
 
   const isConnected = status?.connected ?? false;
-  const isDemo = status?.mode === "demo";
+  const isDemo = status?.mode === 'demo';
+  const isNotConfigured = !status || status.mode === 'not_configured';
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
               <svg
                 viewBox="0 0 24 24"
-                className="h-6 w-6 fill-primary"
+                className="fill-primary h-6 w-6"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm6.341 14.887c-1.309 0-2.134-.877-2.134-2.134 0-1.258.825-2.134 2.134-2.134 1.309 0 2.134.876 2.134 2.134 0 1.257-.825 2.134-2.134 2.134zm-4.536 3.096c-1.551 0-2.617-1.066-2.617-2.617 0-1.55 1.066-2.616 2.617-2.616s2.616 1.066 2.616 2.616c0 1.551-1.065 2.617-2.616 2.617zm-8.27-3.096c-1.309 0-2.134-.877-2.134-2.134 0-1.258.825-2.134 2.134-2.134 1.309 0 2.134.876 2.134 2.134 0 1.257-.825 2.134-2.134 2.134zm4.536-7.632c-1.551 0-2.617-1.066-2.617-2.617 0-1.55 1.066-2.616 2.617-2.616s2.616 1.066 2.616 2.616c0 1.551-1.065 2.617-2.616 2.617z" />
@@ -133,7 +130,7 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isDemo && (
+            {isDemo && isConnected && (
               <Badge variant="secondary" className="text-xs">
                 Demo Mode
               </Badge>
@@ -146,27 +143,45 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
             ) : (
               <Badge variant="outline" className="gap-1">
                 <XCircle className="h-3 w-3" />
-                Disconnected
+                {isNotConfigured ? 'Not Configured' : 'Disconnected'}
               </Badge>
             )}
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* ── Connected state ── */}
         {isConnected && status?.tenant_name && (
-          <div className="rounded-lg bg-muted p-3">
-            <p className="text-sm text-muted-foreground">Connected to</p>
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-muted-foreground text-sm">Connected to</p>
             <p className="font-medium">{status.tenant_name}</p>
             {isDemo && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Demo mode - No real API calls are made
+              <p className="text-muted-foreground mt-1 text-xs">
+                Demo mode — no real API calls are made
               </p>
             )}
           </div>
         )}
 
-        {status?.message && !isConnected && (
-          <p className="text-sm text-muted-foreground">{status.message}</p>
+        {/* ── Not configured — developer setup required ── */}
+        {isNotConfigured && (
+          <div className="border-muted-foreground/20 bg-muted/50 flex items-start gap-2 rounded-lg border p-3">
+            <AlertCircle className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+            <div className="text-muted-foreground text-sm">
+              <p className="font-medium">OAuth app credentials required</p>
+              <p className="mt-1 text-xs">
+                Set <code className="bg-muted rounded px-1">XERO_CLIENT_ID</code> and{' '}
+                <code className="bg-muted rounded px-1">XERO_CLIENT_SECRET</code> environment
+                variables, then set <code className="bg-muted rounded px-1">XERO_MODE=live</code> to
+                enable the OAuth connection flow.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Disconnected message (live mode, credentials set) ── */}
+        {status?.message && !isConnected && !isNotConfigured && (
+          <p className="text-muted-foreground text-sm">{status.message}</p>
         )}
 
         <div className="flex gap-2">
@@ -204,16 +219,20 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
               </AlertDialog>
             </>
           ) : (
-            <Button onClick={handleConnect} disabled={connecting} className="w-full">
+            <Button
+              onClick={handleConnect}
+              disabled={connecting || isNotConfigured}
+              className="w-full"
+            >
               <ExternalLink className="mr-2 h-4 w-4" />
-              {connecting ? "Connecting..." : "Connect to Xero"}
+              {connecting ? 'Connecting...' : 'Connect to Xero'}
             </Button>
           )}
         </div>
 
-        {!isConnected && (
-          <div className="rounded-lg border border-muted bg-muted/50 p-3">
-            <p className="text-xs text-muted-foreground">
+        {!isConnected && !isNotConfigured && (
+          <div className="border-muted bg-muted/50 rounded-lg border p-3">
+            <p className="text-muted-foreground text-xs">
               <strong>What happens when you connect:</strong>
               <br />• Orders will sync to Xero as invoices
               <br />• Payments will update order status automatically

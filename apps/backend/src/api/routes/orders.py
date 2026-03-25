@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +14,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from src.api.deps import get_optional_user
 from src.cache.decorators import invalidate_cache
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.config.settings import Settings, get_settings
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderActivity as OrderActivityModel
@@ -31,6 +31,7 @@ from src.db.schemas import (
     PaginatedResponse,
 )
 from src.monitoring import metrics
+from src.services.email_notifications import email_service
 from src.services.sse_service import sse_service
 from src.utils.calculations import calculate_line_total, calculate_totals
 
@@ -410,7 +411,7 @@ async def list_orders(
     search: str | None = None,
     status: str | None = None,
     customer_id: UUID | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List orders with pagination and filters."""
     # Build query
@@ -486,7 +487,7 @@ async def list_orders(
 @router.get("/{order_id}")
 async def get_order(
     order_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single order by ID."""
     query = (
@@ -543,7 +544,7 @@ async def get_order(
 @router.get("/{order_id}/activity", response_model=list[OrderActivity])
 async def get_order_activity(
     order_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get audit trail for an order."""
     query = (
@@ -560,7 +561,8 @@ async def get_order_activity(
 @router.post("", response_model=Order, status_code=201)
 async def create_order(
     order_data: OrderCreate,
-    db: AsyncSession = Depends(get_db),
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_async_db),
     settings: Settings = Depends(get_settings),
 ):
     """Create a new order with items."""
@@ -678,6 +680,19 @@ async def create_order(
     customer_result = await db.execute(customer_query)
     customer = customer_result.scalar_one_or_none()
     customer_name = customer.company_name if customer else "Unknown Customer"
+    customer_email = customer.email if customer and customer.email else None
+
+    # Send order confirmation email (non-blocking background task)
+    if customer_email:
+        background_tasks.add_task(
+            email_service.send_order_confirmation,
+            order_number=order_number,
+            customer_email=customer_email,
+            customer_name=customer_name,
+            total=float(total),
+            item_count=len(order_data.items),
+            status=order_data.status,
+        )
 
     # Publish to order-updates channel
     await sse_service.publish("order-updates", {
@@ -737,7 +752,7 @@ async def create_order(
 async def update_order(
     order_id: UUID,
     order_data: OrderUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     settings: Settings = Depends(get_settings),
     current_user: User | None = Depends(get_optional_user),
 ):
@@ -1054,7 +1069,7 @@ async def update_order_status(
     order_id: UUID,
     status: str = Query(..., description="New status"),
     fulfillment_location: str = Query("brisbane", description="Fulfillment location"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User | None = Depends(get_optional_user),
 ):
     """Update order status and deduct stock when confirming with pessimistic locking."""
@@ -1196,7 +1211,7 @@ async def update_order_status(
 async def update_order_status_patch(
     order_id: UUID,
     status_update: StatusUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User | None = Depends(get_optional_user),
 ):
     """
@@ -1218,7 +1233,7 @@ async def update_order_status_patch(
 @router.delete("/{order_id}", status_code=204, response_model=None)
 async def delete_order(
     order_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User | None = Depends(get_optional_user),
 ) -> None:
     """Delete an order and its items."""

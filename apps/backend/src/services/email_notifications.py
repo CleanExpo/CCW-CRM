@@ -390,5 +390,171 @@ class EmailNotificationService:
             return False
 
 
+    def send_order_confirmation(
+        self,
+        order_number: str,
+        customer_email: str,
+        customer_name: str,
+        total: float,
+        item_count: int,
+        status: str,
+        frontend_url: str = "https://app.ccwonline.com.au",
+    ) -> bool:
+        """Send order confirmation email to customer."""
+        if not self.client:
+            logger.warning("Email notification skipped - SendGrid not configured")
+            return False
+
+        try:
+            html_content = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h2 style="color: #2563eb; margin-bottom: 20px;">Order Confirmation</h2>
+                        <p>Dear {customer_name},</p>
+                        <p>Your order has been received and is being processed.</p>
+                        <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Order Number:</strong> {order_number}</p>
+                            <p style="margin: 5px 0;"><strong>Items:</strong> {item_count}</p>
+                            <p style="margin: 5px 0;"><strong>Total:</strong> ${total:,.2f} AUD</p>
+                            <p style="margin: 5px 0;"><strong>Status:</strong> {status.upper()}</p>
+                        </div>
+                        <p>Our team will be in touch shortly regarding delivery details.</p>
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                            <p style="font-size: 14px; color: #64748b;">
+                                <strong>CCW Online</strong> — Australia's cleaning equipment specialists
+                            </p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+            """  # noqa: E501
+            message = Mail(
+                from_email=Email(self.from_email),
+                to_emails=To(customer_email),
+                subject=f"Order Confirmation — {order_number}",
+                html_content=Content("text/html", html_content),
+            )
+            response = self.client.send(message)
+            success = response.status_code in (200, 201, 202)
+            if success:
+                logger.info("Order confirmation sent", order_number=order_number, to=customer_email)
+            else:
+                logger.error("Order confirmation send failed", order_number=order_number, status=response.status_code)
+            return success
+        except Exception as e:
+            logger.error("Error sending order confirmation", order_number=order_number, error=str(e))
+            return False
+
+    def send_quote_sent_notification(
+        self,
+        quote_number: str,
+        customer_email: str,
+        customer_name: str,
+        total: float,
+        valid_until: str | None,
+        frontend_url: str = "https://app.ccwonline.com.au",
+    ) -> bool:
+        """Send quote notification email to customer."""
+        if not self.client:
+            logger.warning("Email notification skipped - SendGrid not configured")
+            return False
+
+        try:
+            valid_text = f"<p style='margin: 5px 0;'><strong>Valid Until:</strong> {valid_until}</p>" if valid_until else ""
+            html_content = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h2 style="color: #2563eb; margin-bottom: 20px;">Your Quote is Ready</h2>
+                        <p>Dear {customer_name},</p>
+                        <p>We've prepared a quote for your review.</p>
+                        <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Quote Number:</strong> {quote_number}</p>
+                            <p style="margin: 5px 0;"><strong>Total:</strong> ${total:,.2f} AUD</p>
+                            {valid_text}
+                        </div>
+                        <p>Please contact us to accept this quote or if you have any questions.</p>
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                            <p style="font-size: 14px; color: #64748b;">
+                                <strong>CCW Online</strong> — Australia's cleaning equipment specialists
+                            </p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+            """  # noqa: E501
+            message = Mail(
+                from_email=Email(self.from_email),
+                to_emails=To(customer_email),
+                subject=f"Quote {quote_number} from CCW Online",
+                html_content=Content("text/html", html_content),
+            )
+            response = self.client.send(message)
+            success = response.status_code in (200, 201, 202)
+            if success:
+                logger.info("Quote notification sent", quote_number=quote_number, to=customer_email)
+            else:
+                logger.error("Quote notification send failed", quote_number=quote_number, status=response.status_code)
+            return success
+        except Exception as e:
+            logger.error("Error sending quote notification", quote_number=quote_number, error=str(e))
+            return False
+
+    def send_invoice_issued_notification(
+        self,
+        invoice_number: str,
+        customer_email: str,
+        customer_name: str,
+        total: float,
+        due_date: str,
+        frontend_url: str = "https://app.ccwonline.com.au",
+    ) -> bool:
+        """Send invoice notification email to customer."""
+        if not self.client:
+            logger.warning("Email notification skipped - SendGrid not configured")
+            return False
+
+        try:
+            html_content = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h2 style="color: #2563eb; margin-bottom: 20px;">Invoice {invoice_number}</h2>
+                        <p>Dear {customer_name},</p>
+                        <p>Please find your invoice details below.</p>
+                        <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Invoice Number:</strong> {invoice_number}</p>
+                            <p style="margin: 5px 0;"><strong>Amount Due:</strong> ${total:,.2f} AUD</p>
+                            <p style="margin: 5px 0;"><strong>Due Date:</strong> {due_date}</p>
+                        </div>
+                        <p>Please process payment by the due date to avoid any late fees.</p>
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                            <p style="font-size: 14px; color: #64748b;">
+                                <strong>CCW Online</strong> — Australia's cleaning equipment specialists
+                            </p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+            """  # noqa: E501
+            message = Mail(
+                from_email=Email(self.from_email),
+                to_emails=To(customer_email),
+                subject=f"Invoice {invoice_number} — Payment Due {due_date}",
+                html_content=Content("text/html", html_content),
+            )
+            response = self.client.send(message)
+            success = response.status_code in (200, 201, 202)
+            if success:
+                logger.info("Invoice notification sent", invoice_number=invoice_number, to=customer_email)
+            else:
+                logger.error("Invoice notification send failed", invoice_number=invoice_number, status=response.status_code)
+            return success
+        except Exception as e:
+            logger.error("Error sending invoice notification", invoice_number=invoice_number, error=str(e))
+            return False
+
+
 # Global instance
 email_service = EmailNotificationService()

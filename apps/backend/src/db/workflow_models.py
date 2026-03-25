@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     Column,
     DateTime,
@@ -14,6 +13,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
@@ -29,7 +29,7 @@ class WorkflowTemplate(Base):
     name: str = Column(String(255), nullable=False)
     description: str | None = Column(Text, nullable=True)
     trigger_event: str = Column(String(100), nullable=False, index=True)
-    trigger_conditions: dict | None = Column(JSON, nullable=True)
+    trigger_conditions: dict | None = Column(JSONB, nullable=True)
     is_active: bool = Column(Boolean, default=True, nullable=False, index=True)
     created_at: datetime = Column(
         DateTime(timezone=True),
@@ -69,7 +69,7 @@ class WorkflowTemplateAction(Base):
     )
     # send_email | create_task | create_in_app_notification
     action_type: str = Column(String(100), nullable=False)
-    action_config: dict | None = Column(JSON, nullable=True)
+    action_config: dict | None = Column(JSONB, nullable=True)
     order: int = Column(Integer, default=0, nullable=False)
     created_at: datetime = Column(
         DateTime(timezone=True),
@@ -127,7 +127,7 @@ class SLARule(Base):
     sla_hours: int = Column(Integer, nullable=False)
     # send_email | create_notification
     escalation_action: str = Column(String(100), nullable=False)
-    escalation_config: dict | None = Column(JSON, nullable=True)
+    escalation_config: dict | None = Column(JSONB, nullable=True)
     is_active: bool = Column(Boolean, default=True, nullable=False, index=True)
     created_at: datetime = Column(
         DateTime(timezone=True),

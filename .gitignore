@@ -142,12 +142,15 @@ supabase/.temp
 
 # Local agent/solution libraries (not part of project)
 .claude/agents-lib/
-lib/
+/lib/
 
 # Misc
 *.tsbuildinfo
 .vercel
 .cache
+
+# Git worktrees
+.worktrees/
 
 # Example/test projects (if not needed)
 my-app/
@@ -158,3 +161,12 @@ backups/
 **/backups/
 .planning/linear-sync.mjs
 scripts/linear-project-status.mjs
+
+# Obsidian vault - local only
+.obsidian-vault/.obsidian/workspace*.json
+.obsidian-vault/.obsidian/workspaces.json
+.obsidian-vault/.obsidian/hotkeys.json
+.obsidian-vault/.obsidian/cache/
+.obsidian-vault/.obsidian/plugins/*/
+.obsidian-vault/.obsidian/.trash/
+.obsidian-vault/scratchpad/

@@ -12,7 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.decorators import cached, invalidate_cache
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.demo_models import Product as ProductModel
 from src.db.inventory_models import ProductStockByLocation
 from src.db.schemas import (
@@ -36,7 +36,7 @@ async def list_products(
     category: str | None = None,
     is_active: bool | None = None,
     include_stock: bool = Query(True, description="Include multi-location stock data"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List products with pagination and filters.
 
@@ -135,7 +135,7 @@ async def list_products(
 @router.get("/{product_id}", response_model=Product)
 async def get_product(
     product_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single product by ID."""
     query = select(ProductModel).where(ProductModel.id == product_id)
@@ -151,7 +151,7 @@ async def get_product(
 @router.post("", response_model=Product, status_code=201)
 async def create_product(
     product_data: ProductCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Create a new product."""
     # Check if SKU already exists
@@ -195,7 +195,7 @@ async def create_product(
 async def update_product(
     product_id: UUID,
     product_data: ProductUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Update a product.
 
@@ -314,7 +314,7 @@ async def update_product(
 @router.delete("/{product_id}", status_code=204, response_model=None)
 async def delete_product(
     product_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Soft delete a product (set is_active to False)."""
     # Get existing product

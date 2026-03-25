@@ -9,7 +9,6 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     DateTime,
     Enum,
@@ -18,7 +17,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .models_base import Base
@@ -99,20 +98,20 @@ class MarketplaceConnection(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     mode: Mapped[str] = mapped_column(String(10), default="demo")  # demo | live
 
-    # Credentials (encrypted in production) — stored as JSON for flexibility
-    credentials: Mapped[dict | None] = mapped_column(JSON)
+    # Credentials (encrypted in production) — stored as JSONB for flexibility
+    credentials: Mapped[dict | None] = mapped_column(JSONB)
     # Shopify: {"shop_domain", "access_token", "api_key", "api_secret"}
     # eBay: {"client_id", "client_secret", "refresh_token", "environment"}
     # Facebook: {"app_id", "app_secret", "access_token", "catalog_id"}
 
     # Channel-specific metadata
-    channel_metadata: Mapped[dict | None] = mapped_column(JSON)
+    channel_metadata: Mapped[dict | None] = mapped_column(JSONB)
     # Shopify: {"shop_name", "currency", "api_version"}
     # eBay: {"marketplace_id", "seller_username", "site_id"}
     # Facebook: {"page_id", "page_name", "commerce_account_id"}
 
     # Sync configuration
-    sync_settings: Mapped[dict | None] = mapped_column(JSON)
+    sync_settings: Mapped[dict | None] = mapped_column(JSONB)
     # {"auto_sync_products": true, "auto_sync_inventory": true, "sync_interval": 300}
 
     # Sync state tracking
@@ -176,7 +175,7 @@ class MarketplaceProductListing(Base):
     )
 
     # Channel-specific data snapshot
-    channel_data: Mapped[dict | None] = mapped_column(JSON)
+    channel_data: Mapped[dict | None] = mapped_column(JSONB)
 
     # Sync state
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -235,10 +234,10 @@ class MarketplaceOrder(Base):
     customer_email: Mapped[str | None] = mapped_column(String(255))
     total_amount: Mapped[float | None] = mapped_column(Float)
     currency: Mapped[str] = mapped_column(String(10), default="AUD")
-    shipping_address: Mapped[dict | None] = mapped_column(JSON)
+    shipping_address: Mapped[dict | None] = mapped_column(JSONB)
 
     # Line items snapshot
-    line_items: Mapped[dict | None] = mapped_column(JSON)
+    line_items: Mapped[dict | None] = mapped_column(JSONB)
 
     # Sync state
     synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -246,7 +245,7 @@ class MarketplaceOrder(Base):
     sync_error: Mapped[str | None] = mapped_column(Text)
 
     # Channel-specific data
-    channel_data: Mapped[dict | None] = mapped_column(JSON)
+    channel_data: Mapped[dict | None] = mapped_column(JSONB)
 
     # When the order was placed on the channel
     ordered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -360,7 +359,7 @@ class MarketplaceSyncLog(Base):
     items_succeeded: Mapped[int] = mapped_column(Integer, default=0)
     items_failed: Mapped[int] = mapped_column(Integer, default=0)
     error_message: Mapped[str | None] = mapped_column(Text)
-    details: Mapped[dict | None] = mapped_column(JSON)
+    details: Mapped[dict | None] = mapped_column(JSONB)
 
     # Duration
     started_at: Mapped[datetime] = mapped_column(

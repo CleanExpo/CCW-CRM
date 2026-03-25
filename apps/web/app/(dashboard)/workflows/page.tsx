@@ -44,6 +44,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { workflowsApi, type WorkflowTemplate, type WorkflowInstance } from '@/lib/api/workflows';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -414,138 +415,140 @@ export default function WorkflowsPage() {
   const runningInstances = instances.filter((i) => i.status === 'running').length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Workflow Automation</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Automate business processes with trigger-based workflows
-          </p>
-        </div>
-        <Button onClick={handleNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Workflow
-        </Button>
-      </div>
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {[
-          { label: 'Total', value: templates.length },
-          { label: 'Active', value: active },
-          { label: 'Paused', value: templates.length - active },
-          { label: 'Running Now', value: runningInstances },
-        ].map((s) => (
-          <Card key={s.label}>
-            <CardContent className="pt-4">
-              <p className="text-muted-foreground text-xs">{s.label}</p>
-              <p className="text-2xl font-bold">{s.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Templates grid */}
-      <div>
-        <h2 className="mb-3 text-base font-semibold">Templates</h2>
-        {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-muted h-40 animate-pulse rounded-lg" />
-            ))}
+    <ErrorBoundary>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Equipment Order Workflow Automation</h1>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              Automate equipment ordering, approvals, and fulfilment with trigger-based workflows
+            </p>
           </div>
-        ) : templates.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center py-12 text-center">
-              <GitMerge className="text-muted-foreground mb-3 h-10 w-10" />
-              <p className="font-medium">No workflows yet</p>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Create your first workflow to automate business processes.
-              </p>
-              <Button className="mt-4" onClick={handleNew}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Workflow
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {templates.map((t) => (
-              <TemplateCard
-                key={t.id}
-                template={t}
-                onToggle={handleToggle}
-                onEdit={handleEdit}
-                onDelete={(id) => setDeleteId(id)}
-              />
-            ))}
+          <Button onClick={handleNew}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Workflow
+          </Button>
+        </div>
+
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {[
+            { label: 'Total', value: templates.length },
+            { label: 'Active', value: active },
+            { label: 'Paused', value: templates.length - active },
+            { label: 'Running Now', value: runningInstances },
+          ].map((s) => (
+            <Card key={s.label}>
+              <CardContent className="pt-4">
+                <p className="text-muted-foreground text-xs">{s.label}</p>
+                <p className="text-2xl font-bold">{s.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Templates grid */}
+        <div>
+          <h2 className="mb-3 text-base font-semibold">Templates</h2>
+          {loading ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-muted h-40 animate-pulse rounded-lg" />
+              ))}
+            </div>
+          ) : templates.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center py-12 text-center">
+                <GitMerge className="text-muted-foreground mb-3 h-10 w-10" />
+                <p className="font-medium">No workflows yet</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Create your first workflow to automate equipment ordering and fulfilment.
+                </p>
+                <Button className="mt-4" onClick={handleNew}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Workflow
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {templates.map((t) => (
+                <TemplateCard
+                  key={t.id}
+                  template={t}
+                  onToggle={handleToggle}
+                  onEdit={handleEdit}
+                  onDelete={(id) => setDeleteId(id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent instances */}
+        {instances.length > 0 && (
+          <div>
+            <h2 className="mb-3 text-base font-semibold">Recent Executions</h2>
+            <div className="space-y-2">
+              {instances.map((inst) => (
+                <div
+                  key={inst.id}
+                  className="flex items-center justify-between rounded border px-4 py-2"
+                >
+                  <div>
+                    <p className="text-sm font-medium">
+                      {inst.trigger_entity_type} · {inst.trigger_entity_id?.slice(0, 8) ?? '—'}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Started {new Date(inst.started_at).toLocaleString()}
+                    </p>
+                    {inst.error_message && (
+                      <p className="text-destructive mt-0.5 text-xs">{inst.error_message}</p>
+                    )}
+                  </div>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      INSTANCE_STATUS_COLORS[inst.status] ?? 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {inst.status}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Recent instances */}
-      {instances.length > 0 && (
-        <div>
-          <h2 className="mb-3 text-base font-semibold">Recent Executions</h2>
-          <div className="space-y-2">
-            {instances.map((inst) => (
-              <div
-                key={inst.id}
-                className="flex items-center justify-between rounded border px-4 py-2"
+        {/* Create / Edit dialog */}
+        <TemplateDialog
+          open={dialogOpen}
+          initial={editTarget}
+          onClose={() => setDialogOpen(false)}
+          onSaved={handleSaved}
+        />
+
+        {/* Delete confirmation */}
+        <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete workflow?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the workflow template. Existing instances will remain.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => deleteId && handleDelete(deleteId)}
               >
-                <div>
-                  <p className="text-sm font-medium">
-                    {inst.trigger_entity_type} · {inst.trigger_entity_id?.slice(0, 8) ?? '—'}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    Started {new Date(inst.started_at).toLocaleString()}
-                  </p>
-                  {inst.error_message && (
-                    <p className="text-destructive mt-0.5 text-xs">{inst.error_message}</p>
-                  )}
-                </div>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    INSTANCE_STATUS_COLORS[inst.status] ?? 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {inst.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Create / Edit dialog */}
-      <TemplateDialog
-        open={dialogOpen}
-        initial={editTarget}
-        onClose={() => setDialogOpen(false)}
-        onSaved={handleSaved}
-      />
-
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete workflow?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the workflow template. Existing instances will remain.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteId && handleDelete(deleteId)}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </ErrorBoundary>
   );
 }

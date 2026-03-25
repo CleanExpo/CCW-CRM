@@ -1,38 +1,17 @@
-/**
- * AgentList Component
- *
- * Displays list of active agents with their status and metrics.
- */
+'use client';
 
-interface Agent {
-  agent_id: string;
-  agent_type: string;
-  status: string;
-  task_count: number;
-  success_rate: number;
-}
+import { useEffect, useState } from 'react';
+import { agentsApi, type Agent } from '@/lib/api/agents';
 
-async function fetchAgents(): Promise<Agent[]> {
-  try {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const res = await fetch(`${backendUrl}/api/agents/list`, {
-      cache: 'no-store',
-      next: { revalidate: 0 },
-    });
+export function AgentList() {
+  const [agents, setAgents] = useState<Agent[]>([]);
 
-    if (!res.ok) {
-      return [];
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error('Failed to fetch agents:', error);
-    return [];
-  }
-}
-
-export async function AgentList() {
-  const agents = await fetchAgents();
+  useEffect(() => {
+    agentsApi
+      .listAgents()
+      .then(setAgents)
+      .catch(() => setAgents([]));
+  }, []);
 
   if (agents.length === 0) {
     return (

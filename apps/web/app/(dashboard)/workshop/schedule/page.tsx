@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { workshopApi, type WorkshopBooking } from '@/lib/api/workshop';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 const STATUS_COLORS: Record<string, string> = {
   scheduled: 'bg-blue-100 text-blue-800',
@@ -81,138 +82,144 @@ export default function WorkshopSchedulePage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Workshop Schedule</h1>
-          <p className="text-neutral-600 dark:text-neutral-400">
-            Manage bookings across all workshop locations
-          </p>
+    <ErrorBoundary>
+      <div className="space-y-6 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Workshop Schedule</h1>
+            <p className="text-neutral-600 dark:text-neutral-400">
+              Manage bookings across all workshop locations
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="bg-background rounded-md border px-3 py-2 text-sm"
+            >
+              <option value="">All Locations</option>
+              <option value="brisbane">Brisbane</option>
+              <option value="sydney">Sydney</option>
+              <option value="melbourne">Melbourne</option>
+            </select>
+            <Button variant="outline" size="sm" onClick={load}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> New Booking
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="bg-background rounded-md border px-3 py-2 text-sm"
-          >
-            <option value="">All Locations</option>
-            <option value="brisbane">Brisbane</option>
-            <option value="sydney">Sydney</option>
-            <option value="melbourne">Melbourne</option>
-          </select>
-          <Button variant="outline" size="sm" onClick={load}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> New Booking
-          </Button>
-        </div>
-      </div>
 
-      {/* Week Navigation */}
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={prevWeek}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <span className="font-medium">
-          {weekDates[0].toLocaleDateString([], { month: 'long', day: 'numeric' })} –{' '}
-          {weekDates[6].toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
-        </span>
-        <Button variant="outline" size="sm" onClick={nextWeek}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => setWeekStart(new Date())}>
-          Today
-        </Button>
-      </div>
-
-      {/* Week Grid */}
-      {loading ? (
-        <div className="grid grid-cols-7 gap-2">
-          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <div key={i} className="bg-muted min-h-[120px] animate-pulse rounded-lg" />
-          ))}
+        {/* Week Navigation */}
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={prevWeek}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="font-medium">
+            {weekDates[0].toLocaleDateString([], { month: 'long', day: 'numeric' })} –{' '}
+            {weekDates[6].toLocaleDateString([], {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </span>
+          <Button variant="outline" size="sm" onClick={nextWeek}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setWeekStart(new Date())}>
+            Today
+          </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-7 gap-2">
-          {weekDates.map((date) => {
-            const isToday = date.toDateString() === new Date().toDateString();
-            const dayBookings = bookingsForDay(date);
-            return (
-              <div
-                key={date.toISOString()}
-                className={`min-h-[120px] rounded-lg border p-2 ${isToday ? 'border-primary bg-primary/5' : ''}`}
-              >
+
+        {/* Week Grid */}
+        {loading ? (
+          <div className="grid grid-cols-7 gap-2">
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <div key={i} className="bg-muted min-h-[120px] animate-pulse rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-2">
+            {weekDates.map((date) => {
+              const isToday = date.toDateString() === new Date().toDateString();
+              const dayBookings = bookingsForDay(date);
+              return (
                 <div
-                  className={`mb-2 text-xs font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
+                  key={date.toISOString()}
+                  className={`min-h-[120px] rounded-lg border p-2 ${isToday ? 'border-primary bg-primary/5' : ''}`}
                 >
-                  {date.toLocaleDateString([], { weekday: 'short', day: 'numeric' })}
-                </div>
-                {dayBookings.length === 0 ? (
-                  <div className="text-muted-foreground/50 text-xs">Free</div>
-                ) : (
-                  <div className="space-y-1">
-                    {dayBookings.map((b) => (
-                      <div
-                        key={b.id}
-                        className={`rounded px-1 py-0.5 text-xs ${STATUS_COLORS[b.status] || 'bg-gray-100'}`}
-                      >
-                        <div className="font-mono">{b.booking_number}</div>
-                        <div className="capitalize">{b.location}</div>
-                      </div>
-                    ))}
+                  <div
+                    className={`mb-2 text-xs font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
+                  >
+                    {date.toLocaleDateString([], { weekday: 'short', day: 'numeric' })}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  {dayBookings.length === 0 ? (
+                    <div className="text-muted-foreground/50 text-xs">Free</div>
+                  ) : (
+                    <div className="space-y-1">
+                      {dayBookings.map((b) => (
+                        <div
+                          key={b.id}
+                          className={`rounded px-1 py-0.5 text-xs ${STATUS_COLORS[b.status] || 'bg-gray-100'}`}
+                        >
+                          <div className="font-mono">{b.booking_number}</div>
+                          <div className="capitalize">{b.location}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-      {/* Booking List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">All Bookings This Week ({bookings.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {bookings.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No bookings this week.</p>
-          ) : (
-            <div className="overflow-hidden rounded border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-3 py-2 text-left">Booking #</th>
-                    <th className="px-3 py-2 text-left">Date / Time</th>
-                    <th className="px-3 py-2 text-left">Location</th>
-                    <th className="px-3 py-2 text-left">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {bookings.map((b) => (
-                    <tr key={b.id} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 font-mono font-medium">{b.booking_number}</td>
-                      <td className="px-3 py-2">
-                        {new Date(b.scheduled_date).toLocaleDateString()}{' '}
-                        {new Date(b.scheduled_date).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </td>
-                      <td className="px-3 py-2 capitalize">{b.location}</td>
-                      <td className="px-3 py-2">
-                        <Badge className={STATUS_COLORS[b.status] || ''}>
-                          {b.status.replace('_', ' ')}
-                        </Badge>
-                      </td>
+        {/* Booking List */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">All Bookings This Week ({bookings.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {bookings.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No bookings this week.</p>
+            ) : (
+              <div className="overflow-hidden rounded border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-3 py-2 text-left">Booking #</th>
+                      <th className="px-3 py-2 text-left">Date / Time</th>
+                      <th className="px-3 py-2 text-left">Location</th>
+                      <th className="px-3 py-2 text-left">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  </thead>
+                  <tbody className="divide-y">
+                    {bookings.map((b) => (
+                      <tr key={b.id} className="hover:bg-muted/30">
+                        <td className="px-3 py-2 font-mono font-medium">{b.booking_number}</td>
+                        <td className="px-3 py-2">
+                          {new Date(b.scheduled_date).toLocaleDateString()}{' '}
+                          {new Date(b.scheduled_date).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="px-3 py-2 capitalize">{b.location}</td>
+                        <td className="px-3 py-2">
+                          <Badge className={STATUS_COLORS[b.status] || ''}>
+                            {b.status.replace('_', ' ')}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </ErrorBoundary>
   );
 }

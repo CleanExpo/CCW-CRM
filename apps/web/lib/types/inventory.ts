@@ -325,3 +325,53 @@ export interface AdjustmentFormData {
   quantity_change: number;
   reason?: string;
 }
+
+/**
+ * Warehouse operations dashboard payload
+ * Used by GET /api/warehouse/ops
+ */
+export interface WarehouseOpsPayload {
+  updatedAt: string;
+  metrics: {
+    inboundToday: number;
+    inboundDocked: number;
+    inboundScheduled: number;
+    picksDueToday: number;
+    rushPicks: number;
+    returnsOpen: number;
+    returnSlaRisk: number;
+    onTimeRate: number;
+  };
+  receivingQueue: Array<{
+    id: string;
+    supplier: string;
+    container: string;
+    eta: string;
+    dock: string;
+    items: number;
+    status: string;
+    priority: string;
+  }>;
+  pickQueue: Array<{
+    id: string;
+    customer: string;
+    zone: string;
+    lines: number;
+    promised: string;
+    status: string;
+    priority: string;
+  }>;
+  returnsQueue: Array<{
+    id: string;
+    customer: string;
+    reason: string;
+    items: number;
+    sla: string;
+    status: string;
+  }>;
+  aiGuidance: Array<{
+    title: string;
+    detail: string;
+    impact: string;
+  }>;
+}

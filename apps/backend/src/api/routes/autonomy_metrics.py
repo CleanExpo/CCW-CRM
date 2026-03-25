@@ -9,6 +9,7 @@ Part of Phase 5 (Autonomous Development Framework) - Week 3 monitoring.
 
 
 from datetime import UTC
+from typing import Any
 
 from fastapi import APIRouter, Query
 
@@ -190,7 +191,7 @@ async def get_recent_audit_entries(
     limit: int = Query(100, ge=1, le=1000, description="Max entries to return"),
     action: AuditAction | None = Query(None, description="Filter by action type"),
     result: AuditResult | None = Query(None, description="Filter by result type"),
-):
+) -> list[dict[str, Any]]:
     """
     Get recent audit log entries.
 
@@ -236,7 +237,7 @@ async def get_recent_audit_entries(
 @router.get("/anomalies")
 async def get_anomalies(
     window_hours: int = Query(24, ge=1, le=168)
-):
+) -> dict[str, Any]:
     """
     Get detected anomalies for a time window.
 
@@ -283,7 +284,7 @@ async def get_anomalies(
 @router.get("/health")
 async def get_autonomy_health(
     window_hours: int = Query(1, ge=1, le=24)
-):
+) -> dict[str, Any]:
     """
     Get overall health status of autonomous system.
 

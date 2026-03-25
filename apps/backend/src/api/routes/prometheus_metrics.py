@@ -4,14 +4,30 @@ Prometheus Metrics Endpoint.
 Exposes application and business metrics in Prometheus format for scraping.
 """
 
-from fastapi import APIRouter, Response
+import os
+
+from fastapi import APIRouter, Header, HTTPException, Response, status
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 router = APIRouter(tags=["Monitoring"])
 
 
+def _verify_metrics_token(authorization: str | None) -> None:
+    """Verify bearer token for /metrics endpoint. Skips check in dev (no token configured)."""
+    metrics_token = os.getenv("METRICS_TOKEN")
+    if not metrics_token:
+        # Development mode — allow unauthenticated access
+        return
+    if authorization != f"Bearer {metrics_token}":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing metrics token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
 @router.get("/metrics")
-async def metrics_endpoint() -> Response:
+async def metrics_endpoint(authorization: str | None = Header(None)) -> Response:
     """
     Prometheus metrics endpoint.
 
@@ -48,6 +64,8 @@ async def metrics_endpoint() -> Response:
     risk_assessments_total{risk_level="LOW"} 15.0
     ```
     """
+    _verify_metrics_token(authorization)
+
     # Generate latest metrics in Prometheus format
     metrics_data = generate_latest()
 

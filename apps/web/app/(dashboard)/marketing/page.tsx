@@ -46,6 +46,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 interface MarketingStats {
   totalAssets: number;
@@ -132,7 +133,7 @@ function CampaignDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Enter your product details and let AI generate the copy.
+            Enter your cleaning equipment product details and let AI generate the copy.
           </DialogDescription>
         </DialogHeader>
 
@@ -351,272 +352,276 @@ export default function MarketingPage() {
   ];
 
   return (
-    <div className="space-y-8 pb-12">
-      {/* Campaign Generation Dialog */}
-      <CampaignDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        defaultCampaignType={dialogConfig.campaignType}
-        title={dialogConfig.title}
-      />
+    <ErrorBoundary>
+      <div className="space-y-8 pb-12">
+        {/* Campaign Generation Dialog */}
+        <CampaignDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          defaultCampaignType={dialogConfig.campaignType}
+          title={dialogConfig.title}
+        />
 
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-4xl font-semibold tracking-tight">AI Marketing Hub</h1>
-        <p className="text-muted-foreground mt-2 text-lg">
-          Generate professional marketing assets with AI-powered tools
-        </p>
-      </motion.div>
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-4xl font-semibold tracking-tight">
+            AI Marketing Hub — Cleaning Equipment
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Generate professional cleaning equipment marketing assets with AI-powered tools
+          </p>
+        </motion.div>
 
-      {/* Bento Grid Layout */}
-      <BentoGrid columns={4} gap="lg">
-        {/* Stats Row - 4 cards spanning 1 column each */}
-        {statCards.map((stat) => (
-          <BentoCard key={stat.title} variant="glass" span={1} className="min-h-[120px]">
-            <BentoCardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-muted-foreground text-sm font-medium">{stat.title}</p>
-                  <p className="text-3xl font-bold">
-                    {loading ? (
-                      <span className="bg-muted/20 inline-block h-8 w-16 animate-pulse rounded" />
-                    ) : (
-                      stat.value
-                    )}
-                  </p>
+        {/* Bento Grid Layout */}
+        <BentoGrid columns={4} gap="lg">
+          {/* Stats Row - 4 cards spanning 1 column each */}
+          {statCards.map((stat) => (
+            <BentoCard key={stat.title} variant="glass" span={1} className="min-h-[120px]">
+              <BentoCardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <p className="text-muted-foreground text-sm font-medium">{stat.title}</p>
+                    <p className="text-3xl font-bold">
+                      {loading ? (
+                        <span className="bg-muted/20 inline-block h-8 w-16 animate-pulse rounded" />
+                      ) : (
+                        stat.value
+                      )}
+                    </p>
+                  </div>
+                  <div className={`rounded-lg p-3 ${stat.bgColor} border border-white/10`}>
+                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                  </div>
                 </div>
-                <div className={`rounded-lg p-3 ${stat.bgColor} border border-white/10`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              </BentoCardContent>
+            </BentoCard>
+          ))}
+
+          {/* AI Media Generator - Large card spanning 2 columns with BorderBeam */}
+          <BorderBeam>
+            <MediaGenerator variant="glass" span={2} className="min-h-[600px]" />
+          </BorderBeam>
+
+          {/* Quick Actions Card - 2 columns */}
+          <BentoCard variant="gradient" span={2} className="min-h-[600px]">
+            <BentoCardHeader>
+              <BentoCardTitle className="text-white">Quick Actions</BentoCardTitle>
+              <BentoCardDescription className="text-white/80">
+                Common CCW marketing tasks and templates
+              </BentoCardDescription>
+            </BentoCardHeader>
+            <BentoCardContent>
+              <div className="grid gap-4">
+                <button
+                  type="button"
+                  onClick={() => openCampaignDialog('Product Launch Campaign', 'email')}
+                  className="w-full cursor-pointer rounded-lg border border-white/20 bg-white/10 p-4 text-left transition-colors hover:bg-white/15"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-white/10 p-2">
+                      <Sparkles className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-white">Product Launch Campaign</h4>
+                      <p className="mt-1 text-xs text-white/70">
+                        Generate hero images and announcement copy
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => openCampaignDialog('Social Media Bundle', 'social')}
+                  className="w-full cursor-pointer rounded-lg border border-white/20 bg-white/10 p-4 text-left transition-colors hover:bg-white/15"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-white/10 p-2">
+                      <ImageIcon className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-white">Social Media Bundle</h4>
+                      <p className="mt-1 text-xs text-white/70">
+                        Create complete social media post package
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => openCampaignDialog('Email Newsletter', 'email')}
+                  className="w-full cursor-pointer rounded-lg border border-white/20 bg-white/10 p-4 text-left transition-colors hover:bg-white/15"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-white/10 p-2">
+                      <Zap className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-white">Email Newsletter</h4>
+                      <p className="mt-1 text-xs text-white/70">
+                        Generate engaging email content and visuals
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => openCampaignDialog('Ad Campaign Assets', 'social')}
+                  className="w-full cursor-pointer rounded-lg border border-white/20 bg-white/10 p-4 text-left transition-colors hover:bg-white/15"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-white/10 p-2">
+                      <TrendingUp className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-white">Ad Campaign Assets</h4>
+                      <p className="mt-1 text-xs text-white/70">
+                        Create multiple ad variations and copy
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </BentoCardContent>
+          </BentoCard>
+
+          {/* Asset Library - Full width spanning 4 columns */}
+          <AssetLibrary variant="glass" span={4} />
+
+          {/* Tips & Best Practices - 2 columns */}
+          <BentoCard variant="elevated" span={2} className="min-h-[300px]">
+            <BentoCardHeader>
+              <BentoCardTitle>Tips & Best Practices</BentoCardTitle>
+              <BentoCardDescription>Get the most out of AI generation</BentoCardDescription>
+            </BentoCardHeader>
+            <BentoCardContent>
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <div className="bg-brand-primary/20 text-brand-primary flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                    1
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Be Specific with Prompts</h4>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Include details about style, mood, colors, and composition for better results
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="bg-brand-primary/20 text-brand-primary flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                    2
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Iterate and Refine</h4>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Generate multiple variations and refine prompts based on results
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="bg-brand-primary/20 text-brand-primary flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                    3
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Use Templates</h4>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Start with quick action templates for common marketing tasks
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="bg-brand-primary/20 text-brand-primary flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                    4
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Maintain Brand Voice</h4>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Review and adjust generated content to match your brand guidelines
+                    </p>
+                  </div>
                 </div>
               </div>
             </BentoCardContent>
           </BentoCard>
-        ))}
 
-        {/* AI Media Generator - Large card spanning 2 columns with BorderBeam */}
-        <BorderBeam>
-          <MediaGenerator variant="glass" span={2} className="min-h-[600px]" />
-        </BorderBeam>
-
-        {/* Quick Actions Card - 2 columns */}
-        <BentoCard variant="gradient" span={2} className="min-h-[600px]">
-          <BentoCardHeader>
-            <BentoCardTitle className="text-white">Quick Actions</BentoCardTitle>
-            <BentoCardDescription className="text-white/80">
-              Common marketing tasks and templates
-            </BentoCardDescription>
-          </BentoCardHeader>
-          <BentoCardContent>
-            <div className="grid gap-4">
-              <button
-                type="button"
-                onClick={() => openCampaignDialog('Product Launch Campaign', 'email')}
-                className="w-full cursor-pointer rounded-lg border border-white/20 bg-white/10 p-4 text-left transition-colors hover:bg-white/15"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-white/10 p-2">
-                    <Sparkles className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-white">Product Launch Campaign</h4>
-                    <p className="mt-1 text-xs text-white/70">
-                      Generate hero images and announcement copy
-                    </p>
-                  </div>
+          {/* Recent Activity - 2 columns */}
+          <BentoCard variant="glass" span={2} className="min-h-[300px]">
+            <BentoCardHeader>
+              <BentoCardTitle>Recent Activity</BentoCardTitle>
+              <BentoCardDescription>Your latest AI generations</BentoCardDescription>
+            </BentoCardHeader>
+            <BentoCardContent>
+              {loading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="bg-card/50 flex gap-3 rounded-lg border border-white/10 p-3"
+                    >
+                      <div className="bg-muted/20 h-10 w-10 animate-pulse rounded" />
+                      <div className="flex-1 space-y-2">
+                        <div className="bg-muted/20 h-4 animate-pulse rounded" />
+                        <div className="bg-muted/20 h-3 w-2/3 animate-pulse rounded" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => openCampaignDialog('Social Media Bundle', 'social')}
-                className="w-full cursor-pointer rounded-lg border border-white/20 bg-white/10 p-4 text-left transition-colors hover:bg-white/15"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-white/10 p-2">
-                    <ImageIcon className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-white">Social Media Bundle</h4>
-                    <p className="mt-1 text-xs text-white/70">
-                      Create complete social media post package
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => openCampaignDialog('Email Newsletter', 'email')}
-                className="w-full cursor-pointer rounded-lg border border-white/20 bg-white/10 p-4 text-left transition-colors hover:bg-white/15"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-white/10 p-2">
-                    <Zap className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-white">Email Newsletter</h4>
-                    <p className="mt-1 text-xs text-white/70">
-                      Generate engaging email content and visuals
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => openCampaignDialog('Ad Campaign Assets', 'social')}
-                className="w-full cursor-pointer rounded-lg border border-white/20 bg-white/10 p-4 text-left transition-colors hover:bg-white/15"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-white/10 p-2">
-                    <TrendingUp className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-white">Ad Campaign Assets</h4>
-                    <p className="mt-1 text-xs text-white/70">
-                      Create multiple ad variations and copy
-                    </p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </BentoCardContent>
-        </BentoCard>
-
-        {/* Asset Library - Full width spanning 4 columns */}
-        <AssetLibrary variant="glass" span={4} />
-
-        {/* Tips & Best Practices - 2 columns */}
-        <BentoCard variant="elevated" span={2} className="min-h-[300px]">
-          <BentoCardHeader>
-            <BentoCardTitle>Tips & Best Practices</BentoCardTitle>
-            <BentoCardDescription>Get the most out of AI generation</BentoCardDescription>
-          </BentoCardHeader>
-          <BentoCardContent>
-            <div className="space-y-4">
-              <div className="flex gap-3">
-                <div className="bg-brand-primary/20 text-brand-primary flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                  1
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Be Specific with Prompts</h4>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Include details about style, mood, colors, and composition for better results
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="bg-brand-primary/20 text-brand-primary flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                  2
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Iterate and Refine</h4>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Generate multiple variations and refine prompts based on results
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="bg-brand-primary/20 text-brand-primary flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                  3
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Use Templates</h4>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Start with quick action templates for common marketing tasks
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="bg-brand-primary/20 text-brand-primary flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                  4
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Maintain Brand Voice</h4>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Review and adjust generated content to match your brand guidelines
-                  </p>
-                </div>
-              </div>
-            </div>
-          </BentoCardContent>
-        </BentoCard>
-
-        {/* Recent Activity - 2 columns */}
-        <BentoCard variant="glass" span={2} className="min-h-[300px]">
-          <BentoCardHeader>
-            <BentoCardTitle>Recent Activity</BentoCardTitle>
-            <BentoCardDescription>Your latest AI generations</BentoCardDescription>
-          </BentoCardHeader>
-          <BentoCardContent>
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="bg-card/50 flex gap-3 rounded-lg border border-white/10 p-3"
-                  >
-                    <div className="bg-muted/20 h-10 w-10 animate-pulse rounded" />
-                    <div className="flex-1 space-y-2">
-                      <div className="bg-muted/20 h-4 animate-pulse rounded" />
-                      <div className="bg-muted/20 h-3 w-2/3 animate-pulse rounded" />
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-card/50 hover:bg-card/80 flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 transition-colors">
+                    <div className="bg-brand-primary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
+                      <ImageIcon className="text-brand-primary h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">Product Launch Hero</p>
+                      <p className="text-muted-foreground text-xs">2 hours ago</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="bg-card/50 hover:bg-card/80 flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 transition-colors">
-                  <div className="bg-brand-primary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
-                    <ImageIcon className="text-brand-primary h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">Product Launch Hero</p>
-                    <p className="text-muted-foreground text-xs">2 hours ago</p>
-                  </div>
-                </div>
 
-                <div className="bg-card/50 hover:bg-card/80 flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 transition-colors">
-                  <div className="bg-brand-secondary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
-                    <Zap className="text-brand-secondary h-5 w-5" />
+                  <div className="bg-card/50 hover:bg-card/80 flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 transition-colors">
+                    <div className="bg-brand-secondary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
+                      <Zap className="text-brand-secondary h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">Email Campaign Copy</p>
+                      <p className="text-muted-foreground text-xs">1 day ago</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">Email Campaign Copy</p>
-                    <p className="text-muted-foreground text-xs">1 day ago</p>
-                  </div>
-                </div>
 
-                <div className="bg-card/50 hover:bg-card/80 flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 transition-colors">
-                  <div className="bg-brand-primary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
-                    <ImageIcon className="text-brand-primary h-5 w-5" />
+                  <div className="bg-card/50 hover:bg-card/80 flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 transition-colors">
+                    <div className="bg-brand-primary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
+                      <ImageIcon className="text-brand-primary h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">Social Media Banner</p>
+                      <p className="text-muted-foreground text-xs">2 days ago</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">Social Media Banner</p>
-                    <p className="text-muted-foreground text-xs">2 days ago</p>
-                  </div>
-                </div>
 
-                <div className="bg-card/50 hover:bg-card/80 flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 transition-colors">
-                  <div className="bg-brand-secondary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
-                    <Zap className="text-brand-secondary h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">Ad Copy Variation</p>
-                    <p className="text-muted-foreground text-xs">3 days ago</p>
+                  <div className="bg-card/50 hover:bg-card/80 flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 transition-colors">
+                    <div className="bg-brand-secondary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
+                      <Zap className="text-brand-secondary h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">Ad Copy Variation</p>
+                      <p className="text-muted-foreground text-xs">3 days ago</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </BentoCardContent>
-        </BentoCard>
-      </BentoGrid>
-    </div>
+              )}
+            </BentoCardContent>
+          </BentoCard>
+        </BentoGrid>
+      </div>
+    </ErrorBoundary>
   );
 }

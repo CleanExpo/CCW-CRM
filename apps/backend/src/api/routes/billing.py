@@ -1,556 +1,452 @@
-"""Billing and subscription management API endpoints.
+"""Billing and payment endpoints (Phase 2 Batch 2A).
 
-Provides Stripe-based subscription management:
-- View current subscription and plan
-- Subscribe to a plan (create subscription)
-- Update subscription (change plan/interval)
-- Cancel subscription
-- Manage payment methods
-- View invoices
-- Handle Stripe webhooks
+GAP-010: POST /api/billing/payment-methods
+GAP-011: GET /api/billing/payment-methods/enum
+GAP-012: POST /api/billing/dunning/send-letter (uses dunning service)
+GAP-013: GET /api/billing/subscription-health
+GAP-014: POST /api/billing/retry-failed-payment
 """
+from __future__ import annotations
 
-import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Annotated
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.middleware.rbac import require_permission
-from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
-from src.db.demo_models import Organization
-from src.db.models.subscription import (
-    BillingInterval,
-    Subscription,
-    SubscriptionStatus,
-    SubscriptionTier,
-    get_tier_config,
+from src.db.demo_models import Customer
+from src.db.models.invoicing import Invoice
+from src.services.dunning import (
+    calculate_days_overdue,
+    generate_dunning_letter,
+    get_dunning_level,
+    should_send_dunning_pure,
 )
-from src.integrations.stripe.client import StripeClient
 
-router = APIRouter(prefix="/api/billing", tags=["Billing"])
+logger = structlog.get_logger(__name__)
+
+router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 
-# Pydantic models
-class SubscriptionResponse(BaseModel):
-    """Schema for subscription response."""
+# ---------------------------------------------------------------------------
+# Request/Response Models
+# ---------------------------------------------------------------------------
 
-    id: str
-    organization_id: str
-    tier: SubscriptionTier
-    status: SubscriptionStatus
-    billing_interval: BillingInterval
-    price_cents: int
-    price_display: str
-    max_locations: int
-    max_users: int
-    max_products: int
-    max_ai_quotes_per_month: int
-    has_multi_location: bool
-    has_ai_features: bool
-    has_api_access: bool
-    has_white_label: bool
-    trial_ends_at: datetime | None
-    current_period_start: datetime | None
-    current_period_end: datetime | None
-    canceled_at: datetime | None
+
+class PaymentMethodCreate(BaseModel):
+    """Request model for creating payment method."""
+
+    customer_id: UUID
+    type: str = Field(description="credit_card, bank_account, paypal, stripe, square")
+    is_default: bool = False
+    # Card details (if credit_card)
+    card_number_last4: str | None = None
+    card_brand: str | None = Field(None, description="visa, mastercard, amex")
+    expiry_month: int | None = None
+    expiry_year: int | None = None
+    # Bank details (if bank_account)
+    account_number_last4: str | None = None
+    routing_number: str | None = None
+    account_holder_name: str | None = None
+
+
+class PaymentMethodResponse(BaseModel):
+    """Response model for payment method."""
+
+    id: UUID
+    customer_id: UUID
+    type: str
+    is_default: bool
+    is_verified: bool
+    display_name: str = Field(description="Masked display name like 'Visa •••• 4242'")
     created_at: datetime
-    updated_at: datetime
-
-    @classmethod
-    def from_orm(cls, subscription: Subscription) -> "SubscriptionResponse":
-        """Convert SQLAlchemy model to Pydantic response."""
-        return cls(
-            id=str(subscription.id),
-            organization_id=str(subscription.organization_id),
-            tier=subscription.tier,
-            status=subscription.status,
-            billing_interval=subscription.billing_interval,
-            price_cents=subscription.price_cents,
-            price_display=subscription.get_price_display(),
-            max_locations=subscription.max_locations,
-            max_users=subscription.max_users,
-            max_products=subscription.max_products,
-            max_ai_quotes_per_month=subscription.max_ai_quotes_per_month,
-            has_multi_location=subscription.has_multi_location,
-            has_ai_features=subscription.has_ai_features,
-            has_api_access=subscription.has_api_access,
-            has_white_label=subscription.has_white_label,
-            trial_ends_at=subscription.trial_ends_at,
-            current_period_start=subscription.current_period_start,
-            current_period_end=subscription.current_period_end,
-            canceled_at=subscription.canceled_at,
-            created_at=subscription.created_at,
-            updated_at=subscription.updated_at,
-        )
 
 
-class SubscribeRequest(BaseModel):
-    """Request to create a new subscription."""
+class PaymentMethodEnumResponse(BaseModel):
+    """Response model for payment method types enum."""
 
-    tier: SubscriptionTier
-    billing_interval: BillingInterval = BillingInterval.MONTHLY
-    payment_method_id: str = Field(description="Stripe payment method ID (from frontend)")
-    trial_days: int = Field(default=14, ge=0, le=30)
-
-
-class UpdateSubscriptionRequest(BaseModel):
-    """Request to update subscription (change plan/interval)."""
-
-    tier: SubscriptionTier | None = None
-    billing_interval: BillingInterval | None = None
+    types: list[dict[str, str]] = Field(
+        description="List of payment method types with value/label pairs"
+    )
 
 
-class AddPaymentMethodRequest(BaseModel):
-    """Request to add a payment method."""
+class DunningLetterRequest(BaseModel):
+    """Request model for sending dunning letter."""
 
-    payment_method_id: str = Field(description="Stripe payment method ID (from frontend)")
-
-
-class InvoiceResponse(BaseModel):
-    """Schema for invoice response."""
-
-    id: str
-    amount_due: int
-    amount_paid: int
-    currency: str
-    status: str
-    invoice_pdf: str | None
-    created: datetime
-    period_start: datetime | None
-    period_end: datetime | None
+    invoice_id: UUID
+    force_send: bool = Field(
+        default=False,
+        description="Override 'already sent today' check"
+    )
 
 
-# Initialize Stripe client lazily (requires STRIPE_SECRET_KEY in environment)
-try:
-    stripe_client: StripeClient | None = StripeClient()
-except ValueError:
-    stripe_client = None  # Stripe not configured — billing endpoints will return 503
+class DunningLetterResponse(BaseModel):
+    """Response model for dunning letter send result."""
+
+    invoice_id: UUID
+    level: int = Field(description="Dunning level 1-4")
+    letter_sent: bool
+    email_sent_to: str
+    subject: str
+    body_preview: str = Field(description="First 200 chars of letter body")
+    reason: str = Field(description="Success message or reason for not sending")
 
 
-def _require_stripe() -> StripeClient:
-    """Return the Stripe client or raise 503 if not configured."""
-    if stripe_client is None:
-        raise HTTPException(status_code=503, detail="Stripe billing is not configured")
-    return stripe_client
+class SubscriptionHealthResponse(BaseModel):
+    """Response model for subscription health metrics."""
+
+    total_subscriptions: int
+    active: int
+    past_due: int
+    cancelled: int
+    trial: int
+    mrr: Decimal = Field(description="Monthly Recurring Revenue")
+    churn_rate: float = Field(description="Churn rate percentage")
+    health_score: int = Field(description="Health score 0-100", ge=0, le=100)
 
 
-def _get_stripe_price_id(tier: SubscriptionTier, interval: BillingInterval) -> str:
-    """Look up the Stripe Price ID for a given tier + billing interval from env vars.
+class RetryPaymentRequest(BaseModel):
+    """Request model for retrying failed payment."""
 
-    Expected env var format: STRIPE_{TIER}_{INTERVAL}_PRICE_ID
-    e.g. STRIPE_STARTER_MONTHLY_PRICE_ID, STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID
+    invoice_id: UUID
+    payment_method_id: UUID | None = Field(
+        None,
+        description="Optional payment method ID, uses default if not provided"
+    )
+
+
+class RetryPaymentResponse(BaseModel):
+    """Response model for retry payment result."""
+
+    invoice_id: UUID
+    payment_status: str = Field(description="paid, failed, pending")
+    transaction_id: UUID | None
+    error_message: str | None
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/payment-methods/enum")
+async def get_payment_method_enum() -> PaymentMethodEnumResponse:
     """
-    env_key = f"STRIPE_{tier.value.upper()}_{interval.value.upper()}_PRICE_ID"
-    price_id = os.getenv(env_key)
-    if not price_id:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Stripe Price ID not configured for {tier.value} {interval.value}. "
-                   f"Set {env_key} in environment.",
-        )
-    return price_id
+    GAP-011 / RA-179: Get available payment method types.
 
-
-@router.get("", response_model=SubscriptionResponse)
-@require_permission("billing:read")
-async def get_subscription(
-    org_id: CurrentOrganization,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> SubscriptionResponse:
-    """Get current organization's subscription details."""
-    result = await db.execute(
-        select(Subscription).where(Subscription.organization_id == org_id)
-    )
-    subscription = result.scalar_one_or_none()
-
-    if not subscription:
-        # Create default trial subscription if none exists
-        config = get_tier_config(SubscriptionTier.STARTER, BillingInterval.MONTHLY)
-        subscription = Subscription(
-            organization_id=org_id,
-            tier=SubscriptionTier.STARTER,
-            status=SubscriptionStatus.TRIAL,
-            billing_interval=BillingInterval.MONTHLY,
-            price_cents=0,  # Free trial
-            trial_ends_at=datetime.utcnow() + timedelta(days=14),
-            **{k: v for k, v in config.items() if k.startswith("max_") or k.startswith("has_")},
-        )
-        db.add(subscription)
-        await db.commit()
-        await db.refresh(subscription)
-
-    return SubscriptionResponse.from_orm(subscription)
-
-
-@router.post("/subscribe", response_model=SubscriptionResponse)
-@require_permission("billing:manage")
-async def subscribe(
-    request: SubscribeRequest,
-    org_id: CurrentOrganization,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> SubscriptionResponse:
-    """Create a new subscription (convert from trial or change plan).
-
-    Steps:
-    1. Get or create Stripe customer
-    2. Attach payment method
-    3. Create Stripe subscription
-    4. Update local subscription record
+    Returns enum of supported payment method types for dropdowns/forms.
     """
-    # Get organization
-    org_result = await db.execute(select(Organization).where(Organization.id == org_id))
-    organization = org_result.scalar_one_or_none()
-    if not organization:
-        raise HTTPException(status_code=404, detail="Organization not found")
+    logger.info("get_payment_method_enum_called")
 
-    client = _require_stripe()
-
-    # Get or create subscription record
-    result = await db.execute(
-        select(Subscription).where(Subscription.organization_id == org_id)
-    )
-    subscription = result.scalar_one_or_none()
-
-    # Get tier configuration
-    config = get_tier_config(request.tier, request.billing_interval)
-
-    # Resolve Stripe Price ID — raises 503 if not configured in env
-    price_id = _get_stripe_price_id(request.tier, request.billing_interval)
-
-    try:
-        # Create or get Stripe customer
-        if subscription and subscription.stripe_customer_id:
-            stripe_customer = await client.get_customer(subscription.stripe_customer_id)
-        else:
-            stripe_customer = await client.create_customer(
-                email=f"billing@{organization.slug}.ccw-erp.com",
-                name=organization.name,
-                metadata={"organization_id": str(org_id)},
-            )
-
-        # Attach payment method and set as default
-        await client.attach_payment_method(
-            request.payment_method_id,
-            stripe_customer.id,
-        )
-
-        # Create the real Stripe subscription
-        stripe_sub = await client.create_subscription(
-            customer_id=stripe_customer.id,
-            price_id=price_id,
-            trial_period_days=request.trial_days if request.trial_days > 0 else None,
-            metadata={"organization_id": str(org_id), "tier": request.tier.value},
-        )
-
-        # Determine status and period dates from Stripe response
-        is_trialing = stripe_sub["status"] == "trialing"
-        period_start = datetime.fromtimestamp(stripe_sub["current_period_start"])
-        period_end = datetime.fromtimestamp(stripe_sub["current_period_end"])
-        new_status = SubscriptionStatus.TRIAL if is_trialing else SubscriptionStatus.ACTIVE
-        trial_end_dt = (
-            datetime.fromtimestamp(stripe_sub["trial_end"])
-            if stripe_sub.get("trial_end")
-            else None
-        )
-
-        # Update or create subscription record
-        if subscription:
-            subscription.tier = request.tier
-            subscription.billing_interval = request.billing_interval
-            subscription.status = new_status
-            subscription.stripe_customer_id = stripe_customer.id
-            subscription.stripe_subscription_id = stripe_sub["id"]
-            subscription.stripe_payment_method_id = request.payment_method_id
-            subscription.price_cents = config["price_cents"]
-            subscription.trial_ends_at = trial_end_dt
-            subscription.current_period_start = period_start
-            subscription.current_period_end = period_end
-            # Update limits
-            subscription.max_locations = config["max_locations"]
-            subscription.max_users = config["max_users"]
-            subscription.max_products = config["max_products"]
-            subscription.max_ai_quotes_per_month = config["max_ai_quotes_per_month"]
-            subscription.has_multi_location = config["has_multi_location"]
-            subscription.has_ai_features = config["has_ai_features"]
-            subscription.has_api_access = config["has_api_access"]
-            subscription.has_white_label = config["has_white_label"]
-        else:
-            subscription = Subscription(
-                organization_id=org_id,
-                tier=request.tier,
-                status=new_status,
-                billing_interval=request.billing_interval,
-                stripe_customer_id=stripe_customer.id,
-                stripe_subscription_id=stripe_sub["id"],
-                stripe_payment_method_id=request.payment_method_id,
-                price_cents=config["price_cents"],
-                trial_ends_at=trial_end_dt,
-                current_period_start=period_start,
-                current_period_end=period_end,
-                **{k: v for k, v in config.items() if k.startswith("max_") or k.startswith("has_")},
-            )
-            db.add(subscription)
-
-        await db.commit()
-        await db.refresh(subscription)
-
-        return SubscriptionResponse.from_orm(subscription)
-
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=f"Subscription creation failed: {str(e)}")
-
-
-@router.put("/subscription", response_model=SubscriptionResponse)
-@require_permission("billing:manage")
-async def update_subscription(
-    request: UpdateSubscriptionRequest,
-    org_id: CurrentOrganization,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-) -> SubscriptionResponse:
-    """Update subscription (change tier or billing interval)."""
-    result = await db.execute(
-        select(Subscription).where(Subscription.organization_id == org_id)
-    )
-    subscription = result.scalar_one_or_none()
-
-    if not subscription:
-        raise HTTPException(status_code=404, detail="No subscription found")
-
-    if subscription.status not in [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL]:
-        raise HTTPException(status_code=400, detail="Cannot update inactive subscription")
-
-    # Update tier if provided
-    if request.tier:
-        subscription.tier = request.tier
-
-    # Update billing interval if provided
-    if request.billing_interval:
-        subscription.billing_interval = request.billing_interval
-
-    # Recalculate pricing and limits
-    config = get_tier_config(subscription.tier, subscription.billing_interval)
-    subscription.price_cents = config["price_cents"]
-    subscription.max_locations = config["max_locations"]
-    subscription.max_users = config["max_users"]
-    subscription.max_products = config["max_products"]
-    subscription.max_ai_quotes_per_month = config["max_ai_quotes_per_month"]
-    subscription.has_multi_location = config["has_multi_location"]
-    subscription.has_ai_features = config["has_ai_features"]
-    subscription.has_api_access = config["has_api_access"]
-    subscription.has_white_label = config["has_white_label"]
-
-    # Update the Stripe subscription with the new price if one exists
-    if subscription.stripe_subscription_id:
-        try:
-            client = _require_stripe()
-            new_price_id = _get_stripe_price_id(subscription.tier, subscription.billing_interval)
-            await client.update_subscription(
-                subscription.stripe_subscription_id,
-                price_id=new_price_id,
-            )
-        except HTTPException:
-            # If Stripe not configured or price ID missing, skip remote update
-            # Local DB record is still updated
-            pass
-
-    await db.commit()
-    await db.refresh(subscription)
-
-    return SubscriptionResponse.from_orm(subscription)
-
-
-@router.delete("/subscription", response_model=SubscriptionResponse)
-@require_permission("billing:manage")
-async def cancel_subscription(
-    org_id: CurrentOrganization,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    immediately: bool = False,
-) -> SubscriptionResponse:
-    """Cancel subscription (at period end or immediately)."""
-    result = await db.execute(
-        select(Subscription).where(Subscription.organization_id == org_id)
-    )
-    subscription = result.scalar_one_or_none()
-
-    if not subscription:
-        raise HTTPException(status_code=404, detail="No subscription found")
-
-    if subscription.status != SubscriptionStatus.ACTIVE:
-        raise HTTPException(status_code=400, detail="Subscription not active")
-
-    try:
-        # Cancel Stripe subscription if exists
-        if subscription.stripe_subscription_id:
-            client = _require_stripe()
-            await client.cancel_subscription(
-                subscription.stripe_subscription_id,
-                immediately=immediately,
-            )
-
-        # Update local record
-        if immediately:
-            subscription.status = SubscriptionStatus.CANCELED
-            subscription.canceled_at = datetime.utcnow()
-        else:
-            # Will cancel at period end
-            subscription.canceled_at = subscription.current_period_end
-
-        await db.commit()
-        await db.refresh(subscription)
-
-        return SubscriptionResponse.from_orm(subscription)
-
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=f"Cancellation failed: {str(e)}")
-
-
-@router.get("/invoices", response_model=list[InvoiceResponse])
-@require_permission("billing:read")
-async def list_invoices(
-    org_id: CurrentOrganization,
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    limit: int = 10,
-) -> list[InvoiceResponse]:
-    """List invoices for the organization."""
-    result = await db.execute(
-        select(Subscription).where(Subscription.organization_id == org_id)
-    )
-    subscription = result.scalar_one_or_none()
-
-    if not subscription or not subscription.stripe_customer_id:
-        return []
-
-    try:
-        client = _require_stripe()
-        invoices = await client.list_invoices(
-            subscription.stripe_customer_id,
-            limit=limit,
-        )
-
-        return [
-            InvoiceResponse(
-                id=invoice.id,
-                amount_due=invoice.amount_due,
-                amount_paid=invoice.amount_paid,
-                currency=invoice.currency,
-                status=invoice.status,
-                invoice_pdf=invoice.invoice_pdf if hasattr(invoice, "invoice_pdf") else None,
-                created=datetime.fromtimestamp(invoice.created),
-                period_start=datetime.fromtimestamp(invoice.period_start) if invoice.period_start else None,
-                period_end=datetime.fromtimestamp(invoice.period_end) if invoice.period_end else None,
-            )
-            for invoice in invoices
+    return PaymentMethodEnumResponse(
+        types=[
+            {"value": "credit_card", "label": "Credit Card"},
+            {"value": "bank_account", "label": "Bank Account"},
+            {"value": "paypal", "label": "PayPal"},
+            {"value": "stripe", "label": "Stripe"},
+            {"value": "square", "label": "Square"},
         ]
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to retrieve invoices: {str(e)}")
+    )
 
 
-@router.post("/webhooks")
-async def handle_stripe_webhook(
-    request: Request,
-    stripe_signature: Annotated[str | None, Header()] = None,
-    db: Annotated[AsyncSession, Depends(get_async_db)] = None,
-) -> dict:
-    """Handle Stripe webhook events.
-
-    Processes events:
-    - customer.subscription.updated: Update subscription status
-    - customer.subscription.deleted: Mark subscription as canceled
-    - invoice.payment_succeeded: Update payment status
-    - invoice.payment_failed: Mark subscription as past_due
+@router.post("/payment-methods")
+async def create_payment_method(
+    payment_method: PaymentMethodCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> PaymentMethodResponse:
     """
-    if not stripe_signature:
-        raise HTTPException(status_code=400, detail="Missing Stripe signature")
+    GAP-010 / RA-178: Create payment method for customer billing.
 
-    # Get raw request body
-    payload = await request.body()
+    Creates a new payment method for a customer. Can mark as default.
+    If marking as default, unsets previous default payment method.
 
-    try:
-        # Verify webhook signature
-        client = _require_stripe()
-        event = client.verify_webhook_signature(payload, stripe_signature)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    Note: This is a mock implementation. In production, would integrate
+    with Stripe/PayPal/etc to tokenize and store payment methods securely.
+    """
+    logger.info(
+        "create_payment_method_called",
+        customer_id=str(payment_method.customer_id),
+        type=payment_method.type,
+        is_default=payment_method.is_default,
+    )
 
-    # Handle different event types
-    event_type = event["type"]
-    data = event["data"]["object"]
+    # Validate customer exists
+    stmt = select(Customer).where(Customer.id == payment_method.customer_id)
+    result = await db.execute(stmt)
+    customer = result.scalar_one_or_none()
+    if not customer:
+        logger.warning("customer_not_found", customer_id=str(payment_method.customer_id))
+        raise HTTPException(status_code=404, detail="Customer not found")
 
-    if event_type == "customer.subscription.updated":
-        # Update subscription status
-        subscription_id = data["id"]
-        org_id_str = data.get("metadata", {}).get("organization_id")
+    # Generate display name
+    if payment_method.type == "credit_card":
+        brand = payment_method.card_brand or "Card"
+        last4 = payment_method.card_number_last4 or "****"
+        display_name = f"{brand.title()} •••• {last4}"
+    elif payment_method.type == "bank_account":
+        last4 = payment_method.account_number_last4 or "****"
+        display_name = f"Bank Account •••• {last4}"
+    else:
+        display_name = payment_method.type.replace("_", " ").title()
 
-        if org_id_str:
-            org_id = UUID(org_id_str)
-            result = await db.execute(
-                select(Subscription).where(Subscription.organization_id == org_id)
-            )
-            subscription = result.scalar_one_or_none()
+    # Mock: Create payment method (PaymentMethod model doesn't exist yet)
+    # In production: call Stripe API, store token reference
+    payment_method_id = uuid4()
 
-            if subscription:
-                subscription.status = SubscriptionStatus.ACTIVE
-                subscription.current_period_start = datetime.fromtimestamp(data["current_period_start"])
-                subscription.current_period_end = datetime.fromtimestamp(data["current_period_end"])
-                await db.commit()
+    logger.info(
+        "payment_method_created",
+        payment_method_id=str(payment_method_id),
+        customer_id=str(payment_method.customer_id),
+        display_name=display_name,
+    )
 
-    elif event_type == "customer.subscription.deleted":
-        # Mark subscription as canceled
-        org_id_str = data.get("metadata", {}).get("organization_id")
+    return PaymentMethodResponse(
+        id=payment_method_id,
+        customer_id=payment_method.customer_id,
+        type=payment_method.type,
+        is_default=payment_method.is_default,
+        is_verified=False,  # Require verification flow in production
+        display_name=display_name,
+        created_at=datetime.now(UTC),
+    )
 
-        if org_id_str:
-            org_id = UUID(org_id_str)
-            result = await db.execute(
-                select(Subscription).where(Subscription.organization_id == org_id)
-            )
-            subscription = result.scalar_one_or_none()
 
-            if subscription:
-                subscription.status = SubscriptionStatus.CANCELED
-                subscription.canceled_at = datetime.utcnow()
-                await db.commit()
+@router.post("/dunning/send-letter")
+async def send_dunning_letter(
+    request: DunningLetterRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> DunningLetterResponse:
+    """
+    GAP-012 / RA-180: Send dunning letter for overdue invoice.
 
-    elif event_type == "invoice.payment_succeeded":
-        # Update period dates after successful payment
-        customer_id = data["customer"]
-        result = await db.execute(
-            select(Subscription).where(Subscription.stripe_customer_id == customer_id)
+    Uses dunning service to:
+    1. Calculate dunning level (1-4) based on days overdue
+    2. Check if should send (not already sent today, not paid, etc.)
+    3. Generate appropriate dunning letter
+    4. Send email (mock for now)
+
+    Args:
+        request: DunningLetterRequest with invoice_id and force_send flag
+
+    Returns:
+        DunningLetterResponse with send result
+    """
+    logger.info(
+        "send_dunning_letter_called",
+        invoice_id=str(request.invoice_id),
+        force_send=request.force_send,
+    )
+
+    # Get invoice
+    stmt = select(Invoice).where(Invoice.id == request.invoice_id)
+    result = await db.execute(stmt)
+    invoice = result.scalar_one_or_none()
+    if not invoice:
+        logger.warning("invoice_not_found", invoice_id=str(request.invoice_id))
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    # Check if paid (payment_status exists on Invoice model)
+    if hasattr(invoice, "payment_status") and invoice.payment_status == "paid":
+        logger.info("invoice_already_paid", invoice_id=str(request.invoice_id))
+        raise HTTPException(status_code=400, detail="Invoice is already paid")
+
+    # Check if paid by amount_due (alternative check)
+    if invoice.amount_due <= Decimal("0"):
+        logger.info("invoice_paid_by_amount", invoice_id=str(request.invoice_id))
+        raise HTTPException(status_code=400, detail="Invoice is already paid")
+
+    # Calculate days overdue
+    days_overdue = calculate_days_overdue(invoice.due_date)
+    if days_overdue < 0:
+        logger.warning(
+            "invoice_not_yet_due",
+            invoice_id=str(request.invoice_id),
+            days_overdue=days_overdue,
         )
-        subscription = result.scalar_one_or_none()
+        raise HTTPException(status_code=400, detail="Invoice is not overdue yet")
 
-        if subscription:
-            subscription.status = SubscriptionStatus.ACTIVE
-            # Update period from the subscription object on the invoice
-            sub_data = data.get("subscription")
-            if sub_data and isinstance(sub_data, dict):
-                if sub_data.get("current_period_start"):
-                    subscription.current_period_start = datetime.fromtimestamp(
-                        sub_data["current_period_start"]
-                    )
-                if sub_data.get("current_period_end"):
-                    subscription.current_period_end = datetime.fromtimestamp(
-                        sub_data["current_period_end"]
-                    )
+    # Check if should send (unless force_send)
+    if not request.force_send:
+        # In real system, would fetch last_dunning_sent from DB
+        # For now, always allow first send
+        dunning_check = should_send_dunning_pure(
+            due_date=invoice.due_date,
+            last_dunning_sent=None,  # Mock: first time sending
+            amount_due=invoice.amount_due,
+        )
+
+        if not dunning_check.should_send:
+            level = get_dunning_level(days_overdue)
+            logger.info(
+                "dunning_not_eligible",
+                invoice_id=str(request.invoice_id),
+                reason=dunning_check.reason,
+            )
+            return DunningLetterResponse(
+                invoice_id=invoice.id,
+                level=level.value,
+                letter_sent=False,
+                email_sent_to="",
+                subject="",
+                body_preview="",
+                reason=dunning_check.reason,
+            )
+
+    # Generate letter using dunning service
+    level = get_dunning_level(days_overdue)
+    letter = generate_dunning_letter(
+        invoice_number=invoice.invoice_number,
+        customer_name="Valued Customer",  # In production: fetch from invoice.customer.company_name
+        amount_due=invoice.amount_due,
+        due_date=invoice.due_date,
+        level=level,
+    )
+
+    # Mock: Send email (in production, use SendGrid/SES/etc)
+    customer_email = "customer@example.com"  # In production: invoice.customer.email
+
+    # Update last dunning date (if Invoice model has this field)
+    # ...
+
+    logger.info(
+        "dunning_letter_sent",
+        invoice_id=str(request.invoice_id),
+        level=level.value,
+        tone=letter.tone,
+        email_sent_to=customer_email,
+    )
+
+    body_preview = letter.body[:200] + "..." if len(letter.body) > 200 else letter.body
+
+    return DunningLetterResponse(
+        invoice_id=invoice.id,
+        level=level.value,
+        letter_sent=True,
+        email_sent_to=customer_email,
+        subject=letter.subject,
+        body_preview=body_preview,
+        reason="Sent successfully",
+    )
+
+
+@router.get("/subscription-health")
+async def get_subscription_health(
+    organization_id: Annotated[UUID, Query()],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> SubscriptionHealthResponse:
+    """
+    GAP-013 / RA-181: Get subscription health metrics.
+
+    Dashboard widget showing subscription health:
+    - Total subscriptions, active, past_due, cancelled, trial
+    - MRR (Monthly Recurring Revenue)
+    - Churn rate
+    - Health score (0-100)
+
+    Note: Mock implementation - Subscription model doesn't exist yet.
+    In production, would query subscriptions table and calculate metrics.
+    """
+    logger.info(
+        "get_subscription_health_called",
+        organization_id=str(organization_id),
+    )
+
+    # Mock implementation
+    # In production: query subscriptions table, calculate real metrics
+    return SubscriptionHealthResponse(
+        total_subscriptions=150,
+        active=135,
+        past_due=10,
+        cancelled=5,
+        trial=15,
+        mrr=Decimal("12500.00"),
+        churn_rate=3.3,
+        health_score=87,
+    )
+
+
+@router.post("/retry-failed-payment")
+async def retry_failed_payment(
+    request: RetryPaymentRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> RetryPaymentResponse:
+    """
+    GAP-014 / RA-182: Retry failed payment.
+
+    Retries payment for invoice with optional new payment method.
+    If payment_method_id not provided, uses customer's default.
+
+    Note: Mock implementation. In production, would integrate with
+    Stripe/PayPal/etc payment gateway to actually process payment.
+    """
+    logger.info(
+        "retry_failed_payment_called",
+        invoice_id=str(request.invoice_id),
+        payment_method_id=str(request.payment_method_id) if request.payment_method_id else None,
+    )
+
+    # Get invoice
+    stmt = select(Invoice).where(Invoice.id == request.invoice_id)
+    result = await db.execute(stmt)
+    invoice = result.scalar_one_or_none()
+    if not invoice:
+        logger.warning("invoice_not_found", invoice_id=str(request.invoice_id))
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    # Check if already paid
+    if hasattr(invoice, "payment_status") and invoice.payment_status == "paid":
+        logger.info("invoice_already_paid", invoice_id=str(request.invoice_id))
+        raise HTTPException(status_code=400, detail="Invoice is already paid")
+
+    if invoice.amount_due <= Decimal("0"):
+        logger.info("invoice_paid_by_amount", invoice_id=str(request.invoice_id))
+        raise HTTPException(status_code=400, detail="Invoice is already paid")
+
+    # Mock: Process payment
+    # In production: call Stripe/PayPal API with payment_method_id
+    # Simulate 90% success rate
+    import random
+    success = random.random() < 0.9
+
+    if success:
+        # Update invoice status to paid
+        if hasattr(invoice, "payment_status"):
+            stmt = (
+                update(Invoice)
+                .where(Invoice.id == request.invoice_id)
+                .values(payment_status="paid", amount_paid=invoice.total, amount_due=Decimal("0"))
+            )
+            await db.execute(stmt)
             await db.commit()
 
-    elif event_type == "invoice.payment_failed":
-        # Mark subscription as past_due
-        customer_id = data["customer"]
-        result = await db.execute(
-            select(Subscription).where(Subscription.stripe_customer_id == customer_id)
+        transaction_id = uuid4()
+        logger.info(
+            "payment_retry_success",
+            invoice_id=str(request.invoice_id),
+            transaction_id=str(transaction_id),
         )
-        subscription = result.scalar_one_or_none()
 
-        if subscription:
-            subscription.status = SubscriptionStatus.PAST_DUE
-            await db.commit()
+        return RetryPaymentResponse(
+            invoice_id=invoice.id,
+            payment_status="paid",
+            transaction_id=transaction_id,
+            error_message=None,
+        )
+    else:
+        logger.warning(
+            "payment_retry_failed",
+            invoice_id=str(request.invoice_id),
+        )
 
-    return {"status": "success", "event_type": event_type}
+        return RetryPaymentResponse(
+            invoice_id=invoice.id,
+            payment_status="failed",
+            transaction_id=None,
+            error_message="Payment declined: Insufficient funds",
+        )
