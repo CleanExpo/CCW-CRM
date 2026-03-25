@@ -477,8 +477,8 @@ function InvoiceDocumentScan({ onInvoiceCreated }: { onInvoiceCreated: () => voi
     try {
       const { apiClient } = await import('@/lib/api/client');
       const result = await apiClient.post<{ extracted_data: ExtractedInvoiceData }>(
-        '/api/documents/extract-invoice',
-        { image_url: imageUrl.trim() }
+        '/api/documents/extract-from-url',
+        { image_url: imageUrl.trim(), document_type: 'invoice' }
       );
       setExtracted(result.extracted_data);
       toast({ title: 'Extraction Complete', description: 'Review the extracted data below.' });
@@ -498,7 +498,7 @@ function InvoiceDocumentScan({ onInvoiceCreated }: { onInvoiceCreated: () => voi
     setCreating(true);
     try {
       const { apiClient } = await import('@/lib/api/client');
-      await apiClient.post('/api/documents/extract-and-create', {
+      await apiClient.post('/api/documents/create-from-url', {
         image_url: imageUrl.trim(),
         document_type: 'invoice',
       });
