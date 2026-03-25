@@ -17,7 +17,8 @@ import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
 import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopify';
 import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/sendgrid';
 import { getCin7Status, type Cin7ConnectionStatus } from '@/lib/api/cin7';
-import { Settings, AlertCircle, BookOpen, Globe } from 'lucide-react';
+import { Settings, AlertCircle, BookOpen, Globe, Bot, CheckCircle2, XCircle } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 import Link from 'next/link';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
@@ -29,6 +30,12 @@ function IntegrationsContent() {
   const [sendgridStatus, setSendgridStatus] = useState<SendGridConnectionStatus | null>(null);
   const [cin7Status, setCin7Status] = useState<Cin7ConnectionStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [geminiStatus, setGeminiStatus] = useState<{
+    configured: boolean;
+    status: string;
+    default_model?: string;
+  } | null>(null);
+  const [claudeStatus, setClaudeStatus] = useState<{ mode: string; status: string } | null>(null);
 
   const loadXeroStatus = async () => {
     try {
@@ -70,6 +77,21 @@ function IntegrationsContent() {
     }
   };
 
+  const loadAiStatuses = async () => {
+    try {
+      const [g, c] = await Promise.allSettled([
+        apiClient.get<{ configured: boolean; status: string; default_model?: string }>(
+          '/api/google-ai/health'
+        ),
+        apiClient.get<{ mode: string; status: string }>('/api/ai/autonomous/health'),
+      ]);
+      if (g.status === 'fulfilled') setGeminiStatus(g.value);
+      if (c.status === 'fulfilled') setClaudeStatus(c.value);
+    } catch {
+      // AI services are optional — don't error
+    }
+  };
+
   const loadAllStatuses = async () => {
     setLoading(true);
     try {
@@ -78,6 +100,7 @@ function IntegrationsContent() {
         loadShopifyStatus(),
         loadSendGridStatus(),
         loadCin7Status(),
+        loadAiStatuses(),
       ]);
     } catch (error: unknown) {
       toast({
@@ -294,6 +317,74 @@ function IntegrationsContent() {
                 <span className="text-muted-foreground text-sm">Open Dashboard →</span>
               </div>
             </Link>
+          </div>
+
+          {/* AI Services */}
+          <div>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <Bot className="h-5 w-5" />
+              AI Services
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Google Gemini */}
+              <div className="rounded-lg border p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="text-xl">✨</span> Google Gemini
+                  </div>
+                  {geminiStatus?.configured ? (
+                    <span className="flex items-center gap-1 text-xs text-green-600">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Ready
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-xs text-orange-600">
+                      <XCircle className="h-3.5 w-3.5" /> Not configured
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Vision analysis, product attribute extraction, text generation.
+                </p>
+                {geminiStatus?.default_model && (
+                  <p className="mt-1 font-mono text-xs text-blue-600">
+                    {geminiStatus.default_model}
+                  </p>
+                )}
+                {!geminiStatus?.configured && (
+                  <p className="mt-2 text-xs text-orange-700">
+                    Set <code className="bg-muted rounded px-1">GOOGLE_AI_API_KEY</code> in
+                    environment variables.
+                  </p>
+                )}
+              </div>
+              {/* Anthropic Claude */}
+              <div className="rounded-lg border p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="text-xl">🤖</span> Anthropic Claude
+                  </div>
+                  {claudeStatus?.mode === 'production' ? (
+                    <span className="flex items-center gap-1 text-xs text-green-600">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Production
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-xs text-blue-600">
+                      <Bot className="h-3.5 w-3.5" /> Demo mode
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Autonomous ops, document extraction, NL queries, staff copilot.
+                </p>
+                <p className="mt-1 font-mono text-xs text-purple-600">claude-sonnet-4-6</p>
+                {claudeStatus?.mode !== 'production' && (
+                  <p className="mt-2 text-xs text-blue-700">
+                    Set <code className="bg-muted rounded px-1">ANTHROPIC_API_KEY</code> for live AI
+                    decisions.
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Google AP2 Integration */}
