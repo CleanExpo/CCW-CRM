@@ -31,7 +31,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, MoreHorizontal, PackageCheck, X, Copy, Download } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  PackageCheck,
+  X,
+  Copy,
+  Download,
+  ScanLine,
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { exportPurchaseOrdersToCSV } from '@/lib/utils/csv-export';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api/client';
@@ -83,6 +100,59 @@ export default function PurchaseOrdersPage() {
   const [editingPO, setEditingPO] = useState<PurchaseOrder | null>(null);
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
   const [cancellingPO, setCancellingPO] = useState<PurchaseOrder | null>(null);
+
+  // PO document scan
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanUrl, setScanUrl] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<Record<string, unknown> | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const handleScanExtract = async () => {
+    if (!scanUrl.trim()) return;
+    setScanning(true);
+    setScanResult(null);
+    try {
+      const result = await apiClient.post<{ extracted_data: Record<string, unknown> }>(
+        '/api/documents/extract-from-url',
+        { image_url: scanUrl.trim(), document_type: 'purchase_order' }
+      );
+      setScanResult(result.extracted_data);
+      toast({ title: 'Extraction Complete', description: 'Review and create draft PO.' });
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Extraction Failed',
+        description: e instanceof Error ? e.message : 'Could not extract PO data.',
+      });
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleScanCreate = async () => {
+    if (!scanResult) return;
+    setCreating(true);
+    try {
+      await apiClient.post('/api/documents/create-from-url', {
+        image_url: scanUrl.trim(),
+        document_type: 'purchase_order',
+      });
+      toast({ title: 'Draft PO Created', description: 'Check Purchase Orders list.' });
+      setScanOpen(false);
+      setScanUrl('');
+      setScanResult(null);
+      loadPurchaseOrders();
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Create Failed',
+        description: e instanceof Error ? e.message : 'Could not create draft PO.',
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     loadPurchaseOrders();
@@ -213,6 +283,10 @@ export default function PurchaseOrdersPage() {
             >
               <Download className="mr-2 h-4 w-4" />
               Export CSV
+            </Button>
+            <Button variant="outline" onClick={() => setScanOpen(true)}>
+              <ScanLine className="mr-2 h-4 w-4" />
+              Scan PO Image
             </Button>
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -452,6 +526,85 @@ export default function PurchaseOrdersPage() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+
+      {/* PO Document Scan Dialog */}
+      <Dialog
+        open={scanOpen}
+        onOpenChange={(open) => {
+          setScanOpen(open);
+          if (!open) {
+            setScanUrl('');
+            setScanResult(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ScanLine className="h-4 w-4" />
+              Scan Purchase Order Image
+            </DialogTitle>
+            <DialogDescription>
+              Paste a URL of a supplier PO or handwritten order. Claude Vision will extract
+              supplier, items, and totals automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="po-scan-url">Image URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="po-scan-url"
+                  type="url"
+                  placeholder="https://... (image of PO)"
+                  value={scanUrl}
+                  onChange={(e) => setScanUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleScanExtract()}
+                />
+                <Button onClick={handleScanExtract} disabled={scanning || !scanUrl.trim()}>
+                  <ScanLine className={`mr-2 h-4 w-4 ${scanning ? 'animate-pulse' : ''}`} />
+                  {scanning ? 'Extracting…' : 'Extract'}
+                </Button>
+              </div>
+            </div>
+
+            {scanResult && (
+              <div className="space-y-2 rounded-lg border p-3">
+                <p className="text-sm font-medium">Extracted PO Data</p>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  {(scanResult.supplier_name as string) && (
+                    <>
+                      <dt className="text-muted-foreground">Supplier</dt>
+                      <dd>{scanResult.supplier_name as string}</dd>
+                    </>
+                  )}
+                  {(scanResult.po_number as string) && (
+                    <>
+                      <dt className="text-muted-foreground">PO Number</dt>
+                      <dd>{scanResult.po_number as string}</dd>
+                    </>
+                  )}
+                  {(scanResult.total_amount as number) != null && (
+                    <>
+                      <dt className="text-muted-foreground">Total</dt>
+                      <dd>${Number(scanResult.total_amount).toFixed(2)}</dd>
+                    </>
+                  )}
+                  {(scanResult.line_items as unknown[])?.length > 0 && (
+                    <>
+                      <dt className="text-muted-foreground">Line Items</dt>
+                      <dd>{(scanResult.line_items as unknown[]).length} item(s)</dd>
+                    </>
+                  )}
+                </dl>
+                <Button className="mt-2 w-full" onClick={handleScanCreate} disabled={creating}>
+                  {creating ? 'Creating…' : 'Create Draft Purchase Order'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </ErrorBoundary>
   );
 }
