@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
-/**
- * Refresh Xero Tokens Cron Job
- *
- * Schedule: Every 15 minutes (*/15 * * * *)
- * Proxies to FastAPI backend to proactively refresh Xero OAuth
- * tokens before they expire, preventing token-related API failures.
- */
+// Refresh Xero Tokens Cron Job
+// Schedule: Every 15 minutes
+// Proactively refreshes Xero OAuth tokens before they expire
+// to prevent auth failures during business operations.
+
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -32,18 +30,11 @@ export async function GET(request: Request) {
     const data = await response.json();
 
     logger.info("Refresh Xero tokens cron", {
-      status: data.status,
       refreshed: data.refreshed,
-      failed: data.failed,
+      skipped: data.skipped,
+      errors: data.errors?.length ?? 0,
       timestamp: new Date().toISOString(),
     });
-
-    if (data.failed > 0) {
-      logger.error("Xero token refresh had failures", {
-        failed: data.failed,
-        errors: data.errors,
-      });
-    }
 
     return NextResponse.json({
       success: response.ok,
