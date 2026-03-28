@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
-/**
- * Check SLA Breaches Cron Job
- *
- * Schedule: Every 15 minutes (*/15 * * * *)
- * UNI-174 ST-4: Proxies to FastAPI backend to scan for SLA instances
- * past their deadline and fire escalation workflows.
- */
+// Check SLA Breaches Cron Job
+// Schedule: Every 15 minutes
+// UNI-174 ST-4: Proxies to FastAPI backend to scan for SLA breaches
+// and fire escalation notifications.
+
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -32,16 +30,10 @@ export async function GET(request: Request) {
     const data = await response.json();
 
     logger.info("Check SLA breaches cron", {
-      breachedCount: data.breached_count,
-      checkedAt: data.checked_at,
+      breachesFound: data.breaches_found,
+      escalationsSent: data.escalations_sent,
       timestamp: new Date().toISOString(),
     });
-
-    if (data.breached_count > 0) {
-      logger.warn("SLA breaches detected", {
-        count: data.breached_count,
-      });
-    }
 
     return NextResponse.json({
       success: response.ok,
