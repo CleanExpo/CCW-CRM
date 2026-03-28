@@ -60,7 +60,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Protected routes — all paths except explicitly public ones require authentication
-  const publicPaths = ["/login", "/register", "/guest", "/faq", "/"];
+  // Note: /api/cron routes use their own CRON_SECRET auth, not session cookies
+  const publicPaths = ["/login", "/register", "/guest", "/faq", "/", "/api/cron"];
   const isPublicPath = publicPaths.some(
     (path) =>
       request.nextUrl.pathname === path ||
