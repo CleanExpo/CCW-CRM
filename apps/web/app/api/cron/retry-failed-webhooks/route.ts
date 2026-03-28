@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
-/**
- * Retry Failed Webhooks Cron Job
- *
- * Schedule: Every 5 minutes (*/5 * * * *)
- * ISS-036: Proxies to FastAPI backend to process the webhook retry queue.
- * Retries failed webhooks with exponential backoff, moves to dead letter
- * queue after max retries. Supports Shopify, Xero, SendGrid, Stripe.
- */
+// Retry Failed Webhooks Cron Job
+// Schedule: Every 5 minutes
+// ISS-036: Proxies to FastAPI backend to process the webhook retry queue.
+// Retries failed webhooks with exponential backoff, moves to dead letter
+// queue after max retries. Supports Shopify, Xero, SendGrid, Stripe.
+
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
