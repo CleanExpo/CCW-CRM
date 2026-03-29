@@ -56,6 +56,22 @@
     {
       "path": "/api/cron/auto-reorder-inventory",
       "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 14 * * *"
     }
   ],
   "headers": [
