@@ -140,8 +140,12 @@ async def create_template(
         item = ServiceTemplateItem(template_id=template.id, **item_data.model_dump())
         db.add(item)
 
-    await db.commit()
-    await db.refresh(template)
+    try:
+        await db.commit()
+        await db.refresh(template)
+    except Exception:
+        await db.rollback()
+        raise
     return TemplateResponse.model_validate(template)
 
 
@@ -173,8 +177,12 @@ async def update_template(
             item = ServiceTemplateItem(template_id=template_id, **item_data.model_dump())
             db.add(item)
 
-    await db.commit()
-    await db.refresh(template)
+    try:
+        await db.commit()
+        await db.refresh(template)
+    except Exception:
+        await db.rollback()
+        raise
     return TemplateResponse.model_validate(template)
 
 
@@ -189,4 +197,8 @@ async def deactivate_template(
         raise HTTPException(status_code=404, detail="Service template not found")
     template.is_active = False
     template.updated_at = datetime.now(UTC)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
