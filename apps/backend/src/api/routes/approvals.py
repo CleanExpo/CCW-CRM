@@ -521,8 +521,12 @@ async def add_approval_step(
     )
 
     db.add(step)
-    await db.commit()
-    await db.refresh(step)
+    try:
+        await db.commit()
+        await db.refresh(step)
+    except Exception:
+        await db.rollback()
+        raise
 
     logger.info(
         "Approval step added",
@@ -626,9 +630,13 @@ async def update_approval_step(
         approval.completed_at = datetime.now(UTC)
         logger.info("Approval workflow rejected", approval_id=str(approval_id), step=step.step_number)
 
-    await db.commit()
-    await db.refresh(step)
-    await db.refresh(approval)
+    try:
+        await db.commit()
+        await db.refresh(step)
+        await db.refresh(approval)
+    except Exception:
+        await db.rollback()
+        raise
 
     return ApprovalStepResponse(
         id=step.id,
@@ -673,7 +681,11 @@ async def cancel_approval(
     approval.status = ApprovalStatus.CANCELLED
     approval.completed_at = datetime.now(UTC)
 
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     logger.info("Approval workflow cancelled", approval_id=str(approval_id))
 
@@ -769,7 +781,11 @@ async def bulk_approve_v2(
             logger.error("bulk_approve_failed", approval_id=str(approval_id), error=str(e))
 
     # Commit all changes
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     total_approved = sum(1 for r in results if r.success)
     total_failed = len(results) - total_approved
@@ -869,7 +885,11 @@ async def bulk_approve(
             failed_ids.append(f"{approval_id}: {str(e)}")
             logger.error("Bulk approve failed for approval", approval_id=str(approval_id), error=str(e))
 
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     logger.info(
         "Bulk approve completed",
