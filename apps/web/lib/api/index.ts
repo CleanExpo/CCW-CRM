@@ -25,7 +25,12 @@ export { contactsApi } from './contacts';
 export { copilotApi } from './copilot';
 export type { CopilotQueryRequest, CopilotQueryResponse, CopilotMessage } from './copilot';
 export { shadowApi } from './shadow';
-export type { ShadowStatusResponse, ShadowSessionResponse, ReadinessScoreResponse, AiOpportunity } from './shadow';
+export type {
+  ShadowStatusResponse,
+  ShadowSessionResponse,
+  ReadinessScoreResponse,
+  AiOpportunity,
+} from './shadow';
 
 // Auth types
 export type { User, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from './auth';
@@ -516,3 +521,13 @@ export {
   getXeroInvoice,
   isXeroConnected,
 } from './xero';
+
+// Document Extraction API client
+export { documentsApi } from './documents';
+export type {
+  ExtractedInvoiceData,
+  ExtractedPOData,
+  ExtractionResponse,
+  CreateFromExtractionResponse,
+  ExtractedLineItem,
+} from './documents';

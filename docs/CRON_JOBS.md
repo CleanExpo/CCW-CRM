@@ -1,75 +1,53 @@
-# Frontend Cron Jobs
+# Cron Jobs — CCW ERP/CRM
 
-Scheduled tasks using Vercel Cron for periodic maintenance and monitoring.
+Scheduled tasks using Vercel Cron (frontend) proxying to FastAPI (backend) for periodic maintenance, monitoring, integrations, and autonomous operations.
 
-## Overview
+## Architecture
 
-This project uses Vercel Cron to run scheduled tasks directly from the Next.js frontend. This is ideal for:
-- Periodic cleanup tasks
-- Health monitoring
-- Daily/weekly reports
-- Scheduled notifications
+All cron jobs follow this flow:
 
-## Configured Cron Jobs
+1. **Vercel Cron** triggers a Next.js API route on schedule
+2. The **Next.js route** verifies `CRON_SECRET` and either handles the task directly (Supabase queries) or proxies to the **FastAPI backend**
+3. The **FastAPI endpoint** executes the business logic and returns results
+4. Results are logged for monitoring
 
-### 1. Cleanup Old Runs (Daily at 2:00 AM)
+## Complete Cron Schedule
 
-**Schedule**: `0 2 * * *` (Every day at 2:00 AM)
-**Endpoint**: `/api/cron/cleanup-old-runs`
-**Purpose**: Deletes completed/failed agent runs older than 30 days
+### High-Frequency (Every 5–15 Minutes)
 
-**What it does**:
-- Queries `agent_runs` table for old completed/failed runs
-- Deletes runs with `completed_at` older than 30 days
-- Logs the number of deleted records
+| Schedule | Endpoint | Description | Layer |
+|----------|----------|-------------|-------|
+| `*/5 * * * *` | `/api/cron/health-check` | Ping backend, measure latency, detect outages | Frontend |
+| `*/5 * * * *` | `/api/cron/retry-failed-webhooks` | ISS-036: Retry failed webhooks with exponential backoff | Backend |
+| `*/15 * * * *` | `/api/cron/refresh-xero-tokens` | Proactively refresh Xero OAuth tokens before expiry | Backend |
+| `*/15 * * * *` | `/api/cron/check-sla-breaches` | UNI-174 ST-4: Scan for SLA breaches, fire escalations | Backend |
 
-**Why at 2 AM?**
-- Low traffic period
-- Minimal impact on database performance
-- Runs before daily backup (if configured)
+### Hourly
 
-### 2. Health Check (Every 5 Minutes)
+| Schedule | Endpoint | Description | Layer |
+|----------|----------|-------------|-------|
+| `0 * * * *` | `/api/cron/run-autonomous-ops` | Claude Sonnet reviews ERP state — draft POs, payment reminders, flag unmatched txns | Backend |
 
-**Schedule**: `*/5 * * * *` (Every 5 minutes)
-**Endpoint**: `/api/cron/health-check`
-**Purpose**: Monitors backend health and latency
+### Daily
 
-**What it does**:
-- Pings FastAPI backend `/health` endpoint
-- Measures response time
-- Logs health status
-- Can trigger alerts if unhealthy
+| Schedule (UTC) | AEST | Endpoint | Description | Layer |
+|----------------|------|----------|-------------|-------|
+| `0 0 * * *` | 10:00 AM | `/api/cron/refresh-health-scores` | UNI-1114/1112: Refresh CRM persona tags for all customers | Backend |
+| `0 2 * * *` | 12:00 PM | `/api/cron/cleanup-old-runs` | Delete completed/failed agent runs older than 30 days | Frontend |
+| `0 9 * * *` | 7:00 PM | `/api/cron/daily-report` | Generate daily summary of agent activity and success rates | Frontend |
+| `0 9 * * *` | 7:00 PM | `/api/cron/check-expiring-quotes` | Check quotes expiring in 3 days, send notifications | Backend |
+| `0 9 * * *` | 7:00 PM | `/api/cron/process-onboarding-emails` | UNI-1113: Send due onboarding touchpoint emails | Backend |
+| `0 19 * * *` | 5:00 AM+1 | `/api/cron/shadow-sync-cin7` | Shadow sync: pull products, orders, customers from Cin7 | Backend |
+| `0 20 * * *` | 6:00 AM+1 | `/api/cron/shadow-sync-xero` | Shadow sync: pull invoices, payments, accounts from Xero | Backend |
+| `0 21 * * *` | 7:00 AM+1 | `/api/cron/auto-reorder-inventory` | Sprint 4: Scan inventory, create draft POs for low-stock items | Backend |
 
-**Use cases**:
-- Early detection of backend issues
-- Uptime monitoring
-- Performance tracking
-- Integration with monitoring services (PagerDuty, etc.)
-
-### 3. Daily Report (Daily at 9:00 AM)
-
-**Schedule**: `0 9 * * *` (Every day at 9:00 AM)
-**Endpoint**: `/api/cron/daily-report`
-**Purpose**: Generates daily summary of agent activity
-
-**What it does**:
-- Queries yesterday's agent runs
-- Calculates success rate, failures, escalations
-- Computes average execution time
-- Lists top failures
-
-**Report includes**:
-- Total runs
-- Completion rate
-- Failed runs with errors
-- Agent breakdown
-- Average duration
+**Total: 13 scheduled cron jobs**
 
 ## Setup
 
 ### 1. Environment Variables
 
-Add to `.env.local`:
+Add to `.env.local` (frontend) and backend `.env`:
 
 ```env
 CRON_SECRET=your-secure-random-string-here
@@ -83,79 +61,30 @@ openssl rand -base64 32
 
 ### 2. Vercel Configuration
 
-The `vercel.json` file defines all cron schedules:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/cleanup-old-runs",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/health-check",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/daily-report",
-      "schedule": "0 9 * * *"
-    }
-  ]
-}
-```
-
-### 3. Deploy to Vercel
+All schedules are defined in `apps/web/vercel.json`. After any changes:
 
 ```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Login
-vercel login
-
-# Deploy
 vercel --prod
 ```
 
-Cron jobs will automatically start running after deployment.
+Cron jobs start running automatically after deployment.
 
-## Cron Schedule Syntax
+### 3. Required Backend Environment Variables
 
+The backend cron endpoints also depend on:
+
+```env
+# Xero integration
+XERO_CLIENT_ID=...
+XERO_CLIENT_SECRET=...
+
+# Cin7 integration
+CIN7_API_KEY=...
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
 ```
-* * * * *
-│ │ │ │ │
-│ │ │ │ └─── Day of week (0-6, Sunday=0)
-│ │ │ └───── Month (1-12)
-│ │ └─────── Day of month (1-31)
-│ └───────── Hour (0-23)
-└─────────── Minute (0-59)
-```
-
-### Common Examples
-
-| Schedule | Description |
-|----------|-------------|
-| `*/5 * * * *` | Every 5 minutes |
-| `0 * * * *` | Every hour |
-| `0 0 * * *` | Every day at midnight |
-| `0 9 * * *` | Every day at 9 AM |
-| `0 9 * * 1` | Every Monday at 9 AM |
-| `0 0 1 * *` | First day of every month |
-
-## Local Testing
-
-Cron jobs don't run locally. Test them manually:
-
-```bash
-# Terminal 1: Start Next.js dev server
-pnpm dev
-
-# Terminal 2: Call cron endpoint with authorization
-curl http://localhost:3000/api/cron/health-check \
-  -H "Authorization: Bearer your-cron-secret"
-```
-
-Or use a tool like [Postman](https://www.postman.com/) or [Insomnia](https://insomnia.rest/).
 
 ## Security
 
@@ -163,182 +92,158 @@ Or use a tool like [Postman](https://www.postman.com/) or [Insomnia](https://ins
 
 All cron endpoints verify the `CRON_SECRET` header:
 
+**Frontend (Next.js):**
 ```typescript
 const authHeader = request.headers.get("authorization");
-if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+if (authHeader !== \`Bearer \${process.env.CRON_SECRET}\`) {
   return new NextResponse("Unauthorized", { status: 401 });
 }
 ```
 
-**Important**: Never commit `CRON_SECRET` to git. Use environment variables.
+**Backend (FastAPI):**
+```python
+def verify_cron_secret(authorization: str | None = Header(None)) -> bool:
+    cron_secret = os.getenv("CRON_SECRET")
+    if not cron_secret:
+        return True  # Development mode
+    return authorization == f"Bearer {cron_secret}"
+```
 
 ### Vercel Protection
 
-Vercel automatically:
-- Sets the `Authorization` header with your `CRON_SECRET`
-- Only allows Vercel infrastructure to call cron endpoints
-- Provides execution logs in the Vercel dashboard
+Vercel automatically sets the `Authorization` header and restricts cron calls to Vercel infrastructure only.
+
+## Internal Schedulers (Non-Vercel)
+
+### APScheduler — Bank Feed Sync
+
+Located in `apps/backend/src/scheduler/bank_feed_scheduler.py`. Runs inside the FastAPI process:
+
+| Job ID | Schedule | Description |
+|--------|----------|-------------|
+| `bank_feed_sync_hourly` | Every hour at :05 | Sync accounts with 1-hour interval |
+| `bank_feed_sync_4hour` | Every 4 hours at :10 | Sync accounts with 4-hour interval |
+| `bank_feed_sync_daily` | Daily at 9:00 AM | Sync accounts with 24-hour interval (default) |
+
+### Workshop Scheduler
+
+Located in `apps/backend/src/services/workshop_scheduler.py`. Event-driven (not cron):
+
+- Service reminders at 90, 30, and 7 days before due date
+- Overdue reminders for equipment past service date
+- Idempotent design prevents duplicate reminders
+
+## Local Testing
+
+Cron jobs don't run locally. Test them manually:
+
+```bash
+# Start dev server
+pnpm dev
+
+# Call any cron endpoint
+curl http://localhost:3000/api/cron/health-check \\
+  -H "Authorization: Bearer your-cron-secret"
+
+# Test backend endpoint directly
+curl -X POST http://localhost:8000/api/cron/check-expiring-quotes \\
+  -H "Authorization: Bearer your-cron-secret"
+```
 
 ## Monitoring
 
-### View Cron Execution Logs
+### Vercel Dashboard
 
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Select your project
-3. Go to "Deployments" → Select latest deployment
-4. Click "Functions" tab
-5. Find your cron function
-6. View logs
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → Your project
+2. Deployments → Latest → Functions tab
+3. Find cron functions and view execution logs
 
-### Set Up Alerts
+### On-Demand Health Endpoints
 
-Add to your cron handlers:
+These backend endpoints provide monitoring data without a schedule:
 
-```typescript
-if (!healthy) {
-  // Send alert to Slack
-  await fetch(process.env.SLACK_WEBHOOK_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      text: "🚨 Backend health check failed!",
-    }),
-  });
-
-  // Or send email via SendGrid, Resend, etc.
-  await sendEmail({
-    to: "alerts@example.com",
-    subject: "Backend health check failed",
-    body: "..."
-  });
-}
-```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/cron/xero-token-health` | GET | Xero OAuth connection health and expiry times |
+| `/api/cron/webhook-health` | GET | Webhook processing stats, reliability rate (target: 99%) |
+| `/api/cron/dead-letter-queue` | GET | Webhooks that exceeded max retries |
+| `/api/cron/dead-letter-queue/{id}/retry` | POST | Manually retry a dead-letter webhook |
 
 ## Adding New Cron Jobs
 
-### 1. Create API Route
+### 1. Create Backend Endpoint (if needed)
+
+```python
+# apps/backend/src/api/routes/cron_jobs.py
+@router.post("/my-new-task")
+async def my_new_task(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    # Task logic here
+    return {"status": "success"}
+```
+
+### 2. Create Frontend Route
 
 ```typescript
-// apps/web/app/api/cron/my-task/route.ts
+// apps/web/app/api/cron/my-new-task/route.ts
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: Request) {
-  // Verify cron secret
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
   try {
-    // Your task logic here
-    console.log("Running my custom task");
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== \`Bearer \${process.env.CRON_SECRET}\`) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
 
-    return NextResponse.json({ success: true });
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+    const response = await fetch(\`\${backendUrl}/api/cron/my-new-task\`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: \`Bearer \${process.env.CRON_SECRET}\`,
+      },
+    });
+
+    const data = await response.json();
+    logger.info("My new task cron", { ...data });
+    return NextResponse.json({ success: response.ok, ...data });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error("My new task cron error", error);
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
   }
 }
 ```
 
-### 2. Add to vercel.json
+### 3. Add to vercel.json
 
 ```json
 {
-  "crons": [
-    {
-      "path": "/api/cron/my-task",
-      "schedule": "0 */6 * * *"  // Every 6 hours
-    }
-  ]
+  "path": "/api/cron/my-new-task",
+  "schedule": "0 */6 * * *"
 }
 ```
 
-### 3. Deploy
+### 4. Deploy
 
 ```bash
 vercel --prod
 ```
 
-## Alternative: Next.js Route Handlers (Without Vercel)
+## File Reference
 
-If not using Vercel, you can trigger cron jobs externally:
-
-### Option 1: External Cron Service
-
-Use services like:
-- [Cron-job.org](https://cron-job.org/)
-- [EasyCron](https://www.easycron.com/)
-- GitHub Actions
-
-```yaml
-# .github/workflows/cron.yml
-name: Daily Report
-on:
-  schedule:
-    - cron: '0 9 * * *'
-
-jobs:
-  run-report:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger daily report
-        run: |
-          curl https://your-app.vercel.app/api/cron/daily-report \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
-```
-
-### Option 2: Self-Hosted Cron
-
-```bash
-# Add to crontab
-crontab -e
-
-# Add line:
-0 9 * * * curl https://your-app.com/api/cron/daily-report -H "Authorization: Bearer your-secret"
-```
-
-## Best Practices
-
-1. **Keep cron jobs lightweight** - Offload heavy work to background jobs
-2. **Add timeout protection** - Use `AbortController` for long-running tasks
-3. **Implement retries** - Handle transient failures gracefully
-4. **Log everything** - Essential for debugging
-5. **Monitor execution time** - Alert if jobs take too long
-6. **Use idempotency** - Ensure safe re-execution
-7. **Secure endpoints** - Always verify `CRON_SECRET`
-
-## Troubleshooting
-
-### Cron job not running
-
-1. Check Vercel dashboard for execution logs
-2. Verify `vercel.json` syntax
-3. Ensure `CRON_SECRET` environment variable is set
-4. Check function timeout limits (Vercel: 10s free, 60s pro)
-
-### Unauthorized errors
-
-1. Verify `CRON_SECRET` matches in code and Vercel
-2. Check authorization header format: `Bearer <secret>`
-3. Ensure environment variable is set in Vercel dashboard
-
-### Jobs timing out
-
-1. Reduce workload per execution
-2. Use background jobs for heavy tasks
-3. Upgrade to Vercel Pro for longer timeouts
-4. Split into multiple smaller cron jobs
-
-## Related Files
-
-- **Config**: `apps/web/vercel.json`
-- **Cleanup**: `apps/web/app/api/cron/cleanup-old-runs/route.ts`
-- **Health Check**: `apps/web/app/api/cron/health-check/route.ts`
-- **Daily Report**: `apps/web/app/api/cron/daily-report/route.ts`
-
-## Next Steps
-
-- [ ] Add email notifications for daily reports
-- [ ] Implement Slack alerts for health check failures
-- [ ] Create weekly summary report
-- [ ] Add metrics tracking (execution time, success rate)
-- [ ] Set up dead letter queue for failed jobs
+| File | Purpose |
+|------|---------|
+| `apps/web/vercel.json` | Vercel cron schedule configuration |
+| `apps/web/app/api/cron/*/route.ts` | Frontend cron route handlers (13 routes) |
+| `apps/backend/src/api/routes/cron_jobs.py` | Backend cron endpoint implementations |
+| `apps/backend/src/scheduler/bank_feed_scheduler.py` | APScheduler bank feed sync |
+| `apps/backend/src/services/workshop_scheduler.py` | Workshop service reminder scheduler |
+| `docs/CRON_JOBS.md` | This documentation |

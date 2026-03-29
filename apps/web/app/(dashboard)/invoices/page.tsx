@@ -6,7 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSearchState } from '@/lib/hooks/use-search-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Eye, DollarSign, FileText, Edit, Trash2, BarChart3, Download } from 'lucide-react';
+import {
+  Plus,
+  Eye,
+  DollarSign,
+  FileText,
+  Edit,
+  Trash2,
+  BarChart3,
+  Download,
+  ScanLine,
+  Sparkles,
+} from 'lucide-react';
 import { exportInvoicesToCSV } from '@/lib/utils/csv-export';
 import { useToast } from '@/hooks/use-toast';
 import type { Invoice, InvoiceSummary } from '@/lib/types/invoices';
@@ -277,6 +288,10 @@ export default function InvoicesPage() {
               <BarChart3 className="mr-2 h-4 w-4" />
               Reports
             </TabsTrigger>
+            <TabsTrigger value="scan">
+              <ScanLine className="mr-2 h-4 w-4" />
+              Document Scan
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="invoices" className="mt-6 space-y-6">
@@ -392,6 +407,10 @@ export default function InvoicesPage() {
           <TabsContent value="reports" className="mt-6">
             <FinancialReportTab />
           </TabsContent>
+
+          <TabsContent value="scan" className="mt-6">
+            <InvoiceDocumentScan onInvoiceCreated={loadInvoices} />
+          </TabsContent>
         </Tabs>
 
         {/* Dialogs */}
@@ -421,5 +440,174 @@ export default function InvoicesPage() {
         />
       </div>
     </ErrorBoundary>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Document Scan — Claude Vision invoice extraction
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ExtractedInvoiceData {
+  vendor_name?: string;
+  invoice_number?: string;
+  invoice_date?: string;
+  due_date?: string;
+  total_amount?: number;
+  tax_amount?: number;
+  line_items?: Array<{
+    description: string;
+    quantity?: number;
+    unit_price?: number;
+    total?: number;
+  }>;
+  [key: string]: unknown;
+}
+
+function InvoiceDocumentScan({ onInvoiceCreated }: { onInvoiceCreated: () => void }) {
+  const { toast } = useToast();
+  const [imageUrl, setImageUrl] = useState('');
+  const [extracting, setExtracting] = useState(false);
+  const [extracted, setExtracted] = useState<ExtractedInvoiceData | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const handleExtract = async () => {
+    if (!imageUrl.trim()) return;
+    setExtracting(true);
+    setExtracted(null);
+    try {
+      const { apiClient } = await import('@/lib/api/client');
+      const result = await apiClient.post<{ extracted_data: ExtractedInvoiceData }>(
+        '/api/documents/extract-from-url',
+        { image_url: imageUrl.trim(), document_type: 'invoice' }
+      );
+      setExtracted(result.extracted_data);
+      toast({ title: 'Extraction Complete', description: 'Review the extracted data below.' });
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Extraction Failed',
+        description: e instanceof Error ? e.message : 'Could not extract invoice data.',
+      });
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const handleCreateDraft = async () => {
+    if (!extracted) return;
+    setCreating(true);
+    try {
+      const { apiClient } = await import('@/lib/api/client');
+      await apiClient.post('/api/documents/create-from-url', {
+        image_url: imageUrl.trim(),
+        document_type: 'invoice',
+      });
+      toast({
+        title: 'Draft Invoice Created',
+        description: 'Check Invoices list for the new draft.',
+      });
+      setExtracted(null);
+      setImageUrl('');
+      onInvoiceCreated();
+    } catch (e: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Create Failed',
+        description: e instanceof Error ? e.message : 'Could not create draft invoice.',
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="h-4 w-4 text-purple-500" />
+            AI Invoice Extraction
+          </CardTitle>
+          <CardDescription>
+            Paste an image URL of a supplier invoice or handwritten PO. Claude Vision will extract
+            vendor, dates, line items, and totals automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              placeholder="https://... (image URL of invoice)"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full flex-1 rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+            />
+            <Button onClick={handleExtract} disabled={extracting || !imageUrl.trim()}>
+              <ScanLine className={`mr-2 h-4 w-4 ${extracting ? 'animate-pulse' : ''}`} />
+              {extracting ? 'Extracting…' : 'Extract'}
+            </Button>
+          </div>
+
+          {extracted && (
+            <div className="space-y-3 rounded-lg border p-4">
+              <p className="text-sm font-medium">Extracted Data</p>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {extracted.vendor_name && (
+                  <>
+                    <dt className="text-muted-foreground">Vendor</dt>
+                    <dd>{extracted.vendor_name}</dd>
+                  </>
+                )}
+                {extracted.invoice_number && (
+                  <>
+                    <dt className="text-muted-foreground">Invoice #</dt>
+                    <dd>{extracted.invoice_number}</dd>
+                  </>
+                )}
+                {extracted.invoice_date && (
+                  <>
+                    <dt className="text-muted-foreground">Date</dt>
+                    <dd>{extracted.invoice_date}</dd>
+                  </>
+                )}
+                {extracted.total_amount != null && (
+                  <>
+                    <dt className="text-muted-foreground">Total</dt>
+                    <dd>${Number(extracted.total_amount).toFixed(2)}</dd>
+                  </>
+                )}
+                {extracted.tax_amount != null && (
+                  <>
+                    <dt className="text-muted-foreground">GST</dt>
+                    <dd>${Number(extracted.tax_amount).toFixed(2)}</dd>
+                  </>
+                )}
+              </dl>
+              {extracted.line_items && extracted.line_items.length > 0 && (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">
+                    Line Items ({extracted.line_items.length})
+                  </p>
+                  <ul className="space-y-0.5 text-sm">
+                    {extracted.line_items.map((item, i) => (
+                      <li key={i} className="flex justify-between gap-4">
+                        <span className="truncate">{item.description}</span>
+                        <span className="text-muted-foreground shrink-0">
+                          {item.quantity != null && `×${item.quantity} `}
+                          {item.total != null && `$${Number(item.total).toFixed(2)}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <Button onClick={handleCreateDraft} disabled={creating} className="w-full" size="sm">
+                {creating ? 'Creating…' : 'Create Draft Invoice from Extraction'}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
