@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from src.api.middleware.rate_limit import RateLimits, limiter
 from src.config.marketplace_settings import get_marketplace_settings
+from src.integrations.marketplace import EbayChannel, ShopifyChannel
 from src.integrations.marketplace.demo_channel import (
     EbayDemoChannel,
     FacebookDemoChannel,
@@ -21,6 +22,11 @@ from src.integrations.marketplace.demo_channel import (
 )
 from src.integrations.marketplace.registry import get_channel, list_channels
 from src.integrations.marketplace.sync_engine import SyncEngine
+
+# Ensure real channel classes are imported so @register_channel runs at startup.
+# In demo mode the engine uses demo instances; in live mode these classes are
+# retrieved from the registry by the connect endpoint.
+_LIVE_CHANNELS = (ShopifyChannel, EbayChannel)
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/marketplace", tags=["Marketplace"])
