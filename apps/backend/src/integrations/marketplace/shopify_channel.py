@@ -53,21 +53,21 @@ class ShopifyChannel(BaseMarketplaceChannel):
             raise RuntimeError("ShopifyChannel not connected")
         r = await self._client.get(path, params=params or {})
         r.raise_for_status()
-        return r.json()
+        return dict(r.json())
 
     async def _post(self, path: str, json: dict) -> dict[str, Any]:
         if not self._client:
             raise RuntimeError("ShopifyChannel not connected")
         r = await self._client.post(path, json=json)
         r.raise_for_status()
-        return r.json()
+        return dict(r.json())
 
     async def _put(self, path: str, json: dict) -> dict[str, Any]:
         if not self._client:
             raise RuntimeError("ShopifyChannel not connected")
         r = await self._client.put(path, json=json)
         r.raise_for_status()
-        return r.json()
+        return dict(r.json())
 
     async def _delete(self, path: str) -> None:
         if not self._client:
