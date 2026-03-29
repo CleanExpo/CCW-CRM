@@ -228,15 +228,14 @@ class EbayDemoChannel(_BaseDemoChannel):
 
 @register_channel
 class FacebookDemoChannel(_BaseDemoChannel):
-    """Demo Facebook Marketplace channel."""
+    """Demo Facebook & Instagram Shop channel."""
 
     channel_type = "facebook"
-    display_name = "Facebook Marketplace"
+    display_name = "Facebook & Instagram Shop"
 
     def get_setup_fields(self) -> list[dict]:
         return [
-            {"key": "app_id", "label": "App ID", "type": "text", "required": True, "placeholder": "Facebook App ID"},
-            {"key": "app_secret", "label": "App Secret", "type": "password", "required": True, "placeholder": "Facebook App Secret"},
-            {"key": "access_token", "label": "Page Access Token", "type": "password", "required": True, "placeholder": "Long-lived page access token"},
-            {"key": "catalog_id", "label": "Catalog ID", "type": "text", "required": True, "placeholder": "Facebook Commerce catalog ID"},
+            {"key": "access_token", "label": "System User Access Token", "type": "password", "required": True, "placeholder": "EAABxx... (long-lived system user token)"},
+            {"key": "catalog_id", "label": "Commerce Catalog ID", "type": "text", "required": True, "placeholder": "123456789012345"},
+            {"key": "page_id", "label": "Facebook Page ID (required for order management)", "type": "text", "required": False, "placeholder": "987654321098765"},
         ]
