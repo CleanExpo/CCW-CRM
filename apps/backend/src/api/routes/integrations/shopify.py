@@ -348,8 +348,12 @@ async def configure_shopify(
         )
         db.add(conn)
 
-    await db.commit()
-    await db.refresh(conn)
+    try:
+        await db.commit()
+        await db.refresh(conn)
+    except Exception:
+        await db.rollback()
+        raise
 
     logger.info("shopify_credentials_saved", shop_domain=conn.shop_domain)
     return {
@@ -425,7 +429,11 @@ async def connect_shopify(
             )
             db.add(connection)
 
-        await db.commit()
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
 
         return {
             "success": True,
@@ -466,7 +474,11 @@ async def disconnect_shopify(
 
     if connection:
         connection.is_active = False
-        await db.commit()
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
 
     return {"success": True, "message": "Shopify connection disconnected"}
 
