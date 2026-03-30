@@ -1,134 +1,99 @@
-# Xero OAuth Setup Guide for CCW
+# Xero OAuth Setup Guide — CCW Equipment Suppliers
 
-This guide walks through connecting the CCW ERP/CRM to Xero so that invoices,
-payments, and contacts sync automatically each night.
-
----
-
-## Prerequisites
-
-- A Xero account with accounting access for CCW
-- Access to the Railway backend environment variables (Phill)
-- The production backend URL (Railway) — e.g. `https://ccw-backend.up.railway.app`
+**Last updated**: 2026-03-30
+**Status**: Ready for CCW to complete
 
 ---
 
-## Step 1 — Create a Xero Developer App
+## Overview
 
-1. Go to **[developer.xero.com](https://developer.xero.com)**
-2. Sign in with your Xero credentials
+The Xero integration is fully coded and tested. The only blocker is CCW registering a Xero Developer App and providing the credentials. This guide walks through every step.
+
+**Time required**: ~20 minutes
+
+---
+
+## Step 1: Create a Xero Developer Account
+
+1. Go to [developer.xero.com](https://developer.xero.com)
+2. Sign in with your Xero account (same as your accounting login)
 3. Click **My Apps** → **New App**
-4. Fill in the form:
-   - **App name**: `CCW ERP Integration`
-   - **Company URL**: `https://ccwonline.com.au`
-   - **OAuth 2.0 redirect URI**:
-     ```
-     https://<your-railway-backend-url>/api/integrations/xero/callback
-     ```
-     Example: `https://ccw-backend.up.railway.app/api/integrations/xero/callback`
-   - **Scopes** (select all that apply):
-     - `accounting.transactions`
-     - `accounting.contacts`
-     - `accounting.settings.read`
-5. Click **Create App**
 
 ---
 
-## Step 2 — Copy Your App Credentials
+## Step 2: Register the CCW App
 
-From the Xero Developer Portal, on your new app's page:
+Fill in the form:
 
-1. Copy the **Client ID**
-2. Generate and copy the **Client Secret** (click "Generate a secret")
+| Field | Value |
+|---|---|
+| **App name** | CCW Online ERP |
+| **Company or application URL** | https://ccwonline.com.au |
+| **OAuth 2.0 redirect URI** | https://ccwonline.com.au/api/integrations/xero/callback |
+| **Scopes** | `accounting.transactions`, `accounting.contacts`, `accounting.settings`, `offline_access` |
 
-Keep these — you need them in the next step.
+Click **Create App**.
 
 ---
 
-## Step 3 — Add Environment Variables to Railway
+## Step 3: Get Your Credentials
 
-In the [Railway dashboard](https://railway.app):
+After creating the app:
+1. Click the app name to open settings
+2. Copy the **Client ID**
+3. Click **Generate a secret** and copy the **Client Secret** (you only see this once)
 
-1. Open your **CCW backend** service
-2. Go to **Variables**
-3. Add the following environment variables:
+---
+
+## Step 4: Add Environment Variables to Railway
+
+1. Go to [railway.app](https://railway.app) → CCW backend service → **Variables**
+2. Add these variables:
 
 | Variable | Value |
 |---|---|
-| `XERO_MODE` | `live` |
-| `XERO_CLIENT_ID` | *(Client ID from Step 2)* |
-| `XERO_CLIENT_SECRET` | *(Client Secret from Step 2)* |
-| `XERO_REDIRECT_URI` | `https://<your-railway-backend-url>/api/integrations/xero/callback` |
-| `XERO_SCOPES` | `accounting.transactions accounting.contacts accounting.settings.read` |
+| `XERO_CLIENT_ID` | (from Step 3) |
+| `XERO_CLIENT_SECRET` | (from Step 3) |
+| `XERO_REDIRECT_URI` | `https://ccwonline.com.au/api/integrations/xero/callback` |
 
-4. Railway will automatically redeploy with the new variables
+3. Click **Deploy** to restart the backend with the new variables.
 
 ---
 
-## Step 4 — Connect Xero in the Dashboard
+## Step 5: Authorise the Connection in CCW
 
-1. Open the CCW ERP at **[ccwonline.com.au](https://ccwonline.com.au)**
-2. Go to **Settings → Integrations**
-3. Find the **Xero** card
-4. Click **Connect Xero**
-5. You will be redirected to Xero to authorise access
-6. After authorising, you'll be returned to the dashboard
-7. The Xero card should now show **Connected**
+1. Log in to [ccwonline.com.au](https://ccwonline.com.au)
+2. Go to **Settings → Integrations → Xero**
+3. Click **Connect Xero**
+4. You'll be redirected to Xero's login page — sign in with your Xero account
+5. Click **Allow Access** on the permissions screen
+6. You'll be redirected back to CCW with a "Xero connected" confirmation
 
 ---
 
-## Step 5 — Verify the Connection
+## Step 6: Verify the Connection
 
 After connecting:
-
-1. Check the Xero card shows your **organisation name** and **Connected** status
-2. Wait for the first nightly sync (8pm AEST) or manually trigger:
-   ```
-   GET https://<backend-url>/api/cron/shadow-sync-xero
-   ```
-3. Check the dashboard for imported invoices and contacts
-
----
-
-## Step 6 — Re-enable the Xero Cron Jobs
-
-The Xero cron jobs were disabled in `apps/web/vercel.json` to prevent failed
-invocations before credentials were configured. Once connected:
-
-1. Open `apps/web/vercel.json`
-2. Uncomment (or re-add) the two Xero cron entries:
-   ```json
-   { "path": "/api/cron/refresh-xero-tokens", "schedule": "*/15 * * * *" },
-   { "path": "/api/cron/shadow-sync-xero", "schedule": "0 20 * * *" }
-   ```
-3. Commit and push — Vercel will pick up the cron changes on next deploy
+- Dashboard sync widget should show **Xero: Connected**
+- Go to **Invoices** — you should see Xero sync status
+- The nightly sync will run at 8pm AEST and import invoices/payments
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| "Demo Mode Active" toast on connect | `XERO_MODE` is not set to `live` | Set `XERO_MODE=live` in Railway |
-| Redirect goes to localhost | `XERO_REDIRECT_URI` still has localhost value | Update to Railway URL in Railway env vars |
-| "Invalid client" error from Xero | Wrong Client ID or Secret | Re-check values from developer.xero.com |
-| Callback returns 404 | Backend not deployed with new env vars | Redeploy Railway service |
-| Token refresh fails | `XERO_CLIENT_SECRET` mismatch | Regenerate secret on Xero developer portal |
+| Issue | Solution |
+|---|---|
+| "Invalid redirect URI" error | Verify the redirect URI in your Xero app matches exactly: `https://ccwonline.com.au/api/integrations/xero/callback` |
+| "Client not found" error | Double-check the Client ID was copied correctly (no spaces) |
+| Sync not working after connect | Check Railway logs for `xero_sync` errors, verify scopes include `accounting.transactions` |
+| Token expired | Re-connect via Settings → Integrations → Xero → Disconnect → Reconnect |
 
 ---
 
-## Environment Variable Summary
+## Support
 
-```bash
-# Railway backend environment variables required for live Xero
-
-XERO_MODE=live
-XERO_CLIENT_ID=your_client_id_here
-XERO_CLIENT_SECRET=your_client_secret_here
-XERO_REDIRECT_URI=https://your-railway-backend.up.railway.app/api/integrations/xero/callback
-XERO_SCOPES=accounting.transactions accounting.contacts accounting.settings.read
-```
-
----
-
-*Last updated: 2026-03-30*
+If you encounter issues, contact Unite Group Development with:
+1. Screenshot of the error message
+2. The Railway backend logs (Railway → Logs tab, filter by "xero")
+3. Your Xero app Client ID (NOT the secret)
