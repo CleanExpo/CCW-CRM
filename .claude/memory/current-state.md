@@ -1,4 +1,28 @@
-# Current State — 2026-03-31T12:00:00
+# Current State — 2026-03-31T22:00:00
+
+## Active Sprint: COMPLETE — All CCW-ERP/CRM Linear Issues Resolved
+
+### Session 2 Additions (2026-03-31 evening)
+
+#### Linear Housekeeping — All Issues Marked Done
+- [x] UNI-1691/1693/1694/1695/1716/1138/1139/1140/1141/1137/1135/1136/1134 — marked Done (correct `state` param)
+- [x] UNI-1712/1711/1709/1715/1714/1713/1696/1708 — previously completed, now marked Done
+
+#### UNI-1692: Superpowers Skill Bindings (DONE)
+- [x] `scripts/boardroom/orchestrator.js` — all 10 board members + Witness get `superpowers: []` field
+- [x] Each system prompt includes "Available Superpowers:" section with invocation guidance
+- [x] Commit `9ad7a73` pushed to `ai-updates`
+
+#### UNI-1697: RLS Security (DONE)
+- [x] pg_trgm moved from public → extensions schema (migration: `uni_1697_move_pgtrgm_to_extensions_schema`)
+- [x] 13 customer PII tables: org-scoped RLS already deployed in previous session
+- [x] 20 operational tables: acceptable risk for single-tenant MVP (no org_id, locked models)
+- ⚠️ MANUAL ACTION STILL NEEDED: Enable leaked password protection in Supabase Auth settings
+
+#### Supabase Migration Applied
+- `uni_1697_move_pgtrgm_to_extensions_schema` — pg_trgm now in extensions schema
+
+---
 
 ## Active Sprint: COMPLETE — Boardroom CRON v2 + Agent Teams + CLAUDE.md Governance Shipped
 
