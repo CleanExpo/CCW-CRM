@@ -1,98 +1,128 @@
 /**
- * CCW Boardroom — ElevenLabs CEO Voice Generation Module (UNI-1667)
+ * CCW Video Production Pipeline — ElevenLabs TTS Narration Generator (UNI-1672)
  *
- * Generates Australian Male CEO narration MP3 from boardroom Video Brief script.
- * Called after Video Director produces VIDEO_BRIEF JSON.
+ * Generates CEO narration MP3 from script text using the ElevenLabs v1 API.
+ * Called by the video pipeline orchestrator after script generation.
  *
- * CEO must confirm ELEVENLABS_VOICE_ID before go-live.
- * Recommended: test Daniel (AU), William (AU), or similar from ElevenLabs voice library.
+ * Env vars:
+ *   ELEVENLABS_API_KEY   — ElevenLabs API key
+ *   ELEVENLABS_VOICE_ID  — Voice ID (default: 21m00Tcm4TlvDq8ikWAM = Rachel)
  */
 
 import fs from 'fs/promises';
 import path from 'path';
 
-const DEFAULT_OUTPUT_DIR = process.env.VIDEO_OUTPUT_DIR || './data/sessions';
+const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
+const CHUNK_SIZE_LIMIT = 2500;
 
 /**
- * Voice settings for CEO narration — professional, warm, authoritative.
- * Tuned for 8-minute YouTube scripts.
- */
-const VOICE_SETTINGS = {
-  stability: 0.75,          // Consistent delivery across long scripts
-  similarity_boost: 0.85,   // Stays true to the selected voice
-  style: 0.45,              // Professional but warm — not robotic
-  use_speaker_boost: true,  // Enhances clarity
-};
-
-/**
- * Generate CEO narration MP3 from script text.
+ * Split a long script into sentence-boundary chunks under CHUNK_SIZE_LIMIT chars.
  *
- * @param {string} script - CEO narration script from Video Brief
- * @param {string} sessionId - Session ID for output file path
- * @param {string} [outputDir] - Override output directory
- * @returns {Promise<string>} Absolute path to generated MP3 file
- * @throws {Error} If API keys missing or generation fails
+ * @param {string} script
+ * @returns {string[]}
  */
-export async function generateCEONarration(script, sessionId, outputDir = DEFAULT_OUTPUT_DIR) {
-  const voiceId = process.env.ELEVENLABS_VOICE_ID;
-  const apiKey = process.env.ELEVENLABS_API_KEY;
+function splitIntoChunks(script) {
+  if (script.length <= CHUNK_SIZE_LIMIT) return [script];
 
-  if (!voiceId || !apiKey) {
-    throw new Error(
-      '[ElevenLabs] Missing env vars: ELEVENLABS_VOICE_ID and/or ELEVENLABS_API_KEY. ' +
-        'CEO must confirm voice ID at elevenlabs.io/voice-library and set both vars in Vercel.'
-    );
+  const sentences = script.split('. ');
+  const chunks = [];
+  let current = '';
+
+  for (const sentence of sentences) {
+    const candidate = current ? current + '. ' + sentence : sentence;
+    if (candidate.length > CHUNK_SIZE_LIMIT && current) {
+      chunks.push(current);
+      current = sentence;
+    } else {
+      current = candidate;
+    }
   }
 
-  console.log(`[ElevenLabs] Generating CEO narration for session ${sessionId}...`);
-  console.log(`[ElevenLabs] Voice ID: ${voiceId} | Script length: ${script.length} chars`);
+  if (current) chunks.push(current);
+  return chunks;
+}
 
-  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+/**
+ * Call the ElevenLabs TTS API for a single text chunk.
+ *
+ * @param {string} text
+ * @param {string} voiceId
+ * @param {string} apiKey
+ * @returns {Promise<ArrayBuffer>}
+ */
+async function callElevenLabsAPI(text, voiceId, apiKey) {
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'xi-api-key': apiKey,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      text: script,
-      model_id: 'eleven_turbo_v2_5', // Fast, high quality — ideal for 8-min scripts
-      voice_settings: VOICE_SETTINGS,
+      text,
+      model_id: 'eleven_monolingual_v1',
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.5,
+      },
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`[ElevenLabs] Generation failed ${response.status}: ${errorText}`);
+    throw new Error(`[ElevenLabs] API error ${response.status}: ${errorText}`);
   }
 
-  const audioBuffer = await response.arrayBuffer();
-  const outputPath = path.join(outputDir, sessionId, 'ceo-narration.mp3');
-
-  await fs.mkdir(path.dirname(outputPath), { recursive: true });
-  await fs.writeFile(outputPath, Buffer.from(audioBuffer));
-
-  const fileSizeKb = Math.round(audioBuffer.byteLength / 1024);
-  console.log(`[ElevenLabs] Narration written to ${outputPath} (${fileSizeKb}KB) ✅`);
-
-  return outputPath;
+  return response.arrayBuffer();
 }
 
 /**
- * Validate ElevenLabs credentials without generating audio.
- * Useful in pre-flight checks.
+ * Generate CEO narration MP3 from script text.
  *
- * @returns {Promise<boolean>} True if credentials are valid
+ * For scripts longer than 2500 chars, splits on sentence boundaries and
+ * concatenates the resulting audio buffers into a single MP3.
+ *
+ * @param {string} script - Narration script text
+ * @param {string} sessionId - Session ID used to build the output path
+ * @returns {Promise<string|null>} Absolute path to generated MP3, or null on failure
  */
-export async function validateElevenLabsCredentials() {
+export async function generateCEONarration(script, sessionId) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) return false;
+
+  if (!apiKey) {
+    console.log('[ElevenLabs] ELEVENLABS_API_KEY not set — skipping narration');
+    return null;
+  }
+
+  const voiceId = process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+  const outputPath = path.join('data', 'sessions', sessionId, 'narration.mp3');
+
+  console.log(`[ElevenLabs] Generating narration for session ${sessionId}`);
+  console.log(`[ElevenLabs] Voice ID: ${voiceId} | Script length: ${script.length} chars`);
 
   try {
-    const res = await fetch('https://api.elevenlabs.io/v1/voices', {
-      headers: { 'xi-api-key': apiKey },
-    });
-    return res.ok;
-  } catch {
-    return false;
+    const chunks = splitIntoChunks(script);
+    console.log(`[ElevenLabs] Processing ${chunks.length} chunk(s)`);
+
+    const buffers = [];
+    for (let i = 0; i < chunks.length; i++) {
+      console.log(`[ElevenLabs] Rendering chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+      const audioBuffer = await callElevenLabsAPI(chunks[i], voiceId, apiKey);
+      buffers.push(Buffer.from(audioBuffer));
+    }
+
+    const combined = Buffer.concat(buffers);
+
+    await fs.mkdir(path.dirname(outputPath), { recursive: true });
+    await fs.writeFile(outputPath, combined);
+
+    const fileSizeKb = Math.round(combined.byteLength / 1024);
+    console.log(`[ElevenLabs] Narration written to ${outputPath} (${fileSizeKb} KB)`);
+
+    return outputPath;
+  } catch (err) {
+    console.log(`[ElevenLabs] Generation failed: ${err.message}`);
+    return null;
   }
 }
