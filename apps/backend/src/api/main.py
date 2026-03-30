@@ -456,6 +456,9 @@ app.include_router(inventory.router, tags=["Multi-Store Inventory"])
 app.include_router(service_requests.router, tags=["Service Requests"])
 # Webhooks
 app.include_router(webhooks.router, tags=["Webhooks"])
+# Boardroom AI session endpoint (4x daily CRON)
+from .routes import boardroom as boardroom_routes
+app.include_router(boardroom_routes.router, tags=["Boardroom"])
 # Stripe webhook receiver (invoice.paid, invoice.payment_failed, subscription.updated, checkout)
 from .routes import stripe_webhooks  # noqa: E402
 app.include_router(stripe_webhooks.router, tags=["Stripe Webhooks"])
