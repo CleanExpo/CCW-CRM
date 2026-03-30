@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
  * GET /api/agents/stats
@@ -8,10 +9,8 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     // Fetch system health from monitoring API
-    const healthRes = await fetch(`${backendUrl}/api/ai/monitoring/system`, {
+    const healthRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/system`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
@@ -25,7 +24,7 @@ export async function GET() {
     const health = await healthRes.json();
 
     // Fetch agent list to get total count
-    const agentsRes = await fetch(`${backendUrl}/api/ai/monitoring/agents`, {
+    const agentsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/agents`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",

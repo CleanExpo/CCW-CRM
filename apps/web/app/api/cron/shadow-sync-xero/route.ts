@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
  * Shadow Sync Xero Cron Job
@@ -15,10 +16,7 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
-    const response = await fetch(`${backendUrl}/api/cron/shadow-sync-xero`, {
+    const response = await fetch(`${BACKEND_URL}/api/cron/shadow-sync-xero`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

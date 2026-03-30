@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
  * GET /api/agents/tasks/recent?limit=10
@@ -10,10 +11,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const limit = searchParams.get('limit') || '10';
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-
     // Fetch recent executions from monitoring API
-    const executionsRes = await fetch(`${backendUrl}/api/ai/monitoring/executions?limit=${limit}`, {
+    const executionsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/executions?limit=${limit}`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',

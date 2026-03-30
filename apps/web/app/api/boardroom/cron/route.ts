@@ -9,6 +9,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 export async function GET(request: Request) {
   // ── Auth: Vercel sends Authorization: Bearer <CRON_SECRET> ──
@@ -23,12 +24,9 @@ export async function GET(request: Request) {
   console.log(`[Boardroom CRON] Session triggered at ${timestamp}`);
 
   try {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     // Kick off the boardroom session on the backend.
     // Backend runs the full 18-step orchestrator and returns the debrief JSON.
-    const response = await fetch(`${backendUrl}/api/boardroom/session`, {
+    const response = await fetch(`${BACKEND_URL}/api/boardroom/session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

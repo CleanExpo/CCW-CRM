@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 export async function GET() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     // Fetch patterns from learning API
-    const response = await fetch(`${backendUrl}/api/ai/learning/patterns`, {
+    const response = await fetch(`${BACKEND_URL}/api/ai/learning/patterns`, {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
  * GET /api/agents/list
@@ -7,10 +8,8 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     // Fetch agents from monitoring API
-    const agentsRes = await fetch(`${backendUrl}/api/ai/monitoring/agents`, {
+    const agentsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/agents`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
@@ -28,7 +27,7 @@ export async function GET() {
       agentsData.agents.map(async (agent: Record<string, unknown>) => {
         try {
           const statsRes = await fetch(
-            `${backendUrl}/api/ai/monitoring/stats/${agent.agent_id}`,
+            `${BACKEND_URL}/api/ai/monitoring/stats/${agent.agent_id}`,
             {
               cache: "no-store",
               headers: {

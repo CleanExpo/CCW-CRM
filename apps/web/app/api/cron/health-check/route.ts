@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
  * Health Check Cron Job
@@ -16,11 +17,9 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     // Check backend health
     const backendStart = Date.now();
-    const backendResponse = await fetch(`${backendUrl}/health`, {
+    const backendResponse = await fetch(`${BACKEND_URL}/health`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -52,7 +51,7 @@ export async function GET(request: Request) {
         backend: {
           healthy: backendHealthy,
           latency: backendLatency,
-          url: backendUrl,
+          url: BACKEND_URL,
         },
       },
       timestamp: new Date().toISOString(),
