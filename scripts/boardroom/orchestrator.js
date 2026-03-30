@@ -1,14 +1,21 @@
 /**
  * CCW Boardroom — Session Orchestrator (UNI-1671)
  *
- * Coordinates the full 18-step autonomous boardroom session:
- * bootstrap → preflight → scout swarm → board deliberation →
- * witness → debrief JSON → ElevenLabs → Remotion → YouTube → Linear
+ * Coordinates the full 22-step autonomous boardroom session:
+ * bootstrap → preflight → scout swarm → competitive intelligence →
+ * board deliberation → security audit → witness → debrief JSON →
+ * ElevenLabs → Remotion → YouTube → Linear → QA check → retro
  *
  * Model assignments:
  *   Orchestrator + Moon Shooter: claude-opus-4-6   (adaptive, effort: max)
  *   Board Members 2–11:          claude-sonnet-4-6  (adaptive, effort: high)
  *   Scout Swarm + Witness:       claude-haiku-4-5-20251001 (speed, no thinking)
+ *
+ * New CRON steps (UNI-1691/1693/1694/1695):
+ *   Step 03b: Competitive intelligence via browse-competitive.js
+ *   Step 10:  Security audit via security-audit.js (weekly comprehensive)
+ *   Step 18a: QA check via qa-check.js
+ *   Step 18b: Retrospective via retro.js (produces cycle_complete.json)
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -18,6 +25,11 @@ import { bootstrap } from '../bootstrap.js';
 import { preFlightCheck } from '../preflight.js';
 import { runScoutSwarm } from '../perplexity.js';
 import { generateCEONarration } from '../elevenlabs.js';
+import { runCompetitiveIntelligence } from './browse-competitive.js';
+import { runSecurityAudit } from './security-audit.js';
+import { runQACheck } from './qa-check.js';
+import { runRetro } from './retro.js';
+import { runClaudemdAudit } from './claudemd-audit.js';
 import { uploadToYouTube } from '../youtube_upload.js';
 
 const DATA_DIR = process.env.VIDEO_OUTPUT_DIR || './data/sessions';
@@ -285,6 +297,15 @@ export async function runBoardroomSession() {
   console.log('\n[Boardroom] Step 03 — Scout Swarm dispatching...');
   const scoutResults = await runScoutSwarm();
 
+  // ── Step 03b: Competitive Intelligence — browser scrape (UNI-1691) ──
+  console.log('\n[Boardroom] Step 03b — Competitive Intelligence (gstack /browse)...');
+  let competitiveIntelligence = null;
+  try {
+    competitiveIntelligence = await runCompetitiveIntelligence(sessionId, DATA_DIR);
+  } catch (err) {
+    console.warn(`[Boardroom] Competitive intelligence skipped: ${err.message}`);
+  }
+
   // ── Steps 04–05: Data Sovereign synthesises intelligence ──
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const sessionDir = path.join(DATA_DIR, sessionId);
@@ -305,12 +326,24 @@ export async function runBoardroomSession() {
 
   // ── Step 06: Orchestrator opens boardroom ──
   console.log('\n[Boardroom] Step 06 — Orchestrator opening boardroom...');
+  // Build competitive intelligence addendum for boardroom context
+  const competitiveAddendum = competitiveIntelligence
+    ? `
+COMPETITIVE INTELLIGENCE (Live Scrape — ${new Date().toLocaleDateString('en-AU')}):
+CCW Site Status: ${competitiveIntelligence.ccwSiteStatus}
+CCW Site Title: ${competitiveIntelligence.ccwTitle || 'N/A'}
+Price Range (scraped): ${competitiveIntelligence.priceRange ? `$${competitiveIntelligence.priceRange.min}–$${competitiveIntelligence.priceRange.max} (${competitiveIntelligence.priceRange.count} products)` : 'N/A'}
+Competitor Presence: ${(competitiveIntelligence.competitorResults || []).map((r) => r.text).slice(0, 3).join('; ') || 'None scraped'}
+Industry News: ${(competitiveIntelligence.industryNews || []).slice(0, 3).join(' | ') || 'None scraped'}
+`
+    : '';
+
   const boardroomContext = `CCW Boardroom — Autonomous Session ${sessionId}
 Date: ${new Date().toLocaleDateString('en-AU')}
 
 INTELLIGENCE BRIEF (Data Sovereign):
 ${sovereignOutput}
-
+${competitiveAddendum}
 The boardroom is now in session. CEO Phill McGurk presiding.`;
 
   const conversationHistory = [];
@@ -374,6 +407,18 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
       script: boardOutputs.video_director || 'Script unavailable.',
       youtube: { chapters: [] },
     };
+  }
+
+  // ── Step 10: Security Audit — gstack /cso (UNI-1693) ──
+  console.log('\n[Boardroom] Step 10 — Security Audit (gstack /cso)...');
+  let securityAudit = null;
+  try {
+    const rootDir = path.join(DATA_DIR, '../..');
+    securityAudit = await runSecurityAudit(sessionId, DATA_DIR, rootDir, {
+      mode: new Date().getDay() === 1 ? 'weekly' : 'daily', // Monday = weekly
+    });
+  } catch (err) {
+    console.warn(`[Boardroom] Security audit skipped: ${err.message}`);
   }
 
   // ── Step 11: The Witness — SWOT + Decision Log ──
@@ -451,19 +496,59 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
   // ── Step 17: Linear — log session ──
   await logSessionToLinear(sessionId, debrief);
 
-  // ── Step 18: cycle_complete.json ──
-  const cycleComplete = {
-    sessionId,
-    completedAt: new Date().toISOString(),
-    buildStatus,
-    youtubeVideoId,
-    nextSessionScheduled: true,
-  };
-  await fs.writeFile(path.join(sessionDir, 'cycle_complete.json'), JSON.stringify(cycleComplete, null, 2));
+  // ── Step 18a: QA Check — gstack /qa (UNI-1694) ──
+  console.log('\n[Boardroom] Step 18a — QA check (gstack /qa)...');
+  let qaReport = null;
+  try {
+    qaReport = await runQACheck(sessionId, DATA_DIR);
+    debrief.qaStatus = qaReport.qaStatus;
+    debrief.qaPassRate = qaReport.summary?.passRate;
+    await fs.writeFile(debriefPath, JSON.stringify(debrief, null, 2));
+  } catch (err) {
+    console.warn(`[Boardroom] QA check skipped: ${err.message}`);
+  }
+
+  // ── Step 18b+: CLAUDE.md Audit — fortnightly (UNI-1140) ──
+  if (new Date().getDay() === 1) { // Monday only
+    console.log('\n[Boardroom] Step 18b+ — Fortnightly CLAUDE.md audit...');
+    try {
+      const rootDir = path.join(DATA_DIR, '../..');
+      await runClaudemdAudit(sessionId, DATA_DIR, rootDir);
+    } catch (err) {
+      console.warn(`[Boardroom] CLAUDE.md audit skipped: ${err.message}`);
+    }
+  }
+
+  // ── Step 18c: Retrospective — gstack /retro (UNI-1695) ──
+  console.log('\n[Boardroom] Step 18c — Post-session retrospective (gstack /retro)...');
+  let cycleComplete;
+  try {
+    cycleComplete = await runRetro(sessionId, DATA_DIR);
+  } catch (err) {
+    console.warn(`[Boardroom] Retro skipped: ${err.message}`);
+    // Fallback cycle_complete
+    cycleComplete = {
+      sessionId,
+      completedAt: new Date().toISOString(),
+      buildStatus,
+      youtubeVideoId,
+      nextSessionScheduled: true,
+    };
+    await fs.writeFile(path.join(sessionDir, 'cycle_complete.json'), JSON.stringify(cycleComplete, null, 2));
+  }
 
   console.log(`\n✅ [Boardroom] Session ${sessionId} complete — BUILD_STATUS: ${buildStatus}`);
+  if (qaReport) {
+    console.log(`🧪 [Boardroom] QA: ${qaReport.qaStatus} — ${qaReport.summary?.passRate}% pass rate`);
+  }
+  if (securityAudit) {
+    console.log(`🔒 [Boardroom] Security: ${securityAudit.securityStatus}`);
+  }
   if (youtubeVideoId) {
     console.log(`📺 [Boardroom] YouTube: https://youtu.be/${youtubeVideoId}`);
+  }
+  if (cycleComplete?.retrospective?.retroSentiment) {
+    console.log(`💭 [Boardroom] Retro sentiment: ${cycleComplete.retrospective.retroSentiment}`);
   }
 
   return debrief;

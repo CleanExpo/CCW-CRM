@@ -16,6 +16,12 @@ This project has automated anti-drift protection via Claude Code hooks.
 - `.claude/memory/decisions-log.md` — append-only decisions audit
 - `.claude/memory/handoff.md` — cross-session handoff
 - `.claude/memory/context-snapshot.md` — pre-compaction save
+- `.claude/memory/CLAUDE-SYNC.md` — Claude Chat → Cowork → Code workflow
+- `.claude/memory/CLAUDEMD-GOVERNANCE.md` — CLAUDE.md inventory + standards
+- `.claude/memory/CLAUDEMD-MASTER-TEMPLATE.md` — master template for all future CLAUDE.md files
+- `.claude/memory/AGENT-TEAMS-ARCHITECTURE.md` — Agent Teams experimental architecture
+- `.claude/memory/AGENT-BROWSER-INTEGRATION.md` — agent-browser portal integration plan
+- `.claude/memory/AGENT-TEAMS-BROWSER-COMBINED.md` — combined architecture
 
 ### 5 Governing Laws:
 
@@ -246,7 +252,7 @@ D:\CCW-ERP-CRM/
 - **Linting**: ESLint, Pyright/mypy
 - **Runtime (gstack)**: Bun v1.3.11
 
-### AI Tooling (v4.0 — installed 2026-03-30)
+### AI Tooling (v4.1 — updated 2026-03-31)
 
 **Superpowers** — `.claude/skills/superpowers/` (14 skills):
 
@@ -284,6 +290,49 @@ D:\CCW-ERP-CRM/
 | `/ship` | Deploy pipeline | Push → build → verify |
 
 Run via: `bun .claude/skills/gstack/gstack.ts <command>`
+
+**Claude Code Agent Teams** — EXPERIMENTAL (UNI-1137):
+
+Enable: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+
+Solves token limit bottleneck: Lead agent breaks work into 3-5 subtasks, each teammate runs in its OWN context window — parallel execution without shared 200k cap.
+
+| Configuration | Value |
+|---|---|
+| Enable env var | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` |
+| Agent configs | `.claude/agents/` — each has its own CLAUDE.md |
+| Quality hooks | `.claude/hooks/TeammateIdle.md` + `TaskCompleted.md` |
+| Architecture doc | `.claude/memory/AGENT-TEAMS-ARCHITECTURE.md` |
+
+CCW use cases: boardroom parallel deliberation, multi-repo doc sync, parallel security audit.
+
+**agent-browser** — Embedded AI assistant in portals (UNI-1135/1136):
+
+In-app AI sidebar (320px collapsible panel) powered by Agent Teams on the backend.
+
+| Portal | Assistant name | Capability |
+|---|---|---|
+| CCW ERP | Warehouse Assistant | Stock queries, order status, invoice help |
+| CARSI LMS | Study Buddy | Course questions, progress tracking |
+| RestoreAssist | Field Guide | IICRC S500 compliance lookups |
+
+API endpoint: `POST /api/ai/assistant` with `{portal, context, message}`
+Architecture doc: `.claude/memory/AGENT-BROWSER-INTEGRATION.md`
+Combined arch: `.claude/memory/AGENT-TEAMS-BROWSER-COMBINED.md`
+
+**CRON Integration (v4.1 additions — UNI-1691/1693/1694/1695):**
+
+| Script | When | Purpose |
+|---|---|---|
+| `scripts/boardroom/browse-competitive.js` | Step 03b every session | Playwright competitor scrape |
+| `scripts/boardroom/security-audit.js` | Step 10 (weekly comprehensive) | OWASP + secrets + deps audit |
+| `scripts/boardroom/qa-check.js` | Step 18a every session | Browser QA suite |
+| `scripts/boardroom/retro.js` | Step 18b every session | Retrospective → `cycle_complete.json` |
+| `scripts/boardroom/claudemd-audit.js` | Fortnightly (Monday) | Audit all CLAUDE.md files |
+
+Claude Chat → Cowork → Code sync: `.claude/memory/CLAUDE-SYNC.md`
+CLAUDE.md governance: `.claude/memory/CLAUDEMD-GOVERNANCE.md`
+CLAUDE.md master template: `.claude/memory/CLAUDEMD-MASTER-TEMPLATE.md`
 
 ### Board Member → Skill Bindings
 
