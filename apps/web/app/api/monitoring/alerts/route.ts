@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://localhost:9090';
+const PROMETHEUS_URL = process.env.PROMETHEUS_URL;
 
 interface PrometheusAlert {
   labels: Record<string, string>;
@@ -26,6 +26,9 @@ interface AlertRule {
  * Returns active alerts from Prometheus alert rules.
  */
 export async function GET() {
+  if (!PROMETHEUS_URL) {
+    return NextResponse.json({ error: 'Prometheus not configured in this environment', rules: [], alerts: [] }, { status: 503 });
+  }
   try {
     const res = await fetch(`${PROMETHEUS_URL}/api/v1/rules`, {
       cache: 'no-store',

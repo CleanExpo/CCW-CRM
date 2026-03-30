@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://localhost:9090';
+const PROMETHEUS_URL = process.env.PROMETHEUS_URL;
 
 interface TargetInfo {
   job: string;
@@ -16,6 +16,9 @@ interface TargetInfo {
  * Returns health status of all monitored services by querying Prometheus targets.
  */
 export async function GET() {
+  if (!PROMETHEUS_URL) {
+    return NextResponse.json({ error: 'Prometheus not configured in this environment', targets: [] }, { status: 503 });
+  }
   try {
     const res = await fetch(`${PROMETHEUS_URL}/api/v1/targets`, {
       cache: 'no-store',
