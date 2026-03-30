@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 export async function GET() {
   try {
     // Fetch insights from backend API (now working after cache fix)
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-    const response = await fetch(`${backendUrl}/api/ai/learning/insights`, {
+    const response = await fetch(`${BACKEND_URL}/api/ai/learning/insights`, {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });

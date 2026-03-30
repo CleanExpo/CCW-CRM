@@ -176,11 +176,47 @@ class TestFacebookDemoChannel:
         assert result.success is True
         assert result.channel_type == "facebook"
 
+    @pytest.mark.asyncio
+    async def test_display_name(self, channel):
+        assert channel.display_name == "Facebook & Instagram Shop"
+
+    @pytest.mark.asyncio
+    async def test_list_products(self, channel):
+        products = await channel.list_products()
+        assert len(products) > 0
+        assert all(isinstance(p, ChannelProduct) for p in products)
+        assert all(p.currency == "AUD" for p in products)
+        assert all(p.external_id.startswith("facebook-") for p in products)
+
+    @pytest.mark.asyncio
+    async def test_pull_orders(self, channel):
+        orders = await channel.pull_orders()
+        assert len(orders) > 0
+        assert all(isinstance(o, ChannelOrder) for o in orders)
+        assert all(o.currency == "AUD" for o in orders)
+
+    @pytest.mark.asyncio
+    async def test_push_product_returns_ext_id(self, channel):
+        ext_id = await channel.push_product({"sku": "FB-TEST-001", "name": "FB Test"})
+        assert "FB-TEST-001" in ext_id
+
     def test_get_setup_fields(self, channel):
+        """Setup fields must match live FacebookChannel contract: access_token, catalog_id, page_id."""
         fields = channel.get_setup_fields()
         keys = {f["key"] for f in fields}
+        assert "access_token" in keys
         assert "catalog_id" in keys
-        assert "app_id" in keys
+        assert "page_id" in keys
+        # app_id must NOT be present — it was the old (mismatched) field
+        assert "app_id" not in keys
+
+    def test_setup_fields_have_required_flag(self, channel):
+        fields = channel.get_setup_fields()
+        field_map = {f["key"]: f for f in fields}
+        assert field_map["access_token"]["required"] is True
+        assert field_map["catalog_id"]["required"] is True
+        # page_id is optional (only needed for order management)
+        assert field_map["page_id"]["required"] is False
 
 
 # ─── Sync Engine Tests ──────────────────────────────────────────────
@@ -500,3 +536,117 @@ class TestMarketplaceAPI:
         assert data["success"] is True
         # Should have results from all connected demo channels
         assert len(data["results"]) >= 1
+
+    def test_facebook_channel_listed(self):
+        """Facebook channel must appear in the channel list with correct display name."""
+        resp = client.get("/api/marketplace/channels")
+        assert resp.status_code == 200
+        data = resp.json()
+        fb = next((c for c in data["channels"] if c["channel_type"] == "facebook"), None)
+        assert fb is not None
+        assert fb["display_name"] == "Facebook & Instagram Shop"
+
+    def test_facebook_setup_fields_endpoint(self):
+        """Facebook setup-fields endpoint returns access_token + catalog_id + page_id."""
+        resp = client.get("/api/marketplace/channels/facebook/setup-fields")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["channel_type"] == "facebook"
+        keys = {f["key"] for f in data["fields"]}
+        assert "access_token" in keys
+        assert "catalog_id" in keys
+        assert "page_id" in keys
+        assert "app_id" not in keys
+
+
+# ─── Facebook Price Parser Unit Tests ────────────────────────────────
+
+
+class TestParseFbPrice:
+    """Unit tests for the _parse_fb_price helper in facebook_channel.py.
+
+    Facebook Catalog API returns prices as strings like:
+      "2999 AUD"   → ($29.99, "AUD")  — integer cents format
+      "29.99 AUD"  → ($29.99, "AUD")  — explicit float format
+      "100 USD"    → ($1.00, "USD")   — exactly 100 cents = $1.00
+      "99 AUD"     → ($0.99, "AUD")   — < 100, treated as dollars (edge)
+      "0 AUD"      → ($0.00, "AUD")   — zero
+      "badvalue"   → ($0.00, "AUD")   — fallback on parse error
+      ""           → ($0.00, "AUD")   — empty string fallback
+    """
+
+    @pytest.fixture(autouse=True)
+    def _import_parser(self):
+        from src.integrations.marketplace.facebook_channel import _parse_fb_price
+        self._parse = _parse_fb_price
+
+    def test_integer_cents_format(self):
+        """'2999 AUD' → $29.99 AUD (integer ≥100, no decimal = cents)."""
+        price, currency = self._parse("2999 AUD")
+        assert abs(price - 29.99) < 0.001
+        assert currency == "AUD"
+
+    def test_float_format(self):
+        """'29.99 AUD' → $29.99 AUD (explicit float, no conversion)."""
+        price, currency = self._parse("29.99 AUD")
+        assert abs(price - 29.99) < 0.001
+        assert currency == "AUD"
+
+    def test_usd_currency(self):
+        """'4200 USD' → $42.00 USD."""
+        price, currency = self._parse("4200 USD")
+        assert abs(price - 42.00) < 0.001
+        assert currency == "USD"
+
+    def test_exactly_100_cents(self):
+        """'100 AUD' → $1.00 (100 cents)."""
+        price, currency = self._parse("100 AUD")
+        assert abs(price - 1.00) < 0.001
+        assert currency == "AUD"
+
+    def test_below_100_treated_as_dollars(self):
+        """'99 AUD' → $99.00 (< 100, no decimal → treated as dollars not cents)."""
+        price, currency = self._parse("99 AUD")
+        assert abs(price - 99.0) < 0.001
+        assert currency == "AUD"
+
+    def test_zero_price(self):
+        """'0 AUD' → $0.00."""
+        price, currency = self._parse("0 AUD")
+        assert price == 0.0
+        assert currency == "AUD"
+
+    def test_large_price(self):
+        """'4250000 AUD' → $42,500.00 (high-value equipment)."""
+        price, currency = self._parse("4250000 AUD")
+        assert abs(price - 42500.00) < 0.01
+        assert currency == "AUD"
+
+    def test_no_currency_defaults_to_aud(self):
+        """'1999' with no currency → defaults to AUD."""
+        price, currency = self._parse("1999")
+        assert currency == "AUD"
+        assert abs(price - 19.99) < 0.001
+
+    def test_bad_value_returns_zero(self):
+        """'notanumber AUD' → (0.0, 'AUD') without raising."""
+        price, currency = self._parse("notanumber AUD")
+        assert price == 0.0
+        assert currency == "AUD"
+
+    def test_empty_string_returns_zero(self):
+        """Empty string → (0.0, 'AUD') without raising."""
+        price, currency = self._parse("")
+        assert price == 0.0
+        assert currency == "AUD"
+
+    def test_float_with_currency_no_cent_conversion(self):
+        """'89.95 AUD' → $89.95 (has decimal point, skip cent conversion)."""
+        price, currency = self._parse("89.95 AUD")
+        assert abs(price - 89.95) < 0.001
+        assert currency == "AUD"
+
+    def test_currency_uppercased(self):
+        """Currency code returned is always uppercase regardless of input."""
+        _, currency = self._parse("500 aud")
+        assert currency == "AUD"

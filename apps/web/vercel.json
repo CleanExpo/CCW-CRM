@@ -14,10 +14,6 @@
       "schedule": "*/5 * * * *"
     },
     {
-      "path": "/api/cron/refresh-xero-tokens",
-      "schedule": "*/15 * * * *"
-    },
-    {
       "path": "/api/cron/check-sla-breaches",
       "schedule": "*/15 * * * *"
     },
@@ -50,12 +46,24 @@
       "schedule": "0 19 * * *"
     },
     {
-      "path": "/api/cron/shadow-sync-xero",
+      "path": "/api/cron/auto-reorder-inventory",
+      "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
       "schedule": "0 20 * * *"
     },
     {
-      "path": "/api/cron/auto-reorder-inventory",
-      "schedule": "0 21 * * *"
+      "path": "/api/boardroom/cron",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 14 * * *"
     }
   ],
   "headers": [

@@ -98,18 +98,28 @@ These actions are NEVER allowed under ANY circumstances:
 
 ---
 
-## ✅ MANDATORY BEHAVIORS
+## ✅ MANDATORY BEHAVIORS (v4.0 — 18-step session sequence)
 
 Every conversation:
 
 1. ☐ Read `.claude/STARTUP.md` first
 2. ☐ Read this file (`.claude/CLAUDE.md`)
-3. ☐ Understand the current task
-4. ☐ Run `/plan` before coding
-5. ☐ Get explicit approval
-6. ☐ Implement exactly as planned
-7. ☐ Run tests
-8. ☐ Report changes
+3. ☐ Read `.claude/memory/current-state.md` — check active sprint
+4. ☐ Check `docs/catalogs/` before adding routes/pages/models
+5. ☐ Understand the current task
+6. ☐ Run `/plan` before coding
+7. ☐ Get explicit approval for the plan
+8. ☐ Apply Superpowers skill if applicable (see Board Member Bindings)
+9. ☐ Run gstack `/cto` review for technical decisions
+10. ☐ Run gstack `/cso` review for auth/data/security changes
+11. ☐ Implement exactly as planned
+12. ☐ Run `/sync-vault` after adding routes/pages/models
+13. ☐ Run `pnpm turbo run type-check` — fix all TypeScript errors
+14. ☐ Run `pnpm turbo run test` — all tests must pass
+15. ☐ Run gstack `/qa` after each sprint
+16. ☐ Run gstack `/retro` post-sprint
+17. ☐ Report changes (use progress format below)
+18. ☐ Update `.claude/memory/current-state.md` with completed work
 
 Every 5 messages:
 
@@ -234,6 +244,57 @@ D:\CCW-ERP-CRM/
 - **Monorepo**: Turbo (turbo.json)
 - **Testing**: Vitest (frontend), Pytest (backend)
 - **Linting**: ESLint, Pyright/mypy
+- **Runtime (gstack)**: Bun v1.3.11
+
+### AI Tooling (v4.0 — installed 2026-03-30)
+
+**Superpowers** — `.claude/skills/superpowers/` (14 skills):
+
+| Skill | Use when |
+|---|---|
+| `brainstorming` | New feature ideation, architecture decisions |
+| `dispatching-parallel-agents` | Running multiple independent tasks simultaneously |
+| `executing-plans` | Carrying out an approved implementation plan |
+| `finishing-a-development-branch` | Pre-PR checklist, cleanup, and handoff |
+| `receiving-code-review` | Interpreting and acting on code review feedback |
+| `requesting-code-review` | Formatting code for human review |
+| `subagent-driven-development` | Breaking work into parallelizable subagent tasks |
+| `systematic-debugging` | Structured debugging with hypothesis testing |
+| `test-driven-development` | Writing tests before implementation |
+| `using-git-worktrees` | Isolating experiments without polluting main branch |
+| `using-superpowers` | Meta-skill: knowing which skill to use |
+| `verification-before-completion` | Checklist before declaring a task done |
+| `writing-plans` | Creating detailed, approvable implementation plans |
+| `writing-skills` | Creating new Superpowers skill files |
+
+**gstack** — `.claude/skills/gstack/` (29 commands, requires Bun):
+
+| Command | Purpose | When to use |
+|---|---|---|
+| `/ceo` | Strategic review | New features, go/no-go decisions |
+| `/cto` | Technical review | Architecture, security, performance |
+| `/cso` | Security audit | Before any auth/API/data changes |
+| `/cmo` | Marketing review | Customer-facing copy, landing page |
+| `/cfo` | Financial review | Billing, Stripe, pricing changes |
+| `/coo` | Operational review | Cron jobs, integrations, deployment |
+| `/browse` | Competitor research | Market analysis (Playwright + Chromium) |
+| `/design` | UI generation | New page mockups |
+| `/qa` | Browser test suite | After each sprint (headless Chromium) |
+| `/retro` | Post-sprint feedback | After completing a major feature |
+| `/ship` | Deploy pipeline | Push → build → verify |
+
+Run via: `bun .claude/skills/gstack/gstack.ts <command>`
+
+### Board Member → Skill Bindings
+
+| Board Member | gstack | Superpowers |
+|---|---|---|
+| CEO | `/ceo` | `writing-plans` + `brainstorming` |
+| CTO | `/cto` | `subagent-driven-development` + `test-driven-development` |
+| CSO | `/cso` | `systematic-debugging` + `verification-before-completion` |
+| CMO | `/cmo` | `brainstorming` + `writing-skills` |
+| CFO | `/cfo` | `executing-plans` + `finishing-a-development-branch` |
+| COO | `/coo` | `dispatching-parallel-agents` + `using-git-worktrees` |
 
 **Do not add/remove/change stack without explicit approval.**
 
@@ -343,16 +404,40 @@ try {
 - CI/CD: updated pipeline, 4 E2E specs, 51 new Vitest unit tests (UNI-664/1253/1254)
 - Local test env fixed: 823 tests passing (UNI-1242)
 
-**Remaining / Blocked Work:**
+**Completed since last update (2026-03-30 — MVP Go-Live Sprint):**
+
+- UNI-1689: Superpowers installed (14 skills, `.claude/skills/superpowers/`)
+- UNI-1690: gstack installed (29 commands, Bun 1.3.11, Playwright Chromium 145)
+- UNI-1697: RLS security Phase 1-3 (auth bridge, org backfill, org-scoped policies on 13 core tables)
+- UNI-1706: Fixed localhost fallback in workflow/analytics API routes
+- UNI-1707: Disabled stale Xero cron jobs (96+ failed invocations/day)
+- UNI-1710: Guarded all 4 monitoring routes against missing Prometheus (503 instead of timeout)
+
+**Active / Remaining MVP Go-Live (Days 2-7):**
+
+- UNI-1709: Stripe webhook receiver (`/api/webhooks/stripe`) — revenue blocker
+- UNI-1708: Xero OAuth unblock (CCW needs Xero Dev App + env vars on Railway)
+- UNI-1711: Build `/settings/billing` dashboard page (consume billing.ts API client)
+- UNI-1712: Centralize backend URL config (`apps/web/lib/api/backend-url.ts`)
+- UNI-1713: Nightly sync E2E verification (Cin7 → 7pm, Xero → 8pm, auto-reorder → 9pm)
+- UNI-1714: Production smoke test (15-point checklist)
+- UNI-1715: Production operations runbook for CCW handoff
+
+**gstack Boardroom CRON subtasks:**
+
+- UNI-1691: Wire gstack /browse competitor scrape into CRON pre-session
+- UNI-1692: Bind Superpowers skills to board member system prompts
+- UNI-1693: Add gstack /cso security audit to CRON cycle (weekly)
+- UNI-1694: Add gstack /qa browser testing to every CRON cycle
+- UNI-1695: Add gstack /retro feedback loop to CRON post-session
+
+**Blocked:**
 
 - UNI-172 SUB-8: Backend pytest tests for new inventory endpoints
-- UNI-173 SUB-7: Xero sync (blocked on Xero auth)
-- UNI-664 SUBs 2/4/5/6: GitHub Environments, branch protection, staging deploy (require GitHub UI)
+- UNI-173 SUB-7: Xero sync (blocked on Xero auth — unblocked by UNI-1708)
+- UNI-664 SUBs 2/4/5/6: GitHub Environments, branch protection (require GitHub UI)
 - UNI-1235: pgvector semantic search (requires demo_models.py schema change approval)
 - UNI-1236: Enhanced Shopify (blocked by Shopify auth prerequisite)
-- UNI-1469: (Backlog — see Linear)
-- UNI-693: (Todo — see Linear)
-- UNI-173: remaining sub-tasks per Linear
 
 ---
 

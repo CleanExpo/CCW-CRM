@@ -185,8 +185,12 @@ async def create_booking(
         status=BookingStatus.scheduled,
     )
     db.add(booking)
-    await db.commit()
-    await db.refresh(booking)
+    try:
+        await db.commit()
+        await db.refresh(booking)
+    except Exception:
+        await db.rollback()
+        raise
     return BookingResponse.model_validate(booking)
 
 
@@ -204,8 +208,12 @@ async def update_booking(
     for field, value in payload.model_dump(exclude_none=True).items():
         setattr(booking, field, value)
     booking.updated_at = datetime.now(UTC)
-    await db.commit()
-    await db.refresh(booking)
+    try:
+        await db.commit()
+        await db.refresh(booking)
+    except Exception:
+        await db.rollback()
+        raise
     return BookingResponse.model_validate(booking)
 
 
@@ -261,7 +269,11 @@ async def complete_booking(
         await db.flush()
 
         reminders = await generate_reminders(db, equipment.id)
-        await db.commit()
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
 
         return {
             "message": "Booking completed",
@@ -270,7 +282,11 @@ async def complete_booking(
             "reminders_created": len(reminders),
         }
 
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     return {"message": "Booking completed"}
 
 
@@ -289,6 +305,10 @@ async def order_parts(
 
     booking.parts_ordered_at = datetime.now(UTC)
     booking.updated_at = datetime.now(UTC)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     return {"message": "Parts order triggered (draft PO would be created)", "booking_id": str(booking_id)}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 // Retry Failed Webhooks Cron Job
 // Schedule: Every 5 minutes
@@ -14,11 +15,8 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     const response = await fetch(
-      `${backendUrl}/api/cron/retry-failed-webhooks`,
+      `${BACKEND_URL}/api/cron/retry-failed-webhooks`,
       {
         method: "POST",
         headers: {

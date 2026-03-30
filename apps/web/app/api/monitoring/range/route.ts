@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://localhost:9090';
+const PROMETHEUS_URL = process.env.PROMETHEUS_URL;
 
 /**
  * GET /api/monitoring/range?query=...&start=...&end=...&step=...
@@ -8,6 +8,9 @@ const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://localhost:9090';
  * Queries Prometheus range API for time-series chart data.
  */
 export async function GET(request: NextRequest) {
+  if (!PROMETHEUS_URL) {
+    return NextResponse.json({ error: 'Prometheus not configured in this environment', data: [] }, { status: 503 });
+  }
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');

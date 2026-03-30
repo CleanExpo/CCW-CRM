@@ -451,30 +451,39 @@ cd apps/web && pnpm dev
 
 ---
 
-## Recent Additions (2026-03-09)
+## Recent Additions (2026-03-30) — CLAUDE.md v4.0
 
-**Completed since last CLAUDE.md update (2026-03-03 → 2026-03-09):**
+**Completed since last update (2026-03-09 → 2026-03-30):**
 
 - Anti-Drift framework: `.claude/memory/` (6 files), hooks (SessionStart/UserPromptSubmit/PreCompact), 10x health check command, toolshed API
 - 6 Catalogs: `docs/catalogs/` — ROUTES.md, PAGES.md, AGENTS.md, PACKAGES.md, MODELS.md, INTEGRATIONS.md
-- Cin7 Wave 1: Line items sync (Cin7OrderLineItem + Cin7PurchaseOrderLineItem), GRN receiving page, inventory write-back, webhook subscriptions (UNI-1263/1265/1266/1267)
-- Cin7 Wave 2: Shadow transition (cin7_shadow_models.py, 5 endpoints), fulfilment chain (7 endpoints, orders/fulfilment/page.tsx), BOM integration (6 endpoints), GL integration (7 endpoints) (UNI-1260/1261/1262/1264/1268/1269)
-- AP2 integration: frontend dashboard — /settings/integrations/ap2, mandate + transaction endpoints (UNI-1241)
-- Workshop management: 6 models, 5 route modules, 6 frontend pages, dual-interval service scheduler (UNI-workshop)
-- CRM enhancements: /contacts/[id] detail page, ActivityTimeline fix, company name column (UNI-171)
-- Invoicing: invoice_date rename, partial status, payment methods, revenue/tax reports, print view, financial report tab, order-to-invoice generation (UNI-173 SUBs 1–6)
-- Workflow automation: WorkflowTemplate/Instance/SLA models, workflow_service.py + sla_service.py, workflows.py + sla.py + notifications.py routes, workflows/page.tsx builder UI, NotificationBell, TaskSLAPanel (UNI-174 all STs)
-- AI agents: Staff Copilot (staff_copilot_agent.py + routes), Cin7 Shadow AI agent, Marketing AI agent (3 endpoints) (UNI-857/1262)
-- Inventory: barcode scanner hook (useBarcodeScanner), ProductBarcode/StockTake/StockTakeItem/ReorderRule/ProductAttribute/ProductVariant models, all endpoints + frontend wired (UNI-172 SUBs 3–7)
-- CI/CD: ci.yml updated (coverage + E2E + PR comment bot), e2e-tests.yml removed, 4 new E2E specs (UNI-664)
-- Local test env fix: AgentMetadata forward ref, settings name collision, supabase/faker deps (UNI-1242)
-- Test suite: 51 new Vitest unit tests, 4 E2E Playwright specs, backend test fixes
+- Cin7 Wave 1 + Wave 2: line items, GRN receiving, write-back, webhooks, shadow/fulfilment/BOM/GL (UNI-1260–1269)
+- Workshop management, CRM enhancements, Invoicing, Workflow automation, Inventory (UNI-171–174/1112–1114)
+- CI/CD updates, 51 Vitest unit tests, 4 E2E Playwright specs, 823 tests passing (UNI-664/1242)
+- **[NEW v4.0]** Superpowers installed — 14 skills at `.claude/skills/superpowers/` (UNI-1689)
+- **[NEW v4.0]** gstack installed — 29 commands at `.claude/skills/gstack/`, Bun 1.3.11, Playwright Chromium 145 (UNI-1690)
+- **[NEW v4.0]** RLS security Phase 1-3: auth bridge (`auth_id` column), org backfill, org-scoped policies on 13 core tables (UNI-1697)
+- **[NEW v4.0]** Fixed localhost fallback in workflow/analytics API routes for Vercel production (UNI-1706)
+- **[NEW v4.0]** Disabled stale Xero cron jobs (stopped 96+ failed invocations/day) (UNI-1707)
+- **[NEW v4.0]** All 4 monitoring routes return 503 when Prometheus not configured (UNI-1710)
 
-**Remaining / New Next Work:**
+**Active MVP Go-Live Sprint (Days 2-7):**
 
-- UNI-172 SUB-8: Backend pytest tests for new inventory endpoints
-- UNI-173 SUB-7: Xero sync + dead file cleanup (blocked on Xero auth)
-- UNI-664 SUBs 2/4/5/6: GitHub Environments, branch protection, staging deploy, Vercel verification (require GitHub UI)
-- UNI-1235: AI Search — pgvector semantic search (requires demo_models.py schema change approval)
-- UNI-1236: Enhanced Shopify — metafields + real-time inventory sync (blocked by Shopify auth)
-- UNI-172 SUB-5/6 auto-reorder: ReorderRule + auto-PO creation fully wired (backend done, UI partial)
+- UNI-1709: Stripe webhook receiver — `POST /api/webhooks/stripe` (revenue blocker)
+- UNI-1708: Xero OAuth unblock — setup guide + env vars on Railway
+- UNI-1711: `/settings/billing` dashboard page (subscription + payment methods + invoices)
+- UNI-1712: Centralize backend URL (`apps/web/lib/api/backend-url.ts`)
+- UNI-1713–1715: Nightly sync verification, smoke test, CCW handoff runbook
+
+**AI Tooling Summary (see `.claude/CLAUDE.md` for full details):**
+
+- **Superpowers** (14 skills): brainstorming, TDD, subagent-driven-development, systematic-debugging, writing-plans, etc.
+- **gstack** (29 commands): `/ceo` `/cto` `/cso` `/qa` `/browse` `/retro` `/ship` — run via `bun .claude/skills/gstack/gstack.ts <cmd>`
+- **Session sequence**: Updated from 13 → 18 steps (see `.claude/CLAUDE.md` Mandatory Behaviors)
+
+**Blocked:**
+
+- UNI-173 SUB-7: Xero sync (blocked on Xero auth — unblocked by UNI-1708)
+- UNI-664 SUBs 2/4/5/6: GitHub Environments, branch protection (require GitHub UI)
+- UNI-1235: pgvector semantic search (requires demo_models.py schema change approval)
+- UNI-1236: Enhanced Shopify (blocked by Shopify auth prerequisite)

@@ -85,7 +85,11 @@ async def generate_all_reminders(
     for equipment in due_equipment:
         created = await generate_reminders(db, equipment.id)
         total_created += len(created)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     return {"message": f"Generated {total_created} reminders for {len(due_equipment)} equipment", "reminders_created": total_created}
 
 
@@ -103,7 +107,11 @@ async def send_reminder(
     reminder.status = ReminderStatus.sent
     reminder.sent_at = datetime.now(UTC)
     reminder.updated_at = datetime.now(UTC)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     return {"message": "Reminder sent", "reminder_id": str(reminder_id)}
 
@@ -130,7 +138,11 @@ async def send_pending_reminders(
         reminder.updated_at = now
         sent_count += 1
 
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     return {"message": f"Sent {sent_count} pending reminders", "sent_count": sent_count}
 
 
@@ -145,5 +157,9 @@ async def suppress_reminder(
         raise HTTPException(status_code=404, detail="Reminder not found")
     reminder.status = ReminderStatus.suppressed
     reminder.updated_at = datetime.now(UTC)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     return {"message": "Reminder suppressed"}

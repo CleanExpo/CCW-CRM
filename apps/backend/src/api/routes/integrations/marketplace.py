@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from src.api.middleware.rate_limit import RateLimits, limiter
 from src.config.marketplace_settings import get_marketplace_settings
+from src.integrations.marketplace import EbayChannel, FacebookChannel, ShopifyChannel
 from src.integrations.marketplace.demo_channel import (
     EbayDemoChannel,
     FacebookDemoChannel,
@@ -21,6 +22,11 @@ from src.integrations.marketplace.demo_channel import (
 )
 from src.integrations.marketplace.registry import get_channel, list_channels
 from src.integrations.marketplace.sync_engine import SyncEngine
+
+# Ensure real channel classes are imported so @register_channel runs at startup.
+# In demo mode the engine uses demo instances; in live mode these classes are
+# retrieved from the registry by the connect endpoint.
+_LIVE_CHANNELS = (ShopifyChannel, EbayChannel, FacebookChannel)
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/marketplace", tags=["Marketplace"])
@@ -152,6 +158,46 @@ class SetupFieldsResponse(BaseModel):
     channel_type: str
     display_name: str
     fields: list[dict] = Field(default_factory=list)
+
+
+# ─── A5: Unified products + bulk operations models ──────────────────
+
+class UnifiedProductChannelData(BaseModel):
+    external_id: str
+    price: float = 0.0
+    quantity: int = 0
+    status: str = "active"
+    url: str | None = None
+
+
+class UnifiedProductResponse(BaseModel):
+    sku: str | None = None
+    title: str
+    channels: dict[str, UnifiedProductChannelData]
+    has_discrepancy: bool = False
+    min_stock: int = 0
+    max_stock: int = 0
+
+
+class UnifiedProductsResponse(BaseModel):
+    products: list[UnifiedProductResponse]
+    total: int
+    channels: list[str]
+
+
+class BulkUnlistItem(BaseModel):
+    external_id: str
+    channel_type: str
+
+
+class BulkUnlistRequest(BaseModel):
+    items: list[BulkUnlistItem]
+
+
+class BulkUnlistResponse(BaseModel):
+    results: dict[str, dict]
+    success_count: int
+    failed_count: int
 
 
 # ─── Endpoints ──────────────────────────────────────────────────────
@@ -422,4 +468,125 @@ async def get_channel_setup_fields(request: Request, channel_type: str):
         channel_type=channel_type,
         display_name=instance.display_name,
         fields=instance.get_setup_fields(),
+    )
+
+
+# ─── A5: Unified multi-channel product view ─────────────────────────
+
+@router.get("/products", response_model=UnifiedProductsResponse)
+@limiter.limit(RateLimits.READ)
+async def get_unified_products(
+    request: Request,
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Get unified product view across all connected channels.
+
+    Pulls products from every connected channel simultaneously and merges
+    them by SKU. Products present on multiple channels with different
+    stock levels are flagged as discrepancies.
+    """
+    engine = _get_engine()
+    all_products = await engine.pull_products_from_channels(limit=limit)
+
+    unified: dict[str, dict] = {}
+    channels_found: list[str] = []
+
+    for ch_type, products in all_products.items():
+        if products:
+            channels_found.append(ch_type)
+        for product in products:
+            key = product.sku or product.external_id
+            if key not in unified:
+                unified[key] = {
+                    "sku": product.sku,
+                    "title": product.title,
+                    "channels": {},
+                }
+            unified[key]["channels"][ch_type] = {
+                "external_id": product.external_id,
+                "price": product.price,
+                "quantity": product.quantity,
+                "status": product.status,
+                "url": product.url,
+            }
+
+    result_products: list[UnifiedProductResponse] = []
+    for data in unified.values():
+        quantities = [c["quantity"] for c in data["channels"].values()]
+        min_stock = min(quantities) if quantities else 0
+        max_stock = max(quantities) if quantities else 0
+        result_products.append(
+            UnifiedProductResponse(
+                sku=data["sku"],
+                title=data["title"],
+                channels={
+                    ch: UnifiedProductChannelData(**ch_data)
+                    for ch, ch_data in data["channels"].items()
+                },
+                has_discrepancy=len(set(quantities)) > 1,
+                min_stock=min_stock,
+                max_stock=max_stock,
+            )
+        )
+
+    return UnifiedProductsResponse(
+        products=result_products,
+        total=len(result_products),
+        channels=channels_found,
+    )
+
+
+@router.post("/bulk/unlist", response_model=BulkUnlistResponse)
+@limiter.limit(RateLimits.WRITE)
+async def bulk_unlist_products(request: Request, body: BulkUnlistRequest):
+    """Remove specific products from specific marketplace channels.
+
+    Accepts a list of {external_id, channel_type} items and removes each
+    product from its respective channel. Returns per-item results.
+    """
+    engine = _get_engine()
+    results: dict[str, dict] = {}
+    success_count = 0
+    failed_count = 0
+
+    for item in body.items:
+        key = f"{item.channel_type}:{item.external_id}"
+        if item.channel_type not in engine.active_channels:
+            results[key] = {
+                "success": False,
+                "error": f"Channel '{item.channel_type}' is not connected",
+                "channel_type": item.channel_type,
+                "external_id": item.external_id,
+            }
+            failed_count += 1
+            continue
+
+        channel = engine.active_channels[item.channel_type]
+        try:
+            await channel.delete_product(item.external_id)
+            results[key] = {
+                "success": True,
+                "channel_type": item.channel_type,
+                "external_id": item.external_id,
+            }
+            success_count += 1
+        except Exception as exc:
+            logger.warning(
+                "bulk_unlist_item_failed",
+                channel=item.channel_type,
+                external_id=item.external_id,
+                error=str(exc),
+            )
+            results[key] = {
+                "success": False,
+                "error": str(exc),
+                "channel_type": item.channel_type,
+                "external_id": item.external_id,
+            }
+            failed_count += 1
+
+    return BulkUnlistResponse(
+        results=results,
+        success_count=success_count,
+        failed_count=failed_count,
     )

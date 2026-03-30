@@ -456,6 +456,12 @@ app.include_router(inventory.router, tags=["Multi-Store Inventory"])
 app.include_router(service_requests.router, tags=["Service Requests"])
 # Webhooks
 app.include_router(webhooks.router, tags=["Webhooks"])
+# Boardroom AI session endpoint (4x daily CRON)
+from .routes import boardroom as boardroom_routes
+app.include_router(boardroom_routes.router, tags=["Boardroom"])
+# Stripe webhook receiver (invoice.paid, invoice.payment_failed, subscription.updated, checkout)
+from .routes import stripe_webhooks  # noqa: E402
+app.include_router(stripe_webhooks.router, tags=["Stripe Webhooks"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])
 # Team management router (multi-tenant user management)
@@ -525,29 +531,29 @@ except (ImportError, AttributeError):
 try:
     from .routes.ai import build_command
     app.include_router(build_command.router, tags=["Build Command"])
-except (ImportError, AttributeError):
-    pass  # Skip if AI dependencies not available
+except (ImportError, AttributeError, IndexError, OSError):
+    pass  # Skip if AI dependencies not available or path depth wrong (Docker)
 
 # Approval Gates (Phase 3: approval gate system)
 try:
     from .routes.ai import approval_gates
     app.include_router(approval_gates.router, tags=["Approval Gates"])
-except (ImportError, AttributeError):
-    pass  # Skip if AI dependencies not available
+except (ImportError, AttributeError, IndexError, OSError):
+    pass  # Skip if AI dependencies not available or path depth wrong (Docker)
 
 # Gap Sync (Phase 4: gap-to-linear orchestrator)
 try:
     from .routes.ai import gap_sync
     app.include_router(gap_sync.router, tags=["Gap Sync"])
-except (ImportError, AttributeError):
-    pass  # Skip if AI dependencies not available
+except (ImportError, AttributeError, IndexError, OSError):
+    pass  # Skip if AI dependencies not available or path depth wrong (Docker)
 
 # Requirement Verification (Phase 5: requirement tracing)
 try:
     from .routes.ai import requirement_verification
     app.include_router(requirement_verification.router, tags=["Requirement Verification"])
-except (ImportError, AttributeError):
-    pass  # Skip if AI dependencies not available
+except (ImportError, AttributeError, IndexError, OSError):
+    pass  # Skip if AI dependencies not available or path depth wrong (Docker)
 
 # Analytics Metrics
 try:
@@ -669,15 +675,15 @@ except (ImportError, AttributeError):
 try:
     from src.api.routes.ai import project_intelligence
     app.include_router(project_intelligence.router, tags=["Project Intelligence"])
-except (ImportError, AttributeError):
-    pass  # Skip if dependencies not available
+except (ImportError, AttributeError, IndexError, OSError):
+    pass  # Skip if dependencies not available or path depth wrong (Docker)
 
 # Toolshed API (context bundle assembly + quality gates — Minions framework)
 try:
     from src.api.routes.ai import toolshed
     app.include_router(toolshed.router, tags=["Toolshed"])
-except (ImportError, AttributeError):
-    pass  # Skip if dependencies not available
+except (ImportError, AttributeError, IndexError, OSError):
+    pass  # Skip if dependencies not available or path depth wrong (Docker)
 
 # Cin7 Shadow AI Agent — gap analysis + auto-resolution (UNI-1262)
 try:

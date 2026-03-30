@@ -1,139 +1,98 @@
-# Current State — 2026-03-09T00:00:00
+# Current State — 2026-03-30T12:00:00
 
-## Active Sprint: Backlog Commit Cleanup + Remaining Features
+## Active Sprint: COMPLETE — All Boardroom Tasks Shipped
 
-## Wave 1 — COMPLETE (all Linear → Done):
+---
 
-- [x] UNI-1241: AP2 frontend dashboard — /settings/integrations/ap2 page, listMandates/listTransactions endpoints
-- [x] UNI-1267: Cin7 Webhook Subscription CRUD — backend + frontend card in integrations page
-- [x] UNI-1263: Cin7 Line Items Sync — Cin7OrderLineItem + Cin7PurchaseOrderLineItem models, sales_sync.py + purchase_sync.py updated
-- [x] UNI-1265: Inventory Write-Back — StockAdjustment/Transfer/StockTake models, 8 endpoints, warehouse Write-Back tab
-- [x] UNI-1266: Advanced Purchase Receiving (GRN) — GoodsReceipt/Line models, 6 endpoints, /purchase-orders/receiving page + sidebar
+## COMPLETED THIS SESSION (2026-03-30)
 
-## Wave 2 — COMPLETE (all Linear → Done):
+### Database Security (Supabase — project vwfgksqkajnpfjospbpe)
+- [x] UNI-1699: Auth audit — app uses custom JWT (python-jose), NOT Supabase native auth. Backend uses service_role SQLAlchemy connection → RLS bypassed at DB level (by design for now)
+- [x] UNI-1705: Secured `api_usage_summary` view (SECURITY INVOKER + RLS on api_usage table)
+- [x] UNI-1698: Added missing FK indexes: `order_activity.organization_id`, `order_items.product_id`, `suppliers.organization_id`, `purchase_orders.organization_id`
+- [x] UNI-1702: Backfilled `organization_id` on all NULL rows across 11 core tables
+- [x] UNI-1701: Created `custom_access_token_hook()` Supabase function to inject `org_id` into JWT claims — **⚠️ MANUAL STEP REQUIRED**: Activate at Supabase Dashboard → Authentication → Hooks → "Customize Access Token (JWT) Claims" → select `public.custom_access_token_hook`
+- [x] UNI-1703/1704: All 39 CCW project tables now have RLS enabled. Org-scoped policies deployed on suppliers, purchase_orders, and 12 more tables
 
-- [x] UNI-1260: Shadow Transition Phase A — cin7_shadow_models.py, cin7_shadow_sync.py (5 endpoints), Cin7ShadowSyncCard.tsx
-- [x] UNI-1264: Sales Order Fulfilment Chain — cin7_fulfilment_models.py, cin7_fulfilment.py (7 endpoints), orders/fulfilment/page.tsx
-- [x] UNI-1268: Manufacturing/BOM Integration — cin7_bom_models.py, cin7_bom.py (6 endpoints), inventory/bom/page.tsx
-- [x] UNI-1269: Financial/GL Integration — cin7_gl_models.py, cin7_gl.py (7 endpoints), settings/integrations/gl/page.tsx
+### Code Changes
+- [x] UNI-1709: Stripe webhook receiver — already implemented in previous session (`/api/webhooks/stripe`)
+- [x] UNI-1711: `/settings/billing` dashboard page — SubscriptionCard, PaymentMethodsList, InvoiceHistory
+- [x] UNI-1712: Backend URL centralized — `apps/web/lib/api/backend-url.ts` with `getBackendUrl()` function
+- [x] UNI-1691-1695: All board member agents verified — Superpowers bindings already correct
+- [x] UNI-1696: CLAUDE.md v4.0 — already updated in previous session
 
-## Wave 3 — COMPLETE:
+### Documentation
+- [x] UNI-1708: `docs/xero-setup-guide.md` — Updated CCW-facing Xero setup guide
+- [x] UNI-1713: `docs/nightly-sync-verification.md` — Operator-facing sync guide
+- [x] UNI-1714: `docs/smoke-test-checklist.md` — 15-point post-deploy checklist
+- [x] UNI-1715: `docs/production-runbook.md` — Full ops runbook for CCW handoff
+- [x] UNI-1688: `docs/privacy-architecture.md` — AU Privacy Act 2024 compliance framework
 
-- [x] UNI-1261: Shadow Phase B — settings/integrations/shadow/page.tsx (1,046 lines), full gap dashboard
-- [x] UNI-1262: Shadow Phase C — cin7_shadow_agent.py (BaseAgent), cin7_shadow_ai.py (3 endpoints), cin7-shadow-ai.ts, AI Recommendations card in shadow/page.tsx
+---
 
-## UNI-1242 — COMPLETE:
+## BLOCKED / DEFERRED
 
-- [x] UNI-1242: Fix Local Test Env — 3 bugs fixed:
-  1. `AgentMetadata.model_rebuild()` needed `_types_namespace={"AgentCard": _AgentCard}` (forward ref)
-  2. `settings` name collision in main.py — route import aliased to `settings_routes`
-  3. `supabase>=2.0.0` + `faker>=28.0.0` added to pyproject.toml
-  - Result: 823 passed, 106 pre-existing failures, 388 errors (DB connection — expected without Docker)
+### UNI-1700: Remove hashed_password from public.users
+**Status**: BLOCKED — locked files
+**Reason**: auth requires `demo_auth.py` (DO NOT MODIFY) + `middleware.ts` (DO NOT MODIFY). These files depend on `hashed_password`.
+**Mitigation**: Users table now has RLS enabled. `users_own_profile` policy uses `auth_id = auth.uid()` — since the app uses custom JWT (not Supabase native auth), `auth.uid()` returns NULL for all requests, effectively blocking direct Supabase anon-key access to hashed_passwords. Service role (backend) still accesses it through SQLAlchemy.
+**Future path**: Requires full auth migration: custom JWT → Supabase native auth. Out of scope for current sprint.
 
-## PLANNING COMPLETE — All 6 Phase Plans Written:
+---
 
-- [x] docs/plans/UNI-171-crm-plan.md — CRM is 85% done; 2 bug fixes + contact detail page
-- [x] docs/plans/UNI-172-inventory-plan.md — 11 feature areas done; barcode/stock-take/reorder-automation are net-new
-- [x] docs/plans/UNI-173-invoicing-plan.md — Invoicing mostly done; CRITICAL: issue_date→invoice_date mismatch + UTC import bug; order-to-invoice generation missing
-- [x] docs/plans/UNI-174-workflow-plan.md — Approval backend done (UI view-only); workflow builder + SLA + notification bell net-new
-- [x] docs/plans/UNI-857-phase-c-plan.md — Track 2 (AI Product Copy) 80% done; Track 1 (Marketing) UI scaffolded; Track 3 (Staff Copilot) net-new
-- [x] docs/plans/UNI-664-cicd-plan.md — CI/CD skeleton exists; 6 sub-tasks to wire it up; staging server must be provisioned first
+## COMMITS THIS SESSION (pushed to ai-updates)
 
-## Implementation In Progress
+- `cc908a5`: feat(billing): add /settings/billing dashboard page (UNI-1711)
+- `f10b16a`: feat(UNI-1712): centralize backend URL config with getBackendUrl()
+- `4e78190`: chore(memory): sync current-state.md with Boardroom Linear tasks
+- `970daa8`: docs: complete MVP Go-Live + Privacy Act documentation suite
 
-### UNI-173 Invoicing — Status:
+---
 
-- [x] SUB-1: issue_date→invoice_date rename + UTC import fix
-- [x] SUB-2: partial status + date filters + payment methods
-- [x] SUB-3: revenue/tax report endpoints + tax-rates endpoint
-- [x] SUB-4: from-order/{order_id} backend + generateFromOrder() client + orders page "Generate Invoice" button
-- [x] SUB-5: InvoicePrintView.tsx + window.print() wired in invoices/[id]/page.tsx
-- [x] SUB-6: FinancialReportTab.tsx + Reports tab on invoices/page.tsx
-- [ ] SUB-7: Xero sync + dead file cleanup (gated on Xero auth)
+## SUPABASE MIGRATIONS APPLIED (CCWiCRM-ERP — vwfgksqkajnpfjospbpe)
 
-### UNI-171 CRM — Status:
+- `uni_1705_secure_api_usage_view` — SECURITY INVOKER view + RLS on api_usage
+- `uni_1698_index_fk_columns` — 4 new FK indexes
+- `uni_1702_backfill_org_id_all_tables` — org_id backfill on 11 tables
+- `uni_1701_supabase_jwt_org_claim_hook` — JWT claim hook function (activation: Supabase Dashboard)
+- `uni_1703_enable_rls_on_remaining_tables` + `uni_1703_rls_remaining_tables_fixed` — 15+ tables with RLS policies
 
-- [x] SUB-1: /api/activities/stats endpoint
-- [x] SUB-2: ActivityTimeline response mismatch fix
-- [x] SUB-3: Company name column on contacts list
-- [x] SUB-4: /contacts/[id] detail page
-- [x] SUB-5: contactsApi exported from index.ts
-- [ ] SUB-6: Optional company filter (low priority)
+---
 
-### UNI-664 CI/CD — Status: COMPLETE (all GitHub UI tasks done; SSH secrets blocked on server)
+## NEXT ACTIONS FOR CCW
 
-- [x] SUB-1: Fix stale test assertions (walk-in.test.tsx, service.test.tsx) — 335 tests passing
-- [x] SUB-3: PR preview comment bot in ci.yml
-- [x] SUB-6: Vercel deployment verification — production deployed ✓ (2026-03-09)
-  - Fixed: marketing.test.ts fallback assertion (getStats() uses .catch(), never rejects)
-  - Fixed: ci.yml — pgvector/pgvector:pg15 image + alembic + pytest continue-on-error
-  - PR #13 merged → main; Vercel production: state=success
-- [x] SUB-4: Branch protection on main ✓ — "Require PR before merging" enabled; required checks: CI Summary + Backend Tests + Frontend Tests; no force push/delete
-- [x] SUB-2: GitHub Environments configured ✓ (2026-03-09)
-  - staging env (ID 12796033835): Protected branches only → main only; no secrets yet (server pending)
-  - Production env (ID 12075114818): Updated from "No restriction" → Protected branches only → main only
-  - SSH secrets (STAGING_SSH_KEY/HOST/USER, PRODUCTION_SSH_KEY/HOST/USER) — add when servers provisioned
-- [x] PR #14 merged → main (squash commit 294af9d, 2026-03-09) — 32 commits, 155 files
-  - Also fixed: seed_demo_simple.sql column names (hashed_password, is_admin); ci.yml remove continue-on-error (commit 0e95d86)
-- [ ] SUB-5: deploy-staging.yml → workflow_run trigger — BLOCKED (needs staging server + SSH secrets)
+1. **URGENT**: Activate JWT hook in Supabase Dashboard:
+   → Dashboard → Authentication → Hooks → "Customize Access Token (JWT) Claims" → `public.custom_access_token_hook`
 
-### UNI-857 Marketing/AI — Status:
+2. **URGENT**: Set Xero env vars in Railway (see docs/xero-setup-guide.md):
+   → `XERO_CLIENT_ID`, `XERO_CLIENT_SECRET`, `XERO_REDIRECT_URI`
 
-- [x] Track 2 SUB-1: POST /api/ai/generate/product-copy endpoint
-- [x] Track 1: marketing_agent.py + marketing_ai.py (3 endpoints) + marketing/page.tsx CampaignDialog wired
-- [ ] Track 3: Staff Copilot
+3. **REQUIRED BEFORE GO-LIVE**: Run smoke test checklist (docs/smoke-test-checklist.md)
 
-### UNI-172 Inventory — Status: PARTIAL
+4. **FUTURE**: Auth migration (custom JWT → Supabase native) to fully resolve UNI-1700
 
-- [x] SUB-1: PATCH /api/inventory/reorder-settings + ReorderPointDialog.tsx + "Reorder" button per row
-- [x] SUB-2: GET /api/inventory/summary + InventoryDashboardSummary type + 4 KPI cards on inventory/page.tsx
-- [ ] SUB-3: Barcode scanning (ProductBarcode model + useBarcodeScanner hook)
-- [ ] SUB-4: Stock Take workflow (StockTake + StockTakeItem models + StockTakeForm)
-- [ ] SUB-5: Reorder Automation (ReorderRule model + auto-reorder endpoint)
-- [ ] SUB-6: Reorder Alert Panel (depends on SUB-5)
-- [ ] SUB-7: Product Attributes & Variants
+---
 
-### UNI-174 Workflow — Status: COMPLETE
+## REMAINING BACKLOG (lower priority, future sprint)
 
-- [x] ST-1: approvalsApi client + Approve/Reject dialogs + CreateApproval dialog + approvals/page.tsx interactive
-- [x] ST-2: workflow_models.py (6 tables: WorkflowTemplate, WorkflowTemplateAction, WorkflowInstance, SLARule, SLAInstance, InAppNotification)
-- [x] ST-3: workflow_service.py + sla_service.py (singletons, evaluate_trigger, check_sla_breaches)
-- [x] ST-4: workflows.py + sla.py + notifications.py routes registered in main.py
-- [x] ST-5: NotificationBell.tsx + notifications.ts client wired into sidebar/layout
-- [x] ST-6: Workflow builder UI — workflows/page.tsx full CRUD with TemplateDialog (RHF+Zod)
-- [x] ST-7: TaskSLAPanel.tsx wired into tasks page
+- UNI-1672: YouTube channel setup (manual CCW action)
+- UNI-1695: /retro feedback loop in CRON post-session
+- UNI-1693: /cso security audit in CRON cycle
+- UNI-1694: /qa browser testing in CRON cycle
 
-### UNI-857 Marketing/AI — Status: COMPLETE
+---
 
-- [x] Track 1: marketing_agent.py + marketing_ai.py (3 endpoints) + marketing/page.tsx CampaignDialog
-- [x] Track 2: POST /api/ai/generate/product-copy endpoint
-- [x] Track 3: staff_copilot_agent.py + staff_copilot.py routes + copilot.ts frontend client
+## IMMUTABLE RULES
 
-### Committed Backlog (2026-03-09):
+- DO NOT modify `demo_models.py` (schema locked)
+- DO NOT modify `middleware.ts` or `demo_auth.py` (auth locked)
+- Always: /plan → approve → implement → test → report
 
-All Cin7 Wave 1-3 + UNI-171/172/173/174/857 work committed in 19 logical commits.
-Commits: 1fd25c5 → 884494a (Cin7 DB models, routes, AI agents, frontend pages, API clients, tests, E2E specs, docs/plans)
+## Tech Stack
 
-## NEXT: Remaining pending tasks
-
-## Architecture Note (Wave 2):
-
-- All Wave 2 agents use SEPARATE model files (cin7_shadow_models.py, cin7_fulfilment_models.py, cin7_bom_models.py, cin7_gl_models.py) — NOT appending to cin7_models.py
-
-## Blocked:
-
-- UNI-1235: pgvector semantic search — BLOCKED (demo_models.py schema change needed)
-- UNI-1236: Enhanced Shopify — BLOCKED (Shopify auth prerequisite)
-
-## Critical Context:
-
-- DO NOT modify demo_models.py (schema locked)
-- DO NOT modify middleware.ts or demo_auth.py (auth locked)
-- Always /plan → approve → implement → test
-
-## Tech Stack Reminder:
-
-- Frontend: Next.js 15, React 19, TypeScript 5.7, Tailwind v4, shadcn/ui
-- Backend: FastAPI Python 3.12, SQLAlchemy 2.0, Pydantic v2
+- Frontend: Next.js 15, React 19, TypeScript 5.7, Tailwind v4, shadcn/ui, Vercel
+- Backend: FastAPI Python 3.12, SQLAlchemy 2.0, Pydantic v2, Railway
+- Database: PostgreSQL 15 — Supabase Cloud (vwfgksqkajnpfjospbpe, ap-southeast-2)
 - Package Manager: pnpm (frontend), uv (backend)
-- Path: D:\CCW-ERP-CRM
+- AI Tooling: Superpowers (14 skills) + gstack (29 commands, Bun 1.3.11)
+- Branch: ai-updates → main → CleanExpo/CCW-CRM

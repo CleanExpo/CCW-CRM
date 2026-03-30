@@ -117,6 +117,42 @@ export interface ChannelSetupFieldsResponse {
   fields: SetupField[];
 }
 
+// ─── A5: Unified products + bulk operations types ────────────────────
+
+export interface UnifiedProductChannelData {
+  external_id: string;
+  price: number;
+  quantity: number;
+  status: string;
+  url: string | null;
+}
+
+export interface UnifiedProduct {
+  sku: string | null;
+  title: string;
+  channels: Record<string, UnifiedProductChannelData>;
+  has_discrepancy: boolean;
+  min_stock: number;
+  max_stock: number;
+}
+
+export interface UnifiedProductsResponse {
+  products: UnifiedProduct[];
+  total: number;
+  channels: string[];
+}
+
+export interface BulkUnlistItem {
+  external_id: string;
+  channel_type: string;
+}
+
+export interface BulkUnlistResponse {
+  results: Record<string, { success: boolean; error?: string; channel_type: string; external_id: string }>;
+  success_count: number;
+  failed_count: number;
+}
+
 // ─── API Functions ──────────────────────────────────────────────────
 
 /** List all available marketplace channels with connection status */
@@ -198,6 +234,16 @@ export async function getChannelSetupFields(
   );
 }
 
+/** Get unified product view across all connected channels (A5) */
+export async function getUnifiedProducts(limit: number = 50): Promise<UnifiedProductsResponse> {
+  return apiClient.get<UnifiedProductsResponse>(`/api/marketplace/products?limit=${limit}`);
+}
+
+/** Bulk unlist products from specific channels (A5) */
+export async function bulkUnlistProducts(items: BulkUnlistItem[]): Promise<BulkUnlistResponse> {
+  return apiClient.post<BulkUnlistResponse>('/api/marketplace/bulk/unlist', { items });
+}
+
 /** Convenience: marketplace API namespace */
 export const marketplaceApi = {
   getChannels: getMarketplaceChannels,
@@ -209,4 +255,6 @@ export const marketplaceApi = {
   syncInventory,
   getOrders: getMarketplaceOrders,
   getSetupFields: getChannelSetupFields,
+  getUnifiedProducts,
+  bulkUnlistProducts,
 };

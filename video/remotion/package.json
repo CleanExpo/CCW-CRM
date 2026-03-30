@@ -1,0 +1,19 @@
+{
+  "name": "ccw-boardroom-video",
+  "version": "1.0.0",
+  "description": "CCW Boardroom Video Renderer — Remotion (UNI-1666)",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render src/index.ts BoardroomVideo out/boardroom.mp4",
+    "render": "remotion render src/index.ts BoardroomVideo"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

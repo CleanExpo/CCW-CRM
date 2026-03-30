@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://localhost:9090';
+const PROMETHEUS_URL = process.env.PROMETHEUS_URL;
 
 /**
  * GET /api/monitoring/metrics
@@ -9,6 +9,9 @@ const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://localhost:9090';
  * for the monitoring dashboard charts and stat cards.
  */
 export async function GET(request: NextRequest) {
+  if (!PROMETHEUS_URL) {
+    return NextResponse.json({ error: 'Prometheus not configured in this environment', metrics: {} }, { status: 503 });
+  }
   try {
     const queries: Record<string, string> = {
       // PostgreSQL
