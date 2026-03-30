@@ -33,3 +33,60 @@ export interface BoardroomVideoProps {
   videoBrief: VideoBrief;
   narrationPath?: string;
 }
+
+export interface ProductDemoVideoProps {
+  featureName: string;
+  tagline: string;
+  problemStatement: string;
+  screenshots: string[];
+  screenshotCaptions: string[];
+  results: string;
+  ctaText: string;
+  narrationPath?: string;
+  format?: 'landscape' | 'portrait';
+}
+
+export interface ClientBenefitsVideoProps {
+  industry: 'trades' | 'restoration' | 'training';
+  painPoint: string;
+  solutionName: string;
+  metrics: Array<{
+    label: string;
+    value: number;
+    unit: string;
+    direction: 'up' | 'down';
+  }>;
+  testimonialQuote?: string;
+  testimonialSource?: string;
+  ctaText: string;
+  narrationPath?: string;
+}
+
+export interface FeatureSpotlightVideoProps {
+  featureName: string;
+  hookStatement: string;
+  screenshot?: string;
+  screenshotCaption?: string;
+  keyBenefit: string;
+  ctaText: string;
+  format?: 'landscape' | 'portrait';
+  narrationPath?: string;
+}
+
+export interface BehindTheScenesVideoProps {
+  sessionId: string;
+  sessionDate: string;
+  openingQuestion: string;
+  boardMemberHighlights: Array<{
+    name: string;
+    title: string;
+    insight: string;
+    accentColor: string;
+  }>;
+  conflictMoment?: string;
+  decision: string;
+  moonShot: string;
+  outcome: string;
+  impact: string;
+  narrationPath?: string;
+}
