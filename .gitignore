@@ -152,6 +152,11 @@ supabase/.temp
 # Git worktrees
 .worktrees/
 
+# Boardroom CRON runtime state (UNI-1729, UNI-1731, UNI-1733)
+.session-state/
+.approvals/
+.learning/
+
 # Example/test projects (if not needed)
 my-app/
 shopify-scraper/
