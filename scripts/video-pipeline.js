@@ -37,82 +37,124 @@ const VIDEO_TYPES = {
  * @returns {Object}
  */
 function buildDefaultProps(type, options) {
-  const base = {
-    sessionId: options.sessionId,
-    platforms: options.platforms || ['youtube'],
-    generatedAt: new Date().toISOString(),
-  };
+  // Props must exactly match the TypeScript interfaces defined in
+  // video/remotion/src/types.ts — field names must be identical.
 
   switch (type) {
     case 'productdemo':
+      // Matches ProductDemoVideoProps
       return {
-        ...base,
-        title: 'CCW Product Demo',
-        subtitle: 'See the power of CCW in action',
-        features: [
-          'AI-powered inventory management',
-          'Real-time order tracking',
-          'Integrated POS system',
-          'Multi-location stock control',
-        ],
-        cta: 'Book a free demo at carpetcleanerswarehouse.com.au',
-        duration: 120,
+        featureName: options.feature || 'CCW ERP Platform',
+        tagline: 'Everything your trades business needs in one place',
+        problemStatement:
+          'Managing quotes, orders, inventory, and invoices across multiple tools costs your team hours every week.',
         screenshots: [],
+        screenshotCaptions: [],
+        results:
+          '4+ hours saved per week. Zero missed orders. Real-time stock visibility.',
+        ctaText: 'See CCW ERP in action — ccwonline.com.au',
       };
 
     case 'clientbenefits':
+      // Matches ClientBenefitsVideoProps
       return {
-        ...base,
-        title: 'Why Trades Businesses Choose CCW',
         industry: options.industry || 'trades',
-        benefits: [
-          'Save 4+ hours per week on admin',
-          'Never oversell stock again',
-          'Get paid faster with integrated invoicing',
-          'Know your numbers with real-time KPIs',
+        painPoint:
+          'Chasing quotes, invoices, and purchase orders across spreadsheets costs you 12+ hours every week.',
+        solutionName: 'CCW ERP — Built for Trades',
+        metrics: [
+          { label: 'Quote Time Reduced', value: 85, unit: '%', direction: 'down' },
+          { label: 'Admin Hours Saved', value: 12, unit: 'hrs/wk', direction: 'down' },
+          { label: 'Revenue Visibility', value: 100, unit: '%', direction: 'up' },
         ],
-        testimonial: {
-          quote: 'CCW transformed how we run our business.',
-          author: 'CCW Customer',
-          business: 'Trades Business',
-        },
-        cta: 'Start your free trial today',
-        duration: 90,
+        testimonialQuote: 'CCW ERP transformed how we run our business. We quote faster, stock smarter, and get paid sooner.',
+        testimonialSource: 'Trades Business Owner, Brisbane',
+        ctaText: 'Built for trades. Proven in the field.',
       };
 
     case 'spotlight':
+      // Matches FeatureSpotlightVideoProps
       return {
-        ...base,
-        featureName: options.feature || 'Feature Spotlight',
-        title: `Feature Spotlight: ${options.feature || 'New Feature'}`,
-        description: 'See how this feature saves you time and money.',
-        steps: [
-          'Open the feature',
-          'Configure your settings',
-          'Watch the magic happen',
-        ],
-        screenshots: [],
-        duration: 60,
+        featureName: options.feature || 'AI Quote Generator',
+        hookStatement: options.feature
+          ? `${options.feature} — how it works in 60 seconds.`
+          : 'Generate a professional quote in 30 seconds.',
+        screenshot: undefined,
+        screenshotCaption: undefined,
+        keyBenefit: 'No more hours lost to manual quoting',
+        ctaText: 'See it live — ccwonline.com.au',
       };
 
     case 'behindthescenes':
+      // Matches BehindTheScenesVideoProps
+      // If debrief was loaded, use real data; otherwise use illustrative defaults
+      if (options.debriefData) {
+        const d = options.debriefData;
+        const members = Object.entries(d.boardOutputs || {}).slice(0, 4).map(([id, output]) => {
+          const COLORS = {
+            architect: '#3b82f6', revenue_guardian: '#22c55e',
+            security_sentinel: '#ef4444', data_sovereign: '#06b6d4',
+            agent_whisperer: '#8b5cf6', compliance_counsel: '#f59e0b',
+            integration_maestro: '#06b6d4', video_director: '#ec4899',
+            ux_visionary: '#a78bfa', fullstack_forge: '#3b82f6', moon_shooter: '#8b5cf6',
+          };
+          const sentences = String(output).split('. ').filter(s => s.length > 40 && s.length < 220);
+          return {
+            name: id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            title: 'Board Member',
+            insight: (sentences[0] || String(output).slice(0, 200)) + '.',
+            accentColor: COLORS[id] || '#3b82f6',
+          };
+        });
+        return {
+          sessionId: d.sessionId || options.sessionId,
+          sessionDate: new Date(d.timestamp || Date.now()).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+          openingQuestion: 'How do we build the best ERP system for Australian trades businesses?',
+          boardMemberHighlights: members.length > 0 ? members : DEFAULT_BOARD_HIGHLIGHTS,
+          conflictMoment: (d.witness?.red_flags || [])[0],
+          decision: (d.witness?.decisions || ['Ship the next sprint feature set on schedule.'])[0],
+          moonShot: d.moonShot || 'Fully autonomous business operations — zero manual admin — within 90 days.',
+          outcome: (d.retrospective?.whatWentWell || ['All sprint targets hit on time.'])[0],
+          impact: (d.retrospective?.nextSessionPriorities || [{ action: 'Continue building on this momentum.' }])[0].action,
+        };
+      }
       return {
-        ...base,
-        title: 'Behind the Scenes at CCW',
-        sessionReference: options.session || null,
-        topics: [
-          'What we built this sprint',
-          'Challenges we solved',
-          'What is coming next',
-        ],
-        debriefData: options.debriefData || null,
-        duration: 180,
+        sessionId: options.sessionId,
+        sessionDate: new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+        openingQuestion: "How do we reduce CCW's admin overhead by 60% before Q3?",
+        boardMemberHighlights: DEFAULT_BOARD_HIGHLIGHTS,
+        conflictMoment: undefined,
+        decision: 'Deploy automated Cin7-Xero nightly sync with anomaly alerts by end of sprint.',
+        moonShot: 'Predictive reorder system that eliminates manual purchase orders within 90 days.',
+        outcome: 'Nightly sync deployed, tested, and running — zero manual intervention required.',
+        impact: 'Free up 8 hours per week across the CCW admin team for customer-facing work.',
       };
 
     default:
-      return base;
+      return {};
   }
 }
+
+const DEFAULT_BOARD_HIGHLIGHTS = [
+  {
+    name: 'The Architect',
+    title: 'Systems & Technical Strategy',
+    insight: 'The bottleneck is manual data re-entry between Cin7 and Xero — automating this sync saves 8 hours per week.',
+    accentColor: '#3b82f6',
+  },
+  {
+    name: 'The Revenue Guardian',
+    title: 'Commercial & Growth',
+    insight: "Every hour saved on admin is an hour that goes to customer relationships — that's where the real revenue is.",
+    accentColor: '#22c55e',
+  },
+  {
+    name: 'The Moon Shooter',
+    title: 'Vision & Innovation',
+    insight: 'What if the system could predict reorder needs 3 weeks in advance using historical seasonal patterns?',
+    accentColor: '#8b5cf6',
+  },
+];
 
 // ---------------------------------------------------------------------------
 // Main pipeline function

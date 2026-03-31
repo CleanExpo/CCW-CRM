@@ -2,6 +2,7 @@
   "name": "ccw-online-erp",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Equipment Supplier ERP System built with Next.js and FastAPI",
   "author": "CCW",
   "license": "MIT",
@@ -54,6 +55,7 @@
     "@composio/openai-agents": "^0.6.3",
     "@openai/agents": "^0.4.10",
     "dotenv": "^17.3.1",
+    "googleapis": "^144.0.0",
     "mcp-linear": "^0.1.8"
   }
 }
