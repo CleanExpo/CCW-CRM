@@ -40,22 +40,41 @@ def get_database_url(async_mode: bool = False) -> str:
 
 
 # Synchronous engine (for migrations and CLI tools)
-sync_engine = create_engine(
-    get_database_url(async_mode=False),
-    echo=get_settings().debug,
-    pool_pre_ping=True,  # Verify connections before using
-    pool_size=20,  # Support 20 concurrent requests
-    max_overflow=30,  # Burst up to 50 total connections
-    pool_timeout=30,  # Wait 30s before failing connection request
-    pool_recycle=3600,  # Recycle connections after 1 hour
-)
+# Created lazily to avoid startup failures when DB is temporarily unreachable
+_sync_engine = None
+_sync_session_local = None
 
-# Synchronous session factory
-SyncSessionLocal = sessionmaker(
-    bind=sync_engine,
-    autocommit=False,
-    autoflush=False,
-)
+
+def _get_sync_engine():
+    """Lazy-init sync engine — avoids crashes when DB is unreachable at import time."""
+    global _sync_engine
+    if _sync_engine is None:
+        _sync_engine = create_engine(
+            get_database_url(async_mode=False),
+            echo=get_settings().debug,
+            pool_pre_ping=True,
+            pool_size=5,  # Smaller pool for sync (rarely used in prod)
+            max_overflow=10,
+            pool_timeout=30,
+            pool_recycle=3600,
+        )
+    return _sync_engine
+
+
+def _get_sync_session_local():
+    """Lazy-init sync session factory."""
+    global _sync_session_local
+    if _sync_session_local is None:
+        _sync_session_local = sessionmaker(
+            bind=_get_sync_engine(),
+            autocommit=False,
+            autoflush=False,
+        )
+    return _sync_session_local
+
+
+# Backward-compatible module-level aliases (lazy — only connect on first use)
+# These are accessed via the getter functions in get_sync_db() below
 
 
 # Asynchronous engine (for FastAPI endpoints)
@@ -96,7 +115,8 @@ def get_sync_db() -> Session:
             user = db.query(User).first()
         ```
     """
-    db = SyncSessionLocal()
+    session_factory = _get_sync_session_local()
+    db = session_factory()
     try:
         yield db
     finally:
