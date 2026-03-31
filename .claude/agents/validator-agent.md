@@ -1,3 +1,8 @@
+---
+name: Validator Agent
+description: Validates implementations against acceptance criteria
+---
+
 # VALIDATOR AGENT
 
 **Version**: 1.0.0

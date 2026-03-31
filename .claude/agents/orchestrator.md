@@ -1,3 +1,8 @@
+---
+name: Orchestrator Agent
+description: Master gatekeeper enforcing workflow rules and routing tasks to specialists
+---
+
 # ORCHESTRATOR AGENT
 
 **Version**: 2.0.0

@@ -1,3 +1,8 @@
+---
+name: Planner Agent
+description: Creates detailed implementation plans before any coding begins
+---
+
 # PLANNER AGENT
 
 **Version**: 2.0.0

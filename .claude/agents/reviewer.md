@@ -1,3 +1,8 @@
+---
+name: Reviewer Agent
+description: Reviews code changes for quality, security, and compliance
+---
+
 # REVIEWER AGENT
 
 **Version**: 2.0.0

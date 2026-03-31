@@ -1,3 +1,8 @@
+---
+name: Lead Agent
+description: Coordinates multi-phase tasks across specialist agents
+---
+
 # LEAD AGENT
 
 **Version**: 1.0.0

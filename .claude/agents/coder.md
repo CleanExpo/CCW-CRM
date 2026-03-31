@@ -1,3 +1,8 @@
+---
+name: Coder Agent
+description: Writes and modifies code following approved implementation plans
+---
+
 # CODER AGENT
 
 **Version**: 2.0.0
