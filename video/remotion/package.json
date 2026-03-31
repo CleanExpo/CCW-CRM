@@ -6,7 +6,9 @@
   "scripts": {
     "start": "remotion studio",
     "build": "remotion render src/index.ts BoardroomVideo out/boardroom.mp4",
-    "render": "remotion render src/index.ts BoardroomVideo"
+    "render": "remotion render src/index.ts BoardroomVideo",
+    "render:firstlook": "remotion render src/index.ts FirstLookVideo out/firstlook.mp4",
+    "render:connections": "remotion render src/index.ts ConnectionsGuideVideo out/connections-guide.mp4"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",
