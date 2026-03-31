@@ -14,7 +14,7 @@ import {
  * https://studio.youtube.com/channel/UChN8nQFig73BoefyMBIsN-w
  */
 const DEFAULT_CHANNEL_URL =
-  "https://www.youtube.com/channel/UChN8nQFig73BoefyMBIsN-w";
+  "https://www.youtube.com/channel/UCLqS3mSp4DflzZd9IILXLdQ";
 
 interface DemoVideoLinkProps {
   /** Module key (e.g. "products", "orders") */

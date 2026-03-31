@@ -128,7 +128,7 @@ def upload_video(youtube, module: str, mp4_path: Path) -> str | None:
             "defaultLanguage": "en-AU",
         },
         "status": {
-            "privacyStatus": "unlisted",  # Internal training — not public
+            "privacyStatus": "private",   # Internal training — private
             "selfDeclaredMadeForKids": False,
         },
     }
