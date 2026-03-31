@@ -1,0 +1,33 @@
+{
+  "channel": {
+    "name": "Unite-Group",
+    "id": "UCxJtkvKEpNUhulVZ0suU6yw",
+    "studioUrl": "https://studio.youtube.com/channel/UCxJtkvKEpNUhulVZ0suU6yw"
+  },
+  "videos": [
+    { "module": "dashboard", "title": "CCW ERP — Dashboard Overview", "youtubeId": null, "youtubeUrl": null, "duration": 120, "status": "pending", "tier": 1 },
+    { "module": "products", "title": "CCW ERP — Products Walkthrough", "youtubeId": null, "youtubeUrl": null, "duration": 120, "status": "pending", "tier": 1 },
+    { "module": "customers", "title": "CCW ERP — Customers Walkthrough", "youtubeId": null, "youtubeUrl": null, "duration": 120, "status": "pending", "tier": 1 },
+    { "module": "orders", "title": "CCW ERP — Orders Process Demo", "youtubeId": null, "youtubeUrl": null, "duration": 120, "status": "pending", "tier": 1 },
+    { "module": "quotes", "title": "CCW ERP — Quotes Workflow", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 1 },
+    { "module": "pos", "title": "CCW ERP — POS Feature Demo", "youtubeId": null, "youtubeUrl": null, "duration": 120, "status": "pending", "tier": 1 },
+    { "module": "invoices", "title": "CCW ERP — Invoices & Billing", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 1 },
+    { "module": "warehouse", "title": "CCW ERP — Warehouse Operations", "youtubeId": null, "youtubeUrl": null, "duration": 120, "status": "pending", "tier": 1 },
+    { "module": "suppliers", "title": "CCW ERP — Supplier Management", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 1 },
+    { "module": "purchase-orders", "title": "CCW ERP — Purchase Orders", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 1 },
+    { "module": "contacts", "title": "CCW ERP — CRM Contacts", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 1 },
+    { "module": "reports", "title": "CCW ERP — Reports & Analytics", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 1 },
+    { "module": "settings", "title": "CCW ERP — Settings & Config", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 1 },
+    { "module": "integrations", "title": "CCW ERP — Cin7 & Xero Integration", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 1 },
+    { "module": "workflows", "title": "CCW ERP — Workflow Automation", "youtubeId": null, "youtubeUrl": null, "duration": 60, "status": "pending", "tier": 2 },
+    { "module": "workshop", "title": "CCW ERP — Workshop Management", "youtubeId": null, "youtubeUrl": null, "duration": 60, "status": "pending", "tier": 2 },
+    { "module": "ai-assistant", "title": "CCW ERP — AI Assistant", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 2 },
+    { "module": "marketing", "title": "CCW ERP — Marketing Campaigns", "youtubeId": null, "youtubeUrl": null, "duration": 60, "status": "pending", "tier": 2 },
+    { "module": "shipments", "title": "CCW ERP — Shipment Tracking", "youtubeId": null, "youtubeUrl": null, "duration": 60, "status": "pending", "tier": 2 },
+    { "module": "backorders", "title": "CCW ERP — Auto-Reorder", "youtubeId": null, "youtubeUrl": null, "duration": 60, "status": "pending", "tier": 2 },
+    { "module": "overview", "title": "CCW — Platform Overview", "youtubeId": null, "youtubeUrl": null, "duration": 180, "status": "pending", "tier": 3 },
+    { "module": "tradies", "title": "Why CCW for Tradies", "youtubeId": null, "youtubeUrl": null, "duration": 120, "status": "pending", "tier": 3 },
+    { "module": "vs-spreadsheets", "title": "CCW vs Spreadsheets", "youtubeId": null, "youtubeUrl": null, "duration": 90, "status": "pending", "tier": 3 },
+    { "module": "integration-story", "title": "The CCW Integration Story", "youtubeId": null, "youtubeUrl": null, "duration": 120, "status": "pending", "tier": 3 }
+  ]
+}
