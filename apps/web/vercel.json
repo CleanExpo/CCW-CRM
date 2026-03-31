@@ -42,12 +42,16 @@
       "schedule": "0 9 * * *"
     },
     {
+      "path": "/api/cron/nightly-full-sync",
+      "schedule": "0 13 * * *"
+    },
+    {
       "path": "/api/cron/shadow-sync-cin7",
-      "schedule": "0 19 * * *"
+      "schedule": "0 13 * * *"
     },
     {
       "path": "/api/cron/auto-reorder-inventory",
-      "schedule": "0 21 * * *"
+      "schedule": "0 14 * * *"
     },
     {
       "path": "/api/boardroom/cron",
