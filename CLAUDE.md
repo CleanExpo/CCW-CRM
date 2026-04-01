@@ -67,6 +67,25 @@ When starting a fresh context window:
 3. Run `pnpm turbo run type-check` to verify environment
 4. Continue from the next task in PROGRESS.md
 
+## Skills
+
+Skills live in `.claude/skills/[name]/SKILL.md`. Read `.claude/skills/CHROME-SKILLS-INDEX.md` for the full Chrome automation index.
+
+**Auto-discovery rule**: Before any task involving a browser, Linear, Vercel, Supabase, YouTube, or GitHub — scan `.claude/skills/` with Glob and use the matching skill. Do NOT ask the user which skill to use.
+
+**Auto-generation rule**: If no skill exists for a task, create `.claude/skills/[task-name]/SKILL.md` before starting. Follow the format of existing skills.
+
+### Chrome browser skills (use `mcp__Claude_in_Chrome__*` tools)
+
+| Skill directory       | Use for                                          |
+|-----------------------|--------------------------------------------------|
+| `chrome-linear`       | View/triage Linear board, update issue statuses  |
+| `chrome-vercel`       | Deployment status, build logs, env vars          |
+| `chrome-supabase`     | RLS audit, SQL editor, JWT hook activation       |
+| `chrome-youtube`      | Upload/schedule videos, channel status           |
+| `chrome-github`       | PRs, CI status, diffs, merges                    |
+| `chrome-prod`         | Full smoke test of ccw-crm-web.vercel.app        |
+
 ## Investigation Rule
 
 Read relevant source files before making claims about this codebase.
