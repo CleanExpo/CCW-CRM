@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 // Check SLA Breaches Cron Job
 // Schedule: Every 15 minutes
@@ -13,11 +14,8 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     const response = await fetch(
-      `${backendUrl}/api/cron/check-sla-breaches`,
+      `${BACKEND_URL}/api/cron/check-sla-breaches`,
       {
         method: "POST",
         headers: {

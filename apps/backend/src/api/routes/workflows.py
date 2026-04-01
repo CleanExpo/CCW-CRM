@@ -223,10 +223,13 @@ async def create_workflow_template(
         is_active=request.is_active,
     )
     db.add(template)
-    await db.commit()
-    await db.refresh(template)
-    # Explicitly load actions relationship so _build_template_response can use it
-    await db.refresh(template, attribute_names=["actions"])
+    try:
+        await db.commit()
+        await db.refresh(template)
+        await db.refresh(template, attribute_names=["actions"])
+    except Exception:
+        await db.rollback()
+        raise
 
     logger.info(
         "workflow_template_created",
@@ -268,9 +271,13 @@ async def update_workflow_template(
 
     template.updated_at = datetime.now(UTC)
 
-    await db.commit()
-    await db.refresh(template)
-    await db.refresh(template, attribute_names=["actions"])
+    try:
+        await db.commit()
+        await db.refresh(template)
+        await db.refresh(template, attribute_names=["actions"])
+    except Exception:
+        await db.rollback()
+        raise
 
     logger.info("workflow_template_updated", template_id=str(template_id))
     return await _build_template_response(template, db)
@@ -284,7 +291,11 @@ async def delete_workflow_template(
     """Delete a workflow template (cascade deletes actions)."""
     template = await _get_template_with_actions(template_id, db)
     await db.delete(template)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     logger.info("workflow_template_deleted", template_id=str(template_id))
 

@@ -7,6 +7,7 @@ import { WebSocketProvider } from '@/contexts/websocket-context';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { StaffCopilotWidget } from '@/components/ai/StaffCopilotWidget';
 import { ShadowModeBanner } from '@/components/layout/ShadowModeBanner';
+import { DemoVideoBanner } from '@/components/dashboard/DemoVideoBanner';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           <main className="flex-1 p-4 pt-16 md:p-6 md:pt-6">
+            <DemoVideoBanner />
             <PageTransition>{children}</PageTransition>
           </main>
         </div>

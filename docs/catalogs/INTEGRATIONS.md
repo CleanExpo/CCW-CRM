@@ -2,7 +2,7 @@
 
 # Last Updated: 2026-03-17
 
-# Total Integrations: 13
+# Total Integrations: 14
 
 # Source: apps/backend/src/integrations/ + apps/backend/src/api/routes/integrations/
 
@@ -191,6 +191,34 @@
 - **Features**: Production auth, database hosting, state storage
 - **Status**: Active (production deployment)
 - **Last Verified**: 2026-03-17
+
+---
+
+### INT-014: HeyGen
+
+- **Type**: Avatar Video Generation
+- **Backend Client**: `apps/backend/src/integrations/heygen/client.py`
+- **Demo Client**: `apps/backend/src/integrations/heygen/demo_client.py`
+- **Live Client**: `apps/backend/src/integrations/heygen/live_client.py`
+- **Config**: `apps/backend/src/config/heygen_settings.py`
+- **Route File**: `apps/backend/src/api/routes/integrations/heygen.py`
+- **Frontend Client**: `apps/web/lib/api/heygen.ts`
+- **Endpoints** (5):
+  - `POST /api/integrations/heygen/generate` — submit async video generation
+  - `GET /api/integrations/heygen/status/{video_id}` — poll completion
+  - `GET /api/integrations/heygen/avatars` — list avatars
+  - `GET /api/integrations/heygen/voices` — list voices
+  - `GET /api/integrations/heygen/quota` — remaining quota
+- **Auth**: `HEYGEN_API_KEY` (X-Api-Key header)
+- **Mode**: demo/live via `HEYGEN_MODE` env var
+- **YouTube Channel**: Unite-Group (`UCxJtkvKEpNUhulVZ0suU6yw`)
+- **Skills** (5): heygen-brand-governor, heygen-script-optimizer, heygen-production-orchestrator, heygen-quality-gate, heygen-cost-tracker
+- **Dashboard Component**: `apps/web/components/dashboard/DemoVideoBanner.tsx` (auto-route-matching)
+- **Video Registry**: `data/heygen/video-registry.json` (24 demo videos mapped)
+- **Cost Tracking**: `data/heygen/cost-ledger.json`
+- **Features**: Avatar-driven demo video production for all 20+ ERP modules
+- **Status**: Active (API connected, skills created, dashboard placeholders live)
+- **Last Verified**: 2026-03-31
 
 ---
 

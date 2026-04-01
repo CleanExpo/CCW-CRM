@@ -59,48 +59,31 @@ export const authApi = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const { rememberMe = true } = credentials;
 
-    if (isSupabaseAuthEnabled()) {
-      // Supabase Auth
-      const { data, error } = await getSupabase().auth.signInWithPassword({
+    // Always use the same-origin proxy route for login.
+    // This solves two problems:
+    // 1. Supabase Auth intercepts when NEXT_PUBLIC_SUPABASE_URL is set,
+    //    but users are in public.users not auth.users
+    // 2. Cross-domain cookies: Railway backend sets Domain=localhost
+    //    which browsers on vercel.app ignore. The proxy sets the cookie
+    //    on the correct domain so Next.js middleware can read it.
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         email: credentials.email,
         password: credentials.password,
-      });
+      }),
+    });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      const token = data.session?.access_token || '';
-
-      // Store token based on "Keep me signed in" preference
-      if (token && typeof window !== 'undefined') {
-        if (rememberMe) {
-          localStorage.setItem('auth_token', token);
-          sessionStorage.removeItem('auth_token');
-        } else {
-          sessionStorage.setItem('auth_token', token);
-          localStorage.removeItem('auth_token');
-        }
-      }
-
-      return {
-        access_token: token,
-        token_type: 'bearer',
-        user: {
-          id: data.user?.id || '',
-          email: data.user?.email || '',
-          full_name: data.user?.user_metadata?.full_name || data.user?.email?.split('@')[0] || '',
-          is_active: true,
-          is_admin: data.user?.user_metadata?.is_admin ?? true,
-          created_at: data.user?.created_at || new Date().toISOString(),
-        },
-      };
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.detail || errorData.error || 'Login failed');
     }
 
-    // FastAPI backend (local development)
-    const { rememberMe: _, ...loginData } = credentials;
-    const response = await apiClient.post<LoginResponse>('/api/auth/login', loginData);
+    const response: LoginResponse = await res.json();
 
+    // Store token in client-side storage for subsequent API calls
+    // (the proxy also sets an httpOnly cookie for SSR middleware)
     if (response.access_token && typeof window !== 'undefined') {
       if (rememberMe) {
         localStorage.setItem('auth_token', response.access_token);
@@ -155,13 +138,18 @@ export const authApi = {
       sessionStorage.removeItem('auth_token');
     }
 
+    // Clear the httpOnly auth cookie via the proxy route
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore errors - token is already cleared from client storage
+    }
+
     if (isSupabaseAuthEnabled()) {
-      await getSupabase().auth.signOut();
-    } else {
       try {
-        await apiClient.post('/api/auth/logout');
+        await getSupabase().auth.signOut();
       } catch {
-        // Ignore errors - token is already cleared
+        // Ignore - Supabase session may not exist
       }
     }
   },

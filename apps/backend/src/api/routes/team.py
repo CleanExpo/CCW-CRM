@@ -1,5 +1,3 @@
-import structlog
-
 """
 Team Management API endpoints.
 
@@ -10,12 +8,14 @@ Provides team member management for multi-tenant organizations:
 - Remove members
 """
 
+import structlog
+
 logger = structlog.get_logger(__name__)
 
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -70,6 +70,7 @@ class PaginatedTeamResponse(BaseModel):
 @router.get("", response_model=PaginatedTeamResponse)
 @require_permission("team:read")
 async def list_team_members(
+    request: Request,
     org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
@@ -132,6 +133,7 @@ async def list_team_members(
 @router.post("/invite", response_model=TeamMemberResponse, status_code=201)
 @require_permission("team:invite")
 async def invite_team_member(
+    request: Request,
     invite_data: TeamMemberInvite,
     org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
@@ -201,6 +203,7 @@ async def invite_team_member(
 @router.put("/{user_id}/role", response_model=TeamMemberResponse)
 @require_permission("team:edit_roles")
 async def update_member_role(
+    request: Request,
     user_id: UUID,
     role_update: TeamMemberRoleUpdate,
     org_id: CurrentOrganization,
@@ -263,6 +266,7 @@ async def update_member_role(
 @router.delete("/{user_id}", status_code=204, response_model=None)
 @require_permission("team:remove")
 async def remove_team_member(
+    request: Request,
     user_id: UUID,
     org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],

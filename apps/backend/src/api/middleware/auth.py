@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 from fastapi import Request, Response
+from sqlalchemy import select
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.config import get_settings
@@ -10,6 +11,67 @@ from src.utils import get_logger
 
 settings = get_settings()
 logger = get_logger(__name__)
+
+
+async def _populate_user_state(request: Request, user_id: str | None, jwt_payload: dict) -> None:
+    """
+    Populate request.state.user with role and profile for RBAC middleware.
+
+    Fetches the user's role from the database so that @require_permission
+    decorators can enforce access control correctly.
+    Falls back to is_admin flag from JWT if DB lookup fails.
+    """
+    try:
+        from src.config.database import AsyncSessionLocal
+        from src.db.models_base import User
+
+        if not user_id:
+            # No user_id in token — fall back to is_admin mapping
+            is_admin = jwt_payload.get("is_admin", False)
+            request.state.user = {
+                "id": None,
+                "email": jwt_payload.get("sub"),
+                "role": "admin" if is_admin else "member",
+                "organization_id": jwt_payload.get("organization_id"),
+            }
+            return
+
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(User.id, User.email, User.role, User.organization_id, User.is_admin)
+                .where(User.id == user_id)
+            )
+            row = result.first()
+
+        if row:
+            request.state.user = {
+                "id": str(row.id),
+                "email": row.email,
+                "role": row.role or ("admin" if row.is_admin else "member"),
+                "organization_id": str(row.organization_id) if row.organization_id else None,
+            }
+            # Also update organization_id on state from DB (more reliable than JWT)
+            if row.organization_id:
+                request.state.organization_id = str(row.organization_id)
+        else:
+            # User not found in DB — fall back to JWT claims
+            is_admin = jwt_payload.get("is_admin", False)
+            request.state.user = {
+                "id": user_id,
+                "email": jwt_payload.get("sub"),
+                "role": "admin" if is_admin else "member",
+                "organization_id": jwt_payload.get("organization_id"),
+            }
+    except Exception as exc:
+        # Non-fatal: log and fall back so the request can still proceed
+        logger.warning(f"Failed to populate user state from DB: {exc}")
+        is_admin = jwt_payload.get("is_admin", False)
+        request.state.user = {
+            "id": user_id,
+            "email": jwt_payload.get("sub"),
+            "role": "admin" if is_admin else "member",
+            "organization_id": jwt_payload.get("organization_id"),
+        }
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -60,10 +122,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
             try:
                 from src.auth.jwt import decode_access_token
                 payload = decode_access_token(auth_token_cookie)
-                request.state.user_id = payload.get("user_id")
+                user_id = payload.get("user_id")
+                request.state.user_id = user_id
                 request.state.organization_id = payload.get("organization_id")
                 request.state.auth_type = "jwt_cookie"
-                logger.debug(f"JWT cookie auth successful for user {payload.get('user_id')}")
+                # Populate request.state.user for RBAC middleware
+                await _populate_user_state(request, user_id, payload)
+                logger.debug(f"JWT cookie auth successful for user {user_id}")
                 return await call_next(request)
             except Exception as e:
                 logger.warning(f"Invalid JWT cookie: {e}")
@@ -80,12 +145,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
             try:
                 from src.auth.jwt import decode_access_token
                 payload = decode_access_token(token)
-                request.state.user_id = payload.get("user_id")
+                user_id = payload.get("user_id")
+                request.state.user_id = user_id
                 request.state.email = payload.get("sub")
                 request.state.organization_id = payload.get("organization_id")
                 request.state.auth_type = "jwt_bearer"
+                # Populate request.state.user for RBAC middleware
+                await _populate_user_state(request, user_id, payload)
                 logger.debug(
-                    f"JWT Bearer auth successful for user {payload.get('user_id')}"
+                    f"JWT Bearer auth successful for user {user_id}"
                 )
                 return await call_next(request)
             except Exception as e:

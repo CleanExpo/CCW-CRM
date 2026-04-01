@@ -48,9 +48,9 @@ export function QuotePrintView({ quote }: QuotePrintViewProps) {
               <div className="mt-4 text-sm">
                 <p>123 Equipment Street</p>
                 <p>Brisbane QLD 4000, Australia</p>
-                <p>ABN: 12 345 678 901</p>
-                <p>Phone: +61 7 3000 0000</p>
-                <p>Email: sales@ccwonline.com.au</p>
+                <p>ABN: 94 086 503 317</p>
+                <p>Phone: 1800 686 869</p>
+                <p>Email: sales@ccwarehouse.com.au</p>
               </div>
             </div>
             <div className="text-right">
@@ -177,7 +177,7 @@ export function QuotePrintView({ quote }: QuotePrintViewProps) {
         {/* Footer */}
         <div className="text-muted-foreground mt-8 border-t border-gray-200 pt-6 text-center text-xs">
           <p>Thank you for considering CCW Online for your equipment needs!</p>
-          <p className="mt-1">CCW Online | ABN 12 345 678 901 | www.ccwonline.com.au</p>
+          <p className="mt-1">CCW Online | ABN 94 086 503 317 | www.ccwonline.com.au</p>
         </div>
       </div>
     </div>

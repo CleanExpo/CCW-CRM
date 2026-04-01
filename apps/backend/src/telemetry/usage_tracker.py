@@ -19,11 +19,11 @@ MODEL_PRICING = {
         "input": Decimal("0.000003"),  # $3 per million tokens
         "output": Decimal("0.000015"),  # $15 per million tokens
     },
-    "claude-3-5-sonnet-20241022": {
+    "claude-sonnet-4-6": {
         "input": Decimal("0.000003"),  # $3 per million tokens
         "output": Decimal("0.000015"),  # $15 per million tokens
     },
-    "claude-3-5-haiku-20241022": {
+    "claude-haiku-4-5-20251001": {
         "input": Decimal("0.0000008"),  # $0.80 per million tokens
         "output": Decimal("0.000004"),  # $4 per million tokens
     },

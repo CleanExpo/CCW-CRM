@@ -159,6 +159,8 @@ const navGroups: NavGroup[] = [
       { name: 'Alerts', href: '/alerts', icon: Bell },
       { name: 'Monitoring', href: '/monitoring', icon: Activity },
       { name: 'FAQ', href: '/faq', icon: HelpCircle },
+      { name: 'Team', href: '/settings/team', icon: Users },
+      { name: 'Billing', href: '/settings/billing', icon: CreditCard },
       { name: 'Mobile Orders', href: '/settings/mobile', icon: Camera },
       { name: 'Shadow Mode', href: '/settings/shadow', icon: Eye },
       { name: 'Client Onboarding', href: '/settings/onboarding', icon: UserCog },

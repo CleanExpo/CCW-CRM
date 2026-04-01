@@ -57,7 +57,7 @@ def test_code_generator_initialization(project_root):
 
     assert generator.project_root == project_root
     assert generator.model == "claude-opus-4-6"
-    assert generator.fallback_model == "claude-haiku-4-20250910"
+    assert generator.fallback_model == "claude-haiku-4-5-20251001"
     assert generator.max_retries == 2
 
 

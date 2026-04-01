@@ -1,3 +1,8 @@
+---
+name: Builder Agent
+description: Implements code changes from approved architecture documents
+---
+
 # BUILDER AGENT
 
 **Version**: 1.0.0

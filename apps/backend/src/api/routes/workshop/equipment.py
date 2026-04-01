@@ -239,8 +239,12 @@ async def create_equipment(
     equipment.next_service_date = next_date
     equipment.next_service_hours = next_hours
     db.add(equipment)
-    await db.commit()
-    await db.refresh(equipment)
+    try:
+        await db.commit()
+        await db.refresh(equipment)
+    except Exception:
+        await db.rollback()
+        raise
     return EquipmentResponse.model_validate(equipment)
 
 
@@ -263,8 +267,12 @@ async def update_equipment(
     equipment.next_service_hours = next_hours
     equipment.updated_at = datetime.now(UTC)
 
-    await db.commit()
-    await db.refresh(equipment)
+    try:
+        await db.commit()
+        await db.refresh(equipment)
+    except Exception:
+        await db.rollback()
+        raise
     return EquipmentResponse.model_validate(equipment)
 
 
@@ -279,7 +287,11 @@ async def retire_equipment(
         raise HTTPException(status_code=404, detail="Equipment not found")
     equipment.status = EquipmentStatus.retired
     equipment.updated_at = datetime.now(UTC)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
 
 @router.post("/{equipment_id}/update-hours")
@@ -296,8 +308,12 @@ async def update_hours(
     _, next_hours = compute_next_service(equipment)
     equipment.next_service_hours = next_hours
     equipment.updated_at = datetime.now(UTC)
-    await db.commit()
-    await db.refresh(equipment)
+    try:
+        await db.commit()
+        await db.refresh(equipment)
+    except Exception:
+        await db.rollback()
+        raise
     return EquipmentResponse.model_validate(equipment)
 
 
@@ -341,7 +357,11 @@ async def record_service(
 
     # Generate new reminders for next service
     reminders = await generate_reminders(db, equipment_id)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     return {
         "message": "Service recorded successfully",

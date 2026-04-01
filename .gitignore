@@ -152,6 +152,11 @@ supabase/.temp
 # Git worktrees
 .worktrees/
 
+# Boardroom CRON runtime state (UNI-1729, UNI-1731, UNI-1733)
+.session-state/
+.approvals/
+.learning/
+
 # Example/test projects (if not needed)
 my-app/
 shopify-scraper/
@@ -162,6 +167,11 @@ backups/
 .planning/linear-sync.mjs
 scripts/linear-project-status.mjs
 
+# Remotion audio files (binary, regenerate with scripts/generate-intro-audio.js)
+video/remotion/public/audio/*.mp3
+# Remotion screenshots are committed (captured by scripts/capture-ccw-screenshots.js)
+# video/remotion/public/images/*.png  <-- intentionally tracked
+
 # Obsidian vault - local only
 .obsidian-vault/.obsidian/workspace*.json
 .obsidian-vault/.obsidian/workspaces.json
@@ -170,3 +180,24 @@ scripts/linear-project-status.mjs
 .obsidian-vault/.obsidian/plugins/*/
 .obsidian-vault/.obsidian/.trash/
 .obsidian-vault/scratchpad/
+
+# YouTube OAuth tokens (sensitive)
+scripts/.youtube_token.json
+scripts/youtube_oauth_client.json
+
+# HeyGen session data
+data/sessions/
+
+# HeyGen downloaded videos (large binaries — re-download from HeyGen as needed)
+data/heygen/downloads/
+
+# Remotion build output
+video/remotion/out/
+video/remotion/node_modules/
+video/remotion/package-lock.json
+video/remotion/public/audio/
+
+# gstack cache and heavy binaries
+.claude/skills/gstack/node_modules/
+.claude/skills/gstack/.cache/
+.env*.local

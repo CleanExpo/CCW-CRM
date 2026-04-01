@@ -15,44 +15,26 @@ import {
   LogIn,
   AlertTriangle,
 } from 'lucide-react';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-
-/**
- * Realistic demo stats shown when the backend is unreachable.
- * These match the seeded database numbers so the page always looks live.
- */
-const DEMO_STATS: PublicStats = {
-  total_products: 150,
-  total_customers: 45,
-  active_orders: 32,
-  pending_quotes: 12,
-  total_revenue_this_month: '124850',
-  low_stock_alerts: 7,
-  product_categories: 8,
-  warehouse_count: 3,
-  fetched_at: new Date().toISOString(),
-};
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
  * Fetch public stats from the backend (server-side, no auth required).
- * Falls back to realistic demo stats if the backend is unreachable,
- * so the landing page always displays live-looking data.
+ * Returns null if the backend is unreachable or returns a non-ok response.
  */
-async function getPublicStats(): Promise<PublicStats> {
+async function getPublicStats(): Promise<PublicStats | null> {
   try {
     const res = await fetch(`${BACKEND_URL}/api/public/stats`, {
       next: { revalidate: 60 },
     });
-    if (!res.ok) return DEMO_STATS;
+    if (!res.ok) return null;
     return res.json();
   } catch {
-    return DEMO_STATS;
+    return null;
   }
 }
 
 export default async function Home() {
-  const stats: PublicStats = await getPublicStats();
+  const stats: PublicStats | null = await getPublicStats();
 
   return (
     <div className="bg-background text-foreground min-h-screen">
@@ -100,7 +82,14 @@ export default async function Home() {
         </section>
 
         {/* Live Stats Bar */}
-        <LiveStatsBar stats={stats} />
+        {stats === null ? (
+          <div className="border-y border-yellow-200 bg-yellow-50 py-3 text-center text-sm text-yellow-700">
+            <AlertTriangle className="mr-2 inline h-4 w-4" />
+            System initialising — live data will appear once the backend is connected.
+          </div>
+        ) : (
+          <LiveStatsBar stats={stats} />
+        )}
 
         {/* Features Grid */}
         <section className="bg-muted/40 border-t">
@@ -116,11 +105,11 @@ export default async function Home() {
                 </div>
                 <p className="mb-5 text-slate-600">
                   <span className="text-foreground font-semibold">
-                    {stats.active_orders} orders
+                    {stats?.active_orders ?? '—'} orders
                   </span>{' '}
                   in progress and{' '}
                   <span className="text-foreground font-semibold">
-                    {stats.pending_quotes} quotes
+                    {stats?.pending_quotes ?? '—'} quotes
                   </span>{' '}
                   open. Create quotes, convert to orders, track fulfilment and manage line items
                   across all product categories.
@@ -151,7 +140,7 @@ export default async function Home() {
                 </div>
                 <p className="text-slate-600">
                   <span className="text-foreground font-semibold">
-                    {stats.total_customers} active accounts
+                    {stats?.total_customers ?? '—'} active accounts
                   </span>{' '}
                   with contact details, order history and account management.
                 </p>
@@ -167,11 +156,11 @@ export default async function Home() {
                 </div>
                 <p className="text-slate-600">
                   <span className="text-foreground font-semibold">
-                    {stats.total_products} products
+                    {stats?.total_products ?? '—'} products
                   </span>{' '}
                   across{' '}
                   <span className="text-foreground font-semibold">
-                    {stats.product_categories} categories
+                    {stats?.product_categories ?? '—'} categories
                   </span>{' '}
                   including heavy machinery, power tools, safety equipment and more.
                 </p>
@@ -187,10 +176,10 @@ export default async function Home() {
                 </div>
                 <p className="mb-5 text-slate-600">
                   Stock levels, transfers and purchase orders across all three warehouses.{' '}
-                  {stats.low_stock_alerts > 0 && (
+                  {stats && stats.low_stock_alerts > 0 && (
                     <span className="inline-flex items-center gap-1 font-medium text-amber-700">
                       <AlertTriangle className="h-3.5 w-3.5" />
-                      {stats.low_stock_alerts} low stock alerts
+                      {stats?.low_stock_alerts} low stock alerts
                     </span>
                   )}
                 </p>
@@ -221,10 +210,10 @@ export default async function Home() {
                   Revenue, stock health, order status and performance dashboards tracking{' '}
                   <span className="text-foreground font-semibold">
                     $
-                    {Number(stats.total_revenue_this_month).toLocaleString('en-AU', {
+                    {stats ? Number(stats.total_revenue_this_month).toLocaleString('en-AU', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
-                    })}
+                    }) : '—'}
                   </span>{' '}
                   this month with live data.
                 </p>

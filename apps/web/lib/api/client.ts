@@ -11,7 +11,9 @@
  * - Automatic token refresh on 401
  */
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+import { getBackendUrl } from "@/lib/api/backend-url";
+
+const BACKEND_URL = getBackendUrl();
 
 /** Default request timeout in milliseconds */
 const DEFAULT_TIMEOUT_MS = 30_000;

@@ -1,3 +1,8 @@
+---
+name: Finalizer Agent
+description: Performs pre-PR cleanup, testing, and handoff preparation
+---
+
 # FINALIZER AGENT
 
 **Version**: 1.0.0

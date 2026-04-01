@@ -1,0 +1,25 @@
+# CODEOWNERS — Maps file paths to reviewer agents
+# UNI-1744 [PROD-2]
+
+# Global default reviewer
+* @ccw-orchestrator
+
+# Security-sensitive files
+supabase/ @ccw-security-reviewer @ccw-orchestrator
+scripts/lib/approval-gate.js @ccw-security-reviewer
+scripts/lib/sandbox.js @ccw-security-reviewer
+hooks/ @ccw-security-reviewer
+lib/au-privacy-compliance.js @ccw-security-reviewer @ccw-orchestrator
+
+# Database files
+*.sql @ccw-database-reviewer
+supabase/migrations/ @ccw-database-reviewer @ccw-security-reviewer
+
+# Infrastructure
+.github/ @ccw-infra-reviewer
+docker/ @ccw-infra-reviewer
+
+# Core application — never modify without review
+apps/web/middleware.ts @ccw-security-reviewer @ccw-orchestrator
+apps/backend/src/api/routes/demo_auth.py @ccw-security-reviewer @ccw-orchestrator
+apps/backend/src/db/demo_models.py @ccw-database-reviewer @ccw-orchestrator

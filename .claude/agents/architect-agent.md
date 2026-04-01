@@ -1,3 +1,8 @@
+---
+name: Architect Agent
+description: Plans system architecture and technical design from discovery reports
+---
+
 # ARCHITECT AGENT
 
 **Version**: 1.0.0

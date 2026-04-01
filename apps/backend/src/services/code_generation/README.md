@@ -118,8 +118,8 @@ ANTHROPIC_API_KEY=sk-ant-...    # Required for LLM calls
 generator = CodeGenerator(
     project_root=Path.cwd(),
     anthropic_api_key="sk-ant-...",
-    model="claude-sonnet-4-20250514",          # Sonnet 4.5
-    fallback_model="claude-haiku-4-20250910",  # Haiku fallback
+    model="claude-sonnet-4-6",                  # Sonnet 4.6
+    fallback_model="claude-haiku-4-5-20251001",  # Haiku 4.5 fallback
     max_retries=2                              # API retry count
 )
 ```
