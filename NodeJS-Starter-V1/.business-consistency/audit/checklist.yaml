@@ -1,0 +1,193 @@
+# Consistency Audit Checklist
+# Step-by-step process to identify and fix inconsistencies
+
+version: "1.0"
+principle: "Systematic audit catches issues before they hurt rankings"
+
+phase_1_gather_current_state:
+  description: "Document what exists before making changes"
+
+  step_1:
+    action: "Document canonical business information"
+    fields:
+      - "Business name (exact)"
+      - "Street address (exact format)"
+      - "Phone number (exact format)"
+      - "Website URL"
+      - "Email address"
+      - "Business hours"
+      - "Primary category"
+      - "ABN"
+      - "License numbers"
+    output: "Master business document"
+
+  step_2:
+    action: "Export listing data from major platforms"
+    platforms:
+      - "Google Business Profile"
+      - "Facebook Page"
+      - "Bing Places"
+      - "Apple Maps"
+      - "Website"
+    method: "Screenshot or copy NAP from each"
+
+  step_3:
+    action: "Use citation audit tools"
+    tools:
+      - name: "BrightLocal"
+        url: "https://www.brightlocal.com"
+        feature: "Citation tracking"
+      - name: "Whitespark Local Citation Finder"
+        url: "https://whitespark.ca"
+        feature: "Find existing citations"
+      - name: "Moz Local"
+        url: "https://moz.com/local"
+        feature: "Real-time listing sync"
+    alternative: "Manual search for business name"
+
+phase_2_identify_inconsistencies:
+  description: "Compare all sources against master document"
+
+  checklist:
+    business_name:
+      check: "Is it EXACTLY identical on all platforms?"
+      common_issues:
+        - "Missing Pty Ltd"
+        - "Abbreviations"
+        - "Extra keywords"
+        - "Punctuation differences"
+        - "Capitalization"
+
+    address:
+      check: "Is the format identical everywhere?"
+      common_issues:
+        - "St vs Street"
+        - "Unit vs Suite"
+        - "Missing unit number"
+        - "Suburb spelling"
+        - "State abbreviation"
+
+    phone:
+      check: "Is the format identical?"
+      common_issues:
+        - "Spacing variations"
+        - "Country code presence"
+        - "Different numbers entirely"
+
+    website:
+      check: "Same URL format everywhere?"
+      common_issues:
+        - "www vs no www"
+        - "https missing"
+        - "Trailing slash"
+
+    hours:
+      check: "Identical hours on all platforms?"
+      common_issues:
+        - "Different formats"
+        - "Outdated hours"
+        - "Missing holiday hours"
+
+    categories:
+      check: "Consistent primary category?"
+      common_issues:
+        - "Different primary categories"
+        - "Wrong specificity level"
+
+  tracking_template:
+    columns:
+      - "Platform"
+      - "Name Match"
+      - "Address Match"
+      - "Phone Match"
+      - "URL Match"
+      - "Hours Match"
+      - "Issues Found"
+      - "Action Needed"
+
+phase_3_fix_and_update:
+  description: "Systematically correct all inconsistencies"
+
+  priority_order:
+    priority_1:
+      platforms: ["Google Business Profile", "Website"]
+      reason: "Highest impact, establishes canonical data"
+
+    priority_2:
+      platforms: ["Bing Places", "Apple Maps", "Facebook"]
+      reason: "Major platforms, voice search impact"
+
+    priority_3:
+      platforms: ["Yellow Pages", "True Local", "Yelp"]
+      reason: "High-authority Australian directories"
+
+    priority_4:
+      platforms: ["All other directories"]
+      reason: "Complete the citation profile"
+
+  update_process:
+    for_each_platform:
+      - "Log into platform"
+      - "Reference master document"
+      - "Update NAP to match EXACTLY"
+      - "Update hours, description, categories"
+      - "Verify changes saved"
+      - "Document in tracking spreadsheet"
+
+  verification:
+    timing: "Check 1-2 weeks after updates"
+    verify:
+      - "Changes reflected on platform"
+      - "No auto-corrections by platform"
+      - "No new inconsistencies"
+
+phase_4_ongoing_monitoring:
+  description: "Regular checks to maintain consistency"
+
+  schedule:
+    weekly:
+      - task: "Check GBP for suggested edits"
+        reason: "Google can auto-update info"
+      - task: "Monitor reviews across platforms"
+        reason: "Respond promptly"
+
+    monthly:
+      - task: "Audit top 10 citations for accuracy"
+        reason: "Catch drift early"
+      - task: "Check for new citations"
+        reason: "May be user-submitted with errors"
+
+    quarterly:
+      - task: "Full citation audit"
+        reason: "Comprehensive review"
+      - task: "Update schema markup if needed"
+        reason: "Ensure still valid"
+      - task: "Review AI search visibility"
+        reason: "Monitor GEO performance"
+
+  tools_for_monitoring:
+    brightlocal:
+      purpose: "Citation tracking and management"
+      url: "https://www.brightlocal.com"
+
+    google_alerts:
+      purpose: "Monitor brand mentions"
+      setup: "Alert for business name"
+
+    manual_search:
+      purpose: "Spot check"
+      method: "Search business name monthly"
+
+audit_documentation:
+  per_audit:
+    record:
+      - "Date of audit"
+      - "Platforms checked"
+      - "Issues found"
+      - "Actions taken"
+      - "Verification status"
+
+  metrics_to_track:
+    - "Consistency score (platforms consistent / total)"
+    - "Issues found vs resolved"
+    - "Time to fix issues"

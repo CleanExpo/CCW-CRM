@@ -1,0 +1,210 @@
+Connecting to Linear API...
+
+[OK] Connected as: Phill McGurk
+   Organization: Unite-Group
+
+[OK] Using team: RA (ID: a8a52f07-63cf-4ece-9ad2-3e3bd3c15673)
+
+[INFO] Loaded 49 issues from CSV
+
+[INFO] Creating all 49 issues...
+
+   [1/49] Creating: [GAP-001] Gap Catalog Creation...
+   [OK] RA-169
+
+   [2/49] Creating: [GAP-002] Linear Issue Structure...
+   [OK] RA-170
+
+   [3/49] Creating: [GAP-003] LocationStockResponse Type Mismatch...
+   [OK] RA-171
+
+   [4/49] Creating: [GAP-004] WarehouseOpsPayload Type Missing...
+   [OK] RA-172
+
+   [5/49] Creating: [GAP-005] MarketplaceOrder Type Missing...
+   [OK] RA-173
+
+   [6/49] Creating: [GAP-006] Cin7Fulfilment Schema Mismatch...
+   [OK] RA-174
+
+   [7/49] Creating: [GAP-007] PaymentMethodEnum Missing...
+   [OK] RA-175
+
+   [8/49] Creating: [GAP-008] SLAEscalationPayload Type Missing...
+   [OK] RA-176
+
+   [9/49] Creating: [GAP-009] ReconciliationMatch Type Missing...
+   [OK] RA-177
+
+   [10/49] Creating: [GAP-010] POST /api/billing/payment-methods...
+   [OK] RA-178
+
+   [11/49] Creating: [GAP-011] GET /api/billing/payment-methods/enum...
+   [OK] RA-179
+
+   [12/49] Creating: [GAP-012] POST /api/billing/dunning/send-letter...
+   [OK] RA-180
+
+   [13/49] Creating: [GAP-013] GET /api/billing/subscription-health...
+   [OK] RA-181
+
+   [14/49] Creating: [GAP-014] POST /api/billing/retry-failed-payment...
+   [OK] RA-182
+
+   [15/49] Creating: [GAP-015] POST /api/inventory/auto-reorder...
+   [OK] RA-183
+
+   [16/49] Creating: [GAP-016] POST /api/procurement/three-way-match...
+   [OK] RA-184
+
+   [17/49] Creating: [GAP-017] GET /api/procurement/unmatched-po-items...
+   [OK] RA-185
+
+   [18/49] Creating: [GAP-018] POST /api/inventory/bulk-adjust...
+   [OK] RA-186
+
+   [19/49] Creating: [GAP-019] GET /api/inventory/stock-takes/active...
+   [OK] RA-187
+
+   [20/49] Creating: [GAP-020] POST /api/inventory/cycle-count/generate...
+   [OK] RA-188
+
+   [21/49] Creating: [GAP-021] POST /api/workflows/sla/escalate...
+   [OK] RA-189
+
+   [22/49] Creating: [GAP-022] GET /api/approvals/pending-my-approval...
+   [OK] RA-190
+
+   [23/49] Creating: [GAP-023] POST /api/approvals/bulk-approve...
+   [OK] RA-191
+
+   [24/49] Creating: [GAP-024] GET /api/workflows/execution-stats...
+   [OK] RA-192
+
+   [25/49] Creating: [GAP-025] POST /api/invoices/tax/calculate...
+   [OK] RA-193
+
+   [26/49] Creating: [GAP-026] GET /api/reconciliation/match-suggestions...
+   [OK] RA-194
+
+   [27/49] Creating: [GAP-027] POST /api/reconciliation/auto-match...
+   [OK] RA-195
+
+   [28/49] Creating: [GAP-028] Three-Way PO Matching Service...
+   [OK] RA-196
+
+   [29/49] Creating: [GAP-029] Order State Machine Service...
+   [OK] RA-197
+
+   [30/49] Creating: [GAP-030] Tax Calculation Engine...
+   [OK] RA-198
+
+   [31/49] Creating: [GAP-031] Dunning Letter Automation Service...
+   [OK] RA-199
+
+   [32/49] Creating: [GAP-032] Auto-Reorder Service...
+   [OK] RA-200
+
+   [33/49] Creating: [GAP-033] SLA Escalation Logic Service...
+   [OK] RA-201
+
+   [34/49] Creating: [GAP-089] Inventory Page Tests...
+   [OK] RA-202
+
+   [35/49] Creating: [GAP-090] Billing Page Tests...
+   [OK] RA-203
+
+   [36/49] Creating: [GAP-091] Workshop Pages Tests...
+   [OK] RA-204
+
+   [37/49] Creating: [GAP-092] Warehouse Page Tests...
+   [OK] RA-205
+
+   [38/49] Creating: [GAP-093] Procurement & Approvals Tests...
+   [OK] RA-206
+
+   [39/49] Creating: [GAP-140] Billing Routes Tests...
+   [OK] RA-207
+
+   [40/49] Creating: [GAP-141] Inventory Routes Tests...
+   [OK] RA-208
+
+   [41/49] Creating: [GAP-142] Procurement Routes Tests...
+   [OK] RA-209
+
+   [42/49] Creating: [GAP-143] Workflow & Approval Routes Tests...
+   [OK] RA-210
+
+   [43/49] Creating: [GAP-144] Financial Routes Tests...
+   [OK] RA-211
+
+   [44/49] Creating: [GAP-145] Business Logic Service Tests...
+   [OK] RA-212
+
+   [45/49] Creating: [GAP-297] Warehouse E2E Spec...
+   [OK] RA-213
+
+   [46/49] Creating: [GAP-298] Workshop E2E Spec...
+   [OK] RA-214
+
+   [47/49] Creating: [GAP-299] Billing E2E Spec...
+   [OK] RA-215
+
+   [48/49] Creating: [GAP-300] CRM Health E2E Spec...
+   [OK] RA-216
+
+   [49/49] Creating: [GAP-301] Procurement E2E Spec...
+   [OK] RA-217
+
+[OK] Successfully created 49 issues
+
+[SUMMARY] All created issues:
+   - RA-169: [GAP-001] Gap Catalog Creation
+   - RA-170: [GAP-002] Linear Issue Structure
+   - RA-171: [GAP-003] LocationStockResponse Type Mismatch
+   - RA-172: [GAP-004] WarehouseOpsPayload Type Missing
+   - RA-173: [GAP-005] MarketplaceOrder Type Missing
+   - RA-174: [GAP-006] Cin7Fulfilment Schema Mismatch
+   - RA-175: [GAP-007] PaymentMethodEnum Missing
+   - RA-176: [GAP-008] SLAEscalationPayload Type Missing
+   - RA-177: [GAP-009] ReconciliationMatch Type Missing
+   - RA-178: [GAP-010] POST /api/billing/payment-methods
+   - RA-179: [GAP-011] GET /api/billing/payment-methods/enum
+   - RA-180: [GAP-012] POST /api/billing/dunning/send-letter
+   - RA-181: [GAP-013] GET /api/billing/subscription-health
+   - RA-182: [GAP-014] POST /api/billing/retry-failed-payment
+   - RA-183: [GAP-015] POST /api/inventory/auto-reorder
+   - RA-184: [GAP-016] POST /api/procurement/three-way-match
+   - RA-185: [GAP-017] GET /api/procurement/unmatched-po-items
+   - RA-186: [GAP-018] POST /api/inventory/bulk-adjust
+   - RA-187: [GAP-019] GET /api/inventory/stock-takes/active
+   - RA-188: [GAP-020] POST /api/inventory/cycle-count/generate
+   - RA-189: [GAP-021] POST /api/workflows/sla/escalate
+   - RA-190: [GAP-022] GET /api/approvals/pending-my-approval
+   - RA-191: [GAP-023] POST /api/approvals/bulk-approve
+   - RA-192: [GAP-024] GET /api/workflows/execution-stats
+   - RA-193: [GAP-025] POST /api/invoices/tax/calculate
+   - RA-194: [GAP-026] GET /api/reconciliation/match-suggestions
+   - RA-195: [GAP-027] POST /api/reconciliation/auto-match
+   - RA-196: [GAP-028] Three-Way PO Matching Service
+   - RA-197: [GAP-029] Order State Machine Service
+   - RA-198: [GAP-030] Tax Calculation Engine
+   - RA-199: [GAP-031] Dunning Letter Automation Service
+   - RA-200: [GAP-032] Auto-Reorder Service
+   - RA-201: [GAP-033] SLA Escalation Logic Service
+   - RA-202: [GAP-089] Inventory Page Tests
+   - RA-203: [GAP-090] Billing Page Tests
+   - RA-204: [GAP-091] Workshop Pages Tests
+   - RA-205: [GAP-092] Warehouse Page Tests
+   - RA-206: [GAP-093] Procurement & Approvals Tests
+   - RA-207: [GAP-140] Billing Routes Tests
+   - RA-208: [GAP-141] Inventory Routes Tests
+   - RA-209: [GAP-142] Procurement Routes Tests
+   - RA-210: [GAP-143] Workflow & Approval Routes Tests
+   - RA-211: [GAP-144] Financial Routes Tests
+   - RA-212: [GAP-145] Business Logic Service Tests
+   - RA-213: [GAP-297] Warehouse E2E Spec
+   - RA-214: [GAP-298] Workshop E2E Spec
+   - RA-215: [GAP-299] Billing E2E Spec
+   - RA-216: [GAP-300] CRM Health E2E Spec
+   - RA-217: [GAP-301] Procurement E2E Spec

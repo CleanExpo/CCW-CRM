@@ -1,0 +1,135 @@
+# Competitor Analysis Template
+# Copy and fill for each competitor analyzed
+
+# Instructions:
+# 1. Copy this file for each competitor
+# 2. Visit their website and document each page
+# 3. Note section order, content, and unique elements
+# 4. After analyzing 5-10 competitors, synthesize patterns
+
+competitor_info:
+  name: ""
+  website: ""
+  location: ""
+  apparent_size: "solo|small|medium|large"
+  analysis_date: ""
+
+homepage_analysis:
+  url: ""
+
+  hero_section:
+    headline: ""
+    headline_type: "benefit|problem|identity|question"
+    subhead: ""
+    cta_text: ""
+    cta_action: "form|phone|booking"
+    image_type: "real_work|stock|illustration|video"
+    trust_badges: []
+    notes: ""
+
+  sections:
+    - position: 1
+      name: "Hero"
+      type: "hero"
+      content_summary: ""
+      notable_elements: []
+
+    - position: 2
+      name: ""
+      type: ""
+      content_summary: ""
+      notable_elements: []
+
+    # Continue for all sections...
+
+  total_sections: 0
+  cta_count: 0
+  form_placement: ""
+  unique_elements: []
+
+about_page_analysis:
+  url: ""
+  exists: true
+
+  structure:
+    story_present: true
+    story_type: "founder|company|values|mission"
+    team_shown: true
+    team_count: 0
+    credentials_displayed: []
+    photos: "real|stock|none"
+
+  sections:
+    - position: 1
+      name: ""
+      content_summary: ""
+
+  unique_elements: []
+  notes: ""
+
+services_page_analysis:
+  url: ""
+  exists: true
+
+  structure:
+    type: "single_page|multiple_pages|hybrid"
+    service_count: 0
+    presentation: "cards|list|detailed"
+    pricing_shown: true
+    process_explained: true
+
+  services_listed:
+    - name: ""
+      has_detail_page: true
+      description_length: "short|medium|long"
+
+  unique_elements: []
+  notes: ""
+
+contact_page_analysis:
+  url: ""
+  exists: true
+
+  structure:
+    form_present: true
+    form_fields: []
+    phone_prominent: true
+    hours_shown: true
+    map_included: true
+    chat_available: false
+
+  unique_elements: []
+  notes: ""
+
+other_pages:
+  - page_name: ""
+    url: ""
+    purpose: ""
+    notable: ""
+
+overall_assessment:
+  strengths:
+    - ""
+  weaknesses:
+    - ""
+  unique_features:
+    - ""
+  missing_elements:
+    - ""
+
+comparison_scores:
+  # Rate 1-5
+  visual_design: 0
+  copy_quality: 0
+  trust_signals: 0
+  user_experience: 0
+  mobile_experience: 0
+  conversion_focus: 0
+
+takeaways:
+  must_match:
+    - "Industry standard elements to include"
+  could_improve_on:
+    - "Areas where you could do better"
+  opportunity:
+    - "Gaps to exploit"

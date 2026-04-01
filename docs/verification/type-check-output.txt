@@ -1,0 +1,4 @@
+
+> web@0.1.0 type-check C:\CCW-Online ERP\apps\web
+> tsc --noEmit
+

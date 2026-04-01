@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10,000 Scenario Test Report - CCW ERP</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000000;
+            color: #fafafa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 2.5rem; font-weight: 600; margin-bottom: 1rem; color: #fafafa; }
+        h2 { font-size: 1.8rem; font-weight: 600; margin: 2rem 0 1rem; color: #fafafa; border-bottom: 1px solid #333; padding-bottom: 0.5rem; }
+        h3 { font-size: 1.3rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #fafafa; }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .metric {
+            background: #111111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .metric-label { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+        .pass { color: #4ade80; }
+        .fail { color: #f87171; }
+        .warning { color: #fbbf24; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: #111111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th {
+            background: #1a1a1a;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid #333;
+        }
+        td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #222;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #0a0a0a; }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge-critical { background: #7f1d1d; color: #fca5a5; }
+        .badge-high { background: #7c2d12; color: #fdba74; }
+        .badge-medium { background: #713f12; color: #fde047; }
+        .badge-low { background: #14532d; color: #86efac; }
+        .code {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        .timestamp { color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>[LOAD TEST] 10,000 Scenario Test Report</h1>
+        <p class="timestamp">Generated: 2026-01-27 10:07:04</p>
+
+        <section class="summary">
+            <div class="metric">
+                <div class="metric-value">0</div>
+                <div class="metric-label">Total Scenarios</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value pass">7,272 (90.9%)</div>
+                <div class="metric-label">Passed</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value fail">728 (9.1%)</div>
+                <div class="metric-label">Failed</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value warning">1453ms</div>
+                <div class="metric-label">Avg Response Time</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">3134ms</div>
+                <div class="metric-label">P95 Response Time</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">11531ms</div>
+                <div class="metric-label">Max Response Time</div>
+            </div>
+        </section>
+
+        <h2>[CRITICAL] Critical Failures (0)</h2>
+        <p>No critical failures detected.</p>
+
+        <h2>[FAILURES] All Failures by Type</h2>
+        
+            <h3>Unknown (728)</h3>
+            <ul>
+                <li><code class="code">order_create_valid_0</code>: </li><li><code class="code">order_create_valid_345</code>: </li><li><code class="code">order_create_valid_347</code>: </li><li><code class="code">order_create_valid_348</code>: </li><li><code class="code">order_create_valid_350</code>: </li><li><code class="code">order_create_valid_353</code>: </li><li><code class="code">order_create_valid_358</code>: </li><li><code class="code">order_create_valid_361</code>: </li><li><code class="code">order_create_valid_363</code>: </li><li><code class="code">order_create_valid_375</code>: </li>
+            </ul>
+            <p><em>...and 718 more</em></p>
+        
+
+        <h2>[PERFORMANCE] Performance Issues</h2>
+        <p>Scenarios with response time > 1000ms</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Scenario</th>
+                    <th>Response Time</th>
+                    <th>Status Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code class="code">product_create_0</code></td>
+                <td class="warning">1709ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_1</code></td>
+                <td class="warning">1569ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_2</code></td>
+                <td class="warning">1672ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_3</code></td>
+                <td class="warning">1862ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_4</code></td>
+                <td class="warning">1560ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_5</code></td>
+                <td class="warning">1380ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_6</code></td>
+                <td class="warning">1320ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_7</code></td>
+                <td class="warning">1179ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_8</code></td>
+                <td class="warning">1056ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_9</code></td>
+                <td class="warning">1125ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_10</code></td>
+                <td class="warning">1152ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_11</code></td>
+                <td class="warning">1305ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_12</code></td>
+                <td class="warning">1401ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_13</code></td>
+                <td class="warning">1214ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_14</code></td>
+                <td class="warning">1107ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_15</code></td>
+                <td class="warning">1030ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_17</code></td>
+                <td class="warning">1044ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_18</code></td>
+                <td class="warning">1064ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_19</code></td>
+                <td class="warning">1100ms</td>
+                <td>201</td>
+            </tr>
+        
+            <tr>
+                <td><code class="code">product_create_20</code></td>
+                <td class="warning">1152ms</td>
+                <td>201</td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+
+        <h2>[SECURITY] Security Concerns</h2>
+        <p>No security issues detected.</p>
+
+        <h2>[SLOWEST] Top 10 Slowest Scenarios</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Scenario</th>
+                    <th>Response Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            </tbody>
+        </table>
+    
+
+        <h2>[SUCCESS CRITERIA] Success Criteria</h2>
+        <table>
+            <tr>
+                <th>Criteria</th>
+                <th>Target</th>
+                <th>Actual</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>Pass Rate</td>
+                <td>≥ 90%</td>
+                <td>90.9%</td>
+                <td class="pass">
+                    [PASS]
+                </td>
+            </tr>
+            <tr>
+                <td>Average Response Time</td>
+                <td>≤ 500ms</td>
+                <td>1453ms</td>
+                <td class="warning">
+                    [WARNING]
+                </td>
+            </tr>
+            <tr>
+                <td>P95 Response Time</td>
+                <td>≤ 1000ms</td>
+                <td>3134ms</td>
+                <td class="warning">
+                    [WARNING]
+                </td>
+            </tr>
+            <tr>
+                <td>Critical Failures</td>
+                <td>0</td>
+                <td>0</td>
+                <td class="pass">
+                    [PASS]
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

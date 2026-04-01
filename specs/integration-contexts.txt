@@ -1,0 +1,9 @@
+app/(dashboard)/layout.tsx:6:import { WebSocketProvider } from "@/contexts/websocket-context";
+app/(dashboard)/layout.tsx:14:    <WebSocketProvider>
+app/(dashboard)/layout.tsx:33:    </WebSocketProvider>
+app/(dashboard)/pos/locations/components/TerminalDialog.tsx:240:                  <FormLabel>Provider (Optional)</FormLabel>
+app/(dashboard)/pos/locations/page.tsx:561:                      <TableHead>Provider</TableHead>
+app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx:263:                    <FormLabel>Feed Provider *</FormLabel>
+app/layout.tsx:7:import { I18nProvider } from "@/components/providers/i18n-provider";
+app/layout.tsx:63:        <I18nProvider locale={locale} messages={messages}>
+app/layout.tsx:67:        </I18nProvider>

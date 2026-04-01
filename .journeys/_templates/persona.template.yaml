@@ -1,0 +1,35 @@
+# Basic Persona Template
+# Copy and customize for your users
+
+id: persona-id
+name: "Persona Name"
+version: "1.0"
+
+demographics:
+  age_range: "25-45"
+  occupation: "Role/Job"
+  tech_comfort: "moderate"  # low, moderate, high
+  context: "When/where they use this"
+
+goals:
+  primary: "Main thing they want to achieve"
+  secondary:
+    - "Additional goal 1"
+    - "Additional goal 2"
+
+frustrations:
+  - "Pain point 1"
+  - "Pain point 2"
+
+behavioral_triggers:
+  positive:
+    - trigger: "What motivates action"
+      response: "How they respond"
+  negative:
+    - trigger: "What causes abandonment"
+      response: "How they respond"
+
+journeys:
+  - journey_id: "journey-name"
+    frequency: "daily|weekly|monthly|once"
+    importance: "critical|high|medium|low"

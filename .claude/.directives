@@ -1,0 +1,256 @@
+# DIRECTIVES — ACTIVE RULES
+
+## ENFORCEMENT LEVEL: STRICT
+
+These rules are checked automatically. Violations trigger warnings.
+
+---
+
+## FOLDER RULES
+
+ALLOWED_FOLDERS_WEB:
+  - apps/web/app
+  - apps/web/components
+  - apps/web/lib
+  - apps/web/hooks
+  - apps/web/types
+  - apps/web/e2e
+  - apps/web/__tests__
+  - apps/web/i18n
+  - apps/web/public
+
+ALLOWED_FOLDERS_BACKEND:
+  - apps/backend/src
+  - apps/backend/src/api
+  - apps/backend/src/api/routes
+  - apps/backend/src/db
+  - apps/backend/src/services
+  - apps/backend/src/ai
+  - apps/backend/src/config
+  - apps/backend/tests
+  - apps/backend/migrations
+
+FORBIDDEN_PATTERNS:
+  - */temp/*
+  - */tmp/*
+  - */old/*
+  - */backup/*
+  - */test-*
+  - */copy-*
+  - */_unused/*
+  - */deprecated/*
+
+FORBIDDEN_FILES:
+  - apps/backend/src/db/demo_models.py (MODIFY)
+  - apps/web/middleware.ts (MODIFY)
+  - apps/backend/src/api/routes/demo_auth.py (MODIFY)
+
+ON_VIOLATION: STOP and ask user
+
+---
+
+## CODE RULES
+
+BEFORE_CODING:
+  - Must have approved plan
+  - Must have read CLAUDE.md
+  - Must know which files to change
+  - Must understand existing patterns
+
+DURING_CODING:
+  - One file at a time
+  - Follow existing patterns
+  - No console.log in production code
+  - All functions must have types (TypeScript) or hints (Python)
+  - Use existing UI components (shadcn/ui)
+  - Use existing API client (apiClient)
+
+AFTER_CODING:
+  - Run tests (pnpm turbo run test OR pytest)
+  - Run type check (pnpm turbo run type-check)
+  - Run lint (pnpm turbo run lint)
+  - Report changes
+  - Verify no new folders created
+
+---
+
+## PACKAGE RULES
+
+ALLOWED_INSTALL: false (must ask first)
+ALLOWED_UPGRADE: false (must ask first)
+ALLOWED_REMOVE: false (must ask first)
+
+LOCKED_DEPENDENCIES_WEB:
+  - next (15.x)
+  - react (19.x)
+  - typescript (5.7.x)
+  - tailwindcss (4.x)
+  - next-intl
+
+LOCKED_DEPENDENCIES_BACKEND:
+  - fastapi
+  - sqlalchemy
+  - pydantic
+  - psycopg2-binary
+  - python (3.12)
+
+PACKAGE_SIZE_LIMIT: 5MB
+ON_LARGE_PACKAGE: Ask user with justification
+
+---
+
+## API RULES
+
+BREAKING_CHANGE_DETECTION:
+  - Changing response structure
+  - Removing fields from responses
+  - Changing required parameters
+  - Renaming endpoints
+  - Changing HTTP methods
+
+ON_BREAKING_CHANGE: STOP and get explicit approval
+
+SAFE_CHANGES:
+  - Adding optional parameters
+  - Adding new fields to responses
+  - Creating new endpoints
+  - Adding new error codes
+
+---
+
+## DATABASE RULES
+
+SCHEMA_CHANGES: FORBIDDEN (unless explicit approval)
+
+FORBIDDEN_DB_OPERATIONS:
+  - ALTER TABLE
+  - DROP TABLE
+  - CREATE TABLE (without approval)
+  - MODIFY COLUMN
+  - ADD COLUMN (without approval)
+  - REMOVE COLUMN
+
+ALLOWED_DB_OPERATIONS:
+  - INSERT
+  - UPDATE
+  - DELETE
+  - SELECT
+  - CREATE INDEX (with approval)
+
+ON_SCHEMA_CHANGE: STOP immediately + Ask for migration plan
+
+---
+
+## SECURITY RULES
+
+FORBIDDEN_IN_CODE:
+  - Hardcoded secrets
+  - Hardcoded API keys
+  - Hardcoded passwords
+  - console.log with sensitive data
+  - Disabled authentication checks
+  - SQL injection vulnerabilities
+  - XSS vulnerabilities
+
+REQUIRED_IN_CODE:
+  - Input validation (Zod/Pydantic)
+  - Error handling (try-catch)
+  - Loading states
+  - Type safety
+
+---
+
+## COMMUNICATION RULES
+
+ALWAYS:
+  - Explain in clear terms
+  - Show plan before coding
+  - Report what changed
+  - Ask when uncertain
+  - Use the format from CLAUDE.md
+
+NEVER:
+  - Use unexplained jargon
+  - Assume what user wants
+  - Hide errors or problems
+  - Say "done" without testing
+  - Make excuses
+
+---
+
+## CONTEXT RULES
+
+RE_READ_CLAUDE_MD_EVERY: 5 messages
+RE_READ_STARTUP_MD: Every conversation start
+MAX_CONTEXT_TOKENS: 150000
+ON_CONTEXT_HIGH: Summarize and continue
+ON_CONFUSION: Run /reset
+
+CHECK_EVERY_MESSAGE:
+  - Am I following the plan?
+  - Have I read CLAUDE.md recently?
+  - Am I about to do something forbidden?
+  - Do I need to ask for clarification?
+
+---
+
+## TESTING RULES
+
+BEFORE_SAYING_DONE:
+  - All tests must pass
+  - No TypeScript errors
+  - No lint errors
+  - Manual testing documented
+
+REQUIRED_TESTS:
+  - Frontend: Vitest for new components
+  - Backend: Pytest for new endpoints
+  - Critical paths tested (auth, payments, data mutation)
+  - Edge cases covered
+
+FORBIDDEN_IN_TESTS:
+  - Skipped tests without justification
+  - Commented-out tests
+  - Tests that always pass
+  - Tests without assertions
+
+---
+
+## DEPLOYMENT RULES
+
+BEFORE_DEPLOY:
+  - All tests must pass
+  - No TypeScript errors
+  - No lint errors
+  - User must approve
+  - No breaking changes (unless approved)
+
+FORBIDDEN_IN_DEPLOYMENT:
+  - console.log statements in src/
+  - TODO comments in production code
+  - Hardcoded secrets
+  - Test data
+  - Debug code
+
+---
+
+## FILE NAMING CONVENTIONS
+
+FRONTEND:
+  - Components: PascalCase.tsx
+  - Utilities: kebab-case.ts
+  - Pages: kebab-case/page.tsx
+  - Types: PascalCase.ts or kebab-case.ts
+
+BACKEND:
+  - Routes: snake_case.py
+  - Models: snake_case.py
+  - Services: snake_case.py
+  - Tests: test_snake_case.py
+
+---
+
+*These directives are loaded automatically. Do not modify.*
+
+Last Updated: 2026-01-22
+Version: 1.0.0

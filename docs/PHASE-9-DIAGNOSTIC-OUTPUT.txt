@@ -1,0 +1,40 @@
+Generating scenarios...
+
+Running 100 scenarios...
+
+Running 100 scenarios with max 10 concurrent...
+Passed: 55 (55.0%)
+Failed: 45 (45.0%)
+Avg Response Time: 5822.66ms
+
+================================================================================
+COMPREHENSIVE FAILURE ANALYSIS
+================================================================================
+
+Overall Results:
+  Total: 100
+  Passed: 55 (55.0%)
+  Failed: 45 (45.0%)
+
+================================================================================
+BREAKDOWN BY SCENARIO TYPE
+================================================================================
+Traceback (most recent call last):
+  File "C:\Users\Phill\AppData\Local\Temp\claude\C--CCW-Online-ERP\b1068444-9e85-401d-a943-afd524bf536e\scratchpad\comprehensive_diagnostic.py", line 185, in <module>
+    result = asyncio.run(run_diagnostic())
+  File "C:\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python313\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\Phill\AppData\Local\Temp\claude\C--CCW-Online-ERP\b1068444-9e85-401d-a943-afd524bf536e\scratchpad\comprehensive_diagnostic.py", line 71, in run_diagnostic
+    print(f"{symbol} {stype:12s}: {stats['passed']:2d}/{stats['total']:2d} passed ({pass_rate:5.1f}%)")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>

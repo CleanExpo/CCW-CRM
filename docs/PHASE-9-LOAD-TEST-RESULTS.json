@@ -1,0 +1,266 @@
+{
+  "test_suite": "Full Load Test - Phase 9",
+  "start_time": "2026-02-05T09:33:57.975414",
+  "end_time": "2026-02-05T12:50:37.443346",
+  "total_duration_seconds": 11799.46305,
+  "total_scenarios": 8000,
+  "passed": 600,
+  "failed": 7400,
+  "pass_rate": 7.5,
+  "scenarios_per_second": 0.6779969534291647,
+  "avg_response_time_ms": 2820.506916344166,
+  "p50_response_time_ms": 2854.7933101654053,
+  "p95_response_time_ms": 3216.6061401367188,
+  "p99_response_time_ms": 4065.2501583099365,
+  "min_response_time_ms": 2534.6972942352295,
+  "max_response_time_ms": 4905.435085296631,
+  "failures_by_status": {},
+  "failures_by_scenario_type": {
+    "product": 1700,
+    "customer": 1800,
+    "order": 2000,
+    "quote": 1900
+  },
+  "phase_summaries": [
+    {
+      "total": 2000,
+      "passed": 300,
+      "failed": 1700,
+      "pass_rate": 15.0,
+      "avg_response_time_ms": 2864.071749806404,
+      "p50_response_time_ms": 2866.788864135742,
+      "p95_response_time_ms": 3273.120164871216,
+      "p99_response_time_ms": 3596.3985919952393,
+      "min_response_time_ms": 2546.9329357147217,
+      "max_response_time_ms": 3834.228515625,
+      "failure_types": {
+        "ConnectError": 1700
+      },
+      "slowest_scenarios": [
+        [
+          "product_read_146",
+          3834.228515625
+        ],
+        [
+          "product_create_82",
+          3828.681230545044
+        ],
+        [
+          "product_list_6",
+          3816.2577152252197
+        ],
+        [
+          "product_list_18",
+          3806.2288761138916
+        ],
+        [
+          "product_read_152",
+          3789.2231941223145
+        ],
+        [
+          "product_list_22",
+          3754.0481090545654
+        ],
+        [
+          "product_create_192",
+          3733.6366176605225
+        ],
+        [
+          "product_read_176",
+          3669.451951980591
+        ],
+        [
+          "product_list_132",
+          3661.632299423218
+        ],
+        [
+          "product_list_84",
+          3660.5234146118164
+        ]
+      ],
+      "phase_name": "Products",
+      "phase_duration_seconds": 2989.688361,
+      "scenarios_per_second": 0.668966045454662
+    },
+    {
+      "total": 2000,
+      "passed": 200,
+      "failed": 1800,
+      "pass_rate": 10.0,
+      "avg_response_time_ms": 2778.9493148326874,
+      "p50_response_time_ms": 2856.144666671753,
+      "p95_response_time_ms": 3142.345905303955,
+      "p99_response_time_ms": 3234.391212463379,
+      "min_response_time_ms": 2546.4634895324707,
+      "max_response_time_ms": 3328.9966583251953,
+      "failure_types": {
+        "ConnectError": 1800
+      },
+      "slowest_scenarios": [
+        [
+          "customer_search_email_90",
+          3328.9966583251953
+        ],
+        [
+          "customer_search_email_44",
+          3309.1835975646973
+        ],
+        [
+          "customer_read_60",
+          3302.6411533355713
+        ],
+        [
+          "customer_read_12",
+          3286.3993644714355
+        ],
+        [
+          "customer_read_144",
+          3271.07834815979
+        ],
+        [
+          "customer_create_116",
+          3270.7252502441406
+        ],
+        [
+          "customer_search_email_56",
+          3269.493818283081
+        ],
+        [
+          "customer_search_email_96",
+          3256.483793258667
+        ],
+        [
+          "customer_read_180",
+          3256.394624710083
+        ],
+        [
+          "customer_search_email_76",
+          3256.3681602478027
+        ]
+      ],
+      "phase_name": "Customers",
+      "phase_duration_seconds": 2897.031079,
+      "scenarios_per_second": 0.690361941401872
+    },
+    {
+      "total": 2000,
+      "passed": 0,
+      "failed": 2000,
+      "pass_rate": 0.0,
+      "avg_response_time_ms": 2777.5630272626877,
+      "p50_response_time_ms": 2849.9584197998047,
+      "p95_response_time_ms": 3132.0223808288574,
+      "p99_response_time_ms": 3268.573760986328,
+      "min_response_time_ms": 2534.6972942352295,
+      "max_response_time_ms": 3381.9310665130615,
+      "failure_types": {
+        "ConnectError": 2000
+      },
+      "slowest_scenarios": [
+        [
+          "order_create_valid_158",
+          3381.9310665130615
+        ],
+        [
+          "order_create_valid_182",
+          3377.7756690979004
+        ],
+        [
+          "order_create_valid_174",
+          3377.0790100097656
+        ],
+        [
+          "order_create_valid_164",
+          3371.8817234039307
+        ],
+        [
+          "order_create_valid_106",
+          3360.708475112915
+        ],
+        [
+          "order_create_valid_168",
+          3339.2035961151123
+        ],
+        [
+          "order_create_valid_380",
+          3335.5705738067627
+        ],
+        [
+          "order_create_valid_200",
+          3333.566904067993
+        ],
+        [
+          "order_create_valid_246",
+          3322.5648403167725
+        ],
+        [
+          "order_create_valid_120",
+          3319.6935653686523
+        ]
+      ],
+      "phase_name": "Orders",
+      "phase_duration_seconds": 2892.802522,
+      "scenarios_per_second": 0.6913710786650096
+    },
+    {
+      "total": 2000,
+      "passed": 100,
+      "failed": 1900,
+      "pass_rate": 5.0,
+      "avg_response_time_ms": 2861.443573474884,
+      "p50_response_time_ms": 2852.8690338134766,
+      "p95_response_time_ms": 3969.2015647888184,
+      "p99_response_time_ms": 4265.561580657959,
+      "min_response_time_ms": 2536.534547805786,
+      "max_response_time_ms": 4905.435085296631,
+      "failure_types": {
+        "ConnectError": 1900
+      },
+      "slowest_scenarios": [
+        [
+          "quote_expired_28",
+          4905.435085296631
+        ],
+        [
+          "quote_convert_non_accepted_272",
+          4612.588167190552
+        ],
+        [
+          "quote_expired_122",
+          4527.324199676514
+        ],
+        [
+          "quote_convert_non_accepted_256",
+          4487.717390060425
+        ],
+        [
+          "quote_expired_118",
+          4388.632535934448
+        ],
+        [
+          "quote_expired_60",
+          4388.34547996521
+        ],
+        [
+          "quote_expired_26",
+          4369.611978530884
+        ],
+        [
+          "quote_expired_46",
+          4351.8407344818115
+        ],
+        [
+          "quote_expired_108",
+          4351.791620254517
+        ],
+        [
+          "quote_expired_106",
+          4341.125726699829
+        ]
+      ],
+      "phase_name": "Quotes",
+      "phase_duration_seconds": 3019.814012,
+      "scenarios_per_second": 0.662292443194346
+    }
+  ]
+}

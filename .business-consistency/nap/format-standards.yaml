@@ -1,0 +1,183 @@
+# Format Standards - Australian Business
+# Exact formats to use consistently across all platforms
+
+version: "1.0"
+region: "Australia"
+
+business_name:
+  format:
+    structure: "[Business Name] [Entity Type]"
+    entity_types:
+      - "Pty Ltd"
+      - "Pty Limited"
+      - "Limited"
+      - "Trading as" # If applicable
+    notes:
+      - "Use EXACTLY as registered with ASIC"
+      - "Include or exclude entity type consistently"
+      - "Never abbreviate parts of name"
+
+  examples:
+    full_company: "Dave's Premium Plumbing Pty Ltd"
+    sole_trader: "Dave's Premium Plumbing"
+    trading_as: "Smith Holdings Pty Ltd trading as Dave's Premium Plumbing"
+
+address:
+  format:
+    structure: "[Unit], [Street Number] [Street Name] [Street Type], [Suburb] [State] [Postcode]"
+
+  street_types:
+    choose_one:
+      - { full: "Street", abbreviated: "St" }
+      - { full: "Road", abbreviated: "Rd" }
+      - { full: "Avenue", abbreviated: "Ave" }
+      - { full: "Boulevard", abbreviated: "Blvd" }
+      - { full: "Drive", abbreviated: "Dr" }
+      - { full: "Court", abbreviated: "Ct" }
+      - { full: "Place", abbreviated: "Pl" }
+      - { full: "Crescent", abbreviated: "Cres" }
+      - { full: "Parade", abbreviated: "Pde" }
+    recommendation: "Use full form for clarity"
+
+  unit_formats:
+    choose_one:
+      - "Unit X,"
+      - "Suite X,"
+      - "Level X,"
+      - "Shop X,"
+    recommendation: "Use 'Unit X,' for most businesses"
+
+  state_abbreviations:
+    use:
+      - "QLD" # Queensland
+      - "NSW" # New South Wales
+      - "VIC" # Victoria
+      - "SA" # South Australia
+      - "WA" # Western Australia
+      - "TAS" # Tasmania
+      - "NT" # Northern Territory
+      - "ACT" # Australian Capital Territory
+    note: "Always use abbreviation, not full name"
+
+  postcode:
+    format: "4 digits, no prefix"
+    examples:
+      - "4000" # Brisbane CBD
+      - "2000" # Sydney CBD
+      - "3000" # Melbourne CBD
+
+  full_examples:
+    residential_area:
+      correct: "Unit 5, 123 Smith Street, Paddington QLD 4064"
+      wrong:
+        - "5/123 Smith St Paddington 4064"
+        - "Unit 5, 123 Smith Street, PADDINGTON QLD 4064"
+
+    commercial:
+      correct: "Suite 12, Level 3, 456 Queen Street, Brisbane QLD 4000"
+
+    po_box:
+      format: "PO Box [Number], [Suburb] [State] [Postcode]"
+      example: "PO Box 123, Brisbane QLD 4001"
+      note: "Use street address for GBP, PO Box for mail only"
+
+phone:
+  formats:
+    landline:
+      preferred: "(0X) XXXX XXXX"
+      example: "(07) 3123 4567"
+      alternative: "07 3123 4567"
+
+    mobile:
+      preferred: "04XX XXX XXX"
+      example: "0412 345 678"
+      alternative: "0412345678"
+
+    international:
+      preferred: "+61 X XXXX XXXX"
+      example: "+61 7 3123 4567"
+      note: "Drop leading 0 when using country code"
+
+    toll_free:
+      format: "1800 XXX XXX"
+      example: "1800 123 456"
+
+  consistency_rule: "Pick ONE format and use it EVERYWHERE"
+
+  do_not:
+    - "Mix formats across platforms"
+    - "Use different numbers on different platforms"
+    - "Include extensions inconsistently"
+
+website:
+  format:
+    preferred: "https://www.yourdomain.com.au"
+    components:
+      protocol: "https://" # Always include
+      www: "Include OR exclude consistently"
+      domain: "yourdomain.com.au"
+      trailing_slash: "Exclude OR include consistently"
+
+  examples:
+    correct: "https://www.davesplumbing.com.au"
+    wrong:
+      - "www.davesplumbing.com.au" # Missing protocol
+      - "davesplumbing.com.au" # Missing protocol and www
+      - "https://davesplumbing.com.au/" # Inconsistent www/trailing slash
+
+email:
+  format:
+    preferred: "[role]@yourdomain.com.au"
+    roles:
+      - "info@" # General inquiries
+      - "contact@" # Contact form
+      - "hello@" # Friendly alternative
+      - "bookings@" # For appointments
+
+  examples:
+    correct: "info@davesplumbing.com.au"
+    wrong:
+      - "daveplumber@gmail.com" # Not branded
+      - "dave@davesplumbing.com.au" # Personal name
+
+hours:
+  format:
+    preferred: "[Day]: [Start Time] - [End Time]"
+    time_format: "12-hour with AM/PM"
+
+  examples:
+    standard:
+      - "Mon-Fri: 7:00 AM - 5:00 PM"
+      - "Sat: 8:00 AM - 12:00 PM"
+      - "Sun: Closed"
+
+    compact:
+      - "Mon-Fri: 7am-5pm"
+      - "Sat: 8am-12pm"
+      - "Sun: Closed"
+
+    twentyfour_hour:
+      - "Mon-Fri: 07:00 - 17:00"
+
+  special_cases:
+    by_appointment: "By appointment only"
+    twenty_four_seven: "24/7 Emergency Service"
+    varies: "Hours may vary - call to confirm"
+
+abn:
+  format: "XX XXX XXX XXX"
+  example: "12 345 678 901"
+  display: "ABN: 12 345 678 901"
+  note: "Verifiable at abr.business.gov.au"
+
+license_numbers:
+  qbcc:
+    format: "QBCC License: [Number]"
+    example: "QBCC License: 1234567"
+
+  electrical:
+    format: "Electrical License: [Number]"
+    example: "Electrical License: 12345"
+
+  general:
+    format: "[License Type]: [Number]"

@@ -1,0 +1,152 @@
+# Page Copy Template
+# Use after completing audience research and competitor analysis
+
+# Instructions:
+# 1. Complete audience research first (required)
+# 2. Complete competitor analysis first (recommended)
+# 3. Copy this file for each page you're writing
+# 4. Fill in each section using research data
+# 5. Reference specific quotes by ID where possible
+
+page_metadata:
+  page_type: "homepage|services|about|contact|other"
+  business_id: ""
+  version: 1
+  status: "draft|review|approved|published"
+  created_date: ""
+  last_updated: ""
+
+research_references:
+  audience_research_file: ""
+  competitor_analysis_files: []
+  key_quotes_used: []
+
+# ============================================================================
+# PAGE COPY
+# ============================================================================
+
+hero:
+  headline:
+    text: ""
+    source_quote_id: ""
+    formula_used: ""
+
+  subhead:
+    text: ""
+    source_quote_id: ""
+
+  cta_primary:
+    text: ""
+    action: ""
+
+  cta_secondary:
+    text: ""
+    action: ""
+
+  trust_badges:
+    - ""
+
+problem_section:
+  empathy_opener: ""
+
+  pain_points:
+    - text: ""
+      source_quote_id: ""
+
+  consequence: ""
+
+  transition: ""
+
+value_proposition:
+  intro: ""
+
+  props:
+    - benefit: ""
+      because: ""
+      proof: ""
+      source_quote_id: ""
+
+social_proof:
+  section_header: ""
+
+  testimonials:
+    - quote: ""
+      name: ""
+      location: ""
+      source: ""
+
+  review_stats:
+    platform: ""
+    rating: ""
+    count: ""
+
+process:
+  headline: ""
+  subhead: ""
+
+  steps:
+    - number: 1
+      action: ""
+      experience: ""
+
+services_preview:
+  headline: ""
+
+  services:
+    - title: ""
+      description: ""
+      link: ""
+
+faq:
+  headline: ""
+
+  questions:
+    - question: ""
+      answer: ""
+      source_quote_id: ""
+
+final_cta:
+  headline: ""
+  subhead: ""
+  button_text: ""
+  phone: ""
+  alternative: ""
+
+# ============================================================================
+# VALIDATION
+# ============================================================================
+
+validation_checklist:
+  research_based:
+    - checked: false
+      item: "Customer language used (not marketing speak)"
+    - checked: false
+      item: "Pain points from research"
+    - checked: false
+      item: "Dream outcomes from research"
+    - checked: false
+      item: "Objections addressed from research"
+
+  copy_rules:
+    - checked: false
+      item: "No banned words/phrases"
+    - checked: false
+      item: "All claims verifiable"
+    - checked: false
+      item: "Short sentences (15-20 words)"
+    - checked: false
+      item: "Short paragraphs (2-3 sentences)"
+    - checked: false
+      item: "Conversational tone"
+
+  structure:
+    - checked: false
+      item: "Clear section hierarchy"
+    - checked: false
+      item: "Multiple CTAs"
+    - checked: false
+      item: "Trust signals present"
+    - checked: false
+      item: "Easy to scan"
+
+notes: ""

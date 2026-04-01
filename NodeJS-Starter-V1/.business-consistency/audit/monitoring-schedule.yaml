@@ -1,0 +1,135 @@
+# Consistency Monitoring Schedule
+# Regular checks to maintain NAP accuracy
+
+version: "1.0"
+principle: "Regular monitoring catches drift before it impacts rankings"
+
+weekly_tasks:
+  google_business_profile:
+    - task: "Check for suggested edits"
+      why: "Google can auto-update based on user suggestions"
+      action: "Review and reject incorrect suggestions"
+
+    - task: "Check Q&A section"
+      why: "Users may ask questions needing response"
+      action: "Answer promptly with consistent info"
+
+    - task: "Monitor new reviews"
+      why: "Respond within 24-48 hours"
+      action: "Thank positive, address negative professionally"
+
+  website:
+    - task: "Verify NAP in footer/contact page"
+      why: "Ensure no accidental changes"
+      action: "Compare against master document"
+
+monthly_tasks:
+  top_citations:
+    - task: "Audit top 10 citations for accuracy"
+      platforms:
+        - "Google Business Profile"
+        - "Bing Places"
+        - "Apple Maps"
+        - "Facebook"
+        - "Yellow Pages"
+        - "True Local"
+      action: "Compare NAP against master document"
+
+  new_citations:
+    - task: "Search for new mentions"
+      method: "Google business name in quotes"
+      why: "User-submitted listings may have errors"
+      action: "Claim and correct if needed"
+
+  schema_validation:
+    - task: "Test schema markup"
+      tool: "Google Rich Results Test"
+      action: "Fix any validation errors"
+
+  ai_visibility:
+    - task: "Test AI platform responses"
+      platforms: ["ChatGPT", "Perplexity", "Google AI"]
+      queries:
+        - "[service] in [suburb]"
+        - "best [trade] near [location]"
+        - "[business name] reviews"
+      action: "Note accuracy and visibility"
+
+quarterly_tasks:
+  full_citation_audit:
+    - task: "Complete audit of all known citations"
+      scope: "All Tier 1-4 platforms"
+      deliverable: "Audit report with consistency score"
+
+  schema_review:
+    - task: "Review and update schema markup"
+      checks:
+        - "All fields still accurate"
+        - "New schema types applicable"
+        - "sameAs links current"
+
+  competitor_check:
+    - task: "Review competitor consistency"
+      why: "Identify opportunities"
+      check: "Are competitors more consistent?"
+
+  strategy_review:
+    - task: "Review GEO strategy"
+      checks:
+        - "AI visibility improving?"
+        - "New platforms to target?"
+        - "Content updates needed?"
+
+annual_tasks:
+  comprehensive_review:
+    - task: "Full business information review"
+      checks:
+        - "Hours still accurate"
+        - "Services still current"
+        - "Service areas changed"
+        - "Contact details current"
+        - "Licenses renewed"
+
+  platform_expansion:
+    - task: "Identify new platforms"
+      action: "Research new directories or platforms"
+
+  documentation_update:
+    - task: "Update master consistency document"
+      action: "Ensure reflects current business state"
+
+monitoring_tools:
+  automated:
+    - name: "BrightLocal"
+      purpose: "Citation tracking"
+      features: ["Consistency alerts", "New citation alerts"]
+
+    - name: "Moz Local"
+      purpose: "Real-time listing sync"
+      features: ["Automatic updates", "Consistency monitoring"]
+
+  manual:
+    - name: "Google Alerts"
+      setup: "Alert for business name"
+      purpose: "Monitor new mentions"
+
+    - name: "Manual search"
+      frequency: "Monthly"
+      method: "Search business name + suburb"
+
+tracking_metrics:
+  consistency_score:
+    formula: "(Consistent platforms / Total platforms) x 100"
+    target: "95%+"
+
+  citation_count:
+    track: "Total citations found"
+    goal: "Increase quality citations"
+
+  ai_visibility:
+    track: "Mentions in AI responses"
+    method: "Monthly testing"
+
+  response_time:
+    track: "Time to fix inconsistencies"
+    target: "Within 1 week of discovery"

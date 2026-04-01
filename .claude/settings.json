@@ -1,0 +1,116 @@
+{
+  "name": "CCW-Online ERP",
+  "version": "2.0.0",
+  "description": "Equipment Supplier ERP — Context Control System v2",
+
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash(pnpm *)",
+      "Bash(npx *)",
+      "Bash(npm *)",
+      "Bash(git *)",
+      "Bash(python *)",
+      "Bash(uv *)",
+      "Bash(pytest *)",
+      "Bash(bun *)",
+      "Bash(docker *)",
+      "Bash(curl *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(ls *)",
+      "Bash(dir *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(echo *)",
+      "Bash(wc *)",
+      "Bash(cd *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(sudo rm *)",
+      "Bash(del /s /q *)"
+    ]
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qiE \"(rm -rf|--force|--no-verify|DROP TABLE|TRUNCATE|git reset --hard)\"; then echo \"BLOCKED: Destructive command. Use safe alternatives.\" >&2; exit 1; fi; exit 0'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qiE \"(demo_models\\.py|middleware\\.ts|demo_auth\\.py)\"; then echo \"BLOCKED: Locked file (demo_models.py, middleware.ts, demo_auth.py).\" >&2; exit 1; fi; exit 0'"
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'echo \"[DISPATCH] $(date -Iseconds) — Agent task dispatched\" >> .claude/memory/decisions-log.md 2>/dev/null; exit 0'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'exit 0'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'echo \"\" >> .claude/PROGRESS.md; echo \"## Session end: $(date -Iseconds)\" >> .claude/PROGRESS.md; echo \"### Modified files:\" >> .claude/PROGRESS.md; git diff --name-only 2>/dev/null | sed \"s/^/- /\" >> .claude/PROGRESS.md; git diff --cached --name-only 2>/dev/null | sed \"s/^/- (staged) /\" >> .claude/PROGRESS.md; exit 0'"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'mkdir -p .claude/backups; cp .claude/PROGRESS.md \".claude/backups/PROGRESS-$(date +%Y%m%d-%H%M%S).md\" 2>/dev/null; exit 0'"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Verify the subagent completed its task: (1) all mentioned files were modified, (2) no partial implementations, (3) type-check passes if code was changed."
+          }
+        ]
+      }
+    ]
+  }
+}

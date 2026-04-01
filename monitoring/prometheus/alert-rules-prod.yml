@@ -1,0 +1,194 @@
+# Prometheus Alert Rules for CCW-Online ERP Production
+groups:
+  - name: api_performance
+    interval: 30s
+    rules:
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: "High API response time"
+          description: "p95 response time is {{ $value }}s (threshold: 0.5s)"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: backend
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+  - name: system_resources
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+  - name: database
+    interval: 30s
+    rules:
+      - alert: PostgreSQLDown
+        expr: up{job="postgresql"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database has been down for more than 1 minute"
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Average query time is {{ $value }}s"
+
+  - name: cache
+    interval: 30s
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache has been down for more than 1 minute"
+
+      - alert: HighCacheMissRate
+        expr: rate(redis_keyspace_misses_total[5m]) / rate(redis_keyspace_hits_total[5m]) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "High cache miss rate"
+          description: "Cache miss rate is {{ $value | humanizePercentage }}"
+
+  - name: container_resources
+    interval: 30s
+    rules:
+      # Container memory usage high (warning at 80% of limit)
+      - alert: ContainerMemoryUsageHigh
+        expr: |
+          (container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) > 0.8
+          and container_spec_memory_limit_bytes{name!=""} > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: container
+        annotations:
+          summary: "Container {{ $labels.name }} memory usage is above 80%"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit"
+
+      # Container memory usage critical (95% of limit)
+      - alert: ContainerMemoryUsageCritical
+        expr: |
+          (container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) > 0.95
+          and container_spec_memory_limit_bytes{name!=""} > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: container
+        annotations:
+          summary: "CRITICAL: Container {{ $labels.name }} memory usage is above 95%"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit - OOM kill imminent"
+
+      # Container CPU usage high (warning at 80% of limit)
+      - alert: ContainerCPUUsageHigh
+        expr: |
+          (rate(container_cpu_usage_seconds_total{name!=""}[5m]) / container_spec_cpu_quota{name!=""} * container_spec_cpu_period{name!=""}) > 0.8
+          and container_spec_cpu_quota{name!=""} > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: container
+        annotations:
+          summary: "Container {{ $labels.name }} CPU usage is above 80%"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its CPU limit"
+
+      # Container CPU usage critical (95% of limit)
+      - alert: ContainerCPUUsageCritical
+        expr: |
+          (rate(container_cpu_usage_seconds_total{name!=""}[5m]) / container_spec_cpu_quota{name!=""} * container_spec_cpu_period{name!=""}) > 0.95
+          and container_spec_cpu_quota{name!=""} > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: container
+        annotations:
+          summary: "CRITICAL: Container {{ $labels.name }} CPU usage is above 95%"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its CPU limit - throttling likely"
+
+      # Container restart detected
+      - alert: ContainerRestarted
+        expr: increase(container_start_time_seconds{name!=""}[5m]) > 1
+        for: 0m
+        labels:
+          severity: warning
+          component: container
+        annotations:
+          summary: "Container {{ $labels.name }} has restarted"
+          description: "Container {{ $labels.name }} was restarted in the last 5 minutes"
+
+      # Container restart loop (multiple restarts)
+      - alert: ContainerRestartLoop
+        expr: increase(container_start_time_seconds{name!=""}[15m]) > 3
+        for: 0m
+        labels:
+          severity: critical
+          component: container
+        annotations:
+          summary: "CRITICAL: Container {{ $labels.name }} is in a restart loop"
+          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last 15 minutes"
+
+      # Container OOM killed
+      - alert: ContainerOOMKilled
+        expr: container_oom_events_total{name!=""} > 0
+        for: 0m
+        labels:
+          severity: critical
+          component: container
+        annotations:
+          summary: "CRITICAL: Container {{ $labels.name }} was OOM killed"
+          description: "Container {{ $labels.name }} was killed due to out of memory"
+
+      # Container not running (service down)
+      - alert: ContainerDown
+        expr: |
+          absent(container_start_time_seconds{name=~"nodejs-starter-.*|ccw-.*"})
+          or (time() - container_start_time_seconds{name=~"nodejs-starter-.*|ccw-.*"}) < 60
+        for: 2m
+        labels:
+          severity: critical
+          component: container
+        annotations:
+          summary: "Container {{ $labels.name }} is not running or just started"
+          description: "Container {{ $labels.name }} may be down or unstable"

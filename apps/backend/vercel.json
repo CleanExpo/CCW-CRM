@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/api/debug_main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/api/debug_main.py"
+    }
+  ],
+  "env": {
+    "ENVIRONMENT": "production"
+  }
+}

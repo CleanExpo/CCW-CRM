@@ -1,0 +1,126 @@
+
+> web@0.1.0 test C:\CCW-Online ERP\apps\web
+> vitest run
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/CCW-Online ERP/apps/web[39m
+
+ [32m✓[39m lib/utils.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 27[2mms[22m[39m
+ [32m✓[39m lib/utils/calculations.test.ts [2m([22m[2m48 tests[22m[2m)[22m[90m 203[2mms[22m[39m
+ [32m✓[39m __tests__/components/portal/CartManager.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 2061[2mms[22m[39m
+   [33m[2m✓[22m[39m CartManager[2m > [22mcalls onUpdateQuantity when quantity is changed [33m373[2mms[22m[39m
+   [33m[2m✓[22m[39m CartManager[2m > [22mcalls onRemoveItem when remove button is clicked [33m402[2mms[22m[39m
+ [32m✓[39m __tests__/components/portal/ProductSearch.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 2996[2mms[22m[39m
+   [33m[2m✓[22m[39m ProductSearch[2m > [22mdisplays search results when user types [33m481[2mms[22m[39m
+   [33m[2m✓[22m[39m ProductSearch[2m > [22mcalls onProductSelect when product is clicked [33m405[2mms[22m[39m
+   [33m[2m✓[22m[39m ProductSearch[2m > [22mshows 'In Stock' badge for products with stock > 10 [33m375[2mms[22m[39m
+   [33m[2m✓[22m[39m ProductSearch[2m > [22mshows 'Low Stock' badge for products with 1-10 units [33m387[2mms[22m[39m
+   [33m[2m✓[22m[39m ProductSearch[2m > [22mshows 'Out of Stock' badge for products with 0 stock [33m359[2mms[22m[39m
+   [33m[2m✓[22m[39m ProductSearch[2m > [22mshows 'No products found' message when search returns empty [33m397[2mms[22m[39m
+   [33m[2m✓[22m[39m ProductSearch[2m > [22mclears search query after product selection [33m403[2mms[22m[39m
+[90mstderr[2m | __tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx[2m > [22m[2mContactSubmissionsTable[2m > [22m[2mshows loading state initially
+[22m[39mAn update to ContactSubmissionsTable inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContactSubmissionsTable inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32m✓[39m __tests__/components/ui/pagination-controls.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 2905[2mms[22m[39m
+   [33m[2m✓[22m[39m PaginationControls[2m > [22mrenders pagination controls with correct item counts [33m391[2mms[22m[39m
+   [33m[2m✓[22m[39m PaginationControls[2m > [22mmemoizes page numbers calculation [33m765[2mms[22m[39m
+   [33m[2m✓[22m[39m PaginationControls[2m > [22mhandles large page counts efficiently with ellipsis [33m334[2mms[22m[39m
+   [33m[2m✓[22m[39m PaginationControls[2m > [22mupdates page numbers when currentPage changes [33m322[2mms[22m[39m
+   [33m[2m✓[22m[39m PaginationControls[2m > [22mshows all pages when total is small [33m478[2mms[22m[39m
+[90mstderr[2m | __tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx[2m > [22m[2mDemoRequestsTable[2m > [22m[2mshows loading state initially
+[22m[39mAn update to DemoRequestsTable inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DemoRequestsTable inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32m✓[39m __tests__/components/portal/ContactForm.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 4087[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactForm[2m > [22mrenders contact form button [33m382[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactForm[2m > [22mopens dialog when button is clicked [33m416[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactForm[2m > [22mshows validation errors for empty required fields [33m541[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactForm[2m > [22msubmits form with valid data [33m776[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactForm[2m > [22mshows loading state during submission [33m659[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactForm[2m > [22mhandles API error gracefully [33m429[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactForm[2m > [22mcloses dialog after successful submission [33m453[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactForm[2m > [22mallows optional phone and subject fields to be empty [33m425[2mms[22m[39m
+ [32m✓[39m __tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 4220[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactSubmissionsTable[2m > [22mrenders table with submissions [33m534[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactSubmissionsTable[2m > [22mallows status updates [33m1011[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactSubmissionsTable[2m > [22mrefreshes data when onDataChange is called [33m501[2mms[22m[39m
+   [33m[2m✓[22m[39m ContactSubmissionsTable[2m > [22mhandles status update error [33m485[2mms[22m[39m
+ [32m✓[39m __tests__/app/portal/walk-in.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 5778[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22mrenders walk-in checkout page [33m308[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22mdisplays payment buttons when cart has items [33m828[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22madds product to cart when selected [33m562[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22mprocesses cash payment successfully [33m632[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22mprocesses card payment successfully [33m747[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22mprocesses account payment as pending order [33m1116[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22mdisables account payment until customer is selected [33m440[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22mclears cart after successful payment [33m527[2mms[22m[39m
+   [33m[2m✓[22m[39m Walk-In Portal[2m > [22mcalculates total with tax correctly [33m492[2mms[22m[39m
+ [32m✓[39m __tests__/app/portal/service.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 4956[2mms[22m[39m
+   [33m[2m✓[22m[39m Service Portal[2m > [22mrenders service portal page [33m642[2mms[22m[39m
+   [33m[2m✓[22m[39m Service Portal[2m > [22mopens new request dialog when button clicked [33m506[2mms[22m[39m
+   [33m[2m✓[22m[39m Service Portal[2m > [22msubmits new service request successfully [33m693[2mms[22m[39m
+   [33m[2m✓[22m[39m Service Portal[2m > [22mdisplays timeline view [33m390[2mms[22m[39m
+   [33m[2m✓[22m[39m Service Portal[2m > [22mresets form after successful submission [33m697[2mms[22m[39m
+ [32m✓[39m __tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx [2m([22m[2m16 tests[22m[2m)[22m[33m 5536[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestsTable[2m > [22mrenders table with demo requests [33m774[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestsTable[2m > [22mdisplays contact names [33m332[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestsTable[2m > [22mallows status updates [33m1169[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestsTable[2m > [22mrefreshes data when onDataChange is called [33m459[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestsTable[2m > [22mdisplays date in readable format [33m352[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestsTable[2m > [22mhandles status update error [33m457[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestsTable[2m > [22mhandles all status transitions [33m541[2mms[22m[39m
+ [32m✓[39m __tests__/components/portal/DemoRequestForm.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 6023[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22mrenders demo request button [33m470[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22mopens dialog when button is clicked [33m348[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22mshows validation errors for empty required fields [33m586[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22msubmits form with valid required data [33m752[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22msubmits form with all fields filled [33m905[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22mshows loading state during submission [33m633[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22mhandles API error gracefully [33m573[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22mcloses dialog after successful submission [33m635[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22mvalidates phone number length [33m491[2mms[22m[39m
+   [33m[2m✓[22m[39m DemoRequestForm[2m > [22mallows optional fields to be empty [33m623[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m11 passed[39m[22m[90m (11)[39m
+[2m      Tests [22m [1m[32m154 passed[39m[22m[90m (154)[39m
+[2m   Start at [22m 19:10:41
+[2m   Duration [22m 22.82s[2m (transform 11.41s, setup 38.24s, collect 26.52s, tests 38.79s, environment 72.72s, prepare 11.26s)[22m
+

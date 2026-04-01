@@ -1,0 +1,25 @@
+{
+  "name": "ccw-erp-load-tests",
+  "version": "1.0.0",
+  "description": "Load testing suite for CCW-Online ERP using k6",
+  "scripts": {
+    "test:smoke": "k6 run scenarios/smoke-test.js",
+    "test:load": "k6 run scenarios/load-test.js",
+    "test:stress": "k6 run scenarios/stress-test.js",
+    "test:spike": "k6 run scenarios/spike-test.js",
+    "test:soak": "k6 run scenarios/soak-test.js",
+    "test:all": "npm run test:smoke && npm run test:load && npm run test:stress",
+    "test:cloud": "k6 cloud run scenarios/load-test.js"
+  },
+  "keywords": [
+    "k6",
+    "load-testing",
+    "performance",
+    "erp"
+  ],
+  "author": "CCW Equipment Supplier",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/k6": "^0.52.0"
+  }
+}

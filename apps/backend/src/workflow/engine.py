@@ -1,0 +1,445 @@
+"""Workflow execution engine."""
+from __future__ import annotations
+
+import re
+import uuid
+from datetime import datetime
+from typing import Any
+
+try:
+    from src.ai.orchestration.supervisor_agent import get_supervisor_agent
+except ImportError:
+    get_supervisor_agent = None  # type: ignore[assignment]
+from src.utils import get_logger
+from src.workflow.models import (
+    EdgeType,
+    ExecutionContext,
+    ExecutionStatus,
+    NodeConfig,
+    NodeType,
+    WorkflowDefinition,
+)
+from src.workflow.storage import WorkflowStorage
+
+logger = get_logger(__name__)
+
+
+class WorkflowEngine:
+    """Executes visual workflows by coordinating node execution."""
+
+    def __init__(self) -> None:
+        self.storage = WorkflowStorage()
+        self.supervisor = get_supervisor_agent()
+        self.tool_registry: dict[str, Any] = {}
+
+    async def start_execution(
+        self,
+        workflow: WorkflowDefinition,
+        input_variables: dict[str, Any],
+        user_id: str | None = None,
+    ) -> str:
+        """Start workflow execution and return execution ID."""
+        execution_id = str(uuid.uuid4())
+
+        context = ExecutionContext(
+            execution_id=execution_id,
+            workflow_id=workflow.id,
+            user_id=user_id,
+            variables={**workflow.variables, **input_variables},
+            status=ExecutionStatus.PENDING,
+        )
+
+        # Ensure workflow is stored before execution begins
+        existing_workflow = await self.storage.get_workflow(workflow.id)
+        if not existing_workflow:
+            await self.storage.create_workflow(workflow, user_id=user_id)
+
+        # Save initial execution state
+        await self.storage.create_execution(context)
+
+        logger.info(
+            "Started workflow execution",
+            execution_id=execution_id,
+            workflow_id=workflow.id,
+        )
+
+        return execution_id
+
+    async def execute(self, execution_id: str) -> ExecutionContext:
+        """Execute the workflow."""
+        context = await self.storage.get_execution(execution_id)
+        if not context:
+            raise ValueError(f"Execution {execution_id} not found")
+
+        workflow = await self.storage.get_workflow(context.workflow_id)
+        if not workflow:
+            raise ValueError(f"Workflow {context.workflow_id} not found")
+
+        context.status = ExecutionStatus.RUNNING
+        await self.storage.update_execution(execution_id, context)
+
+        try:
+            # Find start node
+            start_node = next(
+                (n for n in workflow.nodes if n.type == NodeType.START),
+                None,
+            )
+
+            if not start_node:
+                raise ValueError("Workflow has no start node")
+
+            # Execute from start node
+            await self._execute_node(start_node, workflow, context)
+
+            context.status = ExecutionStatus.COMPLETED
+            context.completed_at = datetime.now().isoformat()
+
+        except Exception as e:
+            logger.error("Workflow execution failed", error=str(e))
+            context.status = ExecutionStatus.FAILED
+            context.completed_at = datetime.now().isoformat()
+            await self._add_log(context, "system", f"Execution failed: {str(e)}")
+
+        finally:
+            await self.storage.update_execution(execution_id, context)
+
+        return context
+
+    async def _execute_node(
+        self,
+        node: NodeConfig,
+        workflow: WorkflowDefinition,
+        context: ExecutionContext,
+    ) -> Any:
+        """Execute a single node."""
+        context.current_node_id = node.id
+        await self.storage.update_execution(context.execution_id, context)
+        await self._add_log(context, node.id, f"Executing {node.type.value} node: {node.label}")
+
+        try:
+            # Resolve input variables
+            resolved_inputs = self._resolve_variables(node.inputs, context.variables)
+
+            # Execute based on node type
+            result: dict[str, Any] = {}
+
+            if node.type == NodeType.START:
+                result = {"started": True}
+
+            elif node.type == NodeType.END:
+                await self._add_log(context, node.id, "Reached end node")
+                context.completed_nodes.add(node.id)
+                return None
+
+            elif node.type == NodeType.LLM:
+                result = await self._execute_llm_node(node, resolved_inputs)
+
+            elif node.type == NodeType.AGENT:
+                result = await self._execute_agent_node(node, resolved_inputs)
+
+            elif node.type == NodeType.TOOL:
+                result = await self._execute_tool_node(node, resolved_inputs)
+
+            elif node.type == NodeType.CONDITIONAL:
+                result = await self._execute_conditional_node(node, resolved_inputs)
+
+            else:
+                logger.warning(f"Node type {node.type} not yet implemented")
+                result = {"skipped": True}
+
+            # Store outputs
+            context.node_outputs[node.id] = result
+
+            # Map outputs to workflow variables (supports nested paths)
+            for output_path, output_var in node.outputs.items():
+                output_value = self._extract_nested_value(result, output_path)
+                if output_value is not None:
+                    context.variables[output_var] = output_value
+                    logger.debug(
+                        "Mapped output variable",
+                        output_path=output_path,
+                        output_var=output_var,
+                        value_type=type(output_value).__name__,
+                    )
+
+            context.completed_nodes.add(node.id)
+            await self._add_log(context, node.id, "Completed successfully")
+
+            # Find and execute next nodes
+            next_edges = self._find_outgoing_edges(node.id, workflow)
+            for edge in next_edges:
+                # Check edge conditions
+                should_execute = True
+
+                if edge.type == EdgeType.CONDITIONAL_TRUE:
+                    should_execute = result.get("condition", False)
+                elif edge.type == EdgeType.CONDITIONAL_FALSE:
+                    should_execute = not result.get("condition", False)
+
+                if should_execute:
+                    next_node = next(
+                        (n for n in workflow.nodes if n.id == edge.target_node_id),
+                        None,
+                    )
+                    if next_node:
+                        await self._execute_node(next_node, workflow, context)
+
+            return result
+
+        except Exception as e:
+            logger.error("Node execution failed", node_id=node.id, error=str(e))
+            context.failed_nodes.add(node.id)
+            await self._add_log(context, node.id, f"Failed: {str(e)}")
+            raise
+
+    async def _execute_llm_node(
+        self,
+        node: NodeConfig,
+        inputs: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Execute an LLM node."""
+        # This would call Claude API
+        # For now, return a placeholder
+        logger.info("LLM node execution (placeholder)", node_id=node.id)
+        return {
+            "response": f"LLM response for: {node.config.get('prompt', '')}",
+            "model": node.config.get("model", "claude-opus-4-6"),
+        }
+
+    async def _execute_agent_node(
+        self,
+        node: NodeConfig,
+        inputs: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Execute an agent node using SupervisorAgent.
+
+        The SupervisorAgent will route the task to the appropriate specialized agent
+        based on intent classification.
+
+        Args:
+            node: Agent node configuration
+            inputs: Resolved input variables from workflow context
+
+        Returns:
+            dict containing agent execution results and metadata
+        """
+        task_description = node.config.get("task_description", "")
+        agent_name = node.config.get("agent_name", "auto")  # auto = supervisor routes
+
+        if not task_description:
+            return {
+                "agent": agent_name,
+                "status": "failed",
+                "error": "Agent node missing task_description in config",
+                "result": {},
+            }
+
+        logger.info(
+            "Executing agent node via supervisor",
+            node_id=node.id,
+            agent_name=agent_name,
+            task_preview=task_description[:100],
+        )
+
+        try:
+            # Build context from inputs
+            context = {
+                "workflow_variables": inputs,
+                "node_config": node.config,
+            }
+
+            # Route task through supervisor (which selects the right specialized agent)
+            agent_result = await self.supervisor.execute(
+                task=task_description,
+                context=context,
+            )
+
+            # Extract key fields from agent result
+            status = agent_result.get("status", "completed")
+            selected_agent = agent_result.get("selected_agent", "unknown")
+            agent_output = agent_result.get("final_result", {})
+
+            logger.info(
+                "Agent node completed",
+                node_id=node.id,
+                selected_agent=selected_agent,
+                status=status,
+            )
+
+            # Return structured output for workflow
+            return {
+                "agent": selected_agent,
+                "status": status,
+                "result": agent_output,
+                "raw_output": agent_result,  # Full agent result for debugging
+            }
+
+        except Exception as e:
+            logger.error(
+                "Agent node execution failed",
+                node_id=node.id,
+                error=str(e),
+            )
+            return {
+                "agent": agent_name,
+                "status": "failed",
+                "error": str(e),
+                "result": {},
+            }
+
+    async def _execute_tool_node(
+        self,
+        node: NodeConfig,
+        inputs: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Execute a tool node using existing tool registry."""
+        tool_name = node.config.get("tool_name")
+
+        if not tool_name:
+            raise ValueError("Tool node missing tool_name in config")
+
+        # TODO: Implement tool registry or route through agents
+        logger.warning("Tool node execution not yet implemented", tool_name=tool_name)
+
+        return {
+            "results": f"Tool {tool_name} execution placeholder",
+            "status": "not_implemented",
+        }
+
+    async def _execute_conditional_node(
+        self,
+        node: NodeConfig,
+        inputs: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Execute a conditional node."""
+        condition = node.config.get("condition", "")
+
+        # Resolve variables in condition
+        resolved_condition = self._resolve_variables_in_string(condition, inputs)
+
+        # Evaluate condition (simple eval for now - should use safe evaluator)
+        try:
+            # This is a simplified evaluation
+            # In production, use a safe expression evaluator
+            result = eval(resolved_condition)
+            condition_met = bool(result)
+        except Exception as e:
+            logger.error("Condition evaluation failed", error=str(e))
+            condition_met = False
+
+        return {"condition": condition_met}
+
+    def _resolve_variables(
+        self,
+        template: dict[str, Any],
+        variables: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Resolve variable references like {{variable.path}}."""
+
+        def resolve_value(value: Any) -> Any:
+            if isinstance(value, str):
+                return self._resolve_variables_in_string(value, variables)
+            elif isinstance(value, dict):
+                return {k: resolve_value(v) for k, v in value.items()}
+            elif isinstance(value, list):
+                return [resolve_value(v) for v in value]
+            else:
+                return value
+
+        return resolve_value(template)
+
+    def _resolve_variables_in_string(
+        self,
+        text: str,
+        variables: dict[str, Any],
+    ) -> str:
+        """Resolve variables in a string."""
+        pattern = r"\{\{([^}]+)\}\}"
+        matches = re.findall(pattern, text)
+
+        for match in matches:
+            path_parts = match.strip().split(".")
+            resolved = variables
+
+            for part in path_parts:
+                if isinstance(resolved, dict):
+                    resolved = resolved.get(part, {})
+                else:
+                    resolved = {}
+
+            text = text.replace(f"{{{{{match}}}}}", str(resolved))
+
+        return text
+
+    def _extract_nested_value(
+        self,
+        data: dict[str, Any],
+        path: str,
+    ) -> Any:
+        """Extract value from nested dict using dot notation.
+
+        Examples:
+            data = {"result": {"price": 100}}
+            _extract_nested_value(data, "result.price") -> 100
+
+            data = {"agent": "pricing", "status": "completed"}
+            _extract_nested_value(data, "status") -> "completed"
+
+        Args:
+            data: Dictionary to extract from
+            path: Dot-separated path (e.g., "result.recommendation.price")
+
+        Returns:
+            Extracted value or None if path not found
+        """
+        path_parts = path.split(".")
+        current = data
+
+        for part in path_parts:
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
+                return None
+
+        return current
+
+    def _find_outgoing_edges(
+        self,
+        node_id: str,
+        workflow: WorkflowDefinition,
+    ) -> list:
+        """Find all edges going out from a node."""
+        return [e for e in workflow.edges if e.source_node_id == node_id]
+
+    async def _add_log(
+        self,
+        context: ExecutionContext,
+        node_id: str,
+        message: str,
+    ) -> None:
+        """Add a log entry to the execution context."""
+        context.logs.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "node_id": node_id,
+                "message": message,
+            }
+        )
+
+    async def get_execution_status(self, execution_id: str) -> dict | None:
+        """Get execution status."""
+        context = await self.storage.get_execution(execution_id)
+        if not context:
+            return None
+
+        return {
+            "execution_id": context.execution_id,
+            "workflow_id": context.workflow_id,
+            "status": context.status.value,
+            "started_at": context.started_at,
+            "completed_at": context.completed_at,
+            "current_node_id": context.current_node_id,
+            "completed_nodes": list(context.completed_nodes),
+            "failed_nodes": list(context.failed_nodes),
+            "logs": context.logs,
+        }

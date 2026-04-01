@@ -1,0 +1,13 @@
+{
+  "supplier_id": "eb9f88db-5fb6-4e49-a8a8-1874255e0220",
+  "delivery_location": "brisbane",
+  "expected_delivery_date": "2026-01-20T10:00:00",
+  "notes": "Rush order for new project",
+  "items": [
+    {
+      "product_id": "c788b68e-0fa6-4d4f-a0d1-33e1132a4474",
+      "quantity": 50,
+      "unit_cost": 125.50
+    }
+  ]
+}

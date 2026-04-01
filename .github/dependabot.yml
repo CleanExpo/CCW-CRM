@@ -1,0 +1,54 @@
+version: 2
+updates:
+  # GitHub Actions — pin to commit SHAs, keep updated (P1-7 health scan)
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Australia/Sydney'
+    labels:
+      - 'dependencies'
+      - 'github-actions'
+    commit-message:
+      prefix: 'chore(ci)'
+
+  # Python (uv/pip) — backend dependencies
+  - package-ecosystem: 'pip'
+    directory: '/apps/backend'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Australia/Sydney'
+    labels:
+      - 'dependencies'
+      - 'backend'
+    commit-message:
+      prefix: 'chore(deps)'
+    # Only open PRs for security updates automatically
+    open-pull-requests-limit: 5
+
+  # npm/pnpm — frontend dependencies
+  - package-ecosystem: 'npm'
+    directory: '/apps/web'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Australia/Sydney'
+    labels:
+      - 'dependencies'
+      - 'frontend'
+    commit-message:
+      prefix: 'chore(deps)'
+    open-pull-requests-limit: 5
+    # Ignore major version bumps on framework packages (require manual approval)
+    ignore:
+      - dependency-name: 'next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']

@@ -1,0 +1,80 @@
+# Project Memory
+
+> **Monorepo**: Next.js 15 + FastAPI/LangGraph + Supabase with AI agent orchestration
+
+## Quick Start
+
+```bash
+# Development
+pnpm dev                          # All services
+pnpm dev --filter=web             # Frontend only
+cd apps/backend && uv run uvicorn src.api.main:app --reload  # Backend only
+
+# Database
+supabase start && supabase db push
+
+# Quality
+pnpm turbo run type-check lint test
+.\scripts\health-check.ps1
+
+# Pre-PR
+pnpm turbo run type-check lint test && echo "✅ Ready"
+```
+
+## Stack
+
+| Layer | Path | Tech |
+|-------|------|------|
+| Frontend | `apps/web/` | Next.js 15, React 19, Tailwind v4 |
+| Backend | `apps/backend/src/` | FastAPI, LangGraph, Pydantic |
+| Database | `supabase/` | PostgreSQL, pgvector, RLS |
+
+## Key Systems
+
+- **Orchestrator** - Task routing, verification enforcement
+- **Tools** - Advanced tool search & programmatic calling
+- **Long-Running** - Multi-session agents via progress files
+- **Verification** - Independent verification, no self-attestation
+- **Memory** - Vector-based persistent memory
+- **Health Checks** - 6-phase validation system
+
+## Environment
+
+Required in `.env`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+ANTHROPIC_API_KEY=
+OPENAI_API_KEY=
+BACKEND_URL=http://localhost:8000
+```
+
+## Rules
+
+**Path-specific rules auto-load** based on files being worked on:
+- `apps/web/**/*.{ts,tsx}` → Frontend rules
+- `apps/backend/src/**/*.py` → Backend rules
+- `supabase/**/*.sql` → Database rules
+- `skills/**/*.md` → Skills rules
+
+## Standards
+
+- **Verification First**: Always run actual tests before marking complete
+- **No Self-Attestation**: Agents can't verify own work
+- **Type Safety**: Explicit types, no `any`, strict mode
+- **Layer Separation**: No cross-layer imports
+- **Frontend**: Components → Hooks → API Routes → Services
+- **Backend**: Type hints, Pydantic, async/await, PEP 8
+
+## Memory Hierarchy
+
+1. Enterprise Policy (org-wide)
+2. Project Memory (this file)
+3. Path-Specific Rules (`.claude/rules/*.md`)
+4. User Memory (`~/.claude/CLAUDE.md`)
+5. Project Local (`./CLAUDE.local.md`)
+
+---
+
+**Detailed patterns**: See `.claude/rules/` (auto-loads based on context)

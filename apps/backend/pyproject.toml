@@ -1,0 +1,245 @@
+[project]
+name = "ccw-erp-backend"
+version = "1.0.0"
+description = "CCW Equipment Supplier ERP Backend API"
+requires-python = ">=3.12"
+
+dependencies = [
+    # Web Framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    # Database (PostgreSQL + SQLAlchemy)
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0", # Async PostgreSQL driver
+    "psycopg2-binary>=2.9.0", # Sync PostgreSQL driver (for migrations)
+    "pgvector>=0.3.0", # Vector similarity search
+    "alembic>=1.13.0", # Database migrations
+    # Caching
+    "redis>=5.0.0", # Redis async client for caching
+    # Authentication
+    "python-jose[cryptography]>=3.3.0", # JWT tokens — CVE-2024-33664/33663 mitigated by algorithms=["HS256"]
+    "cryptography>=42.0.0", # Pin to avoid CVE-2023-49083 and related issues
+    "passlib[bcrypt]>=1.7.0", # Password hashing
+    # Billing
+    "stripe>=7.0.0", # Stripe payment processing
+    # Core
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "email-validator>=2.0.0", # For pydantic email validation
+    "python-dotenv>=1.0.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0.0",
+    "structlog>=24.4.0",
+    "python-multipart>=0.0.12",
+    "slowapi>=0.1.9", # Rate limiting
+    "sendgrid>=6.11.0", # Email notifications
+    "fastapi-mail>=1.4.1", # Email notifications for system alerts
+    "prometheus-fastapi-instrumentator>=7.0.0", # Prometheus metrics
+    "prometheus-client>=0.19.0", # Prometheus Python client
+    "apscheduler>=3.10.0", # Job scheduling
+    # AI/LLM (LangChain + Ollama + Anthropic)
+    "langchain>=0.1.0",
+    "langchain-community>=0.0.20",
+    "langchain-core>=0.1.0",
+    "langgraph>=0.0.20",
+    "ollama>=0.1.6",
+    "anthropic>=0.39.0", # Claude API for code generation
+    "openai>=1.58.1", # OpenAI API for LLM-based requirement extraction
+    "sse-starlette>=3.2.0",
+    "sentry-sdk[fastapi]>=2.52.0",
+    # Supabase client (state store, RAG storage, migrations)
+    "supabase>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=5.0.0",
+    "respx>=0.21.0",  # HTTP mocking for tests
+    "mypy>=1.13.0",
+    "ruff>=0.7.0",
+    "httpx>=0.27.0",
+    "requests>=2.31.0",  # For integration tests
+    "faker>=28.0.0",  # Fake data for load tests
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+exclude = ["src/api/debug_main.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = [
+    "E501",   # Line too long — codebase predates this rule
+    "E402",   # Module import not at top — intentional in some files
+    "E712",   # Comparison to True/False — pre-existing style
+    "E741",   # Ambiguous variable name — pre-existing
+    "F821",   # Undefined name — false positives with optional imports
+    "F841",   # Unused variable — pre-existing
+    "N806",   # Non-lowercase variable in function — pre-existing
+    "N811",   # Constant imported as non-constant — pre-existing
+    "N812",   # Lowercase imported as non-lowercase — pre-existing
+    "N815",   # Mixed-case variable in class scope — pre-existing
+    "N818",   # Error suffix on exception name — pre-existing
+    "W293",   # Blank line with whitespace — pre-existing
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = true
+warn_return_any = true
+
+# Suppress entire packages with pre-existing type issues.
+# These use glob-style module patterns (mypy supports * for single segment, ** unsupported).
+# Covers SQLAlchemy old-style Column annotations, complex AI tooling, legacy integrations.
+[[tool.mypy.overrides]]
+module = [
+    # Database models (old-style Column annotations)
+    "src.db.*",
+    # AI agents, tools, orchestration
+    "src.ai.*",
+    "src.agents.*",
+    # Infrastructure
+    "src.workflow.*",
+    "src.workflows.*",
+    "src.rag.*",
+    "src.telemetry.*",
+    "src.events.*",
+    "src.cache.*",
+    "src.scheduler.*",
+    # Auth
+    "src.auth.*",
+    # Integration clients
+    "src.integrations.stripe.*",
+    "src.integrations.shopify.*",
+    "src.integrations.cin7.*",
+    "src.integrations.xero.*",
+    "src.integrations.sendgrid.*",
+    "src.integrations.google.*",
+    "src.integrations.sentry_client",
+    # Services layer (mixed old/new patterns)
+    "src.services.*",
+    # Config
+    "src.config.*",
+    # Monitoring
+    "src.monitoring",
+    "src.monitoring.*",
+    # API infrastructure with known issues
+    "src.api.routers.*",
+    "src.api.debug_main",
+    "src.api.deps",
+    "src.api.middleware.*",
+    "src.api.main",
+    # Testing mocks/fixtures (no strict typing needed)
+    "src.testing.*",
+    # Individual routes with pre-existing issues
+    "src.api.routes.prd",
+    "src.api.routes.demo_lists",
+    "src.api.routes.demo_dashboard",
+    "src.api.routes.demo_auth",
+    "src.api.routes.activities",
+    "src.api.routes.analytics",
+    "src.api.routes.approvals",
+    "src.api.routes.audit_trail",
+    "src.api.routes.backorders",
+    "src.api.routes.billing",
+    "src.api.routes.contacts",
+    "src.api.routes.containers",
+    "src.api.routes.contractors",
+    "src.api.routes.crm_health",
+    "src.api.routes.crm_onboarding",
+    "src.api.routes.crm_personas",
+    "src.api.routes.cron_jobs",
+    "src.api.routes.customer_orders",
+    "src.api.routes.customers",
+    "src.api.routes.dashboard_stream",
+    "src.api.routes.email_audit",
+    "src.api.routes.google_ai",
+    "src.api.routes.health",
+    "src.api.routes.integrations.*",
+    "src.api.routes.inventory",
+    "src.api.routes.invoice_payments",
+    "src.api.routes.invoices",
+    "src.api.routes.jobs",
+    "src.api.routes.mobile.*",
+    "src.api.routes.monitoring.*",
+    "src.api.routes.notifications",
+    "src.api.routes.orders",
+    "src.api.routes.pos_transactions",
+    "src.api.routes.pos_xero_reconciliation",
+    "src.api.routes.procurement",
+    "src.api.routes.products",
+    "src.api.routes.public_stats",
+    "src.api.routes.purchase_orders",
+    "src.api.routes.quotes",
+    "src.api.routes.recommendations",
+    "src.api.routes.search",
+    "src.api.routes.service_requests",
+    "src.api.routes.settings",
+    "src.api.routes.shadow_analytics",
+    "src.api.routes.shipments",
+    "src.api.routes.sla",
+    "src.api.routes.suppliers",
+    "src.api.routes.team",
+    "src.api.routes.test_data_gen",
+    "src.api.routes.translations",
+    "src.api.routes.workflows",
+    "src.api.routes.workshop.*",
+    "src.api.routes.ai.*",
+    "src.api.schemas.*",
+]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "asyncio: mark test as async",
+    "integration: mark test as integration test",
+    "unit: mark test as unit test",
+    "performance: mark test as performance/benchmark test",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+fail_under = 15
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

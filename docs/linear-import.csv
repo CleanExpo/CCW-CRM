@@ -1,0 +1,169 @@
+Title,Description,Priority,Status,Estimate,Labels,Project
+"Phase 9: Performance Testing Complete","✅ COMPLETE: 8,000 scenario load test executed
+- Overall pass rate: 90.9% (7,272/8,000)
+- Products: 100%, Customers: 100%, Orders: 96.6%, Quotes: 67%
+- Zero crashes, excellent stability
+- Full documentation in docs/PHASE-9-PERFORMANCE-BASELINE.md
+
+**Deliverables**:
+- ✅ Performance baseline report
+- ✅ HTML/JSON reports
+- ✅ Production readiness checklist
+- ✅ All 6 subtasks complete",No priority,Done,0,"phase-9,milestone",CCW-ERP/CRM
+"Fix Quote Module Routing Errors (405)","**Problem**: 100 quote scenarios failing with 405 Method Not Allowed errors during load testing. HTTP methods not properly configured on quote endpoints.
+
+**Impact**: 5% of quote operations fail, blocking production deployment.
+
+**Root Cause**: PUT/PATCH/DELETE methods likely not configured in FastAPI route decorators.
+
+**Files**: apps/backend/src/api/routes/quotes.py
+
+**Acceptance Criteria**:
+- [ ] Identify all endpoints returning 405 errors
+- [ ] Fix HTTP method configuration in FastAPI
+- [ ] Add integration tests for all HTTP methods
+- [ ] Re-run quote load test
+- [ ] Verify 0 instances of 405 errors",Urgent,Backlog,2,"bug,quotes,backend,blocking-production",CCW-ERP/CRM
+"Fix Quote Module Resource Lookup Errors (404)","**Problem**: 300 quote scenarios failing with 404 Not Found errors. Quotes created but cannot be retrieved.
+
+**Impact**: 15% of quote operations fail, major contributor to 67% pass rate.
+
+**Root Cause**: Possible UUID generation issues, database constraints, cascade delete problems, or session management issues.
+
+**Files**: apps/backend/src/api/routes/quotes.py, apps/backend/src/db/demo_models.py
+
+**Acceptance Criteria**:
+- [ ] Identify which quote operations return 404
+- [ ] Review quote creation and retrieval logic
+- [ ] Add comprehensive logging
+- [ ] Fix root cause
+- [ ] Add integration tests for quote lifecycle
+- [ ] Re-run quote load test
+- [ ] Verify 0 instances of 404 errors",Urgent,Backlog,4,"bug,quotes,backend,blocking-production",CCW-ERP/CRM
+"Fix Quote Module Validation Errors (422)","**Problem**: 200 quote scenarios failing with 422 Unprocessable Entity errors. Request data fails Pydantic validation.
+
+**Impact**: 10% of quote operations fail, blocking production deployment.
+
+**Root Cause**: Date format issues (valid_until), missing required fields, price/quantity validation failures.
+
+**Files**: apps/backend/src/api/routes/quotes.py, apps/backend/tests/load/generators/quotes.py
+
+**Acceptance Criteria**:
+- [ ] Collect all 422 validation error messages
+- [ ] Review Pydantic schemas
+- [ ] Fix validation rules or test data
+- [ ] Ensure error messages are clear
+- [ ] Add comprehensive validation tests
+- [ ] Re-run quote load test
+- [ ] Verify 0 instances of 422 errors",Urgent,Backlog,3,"bug,quotes,validation,blocking-production",CCW-ERP/CRM
+"Deploy Microsecond Timestamp Fix","**Problem**: Permanent fix for order/quote number race conditions is coded but not deployed. System must run with reduced concurrency.
+
+**Impact**: Cannot increase concurrency beyond max_concurrent=2, lower throughput.
+
+**Solution**: Microsecond timestamp-based number generation already in orders.py and quotes.py
+
+**Acceptance Criteria**:
+- [ ] Rebuild backend container
+- [ ] Deploy new container image
+- [ ] Re-run smoke test (max_concurrent=2)
+- [ ] Verify 100% pass rate (0 conflicts)
+- [ ] Increase to max_concurrent=5
+- [ ] Re-run smoke test with max_concurrent=5
+- [ ] Verify >98% pass rate",High,Backlog,2,"deployment,backend,performance",CCW-ERP/CRM
+"Fix Shopify Authentication (401)","**Problem**: Shopify API connection failing with 401 Unauthorized error.
+
+**Impact**: Cannot integrate with Shopify for product/order sync.
+
+**Status**: BLOCKED - Requires user to verify credentials in Shopify Admin
+
+**User Actions Required**:
+1. Go to Shopify Admin: Settings → Apps → Develop apps
+2. Verify app is Installed
+3. Confirm access token matches configured token
+4. Ensure required API scopes enabled (read/write products, orders, inventory, locations)
+
+**After Verification**:
+- [ ] Re-run connection test
+- [ ] Verify all 4 tests pass
+- [ ] Configure webhooks
+- [ ] Set up bidirectional sync",High,Blocked,2,"integration,shopify,authentication",CCW-ERP/CRM
+"Investigate and Fix 30 Internal Server Errors","**Problem**: 30 scenarios failed with 500 Internal Server Error during load testing (0.4% error rate).
+
+**Impact**: Indicates unhandled exceptions in backend code.
+
+**Investigation Steps**:
+1. Review application logs for stack traces
+2. Identify which endpoints returned 500 errors
+3. Reproduce locally with debugger
+4. Fix underlying bugs
+
+**Acceptance Criteria**:
+- [ ] Review logs for all 500 errors
+- [ ] Identify root cause for each
+- [ ] Fix underlying bugs
+- [ ] Add proper exception handling
+- [ ] Add tests for error scenarios
+- [ ] Re-run load test
+- [ ] Verify <10 internal errors",Medium,Backlog,4,"bug,backend,stability",CCW-ERP/CRM
+"Optimize Database Indexes for Search","**Problem**: Customer wildcard searches take 3,500ms (P95: 3,892ms). Product searches take 1,700ms.
+
+**Impact**: Slow search operations, higher database load.
+
+**Solution**: Add trigram indexes (pg_trgm) for fuzzy text matching + B-tree indexes on foreign keys
+
+**Expected Improvement**:
+- Customer search: 3,500ms → <1,000ms (71% improvement)
+- Product search: 1,700ms → <800ms (53% improvement)
+
+**Acceptance Criteria**:
+- [ ] Create migration script
+- [ ] Add pg_trgm extension
+- [ ] Create trigram indexes on search fields
+- [ ] Create B-tree indexes on foreign keys
+- [ ] Test before/after performance
+- [ ] Deploy to production",Medium,Backlog,2,"performance,database,optimization",CCW-ERP/CRM
+"Setup Production Monitoring and Alerts","**Problem**: No production monitoring or alerting in place.
+
+**Impact**: No visibility into production performance, issues only discovered when users report.
+
+**Solution**: Implement APM with Prometheus + Grafana
+
+**Deliverables**:
+- [ ] Install Prometheus + Grafana
+- [ ] Configure metrics collection (response times, error rates, throughput)
+- [ ] Create production dashboard
+- [ ] Set up alert rules (>2s response, >1% error rate, low DB connections)
+- [ ] Test alert notifications
+- [ ] Document monitoring setup and runbook",Medium,Backlog,4,"devops,monitoring,observability",CCW-ERP/CRM
+"Implement Shopify Bidirectional Product Sync","**Problem**: Need real-time bidirectional synchronization for products between ERP and Shopify.
+
+**Dependencies**: Blocked by Shopify Authentication issue
+
+**Requirements**:
+- ERP → Shopify: Create/update/delete products
+- Shopify → ERP: Sync via webhooks
+
+**Acceptance Criteria**:
+- [ ] Create webhook endpoints
+- [ ] Implement signature verification
+- [ ] Implement ERP → Shopify sync
+- [ ] Implement Shopify → ERP sync
+- [ ] Handle sync conflicts
+- [ ] Add retry logic
+- [ ] Create sync status dashboard
+- [ ] Test end-to-end workflow",High,Blocked,8,"integration,shopify,products,sync",CCW-ERP/CRM
+"Implement Shopify Real-Time Inventory Sync","**Problem**: Need real-time bidirectional inventory synchronization between ERP and Shopify.
+
+**Dependencies**: Blocked by Shopify Authentication + Product Sync
+
+**Requirements**:
+- ERP → Shopify: Stock changes sync within 5 seconds
+- Shopify → ERP: Orders decrement stock, cancellations increment
+
+**Acceptance Criteria**:
+- [ ] Implement ERP → Shopify inventory sync
+- [ ] Implement Shopify → ERP sync (order webhooks)
+- [ ] Configure location mapping
+- [ ] Handle sync failures (retry logic)
+- [ ] Test with multiple locations
+- [ ] Verify 100% accuracy (no discrepancies)",High,Blocked,6,"integration,shopify,inventory,real-time",CCW-ERP/CRM

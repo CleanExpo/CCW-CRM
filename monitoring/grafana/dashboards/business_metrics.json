@@ -1,0 +1,317 @@
+{
+  "title": "Business Metrics",
+  "tags": [
+    "business",
+    "orders",
+    "pos"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "title": "Orders per Hour",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(orders_created_total[1h]) * 3600",
+          "legendFormat": "{{status}}"
+        }
+      ]
+    },
+    {
+      "title": "Revenue per Hour (AUD)",
+      "type": "graph",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(orders_revenue_total[1h]) * 3600",
+          "legendFormat": "{{location}}"
+        }
+      ]
+    },
+    {
+      "title": "POS Transactions per Day",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "increase(pos_transactions_total[24h])",
+          "legendFormat": "{{payment_method}} - {{location}}"
+        }
+      ]
+    },
+    {
+      "title": "POS Reconciliation Rate",
+      "type": "gauge",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "pos_reconciliation_rate * 100",
+          "legendFormat": "Reconciliation Rate %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "red"
+              },
+              {
+                "value": 70,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "green"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Quote Conversion Rate",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "rate(quotes_converted_total[24h]) / rate(quotes_created_total[24h]) * 100",
+          "legendFormat": "Conversion Rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        }
+      }
+    },
+    {
+      "title": "Total Orders (24h)",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 16,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "increase(orders_created_total[24h])",
+          "legendFormat": "Orders"
+        }
+      ]
+    },
+    {
+      "title": "Total Revenue (24h)",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "increase(orders_revenue_total[24h])",
+          "legendFormat": "Revenue (AUD)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyAUD"
+        }
+      }
+    },
+    {
+      "title": "POS Transactions (24h)",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 16,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "increase(pos_transactions_total[24h])",
+          "legendFormat": "Transactions"
+        }
+      ]
+    },
+    {
+      "title": "Bank Feed Auto-Match Rate",
+      "type": "gauge",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "bank_feed_auto_match_rate",
+          "legendFormat": "Auto-Match Rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 0.7, "color": "yellow"},
+              {"value": 0.85, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Pending Bank Feeds",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 20,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "bank_feed_pending_count",
+          "legendFormat": "Pending"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 50, "color": "yellow"},
+              {"value": 100, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Bank Feed Sync Success Rate",
+      "type": "graph",
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "rate(bank_feed_sync_success_total[1h]) / (rate(bank_feed_sync_success_total[1h]) + rate(bank_feed_sync_failure_total[1h]))",
+          "legendFormat": "{{provider}}"
+        }
+      ],
+      "yaxes": [
+        {"format": "percentunit", "min": 0, "max": 1}
+      ]
+    },
+    {
+      "title": "Webhook Activity",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 12,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "rate(bank_feed_webhook_received_total[5m]) * 300",
+          "legendFormat": "{{provider}}"
+        }
+      ],
+      "yaxes": [
+        {"format": "short", "label": "Webhooks per 5m"}
+      ]
+    },
+    {
+      "title": "AI Suggestions Generated",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 26,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "increase(bank_feed_suggestions_generated_total[24h])",
+          "legendFormat": "Suggestions (24h)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "title": "Top Unmatched Feeds (by Amount)",
+      "type": "table",
+      "gridPos": {
+        "x": 18,
+        "y": 26,
+        "w": 6,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "topk(10, bank_feed_pending_count) by (account)",
+          "legendFormat": "{{account}}",
+          "format": "table"
+        }
+      ]
+    }
+  ]
+}

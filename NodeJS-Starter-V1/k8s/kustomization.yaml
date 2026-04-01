@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ccw-erp
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - persistent-volumes.yaml
+  - postgres-statefulset.yaml
+  - redis-deployment.yaml
+  - backend-deployment.yaml
+  - celery-worker-deployment.yaml
+  - frontend-deployment.yaml
+  - ingress.yaml
+
+# Common labels for all resources
+commonLabels:
+  app: ccw-online-erp
+  environment: production
+  managed-by: kustomize
+
+# Images to use (can be overridden with kustomize edit)
+images:
+  - name: ccw-erp-backend
+    newName: your-registry/ccw-erp-backend
+    newTag: latest
+  - name: ccw-erp-frontend
+    newName: your-registry/ccw-erp-frontend
+    newTag: latest

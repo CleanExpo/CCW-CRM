@@ -1,0 +1,513 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Git tag or commit SHA to deploy (must be tested on staging first)'
+        required: true
+      confirm_staging_tested:
+        description: 'Confirm this version was tested on staging'
+        required: true
+        type: boolean
+        default: false
+      confirm_rollback_plan:
+        description: 'Confirm rollback plan is in place'
+        required: true
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.15.0"
+  PYTHON_VERSION: "3.12"
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PRODUCTION_URL: https://api.ccw-erp.com
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  # ============================================================================
+  # Pre-Deployment Validation
+  # ============================================================================
+  validate:
+    name: Pre-Deployment Validation
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      short_sha: ${{ steps.version.outputs.short_sha }}
+      release_tag: ${{ steps.version.outputs.release_tag }}
+
+    steps:
+      - name: Validate confirmations
+        run: |
+          if [ "${{ github.event.inputs.confirm_staging_tested }}" != "true" ]; then
+            echo "Error: You must confirm that this version was tested on staging"
+            exit 1
+          fi
+
+          if [ "${{ github.event.inputs.confirm_rollback_plan }}" != "true" ]; then
+            echo "Error: You must confirm that a rollback plan is in place"
+            exit 1
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short_sha=$(git rev-parse --short $VERSION)" >> $GITHUB_OUTPUT
+
+          # Check if this is a release tag
+          if git describe --tags --exact-match $VERSION 2>/dev/null; then
+            echo "release_tag=$(git describe --tags --exact-match $VERSION)" >> $GITHUB_OUTPUT
+          else
+            echo "release_tag=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate version exists
+        run: |
+          if ! git rev-parse "${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
+            echo "Error: Version ${{ steps.version.outputs.version }} does not exist"
+            exit 1
+          fi
+
+      - name: Verify Docker images exist
+        run: |
+          echo "Checking if Docker images exist for version ${{ steps.version.outputs.short_sha }}..."
+          # This is a placeholder - in real implementation, check GHCR for the images
+          echo "Docker image verification would happen here"
+
+  # ============================================================================
+  # Run Full Test Suite
+  # ============================================================================
+  test:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    needs: validate
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: starter_db
+          POSTGRES_USER: starter_user
+          POSTGRES_PASSWORD: local_dev_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.version }}
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install backend dependencies
+        working-directory: apps/backend
+        run: uv sync --all-extras
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run backend tests
+        working-directory: apps/backend
+        run: uv run pytest -v --tb=short --cov=src --cov-fail-under=15
+        env:
+          DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: Run frontend tests
+        run: pnpm turbo run test
+
+      - name: Type check
+        run: pnpm turbo run type-check
+
+      - name: Lint check
+        run: pnpm turbo run lint
+
+      - name: Build check
+        run: pnpm turbo run build
+        env:
+          NEXT_PUBLIC_BACKEND_URL: ${{ env.PRODUCTION_URL }}
+
+  # ============================================================================
+  # Build Production Images
+  # ============================================================================
+  build-images:
+    name: Build Production Images
+    runs-on: ubuntu-latest
+    needs: [validate, test]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.version }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for backend
+        id: meta-backend
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/backend
+          tags: |
+            type=sha,prefix=
+            type=raw,value=production
+            type=raw,value=${{ needs.validate.outputs.release_tag }},enable=${{ needs.validate.outputs.release_tag != '' }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend
+          file: ./apps/backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/web
+          tags: |
+            type=sha,prefix=
+            type=raw,value=production
+            type=raw,value=${{ needs.validate.outputs.release_tag }},enable=${{ needs.validate.outputs.release_tag != '' }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          file: ./apps/web/Dockerfile
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_BACKEND_URL=${{ secrets.PRODUCTION_API_URL || 'https://api.ccw-erp.com' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================================
+  # Deploy to Production (requires manual approval via GitHub Environment)
+  # ============================================================================
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [validate, test, build-images]
+    environment:
+      name: production
+      url: https://ccw-erp.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.version }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+      - name: Add production server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PRODUCTION_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create pre-deployment backup
+        id: backup
+        run: |
+          BACKUP_NAME=$(ssh ${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }} << 'EOF'
+            set -e
+            BACKUP_DIR="/var/backups/ccw-erp"
+            BACKUP_FILE="pre_deploy_$(date +%Y%m%d_%H%M%S).sql"
+            mkdir -p $BACKUP_DIR
+
+            cd /opt/ccw-erp
+            docker compose -f docker-compose.production.yml exec -T postgres \
+              pg_dump -U starter_user starter_db > $BACKUP_DIR/$BACKUP_FILE
+
+            echo $BACKUP_FILE
+          EOF
+          )
+          echo "backup_file=$BACKUP_NAME" >> $GITHUB_OUTPUT
+          echo "Created backup: $BACKUP_NAME"
+
+      - name: Deploy to production
+        id: deploy
+        run: |
+          ssh ${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }} << 'EOF'
+            set -e
+            cd /opt/ccw-erp
+
+            # Store current version for potential rollback
+            PREVIOUS_VERSION=$(git rev-parse --short HEAD)
+            echo "Previous version: $PREVIOUS_VERSION"
+
+            # Pull latest code
+            git fetch --all
+            git checkout ${{ needs.validate.outputs.version }}
+            git reset --hard ${{ needs.validate.outputs.version }}
+
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull new images
+            docker compose -f docker-compose.production.yml pull
+
+            # Graceful shutdown with connection draining
+            echo "Initiating graceful shutdown..."
+            docker compose -f docker-compose.production.yml stop backend --timeout 30
+
+            # Start new services
+            docker compose -f docker-compose.production.yml up -d
+
+            # Wait for services to be healthy
+            echo "Waiting for services to become healthy..."
+            sleep 30
+
+            # Run database migrations
+            docker compose -f docker-compose.production.yml exec -T backend alembic upgrade head
+
+            echo "Deployment completed successfully"
+          EOF
+
+      - name: Verify deployment health
+        id: health-check
+        run: |
+          echo "Waiting for services to stabilize..."
+          sleep 20
+
+          MAX_RETRIES=15
+          RETRY_COUNT=0
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ env.PRODUCTION_URL }}/api/health || echo "000")
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Health check passed (HTTP $HTTP_STATUS)"
+              exit 0
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Health check attempt $RETRY_COUNT/$MAX_RETRIES failed (HTTP $HTTP_STATUS)"
+            sleep 10
+          done
+
+          echo "Health check failed after $MAX_RETRIES attempts"
+          echo "health_check_failed=true" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: Rollback on failure
+        if: failure() && steps.health-check.outputs.health_check_failed == 'true'
+        run: |
+          echo "Initiating automatic rollback..."
+          ssh ${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }} << 'EOF'
+            set -e
+            cd /opt/ccw-erp
+
+            # Rollback to previous version
+            git checkout HEAD~1
+            docker compose -f docker-compose.production.yml down
+            docker compose -f docker-compose.production.yml up -d
+
+            echo "Rollback completed"
+          EOF
+
+  # ============================================================================
+  # Post-Deployment Smoke Tests
+  # ============================================================================
+  smoke-tests:
+    name: Production Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [validate, deploy]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.version }}
+
+      - name: Run critical smoke tests
+        run: |
+          # Health check
+          echo "Testing health endpoint..."
+          curl -f ${{ env.PRODUCTION_URL }}/api/health
+
+          # API availability
+          echo "Testing API availability..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ env.PRODUCTION_URL }}/api/products?page=1&page_size=1)
+          if [ "$HTTP_STATUS" != "200" ] && [ "$HTTP_STATUS" != "401" ]; then
+            echo "API check failed with status $HTTP_STATUS"
+            exit 1
+          fi
+
+          echo "All smoke tests passed!"
+
+  # ============================================================================
+  # Notify
+  # ============================================================================
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [validate, deploy, smoke-tests]
+    if: always()
+
+    steps:
+      - name: Set deployment status
+        id: status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ] && [ "${{ needs.smoke-tests.result }}" == "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "emoji=:white_check_mark:" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create deployment summary
+        run: |
+          echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ needs.validate.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ needs.validate.outputs.release_tag }}" ]; then
+            echo "- **Release Tag:** ${{ needs.validate.outputs.release_tag }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://ccw-erp.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "- :white_check_mark: Deployment: Successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: Deployment: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.smoke-tests.result }}" == "success" ]; then
+            echo "- :white_check_mark: Smoke Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- :x: Smoke Tests: ${{ needs.smoke-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Send Slack notification
+        if: secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "${{ steps.status.outputs.color }}",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "${{ steps.status.outputs.emoji }} *Production Deployment ${{ steps.status.outputs.status }}*"
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Version:*\n${{ needs.validate.outputs.short_sha }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Environment:*\nProduction"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*URL:*\n<https://ccw-erp.com|ccw-erp.com>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Deployed by:*\n${{ github.actor }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Create GitHub Release (on success)
+        if: needs.deploy.result == 'success' && needs.validate.outputs.release_tag != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate.outputs.release_tag }}
+          name: Release ${{ needs.validate.outputs.release_tag }}
+          body: |
+            ## Release ${{ needs.validate.outputs.release_tag }}
+
+            Deployed to production on ${{ github.event.repository.updated_at }}
+
+            ### Deployment Details
+            - **Commit:** ${{ needs.validate.outputs.short_sha }}
+            - **Deployed by:** ${{ github.actor }}
+            - **Environment:** Production
+          generate_release_notes: true

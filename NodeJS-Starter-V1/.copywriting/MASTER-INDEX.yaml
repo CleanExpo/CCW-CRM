@@ -1,0 +1,114 @@
+# Research-Driven Copywriting Framework - Master Index
+# Voice of Customer system for authentic, conversion-focused copy
+
+version: "1.0"
+description: "Complete copywriting system using real customer language"
+
+core_principle: "Real customer words > Marketing speak. Always."
+
+# NON-NEGOTIABLE INTEGRITY REQUIREMENTS
+integrity_mandate:
+  uniqueness: "100% original - no copied content"
+  plagiarism: "Zero tolerance - full rewrite if found"
+  verifiability: "100% provable - evidence for every claim"
+  file: validation/integrity.yaml
+  priority: "HIGHEST - checked before all other validation"
+
+layers:
+  1_research:
+    name: "Audience Research"
+    files:
+      - research/audience-research.yaml
+      - research/data-sources.yaml
+      - research/quote-collection.yaml
+    provides:
+      - pain_points
+      - symptoms
+      - dream_outcomes
+      - failed_solutions
+      - buying_decisions
+    principle: "Find exact words, not summaries"
+
+  2_competitor:
+    name: "Competitor Analysis"
+    files:
+      - competitor/analysis-framework.yaml
+      - competitor/page-sections.yaml
+      - competitor/unique-features.yaml
+    requires: [research]
+    provides:
+      - page_structures
+      - section_order
+      - proven_elements
+    principle: "Learn from what's already tested"
+
+  3_copy:
+    name: "Copy Generation"
+    files:
+      - copy/conversion-structures.yaml
+      - copy/section-formulas.yaml
+      - copy/voice-tone.yaml
+      - copy/anti-patterns.yaml
+    requires: [research, competitor]
+    provides:
+      - page_templates
+      - section_copy
+      - cta_patterns
+    principle: "Weave quotes naturally, never as literals"
+
+  4_pages:
+    name: "Page Templates"
+    files:
+      - pages/homepage.yaml
+      - pages/services.yaml
+      - pages/about.yaml
+      - pages/contact.yaml
+    requires: [copy]
+    provides:
+      - complete_page_structures
+      - section_guidelines
+    principle: "Conversion-focused page layouts"
+
+integration:
+  foundation_first:
+    - personas: "Copy targets specific persona pain points"
+    - journeys: "Copy matches journey stage needs"
+    - psychology: "Uses Cialdini principles appropriately"
+    - metrics: "Tracks AARRR conversion metrics"
+
+  visual_content:
+    - "Hero images support hero copy claims"
+    - "Testimonial videos near social proof sections"
+    - "Before/after photos with problem/solution copy"
+    - "Real photos (Tier 1) support authenticity claims"
+
+  business_consistency:
+    - "NAP data accurate in all copy"
+    - "Schema markup supports copy claims"
+    - "GEO optimization for AI discoverability"
+
+validation:
+  # INTEGRITY FIRST (Non-negotiable)
+  integrity_layer:
+    file: validation/integrity.yaml
+    priority: "HIGHEST"
+    checks:
+      - plagiarism_free
+      - 100_percent_unique
+      - all_claims_verifiable
+      - evidence_documented
+      - no_copied_structures
+
+  content_layer:
+    script: validation/copy-validator.ts
+    checks:
+      - no_jargon_words
+      - no_cliche_phrases
+      - verified_claims_only
+      - customer_language_used
+      - conversion_structure_followed
+
+  pre_publish_gate:
+    - "Plagiarism check PASSED"
+    - "Evidence file complete"
+    - "Would stake reputation on every word"
