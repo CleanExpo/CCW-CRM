@@ -74,7 +74,7 @@ fastapi==0.129.0
     # via
     #   ccw-erp-backend (pyproject.toml)
     #   sentry-sdk
-fastapi-mail==1.6.1
+fastapi-mail==1.6.2
     # via ccw-erp-backend (pyproject.toml)
 frozenlist==1.8.0
     # via
