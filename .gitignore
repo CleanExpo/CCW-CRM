@@ -200,3 +200,4 @@ video/remotion/public/audio/
 # gstack cache and heavy binaries
 .claude/skills/gstack/node_modules/
 .claude/skills/gstack/.cache/
+.env*.local
