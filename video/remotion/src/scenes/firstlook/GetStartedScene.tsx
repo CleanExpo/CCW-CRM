@@ -2,11 +2,11 @@ import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion';
 
 const journey = [
-  { day: 'Day 1', label: '🔑 Connect your APIs', color: '#3b82f6' },
-  { day: 'Day 2', label: '📦 Import your data', color: '#8b5cf6' },
-  { day: 'Day 3', label: '👥 Set up your team', color: '#06b6d4' },
-  { day: 'Day 4', label: '✅ Test & validate', color: '#10b981' },
-  { day: 'Day 5', label: '🚀 Go live!', color: '#f59e0b' },
+  { day: 'Day 1', label: 'Connect your APIs', color: '#3b82f6' },
+  { day: 'Day 2', label: 'Import your data', color: '#8b5cf6' },
+  { day: 'Day 3', label: 'Set up your team', color: '#06b6d4' },
+  { day: 'Day 4', label: 'Test & validate', color: '#10b981' },
+  { day: 'Day 5', label: 'Go live', color: '#f59e0b' },
 ];
 
 export const GetStartedScene: React.FC = () => {

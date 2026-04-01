@@ -2,18 +2,18 @@ import React from 'react';
 import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame } from 'remotion';
 
 export interface ConnectionStep {
-  stepNumber: string;   // e.g. "01 / 04"
+  stepNumber: string;   // e.g. "01 / 02"
   serviceName: string;  // e.g. "Shopify"
   accentColor: string;  // e.g. "#96bf48"
-  serviceIcon: string;  // emoji
+  serviceIcon?: string; // unused — kept for compat
   steps: string[];      // instruction steps
   envVars: string[];    // env var lines
   warning?: string;     // optional warning text
-  screenshotPath?: string; // optional path relative to public/, e.g. "images/integrations.png"
+  screenshotPath?: string; // optional path relative to public/
 }
 
 export const ConnectionStepScene: React.FC<ConnectionStep> = ({
-  stepNumber, serviceName, accentColor, serviceIcon, steps, envVars, warning, screenshotPath
+  stepNumber, serviceName, accentColor, steps, envVars, warning, screenshotPath
 }) => {
   const frame = useCurrentFrame();
 
@@ -25,10 +25,10 @@ export const ConnectionStepScene: React.FC<ConnectionStep> = ({
   return (
     <AbsoluteFill style={{ background: '#0f172a', fontFamily: 'system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <div style={{ opacity: headerOpacity, display: 'flex', alignItems: 'center', gap: 16, padding: '32px 60px', background: `${accentColor}15`, borderBottom: `3px solid ${accentColor}` }}>
-        <span style={{ fontSize: 48 }}>{serviceIcon}</span>
+      <div style={{ opacity: headerOpacity, display: 'flex', alignItems: 'center', gap: 20, padding: '28px 60px', background: `${accentColor}15`, borderBottom: `3px solid ${accentColor}` }}>
+        <div style={{ width: 52, height: 52, borderRadius: 12, background: accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 900, color: '#000', letterSpacing: -1, flexShrink: 0 }}>{serviceName[0]}</div>
         <div>
-          <div style={{ fontSize: 18, color: accentColor, fontWeight: 600, letterSpacing: 2 }}>{stepNumber}</div>
+          <div style={{ fontSize: 16, color: accentColor, fontWeight: 600, letterSpacing: 2 }}>{stepNumber}</div>
           <div style={{ fontSize: 40, fontWeight: 800, color: '#ffffff' }}>{serviceName}</div>
         </div>
       </div>

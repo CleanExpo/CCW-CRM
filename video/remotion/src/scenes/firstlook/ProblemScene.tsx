@@ -2,10 +2,10 @@ import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion';
 
 const pains = [
-  { icon: '📊', text: 'Tracking orders in Excel spreadsheets' },
-  { icon: '📞', text: 'Chasing up suppliers by phone' },
-  { icon: '🕐', text: 'Re-entering the same data 3 times' },
-  { icon: '❓', text: 'No idea what stock you actually have' },
+  'Tracking orders in Excel spreadsheets',
+  'Chasing up suppliers by phone',
+  'Re-entering the same data 3 times',
+  'No idea what stock you actually have',
 ];
 
 export const ProblemScene: React.FC = () => {
@@ -24,8 +24,8 @@ export const ProblemScene: React.FC = () => {
           const x = interpolate(frame, [20 + i * 22, 38 + i * 22], [-40, 0], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' });
           return (
             <div key={i} style={{ opacity, transform: `translateX(${x}px)`, display: 'flex', alignItems: 'center', gap: 20, marginBottom: 28, padding: '16px 24px', background: 'rgba(239,68,68,0.08)', borderLeft: '3px solid #ef4444', borderRadius: '0 8px 8px 0' }}>
-              <span style={{ fontSize: 32 }}>{pain.icon}</span>
-              <span style={{ fontSize: 26, color: '#e2e8f0' }}>{pain.text}</span>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
+              <span style={{ fontSize: 26, color: '#e2e8f0' }}>{pain}</span>
             </div>
           );
         })}

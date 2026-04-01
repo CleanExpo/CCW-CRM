@@ -66,6 +66,9 @@ VIDEO_METADATA = {
     "tradies":          {"title": "Why CCW ERP for Tradies",             "desc": "Purpose-built for trades businesses — see how CCW ERP solves the real problems that spreadsheets can't."},
     "vs-spreadsheets":  {"title": "CCW ERP vs Spreadsheets",            "desc": "Side-by-side comparison — why growing equipment suppliers outgrow spreadsheets and what CCW ERP gives you instead."},
     "integration-story":{"title": "The CCW ERP Integration Story",       "desc": "How CCW ERP connects your entire operation — Cin7, Xero, your warehouse, your team and your customers."},
+    # Remotion walkthrough videos
+    "first-look":       {"title": "CCW ERP — First Look: Your Complete Equipment Operations System", "desc": "A first look at CCW ERP CRM — the complete operating system for Australian equipment suppliers. See all 14 modules: products, orders, customers, warehouse, invoicing, AI assistant and more. Built for trades businesses who are ready to move beyond spreadsheets."},
+    "connections-guide":{"title": "CCW ERP — Connections Setup Guide: Shopify & Xero (Under 10 Minutes)", "desc": "Step-by-step guide to connecting your Shopify store and Xero accounting to CCW ERP. CCW manages all infrastructure — you only need to connect your two accounts. Be live in under 10 minutes."},
 }
 
 TAGS = ["CCW ERP", "equipment supplier", "inventory management", "Australia", "trades business",

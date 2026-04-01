@@ -2,11 +2,11 @@ import React from 'react';
 import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame } from 'remotion';
 
 const steps = [
-  { icon: '💬', label: 'Quote', color: '#3b82f6', screenshot: 'images/quotes.png' },
-  { icon: '📋', label: 'Order', color: '#8b5cf6', screenshot: 'images/orders.png' },
-  { icon: '🏭', label: 'Warehouse', color: '#06b6d4', screenshot: 'images/inventory-overview.png' },
-  { icon: '🚚', label: 'Ship', color: '#10b981', screenshot: 'images/orders.png' },
-  { icon: '🧾', label: 'Invoice', color: '#f59e0b', screenshot: 'images/invoices.png' },
+  { num: '01', label: 'Quote', color: '#3b82f6', screenshot: 'images/quotes.png' },
+  { num: '02', label: 'Order', color: '#8b5cf6', screenshot: 'images/orders.png' },
+  { num: '03', label: 'Warehouse', color: '#06b6d4', screenshot: 'images/inventory-overview.png' },
+  { num: '04', label: 'Ship', color: '#10b981', screenshot: 'images/orders.png' },
+  { num: '05', label: 'Invoice', color: '#f59e0b', screenshot: 'images/invoices.png' },
 ];
 
 export const WorkflowScene: React.FC = () => {
@@ -41,12 +41,14 @@ export const WorkflowScene: React.FC = () => {
                   width: 100, height: 100, borderRadius: '50%',
                   background: isActive ? `${step.color}44` : `${step.color}22`,
                   border: `${isActive ? 4 : 3}px solid ${step.color}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 28, fontWeight: 800, color: step.color,
                   transform: isActive ? 'scale(1.1)' : 'scale(1)',
                   transition: 'all 0.3s',
                   boxShadow: isActive ? `0 0 20px ${step.color}66` : 'none',
+                  letterSpacing: -0.5,
                 }}>
-                  {step.icon}
+                  {step.num}
                 </div>
                 <span style={{ fontSize: 22, color: isActive ? '#ffffff' : step.color, fontWeight: 600 }}>{step.label}</span>
               </div>

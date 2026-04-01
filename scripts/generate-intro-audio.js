@@ -28,29 +28,31 @@ const CHUNK_SIZE_LIMIT = 2500;
 
 // ── Narration Scripts ─────────────────────────────────────────────────────────
 
-const FIRSTLOOK_SCRIPT = `Welcome to CCW ERP CRM — the complete operating system built specifically for Australian equipment suppliers. If you run a trade business, supply cleaning equipment or machinery, or manage a team on the road, this system was built for you.
+const FIRSTLOOK_SCRIPT = `CCW ERP. The complete operating system for Australian equipment suppliers. If you run a trade business — supplying cleaning equipment, power tools, safety gear, or machinery — this is the platform that runs your entire operation. Products. Customers. Orders. Invoicing. Warehouse. AI. Everything connected, in one system. No spreadsheets. No switching between tools. Built for the way your business actually works.
 
-Sound familiar? You're tracking orders in Excel. Chasing suppliers by phone. Re-entering the same data across three different systems. And at the end of the day, you still have no idea what stock you actually have. There is a better way — and you're about to see it.
+Sound familiar? You're tracking orders in Excel. Chasing suppliers by phone. Re-entering the same data across three different systems. At the end of the day, you still don't know what stock you have — or whether your jobs are profitable. You've built something real. But you're running it on tools that were never designed for what you do. There is a better way.
 
-CCW ERP brings together everything your business needs in one place. Products and catalogue management. Customers and CRM. Orders, fulfilment, and quoting. Point of sale. Invoicing and billing. Warehouse operations. Suppliers and purchase orders. Contact management. Reports and analytics. Workflow automation. An AI assistant. And deep integration with Shopify and Xero. Fourteen modules. No switching between systems. No double entry. No guesswork.
+CCW ERP brings together everything your business runs on. Products and catalogue. Customers and CRM. Orders and fulfilment. Quotes. Point of sale. Invoicing with Xero sync. Warehouse and stock control. Suppliers. Purchase orders. Contact management. Reports and analytics. Workflow automation. An AI assistant that answers real questions about your business. And direct Shopify integration. Fourteen modules, all connected. When a quote is accepted, it flows to an order. The warehouse picks. The invoice generates and syncs to Xero — no re-entry, no delays.
 
-Your entire business flows in one direction. A customer accepts a quote — it becomes an order. The warehouse picks and packs. It ships. The invoice is generated automatically and syncs to Xero. Every step tracked. Every team in sync. From first contact to paid invoice, CCW handles it.
+Here's how it flows in practice. A customer accepts a quote — CCW converts it to an order automatically. The warehouse team is notified and picks the stock. The shipment goes out. The invoice generates and syncs to Xero that night. Every step tracked. Every team connected. No manual handoffs. No data entry between steps. From first contact to paid invoice — one system handles it all.
 
-CCW ERP was built for equipment suppliers, trade businesses, and Australian SMEs who are serious about growth. If you're moving beyond spreadsheets and want a system that works the way your business works — this is it.
+CCW ERP is built for equipment suppliers, trade businesses, and Australian SMEs who are serious about growth. Fourteen modules. Real-time sync. AI-powered insights. If you're ready to move beyond spreadsheets and want a system built for the way you work — this is it.
 
-Getting started takes five days. Day one, connect your APIs. Day two, import your data. Day three, set up your team. Day four, test and validate. Day five, you go live. Ready to start? Watch the next video to connect your first integration.`;
+Getting started takes five days. Day one: connect your APIs. Day two: import your data. Day three: set up your team. Day four: test and validate. Day five: go live. Watch the next video and we'll walk through the connections step by step. Your system is ready.`;
 
-const CONNECTIONS_SCRIPT = `To get CCW ERP fully operational, you need three connections. Shopify, Xero, and Supabase. Your Vercel environment is already pre-configured — no deployment setup required. Each connection takes between two and eight minutes. Follow along, pause at each step, and you'll be live in under twenty minutes.
+const CONNECTIONS_SCRIPT = `Getting CCW ERP live takes two connections. Shopify — your online store. And Xero — your accounting. That's it. CCW manages all the infrastructure. You just connect the accounts that are yours.
 
-Let's start with Shopify — your e-commerce channel. In your Shopify Admin, go to Settings, then Apps and sales channels. Click Develop apps, then Create a new private app. Enable read and write access for Orders, Products, and Inventory. Copy your Admin API access token. Now in CCW, go to Settings, then Integrations, then Shopify. Paste your token, enter your store URL, and click Save. Click Import Orders to verify the connection is working.
+Let's start with Shopify. In your Shopify Admin, go to Settings, then Apps and sales channels. Click Develop apps, then Create a new private app. Enable read and write access for Orders, Products, and Inventory. Copy your Admin API access token. Now in CCW, go to Settings, then Integrations, then Shopify. Paste your store URL and your access token. Click Save. Then click Import Orders to confirm your orders are coming through.
 
-Next, Xero. Go to developer dot xero dot com. Sign in, then click My Apps, then New App. Choose Web App as the app type. Add your redirect URI — this will be your Vercel domain followed by /api/auth/xero/callback. Once the app is created, copy your Client ID. Click Generate a Secret to get your Client Secret — copy it now, as Xero will only show it once. In CCW, go to Settings, Integrations, Xero, and paste both values. Then click Connect Xero to complete the OAuth authorisation.
+Connection one — done. That took about five minutes.
 
-Finally, Supabase. The good news is your Supabase environment variables are already configured in Vercel — no manual action is required. To confirm everything is connected, log into supabase dot com, open your project, and go to Settings then API. Check that your Project URL and anon key match what's in your Vercel environment. If your CCW dashboard loaded without errors, Supabase is already working correctly.
+Now Xero. Go to developer dot xero dot com. Sign in, then click My Apps, then New App. Choose Web App. Add your redirect URI — your CCW domain followed by /api/auth/xero/callback. Copy your Client ID. Click Generate a Secret, copy it immediately — Xero only shows it once. In CCW, go to Settings, Integrations, Xero. Paste your Client ID and Client Secret. Click Connect Xero and complete the authorisation in the Xero window that opens.
 
-Time to verify. In CCW Settings, test your Shopify connection by importing a test order. Click Connect Xero and complete the authorisation flow. Confirm your dashboard loads without errors — that confirms Supabase. And check that your products appear in the CCW Inventory module. If all three are green, you're live.
+Connection two — done. Under ten minutes total.
 
-Congratulations — you're connected. From tonight, Shopify orders will sync automatically to CCW. Xero invoices will sync every night at eight PM. Your dashboard updates in real time. And your AI assistant is ready to answer questions about your business. Open your CCW dashboard and start exploring. If you need help, reach out at support at unite-group dot in. Welcome to CCW ERP.`;
+Now verify. Go to Settings, Integrations in CCW. Test Shopify by clicking Import Orders — confirm a test order appears. Check Xero shows as Connected. Then open your CCW dashboard — if it loads without errors, everything is flowing correctly.
+
+That's it. You're live. From tonight, Shopify orders will sync automatically into CCW. Xero invoices will sync every evening at eight PM. Your dashboard updates in real time, and your AI assistant is ready. Open your CCW dashboard and start exploring.`;
 
 // ── Audio Generation ──────────────────────────────────────────────────────────
 

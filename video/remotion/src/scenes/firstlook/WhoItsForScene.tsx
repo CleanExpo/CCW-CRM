@@ -2,9 +2,9 @@ import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion';
 
 const personas = [
-  { icon: '🔧', label: 'Equipment Suppliers', color: '#ffffff' },
-  { icon: '🏗️', label: 'Trade Businesses', color: '#f59e0b' },
-  { icon: '🇦🇺', label: 'Australian SMEs', color: '#3b82f6' },
+  { label: 'Equipment Suppliers', color: '#ffffff' },
+  { label: 'Trade Businesses', color: '#f59e0b' },
+  { label: 'Australian SMEs', color: '#3b82f6' },
 ];
 
 const stats = [
@@ -29,7 +29,7 @@ export const WhoItsForScene: React.FC = () => {
           const opacity = interpolate(frame, [20 + i * 90, 40 + i * 90], [0, 1], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' });
           return (
             <div key={i} style={{ opacity, display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
-              <span style={{ fontSize: 52 }}>{p.icon}</span>
+              <div style={{ width: 6, height: 52, background: p.color, borderRadius: 3, flexShrink: 0 }} />
               <span style={{ fontSize: 46, fontWeight: 800, color: p.color }}>{p.label}</span>
             </div>
           );
