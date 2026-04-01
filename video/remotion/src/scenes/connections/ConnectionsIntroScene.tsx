@@ -2,7 +2,7 @@ import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion';
 
 const services = [
-  { icon: '📦', name: 'Cin7' },
+  { icon: '🛒', name: 'Shopify' },
   { icon: '💼', name: 'Xero' },
   { icon: '🗄️', name: 'Supabase' },
   { icon: '▲', name: 'Vercel' },

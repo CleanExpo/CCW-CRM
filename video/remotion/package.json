@@ -8,7 +8,14 @@
     "build": "remotion render src/index.ts BoardroomVideo out/boardroom.mp4",
     "render": "remotion render src/index.ts BoardroomVideo",
     "render:firstlook": "remotion render src/index.ts FirstLookVideo out/firstlook.mp4",
-    "render:connections": "remotion render src/index.ts ConnectionsGuideVideo out/connections-guide.mp4"
+    "render:connections": "remotion render src/index.ts ConnectionsGuideVideo out/connections-guide.mp4",
+    "render:all": "npm run render:firstlook && npm run render:connections",
+    "generate:audio:firstlook": "node ../../scripts/generate-intro-audio.js firstlook",
+    "generate:audio:connections": "node ../../scripts/generate-intro-audio.js connections",
+    "generate:audio:all": "node ../../scripts/generate-intro-audio.js all",
+    "produce:firstlook": "npm run generate:audio:firstlook && npm run render:firstlook",
+    "produce:connections": "npm run generate:audio:connections && npm run render:connections",
+    "produce:all": "npm run generate:audio:all && npm run render:all"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",

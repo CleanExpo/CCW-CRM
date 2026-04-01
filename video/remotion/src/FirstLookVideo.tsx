@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, Sequence } from 'remotion';
+import { AbsoluteFill, Audio, Sequence, staticFile } from 'remotion';
 import { HeroScene } from './scenes/firstlook/HeroScene';
 import { ProblemScene } from './scenes/firstlook/ProblemScene';
 import { ModuleShowcaseScene } from './scenes/firstlook/ModuleShowcaseScene';
@@ -10,9 +10,16 @@ import { GetStartedScene } from './scenes/firstlook/GetStartedScene';
 // 180 seconds @ 30fps = 5400 frames
 export const FIRST_LOOK_TOTAL_FRAMES = 5400;
 
-export const FirstLookVideo: React.FC = () => {
+export interface FirstLookVideoProps {
+  narrationPath?: string;
+}
+
+export const FirstLookVideo: React.FC<FirstLookVideoProps> = ({ narrationPath }) => {
   return (
     <AbsoluteFill>
+      {/* Background narration audio */}
+      {narrationPath && <Audio src={staticFile(narrationPath)} />}
+
       <Sequence from={0} durationInFrames={900}>
         <HeroScene />
       </Sequence>

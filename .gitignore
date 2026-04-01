@@ -167,6 +167,11 @@ backups/
 .planning/linear-sync.mjs
 scripts/linear-project-status.mjs
 
+# Remotion audio files (binary, regenerate with scripts/generate-intro-audio.js)
+video/remotion/public/audio/*.mp3
+# Remotion screenshots are committed (captured by scripts/capture-ccw-screenshots.js)
+# video/remotion/public/images/*.png  <-- intentionally tracked
+
 # Obsidian vault - local only
 .obsidian-vault/.obsidian/workspace*.json
 .obsidian-vault/.obsidian/workspaces.json

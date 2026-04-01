@@ -2,11 +2,11 @@ import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion';
 
 const checks = [
-  { label: 'Cin7: Settings → Integrations → Cin7 → Click "Test Connection"', color: '#f59e0b' },
+  { label: 'Shopify: Settings → Integrations → Shopify → Import Orders → Verify', color: '#96bf48' },
   { label: 'Xero: Settings → Integrations → Xero → Click "Connect Xero"', color: '#10b981' },
   { label: 'Supabase: Dashboard loads without errors ✓', color: '#3ecf8e' },
   { label: 'Backend: Visit [railway-url]/api/health → returns 200 OK', color: '#a855f7' },
-  { label: 'First Sync: Dashboard → Cin7 Sync → Click "Sync Now"', color: '#3b82f6' },
+  { label: 'Products visible in CCW Inventory — data flowing correctly ✓', color: '#3b82f6' },
 ];
 
 export const VerificationScene: React.FC = () => {
@@ -21,7 +21,7 @@ export const VerificationScene: React.FC = () => {
       <div style={{ opacity: titleOpacity, display: 'flex', alignItems: 'center', gap: 16, marginBottom: 60, paddingBottom: 24, borderBottom: '3px solid #3b82f6' }}>
         <span style={{ fontSize: 48 }}>🧪</span>
         <div>
-          <div style={{ fontSize: 18, color: '#3b82f6', fontWeight: 600, letterSpacing: 2 }}>05 / 05</div>
+          <div style={{ fontSize: 18, color: '#3b82f6', fontWeight: 600, letterSpacing: 2 }}>05 / 04</div>
           <div style={{ fontSize: 40, fontWeight: 800, color: '#ffffff' }}>Test Your Connections</div>
         </div>
       </div>
@@ -42,7 +42,7 @@ export const VerificationScene: React.FC = () => {
       </div>
 
       <div style={{ opacity: allGreenOpacity, textAlign: 'center', marginTop: 40, fontSize: 32, fontWeight: 700, color: '#10b981' }}>
-        All 5 green? You're ready. 🚀
+        All green? You're live. 🚀
       </div>
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f59e0b, #10b981, #3ecf8e, #a855f7, #3b82f6)' }} />
     </AbsoluteFill>

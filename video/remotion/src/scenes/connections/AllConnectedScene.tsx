@@ -2,7 +2,7 @@ import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion';
 
 const badges = [
-  { icon: '📦', name: 'Cin7', color: '#f59e0b' },
+  { icon: '🛒', name: 'Shopify', color: '#96bf48' },
   { icon: '💼', name: 'Xero', color: '#10b981' },
   { icon: '🗄️', name: 'Supabase', color: '#3ecf8e' },
   { icon: '▲', name: 'Vercel', color: '#e2e8f0' },
@@ -10,7 +10,7 @@ const badges = [
 ];
 
 const automations = [
-  '🔄 Cin7 sync runs automatically every night at 7pm',
+  '🛒 Shopify orders sync automatically to CCW ERP',
   '💼 Xero invoices sync every night at 8pm',
   '📊 Dashboard updates in real-time',
   '🤖 AI Assistant is ready to answer questions',
