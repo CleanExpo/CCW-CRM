@@ -33,7 +33,7 @@ bcrypt==5.0.0
     # via passlib
 blinker==1.9.0
     # via fastapi-mail
-certifi==2026.1.4
+certifi==2026.2.25
     # via
     #   httpcore
     #   httpx
