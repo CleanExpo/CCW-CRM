@@ -12,9 +12,9 @@
 | YouTube uploads (10/27 done) | BLOCKED (channel limit) | UNI-1751 |
 | ElevenLabs audio regeneration | DONE | UNI-1752 |
 | YouTube OAuth → Unite-Group Nexus | DONE | — |
-| Supabase JWT hook activation | BLOCKED (manual) | UNI-1753 |
-| Leaked password protection | BLOCKED (manual) | — |
-| YouTube channel phone verification | BLOCKED (manual) | — |
+| Supabase JWT hook activation | DONE | UNI-1753 |
+| Leaked password protection | N/A (custom auth, not applicable) | — |
+| Vercel YOUTUBE_CHANNEL_ID env var | DONE | — |
 
 ## Completed This Session (2026-04-01 continued)
 
@@ -49,12 +49,11 @@
 ## Blockers (User Action Required)
 
 1. ~~**ELEVENLABS_API_KEY**~~ — DONE: audio generated via .env.local (pulled from Vercel)
-2. **Supabase JWT hook** — Dashboard > Auth > Hooks > enable `custom_access_token_hook`
-3. **Leaked password protection** — Dashboard > Auth > Password Security > enable
-4. **YouTube channel verification** — `uploadLimitExceeded` = channel-level cap. Go to YouTube Studio > Settings > Channel > Feature eligibility > Verify phone number. This lifts the upload limit.
-5. **YouTube uploads (17 pending)** — CRON retries daily at 9:07 AM. Verification will unblock all 17.
-6. **Vercel env** — set `YOUTUBE_CHANNEL_ID=UChN8nQFig73BoefyMBIsN-w`
-7. ~~**YouTube OAuth credentials**~~ — DONE: migrated to Unite-Group Nexus (`gen-lang-client-0999991687`)
+1. ~~**Supabase JWT hook**~~ — DONE: `public.custom_access_token_hook` enabled 2026-04-01
+2. ~~**Leaked password protection**~~ — N/A: project uses custom JWT auth, not Supabase native auth
+3. ~~**Vercel env**~~ — DONE: `YOUTUBE_CHANNEL_ID=UChN8nQFig73BoefyMBIsN-w` set via CLI 2026-04-01
+4. ~~**YouTube OAuth credentials**~~ — DONE: migrated to Unite-Group Nexus (`gen-lang-client-0999991687`)
+5. **YouTube uploads (17 pending)** — CRON retries daily at 9:07 AM. Channel daily limit resets midnight Pacific.
 
 ## Notes for Next Context Window
 
