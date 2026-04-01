@@ -1,6 +1,40 @@
-# Current State — 2026-03-31T22:00:00
+# Current State — 2026-04-01T13:00:00
 
-## Active Sprint: COMPLETE — All CCW-ERP/CRM Linear Issues Resolved
+## Active Sprint: Video Pipeline + Production Finish Line
+
+### Session 3 (2026-04-01)
+
+#### Video Pipeline — Remotion Scene Redesign (DONE)
+- [x] FirstLookVideo: all 6 scenes redesigned — emoji icons replaced with styled elements (colored dots, letter-circles, step numbers, CSS geometric shapes, screenshot-driven layouts)
+- [x] ConnectionsGuideVideo: Supabase fully removed (CCW's infrastructure, not client-facing). Now 2-connection guide: Shopify + Xero only
+- [x] Narration scripts rewritten: FirstLook synced to scene durations, Connections updated for 2-connection flow
+- [x] Boardroom scenes (3): BuildStatusScene, CTAScene, MoonShotScene — emoji-free
+- [x] Onboarding scenes (3): GoLiveScene, ConnectionSetupScene, RequirementsScene — emoji-free with SVG icons
+
+#### YouTube Channel ID Fixed (DONE — UNI-1747)
+- [x] DemoVideoBanner.tsx, youtube_upload.py, video-registry.json — all set to `UChN8nQFig73BoefyMBIsN-w`
+
+#### YouTube Uploads — 10/26 done, 16 pending (UNI-1751)
+- Quota-gated: resets midnight Pacific daily. CRON job at 7:07pm AEST handles retry.
+
+#### Git: 2 commits pushed to `fix/railway-cache-auth-500`
+- `9c7a6d5` — feat(video): redesign Remotion scenes (12 files)
+- `b3d4f20` — feat(video): complete emoji removal, fix YouTube channel ID (10 files)
+- .gitignore updated for YouTube tokens, HeyGen sessions, gstack cache
+
+#### Linear Issues Created
+- UNI-1751: Upload remaining 16 YouTube videos (High)
+- UNI-1752: Regenerate ElevenLabs audio (Medium — needs API key)
+- UNI-1753: Activate Supabase JWT hook (Urgent — manual)
+
+#### Blockers (user-action required)
+1. ELEVENLABS_API_KEY — not in any .env file, needed for audio regeneration
+2. Supabase JWT hook — manual activation in Dashboard
+3. YouTube quota — daily reset, CRON handles automatically
+
+---
+
+## Previous Sprint: COMPLETE — All CCW-ERP/CRM Linear Issues Resolved
 
 ### Session 2 Additions (2026-03-31 evening)
 
