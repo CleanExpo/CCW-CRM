@@ -102,6 +102,7 @@ from .routes.integrations import (
     cin7_sync,
     cin7_webhooks,
     elevenlabs,
+    heygen,
     marketplace,
     sendgrid,
     shopify,
@@ -571,6 +572,7 @@ app.include_router(shopify.router, tags=["Shopify Integration"])
 app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
+app.include_router(heygen.router, tags=["HeyGen Integration"])
 app.include_router(ap2.router, tags=["AP2 Integration"])
 app.include_router(marketplace.router, tags=["Marketplace Integration"])
 app.include_router(cin7.router, tags=["Cin7 Integration"])

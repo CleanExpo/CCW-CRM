@@ -30,7 +30,7 @@ npm install @anthropic-ai/sdk
 
 | Model ID | Alias | Description |
 |----------|-------|-------------|
-| `claude-sonnet-4-20250514` | `claude-sonnet-4-0` | Fast, balanced performance |
+| `claude-sonnet-4-6` | `claude-sonnet-4-6` | Fast, balanced performance |
 | `claude-opus-4-20250514` | `claude-opus-4-0` | Powerful reasoning |
 
 ### Claude 3.7 Models
@@ -43,8 +43,8 @@ npm install @anthropic-ai/sdk
 
 | Model ID | Alias |
 |----------|-------|
-| `claude-3-5-haiku-20241022` | `claude-3-5-haiku-latest` |
-| `claude-3-5-sonnet-20241022` | `claude-3-5-sonnet-latest` (deprecated) |
+| `claude-haiku-4-5-20251001` | `claude-haiku-4-5` |
+| `claude-sonnet-4-6` | `claude-sonnet-4-6` |
 
 ### Pricing
 

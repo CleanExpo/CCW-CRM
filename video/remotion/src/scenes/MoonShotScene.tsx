@@ -74,7 +74,40 @@ export const MoonShotScene: React.FC<MoonShotSceneProps> = ({ moonShot }) => {
           The Moon Shooter · Speaks Last
         </div>
 
-        <div style={{ fontSize: 64, marginBottom: 32 }}>🚀</div>
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            marginBottom: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+          }}
+        >
+          {/* Upward arrow / launch indicator */}
+          <div
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: '20px solid transparent',
+              borderRight: '20px solid transparent',
+              borderBottom: '32px solid #818cf8',
+              position: 'absolute',
+              top: 0,
+            }}
+          />
+          <div
+            style={{
+              width: 12,
+              height: 28,
+              background: '#818cf8',
+              borderRadius: '0 0 4px 4px',
+              position: 'absolute',
+              bottom: 4,
+            }}
+          />
+        </div>
 
         <h2
           style={{

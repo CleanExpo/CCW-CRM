@@ -5,6 +5,9 @@
 import React from 'react';
 import { Composition } from 'remotion';
 import { BoardroomVideo } from './BoardroomVideo';
+import { OnboardingVideo, ONBOARDING_TOTAL_FRAMES } from './OnboardingVideo';
+import { FirstLookVideo, FIRST_LOOK_TOTAL_FRAMES } from './FirstLookVideo';
+import { ConnectionsGuideVideo, CONNECTIONS_TOTAL_FRAMES } from './ConnectionsGuideVideo';
 import type { BoardroomVideoProps } from './types';
 
 // Default props for Remotion Studio preview
@@ -39,14 +42,43 @@ const TOTAL_FRAMES = VIDEO_FPS * 150;
 
 export const Root: React.FC = () => {
   return (
-    <Composition
-      id="BoardroomVideo"
-      component={BoardroomVideo}
-      durationInFrames={TOTAL_FRAMES}
-      fps={VIDEO_FPS}
-      width={VIDEO_WIDTH}
-      height={VIDEO_HEIGHT}
-      defaultProps={DEFAULT_PROPS}
-    />
+    <>
+      <Composition
+        id="BoardroomVideo"
+        component={BoardroomVideo}
+        durationInFrames={TOTAL_FRAMES}
+        fps={VIDEO_FPS}
+        width={VIDEO_WIDTH}
+        height={VIDEO_HEIGHT}
+        defaultProps={DEFAULT_PROPS}
+      />
+      <Composition
+        id="OnboardingVideo"
+        component={OnboardingVideo}
+        durationInFrames={ONBOARDING_TOTAL_FRAMES}
+        fps={VIDEO_FPS}
+        width={VIDEO_WIDTH}
+        height={VIDEO_HEIGHT}
+        defaultProps={{}}
+      />
+      <Composition
+        id="FirstLookVideo"
+        component={FirstLookVideo}
+        durationInFrames={FIRST_LOOK_TOTAL_FRAMES}
+        fps={VIDEO_FPS}
+        width={VIDEO_WIDTH}
+        height={VIDEO_HEIGHT}
+        defaultProps={{ narrationPath: '' }}
+      />
+      <Composition
+        id="ConnectionsGuideVideo"
+        component={ConnectionsGuideVideo}
+        durationInFrames={CONNECTIONS_TOTAL_FRAMES}
+        fps={VIDEO_FPS}
+        width={VIDEO_WIDTH}
+        height={VIDEO_HEIGHT}
+        defaultProps={{ narrationPath: '' }}
+      />
+    </>
   );
 };

@@ -1,3 +1,8 @@
+---
+name: Discovery Agent
+description: Audits codebase and produces gap analysis reports
+---
+
 # DISCOVERY AGENT
 
 **Version**: 1.0.0

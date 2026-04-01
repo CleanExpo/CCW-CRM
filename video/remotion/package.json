@@ -6,7 +6,18 @@
   "scripts": {
     "start": "remotion studio",
     "build": "remotion render src/index.ts BoardroomVideo out/boardroom.mp4",
-    "render": "remotion render src/index.ts BoardroomVideo"
+    "render": "remotion render src/index.ts BoardroomVideo",
+    "render:firstlook": "remotion render src/index.ts FirstLookVideo out/firstlook.mp4",
+    "render:connections": "remotion render src/index.ts ConnectionsGuideVideo out/connections-guide.mp4",
+    "render:firstlook:audio": "remotion render src/index.ts FirstLookVideo out/firstlook.mp4 --props=props/firstlook-audio.json",
+    "render:connections:audio": "remotion render src/index.ts ConnectionsGuideVideo out/connections-guide.mp4 --props=props/connections-audio.json",
+    "render:all": "npm run render:firstlook && npm run render:connections",
+    "generate:audio:firstlook": "node ../../scripts/generate-intro-audio.js firstlook",
+    "generate:audio:connections": "node ../../scripts/generate-intro-audio.js connections",
+    "generate:audio:all": "node ../../scripts/generate-intro-audio.js all",
+    "produce:firstlook": "npm run generate:audio:firstlook && npm run render:firstlook:audio",
+    "produce:connections": "npm run generate:audio:connections && npm run render:connections:audio",
+    "produce:all": "npm run generate:audio:all && npm run render:firstlook:audio && npm run render:connections:audio"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",

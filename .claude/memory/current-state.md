@@ -1,136 +1,79 @@
-# Current State — 2026-03-31T22:00:00
+# Current State — 2026-04-01T15:00:00
 
-## Active Sprint: COMPLETE — All CCW-ERP/CRM Linear Issues Resolved
+## Active Sprint: Video Pipeline — COMPLETE (Session 3)
+
+### Session 3 Completion Status (2026-04-01)
+
+#### Video Pipeline — ALL DONE
+- [x] FirstLookVideo: 6 scenes — emoji-free (colored dots, letter-circles, step numbers, CSS shapes, screenshot-driven)
+- [x] ConnectionsGuideVideo: 2-connection flow (Shopify + Xero only — Supabase removed, CCW infrastructure)
+- [x] Narration scripts: FirstLook synced to scene durations, Connections updated for 2-connection flow
+- [x] Boardroom scenes (3): BuildStatusScene, CTAScene, MoonShotScene — emoji-free
+- [x] Onboarding scenes (3): GoLiveScene, ConnectionSetupScene, RequirementsScene — emoji-free with SVG icons
+- [x] Videos rendered: `firstlook.mp4` + `connections-guide.mp4` in `data/heygen/downloads/`
+
+#### YouTube Channel ID — FIXED (UNI-1747 — Done)
+- [x] DemoVideoBanner.tsx, youtube_upload.py — both set to `UChN8nQFig73BoefyMBIsN-w`
+
+#### YouTube Uploads — 10/26 done, 16 pending (UNI-1751 — Backlog)
+- Quota-gated: ~6 uploads/day. CRON job at 9:07 AM retries daily.
+- Pending: connections-guide, first-look, overview, pos, products, purchase-orders, quotes, reports, settings, shipments, suppliers, tradies, vs-spreadsheets, warehouse, workflows, workshop
+
+#### TypeScript — ✅ 0 errors
+- `pnpm turbo run type-check` — 2 packages checked, 0 errors (cached)
+
+#### Production Site — ✅ VERIFIED
+- Dashboard: `ccw-crm-web.vercel.app/dashboard` — loads correctly
+- All 6 KPIs rendering: $0.00 Revenue, 5 Active Orders, 60 SKUs, 35 Customers, 12 Low Stock, 7 Pending Quotes
+- Full navigation sidebar with all modules visible
+- Revenue Trend, Stock Health, Sales by Category all rendering
+
+#### Supabase Security Advisors (documented, not blocking)
+- **INFO**: `alembic_version` + `carrier_configurations` — RLS enabled, no policies (non-PII system tables, acceptable)
+- **WARN**: 20 operational tables with `USING (true)` policies — Phase 3 RLS (acceptable for single-tenant MVP, Phase 4 future work)
+- **WARN**: `auth_leaked_password_protection` disabled — **MANUAL ACTION**: Supabase Dashboard → Auth → Password Security → enable
+
+#### Git — Branch: fix/railway-cache-auth-500
+- `9c7a6d5` — feat(video): redesign Remotion scenes (12 files)
+- `b3d4f20` — feat(video): complete emoji removal, fix YouTube channel ID (10 files)
+- `735573c` — chore(git): exclude heygen downloads, remotion artifacts (latest)
+- All pushed to `origin/fix/railway-cache-auth-500`
+
+#### Linear Issues
+- UNI-1747 — Done (YouTube channel ID fixed)
+- UNI-1751 — Backlog (Upload 16 remaining YouTube videos, High)
+- UNI-1752 — Backlog (Regenerate ElevenLabs audio, Medium — needs API key)
+- UNI-1753 — Backlog (Activate Supabase JWT hook, Urgent — manual)
+
+---
+
+## BLOCKERS (user-action required)
+
+1. **ELEVENLABS_API_KEY** — not in any .env. Run: `ELEVENLABS_API_KEY=sk_... node scripts/generate-intro-audio.js all`
+2. **Supabase JWT hook** — Manual: Dashboard → Authentication → Hooks → enable `custom_access_token_hook`
+3. **Supabase leaked password protection** — Manual: Dashboard → Auth → Password Security → enable
+4. **YouTube quota** — 16 videos pending. CRON handles daily retry at 9:07 AM.
+5. **Vercel env var** — Set `YOUTUBE_CHANNEL_ID=UChN8nQFig73BoefyMBIsN-w` in Vercel dashboard
+
+---
+
+## Previous Sprint: COMPLETE — All CCW-ERP/CRM Linear Issues Resolved
 
 ### Session 2 Additions (2026-03-31 evening)
 
 #### Linear Housekeeping — All Issues Marked Done
-- [x] UNI-1691/1693/1694/1695/1716/1138/1139/1140/1141/1137/1135/1136/1134 — marked Done (correct `state` param)
+- [x] UNI-1691/1693/1694/1695/1716/1138/1139/1140/1141/1137/1135/1136/1134 — marked Done
 - [x] UNI-1712/1711/1709/1715/1714/1713/1696/1708 — previously completed, now marked Done
 
 #### UNI-1692: Superpowers Skill Bindings (DONE)
 - [x] `scripts/boardroom/orchestrator.js` — all 10 board members + Witness get `superpowers: []` field
-- [x] Each system prompt includes "Available Superpowers:" section with invocation guidance
 - [x] Commit `9ad7a73` pushed to `ai-updates`
 
 #### UNI-1697: RLS Security (DONE)
-- [x] pg_trgm moved from public → extensions schema (migration: `uni_1697_move_pgtrgm_to_extensions_schema`)
-- [x] 13 customer PII tables: org-scoped RLS already deployed in previous session
-- [x] 20 operational tables: acceptable risk for single-tenant MVP (no org_id, locked models)
-- ⚠️ MANUAL ACTION STILL NEEDED: Enable leaked password protection in Supabase Auth settings
-
-#### Supabase Migration Applied
-- `uni_1697_move_pgtrgm_to_extensions_schema` — pg_trgm now in extensions schema
-
----
-
-## Active Sprint: COMPLETE — Boardroom CRON v2 + Agent Teams + CLAUDE.md Governance Shipped
-
----
-
-## COMPLETED THIS SESSION (2026-03-31)
-
-### Boardroom CRON v2 — gstack Integrations (UNI-1691/1693/1694/1695)
-- [x] UNI-1691: `scripts/boardroom/browse-competitive.js` — Playwright competitor scrape (step 03b)
-- [x] UNI-1693: `scripts/boardroom/security-audit.js` — OWASP/secrets/deps/privacy audit (step 10)
-- [x] UNI-1694: `scripts/boardroom/qa-check.js` — full browser QA suite (step 18a)
-- [x] UNI-1695: `scripts/boardroom/retro.js` — post-session retrospective → cycle_complete.json (step 18c)
-- [x] UNI-1140: `scripts/boardroom/claudemd-audit.js` — fortnightly CLAUDE.md health check (Mondays)
-- [x] `scripts/boardroom/orchestrator.js` updated — all 5 new modules integrated
-
-### CLAUDE.md Governance (UNI-1138/1139/1140/1141/1716)
-- [x] UNI-1141: `.claude/CLAUDE.md` updated to v4.1 — Agent Teams, agent-browser, CRON v2 sections
-- [x] UNI-1716: `.claude/memory/CLAUDE-SYNC.md` — Chat → Cowork → Code v2.1.86 architecture
-- [x] UNI-1138: `.claude/memory/CLAUDEMD-MASTER-TEMPLATE.md` — master template for all projects
-- [x] UNI-1139: `.claude/memory/CLAUDEMD-GOVERNANCE.md` — inventory, standards, audit schedule
-
-### Agent Teams + agent-browser Architecture (UNI-1134/1135/1136/1137)
-- [x] UNI-1137: `.claude/memory/AGENT-TEAMS-ARCHITECTURE.md` — experimental parallel agent plan
-- [x] UNI-1135: `.claude/memory/AGENT-BROWSER-INTEGRATION.md` — AI sidebar for all 7 portals
-- [x] UNI-1136: `.claude/memory/AGENT-TEAMS-BROWSER-COMBINED.md` — combined architecture
-- [x] UNI-1134: `.claude/memory/TeammateIdle.hook.md` + `TaskCompleted.hook.md` — quality gate hooks
-
-### Commit & Push
-- [x] Commit `b14921d` — all work committed to main, pushed to `ai-updates`
-- [x] TypeScript: ✅ zero errors
-
----
-
-## COMPLETED PREVIOUS SESSION (2026-03-30)
-
-### Database Security (Supabase — project vwfgksqkajnpfjospbpe)
-- [x] UNI-1699: Auth audit — app uses custom JWT (python-jose), NOT Supabase native auth. Backend uses service_role SQLAlchemy connection → RLS bypassed at DB level (by design for now)
-- [x] UNI-1705: Secured `api_usage_summary` view (SECURITY INVOKER + RLS on api_usage table)
-- [x] UNI-1698: Added missing FK indexes: `order_activity.organization_id`, `order_items.product_id`, `suppliers.organization_id`, `purchase_orders.organization_id`
-- [x] UNI-1702: Backfilled `organization_id` on all NULL rows across 11 core tables
-- [x] UNI-1701: Created `custom_access_token_hook()` Supabase function to inject `org_id` into JWT claims — **⚠️ MANUAL STEP REQUIRED**: Activate at Supabase Dashboard → Authentication → Hooks → "Customize Access Token (JWT) Claims" → select `public.custom_access_token_hook`
-- [x] UNI-1703/1704: All 39 CCW project tables now have RLS enabled. Org-scoped policies deployed on suppliers, purchase_orders, and 12 more tables
-
-### Code Changes
-- [x] UNI-1709: Stripe webhook receiver — already implemented in previous session (`/api/webhooks/stripe`)
-- [x] UNI-1711: `/settings/billing` dashboard page — SubscriptionCard, PaymentMethodsList, InvoiceHistory
-- [x] UNI-1712: Backend URL centralized — `apps/web/lib/api/backend-url.ts` with `getBackendUrl()` function
-- [x] UNI-1691-1695: All board member agents verified — Superpowers bindings already correct
-- [x] UNI-1696: CLAUDE.md v4.0 — already updated in previous session
-
-### Documentation
-- [x] UNI-1708: `docs/xero-setup-guide.md` — Updated CCW-facing Xero setup guide
-- [x] UNI-1713: `docs/nightly-sync-verification.md` — Operator-facing sync guide
-- [x] UNI-1714: `docs/smoke-test-checklist.md` — 15-point post-deploy checklist
-- [x] UNI-1715: `docs/production-runbook.md` — Full ops runbook for CCW handoff
-- [x] UNI-1688: `docs/privacy-architecture.md` — AU Privacy Act 2024 compliance framework
-
----
-
-## BLOCKED / DEFERRED
-
-### UNI-1700: Remove hashed_password from public.users
-**Status**: BLOCKED — locked files
-**Reason**: auth requires `demo_auth.py` (DO NOT MODIFY) + `middleware.ts` (DO NOT MODIFY). These files depend on `hashed_password`.
-**Mitigation**: Users table now has RLS enabled. `users_own_profile` policy uses `auth_id = auth.uid()` — since the app uses custom JWT (not Supabase native auth), `auth.uid()` returns NULL for all requests, effectively blocking direct Supabase anon-key access to hashed_passwords. Service role (backend) still accesses it through SQLAlchemy.
-**Future path**: Requires full auth migration: custom JWT → Supabase native auth. Out of scope for current sprint.
-
----
-
-## COMMITS THIS SESSION (pushed to ai-updates)
-
-- `cc908a5`: feat(billing): add /settings/billing dashboard page (UNI-1711)
-- `f10b16a`: feat(UNI-1712): centralize backend URL config with getBackendUrl()
-- `4e78190`: chore(memory): sync current-state.md with Boardroom Linear tasks
-- `970daa8`: docs: complete MVP Go-Live + Privacy Act documentation suite
-
----
-
-## SUPABASE MIGRATIONS APPLIED (CCWiCRM-ERP — vwfgksqkajnpfjospbpe)
-
-- `uni_1705_secure_api_usage_view` — SECURITY INVOKER view + RLS on api_usage
-- `uni_1698_index_fk_columns` — 4 new FK indexes
-- `uni_1702_backfill_org_id_all_tables` — org_id backfill on 11 tables
-- `uni_1701_supabase_jwt_org_claim_hook` — JWT claim hook function (activation: Supabase Dashboard)
-- `uni_1703_enable_rls_on_remaining_tables` + `uni_1703_rls_remaining_tables_fixed` — 15+ tables with RLS policies
-
----
-
-## NEXT ACTIONS FOR CCW
-
-1. **URGENT**: Activate JWT hook in Supabase Dashboard:
-   → Dashboard → Authentication → Hooks → "Customize Access Token (JWT) Claims" → `public.custom_access_token_hook`
-
-2. **URGENT**: Set Xero env vars in Railway (see docs/xero-setup-guide.md):
-   → `XERO_CLIENT_ID`, `XERO_CLIENT_SECRET`, `XERO_REDIRECT_URI`
-
-3. **REQUIRED BEFORE GO-LIVE**: Run smoke test checklist (docs/smoke-test-checklist.md)
-
-4. **FUTURE**: Auth migration (custom JWT → Supabase native) to fully resolve UNI-1700
-
----
-
-## REMAINING BACKLOG (lower priority, future sprint)
-
-- UNI-1672: YouTube channel setup (manual CCW action)
-- UNI-1695: /retro feedback loop in CRON post-session
-- UNI-1693: /cso security audit in CRON cycle
-- UNI-1694: /qa browser testing in CRON cycle
+- [x] pg_trgm moved from public → extensions schema
+- [x] 13 customer PII tables: org-scoped RLS deployed
+- [x] 20 operational tables: acceptable risk for single-tenant MVP
+- ⚠️ MANUAL: Enable leaked password protection in Supabase Auth settings
 
 ---
 
@@ -147,4 +90,4 @@
 - Database: PostgreSQL 15 — Supabase Cloud (vwfgksqkajnpfjospbpe, ap-southeast-2)
 - Package Manager: pnpm (frontend), uv (backend)
 - AI Tooling: Superpowers (14 skills) + gstack (29 commands, Bun 1.3.11)
-- Branch: ai-updates → main → CleanExpo/CCW-CRM
+- Branch: fix/railway-cache-auth-500 → main → CleanExpo/CCW-CRM
