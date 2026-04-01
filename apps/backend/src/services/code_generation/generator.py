@@ -92,7 +92,7 @@ class CodeGenerator:
     project_root: Path
     anthropic_api_key: str | None = None
     model: str = "claude-opus-4-6"  # Claude Opus 4-6
-    fallback_model: str = "claude-haiku-4-20250910"  # Claude Haiku
+    fallback_model: str = "claude-haiku-4-5-20251001"  # Claude Haiku 4.5
     max_retries: int = 2
 
     def __post_init__(self):

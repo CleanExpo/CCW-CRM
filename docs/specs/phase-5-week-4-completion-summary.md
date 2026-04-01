@@ -640,7 +640,7 @@ docs/
 ## 🙏 Acknowledgments
 
 **Built with**:
-- Claude Sonnet 4.5 (claude-sonnet-4-20250514)
+- Claude Sonnet 4.6 (claude-sonnet-4-6)
 - Python 3.12+
 - Anthropic API
 - pytest, Pydantic, FastAPI

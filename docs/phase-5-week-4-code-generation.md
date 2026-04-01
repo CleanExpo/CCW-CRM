@@ -143,7 +143,7 @@ Output:
 │  │ • Linting      │                      │ Claude Sonnet  │        │
 │  │ • Type check   │                      │ 4.5 (model:    │        │
 │  │ • Security     │                      │ claude-sonnet- │        │
-│  │ • Formatting   │                      │ 4-20250514)    │        │
+│  │ • Formatting   │                      │ 4-6)           │        │
 │  └────────────────┘                      └────────────────┘        │
 │                                                                       │
 └─────────────────────────────────────────────────────────────────────┘
@@ -939,8 +939,8 @@ ANTHROPIC_API_KEY=sk-ant-...    # Required for LLM calls
 generator = CodeGenerator(
     project_root=Path.cwd(),
     anthropic_api_key="sk-ant-...",
-    model="claude-sonnet-4-20250514",      # Default: Sonnet 4.5
-    fallback_model="claude-haiku-4-20250910",  # Fallback: Haiku
+    model="claude-sonnet-4-6",      # Default: Sonnet 4.6
+    fallback_model="claude-haiku-4-5-20251001",  # Fallback: Haiku
     max_retries=2                          # API retry count
 )
 ```
