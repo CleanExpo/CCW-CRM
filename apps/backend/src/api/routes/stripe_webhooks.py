@@ -14,9 +14,10 @@ processing occurs. Unsigned or tampered requests are rejected with 400.
 """
 from __future__ import annotations
 
+import json as _json
 import os
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Any
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -86,7 +87,7 @@ async def stripe_webhook(
 # ---------------------------------------------------------------------------
 
 
-def _verify_signature(payload: bytes, signature: str) -> dict | None:
+def _verify_signature(payload: bytes, signature: str) -> dict[Any, Any] | None:
     """Verify Stripe webhook signature and return parsed event.
 
     Returns None if verification fails (missing secret, bad signature, etc.).
@@ -97,10 +98,9 @@ def _verify_signature(payload: bytes, signature: str) -> dict | None:
             "Set the env var in production."
         )
         # In development without a secret, attempt to parse payload anyway
-        import json
-
         try:
-            return json.loads(payload)
+            result: dict[Any, Any] = _json.loads(payload)
+            return result
         except Exception:
             return None
 

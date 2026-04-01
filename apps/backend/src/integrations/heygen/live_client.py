@@ -44,9 +44,10 @@ class HeyGenLiveClient:
                     pass
                 logger.error("heygen_api_error", status=response.status_code, url=url)
                 raise HeyGenAPIError(error_msg, response.status_code)
-            data = response.json()
+            data: dict[str, Any] = response.json()
             # HeyGen wraps responses in {"data": {...}}
-            return data.get("data") or data  # type: ignore[return-value]
+            result: dict[str, Any] = data.get("data") or data
+            return result
 
     async def generate_video(
         self,
