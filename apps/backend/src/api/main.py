@@ -36,6 +36,7 @@ from .routes import (
     backorders,
     bank_feeds,
     billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
+    boardroom,  # Boardroom AI session endpoint (4x daily CRON)
     certifications,  # IICRC/ISSA/ARCR certification tracking (Sprint 2)
     config,
     contacts,  # CRM contacts
@@ -72,6 +73,7 @@ from .routes import (
     reconciliation_dashboard,
     service_requests,
     shipments,
+    stripe_webhooks,  # Stripe webhook receiver
     suppliers,
     team,
     translations,
@@ -458,10 +460,8 @@ app.include_router(service_requests.router, tags=["Service Requests"])
 # Webhooks
 app.include_router(webhooks.router, tags=["Webhooks"])
 # Boardroom AI session endpoint (4x daily CRON)
-from .routes import boardroom as boardroom_routes
-app.include_router(boardroom_routes.router, tags=["Boardroom"])
+app.include_router(boardroom.router, tags=["Boardroom"])
 # Stripe webhook receiver (invoice.paid, invoice.payment_failed, subscription.updated, checkout)
-from .routes import stripe_webhooks  # noqa: E402
 app.include_router(stripe_webhooks.router, tags=["Stripe Webhooks"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])

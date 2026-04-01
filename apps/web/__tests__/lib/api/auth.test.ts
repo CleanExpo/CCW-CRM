@@ -35,6 +35,15 @@ const mockGet = vi.mocked(apiClient.get);
 const mockPost = vi.mocked(apiClient.post);
 const mockPatch = vi.mocked(apiClient.patch);
 
+// Helper to create a mock Response for global fetch (used by authApi.login and logout)
+function mockFetchResponse(body: unknown, ok = true) {
+  return Promise.resolve({
+    ok,
+    status: ok ? 200 : 400,
+    json: () => Promise.resolve(body),
+  } as Response);
+}
+
 const mockUser = {
   id: 'user-1',
   email: 'admin@demo.com',
@@ -68,32 +77,37 @@ beforeEach(() => {
     setItem: vi.fn(),
     removeItem: vi.fn(),
   });
+  // Reset fetch mock
+  vi.stubGlobal('fetch', vi.fn());
 });
 
 describe('authApi.login (FastAPI mode)', () => {
   it('calls POST /api/auth/login with credentials', async () => {
-    mockPost.mockResolvedValue(mockLoginResponse);
+    vi.mocked(fetch).mockReturnValue(mockFetchResponse(mockLoginResponse));
     await authApi.login({ email: 'admin@demo.com', password: 'demo123' });
-    expect(mockPost).toHaveBeenCalledWith('/api/auth/login', {
-      email: 'admin@demo.com',
-      password: 'demo123',
-    });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/auth/login',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ email: 'admin@demo.com', password: 'demo123' }),
+      })
+    );
   });
 
   it('stores token in localStorage when rememberMe is true', async () => {
-    mockPost.mockResolvedValue(mockLoginResponse);
+    vi.mocked(fetch).mockReturnValue(mockFetchResponse(mockLoginResponse));
     await authApi.login({ email: 'admin@demo.com', password: 'demo123', rememberMe: true });
     expect(localStorage.setItem).toHaveBeenCalledWith('auth_token', 'jwt-token-123');
   });
 
   it('stores token in sessionStorage when rememberMe is false', async () => {
-    mockPost.mockResolvedValue(mockLoginResponse);
+    vi.mocked(fetch).mockReturnValue(mockFetchResponse(mockLoginResponse));
     await authApi.login({ email: 'admin@demo.com', password: 'demo123', rememberMe: false });
     expect(sessionStorage.setItem).toHaveBeenCalledWith('auth_token', 'jwt-token-123');
   });
 
   it('returns the login response', async () => {
-    mockPost.mockResolvedValue(mockLoginResponse);
+    vi.mocked(fetch).mockReturnValue(mockFetchResponse(mockLoginResponse));
     const result = await authApi.login({ email: 'admin@demo.com', password: 'demo123' });
     expect(result.access_token).toBe('jwt-token-123');
     expect(result.user.email).toBe('admin@demo.com');
@@ -115,11 +129,14 @@ describe('authApi.register (FastAPI mode)', () => {
 
 describe('authApi.logout (FastAPI mode)', () => {
   it('clears tokens and calls POST /api/auth/logout', async () => {
-    mockPost.mockResolvedValue(undefined);
+    vi.mocked(fetch).mockReturnValue(mockFetchResponse(undefined));
     await authApi.logout();
     expect(localStorage.removeItem).toHaveBeenCalledWith('auth_token');
     expect(sessionStorage.removeItem).toHaveBeenCalledWith('auth_token');
-    expect(mockPost).toHaveBeenCalledWith('/api/auth/logout');
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/auth/logout',
+      expect.objectContaining({ method: 'POST' })
+    );
   });
 });
 

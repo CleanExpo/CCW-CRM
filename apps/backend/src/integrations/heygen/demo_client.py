@@ -1,7 +1,7 @@
 """HeyGen demo client — returns mock data without making real API calls."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -44,7 +44,7 @@ class HeyGenDemoClient:
             "video_id": video_id,
             "status": "processing",
             "title": title or "Demo Video",
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "demo_mode": True,
         }
 
