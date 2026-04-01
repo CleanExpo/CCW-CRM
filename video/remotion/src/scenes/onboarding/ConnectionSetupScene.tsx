@@ -11,18 +11,86 @@ interface Step {
   number: string;
   service: string;
   color: string;
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   envVars: { key: string; value: string }[];
   instructions: string[];
 }
+
+/* ── Styled icon components (replace all emoji usage) ── */
+
+/** Branded letter-circle: a colored circle with a bold white letter inside */
+const LetterCircle: React.FC<{ letter: string; bg: string }> = ({ letter, bg }) => (
+  <div
+    style={{
+      width: 44,
+      height: 44,
+      borderRadius: '50%',
+      background: bg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: 22,
+      fontWeight: 900,
+      color: '#ffffff',
+      fontFamily: 'Inter, sans-serif',
+      flexShrink: 0,
+    }}
+  >
+    {letter}
+  </div>
+);
+
+/** Geometric database icon: stacked rounded rectangles */
+const DatabaseIcon: React.FC<{ color: string }> = ({ color }) => (
+  <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+    <ellipse cx="22" cy="12" rx="14" ry="6" fill={color} opacity={0.9} />
+    <path d="M8 12v8c0 3.3 6.3 6 14 6s14-2.7 14-6v-8" stroke={color} strokeWidth="2.5" fill="none" />
+    <path d="M8 20v8c0 3.3 6.3 6 14 6s14-2.7 14-6v-8" stroke={color} strokeWidth="2.5" fill="none" />
+    <ellipse cx="22" cy="20" rx="14" ry="6" fill={color} opacity={0.25} />
+  </svg>
+);
+
+/** Geometric box icon: an open-top 3D box shape */
+const BoxIcon: React.FC<{ color: string }> = ({ color }) => (
+  <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+    <rect x="8" y="14" width="28" height="22" rx="3" fill={color} opacity={0.15} stroke={color} strokeWidth="2.5" />
+    <path d="M8 20h28" stroke={color} strokeWidth="2.5" />
+    <path d="M18 14v6" stroke={color} strokeWidth="2.5" />
+    <path d="M26 14v6" stroke={color} strokeWidth="2.5" />
+    <rect x="14" y="8" width="16" height="6" rx="2" fill={color} opacity={0.5} stroke={color} strokeWidth="2" />
+  </svg>
+);
+
+/** Geometric ledger icon: a stylised open book / ledger */
+const LedgerIcon: React.FC<{ color: string }> = ({ color }) => (
+  <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+    <rect x="6" y="8" width="32" height="28" rx="3" fill={color} opacity={0.12} stroke={color} strokeWidth="2.5" />
+    <line x1="22" y1="8" x2="22" y2="36" stroke={color} strokeWidth="2" />
+    <line x1="12" y1="16" x2="19" y2="16" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="12" y1="22" x2="19" y2="22" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="12" y1="28" x2="19" y2="28" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="25" y1="16" x2="32" y2="16" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="25" y1="22" x2="32" y2="22" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="25" y1="28" x2="32" y2="28" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+/** Geometric deploy / arrow-up icon: an upward arrow inside a rounded square */
+const DeployIcon: React.FC<{ color: string }> = ({ color }) => (
+  <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+    <rect x="6" y="6" width="32" height="32" rx="8" fill={color} opacity={0.12} stroke={color} strokeWidth="2.5" />
+    <path d="M22 32V14" stroke={color} strokeWidth="3" strokeLinecap="round" />
+    <path d="M15 21l7-7 7 7" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 const STEPS: Step[] = [
   {
     number: '01',
     service: 'Supabase',
     color: '#3ecf8e',
-    icon: '🗄️',
+    icon: <DatabaseIcon color="#3ecf8e" />,
     title: 'Connect Your Database',
     envVars: [
       { key: 'NEXT_PUBLIC_SUPABASE_URL', value: 'https://xxxx.supabase.co' },
@@ -40,7 +108,7 @@ const STEPS: Step[] = [
     number: '02',
     service: 'Cin7',
     color: '#f59e0b',
-    icon: '📦',
+    icon: <BoxIcon color="#f59e0b" />,
     title: 'Connect Inventory System',
     envVars: [
       { key: 'CIN7_API_URL', value: 'https://inventory.dearsystems.com/ExternalApi/v2' },
@@ -58,7 +126,7 @@ const STEPS: Step[] = [
     number: '03',
     service: 'Xero',
     color: '#10b981',
-    icon: '💼',
+    icon: <LedgerIcon color="#10b981" />,
     title: 'Connect Accounting',
     envVars: [
       { key: 'XERO_CLIENT_ID', value: 'your-xero-client-id' },
@@ -76,7 +144,7 @@ const STEPS: Step[] = [
     number: '04',
     service: 'Vercel + Railway',
     color: '#a855f7',
-    icon: '🚀',
+    icon: <DeployIcon color="#a855f7" />,
     title: 'Deploy to Production',
     envVars: [
       { key: 'NEXT_PUBLIC_BACKEND_URL', value: 'https://your-backend.railway.app' },
@@ -140,7 +208,7 @@ const StepCard: React.FC<{ step: Step; visible: boolean }> = ({ step, visible })
         >
           {step.number}
         </div>
-        <div style={{ fontSize: 32, marginBottom: 8 }}>{step.icon}</div>
+        <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center' }}>{step.icon}</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: step.color, marginBottom: 8 }}>
           {step.service}
         </div>

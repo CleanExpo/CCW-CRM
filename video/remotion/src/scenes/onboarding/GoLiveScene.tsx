@@ -7,11 +7,11 @@ import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 
 const NEXT_STEPS = [
-  { icon: '🎬', text: 'Watch the module walkthrough videos for each section' },
-  { icon: '👥', text: 'Create staff accounts via Settings → Users' },
-  { icon: '🔄', text: 'Run your first Cin7 sync: Settings → Integrations → Cin7 → Sync Now' },
-  { icon: '📊', text: 'Check the Dashboard — your live metrics will appear within minutes' },
-  { icon: '🤖', text: 'Try the AI Assistant for instant inventory + order queries' },
+  { letter: 'W', color: '#3b82f6', text: 'Watch the module walkthrough videos for each section' },
+  { letter: 'U', color: '#8b5cf6', text: 'Create staff accounts via Settings → Users' },
+  { letter: 'S', color: '#06b6d4', text: 'Run your first Cin7 sync: Settings → Integrations → Cin7 → Sync Now' },
+  { letter: 'D', color: '#f59e0b', text: 'Check the Dashboard — your live metrics will appear within minutes' },
+  { letter: 'AI', color: '#10b981', text: 'Try the AI Assistant for instant inventory + order queries' },
 ];
 
 export const GoLiveScene: React.FC = () => {
@@ -82,12 +82,20 @@ export const GoLiveScene: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 80,
             boxShadow: '0 0 60px #10b98166',
             zIndex: 1,
           }}
         >
-          ✓
+          {/* CSS checkmark — no emoji/unicode */}
+          <div
+            style={{
+              width: 48,
+              height: 72,
+              borderRight: '10px solid #ffffff',
+              borderBottom: '10px solid #ffffff',
+              transform: 'rotate(45deg) translate(-6px, -6px)',
+            }}
+          />
         </div>
 
         <div
@@ -166,7 +174,25 @@ export const GoLiveScene: React.FC = () => {
                 border: '1px solid rgba(255,255,255,0.06)',
               }}
             >
-              <span style={{ fontSize: 24, flexShrink: 0 }}>{step.icon}</span>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  background: `${step.color}22`,
+                  border: `2px solid ${step.color}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: step.letter.length > 1 ? 12 : 14,
+                  fontWeight: 800,
+                  color: step.color,
+                  flexShrink: 0,
+                  letterSpacing: -0.5,
+                }}
+              >
+                {step.letter}
+              </div>
               <span style={{ fontSize: 17, color: '#cbd5e1', lineHeight: 1.4 }}>{step.text}</span>
             </div>
           ))}

@@ -14,7 +14,7 @@ SETUP (one time):
   6. Run: python scripts/youtube_upload.py --upload
 
 ENV (optional overrides):
-  YOUTUBE_CHANNEL_ID   — default: UCLqS3mSp4DflzZd9IILXLdQ
+  YOUTUBE_CHANNEL_ID   — default: UChN8nQFig73BoefyMBIsN-w
   YOUTUBE_PLAYLIST_ID  — if you want videos added to a playlist
 """
 
@@ -36,7 +36,7 @@ OAUTH_CREDS   = REPO_ROOT / "scripts" / "youtube_oauth_client.json"
 TOKEN_FILE    = REPO_ROOT / "scripts" / ".youtube_token.json"
 UPLOAD_LOG    = REPO_ROOT / "data" / "heygen" / "youtube-upload-log.json"
 
-CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "UCLqS3mSp4DflzZd9IILXLdQ")
+CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "UChN8nQFig73BoefyMBIsN-w")
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload",
           "https://www.googleapis.com/auth/youtube"]
 

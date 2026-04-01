@@ -15,7 +15,7 @@ import { DemoVideoLink } from "./DemoVideoLink";
  * Set youtubeId once the video has been uploaded — the banner auto-updates.
  * Until then, the banner links directly to the channel's video library.
  */
-export const YOUTUBE_CHANNEL_ID = "UCLqS3mSp4DflzZd9IILXLdQ";
+export const YOUTUBE_CHANNEL_ID = "UChN8nQFig73BoefyMBIsN-w";
 export const YOUTUBE_CHANNEL_URL = `https://www.youtube.com/channel/${YOUTUBE_CHANNEL_ID}`;
 
 const VIDEO_REGISTRY: Record<

@@ -29,7 +29,24 @@ export const CTAScene: React.FC<CTASceneProps> = ({ nextSessionDate }) => {
       }}
     >
       <div style={{ opacity, textAlign: 'center' }}>
-        <div style={{ fontSize: 48, marginBottom: 24 }}>🔔</div>
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 24,
+            fontSize: 22,
+            fontWeight: 800,
+            color: '#fff',
+            boxShadow: '0 0 24px #f59e0b40',
+          }}
+        >
+          !
+        </div>
 
         <h2 style={{ fontSize: 48, color: '#fff', fontWeight: 800, marginBottom: 16 }}>
           Subscribe for the next session
@@ -55,13 +72,13 @@ export const CTAScene: React.FC<CTASceneProps> = ({ nextSessionDate }) => {
 
         <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap' }}>
           {[
-            { label: '🌐 carpetcleanerswarehouse.com.au', color: '#3b82f6' },
-            { label: '💼 RestoreAssist', color: '#8b5cf6' },
-            { label: '🏗️ NRPG Network', color: '#06b6d4' },
-            { label: '📚 CARSI Training', color: '#10b981' },
+            { text: 'carpetcleanerswarehouse.com.au', letter: 'W', color: '#3b82f6' },
+            { text: 'RestoreAssist', letter: 'R', color: '#8b5cf6' },
+            { text: 'NRPG Network', letter: 'N', color: '#06b6d4' },
+            { text: 'CARSI Training', letter: 'C', color: '#10b981' },
           ].map((link) => (
             <div
-              key={link.label}
+              key={link.text}
               style={{
                 padding: '12px 24px',
                 borderRadius: 8,
@@ -69,9 +86,29 @@ export const CTAScene: React.FC<CTASceneProps> = ({ nextSessionDate }) => {
                 background: `${link.color}10`,
                 fontSize: 16,
                 color: link.color,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
               }}
             >
-              {link.label}
+              <span
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  background: link.color,
+                  color: '#fff',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                {link.letter}
+              </span>
+              {link.text}
             </div>
           ))}
         </div>

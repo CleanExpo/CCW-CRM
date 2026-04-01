@@ -40,7 +40,7 @@ export const VerificationScene: React.FC = () => {
       </div>
 
       <div style={{ opacity: allGreenOpacity, textAlign: 'center', marginTop: 40, fontSize: 32, fontWeight: 700, color: '#10b981' }}>
-        All green? You're live. 🚀
+        All green? You're live.
       </div>
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #96bf48, #10b981, #3b82f6)' }} />
     </AbsoluteFill>

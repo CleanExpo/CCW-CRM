@@ -11,51 +11,149 @@ interface Requirement {
   what: string;
   where: string;
   color: string;
-  icon: string;
+  icon: React.ReactNode;
 }
+
+/** Branded letter-circle icon */
+const LetterIcon: React.FC<{ letter: string; bg: string; fg?: string }> = ({
+  letter,
+  bg,
+  fg = '#0f172a',
+}) => (
+  <div
+    style={{
+      width: 32,
+      height: 32,
+      borderRadius: '50%',
+      background: bg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: 16,
+      fontWeight: 800,
+      color: fg,
+      flexShrink: 0,
+    }}
+  >
+    {letter}
+  </div>
+);
+
+/** Colored diamond shape */
+const DiamondIcon: React.FC<{ color: string }> = ({ color }) => (
+  <div
+    style={{
+      width: 32,
+      height: 32,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}
+  >
+    <div
+      style={{
+        width: 20,
+        height: 20,
+        background: color,
+        transform: 'rotate(45deg)',
+        borderRadius: 4,
+      }}
+    />
+  </div>
+);
+
+/** Upward-pointing triangle (CSS border trick) */
+const TriangleIcon: React.FC<{ color: string }> = ({ color }) => (
+  <div
+    style={{
+      width: 32,
+      height: 32,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}
+  >
+    <div
+      style={{
+        width: 0,
+        height: 0,
+        borderLeft: '10px solid transparent',
+        borderRight: '10px solid transparent',
+        borderBottom: `18px solid ${color}`,
+      }}
+    />
+  </div>
+);
+
+/** Colored dot with inner ring */
+const RingDotIcon: React.FC<{ color: string }> = ({ color }) => (
+  <div
+    style={{
+      width: 32,
+      height: 32,
+      borderRadius: '50%',
+      border: `3px solid ${color}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}
+  >
+    <div
+      style={{
+        width: 12,
+        height: 12,
+        borderRadius: '50%',
+        background: color,
+      }}
+    />
+  </div>
+);
 
 const REQUIREMENTS: Requirement[] = [
   {
     service: 'Cin7',
     what: 'API Key + Company ID',
-    where: 'Cin7 Core → Settings → API',
+    where: 'Cin7 Core -> Settings -> API',
     color: '#f59e0b',
-    icon: '📦',
+    icon: <LetterIcon letter="C" bg="#f59e0b" />,
   },
   {
     service: 'Xero',
     what: 'OAuth App — Client ID + Secret',
-    where: 'developer.xero.com → My Apps → New App',
+    where: 'developer.xero.com -> My Apps -> New App',
     color: '#10b981',
-    icon: '💼',
+    icon: <LetterIcon letter="X" bg="#10b981" />,
   },
   {
     service: 'Supabase',
     what: 'Project URL + Anon Key + Service Role Key',
-    where: 'supabase.com → Project Settings → API',
+    where: 'supabase.com -> Project Settings -> API',
     color: '#3ecf8e',
-    icon: '🗄️',
+    icon: <DiamondIcon color="#3ecf8e" />,
   },
   {
     service: 'Vercel',
     what: 'Account (free tier OK) + GitHub repo access',
-    where: 'vercel.com → New Project → Import repo',
+    where: 'vercel.com -> New Project -> Import repo',
     color: '#e2e8f0',
-    icon: '▲',
+    icon: <TriangleIcon color="#e2e8f0" />,
   },
   {
     service: 'Railway',
     what: 'Account for backend hosting (or run locally)',
-    where: 'railway.app → New Project → Deploy from repo',
+    where: 'railway.app -> New Project -> Deploy from repo',
     color: '#a855f7',
-    icon: '🚂',
+    icon: <RingDotIcon color="#a855f7" />,
   },
   {
     service: 'GitHub',
     what: 'Repo access to CleanExpo/CCW-CRM',
     where: 'Contact Phill — github.com/CleanExpo',
     color: '#60a5fa',
-    icon: '🐙',
+    icon: <LetterIcon letter="GH" bg="#60a5fa" fg="#0f172a" />,
   },
 ];
 
@@ -141,7 +239,7 @@ export const RequirementsScene: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 28 }}>{req.icon}</span>
+              {req.icon}
               <div
                 style={{
                   fontSize: 20,

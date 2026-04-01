@@ -180,3 +180,18 @@ video/remotion/public/audio/*.mp3
 .obsidian-vault/.obsidian/plugins/*/
 .obsidian-vault/.obsidian/.trash/
 .obsidian-vault/scratchpad/
+
+# YouTube OAuth tokens (sensitive)
+scripts/.youtube_token.json
+scripts/youtube_oauth_client.json
+
+# HeyGen session data
+data/sessions/
+
+# Remotion build output
+video/remotion/out/
+video/remotion/node_modules/
+
+# gstack cache and heavy binaries
+.claude/skills/gstack/node_modules/
+.claude/skills/gstack/.cache/

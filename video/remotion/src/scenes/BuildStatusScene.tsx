@@ -12,9 +12,9 @@ interface BuildStatusSceneProps {
 }
 
 const STATUS_CONFIG = {
-  GREEN: { color: '#22c55e', bg: '#052e16', icon: '✅', label: 'All Systems Operational' },
-  AMBER: { color: '#f59e0b', bg: '#1c1400', icon: '⚠️', label: 'Attention Required' },
-  RED: { color: '#ef4444', bg: '#1c0303', icon: '🚨', label: 'Critical Issues' },
+  GREEN: { color: '#22c55e', bg: '#052e16', letter: 'G', label: 'All Systems Operational' },
+  AMBER: { color: '#f59e0b', bg: '#1c1400', letter: 'A', label: 'Attention Required' },
+  RED: { color: '#ef4444', bg: '#1c0303', letter: 'R', label: 'Critical Issues' },
 };
 
 export const BuildStatusScene: React.FC<BuildStatusSceneProps> = ({ status, reason }) => {
@@ -74,7 +74,23 @@ export const BuildStatusScene: React.FC<BuildStatusSceneProps> = ({ status, reas
             boxShadow: `0 0 40px ${cfg.color}40`,
           }}
         >
-          <div style={{ fontSize: 72 }}>{cfg.icon}</div>
+          <div
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              background: cfg.color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 40,
+              fontWeight: 900,
+              color: '#fff',
+              letterSpacing: 0,
+            }}
+          >
+            {cfg.letter}
+          </div>
         </div>
 
         <div style={{ fontSize: 64, fontWeight: 800, color: cfg.color, marginBottom: 8 }}>
