@@ -6,7 +6,6 @@ const badges = [
   { icon: '💼', name: 'Xero', color: '#10b981' },
   { icon: '🗄️', name: 'Supabase', color: '#3ecf8e' },
   { icon: '▲', name: 'Vercel', color: '#e2e8f0' },
-  { icon: '🚂', name: 'Railway', color: '#a855f7' },
 ];
 
 const automations = [

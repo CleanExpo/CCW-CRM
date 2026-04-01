@@ -21,7 +21,7 @@ export const VerificationScene: React.FC = () => {
       <div style={{ opacity: titleOpacity, display: 'flex', alignItems: 'center', gap: 16, marginBottom: 60, paddingBottom: 24, borderBottom: '3px solid #3b82f6' }}>
         <span style={{ fontSize: 48 }}>🧪</span>
         <div>
-          <div style={{ fontSize: 18, color: '#3b82f6', fontWeight: 600, letterSpacing: 2 }}>05 / 04</div>
+          <div style={{ fontSize: 18, color: '#3b82f6', fontWeight: 600, letterSpacing: 2 }}>Final Check</div>
           <div style={{ fontSize: 40, fontWeight: 800, color: '#ffffff' }}>Test Your Connections</div>
         </div>
       </div>

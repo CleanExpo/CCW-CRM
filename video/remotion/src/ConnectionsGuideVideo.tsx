@@ -5,10 +5,10 @@ import { ConnectionStepScene } from './scenes/connections/ConnectionStepScene';
 import { VerificationScene } from './scenes/connections/VerificationScene';
 import { AllConnectedScene } from './scenes/connections/AllConnectedScene';
 
-// 300s @ 30fps = 9000 frames
-export const CONNECTIONS_TOTAL_FRAMES = 9000;
+// 260s @ 30fps = 7800 frames (Vercel env vars are pre-configured — 3 user steps only)
+export const CONNECTIONS_TOTAL_FRAMES = 7800;
 
-// CCW has built its own inventory platform — Shopify is the e-commerce sync integration
+// Shopify — user's own store, requires their API token
 const shopifySteps = [
   'Go to your Shopify Admin → Settings → Apps and sales channels',
   'Click "Develop apps" → Create a new private app',
@@ -19,35 +19,27 @@ const shopifySteps = [
 ];
 const shopifyEnv = ['SHOPIFY_STORE_URL=yourstore.myshopify.com', 'SHOPIFY_ACCESS_TOKEN=shpat_xxxxxxxxxxxx', 'SHOPIFY_WEBHOOK_SECRET=your_webhook_secret'];
 
+// Xero — user's own accounting org
 const xeroSteps = [
   'Go to developer.xero.com → My Apps',
   'Click "New App" → Web App',
   'Add redirect URI: https://your-domain.vercel.app/api/auth/xero/callback',
   'Copy Client ID + Client Secret',
   'In CCW: Settings → Integrations → Xero',
-  'Paste Client ID + Secret → Save',
+  'Paste Client ID + Secret → Connect Xero → Authorise',
 ];
 const xeroEnv = ['XERO_CLIENT_ID=your_client_id', 'XERO_CLIENT_SECRET=your_client_secret', 'XERO_REDIRECT_URI=https://your-domain.vercel.app/api/auth/xero/callback'];
 
+// Supabase — already in Vercel, just confirm keys are present
 const supabaseSteps = [
-  'Go to supabase.com → Your Project',
-  'Click Settings (gear icon, left sidebar)',
-  'Click "API" under Configuration',
-  'Copy Project URL',
-  'Copy anon/public key',
-  'Copy service_role key (keep this secret!)',
+  'These keys are already configured in your Vercel environment',
+  'Go to supabase.com → Your Project → Settings → API',
+  'Confirm Project URL matches NEXT_PUBLIC_SUPABASE_URL in Vercel',
+  'Confirm anon key matches NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel',
+  'No action needed — Vercel reads these automatically on every deploy',
+  'Dashboard loading without errors = Supabase is connected ✓',
 ];
-const supabaseEnv = ['NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co', 'NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...', 'SUPABASE_SERVICE_ROLE_KEY=eyJ...'];
-
-const deploySteps = [
-  'Go to vercel.com → Your Project → Settings → Environment Variables',
-  'Add: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_BACKEND_URL',
-  'Go to railway.app → Your Backend Service → Variables tab',
-  'Add: DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, XERO_CLIENT_SECRET, SECRET_KEY',
-  'Trigger a redeploy on both Vercel and Railway',
-  'Visit your Vercel URL — confirm the dashboard loads ✓',
-];
-const deployEnv = ['NEXT_PUBLIC_BACKEND_URL=https://[your-railway-service].railway.app', 'NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co', 'SECRET_KEY=your_secret_key', 'DATABASE_URL=postgresql://...'];
+const supabaseEnv = ['NEXT_PUBLIC_SUPABASE_URL=✅ already in Vercel', 'NEXT_PUBLIC_SUPABASE_ANON_KEY=✅ already in Vercel', 'SUPABASE_SERVICE_ROLE_KEY=✅ already in Vercel'];
 
 export interface ConnectionsGuideVideoProps {
   narrationPath?: string;
@@ -64,10 +56,10 @@ export const ConnectionsGuideVideo: React.FC<ConnectionsGuideVideoProps> = ({ na
         <ConnectionsIntroScene />
       </Sequence>
 
-      {/* Shopify: 600–2100f (50s) */}
-      <Sequence from={600} durationInFrames={1500}>
+      {/* Shopify: 600–2400f (60s) */}
+      <Sequence from={600} durationInFrames={1800}>
         <ConnectionStepScene
-          stepNumber="01 / 04"
+          stepNumber="01 / 03"
           serviceName="Shopify"
           accentColor="#96bf48"
           serviceIcon="🛒"
@@ -77,10 +69,10 @@ export const ConnectionsGuideVideo: React.FC<ConnectionsGuideVideoProps> = ({ na
         />
       </Sequence>
 
-      {/* Xero: 2100–3600f (50s) */}
-      <Sequence from={2100} durationInFrames={1500}>
+      {/* Xero: 2400–4200f (60s) */}
+      <Sequence from={2400} durationInFrames={1800}>
         <ConnectionStepScene
-          stepNumber="02 / 04"
+          stepNumber="02 / 03"
           serviceName="Xero"
           accentColor="#10b981"
           serviceIcon="💼"
@@ -90,39 +82,27 @@ export const ConnectionsGuideVideo: React.FC<ConnectionsGuideVideoProps> = ({ na
         />
       </Sequence>
 
-      {/* Supabase: 3600–5100f (50s) */}
-      <Sequence from={3600} durationInFrames={1500}>
+      {/* Supabase: 4200–5700f (50s) */}
+      <Sequence from={4200} durationInFrames={1500}>
         <ConnectionStepScene
-          stepNumber="03 / 04"
+          stepNumber="03 / 03"
           serviceName="Supabase"
           accentColor="#3ecf8e"
           serviceIcon="🗄️"
           steps={supabaseSteps}
           envVars={supabaseEnv}
-          warning="⚠️ Service Role Key has full database access. Never put in frontend code."
-        />
-      </Sequence>
-
-      {/* Vercel + Railway: 5100–6900f (60s) */}
-      <Sequence from={5100} durationInFrames={1800}>
-        <ConnectionStepScene
-          stepNumber="04 / 04"
-          serviceName="Vercel + Railway"
-          accentColor="#a855f7"
-          serviceIcon="🚀"
-          steps={deploySteps}
-          envVars={deployEnv}
+          warning="✅ Already configured in Vercel — no manual action required."
           screenshotPath="images/dashboard.png"
         />
       </Sequence>
 
-      {/* Verification: 6900–8100f (40s) */}
-      <Sequence from={6900} durationInFrames={1200}>
+      {/* Verification: 5700–6900f (40s) */}
+      <Sequence from={5700} durationInFrames={1200}>
         <VerificationScene />
       </Sequence>
 
-      {/* All Connected: 8100–9000f (30s) */}
-      <Sequence from={8100} durationInFrames={900}>
+      {/* All Connected: 6900–7800f (30s) */}
+      <Sequence from={6900} durationInFrames={900}>
         <AllConnectedScene />
       </Sequence>
     </AbsoluteFill>

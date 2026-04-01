@@ -68,7 +68,7 @@ export const Root: React.FC = () => {
         fps={VIDEO_FPS}
         width={VIDEO_WIDTH}
         height={VIDEO_HEIGHT}
-        defaultProps={{ narrationPath: 'audio/firstlook-narration.mp3' }}
+        defaultProps={{ narrationPath: '' }}
       />
       <Composition
         id="ConnectionsGuideVideo"
@@ -77,7 +77,7 @@ export const Root: React.FC = () => {
         fps={VIDEO_FPS}
         width={VIDEO_WIDTH}
         height={VIDEO_HEIGHT}
-        defaultProps={{ narrationPath: 'audio/connections-narration.mp3' }}
+        defaultProps={{ narrationPath: '' }}
       />
     </>
   );
