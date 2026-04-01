@@ -188,9 +188,14 @@ scripts/youtube_oauth_client.json
 # HeyGen session data
 data/sessions/
 
+# HeyGen downloaded videos (large binaries — re-download from HeyGen as needed)
+data/heygen/downloads/
+
 # Remotion build output
 video/remotion/out/
 video/remotion/node_modules/
+video/remotion/package-lock.json
+video/remotion/public/audio/
 
 # gstack cache and heavy binaries
 .claude/skills/gstack/node_modules/
