@@ -235,7 +235,7 @@ python-http-client==3.3.7
     # via sendgrid
 python-jose==3.5.0
     # via ccw-erp-backend (pyproject.toml)
-python-multipart==0.0.22
+python-multipart==0.0.24
     # via ccw-erp-backend (pyproject.toml)
 pyyaml==6.0.3
     # via
