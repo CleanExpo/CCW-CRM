@@ -124,8 +124,8 @@ if ($FAIL_COUNT -eq 0) {
     exit 0
 } else {
     Write-Host "⚠️  SOME TESTS FAILED. Check services are running:" -ForegroundColor Yellow
-    Write-Host "   - Backend: cd apps/backend && uv run uvicorn src.api.main:app --reload" -ForegroundColor Gray
-    Write-Host "   - Frontend: cd apps/web && pnpm dev" -ForegroundColor Gray
+    Write-Host "   - Backend: cd backend && uv run uvicorn src.api.main:app --reload" -ForegroundColor Gray
+    Write-Host "   - Frontend: cd app && pnpm dev" -ForegroundColor Gray
     Write-Host "   - Database: docker compose up -d" -ForegroundColor Gray
     exit 1
 }
