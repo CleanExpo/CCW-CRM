@@ -8,7 +8,7 @@ echo ""
 # Check if backend is running
 if ! curl -s http://localhost:8000/health > /dev/null 2>&1; then
     echo "❌ Backend is not running at http://localhost:8000"
-    echo "   Please start the backend first: cd apps/backend && uvicorn src.api.main:app --reload"
+    echo "   Please start the backend first: cd backend && uvicorn src.api.main:app --reload"
     exit 1
 fi
 
