@@ -421,7 +421,7 @@ section "9. N+1 Query Detection"
 
 info "Checking backend code for potential N+1 query patterns..."
 
-BACKEND_DIR="apps/backend/src/api/routes"
+BACKEND_DIR="backend/src/api/routes"
 
 if [ -d "$BACKEND_DIR" ]; then
     # Check for common N+1 patterns in Python code
@@ -480,7 +480,7 @@ else
 fi
 
 # Check for cache configuration in settings
-BACKEND_CONFIG="apps/backend/src/config/settings.py"
+BACKEND_CONFIG="backend/src/config/settings.py"
 if [ -f "$BACKEND_CONFIG" ]; then
     if grep -q "REDIS_URL\|redis_url\|cache" "$BACKEND_CONFIG" 2>/dev/null; then
         pass "Cache configuration found in settings"
@@ -496,7 +496,7 @@ fi
 ################################################################################
 section "11. Connection Pool Configuration"
 
-DATABASE_CONFIG="apps/backend/src/config/database.py"
+DATABASE_CONFIG="backend/src/config/database.py"
 
 if [ -f "$DATABASE_CONFIG" ]; then
     pass "Database configuration file exists"
@@ -680,7 +680,7 @@ fi
 ################################################################################
 section "16. Monitoring Endpoints"
 
-MONITORING_DIR="apps/backend/src/api/routes/monitoring"
+MONITORING_DIR="backend/src/api/routes/monitoring"
 
 if [ -d "$MONITORING_DIR" ]; then
     pass "Monitoring routes directory exists"
