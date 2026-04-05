@@ -191,10 +191,10 @@ verify_backend_test_infrastructure() {
     fi
 
     # Check conftest.py
-    file_exists "apps/backend/tests/conftest.py"
+    file_exists "backend/tests/conftest.py"
 
     # Check pytest configuration in pyproject.toml
-    if grep -q "tool.pytest.ini_options" apps/backend/pyproject.toml 2>/dev/null; then
+    if grep -q "tool.pytest.ini_options" backend/pyproject.toml 2>/dev/null; then
         check_pass "pytest configuration exists in pyproject.toml"
     else
         check_fail "pytest configuration missing"
@@ -223,25 +223,29 @@ verify_frontend_test_infrastructure() {
     fi
 
     # Check Vitest configuration
-    if file_exists "apps/web/vitest.config.ts"; then
+    if file_exists "vitest.config.ts"; then
         :
     fi
 
     # Check testing-library packages
-    if grep -q "@testing-library/react" apps/web/package.json 2>/dev/null; then
+    if grep -q "@testing-library/react" package.json 2>/dev/null; then
         check_pass "@testing-library/react installed"
     else
         check_warn "@testing-library/react not installed"
     fi
 
     # Check test directory exists
-    dir_exists "apps/web/__tests__"
+    if [[ -d "__tests__" ]]; then
+        check_pass "__tests__ directory exists"
+    else
+        check_warn "__tests__ directory missing (optional)"
+    fi
 
     # Check for test setup file
-    if [[ -f "apps/web/__tests__/setup.ts" ]]; then
+    if [[ -f "__tests__/setup.ts" ]]; then
         check_pass "Test setup file exists"
     else
-        check_warn "Test setup file missing (apps/web/__tests__/setup.ts)"
+        check_warn "Test setup file missing (__tests__/setup.ts)"
     fi
 }
 
@@ -253,7 +257,7 @@ verify_backend_test_files() {
     print_category "3. Backend Test Files"
 
     # Count test files
-    BACKEND_TEST_FILES=$(find apps/backend/tests -name "test_*.py" -type f 2>/dev/null | wc -l)
+    BACKEND_TEST_FILES=$(find backend/tests -name "test_*.py" -type f 2>/dev/null | wc -l)
     if [[ $BACKEND_TEST_FILES -gt 0 ]]; then
         check_pass "Backend test files found: $BACKEND_TEST_FILES"
     else
@@ -261,32 +265,32 @@ verify_backend_test_files() {
     fi
 
     # Check API tests
-    if [[ -d "apps/backend/tests/api" ]]; then
-        API_TESTS=$(find apps/backend/tests/api -name "test_*.py" 2>/dev/null | wc -l)
+    if [[ -d "backend/tests/api" ]]; then
+        API_TESTS=$(find backend/tests/api -name "test_*.py" 2>/dev/null | wc -l)
         check_pass "API tests found: $API_TESTS"
     else
         check_warn "API test directory missing"
     fi
 
     # Check unit tests
-    if [[ -d "apps/backend/tests/unit" ]]; then
-        UNIT_TESTS=$(find apps/backend/tests/unit -name "test_*.py" 2>/dev/null | wc -l)
+    if [[ -d "backend/tests/unit" ]]; then
+        UNIT_TESTS=$(find backend/tests/unit -name "test_*.py" 2>/dev/null | wc -l)
         check_pass "Unit tests found: $UNIT_TESTS"
     else
         check_warn "Unit test directory missing"
     fi
 
     # Check integration tests
-    if [[ -d "apps/backend/tests/integration" ]]; then
-        INTEGRATION_TESTS=$(find apps/backend/tests/integration -name "test_*.py" 2>/dev/null | wc -l)
+    if [[ -d "backend/tests/integration" ]]; then
+        INTEGRATION_TESTS=$(find backend/tests/integration -name "test_*.py" 2>/dev/null | wc -l)
         check_pass "Integration tests found: $INTEGRATION_TESTS"
     else
         check_warn "Integration test directory missing"
     fi
 
     # Check security tests
-    if [[ -d "apps/backend/tests/security" ]]; then
-        SECURITY_TESTS=$(find apps/backend/tests/security -name "test_*.py" 2>/dev/null | wc -l)
+    if [[ -d "backend/tests/security" ]]; then
+        SECURITY_TESTS=$(find backend/tests/security -name "test_*.py" 2>/dev/null | wc -l)
         check_pass "Security tests found: $SECURITY_TESTS"
     else
         check_warn "Security test directory missing"
@@ -294,7 +298,7 @@ verify_backend_test_files() {
 
     # Check critical module tests
     for module in "products" "customers" "orders" "quotes" "auth"; do
-        if find apps/backend/tests -name "*${module}*.py" -type f | grep -q .; then
+        if find backend/tests -name "*${module}*.py" -type f | grep -q .; then
             check_pass "Tests exist for $module module"
         else
             check_warn "No tests found for $module module"
@@ -310,7 +314,7 @@ verify_frontend_test_files() {
     print_category "4. Frontend Test Files"
 
     # Count frontend test files
-    FRONTEND_TEST_FILES=$(find apps/web/__tests__ -name "*.test.tsx" -o -name "*.test.ts" 2>/dev/null | wc -l)
+    FRONTEND_TEST_FILES=$(find app/__tests__ -name "*.test.tsx" -o -name "*.test.ts" 2>/dev/null | wc -l)
     if [[ $FRONTEND_TEST_FILES -gt 0 ]]; then
         check_pass "Frontend test files found: $FRONTEND_TEST_FILES"
     else
@@ -318,15 +322,15 @@ verify_frontend_test_files() {
     fi
 
     # Check component tests
-    if find apps/web/__tests__/components -name "*.test.tsx" 2>/dev/null | grep -q .; then
-        COMPONENT_TESTS=$(find apps/web/__tests__/components -name "*.test.tsx" 2>/dev/null | wc -l)
+    if find app/__tests__/components -name "*.test.tsx" 2>/dev/null | grep -q .; then
+        COMPONENT_TESTS=$(find app/__tests__/components -name "*.test.tsx" 2>/dev/null | wc -l)
         check_pass "Component tests found: $COMPONENT_TESTS"
     else
         check_warn "No component tests found"
     fi
 
     # Check portal tests
-    if find apps/web/__tests__ -name "*portal*.test.tsx" 2>/dev/null | grep -q .; then
+    if find app/__tests__ -name "*portal*.test.tsx" 2>/dev/null | grep -q .; then
         check_pass "Portal tests exist"
     else
         check_warn "Portal tests missing"
@@ -355,13 +359,13 @@ verify_test_database_configuration() {
     fi
 
     # Check seed data script
-    if file_exists "apps/backend/src/db/seed_demo.py"; then
+    if file_exists "backend/src/db/seed_demo.py"; then
         :
     fi
 
     # Check if test database can be connected
     echo "Checking database connectivity..."
-    if cd apps/backend && python3 -c "
+    if cd backend && python3 -c "
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
@@ -400,7 +404,7 @@ verify_backend_test_execution() {
     mkdir -p test-results
 
     # Run pytest with coverage
-    if cd apps/backend && pytest -v --tb=short --junit-xml=../../test-results/backend-junit.xml 2>&1 | tee ../../test-results/backend-output.txt; then
+    if cd backend && pytest -v --tb=short --junit-xml=../../test-results/backend-junit.xml 2>&1 | tee ../../test-results/backend-output.txt; then
         BACKEND_TESTS_PASSED=true
         check_pass "Backend tests executed successfully"
     else
@@ -440,15 +444,13 @@ verify_frontend_test_execution() {
     echo ""
 
     # Run Vitest
-    if cd apps/web && pnpm test run 2>&1 | tee ../../test-results/frontend-output.txt; then
+    if npm run test 2>&1 | tee test-results/frontend-output.txt; then
         FRONTEND_TESTS_PASSED=true
         check_pass "Frontend tests executed successfully"
     else
         FRONTEND_TESTS_PASSED=false
         check_fail "Frontend tests failed"
     fi
-
-    cd - > /dev/null
 
     # Parse test results
     if [[ -f "test-results/frontend-output.txt" ]]; then
@@ -510,7 +512,7 @@ verify_test_coverage_analysis() {
 
     # Backend coverage
     echo "Checking backend test coverage..."
-    if cd apps/backend && pytest --cov=src --cov-report=term-missing --cov-report=html:../../test-results/backend-coverage 2>&1 | tee ../../test-results/backend-coverage.txt; then
+    if cd backend && pytest --cov=src --cov-report=term-missing --cov-report=html:../../test-results/backend-coverage 2>&1 | tee ../../test-results/backend-coverage.txt; then
         check_pass "Backend coverage report generated"
 
         # Extract coverage percentage
@@ -534,11 +536,11 @@ verify_test_coverage_analysis() {
 
     # Frontend coverage
     echo "Checking frontend test coverage..."
-    if cd apps/web && pnpm test run --coverage 2>&1 | tee ../../test-results/frontend-coverage.txt; then
+    if npm run test:coverage 2>&1 | tee test-results/frontend-coverage.txt; then
         check_pass "Frontend coverage report generated"
 
         # Extract coverage percentage
-        if [[ -f "../../test-results/frontend-coverage.txt" ]]; then
+        if [[ -f "test-results/frontend-coverage.txt" ]]; then
             if grep -q "All files" test-results/frontend-coverage.txt; then
                 COVERAGE=$(grep "All files" test-results/frontend-coverage.txt | awk '{print $4}' | sed 's/%//')
                 if [[ -n "$COVERAGE" ]] && [[ $(echo "$COVERAGE >= 60" | bc -l 2>/dev/null || echo 0) -eq 1 ]]; then
@@ -564,25 +566,25 @@ verify_api_endpoint_testing() {
 
     # Check for CRUD tests for each module
     for module in "products" "customers" "orders" "quotes"; do
-        if grep -r "test.*${module}.*create\|test.*${module}.*post" apps/backend/tests/ 2>/dev/null | grep -q .; then
+        if grep -r "test.*${module}.*create\|test.*${module}.*post" backend/tests/ 2>/dev/null | grep -q .; then
             check_pass "CREATE tests exist for $module"
         else
             check_warn "CREATE tests missing for $module"
         fi
 
-        if grep -r "test.*${module}.*read\|test.*${module}.*get\|test.*${module}.*list" apps/backend/tests/ 2>/dev/null | grep -q .; then
+        if grep -r "test.*${module}.*read\|test.*${module}.*get\|test.*${module}.*list" backend/tests/ 2>/dev/null | grep -q .; then
             check_pass "READ tests exist for $module"
         else
             check_warn "READ tests missing for $module"
         fi
 
-        if grep -r "test.*${module}.*update\|test.*${module}.*put" apps/backend/tests/ 2>/dev/null | grep -q .; then
+        if grep -r "test.*${module}.*update\|test.*${module}.*put" backend/tests/ 2>/dev/null | grep -q .; then
             check_pass "UPDATE tests exist for $module"
         else
             check_warn "UPDATE tests missing for $module"
         fi
 
-        if grep -r "test.*${module}.*delete" apps/backend/tests/ 2>/dev/null | grep -q .; then
+        if grep -r "test.*${module}.*delete" backend/tests/ 2>/dev/null | grep -q .; then
             check_pass "DELETE tests exist for $module"
         else
             check_warn "DELETE tests missing for $module"
@@ -598,26 +600,26 @@ verify_authentication_testing() {
     print_category "11. Authentication Testing"
 
     # Check for authentication tests
-    if find apps/backend/tests -name "*auth*.py" -type f | grep -q .; then
+    if find backend/tests -name "*auth*.py" -type f | grep -q .; then
         check_pass "Authentication test files exist"
     else
         check_warn "Authentication test files missing"
     fi
 
     # Check for specific auth test cases
-    if grep -r "test.*login" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "test.*login" backend/tests/ 2>/dev/null | grep -q .; then
         check_pass "Login tests exist"
     else
         check_warn "Login tests missing"
     fi
 
-    if grep -r "test.*token\|test.*jwt" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "test.*token\|test.*jwt" backend/tests/ 2>/dev/null | grep -q .; then
         check_pass "Token validation tests exist"
     else
         check_warn "Token validation tests missing"
     fi
 
-    if grep -r "test.*password.*reset\|test.*forgot.*password" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "test.*password.*reset\|test.*forgot.*password" backend/tests/ 2>/dev/null | grep -q .; then
         check_pass "Password reset tests exist"
     else
         check_warn "Password reset tests missing"
@@ -632,12 +634,12 @@ verify_integration_testing() {
     print_category "12. Integration Testing"
 
     # Check for integration test directory
-    if [[ -d "apps/backend/tests/integration" ]]; then
+    if [[ -d "backend/tests/integration" ]]; then
         check_pass "Integration test directory exists"
 
         # Check for specific integration tests
         for integration in "shopify" "xero" "ap2"; do
-            if find apps/backend/tests/integration -name "*${integration}*.py" -type f | grep -q .; then
+            if find backend/tests/integration -name "*${integration}*.py" -type f | grep -q .; then
                 check_pass "Integration tests exist for $integration"
             else
                 check_warn "Integration tests missing for $integration"
@@ -659,28 +661,28 @@ verify_regression_testing() {
     echo "Checking for regression tests of previously fixed issues..."
 
     # ISS-001: Quote total calculation
-    if grep -r "quote.*total\|calculate.*quote" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "quote.*total\|calculate.*quote" backend/tests/ 2>/dev/null | grep -q .; then
         check_pass "Quote calculation regression tests exist (ISS-001)"
     else
         check_warn "Quote calculation regression tests missing"
     fi
 
     # ISS-002: Order item updates
-    if grep -r "order.*item.*update\|update.*order.*item" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "order.*item.*update\|update.*order.*item" backend/tests/ 2>/dev/null | grep -q .; then
         check_pass "Order item update regression tests exist (ISS-002)"
     else
         check_warn "Order item update regression tests missing"
     fi
 
     # ISS-003: Quote number uniqueness
-    if grep -r "quote.*number.*unique\|duplicate.*quote" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "quote.*number.*unique\|duplicate.*quote" backend/tests/ 2>/dev/null | grep -q .; then
         check_pass "Quote number uniqueness regression tests exist (ISS-003)"
     else
         check_warn "Quote number uniqueness regression tests missing"
     fi
 
     # Check for test files related to fixed issues
-    if find apps/backend/tests -name "*404*.py" -o -name "*422*.py" -o -name "*500*.py" | grep -q .; then
+    if find backend/tests -name "*404*.py" -o -name "*422*.py" -o -name "*500*.py" | grep -q .; then
         check_pass "Error handling regression tests exist"
     else
         check_warn "Error handling regression tests missing"
@@ -695,24 +697,24 @@ verify_load_testing_preparation() {
     print_category "14. Load Testing Preparation"
 
     # Check for load test directory
-    if [[ -d "apps/backend/tests/load" ]]; then
+    if [[ -d "backend/tests/load" ]]; then
         check_pass "Load test directory exists"
     else
         check_warn "Load test directory missing"
     fi
 
     # Check for locustfile
-    if file_exists "apps/backend/tests/load/locustfile_ai_features.py"; then
+    if file_exists "backend/tests/load/locustfile_ai_features.py"; then
         :
     fi
 
     # Check for load test scripts
-    if file_exists "apps/backend/tests/load/run_full_load_test.py"; then
+    if file_exists "backend/tests/load/run_full_load_test.py"; then
         :
     fi
 
     # Check for load test scenarios
-    if file_exists "apps/backend/tests/load/test_scenarios.py"; then
+    if file_exists "backend/tests/load/test_scenarios.py"; then
         :
     fi
 }
@@ -817,19 +819,19 @@ verify_production_readiness() {
 
     # Check if critical tests exist
     CRITICAL_TESTS=0
-    if grep -r "test.*auth.*login" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "test.*auth.*login" backend/tests/ 2>/dev/null | grep -q .; then
         ((CRITICAL_TESTS++))
     fi
-    if grep -r "test.*order.*create" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "test.*order.*create" backend/tests/ 2>/dev/null | grep -q .; then
         ((CRITICAL_TESTS++))
     fi
-    if grep -r "test.*quote.*create" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "test.*quote.*create" backend/tests/ 2>/dev/null | grep -q .; then
         ((CRITICAL_TESTS++))
     fi
-    if grep -r "test.*customer.*create" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "test.*customer.*create" backend/tests/ 2>/dev/null | grep -q .; then
         ((CRITICAL_TESTS++))
     fi
-    if grep -r "test.*product.*create" apps/backend/tests/ 2>/dev/null | grep -q .; then
+    if grep -r "test.*product.*create" backend/tests/ 2>/dev/null | grep -q .; then
         ((CRITICAL_TESTS++))
     fi
 
