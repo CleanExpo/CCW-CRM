@@ -14,9 +14,9 @@ This runbook provides step-by-step instructions for deploying the CCW Online ERP
 
 ### 1. Code Quality
 
-- [ ] All tests passing (`pnpm turbo run test`)
-- [ ] Type checking passing (`pnpm turbo run type-check`)
-- [ ] Linting passing (`pnpm turbo run lint`)
+- [ ] All tests passing (`pnpm run test`)
+- [ ] Type checking passing (`pnpm run type-check`)
+- [ ] Linting passing (`pnpm run lint`)
 - [ ] No critical security vulnerabilities (`./scripts/security-audit.ps1`)
 - [ ] Load tests passed (p95 < 500ms)
 - [ ] Code reviewed and approved

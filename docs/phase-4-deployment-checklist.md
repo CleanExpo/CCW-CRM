@@ -64,9 +64,9 @@ Run full test suite before deployment:
 
 ```bash
 # From project root
-pnpm turbo run type-check    # TypeScript validation
-pnpm turbo run lint          # Code quality
-pnpm turbo run test          # Unit tests
+pnpm run type-check    # TypeScript validation
+pnpm run lint          # Code quality
+pnpm run test          # Unit tests
 
 # Backend tests
 cd apps/backend

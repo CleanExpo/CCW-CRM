@@ -70,7 +70,7 @@ Complete guide for deploying the domain memory system to production environments
 
 - [ ] **All tests passing locally**
   ```powershell
-  pnpm turbo run type-check lint test
+  pnpm run check:all
   ```
 
 - [ ] **Integration tests pass**
