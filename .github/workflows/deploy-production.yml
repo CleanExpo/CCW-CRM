@@ -210,7 +210,7 @@ jobs:
             type=raw,value=${{ needs.validate.outputs.release_tag }},enable=${{ needs.validate.outputs.release_tag != '' }}
 
       - name: Build and push backend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./apps/backend
           file: ./apps/backend/Dockerfile
@@ -231,7 +231,7 @@ jobs:
             type=raw,value=${{ needs.validate.outputs.release_tag }},enable=${{ needs.validate.outputs.release_tag != '' }}
 
       - name: Build and push frontend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./apps/web
           file: ./apps/web/Dockerfile
