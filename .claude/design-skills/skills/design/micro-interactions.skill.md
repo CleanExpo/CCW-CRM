@@ -37,6 +37,7 @@ Micro-interactions are small, subtle animations that provide visual feedback and
 ### 1. Hover Effects
 
 Small transformations that indicate interactivity:
+
 - **Scale**: 1.02-1.05 (buttons), 1.1-1.2 (icons)
 - **Lift**: translateY(-2px to -4px) + shadow
 - **Rotate**: 5-15 degrees for playfulness
@@ -44,6 +45,7 @@ Small transformations that indicate interactivity:
 ### 2. Click/Tap Effects
 
 Feedback for user actions:
+
 - **Scale down**: 0.95-0.98 on tap
 - **Ripple**: Expanding circle from click point
 - **Bounce**: Spring back after press
@@ -51,6 +53,7 @@ Feedback for user actions:
 ### 3. State Changes
 
 Visual indicators of state:
+
 - **Success**: Green checkmark with scale + rotate
 - **Error**: Shake animation (translateX oscillation)
 - **Loading**: Spin or pulse
@@ -58,6 +61,7 @@ Visual indicators of state:
 ### 4. Attention Grabbers
 
 Draw focus to important elements:
+
 - **Pulse**: Subtle scale oscillation
 - **Glow**: Box-shadow expansion
 - **Badge pulse**: "You have new notifications"
@@ -71,33 +75,32 @@ Draw focus to important elements:
 Extends shadcn/ui Button with spring animations:
 
 ```tsx
-"use client";
+'use client';
 
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 // Reuse existing button variants
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from '@/components/ui/button';
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   loading?: boolean;
 }
 
 const ButtonEnhanced = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading, children, disabled, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+    const Comp = asChild ? Slot : 'button';
 
     return (
       <motion.div
-        whileHover={{ scale: variant === "ghost" ? 1.05 : 1.02 }}
+        whileHover={{ scale: variant === 'ghost' ? 1.05 : 1.02 }}
         whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className="inline-flex"
       >
         <Comp
@@ -110,8 +113,8 @@ const ButtonEnhanced = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <>
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="h-4 w-4 border-2 border-current border-t-transparent rounded-full"
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="h-4 w-4 rounded-full border-2 border-current border-t-transparent"
               />
               <span className="ml-2">Loading...</span>
             </>
@@ -123,12 +126,13 @@ const ButtonEnhanced = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   }
 );
-ButtonEnhanced.displayName = "ButtonEnhanced";
+ButtonEnhanced.displayName = 'ButtonEnhanced';
 
 export { ButtonEnhanced };
 ```
 
 **Usage**:
+
 ```tsx
 <ButtonEnhanced variant="default" loading={isSubmitting}>
   Submit
@@ -142,10 +146,10 @@ export { ButtonEnhanced };
 Reusable wrapper for icon animations:
 
 ```tsx
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
 interface AnimatedIconProps {
   children: ReactNode;
@@ -166,7 +170,7 @@ export function AnimatedIcon({
       whileHover={{
         scale: hoverScale,
         rotate: hoverRotate,
-        transition: { type: "spring", stiffness: 400, damping: 10 },
+        transition: { type: 'spring', stiffness: 400, damping: 10 },
       }}
       whileTap={{ scale: 0.9 }}
     >
@@ -177,6 +181,7 @@ export function AnimatedIcon({
 ```
 
 **Usage**:
+
 ```tsx
 <AnimatedIcon hoverRotate={15} hoverScale={1.2}>
   <Settings className="h-5 w-5" />
@@ -190,10 +195,10 @@ export function AnimatedIcon({
 Animated notification indicator (e.g., for unread messages):
 
 ```tsx
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface PulseNotificationProps {
   show?: boolean;
@@ -201,11 +206,7 @@ interface PulseNotificationProps {
   className?: string;
 }
 
-export function PulseNotification({
-  show = true,
-  count,
-  className,
-}: PulseNotificationProps) {
+export function PulseNotification({ show = true, count, className }: PulseNotificationProps) {
   if (!show) return null;
 
   return (
@@ -213,7 +214,7 @@ export function PulseNotification({
       {/* Pulsing ring */}
       <motion.span
         className={cn(
-          "absolute top-0 right-0 inline-flex h-3 w-3 rounded-full bg-destructive opacity-75",
+          'bg-destructive absolute top-0 right-0 inline-flex h-3 w-3 rounded-full opacity-75',
           className
         )}
         animate={{
@@ -223,13 +224,13 @@ export function PulseNotification({
         transition={{
           duration: 2,
           repeat: Infinity,
-          ease: "easeInOut",
+          ease: 'easeInOut',
         }}
       />
       {/* Solid dot */}
       <span
         className={cn(
-          "absolute top-0 right-0 inline-flex h-3 w-3 rounded-full bg-destructive",
+          'bg-destructive absolute top-0 right-0 inline-flex h-3 w-3 rounded-full',
           className
         )}
       />
@@ -238,9 +239,9 @@ export function PulseNotification({
         <motion.span
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-destructive-foreground bg-destructive rounded-full"
+          className="text-destructive-foreground bg-destructive absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs leading-none font-bold"
         >
-          {count > 99 ? "99+" : count}
+          {count > 99 ? '99+' : count}
         </motion.span>
       )}
     </div>
@@ -249,6 +250,7 @@ export function PulseNotification({
 ```
 
 **Usage**:
+
 ```tsx
 <div className="relative">
   <Bell className="h-5 w-5" />
@@ -263,11 +265,11 @@ export function PulseNotification({
 Material Design ripple effect:
 
 ```tsx
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { useState, MouseEvent } from "react";
-import { Button, ButtonProps } from "@/components/ui/button";
+import { motion } from 'framer-motion';
+import { useState, MouseEvent } from 'react';
+import { Button, ButtonProps } from '@/components/ui/button';
 
 interface Ripple {
   x: number;
@@ -308,14 +310,14 @@ export function RippleButton({ children, onClick, ...props }: ButtonProps) {
           key={ripple.id}
           initial={{ scale: 0, opacity: 0.5 }}
           animate={{ scale: 4, opacity: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="absolute rounded-full bg-white pointer-events-none"
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="pointer-events-none absolute rounded-full bg-white"
           style={{
             left: ripple.x,
             top: ripple.y,
             width: 20,
             height: 20,
-            transform: "translate(-50%, -50%)",
+            transform: 'translate(-50%, -50%)',
           }}
         />
       ))}
@@ -331,10 +333,10 @@ export function RippleButton({ children, onClick, ...props }: ButtonProps) {
 Shake animation for error states:
 
 ```tsx
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { ReactNode, useEffect, useState } from "react";
+import { motion } from 'framer-motion';
+import { ReactNode, useEffect, useState } from 'react';
 
 interface ShakeOnErrorProps {
   error: boolean;
@@ -372,11 +374,14 @@ export function ShakeOnError({ error, children, className }: ShakeOnErrorProps) 
 ```
 
 **Usage**:
+
 ```tsx
 <ShakeOnError error={hasError}>
   <Input type="password" />
-</ShakeOnError>
-{hasError && <p className="text-destructive">Incorrect password</p>}
+</ShakeOnError>;
+{
+  hasError && <p className="text-destructive">Incorrect password</p>;
+}
 ```
 
 ### 6. SuccessCheckmark
@@ -386,11 +391,11 @@ export function ShakeOnError({ error, children, className }: ShakeOnErrorProps) 
 Animated checkmark for success states:
 
 ```tsx
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SuccessCheckmarkProps {
   show: boolean;
@@ -405,16 +410,16 @@ export function SuccessCheckmark({ show, className }: SuccessCheckmarkProps) {
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0, opacity: 0 }}
-      transition={{ type: "spring", stiffness: 500, damping: 25 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 25 }}
       className={cn(
-        "inline-flex items-center justify-center rounded-full bg-success text-success-foreground",
+        'bg-success text-success-foreground inline-flex items-center justify-center rounded-full',
         className
       )}
     >
       <motion.div
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
+        transition={{ duration: 0.3, ease: 'easeInOut', delay: 0.1 }}
       >
         <Check className="h-5 w-5" />
       </motion.div>
@@ -430,9 +435,10 @@ Add to `globals.css` for common micro-interactions:
 ```css
 /* Enhanced card with hover effect */
 .card-interactive {
-  transition: transform var(--duration-normal) var(--ease-smooth),
-              box-shadow var(--duration-normal) var(--ease-smooth),
-              border-color var(--duration-normal) var(--ease-smooth);
+  transition:
+    transform var(--duration-normal) var(--ease-smooth),
+    box-shadow var(--duration-normal) var(--ease-smooth),
+    border-color var(--duration-normal) var(--ease-smooth);
   cursor: pointer;
 }
 
@@ -463,8 +469,9 @@ Add to `globals.css` for common micro-interactions:
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   transform: translate(-50%, -50%);
-  transition: width var(--duration-slow) var(--ease-out-expo),
-              height var(--duration-slow) var(--ease-out-expo);
+  transition:
+    width var(--duration-slow) var(--ease-out-expo),
+    height var(--duration-slow) var(--ease-out-expo);
 }
 
 .btn-enhanced:hover::before {
@@ -537,7 +544,8 @@ select:focus {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -562,26 +570,26 @@ select:focus {
 **File**: `components/layout/sidebar.tsx`
 
 ```tsx
-import { motion } from "framer-motion";
-import { AnimatedIcon } from "@/components/interactions/AnimatedIcon";
+import { motion } from 'framer-motion';
+import { AnimatedIcon } from '@/components/interactions/AnimatedIcon';
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r bg-muted/40">
+    <aside className="bg-muted/40 w-64 border-r">
       {/* Logo with hover animation */}
       <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold group">
+        <Link href="/" className="group flex items-center gap-2 font-semibold">
           <motion.span
             className="text-xl"
             whileHover={{ scale: 1.1, rotate: 5 }}
             whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
           >
             ⚙️
           </motion.span>
-          <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent group-hover:from-primary/80 group-hover:to-primary/40 transition-all">
+          <span className="from-primary to-primary/60 group-hover:from-primary/80 group-hover:to-primary/40 bg-gradient-to-r bg-clip-text text-transparent transition-all">
             Equipment ERP
           </span>
         </Link>
@@ -599,7 +607,7 @@ export function Sidebar() {
               animate={{ opacity: 1, x: 0 }}
               transition={{
                 delay: index * 0.05,
-                type: "spring",
+                type: 'spring',
                 stiffness: 300,
                 damping: 25,
               }}
@@ -607,18 +615,18 @@ export function Sidebar() {
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all relative overflow-hidden group",
+                  'group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2 text-sm transition-all',
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-105"
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-105'
                 )}
               >
                 {/* Active indicator with layoutId for smooth transitions */}
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-indicator"
-                    className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full"
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="bg-primary-foreground absolute top-0 bottom-0 left-0 w-1 rounded-r-full"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
 
@@ -628,7 +636,7 @@ export function Sidebar() {
                     scale: 1.2,
                     rotate: isActive ? 0 : 15,
                   }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 10 }}
                 >
                   <item.icon className="h-4 w-4" />
                 </motion.div>
@@ -638,7 +646,7 @@ export function Sidebar() {
                 {/* Hover background effect */}
                 {!isActive && (
                   <motion.div
-                    className="absolute inset-0 bg-primary/5 rounded-lg"
+                    className="bg-primary/5 absolute inset-0 rounded-lg"
                     initial={{ scale: 0, opacity: 0 }}
                     whileHover={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.2 }}
@@ -659,7 +667,7 @@ export function Sidebar() {
 **File**: `components/layout/mobile-nav.tsx`
 
 ```tsx
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -670,12 +678,12 @@ export function MobileNav() {
         <motion.div
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          className="md:hidden fixed top-4 left-4 z-50"
+          className="fixed top-4 left-4 z-50 md:hidden"
         >
           <Button variant="ghost" size="icon">
             <AnimatePresence mode="wait">
               <motion.div
-                key={open ? "close" : "menu"}
+                key={open ? 'close' : 'menu'}
                 initial={{ rotate: -90, opacity: 0 }}
                 animate={{ rotate: 0, opacity: 1 }}
                 exit={{ rotate: 90, opacity: 0 }}
@@ -697,19 +705,19 @@ export function MobileNav() {
 
 ### Stiffness (Resistance to Change)
 
-| Use Case | Stiffness | Feel |
-|----------|-----------|------|
-| Quick snappy | 400-500 | Instant response |
-| Normal | 300-400 | Balanced |
-| Smooth flowing | 200-300 | Gentle |
+| Use Case       | Stiffness | Feel             |
+| -------------- | --------- | ---------------- |
+| Quick snappy   | 400-500   | Instant response |
+| Normal         | 300-400   | Balanced         |
+| Smooth flowing | 200-300   | Gentle           |
 
 ### Damping (Friction/Bounce)
 
-| Use Case | Damping | Feel |
-|----------|---------|------|
-| Bouncy | 10-15 | Playful |
-| Balanced | 20-30 | Professional |
-| No overshoot | 40+ | Precise |
+| Use Case     | Damping | Feel         |
+| ------------ | ------- | ------------ |
+| Bouncy       | 10-15   | Playful      |
+| Balanced     | 20-30   | Professional |
+| No overshoot | 40+     | Precise      |
 
 ### Examples
 
@@ -750,6 +758,7 @@ Use CSS variables defined in `globals.css`:
 ```
 
 **Guidelines**:
+
 - **150ms (Fast)**: Hover states, icon changes, tooltips
 - **300ms (Normal)**: Page transitions, cards, modals
 - **500ms (Slow)**: Large layout shifts, drawers, overlays
@@ -785,14 +794,13 @@ Respect user preferences:
 ```tsx
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-<motion.div
-  animate={prefersReducedMotion ? {} : { scale: 1.05 }}
-/>
+<motion.div animate={prefersReducedMotion ? {} : { scale: 1.05 }} />;
 ```
 
 ## Testing Checklist
 
 ### Visual Testing
+
 - [ ] Hover effects work on desktop
 - [ ] Tap effects work on mobile (no hover state stuck)
 - [ ] Animations complete fully (no cut-off)
@@ -801,12 +809,14 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 - [ ] Loading states display correctly
 
 ### Performance Testing
+
 - [ ] 60fps maintained during animations
 - [ ] No frame drops on low-end devices
 - [ ] Bundle size acceptable (+40KB for framer-motion)
 - [ ] Reduced motion preferences respected
 
 ### Accessibility Testing
+
 - [ ] Keyboard navigation works
 - [ ] Focus states visible
 - [ ] Screen reader not confused by animations

@@ -26,6 +26,7 @@ Traditional HTML tables break on mobile devices, requiring horizontal scrolling 
 ## The Problem
 
 **Desktop Table** (Good UX):
+
 ```
 ┌──────────────┬──────────┬───────────┬─────────┐
 │ Product Name │ SKU      │ Price     │ Actions │
@@ -36,6 +37,7 @@ Traditional HTML tables break on mobile devices, requiring horizontal scrolling 
 ```
 
 **Mobile Table** (Bad UX):
+
 ```
 ┌───────────────►Scroll horizontally───────────►
 │ Product...│ SKU    │ Price  │ Stock│ Ware...
@@ -43,6 +45,7 @@ Traditional HTML tables break on mobile devices, requiring horizontal scrolling 
 ```
 
 **Mobile Cards** (Good UX):
+
 ```
 ┌─────────────────────────────────────┐
 │ Product Name: Power Drill           │
@@ -69,9 +72,9 @@ ResponsiveTable (Generic)
 **File**: `components/responsive-table/ResponsiveTable.tsx`
 
 ```tsx
-"use client";
+'use client';
 
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 import {
   Table,
   TableBody,
@@ -79,8 +82,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
+} from '@/components/ui/table';
+import { Card } from '@/components/ui/card';
 
 interface Column<T> {
   key: string;
@@ -125,7 +128,7 @@ export function ResponsiveTable<T>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="text-muted-foreground h-24 text-center"
                 >
                   No results found
                 </TableCell>
@@ -135,7 +138,7 @@ export function ResponsiveTable<T>({
                 <TableRow
                   key={keyExtractor(item)}
                   onClick={() => onRowClick?.(item)}
-                  className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                  className={onRowClick ? 'hover:bg-muted/50 cursor-pointer' : ''}
                 >
                   {columns.map((column) => (
                     <TableCell key={column.key} className={column.className}>
@@ -150,33 +153,26 @@ export function ResponsiveTable<T>({
       </div>
 
       {/* Mobile Cards - hidden on desktop (md:hidden = hide on 768px+) */}
-      <div className="md:hidden space-y-3">
+      <div className="space-y-3 md:hidden">
         {data.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">
-            No results found
-          </Card>
+          <Card className="text-muted-foreground p-8 text-center">No results found</Card>
         ) : (
           data.map((item) => (
             <Card
               key={keyExtractor(item)}
-              className={`p-4 space-y-3 ${mobileCardClassName || ""} ${
-                onRowClick ? "cursor-pointer active:scale-[0.98] transition-transform" : ""
+              className={`space-y-3 p-4 ${mobileCardClassName || ''} ${
+                onRowClick ? 'cursor-pointer transition-transform active:scale-[0.98]' : ''
               }`}
               onClick={() => onRowClick?.(item)}
             >
               {columns
                 .filter((column) => !column.hideOnMobile)
                 .map((column) => (
-                  <div
-                    key={column.key}
-                    className="flex justify-between items-start gap-4"
-                  >
-                    <span className="text-sm font-medium text-muted-foreground min-w-[100px]">
+                  <div key={column.key} className="flex items-start justify-between gap-4">
+                    <span className="text-muted-foreground min-w-[100px] text-sm font-medium">
                       {column.mobileLabel || column.label}
                     </span>
-                    <div className="text-sm text-right flex-1">
-                      {column.render(item)}
-                    </div>
+                    <div className="flex-1 text-right text-sm">{column.render(item)}</div>
                   </div>
                 ))}
             </Card>
@@ -216,12 +212,12 @@ interface Product {
 
 ```tsx
 interface Column<T> {
-  key: string;              // Unique identifier
-  label: string;            // Desktop table header
-  render: (item: T) => ReactNode;  // Cell renderer
-  mobileLabel?: string;     // Optional different label for mobile
-  hideOnMobile?: boolean;   // Hide this column on mobile
-  className?: string;       // Optional Tailwind classes
+  key: string; // Unique identifier
+  label: string; // Desktop table header
+  render: (item: T) => ReactNode; // Cell renderer
+  mobileLabel?: string; // Optional different label for mobile
+  hideOnMobile?: boolean; // Hide this column on mobile
+  className?: string; // Optional Tailwind classes
 }
 ```
 
@@ -230,50 +226,44 @@ interface Column<T> {
 ```tsx
 const columns: Column<Product>[] = [
   {
-    key: "sku",
-    label: "SKU",
-    className: "font-mono text-sm w-[120px]",
+    key: 'sku',
+    label: 'SKU',
+    className: 'font-mono text-sm w-[120px]',
     render: (product) => product.sku,
   },
   {
-    key: "name",
-    label: "Product Name",
-    className: "font-medium",
+    key: 'name',
+    label: 'Product Name',
+    className: 'font-medium',
     render: (product) => product.name,
   },
   {
-    key: "price",
-    label: "Price",
-    className: "text-right",
+    key: 'price',
+    label: 'Price',
+    className: 'text-right',
+    render: (product) => <span className="font-semibold">${product.price.toFixed(2)}</span>,
+  },
+  {
+    key: 'stock',
+    label: 'Stock',
+    className: 'text-right',
     render: (product) => (
-      <span className="font-semibold">
-        ${product.price.toFixed(2)}
-      </span>
+      <Badge variant={product.stock <= 10 ? 'destructive' : 'default'}>{product.stock}</Badge>
     ),
   },
   {
-    key: "stock",
-    label: "Stock",
-    className: "text-right",
-    render: (product) => (
-      <Badge variant={product.stock <= 10 ? "destructive" : "default"}>
-        {product.stock}
-      </Badge>
-    ),
+    key: 'warehouse',
+    label: 'Warehouse',
+    hideOnMobile: true, // Hidden on mobile to save space
+    render: (product) => product.warehouse_location || 'N/A',
   },
   {
-    key: "warehouse",
-    label: "Warehouse",
-    hideOnMobile: true,  // Hidden on mobile to save space
-    render: (product) => product.warehouse_location || "N/A",
-  },
-  {
-    key: "actions",
-    label: "Actions",
-    className: "text-right",
-    mobileLabel: "",  // No label on mobile (just show buttons)
+    key: 'actions',
+    label: 'Actions',
+    className: 'text-right',
+    mobileLabel: '', // No label on mobile (just show buttons)
     render: (product) => (
-      <div className="flex gap-2 justify-end">
+      <div className="flex justify-end gap-2">
         <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
           Edit
         </Button>
@@ -293,7 +283,7 @@ const columns: Column<Product>[] = [
 **File**: `app/(dashboard)/products/page.tsx`
 
 ```tsx
-import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
+import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -304,61 +294,57 @@ export default function ProductsPage() {
       keyExtractor={(product) => product.id}
       columns={[
         {
-          key: "sku",
-          label: "SKU",
-          className: "font-mono text-sm",
+          key: 'sku',
+          label: 'SKU',
+          className: 'font-mono text-sm',
           render: (product) => product.sku,
         },
         {
-          key: "name",
-          label: "Product Name",
-          className: "font-medium",
+          key: 'name',
+          label: 'Product Name',
+          className: 'font-medium',
           render: (product) => product.name,
         },
         {
-          key: "category",
-          label: "Category",
+          key: 'category',
+          label: 'Category',
           hideOnMobile: true,
-          render: (product) => (
-            <Badge variant="outline">{product.category}</Badge>
-          ),
+          render: (product) => <Badge variant="outline">{product.category}</Badge>,
         },
         {
-          key: "price",
-          label: "Price",
-          className: "text-right",
+          key: 'price',
+          label: 'Price',
+          className: 'text-right',
           render: (product) => `$${product.price.toFixed(2)}`,
         },
         {
-          key: "stock",
-          label: "Stock",
-          className: "text-right",
+          key: 'stock',
+          label: 'Stock',
+          className: 'text-right',
           render: (product) => (
-            <Badge variant={product.stock <= 10 ? "destructive" : "default"}>
-              {product.stock}
-            </Badge>
+            <Badge variant={product.stock <= 10 ? 'destructive' : 'default'}>{product.stock}</Badge>
           ),
         },
         {
-          key: "warehouse",
-          label: "Warehouse",
+          key: 'warehouse',
+          label: 'Warehouse',
           hideOnMobile: true,
-          render: (product) => product.warehouse_location || "N/A",
+          render: (product) => product.warehouse_location || 'N/A',
         },
         {
-          key: "updated",
-          label: "Last Updated",
+          key: 'updated',
+          label: 'Last Updated',
           hideOnMobile: true,
-          className: "text-sm text-muted-foreground",
+          className: 'text-sm text-muted-foreground',
           render: (product) => formatDateAU(product.updated_at),
         },
         {
-          key: "actions",
-          label: "Actions",
-          className: "text-right",
-          mobileLabel: "",
+          key: 'actions',
+          label: 'Actions',
+          className: 'text-right',
+          mobileLabel: '',
           render: (product) => (
-            <div className="flex gap-2 justify-end">
+            <div className="flex justify-end gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -369,10 +355,7 @@ export default function ProductsPage() {
               >
                 Edit
               </Button>
-              <DeleteProductDialog
-                product={product}
-                onDelete={() => loadProducts()}
-              />
+              <DeleteProductDialog product={product} onDelete={() => loadProducts()} />
             </div>
           ),
         },
@@ -393,50 +376,46 @@ export default function ProductsPage() {
   onRowClick={(order) => router.push(`/dashboard/orders/${order.id}`)}
   columns={[
     {
-      key: "number",
-      label: "Order #",
-      className: "font-mono font-medium",
+      key: 'number',
+      label: 'Order #',
+      className: 'font-mono font-medium',
       render: (order) => order.order_number,
     },
     {
-      key: "customer",
-      label: "Customer",
+      key: 'customer',
+      label: 'Customer',
       render: (order) => order.customer.company_name,
     },
     {
-      key: "date",
-      label: "Order Date",
+      key: 'date',
+      label: 'Order Date',
       hideOnMobile: true,
       render: (order) => formatDateAU(order.order_date),
     },
     {
-      key: "status",
-      label: "Status",
-      render: (order) => (
-        <Badge variant={getStatusVariant(order.status)}>
-          {order.status}
-        </Badge>
-      ),
+      key: 'status',
+      label: 'Status',
+      render: (order) => <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>,
     },
     {
-      key: "items",
-      label: "Items",
+      key: 'items',
+      label: 'Items',
       hideOnMobile: true,
-      className: "text-right",
+      className: 'text-right',
       render: (order) => order.order_items.length,
     },
     {
-      key: "total",
-      label: "Total",
-      className: "text-right font-semibold",
+      key: 'total',
+      label: 'Total',
+      className: 'text-right font-semibold',
       render: (order) => formatCurrencyAUD(order.total),
     },
     {
-      key: "actions",
-      label: "Actions",
-      mobileLabel: "",
+      key: 'actions',
+      label: 'Actions',
+      mobileLabel: '',
       render: (order) => (
-        <div className="flex gap-2 justify-end">
+        <div className="flex justify-end gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -464,25 +443,25 @@ export default function ProductsPage() {
   keyExtractor={(customer) => customer.id}
   columns={[
     {
-      key: "number",
-      label: "Customer #",
-      className: "font-mono",
+      key: 'number',
+      label: 'Customer #',
+      className: 'font-mono',
       render: (customer) => customer.customer_number,
     },
     {
-      key: "company",
-      label: "Company",
-      className: "font-medium",
+      key: 'company',
+      label: 'Company',
+      className: 'font-medium',
       render: (customer) => customer.company_name,
     },
     {
-      key: "contact",
-      label: "Contact",
+      key: 'contact',
+      label: 'Contact',
       render: (customer) => customer.contact_name,
     },
     {
-      key: "email",
-      label: "Email",
+      key: 'email',
+      label: 'Email',
       hideOnMobile: true,
       render: (customer) => (
         <a
@@ -495,39 +474,36 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "phone",
-      label: "Phone",
+      key: 'phone',
+      label: 'Phone',
       hideOnMobile: true,
       render: (customer) => formatPhoneAU(customer.phone),
     },
     {
-      key: "location",
-      label: "Location",
+      key: 'location',
+      label: 'Location',
       hideOnMobile: true,
       render: (customer) => `${customer.city}, ${customer.state}`,
     },
     {
-      key: "status",
-      label: "Status",
+      key: 'status',
+      label: 'Status',
       render: (customer) => (
-        <Badge variant={customer.is_active ? "default" : "secondary"}>
-          {customer.is_active ? "Active" : "Inactive"}
+        <Badge variant={customer.is_active ? 'default' : 'secondary'}>
+          {customer.is_active ? 'Active' : 'Inactive'}
         </Badge>
       ),
     },
     {
-      key: "actions",
-      label: "Actions",
-      mobileLabel: "",
+      key: 'actions',
+      label: 'Actions',
+      mobileLabel: '',
       render: (customer) => (
-        <div className="flex gap-2 justify-end">
+        <div className="flex justify-end gap-2">
           <Button size="sm" variant="outline" onClick={() => handleEdit(customer)}>
             Edit
           </Button>
-          <DeleteCustomerDialog
-            customer={customer}
-            onDelete={() => loadCustomers()}
-          />
+          <DeleteCustomerDialog customer={customer} onDelete={() => loadCustomers()} />
         </div>
       ),
     },
@@ -599,12 +575,13 @@ Add custom styling to mobile cards:
 
 Uses Tailwind's standard breakpoints:
 
-| Screen | Breakpoint | Behavior |
-|--------|------------|----------|
-| Mobile | 0-767px | Card layout |
-| Tablet/Desktop | 768px+ | Table layout |
+| Screen         | Breakpoint | Behavior     |
+| -------------- | ---------- | ------------ |
+| Mobile         | 0-767px    | Card layout  |
+| Tablet/Desktop | 768px+     | Table layout |
 
 **CSS Classes**:
+
 - `.hidden.md:block` - Hidden on mobile, visible on desktop (table)
 - `.md:hidden` - Visible on mobile, hidden on desktop (cards)
 
@@ -646,7 +623,7 @@ Ensure touch targets are at least 44x44px:
 ```tsx
 <Button
   size="sm"
-  className="min-h-[44px] min-w-[44px]"  // WCAG 2.1 AA
+  className="min-h-[44px] min-w-[44px]" // WCAG 2.1 AA
 >
   Edit
 </Button>
@@ -663,7 +640,7 @@ pnpm add @tanstack/react-virtual
 ```
 
 ```tsx
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 // Implement virtual scrolling
 ```
@@ -687,6 +664,7 @@ For 50+ rows, add pagination:
 ## Testing Checklist
 
 ### Desktop Testing
+
 - [ ] All columns visible
 - [ ] Headers aligned with content
 - [ ] Sorting works (if implemented)
@@ -694,6 +672,7 @@ For 50+ rows, add pagination:
 - [ ] Actions buttons work
 
 ### Mobile Testing
+
 - [ ] Cards display properly (no overflow)
 - [ ] Hidden columns not visible
 - [ ] Actions accessible and tappable
@@ -702,6 +681,7 @@ For 50+ rows, add pagination:
 - [ ] Empty state displays correctly
 
 ### Cross-Browser
+
 - [ ] Chrome/Edge (Chromium)
 - [ ] Safari (iOS + macOS)
 - [ ] Firefox
@@ -747,6 +727,7 @@ keyExtractor={(item) => item.id}
 ## Australian Context
 
 ### Date Formatting
+
 Always use DD/MM/YYYY format:
 
 ```tsx
@@ -760,6 +741,7 @@ import { formatDateAU } from "@/lib/australian-context";
 ```
 
 ### Currency Formatting
+
 Always use AUD with $ prefix:
 
 ```tsx
@@ -773,6 +755,7 @@ import { formatCurrencyAUD } from "@/lib/australian-context";
 ```
 
 ### Phone Formatting
+
 Australian phone number format:
 
 ```tsx

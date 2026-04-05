@@ -90,13 +90,13 @@ Named after Ralph Wiggum from The Simpsons - simple but effective.
 
 ### Key Fields
 
-| Field | Purpose |
-|-------|---------|
-| `passes` | Boolean gate - only true after verification |
-| `priority` | Execution order: critical > high > medium > low |
-| `depends_on` | Task IDs that must pass first |
-| `acceptance_criteria` | Specific requirements to implement |
-| `attempt_count` | Tracks failed attempts (for debugging) |
+| Field                 | Purpose                                         |
+| --------------------- | ----------------------------------------------- |
+| `passes`              | Boolean gate - only true after verification     |
+| `priority`            | Execution order: critical > high > medium > low |
+| `depends_on`          | Task IDs that must pass first                   |
+| `acceptance_criteria` | Specific requirements to implement              |
+| `attempt_count`       | Tracks failed attempts (for debugging)          |
 
 ### 2. Progress File (plans/progress.txt)
 
@@ -104,27 +104,34 @@ Append-only file with session entries:
 
 ```markdown
 # Ralph Wiggum Progress Log
+
 # Project: my-project
+
 # Created: 2026-01-07T10:00:00Z
 
 ---
 
 ## Session 1: 2026-01-07T10:30:00Z
+
 **Task**: US-001 - User can sign up with email
 **Status**: IN_PROGRESS
 
 ### Work Done
+
 - Created SignUpForm component at apps/web/src/components/auth/SignUpForm.tsx
 - Added zod schema for email validation
 
 ### Issues Encountered
+
 - useAuth hook missing return type annotation
 
 ### Learnings
+
 - Always add explicit return types to custom hooks
 - Email regex pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 ### Next Steps
+
 1. Fix useAuth hook return type
 2. Add unit tests for SignUpForm
 3. Run full verification
@@ -132,18 +139,22 @@ Append-only file with session entries:
 ---
 
 ## Session 2: 2026-01-07T11:00:00Z
+
 **Task**: US-001 - User can sign up with email
 **Status**: COMPLETED
 
 ### Work Done
+
 - Fixed useAuth return type
 - Added comprehensive unit tests
 - All verification passed
 
 ### Learnings
+
 - Vitest mocking pattern for Supabase auth
 
 ### Next Steps
+
 - Move to US-002
 ```
 
@@ -152,10 +163,10 @@ Append-only file with session entries:
 ALL must pass before marking `passes: true`:
 
 ```bash
-pnpm turbo run type-check  # TypeScript compilation
-pnpm turbo run lint        # ESLint + Ruff linting
-pnpm turbo run test        # Unit tests (Vitest/Pytest)
-pnpm turbo run build       # Production build
+pnpm run type-check  # TypeScript compilation
+pnpm run lint        # ESLint + Ruff linting
+pnpm run test        # Unit tests (Vitest/Pytest)
+pnpm run build       # Production build
 pnpm --filter=web test:e2e # Playwright E2E tests
 ```
 
@@ -302,7 +313,7 @@ Order tasks logically:
 {
   "id": "US-002",
   "title": "User can log in",
-  "depends_on": ["US-001"]  // Sign-up must work first
+  "depends_on": ["US-001"] // Sign-up must work first
 }
 ```
 
@@ -312,6 +323,7 @@ Check what was learned in previous iterations:
 
 ```markdown
 ### Learnings
+
 - Vitest mocking pattern for Supabase: vi.mock('@supabase/ssr')
 - Always await signUp() before checking error state
 ```
@@ -330,6 +342,7 @@ git log --oneline
 ### 6. Escalate Repeated Failures
 
 If `attempt_count >= 3`:
+
 - Stop working on task
 - Record blocker in progress.txt
 - Move to next available task
@@ -341,11 +354,11 @@ If `attempt_count >= 3`:
 
 Ralph follows the same patterns as `apps/backend/src/agents/long_running/`:
 
-| Ralph | Long-Running |
-|-------|--------------|
-| `progress.txt` | `ProgressFile` class |
-| `prd.json` | `FeatureManager` |
-| Session entries | `SessionProgress` |
+| Ralph           | Long-Running         |
+| --------------- | -------------------- |
+| `progress.txt`  | `ProgressFile` class |
+| `prd.json`      | `FeatureManager`     |
+| Session entries | `SessionProgress`    |
 
 ### Orchestrator Delegation
 
@@ -367,6 +380,7 @@ async def handle_large_feature(feature_description: str):
 ### Verification Agent
 
 Uses the same verification-first principles:
+
 - No self-attestation
 - Run actual commands
 - All checks must pass
@@ -427,6 +441,7 @@ All tasks complete! Project finished in 5 iterations.
 ## Australian Context
 
 All implementations follow Australian defaults:
+
 - en-AU spelling (colour, organisation, behaviour)
 - DD/MM/YYYY date format
 - AUD currency formatting where applicable

@@ -10,6 +10,7 @@ Premium design patterns for creating modern, responsive, and interactive user in
 **Triggers**: page transition, route animation, navigation animation
 
 Smooth page transitions and route loading indicators for premium user experience. Includes:
+
 - PageTransition component with fade/slide animations
 - RouteProgressBar for loading feedback
 - FadeIn and StaggerChildren patterns
@@ -21,6 +22,7 @@ Smooth page transitions and route loading indicators for premium user experience
 **Triggers**: responsive table, mobile table, data table
 
 Mobile-responsive table patterns that transform into card layouts on small screens. Includes:
+
 - ResponsiveTable generic component with TypeScript
 - Desktop table → Mobile card automatic switching
 - Selective column hiding for mobile
@@ -32,6 +34,7 @@ Mobile-responsive table patterns that transform into card layouts on small scree
 **Triggers**: micro-interaction, hover effect, animation
 
 Premium micro-interactions and hover effects for polished user experience. Includes:
+
 - ButtonEnhanced with spring animations
 - AnimatedIcon wrapper
 - PulseNotification for badges
@@ -42,6 +45,7 @@ Premium micro-interactions and hover effects for polished user experience. Inclu
 ## When to Use
 
 Load these skills when working on:
+
 - Frontend UI components
 - Dashboard pages
 - Data tables or lists
@@ -52,6 +56,7 @@ Load these skills when working on:
 ## Dependencies
 
 All skills require:
+
 ```bash
 pnpm add framer-motion
 ```
@@ -61,12 +66,14 @@ And shadcn/ui components (already installed in project).
 ## Integration
 
 These skills build on:
+
 - `design-system.skill.md` - Design tokens and guidelines
 - `frontend/nextjs.skill.md` - Next.js 15 patterns
 
 ## Testing
 
 All patterns include:
+
 - Visual testing checklists
 - Performance considerations
 - Accessibility requirements
@@ -75,6 +82,7 @@ All patterns include:
 ## Australian Context
 
 All implementations follow:
+
 - Australian English spelling
 - DD/MM/YYYY date formatting
 - AUD currency formatting

@@ -38,11 +38,11 @@ Premium page transitions create a polished, app-like feel that reduces perceived
 **Location**: `components/transitions/PageTransition.tsx`
 
 ```tsx
-"use client";
+'use client';
 
-import { motion, AnimatePresence } from "framer-motion";
-import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { motion, AnimatePresence } from 'framer-motion';
+import { usePathname } from 'next/navigation';
+import { ReactNode } from 'react';
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -92,6 +92,7 @@ export function PageTransition({ children }: PageTransitionProps) {
 ```
 
 **Key Features**:
+
 - Uses `pathname` as key to trigger animation on route change
 - `mode="wait"` ensures exit animation completes before enter
 - Small y offset (10px) for subtle slide effect
@@ -103,11 +104,11 @@ export function PageTransition({ children }: PageTransitionProps) {
 **Location**: `components/transitions/RouteProgressBar.tsx`
 
 ```tsx
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function RouteProgressBar() {
   const pathname = usePathname();
@@ -126,9 +127,9 @@ export function RouteProgressBar() {
           initial={{ scaleX: 0, opacity: 1 }}
           animate={{ scaleX: 1, opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/80 to-primary z-[100] origin-left"
-          style={{ boxShadow: "0 0 10px hsl(var(--primary))" }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="from-primary via-primary/80 to-primary fixed top-0 right-0 left-0 z-[100] h-1 origin-left bg-gradient-to-r"
+          style={{ boxShadow: '0 0 10px hsl(var(--primary))' }}
         />
       )}
     </AnimatePresence>
@@ -137,6 +138,7 @@ export function RouteProgressBar() {
 ```
 
 **Key Features**:
+
 - Watches pathname changes to trigger loading state
 - Fixed positioning at top of viewport (z-index 100)
 - Gradient for visual interest
@@ -149,10 +151,10 @@ export function RouteProgressBar() {
 **Location**: `components/transitions/FadeIn.tsx`
 
 ```tsx
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
 interface FadeInProps {
   children: ReactNode;
@@ -161,12 +163,7 @@ interface FadeInProps {
   className?: string;
 }
 
-export function FadeIn({
-  children,
-  delay = 0,
-  duration = 0.5,
-  className
-}: FadeInProps) {
+export function FadeIn({ children, delay = 0, duration = 0.5, className }: FadeInProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -185,6 +182,7 @@ export function FadeIn({
 ```
 
 **Use Cases**:
+
 - Staggered content reveals
 - Dashboard sections loading in sequence
 - Form fields appearing progressively
@@ -194,10 +192,10 @@ export function FadeIn({
 **Location**: `components/transitions/StaggerChildren.tsx`
 
 ```tsx
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
 interface StaggerChildrenProps {
   children: ReactNode;
@@ -227,31 +225,16 @@ export const childVariants = {
   },
 };
 
-export function StaggerChildren({
-  children,
-  className,
-  staggerDelay = 0.1
-}: StaggerChildrenProps) {
+export function StaggerChildren({ children, className, staggerDelay = 0.1 }: StaggerChildrenProps) {
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className={className}
-    >
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className={className}>
       {children}
     </motion.div>
   );
 }
 
 // Wrapper for individual staggered items
-export function StaggerItem({
-  children,
-  className
-}: {
-  children: ReactNode;
-  className?: string
-}) {
+export function StaggerItem({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <motion.div variants={childVariants} className={className}>
       {children}
@@ -261,6 +244,7 @@ export function StaggerItem({
 ```
 
 **Usage Example**:
+
 ```tsx
 <StaggerChildren className="grid gap-4 md:grid-cols-3">
   <StaggerItem>
@@ -282,7 +266,7 @@ export function StaggerItem({
 **File**: `app/layout.tsx`
 
 ```tsx
-import { RouteProgressBar } from "@/components/transitions/RouteProgressBar";
+import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -301,7 +285,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 **File**: `app/(dashboard)/layout.tsx`
 
 ```tsx
-import { PageTransition } from "@/components/transitions/PageTransition";
+import { PageTransition } from '@/components/transitions/PageTransition';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -320,14 +304,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 **File**: `app/(dashboard)/dashboard/page.tsx`
 
 ```tsx
-import { StaggerChildren, StaggerItem } from "@/components/transitions/StaggerChildren";
-import { FadeIn } from "@/components/transitions/FadeIn";
+import { StaggerChildren, StaggerItem } from '@/components/transitions/StaggerChildren';
+import { FadeIn } from '@/components/transitions/FadeIn';
 
 export default function DashboardPage() {
   return (
     <>
       {/* Metrics cards with stagger */}
-      <StaggerChildren className="grid gap-4 md:grid-cols-3 mb-6">
+      <StaggerChildren className="mb-6 grid gap-4 md:grid-cols-3">
         <StaggerItem>
           <Card>Revenue</Card>
         </StaggerItem>
@@ -354,16 +338,19 @@ export default function DashboardPage() {
 ## Animation Timing Guidelines
 
 ### Duration
+
 - **Quick**: 0.15-0.2s - Button hovers, icon changes
 - **Normal**: 0.3s - Page transitions, card reveals
 - **Slow**: 0.5-0.8s - Large layout changes
 
 ### Easing Functions
+
 - **ease-smooth**: `[0.4, 0, 0.2, 1]` - Standard transitions (most common)
 - **ease-out-expo**: `[0.16, 1, 0.3, 1]` - Dramatic entrances
 - **ease-spring**: Use `type: "spring"` with `stiffness: 300-500, damping: 20-30`
 
 ### Stagger Delays
+
 - **Cards/Grid Items**: 0.05-0.1s
 - **List Items**: 0.03-0.05s
 - **Sections**: 0.2-0.3s
@@ -371,6 +358,7 @@ export default function DashboardPage() {
 ## Performance Considerations
 
 ### 1. Use CSS Transforms
+
 Always animate `opacity`, `scale`, `x`, `y` (transforms) rather than `width`, `height`, `top`, `left`:
 
 ```tsx
@@ -401,9 +389,9 @@ const variants = {
 Only load animations on client side:
 
 ```tsx
-"use client"; // Required for framer-motion
+'use client'; // Required for framer-motion
 
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 ```
 
 ## TypeScript Considerations
@@ -486,7 +474,7 @@ pnpm analyze
 Loading bar should be above all content:
 
 ```tsx
-className="fixed ... z-[100]" // High z-index for loading bar
+className = 'fixed ... z-[100]'; // High z-index for loading bar
 ```
 
 ## Australian Context
@@ -504,6 +492,7 @@ className="fixed ... z-[100]" // High z-index for loading bar
 ```
 
 Install via:
+
 ```bash
 pnpm add framer-motion
 ```
