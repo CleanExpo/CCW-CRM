@@ -16,7 +16,7 @@ updates:
 
   # Python (uv/pip) — backend dependencies
   - package-ecosystem: 'pip'
-    directory: '/apps/backend'
+    directory: '/backend'
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -30,9 +30,9 @@ updates:
     # Only open PRs for security updates automatically
     open-pull-requests-limit: 5
 
-  # npm/pnpm — frontend dependencies
+  # npm — frontend (single package, lockfile at repo root)
   - package-ecosystem: 'npm'
-    directory: '/apps/web'
+    directory: '/'
     schedule:
       interval: 'weekly'
       day: 'monday'

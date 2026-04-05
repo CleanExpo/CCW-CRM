@@ -18,6 +18,6 @@ lib/au-privacy-compliance.js @ccw-security-reviewer @ccw-orchestrator
 docker/ @ccw-infra-reviewer
 
 # Core application — never modify without review
-apps/web/middleware.ts @ccw-security-reviewer @ccw-orchestrator
-apps/backend/src/api/routes/demo_auth.py @ccw-security-reviewer @ccw-orchestrator
-apps/backend/src/db/demo_models.py @ccw-database-reviewer @ccw-orchestrator
+src/middleware.ts @ccw-security-reviewer @ccw-orchestrator
+backend/src/api/routes/demo_auth.py @ccw-security-reviewer @ccw-orchestrator
+backend/src/db/demo_models.py @ccw-database-reviewer @ccw-orchestrator

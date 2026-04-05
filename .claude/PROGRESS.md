@@ -63,3 +63,16759 @@
 - The `.claude/CLAUDE.md` file is the old detailed version (archived as `.claude/CLAUDE.md.pre-control-system`). The new control system uses CLAUDE.md (root) + companion files in `.claude/`.
 - Supabase project: `vwfgksqkajnpfjospbpe`
 - Linear team: Unite-Group, project: CCW-ERP/CRM
+
+## Session end: 2026-04-05T06:56:52+05:00
+### Modified files:
+- .claude/PROGRESS.md
+
+## Session end: 2026-04-05T07:31:44+05:00
+### Modified files:
+- .claude/PROGRESS.md
+- .claude/hooks/pre-commit.sh
+- .claude/rules/database/supabase-migrations.md
+- .dockerignore
+- .github/CODEOWNERS
+- .github/dependabot.yml
+- .github/workflows/agent-pr-checks.yml
+- .github/workflows/ci.yml
+- .github/workflows/deploy-production.yml
+- .github/workflows/deploy-staging.yml
+- .github/workflows/examples/deploy-frontend.yml.example
+- .github/workflows/security.yml
+- .husky/pre-commit
+- README.md
+- app/Dockerfile
+- app/components/workflow/canvas/workflow-canvas.tsx
+- app/package.json
+- docs/project-root/CLAUDE.md
+- eslint.config.mjs
+- lighthouserc.js
+- package.json
+- pnpm-lock.yaml
+- pnpm-workspace.yaml
+- scripts/boardroom/security-audit.js
+- scripts/dependency-checks.sh
+- scripts/deploy-phase4-frontend.sh
+- scripts/deploy.sh
+- scripts/health-check-phase4.sh
+- scripts/security-audit.ps1
+- scripts/setup.sh
+- scripts/test-phase4-sse.ps1
+- scripts/verify-integration-tests.sh
+- scripts/verify-penetration-testing.sh
+- scripts/verify-security-audit.sh
+- scripts/verify-sentry.sh
+- scripts/verify-uptime-monitoring.sh
+- scripts/verify.sh
+- (staged) app/.dockerignore
+- (staged) app/.gitignore
+- (staged) app/AGENTS.md
+- (staged) app/Dockerfile
+- (staged) app/__tests__/app/approvals-page.test.tsx
+- (staged) app/__tests__/app/billing-page.test.tsx
+- (staged) app/__tests__/app/crm-health.test.tsx
+- (staged) app/__tests__/app/crm-onboarding.test.tsx
+- (staged) app/__tests__/app/crm-personas.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- (staged) app/__tests__/app/orders-integration.test.tsx
+- (staged) app/__tests__/app/quotes-integration.test.tsx
+- (staged) app/__tests__/app/reconciliation-page.test.tsx
+- (staged) app/__tests__/app/workflows-page.test.tsx
+- (staged) app/__tests__/components/EmptyState.test.tsx
+- (staged) app/__tests__/components/ErrorBoundary.test.tsx
+- (staged) app/__tests__/components/ui/pagination-controls.test.tsx
+- (staged) app/__tests__/e2e/billing.spec.ts
+- (staged) app/__tests__/e2e/onboarding.spec.ts
+- (staged) app/__tests__/lib/api/activities.test.ts
+- (staged) app/__tests__/lib/api/agents.test.ts
+- (staged) app/__tests__/lib/api/ai-chat.test.ts
+- (staged) app/__tests__/lib/api/ai-generate.test.ts
+- (staged) app/__tests__/lib/api/ai-insights.test.ts
+- (staged) app/__tests__/lib/api/ap2.test.ts
+- (staged) app/__tests__/lib/api/approvals-extended.test.ts
+- (staged) app/__tests__/lib/api/approvals.test.ts
+- (staged) app/__tests__/lib/api/auth.test.ts
+- (staged) app/__tests__/lib/api/autonomous.test.ts
+- (staged) app/__tests__/lib/api/autonomy.test.ts
+- (staged) app/__tests__/lib/api/bank-feeds.test.ts
+- (staged) app/__tests__/lib/api/billing.test.ts
+- (staged) app/__tests__/lib/api/chat.test.ts
+- (staged) app/__tests__/lib/api/cin7-bom.test.ts
+- (staged) app/__tests__/lib/api/cin7-fulfilment.test.ts
+- (staged) app/__tests__/lib/api/cin7-gl.test.ts
+- (staged) app/__tests__/lib/api/cin7-grn.test.ts
+- (staged) app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow.test.ts
+- (staged) app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- (staged) app/__tests__/lib/api/cin7.test.ts
+- (staged) app/__tests__/lib/api/contacts.test.ts
+- (staged) app/__tests__/lib/api/contractors.test.ts
+- (staged) app/__tests__/lib/api/copilot.test.ts
+- (staged) app/__tests__/lib/api/customers.test.ts
+- (staged) app/__tests__/lib/api/documents.test.ts
+- (staged) app/__tests__/lib/api/inventory.test.ts
+- (staged) app/__tests__/lib/api/invoices-extended.test.ts
+- (staged) app/__tests__/lib/api/invoices.test.ts
+- (staged) app/__tests__/lib/api/marketing.test.ts
+- (staged) app/__tests__/lib/api/marketplace.test.ts
+- (staged) app/__tests__/lib/api/mobile.test.ts
+- (staged) app/__tests__/lib/api/monitoring.test.ts
+- (staged) app/__tests__/lib/api/notifications.test.ts
+- (staged) app/__tests__/lib/api/orders.test.ts
+- (staged) app/__tests__/lib/api/pos.test.ts
+- (staged) app/__tests__/lib/api/products.test.ts
+- (staged) app/__tests__/lib/api/purchase-orders.test.ts
+- (staged) app/__tests__/lib/api/quotes.test.ts
+- (staged) app/__tests__/lib/api/reconciliation.test.ts
+- (staged) app/__tests__/lib/api/sendgrid.test.ts
+- (staged) app/__tests__/lib/api/service-requests.test.ts
+- (staged) app/__tests__/lib/api/settings.test.ts
+- (staged) app/__tests__/lib/api/shadow.test.ts
+- (staged) app/__tests__/lib/api/shipments-outbound.test.ts
+- (staged) app/__tests__/lib/api/shipments.test.ts
+- (staged) app/__tests__/lib/api/shopify.test.ts
+- (staged) app/__tests__/lib/api/sla.test.ts
+- (staged) app/__tests__/lib/api/suppliers.test.ts
+- (staged) app/__tests__/lib/api/tasks.test.ts
+- (staged) app/__tests__/lib/api/team.test.ts
+- (staged) app/__tests__/lib/api/warehouse.test.ts
+- (staged) app/__tests__/lib/api/workflows-extended.test.ts
+- (staged) app/__tests__/lib/api/workflows.test.ts
+- (staged) app/__tests__/lib/api/workshop.test.ts
+- (staged) app/__tests__/lib/api/xero.test.ts
+- (staged) app/__tests__/lib/marketplace.test.ts
+- (staged) app/__tests__/lib/types/cin7.test.ts
+- (staged) app/__tests__/lib/types/marketplace.test.ts
+- (staged) app/__tests__/lib/types/reconciliation.test.ts
+- (staged) app/__tests__/lib/types/workflows.test.ts
+- (staged) app/__tests__/lib/utils/csv-export.test.ts
+- (staged) app/app/(auth)/layout.tsx
+- (staged) app/app/(auth)/login/page.tsx
+- (staged) app/app/(auth)/onboarding/page.tsx
+- (staged) app/app/(dashboard)/activities/components/ActivityForm.tsx
+- (staged) app/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- (staged) app/app/(dashboard)/activities/page.tsx
+- (staged) app/app/(dashboard)/agents/components/AgentList.tsx
+- (staged) app/app/(dashboard)/agents/components/AgentStats.tsx
+- (staged) app/app/(dashboard)/agents/components/LearningInsights.tsx
+- (staged) app/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- (staged) app/app/(dashboard)/agents/components/TaskHistory.tsx
+- (staged) app/app/(dashboard)/agents/components/index.ts
+- (staged) app/app/(dashboard)/agents/page.tsx
+- (staged) app/app/(dashboard)/ai-assistant/page.tsx
+- (staged) app/app/(dashboard)/ai-ops/page.tsx
+- (staged) app/app/(dashboard)/ai-query/page.tsx
+- (staged) app/app/(dashboard)/alerts/page.tsx
+- (staged) app/app/(dashboard)/approvals/page.tsx
+- (staged) app/app/(dashboard)/autonomous-dev/page.tsx
+- (staged) app/app/(dashboard)/autonomous/page.tsx
+- (staged) app/app/(dashboard)/backorders/page.tsx
+- (staged) app/app/(dashboard)/bank-feeds/page.tsx
+- (staged) app/app/(dashboard)/contacts/[id]/page.tsx
+- (staged) app/app/(dashboard)/contacts/components/ContactForm.tsx
+- (staged) app/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- (staged) app/app/(dashboard)/contacts/page.tsx
+- (staged) app/app/(dashboard)/containers/[id]/page.tsx
+- (staged) app/app/(dashboard)/containers/page.tsx
+- (staged) app/app/(dashboard)/contractors/components/ContractorForm.tsx
+- (staged) app/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- (staged) app/app/(dashboard)/contractors/page.tsx
+- (staged) app/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- (staged) app/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- (staged) app/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- (staged) app/app/(dashboard)/customers/[id]/page.tsx
+- (staged) app/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- (staged) app/app/(dashboard)/customers/components/CustomerForm.tsx
+- (staged) app/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- (staged) app/app/(dashboard)/customers/health/page.tsx
+- (staged) app/app/(dashboard)/customers/layout.tsx
+- (staged) app/app/(dashboard)/customers/onboarding/page.tsx
+- (staged) app/app/(dashboard)/customers/page.tsx
+- (staged) app/app/(dashboard)/customers/personas/page.tsx
+- (staged) app/app/(dashboard)/dashboard/layout.tsx
+- (staged) app/app/(dashboard)/dashboard/page.tsx
+- (staged) app/app/(dashboard)/demo-live/page.tsx
+- (staged) app/app/(dashboard)/demo/contractor-demo.tsx
+- (staged) app/app/(dashboard)/demo/page.tsx
+- (staged) app/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- (staged) app/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- (staged) app/app/(dashboard)/emails/page.tsx
+- (staged) app/app/(dashboard)/error.tsx
+- (staged) app/app/(dashboard)/faq/page.tsx
+- (staged) app/app/(dashboard)/insights/page.tsx
+- (staged) app/app/(dashboard)/inventory/bom/page.tsx
+- (staged) app/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- (staged) app/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- (staged) app/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- (staged) app/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- (staged) app/app/(dashboard)/inventory/forecast/page.tsx
+- (staged) app/app/(dashboard)/inventory/page.tsx
+- (staged) app/app/(dashboard)/inventory/reservations/page.tsx
+- (staged) app/app/(dashboard)/inventory/stock/page.tsx
+- (staged) app/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- (staged) app/app/(dashboard)/inventory/transfers/page.tsx
+- (staged) app/app/(dashboard)/invoices/[id]/page.tsx
+- (staged) app/app/(dashboard)/invoices/bas/page.tsx
+- (staged) app/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- (staged) app/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- (staged) app/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- (staged) app/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- (staged) app/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- (staged) app/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- (staged) app/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- (staged) app/app/(dashboard)/invoices/page.tsx
+- (staged) app/app/(dashboard)/invoices/types.ts
+- (staged) app/app/(dashboard)/layout.tsx
+- (staged) app/app/(dashboard)/loading.tsx
+- (staged) app/app/(dashboard)/marketing/page.tsx
+- (staged) app/app/(dashboard)/marketplace/page.tsx
+- (staged) app/app/(dashboard)/monitoring/components/AlertCard.tsx
+- (staged) app/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- (staged) app/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- (staged) app/app/(dashboard)/monitoring/page.tsx
+- (staged) app/app/(dashboard)/orders/[id]/invoice/page.tsx
+- (staged) app/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- (staged) app/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- (staged) app/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- (staged) app/app/(dashboard)/orders/components/OrderForm.tsx
+- (staged) app/app/(dashboard)/orders/components/OrderLineItems.tsx
+- (staged) app/app/(dashboard)/orders/components/OrderPrintView.tsx
+- (staged) app/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- (staged) app/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- (staged) app/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- (staged) app/app/(dashboard)/orders/fulfilment/page.tsx
+- (staged) app/app/(dashboard)/orders/layout.tsx
+- (staged) app/app/(dashboard)/orders/page.tsx
+- (staged) app/app/(dashboard)/orders/types.ts
+- (staged) app/app/(dashboard)/pos/components/Cart.tsx
+- (staged) app/app/(dashboard)/pos/components/POSTerminal.tsx
+- (staged) app/app/(dashboard)/pos/components/PaymentPanel.tsx
+- (staged) app/app/(dashboard)/pos/components/ProductSearch.tsx
+- (staged) app/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- (staged) app/app/(dashboard)/pos/locations/page.tsx
+- (staged) app/app/(dashboard)/pos/page.tsx
+- (staged) app/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- (staged) app/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- (staged) app/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- (staged) app/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- (staged) app/app/(dashboard)/pos/reconciliation/page.tsx
+- (staged) app/app/(dashboard)/pos/staff/page.tsx
+- (staged) app/app/(dashboard)/pos/terminal/page.tsx
+- (staged) app/app/(dashboard)/pos/types.ts
+- (staged) app/app/(dashboard)/prd/[id]/page.tsx
+- (staged) app/app/(dashboard)/prd/generate/page.tsx
+- (staged) app/app/(dashboard)/products/[id]/page.tsx
+- (staged) app/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- (staged) app/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- (staged) app/app/(dashboard)/products/components/ProductForm.tsx
+- (staged) app/app/(dashboard)/products/layout.tsx
+- (staged) app/app/(dashboard)/products/page.tsx
+- (staged) app/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- (staged) app/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- (staged) app/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- (staged) app/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- (staged) app/app/(dashboard)/purchase-orders/page.tsx
+- (staged) app/app/(dashboard)/purchase-orders/receiving/page.tsx
+- (staged) app/app/(dashboard)/purchase-orders/types.ts
+- (staged) app/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- (staged) app/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- (staged) app/app/(dashboard)/quotes/components/QuoteForm.tsx
+- (staged) app/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- (staged) app/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- (staged) app/app/(dashboard)/quotes/generate/page.tsx
+- (staged) app/app/(dashboard)/quotes/layout.tsx
+- (staged) app/app/(dashboard)/quotes/page.tsx
+- (staged) app/app/(dashboard)/quotes/types.ts
+- (staged) app/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- (staged) app/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- (staged) app/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- (staged) app/app/(dashboard)/reconciliation/page.tsx
+- (staged) app/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- (staged) app/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- (staged) app/app/(dashboard)/reports/layout.tsx
+- (staged) app/app/(dashboard)/reports/page.tsx
+- (staged) app/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- (staged) app/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- (staged) app/app/(dashboard)/service-requests/page.tsx
+- (staged) app/app/(dashboard)/settings/account/page.tsx
+- (staged) app/app/(dashboard)/settings/billing/page.tsx
+- (staged) app/app/(dashboard)/settings/company/page.tsx
+- (staged) app/app/(dashboard)/settings/integrations/ap2/page.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- (staged) app/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- (staged) app/app/(dashboard)/settings/integrations/gl/page.tsx
+- (staged) app/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- (staged) app/app/(dashboard)/settings/integrations/page.tsx
+- (staged) app/app/(dashboard)/settings/integrations/shadow/page.tsx
+- (staged) app/app/(dashboard)/settings/mobile/page.tsx
+- (staged) app/app/(dashboard)/settings/onboarding/page.tsx
+- (staged) app/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- (staged) app/app/(dashboard)/settings/setup/page.tsx
+- (staged) app/app/(dashboard)/settings/shadow/page.tsx
+- (staged) app/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- (staged) app/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- (staged) app/app/(dashboard)/settings/team/page.tsx
+- (staged) app/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- (staged) app/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- (staged) app/app/(dashboard)/settings/translations/components/ProductList.tsx
+- (staged) app/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- (staged) app/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- (staged) app/app/(dashboard)/settings/translations/page.tsx
+- (staged) app/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- (staged) app/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- (staged) app/app/(dashboard)/shipments/page.tsx
+- (staged) app/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- (staged) app/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- (staged) app/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- (staged) app/app/(dashboard)/submissions/page.tsx
+- (staged) app/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- (staged) app/app/(dashboard)/suppliers/page.tsx
+- (staged) app/app/(dashboard)/tasks/components/QueueStats.tsx
+- (staged) app/app/(dashboard)/tasks/components/TaskList.tsx
+- (staged) app/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- (staged) app/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- (staged) app/app/(dashboard)/tasks/page.tsx
+- (staged) app/app/(dashboard)/warehouse/page.tsx
+- (staged) app/app/(dashboard)/workflows/page.tsx
+- (staged) app/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- (staged) app/app/(dashboard)/workshop/equipment/page.tsx
+- (staged) app/app/(dashboard)/workshop/page.tsx
+- (staged) app/app/(dashboard)/workshop/reminders/page.tsx
+- (staged) app/app/(dashboard)/workshop/schedule/page.tsx
+- (staged) app/app/(dashboard)/workshop/templates/page.tsx
+- (staged) app/app/(guest)/layout.tsx
+- (staged) app/app/(guest)/order/[token]/GuestOrderClient.tsx
+- (staged) app/app/(guest)/order/[token]/page.tsx
+- (staged) app/app/(mobile)/layout.tsx
+- (staged) app/app/(mobile)/order/new/page.tsx
+- (staged) app/app/(portal)/layout.tsx
+- (staged) app/app/(portal)/portal/certifications/page.tsx
+- (staged) app/app/(portal)/portal/invoices/page.tsx
+- (staged) app/app/(portal)/portal/orders/page.tsx
+- (staged) app/app/(portal)/portal/page.tsx
+- (staged) app/app/(portal)/portal/service/page.tsx
+- (staged) app/app/(supplier)/layout.tsx
+- (staged) app/app/(supplier)/supplier/orders/page.tsx
+- (staged) app/app/(supplier)/supplier/page.tsx
+- (staged) app/app/api/activities/route.ts
+- (staged) app/app/api/activities/stats/route.ts
+- (staged) app/app/api/agents/insights/route.ts
+- (staged) app/app/api/agents/list/route.ts
+- (staged) app/app/api/agents/patterns/route.ts
+- (staged) app/app/api/agents/stats/route.ts
+- (staged) app/app/api/agents/tasks/recent/route.ts
+- (staged) app/app/api/ai/cin7-anomaly/sync-health/route.ts
+- (staged) app/app/api/ai/insights/dashboard/route.ts
+- (staged) app/app/api/ai/insights/sales/route.ts
+- (staged) app/app/api/ai/inventory-forecast/route.ts
+- (staged) app/app/api/ai/patterns/orders/route.ts
+- (staged) app/app/api/analytics/metrics/overview/route.ts
+- (staged) app/app/api/auth/login/route.ts
+- (staged) app/app/api/auth/logout/route.ts
+- (staged) app/app/api/backorders/route.ts
+- (staged) app/app/api/bank-feeds/accounts/route.ts
+- (staged) app/app/api/boardroom/cron/route.ts
+- (staged) app/app/api/ccw/products/route.ts
+- (staged) app/app/api/ccw/summary/route.ts
+- (staged) app/app/api/contact-submissions/route.ts
+- (staged) app/app/api/contacts/route.ts
+- (staged) app/app/api/containers/route.ts
+- (staged) app/app/api/cron/auto-reorder-inventory/route.ts
+- (staged) app/app/api/cron/check-expiring-quotes/route.ts
+- (staged) app/app/api/cron/check-sla-breaches/route.ts
+- (staged) app/app/api/cron/cleanup-old-runs/route.ts
+- (staged) app/app/api/cron/daily-report/route.ts
+- (staged) app/app/api/cron/health-check/route.ts
+- (staged) app/app/api/cron/nightly-full-sync/route.ts
+- (staged) app/app/api/cron/process-onboarding-emails/route.ts
+- (staged) app/app/api/cron/refresh-health-scores/route.ts
+- (staged) app/app/api/cron/refresh-xero-tokens/route.ts
+- (staged) app/app/api/cron/retry-failed-webhooks/route.ts
+- (staged) app/app/api/cron/run-autonomous-ops/route.ts
+- (staged) app/app/api/cron/shadow-sync-cin7/route.ts
+- (staged) app/app/api/cron/shadow-sync-xero/route.ts
+- (staged) app/app/api/customers/route.ts
+- (staged) app/app/api/dashboard/aggregated/route.ts
+- (staged) app/app/api/dashboard/metrics-stream/route.ts
+- (staged) app/app/api/dashboard/order-status-breakdown/route.ts
+- (staged) app/app/api/dashboard/quote-conversion/route.ts
+- (staged) app/app/api/dashboard/revenue-by-location/route.ts
+- (staged) app/app/api/demo-requests/route.ts
+- (staged) app/app/api/health/route.ts
+- (staged) app/app/api/health/routes/route.ts
+- (staged) app/app/api/integrations/cin7/status/route.ts
+- (staged) app/app/api/integrations/cin7/stream/route.ts
+- (staged) app/app/api/integrations/sendgrid/conversations/route.ts
+- (staged) app/app/api/integrations/sendgrid/status/route.ts
+- (staged) app/app/api/integrations/shopify/status/route.ts
+- (staged) app/app/api/integrations/xero/status/route.ts
+- (staged) app/app/api/inventory-stream/route.ts
+- (staged) app/app/api/inventory/reservations/route.ts
+- (staged) app/app/api/inventory/route.ts
+- (staged) app/app/api/inventory/stock-health/route.ts
+- (staged) app/app/api/inventory/transfer-suggestions/route.ts
+- (staged) app/app/api/inventory/transfers/route.ts
+- (staged) app/app/api/invoices/route.ts
+- (staged) app/app/api/monitoring/alerts/pos-failures/route.ts
+- (staged) app/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- (staged) app/app/api/monitoring/alerts/route.ts
+- (staged) app/app/api/monitoring/health/route.ts
+- (staged) app/app/api/monitoring/metrics/route.ts
+- (staged) app/app/api/monitoring/range/route.ts
+- (staged) app/app/api/orders/route.ts
+- (staged) app/app/api/pos/locations/route.ts
+- (staged) app/app/api/pos/sales-staff/route.ts
+- (staged) app/app/api/pos/terminals/route.ts
+- (staged) app/app/api/products/route.ts
+- (staged) app/app/api/purchase-orders/route.ts
+- (staged) app/app/api/quotes/route.ts
+- (staged) app/app/api/submissions/statistics/route.ts
+- (staged) app/app/api/telemetry/route.ts
+- (staged) app/app/api/warehouse/ops/route.ts
+- (staged) app/app/api/webhooks/route.ts
+- (staged) app/app/api/workflows/[id]/execute/route.ts
+- (staged) app/app/api/workflows/[id]/route.ts
+- (staged) app/app/api/workflows/route.ts
+- (staged) app/app/dashboard-analytics/page.tsx
+- (staged) app/app/demo/i18n/page.tsx
+- (staged) app/app/design-system/page.tsx
+- (staged) app/app/error.tsx
+- (staged) app/app/favicon.ico/route.ts
+- (staged) app/app/globals.css
+- (staged) app/app/layout.tsx
+- (staged) app/app/not-found.tsx
+- (staged) app/app/page.tsx
+- (staged) app/app/playground/page.tsx
+- (staged) app/app/robots.ts
+- (staged) app/app/sitemap.ts
+- (staged) app/components.json
+- (staged) app/components/ClientOnly.tsx
+- (staged) app/components/ai-marketing/asset-library.tsx
+- (staged) app/components/ai-marketing/media-generator.tsx
+- (staged) app/components/ai/AIProductCopyGenerator.tsx
+- (staged) app/components/ai/AIQuoteGenerator.tsx
+- (staged) app/components/ai/QuoteCopilotChat.tsx
+- (staged) app/components/ai/StaffCopilotWidget.tsx
+- (staged) app/components/alerts/AnomalyAlert.tsx
+- (staged) app/components/auth/login-form.tsx
+- (staged) app/components/autonomous/ApprovalGateDialog.tsx
+- (staged) app/components/autonomous/ControlPanel.tsx
+- (staged) app/components/autonomous/FileChangesViewer.tsx
+- (staged) app/components/autonomous/PhaseTimeline.tsx
+- (staged) app/components/charts/CategorySalesChart.tsx
+- (staged) app/components/charts/RevenueChart.tsx
+- (staged) app/components/chat/ChatWidget.tsx
+- (staged) app/components/contractor-availability-live.tsx
+- (staged) app/components/contractor-availability.tsx
+- (staged) app/components/dashboard/AgentMetricsWidget.tsx
+- (staged) app/components/dashboard/Cin7SyncStatusWidget.tsx
+- (staged) app/components/dashboard/DemoVideoBanner.tsx
+- (staged) app/components/dashboard/DemoVideoLink.tsx
+- (staged) app/components/dashboard/InventoryForecastWidget.tsx
+- (staged) app/components/dashboard/OrderPatternsWidget.tsx
+- (staged) app/components/dashboard/OrderStatusBreakdownWidget.tsx
+- (staged) app/components/dashboard/QuoteConversionWidget.tsx
+- (staged) app/components/dashboard/RevenueByLocationWidget.tsx
+- (staged) app/components/dashboard/SalesInsightsWidget.tsx
+- (staged) app/components/dashboard/StockHealthWidget.tsx
+- (staged) app/components/dashboard/TransferSuggestionsWidget.tsx
+- (staged) app/components/errors/ErrorBoundary.tsx
+- (staged) app/components/forms/AutoFillSuggestion.tsx
+- (staged) app/components/insights/insight-card.tsx
+- (staged) app/components/inventory/LocationAwareProductSelect.tsx
+- (staged) app/components/inventory/MultiLocationStockCell.tsx
+- (staged) app/components/inventory/ReleaseReservationDialog.tsx
+- (staged) app/components/inventory/StockReservationDialog.tsx
+- (staged) app/components/inventory/TransferStatusBadge.tsx
+- (staged) app/components/landing/AnimatedCounter.tsx
+- (staged) app/components/landing/LiveStatsBar.tsx
+- (staged) app/components/layout/LanguageSwitcher.tsx
+- (staged) app/components/layout/NotificationBell.tsx
+- (staged) app/components/layout/ShadowModeBanner.tsx
+- (staged) app/components/layout/footer.tsx
+- (staged) app/components/layout/mobile-nav.tsx
+- (staged) app/components/layout/sidebar.tsx
+- (staged) app/components/marketing/feature-grid.tsx
+- (staged) app/components/marketing/hero-section.tsx
+- (staged) app/components/marketing/index.ts
+- (staged) app/components/marketing/testimonials.tsx
+- (staged) app/components/mobile/PhotoCaptureWidget.tsx
+- (staged) app/components/onboarding/CompanySetupStep.tsx
+- (staged) app/components/onboarding/FirstQuoteStep.tsx
+- (staged) app/components/onboarding/OnboardingWizard.tsx
+- (staged) app/components/onboarding/SampleDataStep.tsx
+- (staged) app/components/onboarding/ShopifyConnectStep.tsx
+- (staged) app/components/onboarding/TeamInviteStep.tsx
+- (staged) app/components/prd-generation-progress.tsx
+- (staged) app/components/prd/prd-detail-view.tsx
+- (staged) app/components/prd/prd-generation-progress.tsx
+- (staged) app/components/prd/prd-generator-form.tsx
+- (staged) app/components/providers/i18n-provider.tsx
+- (staged) app/components/responsive-table/ResponsiveTable.tsx
+- (staged) app/components/responsive-table/index.ts
+- (staged) app/components/seo/FaqSchema.tsx
+- (staged) app/components/seo/JsonLd.tsx
+- (staged) app/components/transitions/FadeIn.tsx
+- (staged) app/components/transitions/PageTransition.tsx
+- (staged) app/components/transitions/RouteProgressBar.tsx
+- (staged) app/components/transitions/index.ts
+- (staged) app/components/ui/alert-dialog.tsx
+- (staged) app/components/ui/alert.tsx
+- (staged) app/components/ui/avatar.tsx
+- (staged) app/components/ui/badge.tsx
+- (staged) app/components/ui/bento-grid.tsx
+- (staged) app/components/ui/border-beam.tsx
+- (staged) app/components/ui/breadcrumb.tsx
+- (staged) app/components/ui/button.tsx
+- (staged) app/components/ui/card.tsx
+- (staged) app/components/ui/checkbox.tsx
+- (staged) app/components/ui/command-palette.tsx
+- (staged) app/components/ui/command.tsx
+- (staged) app/components/ui/dialog.tsx
+- (staged) app/components/ui/draft-recovery-alert.tsx
+- (staged) app/components/ui/dropdown-menu.tsx
+- (staged) app/components/ui/empty-state.tsx
+- (staged) app/components/ui/form.tsx
+- (staged) app/components/ui/input.tsx
+- (staged) app/components/ui/label.tsx
+- (staged) app/components/ui/loading.tsx
+- (staged) app/components/ui/motion.tsx
+- (staged) app/components/ui/order-status-badge.tsx
+- (staged) app/components/ui/pagination-controls.tsx
+- (staged) app/components/ui/popover.tsx
+- (staged) app/components/ui/progress.tsx
+- (staged) app/components/ui/real-time-indicator.tsx
+- (staged) app/components/ui/scroll-area.tsx
+- (staged) app/components/ui/select.tsx
+- (staged) app/components/ui/separator.tsx
+- (staged) app/components/ui/sheet.tsx
+- (staged) app/components/ui/skeleton.tsx
+- (staged) app/components/ui/switch.tsx
+- (staged) app/components/ui/table.tsx
+- (staged) app/components/ui/tabs.tsx
+- (staged) app/components/ui/textarea.tsx
+- (staged) app/components/ui/toast.tsx
+- (staged) app/components/ui/tooltip.tsx
+- (staged) app/components/workflow/canvas/workflow-canvas.tsx
+- (staged) app/components/workflow/nodes/agent-node.tsx
+- (staged) app/components/workflow/nodes/conditional-node.tsx
+- (staged) app/components/workflow/nodes/end-node.tsx
+- (staged) app/components/workflow/nodes/llm-node.tsx
+- (staged) app/components/workflow/nodes/start-node.tsx
+- (staged) app/components/workflow/nodes/tool-node.tsx
+- (staged) app/contexts/websocket-context.tsx
+- (staged) app/declarations.d.ts
+- (staged) app/e2e/README.md
+- (staged) app/e2e/auth.setup.ts
+- (staged) app/e2e/auth.spec.ts
+- (staged) app/e2e/autosave.spec.ts
+- (staged) app/e2e/billing.spec.ts
+- (staged) app/e2e/capture-error.spec.ts
+- (staged) app/e2e/crm-health.spec.ts
+- (staged) app/e2e/customers.spec.ts
+- (staged) app/e2e/debug-orders.spec.ts
+- (staged) app/e2e/fixtures/auth.ts
+- (staged) app/e2e/helpers/page-objects.ts
+- (staged) app/e2e/helpers/test-data.ts
+- (staged) app/e2e/mobile-photo-order.spec.ts
+- (staged) app/e2e/monitoring.spec.ts
+- (staged) app/e2e/orders.spec.ts
+- (staged) app/e2e/pos-reconciliation.spec.ts
+- (staged) app/e2e/pos-transactions.spec.ts
+- (staged) app/e2e/prd-generation.spec.ts
+- (staged) app/e2e/products.spec.ts
+- (staged) app/e2e/quotes.spec.ts
+- (staged) app/e2e/showroom.spec.ts
+- (staged) app/e2e/test-helper.ts
+- (staged) app/e2e/test-websocket-fix.spec.ts
+- (staged) app/e2e/warehouse.spec.ts
+- (staged) app/e2e/workshop.spec.ts
+- (staged) app/eslint.config.mjs
+- (staged) app/hooks/use-barcode-scanner.ts
+- (staged) app/hooks/use-chat.ts
+- (staged) app/hooks/use-line-item-calculations.ts
+- (staged) app/hooks/use-prd-generation.ts
+- (staged) app/hooks/use-toast.ts
+- (staged) app/i18n/config.ts
+- (staged) app/i18n/messages/ar.json
+- (staged) app/i18n/messages/en.json
+- (staged) app/i18n/messages/es.json
+- (staged) app/i18n/messages/hi.json
+- (staged) app/i18n/messages/pt.json
+- (staged) app/i18n/messages/ta.json
+- (staged) app/i18n/messages/te.json
+- (staged) app/i18n/messages/vi.json
+- (staged) app/i18n/messages/zh-CN.json
+- (staged) app/i18n/messages/zh-TW.json
+- (staged) app/i18n/request.ts
+- (staged) app/instrumentation.ts
+- (staged) app/lib/agents/independent-verifier.ts
+- (staged) app/lib/api/activities.ts
+- (staged) app/lib/api/agents.ts
+- (staged) app/lib/api/ai-chat.ts
+- (staged) app/lib/api/ai-generate.ts
+- (staged) app/lib/api/ai-insights.ts
+- (staged) app/lib/api/ap2.ts
+- (staged) app/lib/api/approvals.ts
+- (staged) app/lib/api/auth.ts
+- (staged) app/lib/api/autonomous.ts
+- (staged) app/lib/api/autonomy.ts
+- (staged) app/lib/api/backend-url.ts
+- (staged) app/lib/api/backend.ts
+- (staged) app/lib/api/bank-feeds.ts
+- (staged) app/lib/api/billing.ts
+- (staged) app/lib/api/chat.ts
+- (staged) app/lib/api/cin7-bom.ts
+- (staged) app/lib/api/cin7-fulfilment.ts
+- (staged) app/lib/api/cin7-gl.ts
+- (staged) app/lib/api/cin7-grn.ts
+- (staged) app/lib/api/cin7-inventory-writeback.ts
+- (staged) app/lib/api/cin7-shadow-ai.ts
+- (staged) app/lib/api/cin7-shadow.ts
+- (staged) app/lib/api/cin7-webhook-subscriptions.ts
+- (staged) app/lib/api/cin7.ts
+- (staged) app/lib/api/client.ts
+- (staged) app/lib/api/contacts.ts
+- (staged) app/lib/api/contractors.ts
+- (staged) app/lib/api/copilot.ts
+- (staged) app/lib/api/customers.ts
+- (staged) app/lib/api/documents.ts
+- (staged) app/lib/api/heygen.ts
+- (staged) app/lib/api/index.ts
+- (staged) app/lib/api/inventory.ts
+- (staged) app/lib/api/invoices.ts
+- (staged) app/lib/api/marketing.ts
+- (staged) app/lib/api/marketplace.ts
+- (staged) app/lib/api/middleware.ts
+- (staged) app/lib/api/mobile.ts
+- (staged) app/lib/api/monitoring.ts
+- (staged) app/lib/api/notifications.ts
+- (staged) app/lib/api/orders.ts
+- (staged) app/lib/api/pos.ts
+- (staged) app/lib/api/products.ts
+- (staged) app/lib/api/purchase-orders.ts
+- (staged) app/lib/api/quotes.ts
+- (staged) app/lib/api/sendgrid.ts
+- (staged) app/lib/api/server.ts
+- (staged) app/lib/api/service-requests.ts
+- (staged) app/lib/api/settings.ts
+- (staged) app/lib/api/shadow.ts
+- (staged) app/lib/api/shipments-outbound.ts
+- (staged) app/lib/api/shipments.ts
+- (staged) app/lib/api/shopify.ts
+- (staged) app/lib/api/sla.ts
+- (staged) app/lib/api/suppliers.ts
+- (staged) app/lib/api/tasks.ts
+- (staged) app/lib/api/team.ts
+- (staged) app/lib/api/warehouse.ts
+- (staged) app/lib/api/workflows.ts
+- (staged) app/lib/api/workshop.ts
+- (staged) app/lib/api/xero.ts
+- (staged) app/lib/audit/api-route-auditor.ts
+- (staged) app/lib/audit/user-journey-runner.ts
+- (staged) app/lib/audit/ux-friction-detector.ts
+- (staged) app/lib/australian-context.ts
+- (staged) app/lib/config.ts
+- (staged) app/lib/design-system/config.ts
+- (staged) app/lib/design-system/index.ts
+- (staged) app/lib/design-system/library-registry.ts
+- (staged) app/lib/design-system/pattern-validator.ts
+- (staged) app/lib/hooks/use-autonomy-metrics.ts
+- (staged) app/lib/hooks/use-autosave.ts
+- (staged) app/lib/hooks/use-cin7-stream.ts
+- (staged) app/lib/hooks/use-form-autofill.ts
+- (staged) app/lib/hooks/use-inventory-forecast.ts
+- (staged) app/lib/hooks/use-recent-items.ts
+- (staged) app/lib/hooks/use-search-state.ts
+- (staged) app/lib/hooks/use-sse.ts
+- (staged) app/lib/hooks/use-websocket.ts
+- (staged) app/lib/image-generation/asset-manager.ts
+- (staged) app/lib/image-generation/types.ts
+- (staged) app/lib/logger.ts
+- (staged) app/lib/supabase/client.ts
+- (staged) app/lib/supabase/server.ts
+- (staged) app/lib/telemetry.ts
+- (staged) app/lib/tools/index.ts
+- (staged) app/lib/types/activities.ts
+- (staged) app/lib/types/cin7.ts
+- (staged) app/lib/types/contacts.ts
+- (staged) app/lib/types/inventory.ts
+- (staged) app/lib/types/invoices.ts
+- (staged) app/lib/types/marketplace.ts
+- (staged) app/lib/types/reconciliation.ts
+- (staged) app/lib/types/workflows.ts
+- (staged) app/lib/utils.test.ts
+- (staged) app/lib/utils.ts
+- (staged) app/lib/utils/calculations.test.ts
+- (staged) app/lib/utils/calculations.ts
+- (staged) app/lib/utils/csv-export.ts
+- (staged) app/lib/utils/debounce.ts
+- (staged) app/lib/utils/draft-storage.ts
+- (staged) app/lib/utils/storage.ts
+- (staged) app/middleware.ts
+- (staged) app/next-env.d.ts
+- (staged) app/next.config.ts
+- (staged) app/package.json
+- (staged) app/playwright.a11y.config.ts
+- (staged) app/playwright.config.ts
+- (staged) app/postcss.config.js
+- (staged) app/public/favicon.svg
+- (staged) app/public/manifest.json
+- (staged) app/public/test-api.html
+- (staged) app/scripts/dev-with-fallback.mjs
+- (staged) app/sentry.client.config.ts
+- (staged) app/sentry.edge.config.ts
+- (staged) app/sentry.server.config.ts
+- (staged) app/src/lib/australian-context.ts
+- (staged) app/src/styles/design-system.css
+- (staged) app/tailwind.config.ts
+- (staged) app/tests/accessibility/a11y.spec.ts
+- (staged) app/tests/e2e/approvals.spec.ts
+- (staged) app/tests/e2e/error-handling.spec.ts
+- (staged) app/tests/e2e/invoices.spec.ts
+- (staged) app/tests/e2e/reconciliation.spec.ts
+- (staged) app/tests/e2e/workflows.spec.ts
+- (staged) app/tests/visual/components.visual.spec.ts
+- (staged) app/tsconfig.json
+- (staged) app/types/contractor.ts
+- (staged) app/types/index.ts
+- (staged) app/types/prd.ts
+- (staged) app/types/workflow.ts
+- (staged) app/vercel.json
+- (staged) app/vitest.config.ts
+- (staged) app/vitest.d.ts
+- (staged) app/vitest.setup.ts
+
+## Session end: 2026-04-05T07:34:27+05:00
+### Modified files:
+- .claude/PROGRESS.md
+- .claude/hooks/pre-commit.sh
+- .claude/rules/database/supabase-migrations.md
+- .dockerignore
+- .github/CODEOWNERS
+- .github/dependabot.yml
+- .github/workflows/agent-pr-checks.yml
+- .github/workflows/ci.yml
+- .github/workflows/deploy-production.yml
+- .github/workflows/deploy-staging.yml
+- .github/workflows/examples/deploy-frontend.yml.example
+- .github/workflows/security.yml
+- .husky/pre-commit
+- README.md
+- app/Dockerfile
+- app/package.json
+- app/src/components/workflow/canvas/workflow-canvas.tsx
+- app/tsconfig.json
+- docs/project-root/CLAUDE.md
+- eslint.config.mjs
+- lighthouserc.js
+- package.json
+- pnpm-lock.yaml
+- pnpm-workspace.yaml
+- scripts/boardroom/security-audit.js
+- scripts/dependency-checks.sh
+- scripts/deploy-phase4-frontend.sh
+- scripts/deploy.sh
+- scripts/health-check-phase4.sh
+- scripts/security-audit.ps1
+- scripts/setup.sh
+- scripts/test-phase4-sse.ps1
+- scripts/verify-integration-tests.sh
+- scripts/verify-penetration-testing.sh
+- scripts/verify-security-audit.sh
+- scripts/verify-sentry.sh
+- scripts/verify-uptime-monitoring.sh
+- scripts/verify.sh
+- (staged) app/.dockerignore
+- (staged) app/.gitignore
+- (staged) app/AGENTS.md
+- (staged) app/Dockerfile
+- (staged) app/__tests__/app/approvals-page.test.tsx
+- (staged) app/__tests__/app/billing-page.test.tsx
+- (staged) app/__tests__/app/crm-health.test.tsx
+- (staged) app/__tests__/app/crm-onboarding.test.tsx
+- (staged) app/__tests__/app/crm-personas.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- (staged) app/__tests__/app/orders-integration.test.tsx
+- (staged) app/__tests__/app/quotes-integration.test.tsx
+- (staged) app/__tests__/app/reconciliation-page.test.tsx
+- (staged) app/__tests__/app/workflows-page.test.tsx
+- (staged) app/__tests__/components/EmptyState.test.tsx
+- (staged) app/__tests__/components/ErrorBoundary.test.tsx
+- (staged) app/__tests__/components/ui/pagination-controls.test.tsx
+- (staged) app/__tests__/e2e/billing.spec.ts
+- (staged) app/__tests__/e2e/onboarding.spec.ts
+- (staged) app/__tests__/lib/api/activities.test.ts
+- (staged) app/__tests__/lib/api/agents.test.ts
+- (staged) app/__tests__/lib/api/ai-chat.test.ts
+- (staged) app/__tests__/lib/api/ai-generate.test.ts
+- (staged) app/__tests__/lib/api/ai-insights.test.ts
+- (staged) app/__tests__/lib/api/ap2.test.ts
+- (staged) app/__tests__/lib/api/approvals-extended.test.ts
+- (staged) app/__tests__/lib/api/approvals.test.ts
+- (staged) app/__tests__/lib/api/auth.test.ts
+- (staged) app/__tests__/lib/api/autonomous.test.ts
+- (staged) app/__tests__/lib/api/autonomy.test.ts
+- (staged) app/__tests__/lib/api/bank-feeds.test.ts
+- (staged) app/__tests__/lib/api/billing.test.ts
+- (staged) app/__tests__/lib/api/chat.test.ts
+- (staged) app/__tests__/lib/api/cin7-bom.test.ts
+- (staged) app/__tests__/lib/api/cin7-fulfilment.test.ts
+- (staged) app/__tests__/lib/api/cin7-gl.test.ts
+- (staged) app/__tests__/lib/api/cin7-grn.test.ts
+- (staged) app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow.test.ts
+- (staged) app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- (staged) app/__tests__/lib/api/cin7.test.ts
+- (staged) app/__tests__/lib/api/contacts.test.ts
+- (staged) app/__tests__/lib/api/contractors.test.ts
+- (staged) app/__tests__/lib/api/copilot.test.ts
+- (staged) app/__tests__/lib/api/customers.test.ts
+- (staged) app/__tests__/lib/api/documents.test.ts
+- (staged) app/__tests__/lib/api/inventory.test.ts
+- (staged) app/__tests__/lib/api/invoices-extended.test.ts
+- (staged) app/__tests__/lib/api/invoices.test.ts
+- (staged) app/__tests__/lib/api/marketing.test.ts
+- (staged) app/__tests__/lib/api/marketplace.test.ts
+- (staged) app/__tests__/lib/api/mobile.test.ts
+- (staged) app/__tests__/lib/api/monitoring.test.ts
+- (staged) app/__tests__/lib/api/notifications.test.ts
+- (staged) app/__tests__/lib/api/orders.test.ts
+- (staged) app/__tests__/lib/api/pos.test.ts
+- (staged) app/__tests__/lib/api/products.test.ts
+- (staged) app/__tests__/lib/api/purchase-orders.test.ts
+- (staged) app/__tests__/lib/api/quotes.test.ts
+- (staged) app/__tests__/lib/api/reconciliation.test.ts
+- (staged) app/__tests__/lib/api/sendgrid.test.ts
+- (staged) app/__tests__/lib/api/service-requests.test.ts
+- (staged) app/__tests__/lib/api/settings.test.ts
+- (staged) app/__tests__/lib/api/shadow.test.ts
+- (staged) app/__tests__/lib/api/shipments-outbound.test.ts
+- (staged) app/__tests__/lib/api/shipments.test.ts
+- (staged) app/__tests__/lib/api/shopify.test.ts
+- (staged) app/__tests__/lib/api/sla.test.ts
+- (staged) app/__tests__/lib/api/suppliers.test.ts
+- (staged) app/__tests__/lib/api/tasks.test.ts
+- (staged) app/__tests__/lib/api/team.test.ts
+- (staged) app/__tests__/lib/api/warehouse.test.ts
+- (staged) app/__tests__/lib/api/workflows-extended.test.ts
+- (staged) app/__tests__/lib/api/workflows.test.ts
+- (staged) app/__tests__/lib/api/workshop.test.ts
+- (staged) app/__tests__/lib/api/xero.test.ts
+- (staged) app/__tests__/lib/marketplace.test.ts
+- (staged) app/__tests__/lib/types/cin7.test.ts
+- (staged) app/__tests__/lib/types/marketplace.test.ts
+- (staged) app/__tests__/lib/types/reconciliation.test.ts
+- (staged) app/__tests__/lib/types/workflows.test.ts
+- (staged) app/__tests__/lib/utils/csv-export.test.ts
+- (staged) app/components.json
+- (staged) app/declarations.d.ts
+- (staged) app/e2e/README.md
+- (staged) app/e2e/auth.setup.ts
+- (staged) app/e2e/auth.spec.ts
+- (staged) app/e2e/autosave.spec.ts
+- (staged) app/e2e/billing.spec.ts
+- (staged) app/e2e/capture-error.spec.ts
+- (staged) app/e2e/crm-health.spec.ts
+- (staged) app/e2e/customers.spec.ts
+- (staged) app/e2e/debug-orders.spec.ts
+- (staged) app/e2e/fixtures/auth.ts
+- (staged) app/e2e/helpers/page-objects.ts
+- (staged) app/e2e/helpers/test-data.ts
+- (staged) app/e2e/mobile-photo-order.spec.ts
+- (staged) app/e2e/monitoring.spec.ts
+- (staged) app/e2e/orders.spec.ts
+- (staged) app/e2e/pos-reconciliation.spec.ts
+- (staged) app/e2e/pos-transactions.spec.ts
+- (staged) app/e2e/prd-generation.spec.ts
+- (staged) app/e2e/products.spec.ts
+- (staged) app/e2e/quotes.spec.ts
+- (staged) app/e2e/showroom.spec.ts
+- (staged) app/e2e/test-helper.ts
+- (staged) app/e2e/test-websocket-fix.spec.ts
+- (staged) app/e2e/warehouse.spec.ts
+- (staged) app/e2e/workshop.spec.ts
+- (staged) app/eslint.config.mjs
+- (staged) app/next-env.d.ts
+- (staged) app/next.config.ts
+- (staged) app/package.json
+- (staged) app/playwright.a11y.config.ts
+- (staged) app/playwright.config.ts
+- (staged) app/postcss.config.js
+- (staged) app/public/favicon.svg
+- (staged) app/public/manifest.json
+- (staged) app/public/test-api.html
+- (staged) app/scripts/dev-with-fallback.mjs
+- (staged) app/sentry.client.config.ts
+- (staged) app/sentry.edge.config.ts
+- (staged) app/sentry.server.config.ts
+- (staged) app/src/app/(auth)/layout.tsx
+- (staged) app/src/app/(auth)/login/page.tsx
+- (staged) app/src/app/(auth)/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/activities/page.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentList.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentStats.tsx
+- (staged) app/src/app/(dashboard)/agents/components/LearningInsights.tsx
+- (staged) app/src/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- (staged) app/src/app/(dashboard)/agents/components/TaskHistory.tsx
+- (staged) app/src/app/(dashboard)/agents/components/index.ts
+- (staged) app/src/app/(dashboard)/agents/page.tsx
+- (staged) app/src/app/(dashboard)/ai-assistant/page.tsx
+- (staged) app/src/app/(dashboard)/ai-ops/page.tsx
+- (staged) app/src/app/(dashboard)/ai-query/page.tsx
+- (staged) app/src/app/(dashboard)/alerts/page.tsx
+- (staged) app/src/app/(dashboard)/approvals/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous-dev/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous/page.tsx
+- (staged) app/src/app/(dashboard)/backorders/page.tsx
+- (staged) app/src/app/(dashboard)/bank-feeds/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/ContactForm.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- (staged) app/src/app/(dashboard)/contacts/page.tsx
+- (staged) app/src/app/(dashboard)/containers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/containers/page.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/ContractorForm.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- (staged) app/src/app/(dashboard)/contractors/page.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- (staged) app/src/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/health/page.tsx
+- (staged) app/src/app/(dashboard)/customers/layout.tsx
+- (staged) app/src/app/(dashboard)/customers/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/customers/page.tsx
+- (staged) app/src/app/(dashboard)/customers/personas/page.tsx
+- (staged) app/src/app/(dashboard)/dashboard/layout.tsx
+- (staged) app/src/app/(dashboard)/dashboard/page.tsx
+- (staged) app/src/app/(dashboard)/demo-live/page.tsx
+- (staged) app/src/app/(dashboard)/demo/contractor-demo.tsx
+- (staged) app/src/app/(dashboard)/demo/page.tsx
+- (staged) app/src/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/page.tsx
+- (staged) app/src/app/(dashboard)/error.tsx
+- (staged) app/src/app/(dashboard)/faq/page.tsx
+- (staged) app/src/app/(dashboard)/insights/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/bom/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/forecast/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/reservations/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/stock/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/bas/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/types.ts
+- (staged) app/src/app/(dashboard)/layout.tsx
+- (staged) app/src/app/(dashboard)/loading.tsx
+- (staged) app/src/app/(dashboard)/marketing/page.tsx
+- (staged) app/src/app/(dashboard)/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/AlertCard.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- (staged) app/src/app/(dashboard)/monitoring/page.tsx
+- (staged) app/src/app/(dashboard)/orders/[id]/invoice/page.tsx
+- (staged) app/src/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderPrintView.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- (staged) app/src/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- (staged) app/src/app/(dashboard)/orders/fulfilment/page.tsx
+- (staged) app/src/app/(dashboard)/orders/layout.tsx
+- (staged) app/src/app/(dashboard)/orders/page.tsx
+- (staged) app/src/app/(dashboard)/orders/types.ts
+- (staged) app/src/app/(dashboard)/pos/components/Cart.tsx
+- (staged) app/src/app/(dashboard)/pos/components/POSTerminal.tsx
+- (staged) app/src/app/(dashboard)/pos/components/PaymentPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/components/ProductSearch.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/page.tsx
+- (staged) app/src/app/(dashboard)/pos/page.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/pos/staff/page.tsx
+- (staged) app/src/app/(dashboard)/pos/terminal/page.tsx
+- (staged) app/src/app/(dashboard)/pos/types.ts
+- (staged) app/src/app/(dashboard)/prd/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/prd/generate/page.tsx
+- (staged) app/src/app/(dashboard)/products/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/ProductForm.tsx
+- (staged) app/src/app/(dashboard)/products/layout.tsx
+- (staged) app/src/app/(dashboard)/products/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/receiving/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/types.ts
+- (staged) app/src/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- (staged) app/src/app/(dashboard)/quotes/generate/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/layout.tsx
+- (staged) app/src/app/(dashboard)/quotes/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/types.ts
+- (staged) app/src/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/layout.tsx
+- (staged) app/src/app/(dashboard)/reports/page.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- (staged) app/src/app/(dashboard)/service-requests/page.tsx
+- (staged) app/src/app/(dashboard)/settings/account/page.tsx
+- (staged) app/src/app/(dashboard)/settings/billing/page.tsx
+- (staged) app/src/app/(dashboard)/settings/company/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/ap2/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/gl/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/mobile/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- (staged) app/src/app/(dashboard)/settings/setup/page.tsx
+- (staged) app/src/app/(dashboard)/settings/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- (staged) app/src/app/(dashboard)/settings/team/page.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/ProductList.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/page.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/page.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/submissions/page.tsx
+- (staged) app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- (staged) app/src/app/(dashboard)/suppliers/page.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/QueueStats.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskList.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- (staged) app/src/app/(dashboard)/tasks/page.tsx
+- (staged) app/src/app/(dashboard)/warehouse/page.tsx
+- (staged) app/src/app/(dashboard)/workflows/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/reminders/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/schedule/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/templates/page.tsx
+- (staged) app/src/app/(guest)/layout.tsx
+- (staged) app/src/app/(guest)/order/[token]/GuestOrderClient.tsx
+- (staged) app/src/app/(guest)/order/[token]/page.tsx
+- (staged) app/src/app/(mobile)/layout.tsx
+- (staged) app/src/app/(mobile)/order/new/page.tsx
+- (staged) app/src/app/(portal)/layout.tsx
+- (staged) app/src/app/(portal)/portal/certifications/page.tsx
+- (staged) app/src/app/(portal)/portal/invoices/page.tsx
+- (staged) app/src/app/(portal)/portal/orders/page.tsx
+- (staged) app/src/app/(portal)/portal/page.tsx
+- (staged) app/src/app/(portal)/portal/service/page.tsx
+- (staged) app/src/app/(supplier)/layout.tsx
+- (staged) app/src/app/(supplier)/supplier/orders/page.tsx
+- (staged) app/src/app/(supplier)/supplier/page.tsx
+- (staged) app/src/app/api/activities/route.ts
+- (staged) app/src/app/api/activities/stats/route.ts
+- (staged) app/src/app/api/agents/insights/route.ts
+- (staged) app/src/app/api/agents/list/route.ts
+- (staged) app/src/app/api/agents/patterns/route.ts
+- (staged) app/src/app/api/agents/stats/route.ts
+- (staged) app/src/app/api/agents/tasks/recent/route.ts
+- (staged) app/src/app/api/ai/cin7-anomaly/sync-health/route.ts
+- (staged) app/src/app/api/ai/insights/dashboard/route.ts
+- (staged) app/src/app/api/ai/insights/sales/route.ts
+- (staged) app/src/app/api/ai/inventory-forecast/route.ts
+- (staged) app/src/app/api/ai/patterns/orders/route.ts
+- (staged) app/src/app/api/analytics/metrics/overview/route.ts
+- (staged) app/src/app/api/auth/login/route.ts
+- (staged) app/src/app/api/auth/logout/route.ts
+- (staged) app/src/app/api/backorders/route.ts
+- (staged) app/src/app/api/bank-feeds/accounts/route.ts
+- (staged) app/src/app/api/boardroom/cron/route.ts
+- (staged) app/src/app/api/ccw/products/route.ts
+- (staged) app/src/app/api/ccw/summary/route.ts
+- (staged) app/src/app/api/contact-submissions/route.ts
+- (staged) app/src/app/api/contacts/route.ts
+- (staged) app/src/app/api/containers/route.ts
+- (staged) app/src/app/api/cron/auto-reorder-inventory/route.ts
+- (staged) app/src/app/api/cron/check-expiring-quotes/route.ts
+- (staged) app/src/app/api/cron/check-sla-breaches/route.ts
+- (staged) app/src/app/api/cron/cleanup-old-runs/route.ts
+- (staged) app/src/app/api/cron/daily-report/route.ts
+- (staged) app/src/app/api/cron/health-check/route.ts
+- (staged) app/src/app/api/cron/nightly-full-sync/route.ts
+- (staged) app/src/app/api/cron/process-onboarding-emails/route.ts
+- (staged) app/src/app/api/cron/refresh-health-scores/route.ts
+- (staged) app/src/app/api/cron/refresh-xero-tokens/route.ts
+- (staged) app/src/app/api/cron/retry-failed-webhooks/route.ts
+- (staged) app/src/app/api/cron/run-autonomous-ops/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-cin7/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-xero/route.ts
+- (staged) app/src/app/api/customers/route.ts
+- (staged) app/src/app/api/dashboard/aggregated/route.ts
+- (staged) app/src/app/api/dashboard/metrics-stream/route.ts
+- (staged) app/src/app/api/dashboard/order-status-breakdown/route.ts
+- (staged) app/src/app/api/dashboard/quote-conversion/route.ts
+- (staged) app/src/app/api/dashboard/revenue-by-location/route.ts
+- (staged) app/src/app/api/demo-requests/route.ts
+- (staged) app/src/app/api/health/route.ts
+- (staged) app/src/app/api/health/routes/route.ts
+- (staged) app/src/app/api/integrations/cin7/status/route.ts
+- (staged) app/src/app/api/integrations/cin7/stream/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/conversations/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/status/route.ts
+- (staged) app/src/app/api/integrations/shopify/status/route.ts
+- (staged) app/src/app/api/integrations/xero/status/route.ts
+- (staged) app/src/app/api/inventory-stream/route.ts
+- (staged) app/src/app/api/inventory/reservations/route.ts
+- (staged) app/src/app/api/inventory/route.ts
+- (staged) app/src/app/api/inventory/stock-health/route.ts
+- (staged) app/src/app/api/inventory/transfer-suggestions/route.ts
+- (staged) app/src/app/api/inventory/transfers/route.ts
+- (staged) app/src/app/api/invoices/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- (staged) app/src/app/api/monitoring/alerts/route.ts
+- (staged) app/src/app/api/monitoring/health/route.ts
+- (staged) app/src/app/api/monitoring/metrics/route.ts
+- (staged) app/src/app/api/monitoring/range/route.ts
+- (staged) app/src/app/api/orders/route.ts
+- (staged) app/src/app/api/pos/locations/route.ts
+- (staged) app/src/app/api/pos/sales-staff/route.ts
+- (staged) app/src/app/api/pos/terminals/route.ts
+- (staged) app/src/app/api/products/route.ts
+- (staged) app/src/app/api/purchase-orders/route.ts
+- (staged) app/src/app/api/quotes/route.ts
+- (staged) app/src/app/api/submissions/statistics/route.ts
+- (staged) app/src/app/api/telemetry/route.ts
+- (staged) app/src/app/api/warehouse/ops/route.ts
+- (staged) app/src/app/api/webhooks/route.ts
+- (staged) app/src/app/api/workflows/[id]/execute/route.ts
+- (staged) app/src/app/api/workflows/[id]/route.ts
+- (staged) app/src/app/api/workflows/route.ts
+- (staged) app/src/app/dashboard-analytics/page.tsx
+- (staged) app/src/app/demo/i18n/page.tsx
+- (staged) app/src/app/design-system/page.tsx
+- (staged) app/src/app/error.tsx
+- (staged) app/src/app/favicon.ico/route.ts
+- (staged) app/src/app/globals.css
+- (staged) app/src/app/layout.tsx
+- (staged) app/src/app/not-found.tsx
+- (staged) app/src/app/page.tsx
+- (staged) app/src/app/playground/page.tsx
+- (staged) app/src/app/robots.ts
+- (staged) app/src/app/sitemap.ts
+- (staged) app/src/components/ClientOnly.tsx
+- (staged) app/src/components/ai-marketing/asset-library.tsx
+- (staged) app/src/components/ai-marketing/media-generator.tsx
+- (staged) app/src/components/ai/AIProductCopyGenerator.tsx
+- (staged) app/src/components/ai/AIQuoteGenerator.tsx
+- (staged) app/src/components/ai/QuoteCopilotChat.tsx
+- (staged) app/src/components/ai/StaffCopilotWidget.tsx
+- (staged) app/src/components/alerts/AnomalyAlert.tsx
+- (staged) app/src/components/auth/login-form.tsx
+- (staged) app/src/components/autonomous/ApprovalGateDialog.tsx
+- (staged) app/src/components/autonomous/ControlPanel.tsx
+- (staged) app/src/components/autonomous/FileChangesViewer.tsx
+- (staged) app/src/components/autonomous/PhaseTimeline.tsx
+- (staged) app/src/components/charts/CategorySalesChart.tsx
+- (staged) app/src/components/charts/RevenueChart.tsx
+- (staged) app/src/components/chat/ChatWidget.tsx
+- (staged) app/src/components/contractor-availability-live.tsx
+- (staged) app/src/components/contractor-availability.tsx
+- (staged) app/src/components/dashboard/AgentMetricsWidget.tsx
+- (staged) app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- (staged) app/src/components/dashboard/DemoVideoBanner.tsx
+- (staged) app/src/components/dashboard/DemoVideoLink.tsx
+- (staged) app/src/components/dashboard/InventoryForecastWidget.tsx
+- (staged) app/src/components/dashboard/OrderPatternsWidget.tsx
+- (staged) app/src/components/dashboard/OrderStatusBreakdownWidget.tsx
+- (staged) app/src/components/dashboard/QuoteConversionWidget.tsx
+- (staged) app/src/components/dashboard/RevenueByLocationWidget.tsx
+- (staged) app/src/components/dashboard/SalesInsightsWidget.tsx
+- (staged) app/src/components/dashboard/StockHealthWidget.tsx
+- (staged) app/src/components/dashboard/TransferSuggestionsWidget.tsx
+- (staged) app/src/components/errors/ErrorBoundary.tsx
+- (staged) app/src/components/forms/AutoFillSuggestion.tsx
+- (staged) app/src/components/insights/insight-card.tsx
+- (staged) app/src/components/inventory/LocationAwareProductSelect.tsx
+- (staged) app/src/components/inventory/MultiLocationStockCell.tsx
+- (staged) app/src/components/inventory/ReleaseReservationDialog.tsx
+- (staged) app/src/components/inventory/StockReservationDialog.tsx
+- (staged) app/src/components/inventory/TransferStatusBadge.tsx
+- (staged) app/src/components/landing/AnimatedCounter.tsx
+- (staged) app/src/components/landing/LiveStatsBar.tsx
+- (staged) app/src/components/layout/LanguageSwitcher.tsx
+- (staged) app/src/components/layout/NotificationBell.tsx
+- (staged) app/src/components/layout/ShadowModeBanner.tsx
+- (staged) app/src/components/layout/footer.tsx
+- (staged) app/src/components/layout/mobile-nav.tsx
+- (staged) app/src/components/layout/sidebar.tsx
+- (staged) app/src/components/marketing/feature-grid.tsx
+- (staged) app/src/components/marketing/hero-section.tsx
+- (staged) app/src/components/marketing/index.ts
+- (staged) app/src/components/marketing/testimonials.tsx
+- (staged) app/src/components/mobile/PhotoCaptureWidget.tsx
+- (staged) app/src/components/onboarding/CompanySetupStep.tsx
+- (staged) app/src/components/onboarding/FirstQuoteStep.tsx
+- (staged) app/src/components/onboarding/OnboardingWizard.tsx
+- (staged) app/src/components/onboarding/SampleDataStep.tsx
+- (staged) app/src/components/onboarding/ShopifyConnectStep.tsx
+- (staged) app/src/components/onboarding/TeamInviteStep.tsx
+- (staged) app/src/components/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-detail-view.tsx
+- (staged) app/src/components/prd/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-generator-form.tsx
+- (staged) app/src/components/providers/i18n-provider.tsx
+- (staged) app/src/components/responsive-table/ResponsiveTable.tsx
+- (staged) app/src/components/responsive-table/index.ts
+- (staged) app/src/components/seo/FaqSchema.tsx
+- (staged) app/src/components/seo/JsonLd.tsx
+- (staged) app/src/components/transitions/FadeIn.tsx
+- (staged) app/src/components/transitions/PageTransition.tsx
+- (staged) app/src/components/transitions/RouteProgressBar.tsx
+- (staged) app/src/components/transitions/index.ts
+- (staged) app/src/components/ui/alert-dialog.tsx
+- (staged) app/src/components/ui/alert.tsx
+- (staged) app/src/components/ui/avatar.tsx
+- (staged) app/src/components/ui/badge.tsx
+- (staged) app/src/components/ui/bento-grid.tsx
+- (staged) app/src/components/ui/border-beam.tsx
+- (staged) app/src/components/ui/breadcrumb.tsx
+- (staged) app/src/components/ui/button.tsx
+- (staged) app/src/components/ui/card.tsx
+- (staged) app/src/components/ui/checkbox.tsx
+- (staged) app/src/components/ui/command-palette.tsx
+- (staged) app/src/components/ui/command.tsx
+- (staged) app/src/components/ui/dialog.tsx
+- (staged) app/src/components/ui/draft-recovery-alert.tsx
+- (staged) app/src/components/ui/dropdown-menu.tsx
+- (staged) app/src/components/ui/empty-state.tsx
+- (staged) app/src/components/ui/form.tsx
+- (staged) app/src/components/ui/input.tsx
+- (staged) app/src/components/ui/label.tsx
+- (staged) app/src/components/ui/loading.tsx
+- (staged) app/src/components/ui/motion.tsx
+- (staged) app/src/components/ui/order-status-badge.tsx
+- (staged) app/src/components/ui/pagination-controls.tsx
+- (staged) app/src/components/ui/popover.tsx
+- (staged) app/src/components/ui/progress.tsx
+- (staged) app/src/components/ui/real-time-indicator.tsx
+- (staged) app/src/components/ui/scroll-area.tsx
+- (staged) app/src/components/ui/select.tsx
+- (staged) app/src/components/ui/separator.tsx
+- (staged) app/src/components/ui/sheet.tsx
+- (staged) app/src/components/ui/skeleton.tsx
+- (staged) app/src/components/ui/switch.tsx
+- (staged) app/src/components/ui/table.tsx
+- (staged) app/src/components/ui/tabs.tsx
+- (staged) app/src/components/ui/textarea.tsx
+- (staged) app/src/components/ui/toast.tsx
+- (staged) app/src/components/ui/tooltip.tsx
+- (staged) app/src/components/workflow/canvas/workflow-canvas.tsx
+- (staged) app/src/components/workflow/nodes/agent-node.tsx
+- (staged) app/src/components/workflow/nodes/conditional-node.tsx
+- (staged) app/src/components/workflow/nodes/end-node.tsx
+- (staged) app/src/components/workflow/nodes/llm-node.tsx
+- (staged) app/src/components/workflow/nodes/start-node.tsx
+- (staged) app/src/components/workflow/nodes/tool-node.tsx
+- (staged) app/src/contexts/websocket-context.tsx
+- (staged) app/src/hooks/use-barcode-scanner.ts
+- (staged) app/src/hooks/use-chat.ts
+- (staged) app/src/hooks/use-line-item-calculations.ts
+- (staged) app/src/hooks/use-prd-generation.ts
+- (staged) app/src/hooks/use-toast.ts
+- (staged) app/src/i18n/config.ts
+- (staged) app/src/i18n/messages/ar.json
+- (staged) app/src/i18n/messages/en.json
+- (staged) app/src/i18n/messages/es.json
+- (staged) app/src/i18n/messages/hi.json
+- (staged) app/src/i18n/messages/pt.json
+- (staged) app/src/i18n/messages/ta.json
+- (staged) app/src/i18n/messages/te.json
+- (staged) app/src/i18n/messages/vi.json
+- (staged) app/src/i18n/messages/zh-CN.json
+- (staged) app/src/i18n/messages/zh-TW.json
+- (staged) app/src/i18n/request.ts
+- (staged) app/src/instrumentation.ts
+- (staged) app/src/lib/australian-context.ts
+- (staged) app/src/lib/lib/agents/independent-verifier.ts
+- (staged) app/src/lib/lib/api/activities.ts
+- (staged) app/src/lib/lib/api/agents.ts
+- (staged) app/src/lib/lib/api/ai-chat.ts
+- (staged) app/src/lib/lib/api/ai-generate.ts
+- (staged) app/src/lib/lib/api/ai-insights.ts
+- (staged) app/src/lib/lib/api/ap2.ts
+- (staged) app/src/lib/lib/api/approvals.ts
+- (staged) app/src/lib/lib/api/auth.ts
+- (staged) app/src/lib/lib/api/autonomous.ts
+- (staged) app/src/lib/lib/api/autonomy.ts
+- (staged) app/src/lib/lib/api/backend-url.ts
+- (staged) app/src/lib/lib/api/backend.ts
+- (staged) app/src/lib/lib/api/bank-feeds.ts
+- (staged) app/src/lib/lib/api/billing.ts
+- (staged) app/src/lib/lib/api/chat.ts
+- (staged) app/src/lib/lib/api/cin7-bom.ts
+- (staged) app/src/lib/lib/api/cin7-fulfilment.ts
+- (staged) app/src/lib/lib/api/cin7-gl.ts
+- (staged) app/src/lib/lib/api/cin7-grn.ts
+- (staged) app/src/lib/lib/api/cin7-inventory-writeback.ts
+- (staged) app/src/lib/lib/api/cin7-shadow-ai.ts
+- (staged) app/src/lib/lib/api/cin7-shadow.ts
+- (staged) app/src/lib/lib/api/cin7-webhook-subscriptions.ts
+- (staged) app/src/lib/lib/api/cin7.ts
+- (staged) app/src/lib/lib/api/client.ts
+- (staged) app/src/lib/lib/api/contacts.ts
+- (staged) app/src/lib/lib/api/contractors.ts
+- (staged) app/src/lib/lib/api/copilot.ts
+- (staged) app/src/lib/lib/api/customers.ts
+- (staged) app/src/lib/lib/api/documents.ts
+- (staged) app/src/lib/lib/api/heygen.ts
+- (staged) app/src/lib/lib/api/index.ts
+- (staged) app/src/lib/lib/api/inventory.ts
+- (staged) app/src/lib/lib/api/invoices.ts
+- (staged) app/src/lib/lib/api/marketing.ts
+- (staged) app/src/lib/lib/api/marketplace.ts
+- (staged) app/src/lib/lib/api/middleware.ts
+- (staged) app/src/lib/lib/api/mobile.ts
+- (staged) app/src/lib/lib/api/monitoring.ts
+- (staged) app/src/lib/lib/api/notifications.ts
+- (staged) app/src/lib/lib/api/orders.ts
+- (staged) app/src/lib/lib/api/pos.ts
+- (staged) app/src/lib/lib/api/products.ts
+- (staged) app/src/lib/lib/api/purchase-orders.ts
+- (staged) app/src/lib/lib/api/quotes.ts
+- (staged) app/src/lib/lib/api/sendgrid.ts
+- (staged) app/src/lib/lib/api/server.ts
+- (staged) app/src/lib/lib/api/service-requests.ts
+- (staged) app/src/lib/lib/api/settings.ts
+- (staged) app/src/lib/lib/api/shadow.ts
+- (staged) app/src/lib/lib/api/shipments-outbound.ts
+- (staged) app/src/lib/lib/api/shipments.ts
+- (staged) app/src/lib/lib/api/shopify.ts
+- (staged) app/src/lib/lib/api/sla.ts
+- (staged) app/src/lib/lib/api/suppliers.ts
+- (staged) app/src/lib/lib/api/tasks.ts
+- (staged) app/src/lib/lib/api/team.ts
+- (staged) app/src/lib/lib/api/warehouse.ts
+- (staged) app/src/lib/lib/api/workflows.ts
+- (staged) app/src/lib/lib/api/workshop.ts
+- (staged) app/src/lib/lib/api/xero.ts
+- (staged) app/src/lib/lib/audit/api-route-auditor.ts
+- (staged) app/src/lib/lib/audit/user-journey-runner.ts
+- (staged) app/src/lib/lib/audit/ux-friction-detector.ts
+- (staged) app/src/lib/lib/australian-context.ts
+- (staged) app/src/lib/lib/config.ts
+- (staged) app/src/lib/lib/design-system/config.ts
+- (staged) app/src/lib/lib/design-system/index.ts
+- (staged) app/src/lib/lib/design-system/library-registry.ts
+- (staged) app/src/lib/lib/design-system/pattern-validator.ts
+- (staged) app/src/lib/lib/hooks/use-autonomy-metrics.ts
+- (staged) app/src/lib/lib/hooks/use-autosave.ts
+- (staged) app/src/lib/lib/hooks/use-cin7-stream.ts
+- (staged) app/src/lib/lib/hooks/use-form-autofill.ts
+- (staged) app/src/lib/lib/hooks/use-inventory-forecast.ts
+- (staged) app/src/lib/lib/hooks/use-recent-items.ts
+- (staged) app/src/lib/lib/hooks/use-search-state.ts
+- (staged) app/src/lib/lib/hooks/use-sse.ts
+- (staged) app/src/lib/lib/hooks/use-websocket.ts
+- (staged) app/src/lib/lib/image-generation/asset-manager.ts
+- (staged) app/src/lib/lib/image-generation/types.ts
+- (staged) app/src/lib/lib/logger.ts
+- (staged) app/src/lib/lib/supabase/client.ts
+- (staged) app/src/lib/lib/supabase/server.ts
+- (staged) app/src/lib/lib/telemetry.ts
+- (staged) app/src/lib/lib/tools/index.ts
+- (staged) app/src/lib/lib/types/activities.ts
+- (staged) app/src/lib/lib/types/cin7.ts
+- (staged) app/src/lib/lib/types/contacts.ts
+- (staged) app/src/lib/lib/types/inventory.ts
+- (staged) app/src/lib/lib/types/invoices.ts
+- (staged) app/src/lib/lib/types/marketplace.ts
+- (staged) app/src/lib/lib/types/reconciliation.ts
+- (staged) app/src/lib/lib/types/workflows.ts
+- (staged) app/src/lib/lib/utils.test.ts
+- (staged) app/src/lib/lib/utils.ts
+- (staged) app/src/lib/lib/utils/calculations.test.ts
+- (staged) app/src/lib/lib/utils/calculations.ts
+- (staged) app/src/lib/lib/utils/csv-export.ts
+- (staged) app/src/lib/lib/utils/debounce.ts
+- (staged) app/src/lib/lib/utils/draft-storage.ts
+- (staged) app/src/lib/lib/utils/storage.ts
+- (staged) app/src/middleware.ts
+- (staged) app/src/styles/design-system.css
+- (staged) app/src/types/contractor.ts
+- (staged) app/src/types/index.ts
+- (staged) app/src/types/prd.ts
+- (staged) app/src/types/workflow.ts
+- (staged) app/tailwind.config.ts
+- (staged) app/tests/accessibility/a11y.spec.ts
+- (staged) app/tests/e2e/approvals.spec.ts
+- (staged) app/tests/e2e/error-handling.spec.ts
+- (staged) app/tests/e2e/invoices.spec.ts
+- (staged) app/tests/e2e/reconciliation.spec.ts
+- (staged) app/tests/e2e/workflows.spec.ts
+- (staged) app/tests/visual/components.visual.spec.ts
+- (staged) app/tsconfig.json
+- (staged) app/vercel.json
+- (staged) app/vitest.config.ts
+- (staged) app/vitest.d.ts
+- (staged) app/vitest.setup.ts
+- (staged) backend/.claude/memory/context-snapshot.md
+- (staged) backend/.gitignore
+- (staged) backend/.python-version
+- (staged) backend/.vercelignore
+- (staged) backend/=0.39.0
+- (staged) backend/=6.11.0
+- (staged) backend/AGENTS.md
+- (staged) "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- (staged) backend/Dockerfile
+- (staged) backend/ISSUE-4-COMPLETION.md
+- (staged) backend/ISSUE-5-COMPLETION.md
+- (staged) backend/Procfile
+- (staged) backend/alembic.ini
+- (staged) backend/alembic/README
+- (staged) backend/alembic/env.py
+- (staged) backend/alembic/script.py.mako
+- (staged) backend/alembic/versions/001_add_approvals.py
+- (staged) backend/alembic/versions/002_add_semantic_search.py
+- (staged) backend/alembic/versions/003_add_missing_trigram_indexes.py
+- (staged) backend/alembic/versions/004_add_product_sync_bidirectional.py
+- (staged) backend/alembic/versions/005_add_shopify_extended_tables.py
+- (staged) backend/alembic/versions/006_add_mobile_order_tables.py
+- (staged) backend/alembic/versions/007_add_workflow_notification_indexes.py
+- (staged) backend/alembic/versions/008_merge_heads.py
+- (staged) backend/alembic/versions/009_add_pos_tables.py
+- (staged) backend/alembic/versions/00a_rename_invoice_date.py
+- (staged) backend/alembic/versions/00b_add_missing_inventory_tables.py
+- (staged) backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- (staged) backend/alembic/versions/00d_add_certification_tables.py
+- (staged) backend/alembic/versions/00e_add_prd_tables.py
+- (staged) backend/alembic/versions/00f_add_pricing_tier_tables.py
+- (staged) backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- (staged) backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- (staged) backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- (staged) backend/alembic/versions/68d51946645a_create_erp_schema.py
+- (staged) backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- (staged) backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- (staged) backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- (staged) backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- (staged) backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- (staged) backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- (staged) backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- (staged) backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- (staged) backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- (staged) backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- (staged) backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- (staged) backend/analyze_404_errors.py
+- (staged) backend/analyze_422_errors.py
+- (staged) backend/analyze_500_errors.py
+- (staged) backend/apply_i18n_migration.py
+- (staged) backend/apply_i18n_migration_v2.py
+- (staged) backend/apply_indexes.py
+- (staged) backend/apply_indexes_via_backend.py
+- (staged) backend/apply_pos_migration.py
+- (staged) backend/apply_search_indexes.py
+- (staged) backend/apply_sequences_migration.py
+- (staged) backend/benchmarks/after_indexes.txt
+- (staged) backend/benchmarks/before_indexes.txt
+- (staged) backend/benchmarks/comparison.md
+- (staged) backend/check_404_in_full_report.py
+- (staged) backend/check_backend_config.py
+- (staged) backend/check_categories.py
+- (staged) backend/check_db.py
+- (staged) backend/check_enum_def.py
+- (staged) backend/check_orders.py
+- (staged) backend/check_results.py
+- (staged) backend/check_runtime_config.py
+- (staged) backend/check_schema.py
+- (staged) backend/check_tables.py
+- (staged) backend/check_test_status.py
+- (staged) backend/cleanup_db.py
+- (staged) backend/conftest.py
+- (staged) backend/count_data.py
+- (staged) backend/create_admin.py
+- (staged) backend/create_demo_orders.py
+- (staged) backend/create_demo_orders_simple.py
+- (staged) backend/create_inventory_tables.py
+- (staged) backend/create_service_tables.py
+- (staged) backend/debug_response.py
+- (staged) backend/diagnose_db_connection.py
+- (staged) backend/docs/ISS-005-VERIFICATION.md
+- (staged) backend/docs/ISS-006-VERIFICATION.md
+- (staged) backend/docs/ISS-007-VERIFICATION.md
+- (staged) backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- (staged) backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- (staged) backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- (staged) backend/examples/use_agentic_layer.py
+- (staged) backend/fix_categories.py
+- (staged) backend/fix_categories_uppercase.py
+- (staged) backend/generate_endpoint.py
+- (staged) backend/generate_failures.py
+- (staged) backend/generate_password_hash.py
+- (staged) backend/inject_failure_patterns.py
+- (staged) backend/inject_insights_directly.py
+- (staged) backend/inject_test_data.py
+- (staged) backend/inject_test_failures.py
+- (staged) backend/list_google_models.py
+- (staged) backend/load_test_output.txt
+- (staged) backend/migrations/001_add_search_indexes.sql
+- (staged) backend/migrations/001_rollback.sql
+- (staged) backend/migrations/README.md
+- (staged) backend/migrations/add_ai_search.sql
+- (staged) backend/migrations/add_ap2_integration.sql
+- (staged) backend/migrations/add_auto_sync_enhancements.sql
+- (staged) backend/migrations/add_email_audit_tables.sql
+- (staged) backend/migrations/add_foreign_key_indexes.sql
+- (staged) backend/migrations/add_i18n_support.sql
+- (staged) backend/migrations/add_missing_fk_indexes.sql
+- (staged) backend/migrations/add_performance_indexes.sql
+- (staged) backend/migrations/add_phase4_inventory_indexes.sql
+- (staged) backend/migrations/add_portal_forms_tables.sql
+- (staged) backend/migrations/add_pos_system.sql
+- (staged) backend/migrations/add_search_indexes.sql
+- (staged) backend/migrations/add_sequences_for_numbers.sql
+- (staged) backend/migrations/add_shopify_extended.sql
+- (staged) backend/migrations/add_submission_notes_table.sql
+- (staged) backend/migrations/add_trigram_indexes.sql
+- (staged) backend/migrations/add_webhook_events_table.sql
+- (staged) backend/migrations/seed_ccw_products.sql
+- (staged) backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- (staged) backend/migrations/week3_enum_standardization.sql
+- (staged) backend/migrations/week3_timezone_standardization.sql
+- (staged) backend/pyproject.toml
+- (staged) backend/pytest.ini
+- (staged) backend/railway.json
+- (staged) backend/requirements.txt
+- (staged) backend/reset_admin_password.py
+- (staged) backend/run-setup-memory.ps1
+- (staged) backend/run-tests.ps1
+- (staged) backend/run_bugfix_tests.ps1
+- (staged) backend/run_bugfix_tests.sh
+- (staged) backend/run_migrations.py
+- (staged) backend/scripts/analyze_query_performance.py
+- (staged) backend/scripts/apply_foreign_key_indexes.py
+- (staged) backend/scripts/apply_phase4_indexes.py
+- (staged) backend/scripts/apply_trigram_indexes.py
+- (staged) backend/scripts/benchmark_search.py
+- (staged) backend/scripts/create_container_tables.sql
+- (staged) backend/scripts/create_sample_orders.py
+- (staged) backend/scripts/create_sample_quotes.py
+- (staged) backend/scripts/explain_queries.sh
+- (staged) backend/scripts/identify_500_sources.py
+- (staged) backend/scripts/implement_query_optimizations.md
+- (staged) backend/scripts/import_ccwonline_products.py
+- (staged) backend/scripts/insert_container_sample_data.sql
+- (staged) backend/scripts/integration_test_iss001.py
+- (staged) backend/scripts/monitor_indexes.py
+- (staged) backend/scripts/run_sql.py
+- (staged) backend/scripts/seed_ccw_cleaning.py
+- (staged) backend/scripts/seed_ccw_products.py
+- (staged) backend/scripts/setup-memory.py
+- (staged) backend/scripts/test_iss005_fixes.py
+- (staged) backend/scripts/validate_autosave_implementation.py
+- (staged) backend/scripts/validate_iss001_fix.py
+- (staged) backend/scripts/validate_iss003_actual.py
+- (staged) backend/scripts/validate_iss003_fix.py
+- (staged) backend/scripts/validate_iss005_fix.py
+- (staged) backend/scripts/verify_iss005_code.py
+- (staged) backend/scripts/verify_query_optimizations.py
+- (staged) backend/seed_data.py
+- (staged) backend/seed_demo_simple.sql
+- (staged) backend/seed_orders.py
+- (staged) backend/show_customers.py
+- (staged) backend/show_orders.py
+- (staged) backend/show_products.py
+- (staged) backend/show_quotes.py
+- (staged) backend/src/__init__.py
+- (staged) backend/src/agents/prd/__init__.py
+- (staged) backend/src/agents/prd/analysis_agent.py
+- (staged) backend/src/agents/prd/feature_decomposer.py
+- (staged) backend/src/agents/prd/prd_orchestrator.py
+- (staged) backend/src/agents/prd/roadmap_planner.py
+- (staged) backend/src/agents/prd/tech_spec_generator.py
+- (staged) backend/src/agents/prd/test_generator.py
+- (staged) backend/src/ai/__init__.py
+- (staged) backend/src/ai/agents/chat_assistant.py
+- (staged) backend/src/ai/agents/chat_state.py
+- (staged) backend/src/ai/agents/content_generator.py
+- (staged) backend/src/ai/agents/content_state.py
+- (staged) backend/src/ai/agents/insights_agent.py
+- (staged) backend/src/ai/agents/insights_state.py
+- (staged) backend/src/ai/agents/risk_assessor.py
+- (staged) backend/src/ai/agents/rollback_agent.py
+- (staged) backend/src/ai/agents/specialized/__init__.py
+- (staged) backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- (staged) backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- (staged) backend/src/ai/agents/specialized/development_agent.py
+- (staged) backend/src/ai/agents/specialized/document_parser_agent.py
+- (staged) backend/src/ai/agents/specialized/form_autofill_agent.py
+- (staged) backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/marketing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_state.py
+- (staged) backend/src/ai/agents/specialized/procurement_agent.py
+- (staged) backend/src/ai/agents/specialized/procurement_state.py
+- (staged) backend/src/ai/agents/specialized/project_intelligence_agent.py
+- (staged) backend/src/ai/agents/specialized/query_agent.py
+- (staged) backend/src/ai/agents/specialized/recommendation_agent.py
+- (staged) backend/src/ai/agents/specialized/reconciliation_agent.py
+- (staged) backend/src/ai/agents/specialized/search_agent.py
+- (staged) backend/src/ai/agents/specialized/staff_copilot_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_state.py
+- (staged) backend/src/ai/agents/specialized/testing_agent.py
+- (staged) backend/src/ai/base_agent.py
+- (staged) backend/src/ai/generators/__init__.py
+- (staged) backend/src/ai/generators/email_generator.py
+- (staged) backend/src/ai/generators/quote_generator.py
+- (staged) backend/src/ai/learning/__init__.py
+- (staged) backend/src/ai/learning/learning_engine.py
+- (staged) backend/src/ai/learning/learning_repository.py
+- (staged) backend/src/ai/monitoring/__init__.py
+- (staged) backend/src/ai/monitoring/health_monitor.py
+- (staged) backend/src/ai/monitoring/metrics_collector.py
+- (staged) backend/src/ai/ollama_client.py
+- (staged) backend/src/ai/orchestration/__init__.py
+- (staged) backend/src/ai/orchestration/agent_registry.py
+- (staged) backend/src/ai/orchestration/autonomous_loop.py
+- (staged) backend/src/ai/orchestration/project_orchestrator.py
+- (staged) backend/src/ai/orchestration/supervisor_agent.py
+- (staged) backend/src/ai/orchestration/supervisor_state.py
+- (staged) backend/src/ai/prompts/__init__.py
+- (staged) backend/src/ai/prompts/system_prompts.py
+- (staged) backend/src/ai/protocol/__init__.py
+- (staged) backend/src/ai/protocol/confidence.py
+- (staged) backend/src/ai/protocol/error_handler.py
+- (staged) backend/src/ai/protocol/governor.py
+- (staged) backend/src/ai/protocol/message_bus.py
+- (staged) backend/src/ai/protocol/models.py
+- (staged) backend/src/ai/tools/__init__.py
+- (staged) backend/src/ai/tools/analytics_tools.py
+- (staged) backend/src/ai/tools/base.py
+- (staged) backend/src/ai/tools/erp_tools.py
+- (staged) backend/src/ai/tools/execution_tools.py
+- (staged) backend/src/ai/tools/inventory_intelligence.py
+- (staged) backend/src/ai/tools/pricing_tools.py
+- (staged) backend/src/ai/tools/procurement_tools.py
+- (staged) backend/src/api/__init__.py
+- (staged) backend/src/api/debug_main.py
+- (staged) backend/src/api/deps.py
+- (staged) backend/src/api/exceptions.py
+- (staged) backend/src/api/main.py
+- (staged) backend/src/api/middleware/__init__.py
+- (staged) backend/src/api/middleware/auth.py
+- (staged) backend/src/api/middleware/performance.py
+- (staged) backend/src/api/middleware/rate_limit.py
+- (staged) backend/src/api/middleware/rbac.py
+- (staged) backend/src/api/middleware/request_id.py
+- (staged) backend/src/api/middleware/security_headers.py
+- (staged) backend/src/api/middleware/tenant_isolation.py
+- (staged) backend/src/api/routers/prd.py
+- (staged) backend/src/api/routes/__init__.py
+- (staged) backend/src/api/routes/activities.py
+- (staged) backend/src/api/routes/agents_monitor.py
+- (staged) backend/src/api/routes/ai/__init__.py
+- (staged) backend/src/api/routes/ai/anomaly.py
+- (staged) backend/src/api/routes/ai/approval_gates.py
+- (staged) backend/src/api/routes/ai/assets.py
+- (staged) backend/src/api/routes/ai/autonomous_ops.py
+- (staged) backend/src/api/routes/ai/build_command.py
+- (staged) backend/src/api/routes/ai/chat.py
+- (staged) backend/src/api/routes/ai/cin7_anomaly.py
+- (staged) backend/src/api/routes/ai/cin7_forecast.py
+- (staged) backend/src/api/routes/ai/cin7_shadow_ai.py
+- (staged) backend/src/api/routes/ai/command_parser.py
+- (staged) backend/src/api/routes/ai/document_parser.py
+- (staged) backend/src/api/routes/ai/form_autofill.py
+- (staged) backend/src/api/routes/ai/gap_sync.py
+- (staged) backend/src/api/routes/ai/generate.py
+- (staged) backend/src/api/routes/ai/insights.py
+- (staged) backend/src/api/routes/ai/inventory_forecast.py
+- (staged) backend/src/api/routes/ai/learning.py
+- (staged) backend/src/api/routes/ai/marketing_ai.py
+- (staged) backend/src/api/routes/ai/monitoring.py
+- (staged) backend/src/api/routes/ai/project_intelligence.py
+- (staged) backend/src/api/routes/ai/protocol.py
+- (staged) backend/src/api/routes/ai/query.py
+- (staged) backend/src/api/routes/ai/requirement_verification.py
+- (staged) backend/src/api/routes/ai/specialized.py
+- (staged) backend/src/api/routes/ai/staff_copilot.py
+- (staged) backend/src/api/routes/ai/supervisor.py
+- (staged) backend/src/api/routes/ai/test_data.py
+- (staged) backend/src/api/routes/ai/test_failures.py
+- (staged) backend/src/api/routes/ai/toolshed.py
+- (staged) backend/src/api/routes/ai/toolshed_vault.py
+- (staged) backend/src/api/routes/analytics.py
+- (staged) backend/src/api/routes/approvals.py
+- (staged) backend/src/api/routes/audit_trail.py
+- (staged) backend/src/api/routes/autonomous_dev.py
+- (staged) backend/src/api/routes/autonomy_metrics.py
+- (staged) backend/src/api/routes/backorders.py
+- (staged) backend/src/api/routes/bank_feeds.py
+- (staged) backend/src/api/routes/billing.py
+- (staged) backend/src/api/routes/boardroom.py
+- (staged) backend/src/api/routes/certifications.py
+- (staged) backend/src/api/routes/chat.py
+- (staged) backend/src/api/routes/config.py
+- (staged) backend/src/api/routes/contacts.py
+- (staged) backend/src/api/routes/containers.py
+- (staged) backend/src/api/routes/contractors.py
+- (staged) backend/src/api/routes/crm_health.py
+- (staged) backend/src/api/routes/crm_onboarding.py
+- (staged) backend/src/api/routes/crm_personas.py
+- (staged) backend/src/api/routes/cron_jobs.py
+- (staged) backend/src/api/routes/customer_orders.py
+- (staged) backend/src/api/routes/customers.py
+- (staged) backend/src/api/routes/dashboard_stream.py
+- (staged) backend/src/api/routes/demo_auth.py
+- (staged) backend/src/api/routes/demo_dashboard.py
+- (staged) backend/src/api/routes/demo_lists.py
+- (staged) backend/src/api/routes/documents.py
+- (staged) backend/src/api/routes/email_audit.py
+- (staged) backend/src/api/routes/equipment_lifecycle.py
+- (staged) backend/src/api/routes/google_ai.py
+- (staged) backend/src/api/routes/health.py
+- (staged) backend/src/api/routes/integrations/__init__.py
+- (staged) backend/src/api/routes/integrations/ap2.py
+- (staged) backend/src/api/routes/integrations/cin7.py
+- (staged) backend/src/api/routes/integrations/cin7_bom.py
+- (staged) backend/src/api/routes/integrations/cin7_crm.py
+- (staged) backend/src/api/routes/integrations/cin7_fulfilment.py
+- (staged) backend/src/api/routes/integrations/cin7_gl.py
+- (staged) backend/src/api/routes/integrations/cin7_grn.py
+- (staged) backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- (staged) backend/src/api/routes/integrations/cin7_line_items.py
+- (staged) backend/src/api/routes/integrations/cin7_procurement.py
+- (staged) backend/src/api/routes/integrations/cin7_shadow_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_stream.py
+- (staged) backend/src/api/routes/integrations/cin7_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- (staged) backend/src/api/routes/integrations/cin7_webhooks.py
+- (staged) backend/src/api/routes/integrations/elevenlabs.py
+- (staged) backend/src/api/routes/integrations/heygen.py
+- (staged) backend/src/api/routes/integrations/marketplace.py
+- (staged) backend/src/api/routes/integrations/sendgrid.py
+- (staged) backend/src/api/routes/integrations/shopify.py
+- (staged) backend/src/api/routes/integrations/shopify_theme.py
+- (staged) backend/src/api/routes/integrations/xero.py
+- (staged) backend/src/api/routes/inventory.py
+- (staged) backend/src/api/routes/inventory_stream.py
+- (staged) backend/src/api/routes/invoice_payments.py
+- (staged) backend/src/api/routes/invoices.py
+- (staged) backend/src/api/routes/jobs.py
+- (staged) backend/src/api/routes/mobile/__init__.py
+- (staged) backend/src/api/routes/mobile/guest_orders.py
+- (staged) backend/src/api/routes/monitoring/__init__.py
+- (staged) backend/src/api/routes/monitoring/alerts.py
+- (staged) backend/src/api/routes/monitoring/business_metrics.py
+- (staged) backend/src/api/routes/monitoring/infrastructure.py
+- (staged) backend/src/api/routes/monitoring/performance.py
+- (staged) backend/src/api/routes/notifications.py
+- (staged) backend/src/api/routes/orders.py
+- (staged) backend/src/api/routes/portal/__init__.py
+- (staged) backend/src/api/routes/portal/customer_portal.py
+- (staged) backend/src/api/routes/pos_transactions.py
+- (staged) backend/src/api/routes/pos_xero_reconciliation.py
+- (staged) backend/src/api/routes/prd.py
+- (staged) backend/src/api/routes/pricing.py
+- (staged) backend/src/api/routes/procurement.py
+- (staged) backend/src/api/routes/products.py
+- (staged) backend/src/api/routes/prometheus_metrics.py
+- (staged) backend/src/api/routes/public_stats.py
+- (staged) backend/src/api/routes/purchase_orders.py
+- (staged) backend/src/api/routes/quotes.py
+- (staged) backend/src/api/routes/recommendations.py
+- (staged) backend/src/api/routes/reconciliation.py
+- (staged) backend/src/api/routes/reconciliation_dashboard.py
+- (staged) backend/src/api/routes/search.py
+- (staged) backend/src/api/routes/service_requests.py
+- (staged) backend/src/api/routes/settings.py
+- (staged) backend/src/api/routes/shadow_analytics.py
+- (staged) backend/src/api/routes/shadow_mode.py
+- (staged) backend/src/api/routes/shipments.py
+- (staged) backend/src/api/routes/sla.py
+- (staged) backend/src/api/routes/stripe_webhooks.py
+- (staged) backend/src/api/routes/supplier_portal.py
+- (staged) backend/src/api/routes/suppliers.py
+- (staged) backend/src/api/routes/team.py
+- (staged) backend/src/api/routes/test_data_gen.py
+- (staged) backend/src/api/routes/translations.py
+- (staged) backend/src/api/routes/warehouse.py
+- (staged) backend/src/api/routes/webhooks.py
+- (staged) backend/src/api/routes/workflows.py
+- (staged) backend/src/api/routes/workshop/__init__.py
+- (staged) backend/src/api/routes/workshop/bookings.py
+- (staged) backend/src/api/routes/workshop/dashboard.py
+- (staged) backend/src/api/routes/workshop/equipment.py
+- (staged) backend/src/api/routes/workshop/reminders.py
+- (staged) backend/src/api/routes/workshop/templates.py
+- (staged) backend/src/api/schemas/invoicing.py
+- (staged) backend/src/api/schemas/prd.py
+- (staged) backend/src/auth/jwt.py
+- (staged) backend/src/auth/models.py
+- (staged) backend/src/auth/password_reset.py
+- (staged) backend/src/cache/decorators.py
+- (staged) backend/src/cache/redis_client.py
+- (staged) backend/src/config/__init__.py
+- (staged) backend/src/config/ap2_settings.py
+- (staged) backend/src/config/autonomy.py
+- (staged) backend/src/config/cin7_settings.py
+- (staged) backend/src/config/database.py
+- (staged) backend/src/config/elevenlabs_settings.py
+- (staged) backend/src/config/heygen_settings.py
+- (staged) backend/src/config/marketplace_settings.py
+- (staged) backend/src/config/secrets_manager.py
+- (staged) backend/src/config/sendgrid_settings.py
+- (staged) backend/src/config/settings.py
+- (staged) backend/src/config/shopify_settings.py
+- (staged) backend/src/config/xero_settings.py
+- (staged) backend/src/db/__init__.py
+- (staged) backend/src/db/ai_models.py
+- (staged) backend/src/db/ai_search_models.py
+- (staged) backend/src/db/ap2_models.py
+- (staged) backend/src/db/approvals_models.py
+- (staged) backend/src/db/audit_models.py
+- (staged) backend/src/db/certification_models.py
+- (staged) backend/src/db/cin7_bom_models.py
+- (staged) backend/src/db/cin7_fulfilment_models.py
+- (staged) backend/src/db/cin7_gl_models.py
+- (staged) backend/src/db/cin7_models.py
+- (staged) backend/src/db/cin7_shadow_models.py
+- (staged) backend/src/db/container_models.py
+- (staged) backend/src/db/crm_models.py
+- (staged) backend/src/db/crm_schemas.py
+- (staged) backend/src/db/customer_health_models.py
+- (staged) backend/src/db/demo_models.py
+- (staged) backend/src/db/email_audit_models.py
+- (staged) backend/src/db/email_models.py
+- (staged) backend/src/db/equipment_lifecycle_models.py
+- (staged) backend/src/db/generate_demo_purchases.py
+- (staged) backend/src/db/i18n_models.py
+- (staged) backend/src/db/i18n_schemas.py
+- (staged) backend/src/db/indexes.py
+- (staged) backend/src/db/integration_credential_models.py
+- (staged) backend/src/db/inventory_models.py
+- (staged) backend/src/db/inventory_schemas.py
+- (staged) backend/src/db/marketplace_models.py
+- (staged) backend/src/db/mobile_order_models.py
+- (staged) backend/src/db/models/__init__.py
+- (staged) backend/src/db/models/invoicing.py
+- (staged) backend/src/db/models/prd.py
+- (staged) backend/src/db/models_base.py
+- (staged) backend/src/db/portal_forms_models.py
+- (staged) backend/src/db/pos_models.py
+- (staged) backend/src/db/pricing_models.py
+- (staged) backend/src/db/schemas.py
+- (staged) backend/src/db/seed_demo.py
+- (staged) backend/src/db/service_models.py
+- (staged) backend/src/db/shadow_session_models.py
+- (staged) backend/src/db/shopify_extended_models.py
+- (staged) backend/src/db/shopify_models.py
+- (staged) backend/src/db/shopify_schemas.py
+- (staged) backend/src/db/submission_notes_models.py
+- (staged) backend/src/db/webhook_models.py
+- (staged) backend/src/db/workflow_models.py
+- (staged) backend/src/db/workshop_models.py
+- (staged) backend/src/db/xero_models.py
+- (staged) backend/src/db/xero_schemas.py
+- (staged) backend/src/emails/templates/order_confirmed.html
+- (staged) backend/src/emails/templates/order_delivered.html
+- (staged) backend/src/emails/templates/order_shipped.html
+- (staged) backend/src/emails/templates/quote_created.html
+- (staged) backend/src/emails/templates/quote_expiring.html
+- (staged) backend/src/events/__init__.py
+- (staged) backend/src/events/event_bus.py
+- (staged) backend/src/integrations/__init__.py
+- (staged) backend/src/integrations/ap2/__init__.py
+- (staged) backend/src/integrations/ap2/client.py
+- (staged) backend/src/integrations/ap2/security.py
+- (staged) backend/src/integrations/cin7/__init__.py
+- (staged) backend/src/integrations/cin7/change_detector.py
+- (staged) backend/src/integrations/cin7/client.py
+- (staged) backend/src/integrations/cin7/customer_sync.py
+- (staged) backend/src/integrations/cin7/demo_client.py
+- (staged) backend/src/integrations/cin7/event_dispatcher.py
+- (staged) backend/src/integrations/cin7/inventory_sync.py
+- (staged) backend/src/integrations/cin7/product_sync.py
+- (staged) backend/src/integrations/cin7/purchase_sync.py
+- (staged) backend/src/integrations/cin7/sales_sync.py
+- (staged) backend/src/integrations/cin7/supplier_sync.py
+- (staged) backend/src/integrations/elevenlabs/__init__.py
+- (staged) backend/src/integrations/elevenlabs/client.py
+- (staged) backend/src/integrations/elevenlabs/demo_client.py
+- (staged) backend/src/integrations/elevenlabs/live_client.py
+- (staged) backend/src/integrations/google/__init__.py
+- (staged) backend/src/integrations/google/client.py
+- (staged) backend/src/integrations/heygen/__init__.py
+- (staged) backend/src/integrations/heygen/client.py
+- (staged) backend/src/integrations/heygen/demo_client.py
+- (staged) backend/src/integrations/heygen/live_client.py
+- (staged) backend/src/integrations/http_utils.py
+- (staged) backend/src/integrations/marketplace/__init__.py
+- (staged) backend/src/integrations/marketplace/base.py
+- (staged) backend/src/integrations/marketplace/demo_channel.py
+- (staged) backend/src/integrations/marketplace/ebay_channel.py
+- (staged) backend/src/integrations/marketplace/facebook_channel.py
+- (staged) backend/src/integrations/marketplace/registry.py
+- (staged) backend/src/integrations/marketplace/shopify_channel.py
+- (staged) backend/src/integrations/marketplace/sync_engine.py
+- (staged) backend/src/integrations/payments/__init__.py
+- (staged) backend/src/integrations/payments/amex.py
+- (staged) backend/src/integrations/payments/eftpos.py
+- (staged) backend/src/integrations/payments/processor.py
+- (staged) backend/src/integrations/secrets_manager.py
+- (staged) backend/src/integrations/sendgrid/__init__.py
+- (staged) backend/src/integrations/sendgrid/client.py
+- (staged) backend/src/integrations/sendgrid/demo_client.py
+- (staged) backend/src/integrations/sendgrid/live_client.py
+- (staged) backend/src/integrations/sendgrid/processor.py
+- (staged) backend/src/integrations/sentry_client.py
+- (staged) backend/src/integrations/shopify/__init__.py
+- (staged) backend/src/integrations/shopify/client.py
+- (staged) backend/src/integrations/shopify/demo_client.py
+- (staged) backend/src/integrations/shopify/inventory.py
+- (staged) backend/src/integrations/shopify/inventory_sync.py
+- (staged) backend/src/integrations/shopify/metafields.py
+- (staged) backend/src/integrations/shopify/orders.py
+- (staged) backend/src/integrations/shopify/product_sync.py
+- (staged) backend/src/integrations/shopify/translations.py
+- (staged) backend/src/integrations/shopify/webhooks.py
+- (staged) backend/src/integrations/stripe/__init__.py
+- (staged) backend/src/integrations/stripe/client.py
+- (staged) backend/src/integrations/xero/__init__.py
+- (staged) backend/src/integrations/xero/auth.py
+- (staged) backend/src/integrations/xero/client.py
+- (staged) backend/src/integrations/xero/customers.py
+- (staged) backend/src/integrations/xero/demo_client.py
+- (staged) backend/src/integrations/xero/invoices.py
+- (staged) backend/src/integrations/xero/payments.py
+- (staged) backend/src/integrations/xero/pos_reconciliation.py
+- (staged) backend/src/integrations/xero/token_manager.py
+- (staged) backend/src/integrations/xero/webhook_security.py
+- (staged) backend/src/integrations/xero/webhooks.py
+- (staged) backend/src/monitoring/__init__.py
+- (staged) backend/src/monitoring/metrics.py
+- (staged) backend/src/rag/__init__.py
+- (staged) backend/src/rag/chunkers.py
+- (staged) backend/src/rag/models.py
+- (staged) backend/src/rag/parsers.py
+- (staged) backend/src/rag/pipeline.py
+- (staged) backend/src/rag/storage.py
+- (staged) backend/src/scheduler/bank_feed_scheduler.py
+- (staged) backend/src/security/__init__.py
+- (staged) backend/src/security/encryption.py
+- (staged) backend/src/security/webhook_verification.py
+- (staged) backend/src/services/__init__.py
+- (staged) backend/src/services/alert_manager.py
+- (staged) backend/src/services/audit_service.py
+- (staged) backend/src/services/auto_reorder.py
+- (staged) backend/src/services/autonomy_audit.py
+- (staged) backend/src/services/bank_feed_service.py
+- (staged) backend/src/services/business_metrics_service.py
+- (staged) backend/src/services/carrier_service.py
+- (staged) backend/src/services/circuit_breaker.py
+- (staged) backend/src/services/code_generation/README.md
+- (staged) backend/src/services/code_generation/__init__.py
+- (staged) backend/src/services/code_generation/context_builder.py
+- (staged) backend/src/services/code_generation/doc_generator.py
+- (staged) backend/src/services/code_generation/generator.py
+- (staged) backend/src/services/code_generation/prompts/doc_generation.txt
+- (staged) backend/src/services/code_generation/prompts/python_generation.txt
+- (staged) backend/src/services/code_generation/prompts/test_generation.txt
+- (staged) backend/src/services/code_generation/prompts/typescript_generation.txt
+- (staged) backend/src/services/code_generation/quality_checker.py
+- (staged) backend/src/services/code_generation/test_generator.py
+- (staged) backend/src/services/deployment_service.py
+- (staged) backend/src/services/document_extraction_service.py
+- (staged) backend/src/services/dunning.py
+- (staged) backend/src/services/email_audit_service.py
+- (staged) backend/src/services/email_notifications.py
+- (staged) backend/src/services/email_service.py
+- (staged) backend/src/services/embedding_service.py
+- (staged) backend/src/services/i18n_service.py
+- (staged) backend/src/services/notification_service.py
+- (staged) backend/src/services/order_state.py
+- (staged) backend/src/services/procurement_matching.py
+- (staged) backend/src/services/product_recognition_service.py
+- (staged) backend/src/services/recommendation_service.py
+- (staged) backend/src/services/reconciliation_alerts.py
+- (staged) backend/src/services/requirement_extractor.py
+- (staged) backend/src/services/requirement_tracer.py
+- (staged) backend/src/services/semantic_search_service.py
+- (staged) backend/src/services/sla_escalation.py
+- (staged) backend/src/services/sla_service.py
+- (staged) backend/src/services/sse_service.py
+- (staged) backend/src/services/system_alert_service.py
+- (staged) backend/src/services/tax_calculator.py
+- (staged) backend/src/services/webhook_service.py
+- (staged) backend/src/services/workflow_service.py
+- (staged) backend/src/services/workshop_scheduler.py
+- (staged) backend/src/state/__init__.py
+- (staged) backend/src/state/supabase.py
+- (staged) backend/src/telemetry/__init__.py
+- (staged) backend/src/telemetry/usage_tracker.py
+- (staged) backend/src/testing/__init__.py
+- (staged) backend/src/testing/shopify_mock.py
+- (staged) backend/src/testing/xero_mock.py
+- (staged) backend/src/utils/__init__.py
+- (staged) backend/src/utils/calculations.py
+- (staged) backend/src/utils/logging.py
+- (staged) backend/src/utils/supabase_client.py
+- (staged) backend/src/workflow/__init__.py
+- (staged) backend/src/workflow/engine.py
+- (staged) backend/src/workflow/models.py
+- (staged) backend/src/workflow/storage.py
+- (staged) backend/src/workflows/__init__.py
+- (staged) backend/src/workflows/pr_automation.py
+- (staged) backend/srcapimain.py
+- (staged) backend/srcapiroutesailearning.py.tmp
+- (staged) backend/start_for_testing.py
+- (staged) backend/start_load_test_server.py
+- (staged) backend/test_ai_inventory_intelligence.py
+- (staged) backend/test_api.py
+- (staged) backend/test_api_error.py
+- (staged) backend/test_customer_sync.py
+- (staged) backend/test_dashboard_data.py
+- (staged) backend/test_dashboard_data_with_failures.py
+- (staged) backend/test_db_connection.py
+- (staged) backend/test_dependency_injection.py
+- (staged) backend/test_endpoint.py
+- (staged) backend/test_expired_quote_validation.py
+- (staged) backend/test_failure_scenarios.py
+- (staged) backend/test_full_payment_flow.py
+- (staged) backend/test_google_ai_endpoints.py
+- (staged) backend/test_google_ai_integration.py
+- (staged) backend/test_insights_api.py
+- (staged) backend/test_multistore_inventory.py
+- (staged) backend/test_order_update_items_500.py
+- (staged) backend/test_outbound_shipment.json
+- (staged) backend/test_password.py
+- (staged) backend/test_payment_webhook.py
+- (staged) backend/test_po.json
+- (staged) backend/test_quote_404_issue.py
+- (staged) backend/test_quote_fixes.py
+- (staged) backend/test_quote_generate_endpoint.py
+- (staged) backend/test_quote_validation.py
+- (staged) backend/test_redis_connection.py
+- (staged) backend/test_search_performance.py
+- (staged) backend/test_shopify_connection.py
+- (staged) backend/test_shopify_integration.py
+- (staged) backend/test_supplier.json
+- (staged) backend/tests/FIXES_APPLIED.md
+- (staged) backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- (staged) backend/tests/TEST_STATUS_REPORT.md
+- (staged) backend/tests/TEST_STATUS_UPDATE.md
+- (staged) backend/tests/__init__.py
+- (staged) backend/tests/ai/test_reconciliation_agent.py
+- (staged) backend/tests/api/README_BUGFIX_TESTS.md
+- (staged) backend/tests/api/test_500_errors.py
+- (staged) backend/tests/api/test_approval_gates.py
+- (staged) backend/tests/api/test_approvals.py
+- (staged) backend/tests/api/test_approvals_integration.py
+- (staged) backend/tests/api/test_autonomous_ops.py
+- (staged) backend/tests/api/test_bank_feeds.py
+- (staged) backend/tests/api/test_bas_report.py
+- (staged) backend/tests/api/test_billing_gaps.py
+- (staged) backend/tests/api/test_build_command.py
+- (staged) backend/tests/api/test_certifications.py
+- (staged) backend/tests/api/test_command_parser.py
+- (staged) backend/tests/api/test_customer_orders.py
+- (staged) backend/tests/api/test_document_extraction.py
+- (staged) backend/tests/api/test_equipment_lifecycle.py
+- (staged) backend/tests/api/test_gap_sync.py
+- (staged) backend/tests/api/test_inventory.py
+- (staged) backend/tests/api/test_inventory_gaps.py
+- (staged) backend/tests/api/test_inventory_new_endpoints.py
+- (staged) backend/tests/api/test_inventory_uni172.py
+- (staged) backend/tests/api/test_invoice_payments.py
+- (staged) backend/tests/api/test_invoices_tax_integration.py
+- (staged) backend/tests/api/test_nl_query.py
+- (staged) backend/tests/api/test_orders_performance.py
+- (staged) backend/tests/api/test_portal.py
+- (staged) backend/tests/api/test_pos_terminals.py
+- (staged) backend/tests/api/test_pos_transactions.py
+- (staged) backend/tests/api/test_pricing_tiers.py
+- (staged) backend/tests/api/test_quote_404_errors.py
+- (staged) backend/tests/api/test_quote_422_errors.py
+- (staged) backend/tests/api/test_quote_http_methods.py
+- (staged) backend/tests/api/test_rbac.py
+- (staged) backend/tests/api/test_reconciliation_integration.py
+- (staged) backend/tests/api/test_requirement_verification.py
+- (staged) backend/tests/api/test_supplier_portal.py
+- (staged) backend/tests/api/test_tenant_isolation.py
+- (staged) backend/tests/api/test_translations.py
+- (staged) backend/tests/api/test_workflows_integration.py
+- (staged) backend/tests/api/test_workshop_routes.py
+- (staged) backend/tests/conftest.py
+- (staged) backend/tests/e2e/__init__.py
+- (staged) backend/tests/e2e/test_login_flow.py
+- (staged) backend/tests/e2e/test_order_flow.py
+- (staged) backend/tests/fixtures/__init__.py
+- (staged) backend/tests/fixtures/data.py
+- (staged) backend/tests/fixtures/pos_data.py
+- (staged) backend/tests/fixtures/shopify_fixtures.py
+- (staged) backend/tests/fixtures/xero_fixtures.py
+- (staged) backend/tests/integration/README.md
+- (staged) backend/tests/integration/__init__.py
+- (staged) backend/tests/integration/conftest.py
+- (staged) backend/tests/integration/run_all_cin7_tests.py
+- (staged) backend/tests/integration/run_phase3_tests.py
+- (staged) backend/tests/integration/run_phase4_tests.py
+- (staged) backend/tests/integration/run_phase5_tests.py
+- (staged) backend/tests/integration/run_phase6_tests.py
+- (staged) backend/tests/integration/run_phase7_tests.py
+- (staged) backend/tests/integration/run_protocol_tests.py
+- (staged) backend/tests/integration/test_ap2_integration.py
+- (staged) backend/tests/integration/test_api_endpoints.py
+- (staged) backend/tests/integration/test_autonomous_dev.py
+- (staged) backend/tests/integration/test_autonomous_pr_workflow.py
+- (staged) backend/tests/integration/test_cin7_crm_sync.py
+- (staged) backend/tests/integration/test_cin7_integration.py
+- (staged) backend/tests/integration/test_cin7_sync.py
+- (staged) backend/tests/integration/test_crm_module.py
+- (staged) backend/tests/integration/test_recommendations.py
+- (staged) backend/tests/integration/test_search.py
+- (staged) backend/tests/integration/test_shopify_extended.py
+- (staged) backend/tests/integration/test_webhooks.py
+- (staged) backend/tests/integration/test_xero_reconciliation.py
+- (staged) backend/tests/integrations/__init__.py
+- (staged) backend/tests/integrations/test_xero_token_manager.py
+- (staged) backend/tests/load/README.md
+- (staged) backend/tests/load/__init__.py
+- (staged) backend/tests/load/conftest.py
+- (staged) backend/tests/load/generators/customers.py
+- (staged) backend/tests/load/generators/misc.py
+- (staged) backend/tests/load/generators/orders.py
+- (staged) backend/tests/load/generators/products.py
+- (staged) backend/tests/load/generators/quotes.py
+- (staged) backend/tests/load/load_test_requirements.txt
+- (staged) backend/tests/load/load_test_scenarios.ps1
+- (staged) backend/tests/load/load_test_scenarios.sh
+- (staged) backend/tests/load/locustfile.py
+- (staged) backend/tests/load/locustfile_ai_features.py
+- (staged) backend/tests/load/reporters/html_reporter.py
+- (staged) backend/tests/load/reporters/json_reporter.py
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.json
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.json
+- (staged) backend/tests/load/reports/load_test_latest.html
+- (staged) backend/tests/load/reports/load_test_latest.json
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.html
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.json
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.html
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.json
+- (staged) backend/tests/load/reports/load_test_quick_latest.html
+- (staged) backend/tests/load/reports/load_test_quick_latest.json
+- (staged) backend/tests/load/reports/scenario_report.html
+- (staged) backend/tests/load/reports/scenario_report.json
+- (staged) backend/tests/load/run_full_load_test.py
+- (staged) backend/tests/load/run_quick_load_test.py
+- (staged) backend/tests/load/test_concurrent_number_generation.py
+- (staged) backend/tests/load/test_performance_load.py
+- (staged) backend/tests/load/test_scenarios.py
+- (staged) backend/tests/performance/__init__.py
+- (staged) backend/tests/run_integration_tests.ps1
+- (staged) backend/tests/run_integration_tests.sh
+- (staged) backend/tests/security/__init__.py
+- (staged) backend/tests/security/test_auth_security.py
+- (staged) backend/tests/security/test_encryption.py
+- (staged) backend/tests/security/test_injection_attacks.py
+- (staged) backend/tests/security/test_xss_csrf.py
+- (staged) backend/tests/services/__init__.py
+- (staged) backend/tests/services/code_generation/__init__.py
+- (staged) backend/tests/services/code_generation/test_context_builder.py
+- (staged) backend/tests/services/code_generation/test_doc_generator.py
+- (staged) backend/tests/services/code_generation/test_generator.py
+- (staged) backend/tests/services/code_generation/test_integration.py
+- (staged) backend/tests/services/code_generation/test_quality_checker.py
+- (staged) backend/tests/services/code_generation/test_test_generator.py
+- (staged) backend/tests/services/run_all_tests.py
+- (staged) backend/tests/services/test_auto_reorder.py
+- (staged) backend/tests/services/test_auto_reorder_integration.py
+- (staged) backend/tests/services/test_dunning.py
+- (staged) backend/tests/services/test_email_audit_service.py
+- (staged) backend/tests/services/test_order_state.py
+- (staged) backend/tests/services/test_procurement_matching.py
+- (staged) backend/tests/services/test_procurement_matching_integration.py
+- (staged) backend/tests/services/test_requirement_extractor.py
+- (staged) backend/tests/services/test_requirement_tracer.py
+- (staged) backend/tests/services/test_sla_escalation.py
+- (staged) backend/tests/services/test_tax_calculator.py
+- (staged) backend/tests/services/test_tax_calculator_integration.py
+- (staged) backend/tests/smoke/__init__.py
+- (staged) backend/tests/smoke/conftest.py
+- (staged) backend/tests/smoke/test_smoke.py
+- (staged) backend/tests/test_agent_orchestration.py
+- (staged) backend/tests/test_approvals_batch_2c.py
+- (staged) backend/tests/test_auth_security.py
+- (staged) backend/tests/test_autonomy_audit.py
+- (staged) backend/tests/test_autonomy_config.py
+- (staged) backend/tests/test_batch_2c_structure.py
+- (staged) backend/tests/test_billing.py
+- (staged) backend/tests/test_circuit_breaker.py
+- (staged) backend/tests/test_concurrent_number_generation.py
+- (staged) backend/tests/test_customers_api.py
+- (staged) backend/tests/test_error_handling.py
+- (staged) backend/tests/test_gap_batch_2b.py
+- (staged) backend/tests/test_gap_batch_2b_smoke.py
+- (staged) backend/tests/test_gap_batch_2c_2d.py
+- (staged) backend/tests/test_health.py
+- (staged) backend/tests/test_marketplace.py
+- (staged) backend/tests/test_orders_api.py
+- (staged) backend/tests/test_pr_automation.py
+- (staged) backend/tests/test_products_api.py
+- (staged) backend/tests/test_project_intelligence.py
+- (staged) backend/tests/test_prometheus_metrics.py
+- (staged) backend/tests/test_quotes_api.py
+- (staged) backend/tests/test_risk_assessor.py
+- (staged) backend/tests/test_rollback_mechanism.py
+- (staged) backend/tests/test_sequence_generation.py
+- (staged) backend/tests/test_shopify_mock.py
+- (staged) backend/tests/test_specialized_agents.py
+- (staged) backend/tests/test_toolshed_api.py
+- (staged) backend/tests/test_workflow_agent_integration.py
+- (staged) backend/tests/test_workflows_batch_2c.py
+- (staged) backend/tests/test_xero_mock.py
+- (staged) backend/tests/unit/test_number_generation.py
+- (staged) backend/tests/unit/test_reconciliation_logic.py
+- (staged) backend/tests/utils/__init__.py
+- (staged) backend/tests/utils/test_calculations.py
+- (staged) backend/tests/webhooks/__init__.py
+- (staged) backend/tests/webhooks/test_webhook_transactions.py
+- (staged) backend/update_supplier.json
+- (staged) backend/uv.lock
+- (staged) backend/vercel.json
+- (staged) backend/verify_i18n_migration.py
+- (staged) backend/verify_indexes.py
+- (staged) backend/verify_phase1.py
+- (staged) backend/verify_phase9_fixes.py
+- (staged) backend/verify_race_condition_fix.py
+- (staged) backend/verify_sequence_deployment.py
+- (staged) backend/verify_tables.py
+
+## Session end: 2026-04-05T07:41:35+05:00
+### Modified files:
+- .claude/PROGRESS.md
+- .claude/hooks/pre-commit.sh
+- .claude/rules/database/supabase-migrations.md
+- .dockerignore
+- .env.example
+- .github/CODEOWNERS
+- .github/dependabot.yml
+- .github/workflows/agent-pr-checks.yml
+- .github/workflows/ci.yml
+- .github/workflows/deploy-production.yml
+- .github/workflows/deploy-staging.yml
+- .github/workflows/examples/deploy-frontend.yml.example
+- .github/workflows/security.yml
+- .husky/pre-commit
+- README.md
+- app/.dockerignore
+- app/.gitignore
+- app/Dockerfile
+- app/__tests__/app/approvals-page.test.tsx
+- app/__tests__/app/billing-page.test.tsx
+- app/__tests__/app/crm-health.test.tsx
+- app/__tests__/app/crm-onboarding.test.tsx
+- app/__tests__/app/crm-personas.test.tsx
+- app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- app/__tests__/app/orders-integration.test.tsx
+- app/__tests__/app/quotes-integration.test.tsx
+- app/__tests__/app/reconciliation-page.test.tsx
+- app/__tests__/app/workflows-page.test.tsx
+- app/__tests__/components/EmptyState.test.tsx
+- app/__tests__/components/ErrorBoundary.test.tsx
+- app/__tests__/components/ui/pagination-controls.test.tsx
+- app/__tests__/e2e/billing.spec.ts
+- app/__tests__/e2e/onboarding.spec.ts
+- app/__tests__/lib/api/activities.test.ts
+- app/__tests__/lib/api/agents.test.ts
+- app/__tests__/lib/api/ai-chat.test.ts
+- app/__tests__/lib/api/ai-generate.test.ts
+- app/__tests__/lib/api/ai-insights.test.ts
+- app/__tests__/lib/api/ap2.test.ts
+- app/__tests__/lib/api/approvals-extended.test.ts
+- app/__tests__/lib/api/approvals.test.ts
+- app/__tests__/lib/api/auth.test.ts
+- app/__tests__/lib/api/autonomous.test.ts
+- app/__tests__/lib/api/autonomy.test.ts
+- app/__tests__/lib/api/bank-feeds.test.ts
+- app/__tests__/lib/api/billing.test.ts
+- app/__tests__/lib/api/chat.test.ts
+- app/__tests__/lib/api/cin7-bom.test.ts
+- app/__tests__/lib/api/cin7-fulfilment.test.ts
+- app/__tests__/lib/api/cin7-gl.test.ts
+- app/__tests__/lib/api/cin7-grn.test.ts
+- app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- app/__tests__/lib/api/cin7-shadow.test.ts
+- app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- app/__tests__/lib/api/cin7.test.ts
+- app/__tests__/lib/api/contacts.test.ts
+- app/__tests__/lib/api/contractors.test.ts
+- app/__tests__/lib/api/copilot.test.ts
+- app/__tests__/lib/api/customers.test.ts
+- app/__tests__/lib/api/documents.test.ts
+- app/__tests__/lib/api/inventory.test.ts
+- app/__tests__/lib/api/invoices-extended.test.ts
+- app/__tests__/lib/api/invoices.test.ts
+- app/__tests__/lib/api/marketing.test.ts
+- app/__tests__/lib/api/marketplace.test.ts
+- app/__tests__/lib/api/mobile.test.ts
+- app/__tests__/lib/api/monitoring.test.ts
+- app/__tests__/lib/api/notifications.test.ts
+- app/__tests__/lib/api/orders.test.ts
+- app/__tests__/lib/api/pos.test.ts
+- app/__tests__/lib/api/products.test.ts
+- app/__tests__/lib/api/purchase-orders.test.ts
+- app/__tests__/lib/api/quotes.test.ts
+- app/__tests__/lib/api/reconciliation.test.ts
+- app/__tests__/lib/api/sendgrid.test.ts
+- app/__tests__/lib/api/service-requests.test.ts
+- app/__tests__/lib/api/settings.test.ts
+- app/__tests__/lib/api/shadow.test.ts
+- app/__tests__/lib/api/shipments-outbound.test.ts
+- app/__tests__/lib/api/shipments.test.ts
+- app/__tests__/lib/api/shopify.test.ts
+- app/__tests__/lib/api/sla.test.ts
+- app/__tests__/lib/api/suppliers.test.ts
+- app/__tests__/lib/api/tasks.test.ts
+- app/__tests__/lib/api/team.test.ts
+- app/__tests__/lib/api/warehouse.test.ts
+- app/__tests__/lib/api/workflows-extended.test.ts
+- app/__tests__/lib/api/workflows.test.ts
+- app/__tests__/lib/api/workshop.test.ts
+- app/__tests__/lib/api/xero.test.ts
+- app/__tests__/lib/marketplace.test.ts
+- app/__tests__/lib/types/cin7.test.ts
+- app/__tests__/lib/types/marketplace.test.ts
+- app/__tests__/lib/types/reconciliation.test.ts
+- app/__tests__/lib/types/workflows.test.ts
+- app/__tests__/lib/utils/csv-export.test.ts
+- app/components.json
+- app/package.json
+- app/playwright.a11y.config.ts
+- app/playwright.config.ts
+- app/scripts/dev-with-fallback.mjs
+- app/sentry.client.config.ts
+- app/sentry.edge.config.ts
+- app/sentry.server.config.ts
+- app/src/components/workflow/canvas/workflow-canvas.tsx
+- app/tailwind.config.ts
+- app/tests/accessibility/a11y.spec.ts
+- app/tests/e2e/approvals.spec.ts
+- app/tests/e2e/error-handling.spec.ts
+- app/tests/e2e/invoices.spec.ts
+- app/tests/e2e/reconciliation.spec.ts
+- app/tests/e2e/workflows.spec.ts
+- app/tests/visual/components.visual.spec.ts
+- app/tsconfig.json
+- app/vercel.json
+- app/vitest.config.ts
+- app/vitest.d.ts
+- app/vitest.setup.ts
+- backend/.claude/memory/context-snapshot.md
+- backend/.gitignore
+- backend/.python-version
+- backend/.vercelignore
+- backend/=0.39.0
+- backend/=6.11.0
+- backend/AGENTS.md
+- "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- backend/Dockerfile
+- backend/ISSUE-4-COMPLETION.md
+- backend/ISSUE-5-COMPLETION.md
+- backend/Procfile
+- backend/alembic.ini
+- backend/alembic/README
+- backend/alembic/env.py
+- backend/alembic/script.py.mako
+- backend/alembic/versions/001_add_approvals.py
+- backend/alembic/versions/002_add_semantic_search.py
+- backend/alembic/versions/003_add_missing_trigram_indexes.py
+- backend/alembic/versions/004_add_product_sync_bidirectional.py
+- backend/alembic/versions/005_add_shopify_extended_tables.py
+- backend/alembic/versions/006_add_mobile_order_tables.py
+- backend/alembic/versions/007_add_workflow_notification_indexes.py
+- backend/alembic/versions/008_merge_heads.py
+- backend/alembic/versions/009_add_pos_tables.py
+- backend/alembic/versions/00a_rename_invoice_date.py
+- backend/alembic/versions/00b_add_missing_inventory_tables.py
+- backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- backend/alembic/versions/00d_add_certification_tables.py
+- backend/alembic/versions/00e_add_prd_tables.py
+- backend/alembic/versions/00f_add_pricing_tier_tables.py
+- backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- backend/alembic/versions/68d51946645a_create_erp_schema.py
+- backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- backend/analyze_404_errors.py
+- backend/analyze_422_errors.py
+- backend/analyze_500_errors.py
+- backend/apply_i18n_migration.py
+- backend/apply_i18n_migration_v2.py
+- backend/apply_indexes.py
+- backend/apply_indexes_via_backend.py
+- backend/apply_pos_migration.py
+- backend/apply_search_indexes.py
+- backend/apply_sequences_migration.py
+- backend/benchmarks/after_indexes.txt
+- backend/benchmarks/before_indexes.txt
+- backend/benchmarks/comparison.md
+- backend/check_404_in_full_report.py
+- backend/check_backend_config.py
+- backend/check_categories.py
+- backend/check_db.py
+- backend/check_enum_def.py
+- backend/check_orders.py
+- backend/check_results.py
+- backend/check_runtime_config.py
+- backend/check_schema.py
+- backend/check_tables.py
+- backend/check_test_status.py
+- backend/cleanup_db.py
+- backend/conftest.py
+- backend/count_data.py
+- backend/create_admin.py
+- backend/create_demo_orders.py
+- backend/create_demo_orders_simple.py
+- backend/create_inventory_tables.py
+- backend/create_service_tables.py
+- backend/debug_response.py
+- backend/diagnose_db_connection.py
+- backend/docs/ISS-005-VERIFICATION.md
+- backend/docs/ISS-006-VERIFICATION.md
+- backend/docs/ISS-007-VERIFICATION.md
+- backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- backend/examples/use_agentic_layer.py
+- backend/fix_categories.py
+- backend/fix_categories_uppercase.py
+- backend/generate_endpoint.py
+- backend/generate_failures.py
+- backend/generate_password_hash.py
+- backend/inject_failure_patterns.py
+- backend/inject_insights_directly.py
+- backend/inject_test_data.py
+- backend/inject_test_failures.py
+- backend/list_google_models.py
+- backend/load_test_output.txt
+- backend/migrations/001_add_search_indexes.sql
+- backend/migrations/001_rollback.sql
+- backend/migrations/README.md
+- backend/migrations/add_ai_search.sql
+- backend/migrations/add_ap2_integration.sql
+- backend/migrations/add_auto_sync_enhancements.sql
+- backend/migrations/add_email_audit_tables.sql
+- backend/migrations/add_foreign_key_indexes.sql
+- backend/migrations/add_i18n_support.sql
+- backend/migrations/add_missing_fk_indexes.sql
+- backend/migrations/add_performance_indexes.sql
+- backend/migrations/add_phase4_inventory_indexes.sql
+- backend/migrations/add_portal_forms_tables.sql
+- backend/migrations/add_pos_system.sql
+- backend/migrations/add_search_indexes.sql
+- backend/migrations/add_sequences_for_numbers.sql
+- backend/migrations/add_shopify_extended.sql
+- backend/migrations/add_submission_notes_table.sql
+- backend/migrations/add_trigram_indexes.sql
+- backend/migrations/add_webhook_events_table.sql
+- backend/migrations/seed_ccw_products.sql
+- backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- backend/migrations/week3_enum_standardization.sql
+- backend/migrations/week3_timezone_standardization.sql
+- backend/pyproject.toml
+- backend/pytest.ini
+- backend/railway.json
+- backend/requirements.txt
+- backend/reset_admin_password.py
+- backend/run-setup-memory.ps1
+- backend/run-tests.ps1
+- backend/run_bugfix_tests.ps1
+- backend/run_bugfix_tests.sh
+- backend/run_migrations.py
+- backend/scripts/analyze_query_performance.py
+- backend/scripts/apply_foreign_key_indexes.py
+- backend/scripts/apply_phase4_indexes.py
+- backend/scripts/apply_trigram_indexes.py
+- backend/scripts/benchmark_search.py
+- backend/scripts/create_container_tables.sql
+- backend/scripts/create_sample_orders.py
+- backend/scripts/create_sample_quotes.py
+- backend/scripts/explain_queries.sh
+- backend/scripts/identify_500_sources.py
+- backend/scripts/implement_query_optimizations.md
+- backend/scripts/import_ccwonline_products.py
+- backend/scripts/insert_container_sample_data.sql
+- backend/scripts/integration_test_iss001.py
+- backend/scripts/monitor_indexes.py
+- backend/scripts/run_sql.py
+- backend/scripts/seed_ccw_cleaning.py
+- backend/scripts/seed_ccw_products.py
+- backend/scripts/setup-memory.py
+- backend/scripts/test_iss005_fixes.py
+- backend/scripts/validate_autosave_implementation.py
+- backend/scripts/validate_iss001_fix.py
+- backend/scripts/validate_iss003_actual.py
+- backend/scripts/validate_iss003_fix.py
+- backend/scripts/validate_iss005_fix.py
+- backend/scripts/verify_iss005_code.py
+- backend/scripts/verify_query_optimizations.py
+- backend/seed_data.py
+- backend/seed_demo_simple.sql
+- backend/seed_orders.py
+- backend/show_customers.py
+- backend/show_orders.py
+- backend/show_products.py
+- backend/show_quotes.py
+- backend/src/__init__.py
+- backend/src/agents/prd/__init__.py
+- backend/src/agents/prd/analysis_agent.py
+- backend/src/agents/prd/feature_decomposer.py
+- backend/src/agents/prd/prd_orchestrator.py
+- backend/src/agents/prd/roadmap_planner.py
+- backend/src/agents/prd/tech_spec_generator.py
+- backend/src/agents/prd/test_generator.py
+- backend/src/ai/__init__.py
+- backend/src/ai/agents/chat_assistant.py
+- backend/src/ai/agents/chat_state.py
+- backend/src/ai/agents/content_generator.py
+- backend/src/ai/agents/content_state.py
+- backend/src/ai/agents/insights_agent.py
+- backend/src/ai/agents/insights_state.py
+- backend/src/ai/agents/risk_assessor.py
+- backend/src/ai/agents/rollback_agent.py
+- backend/src/ai/agents/specialized/__init__.py
+- backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- backend/src/ai/agents/specialized/development_agent.py
+- backend/src/ai/agents/specialized/document_parser_agent.py
+- backend/src/ai/agents/specialized/form_autofill_agent.py
+- backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- backend/src/ai/agents/specialized/marketing_agent.py
+- backend/src/ai/agents/specialized/pricing_agent.py
+- backend/src/ai/agents/specialized/pricing_state.py
+- backend/src/ai/agents/specialized/procurement_agent.py
+- backend/src/ai/agents/specialized/procurement_state.py
+- backend/src/ai/agents/specialized/project_intelligence_agent.py
+- backend/src/ai/agents/specialized/query_agent.py
+- backend/src/ai/agents/specialized/recommendation_agent.py
+- backend/src/ai/agents/specialized/reconciliation_agent.py
+- backend/src/ai/agents/specialized/search_agent.py
+- backend/src/ai/agents/specialized/staff_copilot_agent.py
+- backend/src/ai/agents/specialized/task_executor_agent.py
+- backend/src/ai/agents/specialized/task_executor_state.py
+- backend/src/ai/agents/specialized/testing_agent.py
+- backend/src/ai/base_agent.py
+- backend/src/ai/generators/__init__.py
+- backend/src/ai/generators/email_generator.py
+- backend/src/ai/generators/quote_generator.py
+- backend/src/ai/learning/__init__.py
+- backend/src/ai/learning/learning_engine.py
+- backend/src/ai/learning/learning_repository.py
+- backend/src/ai/monitoring/__init__.py
+- backend/src/ai/monitoring/health_monitor.py
+- backend/src/ai/monitoring/metrics_collector.py
+- backend/src/ai/ollama_client.py
+- backend/src/ai/orchestration/__init__.py
+- backend/src/ai/orchestration/agent_registry.py
+- backend/src/ai/orchestration/autonomous_loop.py
+- backend/src/ai/orchestration/project_orchestrator.py
+- backend/src/ai/orchestration/supervisor_agent.py
+- backend/src/ai/orchestration/supervisor_state.py
+- backend/src/ai/prompts/__init__.py
+- backend/src/ai/prompts/system_prompts.py
+- backend/src/ai/protocol/__init__.py
+- backend/src/ai/protocol/confidence.py
+- backend/src/ai/protocol/error_handler.py
+- backend/src/ai/protocol/governor.py
+- backend/src/ai/protocol/message_bus.py
+- backend/src/ai/protocol/models.py
+- backend/src/ai/tools/__init__.py
+- backend/src/ai/tools/analytics_tools.py
+- backend/src/ai/tools/base.py
+- backend/src/ai/tools/erp_tools.py
+- backend/src/ai/tools/execution_tools.py
+- backend/src/ai/tools/inventory_intelligence.py
+- backend/src/ai/tools/pricing_tools.py
+- backend/src/ai/tools/procurement_tools.py
+- backend/src/api/__init__.py
+- backend/src/api/debug_main.py
+- backend/src/api/deps.py
+- backend/src/api/exceptions.py
+- backend/src/api/main.py
+- backend/src/api/middleware/__init__.py
+- backend/src/api/middleware/auth.py
+- backend/src/api/middleware/performance.py
+- backend/src/api/middleware/rate_limit.py
+- backend/src/api/middleware/rbac.py
+- backend/src/api/middleware/request_id.py
+- backend/src/api/middleware/security_headers.py
+- backend/src/api/middleware/tenant_isolation.py
+- backend/src/api/routers/prd.py
+- backend/src/api/routes/__init__.py
+- backend/src/api/routes/activities.py
+- backend/src/api/routes/agents_monitor.py
+- backend/src/api/routes/ai/__init__.py
+- backend/src/api/routes/ai/anomaly.py
+- backend/src/api/routes/ai/approval_gates.py
+- backend/src/api/routes/ai/assets.py
+- backend/src/api/routes/ai/autonomous_ops.py
+- backend/src/api/routes/ai/build_command.py
+- backend/src/api/routes/ai/chat.py
+- backend/src/api/routes/ai/cin7_anomaly.py
+- backend/src/api/routes/ai/cin7_forecast.py
+- backend/src/api/routes/ai/cin7_shadow_ai.py
+- backend/src/api/routes/ai/command_parser.py
+- backend/src/api/routes/ai/document_parser.py
+- backend/src/api/routes/ai/form_autofill.py
+- backend/src/api/routes/ai/gap_sync.py
+- backend/src/api/routes/ai/generate.py
+- backend/src/api/routes/ai/insights.py
+- backend/src/api/routes/ai/inventory_forecast.py
+- backend/src/api/routes/ai/learning.py
+- backend/src/api/routes/ai/marketing_ai.py
+- backend/src/api/routes/ai/monitoring.py
+- backend/src/api/routes/ai/project_intelligence.py
+- backend/src/api/routes/ai/protocol.py
+- backend/src/api/routes/ai/query.py
+- backend/src/api/routes/ai/requirement_verification.py
+- backend/src/api/routes/ai/specialized.py
+- backend/src/api/routes/ai/staff_copilot.py
+- backend/src/api/routes/ai/supervisor.py
+- backend/src/api/routes/ai/test_data.py
+- backend/src/api/routes/ai/test_failures.py
+- backend/src/api/routes/ai/toolshed.py
+- backend/src/api/routes/ai/toolshed_vault.py
+- backend/src/api/routes/analytics.py
+- backend/src/api/routes/approvals.py
+- backend/src/api/routes/audit_trail.py
+- backend/src/api/routes/autonomous_dev.py
+- backend/src/api/routes/autonomy_metrics.py
+- backend/src/api/routes/backorders.py
+- backend/src/api/routes/bank_feeds.py
+- backend/src/api/routes/billing.py
+- backend/src/api/routes/boardroom.py
+- backend/src/api/routes/certifications.py
+- backend/src/api/routes/chat.py
+- backend/src/api/routes/config.py
+- backend/src/api/routes/contacts.py
+- backend/src/api/routes/containers.py
+- backend/src/api/routes/contractors.py
+- backend/src/api/routes/crm_health.py
+- backend/src/api/routes/crm_onboarding.py
+- backend/src/api/routes/crm_personas.py
+- backend/src/api/routes/cron_jobs.py
+- backend/src/api/routes/customer_orders.py
+- backend/src/api/routes/customers.py
+- backend/src/api/routes/dashboard_stream.py
+- backend/src/api/routes/demo_auth.py
+- backend/src/api/routes/demo_dashboard.py
+- backend/src/api/routes/demo_lists.py
+- backend/src/api/routes/documents.py
+- backend/src/api/routes/email_audit.py
+- backend/src/api/routes/equipment_lifecycle.py
+- backend/src/api/routes/google_ai.py
+- backend/src/api/routes/health.py
+- backend/src/api/routes/integrations/__init__.py
+- backend/src/api/routes/integrations/ap2.py
+- backend/src/api/routes/integrations/cin7.py
+- backend/src/api/routes/integrations/cin7_bom.py
+- backend/src/api/routes/integrations/cin7_crm.py
+- backend/src/api/routes/integrations/cin7_fulfilment.py
+- backend/src/api/routes/integrations/cin7_gl.py
+- backend/src/api/routes/integrations/cin7_grn.py
+- backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- backend/src/api/routes/integrations/cin7_line_items.py
+- backend/src/api/routes/integrations/cin7_procurement.py
+- backend/src/api/routes/integrations/cin7_shadow_sync.py
+- backend/src/api/routes/integrations/cin7_stream.py
+- backend/src/api/routes/integrations/cin7_sync.py
+- backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- backend/src/api/routes/integrations/cin7_webhooks.py
+- backend/src/api/routes/integrations/elevenlabs.py
+- backend/src/api/routes/integrations/heygen.py
+- backend/src/api/routes/integrations/marketplace.py
+- backend/src/api/routes/integrations/sendgrid.py
+- backend/src/api/routes/integrations/shopify.py
+- backend/src/api/routes/integrations/shopify_theme.py
+- backend/src/api/routes/integrations/xero.py
+- backend/src/api/routes/inventory.py
+- backend/src/api/routes/inventory_stream.py
+- backend/src/api/routes/invoice_payments.py
+- backend/src/api/routes/invoices.py
+- backend/src/api/routes/jobs.py
+- backend/src/api/routes/mobile/__init__.py
+- backend/src/api/routes/mobile/guest_orders.py
+- backend/src/api/routes/monitoring/__init__.py
+- backend/src/api/routes/monitoring/alerts.py
+- backend/src/api/routes/monitoring/business_metrics.py
+- backend/src/api/routes/monitoring/infrastructure.py
+- backend/src/api/routes/monitoring/performance.py
+- backend/src/api/routes/notifications.py
+- backend/src/api/routes/orders.py
+- backend/src/api/routes/portal/__init__.py
+- backend/src/api/routes/portal/customer_portal.py
+- backend/src/api/routes/pos_transactions.py
+- backend/src/api/routes/pos_xero_reconciliation.py
+- backend/src/api/routes/prd.py
+- backend/src/api/routes/pricing.py
+- backend/src/api/routes/procurement.py
+- backend/src/api/routes/products.py
+- backend/src/api/routes/prometheus_metrics.py
+- backend/src/api/routes/public_stats.py
+- backend/src/api/routes/purchase_orders.py
+- backend/src/api/routes/quotes.py
+- backend/src/api/routes/recommendations.py
+- backend/src/api/routes/reconciliation.py
+- backend/src/api/routes/reconciliation_dashboard.py
+- backend/src/api/routes/search.py
+- backend/src/api/routes/service_requests.py
+- backend/src/api/routes/settings.py
+- backend/src/api/routes/shadow_analytics.py
+- backend/src/api/routes/shadow_mode.py
+- backend/src/api/routes/shipments.py
+- backend/src/api/routes/sla.py
+- backend/src/api/routes/stripe_webhooks.py
+- backend/src/api/routes/supplier_portal.py
+- backend/src/api/routes/suppliers.py
+- backend/src/api/routes/team.py
+- backend/src/api/routes/test_data_gen.py
+- backend/src/api/routes/translations.py
+- backend/src/api/routes/warehouse.py
+- backend/src/api/routes/webhooks.py
+- backend/src/api/routes/workflows.py
+- backend/src/api/routes/workshop/__init__.py
+- backend/src/api/routes/workshop/bookings.py
+- backend/src/api/routes/workshop/dashboard.py
+- backend/src/api/routes/workshop/equipment.py
+- backend/src/api/routes/workshop/reminders.py
+- backend/src/api/routes/workshop/templates.py
+- backend/src/api/schemas/invoicing.py
+- backend/src/api/schemas/prd.py
+- backend/src/auth/jwt.py
+- backend/src/auth/models.py
+- backend/src/auth/password_reset.py
+- backend/src/cache/decorators.py
+- backend/src/cache/redis_client.py
+- backend/src/config/__init__.py
+- backend/src/config/ap2_settings.py
+- backend/src/config/autonomy.py
+- backend/src/config/cin7_settings.py
+- backend/src/config/database.py
+- backend/src/config/elevenlabs_settings.py
+- backend/src/config/heygen_settings.py
+- backend/src/config/marketplace_settings.py
+- backend/src/config/secrets_manager.py
+- backend/src/config/sendgrid_settings.py
+- backend/src/config/settings.py
+- backend/src/config/shopify_settings.py
+- backend/src/config/xero_settings.py
+- backend/src/db/__init__.py
+- backend/src/db/ai_models.py
+- backend/src/db/ai_search_models.py
+- backend/src/db/ap2_models.py
+- backend/src/db/approvals_models.py
+- backend/src/db/audit_models.py
+- backend/src/db/certification_models.py
+- backend/src/db/cin7_bom_models.py
+- backend/src/db/cin7_fulfilment_models.py
+- backend/src/db/cin7_gl_models.py
+- backend/src/db/cin7_models.py
+- backend/src/db/cin7_shadow_models.py
+- backend/src/db/container_models.py
+- backend/src/db/crm_models.py
+- backend/src/db/crm_schemas.py
+- backend/src/db/customer_health_models.py
+- backend/src/db/demo_models.py
+- backend/src/db/email_audit_models.py
+- backend/src/db/email_models.py
+- backend/src/db/equipment_lifecycle_models.py
+- backend/src/db/generate_demo_purchases.py
+- backend/src/db/i18n_models.py
+- backend/src/db/i18n_schemas.py
+- backend/src/db/indexes.py
+- backend/src/db/integration_credential_models.py
+- backend/src/db/inventory_models.py
+- backend/src/db/inventory_schemas.py
+- backend/src/db/marketplace_models.py
+- backend/src/db/mobile_order_models.py
+- backend/src/db/models/__init__.py
+- backend/src/db/models/invoicing.py
+- backend/src/db/models/prd.py
+- backend/src/db/models_base.py
+- backend/src/db/portal_forms_models.py
+- backend/src/db/pos_models.py
+- backend/src/db/pricing_models.py
+- backend/src/db/schemas.py
+- backend/src/db/seed_demo.py
+- backend/src/db/service_models.py
+- backend/src/db/shadow_session_models.py
+- backend/src/db/shopify_extended_models.py
+- backend/src/db/shopify_models.py
+- backend/src/db/shopify_schemas.py
+- backend/src/db/submission_notes_models.py
+- backend/src/db/webhook_models.py
+- backend/src/db/workflow_models.py
+- backend/src/db/workshop_models.py
+- backend/src/db/xero_models.py
+- backend/src/db/xero_schemas.py
+- backend/src/emails/templates/order_confirmed.html
+- backend/src/emails/templates/order_delivered.html
+- backend/src/emails/templates/order_shipped.html
+- backend/src/emails/templates/quote_created.html
+- backend/src/emails/templates/quote_expiring.html
+- backend/src/events/__init__.py
+- backend/src/events/event_bus.py
+- backend/src/integrations/__init__.py
+- backend/src/integrations/ap2/__init__.py
+- backend/src/integrations/ap2/client.py
+- backend/src/integrations/ap2/security.py
+- backend/src/integrations/cin7/__init__.py
+- backend/src/integrations/cin7/change_detector.py
+- backend/src/integrations/cin7/client.py
+- backend/src/integrations/cin7/customer_sync.py
+- backend/src/integrations/cin7/demo_client.py
+- backend/src/integrations/cin7/event_dispatcher.py
+- backend/src/integrations/cin7/inventory_sync.py
+- backend/src/integrations/cin7/product_sync.py
+- backend/src/integrations/cin7/purchase_sync.py
+- backend/src/integrations/cin7/sales_sync.py
+- backend/src/integrations/cin7/supplier_sync.py
+- backend/src/integrations/elevenlabs/__init__.py
+- backend/src/integrations/elevenlabs/client.py
+- backend/src/integrations/elevenlabs/demo_client.py
+- backend/src/integrations/elevenlabs/live_client.py
+- backend/src/integrations/google/__init__.py
+- backend/src/integrations/google/client.py
+- backend/src/integrations/heygen/__init__.py
+- backend/src/integrations/heygen/client.py
+- backend/src/integrations/heygen/demo_client.py
+- backend/src/integrations/heygen/live_client.py
+- backend/src/integrations/http_utils.py
+- backend/src/integrations/marketplace/__init__.py
+- backend/src/integrations/marketplace/base.py
+- backend/src/integrations/marketplace/demo_channel.py
+- backend/src/integrations/marketplace/ebay_channel.py
+- backend/src/integrations/marketplace/facebook_channel.py
+- backend/src/integrations/marketplace/registry.py
+- backend/src/integrations/marketplace/shopify_channel.py
+- backend/src/integrations/marketplace/sync_engine.py
+- backend/src/integrations/payments/__init__.py
+- backend/src/integrations/payments/amex.py
+- backend/src/integrations/payments/eftpos.py
+- backend/src/integrations/payments/processor.py
+- backend/src/integrations/secrets_manager.py
+- backend/src/integrations/sendgrid/__init__.py
+- backend/src/integrations/sendgrid/client.py
+- backend/src/integrations/sendgrid/demo_client.py
+- backend/src/integrations/sendgrid/live_client.py
+- backend/src/integrations/sendgrid/processor.py
+- backend/src/integrations/sentry_client.py
+- backend/src/integrations/shopify/__init__.py
+- backend/src/integrations/shopify/client.py
+- backend/src/integrations/shopify/demo_client.py
+- backend/src/integrations/shopify/inventory.py
+- backend/src/integrations/shopify/inventory_sync.py
+- backend/src/integrations/shopify/metafields.py
+- backend/src/integrations/shopify/orders.py
+- backend/src/integrations/shopify/product_sync.py
+- backend/src/integrations/shopify/translations.py
+- backend/src/integrations/shopify/webhooks.py
+- backend/src/integrations/stripe/__init__.py
+- backend/src/integrations/stripe/client.py
+- backend/src/integrations/xero/__init__.py
+- backend/src/integrations/xero/auth.py
+- backend/src/integrations/xero/client.py
+- backend/src/integrations/xero/customers.py
+- backend/src/integrations/xero/demo_client.py
+- backend/src/integrations/xero/invoices.py
+- backend/src/integrations/xero/payments.py
+- backend/src/integrations/xero/pos_reconciliation.py
+- backend/src/integrations/xero/token_manager.py
+- backend/src/integrations/xero/webhook_security.py
+- backend/src/integrations/xero/webhooks.py
+- backend/src/monitoring/__init__.py
+- backend/src/monitoring/metrics.py
+- backend/src/rag/__init__.py
+- backend/src/rag/chunkers.py
+- backend/src/rag/models.py
+- backend/src/rag/parsers.py
+- backend/src/rag/pipeline.py
+- backend/src/rag/storage.py
+- backend/src/scheduler/bank_feed_scheduler.py
+- backend/src/security/__init__.py
+- backend/src/security/encryption.py
+- backend/src/security/webhook_verification.py
+- backend/src/services/__init__.py
+- backend/src/services/alert_manager.py
+- backend/src/services/audit_service.py
+- backend/src/services/auto_reorder.py
+- backend/src/services/autonomy_audit.py
+- backend/src/services/bank_feed_service.py
+- backend/src/services/business_metrics_service.py
+- backend/src/services/carrier_service.py
+- backend/src/services/circuit_breaker.py
+- backend/src/services/code_generation/README.md
+- backend/src/services/code_generation/__init__.py
+- backend/src/services/code_generation/context_builder.py
+- backend/src/services/code_generation/doc_generator.py
+- backend/src/services/code_generation/generator.py
+- backend/src/services/code_generation/prompts/doc_generation.txt
+- backend/src/services/code_generation/prompts/python_generation.txt
+- backend/src/services/code_generation/prompts/test_generation.txt
+- backend/src/services/code_generation/prompts/typescript_generation.txt
+- backend/src/services/code_generation/quality_checker.py
+- backend/src/services/code_generation/test_generator.py
+- backend/src/services/deployment_service.py
+- backend/src/services/document_extraction_service.py
+- backend/src/services/dunning.py
+- backend/src/services/email_audit_service.py
+- backend/src/services/email_notifications.py
+- backend/src/services/email_service.py
+- backend/src/services/embedding_service.py
+- backend/src/services/i18n_service.py
+- backend/src/services/notification_service.py
+- backend/src/services/order_state.py
+- backend/src/services/procurement_matching.py
+- backend/src/services/product_recognition_service.py
+- backend/src/services/recommendation_service.py
+- backend/src/services/reconciliation_alerts.py
+- backend/src/services/requirement_extractor.py
+- backend/src/services/requirement_tracer.py
+- backend/src/services/semantic_search_service.py
+- backend/src/services/sla_escalation.py
+- backend/src/services/sla_service.py
+- backend/src/services/sse_service.py
+- backend/src/services/system_alert_service.py
+- backend/src/services/tax_calculator.py
+- backend/src/services/webhook_service.py
+- backend/src/services/workflow_service.py
+- backend/src/services/workshop_scheduler.py
+- backend/src/state/__init__.py
+- backend/src/state/supabase.py
+- backend/src/telemetry/__init__.py
+- backend/src/telemetry/usage_tracker.py
+- backend/src/testing/__init__.py
+- backend/src/testing/shopify_mock.py
+- backend/src/testing/xero_mock.py
+- backend/src/utils/__init__.py
+- backend/src/utils/calculations.py
+- backend/src/utils/logging.py
+- backend/src/utils/supabase_client.py
+- backend/src/workflow/__init__.py
+- backend/src/workflow/engine.py
+- backend/src/workflow/models.py
+- backend/src/workflow/storage.py
+- backend/src/workflows/__init__.py
+- backend/src/workflows/pr_automation.py
+- backend/srcapimain.py
+- backend/srcapiroutesailearning.py.tmp
+- backend/start_for_testing.py
+- backend/start_load_test_server.py
+- backend/test_ai_inventory_intelligence.py
+- backend/test_api.py
+- backend/test_api_error.py
+- backend/test_customer_sync.py
+- backend/test_dashboard_data.py
+- backend/test_dashboard_data_with_failures.py
+- backend/test_db_connection.py
+- backend/test_dependency_injection.py
+- backend/test_endpoint.py
+- backend/test_expired_quote_validation.py
+- backend/test_failure_scenarios.py
+- backend/test_full_payment_flow.py
+- backend/test_google_ai_endpoints.py
+- backend/test_google_ai_integration.py
+- backend/test_insights_api.py
+- backend/test_multistore_inventory.py
+- backend/test_order_update_items_500.py
+- backend/test_outbound_shipment.json
+- backend/test_password.py
+- backend/test_payment_webhook.py
+- backend/test_po.json
+- backend/test_quote_404_issue.py
+- backend/test_quote_fixes.py
+- backend/test_quote_generate_endpoint.py
+- backend/test_quote_validation.py
+- backend/test_redis_connection.py
+- backend/test_search_performance.py
+- backend/test_shopify_connection.py
+- backend/test_shopify_integration.py
+- backend/test_supplier.json
+- backend/tests/FIXES_APPLIED.md
+- backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- backend/tests/TEST_STATUS_REPORT.md
+- backend/tests/TEST_STATUS_UPDATE.md
+- backend/tests/__init__.py
+- backend/tests/ai/test_reconciliation_agent.py
+- backend/tests/api/README_BUGFIX_TESTS.md
+- backend/tests/api/test_500_errors.py
+- backend/tests/api/test_approval_gates.py
+- backend/tests/api/test_approvals.py
+- backend/tests/api/test_approvals_integration.py
+- backend/tests/api/test_autonomous_ops.py
+- backend/tests/api/test_bank_feeds.py
+- backend/tests/api/test_bas_report.py
+- backend/tests/api/test_billing_gaps.py
+- backend/tests/api/test_build_command.py
+- backend/tests/api/test_certifications.py
+- backend/tests/api/test_command_parser.py
+- backend/tests/api/test_customer_orders.py
+- backend/tests/api/test_document_extraction.py
+- backend/tests/api/test_equipment_lifecycle.py
+- backend/tests/api/test_gap_sync.py
+- backend/tests/api/test_inventory.py
+- backend/tests/api/test_inventory_gaps.py
+- backend/tests/api/test_inventory_new_endpoints.py
+- backend/tests/api/test_inventory_uni172.py
+- backend/tests/api/test_invoice_payments.py
+- backend/tests/api/test_invoices_tax_integration.py
+- backend/tests/api/test_nl_query.py
+- backend/tests/api/test_orders_performance.py
+- backend/tests/api/test_portal.py
+- backend/tests/api/test_pos_terminals.py
+- backend/tests/api/test_pos_transactions.py
+- backend/tests/api/test_pricing_tiers.py
+- backend/tests/api/test_quote_404_errors.py
+- backend/tests/api/test_quote_422_errors.py
+- backend/tests/api/test_quote_http_methods.py
+- backend/tests/api/test_rbac.py
+- backend/tests/api/test_reconciliation_integration.py
+- backend/tests/api/test_requirement_verification.py
+- backend/tests/api/test_supplier_portal.py
+- backend/tests/api/test_tenant_isolation.py
+- backend/tests/api/test_translations.py
+- backend/tests/api/test_workflows_integration.py
+- backend/tests/api/test_workshop_routes.py
+- backend/tests/conftest.py
+- backend/tests/e2e/__init__.py
+- backend/tests/e2e/test_login_flow.py
+- backend/tests/e2e/test_order_flow.py
+- backend/tests/fixtures/__init__.py
+- backend/tests/fixtures/data.py
+- backend/tests/fixtures/pos_data.py
+- backend/tests/fixtures/shopify_fixtures.py
+- backend/tests/fixtures/xero_fixtures.py
+- backend/tests/integration/README.md
+- backend/tests/integration/__init__.py
+- backend/tests/integration/conftest.py
+- backend/tests/integration/run_all_cin7_tests.py
+- backend/tests/integration/run_phase3_tests.py
+- backend/tests/integration/run_phase4_tests.py
+- backend/tests/integration/run_phase5_tests.py
+- backend/tests/integration/run_phase6_tests.py
+- backend/tests/integration/run_phase7_tests.py
+- backend/tests/integration/run_protocol_tests.py
+- backend/tests/integration/test_ap2_integration.py
+- backend/tests/integration/test_api_endpoints.py
+- backend/tests/integration/test_autonomous_dev.py
+- backend/tests/integration/test_autonomous_pr_workflow.py
+- backend/tests/integration/test_cin7_crm_sync.py
+- backend/tests/integration/test_cin7_integration.py
+- backend/tests/integration/test_cin7_sync.py
+- backend/tests/integration/test_crm_module.py
+- backend/tests/integration/test_recommendations.py
+- backend/tests/integration/test_search.py
+- backend/tests/integration/test_shopify_extended.py
+- backend/tests/integration/test_webhooks.py
+- backend/tests/integration/test_xero_reconciliation.py
+- backend/tests/integrations/__init__.py
+- backend/tests/integrations/test_xero_token_manager.py
+- backend/tests/load/README.md
+- backend/tests/load/__init__.py
+- backend/tests/load/conftest.py
+- backend/tests/load/generators/customers.py
+- backend/tests/load/generators/misc.py
+- backend/tests/load/generators/orders.py
+- backend/tests/load/generators/products.py
+- backend/tests/load/generators/quotes.py
+- backend/tests/load/load_test_requirements.txt
+- backend/tests/load/load_test_scenarios.ps1
+- backend/tests/load/load_test_scenarios.sh
+- backend/tests/load/locustfile.py
+- backend/tests/load/locustfile_ai_features.py
+- backend/tests/load/reporters/html_reporter.py
+- backend/tests/load/reporters/json_reporter.py
+- backend/tests/load/reports/load_test_full_20260127_100548.html
+- backend/tests/load/reports/load_test_full_20260127_100548.json
+- backend/tests/load/reports/load_test_full_20260127_100703.html
+- backend/tests/load/reports/load_test_full_20260127_100703.json
+- backend/tests/load/reports/load_test_full_20260128_131600.html
+- backend/tests/load/reports/load_test_full_20260128_131600.json
+- backend/tests/load/reports/load_test_full_20260128_132757.html
+- backend/tests/load/reports/load_test_full_20260128_132757.json
+- backend/tests/load/reports/load_test_full_20260205_124803.html
+- backend/tests/load/reports/load_test_full_20260205_124803.json
+- backend/tests/load/reports/load_test_full_20260205_125037.html
+- backend/tests/load/reports/load_test_full_20260205_125037.json
+- backend/tests/load/reports/load_test_latest.html
+- backend/tests/load/reports/load_test_latest.json
+- backend/tests/load/reports/load_test_quick_20260128_122451.html
+- backend/tests/load/reports/load_test_quick_20260128_122451.json
+- backend/tests/load/reports/load_test_quick_20260205_095442.html
+- backend/tests/load/reports/load_test_quick_20260205_095442.json
+- backend/tests/load/reports/load_test_quick_20260205_193339.html
+- backend/tests/load/reports/load_test_quick_20260205_193339.json
+- backend/tests/load/reports/load_test_quick_20260205_195029.html
+- backend/tests/load/reports/load_test_quick_20260205_195029.json
+- backend/tests/load/reports/load_test_quick_20260205_212433.html
+- backend/tests/load/reports/load_test_quick_20260205_212433.json
+- backend/tests/load/reports/load_test_quick_20260205_214840.html
+- backend/tests/load/reports/load_test_quick_20260205_214840.json
+- backend/tests/load/reports/load_test_quick_20260206_000919.html
+- backend/tests/load/reports/load_test_quick_20260206_000919.json
+- backend/tests/load/reports/load_test_quick_latest.html
+- backend/tests/load/reports/load_test_quick_latest.json
+- backend/tests/load/reports/scenario_report.html
+- backend/tests/load/reports/scenario_report.json
+- backend/tests/load/run_full_load_test.py
+- backend/tests/load/run_quick_load_test.py
+- backend/tests/load/test_concurrent_number_generation.py
+- backend/tests/load/test_performance_load.py
+- backend/tests/load/test_scenarios.py
+- backend/tests/performance/__init__.py
+- backend/tests/run_integration_tests.ps1
+- backend/tests/run_integration_tests.sh
+- backend/tests/security/__init__.py
+- backend/tests/security/test_auth_security.py
+- backend/tests/security/test_encryption.py
+- backend/tests/security/test_injection_attacks.py
+- backend/tests/security/test_xss_csrf.py
+- backend/tests/services/__init__.py
+- backend/tests/services/code_generation/__init__.py
+- backend/tests/services/code_generation/test_context_builder.py
+- backend/tests/services/code_generation/test_doc_generator.py
+- backend/tests/services/code_generation/test_generator.py
+- backend/tests/services/code_generation/test_integration.py
+- backend/tests/services/code_generation/test_quality_checker.py
+- backend/tests/services/code_generation/test_test_generator.py
+- backend/tests/services/run_all_tests.py
+- backend/tests/services/test_auto_reorder.py
+- backend/tests/services/test_auto_reorder_integration.py
+- backend/tests/services/test_dunning.py
+- backend/tests/services/test_email_audit_service.py
+- backend/tests/services/test_order_state.py
+- backend/tests/services/test_procurement_matching.py
+- backend/tests/services/test_procurement_matching_integration.py
+- backend/tests/services/test_requirement_extractor.py
+- backend/tests/services/test_requirement_tracer.py
+- backend/tests/services/test_sla_escalation.py
+- backend/tests/services/test_tax_calculator.py
+- backend/tests/services/test_tax_calculator_integration.py
+- backend/tests/smoke/__init__.py
+- backend/tests/smoke/conftest.py
+- backend/tests/smoke/test_smoke.py
+- backend/tests/test_agent_orchestration.py
+- backend/tests/test_approvals_batch_2c.py
+- backend/tests/test_auth_security.py
+- backend/tests/test_autonomy_audit.py
+- backend/tests/test_autonomy_config.py
+- backend/tests/test_batch_2c_structure.py
+- backend/tests/test_billing.py
+- backend/tests/test_circuit_breaker.py
+- backend/tests/test_concurrent_number_generation.py
+- backend/tests/test_customers_api.py
+- backend/tests/test_error_handling.py
+- backend/tests/test_gap_batch_2b.py
+- backend/tests/test_gap_batch_2b_smoke.py
+- backend/tests/test_gap_batch_2c_2d.py
+- backend/tests/test_health.py
+- backend/tests/test_marketplace.py
+- backend/tests/test_orders_api.py
+- backend/tests/test_pr_automation.py
+- backend/tests/test_products_api.py
+- backend/tests/test_project_intelligence.py
+- backend/tests/test_prometheus_metrics.py
+- backend/tests/test_quotes_api.py
+- backend/tests/test_risk_assessor.py
+- backend/tests/test_rollback_mechanism.py
+- backend/tests/test_sequence_generation.py
+- backend/tests/test_shopify_mock.py
+- backend/tests/test_specialized_agents.py
+- backend/tests/test_toolshed_api.py
+- backend/tests/test_workflow_agent_integration.py
+- backend/tests/test_workflows_batch_2c.py
+- backend/tests/test_xero_mock.py
+- backend/tests/unit/test_number_generation.py
+- backend/tests/unit/test_reconciliation_logic.py
+- backend/tests/utils/__init__.py
+- backend/tests/utils/test_calculations.py
+- backend/tests/webhooks/__init__.py
+- backend/tests/webhooks/test_webhook_transactions.py
+- backend/update_supplier.json
+- backend/uv.lock
+- backend/vercel.json
+- backend/verify_i18n_migration.py
+- backend/verify_indexes.py
+- backend/verify_phase1.py
+- backend/verify_phase9_fixes.py
+- backend/verify_race_condition_fix.py
+- backend/verify_sequence_deployment.py
+- backend/verify_tables.py
+- docs/project-root/CLAUDE.md
+- eslint.config.mjs
+- lighthouserc.js
+- package.json
+- pnpm-lock.yaml
+- pnpm-workspace.yaml
+- scripts/boardroom/security-audit.js
+- scripts/dependency-checks.sh
+- scripts/deploy-phase4-backend.sh
+- scripts/deploy-phase4-frontend.sh
+- scripts/deploy.sh
+- scripts/dev-start.sh
+- scripts/dev.sh
+- scripts/health-check-phase4.sh
+- scripts/security-audit.ps1
+- scripts/setup.sh
+- scripts/test-phase4-sse.ps1
+- scripts/test-sse-events.ps1
+- scripts/test-sse-events.sh
+- scripts/verify-firewall.sh
+- scripts/verify-integration-tests.sh
+- scripts/verify-load-testing.sh
+- scripts/verify-penetration-testing.sh
+- scripts/verify-prometheus-grafana.sh
+- scripts/verify-query-performance.sh
+- scripts/verify-rate-limiting.sh
+- scripts/verify-secrets-management.sh
+- scripts/verify-secrets.sh
+- scripts/verify-security-audit.sh
+- scripts/verify-sentry.sh
+- scripts/verify-shopify-webhooks.sh
+- scripts/verify-uat.sh
+- scripts/verify-uptime-monitoring.sh
+- scripts/verify.sh
+- (staged) app/.dockerignore
+- (staged) app/.gitignore
+- (staged) app/AGENTS.md
+- (staged) app/Dockerfile
+- (staged) app/__tests__/app/approvals-page.test.tsx
+- (staged) app/__tests__/app/billing-page.test.tsx
+- (staged) app/__tests__/app/crm-health.test.tsx
+- (staged) app/__tests__/app/crm-onboarding.test.tsx
+- (staged) app/__tests__/app/crm-personas.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- (staged) app/__tests__/app/orders-integration.test.tsx
+- (staged) app/__tests__/app/quotes-integration.test.tsx
+- (staged) app/__tests__/app/reconciliation-page.test.tsx
+- (staged) app/__tests__/app/workflows-page.test.tsx
+- (staged) app/__tests__/components/EmptyState.test.tsx
+- (staged) app/__tests__/components/ErrorBoundary.test.tsx
+- (staged) app/__tests__/components/ui/pagination-controls.test.tsx
+- (staged) app/__tests__/e2e/billing.spec.ts
+- (staged) app/__tests__/e2e/onboarding.spec.ts
+- (staged) app/__tests__/lib/api/activities.test.ts
+- (staged) app/__tests__/lib/api/agents.test.ts
+- (staged) app/__tests__/lib/api/ai-chat.test.ts
+- (staged) app/__tests__/lib/api/ai-generate.test.ts
+- (staged) app/__tests__/lib/api/ai-insights.test.ts
+- (staged) app/__tests__/lib/api/ap2.test.ts
+- (staged) app/__tests__/lib/api/approvals-extended.test.ts
+- (staged) app/__tests__/lib/api/approvals.test.ts
+- (staged) app/__tests__/lib/api/auth.test.ts
+- (staged) app/__tests__/lib/api/autonomous.test.ts
+- (staged) app/__tests__/lib/api/autonomy.test.ts
+- (staged) app/__tests__/lib/api/bank-feeds.test.ts
+- (staged) app/__tests__/lib/api/billing.test.ts
+- (staged) app/__tests__/lib/api/chat.test.ts
+- (staged) app/__tests__/lib/api/cin7-bom.test.ts
+- (staged) app/__tests__/lib/api/cin7-fulfilment.test.ts
+- (staged) app/__tests__/lib/api/cin7-gl.test.ts
+- (staged) app/__tests__/lib/api/cin7-grn.test.ts
+- (staged) app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow.test.ts
+- (staged) app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- (staged) app/__tests__/lib/api/cin7.test.ts
+- (staged) app/__tests__/lib/api/contacts.test.ts
+- (staged) app/__tests__/lib/api/contractors.test.ts
+- (staged) app/__tests__/lib/api/copilot.test.ts
+- (staged) app/__tests__/lib/api/customers.test.ts
+- (staged) app/__tests__/lib/api/documents.test.ts
+- (staged) app/__tests__/lib/api/inventory.test.ts
+- (staged) app/__tests__/lib/api/invoices-extended.test.ts
+- (staged) app/__tests__/lib/api/invoices.test.ts
+- (staged) app/__tests__/lib/api/marketing.test.ts
+- (staged) app/__tests__/lib/api/marketplace.test.ts
+- (staged) app/__tests__/lib/api/mobile.test.ts
+- (staged) app/__tests__/lib/api/monitoring.test.ts
+- (staged) app/__tests__/lib/api/notifications.test.ts
+- (staged) app/__tests__/lib/api/orders.test.ts
+- (staged) app/__tests__/lib/api/pos.test.ts
+- (staged) app/__tests__/lib/api/products.test.ts
+- (staged) app/__tests__/lib/api/purchase-orders.test.ts
+- (staged) app/__tests__/lib/api/quotes.test.ts
+- (staged) app/__tests__/lib/api/reconciliation.test.ts
+- (staged) app/__tests__/lib/api/sendgrid.test.ts
+- (staged) app/__tests__/lib/api/service-requests.test.ts
+- (staged) app/__tests__/lib/api/settings.test.ts
+- (staged) app/__tests__/lib/api/shadow.test.ts
+- (staged) app/__tests__/lib/api/shipments-outbound.test.ts
+- (staged) app/__tests__/lib/api/shipments.test.ts
+- (staged) app/__tests__/lib/api/shopify.test.ts
+- (staged) app/__tests__/lib/api/sla.test.ts
+- (staged) app/__tests__/lib/api/suppliers.test.ts
+- (staged) app/__tests__/lib/api/tasks.test.ts
+- (staged) app/__tests__/lib/api/team.test.ts
+- (staged) app/__tests__/lib/api/warehouse.test.ts
+- (staged) app/__tests__/lib/api/workflows-extended.test.ts
+- (staged) app/__tests__/lib/api/workflows.test.ts
+- (staged) app/__tests__/lib/api/workshop.test.ts
+- (staged) app/__tests__/lib/api/xero.test.ts
+- (staged) app/__tests__/lib/marketplace.test.ts
+- (staged) app/__tests__/lib/types/cin7.test.ts
+- (staged) app/__tests__/lib/types/marketplace.test.ts
+- (staged) app/__tests__/lib/types/reconciliation.test.ts
+- (staged) app/__tests__/lib/types/workflows.test.ts
+- (staged) app/__tests__/lib/utils/csv-export.test.ts
+- (staged) app/components.json
+- (staged) app/declarations.d.ts
+- (staged) app/e2e/README.md
+- (staged) app/e2e/auth.setup.ts
+- (staged) app/e2e/auth.spec.ts
+- (staged) app/e2e/autosave.spec.ts
+- (staged) app/e2e/billing.spec.ts
+- (staged) app/e2e/capture-error.spec.ts
+- (staged) app/e2e/crm-health.spec.ts
+- (staged) app/e2e/customers.spec.ts
+- (staged) app/e2e/debug-orders.spec.ts
+- (staged) app/e2e/fixtures/auth.ts
+- (staged) app/e2e/helpers/page-objects.ts
+- (staged) app/e2e/helpers/test-data.ts
+- (staged) app/e2e/mobile-photo-order.spec.ts
+- (staged) app/e2e/monitoring.spec.ts
+- (staged) app/e2e/orders.spec.ts
+- (staged) app/e2e/pos-reconciliation.spec.ts
+- (staged) app/e2e/pos-transactions.spec.ts
+- (staged) app/e2e/prd-generation.spec.ts
+- (staged) app/e2e/products.spec.ts
+- (staged) app/e2e/quotes.spec.ts
+- (staged) app/e2e/showroom.spec.ts
+- (staged) app/e2e/test-helper.ts
+- (staged) app/e2e/test-websocket-fix.spec.ts
+- (staged) app/e2e/warehouse.spec.ts
+- (staged) app/e2e/workshop.spec.ts
+- (staged) app/eslint.config.mjs
+- (staged) app/next-env.d.ts
+- (staged) app/next.config.ts
+- (staged) app/package.json
+- (staged) app/playwright.a11y.config.ts
+- (staged) app/playwright.config.ts
+- (staged) app/postcss.config.js
+- (staged) app/public/favicon.svg
+- (staged) app/public/manifest.json
+- (staged) app/public/test-api.html
+- (staged) app/scripts/dev-with-fallback.mjs
+- (staged) app/sentry.client.config.ts
+- (staged) app/sentry.edge.config.ts
+- (staged) app/sentry.server.config.ts
+- (staged) app/src/app/(auth)/layout.tsx
+- (staged) app/src/app/(auth)/login/page.tsx
+- (staged) app/src/app/(auth)/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/activities/page.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentList.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentStats.tsx
+- (staged) app/src/app/(dashboard)/agents/components/LearningInsights.tsx
+- (staged) app/src/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- (staged) app/src/app/(dashboard)/agents/components/TaskHistory.tsx
+- (staged) app/src/app/(dashboard)/agents/components/index.ts
+- (staged) app/src/app/(dashboard)/agents/page.tsx
+- (staged) app/src/app/(dashboard)/ai-assistant/page.tsx
+- (staged) app/src/app/(dashboard)/ai-ops/page.tsx
+- (staged) app/src/app/(dashboard)/ai-query/page.tsx
+- (staged) app/src/app/(dashboard)/alerts/page.tsx
+- (staged) app/src/app/(dashboard)/approvals/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous-dev/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous/page.tsx
+- (staged) app/src/app/(dashboard)/backorders/page.tsx
+- (staged) app/src/app/(dashboard)/bank-feeds/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/ContactForm.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- (staged) app/src/app/(dashboard)/contacts/page.tsx
+- (staged) app/src/app/(dashboard)/containers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/containers/page.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/ContractorForm.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- (staged) app/src/app/(dashboard)/contractors/page.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- (staged) app/src/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/health/page.tsx
+- (staged) app/src/app/(dashboard)/customers/layout.tsx
+- (staged) app/src/app/(dashboard)/customers/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/customers/page.tsx
+- (staged) app/src/app/(dashboard)/customers/personas/page.tsx
+- (staged) app/src/app/(dashboard)/dashboard/layout.tsx
+- (staged) app/src/app/(dashboard)/dashboard/page.tsx
+- (staged) app/src/app/(dashboard)/demo-live/page.tsx
+- (staged) app/src/app/(dashboard)/demo/contractor-demo.tsx
+- (staged) app/src/app/(dashboard)/demo/page.tsx
+- (staged) app/src/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/page.tsx
+- (staged) app/src/app/(dashboard)/error.tsx
+- (staged) app/src/app/(dashboard)/faq/page.tsx
+- (staged) app/src/app/(dashboard)/insights/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/bom/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/forecast/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/reservations/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/stock/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/bas/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/types.ts
+- (staged) app/src/app/(dashboard)/layout.tsx
+- (staged) app/src/app/(dashboard)/loading.tsx
+- (staged) app/src/app/(dashboard)/marketing/page.tsx
+- (staged) app/src/app/(dashboard)/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/AlertCard.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- (staged) app/src/app/(dashboard)/monitoring/page.tsx
+- (staged) app/src/app/(dashboard)/orders/[id]/invoice/page.tsx
+- (staged) app/src/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderPrintView.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- (staged) app/src/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- (staged) app/src/app/(dashboard)/orders/fulfilment/page.tsx
+- (staged) app/src/app/(dashboard)/orders/layout.tsx
+- (staged) app/src/app/(dashboard)/orders/page.tsx
+- (staged) app/src/app/(dashboard)/orders/types.ts
+- (staged) app/src/app/(dashboard)/pos/components/Cart.tsx
+- (staged) app/src/app/(dashboard)/pos/components/POSTerminal.tsx
+- (staged) app/src/app/(dashboard)/pos/components/PaymentPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/components/ProductSearch.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/page.tsx
+- (staged) app/src/app/(dashboard)/pos/page.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/pos/staff/page.tsx
+- (staged) app/src/app/(dashboard)/pos/terminal/page.tsx
+- (staged) app/src/app/(dashboard)/pos/types.ts
+- (staged) app/src/app/(dashboard)/prd/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/prd/generate/page.tsx
+- (staged) app/src/app/(dashboard)/products/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/ProductForm.tsx
+- (staged) app/src/app/(dashboard)/products/layout.tsx
+- (staged) app/src/app/(dashboard)/products/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/receiving/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/types.ts
+- (staged) app/src/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- (staged) app/src/app/(dashboard)/quotes/generate/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/layout.tsx
+- (staged) app/src/app/(dashboard)/quotes/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/types.ts
+- (staged) app/src/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/layout.tsx
+- (staged) app/src/app/(dashboard)/reports/page.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- (staged) app/src/app/(dashboard)/service-requests/page.tsx
+- (staged) app/src/app/(dashboard)/settings/account/page.tsx
+- (staged) app/src/app/(dashboard)/settings/billing/page.tsx
+- (staged) app/src/app/(dashboard)/settings/company/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/ap2/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/gl/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/mobile/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- (staged) app/src/app/(dashboard)/settings/setup/page.tsx
+- (staged) app/src/app/(dashboard)/settings/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- (staged) app/src/app/(dashboard)/settings/team/page.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/ProductList.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/page.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/page.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/submissions/page.tsx
+- (staged) app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- (staged) app/src/app/(dashboard)/suppliers/page.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/QueueStats.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskList.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- (staged) app/src/app/(dashboard)/tasks/page.tsx
+- (staged) app/src/app/(dashboard)/warehouse/page.tsx
+- (staged) app/src/app/(dashboard)/workflows/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/reminders/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/schedule/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/templates/page.tsx
+- (staged) app/src/app/(guest)/layout.tsx
+- (staged) app/src/app/(guest)/order/[token]/GuestOrderClient.tsx
+- (staged) app/src/app/(guest)/order/[token]/page.tsx
+- (staged) app/src/app/(mobile)/layout.tsx
+- (staged) app/src/app/(mobile)/order/new/page.tsx
+- (staged) app/src/app/(portal)/layout.tsx
+- (staged) app/src/app/(portal)/portal/certifications/page.tsx
+- (staged) app/src/app/(portal)/portal/invoices/page.tsx
+- (staged) app/src/app/(portal)/portal/orders/page.tsx
+- (staged) app/src/app/(portal)/portal/page.tsx
+- (staged) app/src/app/(portal)/portal/service/page.tsx
+- (staged) app/src/app/(supplier)/layout.tsx
+- (staged) app/src/app/(supplier)/supplier/orders/page.tsx
+- (staged) app/src/app/(supplier)/supplier/page.tsx
+- (staged) app/src/app/api/activities/route.ts
+- (staged) app/src/app/api/activities/stats/route.ts
+- (staged) app/src/app/api/agents/insights/route.ts
+- (staged) app/src/app/api/agents/list/route.ts
+- (staged) app/src/app/api/agents/patterns/route.ts
+- (staged) app/src/app/api/agents/stats/route.ts
+- (staged) app/src/app/api/agents/tasks/recent/route.ts
+- (staged) app/src/app/api/ai/cin7-anomaly/sync-health/route.ts
+- (staged) app/src/app/api/ai/insights/dashboard/route.ts
+- (staged) app/src/app/api/ai/insights/sales/route.ts
+- (staged) app/src/app/api/ai/inventory-forecast/route.ts
+- (staged) app/src/app/api/ai/patterns/orders/route.ts
+- (staged) app/src/app/api/analytics/metrics/overview/route.ts
+- (staged) app/src/app/api/auth/login/route.ts
+- (staged) app/src/app/api/auth/logout/route.ts
+- (staged) app/src/app/api/backorders/route.ts
+- (staged) app/src/app/api/bank-feeds/accounts/route.ts
+- (staged) app/src/app/api/boardroom/cron/route.ts
+- (staged) app/src/app/api/ccw/products/route.ts
+- (staged) app/src/app/api/ccw/summary/route.ts
+- (staged) app/src/app/api/contact-submissions/route.ts
+- (staged) app/src/app/api/contacts/route.ts
+- (staged) app/src/app/api/containers/route.ts
+- (staged) app/src/app/api/cron/auto-reorder-inventory/route.ts
+- (staged) app/src/app/api/cron/check-expiring-quotes/route.ts
+- (staged) app/src/app/api/cron/check-sla-breaches/route.ts
+- (staged) app/src/app/api/cron/cleanup-old-runs/route.ts
+- (staged) app/src/app/api/cron/daily-report/route.ts
+- (staged) app/src/app/api/cron/health-check/route.ts
+- (staged) app/src/app/api/cron/nightly-full-sync/route.ts
+- (staged) app/src/app/api/cron/process-onboarding-emails/route.ts
+- (staged) app/src/app/api/cron/refresh-health-scores/route.ts
+- (staged) app/src/app/api/cron/refresh-xero-tokens/route.ts
+- (staged) app/src/app/api/cron/retry-failed-webhooks/route.ts
+- (staged) app/src/app/api/cron/run-autonomous-ops/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-cin7/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-xero/route.ts
+- (staged) app/src/app/api/customers/route.ts
+- (staged) app/src/app/api/dashboard/aggregated/route.ts
+- (staged) app/src/app/api/dashboard/metrics-stream/route.ts
+- (staged) app/src/app/api/dashboard/order-status-breakdown/route.ts
+- (staged) app/src/app/api/dashboard/quote-conversion/route.ts
+- (staged) app/src/app/api/dashboard/revenue-by-location/route.ts
+- (staged) app/src/app/api/demo-requests/route.ts
+- (staged) app/src/app/api/health/route.ts
+- (staged) app/src/app/api/health/routes/route.ts
+- (staged) app/src/app/api/integrations/cin7/status/route.ts
+- (staged) app/src/app/api/integrations/cin7/stream/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/conversations/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/status/route.ts
+- (staged) app/src/app/api/integrations/shopify/status/route.ts
+- (staged) app/src/app/api/integrations/xero/status/route.ts
+- (staged) app/src/app/api/inventory-stream/route.ts
+- (staged) app/src/app/api/inventory/reservations/route.ts
+- (staged) app/src/app/api/inventory/route.ts
+- (staged) app/src/app/api/inventory/stock-health/route.ts
+- (staged) app/src/app/api/inventory/transfer-suggestions/route.ts
+- (staged) app/src/app/api/inventory/transfers/route.ts
+- (staged) app/src/app/api/invoices/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- (staged) app/src/app/api/monitoring/alerts/route.ts
+- (staged) app/src/app/api/monitoring/health/route.ts
+- (staged) app/src/app/api/monitoring/metrics/route.ts
+- (staged) app/src/app/api/monitoring/range/route.ts
+- (staged) app/src/app/api/orders/route.ts
+- (staged) app/src/app/api/pos/locations/route.ts
+- (staged) app/src/app/api/pos/sales-staff/route.ts
+- (staged) app/src/app/api/pos/terminals/route.ts
+- (staged) app/src/app/api/products/route.ts
+- (staged) app/src/app/api/purchase-orders/route.ts
+- (staged) app/src/app/api/quotes/route.ts
+- (staged) app/src/app/api/submissions/statistics/route.ts
+- (staged) app/src/app/api/telemetry/route.ts
+- (staged) app/src/app/api/warehouse/ops/route.ts
+- (staged) app/src/app/api/webhooks/route.ts
+- (staged) app/src/app/api/workflows/[id]/execute/route.ts
+- (staged) app/src/app/api/workflows/[id]/route.ts
+- (staged) app/src/app/api/workflows/route.ts
+- (staged) app/src/app/dashboard-analytics/page.tsx
+- (staged) app/src/app/demo/i18n/page.tsx
+- (staged) app/src/app/design-system/page.tsx
+- (staged) app/src/app/error.tsx
+- (staged) app/src/app/favicon.ico/route.ts
+- (staged) app/src/app/globals.css
+- (staged) app/src/app/layout.tsx
+- (staged) app/src/app/not-found.tsx
+- (staged) app/src/app/page.tsx
+- (staged) app/src/app/playground/page.tsx
+- (staged) app/src/app/robots.ts
+- (staged) app/src/app/sitemap.ts
+- (staged) app/src/components/ClientOnly.tsx
+- (staged) app/src/components/ai-marketing/asset-library.tsx
+- (staged) app/src/components/ai-marketing/media-generator.tsx
+- (staged) app/src/components/ai/AIProductCopyGenerator.tsx
+- (staged) app/src/components/ai/AIQuoteGenerator.tsx
+- (staged) app/src/components/ai/QuoteCopilotChat.tsx
+- (staged) app/src/components/ai/StaffCopilotWidget.tsx
+- (staged) app/src/components/alerts/AnomalyAlert.tsx
+- (staged) app/src/components/auth/login-form.tsx
+- (staged) app/src/components/autonomous/ApprovalGateDialog.tsx
+- (staged) app/src/components/autonomous/ControlPanel.tsx
+- (staged) app/src/components/autonomous/FileChangesViewer.tsx
+- (staged) app/src/components/autonomous/PhaseTimeline.tsx
+- (staged) app/src/components/charts/CategorySalesChart.tsx
+- (staged) app/src/components/charts/RevenueChart.tsx
+- (staged) app/src/components/chat/ChatWidget.tsx
+- (staged) app/src/components/contractor-availability-live.tsx
+- (staged) app/src/components/contractor-availability.tsx
+- (staged) app/src/components/dashboard/AgentMetricsWidget.tsx
+- (staged) app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- (staged) app/src/components/dashboard/DemoVideoBanner.tsx
+- (staged) app/src/components/dashboard/DemoVideoLink.tsx
+- (staged) app/src/components/dashboard/InventoryForecastWidget.tsx
+- (staged) app/src/components/dashboard/OrderPatternsWidget.tsx
+- (staged) app/src/components/dashboard/OrderStatusBreakdownWidget.tsx
+- (staged) app/src/components/dashboard/QuoteConversionWidget.tsx
+- (staged) app/src/components/dashboard/RevenueByLocationWidget.tsx
+- (staged) app/src/components/dashboard/SalesInsightsWidget.tsx
+- (staged) app/src/components/dashboard/StockHealthWidget.tsx
+- (staged) app/src/components/dashboard/TransferSuggestionsWidget.tsx
+- (staged) app/src/components/errors/ErrorBoundary.tsx
+- (staged) app/src/components/forms/AutoFillSuggestion.tsx
+- (staged) app/src/components/insights/insight-card.tsx
+- (staged) app/src/components/inventory/LocationAwareProductSelect.tsx
+- (staged) app/src/components/inventory/MultiLocationStockCell.tsx
+- (staged) app/src/components/inventory/ReleaseReservationDialog.tsx
+- (staged) app/src/components/inventory/StockReservationDialog.tsx
+- (staged) app/src/components/inventory/TransferStatusBadge.tsx
+- (staged) app/src/components/landing/AnimatedCounter.tsx
+- (staged) app/src/components/landing/LiveStatsBar.tsx
+- (staged) app/src/components/layout/LanguageSwitcher.tsx
+- (staged) app/src/components/layout/NotificationBell.tsx
+- (staged) app/src/components/layout/ShadowModeBanner.tsx
+- (staged) app/src/components/layout/footer.tsx
+- (staged) app/src/components/layout/mobile-nav.tsx
+- (staged) app/src/components/layout/sidebar.tsx
+- (staged) app/src/components/marketing/feature-grid.tsx
+- (staged) app/src/components/marketing/hero-section.tsx
+- (staged) app/src/components/marketing/index.ts
+- (staged) app/src/components/marketing/testimonials.tsx
+- (staged) app/src/components/mobile/PhotoCaptureWidget.tsx
+- (staged) app/src/components/onboarding/CompanySetupStep.tsx
+- (staged) app/src/components/onboarding/FirstQuoteStep.tsx
+- (staged) app/src/components/onboarding/OnboardingWizard.tsx
+- (staged) app/src/components/onboarding/SampleDataStep.tsx
+- (staged) app/src/components/onboarding/ShopifyConnectStep.tsx
+- (staged) app/src/components/onboarding/TeamInviteStep.tsx
+- (staged) app/src/components/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-detail-view.tsx
+- (staged) app/src/components/prd/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-generator-form.tsx
+- (staged) app/src/components/providers/i18n-provider.tsx
+- (staged) app/src/components/responsive-table/ResponsiveTable.tsx
+- (staged) app/src/components/responsive-table/index.ts
+- (staged) app/src/components/seo/FaqSchema.tsx
+- (staged) app/src/components/seo/JsonLd.tsx
+- (staged) app/src/components/transitions/FadeIn.tsx
+- (staged) app/src/components/transitions/PageTransition.tsx
+- (staged) app/src/components/transitions/RouteProgressBar.tsx
+- (staged) app/src/components/transitions/index.ts
+- (staged) app/src/components/ui/alert-dialog.tsx
+- (staged) app/src/components/ui/alert.tsx
+- (staged) app/src/components/ui/avatar.tsx
+- (staged) app/src/components/ui/badge.tsx
+- (staged) app/src/components/ui/bento-grid.tsx
+- (staged) app/src/components/ui/border-beam.tsx
+- (staged) app/src/components/ui/breadcrumb.tsx
+- (staged) app/src/components/ui/button.tsx
+- (staged) app/src/components/ui/card.tsx
+- (staged) app/src/components/ui/checkbox.tsx
+- (staged) app/src/components/ui/command-palette.tsx
+- (staged) app/src/components/ui/command.tsx
+- (staged) app/src/components/ui/dialog.tsx
+- (staged) app/src/components/ui/draft-recovery-alert.tsx
+- (staged) app/src/components/ui/dropdown-menu.tsx
+- (staged) app/src/components/ui/empty-state.tsx
+- (staged) app/src/components/ui/form.tsx
+- (staged) app/src/components/ui/input.tsx
+- (staged) app/src/components/ui/label.tsx
+- (staged) app/src/components/ui/loading.tsx
+- (staged) app/src/components/ui/motion.tsx
+- (staged) app/src/components/ui/order-status-badge.tsx
+- (staged) app/src/components/ui/pagination-controls.tsx
+- (staged) app/src/components/ui/popover.tsx
+- (staged) app/src/components/ui/progress.tsx
+- (staged) app/src/components/ui/real-time-indicator.tsx
+- (staged) app/src/components/ui/scroll-area.tsx
+- (staged) app/src/components/ui/select.tsx
+- (staged) app/src/components/ui/separator.tsx
+- (staged) app/src/components/ui/sheet.tsx
+- (staged) app/src/components/ui/skeleton.tsx
+- (staged) app/src/components/ui/switch.tsx
+- (staged) app/src/components/ui/table.tsx
+- (staged) app/src/components/ui/tabs.tsx
+- (staged) app/src/components/ui/textarea.tsx
+- (staged) app/src/components/ui/toast.tsx
+- (staged) app/src/components/ui/tooltip.tsx
+- (staged) app/src/components/workflow/canvas/workflow-canvas.tsx
+- (staged) app/src/components/workflow/nodes/agent-node.tsx
+- (staged) app/src/components/workflow/nodes/conditional-node.tsx
+- (staged) app/src/components/workflow/nodes/end-node.tsx
+- (staged) app/src/components/workflow/nodes/llm-node.tsx
+- (staged) app/src/components/workflow/nodes/start-node.tsx
+- (staged) app/src/components/workflow/nodes/tool-node.tsx
+- (staged) app/src/contexts/websocket-context.tsx
+- (staged) app/src/hooks/use-barcode-scanner.ts
+- (staged) app/src/hooks/use-chat.ts
+- (staged) app/src/hooks/use-line-item-calculations.ts
+- (staged) app/src/hooks/use-prd-generation.ts
+- (staged) app/src/hooks/use-toast.ts
+- (staged) app/src/i18n/config.ts
+- (staged) app/src/i18n/messages/ar.json
+- (staged) app/src/i18n/messages/en.json
+- (staged) app/src/i18n/messages/es.json
+- (staged) app/src/i18n/messages/hi.json
+- (staged) app/src/i18n/messages/pt.json
+- (staged) app/src/i18n/messages/ta.json
+- (staged) app/src/i18n/messages/te.json
+- (staged) app/src/i18n/messages/vi.json
+- (staged) app/src/i18n/messages/zh-CN.json
+- (staged) app/src/i18n/messages/zh-TW.json
+- (staged) app/src/i18n/request.ts
+- (staged) app/src/instrumentation.ts
+- (staged) app/src/lib/agents/independent-verifier.ts
+- (staged) app/src/lib/api/activities.ts
+- (staged) app/src/lib/api/agents.ts
+- (staged) app/src/lib/api/ai-chat.ts
+- (staged) app/src/lib/api/ai-generate.ts
+- (staged) app/src/lib/api/ai-insights.ts
+- (staged) app/src/lib/api/ap2.ts
+- (staged) app/src/lib/api/approvals.ts
+- (staged) app/src/lib/api/auth.ts
+- (staged) app/src/lib/api/autonomous.ts
+- (staged) app/src/lib/api/autonomy.ts
+- (staged) app/src/lib/api/backend-url.ts
+- (staged) app/src/lib/api/backend.ts
+- (staged) app/src/lib/api/bank-feeds.ts
+- (staged) app/src/lib/api/billing.ts
+- (staged) app/src/lib/api/chat.ts
+- (staged) app/src/lib/api/cin7-bom.ts
+- (staged) app/src/lib/api/cin7-fulfilment.ts
+- (staged) app/src/lib/api/cin7-gl.ts
+- (staged) app/src/lib/api/cin7-grn.ts
+- (staged) app/src/lib/api/cin7-inventory-writeback.ts
+- (staged) app/src/lib/api/cin7-shadow-ai.ts
+- (staged) app/src/lib/api/cin7-shadow.ts
+- (staged) app/src/lib/api/cin7-webhook-subscriptions.ts
+- (staged) app/src/lib/api/cin7.ts
+- (staged) app/src/lib/api/client.ts
+- (staged) app/src/lib/api/contacts.ts
+- (staged) app/src/lib/api/contractors.ts
+- (staged) app/src/lib/api/copilot.ts
+- (staged) app/src/lib/api/customers.ts
+- (staged) app/src/lib/api/documents.ts
+- (staged) app/src/lib/api/heygen.ts
+- (staged) app/src/lib/api/index.ts
+- (staged) app/src/lib/api/inventory.ts
+- (staged) app/src/lib/api/invoices.ts
+- (staged) app/src/lib/api/marketing.ts
+- (staged) app/src/lib/api/marketplace.ts
+- (staged) app/src/lib/api/middleware.ts
+- (staged) app/src/lib/api/mobile.ts
+- (staged) app/src/lib/api/monitoring.ts
+- (staged) app/src/lib/api/notifications.ts
+- (staged) app/src/lib/api/orders.ts
+- (staged) app/src/lib/api/pos.ts
+- (staged) app/src/lib/api/products.ts
+- (staged) app/src/lib/api/purchase-orders.ts
+- (staged) app/src/lib/api/quotes.ts
+- (staged) app/src/lib/api/sendgrid.ts
+- (staged) app/src/lib/api/server.ts
+- (staged) app/src/lib/api/service-requests.ts
+- (staged) app/src/lib/api/settings.ts
+- (staged) app/src/lib/api/shadow.ts
+- (staged) app/src/lib/api/shipments-outbound.ts
+- (staged) app/src/lib/api/shipments.ts
+- (staged) app/src/lib/api/shopify.ts
+- (staged) app/src/lib/api/sla.ts
+- (staged) app/src/lib/api/suppliers.ts
+- (staged) app/src/lib/api/tasks.ts
+- (staged) app/src/lib/api/team.ts
+- (staged) app/src/lib/api/warehouse.ts
+- (staged) app/src/lib/api/workflows.ts
+- (staged) app/src/lib/api/workshop.ts
+- (staged) app/src/lib/api/xero.ts
+- (staged) app/src/lib/audit/api-route-auditor.ts
+- (staged) app/src/lib/audit/user-journey-runner.ts
+- (staged) app/src/lib/audit/ux-friction-detector.ts
+- (staged) app/src/lib/australian-context.ts
+- (staged) app/src/lib/config.ts
+- (staged) app/src/lib/design-system/config.ts
+- (staged) app/src/lib/design-system/index.ts
+- (staged) app/src/lib/design-system/library-registry.ts
+- (staged) app/src/lib/design-system/pattern-validator.ts
+- (staged) app/src/lib/hooks/use-autonomy-metrics.ts
+- (staged) app/src/lib/hooks/use-autosave.ts
+- (staged) app/src/lib/hooks/use-cin7-stream.ts
+- (staged) app/src/lib/hooks/use-form-autofill.ts
+- (staged) app/src/lib/hooks/use-inventory-forecast.ts
+- (staged) app/src/lib/hooks/use-recent-items.ts
+- (staged) app/src/lib/hooks/use-search-state.ts
+- (staged) app/src/lib/hooks/use-sse.ts
+- (staged) app/src/lib/hooks/use-websocket.ts
+- (staged) app/src/lib/image-generation/asset-manager.ts
+- (staged) app/src/lib/image-generation/types.ts
+- (staged) app/src/lib/logger.ts
+- (staged) app/src/lib/supabase/client.ts
+- (staged) app/src/lib/supabase/server.ts
+- (staged) app/src/lib/telemetry.ts
+- (staged) app/src/lib/tools/index.ts
+- (staged) app/src/lib/types/activities.ts
+- (staged) app/src/lib/types/cin7.ts
+- (staged) app/src/lib/types/contacts.ts
+- (staged) app/src/lib/types/inventory.ts
+- (staged) app/src/lib/types/invoices.ts
+- (staged) app/src/lib/types/marketplace.ts
+- (staged) app/src/lib/types/reconciliation.ts
+- (staged) app/src/lib/types/workflows.ts
+- (staged) app/src/lib/utils.test.ts
+- (staged) app/src/lib/utils.ts
+- (staged) app/src/lib/utils/calculations.test.ts
+- (staged) app/src/lib/utils/calculations.ts
+- (staged) app/src/lib/utils/csv-export.ts
+- (staged) app/src/lib/utils/debounce.ts
+- (staged) app/src/lib/utils/draft-storage.ts
+- (staged) app/src/lib/utils/storage.ts
+- (staged) app/src/middleware.ts
+- (staged) app/src/styles/design-system.css
+- (staged) app/src/types/contractor.ts
+- (staged) app/src/types/index.ts
+- (staged) app/src/types/prd.ts
+- (staged) app/src/types/workflow.ts
+- (staged) app/tailwind.config.ts
+- (staged) app/tests/accessibility/a11y.spec.ts
+- (staged) app/tests/e2e/approvals.spec.ts
+- (staged) app/tests/e2e/error-handling.spec.ts
+- (staged) app/tests/e2e/invoices.spec.ts
+- (staged) app/tests/e2e/reconciliation.spec.ts
+- (staged) app/tests/e2e/workflows.spec.ts
+- (staged) app/tests/visual/components.visual.spec.ts
+- (staged) app/tsconfig.json
+- (staged) app/vercel.json
+- (staged) app/vitest.config.ts
+- (staged) app/vitest.d.ts
+- (staged) app/vitest.setup.ts
+- (staged) apps/web/lib/australian-context.ts
+- (staged) backend/.claude/memory/context-snapshot.md
+- (staged) backend/.gitignore
+- (staged) backend/.python-version
+- (staged) backend/.vercelignore
+- (staged) backend/=0.39.0
+- (staged) backend/=6.11.0
+- (staged) backend/AGENTS.md
+- (staged) "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- (staged) backend/Dockerfile
+- (staged) backend/ISSUE-4-COMPLETION.md
+- (staged) backend/ISSUE-5-COMPLETION.md
+- (staged) backend/Procfile
+- (staged) backend/alembic.ini
+- (staged) backend/alembic/README
+- (staged) backend/alembic/env.py
+- (staged) backend/alembic/script.py.mako
+- (staged) backend/alembic/versions/001_add_approvals.py
+- (staged) backend/alembic/versions/002_add_semantic_search.py
+- (staged) backend/alembic/versions/003_add_missing_trigram_indexes.py
+- (staged) backend/alembic/versions/004_add_product_sync_bidirectional.py
+- (staged) backend/alembic/versions/005_add_shopify_extended_tables.py
+- (staged) backend/alembic/versions/006_add_mobile_order_tables.py
+- (staged) backend/alembic/versions/007_add_workflow_notification_indexes.py
+- (staged) backend/alembic/versions/008_merge_heads.py
+- (staged) backend/alembic/versions/009_add_pos_tables.py
+- (staged) backend/alembic/versions/00a_rename_invoice_date.py
+- (staged) backend/alembic/versions/00b_add_missing_inventory_tables.py
+- (staged) backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- (staged) backend/alembic/versions/00d_add_certification_tables.py
+- (staged) backend/alembic/versions/00e_add_prd_tables.py
+- (staged) backend/alembic/versions/00f_add_pricing_tier_tables.py
+- (staged) backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- (staged) backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- (staged) backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- (staged) backend/alembic/versions/68d51946645a_create_erp_schema.py
+- (staged) backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- (staged) backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- (staged) backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- (staged) backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- (staged) backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- (staged) backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- (staged) backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- (staged) backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- (staged) backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- (staged) backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- (staged) backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- (staged) backend/analyze_404_errors.py
+- (staged) backend/analyze_422_errors.py
+- (staged) backend/analyze_500_errors.py
+- (staged) backend/apply_i18n_migration.py
+- (staged) backend/apply_i18n_migration_v2.py
+- (staged) backend/apply_indexes.py
+- (staged) backend/apply_indexes_via_backend.py
+- (staged) backend/apply_pos_migration.py
+- (staged) backend/apply_search_indexes.py
+- (staged) backend/apply_sequences_migration.py
+- (staged) backend/benchmarks/after_indexes.txt
+- (staged) backend/benchmarks/before_indexes.txt
+- (staged) backend/benchmarks/comparison.md
+- (staged) backend/check_404_in_full_report.py
+- (staged) backend/check_backend_config.py
+- (staged) backend/check_categories.py
+- (staged) backend/check_db.py
+- (staged) backend/check_enum_def.py
+- (staged) backend/check_orders.py
+- (staged) backend/check_results.py
+- (staged) backend/check_runtime_config.py
+- (staged) backend/check_schema.py
+- (staged) backend/check_tables.py
+- (staged) backend/check_test_status.py
+- (staged) backend/cleanup_db.py
+- (staged) backend/conftest.py
+- (staged) backend/count_data.py
+- (staged) backend/create_admin.py
+- (staged) backend/create_demo_orders.py
+- (staged) backend/create_demo_orders_simple.py
+- (staged) backend/create_inventory_tables.py
+- (staged) backend/create_service_tables.py
+- (staged) backend/debug_response.py
+- (staged) backend/diagnose_db_connection.py
+- (staged) backend/docs/ISS-005-VERIFICATION.md
+- (staged) backend/docs/ISS-006-VERIFICATION.md
+- (staged) backend/docs/ISS-007-VERIFICATION.md
+- (staged) backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- (staged) backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- (staged) backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- (staged) backend/examples/use_agentic_layer.py
+- (staged) backend/fix_categories.py
+- (staged) backend/fix_categories_uppercase.py
+- (staged) backend/generate_endpoint.py
+- (staged) backend/generate_failures.py
+- (staged) backend/generate_password_hash.py
+- (staged) backend/inject_failure_patterns.py
+- (staged) backend/inject_insights_directly.py
+- (staged) backend/inject_test_data.py
+- (staged) backend/inject_test_failures.py
+- (staged) backend/list_google_models.py
+- (staged) backend/load_test_output.txt
+- (staged) backend/migrations/001_add_search_indexes.sql
+- (staged) backend/migrations/001_rollback.sql
+- (staged) backend/migrations/README.md
+- (staged) backend/migrations/add_ai_search.sql
+- (staged) backend/migrations/add_ap2_integration.sql
+- (staged) backend/migrations/add_auto_sync_enhancements.sql
+- (staged) backend/migrations/add_email_audit_tables.sql
+- (staged) backend/migrations/add_foreign_key_indexes.sql
+- (staged) backend/migrations/add_i18n_support.sql
+- (staged) backend/migrations/add_missing_fk_indexes.sql
+- (staged) backend/migrations/add_performance_indexes.sql
+- (staged) backend/migrations/add_phase4_inventory_indexes.sql
+- (staged) backend/migrations/add_portal_forms_tables.sql
+- (staged) backend/migrations/add_pos_system.sql
+- (staged) backend/migrations/add_search_indexes.sql
+- (staged) backend/migrations/add_sequences_for_numbers.sql
+- (staged) backend/migrations/add_shopify_extended.sql
+- (staged) backend/migrations/add_submission_notes_table.sql
+- (staged) backend/migrations/add_trigram_indexes.sql
+- (staged) backend/migrations/add_webhook_events_table.sql
+- (staged) backend/migrations/seed_ccw_products.sql
+- (staged) backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- (staged) backend/migrations/week3_enum_standardization.sql
+- (staged) backend/migrations/week3_timezone_standardization.sql
+- (staged) backend/pyproject.toml
+- (staged) backend/pytest.ini
+- (staged) backend/railway.json
+- (staged) backend/requirements.txt
+- (staged) backend/reset_admin_password.py
+- (staged) backend/run-setup-memory.ps1
+- (staged) backend/run-tests.ps1
+- (staged) backend/run_bugfix_tests.ps1
+- (staged) backend/run_bugfix_tests.sh
+- (staged) backend/run_migrations.py
+- (staged) backend/scripts/analyze_query_performance.py
+- (staged) backend/scripts/apply_foreign_key_indexes.py
+- (staged) backend/scripts/apply_phase4_indexes.py
+- (staged) backend/scripts/apply_trigram_indexes.py
+- (staged) backend/scripts/benchmark_search.py
+- (staged) backend/scripts/create_container_tables.sql
+- (staged) backend/scripts/create_sample_orders.py
+- (staged) backend/scripts/create_sample_quotes.py
+- (staged) backend/scripts/explain_queries.sh
+- (staged) backend/scripts/identify_500_sources.py
+- (staged) backend/scripts/implement_query_optimizations.md
+- (staged) backend/scripts/import_ccwonline_products.py
+- (staged) backend/scripts/insert_container_sample_data.sql
+- (staged) backend/scripts/integration_test_iss001.py
+- (staged) backend/scripts/monitor_indexes.py
+- (staged) backend/scripts/run_sql.py
+- (staged) backend/scripts/seed_ccw_cleaning.py
+- (staged) backend/scripts/seed_ccw_products.py
+- (staged) backend/scripts/setup-memory.py
+- (staged) backend/scripts/test_iss005_fixes.py
+- (staged) backend/scripts/validate_autosave_implementation.py
+- (staged) backend/scripts/validate_iss001_fix.py
+- (staged) backend/scripts/validate_iss003_actual.py
+- (staged) backend/scripts/validate_iss003_fix.py
+- (staged) backend/scripts/validate_iss005_fix.py
+- (staged) backend/scripts/verify_iss005_code.py
+- (staged) backend/scripts/verify_query_optimizations.py
+- (staged) backend/seed_data.py
+- (staged) backend/seed_demo_simple.sql
+- (staged) backend/seed_orders.py
+- (staged) backend/show_customers.py
+- (staged) backend/show_orders.py
+- (staged) backend/show_products.py
+- (staged) backend/show_quotes.py
+- (staged) backend/src/__init__.py
+- (staged) backend/src/agents/prd/__init__.py
+- (staged) backend/src/agents/prd/analysis_agent.py
+- (staged) backend/src/agents/prd/feature_decomposer.py
+- (staged) backend/src/agents/prd/prd_orchestrator.py
+- (staged) backend/src/agents/prd/roadmap_planner.py
+- (staged) backend/src/agents/prd/tech_spec_generator.py
+- (staged) backend/src/agents/prd/test_generator.py
+- (staged) backend/src/ai/__init__.py
+- (staged) backend/src/ai/agents/chat_assistant.py
+- (staged) backend/src/ai/agents/chat_state.py
+- (staged) backend/src/ai/agents/content_generator.py
+- (staged) backend/src/ai/agents/content_state.py
+- (staged) backend/src/ai/agents/insights_agent.py
+- (staged) backend/src/ai/agents/insights_state.py
+- (staged) backend/src/ai/agents/risk_assessor.py
+- (staged) backend/src/ai/agents/rollback_agent.py
+- (staged) backend/src/ai/agents/specialized/__init__.py
+- (staged) backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- (staged) backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- (staged) backend/src/ai/agents/specialized/development_agent.py
+- (staged) backend/src/ai/agents/specialized/document_parser_agent.py
+- (staged) backend/src/ai/agents/specialized/form_autofill_agent.py
+- (staged) backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/marketing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_state.py
+- (staged) backend/src/ai/agents/specialized/procurement_agent.py
+- (staged) backend/src/ai/agents/specialized/procurement_state.py
+- (staged) backend/src/ai/agents/specialized/project_intelligence_agent.py
+- (staged) backend/src/ai/agents/specialized/query_agent.py
+- (staged) backend/src/ai/agents/specialized/recommendation_agent.py
+- (staged) backend/src/ai/agents/specialized/reconciliation_agent.py
+- (staged) backend/src/ai/agents/specialized/search_agent.py
+- (staged) backend/src/ai/agents/specialized/staff_copilot_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_state.py
+- (staged) backend/src/ai/agents/specialized/testing_agent.py
+- (staged) backend/src/ai/base_agent.py
+- (staged) backend/src/ai/generators/__init__.py
+- (staged) backend/src/ai/generators/email_generator.py
+- (staged) backend/src/ai/generators/quote_generator.py
+- (staged) backend/src/ai/learning/__init__.py
+- (staged) backend/src/ai/learning/learning_engine.py
+- (staged) backend/src/ai/learning/learning_repository.py
+- (staged) backend/src/ai/monitoring/__init__.py
+- (staged) backend/src/ai/monitoring/health_monitor.py
+- (staged) backend/src/ai/monitoring/metrics_collector.py
+- (staged) backend/src/ai/ollama_client.py
+- (staged) backend/src/ai/orchestration/__init__.py
+- (staged) backend/src/ai/orchestration/agent_registry.py
+- (staged) backend/src/ai/orchestration/autonomous_loop.py
+- (staged) backend/src/ai/orchestration/project_orchestrator.py
+- (staged) backend/src/ai/orchestration/supervisor_agent.py
+- (staged) backend/src/ai/orchestration/supervisor_state.py
+- (staged) backend/src/ai/prompts/__init__.py
+- (staged) backend/src/ai/prompts/system_prompts.py
+- (staged) backend/src/ai/protocol/__init__.py
+- (staged) backend/src/ai/protocol/confidence.py
+- (staged) backend/src/ai/protocol/error_handler.py
+- (staged) backend/src/ai/protocol/governor.py
+- (staged) backend/src/ai/protocol/message_bus.py
+- (staged) backend/src/ai/protocol/models.py
+- (staged) backend/src/ai/tools/__init__.py
+- (staged) backend/src/ai/tools/analytics_tools.py
+- (staged) backend/src/ai/tools/base.py
+- (staged) backend/src/ai/tools/erp_tools.py
+- (staged) backend/src/ai/tools/execution_tools.py
+- (staged) backend/src/ai/tools/inventory_intelligence.py
+- (staged) backend/src/ai/tools/pricing_tools.py
+- (staged) backend/src/ai/tools/procurement_tools.py
+- (staged) backend/src/api/__init__.py
+- (staged) backend/src/api/debug_main.py
+- (staged) backend/src/api/deps.py
+- (staged) backend/src/api/exceptions.py
+- (staged) backend/src/api/main.py
+- (staged) backend/src/api/middleware/__init__.py
+- (staged) backend/src/api/middleware/auth.py
+- (staged) backend/src/api/middleware/performance.py
+- (staged) backend/src/api/middleware/rate_limit.py
+- (staged) backend/src/api/middleware/rbac.py
+- (staged) backend/src/api/middleware/request_id.py
+- (staged) backend/src/api/middleware/security_headers.py
+- (staged) backend/src/api/middleware/tenant_isolation.py
+- (staged) backend/src/api/routers/prd.py
+- (staged) backend/src/api/routes/__init__.py
+- (staged) backend/src/api/routes/activities.py
+- (staged) backend/src/api/routes/agents_monitor.py
+- (staged) backend/src/api/routes/ai/__init__.py
+- (staged) backend/src/api/routes/ai/anomaly.py
+- (staged) backend/src/api/routes/ai/approval_gates.py
+- (staged) backend/src/api/routes/ai/assets.py
+- (staged) backend/src/api/routes/ai/autonomous_ops.py
+- (staged) backend/src/api/routes/ai/build_command.py
+- (staged) backend/src/api/routes/ai/chat.py
+- (staged) backend/src/api/routes/ai/cin7_anomaly.py
+- (staged) backend/src/api/routes/ai/cin7_forecast.py
+- (staged) backend/src/api/routes/ai/cin7_shadow_ai.py
+- (staged) backend/src/api/routes/ai/command_parser.py
+- (staged) backend/src/api/routes/ai/document_parser.py
+- (staged) backend/src/api/routes/ai/form_autofill.py
+- (staged) backend/src/api/routes/ai/gap_sync.py
+- (staged) backend/src/api/routes/ai/generate.py
+- (staged) backend/src/api/routes/ai/insights.py
+- (staged) backend/src/api/routes/ai/inventory_forecast.py
+- (staged) backend/src/api/routes/ai/learning.py
+- (staged) backend/src/api/routes/ai/marketing_ai.py
+- (staged) backend/src/api/routes/ai/monitoring.py
+- (staged) backend/src/api/routes/ai/project_intelligence.py
+- (staged) backend/src/api/routes/ai/protocol.py
+- (staged) backend/src/api/routes/ai/query.py
+- (staged) backend/src/api/routes/ai/requirement_verification.py
+- (staged) backend/src/api/routes/ai/specialized.py
+- (staged) backend/src/api/routes/ai/staff_copilot.py
+- (staged) backend/src/api/routes/ai/supervisor.py
+- (staged) backend/src/api/routes/ai/test_data.py
+- (staged) backend/src/api/routes/ai/test_failures.py
+- (staged) backend/src/api/routes/ai/toolshed.py
+- (staged) backend/src/api/routes/ai/toolshed_vault.py
+- (staged) backend/src/api/routes/analytics.py
+- (staged) backend/src/api/routes/approvals.py
+- (staged) backend/src/api/routes/audit_trail.py
+- (staged) backend/src/api/routes/autonomous_dev.py
+- (staged) backend/src/api/routes/autonomy_metrics.py
+- (staged) backend/src/api/routes/backorders.py
+- (staged) backend/src/api/routes/bank_feeds.py
+- (staged) backend/src/api/routes/billing.py
+- (staged) backend/src/api/routes/boardroom.py
+- (staged) backend/src/api/routes/certifications.py
+- (staged) backend/src/api/routes/chat.py
+- (staged) backend/src/api/routes/config.py
+- (staged) backend/src/api/routes/contacts.py
+- (staged) backend/src/api/routes/containers.py
+- (staged) backend/src/api/routes/contractors.py
+- (staged) backend/src/api/routes/crm_health.py
+- (staged) backend/src/api/routes/crm_onboarding.py
+- (staged) backend/src/api/routes/crm_personas.py
+- (staged) backend/src/api/routes/cron_jobs.py
+- (staged) backend/src/api/routes/customer_orders.py
+- (staged) backend/src/api/routes/customers.py
+- (staged) backend/src/api/routes/dashboard_stream.py
+- (staged) backend/src/api/routes/demo_auth.py
+- (staged) backend/src/api/routes/demo_dashboard.py
+- (staged) backend/src/api/routes/demo_lists.py
+- (staged) backend/src/api/routes/documents.py
+- (staged) backend/src/api/routes/email_audit.py
+- (staged) backend/src/api/routes/equipment_lifecycle.py
+- (staged) backend/src/api/routes/google_ai.py
+- (staged) backend/src/api/routes/health.py
+- (staged) backend/src/api/routes/integrations/__init__.py
+- (staged) backend/src/api/routes/integrations/ap2.py
+- (staged) backend/src/api/routes/integrations/cin7.py
+- (staged) backend/src/api/routes/integrations/cin7_bom.py
+- (staged) backend/src/api/routes/integrations/cin7_crm.py
+- (staged) backend/src/api/routes/integrations/cin7_fulfilment.py
+- (staged) backend/src/api/routes/integrations/cin7_gl.py
+- (staged) backend/src/api/routes/integrations/cin7_grn.py
+- (staged) backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- (staged) backend/src/api/routes/integrations/cin7_line_items.py
+- (staged) backend/src/api/routes/integrations/cin7_procurement.py
+- (staged) backend/src/api/routes/integrations/cin7_shadow_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_stream.py
+- (staged) backend/src/api/routes/integrations/cin7_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- (staged) backend/src/api/routes/integrations/cin7_webhooks.py
+- (staged) backend/src/api/routes/integrations/elevenlabs.py
+- (staged) backend/src/api/routes/integrations/heygen.py
+- (staged) backend/src/api/routes/integrations/marketplace.py
+- (staged) backend/src/api/routes/integrations/sendgrid.py
+- (staged) backend/src/api/routes/integrations/shopify.py
+- (staged) backend/src/api/routes/integrations/shopify_theme.py
+- (staged) backend/src/api/routes/integrations/xero.py
+- (staged) backend/src/api/routes/inventory.py
+- (staged) backend/src/api/routes/inventory_stream.py
+- (staged) backend/src/api/routes/invoice_payments.py
+- (staged) backend/src/api/routes/invoices.py
+- (staged) backend/src/api/routes/jobs.py
+- (staged) backend/src/api/routes/mobile/__init__.py
+- (staged) backend/src/api/routes/mobile/guest_orders.py
+- (staged) backend/src/api/routes/monitoring/__init__.py
+- (staged) backend/src/api/routes/monitoring/alerts.py
+- (staged) backend/src/api/routes/monitoring/business_metrics.py
+- (staged) backend/src/api/routes/monitoring/infrastructure.py
+- (staged) backend/src/api/routes/monitoring/performance.py
+- (staged) backend/src/api/routes/notifications.py
+- (staged) backend/src/api/routes/orders.py
+- (staged) backend/src/api/routes/portal/__init__.py
+- (staged) backend/src/api/routes/portal/customer_portal.py
+- (staged) backend/src/api/routes/pos_transactions.py
+- (staged) backend/src/api/routes/pos_xero_reconciliation.py
+- (staged) backend/src/api/routes/prd.py
+- (staged) backend/src/api/routes/pricing.py
+- (staged) backend/src/api/routes/procurement.py
+- (staged) backend/src/api/routes/products.py
+- (staged) backend/src/api/routes/prometheus_metrics.py
+- (staged) backend/src/api/routes/public_stats.py
+- (staged) backend/src/api/routes/purchase_orders.py
+- (staged) backend/src/api/routes/quotes.py
+- (staged) backend/src/api/routes/recommendations.py
+- (staged) backend/src/api/routes/reconciliation.py
+- (staged) backend/src/api/routes/reconciliation_dashboard.py
+- (staged) backend/src/api/routes/search.py
+- (staged) backend/src/api/routes/service_requests.py
+- (staged) backend/src/api/routes/settings.py
+- (staged) backend/src/api/routes/shadow_analytics.py
+- (staged) backend/src/api/routes/shadow_mode.py
+- (staged) backend/src/api/routes/shipments.py
+- (staged) backend/src/api/routes/sla.py
+- (staged) backend/src/api/routes/stripe_webhooks.py
+- (staged) backend/src/api/routes/supplier_portal.py
+- (staged) backend/src/api/routes/suppliers.py
+- (staged) backend/src/api/routes/team.py
+- (staged) backend/src/api/routes/test_data_gen.py
+- (staged) backend/src/api/routes/translations.py
+- (staged) backend/src/api/routes/warehouse.py
+- (staged) backend/src/api/routes/webhooks.py
+- (staged) backend/src/api/routes/workflows.py
+- (staged) backend/src/api/routes/workshop/__init__.py
+- (staged) backend/src/api/routes/workshop/bookings.py
+- (staged) backend/src/api/routes/workshop/dashboard.py
+- (staged) backend/src/api/routes/workshop/equipment.py
+- (staged) backend/src/api/routes/workshop/reminders.py
+- (staged) backend/src/api/routes/workshop/templates.py
+- (staged) backend/src/api/schemas/invoicing.py
+- (staged) backend/src/api/schemas/prd.py
+- (staged) backend/src/auth/jwt.py
+- (staged) backend/src/auth/models.py
+- (staged) backend/src/auth/password_reset.py
+- (staged) backend/src/cache/decorators.py
+- (staged) backend/src/cache/redis_client.py
+- (staged) backend/src/config/__init__.py
+- (staged) backend/src/config/ap2_settings.py
+- (staged) backend/src/config/autonomy.py
+- (staged) backend/src/config/cin7_settings.py
+- (staged) backend/src/config/database.py
+- (staged) backend/src/config/elevenlabs_settings.py
+- (staged) backend/src/config/heygen_settings.py
+- (staged) backend/src/config/marketplace_settings.py
+- (staged) backend/src/config/secrets_manager.py
+- (staged) backend/src/config/sendgrid_settings.py
+- (staged) backend/src/config/settings.py
+- (staged) backend/src/config/shopify_settings.py
+- (staged) backend/src/config/xero_settings.py
+- (staged) backend/src/db/__init__.py
+- (staged) backend/src/db/ai_models.py
+- (staged) backend/src/db/ai_search_models.py
+- (staged) backend/src/db/ap2_models.py
+- (staged) backend/src/db/approvals_models.py
+- (staged) backend/src/db/audit_models.py
+- (staged) backend/src/db/certification_models.py
+- (staged) backend/src/db/cin7_bom_models.py
+- (staged) backend/src/db/cin7_fulfilment_models.py
+- (staged) backend/src/db/cin7_gl_models.py
+- (staged) backend/src/db/cin7_models.py
+- (staged) backend/src/db/cin7_shadow_models.py
+- (staged) backend/src/db/container_models.py
+- (staged) backend/src/db/crm_models.py
+- (staged) backend/src/db/crm_schemas.py
+- (staged) backend/src/db/customer_health_models.py
+- (staged) backend/src/db/demo_models.py
+- (staged) backend/src/db/email_audit_models.py
+- (staged) backend/src/db/email_models.py
+- (staged) backend/src/db/equipment_lifecycle_models.py
+- (staged) backend/src/db/generate_demo_purchases.py
+- (staged) backend/src/db/i18n_models.py
+- (staged) backend/src/db/i18n_schemas.py
+- (staged) backend/src/db/indexes.py
+- (staged) backend/src/db/integration_credential_models.py
+- (staged) backend/src/db/inventory_models.py
+- (staged) backend/src/db/inventory_schemas.py
+- (staged) backend/src/db/marketplace_models.py
+- (staged) backend/src/db/mobile_order_models.py
+- (staged) backend/src/db/models/__init__.py
+- (staged) backend/src/db/models/invoicing.py
+- (staged) backend/src/db/models/prd.py
+- (staged) backend/src/db/models_base.py
+- (staged) backend/src/db/portal_forms_models.py
+- (staged) backend/src/db/pos_models.py
+- (staged) backend/src/db/pricing_models.py
+- (staged) backend/src/db/schemas.py
+- (staged) backend/src/db/seed_demo.py
+- (staged) backend/src/db/service_models.py
+- (staged) backend/src/db/shadow_session_models.py
+- (staged) backend/src/db/shopify_extended_models.py
+- (staged) backend/src/db/shopify_models.py
+- (staged) backend/src/db/shopify_schemas.py
+- (staged) backend/src/db/submission_notes_models.py
+- (staged) backend/src/db/webhook_models.py
+- (staged) backend/src/db/workflow_models.py
+- (staged) backend/src/db/workshop_models.py
+- (staged) backend/src/db/xero_models.py
+- (staged) backend/src/db/xero_schemas.py
+- (staged) backend/src/emails/templates/order_confirmed.html
+- (staged) backend/src/emails/templates/order_delivered.html
+- (staged) backend/src/emails/templates/order_shipped.html
+- (staged) backend/src/emails/templates/quote_created.html
+- (staged) backend/src/emails/templates/quote_expiring.html
+- (staged) backend/src/events/__init__.py
+- (staged) backend/src/events/event_bus.py
+- (staged) backend/src/integrations/__init__.py
+- (staged) backend/src/integrations/ap2/__init__.py
+- (staged) backend/src/integrations/ap2/client.py
+- (staged) backend/src/integrations/ap2/security.py
+- (staged) backend/src/integrations/cin7/__init__.py
+- (staged) backend/src/integrations/cin7/change_detector.py
+- (staged) backend/src/integrations/cin7/client.py
+- (staged) backend/src/integrations/cin7/customer_sync.py
+- (staged) backend/src/integrations/cin7/demo_client.py
+- (staged) backend/src/integrations/cin7/event_dispatcher.py
+- (staged) backend/src/integrations/cin7/inventory_sync.py
+- (staged) backend/src/integrations/cin7/product_sync.py
+- (staged) backend/src/integrations/cin7/purchase_sync.py
+- (staged) backend/src/integrations/cin7/sales_sync.py
+- (staged) backend/src/integrations/cin7/supplier_sync.py
+- (staged) backend/src/integrations/elevenlabs/__init__.py
+- (staged) backend/src/integrations/elevenlabs/client.py
+- (staged) backend/src/integrations/elevenlabs/demo_client.py
+- (staged) backend/src/integrations/elevenlabs/live_client.py
+- (staged) backend/src/integrations/google/__init__.py
+- (staged) backend/src/integrations/google/client.py
+- (staged) backend/src/integrations/heygen/__init__.py
+- (staged) backend/src/integrations/heygen/client.py
+- (staged) backend/src/integrations/heygen/demo_client.py
+- (staged) backend/src/integrations/heygen/live_client.py
+- (staged) backend/src/integrations/http_utils.py
+- (staged) backend/src/integrations/marketplace/__init__.py
+- (staged) backend/src/integrations/marketplace/base.py
+- (staged) backend/src/integrations/marketplace/demo_channel.py
+- (staged) backend/src/integrations/marketplace/ebay_channel.py
+- (staged) backend/src/integrations/marketplace/facebook_channel.py
+- (staged) backend/src/integrations/marketplace/registry.py
+- (staged) backend/src/integrations/marketplace/shopify_channel.py
+- (staged) backend/src/integrations/marketplace/sync_engine.py
+- (staged) backend/src/integrations/payments/__init__.py
+- (staged) backend/src/integrations/payments/amex.py
+- (staged) backend/src/integrations/payments/eftpos.py
+- (staged) backend/src/integrations/payments/processor.py
+- (staged) backend/src/integrations/secrets_manager.py
+- (staged) backend/src/integrations/sendgrid/__init__.py
+- (staged) backend/src/integrations/sendgrid/client.py
+- (staged) backend/src/integrations/sendgrid/demo_client.py
+- (staged) backend/src/integrations/sendgrid/live_client.py
+- (staged) backend/src/integrations/sendgrid/processor.py
+- (staged) backend/src/integrations/sentry_client.py
+- (staged) backend/src/integrations/shopify/__init__.py
+- (staged) backend/src/integrations/shopify/client.py
+- (staged) backend/src/integrations/shopify/demo_client.py
+- (staged) backend/src/integrations/shopify/inventory.py
+- (staged) backend/src/integrations/shopify/inventory_sync.py
+- (staged) backend/src/integrations/shopify/metafields.py
+- (staged) backend/src/integrations/shopify/orders.py
+- (staged) backend/src/integrations/shopify/product_sync.py
+- (staged) backend/src/integrations/shopify/translations.py
+- (staged) backend/src/integrations/shopify/webhooks.py
+- (staged) backend/src/integrations/stripe/__init__.py
+- (staged) backend/src/integrations/stripe/client.py
+- (staged) backend/src/integrations/xero/__init__.py
+- (staged) backend/src/integrations/xero/auth.py
+- (staged) backend/src/integrations/xero/client.py
+- (staged) backend/src/integrations/xero/customers.py
+- (staged) backend/src/integrations/xero/demo_client.py
+- (staged) backend/src/integrations/xero/invoices.py
+- (staged) backend/src/integrations/xero/payments.py
+- (staged) backend/src/integrations/xero/pos_reconciliation.py
+- (staged) backend/src/integrations/xero/token_manager.py
+- (staged) backend/src/integrations/xero/webhook_security.py
+- (staged) backend/src/integrations/xero/webhooks.py
+- (staged) backend/src/monitoring/__init__.py
+- (staged) backend/src/monitoring/metrics.py
+- (staged) backend/src/rag/__init__.py
+- (staged) backend/src/rag/chunkers.py
+- (staged) backend/src/rag/models.py
+- (staged) backend/src/rag/parsers.py
+- (staged) backend/src/rag/pipeline.py
+- (staged) backend/src/rag/storage.py
+- (staged) backend/src/scheduler/bank_feed_scheduler.py
+- (staged) backend/src/security/__init__.py
+- (staged) backend/src/security/encryption.py
+- (staged) backend/src/security/webhook_verification.py
+- (staged) backend/src/services/__init__.py
+- (staged) backend/src/services/alert_manager.py
+- (staged) backend/src/services/audit_service.py
+- (staged) backend/src/services/auto_reorder.py
+- (staged) backend/src/services/autonomy_audit.py
+- (staged) backend/src/services/bank_feed_service.py
+- (staged) backend/src/services/business_metrics_service.py
+- (staged) backend/src/services/carrier_service.py
+- (staged) backend/src/services/circuit_breaker.py
+- (staged) backend/src/services/code_generation/README.md
+- (staged) backend/src/services/code_generation/__init__.py
+- (staged) backend/src/services/code_generation/context_builder.py
+- (staged) backend/src/services/code_generation/doc_generator.py
+- (staged) backend/src/services/code_generation/generator.py
+- (staged) backend/src/services/code_generation/prompts/doc_generation.txt
+- (staged) backend/src/services/code_generation/prompts/python_generation.txt
+- (staged) backend/src/services/code_generation/prompts/test_generation.txt
+- (staged) backend/src/services/code_generation/prompts/typescript_generation.txt
+- (staged) backend/src/services/code_generation/quality_checker.py
+- (staged) backend/src/services/code_generation/test_generator.py
+- (staged) backend/src/services/deployment_service.py
+- (staged) backend/src/services/document_extraction_service.py
+- (staged) backend/src/services/dunning.py
+- (staged) backend/src/services/email_audit_service.py
+- (staged) backend/src/services/email_notifications.py
+- (staged) backend/src/services/email_service.py
+- (staged) backend/src/services/embedding_service.py
+- (staged) backend/src/services/i18n_service.py
+- (staged) backend/src/services/notification_service.py
+- (staged) backend/src/services/order_state.py
+- (staged) backend/src/services/procurement_matching.py
+- (staged) backend/src/services/product_recognition_service.py
+- (staged) backend/src/services/recommendation_service.py
+- (staged) backend/src/services/reconciliation_alerts.py
+- (staged) backend/src/services/requirement_extractor.py
+- (staged) backend/src/services/requirement_tracer.py
+- (staged) backend/src/services/semantic_search_service.py
+- (staged) backend/src/services/sla_escalation.py
+- (staged) backend/src/services/sla_service.py
+- (staged) backend/src/services/sse_service.py
+- (staged) backend/src/services/system_alert_service.py
+- (staged) backend/src/services/tax_calculator.py
+- (staged) backend/src/services/webhook_service.py
+- (staged) backend/src/services/workflow_service.py
+- (staged) backend/src/services/workshop_scheduler.py
+- (staged) backend/src/state/__init__.py
+- (staged) backend/src/state/supabase.py
+- (staged) backend/src/telemetry/__init__.py
+- (staged) backend/src/telemetry/usage_tracker.py
+- (staged) backend/src/testing/__init__.py
+- (staged) backend/src/testing/shopify_mock.py
+- (staged) backend/src/testing/xero_mock.py
+- (staged) backend/src/utils/__init__.py
+- (staged) backend/src/utils/calculations.py
+- (staged) backend/src/utils/logging.py
+- (staged) backend/src/utils/supabase_client.py
+- (staged) backend/src/workflow/__init__.py
+- (staged) backend/src/workflow/engine.py
+- (staged) backend/src/workflow/models.py
+- (staged) backend/src/workflow/storage.py
+- (staged) backend/src/workflows/__init__.py
+- (staged) backend/src/workflows/pr_automation.py
+- (staged) backend/srcapimain.py
+- (staged) backend/srcapiroutesailearning.py.tmp
+- (staged) backend/start_for_testing.py
+- (staged) backend/start_load_test_server.py
+- (staged) backend/test_ai_inventory_intelligence.py
+- (staged) backend/test_api.py
+- (staged) backend/test_api_error.py
+- (staged) backend/test_customer_sync.py
+- (staged) backend/test_dashboard_data.py
+- (staged) backend/test_dashboard_data_with_failures.py
+- (staged) backend/test_db_connection.py
+- (staged) backend/test_dependency_injection.py
+- (staged) backend/test_endpoint.py
+- (staged) backend/test_expired_quote_validation.py
+- (staged) backend/test_failure_scenarios.py
+- (staged) backend/test_full_payment_flow.py
+- (staged) backend/test_google_ai_endpoints.py
+- (staged) backend/test_google_ai_integration.py
+- (staged) backend/test_insights_api.py
+- (staged) backend/test_multistore_inventory.py
+- (staged) backend/test_order_update_items_500.py
+- (staged) backend/test_outbound_shipment.json
+- (staged) backend/test_password.py
+- (staged) backend/test_payment_webhook.py
+- (staged) backend/test_po.json
+- (staged) backend/test_quote_404_issue.py
+- (staged) backend/test_quote_fixes.py
+- (staged) backend/test_quote_generate_endpoint.py
+- (staged) backend/test_quote_validation.py
+- (staged) backend/test_redis_connection.py
+- (staged) backend/test_search_performance.py
+- (staged) backend/test_shopify_connection.py
+- (staged) backend/test_shopify_integration.py
+- (staged) backend/test_supplier.json
+- (staged) backend/tests/FIXES_APPLIED.md
+- (staged) backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- (staged) backend/tests/TEST_STATUS_REPORT.md
+- (staged) backend/tests/TEST_STATUS_UPDATE.md
+- (staged) backend/tests/__init__.py
+- (staged) backend/tests/ai/test_reconciliation_agent.py
+- (staged) backend/tests/api/README_BUGFIX_TESTS.md
+- (staged) backend/tests/api/test_500_errors.py
+- (staged) backend/tests/api/test_approval_gates.py
+- (staged) backend/tests/api/test_approvals.py
+- (staged) backend/tests/api/test_approvals_integration.py
+- (staged) backend/tests/api/test_autonomous_ops.py
+- (staged) backend/tests/api/test_bank_feeds.py
+- (staged) backend/tests/api/test_bas_report.py
+- (staged) backend/tests/api/test_billing_gaps.py
+- (staged) backend/tests/api/test_build_command.py
+- (staged) backend/tests/api/test_certifications.py
+- (staged) backend/tests/api/test_command_parser.py
+- (staged) backend/tests/api/test_customer_orders.py
+- (staged) backend/tests/api/test_document_extraction.py
+- (staged) backend/tests/api/test_equipment_lifecycle.py
+- (staged) backend/tests/api/test_gap_sync.py
+- (staged) backend/tests/api/test_inventory.py
+- (staged) backend/tests/api/test_inventory_gaps.py
+- (staged) backend/tests/api/test_inventory_new_endpoints.py
+- (staged) backend/tests/api/test_inventory_uni172.py
+- (staged) backend/tests/api/test_invoice_payments.py
+- (staged) backend/tests/api/test_invoices_tax_integration.py
+- (staged) backend/tests/api/test_nl_query.py
+- (staged) backend/tests/api/test_orders_performance.py
+- (staged) backend/tests/api/test_portal.py
+- (staged) backend/tests/api/test_pos_terminals.py
+- (staged) backend/tests/api/test_pos_transactions.py
+- (staged) backend/tests/api/test_pricing_tiers.py
+- (staged) backend/tests/api/test_quote_404_errors.py
+- (staged) backend/tests/api/test_quote_422_errors.py
+- (staged) backend/tests/api/test_quote_http_methods.py
+- (staged) backend/tests/api/test_rbac.py
+- (staged) backend/tests/api/test_reconciliation_integration.py
+- (staged) backend/tests/api/test_requirement_verification.py
+- (staged) backend/tests/api/test_supplier_portal.py
+- (staged) backend/tests/api/test_tenant_isolation.py
+- (staged) backend/tests/api/test_translations.py
+- (staged) backend/tests/api/test_workflows_integration.py
+- (staged) backend/tests/api/test_workshop_routes.py
+- (staged) backend/tests/conftest.py
+- (staged) backend/tests/e2e/__init__.py
+- (staged) backend/tests/e2e/test_login_flow.py
+- (staged) backend/tests/e2e/test_order_flow.py
+- (staged) backend/tests/fixtures/__init__.py
+- (staged) backend/tests/fixtures/data.py
+- (staged) backend/tests/fixtures/pos_data.py
+- (staged) backend/tests/fixtures/shopify_fixtures.py
+- (staged) backend/tests/fixtures/xero_fixtures.py
+- (staged) backend/tests/integration/README.md
+- (staged) backend/tests/integration/__init__.py
+- (staged) backend/tests/integration/conftest.py
+- (staged) backend/tests/integration/run_all_cin7_tests.py
+- (staged) backend/tests/integration/run_phase3_tests.py
+- (staged) backend/tests/integration/run_phase4_tests.py
+- (staged) backend/tests/integration/run_phase5_tests.py
+- (staged) backend/tests/integration/run_phase6_tests.py
+- (staged) backend/tests/integration/run_phase7_tests.py
+- (staged) backend/tests/integration/run_protocol_tests.py
+- (staged) backend/tests/integration/test_ap2_integration.py
+- (staged) backend/tests/integration/test_api_endpoints.py
+- (staged) backend/tests/integration/test_autonomous_dev.py
+- (staged) backend/tests/integration/test_autonomous_pr_workflow.py
+- (staged) backend/tests/integration/test_cin7_crm_sync.py
+- (staged) backend/tests/integration/test_cin7_integration.py
+- (staged) backend/tests/integration/test_cin7_sync.py
+- (staged) backend/tests/integration/test_crm_module.py
+- (staged) backend/tests/integration/test_recommendations.py
+- (staged) backend/tests/integration/test_search.py
+- (staged) backend/tests/integration/test_shopify_extended.py
+- (staged) backend/tests/integration/test_webhooks.py
+- (staged) backend/tests/integration/test_xero_reconciliation.py
+- (staged) backend/tests/integrations/__init__.py
+- (staged) backend/tests/integrations/test_xero_token_manager.py
+- (staged) backend/tests/load/README.md
+- (staged) backend/tests/load/__init__.py
+- (staged) backend/tests/load/conftest.py
+- (staged) backend/tests/load/generators/customers.py
+- (staged) backend/tests/load/generators/misc.py
+- (staged) backend/tests/load/generators/orders.py
+- (staged) backend/tests/load/generators/products.py
+- (staged) backend/tests/load/generators/quotes.py
+- (staged) backend/tests/load/load_test_requirements.txt
+- (staged) backend/tests/load/load_test_scenarios.ps1
+- (staged) backend/tests/load/load_test_scenarios.sh
+- (staged) backend/tests/load/locustfile.py
+- (staged) backend/tests/load/locustfile_ai_features.py
+- (staged) backend/tests/load/reporters/html_reporter.py
+- (staged) backend/tests/load/reporters/json_reporter.py
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.json
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.json
+- (staged) backend/tests/load/reports/load_test_latest.html
+- (staged) backend/tests/load/reports/load_test_latest.json
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.html
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.json
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.html
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.json
+- (staged) backend/tests/load/reports/load_test_quick_latest.html
+- (staged) backend/tests/load/reports/load_test_quick_latest.json
+- (staged) backend/tests/load/reports/scenario_report.html
+- (staged) backend/tests/load/reports/scenario_report.json
+- (staged) backend/tests/load/run_full_load_test.py
+- (staged) backend/tests/load/run_quick_load_test.py
+- (staged) backend/tests/load/test_concurrent_number_generation.py
+- (staged) backend/tests/load/test_performance_load.py
+- (staged) backend/tests/load/test_scenarios.py
+- (staged) backend/tests/performance/__init__.py
+- (staged) backend/tests/run_integration_tests.ps1
+- (staged) backend/tests/run_integration_tests.sh
+- (staged) backend/tests/security/__init__.py
+- (staged) backend/tests/security/test_auth_security.py
+- (staged) backend/tests/security/test_encryption.py
+- (staged) backend/tests/security/test_injection_attacks.py
+- (staged) backend/tests/security/test_xss_csrf.py
+- (staged) backend/tests/services/__init__.py
+- (staged) backend/tests/services/code_generation/__init__.py
+- (staged) backend/tests/services/code_generation/test_context_builder.py
+- (staged) backend/tests/services/code_generation/test_doc_generator.py
+- (staged) backend/tests/services/code_generation/test_generator.py
+- (staged) backend/tests/services/code_generation/test_integration.py
+- (staged) backend/tests/services/code_generation/test_quality_checker.py
+- (staged) backend/tests/services/code_generation/test_test_generator.py
+- (staged) backend/tests/services/run_all_tests.py
+- (staged) backend/tests/services/test_auto_reorder.py
+- (staged) backend/tests/services/test_auto_reorder_integration.py
+- (staged) backend/tests/services/test_dunning.py
+- (staged) backend/tests/services/test_email_audit_service.py
+- (staged) backend/tests/services/test_order_state.py
+- (staged) backend/tests/services/test_procurement_matching.py
+- (staged) backend/tests/services/test_procurement_matching_integration.py
+- (staged) backend/tests/services/test_requirement_extractor.py
+- (staged) backend/tests/services/test_requirement_tracer.py
+- (staged) backend/tests/services/test_sla_escalation.py
+- (staged) backend/tests/services/test_tax_calculator.py
+- (staged) backend/tests/services/test_tax_calculator_integration.py
+- (staged) backend/tests/smoke/__init__.py
+- (staged) backend/tests/smoke/conftest.py
+- (staged) backend/tests/smoke/test_smoke.py
+- (staged) backend/tests/test_agent_orchestration.py
+- (staged) backend/tests/test_approvals_batch_2c.py
+- (staged) backend/tests/test_auth_security.py
+- (staged) backend/tests/test_autonomy_audit.py
+- (staged) backend/tests/test_autonomy_config.py
+- (staged) backend/tests/test_batch_2c_structure.py
+- (staged) backend/tests/test_billing.py
+- (staged) backend/tests/test_circuit_breaker.py
+- (staged) backend/tests/test_concurrent_number_generation.py
+- (staged) backend/tests/test_customers_api.py
+- (staged) backend/tests/test_error_handling.py
+- (staged) backend/tests/test_gap_batch_2b.py
+- (staged) backend/tests/test_gap_batch_2b_smoke.py
+- (staged) backend/tests/test_gap_batch_2c_2d.py
+- (staged) backend/tests/test_health.py
+- (staged) backend/tests/test_marketplace.py
+- (staged) backend/tests/test_orders_api.py
+- (staged) backend/tests/test_pr_automation.py
+- (staged) backend/tests/test_products_api.py
+- (staged) backend/tests/test_project_intelligence.py
+- (staged) backend/tests/test_prometheus_metrics.py
+- (staged) backend/tests/test_quotes_api.py
+- (staged) backend/tests/test_risk_assessor.py
+- (staged) backend/tests/test_rollback_mechanism.py
+- (staged) backend/tests/test_sequence_generation.py
+- (staged) backend/tests/test_shopify_mock.py
+- (staged) backend/tests/test_specialized_agents.py
+- (staged) backend/tests/test_toolshed_api.py
+- (staged) backend/tests/test_workflow_agent_integration.py
+- (staged) backend/tests/test_workflows_batch_2c.py
+- (staged) backend/tests/test_xero_mock.py
+- (staged) backend/tests/unit/test_number_generation.py
+- (staged) backend/tests/unit/test_reconciliation_logic.py
+- (staged) backend/tests/utils/__init__.py
+- (staged) backend/tests/utils/test_calculations.py
+- (staged) backend/tests/webhooks/__init__.py
+- (staged) backend/tests/webhooks/test_webhook_transactions.py
+- (staged) backend/update_supplier.json
+- (staged) backend/uv.lock
+- (staged) backend/vercel.json
+- (staged) backend/verify_i18n_migration.py
+- (staged) backend/verify_indexes.py
+- (staged) backend/verify_phase1.py
+- (staged) backend/verify_phase9_fixes.py
+- (staged) backend/verify_race_condition_fix.py
+- (staged) backend/verify_sequence_deployment.py
+- (staged) backend/verify_tables.py
+
+## Session end: 2026-04-05T07:45:08+05:00
+### Modified files:
+- .claude/PROGRESS.md
+- .claude/hooks/pre-commit.sh
+- .claude/rules/database/supabase-migrations.md
+- .dockerignore
+- .env.example
+- .github/CODEOWNERS
+- .github/dependabot.yml
+- .github/workflows/agent-pr-checks.yml
+- .github/workflows/ci.yml
+- .github/workflows/deploy-production.yml
+- .github/workflows/deploy-staging.yml
+- .github/workflows/examples/deploy-frontend.yml.example
+- .github/workflows/security.yml
+- .husky/pre-commit
+- README.md
+- app/.dockerignore
+- app/.gitignore
+- app/Dockerfile
+- app/__tests__/app/approvals-page.test.tsx
+- app/__tests__/app/billing-page.test.tsx
+- app/__tests__/app/crm-health.test.tsx
+- app/__tests__/app/crm-onboarding.test.tsx
+- app/__tests__/app/crm-personas.test.tsx
+- app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- app/__tests__/app/orders-integration.test.tsx
+- app/__tests__/app/quotes-integration.test.tsx
+- app/__tests__/app/reconciliation-page.test.tsx
+- app/__tests__/app/workflows-page.test.tsx
+- app/__tests__/components/EmptyState.test.tsx
+- app/__tests__/components/ErrorBoundary.test.tsx
+- app/__tests__/components/ui/pagination-controls.test.tsx
+- app/__tests__/e2e/billing.spec.ts
+- app/__tests__/e2e/onboarding.spec.ts
+- app/__tests__/lib/api/activities.test.ts
+- app/__tests__/lib/api/agents.test.ts
+- app/__tests__/lib/api/ai-chat.test.ts
+- app/__tests__/lib/api/ai-generate.test.ts
+- app/__tests__/lib/api/ai-insights.test.ts
+- app/__tests__/lib/api/ap2.test.ts
+- app/__tests__/lib/api/approvals-extended.test.ts
+- app/__tests__/lib/api/approvals.test.ts
+- app/__tests__/lib/api/auth.test.ts
+- app/__tests__/lib/api/autonomous.test.ts
+- app/__tests__/lib/api/autonomy.test.ts
+- app/__tests__/lib/api/bank-feeds.test.ts
+- app/__tests__/lib/api/billing.test.ts
+- app/__tests__/lib/api/chat.test.ts
+- app/__tests__/lib/api/cin7-bom.test.ts
+- app/__tests__/lib/api/cin7-fulfilment.test.ts
+- app/__tests__/lib/api/cin7-gl.test.ts
+- app/__tests__/lib/api/cin7-grn.test.ts
+- app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- app/__tests__/lib/api/cin7-shadow.test.ts
+- app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- app/__tests__/lib/api/cin7.test.ts
+- app/__tests__/lib/api/contacts.test.ts
+- app/__tests__/lib/api/contractors.test.ts
+- app/__tests__/lib/api/copilot.test.ts
+- app/__tests__/lib/api/customers.test.ts
+- app/__tests__/lib/api/documents.test.ts
+- app/__tests__/lib/api/inventory.test.ts
+- app/__tests__/lib/api/invoices-extended.test.ts
+- app/__tests__/lib/api/invoices.test.ts
+- app/__tests__/lib/api/marketing.test.ts
+- app/__tests__/lib/api/marketplace.test.ts
+- app/__tests__/lib/api/mobile.test.ts
+- app/__tests__/lib/api/monitoring.test.ts
+- app/__tests__/lib/api/notifications.test.ts
+- app/__tests__/lib/api/orders.test.ts
+- app/__tests__/lib/api/pos.test.ts
+- app/__tests__/lib/api/products.test.ts
+- app/__tests__/lib/api/purchase-orders.test.ts
+- app/__tests__/lib/api/quotes.test.ts
+- app/__tests__/lib/api/reconciliation.test.ts
+- app/__tests__/lib/api/sendgrid.test.ts
+- app/__tests__/lib/api/service-requests.test.ts
+- app/__tests__/lib/api/settings.test.ts
+- app/__tests__/lib/api/shadow.test.ts
+- app/__tests__/lib/api/shipments-outbound.test.ts
+- app/__tests__/lib/api/shipments.test.ts
+- app/__tests__/lib/api/shopify.test.ts
+- app/__tests__/lib/api/sla.test.ts
+- app/__tests__/lib/api/suppliers.test.ts
+- app/__tests__/lib/api/tasks.test.ts
+- app/__tests__/lib/api/team.test.ts
+- app/__tests__/lib/api/warehouse.test.ts
+- app/__tests__/lib/api/workflows-extended.test.ts
+- app/__tests__/lib/api/workflows.test.ts
+- app/__tests__/lib/api/workshop.test.ts
+- app/__tests__/lib/api/xero.test.ts
+- app/__tests__/lib/marketplace.test.ts
+- app/__tests__/lib/types/cin7.test.ts
+- app/__tests__/lib/types/marketplace.test.ts
+- app/__tests__/lib/types/reconciliation.test.ts
+- app/__tests__/lib/types/workflows.test.ts
+- app/__tests__/lib/utils/csv-export.test.ts
+- app/components.json
+- app/next.config.ts
+- app/package.json
+- app/playwright.a11y.config.ts
+- app/playwright.config.ts
+- app/scripts/dev-with-fallback.mjs
+- app/sentry.client.config.ts
+- app/sentry.edge.config.ts
+- app/sentry.server.config.ts
+- app/src/components/workflow/canvas/workflow-canvas.tsx
+- app/src/instrumentation.ts
+- app/tailwind.config.ts
+- app/tests/accessibility/a11y.spec.ts
+- app/tests/e2e/approvals.spec.ts
+- app/tests/e2e/error-handling.spec.ts
+- app/tests/e2e/invoices.spec.ts
+- app/tests/e2e/reconciliation.spec.ts
+- app/tests/e2e/workflows.spec.ts
+- app/tests/visual/components.visual.spec.ts
+- app/tsconfig.json
+- app/vercel.json
+- app/vitest.config.ts
+- app/vitest.d.ts
+- app/vitest.setup.ts
+- backend/.claude/memory/context-snapshot.md
+- backend/.gitignore
+- backend/.python-version
+- backend/.vercelignore
+- backend/=0.39.0
+- backend/=6.11.0
+- backend/AGENTS.md
+- "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- backend/Dockerfile
+- backend/ISSUE-4-COMPLETION.md
+- backend/ISSUE-5-COMPLETION.md
+- backend/Procfile
+- backend/alembic.ini
+- backend/alembic/README
+- backend/alembic/env.py
+- backend/alembic/script.py.mako
+- backend/alembic/versions/001_add_approvals.py
+- backend/alembic/versions/002_add_semantic_search.py
+- backend/alembic/versions/003_add_missing_trigram_indexes.py
+- backend/alembic/versions/004_add_product_sync_bidirectional.py
+- backend/alembic/versions/005_add_shopify_extended_tables.py
+- backend/alembic/versions/006_add_mobile_order_tables.py
+- backend/alembic/versions/007_add_workflow_notification_indexes.py
+- backend/alembic/versions/008_merge_heads.py
+- backend/alembic/versions/009_add_pos_tables.py
+- backend/alembic/versions/00a_rename_invoice_date.py
+- backend/alembic/versions/00b_add_missing_inventory_tables.py
+- backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- backend/alembic/versions/00d_add_certification_tables.py
+- backend/alembic/versions/00e_add_prd_tables.py
+- backend/alembic/versions/00f_add_pricing_tier_tables.py
+- backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- backend/alembic/versions/68d51946645a_create_erp_schema.py
+- backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- backend/analyze_404_errors.py
+- backend/analyze_422_errors.py
+- backend/analyze_500_errors.py
+- backend/apply_i18n_migration.py
+- backend/apply_i18n_migration_v2.py
+- backend/apply_indexes.py
+- backend/apply_indexes_via_backend.py
+- backend/apply_pos_migration.py
+- backend/apply_search_indexes.py
+- backend/apply_sequences_migration.py
+- backend/benchmarks/after_indexes.txt
+- backend/benchmarks/before_indexes.txt
+- backend/benchmarks/comparison.md
+- backend/check_404_in_full_report.py
+- backend/check_backend_config.py
+- backend/check_categories.py
+- backend/check_db.py
+- backend/check_enum_def.py
+- backend/check_orders.py
+- backend/check_results.py
+- backend/check_runtime_config.py
+- backend/check_schema.py
+- backend/check_tables.py
+- backend/check_test_status.py
+- backend/cleanup_db.py
+- backend/conftest.py
+- backend/count_data.py
+- backend/create_admin.py
+- backend/create_demo_orders.py
+- backend/create_demo_orders_simple.py
+- backend/create_inventory_tables.py
+- backend/create_service_tables.py
+- backend/debug_response.py
+- backend/diagnose_db_connection.py
+- backend/docs/ISS-005-VERIFICATION.md
+- backend/docs/ISS-006-VERIFICATION.md
+- backend/docs/ISS-007-VERIFICATION.md
+- backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- backend/examples/use_agentic_layer.py
+- backend/fix_categories.py
+- backend/fix_categories_uppercase.py
+- backend/generate_endpoint.py
+- backend/generate_failures.py
+- backend/generate_password_hash.py
+- backend/inject_failure_patterns.py
+- backend/inject_insights_directly.py
+- backend/inject_test_data.py
+- backend/inject_test_failures.py
+- backend/list_google_models.py
+- backend/load_test_output.txt
+- backend/migrations/001_add_search_indexes.sql
+- backend/migrations/001_rollback.sql
+- backend/migrations/README.md
+- backend/migrations/add_ai_search.sql
+- backend/migrations/add_ap2_integration.sql
+- backend/migrations/add_auto_sync_enhancements.sql
+- backend/migrations/add_email_audit_tables.sql
+- backend/migrations/add_foreign_key_indexes.sql
+- backend/migrations/add_i18n_support.sql
+- backend/migrations/add_missing_fk_indexes.sql
+- backend/migrations/add_performance_indexes.sql
+- backend/migrations/add_phase4_inventory_indexes.sql
+- backend/migrations/add_portal_forms_tables.sql
+- backend/migrations/add_pos_system.sql
+- backend/migrations/add_search_indexes.sql
+- backend/migrations/add_sequences_for_numbers.sql
+- backend/migrations/add_shopify_extended.sql
+- backend/migrations/add_submission_notes_table.sql
+- backend/migrations/add_trigram_indexes.sql
+- backend/migrations/add_webhook_events_table.sql
+- backend/migrations/seed_ccw_products.sql
+- backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- backend/migrations/week3_enum_standardization.sql
+- backend/migrations/week3_timezone_standardization.sql
+- backend/pyproject.toml
+- backend/pytest.ini
+- backend/railway.json
+- backend/requirements.txt
+- backend/reset_admin_password.py
+- backend/run-setup-memory.ps1
+- backend/run-tests.ps1
+- backend/run_bugfix_tests.ps1
+- backend/run_bugfix_tests.sh
+- backend/run_migrations.py
+- backend/scripts/analyze_query_performance.py
+- backend/scripts/apply_foreign_key_indexes.py
+- backend/scripts/apply_phase4_indexes.py
+- backend/scripts/apply_trigram_indexes.py
+- backend/scripts/benchmark_search.py
+- backend/scripts/create_container_tables.sql
+- backend/scripts/create_sample_orders.py
+- backend/scripts/create_sample_quotes.py
+- backend/scripts/explain_queries.sh
+- backend/scripts/identify_500_sources.py
+- backend/scripts/implement_query_optimizations.md
+- backend/scripts/import_ccwonline_products.py
+- backend/scripts/insert_container_sample_data.sql
+- backend/scripts/integration_test_iss001.py
+- backend/scripts/monitor_indexes.py
+- backend/scripts/run_sql.py
+- backend/scripts/seed_ccw_cleaning.py
+- backend/scripts/seed_ccw_products.py
+- backend/scripts/setup-memory.py
+- backend/scripts/test_iss005_fixes.py
+- backend/scripts/validate_autosave_implementation.py
+- backend/scripts/validate_iss001_fix.py
+- backend/scripts/validate_iss003_actual.py
+- backend/scripts/validate_iss003_fix.py
+- backend/scripts/validate_iss005_fix.py
+- backend/scripts/verify_iss005_code.py
+- backend/scripts/verify_query_optimizations.py
+- backend/seed_data.py
+- backend/seed_demo_simple.sql
+- backend/seed_orders.py
+- backend/show_customers.py
+- backend/show_orders.py
+- backend/show_products.py
+- backend/show_quotes.py
+- backend/src/__init__.py
+- backend/src/agents/prd/__init__.py
+- backend/src/agents/prd/analysis_agent.py
+- backend/src/agents/prd/feature_decomposer.py
+- backend/src/agents/prd/prd_orchestrator.py
+- backend/src/agents/prd/roadmap_planner.py
+- backend/src/agents/prd/tech_spec_generator.py
+- backend/src/agents/prd/test_generator.py
+- backend/src/ai/__init__.py
+- backend/src/ai/agents/chat_assistant.py
+- backend/src/ai/agents/chat_state.py
+- backend/src/ai/agents/content_generator.py
+- backend/src/ai/agents/content_state.py
+- backend/src/ai/agents/insights_agent.py
+- backend/src/ai/agents/insights_state.py
+- backend/src/ai/agents/risk_assessor.py
+- backend/src/ai/agents/rollback_agent.py
+- backend/src/ai/agents/specialized/__init__.py
+- backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- backend/src/ai/agents/specialized/development_agent.py
+- backend/src/ai/agents/specialized/document_parser_agent.py
+- backend/src/ai/agents/specialized/form_autofill_agent.py
+- backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- backend/src/ai/agents/specialized/marketing_agent.py
+- backend/src/ai/agents/specialized/pricing_agent.py
+- backend/src/ai/agents/specialized/pricing_state.py
+- backend/src/ai/agents/specialized/procurement_agent.py
+- backend/src/ai/agents/specialized/procurement_state.py
+- backend/src/ai/agents/specialized/project_intelligence_agent.py
+- backend/src/ai/agents/specialized/query_agent.py
+- backend/src/ai/agents/specialized/recommendation_agent.py
+- backend/src/ai/agents/specialized/reconciliation_agent.py
+- backend/src/ai/agents/specialized/search_agent.py
+- backend/src/ai/agents/specialized/staff_copilot_agent.py
+- backend/src/ai/agents/specialized/task_executor_agent.py
+- backend/src/ai/agents/specialized/task_executor_state.py
+- backend/src/ai/agents/specialized/testing_agent.py
+- backend/src/ai/base_agent.py
+- backend/src/ai/generators/__init__.py
+- backend/src/ai/generators/email_generator.py
+- backend/src/ai/generators/quote_generator.py
+- backend/src/ai/learning/__init__.py
+- backend/src/ai/learning/learning_engine.py
+- backend/src/ai/learning/learning_repository.py
+- backend/src/ai/monitoring/__init__.py
+- backend/src/ai/monitoring/health_monitor.py
+- backend/src/ai/monitoring/metrics_collector.py
+- backend/src/ai/ollama_client.py
+- backend/src/ai/orchestration/__init__.py
+- backend/src/ai/orchestration/agent_registry.py
+- backend/src/ai/orchestration/autonomous_loop.py
+- backend/src/ai/orchestration/project_orchestrator.py
+- backend/src/ai/orchestration/supervisor_agent.py
+- backend/src/ai/orchestration/supervisor_state.py
+- backend/src/ai/prompts/__init__.py
+- backend/src/ai/prompts/system_prompts.py
+- backend/src/ai/protocol/__init__.py
+- backend/src/ai/protocol/confidence.py
+- backend/src/ai/protocol/error_handler.py
+- backend/src/ai/protocol/governor.py
+- backend/src/ai/protocol/message_bus.py
+- backend/src/ai/protocol/models.py
+- backend/src/ai/tools/__init__.py
+- backend/src/ai/tools/analytics_tools.py
+- backend/src/ai/tools/base.py
+- backend/src/ai/tools/erp_tools.py
+- backend/src/ai/tools/execution_tools.py
+- backend/src/ai/tools/inventory_intelligence.py
+- backend/src/ai/tools/pricing_tools.py
+- backend/src/ai/tools/procurement_tools.py
+- backend/src/api/__init__.py
+- backend/src/api/debug_main.py
+- backend/src/api/deps.py
+- backend/src/api/exceptions.py
+- backend/src/api/main.py
+- backend/src/api/middleware/__init__.py
+- backend/src/api/middleware/auth.py
+- backend/src/api/middleware/performance.py
+- backend/src/api/middleware/rate_limit.py
+- backend/src/api/middleware/rbac.py
+- backend/src/api/middleware/request_id.py
+- backend/src/api/middleware/security_headers.py
+- backend/src/api/middleware/tenant_isolation.py
+- backend/src/api/routers/prd.py
+- backend/src/api/routes/__init__.py
+- backend/src/api/routes/activities.py
+- backend/src/api/routes/agents_monitor.py
+- backend/src/api/routes/ai/__init__.py
+- backend/src/api/routes/ai/anomaly.py
+- backend/src/api/routes/ai/approval_gates.py
+- backend/src/api/routes/ai/assets.py
+- backend/src/api/routes/ai/autonomous_ops.py
+- backend/src/api/routes/ai/build_command.py
+- backend/src/api/routes/ai/chat.py
+- backend/src/api/routes/ai/cin7_anomaly.py
+- backend/src/api/routes/ai/cin7_forecast.py
+- backend/src/api/routes/ai/cin7_shadow_ai.py
+- backend/src/api/routes/ai/command_parser.py
+- backend/src/api/routes/ai/document_parser.py
+- backend/src/api/routes/ai/form_autofill.py
+- backend/src/api/routes/ai/gap_sync.py
+- backend/src/api/routes/ai/generate.py
+- backend/src/api/routes/ai/insights.py
+- backend/src/api/routes/ai/inventory_forecast.py
+- backend/src/api/routes/ai/learning.py
+- backend/src/api/routes/ai/marketing_ai.py
+- backend/src/api/routes/ai/monitoring.py
+- backend/src/api/routes/ai/project_intelligence.py
+- backend/src/api/routes/ai/protocol.py
+- backend/src/api/routes/ai/query.py
+- backend/src/api/routes/ai/requirement_verification.py
+- backend/src/api/routes/ai/specialized.py
+- backend/src/api/routes/ai/staff_copilot.py
+- backend/src/api/routes/ai/supervisor.py
+- backend/src/api/routes/ai/test_data.py
+- backend/src/api/routes/ai/test_failures.py
+- backend/src/api/routes/ai/toolshed.py
+- backend/src/api/routes/ai/toolshed_vault.py
+- backend/src/api/routes/analytics.py
+- backend/src/api/routes/approvals.py
+- backend/src/api/routes/audit_trail.py
+- backend/src/api/routes/autonomous_dev.py
+- backend/src/api/routes/autonomy_metrics.py
+- backend/src/api/routes/backorders.py
+- backend/src/api/routes/bank_feeds.py
+- backend/src/api/routes/billing.py
+- backend/src/api/routes/boardroom.py
+- backend/src/api/routes/certifications.py
+- backend/src/api/routes/chat.py
+- backend/src/api/routes/config.py
+- backend/src/api/routes/contacts.py
+- backend/src/api/routes/containers.py
+- backend/src/api/routes/contractors.py
+- backend/src/api/routes/crm_health.py
+- backend/src/api/routes/crm_onboarding.py
+- backend/src/api/routes/crm_personas.py
+- backend/src/api/routes/cron_jobs.py
+- backend/src/api/routes/customer_orders.py
+- backend/src/api/routes/customers.py
+- backend/src/api/routes/dashboard_stream.py
+- backend/src/api/routes/demo_auth.py
+- backend/src/api/routes/demo_dashboard.py
+- backend/src/api/routes/demo_lists.py
+- backend/src/api/routes/documents.py
+- backend/src/api/routes/email_audit.py
+- backend/src/api/routes/equipment_lifecycle.py
+- backend/src/api/routes/google_ai.py
+- backend/src/api/routes/health.py
+- backend/src/api/routes/integrations/__init__.py
+- backend/src/api/routes/integrations/ap2.py
+- backend/src/api/routes/integrations/cin7.py
+- backend/src/api/routes/integrations/cin7_bom.py
+- backend/src/api/routes/integrations/cin7_crm.py
+- backend/src/api/routes/integrations/cin7_fulfilment.py
+- backend/src/api/routes/integrations/cin7_gl.py
+- backend/src/api/routes/integrations/cin7_grn.py
+- backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- backend/src/api/routes/integrations/cin7_line_items.py
+- backend/src/api/routes/integrations/cin7_procurement.py
+- backend/src/api/routes/integrations/cin7_shadow_sync.py
+- backend/src/api/routes/integrations/cin7_stream.py
+- backend/src/api/routes/integrations/cin7_sync.py
+- backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- backend/src/api/routes/integrations/cin7_webhooks.py
+- backend/src/api/routes/integrations/elevenlabs.py
+- backend/src/api/routes/integrations/heygen.py
+- backend/src/api/routes/integrations/marketplace.py
+- backend/src/api/routes/integrations/sendgrid.py
+- backend/src/api/routes/integrations/shopify.py
+- backend/src/api/routes/integrations/shopify_theme.py
+- backend/src/api/routes/integrations/xero.py
+- backend/src/api/routes/inventory.py
+- backend/src/api/routes/inventory_stream.py
+- backend/src/api/routes/invoice_payments.py
+- backend/src/api/routes/invoices.py
+- backend/src/api/routes/jobs.py
+- backend/src/api/routes/mobile/__init__.py
+- backend/src/api/routes/mobile/guest_orders.py
+- backend/src/api/routes/monitoring/__init__.py
+- backend/src/api/routes/monitoring/alerts.py
+- backend/src/api/routes/monitoring/business_metrics.py
+- backend/src/api/routes/monitoring/infrastructure.py
+- backend/src/api/routes/monitoring/performance.py
+- backend/src/api/routes/notifications.py
+- backend/src/api/routes/orders.py
+- backend/src/api/routes/portal/__init__.py
+- backend/src/api/routes/portal/customer_portal.py
+- backend/src/api/routes/pos_transactions.py
+- backend/src/api/routes/pos_xero_reconciliation.py
+- backend/src/api/routes/prd.py
+- backend/src/api/routes/pricing.py
+- backend/src/api/routes/procurement.py
+- backend/src/api/routes/products.py
+- backend/src/api/routes/prometheus_metrics.py
+- backend/src/api/routes/public_stats.py
+- backend/src/api/routes/purchase_orders.py
+- backend/src/api/routes/quotes.py
+- backend/src/api/routes/recommendations.py
+- backend/src/api/routes/reconciliation.py
+- backend/src/api/routes/reconciliation_dashboard.py
+- backend/src/api/routes/search.py
+- backend/src/api/routes/service_requests.py
+- backend/src/api/routes/settings.py
+- backend/src/api/routes/shadow_analytics.py
+- backend/src/api/routes/shadow_mode.py
+- backend/src/api/routes/shipments.py
+- backend/src/api/routes/sla.py
+- backend/src/api/routes/stripe_webhooks.py
+- backend/src/api/routes/supplier_portal.py
+- backend/src/api/routes/suppliers.py
+- backend/src/api/routes/team.py
+- backend/src/api/routes/test_data_gen.py
+- backend/src/api/routes/translations.py
+- backend/src/api/routes/warehouse.py
+- backend/src/api/routes/webhooks.py
+- backend/src/api/routes/workflows.py
+- backend/src/api/routes/workshop/__init__.py
+- backend/src/api/routes/workshop/bookings.py
+- backend/src/api/routes/workshop/dashboard.py
+- backend/src/api/routes/workshop/equipment.py
+- backend/src/api/routes/workshop/reminders.py
+- backend/src/api/routes/workshop/templates.py
+- backend/src/api/schemas/invoicing.py
+- backend/src/api/schemas/prd.py
+- backend/src/auth/jwt.py
+- backend/src/auth/models.py
+- backend/src/auth/password_reset.py
+- backend/src/cache/decorators.py
+- backend/src/cache/redis_client.py
+- backend/src/config/__init__.py
+- backend/src/config/ap2_settings.py
+- backend/src/config/autonomy.py
+- backend/src/config/cin7_settings.py
+- backend/src/config/database.py
+- backend/src/config/elevenlabs_settings.py
+- backend/src/config/heygen_settings.py
+- backend/src/config/marketplace_settings.py
+- backend/src/config/secrets_manager.py
+- backend/src/config/sendgrid_settings.py
+- backend/src/config/settings.py
+- backend/src/config/shopify_settings.py
+- backend/src/config/xero_settings.py
+- backend/src/db/__init__.py
+- backend/src/db/ai_models.py
+- backend/src/db/ai_search_models.py
+- backend/src/db/ap2_models.py
+- backend/src/db/approvals_models.py
+- backend/src/db/audit_models.py
+- backend/src/db/certification_models.py
+- backend/src/db/cin7_bom_models.py
+- backend/src/db/cin7_fulfilment_models.py
+- backend/src/db/cin7_gl_models.py
+- backend/src/db/cin7_models.py
+- backend/src/db/cin7_shadow_models.py
+- backend/src/db/container_models.py
+- backend/src/db/crm_models.py
+- backend/src/db/crm_schemas.py
+- backend/src/db/customer_health_models.py
+- backend/src/db/demo_models.py
+- backend/src/db/email_audit_models.py
+- backend/src/db/email_models.py
+- backend/src/db/equipment_lifecycle_models.py
+- backend/src/db/generate_demo_purchases.py
+- backend/src/db/i18n_models.py
+- backend/src/db/i18n_schemas.py
+- backend/src/db/indexes.py
+- backend/src/db/integration_credential_models.py
+- backend/src/db/inventory_models.py
+- backend/src/db/inventory_schemas.py
+- backend/src/db/marketplace_models.py
+- backend/src/db/mobile_order_models.py
+- backend/src/db/models/__init__.py
+- backend/src/db/models/invoicing.py
+- backend/src/db/models/prd.py
+- backend/src/db/models_base.py
+- backend/src/db/portal_forms_models.py
+- backend/src/db/pos_models.py
+- backend/src/db/pricing_models.py
+- backend/src/db/schemas.py
+- backend/src/db/seed_demo.py
+- backend/src/db/service_models.py
+- backend/src/db/shadow_session_models.py
+- backend/src/db/shopify_extended_models.py
+- backend/src/db/shopify_models.py
+- backend/src/db/shopify_schemas.py
+- backend/src/db/submission_notes_models.py
+- backend/src/db/webhook_models.py
+- backend/src/db/workflow_models.py
+- backend/src/db/workshop_models.py
+- backend/src/db/xero_models.py
+- backend/src/db/xero_schemas.py
+- backend/src/emails/templates/order_confirmed.html
+- backend/src/emails/templates/order_delivered.html
+- backend/src/emails/templates/order_shipped.html
+- backend/src/emails/templates/quote_created.html
+- backend/src/emails/templates/quote_expiring.html
+- backend/src/events/__init__.py
+- backend/src/events/event_bus.py
+- backend/src/integrations/__init__.py
+- backend/src/integrations/ap2/__init__.py
+- backend/src/integrations/ap2/client.py
+- backend/src/integrations/ap2/security.py
+- backend/src/integrations/cin7/__init__.py
+- backend/src/integrations/cin7/change_detector.py
+- backend/src/integrations/cin7/client.py
+- backend/src/integrations/cin7/customer_sync.py
+- backend/src/integrations/cin7/demo_client.py
+- backend/src/integrations/cin7/event_dispatcher.py
+- backend/src/integrations/cin7/inventory_sync.py
+- backend/src/integrations/cin7/product_sync.py
+- backend/src/integrations/cin7/purchase_sync.py
+- backend/src/integrations/cin7/sales_sync.py
+- backend/src/integrations/cin7/supplier_sync.py
+- backend/src/integrations/elevenlabs/__init__.py
+- backend/src/integrations/elevenlabs/client.py
+- backend/src/integrations/elevenlabs/demo_client.py
+- backend/src/integrations/elevenlabs/live_client.py
+- backend/src/integrations/google/__init__.py
+- backend/src/integrations/google/client.py
+- backend/src/integrations/heygen/__init__.py
+- backend/src/integrations/heygen/client.py
+- backend/src/integrations/heygen/demo_client.py
+- backend/src/integrations/heygen/live_client.py
+- backend/src/integrations/http_utils.py
+- backend/src/integrations/marketplace/__init__.py
+- backend/src/integrations/marketplace/base.py
+- backend/src/integrations/marketplace/demo_channel.py
+- backend/src/integrations/marketplace/ebay_channel.py
+- backend/src/integrations/marketplace/facebook_channel.py
+- backend/src/integrations/marketplace/registry.py
+- backend/src/integrations/marketplace/shopify_channel.py
+- backend/src/integrations/marketplace/sync_engine.py
+- backend/src/integrations/payments/__init__.py
+- backend/src/integrations/payments/amex.py
+- backend/src/integrations/payments/eftpos.py
+- backend/src/integrations/payments/processor.py
+- backend/src/integrations/secrets_manager.py
+- backend/src/integrations/sendgrid/__init__.py
+- backend/src/integrations/sendgrid/client.py
+- backend/src/integrations/sendgrid/demo_client.py
+- backend/src/integrations/sendgrid/live_client.py
+- backend/src/integrations/sendgrid/processor.py
+- backend/src/integrations/sentry_client.py
+- backend/src/integrations/shopify/__init__.py
+- backend/src/integrations/shopify/client.py
+- backend/src/integrations/shopify/demo_client.py
+- backend/src/integrations/shopify/inventory.py
+- backend/src/integrations/shopify/inventory_sync.py
+- backend/src/integrations/shopify/metafields.py
+- backend/src/integrations/shopify/orders.py
+- backend/src/integrations/shopify/product_sync.py
+- backend/src/integrations/shopify/translations.py
+- backend/src/integrations/shopify/webhooks.py
+- backend/src/integrations/stripe/__init__.py
+- backend/src/integrations/stripe/client.py
+- backend/src/integrations/xero/__init__.py
+- backend/src/integrations/xero/auth.py
+- backend/src/integrations/xero/client.py
+- backend/src/integrations/xero/customers.py
+- backend/src/integrations/xero/demo_client.py
+- backend/src/integrations/xero/invoices.py
+- backend/src/integrations/xero/payments.py
+- backend/src/integrations/xero/pos_reconciliation.py
+- backend/src/integrations/xero/token_manager.py
+- backend/src/integrations/xero/webhook_security.py
+- backend/src/integrations/xero/webhooks.py
+- backend/src/monitoring/__init__.py
+- backend/src/monitoring/metrics.py
+- backend/src/rag/__init__.py
+- backend/src/rag/chunkers.py
+- backend/src/rag/models.py
+- backend/src/rag/parsers.py
+- backend/src/rag/pipeline.py
+- backend/src/rag/storage.py
+- backend/src/scheduler/bank_feed_scheduler.py
+- backend/src/security/__init__.py
+- backend/src/security/encryption.py
+- backend/src/security/webhook_verification.py
+- backend/src/services/__init__.py
+- backend/src/services/alert_manager.py
+- backend/src/services/audit_service.py
+- backend/src/services/auto_reorder.py
+- backend/src/services/autonomy_audit.py
+- backend/src/services/bank_feed_service.py
+- backend/src/services/business_metrics_service.py
+- backend/src/services/carrier_service.py
+- backend/src/services/circuit_breaker.py
+- backend/src/services/code_generation/README.md
+- backend/src/services/code_generation/__init__.py
+- backend/src/services/code_generation/context_builder.py
+- backend/src/services/code_generation/doc_generator.py
+- backend/src/services/code_generation/generator.py
+- backend/src/services/code_generation/prompts/doc_generation.txt
+- backend/src/services/code_generation/prompts/python_generation.txt
+- backend/src/services/code_generation/prompts/test_generation.txt
+- backend/src/services/code_generation/prompts/typescript_generation.txt
+- backend/src/services/code_generation/quality_checker.py
+- backend/src/services/code_generation/test_generator.py
+- backend/src/services/deployment_service.py
+- backend/src/services/document_extraction_service.py
+- backend/src/services/dunning.py
+- backend/src/services/email_audit_service.py
+- backend/src/services/email_notifications.py
+- backend/src/services/email_service.py
+- backend/src/services/embedding_service.py
+- backend/src/services/i18n_service.py
+- backend/src/services/notification_service.py
+- backend/src/services/order_state.py
+- backend/src/services/procurement_matching.py
+- backend/src/services/product_recognition_service.py
+- backend/src/services/recommendation_service.py
+- backend/src/services/reconciliation_alerts.py
+- backend/src/services/requirement_extractor.py
+- backend/src/services/requirement_tracer.py
+- backend/src/services/semantic_search_service.py
+- backend/src/services/sla_escalation.py
+- backend/src/services/sla_service.py
+- backend/src/services/sse_service.py
+- backend/src/services/system_alert_service.py
+- backend/src/services/tax_calculator.py
+- backend/src/services/webhook_service.py
+- backend/src/services/workflow_service.py
+- backend/src/services/workshop_scheduler.py
+- backend/src/state/__init__.py
+- backend/src/state/supabase.py
+- backend/src/telemetry/__init__.py
+- backend/src/telemetry/usage_tracker.py
+- backend/src/testing/__init__.py
+- backend/src/testing/shopify_mock.py
+- backend/src/testing/xero_mock.py
+- backend/src/utils/__init__.py
+- backend/src/utils/calculations.py
+- backend/src/utils/logging.py
+- backend/src/utils/supabase_client.py
+- backend/src/workflow/__init__.py
+- backend/src/workflow/engine.py
+- backend/src/workflow/models.py
+- backend/src/workflow/storage.py
+- backend/src/workflows/__init__.py
+- backend/src/workflows/pr_automation.py
+- backend/srcapimain.py
+- backend/srcapiroutesailearning.py.tmp
+- backend/start_for_testing.py
+- backend/start_load_test_server.py
+- backend/test_ai_inventory_intelligence.py
+- backend/test_api.py
+- backend/test_api_error.py
+- backend/test_customer_sync.py
+- backend/test_dashboard_data.py
+- backend/test_dashboard_data_with_failures.py
+- backend/test_db_connection.py
+- backend/test_dependency_injection.py
+- backend/test_endpoint.py
+- backend/test_expired_quote_validation.py
+- backend/test_failure_scenarios.py
+- backend/test_full_payment_flow.py
+- backend/test_google_ai_endpoints.py
+- backend/test_google_ai_integration.py
+- backend/test_insights_api.py
+- backend/test_multistore_inventory.py
+- backend/test_order_update_items_500.py
+- backend/test_outbound_shipment.json
+- backend/test_password.py
+- backend/test_payment_webhook.py
+- backend/test_po.json
+- backend/test_quote_404_issue.py
+- backend/test_quote_fixes.py
+- backend/test_quote_generate_endpoint.py
+- backend/test_quote_validation.py
+- backend/test_redis_connection.py
+- backend/test_search_performance.py
+- backend/test_shopify_connection.py
+- backend/test_shopify_integration.py
+- backend/test_supplier.json
+- backend/tests/FIXES_APPLIED.md
+- backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- backend/tests/TEST_STATUS_REPORT.md
+- backend/tests/TEST_STATUS_UPDATE.md
+- backend/tests/__init__.py
+- backend/tests/ai/test_reconciliation_agent.py
+- backend/tests/api/README_BUGFIX_TESTS.md
+- backend/tests/api/test_500_errors.py
+- backend/tests/api/test_approval_gates.py
+- backend/tests/api/test_approvals.py
+- backend/tests/api/test_approvals_integration.py
+- backend/tests/api/test_autonomous_ops.py
+- backend/tests/api/test_bank_feeds.py
+- backend/tests/api/test_bas_report.py
+- backend/tests/api/test_billing_gaps.py
+- backend/tests/api/test_build_command.py
+- backend/tests/api/test_certifications.py
+- backend/tests/api/test_command_parser.py
+- backend/tests/api/test_customer_orders.py
+- backend/tests/api/test_document_extraction.py
+- backend/tests/api/test_equipment_lifecycle.py
+- backend/tests/api/test_gap_sync.py
+- backend/tests/api/test_inventory.py
+- backend/tests/api/test_inventory_gaps.py
+- backend/tests/api/test_inventory_new_endpoints.py
+- backend/tests/api/test_inventory_uni172.py
+- backend/tests/api/test_invoice_payments.py
+- backend/tests/api/test_invoices_tax_integration.py
+- backend/tests/api/test_nl_query.py
+- backend/tests/api/test_orders_performance.py
+- backend/tests/api/test_portal.py
+- backend/tests/api/test_pos_terminals.py
+- backend/tests/api/test_pos_transactions.py
+- backend/tests/api/test_pricing_tiers.py
+- backend/tests/api/test_quote_404_errors.py
+- backend/tests/api/test_quote_422_errors.py
+- backend/tests/api/test_quote_http_methods.py
+- backend/tests/api/test_rbac.py
+- backend/tests/api/test_reconciliation_integration.py
+- backend/tests/api/test_requirement_verification.py
+- backend/tests/api/test_supplier_portal.py
+- backend/tests/api/test_tenant_isolation.py
+- backend/tests/api/test_translations.py
+- backend/tests/api/test_workflows_integration.py
+- backend/tests/api/test_workshop_routes.py
+- backend/tests/conftest.py
+- backend/tests/e2e/__init__.py
+- backend/tests/e2e/test_login_flow.py
+- backend/tests/e2e/test_order_flow.py
+- backend/tests/fixtures/__init__.py
+- backend/tests/fixtures/data.py
+- backend/tests/fixtures/pos_data.py
+- backend/tests/fixtures/shopify_fixtures.py
+- backend/tests/fixtures/xero_fixtures.py
+- backend/tests/integration/README.md
+- backend/tests/integration/__init__.py
+- backend/tests/integration/conftest.py
+- backend/tests/integration/run_all_cin7_tests.py
+- backend/tests/integration/run_phase3_tests.py
+- backend/tests/integration/run_phase4_tests.py
+- backend/tests/integration/run_phase5_tests.py
+- backend/tests/integration/run_phase6_tests.py
+- backend/tests/integration/run_phase7_tests.py
+- backend/tests/integration/run_protocol_tests.py
+- backend/tests/integration/test_ap2_integration.py
+- backend/tests/integration/test_api_endpoints.py
+- backend/tests/integration/test_autonomous_dev.py
+- backend/tests/integration/test_autonomous_pr_workflow.py
+- backend/tests/integration/test_cin7_crm_sync.py
+- backend/tests/integration/test_cin7_integration.py
+- backend/tests/integration/test_cin7_sync.py
+- backend/tests/integration/test_crm_module.py
+- backend/tests/integration/test_recommendations.py
+- backend/tests/integration/test_search.py
+- backend/tests/integration/test_shopify_extended.py
+- backend/tests/integration/test_webhooks.py
+- backend/tests/integration/test_xero_reconciliation.py
+- backend/tests/integrations/__init__.py
+- backend/tests/integrations/test_xero_token_manager.py
+- backend/tests/load/README.md
+- backend/tests/load/__init__.py
+- backend/tests/load/conftest.py
+- backend/tests/load/generators/customers.py
+- backend/tests/load/generators/misc.py
+- backend/tests/load/generators/orders.py
+- backend/tests/load/generators/products.py
+- backend/tests/load/generators/quotes.py
+- backend/tests/load/load_test_requirements.txt
+- backend/tests/load/load_test_scenarios.ps1
+- backend/tests/load/load_test_scenarios.sh
+- backend/tests/load/locustfile.py
+- backend/tests/load/locustfile_ai_features.py
+- backend/tests/load/reporters/html_reporter.py
+- backend/tests/load/reporters/json_reporter.py
+- backend/tests/load/reports/load_test_full_20260127_100548.html
+- backend/tests/load/reports/load_test_full_20260127_100548.json
+- backend/tests/load/reports/load_test_full_20260127_100703.html
+- backend/tests/load/reports/load_test_full_20260127_100703.json
+- backend/tests/load/reports/load_test_full_20260128_131600.html
+- backend/tests/load/reports/load_test_full_20260128_131600.json
+- backend/tests/load/reports/load_test_full_20260128_132757.html
+- backend/tests/load/reports/load_test_full_20260128_132757.json
+- backend/tests/load/reports/load_test_full_20260205_124803.html
+- backend/tests/load/reports/load_test_full_20260205_124803.json
+- backend/tests/load/reports/load_test_full_20260205_125037.html
+- backend/tests/load/reports/load_test_full_20260205_125037.json
+- backend/tests/load/reports/load_test_latest.html
+- backend/tests/load/reports/load_test_latest.json
+- backend/tests/load/reports/load_test_quick_20260128_122451.html
+- backend/tests/load/reports/load_test_quick_20260128_122451.json
+- backend/tests/load/reports/load_test_quick_20260205_095442.html
+- backend/tests/load/reports/load_test_quick_20260205_095442.json
+- backend/tests/load/reports/load_test_quick_20260205_193339.html
+- backend/tests/load/reports/load_test_quick_20260205_193339.json
+- backend/tests/load/reports/load_test_quick_20260205_195029.html
+- backend/tests/load/reports/load_test_quick_20260205_195029.json
+- backend/tests/load/reports/load_test_quick_20260205_212433.html
+- backend/tests/load/reports/load_test_quick_20260205_212433.json
+- backend/tests/load/reports/load_test_quick_20260205_214840.html
+- backend/tests/load/reports/load_test_quick_20260205_214840.json
+- backend/tests/load/reports/load_test_quick_20260206_000919.html
+- backend/tests/load/reports/load_test_quick_20260206_000919.json
+- backend/tests/load/reports/load_test_quick_latest.html
+- backend/tests/load/reports/load_test_quick_latest.json
+- backend/tests/load/reports/scenario_report.html
+- backend/tests/load/reports/scenario_report.json
+- backend/tests/load/run_full_load_test.py
+- backend/tests/load/run_quick_load_test.py
+- backend/tests/load/test_concurrent_number_generation.py
+- backend/tests/load/test_performance_load.py
+- backend/tests/load/test_scenarios.py
+- backend/tests/performance/__init__.py
+- backend/tests/run_integration_tests.ps1
+- backend/tests/run_integration_tests.sh
+- backend/tests/security/__init__.py
+- backend/tests/security/test_auth_security.py
+- backend/tests/security/test_encryption.py
+- backend/tests/security/test_injection_attacks.py
+- backend/tests/security/test_xss_csrf.py
+- backend/tests/services/__init__.py
+- backend/tests/services/code_generation/__init__.py
+- backend/tests/services/code_generation/test_context_builder.py
+- backend/tests/services/code_generation/test_doc_generator.py
+- backend/tests/services/code_generation/test_generator.py
+- backend/tests/services/code_generation/test_integration.py
+- backend/tests/services/code_generation/test_quality_checker.py
+- backend/tests/services/code_generation/test_test_generator.py
+- backend/tests/services/run_all_tests.py
+- backend/tests/services/test_auto_reorder.py
+- backend/tests/services/test_auto_reorder_integration.py
+- backend/tests/services/test_dunning.py
+- backend/tests/services/test_email_audit_service.py
+- backend/tests/services/test_order_state.py
+- backend/tests/services/test_procurement_matching.py
+- backend/tests/services/test_procurement_matching_integration.py
+- backend/tests/services/test_requirement_extractor.py
+- backend/tests/services/test_requirement_tracer.py
+- backend/tests/services/test_sla_escalation.py
+- backend/tests/services/test_tax_calculator.py
+- backend/tests/services/test_tax_calculator_integration.py
+- backend/tests/smoke/__init__.py
+- backend/tests/smoke/conftest.py
+- backend/tests/smoke/test_smoke.py
+- backend/tests/test_agent_orchestration.py
+- backend/tests/test_approvals_batch_2c.py
+- backend/tests/test_auth_security.py
+- backend/tests/test_autonomy_audit.py
+- backend/tests/test_autonomy_config.py
+- backend/tests/test_batch_2c_structure.py
+- backend/tests/test_billing.py
+- backend/tests/test_circuit_breaker.py
+- backend/tests/test_concurrent_number_generation.py
+- backend/tests/test_customers_api.py
+- backend/tests/test_error_handling.py
+- backend/tests/test_gap_batch_2b.py
+- backend/tests/test_gap_batch_2b_smoke.py
+- backend/tests/test_gap_batch_2c_2d.py
+- backend/tests/test_health.py
+- backend/tests/test_marketplace.py
+- backend/tests/test_orders_api.py
+- backend/tests/test_pr_automation.py
+- backend/tests/test_products_api.py
+- backend/tests/test_project_intelligence.py
+- backend/tests/test_prometheus_metrics.py
+- backend/tests/test_quotes_api.py
+- backend/tests/test_risk_assessor.py
+- backend/tests/test_rollback_mechanism.py
+- backend/tests/test_sequence_generation.py
+- backend/tests/test_shopify_mock.py
+- backend/tests/test_specialized_agents.py
+- backend/tests/test_toolshed_api.py
+- backend/tests/test_workflow_agent_integration.py
+- backend/tests/test_workflows_batch_2c.py
+- backend/tests/test_xero_mock.py
+- backend/tests/unit/test_number_generation.py
+- backend/tests/unit/test_reconciliation_logic.py
+- backend/tests/utils/__init__.py
+- backend/tests/utils/test_calculations.py
+- backend/tests/webhooks/__init__.py
+- backend/tests/webhooks/test_webhook_transactions.py
+- backend/update_supplier.json
+- backend/uv.lock
+- backend/vercel.json
+- backend/verify_i18n_migration.py
+- backend/verify_indexes.py
+- backend/verify_phase1.py
+- backend/verify_phase9_fixes.py
+- backend/verify_race_condition_fix.py
+- backend/verify_sequence_deployment.py
+- backend/verify_tables.py
+- docs/project-root/CLAUDE.md
+- eslint.config.mjs
+- lighthouserc.js
+- package.json
+- pnpm-lock.yaml
+- pnpm-workspace.yaml
+- scripts/boardroom/security-audit.js
+- scripts/dependency-checks.sh
+- scripts/deploy-phase4-backend.sh
+- scripts/deploy-phase4-frontend.sh
+- scripts/deploy.sh
+- scripts/dev-start.sh
+- scripts/dev.sh
+- scripts/health-check-phase4.sh
+- scripts/security-audit.ps1
+- scripts/setup.sh
+- scripts/test-phase4-sse.ps1
+- scripts/test-sse-events.ps1
+- scripts/test-sse-events.sh
+- scripts/verify-firewall.sh
+- scripts/verify-integration-tests.sh
+- scripts/verify-load-testing.sh
+- scripts/verify-penetration-testing.sh
+- scripts/verify-prometheus-grafana.sh
+- scripts/verify-query-performance.sh
+- scripts/verify-rate-limiting.sh
+- scripts/verify-secrets-management.sh
+- scripts/verify-secrets.sh
+- scripts/verify-security-audit.sh
+- scripts/verify-sentry.sh
+- scripts/verify-shopify-webhooks.sh
+- scripts/verify-uat.sh
+- scripts/verify-uptime-monitoring.sh
+- scripts/verify.sh
+- (staged) app/.dockerignore
+- (staged) app/.gitignore
+- (staged) app/AGENTS.md
+- (staged) app/Dockerfile
+- (staged) app/__tests__/app/approvals-page.test.tsx
+- (staged) app/__tests__/app/billing-page.test.tsx
+- (staged) app/__tests__/app/crm-health.test.tsx
+- (staged) app/__tests__/app/crm-onboarding.test.tsx
+- (staged) app/__tests__/app/crm-personas.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- (staged) app/__tests__/app/orders-integration.test.tsx
+- (staged) app/__tests__/app/quotes-integration.test.tsx
+- (staged) app/__tests__/app/reconciliation-page.test.tsx
+- (staged) app/__tests__/app/workflows-page.test.tsx
+- (staged) app/__tests__/components/EmptyState.test.tsx
+- (staged) app/__tests__/components/ErrorBoundary.test.tsx
+- (staged) app/__tests__/components/ui/pagination-controls.test.tsx
+- (staged) app/__tests__/e2e/billing.spec.ts
+- (staged) app/__tests__/e2e/onboarding.spec.ts
+- (staged) app/__tests__/lib/api/activities.test.ts
+- (staged) app/__tests__/lib/api/agents.test.ts
+- (staged) app/__tests__/lib/api/ai-chat.test.ts
+- (staged) app/__tests__/lib/api/ai-generate.test.ts
+- (staged) app/__tests__/lib/api/ai-insights.test.ts
+- (staged) app/__tests__/lib/api/ap2.test.ts
+- (staged) app/__tests__/lib/api/approvals-extended.test.ts
+- (staged) app/__tests__/lib/api/approvals.test.ts
+- (staged) app/__tests__/lib/api/auth.test.ts
+- (staged) app/__tests__/lib/api/autonomous.test.ts
+- (staged) app/__tests__/lib/api/autonomy.test.ts
+- (staged) app/__tests__/lib/api/bank-feeds.test.ts
+- (staged) app/__tests__/lib/api/billing.test.ts
+- (staged) app/__tests__/lib/api/chat.test.ts
+- (staged) app/__tests__/lib/api/cin7-bom.test.ts
+- (staged) app/__tests__/lib/api/cin7-fulfilment.test.ts
+- (staged) app/__tests__/lib/api/cin7-gl.test.ts
+- (staged) app/__tests__/lib/api/cin7-grn.test.ts
+- (staged) app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow.test.ts
+- (staged) app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- (staged) app/__tests__/lib/api/cin7.test.ts
+- (staged) app/__tests__/lib/api/contacts.test.ts
+- (staged) app/__tests__/lib/api/contractors.test.ts
+- (staged) app/__tests__/lib/api/copilot.test.ts
+- (staged) app/__tests__/lib/api/customers.test.ts
+- (staged) app/__tests__/lib/api/documents.test.ts
+- (staged) app/__tests__/lib/api/inventory.test.ts
+- (staged) app/__tests__/lib/api/invoices-extended.test.ts
+- (staged) app/__tests__/lib/api/invoices.test.ts
+- (staged) app/__tests__/lib/api/marketing.test.ts
+- (staged) app/__tests__/lib/api/marketplace.test.ts
+- (staged) app/__tests__/lib/api/mobile.test.ts
+- (staged) app/__tests__/lib/api/monitoring.test.ts
+- (staged) app/__tests__/lib/api/notifications.test.ts
+- (staged) app/__tests__/lib/api/orders.test.ts
+- (staged) app/__tests__/lib/api/pos.test.ts
+- (staged) app/__tests__/lib/api/products.test.ts
+- (staged) app/__tests__/lib/api/purchase-orders.test.ts
+- (staged) app/__tests__/lib/api/quotes.test.ts
+- (staged) app/__tests__/lib/api/reconciliation.test.ts
+- (staged) app/__tests__/lib/api/sendgrid.test.ts
+- (staged) app/__tests__/lib/api/service-requests.test.ts
+- (staged) app/__tests__/lib/api/settings.test.ts
+- (staged) app/__tests__/lib/api/shadow.test.ts
+- (staged) app/__tests__/lib/api/shipments-outbound.test.ts
+- (staged) app/__tests__/lib/api/shipments.test.ts
+- (staged) app/__tests__/lib/api/shopify.test.ts
+- (staged) app/__tests__/lib/api/sla.test.ts
+- (staged) app/__tests__/lib/api/suppliers.test.ts
+- (staged) app/__tests__/lib/api/tasks.test.ts
+- (staged) app/__tests__/lib/api/team.test.ts
+- (staged) app/__tests__/lib/api/warehouse.test.ts
+- (staged) app/__tests__/lib/api/workflows-extended.test.ts
+- (staged) app/__tests__/lib/api/workflows.test.ts
+- (staged) app/__tests__/lib/api/workshop.test.ts
+- (staged) app/__tests__/lib/api/xero.test.ts
+- (staged) app/__tests__/lib/marketplace.test.ts
+- (staged) app/__tests__/lib/types/cin7.test.ts
+- (staged) app/__tests__/lib/types/marketplace.test.ts
+- (staged) app/__tests__/lib/types/reconciliation.test.ts
+- (staged) app/__tests__/lib/types/workflows.test.ts
+- (staged) app/__tests__/lib/utils/csv-export.test.ts
+- (staged) app/components.json
+- (staged) app/declarations.d.ts
+- (staged) app/e2e/README.md
+- (staged) app/e2e/auth.setup.ts
+- (staged) app/e2e/auth.spec.ts
+- (staged) app/e2e/autosave.spec.ts
+- (staged) app/e2e/billing.spec.ts
+- (staged) app/e2e/capture-error.spec.ts
+- (staged) app/e2e/crm-health.spec.ts
+- (staged) app/e2e/customers.spec.ts
+- (staged) app/e2e/debug-orders.spec.ts
+- (staged) app/e2e/fixtures/auth.ts
+- (staged) app/e2e/helpers/page-objects.ts
+- (staged) app/e2e/helpers/test-data.ts
+- (staged) app/e2e/mobile-photo-order.spec.ts
+- (staged) app/e2e/monitoring.spec.ts
+- (staged) app/e2e/orders.spec.ts
+- (staged) app/e2e/pos-reconciliation.spec.ts
+- (staged) app/e2e/pos-transactions.spec.ts
+- (staged) app/e2e/prd-generation.spec.ts
+- (staged) app/e2e/products.spec.ts
+- (staged) app/e2e/quotes.spec.ts
+- (staged) app/e2e/showroom.spec.ts
+- (staged) app/e2e/test-helper.ts
+- (staged) app/e2e/test-websocket-fix.spec.ts
+- (staged) app/e2e/warehouse.spec.ts
+- (staged) app/e2e/workshop.spec.ts
+- (staged) app/eslint.config.mjs
+- (staged) app/next-env.d.ts
+- (staged) app/next.config.ts
+- (staged) app/package.json
+- (staged) app/playwright.a11y.config.ts
+- (staged) app/playwright.config.ts
+- (staged) app/postcss.config.js
+- (staged) app/public/favicon.svg
+- (staged) app/public/manifest.json
+- (staged) app/public/test-api.html
+- (staged) app/scripts/dev-with-fallback.mjs
+- (staged) app/sentry.client.config.ts
+- (staged) app/sentry.edge.config.ts
+- (staged) app/sentry.server.config.ts
+- (staged) app/src/app/(auth)/layout.tsx
+- (staged) app/src/app/(auth)/login/page.tsx
+- (staged) app/src/app/(auth)/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/activities/page.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentList.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentStats.tsx
+- (staged) app/src/app/(dashboard)/agents/components/LearningInsights.tsx
+- (staged) app/src/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- (staged) app/src/app/(dashboard)/agents/components/TaskHistory.tsx
+- (staged) app/src/app/(dashboard)/agents/components/index.ts
+- (staged) app/src/app/(dashboard)/agents/page.tsx
+- (staged) app/src/app/(dashboard)/ai-assistant/page.tsx
+- (staged) app/src/app/(dashboard)/ai-ops/page.tsx
+- (staged) app/src/app/(dashboard)/ai-query/page.tsx
+- (staged) app/src/app/(dashboard)/alerts/page.tsx
+- (staged) app/src/app/(dashboard)/approvals/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous-dev/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous/page.tsx
+- (staged) app/src/app/(dashboard)/backorders/page.tsx
+- (staged) app/src/app/(dashboard)/bank-feeds/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/ContactForm.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- (staged) app/src/app/(dashboard)/contacts/page.tsx
+- (staged) app/src/app/(dashboard)/containers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/containers/page.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/ContractorForm.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- (staged) app/src/app/(dashboard)/contractors/page.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- (staged) app/src/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/health/page.tsx
+- (staged) app/src/app/(dashboard)/customers/layout.tsx
+- (staged) app/src/app/(dashboard)/customers/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/customers/page.tsx
+- (staged) app/src/app/(dashboard)/customers/personas/page.tsx
+- (staged) app/src/app/(dashboard)/dashboard/layout.tsx
+- (staged) app/src/app/(dashboard)/dashboard/page.tsx
+- (staged) app/src/app/(dashboard)/demo-live/page.tsx
+- (staged) app/src/app/(dashboard)/demo/contractor-demo.tsx
+- (staged) app/src/app/(dashboard)/demo/page.tsx
+- (staged) app/src/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/page.tsx
+- (staged) app/src/app/(dashboard)/error.tsx
+- (staged) app/src/app/(dashboard)/faq/page.tsx
+- (staged) app/src/app/(dashboard)/insights/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/bom/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/forecast/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/reservations/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/stock/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/bas/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/types.ts
+- (staged) app/src/app/(dashboard)/layout.tsx
+- (staged) app/src/app/(dashboard)/loading.tsx
+- (staged) app/src/app/(dashboard)/marketing/page.tsx
+- (staged) app/src/app/(dashboard)/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/AlertCard.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- (staged) app/src/app/(dashboard)/monitoring/page.tsx
+- (staged) app/src/app/(dashboard)/orders/[id]/invoice/page.tsx
+- (staged) app/src/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderPrintView.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- (staged) app/src/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- (staged) app/src/app/(dashboard)/orders/fulfilment/page.tsx
+- (staged) app/src/app/(dashboard)/orders/layout.tsx
+- (staged) app/src/app/(dashboard)/orders/page.tsx
+- (staged) app/src/app/(dashboard)/orders/types.ts
+- (staged) app/src/app/(dashboard)/pos/components/Cart.tsx
+- (staged) app/src/app/(dashboard)/pos/components/POSTerminal.tsx
+- (staged) app/src/app/(dashboard)/pos/components/PaymentPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/components/ProductSearch.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/page.tsx
+- (staged) app/src/app/(dashboard)/pos/page.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/pos/staff/page.tsx
+- (staged) app/src/app/(dashboard)/pos/terminal/page.tsx
+- (staged) app/src/app/(dashboard)/pos/types.ts
+- (staged) app/src/app/(dashboard)/prd/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/prd/generate/page.tsx
+- (staged) app/src/app/(dashboard)/products/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/ProductForm.tsx
+- (staged) app/src/app/(dashboard)/products/layout.tsx
+- (staged) app/src/app/(dashboard)/products/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/receiving/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/types.ts
+- (staged) app/src/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- (staged) app/src/app/(dashboard)/quotes/generate/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/layout.tsx
+- (staged) app/src/app/(dashboard)/quotes/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/types.ts
+- (staged) app/src/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/layout.tsx
+- (staged) app/src/app/(dashboard)/reports/page.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- (staged) app/src/app/(dashboard)/service-requests/page.tsx
+- (staged) app/src/app/(dashboard)/settings/account/page.tsx
+- (staged) app/src/app/(dashboard)/settings/billing/page.tsx
+- (staged) app/src/app/(dashboard)/settings/company/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/ap2/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/gl/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/mobile/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- (staged) app/src/app/(dashboard)/settings/setup/page.tsx
+- (staged) app/src/app/(dashboard)/settings/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- (staged) app/src/app/(dashboard)/settings/team/page.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/ProductList.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/page.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/page.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/submissions/page.tsx
+- (staged) app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- (staged) app/src/app/(dashboard)/suppliers/page.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/QueueStats.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskList.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- (staged) app/src/app/(dashboard)/tasks/page.tsx
+- (staged) app/src/app/(dashboard)/warehouse/page.tsx
+- (staged) app/src/app/(dashboard)/workflows/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/reminders/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/schedule/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/templates/page.tsx
+- (staged) app/src/app/(guest)/layout.tsx
+- (staged) app/src/app/(guest)/order/[token]/GuestOrderClient.tsx
+- (staged) app/src/app/(guest)/order/[token]/page.tsx
+- (staged) app/src/app/(mobile)/layout.tsx
+- (staged) app/src/app/(mobile)/order/new/page.tsx
+- (staged) app/src/app/(portal)/layout.tsx
+- (staged) app/src/app/(portal)/portal/certifications/page.tsx
+- (staged) app/src/app/(portal)/portal/invoices/page.tsx
+- (staged) app/src/app/(portal)/portal/orders/page.tsx
+- (staged) app/src/app/(portal)/portal/page.tsx
+- (staged) app/src/app/(portal)/portal/service/page.tsx
+- (staged) app/src/app/(supplier)/layout.tsx
+- (staged) app/src/app/(supplier)/supplier/orders/page.tsx
+- (staged) app/src/app/(supplier)/supplier/page.tsx
+- (staged) app/src/app/api/activities/route.ts
+- (staged) app/src/app/api/activities/stats/route.ts
+- (staged) app/src/app/api/agents/insights/route.ts
+- (staged) app/src/app/api/agents/list/route.ts
+- (staged) app/src/app/api/agents/patterns/route.ts
+- (staged) app/src/app/api/agents/stats/route.ts
+- (staged) app/src/app/api/agents/tasks/recent/route.ts
+- (staged) app/src/app/api/ai/cin7-anomaly/sync-health/route.ts
+- (staged) app/src/app/api/ai/insights/dashboard/route.ts
+- (staged) app/src/app/api/ai/insights/sales/route.ts
+- (staged) app/src/app/api/ai/inventory-forecast/route.ts
+- (staged) app/src/app/api/ai/patterns/orders/route.ts
+- (staged) app/src/app/api/analytics/metrics/overview/route.ts
+- (staged) app/src/app/api/auth/login/route.ts
+- (staged) app/src/app/api/auth/logout/route.ts
+- (staged) app/src/app/api/backorders/route.ts
+- (staged) app/src/app/api/bank-feeds/accounts/route.ts
+- (staged) app/src/app/api/boardroom/cron/route.ts
+- (staged) app/src/app/api/ccw/products/route.ts
+- (staged) app/src/app/api/ccw/summary/route.ts
+- (staged) app/src/app/api/contact-submissions/route.ts
+- (staged) app/src/app/api/contacts/route.ts
+- (staged) app/src/app/api/containers/route.ts
+- (staged) app/src/app/api/cron/auto-reorder-inventory/route.ts
+- (staged) app/src/app/api/cron/check-expiring-quotes/route.ts
+- (staged) app/src/app/api/cron/check-sla-breaches/route.ts
+- (staged) app/src/app/api/cron/cleanup-old-runs/route.ts
+- (staged) app/src/app/api/cron/daily-report/route.ts
+- (staged) app/src/app/api/cron/health-check/route.ts
+- (staged) app/src/app/api/cron/nightly-full-sync/route.ts
+- (staged) app/src/app/api/cron/process-onboarding-emails/route.ts
+- (staged) app/src/app/api/cron/refresh-health-scores/route.ts
+- (staged) app/src/app/api/cron/refresh-xero-tokens/route.ts
+- (staged) app/src/app/api/cron/retry-failed-webhooks/route.ts
+- (staged) app/src/app/api/cron/run-autonomous-ops/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-cin7/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-xero/route.ts
+- (staged) app/src/app/api/customers/route.ts
+- (staged) app/src/app/api/dashboard/aggregated/route.ts
+- (staged) app/src/app/api/dashboard/metrics-stream/route.ts
+- (staged) app/src/app/api/dashboard/order-status-breakdown/route.ts
+- (staged) app/src/app/api/dashboard/quote-conversion/route.ts
+- (staged) app/src/app/api/dashboard/revenue-by-location/route.ts
+- (staged) app/src/app/api/demo-requests/route.ts
+- (staged) app/src/app/api/health/route.ts
+- (staged) app/src/app/api/health/routes/route.ts
+- (staged) app/src/app/api/integrations/cin7/status/route.ts
+- (staged) app/src/app/api/integrations/cin7/stream/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/conversations/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/status/route.ts
+- (staged) app/src/app/api/integrations/shopify/status/route.ts
+- (staged) app/src/app/api/integrations/xero/status/route.ts
+- (staged) app/src/app/api/inventory-stream/route.ts
+- (staged) app/src/app/api/inventory/reservations/route.ts
+- (staged) app/src/app/api/inventory/route.ts
+- (staged) app/src/app/api/inventory/stock-health/route.ts
+- (staged) app/src/app/api/inventory/transfer-suggestions/route.ts
+- (staged) app/src/app/api/inventory/transfers/route.ts
+- (staged) app/src/app/api/invoices/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- (staged) app/src/app/api/monitoring/alerts/route.ts
+- (staged) app/src/app/api/monitoring/health/route.ts
+- (staged) app/src/app/api/monitoring/metrics/route.ts
+- (staged) app/src/app/api/monitoring/range/route.ts
+- (staged) app/src/app/api/orders/route.ts
+- (staged) app/src/app/api/pos/locations/route.ts
+- (staged) app/src/app/api/pos/sales-staff/route.ts
+- (staged) app/src/app/api/pos/terminals/route.ts
+- (staged) app/src/app/api/products/route.ts
+- (staged) app/src/app/api/purchase-orders/route.ts
+- (staged) app/src/app/api/quotes/route.ts
+- (staged) app/src/app/api/submissions/statistics/route.ts
+- (staged) app/src/app/api/telemetry/route.ts
+- (staged) app/src/app/api/warehouse/ops/route.ts
+- (staged) app/src/app/api/webhooks/route.ts
+- (staged) app/src/app/api/workflows/[id]/execute/route.ts
+- (staged) app/src/app/api/workflows/[id]/route.ts
+- (staged) app/src/app/api/workflows/route.ts
+- (staged) app/src/app/dashboard-analytics/page.tsx
+- (staged) app/src/app/demo/i18n/page.tsx
+- (staged) app/src/app/design-system/page.tsx
+- (staged) app/src/app/error.tsx
+- (staged) app/src/app/favicon.ico/route.ts
+- (staged) app/src/app/globals.css
+- (staged) app/src/app/layout.tsx
+- (staged) app/src/app/not-found.tsx
+- (staged) app/src/app/page.tsx
+- (staged) app/src/app/playground/page.tsx
+- (staged) app/src/app/robots.ts
+- (staged) app/src/app/sitemap.ts
+- (staged) app/src/components/ClientOnly.tsx
+- (staged) app/src/components/ai-marketing/asset-library.tsx
+- (staged) app/src/components/ai-marketing/media-generator.tsx
+- (staged) app/src/components/ai/AIProductCopyGenerator.tsx
+- (staged) app/src/components/ai/AIQuoteGenerator.tsx
+- (staged) app/src/components/ai/QuoteCopilotChat.tsx
+- (staged) app/src/components/ai/StaffCopilotWidget.tsx
+- (staged) app/src/components/alerts/AnomalyAlert.tsx
+- (staged) app/src/components/auth/login-form.tsx
+- (staged) app/src/components/autonomous/ApprovalGateDialog.tsx
+- (staged) app/src/components/autonomous/ControlPanel.tsx
+- (staged) app/src/components/autonomous/FileChangesViewer.tsx
+- (staged) app/src/components/autonomous/PhaseTimeline.tsx
+- (staged) app/src/components/charts/CategorySalesChart.tsx
+- (staged) app/src/components/charts/RevenueChart.tsx
+- (staged) app/src/components/chat/ChatWidget.tsx
+- (staged) app/src/components/contractor-availability-live.tsx
+- (staged) app/src/components/contractor-availability.tsx
+- (staged) app/src/components/dashboard/AgentMetricsWidget.tsx
+- (staged) app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- (staged) app/src/components/dashboard/DemoVideoBanner.tsx
+- (staged) app/src/components/dashboard/DemoVideoLink.tsx
+- (staged) app/src/components/dashboard/InventoryForecastWidget.tsx
+- (staged) app/src/components/dashboard/OrderPatternsWidget.tsx
+- (staged) app/src/components/dashboard/OrderStatusBreakdownWidget.tsx
+- (staged) app/src/components/dashboard/QuoteConversionWidget.tsx
+- (staged) app/src/components/dashboard/RevenueByLocationWidget.tsx
+- (staged) app/src/components/dashboard/SalesInsightsWidget.tsx
+- (staged) app/src/components/dashboard/StockHealthWidget.tsx
+- (staged) app/src/components/dashboard/TransferSuggestionsWidget.tsx
+- (staged) app/src/components/errors/ErrorBoundary.tsx
+- (staged) app/src/components/forms/AutoFillSuggestion.tsx
+- (staged) app/src/components/insights/insight-card.tsx
+- (staged) app/src/components/inventory/LocationAwareProductSelect.tsx
+- (staged) app/src/components/inventory/MultiLocationStockCell.tsx
+- (staged) app/src/components/inventory/ReleaseReservationDialog.tsx
+- (staged) app/src/components/inventory/StockReservationDialog.tsx
+- (staged) app/src/components/inventory/TransferStatusBadge.tsx
+- (staged) app/src/components/landing/AnimatedCounter.tsx
+- (staged) app/src/components/landing/LiveStatsBar.tsx
+- (staged) app/src/components/layout/LanguageSwitcher.tsx
+- (staged) app/src/components/layout/NotificationBell.tsx
+- (staged) app/src/components/layout/ShadowModeBanner.tsx
+- (staged) app/src/components/layout/footer.tsx
+- (staged) app/src/components/layout/mobile-nav.tsx
+- (staged) app/src/components/layout/sidebar.tsx
+- (staged) app/src/components/marketing/feature-grid.tsx
+- (staged) app/src/components/marketing/hero-section.tsx
+- (staged) app/src/components/marketing/index.ts
+- (staged) app/src/components/marketing/testimonials.tsx
+- (staged) app/src/components/mobile/PhotoCaptureWidget.tsx
+- (staged) app/src/components/onboarding/CompanySetupStep.tsx
+- (staged) app/src/components/onboarding/FirstQuoteStep.tsx
+- (staged) app/src/components/onboarding/OnboardingWizard.tsx
+- (staged) app/src/components/onboarding/SampleDataStep.tsx
+- (staged) app/src/components/onboarding/ShopifyConnectStep.tsx
+- (staged) app/src/components/onboarding/TeamInviteStep.tsx
+- (staged) app/src/components/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-detail-view.tsx
+- (staged) app/src/components/prd/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-generator-form.tsx
+- (staged) app/src/components/providers/i18n-provider.tsx
+- (staged) app/src/components/responsive-table/ResponsiveTable.tsx
+- (staged) app/src/components/responsive-table/index.ts
+- (staged) app/src/components/seo/FaqSchema.tsx
+- (staged) app/src/components/seo/JsonLd.tsx
+- (staged) app/src/components/transitions/FadeIn.tsx
+- (staged) app/src/components/transitions/PageTransition.tsx
+- (staged) app/src/components/transitions/RouteProgressBar.tsx
+- (staged) app/src/components/transitions/index.ts
+- (staged) app/src/components/ui/alert-dialog.tsx
+- (staged) app/src/components/ui/alert.tsx
+- (staged) app/src/components/ui/avatar.tsx
+- (staged) app/src/components/ui/badge.tsx
+- (staged) app/src/components/ui/bento-grid.tsx
+- (staged) app/src/components/ui/border-beam.tsx
+- (staged) app/src/components/ui/breadcrumb.tsx
+- (staged) app/src/components/ui/button.tsx
+- (staged) app/src/components/ui/card.tsx
+- (staged) app/src/components/ui/checkbox.tsx
+- (staged) app/src/components/ui/command-palette.tsx
+- (staged) app/src/components/ui/command.tsx
+- (staged) app/src/components/ui/dialog.tsx
+- (staged) app/src/components/ui/draft-recovery-alert.tsx
+- (staged) app/src/components/ui/dropdown-menu.tsx
+- (staged) app/src/components/ui/empty-state.tsx
+- (staged) app/src/components/ui/form.tsx
+- (staged) app/src/components/ui/input.tsx
+- (staged) app/src/components/ui/label.tsx
+- (staged) app/src/components/ui/loading.tsx
+- (staged) app/src/components/ui/motion.tsx
+- (staged) app/src/components/ui/order-status-badge.tsx
+- (staged) app/src/components/ui/pagination-controls.tsx
+- (staged) app/src/components/ui/popover.tsx
+- (staged) app/src/components/ui/progress.tsx
+- (staged) app/src/components/ui/real-time-indicator.tsx
+- (staged) app/src/components/ui/scroll-area.tsx
+- (staged) app/src/components/ui/select.tsx
+- (staged) app/src/components/ui/separator.tsx
+- (staged) app/src/components/ui/sheet.tsx
+- (staged) app/src/components/ui/skeleton.tsx
+- (staged) app/src/components/ui/switch.tsx
+- (staged) app/src/components/ui/table.tsx
+- (staged) app/src/components/ui/tabs.tsx
+- (staged) app/src/components/ui/textarea.tsx
+- (staged) app/src/components/ui/toast.tsx
+- (staged) app/src/components/ui/tooltip.tsx
+- (staged) app/src/components/workflow/canvas/workflow-canvas.tsx
+- (staged) app/src/components/workflow/nodes/agent-node.tsx
+- (staged) app/src/components/workflow/nodes/conditional-node.tsx
+- (staged) app/src/components/workflow/nodes/end-node.tsx
+- (staged) app/src/components/workflow/nodes/llm-node.tsx
+- (staged) app/src/components/workflow/nodes/start-node.tsx
+- (staged) app/src/components/workflow/nodes/tool-node.tsx
+- (staged) app/src/contexts/websocket-context.tsx
+- (staged) app/src/hooks/use-barcode-scanner.ts
+- (staged) app/src/hooks/use-chat.ts
+- (staged) app/src/hooks/use-line-item-calculations.ts
+- (staged) app/src/hooks/use-prd-generation.ts
+- (staged) app/src/hooks/use-toast.ts
+- (staged) app/src/i18n/config.ts
+- (staged) app/src/i18n/messages/ar.json
+- (staged) app/src/i18n/messages/en.json
+- (staged) app/src/i18n/messages/es.json
+- (staged) app/src/i18n/messages/hi.json
+- (staged) app/src/i18n/messages/pt.json
+- (staged) app/src/i18n/messages/ta.json
+- (staged) app/src/i18n/messages/te.json
+- (staged) app/src/i18n/messages/vi.json
+- (staged) app/src/i18n/messages/zh-CN.json
+- (staged) app/src/i18n/messages/zh-TW.json
+- (staged) app/src/i18n/request.ts
+- (staged) app/src/instrumentation.ts
+- (staged) app/src/lib/agents/independent-verifier.ts
+- (staged) app/src/lib/api/activities.ts
+- (staged) app/src/lib/api/agents.ts
+- (staged) app/src/lib/api/ai-chat.ts
+- (staged) app/src/lib/api/ai-generate.ts
+- (staged) app/src/lib/api/ai-insights.ts
+- (staged) app/src/lib/api/ap2.ts
+- (staged) app/src/lib/api/approvals.ts
+- (staged) app/src/lib/api/auth.ts
+- (staged) app/src/lib/api/autonomous.ts
+- (staged) app/src/lib/api/autonomy.ts
+- (staged) app/src/lib/api/backend-url.ts
+- (staged) app/src/lib/api/backend.ts
+- (staged) app/src/lib/api/bank-feeds.ts
+- (staged) app/src/lib/api/billing.ts
+- (staged) app/src/lib/api/chat.ts
+- (staged) app/src/lib/api/cin7-bom.ts
+- (staged) app/src/lib/api/cin7-fulfilment.ts
+- (staged) app/src/lib/api/cin7-gl.ts
+- (staged) app/src/lib/api/cin7-grn.ts
+- (staged) app/src/lib/api/cin7-inventory-writeback.ts
+- (staged) app/src/lib/api/cin7-shadow-ai.ts
+- (staged) app/src/lib/api/cin7-shadow.ts
+- (staged) app/src/lib/api/cin7-webhook-subscriptions.ts
+- (staged) app/src/lib/api/cin7.ts
+- (staged) app/src/lib/api/client.ts
+- (staged) app/src/lib/api/contacts.ts
+- (staged) app/src/lib/api/contractors.ts
+- (staged) app/src/lib/api/copilot.ts
+- (staged) app/src/lib/api/customers.ts
+- (staged) app/src/lib/api/documents.ts
+- (staged) app/src/lib/api/heygen.ts
+- (staged) app/src/lib/api/index.ts
+- (staged) app/src/lib/api/inventory.ts
+- (staged) app/src/lib/api/invoices.ts
+- (staged) app/src/lib/api/marketing.ts
+- (staged) app/src/lib/api/marketplace.ts
+- (staged) app/src/lib/api/middleware.ts
+- (staged) app/src/lib/api/mobile.ts
+- (staged) app/src/lib/api/monitoring.ts
+- (staged) app/src/lib/api/notifications.ts
+- (staged) app/src/lib/api/orders.ts
+- (staged) app/src/lib/api/pos.ts
+- (staged) app/src/lib/api/products.ts
+- (staged) app/src/lib/api/purchase-orders.ts
+- (staged) app/src/lib/api/quotes.ts
+- (staged) app/src/lib/api/sendgrid.ts
+- (staged) app/src/lib/api/server.ts
+- (staged) app/src/lib/api/service-requests.ts
+- (staged) app/src/lib/api/settings.ts
+- (staged) app/src/lib/api/shadow.ts
+- (staged) app/src/lib/api/shipments-outbound.ts
+- (staged) app/src/lib/api/shipments.ts
+- (staged) app/src/lib/api/shopify.ts
+- (staged) app/src/lib/api/sla.ts
+- (staged) app/src/lib/api/suppliers.ts
+- (staged) app/src/lib/api/tasks.ts
+- (staged) app/src/lib/api/team.ts
+- (staged) app/src/lib/api/warehouse.ts
+- (staged) app/src/lib/api/workflows.ts
+- (staged) app/src/lib/api/workshop.ts
+- (staged) app/src/lib/api/xero.ts
+- (staged) app/src/lib/audit/api-route-auditor.ts
+- (staged) app/src/lib/audit/user-journey-runner.ts
+- (staged) app/src/lib/audit/ux-friction-detector.ts
+- (staged) app/src/lib/australian-context.ts
+- (staged) app/src/lib/config.ts
+- (staged) app/src/lib/design-system/config.ts
+- (staged) app/src/lib/design-system/index.ts
+- (staged) app/src/lib/design-system/library-registry.ts
+- (staged) app/src/lib/design-system/pattern-validator.ts
+- (staged) app/src/lib/hooks/use-autonomy-metrics.ts
+- (staged) app/src/lib/hooks/use-autosave.ts
+- (staged) app/src/lib/hooks/use-cin7-stream.ts
+- (staged) app/src/lib/hooks/use-form-autofill.ts
+- (staged) app/src/lib/hooks/use-inventory-forecast.ts
+- (staged) app/src/lib/hooks/use-recent-items.ts
+- (staged) app/src/lib/hooks/use-search-state.ts
+- (staged) app/src/lib/hooks/use-sse.ts
+- (staged) app/src/lib/hooks/use-websocket.ts
+- (staged) app/src/lib/image-generation/asset-manager.ts
+- (staged) app/src/lib/image-generation/types.ts
+- (staged) app/src/lib/logger.ts
+- (staged) app/src/lib/supabase/client.ts
+- (staged) app/src/lib/supabase/server.ts
+- (staged) app/src/lib/telemetry.ts
+- (staged) app/src/lib/tools/index.ts
+- (staged) app/src/lib/types/activities.ts
+- (staged) app/src/lib/types/cin7.ts
+- (staged) app/src/lib/types/contacts.ts
+- (staged) app/src/lib/types/inventory.ts
+- (staged) app/src/lib/types/invoices.ts
+- (staged) app/src/lib/types/marketplace.ts
+- (staged) app/src/lib/types/reconciliation.ts
+- (staged) app/src/lib/types/workflows.ts
+- (staged) app/src/lib/utils.test.ts
+- (staged) app/src/lib/utils.ts
+- (staged) app/src/lib/utils/calculations.test.ts
+- (staged) app/src/lib/utils/calculations.ts
+- (staged) app/src/lib/utils/csv-export.ts
+- (staged) app/src/lib/utils/debounce.ts
+- (staged) app/src/lib/utils/draft-storage.ts
+- (staged) app/src/lib/utils/storage.ts
+- (staged) app/src/middleware.ts
+- (staged) app/src/styles/design-system.css
+- (staged) app/src/types/contractor.ts
+- (staged) app/src/types/index.ts
+- (staged) app/src/types/prd.ts
+- (staged) app/src/types/workflow.ts
+- (staged) app/tailwind.config.ts
+- (staged) app/tests/accessibility/a11y.spec.ts
+- (staged) app/tests/e2e/approvals.spec.ts
+- (staged) app/tests/e2e/error-handling.spec.ts
+- (staged) app/tests/e2e/invoices.spec.ts
+- (staged) app/tests/e2e/reconciliation.spec.ts
+- (staged) app/tests/e2e/workflows.spec.ts
+- (staged) app/tests/visual/components.visual.spec.ts
+- (staged) app/tsconfig.json
+- (staged) app/vercel.json
+- (staged) app/vitest.config.ts
+- (staged) app/vitest.d.ts
+- (staged) app/vitest.setup.ts
+- (staged) apps/web/lib/australian-context.ts
+- (staged) backend/.claude/memory/context-snapshot.md
+- (staged) backend/.gitignore
+- (staged) backend/.python-version
+- (staged) backend/.vercelignore
+- (staged) backend/=0.39.0
+- (staged) backend/=6.11.0
+- (staged) backend/AGENTS.md
+- (staged) "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- (staged) backend/Dockerfile
+- (staged) backend/ISSUE-4-COMPLETION.md
+- (staged) backend/ISSUE-5-COMPLETION.md
+- (staged) backend/Procfile
+- (staged) backend/alembic.ini
+- (staged) backend/alembic/README
+- (staged) backend/alembic/env.py
+- (staged) backend/alembic/script.py.mako
+- (staged) backend/alembic/versions/001_add_approvals.py
+- (staged) backend/alembic/versions/002_add_semantic_search.py
+- (staged) backend/alembic/versions/003_add_missing_trigram_indexes.py
+- (staged) backend/alembic/versions/004_add_product_sync_bidirectional.py
+- (staged) backend/alembic/versions/005_add_shopify_extended_tables.py
+- (staged) backend/alembic/versions/006_add_mobile_order_tables.py
+- (staged) backend/alembic/versions/007_add_workflow_notification_indexes.py
+- (staged) backend/alembic/versions/008_merge_heads.py
+- (staged) backend/alembic/versions/009_add_pos_tables.py
+- (staged) backend/alembic/versions/00a_rename_invoice_date.py
+- (staged) backend/alembic/versions/00b_add_missing_inventory_tables.py
+- (staged) backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- (staged) backend/alembic/versions/00d_add_certification_tables.py
+- (staged) backend/alembic/versions/00e_add_prd_tables.py
+- (staged) backend/alembic/versions/00f_add_pricing_tier_tables.py
+- (staged) backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- (staged) backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- (staged) backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- (staged) backend/alembic/versions/68d51946645a_create_erp_schema.py
+- (staged) backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- (staged) backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- (staged) backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- (staged) backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- (staged) backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- (staged) backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- (staged) backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- (staged) backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- (staged) backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- (staged) backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- (staged) backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- (staged) backend/analyze_404_errors.py
+- (staged) backend/analyze_422_errors.py
+- (staged) backend/analyze_500_errors.py
+- (staged) backend/apply_i18n_migration.py
+- (staged) backend/apply_i18n_migration_v2.py
+- (staged) backend/apply_indexes.py
+- (staged) backend/apply_indexes_via_backend.py
+- (staged) backend/apply_pos_migration.py
+- (staged) backend/apply_search_indexes.py
+- (staged) backend/apply_sequences_migration.py
+- (staged) backend/benchmarks/after_indexes.txt
+- (staged) backend/benchmarks/before_indexes.txt
+- (staged) backend/benchmarks/comparison.md
+- (staged) backend/check_404_in_full_report.py
+- (staged) backend/check_backend_config.py
+- (staged) backend/check_categories.py
+- (staged) backend/check_db.py
+- (staged) backend/check_enum_def.py
+- (staged) backend/check_orders.py
+- (staged) backend/check_results.py
+- (staged) backend/check_runtime_config.py
+- (staged) backend/check_schema.py
+- (staged) backend/check_tables.py
+- (staged) backend/check_test_status.py
+- (staged) backend/cleanup_db.py
+- (staged) backend/conftest.py
+- (staged) backend/count_data.py
+- (staged) backend/create_admin.py
+- (staged) backend/create_demo_orders.py
+- (staged) backend/create_demo_orders_simple.py
+- (staged) backend/create_inventory_tables.py
+- (staged) backend/create_service_tables.py
+- (staged) backend/debug_response.py
+- (staged) backend/diagnose_db_connection.py
+- (staged) backend/docs/ISS-005-VERIFICATION.md
+- (staged) backend/docs/ISS-006-VERIFICATION.md
+- (staged) backend/docs/ISS-007-VERIFICATION.md
+- (staged) backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- (staged) backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- (staged) backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- (staged) backend/examples/use_agentic_layer.py
+- (staged) backend/fix_categories.py
+- (staged) backend/fix_categories_uppercase.py
+- (staged) backend/generate_endpoint.py
+- (staged) backend/generate_failures.py
+- (staged) backend/generate_password_hash.py
+- (staged) backend/inject_failure_patterns.py
+- (staged) backend/inject_insights_directly.py
+- (staged) backend/inject_test_data.py
+- (staged) backend/inject_test_failures.py
+- (staged) backend/list_google_models.py
+- (staged) backend/load_test_output.txt
+- (staged) backend/migrations/001_add_search_indexes.sql
+- (staged) backend/migrations/001_rollback.sql
+- (staged) backend/migrations/README.md
+- (staged) backend/migrations/add_ai_search.sql
+- (staged) backend/migrations/add_ap2_integration.sql
+- (staged) backend/migrations/add_auto_sync_enhancements.sql
+- (staged) backend/migrations/add_email_audit_tables.sql
+- (staged) backend/migrations/add_foreign_key_indexes.sql
+- (staged) backend/migrations/add_i18n_support.sql
+- (staged) backend/migrations/add_missing_fk_indexes.sql
+- (staged) backend/migrations/add_performance_indexes.sql
+- (staged) backend/migrations/add_phase4_inventory_indexes.sql
+- (staged) backend/migrations/add_portal_forms_tables.sql
+- (staged) backend/migrations/add_pos_system.sql
+- (staged) backend/migrations/add_search_indexes.sql
+- (staged) backend/migrations/add_sequences_for_numbers.sql
+- (staged) backend/migrations/add_shopify_extended.sql
+- (staged) backend/migrations/add_submission_notes_table.sql
+- (staged) backend/migrations/add_trigram_indexes.sql
+- (staged) backend/migrations/add_webhook_events_table.sql
+- (staged) backend/migrations/seed_ccw_products.sql
+- (staged) backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- (staged) backend/migrations/week3_enum_standardization.sql
+- (staged) backend/migrations/week3_timezone_standardization.sql
+- (staged) backend/pyproject.toml
+- (staged) backend/pytest.ini
+- (staged) backend/railway.json
+- (staged) backend/requirements.txt
+- (staged) backend/reset_admin_password.py
+- (staged) backend/run-setup-memory.ps1
+- (staged) backend/run-tests.ps1
+- (staged) backend/run_bugfix_tests.ps1
+- (staged) backend/run_bugfix_tests.sh
+- (staged) backend/run_migrations.py
+- (staged) backend/scripts/analyze_query_performance.py
+- (staged) backend/scripts/apply_foreign_key_indexes.py
+- (staged) backend/scripts/apply_phase4_indexes.py
+- (staged) backend/scripts/apply_trigram_indexes.py
+- (staged) backend/scripts/benchmark_search.py
+- (staged) backend/scripts/create_container_tables.sql
+- (staged) backend/scripts/create_sample_orders.py
+- (staged) backend/scripts/create_sample_quotes.py
+- (staged) backend/scripts/explain_queries.sh
+- (staged) backend/scripts/identify_500_sources.py
+- (staged) backend/scripts/implement_query_optimizations.md
+- (staged) backend/scripts/import_ccwonline_products.py
+- (staged) backend/scripts/insert_container_sample_data.sql
+- (staged) backend/scripts/integration_test_iss001.py
+- (staged) backend/scripts/monitor_indexes.py
+- (staged) backend/scripts/run_sql.py
+- (staged) backend/scripts/seed_ccw_cleaning.py
+- (staged) backend/scripts/seed_ccw_products.py
+- (staged) backend/scripts/setup-memory.py
+- (staged) backend/scripts/test_iss005_fixes.py
+- (staged) backend/scripts/validate_autosave_implementation.py
+- (staged) backend/scripts/validate_iss001_fix.py
+- (staged) backend/scripts/validate_iss003_actual.py
+- (staged) backend/scripts/validate_iss003_fix.py
+- (staged) backend/scripts/validate_iss005_fix.py
+- (staged) backend/scripts/verify_iss005_code.py
+- (staged) backend/scripts/verify_query_optimizations.py
+- (staged) backend/seed_data.py
+- (staged) backend/seed_demo_simple.sql
+- (staged) backend/seed_orders.py
+- (staged) backend/show_customers.py
+- (staged) backend/show_orders.py
+- (staged) backend/show_products.py
+- (staged) backend/show_quotes.py
+- (staged) backend/src/__init__.py
+- (staged) backend/src/agents/prd/__init__.py
+- (staged) backend/src/agents/prd/analysis_agent.py
+- (staged) backend/src/agents/prd/feature_decomposer.py
+- (staged) backend/src/agents/prd/prd_orchestrator.py
+- (staged) backend/src/agents/prd/roadmap_planner.py
+- (staged) backend/src/agents/prd/tech_spec_generator.py
+- (staged) backend/src/agents/prd/test_generator.py
+- (staged) backend/src/ai/__init__.py
+- (staged) backend/src/ai/agents/chat_assistant.py
+- (staged) backend/src/ai/agents/chat_state.py
+- (staged) backend/src/ai/agents/content_generator.py
+- (staged) backend/src/ai/agents/content_state.py
+- (staged) backend/src/ai/agents/insights_agent.py
+- (staged) backend/src/ai/agents/insights_state.py
+- (staged) backend/src/ai/agents/risk_assessor.py
+- (staged) backend/src/ai/agents/rollback_agent.py
+- (staged) backend/src/ai/agents/specialized/__init__.py
+- (staged) backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- (staged) backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- (staged) backend/src/ai/agents/specialized/development_agent.py
+- (staged) backend/src/ai/agents/specialized/document_parser_agent.py
+- (staged) backend/src/ai/agents/specialized/form_autofill_agent.py
+- (staged) backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/marketing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_state.py
+- (staged) backend/src/ai/agents/specialized/procurement_agent.py
+- (staged) backend/src/ai/agents/specialized/procurement_state.py
+- (staged) backend/src/ai/agents/specialized/project_intelligence_agent.py
+- (staged) backend/src/ai/agents/specialized/query_agent.py
+- (staged) backend/src/ai/agents/specialized/recommendation_agent.py
+- (staged) backend/src/ai/agents/specialized/reconciliation_agent.py
+- (staged) backend/src/ai/agents/specialized/search_agent.py
+- (staged) backend/src/ai/agents/specialized/staff_copilot_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_state.py
+- (staged) backend/src/ai/agents/specialized/testing_agent.py
+- (staged) backend/src/ai/base_agent.py
+- (staged) backend/src/ai/generators/__init__.py
+- (staged) backend/src/ai/generators/email_generator.py
+- (staged) backend/src/ai/generators/quote_generator.py
+- (staged) backend/src/ai/learning/__init__.py
+- (staged) backend/src/ai/learning/learning_engine.py
+- (staged) backend/src/ai/learning/learning_repository.py
+- (staged) backend/src/ai/monitoring/__init__.py
+- (staged) backend/src/ai/monitoring/health_monitor.py
+- (staged) backend/src/ai/monitoring/metrics_collector.py
+- (staged) backend/src/ai/ollama_client.py
+- (staged) backend/src/ai/orchestration/__init__.py
+- (staged) backend/src/ai/orchestration/agent_registry.py
+- (staged) backend/src/ai/orchestration/autonomous_loop.py
+- (staged) backend/src/ai/orchestration/project_orchestrator.py
+- (staged) backend/src/ai/orchestration/supervisor_agent.py
+- (staged) backend/src/ai/orchestration/supervisor_state.py
+- (staged) backend/src/ai/prompts/__init__.py
+- (staged) backend/src/ai/prompts/system_prompts.py
+- (staged) backend/src/ai/protocol/__init__.py
+- (staged) backend/src/ai/protocol/confidence.py
+- (staged) backend/src/ai/protocol/error_handler.py
+- (staged) backend/src/ai/protocol/governor.py
+- (staged) backend/src/ai/protocol/message_bus.py
+- (staged) backend/src/ai/protocol/models.py
+- (staged) backend/src/ai/tools/__init__.py
+- (staged) backend/src/ai/tools/analytics_tools.py
+- (staged) backend/src/ai/tools/base.py
+- (staged) backend/src/ai/tools/erp_tools.py
+- (staged) backend/src/ai/tools/execution_tools.py
+- (staged) backend/src/ai/tools/inventory_intelligence.py
+- (staged) backend/src/ai/tools/pricing_tools.py
+- (staged) backend/src/ai/tools/procurement_tools.py
+- (staged) backend/src/api/__init__.py
+- (staged) backend/src/api/debug_main.py
+- (staged) backend/src/api/deps.py
+- (staged) backend/src/api/exceptions.py
+- (staged) backend/src/api/main.py
+- (staged) backend/src/api/middleware/__init__.py
+- (staged) backend/src/api/middleware/auth.py
+- (staged) backend/src/api/middleware/performance.py
+- (staged) backend/src/api/middleware/rate_limit.py
+- (staged) backend/src/api/middleware/rbac.py
+- (staged) backend/src/api/middleware/request_id.py
+- (staged) backend/src/api/middleware/security_headers.py
+- (staged) backend/src/api/middleware/tenant_isolation.py
+- (staged) backend/src/api/routers/prd.py
+- (staged) backend/src/api/routes/__init__.py
+- (staged) backend/src/api/routes/activities.py
+- (staged) backend/src/api/routes/agents_monitor.py
+- (staged) backend/src/api/routes/ai/__init__.py
+- (staged) backend/src/api/routes/ai/anomaly.py
+- (staged) backend/src/api/routes/ai/approval_gates.py
+- (staged) backend/src/api/routes/ai/assets.py
+- (staged) backend/src/api/routes/ai/autonomous_ops.py
+- (staged) backend/src/api/routes/ai/build_command.py
+- (staged) backend/src/api/routes/ai/chat.py
+- (staged) backend/src/api/routes/ai/cin7_anomaly.py
+- (staged) backend/src/api/routes/ai/cin7_forecast.py
+- (staged) backend/src/api/routes/ai/cin7_shadow_ai.py
+- (staged) backend/src/api/routes/ai/command_parser.py
+- (staged) backend/src/api/routes/ai/document_parser.py
+- (staged) backend/src/api/routes/ai/form_autofill.py
+- (staged) backend/src/api/routes/ai/gap_sync.py
+- (staged) backend/src/api/routes/ai/generate.py
+- (staged) backend/src/api/routes/ai/insights.py
+- (staged) backend/src/api/routes/ai/inventory_forecast.py
+- (staged) backend/src/api/routes/ai/learning.py
+- (staged) backend/src/api/routes/ai/marketing_ai.py
+- (staged) backend/src/api/routes/ai/monitoring.py
+- (staged) backend/src/api/routes/ai/project_intelligence.py
+- (staged) backend/src/api/routes/ai/protocol.py
+- (staged) backend/src/api/routes/ai/query.py
+- (staged) backend/src/api/routes/ai/requirement_verification.py
+- (staged) backend/src/api/routes/ai/specialized.py
+- (staged) backend/src/api/routes/ai/staff_copilot.py
+- (staged) backend/src/api/routes/ai/supervisor.py
+- (staged) backend/src/api/routes/ai/test_data.py
+- (staged) backend/src/api/routes/ai/test_failures.py
+- (staged) backend/src/api/routes/ai/toolshed.py
+- (staged) backend/src/api/routes/ai/toolshed_vault.py
+- (staged) backend/src/api/routes/analytics.py
+- (staged) backend/src/api/routes/approvals.py
+- (staged) backend/src/api/routes/audit_trail.py
+- (staged) backend/src/api/routes/autonomous_dev.py
+- (staged) backend/src/api/routes/autonomy_metrics.py
+- (staged) backend/src/api/routes/backorders.py
+- (staged) backend/src/api/routes/bank_feeds.py
+- (staged) backend/src/api/routes/billing.py
+- (staged) backend/src/api/routes/boardroom.py
+- (staged) backend/src/api/routes/certifications.py
+- (staged) backend/src/api/routes/chat.py
+- (staged) backend/src/api/routes/config.py
+- (staged) backend/src/api/routes/contacts.py
+- (staged) backend/src/api/routes/containers.py
+- (staged) backend/src/api/routes/contractors.py
+- (staged) backend/src/api/routes/crm_health.py
+- (staged) backend/src/api/routes/crm_onboarding.py
+- (staged) backend/src/api/routes/crm_personas.py
+- (staged) backend/src/api/routes/cron_jobs.py
+- (staged) backend/src/api/routes/customer_orders.py
+- (staged) backend/src/api/routes/customers.py
+- (staged) backend/src/api/routes/dashboard_stream.py
+- (staged) backend/src/api/routes/demo_auth.py
+- (staged) backend/src/api/routes/demo_dashboard.py
+- (staged) backend/src/api/routes/demo_lists.py
+- (staged) backend/src/api/routes/documents.py
+- (staged) backend/src/api/routes/email_audit.py
+- (staged) backend/src/api/routes/equipment_lifecycle.py
+- (staged) backend/src/api/routes/google_ai.py
+- (staged) backend/src/api/routes/health.py
+- (staged) backend/src/api/routes/integrations/__init__.py
+- (staged) backend/src/api/routes/integrations/ap2.py
+- (staged) backend/src/api/routes/integrations/cin7.py
+- (staged) backend/src/api/routes/integrations/cin7_bom.py
+- (staged) backend/src/api/routes/integrations/cin7_crm.py
+- (staged) backend/src/api/routes/integrations/cin7_fulfilment.py
+- (staged) backend/src/api/routes/integrations/cin7_gl.py
+- (staged) backend/src/api/routes/integrations/cin7_grn.py
+- (staged) backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- (staged) backend/src/api/routes/integrations/cin7_line_items.py
+- (staged) backend/src/api/routes/integrations/cin7_procurement.py
+- (staged) backend/src/api/routes/integrations/cin7_shadow_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_stream.py
+- (staged) backend/src/api/routes/integrations/cin7_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- (staged) backend/src/api/routes/integrations/cin7_webhooks.py
+- (staged) backend/src/api/routes/integrations/elevenlabs.py
+- (staged) backend/src/api/routes/integrations/heygen.py
+- (staged) backend/src/api/routes/integrations/marketplace.py
+- (staged) backend/src/api/routes/integrations/sendgrid.py
+- (staged) backend/src/api/routes/integrations/shopify.py
+- (staged) backend/src/api/routes/integrations/shopify_theme.py
+- (staged) backend/src/api/routes/integrations/xero.py
+- (staged) backend/src/api/routes/inventory.py
+- (staged) backend/src/api/routes/inventory_stream.py
+- (staged) backend/src/api/routes/invoice_payments.py
+- (staged) backend/src/api/routes/invoices.py
+- (staged) backend/src/api/routes/jobs.py
+- (staged) backend/src/api/routes/mobile/__init__.py
+- (staged) backend/src/api/routes/mobile/guest_orders.py
+- (staged) backend/src/api/routes/monitoring/__init__.py
+- (staged) backend/src/api/routes/monitoring/alerts.py
+- (staged) backend/src/api/routes/monitoring/business_metrics.py
+- (staged) backend/src/api/routes/monitoring/infrastructure.py
+- (staged) backend/src/api/routes/monitoring/performance.py
+- (staged) backend/src/api/routes/notifications.py
+- (staged) backend/src/api/routes/orders.py
+- (staged) backend/src/api/routes/portal/__init__.py
+- (staged) backend/src/api/routes/portal/customer_portal.py
+- (staged) backend/src/api/routes/pos_transactions.py
+- (staged) backend/src/api/routes/pos_xero_reconciliation.py
+- (staged) backend/src/api/routes/prd.py
+- (staged) backend/src/api/routes/pricing.py
+- (staged) backend/src/api/routes/procurement.py
+- (staged) backend/src/api/routes/products.py
+- (staged) backend/src/api/routes/prometheus_metrics.py
+- (staged) backend/src/api/routes/public_stats.py
+- (staged) backend/src/api/routes/purchase_orders.py
+- (staged) backend/src/api/routes/quotes.py
+- (staged) backend/src/api/routes/recommendations.py
+- (staged) backend/src/api/routes/reconciliation.py
+- (staged) backend/src/api/routes/reconciliation_dashboard.py
+- (staged) backend/src/api/routes/search.py
+- (staged) backend/src/api/routes/service_requests.py
+- (staged) backend/src/api/routes/settings.py
+- (staged) backend/src/api/routes/shadow_analytics.py
+- (staged) backend/src/api/routes/shadow_mode.py
+- (staged) backend/src/api/routes/shipments.py
+- (staged) backend/src/api/routes/sla.py
+- (staged) backend/src/api/routes/stripe_webhooks.py
+- (staged) backend/src/api/routes/supplier_portal.py
+- (staged) backend/src/api/routes/suppliers.py
+- (staged) backend/src/api/routes/team.py
+- (staged) backend/src/api/routes/test_data_gen.py
+- (staged) backend/src/api/routes/translations.py
+- (staged) backend/src/api/routes/warehouse.py
+- (staged) backend/src/api/routes/webhooks.py
+- (staged) backend/src/api/routes/workflows.py
+- (staged) backend/src/api/routes/workshop/__init__.py
+- (staged) backend/src/api/routes/workshop/bookings.py
+- (staged) backend/src/api/routes/workshop/dashboard.py
+- (staged) backend/src/api/routes/workshop/equipment.py
+- (staged) backend/src/api/routes/workshop/reminders.py
+- (staged) backend/src/api/routes/workshop/templates.py
+- (staged) backend/src/api/schemas/invoicing.py
+- (staged) backend/src/api/schemas/prd.py
+- (staged) backend/src/auth/jwt.py
+- (staged) backend/src/auth/models.py
+- (staged) backend/src/auth/password_reset.py
+- (staged) backend/src/cache/decorators.py
+- (staged) backend/src/cache/redis_client.py
+- (staged) backend/src/config/__init__.py
+- (staged) backend/src/config/ap2_settings.py
+- (staged) backend/src/config/autonomy.py
+- (staged) backend/src/config/cin7_settings.py
+- (staged) backend/src/config/database.py
+- (staged) backend/src/config/elevenlabs_settings.py
+- (staged) backend/src/config/heygen_settings.py
+- (staged) backend/src/config/marketplace_settings.py
+- (staged) backend/src/config/secrets_manager.py
+- (staged) backend/src/config/sendgrid_settings.py
+- (staged) backend/src/config/settings.py
+- (staged) backend/src/config/shopify_settings.py
+- (staged) backend/src/config/xero_settings.py
+- (staged) backend/src/db/__init__.py
+- (staged) backend/src/db/ai_models.py
+- (staged) backend/src/db/ai_search_models.py
+- (staged) backend/src/db/ap2_models.py
+- (staged) backend/src/db/approvals_models.py
+- (staged) backend/src/db/audit_models.py
+- (staged) backend/src/db/certification_models.py
+- (staged) backend/src/db/cin7_bom_models.py
+- (staged) backend/src/db/cin7_fulfilment_models.py
+- (staged) backend/src/db/cin7_gl_models.py
+- (staged) backend/src/db/cin7_models.py
+- (staged) backend/src/db/cin7_shadow_models.py
+- (staged) backend/src/db/container_models.py
+- (staged) backend/src/db/crm_models.py
+- (staged) backend/src/db/crm_schemas.py
+- (staged) backend/src/db/customer_health_models.py
+- (staged) backend/src/db/demo_models.py
+- (staged) backend/src/db/email_audit_models.py
+- (staged) backend/src/db/email_models.py
+- (staged) backend/src/db/equipment_lifecycle_models.py
+- (staged) backend/src/db/generate_demo_purchases.py
+- (staged) backend/src/db/i18n_models.py
+- (staged) backend/src/db/i18n_schemas.py
+- (staged) backend/src/db/indexes.py
+- (staged) backend/src/db/integration_credential_models.py
+- (staged) backend/src/db/inventory_models.py
+- (staged) backend/src/db/inventory_schemas.py
+- (staged) backend/src/db/marketplace_models.py
+- (staged) backend/src/db/mobile_order_models.py
+- (staged) backend/src/db/models/__init__.py
+- (staged) backend/src/db/models/invoicing.py
+- (staged) backend/src/db/models/prd.py
+- (staged) backend/src/db/models_base.py
+- (staged) backend/src/db/portal_forms_models.py
+- (staged) backend/src/db/pos_models.py
+- (staged) backend/src/db/pricing_models.py
+- (staged) backend/src/db/schemas.py
+- (staged) backend/src/db/seed_demo.py
+- (staged) backend/src/db/service_models.py
+- (staged) backend/src/db/shadow_session_models.py
+- (staged) backend/src/db/shopify_extended_models.py
+- (staged) backend/src/db/shopify_models.py
+- (staged) backend/src/db/shopify_schemas.py
+- (staged) backend/src/db/submission_notes_models.py
+- (staged) backend/src/db/webhook_models.py
+- (staged) backend/src/db/workflow_models.py
+- (staged) backend/src/db/workshop_models.py
+- (staged) backend/src/db/xero_models.py
+- (staged) backend/src/db/xero_schemas.py
+- (staged) backend/src/emails/templates/order_confirmed.html
+- (staged) backend/src/emails/templates/order_delivered.html
+- (staged) backend/src/emails/templates/order_shipped.html
+- (staged) backend/src/emails/templates/quote_created.html
+- (staged) backend/src/emails/templates/quote_expiring.html
+- (staged) backend/src/events/__init__.py
+- (staged) backend/src/events/event_bus.py
+- (staged) backend/src/integrations/__init__.py
+- (staged) backend/src/integrations/ap2/__init__.py
+- (staged) backend/src/integrations/ap2/client.py
+- (staged) backend/src/integrations/ap2/security.py
+- (staged) backend/src/integrations/cin7/__init__.py
+- (staged) backend/src/integrations/cin7/change_detector.py
+- (staged) backend/src/integrations/cin7/client.py
+- (staged) backend/src/integrations/cin7/customer_sync.py
+- (staged) backend/src/integrations/cin7/demo_client.py
+- (staged) backend/src/integrations/cin7/event_dispatcher.py
+- (staged) backend/src/integrations/cin7/inventory_sync.py
+- (staged) backend/src/integrations/cin7/product_sync.py
+- (staged) backend/src/integrations/cin7/purchase_sync.py
+- (staged) backend/src/integrations/cin7/sales_sync.py
+- (staged) backend/src/integrations/cin7/supplier_sync.py
+- (staged) backend/src/integrations/elevenlabs/__init__.py
+- (staged) backend/src/integrations/elevenlabs/client.py
+- (staged) backend/src/integrations/elevenlabs/demo_client.py
+- (staged) backend/src/integrations/elevenlabs/live_client.py
+- (staged) backend/src/integrations/google/__init__.py
+- (staged) backend/src/integrations/google/client.py
+- (staged) backend/src/integrations/heygen/__init__.py
+- (staged) backend/src/integrations/heygen/client.py
+- (staged) backend/src/integrations/heygen/demo_client.py
+- (staged) backend/src/integrations/heygen/live_client.py
+- (staged) backend/src/integrations/http_utils.py
+- (staged) backend/src/integrations/marketplace/__init__.py
+- (staged) backend/src/integrations/marketplace/base.py
+- (staged) backend/src/integrations/marketplace/demo_channel.py
+- (staged) backend/src/integrations/marketplace/ebay_channel.py
+- (staged) backend/src/integrations/marketplace/facebook_channel.py
+- (staged) backend/src/integrations/marketplace/registry.py
+- (staged) backend/src/integrations/marketplace/shopify_channel.py
+- (staged) backend/src/integrations/marketplace/sync_engine.py
+- (staged) backend/src/integrations/payments/__init__.py
+- (staged) backend/src/integrations/payments/amex.py
+- (staged) backend/src/integrations/payments/eftpos.py
+- (staged) backend/src/integrations/payments/processor.py
+- (staged) backend/src/integrations/secrets_manager.py
+- (staged) backend/src/integrations/sendgrid/__init__.py
+- (staged) backend/src/integrations/sendgrid/client.py
+- (staged) backend/src/integrations/sendgrid/demo_client.py
+- (staged) backend/src/integrations/sendgrid/live_client.py
+- (staged) backend/src/integrations/sendgrid/processor.py
+- (staged) backend/src/integrations/sentry_client.py
+- (staged) backend/src/integrations/shopify/__init__.py
+- (staged) backend/src/integrations/shopify/client.py
+- (staged) backend/src/integrations/shopify/demo_client.py
+- (staged) backend/src/integrations/shopify/inventory.py
+- (staged) backend/src/integrations/shopify/inventory_sync.py
+- (staged) backend/src/integrations/shopify/metafields.py
+- (staged) backend/src/integrations/shopify/orders.py
+- (staged) backend/src/integrations/shopify/product_sync.py
+- (staged) backend/src/integrations/shopify/translations.py
+- (staged) backend/src/integrations/shopify/webhooks.py
+- (staged) backend/src/integrations/stripe/__init__.py
+- (staged) backend/src/integrations/stripe/client.py
+- (staged) backend/src/integrations/xero/__init__.py
+- (staged) backend/src/integrations/xero/auth.py
+- (staged) backend/src/integrations/xero/client.py
+- (staged) backend/src/integrations/xero/customers.py
+- (staged) backend/src/integrations/xero/demo_client.py
+- (staged) backend/src/integrations/xero/invoices.py
+- (staged) backend/src/integrations/xero/payments.py
+- (staged) backend/src/integrations/xero/pos_reconciliation.py
+- (staged) backend/src/integrations/xero/token_manager.py
+- (staged) backend/src/integrations/xero/webhook_security.py
+- (staged) backend/src/integrations/xero/webhooks.py
+- (staged) backend/src/monitoring/__init__.py
+- (staged) backend/src/monitoring/metrics.py
+- (staged) backend/src/rag/__init__.py
+- (staged) backend/src/rag/chunkers.py
+- (staged) backend/src/rag/models.py
+- (staged) backend/src/rag/parsers.py
+- (staged) backend/src/rag/pipeline.py
+- (staged) backend/src/rag/storage.py
+- (staged) backend/src/scheduler/bank_feed_scheduler.py
+- (staged) backend/src/security/__init__.py
+- (staged) backend/src/security/encryption.py
+- (staged) backend/src/security/webhook_verification.py
+- (staged) backend/src/services/__init__.py
+- (staged) backend/src/services/alert_manager.py
+- (staged) backend/src/services/audit_service.py
+- (staged) backend/src/services/auto_reorder.py
+- (staged) backend/src/services/autonomy_audit.py
+- (staged) backend/src/services/bank_feed_service.py
+- (staged) backend/src/services/business_metrics_service.py
+- (staged) backend/src/services/carrier_service.py
+- (staged) backend/src/services/circuit_breaker.py
+- (staged) backend/src/services/code_generation/README.md
+- (staged) backend/src/services/code_generation/__init__.py
+- (staged) backend/src/services/code_generation/context_builder.py
+- (staged) backend/src/services/code_generation/doc_generator.py
+- (staged) backend/src/services/code_generation/generator.py
+- (staged) backend/src/services/code_generation/prompts/doc_generation.txt
+- (staged) backend/src/services/code_generation/prompts/python_generation.txt
+- (staged) backend/src/services/code_generation/prompts/test_generation.txt
+- (staged) backend/src/services/code_generation/prompts/typescript_generation.txt
+- (staged) backend/src/services/code_generation/quality_checker.py
+- (staged) backend/src/services/code_generation/test_generator.py
+- (staged) backend/src/services/deployment_service.py
+- (staged) backend/src/services/document_extraction_service.py
+- (staged) backend/src/services/dunning.py
+- (staged) backend/src/services/email_audit_service.py
+- (staged) backend/src/services/email_notifications.py
+- (staged) backend/src/services/email_service.py
+- (staged) backend/src/services/embedding_service.py
+- (staged) backend/src/services/i18n_service.py
+- (staged) backend/src/services/notification_service.py
+- (staged) backend/src/services/order_state.py
+- (staged) backend/src/services/procurement_matching.py
+- (staged) backend/src/services/product_recognition_service.py
+- (staged) backend/src/services/recommendation_service.py
+- (staged) backend/src/services/reconciliation_alerts.py
+- (staged) backend/src/services/requirement_extractor.py
+- (staged) backend/src/services/requirement_tracer.py
+- (staged) backend/src/services/semantic_search_service.py
+- (staged) backend/src/services/sla_escalation.py
+- (staged) backend/src/services/sla_service.py
+- (staged) backend/src/services/sse_service.py
+- (staged) backend/src/services/system_alert_service.py
+- (staged) backend/src/services/tax_calculator.py
+- (staged) backend/src/services/webhook_service.py
+- (staged) backend/src/services/workflow_service.py
+- (staged) backend/src/services/workshop_scheduler.py
+- (staged) backend/src/state/__init__.py
+- (staged) backend/src/state/supabase.py
+- (staged) backend/src/telemetry/__init__.py
+- (staged) backend/src/telemetry/usage_tracker.py
+- (staged) backend/src/testing/__init__.py
+- (staged) backend/src/testing/shopify_mock.py
+- (staged) backend/src/testing/xero_mock.py
+- (staged) backend/src/utils/__init__.py
+- (staged) backend/src/utils/calculations.py
+- (staged) backend/src/utils/logging.py
+- (staged) backend/src/utils/supabase_client.py
+- (staged) backend/src/workflow/__init__.py
+- (staged) backend/src/workflow/engine.py
+- (staged) backend/src/workflow/models.py
+- (staged) backend/src/workflow/storage.py
+- (staged) backend/src/workflows/__init__.py
+- (staged) backend/src/workflows/pr_automation.py
+- (staged) backend/srcapimain.py
+- (staged) backend/srcapiroutesailearning.py.tmp
+- (staged) backend/start_for_testing.py
+- (staged) backend/start_load_test_server.py
+- (staged) backend/test_ai_inventory_intelligence.py
+- (staged) backend/test_api.py
+- (staged) backend/test_api_error.py
+- (staged) backend/test_customer_sync.py
+- (staged) backend/test_dashboard_data.py
+- (staged) backend/test_dashboard_data_with_failures.py
+- (staged) backend/test_db_connection.py
+- (staged) backend/test_dependency_injection.py
+- (staged) backend/test_endpoint.py
+- (staged) backend/test_expired_quote_validation.py
+- (staged) backend/test_failure_scenarios.py
+- (staged) backend/test_full_payment_flow.py
+- (staged) backend/test_google_ai_endpoints.py
+- (staged) backend/test_google_ai_integration.py
+- (staged) backend/test_insights_api.py
+- (staged) backend/test_multistore_inventory.py
+- (staged) backend/test_order_update_items_500.py
+- (staged) backend/test_outbound_shipment.json
+- (staged) backend/test_password.py
+- (staged) backend/test_payment_webhook.py
+- (staged) backend/test_po.json
+- (staged) backend/test_quote_404_issue.py
+- (staged) backend/test_quote_fixes.py
+- (staged) backend/test_quote_generate_endpoint.py
+- (staged) backend/test_quote_validation.py
+- (staged) backend/test_redis_connection.py
+- (staged) backend/test_search_performance.py
+- (staged) backend/test_shopify_connection.py
+- (staged) backend/test_shopify_integration.py
+- (staged) backend/test_supplier.json
+- (staged) backend/tests/FIXES_APPLIED.md
+- (staged) backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- (staged) backend/tests/TEST_STATUS_REPORT.md
+- (staged) backend/tests/TEST_STATUS_UPDATE.md
+- (staged) backend/tests/__init__.py
+- (staged) backend/tests/ai/test_reconciliation_agent.py
+- (staged) backend/tests/api/README_BUGFIX_TESTS.md
+- (staged) backend/tests/api/test_500_errors.py
+- (staged) backend/tests/api/test_approval_gates.py
+- (staged) backend/tests/api/test_approvals.py
+- (staged) backend/tests/api/test_approvals_integration.py
+- (staged) backend/tests/api/test_autonomous_ops.py
+- (staged) backend/tests/api/test_bank_feeds.py
+- (staged) backend/tests/api/test_bas_report.py
+- (staged) backend/tests/api/test_billing_gaps.py
+- (staged) backend/tests/api/test_build_command.py
+- (staged) backend/tests/api/test_certifications.py
+- (staged) backend/tests/api/test_command_parser.py
+- (staged) backend/tests/api/test_customer_orders.py
+- (staged) backend/tests/api/test_document_extraction.py
+- (staged) backend/tests/api/test_equipment_lifecycle.py
+- (staged) backend/tests/api/test_gap_sync.py
+- (staged) backend/tests/api/test_inventory.py
+- (staged) backend/tests/api/test_inventory_gaps.py
+- (staged) backend/tests/api/test_inventory_new_endpoints.py
+- (staged) backend/tests/api/test_inventory_uni172.py
+- (staged) backend/tests/api/test_invoice_payments.py
+- (staged) backend/tests/api/test_invoices_tax_integration.py
+- (staged) backend/tests/api/test_nl_query.py
+- (staged) backend/tests/api/test_orders_performance.py
+- (staged) backend/tests/api/test_portal.py
+- (staged) backend/tests/api/test_pos_terminals.py
+- (staged) backend/tests/api/test_pos_transactions.py
+- (staged) backend/tests/api/test_pricing_tiers.py
+- (staged) backend/tests/api/test_quote_404_errors.py
+- (staged) backend/tests/api/test_quote_422_errors.py
+- (staged) backend/tests/api/test_quote_http_methods.py
+- (staged) backend/tests/api/test_rbac.py
+- (staged) backend/tests/api/test_reconciliation_integration.py
+- (staged) backend/tests/api/test_requirement_verification.py
+- (staged) backend/tests/api/test_supplier_portal.py
+- (staged) backend/tests/api/test_tenant_isolation.py
+- (staged) backend/tests/api/test_translations.py
+- (staged) backend/tests/api/test_workflows_integration.py
+- (staged) backend/tests/api/test_workshop_routes.py
+- (staged) backend/tests/conftest.py
+- (staged) backend/tests/e2e/__init__.py
+- (staged) backend/tests/e2e/test_login_flow.py
+- (staged) backend/tests/e2e/test_order_flow.py
+- (staged) backend/tests/fixtures/__init__.py
+- (staged) backend/tests/fixtures/data.py
+- (staged) backend/tests/fixtures/pos_data.py
+- (staged) backend/tests/fixtures/shopify_fixtures.py
+- (staged) backend/tests/fixtures/xero_fixtures.py
+- (staged) backend/tests/integration/README.md
+- (staged) backend/tests/integration/__init__.py
+- (staged) backend/tests/integration/conftest.py
+- (staged) backend/tests/integration/run_all_cin7_tests.py
+- (staged) backend/tests/integration/run_phase3_tests.py
+- (staged) backend/tests/integration/run_phase4_tests.py
+- (staged) backend/tests/integration/run_phase5_tests.py
+- (staged) backend/tests/integration/run_phase6_tests.py
+- (staged) backend/tests/integration/run_phase7_tests.py
+- (staged) backend/tests/integration/run_protocol_tests.py
+- (staged) backend/tests/integration/test_ap2_integration.py
+- (staged) backend/tests/integration/test_api_endpoints.py
+- (staged) backend/tests/integration/test_autonomous_dev.py
+- (staged) backend/tests/integration/test_autonomous_pr_workflow.py
+- (staged) backend/tests/integration/test_cin7_crm_sync.py
+- (staged) backend/tests/integration/test_cin7_integration.py
+- (staged) backend/tests/integration/test_cin7_sync.py
+- (staged) backend/tests/integration/test_crm_module.py
+- (staged) backend/tests/integration/test_recommendations.py
+- (staged) backend/tests/integration/test_search.py
+- (staged) backend/tests/integration/test_shopify_extended.py
+- (staged) backend/tests/integration/test_webhooks.py
+- (staged) backend/tests/integration/test_xero_reconciliation.py
+- (staged) backend/tests/integrations/__init__.py
+- (staged) backend/tests/integrations/test_xero_token_manager.py
+- (staged) backend/tests/load/README.md
+- (staged) backend/tests/load/__init__.py
+- (staged) backend/tests/load/conftest.py
+- (staged) backend/tests/load/generators/customers.py
+- (staged) backend/tests/load/generators/misc.py
+- (staged) backend/tests/load/generators/orders.py
+- (staged) backend/tests/load/generators/products.py
+- (staged) backend/tests/load/generators/quotes.py
+- (staged) backend/tests/load/load_test_requirements.txt
+- (staged) backend/tests/load/load_test_scenarios.ps1
+- (staged) backend/tests/load/load_test_scenarios.sh
+- (staged) backend/tests/load/locustfile.py
+- (staged) backend/tests/load/locustfile_ai_features.py
+- (staged) backend/tests/load/reporters/html_reporter.py
+- (staged) backend/tests/load/reporters/json_reporter.py
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.json
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.json
+- (staged) backend/tests/load/reports/load_test_latest.html
+- (staged) backend/tests/load/reports/load_test_latest.json
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.html
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.json
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.html
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.json
+- (staged) backend/tests/load/reports/load_test_quick_latest.html
+- (staged) backend/tests/load/reports/load_test_quick_latest.json
+- (staged) backend/tests/load/reports/scenario_report.html
+- (staged) backend/tests/load/reports/scenario_report.json
+- (staged) backend/tests/load/run_full_load_test.py
+- (staged) backend/tests/load/run_quick_load_test.py
+- (staged) backend/tests/load/test_concurrent_number_generation.py
+- (staged) backend/tests/load/test_performance_load.py
+- (staged) backend/tests/load/test_scenarios.py
+- (staged) backend/tests/performance/__init__.py
+- (staged) backend/tests/run_integration_tests.ps1
+- (staged) backend/tests/run_integration_tests.sh
+- (staged) backend/tests/security/__init__.py
+- (staged) backend/tests/security/test_auth_security.py
+- (staged) backend/tests/security/test_encryption.py
+- (staged) backend/tests/security/test_injection_attacks.py
+- (staged) backend/tests/security/test_xss_csrf.py
+- (staged) backend/tests/services/__init__.py
+- (staged) backend/tests/services/code_generation/__init__.py
+- (staged) backend/tests/services/code_generation/test_context_builder.py
+- (staged) backend/tests/services/code_generation/test_doc_generator.py
+- (staged) backend/tests/services/code_generation/test_generator.py
+- (staged) backend/tests/services/code_generation/test_integration.py
+- (staged) backend/tests/services/code_generation/test_quality_checker.py
+- (staged) backend/tests/services/code_generation/test_test_generator.py
+- (staged) backend/tests/services/run_all_tests.py
+- (staged) backend/tests/services/test_auto_reorder.py
+- (staged) backend/tests/services/test_auto_reorder_integration.py
+- (staged) backend/tests/services/test_dunning.py
+- (staged) backend/tests/services/test_email_audit_service.py
+- (staged) backend/tests/services/test_order_state.py
+- (staged) backend/tests/services/test_procurement_matching.py
+- (staged) backend/tests/services/test_procurement_matching_integration.py
+- (staged) backend/tests/services/test_requirement_extractor.py
+- (staged) backend/tests/services/test_requirement_tracer.py
+- (staged) backend/tests/services/test_sla_escalation.py
+- (staged) backend/tests/services/test_tax_calculator.py
+- (staged) backend/tests/services/test_tax_calculator_integration.py
+- (staged) backend/tests/smoke/__init__.py
+- (staged) backend/tests/smoke/conftest.py
+- (staged) backend/tests/smoke/test_smoke.py
+- (staged) backend/tests/test_agent_orchestration.py
+- (staged) backend/tests/test_approvals_batch_2c.py
+- (staged) backend/tests/test_auth_security.py
+- (staged) backend/tests/test_autonomy_audit.py
+- (staged) backend/tests/test_autonomy_config.py
+- (staged) backend/tests/test_batch_2c_structure.py
+- (staged) backend/tests/test_billing.py
+- (staged) backend/tests/test_circuit_breaker.py
+- (staged) backend/tests/test_concurrent_number_generation.py
+- (staged) backend/tests/test_customers_api.py
+- (staged) backend/tests/test_error_handling.py
+- (staged) backend/tests/test_gap_batch_2b.py
+- (staged) backend/tests/test_gap_batch_2b_smoke.py
+- (staged) backend/tests/test_gap_batch_2c_2d.py
+- (staged) backend/tests/test_health.py
+- (staged) backend/tests/test_marketplace.py
+- (staged) backend/tests/test_orders_api.py
+- (staged) backend/tests/test_pr_automation.py
+- (staged) backend/tests/test_products_api.py
+- (staged) backend/tests/test_project_intelligence.py
+- (staged) backend/tests/test_prometheus_metrics.py
+- (staged) backend/tests/test_quotes_api.py
+- (staged) backend/tests/test_risk_assessor.py
+- (staged) backend/tests/test_rollback_mechanism.py
+- (staged) backend/tests/test_sequence_generation.py
+- (staged) backend/tests/test_shopify_mock.py
+- (staged) backend/tests/test_specialized_agents.py
+- (staged) backend/tests/test_toolshed_api.py
+- (staged) backend/tests/test_workflow_agent_integration.py
+- (staged) backend/tests/test_workflows_batch_2c.py
+- (staged) backend/tests/test_xero_mock.py
+- (staged) backend/tests/unit/test_number_generation.py
+- (staged) backend/tests/unit/test_reconciliation_logic.py
+- (staged) backend/tests/utils/__init__.py
+- (staged) backend/tests/utils/test_calculations.py
+- (staged) backend/tests/webhooks/__init__.py
+- (staged) backend/tests/webhooks/test_webhook_transactions.py
+- (staged) backend/update_supplier.json
+- (staged) backend/uv.lock
+- (staged) backend/vercel.json
+- (staged) backend/verify_i18n_migration.py
+- (staged) backend/verify_indexes.py
+- (staged) backend/verify_phase1.py
+- (staged) backend/verify_phase9_fixes.py
+- (staged) backend/verify_race_condition_fix.py
+- (staged) backend/verify_sequence_deployment.py
+- (staged) backend/verify_tables.py
+
+## Session end: 2026-04-05T07:57:49+05:00
+### Modified files:
+- .claude/PROGRESS.md
+- .claude/hooks/pre-commit.sh
+- .claude/rules/database/supabase-migrations.md
+- .dockerignore
+- .env.example
+- .github/CODEOWNERS
+- .github/dependabot.yml
+- .github/workflows/agent-pr-checks.yml
+- .github/workflows/ci.yml
+- .github/workflows/deploy-production.yml
+- .github/workflows/deploy-staging.yml
+- .github/workflows/examples/deploy-frontend.yml.example
+- .github/workflows/security.yml
+- .husky/pre-commit
+- README.md
+- app/.dockerignore
+- app/.gitignore
+- app/AGENTS.md
+- app/Dockerfile
+- app/__tests__/app/approvals-page.test.tsx
+- app/__tests__/app/billing-page.test.tsx
+- app/__tests__/app/crm-health.test.tsx
+- app/__tests__/app/crm-onboarding.test.tsx
+- app/__tests__/app/crm-personas.test.tsx
+- app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- app/__tests__/app/orders-integration.test.tsx
+- app/__tests__/app/quotes-integration.test.tsx
+- app/__tests__/app/reconciliation-page.test.tsx
+- app/__tests__/app/workflows-page.test.tsx
+- app/__tests__/components/EmptyState.test.tsx
+- app/__tests__/components/ErrorBoundary.test.tsx
+- app/__tests__/components/ui/pagination-controls.test.tsx
+- app/__tests__/e2e/billing.spec.ts
+- app/__tests__/e2e/onboarding.spec.ts
+- app/__tests__/lib/api/activities.test.ts
+- app/__tests__/lib/api/agents.test.ts
+- app/__tests__/lib/api/ai-chat.test.ts
+- app/__tests__/lib/api/ai-generate.test.ts
+- app/__tests__/lib/api/ai-insights.test.ts
+- app/__tests__/lib/api/ap2.test.ts
+- app/__tests__/lib/api/approvals-extended.test.ts
+- app/__tests__/lib/api/approvals.test.ts
+- app/__tests__/lib/api/auth.test.ts
+- app/__tests__/lib/api/autonomous.test.ts
+- app/__tests__/lib/api/autonomy.test.ts
+- app/__tests__/lib/api/bank-feeds.test.ts
+- app/__tests__/lib/api/billing.test.ts
+- app/__tests__/lib/api/chat.test.ts
+- app/__tests__/lib/api/cin7-bom.test.ts
+- app/__tests__/lib/api/cin7-fulfilment.test.ts
+- app/__tests__/lib/api/cin7-gl.test.ts
+- app/__tests__/lib/api/cin7-grn.test.ts
+- app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- app/__tests__/lib/api/cin7-shadow.test.ts
+- app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- app/__tests__/lib/api/cin7.test.ts
+- app/__tests__/lib/api/contacts.test.ts
+- app/__tests__/lib/api/contractors.test.ts
+- app/__tests__/lib/api/copilot.test.ts
+- app/__tests__/lib/api/customers.test.ts
+- app/__tests__/lib/api/documents.test.ts
+- app/__tests__/lib/api/inventory.test.ts
+- app/__tests__/lib/api/invoices-extended.test.ts
+- app/__tests__/lib/api/invoices.test.ts
+- app/__tests__/lib/api/marketing.test.ts
+- app/__tests__/lib/api/marketplace.test.ts
+- app/__tests__/lib/api/mobile.test.ts
+- app/__tests__/lib/api/monitoring.test.ts
+- app/__tests__/lib/api/notifications.test.ts
+- app/__tests__/lib/api/orders.test.ts
+- app/__tests__/lib/api/pos.test.ts
+- app/__tests__/lib/api/products.test.ts
+- app/__tests__/lib/api/purchase-orders.test.ts
+- app/__tests__/lib/api/quotes.test.ts
+- app/__tests__/lib/api/reconciliation.test.ts
+- app/__tests__/lib/api/sendgrid.test.ts
+- app/__tests__/lib/api/service-requests.test.ts
+- app/__tests__/lib/api/settings.test.ts
+- app/__tests__/lib/api/shadow.test.ts
+- app/__tests__/lib/api/shipments-outbound.test.ts
+- app/__tests__/lib/api/shipments.test.ts
+- app/__tests__/lib/api/shopify.test.ts
+- app/__tests__/lib/api/sla.test.ts
+- app/__tests__/lib/api/suppliers.test.ts
+- app/__tests__/lib/api/tasks.test.ts
+- app/__tests__/lib/api/team.test.ts
+- app/__tests__/lib/api/warehouse.test.ts
+- app/__tests__/lib/api/workflows-extended.test.ts
+- app/__tests__/lib/api/workflows.test.ts
+- app/__tests__/lib/api/workshop.test.ts
+- app/__tests__/lib/api/xero.test.ts
+- app/__tests__/lib/marketplace.test.ts
+- app/__tests__/lib/types/cin7.test.ts
+- app/__tests__/lib/types/marketplace.test.ts
+- app/__tests__/lib/types/reconciliation.test.ts
+- app/__tests__/lib/types/workflows.test.ts
+- app/__tests__/lib/utils/csv-export.test.ts
+- app/components.json
+- app/declarations.d.ts
+- app/e2e/README.md
+- app/e2e/auth.setup.ts
+- app/e2e/auth.spec.ts
+- app/e2e/autosave.spec.ts
+- app/e2e/billing.spec.ts
+- app/e2e/capture-error.spec.ts
+- app/e2e/crm-health.spec.ts
+- app/e2e/customers.spec.ts
+- app/e2e/debug-orders.spec.ts
+- app/e2e/fixtures/auth.ts
+- app/e2e/helpers/page-objects.ts
+- app/e2e/helpers/test-data.ts
+- app/e2e/mobile-photo-order.spec.ts
+- app/e2e/monitoring.spec.ts
+- app/e2e/orders.spec.ts
+- app/e2e/pos-reconciliation.spec.ts
+- app/e2e/pos-transactions.spec.ts
+- app/e2e/prd-generation.spec.ts
+- app/e2e/products.spec.ts
+- app/e2e/quotes.spec.ts
+- app/e2e/showroom.spec.ts
+- app/e2e/test-helper.ts
+- app/e2e/test-websocket-fix.spec.ts
+- app/e2e/warehouse.spec.ts
+- app/e2e/workshop.spec.ts
+- app/eslint.config.mjs
+- app/next-env.d.ts
+- app/next.config.ts
+- app/package.json
+- app/playwright.a11y.config.ts
+- app/playwright.config.ts
+- app/postcss.config.js
+- app/public/favicon.svg
+- app/public/manifest.json
+- app/public/test-api.html
+- app/scripts/dev-with-fallback.mjs
+- app/sentry.client.config.ts
+- app/sentry.edge.config.ts
+- app/sentry.server.config.ts
+- app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- app/src/app/(dashboard)/activities/page.tsx
+- app/src/app/(dashboard)/approvals/page.tsx
+- app/src/app/(dashboard)/contacts/[id]/page.tsx
+- app/src/app/(dashboard)/contacts/page.tsx
+- app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- app/src/app/(dashboard)/customers/[id]/page.tsx
+- app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- app/src/app/(dashboard)/customers/page.tsx
+- app/src/app/(dashboard)/dashboard/page.tsx
+- app/src/app/(dashboard)/inventory/forecast/page.tsx
+- app/src/app/(dashboard)/inventory/page.tsx
+- app/src/app/(dashboard)/inventory/reservations/page.tsx
+- app/src/app/(dashboard)/inventory/stock/page.tsx
+- app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- app/src/app/(dashboard)/inventory/transfers/page.tsx
+- app/src/app/(dashboard)/invoices/[id]/page.tsx
+- app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- app/src/app/(dashboard)/invoices/page.tsx
+- app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- app/src/app/(dashboard)/orders/page.tsx
+- app/src/app/(dashboard)/products/components/ProductForm.tsx
+- app/src/app/(dashboard)/products/page.tsx
+- app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- app/src/app/(dashboard)/purchase-orders/page.tsx
+- app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- app/src/app/(dashboard)/warehouse/page.tsx
+- app/src/app/error.tsx
+- app/src/app/robots.ts
+- app/src/components/dashboard/AgentMetricsWidget.tsx
+- app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- app/src/components/dashboard/InventoryForecastWidget.tsx
+- app/src/components/inventory/LocationAwareProductSelect.tsx
+- app/src/components/inventory/ReleaseReservationDialog.tsx
+- app/src/components/inventory/StockReservationDialog.tsx
+- app/src/components/inventory/TransferStatusBadge.tsx
+- app/src/components/workflow/canvas/workflow-canvas.tsx
+- app/src/instrumentation.ts
+- app/src/lib/api/activities.ts
+- app/src/lib/api/contacts.ts
+- app/src/lib/api/index.ts
+- app/src/lib/api/inventory.ts
+- app/src/lib/api/invoices.ts
+- app/src/lib/api/pos.ts
+- app/src/lib/hooks/use-autonomy-metrics.ts
+- app/src/lib/hooks/use-autosave.ts
+- app/src/lib/hooks/use-cin7-stream.ts
+- app/src/lib/hooks/use-form-autofill.ts
+- app/src/lib/hooks/use-inventory-forecast.ts
+- app/src/lib/hooks/use-recent-items.ts
+- app/src/lib/hooks/use-search-state.ts
+- app/src/lib/hooks/use-sse.ts
+- app/src/lib/hooks/use-websocket.ts
+- app/src/lib/types/activities.ts
+- app/src/lib/types/cin7.ts
+- app/src/lib/types/contacts.ts
+- app/src/lib/types/inventory.ts
+- app/src/lib/types/invoices.ts
+- app/src/lib/types/marketplace.ts
+- app/src/lib/types/reconciliation.ts
+- app/src/lib/types/workflows.ts
+- app/tailwind.config.ts
+- app/tests/accessibility/a11y.spec.ts
+- app/tests/e2e/approvals.spec.ts
+- app/tests/e2e/error-handling.spec.ts
+- app/tests/e2e/invoices.spec.ts
+- app/tests/e2e/reconciliation.spec.ts
+- app/tests/e2e/workflows.spec.ts
+- app/tests/visual/components.visual.spec.ts
+- app/tsconfig.json
+- app/vercel.json
+- app/vitest.config.ts
+- app/vitest.d.ts
+- app/vitest.setup.ts
+- backend/.claude/memory/context-snapshot.md
+- backend/.gitignore
+- backend/.python-version
+- backend/.vercelignore
+- backend/=0.39.0
+- backend/=6.11.0
+- backend/AGENTS.md
+- "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- backend/Dockerfile
+- backend/ISSUE-4-COMPLETION.md
+- backend/ISSUE-5-COMPLETION.md
+- backend/Procfile
+- backend/alembic.ini
+- backend/alembic/README
+- backend/alembic/env.py
+- backend/alembic/script.py.mako
+- backend/alembic/versions/001_add_approvals.py
+- backend/alembic/versions/002_add_semantic_search.py
+- backend/alembic/versions/003_add_missing_trigram_indexes.py
+- backend/alembic/versions/004_add_product_sync_bidirectional.py
+- backend/alembic/versions/005_add_shopify_extended_tables.py
+- backend/alembic/versions/006_add_mobile_order_tables.py
+- backend/alembic/versions/007_add_workflow_notification_indexes.py
+- backend/alembic/versions/008_merge_heads.py
+- backend/alembic/versions/009_add_pos_tables.py
+- backend/alembic/versions/00a_rename_invoice_date.py
+- backend/alembic/versions/00b_add_missing_inventory_tables.py
+- backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- backend/alembic/versions/00d_add_certification_tables.py
+- backend/alembic/versions/00e_add_prd_tables.py
+- backend/alembic/versions/00f_add_pricing_tier_tables.py
+- backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- backend/alembic/versions/68d51946645a_create_erp_schema.py
+- backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- backend/analyze_404_errors.py
+- backend/analyze_422_errors.py
+- backend/analyze_500_errors.py
+- backend/apply_i18n_migration.py
+- backend/apply_i18n_migration_v2.py
+- backend/apply_indexes.py
+- backend/apply_indexes_via_backend.py
+- backend/apply_pos_migration.py
+- backend/apply_search_indexes.py
+- backend/apply_sequences_migration.py
+- backend/benchmarks/after_indexes.txt
+- backend/benchmarks/before_indexes.txt
+- backend/benchmarks/comparison.md
+- backend/check_404_in_full_report.py
+- backend/check_backend_config.py
+- backend/check_categories.py
+- backend/check_db.py
+- backend/check_enum_def.py
+- backend/check_orders.py
+- backend/check_results.py
+- backend/check_runtime_config.py
+- backend/check_schema.py
+- backend/check_tables.py
+- backend/check_test_status.py
+- backend/cleanup_db.py
+- backend/conftest.py
+- backend/count_data.py
+- backend/create_admin.py
+- backend/create_demo_orders.py
+- backend/create_demo_orders_simple.py
+- backend/create_inventory_tables.py
+- backend/create_service_tables.py
+- backend/debug_response.py
+- backend/diagnose_db_connection.py
+- backend/docs/ISS-005-VERIFICATION.md
+- backend/docs/ISS-006-VERIFICATION.md
+- backend/docs/ISS-007-VERIFICATION.md
+- backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- backend/examples/use_agentic_layer.py
+- backend/fix_categories.py
+- backend/fix_categories_uppercase.py
+- backend/generate_endpoint.py
+- backend/generate_failures.py
+- backend/generate_password_hash.py
+- backend/inject_failure_patterns.py
+- backend/inject_insights_directly.py
+- backend/inject_test_data.py
+- backend/inject_test_failures.py
+- backend/list_google_models.py
+- backend/load_test_output.txt
+- backend/migrations/001_add_search_indexes.sql
+- backend/migrations/001_rollback.sql
+- backend/migrations/README.md
+- backend/migrations/add_ai_search.sql
+- backend/migrations/add_ap2_integration.sql
+- backend/migrations/add_auto_sync_enhancements.sql
+- backend/migrations/add_email_audit_tables.sql
+- backend/migrations/add_foreign_key_indexes.sql
+- backend/migrations/add_i18n_support.sql
+- backend/migrations/add_missing_fk_indexes.sql
+- backend/migrations/add_performance_indexes.sql
+- backend/migrations/add_phase4_inventory_indexes.sql
+- backend/migrations/add_portal_forms_tables.sql
+- backend/migrations/add_pos_system.sql
+- backend/migrations/add_search_indexes.sql
+- backend/migrations/add_sequences_for_numbers.sql
+- backend/migrations/add_shopify_extended.sql
+- backend/migrations/add_submission_notes_table.sql
+- backend/migrations/add_trigram_indexes.sql
+- backend/migrations/add_webhook_events_table.sql
+- backend/migrations/seed_ccw_products.sql
+- backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- backend/migrations/week3_enum_standardization.sql
+- backend/migrations/week3_timezone_standardization.sql
+- backend/pyproject.toml
+- backend/pytest.ini
+- backend/railway.json
+- backend/requirements.txt
+- backend/reset_admin_password.py
+- backend/run-setup-memory.ps1
+- backend/run-tests.ps1
+- backend/run_bugfix_tests.ps1
+- backend/run_bugfix_tests.sh
+- backend/run_migrations.py
+- backend/scripts/analyze_query_performance.py
+- backend/scripts/apply_foreign_key_indexes.py
+- backend/scripts/apply_phase4_indexes.py
+- backend/scripts/apply_trigram_indexes.py
+- backend/scripts/benchmark_search.py
+- backend/scripts/create_container_tables.sql
+- backend/scripts/create_sample_orders.py
+- backend/scripts/create_sample_quotes.py
+- backend/scripts/explain_queries.sh
+- backend/scripts/identify_500_sources.py
+- backend/scripts/implement_query_optimizations.md
+- backend/scripts/import_ccwonline_products.py
+- backend/scripts/insert_container_sample_data.sql
+- backend/scripts/integration_test_iss001.py
+- backend/scripts/monitor_indexes.py
+- backend/scripts/run_sql.py
+- backend/scripts/seed_ccw_cleaning.py
+- backend/scripts/seed_ccw_products.py
+- backend/scripts/setup-memory.py
+- backend/scripts/test_iss005_fixes.py
+- backend/scripts/validate_autosave_implementation.py
+- backend/scripts/validate_iss001_fix.py
+- backend/scripts/validate_iss003_actual.py
+- backend/scripts/validate_iss003_fix.py
+- backend/scripts/validate_iss005_fix.py
+- backend/scripts/verify_iss005_code.py
+- backend/scripts/verify_query_optimizations.py
+- backend/seed_data.py
+- backend/seed_demo_simple.sql
+- backend/seed_orders.py
+- backend/show_customers.py
+- backend/show_orders.py
+- backend/show_products.py
+- backend/show_quotes.py
+- backend/src/__init__.py
+- backend/src/agents/prd/__init__.py
+- backend/src/agents/prd/analysis_agent.py
+- backend/src/agents/prd/feature_decomposer.py
+- backend/src/agents/prd/prd_orchestrator.py
+- backend/src/agents/prd/roadmap_planner.py
+- backend/src/agents/prd/tech_spec_generator.py
+- backend/src/agents/prd/test_generator.py
+- backend/src/ai/__init__.py
+- backend/src/ai/agents/chat_assistant.py
+- backend/src/ai/agents/chat_state.py
+- backend/src/ai/agents/content_generator.py
+- backend/src/ai/agents/content_state.py
+- backend/src/ai/agents/insights_agent.py
+- backend/src/ai/agents/insights_state.py
+- backend/src/ai/agents/risk_assessor.py
+- backend/src/ai/agents/rollback_agent.py
+- backend/src/ai/agents/specialized/__init__.py
+- backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- backend/src/ai/agents/specialized/development_agent.py
+- backend/src/ai/agents/specialized/document_parser_agent.py
+- backend/src/ai/agents/specialized/form_autofill_agent.py
+- backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- backend/src/ai/agents/specialized/marketing_agent.py
+- backend/src/ai/agents/specialized/pricing_agent.py
+- backend/src/ai/agents/specialized/pricing_state.py
+- backend/src/ai/agents/specialized/procurement_agent.py
+- backend/src/ai/agents/specialized/procurement_state.py
+- backend/src/ai/agents/specialized/project_intelligence_agent.py
+- backend/src/ai/agents/specialized/query_agent.py
+- backend/src/ai/agents/specialized/recommendation_agent.py
+- backend/src/ai/agents/specialized/reconciliation_agent.py
+- backend/src/ai/agents/specialized/search_agent.py
+- backend/src/ai/agents/specialized/staff_copilot_agent.py
+- backend/src/ai/agents/specialized/task_executor_agent.py
+- backend/src/ai/agents/specialized/task_executor_state.py
+- backend/src/ai/agents/specialized/testing_agent.py
+- backend/src/ai/base_agent.py
+- backend/src/ai/generators/__init__.py
+- backend/src/ai/generators/email_generator.py
+- backend/src/ai/generators/quote_generator.py
+- backend/src/ai/learning/__init__.py
+- backend/src/ai/learning/learning_engine.py
+- backend/src/ai/learning/learning_repository.py
+- backend/src/ai/monitoring/__init__.py
+- backend/src/ai/monitoring/health_monitor.py
+- backend/src/ai/monitoring/metrics_collector.py
+- backend/src/ai/ollama_client.py
+- backend/src/ai/orchestration/__init__.py
+- backend/src/ai/orchestration/agent_registry.py
+- backend/src/ai/orchestration/autonomous_loop.py
+- backend/src/ai/orchestration/project_orchestrator.py
+- backend/src/ai/orchestration/supervisor_agent.py
+- backend/src/ai/orchestration/supervisor_state.py
+- backend/src/ai/prompts/__init__.py
+- backend/src/ai/prompts/system_prompts.py
+- backend/src/ai/protocol/__init__.py
+- backend/src/ai/protocol/confidence.py
+- backend/src/ai/protocol/error_handler.py
+- backend/src/ai/protocol/governor.py
+- backend/src/ai/protocol/message_bus.py
+- backend/src/ai/protocol/models.py
+- backend/src/ai/tools/__init__.py
+- backend/src/ai/tools/analytics_tools.py
+- backend/src/ai/tools/base.py
+- backend/src/ai/tools/erp_tools.py
+- backend/src/ai/tools/execution_tools.py
+- backend/src/ai/tools/inventory_intelligence.py
+- backend/src/ai/tools/pricing_tools.py
+- backend/src/ai/tools/procurement_tools.py
+- backend/src/api/__init__.py
+- backend/src/api/debug_main.py
+- backend/src/api/deps.py
+- backend/src/api/exceptions.py
+- backend/src/api/main.py
+- backend/src/api/middleware/__init__.py
+- backend/src/api/middleware/auth.py
+- backend/src/api/middleware/performance.py
+- backend/src/api/middleware/rate_limit.py
+- backend/src/api/middleware/rbac.py
+- backend/src/api/middleware/request_id.py
+- backend/src/api/middleware/security_headers.py
+- backend/src/api/middleware/tenant_isolation.py
+- backend/src/api/routers/prd.py
+- backend/src/api/routes/__init__.py
+- backend/src/api/routes/activities.py
+- backend/src/api/routes/agents_monitor.py
+- backend/src/api/routes/ai/__init__.py
+- backend/src/api/routes/ai/anomaly.py
+- backend/src/api/routes/ai/approval_gates.py
+- backend/src/api/routes/ai/assets.py
+- backend/src/api/routes/ai/autonomous_ops.py
+- backend/src/api/routes/ai/build_command.py
+- backend/src/api/routes/ai/chat.py
+- backend/src/api/routes/ai/cin7_anomaly.py
+- backend/src/api/routes/ai/cin7_forecast.py
+- backend/src/api/routes/ai/cin7_shadow_ai.py
+- backend/src/api/routes/ai/command_parser.py
+- backend/src/api/routes/ai/document_parser.py
+- backend/src/api/routes/ai/form_autofill.py
+- backend/src/api/routes/ai/gap_sync.py
+- backend/src/api/routes/ai/generate.py
+- backend/src/api/routes/ai/insights.py
+- backend/src/api/routes/ai/inventory_forecast.py
+- backend/src/api/routes/ai/learning.py
+- backend/src/api/routes/ai/marketing_ai.py
+- backend/src/api/routes/ai/monitoring.py
+- backend/src/api/routes/ai/project_intelligence.py
+- backend/src/api/routes/ai/protocol.py
+- backend/src/api/routes/ai/query.py
+- backend/src/api/routes/ai/requirement_verification.py
+- backend/src/api/routes/ai/specialized.py
+- backend/src/api/routes/ai/staff_copilot.py
+- backend/src/api/routes/ai/supervisor.py
+- backend/src/api/routes/ai/test_data.py
+- backend/src/api/routes/ai/test_failures.py
+- backend/src/api/routes/ai/toolshed.py
+- backend/src/api/routes/ai/toolshed_vault.py
+- backend/src/api/routes/analytics.py
+- backend/src/api/routes/approvals.py
+- backend/src/api/routes/audit_trail.py
+- backend/src/api/routes/autonomous_dev.py
+- backend/src/api/routes/autonomy_metrics.py
+- backend/src/api/routes/backorders.py
+- backend/src/api/routes/bank_feeds.py
+- backend/src/api/routes/billing.py
+- backend/src/api/routes/boardroom.py
+- backend/src/api/routes/certifications.py
+- backend/src/api/routes/chat.py
+- backend/src/api/routes/config.py
+- backend/src/api/routes/contacts.py
+- backend/src/api/routes/containers.py
+- backend/src/api/routes/contractors.py
+- backend/src/api/routes/crm_health.py
+- backend/src/api/routes/crm_onboarding.py
+- backend/src/api/routes/crm_personas.py
+- backend/src/api/routes/cron_jobs.py
+- backend/src/api/routes/customer_orders.py
+- backend/src/api/routes/customers.py
+- backend/src/api/routes/dashboard_stream.py
+- backend/src/api/routes/demo_auth.py
+- backend/src/api/routes/demo_dashboard.py
+- backend/src/api/routes/demo_lists.py
+- backend/src/api/routes/documents.py
+- backend/src/api/routes/email_audit.py
+- backend/src/api/routes/equipment_lifecycle.py
+- backend/src/api/routes/google_ai.py
+- backend/src/api/routes/health.py
+- backend/src/api/routes/integrations/__init__.py
+- backend/src/api/routes/integrations/ap2.py
+- backend/src/api/routes/integrations/cin7.py
+- backend/src/api/routes/integrations/cin7_bom.py
+- backend/src/api/routes/integrations/cin7_crm.py
+- backend/src/api/routes/integrations/cin7_fulfilment.py
+- backend/src/api/routes/integrations/cin7_gl.py
+- backend/src/api/routes/integrations/cin7_grn.py
+- backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- backend/src/api/routes/integrations/cin7_line_items.py
+- backend/src/api/routes/integrations/cin7_procurement.py
+- backend/src/api/routes/integrations/cin7_shadow_sync.py
+- backend/src/api/routes/integrations/cin7_stream.py
+- backend/src/api/routes/integrations/cin7_sync.py
+- backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- backend/src/api/routes/integrations/cin7_webhooks.py
+- backend/src/api/routes/integrations/elevenlabs.py
+- backend/src/api/routes/integrations/heygen.py
+- backend/src/api/routes/integrations/marketplace.py
+- backend/src/api/routes/integrations/sendgrid.py
+- backend/src/api/routes/integrations/shopify.py
+- backend/src/api/routes/integrations/shopify_theme.py
+- backend/src/api/routes/integrations/xero.py
+- backend/src/api/routes/inventory.py
+- backend/src/api/routes/inventory_stream.py
+- backend/src/api/routes/invoice_payments.py
+- backend/src/api/routes/invoices.py
+- backend/src/api/routes/jobs.py
+- backend/src/api/routes/mobile/__init__.py
+- backend/src/api/routes/mobile/guest_orders.py
+- backend/src/api/routes/monitoring/__init__.py
+- backend/src/api/routes/monitoring/alerts.py
+- backend/src/api/routes/monitoring/business_metrics.py
+- backend/src/api/routes/monitoring/infrastructure.py
+- backend/src/api/routes/monitoring/performance.py
+- backend/src/api/routes/notifications.py
+- backend/src/api/routes/orders.py
+- backend/src/api/routes/portal/__init__.py
+- backend/src/api/routes/portal/customer_portal.py
+- backend/src/api/routes/pos_transactions.py
+- backend/src/api/routes/pos_xero_reconciliation.py
+- backend/src/api/routes/prd.py
+- backend/src/api/routes/pricing.py
+- backend/src/api/routes/procurement.py
+- backend/src/api/routes/products.py
+- backend/src/api/routes/prometheus_metrics.py
+- backend/src/api/routes/public_stats.py
+- backend/src/api/routes/purchase_orders.py
+- backend/src/api/routes/quotes.py
+- backend/src/api/routes/recommendations.py
+- backend/src/api/routes/reconciliation.py
+- backend/src/api/routes/reconciliation_dashboard.py
+- backend/src/api/routes/search.py
+- backend/src/api/routes/service_requests.py
+- backend/src/api/routes/settings.py
+- backend/src/api/routes/shadow_analytics.py
+- backend/src/api/routes/shadow_mode.py
+- backend/src/api/routes/shipments.py
+- backend/src/api/routes/sla.py
+- backend/src/api/routes/stripe_webhooks.py
+- backend/src/api/routes/supplier_portal.py
+- backend/src/api/routes/suppliers.py
+- backend/src/api/routes/team.py
+- backend/src/api/routes/test_data_gen.py
+- backend/src/api/routes/translations.py
+- backend/src/api/routes/warehouse.py
+- backend/src/api/routes/webhooks.py
+- backend/src/api/routes/workflows.py
+- backend/src/api/routes/workshop/__init__.py
+- backend/src/api/routes/workshop/bookings.py
+- backend/src/api/routes/workshop/dashboard.py
+- backend/src/api/routes/workshop/equipment.py
+- backend/src/api/routes/workshop/reminders.py
+- backend/src/api/routes/workshop/templates.py
+- backend/src/api/schemas/invoicing.py
+- backend/src/api/schemas/prd.py
+- backend/src/auth/jwt.py
+- backend/src/auth/models.py
+- backend/src/auth/password_reset.py
+- backend/src/cache/decorators.py
+- backend/src/cache/redis_client.py
+- backend/src/config/__init__.py
+- backend/src/config/ap2_settings.py
+- backend/src/config/autonomy.py
+- backend/src/config/cin7_settings.py
+- backend/src/config/database.py
+- backend/src/config/elevenlabs_settings.py
+- backend/src/config/heygen_settings.py
+- backend/src/config/marketplace_settings.py
+- backend/src/config/secrets_manager.py
+- backend/src/config/sendgrid_settings.py
+- backend/src/config/settings.py
+- backend/src/config/shopify_settings.py
+- backend/src/config/xero_settings.py
+- backend/src/db/__init__.py
+- backend/src/db/ai_models.py
+- backend/src/db/ai_search_models.py
+- backend/src/db/ap2_models.py
+- backend/src/db/approvals_models.py
+- backend/src/db/audit_models.py
+- backend/src/db/certification_models.py
+- backend/src/db/cin7_bom_models.py
+- backend/src/db/cin7_fulfilment_models.py
+- backend/src/db/cin7_gl_models.py
+- backend/src/db/cin7_models.py
+- backend/src/db/cin7_shadow_models.py
+- backend/src/db/container_models.py
+- backend/src/db/crm_models.py
+- backend/src/db/crm_schemas.py
+- backend/src/db/customer_health_models.py
+- backend/src/db/demo_models.py
+- backend/src/db/email_audit_models.py
+- backend/src/db/email_models.py
+- backend/src/db/equipment_lifecycle_models.py
+- backend/src/db/generate_demo_purchases.py
+- backend/src/db/i18n_models.py
+- backend/src/db/i18n_schemas.py
+- backend/src/db/indexes.py
+- backend/src/db/integration_credential_models.py
+- backend/src/db/inventory_models.py
+- backend/src/db/inventory_schemas.py
+- backend/src/db/marketplace_models.py
+- backend/src/db/mobile_order_models.py
+- backend/src/db/models/__init__.py
+- backend/src/db/models/invoicing.py
+- backend/src/db/models/prd.py
+- backend/src/db/models_base.py
+- backend/src/db/portal_forms_models.py
+- backend/src/db/pos_models.py
+- backend/src/db/pricing_models.py
+- backend/src/db/schemas.py
+- backend/src/db/seed_demo.py
+- backend/src/db/service_models.py
+- backend/src/db/shadow_session_models.py
+- backend/src/db/shopify_extended_models.py
+- backend/src/db/shopify_models.py
+- backend/src/db/shopify_schemas.py
+- backend/src/db/submission_notes_models.py
+- backend/src/db/webhook_models.py
+- backend/src/db/workflow_models.py
+- backend/src/db/workshop_models.py
+- backend/src/db/xero_models.py
+- backend/src/db/xero_schemas.py
+- backend/src/emails/templates/order_confirmed.html
+- backend/src/emails/templates/order_delivered.html
+- backend/src/emails/templates/order_shipped.html
+- backend/src/emails/templates/quote_created.html
+- backend/src/emails/templates/quote_expiring.html
+- backend/src/events/__init__.py
+- backend/src/events/event_bus.py
+- backend/src/integrations/__init__.py
+- backend/src/integrations/ap2/__init__.py
+- backend/src/integrations/ap2/client.py
+- backend/src/integrations/ap2/security.py
+- backend/src/integrations/cin7/__init__.py
+- backend/src/integrations/cin7/change_detector.py
+- backend/src/integrations/cin7/client.py
+- backend/src/integrations/cin7/customer_sync.py
+- backend/src/integrations/cin7/demo_client.py
+- backend/src/integrations/cin7/event_dispatcher.py
+- backend/src/integrations/cin7/inventory_sync.py
+- backend/src/integrations/cin7/product_sync.py
+- backend/src/integrations/cin7/purchase_sync.py
+- backend/src/integrations/cin7/sales_sync.py
+- backend/src/integrations/cin7/supplier_sync.py
+- backend/src/integrations/elevenlabs/__init__.py
+- backend/src/integrations/elevenlabs/client.py
+- backend/src/integrations/elevenlabs/demo_client.py
+- backend/src/integrations/elevenlabs/live_client.py
+- backend/src/integrations/google/__init__.py
+- backend/src/integrations/google/client.py
+- backend/src/integrations/heygen/__init__.py
+- backend/src/integrations/heygen/client.py
+- backend/src/integrations/heygen/demo_client.py
+- backend/src/integrations/heygen/live_client.py
+- backend/src/integrations/http_utils.py
+- backend/src/integrations/marketplace/__init__.py
+- backend/src/integrations/marketplace/base.py
+- backend/src/integrations/marketplace/demo_channel.py
+- backend/src/integrations/marketplace/ebay_channel.py
+- backend/src/integrations/marketplace/facebook_channel.py
+- backend/src/integrations/marketplace/registry.py
+- backend/src/integrations/marketplace/shopify_channel.py
+- backend/src/integrations/marketplace/sync_engine.py
+- backend/src/integrations/payments/__init__.py
+- backend/src/integrations/payments/amex.py
+- backend/src/integrations/payments/eftpos.py
+- backend/src/integrations/payments/processor.py
+- backend/src/integrations/secrets_manager.py
+- backend/src/integrations/sendgrid/__init__.py
+- backend/src/integrations/sendgrid/client.py
+- backend/src/integrations/sendgrid/demo_client.py
+- backend/src/integrations/sendgrid/live_client.py
+- backend/src/integrations/sendgrid/processor.py
+- backend/src/integrations/sentry_client.py
+- backend/src/integrations/shopify/__init__.py
+- backend/src/integrations/shopify/client.py
+- backend/src/integrations/shopify/demo_client.py
+- backend/src/integrations/shopify/inventory.py
+- backend/src/integrations/shopify/inventory_sync.py
+- backend/src/integrations/shopify/metafields.py
+- backend/src/integrations/shopify/orders.py
+- backend/src/integrations/shopify/product_sync.py
+- backend/src/integrations/shopify/translations.py
+- backend/src/integrations/shopify/webhooks.py
+- backend/src/integrations/stripe/__init__.py
+- backend/src/integrations/stripe/client.py
+- backend/src/integrations/xero/__init__.py
+- backend/src/integrations/xero/auth.py
+- backend/src/integrations/xero/client.py
+- backend/src/integrations/xero/customers.py
+- backend/src/integrations/xero/demo_client.py
+- backend/src/integrations/xero/invoices.py
+- backend/src/integrations/xero/payments.py
+- backend/src/integrations/xero/pos_reconciliation.py
+- backend/src/integrations/xero/token_manager.py
+- backend/src/integrations/xero/webhook_security.py
+- backend/src/integrations/xero/webhooks.py
+- backend/src/monitoring/__init__.py
+- backend/src/monitoring/metrics.py
+- backend/src/rag/__init__.py
+- backend/src/rag/chunkers.py
+- backend/src/rag/models.py
+- backend/src/rag/parsers.py
+- backend/src/rag/pipeline.py
+- backend/src/rag/storage.py
+- backend/src/scheduler/bank_feed_scheduler.py
+- backend/src/security/__init__.py
+- backend/src/security/encryption.py
+- backend/src/security/webhook_verification.py
+- backend/src/services/__init__.py
+- backend/src/services/alert_manager.py
+- backend/src/services/audit_service.py
+- backend/src/services/auto_reorder.py
+- backend/src/services/autonomy_audit.py
+- backend/src/services/bank_feed_service.py
+- backend/src/services/business_metrics_service.py
+- backend/src/services/carrier_service.py
+- backend/src/services/circuit_breaker.py
+- backend/src/services/code_generation/README.md
+- backend/src/services/code_generation/__init__.py
+- backend/src/services/code_generation/context_builder.py
+- backend/src/services/code_generation/doc_generator.py
+- backend/src/services/code_generation/generator.py
+- backend/src/services/code_generation/prompts/doc_generation.txt
+- backend/src/services/code_generation/prompts/python_generation.txt
+- backend/src/services/code_generation/prompts/test_generation.txt
+- backend/src/services/code_generation/prompts/typescript_generation.txt
+- backend/src/services/code_generation/quality_checker.py
+- backend/src/services/code_generation/test_generator.py
+- backend/src/services/deployment_service.py
+- backend/src/services/document_extraction_service.py
+- backend/src/services/dunning.py
+- backend/src/services/email_audit_service.py
+- backend/src/services/email_notifications.py
+- backend/src/services/email_service.py
+- backend/src/services/embedding_service.py
+- backend/src/services/i18n_service.py
+- backend/src/services/notification_service.py
+- backend/src/services/order_state.py
+- backend/src/services/procurement_matching.py
+- backend/src/services/product_recognition_service.py
+- backend/src/services/recommendation_service.py
+- backend/src/services/reconciliation_alerts.py
+- backend/src/services/requirement_extractor.py
+- backend/src/services/requirement_tracer.py
+- backend/src/services/semantic_search_service.py
+- backend/src/services/sla_escalation.py
+- backend/src/services/sla_service.py
+- backend/src/services/sse_service.py
+- backend/src/services/system_alert_service.py
+- backend/src/services/tax_calculator.py
+- backend/src/services/webhook_service.py
+- backend/src/services/workflow_service.py
+- backend/src/services/workshop_scheduler.py
+- backend/src/state/__init__.py
+- backend/src/state/supabase.py
+- backend/src/telemetry/__init__.py
+- backend/src/telemetry/usage_tracker.py
+- backend/src/testing/__init__.py
+- backend/src/testing/shopify_mock.py
+- backend/src/testing/xero_mock.py
+- backend/src/utils/__init__.py
+- backend/src/utils/calculations.py
+- backend/src/utils/logging.py
+- backend/src/utils/supabase_client.py
+- backend/src/workflow/__init__.py
+- backend/src/workflow/engine.py
+- backend/src/workflow/models.py
+- backend/src/workflow/storage.py
+- backend/src/workflows/__init__.py
+- backend/src/workflows/pr_automation.py
+- backend/srcapimain.py
+- backend/srcapiroutesailearning.py.tmp
+- backend/start_for_testing.py
+- backend/start_load_test_server.py
+- backend/test_ai_inventory_intelligence.py
+- backend/test_api.py
+- backend/test_api_error.py
+- backend/test_customer_sync.py
+- backend/test_dashboard_data.py
+- backend/test_dashboard_data_with_failures.py
+- backend/test_db_connection.py
+- backend/test_dependency_injection.py
+- backend/test_endpoint.py
+- backend/test_expired_quote_validation.py
+- backend/test_failure_scenarios.py
+- backend/test_full_payment_flow.py
+- backend/test_google_ai_endpoints.py
+- backend/test_google_ai_integration.py
+- backend/test_insights_api.py
+- backend/test_multistore_inventory.py
+- backend/test_order_update_items_500.py
+- backend/test_outbound_shipment.json
+- backend/test_password.py
+- backend/test_payment_webhook.py
+- backend/test_po.json
+- backend/test_quote_404_issue.py
+- backend/test_quote_fixes.py
+- backend/test_quote_generate_endpoint.py
+- backend/test_quote_validation.py
+- backend/test_redis_connection.py
+- backend/test_search_performance.py
+- backend/test_shopify_connection.py
+- backend/test_shopify_integration.py
+- backend/test_supplier.json
+- backend/tests/FIXES_APPLIED.md
+- backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- backend/tests/TEST_STATUS_REPORT.md
+- backend/tests/TEST_STATUS_UPDATE.md
+- backend/tests/__init__.py
+- backend/tests/ai/test_reconciliation_agent.py
+- backend/tests/api/README_BUGFIX_TESTS.md
+- backend/tests/api/test_500_errors.py
+- backend/tests/api/test_approval_gates.py
+- backend/tests/api/test_approvals.py
+- backend/tests/api/test_approvals_integration.py
+- backend/tests/api/test_autonomous_ops.py
+- backend/tests/api/test_bank_feeds.py
+- backend/tests/api/test_bas_report.py
+- backend/tests/api/test_billing_gaps.py
+- backend/tests/api/test_build_command.py
+- backend/tests/api/test_certifications.py
+- backend/tests/api/test_command_parser.py
+- backend/tests/api/test_customer_orders.py
+- backend/tests/api/test_document_extraction.py
+- backend/tests/api/test_equipment_lifecycle.py
+- backend/tests/api/test_gap_sync.py
+- backend/tests/api/test_inventory.py
+- backend/tests/api/test_inventory_gaps.py
+- backend/tests/api/test_inventory_new_endpoints.py
+- backend/tests/api/test_inventory_uni172.py
+- backend/tests/api/test_invoice_payments.py
+- backend/tests/api/test_invoices_tax_integration.py
+- backend/tests/api/test_nl_query.py
+- backend/tests/api/test_orders_performance.py
+- backend/tests/api/test_portal.py
+- backend/tests/api/test_pos_terminals.py
+- backend/tests/api/test_pos_transactions.py
+- backend/tests/api/test_pricing_tiers.py
+- backend/tests/api/test_quote_404_errors.py
+- backend/tests/api/test_quote_422_errors.py
+- backend/tests/api/test_quote_http_methods.py
+- backend/tests/api/test_rbac.py
+- backend/tests/api/test_reconciliation_integration.py
+- backend/tests/api/test_requirement_verification.py
+- backend/tests/api/test_supplier_portal.py
+- backend/tests/api/test_tenant_isolation.py
+- backend/tests/api/test_translations.py
+- backend/tests/api/test_workflows_integration.py
+- backend/tests/api/test_workshop_routes.py
+- backend/tests/conftest.py
+- backend/tests/e2e/__init__.py
+- backend/tests/e2e/test_login_flow.py
+- backend/tests/e2e/test_order_flow.py
+- backend/tests/fixtures/__init__.py
+- backend/tests/fixtures/data.py
+- backend/tests/fixtures/pos_data.py
+- backend/tests/fixtures/shopify_fixtures.py
+- backend/tests/fixtures/xero_fixtures.py
+- backend/tests/integration/README.md
+- backend/tests/integration/__init__.py
+- backend/tests/integration/conftest.py
+- backend/tests/integration/run_all_cin7_tests.py
+- backend/tests/integration/run_phase3_tests.py
+- backend/tests/integration/run_phase4_tests.py
+- backend/tests/integration/run_phase5_tests.py
+- backend/tests/integration/run_phase6_tests.py
+- backend/tests/integration/run_phase7_tests.py
+- backend/tests/integration/run_protocol_tests.py
+- backend/tests/integration/test_ap2_integration.py
+- backend/tests/integration/test_api_endpoints.py
+- backend/tests/integration/test_autonomous_dev.py
+- backend/tests/integration/test_autonomous_pr_workflow.py
+- backend/tests/integration/test_cin7_crm_sync.py
+- backend/tests/integration/test_cin7_integration.py
+- backend/tests/integration/test_cin7_sync.py
+- backend/tests/integration/test_crm_module.py
+- backend/tests/integration/test_recommendations.py
+- backend/tests/integration/test_search.py
+- backend/tests/integration/test_shopify_extended.py
+- backend/tests/integration/test_webhooks.py
+- backend/tests/integration/test_xero_reconciliation.py
+- backend/tests/integrations/__init__.py
+- backend/tests/integrations/test_xero_token_manager.py
+- backend/tests/load/README.md
+- backend/tests/load/__init__.py
+- backend/tests/load/conftest.py
+- backend/tests/load/generators/customers.py
+- backend/tests/load/generators/misc.py
+- backend/tests/load/generators/orders.py
+- backend/tests/load/generators/products.py
+- backend/tests/load/generators/quotes.py
+- backend/tests/load/load_test_requirements.txt
+- backend/tests/load/load_test_scenarios.ps1
+- backend/tests/load/load_test_scenarios.sh
+- backend/tests/load/locustfile.py
+- backend/tests/load/locustfile_ai_features.py
+- backend/tests/load/reporters/html_reporter.py
+- backend/tests/load/reporters/json_reporter.py
+- backend/tests/load/reports/load_test_full_20260127_100548.html
+- backend/tests/load/reports/load_test_full_20260127_100548.json
+- backend/tests/load/reports/load_test_full_20260127_100703.html
+- backend/tests/load/reports/load_test_full_20260127_100703.json
+- backend/tests/load/reports/load_test_full_20260128_131600.html
+- backend/tests/load/reports/load_test_full_20260128_131600.json
+- backend/tests/load/reports/load_test_full_20260128_132757.html
+- backend/tests/load/reports/load_test_full_20260128_132757.json
+- backend/tests/load/reports/load_test_full_20260205_124803.html
+- backend/tests/load/reports/load_test_full_20260205_124803.json
+- backend/tests/load/reports/load_test_full_20260205_125037.html
+- backend/tests/load/reports/load_test_full_20260205_125037.json
+- backend/tests/load/reports/load_test_latest.html
+- backend/tests/load/reports/load_test_latest.json
+- backend/tests/load/reports/load_test_quick_20260128_122451.html
+- backend/tests/load/reports/load_test_quick_20260128_122451.json
+- backend/tests/load/reports/load_test_quick_20260205_095442.html
+- backend/tests/load/reports/load_test_quick_20260205_095442.json
+- backend/tests/load/reports/load_test_quick_20260205_193339.html
+- backend/tests/load/reports/load_test_quick_20260205_193339.json
+- backend/tests/load/reports/load_test_quick_20260205_195029.html
+- backend/tests/load/reports/load_test_quick_20260205_195029.json
+- backend/tests/load/reports/load_test_quick_20260205_212433.html
+- backend/tests/load/reports/load_test_quick_20260205_212433.json
+- backend/tests/load/reports/load_test_quick_20260205_214840.html
+- backend/tests/load/reports/load_test_quick_20260205_214840.json
+- backend/tests/load/reports/load_test_quick_20260206_000919.html
+- backend/tests/load/reports/load_test_quick_20260206_000919.json
+- backend/tests/load/reports/load_test_quick_latest.html
+- backend/tests/load/reports/load_test_quick_latest.json
+- backend/tests/load/reports/scenario_report.html
+- backend/tests/load/reports/scenario_report.json
+- backend/tests/load/run_full_load_test.py
+- backend/tests/load/run_quick_load_test.py
+- backend/tests/load/test_concurrent_number_generation.py
+- backend/tests/load/test_performance_load.py
+- backend/tests/load/test_scenarios.py
+- backend/tests/performance/__init__.py
+- backend/tests/run_integration_tests.ps1
+- backend/tests/run_integration_tests.sh
+- backend/tests/security/__init__.py
+- backend/tests/security/test_auth_security.py
+- backend/tests/security/test_encryption.py
+- backend/tests/security/test_injection_attacks.py
+- backend/tests/security/test_xss_csrf.py
+- backend/tests/services/__init__.py
+- backend/tests/services/code_generation/__init__.py
+- backend/tests/services/code_generation/test_context_builder.py
+- backend/tests/services/code_generation/test_doc_generator.py
+- backend/tests/services/code_generation/test_generator.py
+- backend/tests/services/code_generation/test_integration.py
+- backend/tests/services/code_generation/test_quality_checker.py
+- backend/tests/services/code_generation/test_test_generator.py
+- backend/tests/services/run_all_tests.py
+- backend/tests/services/test_auto_reorder.py
+- backend/tests/services/test_auto_reorder_integration.py
+- backend/tests/services/test_dunning.py
+- backend/tests/services/test_email_audit_service.py
+- backend/tests/services/test_order_state.py
+- backend/tests/services/test_procurement_matching.py
+- backend/tests/services/test_procurement_matching_integration.py
+- backend/tests/services/test_requirement_extractor.py
+- backend/tests/services/test_requirement_tracer.py
+- backend/tests/services/test_sla_escalation.py
+- backend/tests/services/test_tax_calculator.py
+- backend/tests/services/test_tax_calculator_integration.py
+- backend/tests/smoke/__init__.py
+- backend/tests/smoke/conftest.py
+- backend/tests/smoke/test_smoke.py
+- backend/tests/test_agent_orchestration.py
+- backend/tests/test_approvals_batch_2c.py
+- backend/tests/test_auth_security.py
+- backend/tests/test_autonomy_audit.py
+- backend/tests/test_autonomy_config.py
+- backend/tests/test_batch_2c_structure.py
+- backend/tests/test_billing.py
+- backend/tests/test_circuit_breaker.py
+- backend/tests/test_concurrent_number_generation.py
+- backend/tests/test_customers_api.py
+- backend/tests/test_error_handling.py
+- backend/tests/test_gap_batch_2b.py
+- backend/tests/test_gap_batch_2b_smoke.py
+- backend/tests/test_gap_batch_2c_2d.py
+- backend/tests/test_health.py
+- backend/tests/test_marketplace.py
+- backend/tests/test_orders_api.py
+- backend/tests/test_pr_automation.py
+- backend/tests/test_products_api.py
+- backend/tests/test_project_intelligence.py
+- backend/tests/test_prometheus_metrics.py
+- backend/tests/test_quotes_api.py
+- backend/tests/test_risk_assessor.py
+- backend/tests/test_rollback_mechanism.py
+- backend/tests/test_sequence_generation.py
+- backend/tests/test_shopify_mock.py
+- backend/tests/test_specialized_agents.py
+- backend/tests/test_toolshed_api.py
+- backend/tests/test_workflow_agent_integration.py
+- backend/tests/test_workflows_batch_2c.py
+- backend/tests/test_xero_mock.py
+- backend/tests/unit/test_number_generation.py
+- backend/tests/unit/test_reconciliation_logic.py
+- backend/tests/utils/__init__.py
+- backend/tests/utils/test_calculations.py
+- backend/tests/webhooks/__init__.py
+- backend/tests/webhooks/test_webhook_transactions.py
+- backend/update_supplier.json
+- backend/uv.lock
+- backend/vercel.json
+- backend/verify_i18n_migration.py
+- backend/verify_indexes.py
+- backend/verify_phase1.py
+- backend/verify_phase9_fixes.py
+- backend/verify_race_condition_fix.py
+- backend/verify_sequence_deployment.py
+- backend/verify_tables.py
+- docs/project-root/CLAUDE.md
+- eslint.config.mjs
+- lighthouserc.js
+- package.json
+- pnpm-lock.yaml
+- pnpm-workspace.yaml
+- scripts/boardroom/security-audit.js
+- scripts/dependency-checks.sh
+- scripts/deploy-phase4-backend.sh
+- scripts/deploy-phase4-frontend.sh
+- scripts/deploy.sh
+- scripts/dev-start.sh
+- scripts/dev.sh
+- scripts/health-check-phase4.sh
+- scripts/security-audit.ps1
+- scripts/setup.sh
+- scripts/test-phase4-sse.ps1
+- scripts/test-sse-events.ps1
+- scripts/test-sse-events.sh
+- scripts/verify-firewall.sh
+- scripts/verify-integration-tests.sh
+- scripts/verify-load-testing.sh
+- scripts/verify-penetration-testing.sh
+- scripts/verify-prometheus-grafana.sh
+- scripts/verify-query-performance.sh
+- scripts/verify-rate-limiting.sh
+- scripts/verify-secrets-management.sh
+- scripts/verify-secrets.sh
+- scripts/verify-security-audit.sh
+- scripts/verify-sentry.sh
+- scripts/verify-shopify-webhooks.sh
+- scripts/verify-uat.sh
+- scripts/verify-uptime-monitoring.sh
+- scripts/verify.sh
+- (staged) app/.dockerignore
+- (staged) app/.gitignore
+- (staged) app/AGENTS.md
+- (staged) app/Dockerfile
+- (staged) app/__tests__/app/approvals-page.test.tsx
+- (staged) app/__tests__/app/billing-page.test.tsx
+- (staged) app/__tests__/app/crm-health.test.tsx
+- (staged) app/__tests__/app/crm-onboarding.test.tsx
+- (staged) app/__tests__/app/crm-personas.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- (staged) app/__tests__/app/orders-integration.test.tsx
+- (staged) app/__tests__/app/quotes-integration.test.tsx
+- (staged) app/__tests__/app/reconciliation-page.test.tsx
+- (staged) app/__tests__/app/workflows-page.test.tsx
+- (staged) app/__tests__/components/EmptyState.test.tsx
+- (staged) app/__tests__/components/ErrorBoundary.test.tsx
+- (staged) app/__tests__/components/ui/pagination-controls.test.tsx
+- (staged) app/__tests__/e2e/billing.spec.ts
+- (staged) app/__tests__/e2e/onboarding.spec.ts
+- (staged) app/__tests__/lib/api/activities.test.ts
+- (staged) app/__tests__/lib/api/agents.test.ts
+- (staged) app/__tests__/lib/api/ai-chat.test.ts
+- (staged) app/__tests__/lib/api/ai-generate.test.ts
+- (staged) app/__tests__/lib/api/ai-insights.test.ts
+- (staged) app/__tests__/lib/api/ap2.test.ts
+- (staged) app/__tests__/lib/api/approvals-extended.test.ts
+- (staged) app/__tests__/lib/api/approvals.test.ts
+- (staged) app/__tests__/lib/api/auth.test.ts
+- (staged) app/__tests__/lib/api/autonomous.test.ts
+- (staged) app/__tests__/lib/api/autonomy.test.ts
+- (staged) app/__tests__/lib/api/bank-feeds.test.ts
+- (staged) app/__tests__/lib/api/billing.test.ts
+- (staged) app/__tests__/lib/api/chat.test.ts
+- (staged) app/__tests__/lib/api/cin7-bom.test.ts
+- (staged) app/__tests__/lib/api/cin7-fulfilment.test.ts
+- (staged) app/__tests__/lib/api/cin7-gl.test.ts
+- (staged) app/__tests__/lib/api/cin7-grn.test.ts
+- (staged) app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow.test.ts
+- (staged) app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- (staged) app/__tests__/lib/api/cin7.test.ts
+- (staged) app/__tests__/lib/api/contacts.test.ts
+- (staged) app/__tests__/lib/api/contractors.test.ts
+- (staged) app/__tests__/lib/api/copilot.test.ts
+- (staged) app/__tests__/lib/api/customers.test.ts
+- (staged) app/__tests__/lib/api/documents.test.ts
+- (staged) app/__tests__/lib/api/inventory.test.ts
+- (staged) app/__tests__/lib/api/invoices-extended.test.ts
+- (staged) app/__tests__/lib/api/invoices.test.ts
+- (staged) app/__tests__/lib/api/marketing.test.ts
+- (staged) app/__tests__/lib/api/marketplace.test.ts
+- (staged) app/__tests__/lib/api/mobile.test.ts
+- (staged) app/__tests__/lib/api/monitoring.test.ts
+- (staged) app/__tests__/lib/api/notifications.test.ts
+- (staged) app/__tests__/lib/api/orders.test.ts
+- (staged) app/__tests__/lib/api/pos.test.ts
+- (staged) app/__tests__/lib/api/products.test.ts
+- (staged) app/__tests__/lib/api/purchase-orders.test.ts
+- (staged) app/__tests__/lib/api/quotes.test.ts
+- (staged) app/__tests__/lib/api/reconciliation.test.ts
+- (staged) app/__tests__/lib/api/sendgrid.test.ts
+- (staged) app/__tests__/lib/api/service-requests.test.ts
+- (staged) app/__tests__/lib/api/settings.test.ts
+- (staged) app/__tests__/lib/api/shadow.test.ts
+- (staged) app/__tests__/lib/api/shipments-outbound.test.ts
+- (staged) app/__tests__/lib/api/shipments.test.ts
+- (staged) app/__tests__/lib/api/shopify.test.ts
+- (staged) app/__tests__/lib/api/sla.test.ts
+- (staged) app/__tests__/lib/api/suppliers.test.ts
+- (staged) app/__tests__/lib/api/tasks.test.ts
+- (staged) app/__tests__/lib/api/team.test.ts
+- (staged) app/__tests__/lib/api/warehouse.test.ts
+- (staged) app/__tests__/lib/api/workflows-extended.test.ts
+- (staged) app/__tests__/lib/api/workflows.test.ts
+- (staged) app/__tests__/lib/api/workshop.test.ts
+- (staged) app/__tests__/lib/api/xero.test.ts
+- (staged) app/__tests__/lib/marketplace.test.ts
+- (staged) app/__tests__/lib/types/cin7.test.ts
+- (staged) app/__tests__/lib/types/marketplace.test.ts
+- (staged) app/__tests__/lib/types/reconciliation.test.ts
+- (staged) app/__tests__/lib/types/workflows.test.ts
+- (staged) app/__tests__/lib/utils/csv-export.test.ts
+- (staged) app/components.json
+- (staged) app/declarations.d.ts
+- (staged) app/e2e/README.md
+- (staged) app/e2e/auth.setup.ts
+- (staged) app/e2e/auth.spec.ts
+- (staged) app/e2e/autosave.spec.ts
+- (staged) app/e2e/billing.spec.ts
+- (staged) app/e2e/capture-error.spec.ts
+- (staged) app/e2e/crm-health.spec.ts
+- (staged) app/e2e/customers.spec.ts
+- (staged) app/e2e/debug-orders.spec.ts
+- (staged) app/e2e/fixtures/auth.ts
+- (staged) app/e2e/helpers/page-objects.ts
+- (staged) app/e2e/helpers/test-data.ts
+- (staged) app/e2e/mobile-photo-order.spec.ts
+- (staged) app/e2e/monitoring.spec.ts
+- (staged) app/e2e/orders.spec.ts
+- (staged) app/e2e/pos-reconciliation.spec.ts
+- (staged) app/e2e/pos-transactions.spec.ts
+- (staged) app/e2e/prd-generation.spec.ts
+- (staged) app/e2e/products.spec.ts
+- (staged) app/e2e/quotes.spec.ts
+- (staged) app/e2e/showroom.spec.ts
+- (staged) app/e2e/test-helper.ts
+- (staged) app/e2e/test-websocket-fix.spec.ts
+- (staged) app/e2e/warehouse.spec.ts
+- (staged) app/e2e/workshop.spec.ts
+- (staged) app/eslint.config.mjs
+- (staged) app/next-env.d.ts
+- (staged) app/next.config.ts
+- (staged) app/package.json
+- (staged) app/playwright.a11y.config.ts
+- (staged) app/playwright.config.ts
+- (staged) app/postcss.config.js
+- (staged) app/public/favicon.svg
+- (staged) app/public/manifest.json
+- (staged) app/public/test-api.html
+- (staged) app/scripts/dev-with-fallback.mjs
+- (staged) app/sentry.client.config.ts
+- (staged) app/sentry.edge.config.ts
+- (staged) app/sentry.server.config.ts
+- (staged) app/src/app/(auth)/layout.tsx
+- (staged) app/src/app/(auth)/login/page.tsx
+- (staged) app/src/app/(auth)/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/activities/page.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentList.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentStats.tsx
+- (staged) app/src/app/(dashboard)/agents/components/LearningInsights.tsx
+- (staged) app/src/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- (staged) app/src/app/(dashboard)/agents/components/TaskHistory.tsx
+- (staged) app/src/app/(dashboard)/agents/components/index.ts
+- (staged) app/src/app/(dashboard)/agents/page.tsx
+- (staged) app/src/app/(dashboard)/ai-assistant/page.tsx
+- (staged) app/src/app/(dashboard)/ai-ops/page.tsx
+- (staged) app/src/app/(dashboard)/ai-query/page.tsx
+- (staged) app/src/app/(dashboard)/alerts/page.tsx
+- (staged) app/src/app/(dashboard)/approvals/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous-dev/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous/page.tsx
+- (staged) app/src/app/(dashboard)/backorders/page.tsx
+- (staged) app/src/app/(dashboard)/bank-feeds/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/ContactForm.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- (staged) app/src/app/(dashboard)/contacts/page.tsx
+- (staged) app/src/app/(dashboard)/containers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/containers/page.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/ContractorForm.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- (staged) app/src/app/(dashboard)/contractors/page.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- (staged) app/src/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/health/page.tsx
+- (staged) app/src/app/(dashboard)/customers/layout.tsx
+- (staged) app/src/app/(dashboard)/customers/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/customers/page.tsx
+- (staged) app/src/app/(dashboard)/customers/personas/page.tsx
+- (staged) app/src/app/(dashboard)/dashboard/layout.tsx
+- (staged) app/src/app/(dashboard)/dashboard/page.tsx
+- (staged) app/src/app/(dashboard)/demo-live/page.tsx
+- (staged) app/src/app/(dashboard)/demo/contractor-demo.tsx
+- (staged) app/src/app/(dashboard)/demo/page.tsx
+- (staged) app/src/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/page.tsx
+- (staged) app/src/app/(dashboard)/error.tsx
+- (staged) app/src/app/(dashboard)/faq/page.tsx
+- (staged) app/src/app/(dashboard)/insights/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/bom/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/forecast/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/reservations/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/stock/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/bas/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/types.ts
+- (staged) app/src/app/(dashboard)/layout.tsx
+- (staged) app/src/app/(dashboard)/loading.tsx
+- (staged) app/src/app/(dashboard)/marketing/page.tsx
+- (staged) app/src/app/(dashboard)/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/AlertCard.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- (staged) app/src/app/(dashboard)/monitoring/page.tsx
+- (staged) app/src/app/(dashboard)/orders/[id]/invoice/page.tsx
+- (staged) app/src/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderPrintView.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- (staged) app/src/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- (staged) app/src/app/(dashboard)/orders/fulfilment/page.tsx
+- (staged) app/src/app/(dashboard)/orders/layout.tsx
+- (staged) app/src/app/(dashboard)/orders/page.tsx
+- (staged) app/src/app/(dashboard)/orders/types.ts
+- (staged) app/src/app/(dashboard)/pos/components/Cart.tsx
+- (staged) app/src/app/(dashboard)/pos/components/POSTerminal.tsx
+- (staged) app/src/app/(dashboard)/pos/components/PaymentPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/components/ProductSearch.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/page.tsx
+- (staged) app/src/app/(dashboard)/pos/page.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/pos/staff/page.tsx
+- (staged) app/src/app/(dashboard)/pos/terminal/page.tsx
+- (staged) app/src/app/(dashboard)/pos/types.ts
+- (staged) app/src/app/(dashboard)/prd/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/prd/generate/page.tsx
+- (staged) app/src/app/(dashboard)/products/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/ProductForm.tsx
+- (staged) app/src/app/(dashboard)/products/layout.tsx
+- (staged) app/src/app/(dashboard)/products/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/receiving/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/types.ts
+- (staged) app/src/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- (staged) app/src/app/(dashboard)/quotes/generate/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/layout.tsx
+- (staged) app/src/app/(dashboard)/quotes/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/types.ts
+- (staged) app/src/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/layout.tsx
+- (staged) app/src/app/(dashboard)/reports/page.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- (staged) app/src/app/(dashboard)/service-requests/page.tsx
+- (staged) app/src/app/(dashboard)/settings/account/page.tsx
+- (staged) app/src/app/(dashboard)/settings/billing/page.tsx
+- (staged) app/src/app/(dashboard)/settings/company/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/ap2/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/gl/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/mobile/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- (staged) app/src/app/(dashboard)/settings/setup/page.tsx
+- (staged) app/src/app/(dashboard)/settings/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- (staged) app/src/app/(dashboard)/settings/team/page.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/ProductList.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/page.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/page.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/submissions/page.tsx
+- (staged) app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- (staged) app/src/app/(dashboard)/suppliers/page.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/QueueStats.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskList.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- (staged) app/src/app/(dashboard)/tasks/page.tsx
+- (staged) app/src/app/(dashboard)/warehouse/page.tsx
+- (staged) app/src/app/(dashboard)/workflows/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/reminders/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/schedule/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/templates/page.tsx
+- (staged) app/src/app/(guest)/layout.tsx
+- (staged) app/src/app/(guest)/order/[token]/GuestOrderClient.tsx
+- (staged) app/src/app/(guest)/order/[token]/page.tsx
+- (staged) app/src/app/(mobile)/layout.tsx
+- (staged) app/src/app/(mobile)/order/new/page.tsx
+- (staged) app/src/app/(portal)/layout.tsx
+- (staged) app/src/app/(portal)/portal/certifications/page.tsx
+- (staged) app/src/app/(portal)/portal/invoices/page.tsx
+- (staged) app/src/app/(portal)/portal/orders/page.tsx
+- (staged) app/src/app/(portal)/portal/page.tsx
+- (staged) app/src/app/(portal)/portal/service/page.tsx
+- (staged) app/src/app/(supplier)/layout.tsx
+- (staged) app/src/app/(supplier)/supplier/orders/page.tsx
+- (staged) app/src/app/(supplier)/supplier/page.tsx
+- (staged) app/src/app/api/activities/route.ts
+- (staged) app/src/app/api/activities/stats/route.ts
+- (staged) app/src/app/api/agents/insights/route.ts
+- (staged) app/src/app/api/agents/list/route.ts
+- (staged) app/src/app/api/agents/patterns/route.ts
+- (staged) app/src/app/api/agents/stats/route.ts
+- (staged) app/src/app/api/agents/tasks/recent/route.ts
+- (staged) app/src/app/api/ai/cin7-anomaly/sync-health/route.ts
+- (staged) app/src/app/api/ai/insights/dashboard/route.ts
+- (staged) app/src/app/api/ai/insights/sales/route.ts
+- (staged) app/src/app/api/ai/inventory-forecast/route.ts
+- (staged) app/src/app/api/ai/patterns/orders/route.ts
+- (staged) app/src/app/api/analytics/metrics/overview/route.ts
+- (staged) app/src/app/api/auth/login/route.ts
+- (staged) app/src/app/api/auth/logout/route.ts
+- (staged) app/src/app/api/backorders/route.ts
+- (staged) app/src/app/api/bank-feeds/accounts/route.ts
+- (staged) app/src/app/api/boardroom/cron/route.ts
+- (staged) app/src/app/api/ccw/products/route.ts
+- (staged) app/src/app/api/ccw/summary/route.ts
+- (staged) app/src/app/api/contact-submissions/route.ts
+- (staged) app/src/app/api/contacts/route.ts
+- (staged) app/src/app/api/containers/route.ts
+- (staged) app/src/app/api/cron/auto-reorder-inventory/route.ts
+- (staged) app/src/app/api/cron/check-expiring-quotes/route.ts
+- (staged) app/src/app/api/cron/check-sla-breaches/route.ts
+- (staged) app/src/app/api/cron/cleanup-old-runs/route.ts
+- (staged) app/src/app/api/cron/daily-report/route.ts
+- (staged) app/src/app/api/cron/health-check/route.ts
+- (staged) app/src/app/api/cron/nightly-full-sync/route.ts
+- (staged) app/src/app/api/cron/process-onboarding-emails/route.ts
+- (staged) app/src/app/api/cron/refresh-health-scores/route.ts
+- (staged) app/src/app/api/cron/refresh-xero-tokens/route.ts
+- (staged) app/src/app/api/cron/retry-failed-webhooks/route.ts
+- (staged) app/src/app/api/cron/run-autonomous-ops/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-cin7/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-xero/route.ts
+- (staged) app/src/app/api/customers/route.ts
+- (staged) app/src/app/api/dashboard/aggregated/route.ts
+- (staged) app/src/app/api/dashboard/metrics-stream/route.ts
+- (staged) app/src/app/api/dashboard/order-status-breakdown/route.ts
+- (staged) app/src/app/api/dashboard/quote-conversion/route.ts
+- (staged) app/src/app/api/dashboard/revenue-by-location/route.ts
+- (staged) app/src/app/api/demo-requests/route.ts
+- (staged) app/src/app/api/health/route.ts
+- (staged) app/src/app/api/health/routes/route.ts
+- (staged) app/src/app/api/integrations/cin7/status/route.ts
+- (staged) app/src/app/api/integrations/cin7/stream/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/conversations/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/status/route.ts
+- (staged) app/src/app/api/integrations/shopify/status/route.ts
+- (staged) app/src/app/api/integrations/xero/status/route.ts
+- (staged) app/src/app/api/inventory-stream/route.ts
+- (staged) app/src/app/api/inventory/reservations/route.ts
+- (staged) app/src/app/api/inventory/route.ts
+- (staged) app/src/app/api/inventory/stock-health/route.ts
+- (staged) app/src/app/api/inventory/transfer-suggestions/route.ts
+- (staged) app/src/app/api/inventory/transfers/route.ts
+- (staged) app/src/app/api/invoices/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- (staged) app/src/app/api/monitoring/alerts/route.ts
+- (staged) app/src/app/api/monitoring/health/route.ts
+- (staged) app/src/app/api/monitoring/metrics/route.ts
+- (staged) app/src/app/api/monitoring/range/route.ts
+- (staged) app/src/app/api/orders/route.ts
+- (staged) app/src/app/api/pos/locations/route.ts
+- (staged) app/src/app/api/pos/sales-staff/route.ts
+- (staged) app/src/app/api/pos/terminals/route.ts
+- (staged) app/src/app/api/products/route.ts
+- (staged) app/src/app/api/purchase-orders/route.ts
+- (staged) app/src/app/api/quotes/route.ts
+- (staged) app/src/app/api/submissions/statistics/route.ts
+- (staged) app/src/app/api/telemetry/route.ts
+- (staged) app/src/app/api/warehouse/ops/route.ts
+- (staged) app/src/app/api/webhooks/route.ts
+- (staged) app/src/app/api/workflows/[id]/execute/route.ts
+- (staged) app/src/app/api/workflows/[id]/route.ts
+- (staged) app/src/app/api/workflows/route.ts
+- (staged) app/src/app/dashboard-analytics/page.tsx
+- (staged) app/src/app/demo/i18n/page.tsx
+- (staged) app/src/app/design-system/page.tsx
+- (staged) app/src/app/error.tsx
+- (staged) app/src/app/favicon.ico/route.ts
+- (staged) app/src/app/globals.css
+- (staged) app/src/app/layout.tsx
+- (staged) app/src/app/not-found.tsx
+- (staged) app/src/app/page.tsx
+- (staged) app/src/app/playground/page.tsx
+- (staged) app/src/app/robots.ts
+- (staged) app/src/app/sitemap.ts
+- (staged) app/src/components/ClientOnly.tsx
+- (staged) app/src/components/ai-marketing/asset-library.tsx
+- (staged) app/src/components/ai-marketing/media-generator.tsx
+- (staged) app/src/components/ai/AIProductCopyGenerator.tsx
+- (staged) app/src/components/ai/AIQuoteGenerator.tsx
+- (staged) app/src/components/ai/QuoteCopilotChat.tsx
+- (staged) app/src/components/ai/StaffCopilotWidget.tsx
+- (staged) app/src/components/alerts/AnomalyAlert.tsx
+- (staged) app/src/components/auth/login-form.tsx
+- (staged) app/src/components/autonomous/ApprovalGateDialog.tsx
+- (staged) app/src/components/autonomous/ControlPanel.tsx
+- (staged) app/src/components/autonomous/FileChangesViewer.tsx
+- (staged) app/src/components/autonomous/PhaseTimeline.tsx
+- (staged) app/src/components/charts/CategorySalesChart.tsx
+- (staged) app/src/components/charts/RevenueChart.tsx
+- (staged) app/src/components/chat/ChatWidget.tsx
+- (staged) app/src/components/contractor-availability-live.tsx
+- (staged) app/src/components/contractor-availability.tsx
+- (staged) app/src/components/dashboard/AgentMetricsWidget.tsx
+- (staged) app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- (staged) app/src/components/dashboard/DemoVideoBanner.tsx
+- (staged) app/src/components/dashboard/DemoVideoLink.tsx
+- (staged) app/src/components/dashboard/InventoryForecastWidget.tsx
+- (staged) app/src/components/dashboard/OrderPatternsWidget.tsx
+- (staged) app/src/components/dashboard/OrderStatusBreakdownWidget.tsx
+- (staged) app/src/components/dashboard/QuoteConversionWidget.tsx
+- (staged) app/src/components/dashboard/RevenueByLocationWidget.tsx
+- (staged) app/src/components/dashboard/SalesInsightsWidget.tsx
+- (staged) app/src/components/dashboard/StockHealthWidget.tsx
+- (staged) app/src/components/dashboard/TransferSuggestionsWidget.tsx
+- (staged) app/src/components/errors/ErrorBoundary.tsx
+- (staged) app/src/components/forms/AutoFillSuggestion.tsx
+- (staged) app/src/components/insights/insight-card.tsx
+- (staged) app/src/components/inventory/LocationAwareProductSelect.tsx
+- (staged) app/src/components/inventory/MultiLocationStockCell.tsx
+- (staged) app/src/components/inventory/ReleaseReservationDialog.tsx
+- (staged) app/src/components/inventory/StockReservationDialog.tsx
+- (staged) app/src/components/inventory/TransferStatusBadge.tsx
+- (staged) app/src/components/landing/AnimatedCounter.tsx
+- (staged) app/src/components/landing/LiveStatsBar.tsx
+- (staged) app/src/components/layout/LanguageSwitcher.tsx
+- (staged) app/src/components/layout/NotificationBell.tsx
+- (staged) app/src/components/layout/ShadowModeBanner.tsx
+- (staged) app/src/components/layout/footer.tsx
+- (staged) app/src/components/layout/mobile-nav.tsx
+- (staged) app/src/components/layout/sidebar.tsx
+- (staged) app/src/components/marketing/feature-grid.tsx
+- (staged) app/src/components/marketing/hero-section.tsx
+- (staged) app/src/components/marketing/index.ts
+- (staged) app/src/components/marketing/testimonials.tsx
+- (staged) app/src/components/mobile/PhotoCaptureWidget.tsx
+- (staged) app/src/components/onboarding/CompanySetupStep.tsx
+- (staged) app/src/components/onboarding/FirstQuoteStep.tsx
+- (staged) app/src/components/onboarding/OnboardingWizard.tsx
+- (staged) app/src/components/onboarding/SampleDataStep.tsx
+- (staged) app/src/components/onboarding/ShopifyConnectStep.tsx
+- (staged) app/src/components/onboarding/TeamInviteStep.tsx
+- (staged) app/src/components/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-detail-view.tsx
+- (staged) app/src/components/prd/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-generator-form.tsx
+- (staged) app/src/components/providers/i18n-provider.tsx
+- (staged) app/src/components/responsive-table/ResponsiveTable.tsx
+- (staged) app/src/components/responsive-table/index.ts
+- (staged) app/src/components/seo/FaqSchema.tsx
+- (staged) app/src/components/seo/JsonLd.tsx
+- (staged) app/src/components/transitions/FadeIn.tsx
+- (staged) app/src/components/transitions/PageTransition.tsx
+- (staged) app/src/components/transitions/RouteProgressBar.tsx
+- (staged) app/src/components/transitions/index.ts
+- (staged) app/src/components/ui/alert-dialog.tsx
+- (staged) app/src/components/ui/alert.tsx
+- (staged) app/src/components/ui/avatar.tsx
+- (staged) app/src/components/ui/badge.tsx
+- (staged) app/src/components/ui/bento-grid.tsx
+- (staged) app/src/components/ui/border-beam.tsx
+- (staged) app/src/components/ui/breadcrumb.tsx
+- (staged) app/src/components/ui/button.tsx
+- (staged) app/src/components/ui/card.tsx
+- (staged) app/src/components/ui/checkbox.tsx
+- (staged) app/src/components/ui/command-palette.tsx
+- (staged) app/src/components/ui/command.tsx
+- (staged) app/src/components/ui/dialog.tsx
+- (staged) app/src/components/ui/draft-recovery-alert.tsx
+- (staged) app/src/components/ui/dropdown-menu.tsx
+- (staged) app/src/components/ui/empty-state.tsx
+- (staged) app/src/components/ui/form.tsx
+- (staged) app/src/components/ui/input.tsx
+- (staged) app/src/components/ui/label.tsx
+- (staged) app/src/components/ui/loading.tsx
+- (staged) app/src/components/ui/motion.tsx
+- (staged) app/src/components/ui/order-status-badge.tsx
+- (staged) app/src/components/ui/pagination-controls.tsx
+- (staged) app/src/components/ui/popover.tsx
+- (staged) app/src/components/ui/progress.tsx
+- (staged) app/src/components/ui/real-time-indicator.tsx
+- (staged) app/src/components/ui/scroll-area.tsx
+- (staged) app/src/components/ui/select.tsx
+- (staged) app/src/components/ui/separator.tsx
+- (staged) app/src/components/ui/sheet.tsx
+- (staged) app/src/components/ui/skeleton.tsx
+- (staged) app/src/components/ui/switch.tsx
+- (staged) app/src/components/ui/table.tsx
+- (staged) app/src/components/ui/tabs.tsx
+- (staged) app/src/components/ui/textarea.tsx
+- (staged) app/src/components/ui/toast.tsx
+- (staged) app/src/components/ui/tooltip.tsx
+- (staged) app/src/components/workflow/canvas/workflow-canvas.tsx
+- (staged) app/src/components/workflow/nodes/agent-node.tsx
+- (staged) app/src/components/workflow/nodes/conditional-node.tsx
+- (staged) app/src/components/workflow/nodes/end-node.tsx
+- (staged) app/src/components/workflow/nodes/llm-node.tsx
+- (staged) app/src/components/workflow/nodes/start-node.tsx
+- (staged) app/src/components/workflow/nodes/tool-node.tsx
+- (staged) app/src/contexts/websocket-context.tsx
+- (staged) app/src/hooks/use-barcode-scanner.ts
+- (staged) app/src/hooks/use-chat.ts
+- (staged) app/src/hooks/use-line-item-calculations.ts
+- (staged) app/src/hooks/use-prd-generation.ts
+- (staged) app/src/hooks/use-toast.ts
+- (staged) app/src/i18n/config.ts
+- (staged) app/src/i18n/messages/ar.json
+- (staged) app/src/i18n/messages/en.json
+- (staged) app/src/i18n/messages/es.json
+- (staged) app/src/i18n/messages/hi.json
+- (staged) app/src/i18n/messages/pt.json
+- (staged) app/src/i18n/messages/ta.json
+- (staged) app/src/i18n/messages/te.json
+- (staged) app/src/i18n/messages/vi.json
+- (staged) app/src/i18n/messages/zh-CN.json
+- (staged) app/src/i18n/messages/zh-TW.json
+- (staged) app/src/i18n/request.ts
+- (staged) app/src/instrumentation.ts
+- (staged) app/src/lib/agents/independent-verifier.ts
+- (staged) app/src/lib/api/activities.ts
+- (staged) app/src/lib/api/agents.ts
+- (staged) app/src/lib/api/ai-chat.ts
+- (staged) app/src/lib/api/ai-generate.ts
+- (staged) app/src/lib/api/ai-insights.ts
+- (staged) app/src/lib/api/ap2.ts
+- (staged) app/src/lib/api/approvals.ts
+- (staged) app/src/lib/api/auth.ts
+- (staged) app/src/lib/api/autonomous.ts
+- (staged) app/src/lib/api/autonomy.ts
+- (staged) app/src/lib/api/backend-url.ts
+- (staged) app/src/lib/api/backend.ts
+- (staged) app/src/lib/api/bank-feeds.ts
+- (staged) app/src/lib/api/billing.ts
+- (staged) app/src/lib/api/chat.ts
+- (staged) app/src/lib/api/cin7-bom.ts
+- (staged) app/src/lib/api/cin7-fulfilment.ts
+- (staged) app/src/lib/api/cin7-gl.ts
+- (staged) app/src/lib/api/cin7-grn.ts
+- (staged) app/src/lib/api/cin7-inventory-writeback.ts
+- (staged) app/src/lib/api/cin7-shadow-ai.ts
+- (staged) app/src/lib/api/cin7-shadow.ts
+- (staged) app/src/lib/api/cin7-webhook-subscriptions.ts
+- (staged) app/src/lib/api/cin7.ts
+- (staged) app/src/lib/api/client.ts
+- (staged) app/src/lib/api/contacts.ts
+- (staged) app/src/lib/api/contractors.ts
+- (staged) app/src/lib/api/copilot.ts
+- (staged) app/src/lib/api/customers.ts
+- (staged) app/src/lib/api/documents.ts
+- (staged) app/src/lib/api/heygen.ts
+- (staged) app/src/lib/api/index.ts
+- (staged) app/src/lib/api/inventory.ts
+- (staged) app/src/lib/api/invoices.ts
+- (staged) app/src/lib/api/marketing.ts
+- (staged) app/src/lib/api/marketplace.ts
+- (staged) app/src/lib/api/middleware.ts
+- (staged) app/src/lib/api/mobile.ts
+- (staged) app/src/lib/api/monitoring.ts
+- (staged) app/src/lib/api/notifications.ts
+- (staged) app/src/lib/api/orders.ts
+- (staged) app/src/lib/api/pos.ts
+- (staged) app/src/lib/api/products.ts
+- (staged) app/src/lib/api/purchase-orders.ts
+- (staged) app/src/lib/api/quotes.ts
+- (staged) app/src/lib/api/sendgrid.ts
+- (staged) app/src/lib/api/server.ts
+- (staged) app/src/lib/api/service-requests.ts
+- (staged) app/src/lib/api/settings.ts
+- (staged) app/src/lib/api/shadow.ts
+- (staged) app/src/lib/api/shipments-outbound.ts
+- (staged) app/src/lib/api/shipments.ts
+- (staged) app/src/lib/api/shopify.ts
+- (staged) app/src/lib/api/sla.ts
+- (staged) app/src/lib/api/suppliers.ts
+- (staged) app/src/lib/api/tasks.ts
+- (staged) app/src/lib/api/team.ts
+- (staged) app/src/lib/api/warehouse.ts
+- (staged) app/src/lib/api/workflows.ts
+- (staged) app/src/lib/api/workshop.ts
+- (staged) app/src/lib/api/xero.ts
+- (staged) app/src/lib/audit/api-route-auditor.ts
+- (staged) app/src/lib/audit/user-journey-runner.ts
+- (staged) app/src/lib/audit/ux-friction-detector.ts
+- (staged) app/src/lib/australian-context.ts
+- (staged) app/src/lib/config.ts
+- (staged) app/src/lib/design-system/config.ts
+- (staged) app/src/lib/design-system/index.ts
+- (staged) app/src/lib/design-system/library-registry.ts
+- (staged) app/src/lib/design-system/pattern-validator.ts
+- (staged) app/src/lib/hooks/use-autonomy-metrics.ts
+- (staged) app/src/lib/hooks/use-autosave.ts
+- (staged) app/src/lib/hooks/use-cin7-stream.ts
+- (staged) app/src/lib/hooks/use-form-autofill.ts
+- (staged) app/src/lib/hooks/use-inventory-forecast.ts
+- (staged) app/src/lib/hooks/use-recent-items.ts
+- (staged) app/src/lib/hooks/use-search-state.ts
+- (staged) app/src/lib/hooks/use-sse.ts
+- (staged) app/src/lib/hooks/use-websocket.ts
+- (staged) app/src/lib/image-generation/asset-manager.ts
+- (staged) app/src/lib/image-generation/types.ts
+- (staged) app/src/lib/logger.ts
+- (staged) app/src/lib/supabase/client.ts
+- (staged) app/src/lib/supabase/server.ts
+- (staged) app/src/lib/telemetry.ts
+- (staged) app/src/lib/tools/index.ts
+- (staged) app/src/lib/types/activities.ts
+- (staged) app/src/lib/types/cin7.ts
+- (staged) app/src/lib/types/contacts.ts
+- (staged) app/src/lib/types/inventory.ts
+- (staged) app/src/lib/types/invoices.ts
+- (staged) app/src/lib/types/marketplace.ts
+- (staged) app/src/lib/types/reconciliation.ts
+- (staged) app/src/lib/types/workflows.ts
+- (staged) app/src/lib/utils.test.ts
+- (staged) app/src/lib/utils.ts
+- (staged) app/src/lib/utils/calculations.test.ts
+- (staged) app/src/lib/utils/calculations.ts
+- (staged) app/src/lib/utils/csv-export.ts
+- (staged) app/src/lib/utils/debounce.ts
+- (staged) app/src/lib/utils/draft-storage.ts
+- (staged) app/src/lib/utils/storage.ts
+- (staged) app/src/middleware.ts
+- (staged) app/src/styles/design-system.css
+- (staged) app/src/types/contractor.ts
+- (staged) app/src/types/index.ts
+- (staged) app/src/types/prd.ts
+- (staged) app/src/types/workflow.ts
+- (staged) app/tailwind.config.ts
+- (staged) app/tests/accessibility/a11y.spec.ts
+- (staged) app/tests/e2e/approvals.spec.ts
+- (staged) app/tests/e2e/error-handling.spec.ts
+- (staged) app/tests/e2e/invoices.spec.ts
+- (staged) app/tests/e2e/reconciliation.spec.ts
+- (staged) app/tests/e2e/workflows.spec.ts
+- (staged) app/tests/visual/components.visual.spec.ts
+- (staged) app/tsconfig.json
+- (staged) app/vercel.json
+- (staged) app/vitest.config.ts
+- (staged) app/vitest.d.ts
+- (staged) app/vitest.setup.ts
+- (staged) apps/web/lib/australian-context.ts
+- (staged) backend/.claude/memory/context-snapshot.md
+- (staged) backend/.gitignore
+- (staged) backend/.python-version
+- (staged) backend/.vercelignore
+- (staged) backend/=0.39.0
+- (staged) backend/=6.11.0
+- (staged) backend/AGENTS.md
+- (staged) "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- (staged) backend/Dockerfile
+- (staged) backend/ISSUE-4-COMPLETION.md
+- (staged) backend/ISSUE-5-COMPLETION.md
+- (staged) backend/Procfile
+- (staged) backend/alembic.ini
+- (staged) backend/alembic/README
+- (staged) backend/alembic/env.py
+- (staged) backend/alembic/script.py.mako
+- (staged) backend/alembic/versions/001_add_approvals.py
+- (staged) backend/alembic/versions/002_add_semantic_search.py
+- (staged) backend/alembic/versions/003_add_missing_trigram_indexes.py
+- (staged) backend/alembic/versions/004_add_product_sync_bidirectional.py
+- (staged) backend/alembic/versions/005_add_shopify_extended_tables.py
+- (staged) backend/alembic/versions/006_add_mobile_order_tables.py
+- (staged) backend/alembic/versions/007_add_workflow_notification_indexes.py
+- (staged) backend/alembic/versions/008_merge_heads.py
+- (staged) backend/alembic/versions/009_add_pos_tables.py
+- (staged) backend/alembic/versions/00a_rename_invoice_date.py
+- (staged) backend/alembic/versions/00b_add_missing_inventory_tables.py
+- (staged) backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- (staged) backend/alembic/versions/00d_add_certification_tables.py
+- (staged) backend/alembic/versions/00e_add_prd_tables.py
+- (staged) backend/alembic/versions/00f_add_pricing_tier_tables.py
+- (staged) backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- (staged) backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- (staged) backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- (staged) backend/alembic/versions/68d51946645a_create_erp_schema.py
+- (staged) backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- (staged) backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- (staged) backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- (staged) backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- (staged) backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- (staged) backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- (staged) backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- (staged) backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- (staged) backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- (staged) backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- (staged) backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- (staged) backend/analyze_404_errors.py
+- (staged) backend/analyze_422_errors.py
+- (staged) backend/analyze_500_errors.py
+- (staged) backend/apply_i18n_migration.py
+- (staged) backend/apply_i18n_migration_v2.py
+- (staged) backend/apply_indexes.py
+- (staged) backend/apply_indexes_via_backend.py
+- (staged) backend/apply_pos_migration.py
+- (staged) backend/apply_search_indexes.py
+- (staged) backend/apply_sequences_migration.py
+- (staged) backend/benchmarks/after_indexes.txt
+- (staged) backend/benchmarks/before_indexes.txt
+- (staged) backend/benchmarks/comparison.md
+- (staged) backend/check_404_in_full_report.py
+- (staged) backend/check_backend_config.py
+- (staged) backend/check_categories.py
+- (staged) backend/check_db.py
+- (staged) backend/check_enum_def.py
+- (staged) backend/check_orders.py
+- (staged) backend/check_results.py
+- (staged) backend/check_runtime_config.py
+- (staged) backend/check_schema.py
+- (staged) backend/check_tables.py
+- (staged) backend/check_test_status.py
+- (staged) backend/cleanup_db.py
+- (staged) backend/conftest.py
+- (staged) backend/count_data.py
+- (staged) backend/create_admin.py
+- (staged) backend/create_demo_orders.py
+- (staged) backend/create_demo_orders_simple.py
+- (staged) backend/create_inventory_tables.py
+- (staged) backend/create_service_tables.py
+- (staged) backend/debug_response.py
+- (staged) backend/diagnose_db_connection.py
+- (staged) backend/docs/ISS-005-VERIFICATION.md
+- (staged) backend/docs/ISS-006-VERIFICATION.md
+- (staged) backend/docs/ISS-007-VERIFICATION.md
+- (staged) backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- (staged) backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- (staged) backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- (staged) backend/examples/use_agentic_layer.py
+- (staged) backend/fix_categories.py
+- (staged) backend/fix_categories_uppercase.py
+- (staged) backend/generate_endpoint.py
+- (staged) backend/generate_failures.py
+- (staged) backend/generate_password_hash.py
+- (staged) backend/inject_failure_patterns.py
+- (staged) backend/inject_insights_directly.py
+- (staged) backend/inject_test_data.py
+- (staged) backend/inject_test_failures.py
+- (staged) backend/list_google_models.py
+- (staged) backend/load_test_output.txt
+- (staged) backend/migrations/001_add_search_indexes.sql
+- (staged) backend/migrations/001_rollback.sql
+- (staged) backend/migrations/README.md
+- (staged) backend/migrations/add_ai_search.sql
+- (staged) backend/migrations/add_ap2_integration.sql
+- (staged) backend/migrations/add_auto_sync_enhancements.sql
+- (staged) backend/migrations/add_email_audit_tables.sql
+- (staged) backend/migrations/add_foreign_key_indexes.sql
+- (staged) backend/migrations/add_i18n_support.sql
+- (staged) backend/migrations/add_missing_fk_indexes.sql
+- (staged) backend/migrations/add_performance_indexes.sql
+- (staged) backend/migrations/add_phase4_inventory_indexes.sql
+- (staged) backend/migrations/add_portal_forms_tables.sql
+- (staged) backend/migrations/add_pos_system.sql
+- (staged) backend/migrations/add_search_indexes.sql
+- (staged) backend/migrations/add_sequences_for_numbers.sql
+- (staged) backend/migrations/add_shopify_extended.sql
+- (staged) backend/migrations/add_submission_notes_table.sql
+- (staged) backend/migrations/add_trigram_indexes.sql
+- (staged) backend/migrations/add_webhook_events_table.sql
+- (staged) backend/migrations/seed_ccw_products.sql
+- (staged) backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- (staged) backend/migrations/week3_enum_standardization.sql
+- (staged) backend/migrations/week3_timezone_standardization.sql
+- (staged) backend/pyproject.toml
+- (staged) backend/pytest.ini
+- (staged) backend/railway.json
+- (staged) backend/requirements.txt
+- (staged) backend/reset_admin_password.py
+- (staged) backend/run-setup-memory.ps1
+- (staged) backend/run-tests.ps1
+- (staged) backend/run_bugfix_tests.ps1
+- (staged) backend/run_bugfix_tests.sh
+- (staged) backend/run_migrations.py
+- (staged) backend/scripts/analyze_query_performance.py
+- (staged) backend/scripts/apply_foreign_key_indexes.py
+- (staged) backend/scripts/apply_phase4_indexes.py
+- (staged) backend/scripts/apply_trigram_indexes.py
+- (staged) backend/scripts/benchmark_search.py
+- (staged) backend/scripts/create_container_tables.sql
+- (staged) backend/scripts/create_sample_orders.py
+- (staged) backend/scripts/create_sample_quotes.py
+- (staged) backend/scripts/explain_queries.sh
+- (staged) backend/scripts/identify_500_sources.py
+- (staged) backend/scripts/implement_query_optimizations.md
+- (staged) backend/scripts/import_ccwonline_products.py
+- (staged) backend/scripts/insert_container_sample_data.sql
+- (staged) backend/scripts/integration_test_iss001.py
+- (staged) backend/scripts/monitor_indexes.py
+- (staged) backend/scripts/run_sql.py
+- (staged) backend/scripts/seed_ccw_cleaning.py
+- (staged) backend/scripts/seed_ccw_products.py
+- (staged) backend/scripts/setup-memory.py
+- (staged) backend/scripts/test_iss005_fixes.py
+- (staged) backend/scripts/validate_autosave_implementation.py
+- (staged) backend/scripts/validate_iss001_fix.py
+- (staged) backend/scripts/validate_iss003_actual.py
+- (staged) backend/scripts/validate_iss003_fix.py
+- (staged) backend/scripts/validate_iss005_fix.py
+- (staged) backend/scripts/verify_iss005_code.py
+- (staged) backend/scripts/verify_query_optimizations.py
+- (staged) backend/seed_data.py
+- (staged) backend/seed_demo_simple.sql
+- (staged) backend/seed_orders.py
+- (staged) backend/show_customers.py
+- (staged) backend/show_orders.py
+- (staged) backend/show_products.py
+- (staged) backend/show_quotes.py
+- (staged) backend/src/__init__.py
+- (staged) backend/src/agents/prd/__init__.py
+- (staged) backend/src/agents/prd/analysis_agent.py
+- (staged) backend/src/agents/prd/feature_decomposer.py
+- (staged) backend/src/agents/prd/prd_orchestrator.py
+- (staged) backend/src/agents/prd/roadmap_planner.py
+- (staged) backend/src/agents/prd/tech_spec_generator.py
+- (staged) backend/src/agents/prd/test_generator.py
+- (staged) backend/src/ai/__init__.py
+- (staged) backend/src/ai/agents/chat_assistant.py
+- (staged) backend/src/ai/agents/chat_state.py
+- (staged) backend/src/ai/agents/content_generator.py
+- (staged) backend/src/ai/agents/content_state.py
+- (staged) backend/src/ai/agents/insights_agent.py
+- (staged) backend/src/ai/agents/insights_state.py
+- (staged) backend/src/ai/agents/risk_assessor.py
+- (staged) backend/src/ai/agents/rollback_agent.py
+- (staged) backend/src/ai/agents/specialized/__init__.py
+- (staged) backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- (staged) backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- (staged) backend/src/ai/agents/specialized/development_agent.py
+- (staged) backend/src/ai/agents/specialized/document_parser_agent.py
+- (staged) backend/src/ai/agents/specialized/form_autofill_agent.py
+- (staged) backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/marketing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_state.py
+- (staged) backend/src/ai/agents/specialized/procurement_agent.py
+- (staged) backend/src/ai/agents/specialized/procurement_state.py
+- (staged) backend/src/ai/agents/specialized/project_intelligence_agent.py
+- (staged) backend/src/ai/agents/specialized/query_agent.py
+- (staged) backend/src/ai/agents/specialized/recommendation_agent.py
+- (staged) backend/src/ai/agents/specialized/reconciliation_agent.py
+- (staged) backend/src/ai/agents/specialized/search_agent.py
+- (staged) backend/src/ai/agents/specialized/staff_copilot_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_state.py
+- (staged) backend/src/ai/agents/specialized/testing_agent.py
+- (staged) backend/src/ai/base_agent.py
+- (staged) backend/src/ai/generators/__init__.py
+- (staged) backend/src/ai/generators/email_generator.py
+- (staged) backend/src/ai/generators/quote_generator.py
+- (staged) backend/src/ai/learning/__init__.py
+- (staged) backend/src/ai/learning/learning_engine.py
+- (staged) backend/src/ai/learning/learning_repository.py
+- (staged) backend/src/ai/monitoring/__init__.py
+- (staged) backend/src/ai/monitoring/health_monitor.py
+- (staged) backend/src/ai/monitoring/metrics_collector.py
+- (staged) backend/src/ai/ollama_client.py
+- (staged) backend/src/ai/orchestration/__init__.py
+- (staged) backend/src/ai/orchestration/agent_registry.py
+- (staged) backend/src/ai/orchestration/autonomous_loop.py
+- (staged) backend/src/ai/orchestration/project_orchestrator.py
+- (staged) backend/src/ai/orchestration/supervisor_agent.py
+- (staged) backend/src/ai/orchestration/supervisor_state.py
+- (staged) backend/src/ai/prompts/__init__.py
+- (staged) backend/src/ai/prompts/system_prompts.py
+- (staged) backend/src/ai/protocol/__init__.py
+- (staged) backend/src/ai/protocol/confidence.py
+- (staged) backend/src/ai/protocol/error_handler.py
+- (staged) backend/src/ai/protocol/governor.py
+- (staged) backend/src/ai/protocol/message_bus.py
+- (staged) backend/src/ai/protocol/models.py
+- (staged) backend/src/ai/tools/__init__.py
+- (staged) backend/src/ai/tools/analytics_tools.py
+- (staged) backend/src/ai/tools/base.py
+- (staged) backend/src/ai/tools/erp_tools.py
+- (staged) backend/src/ai/tools/execution_tools.py
+- (staged) backend/src/ai/tools/inventory_intelligence.py
+- (staged) backend/src/ai/tools/pricing_tools.py
+- (staged) backend/src/ai/tools/procurement_tools.py
+- (staged) backend/src/api/__init__.py
+- (staged) backend/src/api/debug_main.py
+- (staged) backend/src/api/deps.py
+- (staged) backend/src/api/exceptions.py
+- (staged) backend/src/api/main.py
+- (staged) backend/src/api/middleware/__init__.py
+- (staged) backend/src/api/middleware/auth.py
+- (staged) backend/src/api/middleware/performance.py
+- (staged) backend/src/api/middleware/rate_limit.py
+- (staged) backend/src/api/middleware/rbac.py
+- (staged) backend/src/api/middleware/request_id.py
+- (staged) backend/src/api/middleware/security_headers.py
+- (staged) backend/src/api/middleware/tenant_isolation.py
+- (staged) backend/src/api/routers/prd.py
+- (staged) backend/src/api/routes/__init__.py
+- (staged) backend/src/api/routes/activities.py
+- (staged) backend/src/api/routes/agents_monitor.py
+- (staged) backend/src/api/routes/ai/__init__.py
+- (staged) backend/src/api/routes/ai/anomaly.py
+- (staged) backend/src/api/routes/ai/approval_gates.py
+- (staged) backend/src/api/routes/ai/assets.py
+- (staged) backend/src/api/routes/ai/autonomous_ops.py
+- (staged) backend/src/api/routes/ai/build_command.py
+- (staged) backend/src/api/routes/ai/chat.py
+- (staged) backend/src/api/routes/ai/cin7_anomaly.py
+- (staged) backend/src/api/routes/ai/cin7_forecast.py
+- (staged) backend/src/api/routes/ai/cin7_shadow_ai.py
+- (staged) backend/src/api/routes/ai/command_parser.py
+- (staged) backend/src/api/routes/ai/document_parser.py
+- (staged) backend/src/api/routes/ai/form_autofill.py
+- (staged) backend/src/api/routes/ai/gap_sync.py
+- (staged) backend/src/api/routes/ai/generate.py
+- (staged) backend/src/api/routes/ai/insights.py
+- (staged) backend/src/api/routes/ai/inventory_forecast.py
+- (staged) backend/src/api/routes/ai/learning.py
+- (staged) backend/src/api/routes/ai/marketing_ai.py
+- (staged) backend/src/api/routes/ai/monitoring.py
+- (staged) backend/src/api/routes/ai/project_intelligence.py
+- (staged) backend/src/api/routes/ai/protocol.py
+- (staged) backend/src/api/routes/ai/query.py
+- (staged) backend/src/api/routes/ai/requirement_verification.py
+- (staged) backend/src/api/routes/ai/specialized.py
+- (staged) backend/src/api/routes/ai/staff_copilot.py
+- (staged) backend/src/api/routes/ai/supervisor.py
+- (staged) backend/src/api/routes/ai/test_data.py
+- (staged) backend/src/api/routes/ai/test_failures.py
+- (staged) backend/src/api/routes/ai/toolshed.py
+- (staged) backend/src/api/routes/ai/toolshed_vault.py
+- (staged) backend/src/api/routes/analytics.py
+- (staged) backend/src/api/routes/approvals.py
+- (staged) backend/src/api/routes/audit_trail.py
+- (staged) backend/src/api/routes/autonomous_dev.py
+- (staged) backend/src/api/routes/autonomy_metrics.py
+- (staged) backend/src/api/routes/backorders.py
+- (staged) backend/src/api/routes/bank_feeds.py
+- (staged) backend/src/api/routes/billing.py
+- (staged) backend/src/api/routes/boardroom.py
+- (staged) backend/src/api/routes/certifications.py
+- (staged) backend/src/api/routes/chat.py
+- (staged) backend/src/api/routes/config.py
+- (staged) backend/src/api/routes/contacts.py
+- (staged) backend/src/api/routes/containers.py
+- (staged) backend/src/api/routes/contractors.py
+- (staged) backend/src/api/routes/crm_health.py
+- (staged) backend/src/api/routes/crm_onboarding.py
+- (staged) backend/src/api/routes/crm_personas.py
+- (staged) backend/src/api/routes/cron_jobs.py
+- (staged) backend/src/api/routes/customer_orders.py
+- (staged) backend/src/api/routes/customers.py
+- (staged) backend/src/api/routes/dashboard_stream.py
+- (staged) backend/src/api/routes/demo_auth.py
+- (staged) backend/src/api/routes/demo_dashboard.py
+- (staged) backend/src/api/routes/demo_lists.py
+- (staged) backend/src/api/routes/documents.py
+- (staged) backend/src/api/routes/email_audit.py
+- (staged) backend/src/api/routes/equipment_lifecycle.py
+- (staged) backend/src/api/routes/google_ai.py
+- (staged) backend/src/api/routes/health.py
+- (staged) backend/src/api/routes/integrations/__init__.py
+- (staged) backend/src/api/routes/integrations/ap2.py
+- (staged) backend/src/api/routes/integrations/cin7.py
+- (staged) backend/src/api/routes/integrations/cin7_bom.py
+- (staged) backend/src/api/routes/integrations/cin7_crm.py
+- (staged) backend/src/api/routes/integrations/cin7_fulfilment.py
+- (staged) backend/src/api/routes/integrations/cin7_gl.py
+- (staged) backend/src/api/routes/integrations/cin7_grn.py
+- (staged) backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- (staged) backend/src/api/routes/integrations/cin7_line_items.py
+- (staged) backend/src/api/routes/integrations/cin7_procurement.py
+- (staged) backend/src/api/routes/integrations/cin7_shadow_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_stream.py
+- (staged) backend/src/api/routes/integrations/cin7_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- (staged) backend/src/api/routes/integrations/cin7_webhooks.py
+- (staged) backend/src/api/routes/integrations/elevenlabs.py
+- (staged) backend/src/api/routes/integrations/heygen.py
+- (staged) backend/src/api/routes/integrations/marketplace.py
+- (staged) backend/src/api/routes/integrations/sendgrid.py
+- (staged) backend/src/api/routes/integrations/shopify.py
+- (staged) backend/src/api/routes/integrations/shopify_theme.py
+- (staged) backend/src/api/routes/integrations/xero.py
+- (staged) backend/src/api/routes/inventory.py
+- (staged) backend/src/api/routes/inventory_stream.py
+- (staged) backend/src/api/routes/invoice_payments.py
+- (staged) backend/src/api/routes/invoices.py
+- (staged) backend/src/api/routes/jobs.py
+- (staged) backend/src/api/routes/mobile/__init__.py
+- (staged) backend/src/api/routes/mobile/guest_orders.py
+- (staged) backend/src/api/routes/monitoring/__init__.py
+- (staged) backend/src/api/routes/monitoring/alerts.py
+- (staged) backend/src/api/routes/monitoring/business_metrics.py
+- (staged) backend/src/api/routes/monitoring/infrastructure.py
+- (staged) backend/src/api/routes/monitoring/performance.py
+- (staged) backend/src/api/routes/notifications.py
+- (staged) backend/src/api/routes/orders.py
+- (staged) backend/src/api/routes/portal/__init__.py
+- (staged) backend/src/api/routes/portal/customer_portal.py
+- (staged) backend/src/api/routes/pos_transactions.py
+- (staged) backend/src/api/routes/pos_xero_reconciliation.py
+- (staged) backend/src/api/routes/prd.py
+- (staged) backend/src/api/routes/pricing.py
+- (staged) backend/src/api/routes/procurement.py
+- (staged) backend/src/api/routes/products.py
+- (staged) backend/src/api/routes/prometheus_metrics.py
+- (staged) backend/src/api/routes/public_stats.py
+- (staged) backend/src/api/routes/purchase_orders.py
+- (staged) backend/src/api/routes/quotes.py
+- (staged) backend/src/api/routes/recommendations.py
+- (staged) backend/src/api/routes/reconciliation.py
+- (staged) backend/src/api/routes/reconciliation_dashboard.py
+- (staged) backend/src/api/routes/search.py
+- (staged) backend/src/api/routes/service_requests.py
+- (staged) backend/src/api/routes/settings.py
+- (staged) backend/src/api/routes/shadow_analytics.py
+- (staged) backend/src/api/routes/shadow_mode.py
+- (staged) backend/src/api/routes/shipments.py
+- (staged) backend/src/api/routes/sla.py
+- (staged) backend/src/api/routes/stripe_webhooks.py
+- (staged) backend/src/api/routes/supplier_portal.py
+- (staged) backend/src/api/routes/suppliers.py
+- (staged) backend/src/api/routes/team.py
+- (staged) backend/src/api/routes/test_data_gen.py
+- (staged) backend/src/api/routes/translations.py
+- (staged) backend/src/api/routes/warehouse.py
+- (staged) backend/src/api/routes/webhooks.py
+- (staged) backend/src/api/routes/workflows.py
+- (staged) backend/src/api/routes/workshop/__init__.py
+- (staged) backend/src/api/routes/workshop/bookings.py
+- (staged) backend/src/api/routes/workshop/dashboard.py
+- (staged) backend/src/api/routes/workshop/equipment.py
+- (staged) backend/src/api/routes/workshop/reminders.py
+- (staged) backend/src/api/routes/workshop/templates.py
+- (staged) backend/src/api/schemas/invoicing.py
+- (staged) backend/src/api/schemas/prd.py
+- (staged) backend/src/auth/jwt.py
+- (staged) backend/src/auth/models.py
+- (staged) backend/src/auth/password_reset.py
+- (staged) backend/src/cache/decorators.py
+- (staged) backend/src/cache/redis_client.py
+- (staged) backend/src/config/__init__.py
+- (staged) backend/src/config/ap2_settings.py
+- (staged) backend/src/config/autonomy.py
+- (staged) backend/src/config/cin7_settings.py
+- (staged) backend/src/config/database.py
+- (staged) backend/src/config/elevenlabs_settings.py
+- (staged) backend/src/config/heygen_settings.py
+- (staged) backend/src/config/marketplace_settings.py
+- (staged) backend/src/config/secrets_manager.py
+- (staged) backend/src/config/sendgrid_settings.py
+- (staged) backend/src/config/settings.py
+- (staged) backend/src/config/shopify_settings.py
+- (staged) backend/src/config/xero_settings.py
+- (staged) backend/src/db/__init__.py
+- (staged) backend/src/db/ai_models.py
+- (staged) backend/src/db/ai_search_models.py
+- (staged) backend/src/db/ap2_models.py
+- (staged) backend/src/db/approvals_models.py
+- (staged) backend/src/db/audit_models.py
+- (staged) backend/src/db/certification_models.py
+- (staged) backend/src/db/cin7_bom_models.py
+- (staged) backend/src/db/cin7_fulfilment_models.py
+- (staged) backend/src/db/cin7_gl_models.py
+- (staged) backend/src/db/cin7_models.py
+- (staged) backend/src/db/cin7_shadow_models.py
+- (staged) backend/src/db/container_models.py
+- (staged) backend/src/db/crm_models.py
+- (staged) backend/src/db/crm_schemas.py
+- (staged) backend/src/db/customer_health_models.py
+- (staged) backend/src/db/demo_models.py
+- (staged) backend/src/db/email_audit_models.py
+- (staged) backend/src/db/email_models.py
+- (staged) backend/src/db/equipment_lifecycle_models.py
+- (staged) backend/src/db/generate_demo_purchases.py
+- (staged) backend/src/db/i18n_models.py
+- (staged) backend/src/db/i18n_schemas.py
+- (staged) backend/src/db/indexes.py
+- (staged) backend/src/db/integration_credential_models.py
+- (staged) backend/src/db/inventory_models.py
+- (staged) backend/src/db/inventory_schemas.py
+- (staged) backend/src/db/marketplace_models.py
+- (staged) backend/src/db/mobile_order_models.py
+- (staged) backend/src/db/models/__init__.py
+- (staged) backend/src/db/models/invoicing.py
+- (staged) backend/src/db/models/prd.py
+- (staged) backend/src/db/models_base.py
+- (staged) backend/src/db/portal_forms_models.py
+- (staged) backend/src/db/pos_models.py
+- (staged) backend/src/db/pricing_models.py
+- (staged) backend/src/db/schemas.py
+- (staged) backend/src/db/seed_demo.py
+- (staged) backend/src/db/service_models.py
+- (staged) backend/src/db/shadow_session_models.py
+- (staged) backend/src/db/shopify_extended_models.py
+- (staged) backend/src/db/shopify_models.py
+- (staged) backend/src/db/shopify_schemas.py
+- (staged) backend/src/db/submission_notes_models.py
+- (staged) backend/src/db/webhook_models.py
+- (staged) backend/src/db/workflow_models.py
+- (staged) backend/src/db/workshop_models.py
+- (staged) backend/src/db/xero_models.py
+- (staged) backend/src/db/xero_schemas.py
+- (staged) backend/src/emails/templates/order_confirmed.html
+- (staged) backend/src/emails/templates/order_delivered.html
+- (staged) backend/src/emails/templates/order_shipped.html
+- (staged) backend/src/emails/templates/quote_created.html
+- (staged) backend/src/emails/templates/quote_expiring.html
+- (staged) backend/src/events/__init__.py
+- (staged) backend/src/events/event_bus.py
+- (staged) backend/src/integrations/__init__.py
+- (staged) backend/src/integrations/ap2/__init__.py
+- (staged) backend/src/integrations/ap2/client.py
+- (staged) backend/src/integrations/ap2/security.py
+- (staged) backend/src/integrations/cin7/__init__.py
+- (staged) backend/src/integrations/cin7/change_detector.py
+- (staged) backend/src/integrations/cin7/client.py
+- (staged) backend/src/integrations/cin7/customer_sync.py
+- (staged) backend/src/integrations/cin7/demo_client.py
+- (staged) backend/src/integrations/cin7/event_dispatcher.py
+- (staged) backend/src/integrations/cin7/inventory_sync.py
+- (staged) backend/src/integrations/cin7/product_sync.py
+- (staged) backend/src/integrations/cin7/purchase_sync.py
+- (staged) backend/src/integrations/cin7/sales_sync.py
+- (staged) backend/src/integrations/cin7/supplier_sync.py
+- (staged) backend/src/integrations/elevenlabs/__init__.py
+- (staged) backend/src/integrations/elevenlabs/client.py
+- (staged) backend/src/integrations/elevenlabs/demo_client.py
+- (staged) backend/src/integrations/elevenlabs/live_client.py
+- (staged) backend/src/integrations/google/__init__.py
+- (staged) backend/src/integrations/google/client.py
+- (staged) backend/src/integrations/heygen/__init__.py
+- (staged) backend/src/integrations/heygen/client.py
+- (staged) backend/src/integrations/heygen/demo_client.py
+- (staged) backend/src/integrations/heygen/live_client.py
+- (staged) backend/src/integrations/http_utils.py
+- (staged) backend/src/integrations/marketplace/__init__.py
+- (staged) backend/src/integrations/marketplace/base.py
+- (staged) backend/src/integrations/marketplace/demo_channel.py
+- (staged) backend/src/integrations/marketplace/ebay_channel.py
+- (staged) backend/src/integrations/marketplace/facebook_channel.py
+- (staged) backend/src/integrations/marketplace/registry.py
+- (staged) backend/src/integrations/marketplace/shopify_channel.py
+- (staged) backend/src/integrations/marketplace/sync_engine.py
+- (staged) backend/src/integrations/payments/__init__.py
+- (staged) backend/src/integrations/payments/amex.py
+- (staged) backend/src/integrations/payments/eftpos.py
+- (staged) backend/src/integrations/payments/processor.py
+- (staged) backend/src/integrations/secrets_manager.py
+- (staged) backend/src/integrations/sendgrid/__init__.py
+- (staged) backend/src/integrations/sendgrid/client.py
+- (staged) backend/src/integrations/sendgrid/demo_client.py
+- (staged) backend/src/integrations/sendgrid/live_client.py
+- (staged) backend/src/integrations/sendgrid/processor.py
+- (staged) backend/src/integrations/sentry_client.py
+- (staged) backend/src/integrations/shopify/__init__.py
+- (staged) backend/src/integrations/shopify/client.py
+- (staged) backend/src/integrations/shopify/demo_client.py
+- (staged) backend/src/integrations/shopify/inventory.py
+- (staged) backend/src/integrations/shopify/inventory_sync.py
+- (staged) backend/src/integrations/shopify/metafields.py
+- (staged) backend/src/integrations/shopify/orders.py
+- (staged) backend/src/integrations/shopify/product_sync.py
+- (staged) backend/src/integrations/shopify/translations.py
+- (staged) backend/src/integrations/shopify/webhooks.py
+- (staged) backend/src/integrations/stripe/__init__.py
+- (staged) backend/src/integrations/stripe/client.py
+- (staged) backend/src/integrations/xero/__init__.py
+- (staged) backend/src/integrations/xero/auth.py
+- (staged) backend/src/integrations/xero/client.py
+- (staged) backend/src/integrations/xero/customers.py
+- (staged) backend/src/integrations/xero/demo_client.py
+- (staged) backend/src/integrations/xero/invoices.py
+- (staged) backend/src/integrations/xero/payments.py
+- (staged) backend/src/integrations/xero/pos_reconciliation.py
+- (staged) backend/src/integrations/xero/token_manager.py
+- (staged) backend/src/integrations/xero/webhook_security.py
+- (staged) backend/src/integrations/xero/webhooks.py
+- (staged) backend/src/monitoring/__init__.py
+- (staged) backend/src/monitoring/metrics.py
+- (staged) backend/src/rag/__init__.py
+- (staged) backend/src/rag/chunkers.py
+- (staged) backend/src/rag/models.py
+- (staged) backend/src/rag/parsers.py
+- (staged) backend/src/rag/pipeline.py
+- (staged) backend/src/rag/storage.py
+- (staged) backend/src/scheduler/bank_feed_scheduler.py
+- (staged) backend/src/security/__init__.py
+- (staged) backend/src/security/encryption.py
+- (staged) backend/src/security/webhook_verification.py
+- (staged) backend/src/services/__init__.py
+- (staged) backend/src/services/alert_manager.py
+- (staged) backend/src/services/audit_service.py
+- (staged) backend/src/services/auto_reorder.py
+- (staged) backend/src/services/autonomy_audit.py
+- (staged) backend/src/services/bank_feed_service.py
+- (staged) backend/src/services/business_metrics_service.py
+- (staged) backend/src/services/carrier_service.py
+- (staged) backend/src/services/circuit_breaker.py
+- (staged) backend/src/services/code_generation/README.md
+- (staged) backend/src/services/code_generation/__init__.py
+- (staged) backend/src/services/code_generation/context_builder.py
+- (staged) backend/src/services/code_generation/doc_generator.py
+- (staged) backend/src/services/code_generation/generator.py
+- (staged) backend/src/services/code_generation/prompts/doc_generation.txt
+- (staged) backend/src/services/code_generation/prompts/python_generation.txt
+- (staged) backend/src/services/code_generation/prompts/test_generation.txt
+- (staged) backend/src/services/code_generation/prompts/typescript_generation.txt
+- (staged) backend/src/services/code_generation/quality_checker.py
+- (staged) backend/src/services/code_generation/test_generator.py
+- (staged) backend/src/services/deployment_service.py
+- (staged) backend/src/services/document_extraction_service.py
+- (staged) backend/src/services/dunning.py
+- (staged) backend/src/services/email_audit_service.py
+- (staged) backend/src/services/email_notifications.py
+- (staged) backend/src/services/email_service.py
+- (staged) backend/src/services/embedding_service.py
+- (staged) backend/src/services/i18n_service.py
+- (staged) backend/src/services/notification_service.py
+- (staged) backend/src/services/order_state.py
+- (staged) backend/src/services/procurement_matching.py
+- (staged) backend/src/services/product_recognition_service.py
+- (staged) backend/src/services/recommendation_service.py
+- (staged) backend/src/services/reconciliation_alerts.py
+- (staged) backend/src/services/requirement_extractor.py
+- (staged) backend/src/services/requirement_tracer.py
+- (staged) backend/src/services/semantic_search_service.py
+- (staged) backend/src/services/sla_escalation.py
+- (staged) backend/src/services/sla_service.py
+- (staged) backend/src/services/sse_service.py
+- (staged) backend/src/services/system_alert_service.py
+- (staged) backend/src/services/tax_calculator.py
+- (staged) backend/src/services/webhook_service.py
+- (staged) backend/src/services/workflow_service.py
+- (staged) backend/src/services/workshop_scheduler.py
+- (staged) backend/src/state/__init__.py
+- (staged) backend/src/state/supabase.py
+- (staged) backend/src/telemetry/__init__.py
+- (staged) backend/src/telemetry/usage_tracker.py
+- (staged) backend/src/testing/__init__.py
+- (staged) backend/src/testing/shopify_mock.py
+- (staged) backend/src/testing/xero_mock.py
+- (staged) backend/src/utils/__init__.py
+- (staged) backend/src/utils/calculations.py
+- (staged) backend/src/utils/logging.py
+- (staged) backend/src/utils/supabase_client.py
+- (staged) backend/src/workflow/__init__.py
+- (staged) backend/src/workflow/engine.py
+- (staged) backend/src/workflow/models.py
+- (staged) backend/src/workflow/storage.py
+- (staged) backend/src/workflows/__init__.py
+- (staged) backend/src/workflows/pr_automation.py
+- (staged) backend/srcapimain.py
+- (staged) backend/srcapiroutesailearning.py.tmp
+- (staged) backend/start_for_testing.py
+- (staged) backend/start_load_test_server.py
+- (staged) backend/test_ai_inventory_intelligence.py
+- (staged) backend/test_api.py
+- (staged) backend/test_api_error.py
+- (staged) backend/test_customer_sync.py
+- (staged) backend/test_dashboard_data.py
+- (staged) backend/test_dashboard_data_with_failures.py
+- (staged) backend/test_db_connection.py
+- (staged) backend/test_dependency_injection.py
+- (staged) backend/test_endpoint.py
+- (staged) backend/test_expired_quote_validation.py
+- (staged) backend/test_failure_scenarios.py
+- (staged) backend/test_full_payment_flow.py
+- (staged) backend/test_google_ai_endpoints.py
+- (staged) backend/test_google_ai_integration.py
+- (staged) backend/test_insights_api.py
+- (staged) backend/test_multistore_inventory.py
+- (staged) backend/test_order_update_items_500.py
+- (staged) backend/test_outbound_shipment.json
+- (staged) backend/test_password.py
+- (staged) backend/test_payment_webhook.py
+- (staged) backend/test_po.json
+- (staged) backend/test_quote_404_issue.py
+- (staged) backend/test_quote_fixes.py
+- (staged) backend/test_quote_generate_endpoint.py
+- (staged) backend/test_quote_validation.py
+- (staged) backend/test_redis_connection.py
+- (staged) backend/test_search_performance.py
+- (staged) backend/test_shopify_connection.py
+- (staged) backend/test_shopify_integration.py
+- (staged) backend/test_supplier.json
+- (staged) backend/tests/FIXES_APPLIED.md
+- (staged) backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- (staged) backend/tests/TEST_STATUS_REPORT.md
+- (staged) backend/tests/TEST_STATUS_UPDATE.md
+- (staged) backend/tests/__init__.py
+- (staged) backend/tests/ai/test_reconciliation_agent.py
+- (staged) backend/tests/api/README_BUGFIX_TESTS.md
+- (staged) backend/tests/api/test_500_errors.py
+- (staged) backend/tests/api/test_approval_gates.py
+- (staged) backend/tests/api/test_approvals.py
+- (staged) backend/tests/api/test_approvals_integration.py
+- (staged) backend/tests/api/test_autonomous_ops.py
+- (staged) backend/tests/api/test_bank_feeds.py
+- (staged) backend/tests/api/test_bas_report.py
+- (staged) backend/tests/api/test_billing_gaps.py
+- (staged) backend/tests/api/test_build_command.py
+- (staged) backend/tests/api/test_certifications.py
+- (staged) backend/tests/api/test_command_parser.py
+- (staged) backend/tests/api/test_customer_orders.py
+- (staged) backend/tests/api/test_document_extraction.py
+- (staged) backend/tests/api/test_equipment_lifecycle.py
+- (staged) backend/tests/api/test_gap_sync.py
+- (staged) backend/tests/api/test_inventory.py
+- (staged) backend/tests/api/test_inventory_gaps.py
+- (staged) backend/tests/api/test_inventory_new_endpoints.py
+- (staged) backend/tests/api/test_inventory_uni172.py
+- (staged) backend/tests/api/test_invoice_payments.py
+- (staged) backend/tests/api/test_invoices_tax_integration.py
+- (staged) backend/tests/api/test_nl_query.py
+- (staged) backend/tests/api/test_orders_performance.py
+- (staged) backend/tests/api/test_portal.py
+- (staged) backend/tests/api/test_pos_terminals.py
+- (staged) backend/tests/api/test_pos_transactions.py
+- (staged) backend/tests/api/test_pricing_tiers.py
+- (staged) backend/tests/api/test_quote_404_errors.py
+- (staged) backend/tests/api/test_quote_422_errors.py
+- (staged) backend/tests/api/test_quote_http_methods.py
+- (staged) backend/tests/api/test_rbac.py
+- (staged) backend/tests/api/test_reconciliation_integration.py
+- (staged) backend/tests/api/test_requirement_verification.py
+- (staged) backend/tests/api/test_supplier_portal.py
+- (staged) backend/tests/api/test_tenant_isolation.py
+- (staged) backend/tests/api/test_translations.py
+- (staged) backend/tests/api/test_workflows_integration.py
+- (staged) backend/tests/api/test_workshop_routes.py
+- (staged) backend/tests/conftest.py
+- (staged) backend/tests/e2e/__init__.py
+- (staged) backend/tests/e2e/test_login_flow.py
+- (staged) backend/tests/e2e/test_order_flow.py
+- (staged) backend/tests/fixtures/__init__.py
+- (staged) backend/tests/fixtures/data.py
+- (staged) backend/tests/fixtures/pos_data.py
+- (staged) backend/tests/fixtures/shopify_fixtures.py
+- (staged) backend/tests/fixtures/xero_fixtures.py
+- (staged) backend/tests/integration/README.md
+- (staged) backend/tests/integration/__init__.py
+- (staged) backend/tests/integration/conftest.py
+- (staged) backend/tests/integration/run_all_cin7_tests.py
+- (staged) backend/tests/integration/run_phase3_tests.py
+- (staged) backend/tests/integration/run_phase4_tests.py
+- (staged) backend/tests/integration/run_phase5_tests.py
+- (staged) backend/tests/integration/run_phase6_tests.py
+- (staged) backend/tests/integration/run_phase7_tests.py
+- (staged) backend/tests/integration/run_protocol_tests.py
+- (staged) backend/tests/integration/test_ap2_integration.py
+- (staged) backend/tests/integration/test_api_endpoints.py
+- (staged) backend/tests/integration/test_autonomous_dev.py
+- (staged) backend/tests/integration/test_autonomous_pr_workflow.py
+- (staged) backend/tests/integration/test_cin7_crm_sync.py
+- (staged) backend/tests/integration/test_cin7_integration.py
+- (staged) backend/tests/integration/test_cin7_sync.py
+- (staged) backend/tests/integration/test_crm_module.py
+- (staged) backend/tests/integration/test_recommendations.py
+- (staged) backend/tests/integration/test_search.py
+- (staged) backend/tests/integration/test_shopify_extended.py
+- (staged) backend/tests/integration/test_webhooks.py
+- (staged) backend/tests/integration/test_xero_reconciliation.py
+- (staged) backend/tests/integrations/__init__.py
+- (staged) backend/tests/integrations/test_xero_token_manager.py
+- (staged) backend/tests/load/README.md
+- (staged) backend/tests/load/__init__.py
+- (staged) backend/tests/load/conftest.py
+- (staged) backend/tests/load/generators/customers.py
+- (staged) backend/tests/load/generators/misc.py
+- (staged) backend/tests/load/generators/orders.py
+- (staged) backend/tests/load/generators/products.py
+- (staged) backend/tests/load/generators/quotes.py
+- (staged) backend/tests/load/load_test_requirements.txt
+- (staged) backend/tests/load/load_test_scenarios.ps1
+- (staged) backend/tests/load/load_test_scenarios.sh
+- (staged) backend/tests/load/locustfile.py
+- (staged) backend/tests/load/locustfile_ai_features.py
+- (staged) backend/tests/load/reporters/html_reporter.py
+- (staged) backend/tests/load/reporters/json_reporter.py
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.json
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.json
+- (staged) backend/tests/load/reports/load_test_latest.html
+- (staged) backend/tests/load/reports/load_test_latest.json
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.html
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.json
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.html
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.json
+- (staged) backend/tests/load/reports/load_test_quick_latest.html
+- (staged) backend/tests/load/reports/load_test_quick_latest.json
+- (staged) backend/tests/load/reports/scenario_report.html
+- (staged) backend/tests/load/reports/scenario_report.json
+- (staged) backend/tests/load/run_full_load_test.py
+- (staged) backend/tests/load/run_quick_load_test.py
+- (staged) backend/tests/load/test_concurrent_number_generation.py
+- (staged) backend/tests/load/test_performance_load.py
+- (staged) backend/tests/load/test_scenarios.py
+- (staged) backend/tests/performance/__init__.py
+- (staged) backend/tests/run_integration_tests.ps1
+- (staged) backend/tests/run_integration_tests.sh
+- (staged) backend/tests/security/__init__.py
+- (staged) backend/tests/security/test_auth_security.py
+- (staged) backend/tests/security/test_encryption.py
+- (staged) backend/tests/security/test_injection_attacks.py
+- (staged) backend/tests/security/test_xss_csrf.py
+- (staged) backend/tests/services/__init__.py
+- (staged) backend/tests/services/code_generation/__init__.py
+- (staged) backend/tests/services/code_generation/test_context_builder.py
+- (staged) backend/tests/services/code_generation/test_doc_generator.py
+- (staged) backend/tests/services/code_generation/test_generator.py
+- (staged) backend/tests/services/code_generation/test_integration.py
+- (staged) backend/tests/services/code_generation/test_quality_checker.py
+- (staged) backend/tests/services/code_generation/test_test_generator.py
+- (staged) backend/tests/services/run_all_tests.py
+- (staged) backend/tests/services/test_auto_reorder.py
+- (staged) backend/tests/services/test_auto_reorder_integration.py
+- (staged) backend/tests/services/test_dunning.py
+- (staged) backend/tests/services/test_email_audit_service.py
+- (staged) backend/tests/services/test_order_state.py
+- (staged) backend/tests/services/test_procurement_matching.py
+- (staged) backend/tests/services/test_procurement_matching_integration.py
+- (staged) backend/tests/services/test_requirement_extractor.py
+- (staged) backend/tests/services/test_requirement_tracer.py
+- (staged) backend/tests/services/test_sla_escalation.py
+- (staged) backend/tests/services/test_tax_calculator.py
+- (staged) backend/tests/services/test_tax_calculator_integration.py
+- (staged) backend/tests/smoke/__init__.py
+- (staged) backend/tests/smoke/conftest.py
+- (staged) backend/tests/smoke/test_smoke.py
+- (staged) backend/tests/test_agent_orchestration.py
+- (staged) backend/tests/test_approvals_batch_2c.py
+- (staged) backend/tests/test_auth_security.py
+- (staged) backend/tests/test_autonomy_audit.py
+- (staged) backend/tests/test_autonomy_config.py
+- (staged) backend/tests/test_batch_2c_structure.py
+- (staged) backend/tests/test_billing.py
+- (staged) backend/tests/test_circuit_breaker.py
+- (staged) backend/tests/test_concurrent_number_generation.py
+- (staged) backend/tests/test_customers_api.py
+- (staged) backend/tests/test_error_handling.py
+- (staged) backend/tests/test_gap_batch_2b.py
+- (staged) backend/tests/test_gap_batch_2b_smoke.py
+- (staged) backend/tests/test_gap_batch_2c_2d.py
+- (staged) backend/tests/test_health.py
+- (staged) backend/tests/test_marketplace.py
+- (staged) backend/tests/test_orders_api.py
+- (staged) backend/tests/test_pr_automation.py
+- (staged) backend/tests/test_products_api.py
+- (staged) backend/tests/test_project_intelligence.py
+- (staged) backend/tests/test_prometheus_metrics.py
+- (staged) backend/tests/test_quotes_api.py
+- (staged) backend/tests/test_risk_assessor.py
+- (staged) backend/tests/test_rollback_mechanism.py
+- (staged) backend/tests/test_sequence_generation.py
+- (staged) backend/tests/test_shopify_mock.py
+- (staged) backend/tests/test_specialized_agents.py
+- (staged) backend/tests/test_toolshed_api.py
+- (staged) backend/tests/test_workflow_agent_integration.py
+- (staged) backend/tests/test_workflows_batch_2c.py
+- (staged) backend/tests/test_xero_mock.py
+- (staged) backend/tests/unit/test_number_generation.py
+- (staged) backend/tests/unit/test_reconciliation_logic.py
+- (staged) backend/tests/utils/__init__.py
+- (staged) backend/tests/utils/test_calculations.py
+- (staged) backend/tests/webhooks/__init__.py
+- (staged) backend/tests/webhooks/test_webhook_transactions.py
+- (staged) backend/update_supplier.json
+- (staged) backend/uv.lock
+- (staged) backend/vercel.json
+- (staged) backend/verify_i18n_migration.py
+- (staged) backend/verify_indexes.py
+- (staged) backend/verify_phase1.py
+- (staged) backend/verify_phase9_fixes.py
+- (staged) backend/verify_race_condition_fix.py
+- (staged) backend/verify_sequence_deployment.py
+- (staged) backend/verify_tables.py
+
+## Session end: 2026-04-05T08:08:40+05:00
+### Modified files:
+- .claude/PROGRESS.md
+- .claude/hooks/pre-commit.sh
+- .claude/rules/database/supabase-migrations.md
+- .dockerignore
+- .env.example
+- .github/CODEOWNERS
+- .github/dependabot.yml
+- .github/workflows/agent-pr-checks.yml
+- .github/workflows/ci.yml
+- .github/workflows/deploy-production.yml
+- .github/workflows/deploy-staging.yml
+- .github/workflows/examples/deploy-frontend.yml.example
+- .github/workflows/security.yml
+- .husky/pre-commit
+- README.md
+- app/.dockerignore
+- app/.gitignore
+- app/AGENTS.md
+- app/Dockerfile
+- app/__tests__/app/approvals-page.test.tsx
+- app/__tests__/app/billing-page.test.tsx
+- app/__tests__/app/crm-health.test.tsx
+- app/__tests__/app/crm-onboarding.test.tsx
+- app/__tests__/app/crm-personas.test.tsx
+- app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- app/__tests__/app/orders-integration.test.tsx
+- app/__tests__/app/quotes-integration.test.tsx
+- app/__tests__/app/reconciliation-page.test.tsx
+- app/__tests__/app/workflows-page.test.tsx
+- app/__tests__/components/EmptyState.test.tsx
+- app/__tests__/components/ErrorBoundary.test.tsx
+- app/__tests__/components/ui/pagination-controls.test.tsx
+- app/__tests__/e2e/billing.spec.ts
+- app/__tests__/e2e/onboarding.spec.ts
+- app/__tests__/lib/api/activities.test.ts
+- app/__tests__/lib/api/agents.test.ts
+- app/__tests__/lib/api/ai-chat.test.ts
+- app/__tests__/lib/api/ai-generate.test.ts
+- app/__tests__/lib/api/ai-insights.test.ts
+- app/__tests__/lib/api/ap2.test.ts
+- app/__tests__/lib/api/approvals-extended.test.ts
+- app/__tests__/lib/api/approvals.test.ts
+- app/__tests__/lib/api/auth.test.ts
+- app/__tests__/lib/api/autonomous.test.ts
+- app/__tests__/lib/api/autonomy.test.ts
+- app/__tests__/lib/api/bank-feeds.test.ts
+- app/__tests__/lib/api/billing.test.ts
+- app/__tests__/lib/api/chat.test.ts
+- app/__tests__/lib/api/cin7-bom.test.ts
+- app/__tests__/lib/api/cin7-fulfilment.test.ts
+- app/__tests__/lib/api/cin7-gl.test.ts
+- app/__tests__/lib/api/cin7-grn.test.ts
+- app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- app/__tests__/lib/api/cin7-shadow.test.ts
+- app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- app/__tests__/lib/api/cin7.test.ts
+- app/__tests__/lib/api/contacts.test.ts
+- app/__tests__/lib/api/contractors.test.ts
+- app/__tests__/lib/api/copilot.test.ts
+- app/__tests__/lib/api/customers.test.ts
+- app/__tests__/lib/api/documents.test.ts
+- app/__tests__/lib/api/inventory.test.ts
+- app/__tests__/lib/api/invoices-extended.test.ts
+- app/__tests__/lib/api/invoices.test.ts
+- app/__tests__/lib/api/marketing.test.ts
+- app/__tests__/lib/api/marketplace.test.ts
+- app/__tests__/lib/api/mobile.test.ts
+- app/__tests__/lib/api/monitoring.test.ts
+- app/__tests__/lib/api/notifications.test.ts
+- app/__tests__/lib/api/orders.test.ts
+- app/__tests__/lib/api/pos.test.ts
+- app/__tests__/lib/api/products.test.ts
+- app/__tests__/lib/api/purchase-orders.test.ts
+- app/__tests__/lib/api/quotes.test.ts
+- app/__tests__/lib/api/reconciliation.test.ts
+- app/__tests__/lib/api/sendgrid.test.ts
+- app/__tests__/lib/api/service-requests.test.ts
+- app/__tests__/lib/api/settings.test.ts
+- app/__tests__/lib/api/shadow.test.ts
+- app/__tests__/lib/api/shipments-outbound.test.ts
+- app/__tests__/lib/api/shipments.test.ts
+- app/__tests__/lib/api/shopify.test.ts
+- app/__tests__/lib/api/sla.test.ts
+- app/__tests__/lib/api/suppliers.test.ts
+- app/__tests__/lib/api/tasks.test.ts
+- app/__tests__/lib/api/team.test.ts
+- app/__tests__/lib/api/warehouse.test.ts
+- app/__tests__/lib/api/workflows-extended.test.ts
+- app/__tests__/lib/api/workflows.test.ts
+- app/__tests__/lib/api/workshop.test.ts
+- app/__tests__/lib/api/xero.test.ts
+- app/__tests__/lib/marketplace.test.ts
+- app/__tests__/lib/types/cin7.test.ts
+- app/__tests__/lib/types/marketplace.test.ts
+- app/__tests__/lib/types/reconciliation.test.ts
+- app/__tests__/lib/types/workflows.test.ts
+- app/__tests__/lib/utils/csv-export.test.ts
+- app/components.json
+- app/declarations.d.ts
+- app/e2e/README.md
+- app/e2e/auth.setup.ts
+- app/e2e/auth.spec.ts
+- app/e2e/autosave.spec.ts
+- app/e2e/billing.spec.ts
+- app/e2e/capture-error.spec.ts
+- app/e2e/crm-health.spec.ts
+- app/e2e/customers.spec.ts
+- app/e2e/debug-orders.spec.ts
+- app/e2e/fixtures/auth.ts
+- app/e2e/helpers/page-objects.ts
+- app/e2e/helpers/test-data.ts
+- app/e2e/mobile-photo-order.spec.ts
+- app/e2e/monitoring.spec.ts
+- app/e2e/orders.spec.ts
+- app/e2e/pos-reconciliation.spec.ts
+- app/e2e/pos-transactions.spec.ts
+- app/e2e/prd-generation.spec.ts
+- app/e2e/products.spec.ts
+- app/e2e/quotes.spec.ts
+- app/e2e/showroom.spec.ts
+- app/e2e/test-helper.ts
+- app/e2e/test-websocket-fix.spec.ts
+- app/e2e/warehouse.spec.ts
+- app/e2e/workshop.spec.ts
+- app/eslint.config.mjs
+- app/next-env.d.ts
+- app/next.config.ts
+- app/package.json
+- app/playwright.a11y.config.ts
+- app/playwright.config.ts
+- app/postcss.config.js
+- app/public/favicon.svg
+- app/public/manifest.json
+- app/public/test-api.html
+- app/scripts/dev-with-fallback.mjs
+- app/sentry.client.config.ts
+- app/sentry.edge.config.ts
+- app/sentry.server.config.ts
+- app/src/app/(auth)/layout.tsx
+- app/src/app/(auth)/login/page.tsx
+- app/src/app/(auth)/onboarding/page.tsx
+- app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- app/src/app/(dashboard)/activities/page.tsx
+- app/src/app/(dashboard)/agents/components/AgentList.tsx
+- app/src/app/(dashboard)/agents/components/AgentStats.tsx
+- app/src/app/(dashboard)/agents/components/LearningInsights.tsx
+- app/src/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- app/src/app/(dashboard)/agents/components/TaskHistory.tsx
+- app/src/app/(dashboard)/agents/components/index.ts
+- app/src/app/(dashboard)/agents/page.tsx
+- app/src/app/(dashboard)/ai-assistant/page.tsx
+- app/src/app/(dashboard)/ai-ops/page.tsx
+- app/src/app/(dashboard)/ai-query/page.tsx
+- app/src/app/(dashboard)/alerts/page.tsx
+- app/src/app/(dashboard)/approvals/page.tsx
+- app/src/app/(dashboard)/autonomous-dev/page.tsx
+- app/src/app/(dashboard)/autonomous/page.tsx
+- app/src/app/(dashboard)/backorders/page.tsx
+- app/src/app/(dashboard)/bank-feeds/page.tsx
+- app/src/app/(dashboard)/contacts/[id]/page.tsx
+- app/src/app/(dashboard)/contacts/components/ContactForm.tsx
+- app/src/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- app/src/app/(dashboard)/contacts/page.tsx
+- app/src/app/(dashboard)/containers/[id]/page.tsx
+- app/src/app/(dashboard)/containers/page.tsx
+- app/src/app/(dashboard)/contractors/components/ContractorForm.tsx
+- app/src/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- app/src/app/(dashboard)/contractors/page.tsx
+- app/src/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- app/src/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- app/src/app/(dashboard)/customers/[id]/page.tsx
+- app/src/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- app/src/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- app/src/app/(dashboard)/customers/health/page.tsx
+- app/src/app/(dashboard)/customers/layout.tsx
+- app/src/app/(dashboard)/customers/onboarding/page.tsx
+- app/src/app/(dashboard)/customers/page.tsx
+- app/src/app/(dashboard)/customers/personas/page.tsx
+- app/src/app/(dashboard)/dashboard/layout.tsx
+- app/src/app/(dashboard)/dashboard/page.tsx
+- app/src/app/(dashboard)/demo-live/page.tsx
+- app/src/app/(dashboard)/demo/contractor-demo.tsx
+- app/src/app/(dashboard)/demo/page.tsx
+- app/src/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- app/src/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- app/src/app/(dashboard)/emails/page.tsx
+- app/src/app/(dashboard)/error.tsx
+- app/src/app/(dashboard)/faq/page.tsx
+- app/src/app/(dashboard)/insights/page.tsx
+- app/src/app/(dashboard)/inventory/bom/page.tsx
+- app/src/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- app/src/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- app/src/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- app/src/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- app/src/app/(dashboard)/inventory/forecast/page.tsx
+- app/src/app/(dashboard)/inventory/page.tsx
+- app/src/app/(dashboard)/inventory/reservations/page.tsx
+- app/src/app/(dashboard)/inventory/stock/page.tsx
+- app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- app/src/app/(dashboard)/inventory/transfers/page.tsx
+- app/src/app/(dashboard)/invoices/[id]/page.tsx
+- app/src/app/(dashboard)/invoices/bas/page.tsx
+- app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- app/src/app/(dashboard)/invoices/page.tsx
+- app/src/app/(dashboard)/invoices/types.ts
+- app/src/app/(dashboard)/layout.tsx
+- app/src/app/(dashboard)/loading.tsx
+- app/src/app/(dashboard)/marketing/page.tsx
+- app/src/app/(dashboard)/marketplace/page.tsx
+- app/src/app/(dashboard)/monitoring/components/AlertCard.tsx
+- app/src/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- app/src/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- app/src/app/(dashboard)/monitoring/page.tsx
+- app/src/app/(dashboard)/orders/[id]/invoice/page.tsx
+- app/src/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- app/src/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- app/src/app/(dashboard)/orders/components/OrderLineItems.tsx
+- app/src/app/(dashboard)/orders/components/OrderPrintView.tsx
+- app/src/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- app/src/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- app/src/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- app/src/app/(dashboard)/orders/fulfilment/page.tsx
+- app/src/app/(dashboard)/orders/layout.tsx
+- app/src/app/(dashboard)/orders/page.tsx
+- app/src/app/(dashboard)/orders/types.ts
+- app/src/app/(dashboard)/pos/components/Cart.tsx
+- app/src/app/(dashboard)/pos/components/POSTerminal.tsx
+- app/src/app/(dashboard)/pos/components/PaymentPanel.tsx
+- app/src/app/(dashboard)/pos/components/ProductSearch.tsx
+- app/src/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- app/src/app/(dashboard)/pos/locations/page.tsx
+- app/src/app/(dashboard)/pos/page.tsx
+- app/src/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- app/src/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- app/src/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- app/src/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- app/src/app/(dashboard)/pos/reconciliation/page.tsx
+- app/src/app/(dashboard)/pos/staff/page.tsx
+- app/src/app/(dashboard)/pos/terminal/page.tsx
+- app/src/app/(dashboard)/pos/types.ts
+- app/src/app/(dashboard)/prd/[id]/page.tsx
+- app/src/app/(dashboard)/prd/generate/page.tsx
+- app/src/app/(dashboard)/products/[id]/page.tsx
+- app/src/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- app/src/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- app/src/app/(dashboard)/products/components/ProductForm.tsx
+- app/src/app/(dashboard)/products/layout.tsx
+- app/src/app/(dashboard)/products/page.tsx
+- app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- app/src/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- app/src/app/(dashboard)/purchase-orders/page.tsx
+- app/src/app/(dashboard)/purchase-orders/receiving/page.tsx
+- app/src/app/(dashboard)/purchase-orders/types.ts
+- app/src/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- app/src/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- app/src/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- app/src/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- app/src/app/(dashboard)/quotes/generate/page.tsx
+- app/src/app/(dashboard)/quotes/layout.tsx
+- app/src/app/(dashboard)/quotes/page.tsx
+- app/src/app/(dashboard)/quotes/types.ts
+- app/src/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- app/src/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- app/src/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- app/src/app/(dashboard)/reconciliation/page.tsx
+- app/src/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- app/src/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- app/src/app/(dashboard)/reports/layout.tsx
+- app/src/app/(dashboard)/reports/page.tsx
+- app/src/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- app/src/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- app/src/app/(dashboard)/service-requests/page.tsx
+- app/src/app/(dashboard)/settings/account/page.tsx
+- app/src/app/(dashboard)/settings/billing/page.tsx
+- app/src/app/(dashboard)/settings/company/page.tsx
+- app/src/app/(dashboard)/settings/integrations/ap2/page.tsx
+- app/src/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- app/src/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- app/src/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- app/src/app/(dashboard)/settings/integrations/gl/page.tsx
+- app/src/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- app/src/app/(dashboard)/settings/integrations/page.tsx
+- app/src/app/(dashboard)/settings/integrations/shadow/page.tsx
+- app/src/app/(dashboard)/settings/mobile/page.tsx
+- app/src/app/(dashboard)/settings/onboarding/page.tsx
+- app/src/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- app/src/app/(dashboard)/settings/setup/page.tsx
+- app/src/app/(dashboard)/settings/shadow/page.tsx
+- app/src/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- app/src/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- app/src/app/(dashboard)/settings/team/page.tsx
+- app/src/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- app/src/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- app/src/app/(dashboard)/settings/translations/components/ProductList.tsx
+- app/src/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- app/src/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- app/src/app/(dashboard)/settings/translations/page.tsx
+- app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- app/src/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- app/src/app/(dashboard)/shipments/page.tsx
+- app/src/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- app/src/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- app/src/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- app/src/app/(dashboard)/submissions/page.tsx
+- app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- app/src/app/(dashboard)/suppliers/page.tsx
+- app/src/app/(dashboard)/tasks/components/QueueStats.tsx
+- app/src/app/(dashboard)/tasks/components/TaskList.tsx
+- app/src/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- app/src/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- app/src/app/(dashboard)/tasks/page.tsx
+- app/src/app/(dashboard)/warehouse/page.tsx
+- app/src/app/(dashboard)/workflows/page.tsx
+- app/src/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- app/src/app/(dashboard)/workshop/equipment/page.tsx
+- app/src/app/(dashboard)/workshop/page.tsx
+- app/src/app/(dashboard)/workshop/reminders/page.tsx
+- app/src/app/(dashboard)/workshop/schedule/page.tsx
+- app/src/app/(dashboard)/workshop/templates/page.tsx
+- app/src/app/(guest)/layout.tsx
+- app/src/app/(guest)/order/[token]/GuestOrderClient.tsx
+- app/src/app/(guest)/order/[token]/page.tsx
+- app/src/app/(mobile)/layout.tsx
+- app/src/app/(mobile)/order/new/page.tsx
+- app/src/app/(portal)/layout.tsx
+- app/src/app/(portal)/portal/certifications/page.tsx
+- app/src/app/(portal)/portal/invoices/page.tsx
+- app/src/app/(portal)/portal/orders/page.tsx
+- app/src/app/(portal)/portal/page.tsx
+- app/src/app/(portal)/portal/service/page.tsx
+- app/src/app/(supplier)/layout.tsx
+- app/src/app/(supplier)/supplier/orders/page.tsx
+- app/src/app/(supplier)/supplier/page.tsx
+- app/src/app/api/activities/route.ts
+- app/src/app/api/activities/stats/route.ts
+- app/src/app/api/agents/insights/route.ts
+- app/src/app/api/agents/list/route.ts
+- app/src/app/api/agents/patterns/route.ts
+- app/src/app/api/agents/stats/route.ts
+- app/src/app/api/agents/tasks/recent/route.ts
+- app/src/app/api/ai/cin7-anomaly/sync-health/route.ts
+- app/src/app/api/ai/insights/dashboard/route.ts
+- app/src/app/api/ai/insights/sales/route.ts
+- app/src/app/api/ai/inventory-forecast/route.ts
+- app/src/app/api/ai/patterns/orders/route.ts
+- app/src/app/api/analytics/metrics/overview/route.ts
+- app/src/app/api/auth/login/route.ts
+- app/src/app/api/auth/logout/route.ts
+- app/src/app/api/backorders/route.ts
+- app/src/app/api/bank-feeds/accounts/route.ts
+- app/src/app/api/boardroom/cron/route.ts
+- app/src/app/api/ccw/products/route.ts
+- app/src/app/api/ccw/summary/route.ts
+- app/src/app/api/contact-submissions/route.ts
+- app/src/app/api/contacts/route.ts
+- app/src/app/api/containers/route.ts
+- app/src/app/api/cron/auto-reorder-inventory/route.ts
+- app/src/app/api/cron/check-expiring-quotes/route.ts
+- app/src/app/api/cron/check-sla-breaches/route.ts
+- app/src/app/api/cron/cleanup-old-runs/route.ts
+- app/src/app/api/cron/daily-report/route.ts
+- app/src/app/api/cron/health-check/route.ts
+- app/src/app/api/cron/nightly-full-sync/route.ts
+- app/src/app/api/cron/process-onboarding-emails/route.ts
+- app/src/app/api/cron/refresh-health-scores/route.ts
+- app/src/app/api/cron/refresh-xero-tokens/route.ts
+- app/src/app/api/cron/retry-failed-webhooks/route.ts
+- app/src/app/api/cron/run-autonomous-ops/route.ts
+- app/src/app/api/cron/shadow-sync-cin7/route.ts
+- app/src/app/api/cron/shadow-sync-xero/route.ts
+- app/src/app/api/customers/route.ts
+- app/src/app/api/dashboard/aggregated/route.ts
+- app/src/app/api/dashboard/metrics-stream/route.ts
+- app/src/app/api/dashboard/order-status-breakdown/route.ts
+- app/src/app/api/dashboard/quote-conversion/route.ts
+- app/src/app/api/dashboard/revenue-by-location/route.ts
+- app/src/app/api/demo-requests/route.ts
+- app/src/app/api/health/route.ts
+- app/src/app/api/health/routes/route.ts
+- app/src/app/api/integrations/cin7/status/route.ts
+- app/src/app/api/integrations/cin7/stream/route.ts
+- app/src/app/api/integrations/sendgrid/conversations/route.ts
+- app/src/app/api/integrations/sendgrid/status/route.ts
+- app/src/app/api/integrations/shopify/status/route.ts
+- app/src/app/api/integrations/xero/status/route.ts
+- app/src/app/api/inventory-stream/route.ts
+- app/src/app/api/inventory/reservations/route.ts
+- app/src/app/api/inventory/route.ts
+- app/src/app/api/inventory/stock-health/route.ts
+- app/src/app/api/inventory/transfer-suggestions/route.ts
+- app/src/app/api/inventory/transfers/route.ts
+- app/src/app/api/invoices/route.ts
+- app/src/app/api/monitoring/alerts/pos-failures/route.ts
+- app/src/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- app/src/app/api/monitoring/alerts/route.ts
+- app/src/app/api/monitoring/health/route.ts
+- app/src/app/api/monitoring/metrics/route.ts
+- app/src/app/api/monitoring/range/route.ts
+- app/src/app/api/orders/route.ts
+- app/src/app/api/pos/locations/route.ts
+- app/src/app/api/pos/sales-staff/route.ts
+- app/src/app/api/pos/terminals/route.ts
+- app/src/app/api/products/route.ts
+- app/src/app/api/purchase-orders/route.ts
+- app/src/app/api/quotes/route.ts
+- app/src/app/api/submissions/statistics/route.ts
+- app/src/app/api/telemetry/route.ts
+- app/src/app/api/warehouse/ops/route.ts
+- app/src/app/api/webhooks/route.ts
+- app/src/app/api/workflows/[id]/execute/route.ts
+- app/src/app/api/workflows/[id]/route.ts
+- app/src/app/api/workflows/route.ts
+- app/src/app/dashboard-analytics/page.tsx
+- app/src/app/demo/i18n/page.tsx
+- app/src/app/design-system/page.tsx
+- app/src/app/error.tsx
+- app/src/app/favicon.ico/route.ts
+- app/src/app/globals.css
+- app/src/app/layout.tsx
+- app/src/app/not-found.tsx
+- app/src/app/page.tsx
+- app/src/app/playground/page.tsx
+- app/src/app/robots.ts
+- app/src/app/sitemap.ts
+- app/src/components/ClientOnly.tsx
+- app/src/components/ai-marketing/asset-library.tsx
+- app/src/components/ai-marketing/media-generator.tsx
+- app/src/components/ai/AIProductCopyGenerator.tsx
+- app/src/components/ai/AIQuoteGenerator.tsx
+- app/src/components/ai/QuoteCopilotChat.tsx
+- app/src/components/ai/StaffCopilotWidget.tsx
+- app/src/components/alerts/AnomalyAlert.tsx
+- app/src/components/auth/login-form.tsx
+- app/src/components/autonomous/ApprovalGateDialog.tsx
+- app/src/components/autonomous/ControlPanel.tsx
+- app/src/components/autonomous/FileChangesViewer.tsx
+- app/src/components/autonomous/PhaseTimeline.tsx
+- app/src/components/charts/CategorySalesChart.tsx
+- app/src/components/charts/RevenueChart.tsx
+- app/src/components/chat/ChatWidget.tsx
+- app/src/components/contractor-availability-live.tsx
+- app/src/components/contractor-availability.tsx
+- app/src/components/dashboard/AgentMetricsWidget.tsx
+- app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- app/src/components/dashboard/DemoVideoBanner.tsx
+- app/src/components/dashboard/DemoVideoLink.tsx
+- app/src/components/dashboard/InventoryForecastWidget.tsx
+- app/src/components/dashboard/OrderPatternsWidget.tsx
+- app/src/components/dashboard/OrderStatusBreakdownWidget.tsx
+- app/src/components/dashboard/QuoteConversionWidget.tsx
+- app/src/components/dashboard/RevenueByLocationWidget.tsx
+- app/src/components/dashboard/SalesInsightsWidget.tsx
+- app/src/components/dashboard/StockHealthWidget.tsx
+- app/src/components/dashboard/TransferSuggestionsWidget.tsx
+- app/src/components/errors/ErrorBoundary.tsx
+- app/src/components/forms/AutoFillSuggestion.tsx
+- app/src/components/insights/insight-card.tsx
+- app/src/components/inventory/LocationAwareProductSelect.tsx
+- app/src/components/inventory/MultiLocationStockCell.tsx
+- app/src/components/inventory/ReleaseReservationDialog.tsx
+- app/src/components/inventory/StockReservationDialog.tsx
+- app/src/components/inventory/TransferStatusBadge.tsx
+- app/src/components/landing/AnimatedCounter.tsx
+- app/src/components/landing/LiveStatsBar.tsx
+- app/src/components/layout/LanguageSwitcher.tsx
+- app/src/components/layout/NotificationBell.tsx
+- app/src/components/layout/ShadowModeBanner.tsx
+- app/src/components/layout/footer.tsx
+- app/src/components/layout/mobile-nav.tsx
+- app/src/components/layout/sidebar.tsx
+- app/src/components/marketing/feature-grid.tsx
+- app/src/components/marketing/hero-section.tsx
+- app/src/components/marketing/index.ts
+- app/src/components/marketing/testimonials.tsx
+- app/src/components/mobile/PhotoCaptureWidget.tsx
+- app/src/components/onboarding/CompanySetupStep.tsx
+- app/src/components/onboarding/FirstQuoteStep.tsx
+- app/src/components/onboarding/OnboardingWizard.tsx
+- app/src/components/onboarding/SampleDataStep.tsx
+- app/src/components/onboarding/ShopifyConnectStep.tsx
+- app/src/components/onboarding/TeamInviteStep.tsx
+- app/src/components/prd-generation-progress.tsx
+- app/src/components/prd/prd-detail-view.tsx
+- app/src/components/prd/prd-generation-progress.tsx
+- app/src/components/prd/prd-generator-form.tsx
+- app/src/components/providers/i18n-provider.tsx
+- app/src/components/responsive-table/ResponsiveTable.tsx
+- app/src/components/responsive-table/index.ts
+- app/src/components/seo/FaqSchema.tsx
+- app/src/components/seo/JsonLd.tsx
+- app/src/components/transitions/FadeIn.tsx
+- app/src/components/transitions/PageTransition.tsx
+- app/src/components/transitions/RouteProgressBar.tsx
+- app/src/components/transitions/index.ts
+- app/src/components/ui/alert-dialog.tsx
+- app/src/components/ui/alert.tsx
+- app/src/components/ui/avatar.tsx
+- app/src/components/ui/badge.tsx
+- app/src/components/ui/bento-grid.tsx
+- app/src/components/ui/border-beam.tsx
+- app/src/components/ui/breadcrumb.tsx
+- app/src/components/ui/button.tsx
+- app/src/components/ui/card.tsx
+- app/src/components/ui/checkbox.tsx
+- app/src/components/ui/command-palette.tsx
+- app/src/components/ui/command.tsx
+- app/src/components/ui/dialog.tsx
+- app/src/components/ui/draft-recovery-alert.tsx
+- app/src/components/ui/dropdown-menu.tsx
+- app/src/components/ui/empty-state.tsx
+- app/src/components/ui/form.tsx
+- app/src/components/ui/input.tsx
+- app/src/components/ui/label.tsx
+- app/src/components/ui/loading.tsx
+- app/src/components/ui/motion.tsx
+- app/src/components/ui/order-status-badge.tsx
+- app/src/components/ui/pagination-controls.tsx
+- app/src/components/ui/popover.tsx
+- app/src/components/ui/progress.tsx
+- app/src/components/ui/real-time-indicator.tsx
+- app/src/components/ui/scroll-area.tsx
+- app/src/components/ui/select.tsx
+- app/src/components/ui/separator.tsx
+- app/src/components/ui/sheet.tsx
+- app/src/components/ui/skeleton.tsx
+- app/src/components/ui/switch.tsx
+- app/src/components/ui/table.tsx
+- app/src/components/ui/tabs.tsx
+- app/src/components/ui/textarea.tsx
+- app/src/components/ui/toast.tsx
+- app/src/components/ui/tooltip.tsx
+- app/src/components/workflow/canvas/workflow-canvas.tsx
+- app/src/components/workflow/nodes/agent-node.tsx
+- app/src/components/workflow/nodes/conditional-node.tsx
+- app/src/components/workflow/nodes/end-node.tsx
+- app/src/components/workflow/nodes/llm-node.tsx
+- app/src/components/workflow/nodes/start-node.tsx
+- app/src/components/workflow/nodes/tool-node.tsx
+- app/src/contexts/websocket-context.tsx
+- app/src/hooks/use-barcode-scanner.ts
+- app/src/hooks/use-chat.ts
+- app/src/hooks/use-line-item-calculations.ts
+- app/src/hooks/use-prd-generation.ts
+- app/src/hooks/use-toast.ts
+- app/src/i18n/config.ts
+- app/src/i18n/messages/ar.json
+- app/src/i18n/messages/en.json
+- app/src/i18n/messages/es.json
+- app/src/i18n/messages/hi.json
+- app/src/i18n/messages/pt.json
+- app/src/i18n/messages/ta.json
+- app/src/i18n/messages/te.json
+- app/src/i18n/messages/vi.json
+- app/src/i18n/messages/zh-CN.json
+- app/src/i18n/messages/zh-TW.json
+- app/src/i18n/request.ts
+- app/src/instrumentation.ts
+- app/src/lib/agents/independent-verifier.ts
+- app/src/lib/api/activities.ts
+- app/src/lib/api/agents.ts
+- app/src/lib/api/ai-chat.ts
+- app/src/lib/api/ai-generate.ts
+- app/src/lib/api/ai-insights.ts
+- app/src/lib/api/ap2.ts
+- app/src/lib/api/approvals.ts
+- app/src/lib/api/auth.ts
+- app/src/lib/api/autonomous.ts
+- app/src/lib/api/autonomy.ts
+- app/src/lib/api/backend-url.ts
+- app/src/lib/api/backend.ts
+- app/src/lib/api/bank-feeds.ts
+- app/src/lib/api/billing.ts
+- app/src/lib/api/chat.ts
+- app/src/lib/api/cin7-bom.ts
+- app/src/lib/api/cin7-fulfilment.ts
+- app/src/lib/api/cin7-gl.ts
+- app/src/lib/api/cin7-grn.ts
+- app/src/lib/api/cin7-inventory-writeback.ts
+- app/src/lib/api/cin7-shadow-ai.ts
+- app/src/lib/api/cin7-shadow.ts
+- app/src/lib/api/cin7-webhook-subscriptions.ts
+- app/src/lib/api/cin7.ts
+- app/src/lib/api/client.ts
+- app/src/lib/api/contacts.ts
+- app/src/lib/api/contractors.ts
+- app/src/lib/api/copilot.ts
+- app/src/lib/api/customers.ts
+- app/src/lib/api/documents.ts
+- app/src/lib/api/heygen.ts
+- app/src/lib/api/index.ts
+- app/src/lib/api/inventory.ts
+- app/src/lib/api/invoices.ts
+- app/src/lib/api/marketing.ts
+- app/src/lib/api/marketplace.ts
+- app/src/lib/api/middleware.ts
+- app/src/lib/api/mobile.ts
+- app/src/lib/api/monitoring.ts
+- app/src/lib/api/notifications.ts
+- app/src/lib/api/orders.ts
+- app/src/lib/api/pos.ts
+- app/src/lib/api/products.ts
+- app/src/lib/api/purchase-orders.ts
+- app/src/lib/api/quotes.ts
+- app/src/lib/api/sendgrid.ts
+- app/src/lib/api/server.ts
+- app/src/lib/api/service-requests.ts
+- app/src/lib/api/settings.ts
+- app/src/lib/api/shadow.ts
+- app/src/lib/api/shipments-outbound.ts
+- app/src/lib/api/shipments.ts
+- app/src/lib/api/shopify.ts
+- app/src/lib/api/sla.ts
+- app/src/lib/api/suppliers.ts
+- app/src/lib/api/tasks.ts
+- app/src/lib/api/team.ts
+- app/src/lib/api/warehouse.ts
+- app/src/lib/api/workflows.ts
+- app/src/lib/api/workshop.ts
+- app/src/lib/api/xero.ts
+- app/src/lib/audit/api-route-auditor.ts
+- app/src/lib/audit/user-journey-runner.ts
+- app/src/lib/audit/ux-friction-detector.ts
+- app/src/lib/australian-context.ts
+- app/src/lib/config.ts
+- app/src/lib/design-system/config.ts
+- app/src/lib/design-system/index.ts
+- app/src/lib/design-system/library-registry.ts
+- app/src/lib/design-system/pattern-validator.ts
+- app/src/lib/hooks/use-autonomy-metrics.ts
+- app/src/lib/hooks/use-autosave.ts
+- app/src/lib/hooks/use-cin7-stream.ts
+- app/src/lib/hooks/use-form-autofill.ts
+- app/src/lib/hooks/use-inventory-forecast.ts
+- app/src/lib/hooks/use-recent-items.ts
+- app/src/lib/hooks/use-search-state.ts
+- app/src/lib/hooks/use-sse.ts
+- app/src/lib/hooks/use-websocket.ts
+- app/src/lib/image-generation/asset-manager.ts
+- app/src/lib/image-generation/types.ts
+- app/src/lib/logger.ts
+- app/src/lib/supabase/client.ts
+- app/src/lib/supabase/server.ts
+- app/src/lib/telemetry.ts
+- app/src/lib/tools/index.ts
+- app/src/lib/types/activities.ts
+- app/src/lib/types/cin7.ts
+- app/src/lib/types/contacts.ts
+- app/src/lib/types/inventory.ts
+- app/src/lib/types/invoices.ts
+- app/src/lib/types/marketplace.ts
+- app/src/lib/types/reconciliation.ts
+- app/src/lib/types/workflows.ts
+- app/src/lib/utils.test.ts
+- app/src/lib/utils.ts
+- app/src/lib/utils/calculations.test.ts
+- app/src/lib/utils/calculations.ts
+- app/src/lib/utils/csv-export.ts
+- app/src/lib/utils/debounce.ts
+- app/src/lib/utils/draft-storage.ts
+- app/src/lib/utils/storage.ts
+- app/src/middleware.ts
+- app/src/styles/design-system.css
+- app/src/types/contractor.ts
+- app/src/types/index.ts
+- app/src/types/prd.ts
+- app/src/types/workflow.ts
+- app/tailwind.config.ts
+- app/tests/accessibility/a11y.spec.ts
+- app/tests/e2e/approvals.spec.ts
+- app/tests/e2e/error-handling.spec.ts
+- app/tests/e2e/invoices.spec.ts
+- app/tests/e2e/reconciliation.spec.ts
+- app/tests/e2e/workflows.spec.ts
+- app/tests/visual/components.visual.spec.ts
+- app/tsconfig.json
+- app/vercel.json
+- app/vitest.config.ts
+- app/vitest.d.ts
+- app/vitest.setup.ts
+- backend/.claude/memory/context-snapshot.md
+- backend/.gitignore
+- backend/.python-version
+- backend/.vercelignore
+- backend/=0.39.0
+- backend/=6.11.0
+- backend/AGENTS.md
+- "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- backend/Dockerfile
+- backend/ISSUE-4-COMPLETION.md
+- backend/ISSUE-5-COMPLETION.md
+- backend/Procfile
+- backend/alembic.ini
+- backend/alembic/README
+- backend/alembic/env.py
+- backend/alembic/script.py.mako
+- backend/alembic/versions/001_add_approvals.py
+- backend/alembic/versions/002_add_semantic_search.py
+- backend/alembic/versions/003_add_missing_trigram_indexes.py
+- backend/alembic/versions/004_add_product_sync_bidirectional.py
+- backend/alembic/versions/005_add_shopify_extended_tables.py
+- backend/alembic/versions/006_add_mobile_order_tables.py
+- backend/alembic/versions/007_add_workflow_notification_indexes.py
+- backend/alembic/versions/008_merge_heads.py
+- backend/alembic/versions/009_add_pos_tables.py
+- backend/alembic/versions/00a_rename_invoice_date.py
+- backend/alembic/versions/00b_add_missing_inventory_tables.py
+- backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- backend/alembic/versions/00d_add_certification_tables.py
+- backend/alembic/versions/00e_add_prd_tables.py
+- backend/alembic/versions/00f_add_pricing_tier_tables.py
+- backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- backend/alembic/versions/68d51946645a_create_erp_schema.py
+- backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- backend/analyze_404_errors.py
+- backend/analyze_422_errors.py
+- backend/analyze_500_errors.py
+- backend/apply_i18n_migration.py
+- backend/apply_i18n_migration_v2.py
+- backend/apply_indexes.py
+- backend/apply_indexes_via_backend.py
+- backend/apply_pos_migration.py
+- backend/apply_search_indexes.py
+- backend/apply_sequences_migration.py
+- backend/benchmarks/after_indexes.txt
+- backend/benchmarks/before_indexes.txt
+- backend/benchmarks/comparison.md
+- backend/check_404_in_full_report.py
+- backend/check_backend_config.py
+- backend/check_categories.py
+- backend/check_db.py
+- backend/check_enum_def.py
+- backend/check_orders.py
+- backend/check_results.py
+- backend/check_runtime_config.py
+- backend/check_schema.py
+- backend/check_tables.py
+- backend/check_test_status.py
+- backend/cleanup_db.py
+- backend/conftest.py
+- backend/count_data.py
+- backend/create_admin.py
+- backend/create_demo_orders.py
+- backend/create_demo_orders_simple.py
+- backend/create_inventory_tables.py
+- backend/create_service_tables.py
+- backend/debug_response.py
+- backend/diagnose_db_connection.py
+- backend/docs/ISS-005-VERIFICATION.md
+- backend/docs/ISS-006-VERIFICATION.md
+- backend/docs/ISS-007-VERIFICATION.md
+- backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- backend/examples/use_agentic_layer.py
+- backend/fix_categories.py
+- backend/fix_categories_uppercase.py
+- backend/generate_endpoint.py
+- backend/generate_failures.py
+- backend/generate_password_hash.py
+- backend/inject_failure_patterns.py
+- backend/inject_insights_directly.py
+- backend/inject_test_data.py
+- backend/inject_test_failures.py
+- backend/list_google_models.py
+- backend/load_test_output.txt
+- backend/migrations/001_add_search_indexes.sql
+- backend/migrations/001_rollback.sql
+- backend/migrations/README.md
+- backend/migrations/add_ai_search.sql
+- backend/migrations/add_ap2_integration.sql
+- backend/migrations/add_auto_sync_enhancements.sql
+- backend/migrations/add_email_audit_tables.sql
+- backend/migrations/add_foreign_key_indexes.sql
+- backend/migrations/add_i18n_support.sql
+- backend/migrations/add_missing_fk_indexes.sql
+- backend/migrations/add_performance_indexes.sql
+- backend/migrations/add_phase4_inventory_indexes.sql
+- backend/migrations/add_portal_forms_tables.sql
+- backend/migrations/add_pos_system.sql
+- backend/migrations/add_search_indexes.sql
+- backend/migrations/add_sequences_for_numbers.sql
+- backend/migrations/add_shopify_extended.sql
+- backend/migrations/add_submission_notes_table.sql
+- backend/migrations/add_trigram_indexes.sql
+- backend/migrations/add_webhook_events_table.sql
+- backend/migrations/seed_ccw_products.sql
+- backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- backend/migrations/week3_enum_standardization.sql
+- backend/migrations/week3_timezone_standardization.sql
+- backend/pyproject.toml
+- backend/pytest.ini
+- backend/railway.json
+- backend/requirements.txt
+- backend/reset_admin_password.py
+- backend/run-setup-memory.ps1
+- backend/run-tests.ps1
+- backend/run_bugfix_tests.ps1
+- backend/run_bugfix_tests.sh
+- backend/run_migrations.py
+- backend/scripts/analyze_query_performance.py
+- backend/scripts/apply_foreign_key_indexes.py
+- backend/scripts/apply_phase4_indexes.py
+- backend/scripts/apply_trigram_indexes.py
+- backend/scripts/benchmark_search.py
+- backend/scripts/create_container_tables.sql
+- backend/scripts/create_sample_orders.py
+- backend/scripts/create_sample_quotes.py
+- backend/scripts/explain_queries.sh
+- backend/scripts/identify_500_sources.py
+- backend/scripts/implement_query_optimizations.md
+- backend/scripts/import_ccwonline_products.py
+- backend/scripts/insert_container_sample_data.sql
+- backend/scripts/integration_test_iss001.py
+- backend/scripts/monitor_indexes.py
+- backend/scripts/run_sql.py
+- backend/scripts/seed_ccw_cleaning.py
+- backend/scripts/seed_ccw_products.py
+- backend/scripts/setup-memory.py
+- backend/scripts/test_iss005_fixes.py
+- backend/scripts/validate_autosave_implementation.py
+- backend/scripts/validate_iss001_fix.py
+- backend/scripts/validate_iss003_actual.py
+- backend/scripts/validate_iss003_fix.py
+- backend/scripts/validate_iss005_fix.py
+- backend/scripts/verify_iss005_code.py
+- backend/scripts/verify_query_optimizations.py
+- backend/seed_data.py
+- backend/seed_demo_simple.sql
+- backend/seed_orders.py
+- backend/show_customers.py
+- backend/show_orders.py
+- backend/show_products.py
+- backend/show_quotes.py
+- backend/src/__init__.py
+- backend/src/agents/prd/__init__.py
+- backend/src/agents/prd/analysis_agent.py
+- backend/src/agents/prd/feature_decomposer.py
+- backend/src/agents/prd/prd_orchestrator.py
+- backend/src/agents/prd/roadmap_planner.py
+- backend/src/agents/prd/tech_spec_generator.py
+- backend/src/agents/prd/test_generator.py
+- backend/src/ai/__init__.py
+- backend/src/ai/agents/chat_assistant.py
+- backend/src/ai/agents/chat_state.py
+- backend/src/ai/agents/content_generator.py
+- backend/src/ai/agents/content_state.py
+- backend/src/ai/agents/insights_agent.py
+- backend/src/ai/agents/insights_state.py
+- backend/src/ai/agents/risk_assessor.py
+- backend/src/ai/agents/rollback_agent.py
+- backend/src/ai/agents/specialized/__init__.py
+- backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- backend/src/ai/agents/specialized/development_agent.py
+- backend/src/ai/agents/specialized/document_parser_agent.py
+- backend/src/ai/agents/specialized/form_autofill_agent.py
+- backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- backend/src/ai/agents/specialized/marketing_agent.py
+- backend/src/ai/agents/specialized/pricing_agent.py
+- backend/src/ai/agents/specialized/pricing_state.py
+- backend/src/ai/agents/specialized/procurement_agent.py
+- backend/src/ai/agents/specialized/procurement_state.py
+- backend/src/ai/agents/specialized/project_intelligence_agent.py
+- backend/src/ai/agents/specialized/query_agent.py
+- backend/src/ai/agents/specialized/recommendation_agent.py
+- backend/src/ai/agents/specialized/reconciliation_agent.py
+- backend/src/ai/agents/specialized/search_agent.py
+- backend/src/ai/agents/specialized/staff_copilot_agent.py
+- backend/src/ai/agents/specialized/task_executor_agent.py
+- backend/src/ai/agents/specialized/task_executor_state.py
+- backend/src/ai/agents/specialized/testing_agent.py
+- backend/src/ai/base_agent.py
+- backend/src/ai/generators/__init__.py
+- backend/src/ai/generators/email_generator.py
+- backend/src/ai/generators/quote_generator.py
+- backend/src/ai/learning/__init__.py
+- backend/src/ai/learning/learning_engine.py
+- backend/src/ai/learning/learning_repository.py
+- backend/src/ai/monitoring/__init__.py
+- backend/src/ai/monitoring/health_monitor.py
+- backend/src/ai/monitoring/metrics_collector.py
+- backend/src/ai/ollama_client.py
+- backend/src/ai/orchestration/__init__.py
+- backend/src/ai/orchestration/agent_registry.py
+- backend/src/ai/orchestration/autonomous_loop.py
+- backend/src/ai/orchestration/project_orchestrator.py
+- backend/src/ai/orchestration/supervisor_agent.py
+- backend/src/ai/orchestration/supervisor_state.py
+- backend/src/ai/prompts/__init__.py
+- backend/src/ai/prompts/system_prompts.py
+- backend/src/ai/protocol/__init__.py
+- backend/src/ai/protocol/confidence.py
+- backend/src/ai/protocol/error_handler.py
+- backend/src/ai/protocol/governor.py
+- backend/src/ai/protocol/message_bus.py
+- backend/src/ai/protocol/models.py
+- backend/src/ai/tools/__init__.py
+- backend/src/ai/tools/analytics_tools.py
+- backend/src/ai/tools/base.py
+- backend/src/ai/tools/erp_tools.py
+- backend/src/ai/tools/execution_tools.py
+- backend/src/ai/tools/inventory_intelligence.py
+- backend/src/ai/tools/pricing_tools.py
+- backend/src/ai/tools/procurement_tools.py
+- backend/src/api/__init__.py
+- backend/src/api/debug_main.py
+- backend/src/api/deps.py
+- backend/src/api/exceptions.py
+- backend/src/api/main.py
+- backend/src/api/middleware/__init__.py
+- backend/src/api/middleware/auth.py
+- backend/src/api/middleware/performance.py
+- backend/src/api/middleware/rate_limit.py
+- backend/src/api/middleware/rbac.py
+- backend/src/api/middleware/request_id.py
+- backend/src/api/middleware/security_headers.py
+- backend/src/api/middleware/tenant_isolation.py
+- backend/src/api/routers/prd.py
+- backend/src/api/routes/__init__.py
+- backend/src/api/routes/activities.py
+- backend/src/api/routes/agents_monitor.py
+- backend/src/api/routes/ai/__init__.py
+- backend/src/api/routes/ai/anomaly.py
+- backend/src/api/routes/ai/approval_gates.py
+- backend/src/api/routes/ai/assets.py
+- backend/src/api/routes/ai/autonomous_ops.py
+- backend/src/api/routes/ai/build_command.py
+- backend/src/api/routes/ai/chat.py
+- backend/src/api/routes/ai/cin7_anomaly.py
+- backend/src/api/routes/ai/cin7_forecast.py
+- backend/src/api/routes/ai/cin7_shadow_ai.py
+- backend/src/api/routes/ai/command_parser.py
+- backend/src/api/routes/ai/document_parser.py
+- backend/src/api/routes/ai/form_autofill.py
+- backend/src/api/routes/ai/gap_sync.py
+- backend/src/api/routes/ai/generate.py
+- backend/src/api/routes/ai/insights.py
+- backend/src/api/routes/ai/inventory_forecast.py
+- backend/src/api/routes/ai/learning.py
+- backend/src/api/routes/ai/marketing_ai.py
+- backend/src/api/routes/ai/monitoring.py
+- backend/src/api/routes/ai/project_intelligence.py
+- backend/src/api/routes/ai/protocol.py
+- backend/src/api/routes/ai/query.py
+- backend/src/api/routes/ai/requirement_verification.py
+- backend/src/api/routes/ai/specialized.py
+- backend/src/api/routes/ai/staff_copilot.py
+- backend/src/api/routes/ai/supervisor.py
+- backend/src/api/routes/ai/test_data.py
+- backend/src/api/routes/ai/test_failures.py
+- backend/src/api/routes/ai/toolshed.py
+- backend/src/api/routes/ai/toolshed_vault.py
+- backend/src/api/routes/analytics.py
+- backend/src/api/routes/approvals.py
+- backend/src/api/routes/audit_trail.py
+- backend/src/api/routes/autonomous_dev.py
+- backend/src/api/routes/autonomy_metrics.py
+- backend/src/api/routes/backorders.py
+- backend/src/api/routes/bank_feeds.py
+- backend/src/api/routes/billing.py
+- backend/src/api/routes/boardroom.py
+- backend/src/api/routes/certifications.py
+- backend/src/api/routes/chat.py
+- backend/src/api/routes/config.py
+- backend/src/api/routes/contacts.py
+- backend/src/api/routes/containers.py
+- backend/src/api/routes/contractors.py
+- backend/src/api/routes/crm_health.py
+- backend/src/api/routes/crm_onboarding.py
+- backend/src/api/routes/crm_personas.py
+- backend/src/api/routes/cron_jobs.py
+- backend/src/api/routes/customer_orders.py
+- backend/src/api/routes/customers.py
+- backend/src/api/routes/dashboard_stream.py
+- backend/src/api/routes/demo_auth.py
+- backend/src/api/routes/demo_dashboard.py
+- backend/src/api/routes/demo_lists.py
+- backend/src/api/routes/documents.py
+- backend/src/api/routes/email_audit.py
+- backend/src/api/routes/equipment_lifecycle.py
+- backend/src/api/routes/google_ai.py
+- backend/src/api/routes/health.py
+- backend/src/api/routes/integrations/__init__.py
+- backend/src/api/routes/integrations/ap2.py
+- backend/src/api/routes/integrations/cin7.py
+- backend/src/api/routes/integrations/cin7_bom.py
+- backend/src/api/routes/integrations/cin7_crm.py
+- backend/src/api/routes/integrations/cin7_fulfilment.py
+- backend/src/api/routes/integrations/cin7_gl.py
+- backend/src/api/routes/integrations/cin7_grn.py
+- backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- backend/src/api/routes/integrations/cin7_line_items.py
+- backend/src/api/routes/integrations/cin7_procurement.py
+- backend/src/api/routes/integrations/cin7_shadow_sync.py
+- backend/src/api/routes/integrations/cin7_stream.py
+- backend/src/api/routes/integrations/cin7_sync.py
+- backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- backend/src/api/routes/integrations/cin7_webhooks.py
+- backend/src/api/routes/integrations/elevenlabs.py
+- backend/src/api/routes/integrations/heygen.py
+- backend/src/api/routes/integrations/marketplace.py
+- backend/src/api/routes/integrations/sendgrid.py
+- backend/src/api/routes/integrations/shopify.py
+- backend/src/api/routes/integrations/shopify_theme.py
+- backend/src/api/routes/integrations/xero.py
+- backend/src/api/routes/inventory.py
+- backend/src/api/routes/inventory_stream.py
+- backend/src/api/routes/invoice_payments.py
+- backend/src/api/routes/invoices.py
+- backend/src/api/routes/jobs.py
+- backend/src/api/routes/mobile/__init__.py
+- backend/src/api/routes/mobile/guest_orders.py
+- backend/src/api/routes/monitoring/__init__.py
+- backend/src/api/routes/monitoring/alerts.py
+- backend/src/api/routes/monitoring/business_metrics.py
+- backend/src/api/routes/monitoring/infrastructure.py
+- backend/src/api/routes/monitoring/performance.py
+- backend/src/api/routes/notifications.py
+- backend/src/api/routes/orders.py
+- backend/src/api/routes/portal/__init__.py
+- backend/src/api/routes/portal/customer_portal.py
+- backend/src/api/routes/pos_transactions.py
+- backend/src/api/routes/pos_xero_reconciliation.py
+- backend/src/api/routes/prd.py
+- backend/src/api/routes/pricing.py
+- backend/src/api/routes/procurement.py
+- backend/src/api/routes/products.py
+- backend/src/api/routes/prometheus_metrics.py
+- backend/src/api/routes/public_stats.py
+- backend/src/api/routes/purchase_orders.py
+- backend/src/api/routes/quotes.py
+- backend/src/api/routes/recommendations.py
+- backend/src/api/routes/reconciliation.py
+- backend/src/api/routes/reconciliation_dashboard.py
+- backend/src/api/routes/search.py
+- backend/src/api/routes/service_requests.py
+- backend/src/api/routes/settings.py
+- backend/src/api/routes/shadow_analytics.py
+- backend/src/api/routes/shadow_mode.py
+- backend/src/api/routes/shipments.py
+- backend/src/api/routes/sla.py
+- backend/src/api/routes/stripe_webhooks.py
+- backend/src/api/routes/supplier_portal.py
+- backend/src/api/routes/suppliers.py
+- backend/src/api/routes/team.py
+- backend/src/api/routes/test_data_gen.py
+- backend/src/api/routes/translations.py
+- backend/src/api/routes/warehouse.py
+- backend/src/api/routes/webhooks.py
+- backend/src/api/routes/workflows.py
+- backend/src/api/routes/workshop/__init__.py
+- backend/src/api/routes/workshop/bookings.py
+- backend/src/api/routes/workshop/dashboard.py
+- backend/src/api/routes/workshop/equipment.py
+- backend/src/api/routes/workshop/reminders.py
+- backend/src/api/routes/workshop/templates.py
+- backend/src/api/schemas/invoicing.py
+- backend/src/api/schemas/prd.py
+- backend/src/auth/jwt.py
+- backend/src/auth/models.py
+- backend/src/auth/password_reset.py
+- backend/src/cache/decorators.py
+- backend/src/cache/redis_client.py
+- backend/src/config/__init__.py
+- backend/src/config/ap2_settings.py
+- backend/src/config/autonomy.py
+- backend/src/config/cin7_settings.py
+- backend/src/config/database.py
+- backend/src/config/elevenlabs_settings.py
+- backend/src/config/heygen_settings.py
+- backend/src/config/marketplace_settings.py
+- backend/src/config/secrets_manager.py
+- backend/src/config/sendgrid_settings.py
+- backend/src/config/settings.py
+- backend/src/config/shopify_settings.py
+- backend/src/config/xero_settings.py
+- backend/src/db/__init__.py
+- backend/src/db/ai_models.py
+- backend/src/db/ai_search_models.py
+- backend/src/db/ap2_models.py
+- backend/src/db/approvals_models.py
+- backend/src/db/audit_models.py
+- backend/src/db/certification_models.py
+- backend/src/db/cin7_bom_models.py
+- backend/src/db/cin7_fulfilment_models.py
+- backend/src/db/cin7_gl_models.py
+- backend/src/db/cin7_models.py
+- backend/src/db/cin7_shadow_models.py
+- backend/src/db/container_models.py
+- backend/src/db/crm_models.py
+- backend/src/db/crm_schemas.py
+- backend/src/db/customer_health_models.py
+- backend/src/db/demo_models.py
+- backend/src/db/email_audit_models.py
+- backend/src/db/email_models.py
+- backend/src/db/equipment_lifecycle_models.py
+- backend/src/db/generate_demo_purchases.py
+- backend/src/db/i18n_models.py
+- backend/src/db/i18n_schemas.py
+- backend/src/db/indexes.py
+- backend/src/db/integration_credential_models.py
+- backend/src/db/inventory_models.py
+- backend/src/db/inventory_schemas.py
+- backend/src/db/marketplace_models.py
+- backend/src/db/mobile_order_models.py
+- backend/src/db/models/__init__.py
+- backend/src/db/models/invoicing.py
+- backend/src/db/models/prd.py
+- backend/src/db/models_base.py
+- backend/src/db/portal_forms_models.py
+- backend/src/db/pos_models.py
+- backend/src/db/pricing_models.py
+- backend/src/db/schemas.py
+- backend/src/db/seed_demo.py
+- backend/src/db/service_models.py
+- backend/src/db/shadow_session_models.py
+- backend/src/db/shopify_extended_models.py
+- backend/src/db/shopify_models.py
+- backend/src/db/shopify_schemas.py
+- backend/src/db/submission_notes_models.py
+- backend/src/db/webhook_models.py
+- backend/src/db/workflow_models.py
+- backend/src/db/workshop_models.py
+- backend/src/db/xero_models.py
+- backend/src/db/xero_schemas.py
+- backend/src/emails/templates/order_confirmed.html
+- backend/src/emails/templates/order_delivered.html
+- backend/src/emails/templates/order_shipped.html
+- backend/src/emails/templates/quote_created.html
+- backend/src/emails/templates/quote_expiring.html
+- backend/src/events/__init__.py
+- backend/src/events/event_bus.py
+- backend/src/integrations/__init__.py
+- backend/src/integrations/ap2/__init__.py
+- backend/src/integrations/ap2/client.py
+- backend/src/integrations/ap2/security.py
+- backend/src/integrations/cin7/__init__.py
+- backend/src/integrations/cin7/change_detector.py
+- backend/src/integrations/cin7/client.py
+- backend/src/integrations/cin7/customer_sync.py
+- backend/src/integrations/cin7/demo_client.py
+- backend/src/integrations/cin7/event_dispatcher.py
+- backend/src/integrations/cin7/inventory_sync.py
+- backend/src/integrations/cin7/product_sync.py
+- backend/src/integrations/cin7/purchase_sync.py
+- backend/src/integrations/cin7/sales_sync.py
+- backend/src/integrations/cin7/supplier_sync.py
+- backend/src/integrations/elevenlabs/__init__.py
+- backend/src/integrations/elevenlabs/client.py
+- backend/src/integrations/elevenlabs/demo_client.py
+- backend/src/integrations/elevenlabs/live_client.py
+- backend/src/integrations/google/__init__.py
+- backend/src/integrations/google/client.py
+- backend/src/integrations/heygen/__init__.py
+- backend/src/integrations/heygen/client.py
+- backend/src/integrations/heygen/demo_client.py
+- backend/src/integrations/heygen/live_client.py
+- backend/src/integrations/http_utils.py
+- backend/src/integrations/marketplace/__init__.py
+- backend/src/integrations/marketplace/base.py
+- backend/src/integrations/marketplace/demo_channel.py
+- backend/src/integrations/marketplace/ebay_channel.py
+- backend/src/integrations/marketplace/facebook_channel.py
+- backend/src/integrations/marketplace/registry.py
+- backend/src/integrations/marketplace/shopify_channel.py
+- backend/src/integrations/marketplace/sync_engine.py
+- backend/src/integrations/payments/__init__.py
+- backend/src/integrations/payments/amex.py
+- backend/src/integrations/payments/eftpos.py
+- backend/src/integrations/payments/processor.py
+- backend/src/integrations/secrets_manager.py
+- backend/src/integrations/sendgrid/__init__.py
+- backend/src/integrations/sendgrid/client.py
+- backend/src/integrations/sendgrid/demo_client.py
+- backend/src/integrations/sendgrid/live_client.py
+- backend/src/integrations/sendgrid/processor.py
+- backend/src/integrations/sentry_client.py
+- backend/src/integrations/shopify/__init__.py
+- backend/src/integrations/shopify/client.py
+- backend/src/integrations/shopify/demo_client.py
+- backend/src/integrations/shopify/inventory.py
+- backend/src/integrations/shopify/inventory_sync.py
+- backend/src/integrations/shopify/metafields.py
+- backend/src/integrations/shopify/orders.py
+- backend/src/integrations/shopify/product_sync.py
+- backend/src/integrations/shopify/translations.py
+- backend/src/integrations/shopify/webhooks.py
+- backend/src/integrations/stripe/__init__.py
+- backend/src/integrations/stripe/client.py
+- backend/src/integrations/xero/__init__.py
+- backend/src/integrations/xero/auth.py
+- backend/src/integrations/xero/client.py
+- backend/src/integrations/xero/customers.py
+- backend/src/integrations/xero/demo_client.py
+- backend/src/integrations/xero/invoices.py
+- backend/src/integrations/xero/payments.py
+- backend/src/integrations/xero/pos_reconciliation.py
+- backend/src/integrations/xero/token_manager.py
+- backend/src/integrations/xero/webhook_security.py
+- backend/src/integrations/xero/webhooks.py
+- backend/src/monitoring/__init__.py
+- backend/src/monitoring/metrics.py
+- backend/src/rag/__init__.py
+- backend/src/rag/chunkers.py
+- backend/src/rag/models.py
+- backend/src/rag/parsers.py
+- backend/src/rag/pipeline.py
+- backend/src/rag/storage.py
+- backend/src/scheduler/bank_feed_scheduler.py
+- backend/src/security/__init__.py
+- backend/src/security/encryption.py
+- backend/src/security/webhook_verification.py
+- backend/src/services/__init__.py
+- backend/src/services/alert_manager.py
+- backend/src/services/audit_service.py
+- backend/src/services/auto_reorder.py
+- backend/src/services/autonomy_audit.py
+- backend/src/services/bank_feed_service.py
+- backend/src/services/business_metrics_service.py
+- backend/src/services/carrier_service.py
+- backend/src/services/circuit_breaker.py
+- backend/src/services/code_generation/README.md
+- backend/src/services/code_generation/__init__.py
+- backend/src/services/code_generation/context_builder.py
+- backend/src/services/code_generation/doc_generator.py
+- backend/src/services/code_generation/generator.py
+- backend/src/services/code_generation/prompts/doc_generation.txt
+- backend/src/services/code_generation/prompts/python_generation.txt
+- backend/src/services/code_generation/prompts/test_generation.txt
+- backend/src/services/code_generation/prompts/typescript_generation.txt
+- backend/src/services/code_generation/quality_checker.py
+- backend/src/services/code_generation/test_generator.py
+- backend/src/services/deployment_service.py
+- backend/src/services/document_extraction_service.py
+- backend/src/services/dunning.py
+- backend/src/services/email_audit_service.py
+- backend/src/services/email_notifications.py
+- backend/src/services/email_service.py
+- backend/src/services/embedding_service.py
+- backend/src/services/i18n_service.py
+- backend/src/services/notification_service.py
+- backend/src/services/order_state.py
+- backend/src/services/procurement_matching.py
+- backend/src/services/product_recognition_service.py
+- backend/src/services/recommendation_service.py
+- backend/src/services/reconciliation_alerts.py
+- backend/src/services/requirement_extractor.py
+- backend/src/services/requirement_tracer.py
+- backend/src/services/semantic_search_service.py
+- backend/src/services/sla_escalation.py
+- backend/src/services/sla_service.py
+- backend/src/services/sse_service.py
+- backend/src/services/system_alert_service.py
+- backend/src/services/tax_calculator.py
+- backend/src/services/webhook_service.py
+- backend/src/services/workflow_service.py
+- backend/src/services/workshop_scheduler.py
+- backend/src/state/__init__.py
+- backend/src/state/supabase.py
+- backend/src/telemetry/__init__.py
+- backend/src/telemetry/usage_tracker.py
+- backend/src/testing/__init__.py
+- backend/src/testing/shopify_mock.py
+- backend/src/testing/xero_mock.py
+- backend/src/utils/__init__.py
+- backend/src/utils/calculations.py
+- backend/src/utils/logging.py
+- backend/src/utils/supabase_client.py
+- backend/src/workflow/__init__.py
+- backend/src/workflow/engine.py
+- backend/src/workflow/models.py
+- backend/src/workflow/storage.py
+- backend/src/workflows/__init__.py
+- backend/src/workflows/pr_automation.py
+- backend/srcapimain.py
+- backend/srcapiroutesailearning.py.tmp
+- backend/start_for_testing.py
+- backend/start_load_test_server.py
+- backend/test_ai_inventory_intelligence.py
+- backend/test_api.py
+- backend/test_api_error.py
+- backend/test_customer_sync.py
+- backend/test_dashboard_data.py
+- backend/test_dashboard_data_with_failures.py
+- backend/test_db_connection.py
+- backend/test_dependency_injection.py
+- backend/test_endpoint.py
+- backend/test_expired_quote_validation.py
+- backend/test_failure_scenarios.py
+- backend/test_full_payment_flow.py
+- backend/test_google_ai_endpoints.py
+- backend/test_google_ai_integration.py
+- backend/test_insights_api.py
+- backend/test_multistore_inventory.py
+- backend/test_order_update_items_500.py
+- backend/test_outbound_shipment.json
+- backend/test_password.py
+- backend/test_payment_webhook.py
+- backend/test_po.json
+- backend/test_quote_404_issue.py
+- backend/test_quote_fixes.py
+- backend/test_quote_generate_endpoint.py
+- backend/test_quote_validation.py
+- backend/test_redis_connection.py
+- backend/test_search_performance.py
+- backend/test_shopify_connection.py
+- backend/test_shopify_integration.py
+- backend/test_supplier.json
+- backend/tests/FIXES_APPLIED.md
+- backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- backend/tests/TEST_STATUS_REPORT.md
+- backend/tests/TEST_STATUS_UPDATE.md
+- backend/tests/__init__.py
+- backend/tests/ai/test_reconciliation_agent.py
+- backend/tests/api/README_BUGFIX_TESTS.md
+- backend/tests/api/test_500_errors.py
+- backend/tests/api/test_approval_gates.py
+- backend/tests/api/test_approvals.py
+- backend/tests/api/test_approvals_integration.py
+- backend/tests/api/test_autonomous_ops.py
+- backend/tests/api/test_bank_feeds.py
+- backend/tests/api/test_bas_report.py
+- backend/tests/api/test_billing_gaps.py
+- backend/tests/api/test_build_command.py
+- backend/tests/api/test_certifications.py
+- backend/tests/api/test_command_parser.py
+- backend/tests/api/test_customer_orders.py
+- backend/tests/api/test_document_extraction.py
+- backend/tests/api/test_equipment_lifecycle.py
+- backend/tests/api/test_gap_sync.py
+- backend/tests/api/test_inventory.py
+- backend/tests/api/test_inventory_gaps.py
+- backend/tests/api/test_inventory_new_endpoints.py
+- backend/tests/api/test_inventory_uni172.py
+- backend/tests/api/test_invoice_payments.py
+- backend/tests/api/test_invoices_tax_integration.py
+- backend/tests/api/test_nl_query.py
+- backend/tests/api/test_orders_performance.py
+- backend/tests/api/test_portal.py
+- backend/tests/api/test_pos_terminals.py
+- backend/tests/api/test_pos_transactions.py
+- backend/tests/api/test_pricing_tiers.py
+- backend/tests/api/test_quote_404_errors.py
+- backend/tests/api/test_quote_422_errors.py
+- backend/tests/api/test_quote_http_methods.py
+- backend/tests/api/test_rbac.py
+- backend/tests/api/test_reconciliation_integration.py
+- backend/tests/api/test_requirement_verification.py
+- backend/tests/api/test_supplier_portal.py
+- backend/tests/api/test_tenant_isolation.py
+- backend/tests/api/test_translations.py
+- backend/tests/api/test_workflows_integration.py
+- backend/tests/api/test_workshop_routes.py
+- backend/tests/conftest.py
+- backend/tests/e2e/__init__.py
+- backend/tests/e2e/test_login_flow.py
+- backend/tests/e2e/test_order_flow.py
+- backend/tests/fixtures/__init__.py
+- backend/tests/fixtures/data.py
+- backend/tests/fixtures/pos_data.py
+- backend/tests/fixtures/shopify_fixtures.py
+- backend/tests/fixtures/xero_fixtures.py
+- backend/tests/integration/README.md
+- backend/tests/integration/__init__.py
+- backend/tests/integration/conftest.py
+- backend/tests/integration/run_all_cin7_tests.py
+- backend/tests/integration/run_phase3_tests.py
+- backend/tests/integration/run_phase4_tests.py
+- backend/tests/integration/run_phase5_tests.py
+- backend/tests/integration/run_phase6_tests.py
+- backend/tests/integration/run_phase7_tests.py
+- backend/tests/integration/run_protocol_tests.py
+- backend/tests/integration/test_ap2_integration.py
+- backend/tests/integration/test_api_endpoints.py
+- backend/tests/integration/test_autonomous_dev.py
+- backend/tests/integration/test_autonomous_pr_workflow.py
+- backend/tests/integration/test_cin7_crm_sync.py
+- backend/tests/integration/test_cin7_integration.py
+- backend/tests/integration/test_cin7_sync.py
+- backend/tests/integration/test_crm_module.py
+- backend/tests/integration/test_recommendations.py
+- backend/tests/integration/test_search.py
+- backend/tests/integration/test_shopify_extended.py
+- backend/tests/integration/test_webhooks.py
+- backend/tests/integration/test_xero_reconciliation.py
+- backend/tests/integrations/__init__.py
+- backend/tests/integrations/test_xero_token_manager.py
+- backend/tests/load/README.md
+- backend/tests/load/__init__.py
+- backend/tests/load/conftest.py
+- backend/tests/load/generators/customers.py
+- backend/tests/load/generators/misc.py
+- backend/tests/load/generators/orders.py
+- backend/tests/load/generators/products.py
+- backend/tests/load/generators/quotes.py
+- backend/tests/load/load_test_requirements.txt
+- backend/tests/load/load_test_scenarios.ps1
+- backend/tests/load/load_test_scenarios.sh
+- backend/tests/load/locustfile.py
+- backend/tests/load/locustfile_ai_features.py
+- backend/tests/load/reporters/html_reporter.py
+- backend/tests/load/reporters/json_reporter.py
+- backend/tests/load/reports/load_test_full_20260127_100548.html
+- backend/tests/load/reports/load_test_full_20260127_100548.json
+- backend/tests/load/reports/load_test_full_20260127_100703.html
+- backend/tests/load/reports/load_test_full_20260127_100703.json
+- backend/tests/load/reports/load_test_full_20260128_131600.html
+- backend/tests/load/reports/load_test_full_20260128_131600.json
+- backend/tests/load/reports/load_test_full_20260128_132757.html
+- backend/tests/load/reports/load_test_full_20260128_132757.json
+- backend/tests/load/reports/load_test_full_20260205_124803.html
+- backend/tests/load/reports/load_test_full_20260205_124803.json
+- backend/tests/load/reports/load_test_full_20260205_125037.html
+- backend/tests/load/reports/load_test_full_20260205_125037.json
+- backend/tests/load/reports/load_test_latest.html
+- backend/tests/load/reports/load_test_latest.json
+- backend/tests/load/reports/load_test_quick_20260128_122451.html
+- backend/tests/load/reports/load_test_quick_20260128_122451.json
+- backend/tests/load/reports/load_test_quick_20260205_095442.html
+- backend/tests/load/reports/load_test_quick_20260205_095442.json
+- backend/tests/load/reports/load_test_quick_20260205_193339.html
+- backend/tests/load/reports/load_test_quick_20260205_193339.json
+- backend/tests/load/reports/load_test_quick_20260205_195029.html
+- backend/tests/load/reports/load_test_quick_20260205_195029.json
+- backend/tests/load/reports/load_test_quick_20260205_212433.html
+- backend/tests/load/reports/load_test_quick_20260205_212433.json
+- backend/tests/load/reports/load_test_quick_20260205_214840.html
+- backend/tests/load/reports/load_test_quick_20260205_214840.json
+- backend/tests/load/reports/load_test_quick_20260206_000919.html
+- backend/tests/load/reports/load_test_quick_20260206_000919.json
+- backend/tests/load/reports/load_test_quick_latest.html
+- backend/tests/load/reports/load_test_quick_latest.json
+- backend/tests/load/reports/scenario_report.html
+- backend/tests/load/reports/scenario_report.json
+- backend/tests/load/run_full_load_test.py
+- backend/tests/load/run_quick_load_test.py
+- backend/tests/load/test_concurrent_number_generation.py
+- backend/tests/load/test_performance_load.py
+- backend/tests/load/test_scenarios.py
+- backend/tests/performance/__init__.py
+- backend/tests/run_integration_tests.ps1
+- backend/tests/run_integration_tests.sh
+- backend/tests/security/__init__.py
+- backend/tests/security/test_auth_security.py
+- backend/tests/security/test_encryption.py
+- backend/tests/security/test_injection_attacks.py
+- backend/tests/security/test_xss_csrf.py
+- backend/tests/services/__init__.py
+- backend/tests/services/code_generation/__init__.py
+- backend/tests/services/code_generation/test_context_builder.py
+- backend/tests/services/code_generation/test_doc_generator.py
+- backend/tests/services/code_generation/test_generator.py
+- backend/tests/services/code_generation/test_integration.py
+- backend/tests/services/code_generation/test_quality_checker.py
+- backend/tests/services/code_generation/test_test_generator.py
+- backend/tests/services/run_all_tests.py
+- backend/tests/services/test_auto_reorder.py
+- backend/tests/services/test_auto_reorder_integration.py
+- backend/tests/services/test_dunning.py
+- backend/tests/services/test_email_audit_service.py
+- backend/tests/services/test_order_state.py
+- backend/tests/services/test_procurement_matching.py
+- backend/tests/services/test_procurement_matching_integration.py
+- backend/tests/services/test_requirement_extractor.py
+- backend/tests/services/test_requirement_tracer.py
+- backend/tests/services/test_sla_escalation.py
+- backend/tests/services/test_tax_calculator.py
+- backend/tests/services/test_tax_calculator_integration.py
+- backend/tests/smoke/__init__.py
+- backend/tests/smoke/conftest.py
+- backend/tests/smoke/test_smoke.py
+- backend/tests/test_agent_orchestration.py
+- backend/tests/test_approvals_batch_2c.py
+- backend/tests/test_auth_security.py
+- backend/tests/test_autonomy_audit.py
+- backend/tests/test_autonomy_config.py
+- backend/tests/test_batch_2c_structure.py
+- backend/tests/test_billing.py
+- backend/tests/test_circuit_breaker.py
+- backend/tests/test_concurrent_number_generation.py
+- backend/tests/test_customers_api.py
+- backend/tests/test_error_handling.py
+- backend/tests/test_gap_batch_2b.py
+- backend/tests/test_gap_batch_2b_smoke.py
+- backend/tests/test_gap_batch_2c_2d.py
+- backend/tests/test_health.py
+- backend/tests/test_marketplace.py
+- backend/tests/test_orders_api.py
+- backend/tests/test_pr_automation.py
+- backend/tests/test_products_api.py
+- backend/tests/test_project_intelligence.py
+- backend/tests/test_prometheus_metrics.py
+- backend/tests/test_quotes_api.py
+- backend/tests/test_risk_assessor.py
+- backend/tests/test_rollback_mechanism.py
+- backend/tests/test_sequence_generation.py
+- backend/tests/test_shopify_mock.py
+- backend/tests/test_specialized_agents.py
+- backend/tests/test_toolshed_api.py
+- backend/tests/test_workflow_agent_integration.py
+- backend/tests/test_workflows_batch_2c.py
+- backend/tests/test_xero_mock.py
+- backend/tests/unit/test_number_generation.py
+- backend/tests/unit/test_reconciliation_logic.py
+- backend/tests/utils/__init__.py
+- backend/tests/utils/test_calculations.py
+- backend/tests/webhooks/__init__.py
+- backend/tests/webhooks/test_webhook_transactions.py
+- backend/update_supplier.json
+- backend/uv.lock
+- backend/vercel.json
+- backend/verify_i18n_migration.py
+- backend/verify_indexes.py
+- backend/verify_phase1.py
+- backend/verify_phase9_fixes.py
+- backend/verify_race_condition_fix.py
+- backend/verify_sequence_deployment.py
+- backend/verify_tables.py
+- docs/project-root/CLAUDE.md
+- eslint.config.mjs
+- lighthouserc.js
+- package.json
+- pnpm-lock.yaml
+- pnpm-workspace.yaml
+- scripts/boardroom/security-audit.js
+- scripts/dependency-checks.sh
+- scripts/deploy-phase4-backend.sh
+- scripts/deploy-phase4-frontend.sh
+- scripts/deploy.sh
+- scripts/dev-start.sh
+- scripts/dev.sh
+- scripts/health-check-phase4.sh
+- scripts/security-audit.ps1
+- scripts/setup.sh
+- scripts/test-phase4-sse.ps1
+- scripts/test-sse-events.ps1
+- scripts/test-sse-events.sh
+- scripts/verify-firewall.sh
+- scripts/verify-integration-tests.sh
+- scripts/verify-load-testing.sh
+- scripts/verify-penetration-testing.sh
+- scripts/verify-prometheus-grafana.sh
+- scripts/verify-query-performance.sh
+- scripts/verify-rate-limiting.sh
+- scripts/verify-secrets-management.sh
+- scripts/verify-secrets.sh
+- scripts/verify-security-audit.sh
+- scripts/verify-sentry.sh
+- scripts/verify-shopify-webhooks.sh
+- scripts/verify-uat.sh
+- scripts/verify-uptime-monitoring.sh
+- scripts/verify.sh
+- (staged) app/.dockerignore
+- (staged) app/.gitignore
+- (staged) app/AGENTS.md
+- (staged) app/Dockerfile
+- (staged) app/__tests__/app/approvals-page.test.tsx
+- (staged) app/__tests__/app/billing-page.test.tsx
+- (staged) app/__tests__/app/crm-health.test.tsx
+- (staged) app/__tests__/app/crm-onboarding.test.tsx
+- (staged) app/__tests__/app/crm-personas.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- (staged) app/__tests__/app/orders-integration.test.tsx
+- (staged) app/__tests__/app/quotes-integration.test.tsx
+- (staged) app/__tests__/app/reconciliation-page.test.tsx
+- (staged) app/__tests__/app/workflows-page.test.tsx
+- (staged) app/__tests__/components/EmptyState.test.tsx
+- (staged) app/__tests__/components/ErrorBoundary.test.tsx
+- (staged) app/__tests__/components/ui/pagination-controls.test.tsx
+- (staged) app/__tests__/e2e/billing.spec.ts
+- (staged) app/__tests__/e2e/onboarding.spec.ts
+- (staged) app/__tests__/lib/api/activities.test.ts
+- (staged) app/__tests__/lib/api/agents.test.ts
+- (staged) app/__tests__/lib/api/ai-chat.test.ts
+- (staged) app/__tests__/lib/api/ai-generate.test.ts
+- (staged) app/__tests__/lib/api/ai-insights.test.ts
+- (staged) app/__tests__/lib/api/ap2.test.ts
+- (staged) app/__tests__/lib/api/approvals-extended.test.ts
+- (staged) app/__tests__/lib/api/approvals.test.ts
+- (staged) app/__tests__/lib/api/auth.test.ts
+- (staged) app/__tests__/lib/api/autonomous.test.ts
+- (staged) app/__tests__/lib/api/autonomy.test.ts
+- (staged) app/__tests__/lib/api/bank-feeds.test.ts
+- (staged) app/__tests__/lib/api/billing.test.ts
+- (staged) app/__tests__/lib/api/chat.test.ts
+- (staged) app/__tests__/lib/api/cin7-bom.test.ts
+- (staged) app/__tests__/lib/api/cin7-fulfilment.test.ts
+- (staged) app/__tests__/lib/api/cin7-gl.test.ts
+- (staged) app/__tests__/lib/api/cin7-grn.test.ts
+- (staged) app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow.test.ts
+- (staged) app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- (staged) app/__tests__/lib/api/cin7.test.ts
+- (staged) app/__tests__/lib/api/contacts.test.ts
+- (staged) app/__tests__/lib/api/contractors.test.ts
+- (staged) app/__tests__/lib/api/copilot.test.ts
+- (staged) app/__tests__/lib/api/customers.test.ts
+- (staged) app/__tests__/lib/api/documents.test.ts
+- (staged) app/__tests__/lib/api/inventory.test.ts
+- (staged) app/__tests__/lib/api/invoices-extended.test.ts
+- (staged) app/__tests__/lib/api/invoices.test.ts
+- (staged) app/__tests__/lib/api/marketing.test.ts
+- (staged) app/__tests__/lib/api/marketplace.test.ts
+- (staged) app/__tests__/lib/api/mobile.test.ts
+- (staged) app/__tests__/lib/api/monitoring.test.ts
+- (staged) app/__tests__/lib/api/notifications.test.ts
+- (staged) app/__tests__/lib/api/orders.test.ts
+- (staged) app/__tests__/lib/api/pos.test.ts
+- (staged) app/__tests__/lib/api/products.test.ts
+- (staged) app/__tests__/lib/api/purchase-orders.test.ts
+- (staged) app/__tests__/lib/api/quotes.test.ts
+- (staged) app/__tests__/lib/api/reconciliation.test.ts
+- (staged) app/__tests__/lib/api/sendgrid.test.ts
+- (staged) app/__tests__/lib/api/service-requests.test.ts
+- (staged) app/__tests__/lib/api/settings.test.ts
+- (staged) app/__tests__/lib/api/shadow.test.ts
+- (staged) app/__tests__/lib/api/shipments-outbound.test.ts
+- (staged) app/__tests__/lib/api/shipments.test.ts
+- (staged) app/__tests__/lib/api/shopify.test.ts
+- (staged) app/__tests__/lib/api/sla.test.ts
+- (staged) app/__tests__/lib/api/suppliers.test.ts
+- (staged) app/__tests__/lib/api/tasks.test.ts
+- (staged) app/__tests__/lib/api/team.test.ts
+- (staged) app/__tests__/lib/api/warehouse.test.ts
+- (staged) app/__tests__/lib/api/workflows-extended.test.ts
+- (staged) app/__tests__/lib/api/workflows.test.ts
+- (staged) app/__tests__/lib/api/workshop.test.ts
+- (staged) app/__tests__/lib/api/xero.test.ts
+- (staged) app/__tests__/lib/marketplace.test.ts
+- (staged) app/__tests__/lib/types/cin7.test.ts
+- (staged) app/__tests__/lib/types/marketplace.test.ts
+- (staged) app/__tests__/lib/types/reconciliation.test.ts
+- (staged) app/__tests__/lib/types/workflows.test.ts
+- (staged) app/__tests__/lib/utils/csv-export.test.ts
+- (staged) app/components.json
+- (staged) app/declarations.d.ts
+- (staged) app/e2e/README.md
+- (staged) app/e2e/auth.setup.ts
+- (staged) app/e2e/auth.spec.ts
+- (staged) app/e2e/autosave.spec.ts
+- (staged) app/e2e/billing.spec.ts
+- (staged) app/e2e/capture-error.spec.ts
+- (staged) app/e2e/crm-health.spec.ts
+- (staged) app/e2e/customers.spec.ts
+- (staged) app/e2e/debug-orders.spec.ts
+- (staged) app/e2e/fixtures/auth.ts
+- (staged) app/e2e/helpers/page-objects.ts
+- (staged) app/e2e/helpers/test-data.ts
+- (staged) app/e2e/mobile-photo-order.spec.ts
+- (staged) app/e2e/monitoring.spec.ts
+- (staged) app/e2e/orders.spec.ts
+- (staged) app/e2e/pos-reconciliation.spec.ts
+- (staged) app/e2e/pos-transactions.spec.ts
+- (staged) app/e2e/prd-generation.spec.ts
+- (staged) app/e2e/products.spec.ts
+- (staged) app/e2e/quotes.spec.ts
+- (staged) app/e2e/showroom.spec.ts
+- (staged) app/e2e/test-helper.ts
+- (staged) app/e2e/test-websocket-fix.spec.ts
+- (staged) app/e2e/warehouse.spec.ts
+- (staged) app/e2e/workshop.spec.ts
+- (staged) app/eslint.config.mjs
+- (staged) app/next-env.d.ts
+- (staged) app/next.config.ts
+- (staged) app/package.json
+- (staged) app/playwright.a11y.config.ts
+- (staged) app/playwright.config.ts
+- (staged) app/postcss.config.js
+- (staged) app/public/favicon.svg
+- (staged) app/public/manifest.json
+- (staged) app/public/test-api.html
+- (staged) app/scripts/dev-with-fallback.mjs
+- (staged) app/sentry.client.config.ts
+- (staged) app/sentry.edge.config.ts
+- (staged) app/sentry.server.config.ts
+- (staged) app/src/app/(auth)/layout.tsx
+- (staged) app/src/app/(auth)/login/page.tsx
+- (staged) app/src/app/(auth)/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/activities/page.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentList.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentStats.tsx
+- (staged) app/src/app/(dashboard)/agents/components/LearningInsights.tsx
+- (staged) app/src/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- (staged) app/src/app/(dashboard)/agents/components/TaskHistory.tsx
+- (staged) app/src/app/(dashboard)/agents/components/index.ts
+- (staged) app/src/app/(dashboard)/agents/page.tsx
+- (staged) app/src/app/(dashboard)/ai-assistant/page.tsx
+- (staged) app/src/app/(dashboard)/ai-ops/page.tsx
+- (staged) app/src/app/(dashboard)/ai-query/page.tsx
+- (staged) app/src/app/(dashboard)/alerts/page.tsx
+- (staged) app/src/app/(dashboard)/approvals/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous-dev/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous/page.tsx
+- (staged) app/src/app/(dashboard)/backorders/page.tsx
+- (staged) app/src/app/(dashboard)/bank-feeds/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/ContactForm.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- (staged) app/src/app/(dashboard)/contacts/page.tsx
+- (staged) app/src/app/(dashboard)/containers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/containers/page.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/ContractorForm.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- (staged) app/src/app/(dashboard)/contractors/page.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- (staged) app/src/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/health/page.tsx
+- (staged) app/src/app/(dashboard)/customers/layout.tsx
+- (staged) app/src/app/(dashboard)/customers/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/customers/page.tsx
+- (staged) app/src/app/(dashboard)/customers/personas/page.tsx
+- (staged) app/src/app/(dashboard)/dashboard/layout.tsx
+- (staged) app/src/app/(dashboard)/dashboard/page.tsx
+- (staged) app/src/app/(dashboard)/demo-live/page.tsx
+- (staged) app/src/app/(dashboard)/demo/contractor-demo.tsx
+- (staged) app/src/app/(dashboard)/demo/page.tsx
+- (staged) app/src/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/page.tsx
+- (staged) app/src/app/(dashboard)/error.tsx
+- (staged) app/src/app/(dashboard)/faq/page.tsx
+- (staged) app/src/app/(dashboard)/insights/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/bom/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/forecast/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/reservations/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/stock/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/bas/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/types.ts
+- (staged) app/src/app/(dashboard)/layout.tsx
+- (staged) app/src/app/(dashboard)/loading.tsx
+- (staged) app/src/app/(dashboard)/marketing/page.tsx
+- (staged) app/src/app/(dashboard)/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/AlertCard.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- (staged) app/src/app/(dashboard)/monitoring/page.tsx
+- (staged) app/src/app/(dashboard)/orders/[id]/invoice/page.tsx
+- (staged) app/src/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderPrintView.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- (staged) app/src/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- (staged) app/src/app/(dashboard)/orders/fulfilment/page.tsx
+- (staged) app/src/app/(dashboard)/orders/layout.tsx
+- (staged) app/src/app/(dashboard)/orders/page.tsx
+- (staged) app/src/app/(dashboard)/orders/types.ts
+- (staged) app/src/app/(dashboard)/pos/components/Cart.tsx
+- (staged) app/src/app/(dashboard)/pos/components/POSTerminal.tsx
+- (staged) app/src/app/(dashboard)/pos/components/PaymentPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/components/ProductSearch.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/page.tsx
+- (staged) app/src/app/(dashboard)/pos/page.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/pos/staff/page.tsx
+- (staged) app/src/app/(dashboard)/pos/terminal/page.tsx
+- (staged) app/src/app/(dashboard)/pos/types.ts
+- (staged) app/src/app/(dashboard)/prd/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/prd/generate/page.tsx
+- (staged) app/src/app/(dashboard)/products/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/ProductForm.tsx
+- (staged) app/src/app/(dashboard)/products/layout.tsx
+- (staged) app/src/app/(dashboard)/products/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/receiving/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/types.ts
+- (staged) app/src/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- (staged) app/src/app/(dashboard)/quotes/generate/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/layout.tsx
+- (staged) app/src/app/(dashboard)/quotes/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/types.ts
+- (staged) app/src/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/layout.tsx
+- (staged) app/src/app/(dashboard)/reports/page.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- (staged) app/src/app/(dashboard)/service-requests/page.tsx
+- (staged) app/src/app/(dashboard)/settings/account/page.tsx
+- (staged) app/src/app/(dashboard)/settings/billing/page.tsx
+- (staged) app/src/app/(dashboard)/settings/company/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/ap2/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/gl/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/mobile/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- (staged) app/src/app/(dashboard)/settings/setup/page.tsx
+- (staged) app/src/app/(dashboard)/settings/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- (staged) app/src/app/(dashboard)/settings/team/page.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/ProductList.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/page.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/page.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/submissions/page.tsx
+- (staged) app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- (staged) app/src/app/(dashboard)/suppliers/page.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/QueueStats.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskList.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- (staged) app/src/app/(dashboard)/tasks/page.tsx
+- (staged) app/src/app/(dashboard)/warehouse/page.tsx
+- (staged) app/src/app/(dashboard)/workflows/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/reminders/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/schedule/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/templates/page.tsx
+- (staged) app/src/app/(guest)/layout.tsx
+- (staged) app/src/app/(guest)/order/[token]/GuestOrderClient.tsx
+- (staged) app/src/app/(guest)/order/[token]/page.tsx
+- (staged) app/src/app/(mobile)/layout.tsx
+- (staged) app/src/app/(mobile)/order/new/page.tsx
+- (staged) app/src/app/(portal)/layout.tsx
+- (staged) app/src/app/(portal)/portal/certifications/page.tsx
+- (staged) app/src/app/(portal)/portal/invoices/page.tsx
+- (staged) app/src/app/(portal)/portal/orders/page.tsx
+- (staged) app/src/app/(portal)/portal/page.tsx
+- (staged) app/src/app/(portal)/portal/service/page.tsx
+- (staged) app/src/app/(supplier)/layout.tsx
+- (staged) app/src/app/(supplier)/supplier/orders/page.tsx
+- (staged) app/src/app/(supplier)/supplier/page.tsx
+- (staged) app/src/app/api/activities/route.ts
+- (staged) app/src/app/api/activities/stats/route.ts
+- (staged) app/src/app/api/agents/insights/route.ts
+- (staged) app/src/app/api/agents/list/route.ts
+- (staged) app/src/app/api/agents/patterns/route.ts
+- (staged) app/src/app/api/agents/stats/route.ts
+- (staged) app/src/app/api/agents/tasks/recent/route.ts
+- (staged) app/src/app/api/ai/cin7-anomaly/sync-health/route.ts
+- (staged) app/src/app/api/ai/insights/dashboard/route.ts
+- (staged) app/src/app/api/ai/insights/sales/route.ts
+- (staged) app/src/app/api/ai/inventory-forecast/route.ts
+- (staged) app/src/app/api/ai/patterns/orders/route.ts
+- (staged) app/src/app/api/analytics/metrics/overview/route.ts
+- (staged) app/src/app/api/auth/login/route.ts
+- (staged) app/src/app/api/auth/logout/route.ts
+- (staged) app/src/app/api/backorders/route.ts
+- (staged) app/src/app/api/bank-feeds/accounts/route.ts
+- (staged) app/src/app/api/boardroom/cron/route.ts
+- (staged) app/src/app/api/ccw/products/route.ts
+- (staged) app/src/app/api/ccw/summary/route.ts
+- (staged) app/src/app/api/contact-submissions/route.ts
+- (staged) app/src/app/api/contacts/route.ts
+- (staged) app/src/app/api/containers/route.ts
+- (staged) app/src/app/api/cron/auto-reorder-inventory/route.ts
+- (staged) app/src/app/api/cron/check-expiring-quotes/route.ts
+- (staged) app/src/app/api/cron/check-sla-breaches/route.ts
+- (staged) app/src/app/api/cron/cleanup-old-runs/route.ts
+- (staged) app/src/app/api/cron/daily-report/route.ts
+- (staged) app/src/app/api/cron/health-check/route.ts
+- (staged) app/src/app/api/cron/nightly-full-sync/route.ts
+- (staged) app/src/app/api/cron/process-onboarding-emails/route.ts
+- (staged) app/src/app/api/cron/refresh-health-scores/route.ts
+- (staged) app/src/app/api/cron/refresh-xero-tokens/route.ts
+- (staged) app/src/app/api/cron/retry-failed-webhooks/route.ts
+- (staged) app/src/app/api/cron/run-autonomous-ops/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-cin7/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-xero/route.ts
+- (staged) app/src/app/api/customers/route.ts
+- (staged) app/src/app/api/dashboard/aggregated/route.ts
+- (staged) app/src/app/api/dashboard/metrics-stream/route.ts
+- (staged) app/src/app/api/dashboard/order-status-breakdown/route.ts
+- (staged) app/src/app/api/dashboard/quote-conversion/route.ts
+- (staged) app/src/app/api/dashboard/revenue-by-location/route.ts
+- (staged) app/src/app/api/demo-requests/route.ts
+- (staged) app/src/app/api/health/route.ts
+- (staged) app/src/app/api/health/routes/route.ts
+- (staged) app/src/app/api/integrations/cin7/status/route.ts
+- (staged) app/src/app/api/integrations/cin7/stream/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/conversations/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/status/route.ts
+- (staged) app/src/app/api/integrations/shopify/status/route.ts
+- (staged) app/src/app/api/integrations/xero/status/route.ts
+- (staged) app/src/app/api/inventory-stream/route.ts
+- (staged) app/src/app/api/inventory/reservations/route.ts
+- (staged) app/src/app/api/inventory/route.ts
+- (staged) app/src/app/api/inventory/stock-health/route.ts
+- (staged) app/src/app/api/inventory/transfer-suggestions/route.ts
+- (staged) app/src/app/api/inventory/transfers/route.ts
+- (staged) app/src/app/api/invoices/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- (staged) app/src/app/api/monitoring/alerts/route.ts
+- (staged) app/src/app/api/monitoring/health/route.ts
+- (staged) app/src/app/api/monitoring/metrics/route.ts
+- (staged) app/src/app/api/monitoring/range/route.ts
+- (staged) app/src/app/api/orders/route.ts
+- (staged) app/src/app/api/pos/locations/route.ts
+- (staged) app/src/app/api/pos/sales-staff/route.ts
+- (staged) app/src/app/api/pos/terminals/route.ts
+- (staged) app/src/app/api/products/route.ts
+- (staged) app/src/app/api/purchase-orders/route.ts
+- (staged) app/src/app/api/quotes/route.ts
+- (staged) app/src/app/api/submissions/statistics/route.ts
+- (staged) app/src/app/api/telemetry/route.ts
+- (staged) app/src/app/api/warehouse/ops/route.ts
+- (staged) app/src/app/api/webhooks/route.ts
+- (staged) app/src/app/api/workflows/[id]/execute/route.ts
+- (staged) app/src/app/api/workflows/[id]/route.ts
+- (staged) app/src/app/api/workflows/route.ts
+- (staged) app/src/app/dashboard-analytics/page.tsx
+- (staged) app/src/app/demo/i18n/page.tsx
+- (staged) app/src/app/design-system/page.tsx
+- (staged) app/src/app/error.tsx
+- (staged) app/src/app/favicon.ico/route.ts
+- (staged) app/src/app/globals.css
+- (staged) app/src/app/layout.tsx
+- (staged) app/src/app/not-found.tsx
+- (staged) app/src/app/page.tsx
+- (staged) app/src/app/playground/page.tsx
+- (staged) app/src/app/robots.ts
+- (staged) app/src/app/sitemap.ts
+- (staged) app/src/components/ClientOnly.tsx
+- (staged) app/src/components/ai-marketing/asset-library.tsx
+- (staged) app/src/components/ai-marketing/media-generator.tsx
+- (staged) app/src/components/ai/AIProductCopyGenerator.tsx
+- (staged) app/src/components/ai/AIQuoteGenerator.tsx
+- (staged) app/src/components/ai/QuoteCopilotChat.tsx
+- (staged) app/src/components/ai/StaffCopilotWidget.tsx
+- (staged) app/src/components/alerts/AnomalyAlert.tsx
+- (staged) app/src/components/auth/login-form.tsx
+- (staged) app/src/components/autonomous/ApprovalGateDialog.tsx
+- (staged) app/src/components/autonomous/ControlPanel.tsx
+- (staged) app/src/components/autonomous/FileChangesViewer.tsx
+- (staged) app/src/components/autonomous/PhaseTimeline.tsx
+- (staged) app/src/components/charts/CategorySalesChart.tsx
+- (staged) app/src/components/charts/RevenueChart.tsx
+- (staged) app/src/components/chat/ChatWidget.tsx
+- (staged) app/src/components/contractor-availability-live.tsx
+- (staged) app/src/components/contractor-availability.tsx
+- (staged) app/src/components/dashboard/AgentMetricsWidget.tsx
+- (staged) app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- (staged) app/src/components/dashboard/DemoVideoBanner.tsx
+- (staged) app/src/components/dashboard/DemoVideoLink.tsx
+- (staged) app/src/components/dashboard/InventoryForecastWidget.tsx
+- (staged) app/src/components/dashboard/OrderPatternsWidget.tsx
+- (staged) app/src/components/dashboard/OrderStatusBreakdownWidget.tsx
+- (staged) app/src/components/dashboard/QuoteConversionWidget.tsx
+- (staged) app/src/components/dashboard/RevenueByLocationWidget.tsx
+- (staged) app/src/components/dashboard/SalesInsightsWidget.tsx
+- (staged) app/src/components/dashboard/StockHealthWidget.tsx
+- (staged) app/src/components/dashboard/TransferSuggestionsWidget.tsx
+- (staged) app/src/components/errors/ErrorBoundary.tsx
+- (staged) app/src/components/forms/AutoFillSuggestion.tsx
+- (staged) app/src/components/insights/insight-card.tsx
+- (staged) app/src/components/inventory/LocationAwareProductSelect.tsx
+- (staged) app/src/components/inventory/MultiLocationStockCell.tsx
+- (staged) app/src/components/inventory/ReleaseReservationDialog.tsx
+- (staged) app/src/components/inventory/StockReservationDialog.tsx
+- (staged) app/src/components/inventory/TransferStatusBadge.tsx
+- (staged) app/src/components/landing/AnimatedCounter.tsx
+- (staged) app/src/components/landing/LiveStatsBar.tsx
+- (staged) app/src/components/layout/LanguageSwitcher.tsx
+- (staged) app/src/components/layout/NotificationBell.tsx
+- (staged) app/src/components/layout/ShadowModeBanner.tsx
+- (staged) app/src/components/layout/footer.tsx
+- (staged) app/src/components/layout/mobile-nav.tsx
+- (staged) app/src/components/layout/sidebar.tsx
+- (staged) app/src/components/marketing/feature-grid.tsx
+- (staged) app/src/components/marketing/hero-section.tsx
+- (staged) app/src/components/marketing/index.ts
+- (staged) app/src/components/marketing/testimonials.tsx
+- (staged) app/src/components/mobile/PhotoCaptureWidget.tsx
+- (staged) app/src/components/onboarding/CompanySetupStep.tsx
+- (staged) app/src/components/onboarding/FirstQuoteStep.tsx
+- (staged) app/src/components/onboarding/OnboardingWizard.tsx
+- (staged) app/src/components/onboarding/SampleDataStep.tsx
+- (staged) app/src/components/onboarding/ShopifyConnectStep.tsx
+- (staged) app/src/components/onboarding/TeamInviteStep.tsx
+- (staged) app/src/components/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-detail-view.tsx
+- (staged) app/src/components/prd/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-generator-form.tsx
+- (staged) app/src/components/providers/i18n-provider.tsx
+- (staged) app/src/components/responsive-table/ResponsiveTable.tsx
+- (staged) app/src/components/responsive-table/index.ts
+- (staged) app/src/components/seo/FaqSchema.tsx
+- (staged) app/src/components/seo/JsonLd.tsx
+- (staged) app/src/components/transitions/FadeIn.tsx
+- (staged) app/src/components/transitions/PageTransition.tsx
+- (staged) app/src/components/transitions/RouteProgressBar.tsx
+- (staged) app/src/components/transitions/index.ts
+- (staged) app/src/components/ui/alert-dialog.tsx
+- (staged) app/src/components/ui/alert.tsx
+- (staged) app/src/components/ui/avatar.tsx
+- (staged) app/src/components/ui/badge.tsx
+- (staged) app/src/components/ui/bento-grid.tsx
+- (staged) app/src/components/ui/border-beam.tsx
+- (staged) app/src/components/ui/breadcrumb.tsx
+- (staged) app/src/components/ui/button.tsx
+- (staged) app/src/components/ui/card.tsx
+- (staged) app/src/components/ui/checkbox.tsx
+- (staged) app/src/components/ui/command-palette.tsx
+- (staged) app/src/components/ui/command.tsx
+- (staged) app/src/components/ui/dialog.tsx
+- (staged) app/src/components/ui/draft-recovery-alert.tsx
+- (staged) app/src/components/ui/dropdown-menu.tsx
+- (staged) app/src/components/ui/empty-state.tsx
+- (staged) app/src/components/ui/form.tsx
+- (staged) app/src/components/ui/input.tsx
+- (staged) app/src/components/ui/label.tsx
+- (staged) app/src/components/ui/loading.tsx
+- (staged) app/src/components/ui/motion.tsx
+- (staged) app/src/components/ui/order-status-badge.tsx
+- (staged) app/src/components/ui/pagination-controls.tsx
+- (staged) app/src/components/ui/popover.tsx
+- (staged) app/src/components/ui/progress.tsx
+- (staged) app/src/components/ui/real-time-indicator.tsx
+- (staged) app/src/components/ui/scroll-area.tsx
+- (staged) app/src/components/ui/select.tsx
+- (staged) app/src/components/ui/separator.tsx
+- (staged) app/src/components/ui/sheet.tsx
+- (staged) app/src/components/ui/skeleton.tsx
+- (staged) app/src/components/ui/switch.tsx
+- (staged) app/src/components/ui/table.tsx
+- (staged) app/src/components/ui/tabs.tsx
+- (staged) app/src/components/ui/textarea.tsx
+- (staged) app/src/components/ui/toast.tsx
+- (staged) app/src/components/ui/tooltip.tsx
+- (staged) app/src/components/workflow/canvas/workflow-canvas.tsx
+- (staged) app/src/components/workflow/nodes/agent-node.tsx
+- (staged) app/src/components/workflow/nodes/conditional-node.tsx
+- (staged) app/src/components/workflow/nodes/end-node.tsx
+- (staged) app/src/components/workflow/nodes/llm-node.tsx
+- (staged) app/src/components/workflow/nodes/start-node.tsx
+- (staged) app/src/components/workflow/nodes/tool-node.tsx
+- (staged) app/src/contexts/websocket-context.tsx
+- (staged) app/src/hooks/use-barcode-scanner.ts
+- (staged) app/src/hooks/use-chat.ts
+- (staged) app/src/hooks/use-line-item-calculations.ts
+- (staged) app/src/hooks/use-prd-generation.ts
+- (staged) app/src/hooks/use-toast.ts
+- (staged) app/src/i18n/config.ts
+- (staged) app/src/i18n/messages/ar.json
+- (staged) app/src/i18n/messages/en.json
+- (staged) app/src/i18n/messages/es.json
+- (staged) app/src/i18n/messages/hi.json
+- (staged) app/src/i18n/messages/pt.json
+- (staged) app/src/i18n/messages/ta.json
+- (staged) app/src/i18n/messages/te.json
+- (staged) app/src/i18n/messages/vi.json
+- (staged) app/src/i18n/messages/zh-CN.json
+- (staged) app/src/i18n/messages/zh-TW.json
+- (staged) app/src/i18n/request.ts
+- (staged) app/src/instrumentation.ts
+- (staged) app/src/lib/agents/independent-verifier.ts
+- (staged) app/src/lib/api/activities.ts
+- (staged) app/src/lib/api/agents.ts
+- (staged) app/src/lib/api/ai-chat.ts
+- (staged) app/src/lib/api/ai-generate.ts
+- (staged) app/src/lib/api/ai-insights.ts
+- (staged) app/src/lib/api/ap2.ts
+- (staged) app/src/lib/api/approvals.ts
+- (staged) app/src/lib/api/auth.ts
+- (staged) app/src/lib/api/autonomous.ts
+- (staged) app/src/lib/api/autonomy.ts
+- (staged) app/src/lib/api/backend-url.ts
+- (staged) app/src/lib/api/backend.ts
+- (staged) app/src/lib/api/bank-feeds.ts
+- (staged) app/src/lib/api/billing.ts
+- (staged) app/src/lib/api/chat.ts
+- (staged) app/src/lib/api/cin7-bom.ts
+- (staged) app/src/lib/api/cin7-fulfilment.ts
+- (staged) app/src/lib/api/cin7-gl.ts
+- (staged) app/src/lib/api/cin7-grn.ts
+- (staged) app/src/lib/api/cin7-inventory-writeback.ts
+- (staged) app/src/lib/api/cin7-shadow-ai.ts
+- (staged) app/src/lib/api/cin7-shadow.ts
+- (staged) app/src/lib/api/cin7-webhook-subscriptions.ts
+- (staged) app/src/lib/api/cin7.ts
+- (staged) app/src/lib/api/client.ts
+- (staged) app/src/lib/api/contacts.ts
+- (staged) app/src/lib/api/contractors.ts
+- (staged) app/src/lib/api/copilot.ts
+- (staged) app/src/lib/api/customers.ts
+- (staged) app/src/lib/api/documents.ts
+- (staged) app/src/lib/api/heygen.ts
+- (staged) app/src/lib/api/index.ts
+- (staged) app/src/lib/api/inventory.ts
+- (staged) app/src/lib/api/invoices.ts
+- (staged) app/src/lib/api/marketing.ts
+- (staged) app/src/lib/api/marketplace.ts
+- (staged) app/src/lib/api/middleware.ts
+- (staged) app/src/lib/api/mobile.ts
+- (staged) app/src/lib/api/monitoring.ts
+- (staged) app/src/lib/api/notifications.ts
+- (staged) app/src/lib/api/orders.ts
+- (staged) app/src/lib/api/pos.ts
+- (staged) app/src/lib/api/products.ts
+- (staged) app/src/lib/api/purchase-orders.ts
+- (staged) app/src/lib/api/quotes.ts
+- (staged) app/src/lib/api/sendgrid.ts
+- (staged) app/src/lib/api/server.ts
+- (staged) app/src/lib/api/service-requests.ts
+- (staged) app/src/lib/api/settings.ts
+- (staged) app/src/lib/api/shadow.ts
+- (staged) app/src/lib/api/shipments-outbound.ts
+- (staged) app/src/lib/api/shipments.ts
+- (staged) app/src/lib/api/shopify.ts
+- (staged) app/src/lib/api/sla.ts
+- (staged) app/src/lib/api/suppliers.ts
+- (staged) app/src/lib/api/tasks.ts
+- (staged) app/src/lib/api/team.ts
+- (staged) app/src/lib/api/warehouse.ts
+- (staged) app/src/lib/api/workflows.ts
+- (staged) app/src/lib/api/workshop.ts
+- (staged) app/src/lib/api/xero.ts
+- (staged) app/src/lib/audit/api-route-auditor.ts
+- (staged) app/src/lib/audit/user-journey-runner.ts
+- (staged) app/src/lib/audit/ux-friction-detector.ts
+- (staged) app/src/lib/australian-context.ts
+- (staged) app/src/lib/config.ts
+- (staged) app/src/lib/design-system/config.ts
+- (staged) app/src/lib/design-system/index.ts
+- (staged) app/src/lib/design-system/library-registry.ts
+- (staged) app/src/lib/design-system/pattern-validator.ts
+- (staged) app/src/lib/hooks/use-autonomy-metrics.ts
+- (staged) app/src/lib/hooks/use-autosave.ts
+- (staged) app/src/lib/hooks/use-cin7-stream.ts
+- (staged) app/src/lib/hooks/use-form-autofill.ts
+- (staged) app/src/lib/hooks/use-inventory-forecast.ts
+- (staged) app/src/lib/hooks/use-recent-items.ts
+- (staged) app/src/lib/hooks/use-search-state.ts
+- (staged) app/src/lib/hooks/use-sse.ts
+- (staged) app/src/lib/hooks/use-websocket.ts
+- (staged) app/src/lib/image-generation/asset-manager.ts
+- (staged) app/src/lib/image-generation/types.ts
+- (staged) app/src/lib/logger.ts
+- (staged) app/src/lib/supabase/client.ts
+- (staged) app/src/lib/supabase/server.ts
+- (staged) app/src/lib/telemetry.ts
+- (staged) app/src/lib/tools/index.ts
+- (staged) app/src/lib/types/activities.ts
+- (staged) app/src/lib/types/cin7.ts
+- (staged) app/src/lib/types/contacts.ts
+- (staged) app/src/lib/types/inventory.ts
+- (staged) app/src/lib/types/invoices.ts
+- (staged) app/src/lib/types/marketplace.ts
+- (staged) app/src/lib/types/reconciliation.ts
+- (staged) app/src/lib/types/workflows.ts
+- (staged) app/src/lib/utils.test.ts
+- (staged) app/src/lib/utils.ts
+- (staged) app/src/lib/utils/calculations.test.ts
+- (staged) app/src/lib/utils/calculations.ts
+- (staged) app/src/lib/utils/csv-export.ts
+- (staged) app/src/lib/utils/debounce.ts
+- (staged) app/src/lib/utils/draft-storage.ts
+- (staged) app/src/lib/utils/storage.ts
+- (staged) app/src/middleware.ts
+- (staged) app/src/styles/design-system.css
+- (staged) app/src/types/contractor.ts
+- (staged) app/src/types/index.ts
+- (staged) app/src/types/prd.ts
+- (staged) app/src/types/workflow.ts
+- (staged) app/tailwind.config.ts
+- (staged) app/tests/accessibility/a11y.spec.ts
+- (staged) app/tests/e2e/approvals.spec.ts
+- (staged) app/tests/e2e/error-handling.spec.ts
+- (staged) app/tests/e2e/invoices.spec.ts
+- (staged) app/tests/e2e/reconciliation.spec.ts
+- (staged) app/tests/e2e/workflows.spec.ts
+- (staged) app/tests/visual/components.visual.spec.ts
+- (staged) app/tsconfig.json
+- (staged) app/vercel.json
+- (staged) app/vitest.config.ts
+- (staged) app/vitest.d.ts
+- (staged) app/vitest.setup.ts
+- (staged) apps/web/lib/australian-context.ts
+- (staged) backend/.claude/memory/context-snapshot.md
+- (staged) backend/.gitignore
+- (staged) backend/.python-version
+- (staged) backend/.vercelignore
+- (staged) backend/=0.39.0
+- (staged) backend/=6.11.0
+- (staged) backend/AGENTS.md
+- (staged) "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- (staged) backend/Dockerfile
+- (staged) backend/ISSUE-4-COMPLETION.md
+- (staged) backend/ISSUE-5-COMPLETION.md
+- (staged) backend/Procfile
+- (staged) backend/alembic.ini
+- (staged) backend/alembic/README
+- (staged) backend/alembic/env.py
+- (staged) backend/alembic/script.py.mako
+- (staged) backend/alembic/versions/001_add_approvals.py
+- (staged) backend/alembic/versions/002_add_semantic_search.py
+- (staged) backend/alembic/versions/003_add_missing_trigram_indexes.py
+- (staged) backend/alembic/versions/004_add_product_sync_bidirectional.py
+- (staged) backend/alembic/versions/005_add_shopify_extended_tables.py
+- (staged) backend/alembic/versions/006_add_mobile_order_tables.py
+- (staged) backend/alembic/versions/007_add_workflow_notification_indexes.py
+- (staged) backend/alembic/versions/008_merge_heads.py
+- (staged) backend/alembic/versions/009_add_pos_tables.py
+- (staged) backend/alembic/versions/00a_rename_invoice_date.py
+- (staged) backend/alembic/versions/00b_add_missing_inventory_tables.py
+- (staged) backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- (staged) backend/alembic/versions/00d_add_certification_tables.py
+- (staged) backend/alembic/versions/00e_add_prd_tables.py
+- (staged) backend/alembic/versions/00f_add_pricing_tier_tables.py
+- (staged) backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- (staged) backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- (staged) backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- (staged) backend/alembic/versions/68d51946645a_create_erp_schema.py
+- (staged) backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- (staged) backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- (staged) backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- (staged) backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- (staged) backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- (staged) backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- (staged) backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- (staged) backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- (staged) backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- (staged) backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- (staged) backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- (staged) backend/analyze_404_errors.py
+- (staged) backend/analyze_422_errors.py
+- (staged) backend/analyze_500_errors.py
+- (staged) backend/apply_i18n_migration.py
+- (staged) backend/apply_i18n_migration_v2.py
+- (staged) backend/apply_indexes.py
+- (staged) backend/apply_indexes_via_backend.py
+- (staged) backend/apply_pos_migration.py
+- (staged) backend/apply_search_indexes.py
+- (staged) backend/apply_sequences_migration.py
+- (staged) backend/benchmarks/after_indexes.txt
+- (staged) backend/benchmarks/before_indexes.txt
+- (staged) backend/benchmarks/comparison.md
+- (staged) backend/check_404_in_full_report.py
+- (staged) backend/check_backend_config.py
+- (staged) backend/check_categories.py
+- (staged) backend/check_db.py
+- (staged) backend/check_enum_def.py
+- (staged) backend/check_orders.py
+- (staged) backend/check_results.py
+- (staged) backend/check_runtime_config.py
+- (staged) backend/check_schema.py
+- (staged) backend/check_tables.py
+- (staged) backend/check_test_status.py
+- (staged) backend/cleanup_db.py
+- (staged) backend/conftest.py
+- (staged) backend/count_data.py
+- (staged) backend/create_admin.py
+- (staged) backend/create_demo_orders.py
+- (staged) backend/create_demo_orders_simple.py
+- (staged) backend/create_inventory_tables.py
+- (staged) backend/create_service_tables.py
+- (staged) backend/debug_response.py
+- (staged) backend/diagnose_db_connection.py
+- (staged) backend/docs/ISS-005-VERIFICATION.md
+- (staged) backend/docs/ISS-006-VERIFICATION.md
+- (staged) backend/docs/ISS-007-VERIFICATION.md
+- (staged) backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- (staged) backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- (staged) backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- (staged) backend/examples/use_agentic_layer.py
+- (staged) backend/fix_categories.py
+- (staged) backend/fix_categories_uppercase.py
+- (staged) backend/generate_endpoint.py
+- (staged) backend/generate_failures.py
+- (staged) backend/generate_password_hash.py
+- (staged) backend/inject_failure_patterns.py
+- (staged) backend/inject_insights_directly.py
+- (staged) backend/inject_test_data.py
+- (staged) backend/inject_test_failures.py
+- (staged) backend/list_google_models.py
+- (staged) backend/load_test_output.txt
+- (staged) backend/migrations/001_add_search_indexes.sql
+- (staged) backend/migrations/001_rollback.sql
+- (staged) backend/migrations/README.md
+- (staged) backend/migrations/add_ai_search.sql
+- (staged) backend/migrations/add_ap2_integration.sql
+- (staged) backend/migrations/add_auto_sync_enhancements.sql
+- (staged) backend/migrations/add_email_audit_tables.sql
+- (staged) backend/migrations/add_foreign_key_indexes.sql
+- (staged) backend/migrations/add_i18n_support.sql
+- (staged) backend/migrations/add_missing_fk_indexes.sql
+- (staged) backend/migrations/add_performance_indexes.sql
+- (staged) backend/migrations/add_phase4_inventory_indexes.sql
+- (staged) backend/migrations/add_portal_forms_tables.sql
+- (staged) backend/migrations/add_pos_system.sql
+- (staged) backend/migrations/add_search_indexes.sql
+- (staged) backend/migrations/add_sequences_for_numbers.sql
+- (staged) backend/migrations/add_shopify_extended.sql
+- (staged) backend/migrations/add_submission_notes_table.sql
+- (staged) backend/migrations/add_trigram_indexes.sql
+- (staged) backend/migrations/add_webhook_events_table.sql
+- (staged) backend/migrations/seed_ccw_products.sql
+- (staged) backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- (staged) backend/migrations/week3_enum_standardization.sql
+- (staged) backend/migrations/week3_timezone_standardization.sql
+- (staged) backend/pyproject.toml
+- (staged) backend/pytest.ini
+- (staged) backend/railway.json
+- (staged) backend/requirements.txt
+- (staged) backend/reset_admin_password.py
+- (staged) backend/run-setup-memory.ps1
+- (staged) backend/run-tests.ps1
+- (staged) backend/run_bugfix_tests.ps1
+- (staged) backend/run_bugfix_tests.sh
+- (staged) backend/run_migrations.py
+- (staged) backend/scripts/analyze_query_performance.py
+- (staged) backend/scripts/apply_foreign_key_indexes.py
+- (staged) backend/scripts/apply_phase4_indexes.py
+- (staged) backend/scripts/apply_trigram_indexes.py
+- (staged) backend/scripts/benchmark_search.py
+- (staged) backend/scripts/create_container_tables.sql
+- (staged) backend/scripts/create_sample_orders.py
+- (staged) backend/scripts/create_sample_quotes.py
+- (staged) backend/scripts/explain_queries.sh
+- (staged) backend/scripts/identify_500_sources.py
+- (staged) backend/scripts/implement_query_optimizations.md
+- (staged) backend/scripts/import_ccwonline_products.py
+- (staged) backend/scripts/insert_container_sample_data.sql
+- (staged) backend/scripts/integration_test_iss001.py
+- (staged) backend/scripts/monitor_indexes.py
+- (staged) backend/scripts/run_sql.py
+- (staged) backend/scripts/seed_ccw_cleaning.py
+- (staged) backend/scripts/seed_ccw_products.py
+- (staged) backend/scripts/setup-memory.py
+- (staged) backend/scripts/test_iss005_fixes.py
+- (staged) backend/scripts/validate_autosave_implementation.py
+- (staged) backend/scripts/validate_iss001_fix.py
+- (staged) backend/scripts/validate_iss003_actual.py
+- (staged) backend/scripts/validate_iss003_fix.py
+- (staged) backend/scripts/validate_iss005_fix.py
+- (staged) backend/scripts/verify_iss005_code.py
+- (staged) backend/scripts/verify_query_optimizations.py
+- (staged) backend/seed_data.py
+- (staged) backend/seed_demo_simple.sql
+- (staged) backend/seed_orders.py
+- (staged) backend/show_customers.py
+- (staged) backend/show_orders.py
+- (staged) backend/show_products.py
+- (staged) backend/show_quotes.py
+- (staged) backend/src/__init__.py
+- (staged) backend/src/agents/prd/__init__.py
+- (staged) backend/src/agents/prd/analysis_agent.py
+- (staged) backend/src/agents/prd/feature_decomposer.py
+- (staged) backend/src/agents/prd/prd_orchestrator.py
+- (staged) backend/src/agents/prd/roadmap_planner.py
+- (staged) backend/src/agents/prd/tech_spec_generator.py
+- (staged) backend/src/agents/prd/test_generator.py
+- (staged) backend/src/ai/__init__.py
+- (staged) backend/src/ai/agents/chat_assistant.py
+- (staged) backend/src/ai/agents/chat_state.py
+- (staged) backend/src/ai/agents/content_generator.py
+- (staged) backend/src/ai/agents/content_state.py
+- (staged) backend/src/ai/agents/insights_agent.py
+- (staged) backend/src/ai/agents/insights_state.py
+- (staged) backend/src/ai/agents/risk_assessor.py
+- (staged) backend/src/ai/agents/rollback_agent.py
+- (staged) backend/src/ai/agents/specialized/__init__.py
+- (staged) backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- (staged) backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- (staged) backend/src/ai/agents/specialized/development_agent.py
+- (staged) backend/src/ai/agents/specialized/document_parser_agent.py
+- (staged) backend/src/ai/agents/specialized/form_autofill_agent.py
+- (staged) backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/marketing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_state.py
+- (staged) backend/src/ai/agents/specialized/procurement_agent.py
+- (staged) backend/src/ai/agents/specialized/procurement_state.py
+- (staged) backend/src/ai/agents/specialized/project_intelligence_agent.py
+- (staged) backend/src/ai/agents/specialized/query_agent.py
+- (staged) backend/src/ai/agents/specialized/recommendation_agent.py
+- (staged) backend/src/ai/agents/specialized/reconciliation_agent.py
+- (staged) backend/src/ai/agents/specialized/search_agent.py
+- (staged) backend/src/ai/agents/specialized/staff_copilot_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_state.py
+- (staged) backend/src/ai/agents/specialized/testing_agent.py
+- (staged) backend/src/ai/base_agent.py
+- (staged) backend/src/ai/generators/__init__.py
+- (staged) backend/src/ai/generators/email_generator.py
+- (staged) backend/src/ai/generators/quote_generator.py
+- (staged) backend/src/ai/learning/__init__.py
+- (staged) backend/src/ai/learning/learning_engine.py
+- (staged) backend/src/ai/learning/learning_repository.py
+- (staged) backend/src/ai/monitoring/__init__.py
+- (staged) backend/src/ai/monitoring/health_monitor.py
+- (staged) backend/src/ai/monitoring/metrics_collector.py
+- (staged) backend/src/ai/ollama_client.py
+- (staged) backend/src/ai/orchestration/__init__.py
+- (staged) backend/src/ai/orchestration/agent_registry.py
+- (staged) backend/src/ai/orchestration/autonomous_loop.py
+- (staged) backend/src/ai/orchestration/project_orchestrator.py
+- (staged) backend/src/ai/orchestration/supervisor_agent.py
+- (staged) backend/src/ai/orchestration/supervisor_state.py
+- (staged) backend/src/ai/prompts/__init__.py
+- (staged) backend/src/ai/prompts/system_prompts.py
+- (staged) backend/src/ai/protocol/__init__.py
+- (staged) backend/src/ai/protocol/confidence.py
+- (staged) backend/src/ai/protocol/error_handler.py
+- (staged) backend/src/ai/protocol/governor.py
+- (staged) backend/src/ai/protocol/message_bus.py
+- (staged) backend/src/ai/protocol/models.py
+- (staged) backend/src/ai/tools/__init__.py
+- (staged) backend/src/ai/tools/analytics_tools.py
+- (staged) backend/src/ai/tools/base.py
+- (staged) backend/src/ai/tools/erp_tools.py
+- (staged) backend/src/ai/tools/execution_tools.py
+- (staged) backend/src/ai/tools/inventory_intelligence.py
+- (staged) backend/src/ai/tools/pricing_tools.py
+- (staged) backend/src/ai/tools/procurement_tools.py
+- (staged) backend/src/api/__init__.py
+- (staged) backend/src/api/debug_main.py
+- (staged) backend/src/api/deps.py
+- (staged) backend/src/api/exceptions.py
+- (staged) backend/src/api/main.py
+- (staged) backend/src/api/middleware/__init__.py
+- (staged) backend/src/api/middleware/auth.py
+- (staged) backend/src/api/middleware/performance.py
+- (staged) backend/src/api/middleware/rate_limit.py
+- (staged) backend/src/api/middleware/rbac.py
+- (staged) backend/src/api/middleware/request_id.py
+- (staged) backend/src/api/middleware/security_headers.py
+- (staged) backend/src/api/middleware/tenant_isolation.py
+- (staged) backend/src/api/routers/prd.py
+- (staged) backend/src/api/routes/__init__.py
+- (staged) backend/src/api/routes/activities.py
+- (staged) backend/src/api/routes/agents_monitor.py
+- (staged) backend/src/api/routes/ai/__init__.py
+- (staged) backend/src/api/routes/ai/anomaly.py
+- (staged) backend/src/api/routes/ai/approval_gates.py
+- (staged) backend/src/api/routes/ai/assets.py
+- (staged) backend/src/api/routes/ai/autonomous_ops.py
+- (staged) backend/src/api/routes/ai/build_command.py
+- (staged) backend/src/api/routes/ai/chat.py
+- (staged) backend/src/api/routes/ai/cin7_anomaly.py
+- (staged) backend/src/api/routes/ai/cin7_forecast.py
+- (staged) backend/src/api/routes/ai/cin7_shadow_ai.py
+- (staged) backend/src/api/routes/ai/command_parser.py
+- (staged) backend/src/api/routes/ai/document_parser.py
+- (staged) backend/src/api/routes/ai/form_autofill.py
+- (staged) backend/src/api/routes/ai/gap_sync.py
+- (staged) backend/src/api/routes/ai/generate.py
+- (staged) backend/src/api/routes/ai/insights.py
+- (staged) backend/src/api/routes/ai/inventory_forecast.py
+- (staged) backend/src/api/routes/ai/learning.py
+- (staged) backend/src/api/routes/ai/marketing_ai.py
+- (staged) backend/src/api/routes/ai/monitoring.py
+- (staged) backend/src/api/routes/ai/project_intelligence.py
+- (staged) backend/src/api/routes/ai/protocol.py
+- (staged) backend/src/api/routes/ai/query.py
+- (staged) backend/src/api/routes/ai/requirement_verification.py
+- (staged) backend/src/api/routes/ai/specialized.py
+- (staged) backend/src/api/routes/ai/staff_copilot.py
+- (staged) backend/src/api/routes/ai/supervisor.py
+- (staged) backend/src/api/routes/ai/test_data.py
+- (staged) backend/src/api/routes/ai/test_failures.py
+- (staged) backend/src/api/routes/ai/toolshed.py
+- (staged) backend/src/api/routes/ai/toolshed_vault.py
+- (staged) backend/src/api/routes/analytics.py
+- (staged) backend/src/api/routes/approvals.py
+- (staged) backend/src/api/routes/audit_trail.py
+- (staged) backend/src/api/routes/autonomous_dev.py
+- (staged) backend/src/api/routes/autonomy_metrics.py
+- (staged) backend/src/api/routes/backorders.py
+- (staged) backend/src/api/routes/bank_feeds.py
+- (staged) backend/src/api/routes/billing.py
+- (staged) backend/src/api/routes/boardroom.py
+- (staged) backend/src/api/routes/certifications.py
+- (staged) backend/src/api/routes/chat.py
+- (staged) backend/src/api/routes/config.py
+- (staged) backend/src/api/routes/contacts.py
+- (staged) backend/src/api/routes/containers.py
+- (staged) backend/src/api/routes/contractors.py
+- (staged) backend/src/api/routes/crm_health.py
+- (staged) backend/src/api/routes/crm_onboarding.py
+- (staged) backend/src/api/routes/crm_personas.py
+- (staged) backend/src/api/routes/cron_jobs.py
+- (staged) backend/src/api/routes/customer_orders.py
+- (staged) backend/src/api/routes/customers.py
+- (staged) backend/src/api/routes/dashboard_stream.py
+- (staged) backend/src/api/routes/demo_auth.py
+- (staged) backend/src/api/routes/demo_dashboard.py
+- (staged) backend/src/api/routes/demo_lists.py
+- (staged) backend/src/api/routes/documents.py
+- (staged) backend/src/api/routes/email_audit.py
+- (staged) backend/src/api/routes/equipment_lifecycle.py
+- (staged) backend/src/api/routes/google_ai.py
+- (staged) backend/src/api/routes/health.py
+- (staged) backend/src/api/routes/integrations/__init__.py
+- (staged) backend/src/api/routes/integrations/ap2.py
+- (staged) backend/src/api/routes/integrations/cin7.py
+- (staged) backend/src/api/routes/integrations/cin7_bom.py
+- (staged) backend/src/api/routes/integrations/cin7_crm.py
+- (staged) backend/src/api/routes/integrations/cin7_fulfilment.py
+- (staged) backend/src/api/routes/integrations/cin7_gl.py
+- (staged) backend/src/api/routes/integrations/cin7_grn.py
+- (staged) backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- (staged) backend/src/api/routes/integrations/cin7_line_items.py
+- (staged) backend/src/api/routes/integrations/cin7_procurement.py
+- (staged) backend/src/api/routes/integrations/cin7_shadow_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_stream.py
+- (staged) backend/src/api/routes/integrations/cin7_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- (staged) backend/src/api/routes/integrations/cin7_webhooks.py
+- (staged) backend/src/api/routes/integrations/elevenlabs.py
+- (staged) backend/src/api/routes/integrations/heygen.py
+- (staged) backend/src/api/routes/integrations/marketplace.py
+- (staged) backend/src/api/routes/integrations/sendgrid.py
+- (staged) backend/src/api/routes/integrations/shopify.py
+- (staged) backend/src/api/routes/integrations/shopify_theme.py
+- (staged) backend/src/api/routes/integrations/xero.py
+- (staged) backend/src/api/routes/inventory.py
+- (staged) backend/src/api/routes/inventory_stream.py
+- (staged) backend/src/api/routes/invoice_payments.py
+- (staged) backend/src/api/routes/invoices.py
+- (staged) backend/src/api/routes/jobs.py
+- (staged) backend/src/api/routes/mobile/__init__.py
+- (staged) backend/src/api/routes/mobile/guest_orders.py
+- (staged) backend/src/api/routes/monitoring/__init__.py
+- (staged) backend/src/api/routes/monitoring/alerts.py
+- (staged) backend/src/api/routes/monitoring/business_metrics.py
+- (staged) backend/src/api/routes/monitoring/infrastructure.py
+- (staged) backend/src/api/routes/monitoring/performance.py
+- (staged) backend/src/api/routes/notifications.py
+- (staged) backend/src/api/routes/orders.py
+- (staged) backend/src/api/routes/portal/__init__.py
+- (staged) backend/src/api/routes/portal/customer_portal.py
+- (staged) backend/src/api/routes/pos_transactions.py
+- (staged) backend/src/api/routes/pos_xero_reconciliation.py
+- (staged) backend/src/api/routes/prd.py
+- (staged) backend/src/api/routes/pricing.py
+- (staged) backend/src/api/routes/procurement.py
+- (staged) backend/src/api/routes/products.py
+- (staged) backend/src/api/routes/prometheus_metrics.py
+- (staged) backend/src/api/routes/public_stats.py
+- (staged) backend/src/api/routes/purchase_orders.py
+- (staged) backend/src/api/routes/quotes.py
+- (staged) backend/src/api/routes/recommendations.py
+- (staged) backend/src/api/routes/reconciliation.py
+- (staged) backend/src/api/routes/reconciliation_dashboard.py
+- (staged) backend/src/api/routes/search.py
+- (staged) backend/src/api/routes/service_requests.py
+- (staged) backend/src/api/routes/settings.py
+- (staged) backend/src/api/routes/shadow_analytics.py
+- (staged) backend/src/api/routes/shadow_mode.py
+- (staged) backend/src/api/routes/shipments.py
+- (staged) backend/src/api/routes/sla.py
+- (staged) backend/src/api/routes/stripe_webhooks.py
+- (staged) backend/src/api/routes/supplier_portal.py
+- (staged) backend/src/api/routes/suppliers.py
+- (staged) backend/src/api/routes/team.py
+- (staged) backend/src/api/routes/test_data_gen.py
+- (staged) backend/src/api/routes/translations.py
+- (staged) backend/src/api/routes/warehouse.py
+- (staged) backend/src/api/routes/webhooks.py
+- (staged) backend/src/api/routes/workflows.py
+- (staged) backend/src/api/routes/workshop/__init__.py
+- (staged) backend/src/api/routes/workshop/bookings.py
+- (staged) backend/src/api/routes/workshop/dashboard.py
+- (staged) backend/src/api/routes/workshop/equipment.py
+- (staged) backend/src/api/routes/workshop/reminders.py
+- (staged) backend/src/api/routes/workshop/templates.py
+- (staged) backend/src/api/schemas/invoicing.py
+- (staged) backend/src/api/schemas/prd.py
+- (staged) backend/src/auth/jwt.py
+- (staged) backend/src/auth/models.py
+- (staged) backend/src/auth/password_reset.py
+- (staged) backend/src/cache/decorators.py
+- (staged) backend/src/cache/redis_client.py
+- (staged) backend/src/config/__init__.py
+- (staged) backend/src/config/ap2_settings.py
+- (staged) backend/src/config/autonomy.py
+- (staged) backend/src/config/cin7_settings.py
+- (staged) backend/src/config/database.py
+- (staged) backend/src/config/elevenlabs_settings.py
+- (staged) backend/src/config/heygen_settings.py
+- (staged) backend/src/config/marketplace_settings.py
+- (staged) backend/src/config/secrets_manager.py
+- (staged) backend/src/config/sendgrid_settings.py
+- (staged) backend/src/config/settings.py
+- (staged) backend/src/config/shopify_settings.py
+- (staged) backend/src/config/xero_settings.py
+- (staged) backend/src/db/__init__.py
+- (staged) backend/src/db/ai_models.py
+- (staged) backend/src/db/ai_search_models.py
+- (staged) backend/src/db/ap2_models.py
+- (staged) backend/src/db/approvals_models.py
+- (staged) backend/src/db/audit_models.py
+- (staged) backend/src/db/certification_models.py
+- (staged) backend/src/db/cin7_bom_models.py
+- (staged) backend/src/db/cin7_fulfilment_models.py
+- (staged) backend/src/db/cin7_gl_models.py
+- (staged) backend/src/db/cin7_models.py
+- (staged) backend/src/db/cin7_shadow_models.py
+- (staged) backend/src/db/container_models.py
+- (staged) backend/src/db/crm_models.py
+- (staged) backend/src/db/crm_schemas.py
+- (staged) backend/src/db/customer_health_models.py
+- (staged) backend/src/db/demo_models.py
+- (staged) backend/src/db/email_audit_models.py
+- (staged) backend/src/db/email_models.py
+- (staged) backend/src/db/equipment_lifecycle_models.py
+- (staged) backend/src/db/generate_demo_purchases.py
+- (staged) backend/src/db/i18n_models.py
+- (staged) backend/src/db/i18n_schemas.py
+- (staged) backend/src/db/indexes.py
+- (staged) backend/src/db/integration_credential_models.py
+- (staged) backend/src/db/inventory_models.py
+- (staged) backend/src/db/inventory_schemas.py
+- (staged) backend/src/db/marketplace_models.py
+- (staged) backend/src/db/mobile_order_models.py
+- (staged) backend/src/db/models/__init__.py
+- (staged) backend/src/db/models/invoicing.py
+- (staged) backend/src/db/models/prd.py
+- (staged) backend/src/db/models_base.py
+- (staged) backend/src/db/portal_forms_models.py
+- (staged) backend/src/db/pos_models.py
+- (staged) backend/src/db/pricing_models.py
+- (staged) backend/src/db/schemas.py
+- (staged) backend/src/db/seed_demo.py
+- (staged) backend/src/db/service_models.py
+- (staged) backend/src/db/shadow_session_models.py
+- (staged) backend/src/db/shopify_extended_models.py
+- (staged) backend/src/db/shopify_models.py
+- (staged) backend/src/db/shopify_schemas.py
+- (staged) backend/src/db/submission_notes_models.py
+- (staged) backend/src/db/webhook_models.py
+- (staged) backend/src/db/workflow_models.py
+- (staged) backend/src/db/workshop_models.py
+- (staged) backend/src/db/xero_models.py
+- (staged) backend/src/db/xero_schemas.py
+- (staged) backend/src/emails/templates/order_confirmed.html
+- (staged) backend/src/emails/templates/order_delivered.html
+- (staged) backend/src/emails/templates/order_shipped.html
+- (staged) backend/src/emails/templates/quote_created.html
+- (staged) backend/src/emails/templates/quote_expiring.html
+- (staged) backend/src/events/__init__.py
+- (staged) backend/src/events/event_bus.py
+- (staged) backend/src/integrations/__init__.py
+- (staged) backend/src/integrations/ap2/__init__.py
+- (staged) backend/src/integrations/ap2/client.py
+- (staged) backend/src/integrations/ap2/security.py
+- (staged) backend/src/integrations/cin7/__init__.py
+- (staged) backend/src/integrations/cin7/change_detector.py
+- (staged) backend/src/integrations/cin7/client.py
+- (staged) backend/src/integrations/cin7/customer_sync.py
+- (staged) backend/src/integrations/cin7/demo_client.py
+- (staged) backend/src/integrations/cin7/event_dispatcher.py
+- (staged) backend/src/integrations/cin7/inventory_sync.py
+- (staged) backend/src/integrations/cin7/product_sync.py
+- (staged) backend/src/integrations/cin7/purchase_sync.py
+- (staged) backend/src/integrations/cin7/sales_sync.py
+- (staged) backend/src/integrations/cin7/supplier_sync.py
+- (staged) backend/src/integrations/elevenlabs/__init__.py
+- (staged) backend/src/integrations/elevenlabs/client.py
+- (staged) backend/src/integrations/elevenlabs/demo_client.py
+- (staged) backend/src/integrations/elevenlabs/live_client.py
+- (staged) backend/src/integrations/google/__init__.py
+- (staged) backend/src/integrations/google/client.py
+- (staged) backend/src/integrations/heygen/__init__.py
+- (staged) backend/src/integrations/heygen/client.py
+- (staged) backend/src/integrations/heygen/demo_client.py
+- (staged) backend/src/integrations/heygen/live_client.py
+- (staged) backend/src/integrations/http_utils.py
+- (staged) backend/src/integrations/marketplace/__init__.py
+- (staged) backend/src/integrations/marketplace/base.py
+- (staged) backend/src/integrations/marketplace/demo_channel.py
+- (staged) backend/src/integrations/marketplace/ebay_channel.py
+- (staged) backend/src/integrations/marketplace/facebook_channel.py
+- (staged) backend/src/integrations/marketplace/registry.py
+- (staged) backend/src/integrations/marketplace/shopify_channel.py
+- (staged) backend/src/integrations/marketplace/sync_engine.py
+- (staged) backend/src/integrations/payments/__init__.py
+- (staged) backend/src/integrations/payments/amex.py
+- (staged) backend/src/integrations/payments/eftpos.py
+- (staged) backend/src/integrations/payments/processor.py
+- (staged) backend/src/integrations/secrets_manager.py
+- (staged) backend/src/integrations/sendgrid/__init__.py
+- (staged) backend/src/integrations/sendgrid/client.py
+- (staged) backend/src/integrations/sendgrid/demo_client.py
+- (staged) backend/src/integrations/sendgrid/live_client.py
+- (staged) backend/src/integrations/sendgrid/processor.py
+- (staged) backend/src/integrations/sentry_client.py
+- (staged) backend/src/integrations/shopify/__init__.py
+- (staged) backend/src/integrations/shopify/client.py
+- (staged) backend/src/integrations/shopify/demo_client.py
+- (staged) backend/src/integrations/shopify/inventory.py
+- (staged) backend/src/integrations/shopify/inventory_sync.py
+- (staged) backend/src/integrations/shopify/metafields.py
+- (staged) backend/src/integrations/shopify/orders.py
+- (staged) backend/src/integrations/shopify/product_sync.py
+- (staged) backend/src/integrations/shopify/translations.py
+- (staged) backend/src/integrations/shopify/webhooks.py
+- (staged) backend/src/integrations/stripe/__init__.py
+- (staged) backend/src/integrations/stripe/client.py
+- (staged) backend/src/integrations/xero/__init__.py
+- (staged) backend/src/integrations/xero/auth.py
+- (staged) backend/src/integrations/xero/client.py
+- (staged) backend/src/integrations/xero/customers.py
+- (staged) backend/src/integrations/xero/demo_client.py
+- (staged) backend/src/integrations/xero/invoices.py
+- (staged) backend/src/integrations/xero/payments.py
+- (staged) backend/src/integrations/xero/pos_reconciliation.py
+- (staged) backend/src/integrations/xero/token_manager.py
+- (staged) backend/src/integrations/xero/webhook_security.py
+- (staged) backend/src/integrations/xero/webhooks.py
+- (staged) backend/src/monitoring/__init__.py
+- (staged) backend/src/monitoring/metrics.py
+- (staged) backend/src/rag/__init__.py
+- (staged) backend/src/rag/chunkers.py
+- (staged) backend/src/rag/models.py
+- (staged) backend/src/rag/parsers.py
+- (staged) backend/src/rag/pipeline.py
+- (staged) backend/src/rag/storage.py
+- (staged) backend/src/scheduler/bank_feed_scheduler.py
+- (staged) backend/src/security/__init__.py
+- (staged) backend/src/security/encryption.py
+- (staged) backend/src/security/webhook_verification.py
+- (staged) backend/src/services/__init__.py
+- (staged) backend/src/services/alert_manager.py
+- (staged) backend/src/services/audit_service.py
+- (staged) backend/src/services/auto_reorder.py
+- (staged) backend/src/services/autonomy_audit.py
+- (staged) backend/src/services/bank_feed_service.py
+- (staged) backend/src/services/business_metrics_service.py
+- (staged) backend/src/services/carrier_service.py
+- (staged) backend/src/services/circuit_breaker.py
+- (staged) backend/src/services/code_generation/README.md
+- (staged) backend/src/services/code_generation/__init__.py
+- (staged) backend/src/services/code_generation/context_builder.py
+- (staged) backend/src/services/code_generation/doc_generator.py
+- (staged) backend/src/services/code_generation/generator.py
+- (staged) backend/src/services/code_generation/prompts/doc_generation.txt
+- (staged) backend/src/services/code_generation/prompts/python_generation.txt
+- (staged) backend/src/services/code_generation/prompts/test_generation.txt
+- (staged) backend/src/services/code_generation/prompts/typescript_generation.txt
+- (staged) backend/src/services/code_generation/quality_checker.py
+- (staged) backend/src/services/code_generation/test_generator.py
+- (staged) backend/src/services/deployment_service.py
+- (staged) backend/src/services/document_extraction_service.py
+- (staged) backend/src/services/dunning.py
+- (staged) backend/src/services/email_audit_service.py
+- (staged) backend/src/services/email_notifications.py
+- (staged) backend/src/services/email_service.py
+- (staged) backend/src/services/embedding_service.py
+- (staged) backend/src/services/i18n_service.py
+- (staged) backend/src/services/notification_service.py
+- (staged) backend/src/services/order_state.py
+- (staged) backend/src/services/procurement_matching.py
+- (staged) backend/src/services/product_recognition_service.py
+- (staged) backend/src/services/recommendation_service.py
+- (staged) backend/src/services/reconciliation_alerts.py
+- (staged) backend/src/services/requirement_extractor.py
+- (staged) backend/src/services/requirement_tracer.py
+- (staged) backend/src/services/semantic_search_service.py
+- (staged) backend/src/services/sla_escalation.py
+- (staged) backend/src/services/sla_service.py
+- (staged) backend/src/services/sse_service.py
+- (staged) backend/src/services/system_alert_service.py
+- (staged) backend/src/services/tax_calculator.py
+- (staged) backend/src/services/webhook_service.py
+- (staged) backend/src/services/workflow_service.py
+- (staged) backend/src/services/workshop_scheduler.py
+- (staged) backend/src/state/__init__.py
+- (staged) backend/src/state/supabase.py
+- (staged) backend/src/telemetry/__init__.py
+- (staged) backend/src/telemetry/usage_tracker.py
+- (staged) backend/src/testing/__init__.py
+- (staged) backend/src/testing/shopify_mock.py
+- (staged) backend/src/testing/xero_mock.py
+- (staged) backend/src/utils/__init__.py
+- (staged) backend/src/utils/calculations.py
+- (staged) backend/src/utils/logging.py
+- (staged) backend/src/utils/supabase_client.py
+- (staged) backend/src/workflow/__init__.py
+- (staged) backend/src/workflow/engine.py
+- (staged) backend/src/workflow/models.py
+- (staged) backend/src/workflow/storage.py
+- (staged) backend/src/workflows/__init__.py
+- (staged) backend/src/workflows/pr_automation.py
+- (staged) backend/srcapimain.py
+- (staged) backend/srcapiroutesailearning.py.tmp
+- (staged) backend/start_for_testing.py
+- (staged) backend/start_load_test_server.py
+- (staged) backend/test_ai_inventory_intelligence.py
+- (staged) backend/test_api.py
+- (staged) backend/test_api_error.py
+- (staged) backend/test_customer_sync.py
+- (staged) backend/test_dashboard_data.py
+- (staged) backend/test_dashboard_data_with_failures.py
+- (staged) backend/test_db_connection.py
+- (staged) backend/test_dependency_injection.py
+- (staged) backend/test_endpoint.py
+- (staged) backend/test_expired_quote_validation.py
+- (staged) backend/test_failure_scenarios.py
+- (staged) backend/test_full_payment_flow.py
+- (staged) backend/test_google_ai_endpoints.py
+- (staged) backend/test_google_ai_integration.py
+- (staged) backend/test_insights_api.py
+- (staged) backend/test_multistore_inventory.py
+- (staged) backend/test_order_update_items_500.py
+- (staged) backend/test_outbound_shipment.json
+- (staged) backend/test_password.py
+- (staged) backend/test_payment_webhook.py
+- (staged) backend/test_po.json
+- (staged) backend/test_quote_404_issue.py
+- (staged) backend/test_quote_fixes.py
+- (staged) backend/test_quote_generate_endpoint.py
+- (staged) backend/test_quote_validation.py
+- (staged) backend/test_redis_connection.py
+- (staged) backend/test_search_performance.py
+- (staged) backend/test_shopify_connection.py
+- (staged) backend/test_shopify_integration.py
+- (staged) backend/test_supplier.json
+- (staged) backend/tests/FIXES_APPLIED.md
+- (staged) backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- (staged) backend/tests/TEST_STATUS_REPORT.md
+- (staged) backend/tests/TEST_STATUS_UPDATE.md
+- (staged) backend/tests/__init__.py
+- (staged) backend/tests/ai/test_reconciliation_agent.py
+- (staged) backend/tests/api/README_BUGFIX_TESTS.md
+- (staged) backend/tests/api/test_500_errors.py
+- (staged) backend/tests/api/test_approval_gates.py
+- (staged) backend/tests/api/test_approvals.py
+- (staged) backend/tests/api/test_approvals_integration.py
+- (staged) backend/tests/api/test_autonomous_ops.py
+- (staged) backend/tests/api/test_bank_feeds.py
+- (staged) backend/tests/api/test_bas_report.py
+- (staged) backend/tests/api/test_billing_gaps.py
+- (staged) backend/tests/api/test_build_command.py
+- (staged) backend/tests/api/test_certifications.py
+- (staged) backend/tests/api/test_command_parser.py
+- (staged) backend/tests/api/test_customer_orders.py
+- (staged) backend/tests/api/test_document_extraction.py
+- (staged) backend/tests/api/test_equipment_lifecycle.py
+- (staged) backend/tests/api/test_gap_sync.py
+- (staged) backend/tests/api/test_inventory.py
+- (staged) backend/tests/api/test_inventory_gaps.py
+- (staged) backend/tests/api/test_inventory_new_endpoints.py
+- (staged) backend/tests/api/test_inventory_uni172.py
+- (staged) backend/tests/api/test_invoice_payments.py
+- (staged) backend/tests/api/test_invoices_tax_integration.py
+- (staged) backend/tests/api/test_nl_query.py
+- (staged) backend/tests/api/test_orders_performance.py
+- (staged) backend/tests/api/test_portal.py
+- (staged) backend/tests/api/test_pos_terminals.py
+- (staged) backend/tests/api/test_pos_transactions.py
+- (staged) backend/tests/api/test_pricing_tiers.py
+- (staged) backend/tests/api/test_quote_404_errors.py
+- (staged) backend/tests/api/test_quote_422_errors.py
+- (staged) backend/tests/api/test_quote_http_methods.py
+- (staged) backend/tests/api/test_rbac.py
+- (staged) backend/tests/api/test_reconciliation_integration.py
+- (staged) backend/tests/api/test_requirement_verification.py
+- (staged) backend/tests/api/test_supplier_portal.py
+- (staged) backend/tests/api/test_tenant_isolation.py
+- (staged) backend/tests/api/test_translations.py
+- (staged) backend/tests/api/test_workflows_integration.py
+- (staged) backend/tests/api/test_workshop_routes.py
+- (staged) backend/tests/conftest.py
+- (staged) backend/tests/e2e/__init__.py
+- (staged) backend/tests/e2e/test_login_flow.py
+- (staged) backend/tests/e2e/test_order_flow.py
+- (staged) backend/tests/fixtures/__init__.py
+- (staged) backend/tests/fixtures/data.py
+- (staged) backend/tests/fixtures/pos_data.py
+- (staged) backend/tests/fixtures/shopify_fixtures.py
+- (staged) backend/tests/fixtures/xero_fixtures.py
+- (staged) backend/tests/integration/README.md
+- (staged) backend/tests/integration/__init__.py
+- (staged) backend/tests/integration/conftest.py
+- (staged) backend/tests/integration/run_all_cin7_tests.py
+- (staged) backend/tests/integration/run_phase3_tests.py
+- (staged) backend/tests/integration/run_phase4_tests.py
+- (staged) backend/tests/integration/run_phase5_tests.py
+- (staged) backend/tests/integration/run_phase6_tests.py
+- (staged) backend/tests/integration/run_phase7_tests.py
+- (staged) backend/tests/integration/run_protocol_tests.py
+- (staged) backend/tests/integration/test_ap2_integration.py
+- (staged) backend/tests/integration/test_api_endpoints.py
+- (staged) backend/tests/integration/test_autonomous_dev.py
+- (staged) backend/tests/integration/test_autonomous_pr_workflow.py
+- (staged) backend/tests/integration/test_cin7_crm_sync.py
+- (staged) backend/tests/integration/test_cin7_integration.py
+- (staged) backend/tests/integration/test_cin7_sync.py
+- (staged) backend/tests/integration/test_crm_module.py
+- (staged) backend/tests/integration/test_recommendations.py
+- (staged) backend/tests/integration/test_search.py
+- (staged) backend/tests/integration/test_shopify_extended.py
+- (staged) backend/tests/integration/test_webhooks.py
+- (staged) backend/tests/integration/test_xero_reconciliation.py
+- (staged) backend/tests/integrations/__init__.py
+- (staged) backend/tests/integrations/test_xero_token_manager.py
+- (staged) backend/tests/load/README.md
+- (staged) backend/tests/load/__init__.py
+- (staged) backend/tests/load/conftest.py
+- (staged) backend/tests/load/generators/customers.py
+- (staged) backend/tests/load/generators/misc.py
+- (staged) backend/tests/load/generators/orders.py
+- (staged) backend/tests/load/generators/products.py
+- (staged) backend/tests/load/generators/quotes.py
+- (staged) backend/tests/load/load_test_requirements.txt
+- (staged) backend/tests/load/load_test_scenarios.ps1
+- (staged) backend/tests/load/load_test_scenarios.sh
+- (staged) backend/tests/load/locustfile.py
+- (staged) backend/tests/load/locustfile_ai_features.py
+- (staged) backend/tests/load/reporters/html_reporter.py
+- (staged) backend/tests/load/reporters/json_reporter.py
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.json
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.json
+- (staged) backend/tests/load/reports/load_test_latest.html
+- (staged) backend/tests/load/reports/load_test_latest.json
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.html
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.json
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.html
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.json
+- (staged) backend/tests/load/reports/load_test_quick_latest.html
+- (staged) backend/tests/load/reports/load_test_quick_latest.json
+- (staged) backend/tests/load/reports/scenario_report.html
+- (staged) backend/tests/load/reports/scenario_report.json
+- (staged) backend/tests/load/run_full_load_test.py
+- (staged) backend/tests/load/run_quick_load_test.py
+- (staged) backend/tests/load/test_concurrent_number_generation.py
+- (staged) backend/tests/load/test_performance_load.py
+- (staged) backend/tests/load/test_scenarios.py
+- (staged) backend/tests/performance/__init__.py
+- (staged) backend/tests/run_integration_tests.ps1
+- (staged) backend/tests/run_integration_tests.sh
+- (staged) backend/tests/security/__init__.py
+- (staged) backend/tests/security/test_auth_security.py
+- (staged) backend/tests/security/test_encryption.py
+- (staged) backend/tests/security/test_injection_attacks.py
+- (staged) backend/tests/security/test_xss_csrf.py
+- (staged) backend/tests/services/__init__.py
+- (staged) backend/tests/services/code_generation/__init__.py
+- (staged) backend/tests/services/code_generation/test_context_builder.py
+- (staged) backend/tests/services/code_generation/test_doc_generator.py
+- (staged) backend/tests/services/code_generation/test_generator.py
+- (staged) backend/tests/services/code_generation/test_integration.py
+- (staged) backend/tests/services/code_generation/test_quality_checker.py
+- (staged) backend/tests/services/code_generation/test_test_generator.py
+- (staged) backend/tests/services/run_all_tests.py
+- (staged) backend/tests/services/test_auto_reorder.py
+- (staged) backend/tests/services/test_auto_reorder_integration.py
+- (staged) backend/tests/services/test_dunning.py
+- (staged) backend/tests/services/test_email_audit_service.py
+- (staged) backend/tests/services/test_order_state.py
+- (staged) backend/tests/services/test_procurement_matching.py
+- (staged) backend/tests/services/test_procurement_matching_integration.py
+- (staged) backend/tests/services/test_requirement_extractor.py
+- (staged) backend/tests/services/test_requirement_tracer.py
+- (staged) backend/tests/services/test_sla_escalation.py
+- (staged) backend/tests/services/test_tax_calculator.py
+- (staged) backend/tests/services/test_tax_calculator_integration.py
+- (staged) backend/tests/smoke/__init__.py
+- (staged) backend/tests/smoke/conftest.py
+- (staged) backend/tests/smoke/test_smoke.py
+- (staged) backend/tests/test_agent_orchestration.py
+- (staged) backend/tests/test_approvals_batch_2c.py
+- (staged) backend/tests/test_auth_security.py
+- (staged) backend/tests/test_autonomy_audit.py
+- (staged) backend/tests/test_autonomy_config.py
+- (staged) backend/tests/test_batch_2c_structure.py
+- (staged) backend/tests/test_billing.py
+- (staged) backend/tests/test_circuit_breaker.py
+- (staged) backend/tests/test_concurrent_number_generation.py
+- (staged) backend/tests/test_customers_api.py
+- (staged) backend/tests/test_error_handling.py
+- (staged) backend/tests/test_gap_batch_2b.py
+- (staged) backend/tests/test_gap_batch_2b_smoke.py
+- (staged) backend/tests/test_gap_batch_2c_2d.py
+- (staged) backend/tests/test_health.py
+- (staged) backend/tests/test_marketplace.py
+- (staged) backend/tests/test_orders_api.py
+- (staged) backend/tests/test_pr_automation.py
+- (staged) backend/tests/test_products_api.py
+- (staged) backend/tests/test_project_intelligence.py
+- (staged) backend/tests/test_prometheus_metrics.py
+- (staged) backend/tests/test_quotes_api.py
+- (staged) backend/tests/test_risk_assessor.py
+- (staged) backend/tests/test_rollback_mechanism.py
+- (staged) backend/tests/test_sequence_generation.py
+- (staged) backend/tests/test_shopify_mock.py
+- (staged) backend/tests/test_specialized_agents.py
+- (staged) backend/tests/test_toolshed_api.py
+- (staged) backend/tests/test_workflow_agent_integration.py
+- (staged) backend/tests/test_workflows_batch_2c.py
+- (staged) backend/tests/test_xero_mock.py
+- (staged) backend/tests/unit/test_number_generation.py
+- (staged) backend/tests/unit/test_reconciliation_logic.py
+- (staged) backend/tests/utils/__init__.py
+- (staged) backend/tests/utils/test_calculations.py
+- (staged) backend/tests/webhooks/__init__.py
+- (staged) backend/tests/webhooks/test_webhook_transactions.py
+- (staged) backend/update_supplier.json
+- (staged) backend/uv.lock
+- (staged) backend/vercel.json
+- (staged) backend/verify_i18n_migration.py
+- (staged) backend/verify_indexes.py
+- (staged) backend/verify_phase1.py
+- (staged) backend/verify_phase9_fixes.py
+- (staged) backend/verify_race_condition_fix.py
+- (staged) backend/verify_sequence_deployment.py
+- (staged) backend/verify_tables.py
+
+## Session end: 2026-04-05T08:12:35+05:00
+### Modified files:
+- .beads/QUICKSTART.md
+- .beads/README.md
+- .beads/bd-ready.sh
+- .beads/tasks/bd-a1f8.1.jsonl
+- .beads/tasks/bd-a1f8.2.jsonl
+- .beads/tasks/bd-a1f8.3.jsonl
+- .beads/tasks/bd-a1f8.4.jsonl
+- .beads/tasks/bd-a1f8.5.jsonl
+- .beads/tasks/bd-a1f8.6.jsonl
+- .beads/tasks/bd-a1f8.jsonl
+- .claude/PROGRESS.md
+- .claude/hooks/pre-commit.sh
+- .claude/rules/database/supabase-migrations.md
+- .dockerignore
+- .env.example
+- .github/CODEOWNERS
+- .github/dependabot.yml
+- .github/workflows/agent-pr-checks.yml
+- .github/workflows/ci.yml
+- .github/workflows/deploy-production.yml
+- .github/workflows/deploy-staging.yml
+- .github/workflows/examples/deploy-frontend.yml.example
+- .github/workflows/security.yml
+- .husky/pre-commit
+- .obsidian-vault/.obsidian/community-plugins.json
+- .obsidian-vault/.obsidian/core-plugins.json
+- .obsidian-vault/.obsidian/graph.json
+- .obsidian-vault/.obsidian/templates.json
+- .obsidian-vault/.obsidian/templates/api-client-template.md
+- .obsidian-vault/.obsidian/templates/component-template.md
+- .obsidian-vault/.obsidian/templates/integration-template.md
+- .obsidian-vault/.obsidian/templates/model-template.md
+- .obsidian-vault/.obsidian/templates/page-template.md
+- .obsidian-vault/.obsidian/templates/route-template.md
+- .obsidian-vault/README.md
+- .obsidian-vault/_index/active-routes-by-domain.md
+- .obsidian-vault/_index/integration-health.md
+- .obsidian-vault/_index/missing-tests.md
+- .obsidian-vault/_index/model-usage.md
+- .obsidian-vault/_index/orphaned-routes.md
+- .obsidian-vault/_index/stale-docs.md
+- .obsidian-vault/catalogs/AGENTS.md
+- .obsidian-vault/catalogs/INTEGRATIONS.md
+- .obsidian-vault/catalogs/MODELS.md
+- .obsidian-vault/catalogs/PACKAGES.md
+- .obsidian-vault/catalogs/PAGES.md
+- .obsidian-vault/catalogs/ROUTES.md
+- .obsidian-vault/memory/CONSTITUTION.md
+- .obsidian-vault/memory/agent-routing.md
+- .obsidian-vault/memory/context-snapshot.md
+- .obsidian-vault/memory/current-state.md
+- .obsidian-vault/memory/decisions-log.md
+- .obsidian-vault/memory/handoff.md
+- .obsidian-vault/models/MODEL-XXX-a-i-generated-content.md
+- .obsidian-vault/models/MODEL-XXX-a-p2-agent-interaction.md
+- .obsidian-vault/models/MODEL-XXX-a-p2-connection.md
+- .obsidian-vault/models/MODEL-XXX-a-p2-mandate.md
+- .obsidian-vault/models/MODEL-XXX-a-p2-transaction.md
+- .obsidian-vault/models/MODEL-XXX-a-p2-voice-session.md
+- .obsidian-vault/models/MODEL-XXX-a-p2-webhook-log.md
+- .obsidian-vault/models/MODEL-XXX-activity.md
+- .obsidian-vault/models/MODEL-XXX-agent-execution.md
+- .obsidian-vault/models/MODEL-XXX-approval-step.md
+- .obsidian-vault/models/MODEL-XXX-approval.md
+- .obsidian-vault/models/MODEL-XXX-background-job.md
+- .obsidian-vault/models/MODEL-XXX-backorder.md
+- .obsidian-vault/models/MODEL-XXX-bank-account.md
+- .obsidian-vault/models/MODEL-XXX-bank-feed.md
+- .obsidian-vault/models/MODEL-XXX-carrier-configuration.md
+- .obsidian-vault/models/MODEL-XXX-category-translation.md
+- .obsidian-vault/models/MODEL-XXX-cin7-account-mapping.md
+- .obsidian-vault/models/MODEL-XXX-cin7-bom-component.md
+- .obsidian-vault/models/MODEL-XXX-cin7-bom-master.md
+- .obsidian-vault/models/MODEL-XXX-cin7-chart-of-account.md
+- .obsidian-vault/models/MODEL-XXX-cin7-connection.md
+- .obsidian-vault/models/MODEL-XXX-cin7-customer-mapping.md
+- .obsidian-vault/models/MODEL-XXX-cin7-fulfilment.md
+- .obsidian-vault/models/MODEL-XXX-cin7-goods-receipt-line.md
+- .obsidian-vault/models/MODEL-XXX-cin7-goods-receipt.md
+- .obsidian-vault/models/MODEL-XXX-cin7-invoice.md
+- .obsidian-vault/models/MODEL-XXX-cin7-journal-entry.md
+- .obsidian-vault/models/MODEL-XXX-cin7-journal-line.md
+- .obsidian-vault/models/MODEL-XXX-cin7-order-line-item.md
+- .obsidian-vault/models/MODEL-XXX-cin7-order-mapping.md
+- .obsidian-vault/models/MODEL-XXX-cin7-payment.md
+- .obsidian-vault/models/MODEL-XXX-cin7-product-mapping.md
+- .obsidian-vault/models/MODEL-XXX-cin7-production-run.md
+- .obsidian-vault/models/MODEL-XXX-cin7-purchase-order-line-item.md
+- .obsidian-vault/models/MODEL-XXX-cin7-purchase-order-mapping.md
+- .obsidian-vault/models/MODEL-XXX-cin7-quote-mapping.md
+- .obsidian-vault/models/MODEL-XXX-cin7-shadow-sync.md
+- .obsidian-vault/models/MODEL-XXX-cin7-stock-adjustment.md
+- .obsidian-vault/models/MODEL-XXX-cin7-stock-take-line.md
+- .obsidian-vault/models/MODEL-XXX-cin7-stock-take.md
+- .obsidian-vault/models/MODEL-XXX-cin7-stock-transfer.md
+- .obsidian-vault/models/MODEL-XXX-cin7-supplier-mapping.md
+- .obsidian-vault/models/MODEL-XXX-cin7-sync-gap.md
+- .obsidian-vault/models/MODEL-XXX-cin7-sync-log.md
+- .obsidian-vault/models/MODEL-XXX-cin7-webhook-subscription.md
+- .obsidian-vault/models/MODEL-XXX-contact-submission.md
+- .obsidian-vault/models/MODEL-XXX-contact.md
+- .obsidian-vault/models/MODEL-XXX-container-item.md
+- .obsidian-vault/models/MODEL-XXX-container.md
+- .obsidian-vault/models/MODEL-XXX-conversation-history.md
+- .obsidian-vault/models/MODEL-XXX-customer-persona.md
+- .obsidian-vault/models/MODEL-XXX-customer-product-interaction.md
+- .obsidian-vault/models/MODEL-XXX-customer.md
+- .obsidian-vault/models/MODEL-XXX-demo-request.md
+- .obsidian-vault/models/MODEL-XXX-email-consent.md
+- .obsidian-vault/models/MODEL-XXX-email-conversation.md
+- .obsidian-vault/models/MODEL-XXX-email-log.md
+- .obsidian-vault/models/MODEL-XXX-email-message.md
+- .obsidian-vault/models/MODEL-XXX-email-template-translation.md
+- .obsidian-vault/models/MODEL-XXX-email-template.md
+- .obsidian-vault/models/MODEL-XXX-email-webhook-log.md
+- .obsidian-vault/models/MODEL-XXX-equipment-service-history.md
+- .obsidian-vault/models/MODEL-XXX-equipment.md
+- .obsidian-vault/models/MODEL-XXX-in-app-notification.md
+- .obsidian-vault/models/MODEL-XXX-inbound-shipment.md
+- .obsidian-vault/models/MODEL-XXX-language.md
+- .obsidian-vault/models/MODEL-XXX-learning-insight.md
+- .obsidian-vault/models/MODEL-XXX-learning-pattern.md
+- .obsidian-vault/models/MODEL-XXX-location.md
+- .obsidian-vault/models/MODEL-XXX-marketplace-connection.md
+- .obsidian-vault/models/MODEL-XXX-marketplace-inventory-sync.md
+- .obsidian-vault/models/MODEL-XXX-marketplace-order.md
+- .obsidian-vault/models/MODEL-XXX-marketplace-product-listing.md
+- .obsidian-vault/models/MODEL-XXX-marketplace-sync-log.md
+- .obsidian-vault/models/MODEL-XXX-onboarding-sequence.md
+- .obsidian-vault/models/MODEL-XXX-onboarding-touchpoint.md
+- .obsidian-vault/models/MODEL-XXX-order-activity.md
+- .obsidian-vault/models/MODEL-XXX-order-item.md
+- .obsidian-vault/models/MODEL-XXX-order.md
+- .obsidian-vault/models/MODEL-XXX-organization.md
+- .obsidian-vault/models/MODEL-XXX-outbound-shipment.md
+- .obsidian-vault/models/MODEL-XXX-p-o-s-terminal.md
+- .obsidian-vault/models/MODEL-XXX-p-o-s-transaction.md
+- .obsidian-vault/models/MODEL-XXX-payment.md
+- .obsidian-vault/models/MODEL-XXX-product-attribute.md
+- .obsidian-vault/models/MODEL-XXX-product-barcode.md
+- .obsidian-vault/models/MODEL-XXX-product-co-occurrence.md
+- .obsidian-vault/models/MODEL-XXX-product-embedding.md
+- .obsidian-vault/models/MODEL-XXX-product-recommendation.md
+- .obsidian-vault/models/MODEL-XXX-product-stock-by-location.md
+- .obsidian-vault/models/MODEL-XXX-product-translation.md
+- .obsidian-vault/models/MODEL-XXX-product-variant.md
+- .obsidian-vault/models/MODEL-XXX-product.md
+- .obsidian-vault/models/MODEL-XXX-prompt-variant.md
+- .obsidian-vault/models/MODEL-XXX-purchase-order-item.md
+- .obsidian-vault/models/MODEL-XXX-purchase-order.md
+- .obsidian-vault/models/MODEL-XXX-quote-item.md
+- .obsidian-vault/models/MODEL-XXX-quote.md
+- .obsidian-vault/models/MODEL-XXX-reorder-rule.md
+- .obsidian-vault/models/MODEL-XXX-s-l-a-instance.md
+- .obsidian-vault/models/MODEL-XXX-s-l-a-rule.md
+- .obsidian-vault/models/MODEL-XXX-sales-staff.md
+- .obsidian-vault/models/MODEL-XXX-search-query.md
+- .obsidian-vault/models/MODEL-XXX-service-reminder.md
+- .obsidian-vault/models/MODEL-XXX-service-request.md
+- .obsidian-vault/models/MODEL-XXX-service-template-item.md
+- .obsidian-vault/models/MODEL-XXX-service-template.md
+- .obsidian-vault/models/MODEL-XXX-shopify-connection.md
+- .obsidian-vault/models/MODEL-XXX-shopify-inventory-sync-queue.md
+- .obsidian-vault/models/MODEL-XXX-shopify-inventory-sync.md
+- .obsidian-vault/models/MODEL-XXX-shopify-metafield.md
+- .obsidian-vault/models/MODEL-XXX-shopify-order-mapping.md
+- .obsidian-vault/models/MODEL-XXX-shopify-product-mapping.md
+- .obsidian-vault/models/MODEL-XXX-shopify-product-sync-log.md
+- .obsidian-vault/models/MODEL-XXX-shopify-product-translation.md
+- .obsidian-vault/models/MODEL-XXX-shopify-theme-endpoint.md
+- .obsidian-vault/models/MODEL-XXX-shopify-webhook-log.md
+- .obsidian-vault/models/MODEL-XXX-stock-adjustment.md
+- .obsidian-vault/models/MODEL-XXX-stock-reservation.md
+- .obsidian-vault/models/MODEL-XXX-stock-take-item.md
+- .obsidian-vault/models/MODEL-XXX-stock-take.md
+- .obsidian-vault/models/MODEL-XXX-stock-transfer.md
+- .obsidian-vault/models/MODEL-XXX-submission-note.md
+- .obsidian-vault/models/MODEL-XXX-supplier.md
+- .obsidian-vault/models/MODEL-XXX-translation-queue.md
+- .obsidian-vault/models/MODEL-XXX-u-i-translation.md
+- .obsidian-vault/models/MODEL-XXX-voice-search-session.md
+- .obsidian-vault/models/MODEL-XXX-webhook-event.md
+- .obsidian-vault/models/MODEL-XXX-webhook-metrics.md
+- .obsidian-vault/models/MODEL-XXX-workflow-instance.md
+- .obsidian-vault/models/MODEL-XXX-workflow-template-action.md
+- .obsidian-vault/models/MODEL-XXX-workflow-template.md
+- .obsidian-vault/models/MODEL-XXX-workshop-booking.md
+- .obsidian-vault/models/MODEL-XXX-xero-connection.md
+- .obsidian-vault/pages/PAGE-XXX-activities.md
+- .obsidian-vault/pages/PAGE-XXX-agents.md
+- .obsidian-vault/pages/PAGE-XXX-ai-assistant.md
+- .obsidian-vault/pages/PAGE-XXX-alerts.md
+- .obsidian-vault/pages/PAGE-XXX-approvals.md
+- .obsidian-vault/pages/PAGE-XXX-autonomous-dev.md
+- .obsidian-vault/pages/PAGE-XXX-autonomous.md
+- .obsidian-vault/pages/PAGE-XXX-backorders.md
+- .obsidian-vault/pages/PAGE-XXX-bank-feeds.md
+- .obsidian-vault/pages/PAGE-XXX-contacts-[id].md
+- .obsidian-vault/pages/PAGE-XXX-contacts.md
+- .obsidian-vault/pages/PAGE-XXX-containers-[id].md
+- .obsidian-vault/pages/PAGE-XXX-containers.md
+- .obsidian-vault/pages/PAGE-XXX-contractors.md
+- .obsidian-vault/pages/PAGE-XXX-customers-[id].md
+- .obsidian-vault/pages/PAGE-XXX-customers-health.md
+- .obsidian-vault/pages/PAGE-XXX-customers-onboarding.md
+- .obsidian-vault/pages/PAGE-XXX-customers-personas.md
+- .obsidian-vault/pages/PAGE-XXX-customers.md
+- .obsidian-vault/pages/PAGE-XXX-dashboard.md
+- .obsidian-vault/pages/PAGE-XXX-demo-live.md
+- .obsidian-vault/pages/PAGE-XXX-demo.md
+- .obsidian-vault/pages/PAGE-XXX-emails.md
+- .obsidian-vault/pages/PAGE-XXX-faq.md
+- .obsidian-vault/pages/PAGE-XXX-insights.md
+- .obsidian-vault/pages/PAGE-XXX-inventory-bom.md
+- .obsidian-vault/pages/PAGE-XXX-inventory-forecast.md
+- .obsidian-vault/pages/PAGE-XXX-inventory-reservations.md
+- .obsidian-vault/pages/PAGE-XXX-inventory-stock.md
+- .obsidian-vault/pages/PAGE-XXX-inventory-transfers-[id].md
+- .obsidian-vault/pages/PAGE-XXX-inventory-transfers.md
+- .obsidian-vault/pages/PAGE-XXX-inventory.md
+- .obsidian-vault/pages/PAGE-XXX-invoices-[id].md
+- .obsidian-vault/pages/PAGE-XXX-invoices.md
+- .obsidian-vault/pages/PAGE-XXX-marketing.md
+- .obsidian-vault/pages/PAGE-XXX-monitoring.md
+- .obsidian-vault/pages/PAGE-XXX-orders-[id]-invoice.md
+- .obsidian-vault/pages/PAGE-XXX-orders-fulfilment.md
+- .obsidian-vault/pages/PAGE-XXX-orders.md
+- .obsidian-vault/pages/PAGE-XXX-pos-locations.md
+- .obsidian-vault/pages/PAGE-XXX-pos-reconciliation.md
+- .obsidian-vault/pages/PAGE-XXX-pos-staff.md
+- .obsidian-vault/pages/PAGE-XXX-pos-terminal.md
+- .obsidian-vault/pages/PAGE-XXX-pos.md
+- .obsidian-vault/pages/PAGE-XXX-prd-[id].md
+- .obsidian-vault/pages/PAGE-XXX-prd-generate.md
+- .obsidian-vault/pages/PAGE-XXX-products-[id].md
+- .obsidian-vault/pages/PAGE-XXX-products.md
+- .obsidian-vault/pages/PAGE-XXX-purchase-orders-receiving.md
+- .obsidian-vault/pages/PAGE-XXX-purchase-orders.md
+- .obsidian-vault/pages/PAGE-XXX-quotes-generate.md
+- .obsidian-vault/pages/PAGE-XXX-quotes.md
+- .obsidian-vault/pages/PAGE-XXX-reconciliation.md
+- .obsidian-vault/pages/PAGE-XXX-reports.md
+- .obsidian-vault/pages/PAGE-XXX-service-requests.md
+- .obsidian-vault/pages/PAGE-XXX-settings-account.md
+- .obsidian-vault/pages/PAGE-XXX-settings-company.md
+- .obsidian-vault/pages/PAGE-XXX-settings-integrations-ap2.md
+- .obsidian-vault/pages/PAGE-XXX-settings-integrations-gl.md
+- .obsidian-vault/pages/PAGE-XXX-settings-integrations-marketplace.md
+- .obsidian-vault/pages/PAGE-XXX-settings-integrations-shadow.md
+- .obsidian-vault/pages/PAGE-XXX-settings-integrations.md
+- .obsidian-vault/pages/PAGE-XXX-settings-team.md
+- .obsidian-vault/pages/PAGE-XXX-settings-translations.md
+- .obsidian-vault/pages/PAGE-XXX-shipments.md
+- .obsidian-vault/pages/PAGE-XXX-submissions.md
+- .obsidian-vault/pages/PAGE-XXX-suppliers.md
+- .obsidian-vault/pages/PAGE-XXX-tasks.md
+- .obsidian-vault/pages/PAGE-XXX-warehouse.md
+- .obsidian-vault/pages/PAGE-XXX-workflows.md
+- .obsidian-vault/pages/PAGE-XXX-workshop-equipment-[id].md
+- .obsidian-vault/pages/PAGE-XXX-workshop-equipment.md
+- .obsidian-vault/pages/PAGE-XXX-workshop-reminders.md
+- .obsidian-vault/pages/PAGE-XXX-workshop-schedule.md
+- .obsidian-vault/pages/PAGE-XXX-workshop-templates.md
+- .obsidian-vault/pages/PAGE-XXX-workshop.md
+- .obsidian-vault/routes/ROUTE-XXX---init--.md
+- .obsidian-vault/routes/ROUTE-XXX-activities.md
+- .obsidian-vault/routes/ROUTE-XXX-agents-monitor.md
+- .obsidian-vault/routes/ROUTE-XXX-alerts.md
+- .obsidian-vault/routes/ROUTE-XXX-analytics.md
+- .obsidian-vault/routes/ROUTE-XXX-anomaly.md
+- .obsidian-vault/routes/ROUTE-XXX-ap2.md
+- .obsidian-vault/routes/ROUTE-XXX-approval-gates.md
+- .obsidian-vault/routes/ROUTE-XXX-approvals.md
+- .obsidian-vault/routes/ROUTE-XXX-assets.md
+- .obsidian-vault/routes/ROUTE-XXX-auth.md
+- .obsidian-vault/routes/ROUTE-XXX-autonomous-dev.md
+- .obsidian-vault/routes/ROUTE-XXX-autonomy-metrics.md
+- .obsidian-vault/routes/ROUTE-XXX-backorders.md
+- .obsidian-vault/routes/ROUTE-XXX-bank-feeds.md
+- .obsidian-vault/routes/ROUTE-XXX-billing.md
+- .obsidian-vault/routes/ROUTE-XXX-bookings.md
+- .obsidian-vault/routes/ROUTE-XXX-build-command.md
+- .obsidian-vault/routes/ROUTE-XXX-business-metrics.md
+- .obsidian-vault/routes/ROUTE-XXX-chat.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-anomaly.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-bom.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-crm.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-forecast.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-fulfilment.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-gl.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-grn.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-inventory-writeback.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-line-items.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-procurement.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-shadow-ai.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-shadow-sync.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-stream.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-sync.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-webhook-subscriptions.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7-webhooks.md
+- .obsidian-vault/routes/ROUTE-XXX-cin7.md
+- .obsidian-vault/routes/ROUTE-XXX-command-parser.md
+- .obsidian-vault/routes/ROUTE-XXX-config.md
+- .obsidian-vault/routes/ROUTE-XXX-contacts.md
+- .obsidian-vault/routes/ROUTE-XXX-containers.md
+- .obsidian-vault/routes/ROUTE-XXX-contractors.md
+- .obsidian-vault/routes/ROUTE-XXX-crm-health.md
+- .obsidian-vault/routes/ROUTE-XXX-crm-onboarding.md
+- .obsidian-vault/routes/ROUTE-XXX-crm-personas.md
+- .obsidian-vault/routes/ROUTE-XXX-cron-jobs.md
+- .obsidian-vault/routes/ROUTE-XXX-customer-orders.md
+- .obsidian-vault/routes/ROUTE-XXX-customers.md
+- .obsidian-vault/routes/ROUTE-XXX-dashboard-stream.md
+- .obsidian-vault/routes/ROUTE-XXX-dashboard.md
+- .obsidian-vault/routes/ROUTE-XXX-document-parser.md
+- .obsidian-vault/routes/ROUTE-XXX-elevenlabs.md
+- .obsidian-vault/routes/ROUTE-XXX-email-audit.md
+- .obsidian-vault/routes/ROUTE-XXX-equipment.md
+- .obsidian-vault/routes/ROUTE-XXX-form-autofill.md
+- .obsidian-vault/routes/ROUTE-XXX-gap-sync.md
+- .obsidian-vault/routes/ROUTE-XXX-generate.md
+- .obsidian-vault/routes/ROUTE-XXX-google-ai.md
+- .obsidian-vault/routes/ROUTE-XXX-health.md
+- .obsidian-vault/routes/ROUTE-XXX-infrastructure.md
+- .obsidian-vault/routes/ROUTE-XXX-insights.md
+- .obsidian-vault/routes/ROUTE-XXX-inventory-forecast.md
+- .obsidian-vault/routes/ROUTE-XXX-inventory-stream.md
+- .obsidian-vault/routes/ROUTE-XXX-inventory.md
+- .obsidian-vault/routes/ROUTE-XXX-invoice-payments.md
+- .obsidian-vault/routes/ROUTE-XXX-invoices.md
+- .obsidian-vault/routes/ROUTE-XXX-jobs.md
+- .obsidian-vault/routes/ROUTE-XXX-learning.md
+- .obsidian-vault/routes/ROUTE-XXX-lists.md
+- .obsidian-vault/routes/ROUTE-XXX-marketing-ai.md
+- .obsidian-vault/routes/ROUTE-XXX-marketplace.md
+- .obsidian-vault/routes/ROUTE-XXX-monitoring.md
+- .obsidian-vault/routes/ROUTE-XXX-notifications.md
+- .obsidian-vault/routes/ROUTE-XXX-orders.md
+- .obsidian-vault/routes/ROUTE-XXX-performance.md
+- .obsidian-vault/routes/ROUTE-XXX-pos-transactions.md
+- .obsidian-vault/routes/ROUTE-XXX-pos-xero-reconciliation.md
+- .obsidian-vault/routes/ROUTE-XXX-prd.md
+- .obsidian-vault/routes/ROUTE-XXX-procurement.md
+- .obsidian-vault/routes/ROUTE-XXX-products.md
+- .obsidian-vault/routes/ROUTE-XXX-project-intelligence.md
+- .obsidian-vault/routes/ROUTE-XXX-prometheus-metrics.md
+- .obsidian-vault/routes/ROUTE-XXX-protocol.md
+- .obsidian-vault/routes/ROUTE-XXX-public-stats.md
+- .obsidian-vault/routes/ROUTE-XXX-purchase-orders.md
+- .obsidian-vault/routes/ROUTE-XXX-quotes.md
+- .obsidian-vault/routes/ROUTE-XXX-recommendations.md
+- .obsidian-vault/routes/ROUTE-XXX-reconciliation-dashboard.md
+- .obsidian-vault/routes/ROUTE-XXX-reconciliation.md
+- .obsidian-vault/routes/ROUTE-XXX-reminders.md
+- .obsidian-vault/routes/ROUTE-XXX-requirement-verification.md
+- .obsidian-vault/routes/ROUTE-XXX-search.md
+- .obsidian-vault/routes/ROUTE-XXX-sendgrid.md
+- .obsidian-vault/routes/ROUTE-XXX-service-requests.md
+- .obsidian-vault/routes/ROUTE-XXX-settings.md
+- .obsidian-vault/routes/ROUTE-XXX-shipments.md
+- .obsidian-vault/routes/ROUTE-XXX-shopify-theme.md
+- .obsidian-vault/routes/ROUTE-XXX-shopify.md
+- .obsidian-vault/routes/ROUTE-XXX-sla.md
+- .obsidian-vault/routes/ROUTE-XXX-specialized.md
+- .obsidian-vault/routes/ROUTE-XXX-staff-copilot.md
+- .obsidian-vault/routes/ROUTE-XXX-supervisor.md
+- .obsidian-vault/routes/ROUTE-XXX-suppliers.md
+- .obsidian-vault/routes/ROUTE-XXX-team.md
+- .obsidian-vault/routes/ROUTE-XXX-templates.md
+- .obsidian-vault/routes/ROUTE-XXX-test-data-gen.md
+- .obsidian-vault/routes/ROUTE-XXX-test-data.md
+- .obsidian-vault/routes/ROUTE-XXX-test-failures.md
+- .obsidian-vault/routes/ROUTE-XXX-toolshed-vault.md
+- .obsidian-vault/routes/ROUTE-XXX-toolshed.md
+- .obsidian-vault/routes/ROUTE-XXX-translations.md
+- .obsidian-vault/routes/ROUTE-XXX-warehouse.md
+- .obsidian-vault/routes/ROUTE-XXX-webhooks.md
+- .obsidian-vault/routes/ROUTE-XXX-workflows.md
+- .obsidian-vault/routes/ROUTE-XXX-xero.md
+- .playwright-mcp/page-2026-02-13T04-44-02-076Z.png
+- .playwright-mcp/page-2026-02-16T00-49-49-324Z.png
+- .playwright-mcp/page-2026-02-16T01-35-05-805Z.png
+- .zap/README.md
+- .zap/baseline-scan.yaml
+- .zap/full-scan.yaml
+- .zap/rules.tsv
+- README.md
+- app/.dockerignore
+- app/.gitignore
+- app/AGENTS.md
+- app/Dockerfile
+- app/__tests__/app/approvals-page.test.tsx
+- app/__tests__/app/billing-page.test.tsx
+- app/__tests__/app/crm-health.test.tsx
+- app/__tests__/app/crm-onboarding.test.tsx
+- app/__tests__/app/crm-personas.test.tsx
+- app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- app/__tests__/app/orders-integration.test.tsx
+- app/__tests__/app/quotes-integration.test.tsx
+- app/__tests__/app/reconciliation-page.test.tsx
+- app/__tests__/app/workflows-page.test.tsx
+- app/__tests__/components/EmptyState.test.tsx
+- app/__tests__/components/ErrorBoundary.test.tsx
+- app/__tests__/components/ui/pagination-controls.test.tsx
+- app/__tests__/e2e/billing.spec.ts
+- app/__tests__/e2e/onboarding.spec.ts
+- app/__tests__/lib/api/activities.test.ts
+- app/__tests__/lib/api/agents.test.ts
+- app/__tests__/lib/api/ai-chat.test.ts
+- app/__tests__/lib/api/ai-generate.test.ts
+- app/__tests__/lib/api/ai-insights.test.ts
+- app/__tests__/lib/api/ap2.test.ts
+- app/__tests__/lib/api/approvals-extended.test.ts
+- app/__tests__/lib/api/approvals.test.ts
+- app/__tests__/lib/api/auth.test.ts
+- app/__tests__/lib/api/autonomous.test.ts
+- app/__tests__/lib/api/autonomy.test.ts
+- app/__tests__/lib/api/bank-feeds.test.ts
+- app/__tests__/lib/api/billing.test.ts
+- app/__tests__/lib/api/chat.test.ts
+- app/__tests__/lib/api/cin7-bom.test.ts
+- app/__tests__/lib/api/cin7-fulfilment.test.ts
+- app/__tests__/lib/api/cin7-gl.test.ts
+- app/__tests__/lib/api/cin7-grn.test.ts
+- app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- app/__tests__/lib/api/cin7-shadow.test.ts
+- app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- app/__tests__/lib/api/cin7.test.ts
+- app/__tests__/lib/api/contacts.test.ts
+- app/__tests__/lib/api/contractors.test.ts
+- app/__tests__/lib/api/copilot.test.ts
+- app/__tests__/lib/api/customers.test.ts
+- app/__tests__/lib/api/documents.test.ts
+- app/__tests__/lib/api/inventory.test.ts
+- app/__tests__/lib/api/invoices-extended.test.ts
+- app/__tests__/lib/api/invoices.test.ts
+- app/__tests__/lib/api/marketing.test.ts
+- app/__tests__/lib/api/marketplace.test.ts
+- app/__tests__/lib/api/mobile.test.ts
+- app/__tests__/lib/api/monitoring.test.ts
+- app/__tests__/lib/api/notifications.test.ts
+- app/__tests__/lib/api/orders.test.ts
+- app/__tests__/lib/api/pos.test.ts
+- app/__tests__/lib/api/products.test.ts
+- app/__tests__/lib/api/purchase-orders.test.ts
+- app/__tests__/lib/api/quotes.test.ts
+- app/__tests__/lib/api/reconciliation.test.ts
+- app/__tests__/lib/api/sendgrid.test.ts
+- app/__tests__/lib/api/service-requests.test.ts
+- app/__tests__/lib/api/settings.test.ts
+- app/__tests__/lib/api/shadow.test.ts
+- app/__tests__/lib/api/shipments-outbound.test.ts
+- app/__tests__/lib/api/shipments.test.ts
+- app/__tests__/lib/api/shopify.test.ts
+- app/__tests__/lib/api/sla.test.ts
+- app/__tests__/lib/api/suppliers.test.ts
+- app/__tests__/lib/api/tasks.test.ts
+- app/__tests__/lib/api/team.test.ts
+- app/__tests__/lib/api/warehouse.test.ts
+- app/__tests__/lib/api/workflows-extended.test.ts
+- app/__tests__/lib/api/workflows.test.ts
+- app/__tests__/lib/api/workshop.test.ts
+- app/__tests__/lib/api/xero.test.ts
+- app/__tests__/lib/marketplace.test.ts
+- app/__tests__/lib/types/cin7.test.ts
+- app/__tests__/lib/types/marketplace.test.ts
+- app/__tests__/lib/types/reconciliation.test.ts
+- app/__tests__/lib/types/workflows.test.ts
+- app/__tests__/lib/utils/csv-export.test.ts
+- app/components.json
+- app/declarations.d.ts
+- app/e2e/README.md
+- app/e2e/auth.setup.ts
+- app/e2e/auth.spec.ts
+- app/e2e/autosave.spec.ts
+- app/e2e/billing.spec.ts
+- app/e2e/capture-error.spec.ts
+- app/e2e/crm-health.spec.ts
+- app/e2e/customers.spec.ts
+- app/e2e/debug-orders.spec.ts
+- app/e2e/fixtures/auth.ts
+- app/e2e/helpers/page-objects.ts
+- app/e2e/helpers/test-data.ts
+- app/e2e/mobile-photo-order.spec.ts
+- app/e2e/monitoring.spec.ts
+- app/e2e/orders.spec.ts
+- app/e2e/pos-reconciliation.spec.ts
+- app/e2e/pos-transactions.spec.ts
+- app/e2e/prd-generation.spec.ts
+- app/e2e/products.spec.ts
+- app/e2e/quotes.spec.ts
+- app/e2e/showroom.spec.ts
+- app/e2e/test-helper.ts
+- app/e2e/test-websocket-fix.spec.ts
+- app/e2e/warehouse.spec.ts
+- app/e2e/workshop.spec.ts
+- app/eslint.config.mjs
+- app/next-env.d.ts
+- app/next.config.ts
+- app/package.json
+- app/playwright.a11y.config.ts
+- app/playwright.config.ts
+- app/postcss.config.js
+- app/public/favicon.svg
+- app/public/manifest.json
+- app/public/test-api.html
+- app/scripts/dev-with-fallback.mjs
+- app/sentry.client.config.ts
+- app/sentry.edge.config.ts
+- app/sentry.server.config.ts
+- app/src/app/(auth)/layout.tsx
+- app/src/app/(auth)/login/page.tsx
+- app/src/app/(auth)/onboarding/page.tsx
+- app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- app/src/app/(dashboard)/activities/page.tsx
+- app/src/app/(dashboard)/agents/components/AgentList.tsx
+- app/src/app/(dashboard)/agents/components/AgentStats.tsx
+- app/src/app/(dashboard)/agents/components/LearningInsights.tsx
+- app/src/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- app/src/app/(dashboard)/agents/components/TaskHistory.tsx
+- app/src/app/(dashboard)/agents/components/index.ts
+- app/src/app/(dashboard)/agents/page.tsx
+- app/src/app/(dashboard)/ai-assistant/page.tsx
+- app/src/app/(dashboard)/ai-ops/page.tsx
+- app/src/app/(dashboard)/ai-query/page.tsx
+- app/src/app/(dashboard)/alerts/page.tsx
+- app/src/app/(dashboard)/approvals/page.tsx
+- app/src/app/(dashboard)/autonomous-dev/page.tsx
+- app/src/app/(dashboard)/autonomous/page.tsx
+- app/src/app/(dashboard)/backorders/page.tsx
+- app/src/app/(dashboard)/bank-feeds/page.tsx
+- app/src/app/(dashboard)/contacts/[id]/page.tsx
+- app/src/app/(dashboard)/contacts/components/ContactForm.tsx
+- app/src/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- app/src/app/(dashboard)/contacts/page.tsx
+- app/src/app/(dashboard)/containers/[id]/page.tsx
+- app/src/app/(dashboard)/containers/page.tsx
+- app/src/app/(dashboard)/contractors/components/ContractorForm.tsx
+- app/src/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- app/src/app/(dashboard)/contractors/page.tsx
+- app/src/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- app/src/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- app/src/app/(dashboard)/customers/[id]/page.tsx
+- app/src/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- app/src/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- app/src/app/(dashboard)/customers/health/page.tsx
+- app/src/app/(dashboard)/customers/layout.tsx
+- app/src/app/(dashboard)/customers/onboarding/page.tsx
+- app/src/app/(dashboard)/customers/page.tsx
+- app/src/app/(dashboard)/customers/personas/page.tsx
+- app/src/app/(dashboard)/dashboard/layout.tsx
+- app/src/app/(dashboard)/dashboard/page.tsx
+- app/src/app/(dashboard)/demo-live/page.tsx
+- app/src/app/(dashboard)/demo/contractor-demo.tsx
+- app/src/app/(dashboard)/demo/page.tsx
+- app/src/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- app/src/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- app/src/app/(dashboard)/emails/page.tsx
+- app/src/app/(dashboard)/error.tsx
+- app/src/app/(dashboard)/faq/page.tsx
+- app/src/app/(dashboard)/insights/page.tsx
+- app/src/app/(dashboard)/inventory/bom/page.tsx
+- app/src/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- app/src/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- app/src/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- app/src/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- app/src/app/(dashboard)/inventory/forecast/page.tsx
+- app/src/app/(dashboard)/inventory/page.tsx
+- app/src/app/(dashboard)/inventory/reservations/page.tsx
+- app/src/app/(dashboard)/inventory/stock/page.tsx
+- app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- app/src/app/(dashboard)/inventory/transfers/page.tsx
+- app/src/app/(dashboard)/invoices/[id]/page.tsx
+- app/src/app/(dashboard)/invoices/bas/page.tsx
+- app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- app/src/app/(dashboard)/invoices/page.tsx
+- app/src/app/(dashboard)/invoices/types.ts
+- app/src/app/(dashboard)/layout.tsx
+- app/src/app/(dashboard)/loading.tsx
+- app/src/app/(dashboard)/marketing/page.tsx
+- app/src/app/(dashboard)/marketplace/page.tsx
+- app/src/app/(dashboard)/monitoring/components/AlertCard.tsx
+- app/src/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- app/src/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- app/src/app/(dashboard)/monitoring/page.tsx
+- app/src/app/(dashboard)/orders/[id]/invoice/page.tsx
+- app/src/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- app/src/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- app/src/app/(dashboard)/orders/components/OrderLineItems.tsx
+- app/src/app/(dashboard)/orders/components/OrderPrintView.tsx
+- app/src/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- app/src/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- app/src/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- app/src/app/(dashboard)/orders/fulfilment/page.tsx
+- app/src/app/(dashboard)/orders/layout.tsx
+- app/src/app/(dashboard)/orders/page.tsx
+- app/src/app/(dashboard)/orders/types.ts
+- app/src/app/(dashboard)/pos/components/Cart.tsx
+- app/src/app/(dashboard)/pos/components/POSTerminal.tsx
+- app/src/app/(dashboard)/pos/components/PaymentPanel.tsx
+- app/src/app/(dashboard)/pos/components/ProductSearch.tsx
+- app/src/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- app/src/app/(dashboard)/pos/locations/page.tsx
+- app/src/app/(dashboard)/pos/page.tsx
+- app/src/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- app/src/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- app/src/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- app/src/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- app/src/app/(dashboard)/pos/reconciliation/page.tsx
+- app/src/app/(dashboard)/pos/staff/page.tsx
+- app/src/app/(dashboard)/pos/terminal/page.tsx
+- app/src/app/(dashboard)/pos/types.ts
+- app/src/app/(dashboard)/prd/[id]/page.tsx
+- app/src/app/(dashboard)/prd/generate/page.tsx
+- app/src/app/(dashboard)/products/[id]/page.tsx
+- app/src/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- app/src/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- app/src/app/(dashboard)/products/components/ProductForm.tsx
+- app/src/app/(dashboard)/products/layout.tsx
+- app/src/app/(dashboard)/products/page.tsx
+- app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- app/src/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- app/src/app/(dashboard)/purchase-orders/page.tsx
+- app/src/app/(dashboard)/purchase-orders/receiving/page.tsx
+- app/src/app/(dashboard)/purchase-orders/types.ts
+- app/src/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- app/src/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- app/src/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- app/src/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- app/src/app/(dashboard)/quotes/generate/page.tsx
+- app/src/app/(dashboard)/quotes/layout.tsx
+- app/src/app/(dashboard)/quotes/page.tsx
+- app/src/app/(dashboard)/quotes/types.ts
+- app/src/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- app/src/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- app/src/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- app/src/app/(dashboard)/reconciliation/page.tsx
+- app/src/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- app/src/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- app/src/app/(dashboard)/reports/layout.tsx
+- app/src/app/(dashboard)/reports/page.tsx
+- app/src/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- app/src/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- app/src/app/(dashboard)/service-requests/page.tsx
+- app/src/app/(dashboard)/settings/account/page.tsx
+- app/src/app/(dashboard)/settings/billing/page.tsx
+- app/src/app/(dashboard)/settings/company/page.tsx
+- app/src/app/(dashboard)/settings/integrations/ap2/page.tsx
+- app/src/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- app/src/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- app/src/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- app/src/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- app/src/app/(dashboard)/settings/integrations/gl/page.tsx
+- app/src/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- app/src/app/(dashboard)/settings/integrations/page.tsx
+- app/src/app/(dashboard)/settings/integrations/shadow/page.tsx
+- app/src/app/(dashboard)/settings/mobile/page.tsx
+- app/src/app/(dashboard)/settings/onboarding/page.tsx
+- app/src/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- app/src/app/(dashboard)/settings/setup/page.tsx
+- app/src/app/(dashboard)/settings/shadow/page.tsx
+- app/src/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- app/src/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- app/src/app/(dashboard)/settings/team/page.tsx
+- app/src/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- app/src/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- app/src/app/(dashboard)/settings/translations/components/ProductList.tsx
+- app/src/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- app/src/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- app/src/app/(dashboard)/settings/translations/page.tsx
+- app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- app/src/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- app/src/app/(dashboard)/shipments/page.tsx
+- app/src/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- app/src/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- app/src/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- app/src/app/(dashboard)/submissions/page.tsx
+- app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- app/src/app/(dashboard)/suppliers/page.tsx
+- app/src/app/(dashboard)/tasks/components/QueueStats.tsx
+- app/src/app/(dashboard)/tasks/components/TaskList.tsx
+- app/src/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- app/src/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- app/src/app/(dashboard)/tasks/page.tsx
+- app/src/app/(dashboard)/warehouse/page.tsx
+- app/src/app/(dashboard)/workflows/page.tsx
+- app/src/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- app/src/app/(dashboard)/workshop/equipment/page.tsx
+- app/src/app/(dashboard)/workshop/page.tsx
+- app/src/app/(dashboard)/workshop/reminders/page.tsx
+- app/src/app/(dashboard)/workshop/schedule/page.tsx
+- app/src/app/(dashboard)/workshop/templates/page.tsx
+- app/src/app/(guest)/layout.tsx
+- app/src/app/(guest)/order/[token]/GuestOrderClient.tsx
+- app/src/app/(guest)/order/[token]/page.tsx
+- app/src/app/(mobile)/layout.tsx
+- app/src/app/(mobile)/order/new/page.tsx
+- app/src/app/(portal)/layout.tsx
+- app/src/app/(portal)/portal/certifications/page.tsx
+- app/src/app/(portal)/portal/invoices/page.tsx
+- app/src/app/(portal)/portal/orders/page.tsx
+- app/src/app/(portal)/portal/page.tsx
+- app/src/app/(portal)/portal/service/page.tsx
+- app/src/app/(supplier)/layout.tsx
+- app/src/app/(supplier)/supplier/orders/page.tsx
+- app/src/app/(supplier)/supplier/page.tsx
+- app/src/app/api/activities/route.ts
+- app/src/app/api/activities/stats/route.ts
+- app/src/app/api/agents/insights/route.ts
+- app/src/app/api/agents/list/route.ts
+- app/src/app/api/agents/patterns/route.ts
+- app/src/app/api/agents/stats/route.ts
+- app/src/app/api/agents/tasks/recent/route.ts
+- app/src/app/api/ai/cin7-anomaly/sync-health/route.ts
+- app/src/app/api/ai/insights/dashboard/route.ts
+- app/src/app/api/ai/insights/sales/route.ts
+- app/src/app/api/ai/inventory-forecast/route.ts
+- app/src/app/api/ai/patterns/orders/route.ts
+- app/src/app/api/analytics/metrics/overview/route.ts
+- app/src/app/api/auth/login/route.ts
+- app/src/app/api/auth/logout/route.ts
+- app/src/app/api/backorders/route.ts
+- app/src/app/api/bank-feeds/accounts/route.ts
+- app/src/app/api/boardroom/cron/route.ts
+- app/src/app/api/ccw/products/route.ts
+- app/src/app/api/ccw/summary/route.ts
+- app/src/app/api/contact-submissions/route.ts
+- app/src/app/api/contacts/route.ts
+- app/src/app/api/containers/route.ts
+- app/src/app/api/cron/auto-reorder-inventory/route.ts
+- app/src/app/api/cron/check-expiring-quotes/route.ts
+- app/src/app/api/cron/check-sla-breaches/route.ts
+- app/src/app/api/cron/cleanup-old-runs/route.ts
+- app/src/app/api/cron/daily-report/route.ts
+- app/src/app/api/cron/health-check/route.ts
+- app/src/app/api/cron/nightly-full-sync/route.ts
+- app/src/app/api/cron/process-onboarding-emails/route.ts
+- app/src/app/api/cron/refresh-health-scores/route.ts
+- app/src/app/api/cron/refresh-xero-tokens/route.ts
+- app/src/app/api/cron/retry-failed-webhooks/route.ts
+- app/src/app/api/cron/run-autonomous-ops/route.ts
+- app/src/app/api/cron/shadow-sync-cin7/route.ts
+- app/src/app/api/cron/shadow-sync-xero/route.ts
+- app/src/app/api/customers/route.ts
+- app/src/app/api/dashboard/aggregated/route.ts
+- app/src/app/api/dashboard/metrics-stream/route.ts
+- app/src/app/api/dashboard/order-status-breakdown/route.ts
+- app/src/app/api/dashboard/quote-conversion/route.ts
+- app/src/app/api/dashboard/revenue-by-location/route.ts
+- app/src/app/api/demo-requests/route.ts
+- app/src/app/api/health/route.ts
+- app/src/app/api/health/routes/route.ts
+- app/src/app/api/integrations/cin7/status/route.ts
+- app/src/app/api/integrations/cin7/stream/route.ts
+- app/src/app/api/integrations/sendgrid/conversations/route.ts
+- app/src/app/api/integrations/sendgrid/status/route.ts
+- app/src/app/api/integrations/shopify/status/route.ts
+- app/src/app/api/integrations/xero/status/route.ts
+- app/src/app/api/inventory-stream/route.ts
+- app/src/app/api/inventory/reservations/route.ts
+- app/src/app/api/inventory/route.ts
+- app/src/app/api/inventory/stock-health/route.ts
+- app/src/app/api/inventory/transfer-suggestions/route.ts
+- app/src/app/api/inventory/transfers/route.ts
+- app/src/app/api/invoices/route.ts
+- app/src/app/api/monitoring/alerts/pos-failures/route.ts
+- app/src/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- app/src/app/api/monitoring/alerts/route.ts
+- app/src/app/api/monitoring/health/route.ts
+- app/src/app/api/monitoring/metrics/route.ts
+- app/src/app/api/monitoring/range/route.ts
+- app/src/app/api/orders/route.ts
+- app/src/app/api/pos/locations/route.ts
+- app/src/app/api/pos/sales-staff/route.ts
+- app/src/app/api/pos/terminals/route.ts
+- app/src/app/api/products/route.ts
+- app/src/app/api/purchase-orders/route.ts
+- app/src/app/api/quotes/route.ts
+- app/src/app/api/submissions/statistics/route.ts
+- app/src/app/api/telemetry/route.ts
+- app/src/app/api/warehouse/ops/route.ts
+- app/src/app/api/webhooks/route.ts
+- app/src/app/api/workflows/[id]/execute/route.ts
+- app/src/app/api/workflows/[id]/route.ts
+- app/src/app/api/workflows/route.ts
+- app/src/app/dashboard-analytics/page.tsx
+- app/src/app/demo/i18n/page.tsx
+- app/src/app/design-system/page.tsx
+- app/src/app/error.tsx
+- app/src/app/favicon.ico/route.ts
+- app/src/app/globals.css
+- app/src/app/layout.tsx
+- app/src/app/not-found.tsx
+- app/src/app/page.tsx
+- app/src/app/playground/page.tsx
+- app/src/app/robots.ts
+- app/src/app/sitemap.ts
+- app/src/components/ClientOnly.tsx
+- app/src/components/ai-marketing/asset-library.tsx
+- app/src/components/ai-marketing/media-generator.tsx
+- app/src/components/ai/AIProductCopyGenerator.tsx
+- app/src/components/ai/AIQuoteGenerator.tsx
+- app/src/components/ai/QuoteCopilotChat.tsx
+- app/src/components/ai/StaffCopilotWidget.tsx
+- app/src/components/alerts/AnomalyAlert.tsx
+- app/src/components/auth/login-form.tsx
+- app/src/components/autonomous/ApprovalGateDialog.tsx
+- app/src/components/autonomous/ControlPanel.tsx
+- app/src/components/autonomous/FileChangesViewer.tsx
+- app/src/components/autonomous/PhaseTimeline.tsx
+- app/src/components/charts/CategorySalesChart.tsx
+- app/src/components/charts/RevenueChart.tsx
+- app/src/components/chat/ChatWidget.tsx
+- app/src/components/contractor-availability-live.tsx
+- app/src/components/contractor-availability.tsx
+- app/src/components/dashboard/AgentMetricsWidget.tsx
+- app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- app/src/components/dashboard/DemoVideoBanner.tsx
+- app/src/components/dashboard/DemoVideoLink.tsx
+- app/src/components/dashboard/InventoryForecastWidget.tsx
+- app/src/components/dashboard/OrderPatternsWidget.tsx
+- app/src/components/dashboard/OrderStatusBreakdownWidget.tsx
+- app/src/components/dashboard/QuoteConversionWidget.tsx
+- app/src/components/dashboard/RevenueByLocationWidget.tsx
+- app/src/components/dashboard/SalesInsightsWidget.tsx
+- app/src/components/dashboard/StockHealthWidget.tsx
+- app/src/components/dashboard/TransferSuggestionsWidget.tsx
+- app/src/components/errors/ErrorBoundary.tsx
+- app/src/components/forms/AutoFillSuggestion.tsx
+- app/src/components/insights/insight-card.tsx
+- app/src/components/inventory/LocationAwareProductSelect.tsx
+- app/src/components/inventory/MultiLocationStockCell.tsx
+- app/src/components/inventory/ReleaseReservationDialog.tsx
+- app/src/components/inventory/StockReservationDialog.tsx
+- app/src/components/inventory/TransferStatusBadge.tsx
+- app/src/components/landing/AnimatedCounter.tsx
+- app/src/components/landing/LiveStatsBar.tsx
+- app/src/components/layout/LanguageSwitcher.tsx
+- app/src/components/layout/NotificationBell.tsx
+- app/src/components/layout/ShadowModeBanner.tsx
+- app/src/components/layout/footer.tsx
+- app/src/components/layout/mobile-nav.tsx
+- app/src/components/layout/sidebar.tsx
+- app/src/components/marketing/feature-grid.tsx
+- app/src/components/marketing/hero-section.tsx
+- app/src/components/marketing/index.ts
+- app/src/components/marketing/testimonials.tsx
+- app/src/components/mobile/PhotoCaptureWidget.tsx
+- app/src/components/onboarding/CompanySetupStep.tsx
+- app/src/components/onboarding/FirstQuoteStep.tsx
+- app/src/components/onboarding/OnboardingWizard.tsx
+- app/src/components/onboarding/SampleDataStep.tsx
+- app/src/components/onboarding/ShopifyConnectStep.tsx
+- app/src/components/onboarding/TeamInviteStep.tsx
+- app/src/components/prd-generation-progress.tsx
+- app/src/components/prd/prd-detail-view.tsx
+- app/src/components/prd/prd-generation-progress.tsx
+- app/src/components/prd/prd-generator-form.tsx
+- app/src/components/providers/i18n-provider.tsx
+- app/src/components/responsive-table/ResponsiveTable.tsx
+- app/src/components/responsive-table/index.ts
+- app/src/components/seo/FaqSchema.tsx
+- app/src/components/seo/JsonLd.tsx
+- app/src/components/transitions/FadeIn.tsx
+- app/src/components/transitions/PageTransition.tsx
+- app/src/components/transitions/RouteProgressBar.tsx
+- app/src/components/transitions/index.ts
+- app/src/components/ui/alert-dialog.tsx
+- app/src/components/ui/alert.tsx
+- app/src/components/ui/avatar.tsx
+- app/src/components/ui/badge.tsx
+- app/src/components/ui/bento-grid.tsx
+- app/src/components/ui/border-beam.tsx
+- app/src/components/ui/breadcrumb.tsx
+- app/src/components/ui/button.tsx
+- app/src/components/ui/card.tsx
+- app/src/components/ui/checkbox.tsx
+- app/src/components/ui/command-palette.tsx
+- app/src/components/ui/command.tsx
+- app/src/components/ui/dialog.tsx
+- app/src/components/ui/draft-recovery-alert.tsx
+- app/src/components/ui/dropdown-menu.tsx
+- app/src/components/ui/empty-state.tsx
+- app/src/components/ui/form.tsx
+- app/src/components/ui/input.tsx
+- app/src/components/ui/label.tsx
+- app/src/components/ui/loading.tsx
+- app/src/components/ui/motion.tsx
+- app/src/components/ui/order-status-badge.tsx
+- app/src/components/ui/pagination-controls.tsx
+- app/src/components/ui/popover.tsx
+- app/src/components/ui/progress.tsx
+- app/src/components/ui/real-time-indicator.tsx
+- app/src/components/ui/scroll-area.tsx
+- app/src/components/ui/select.tsx
+- app/src/components/ui/separator.tsx
+- app/src/components/ui/sheet.tsx
+- app/src/components/ui/skeleton.tsx
+- app/src/components/ui/switch.tsx
+- app/src/components/ui/table.tsx
+- app/src/components/ui/tabs.tsx
+- app/src/components/ui/textarea.tsx
+- app/src/components/ui/toast.tsx
+- app/src/components/ui/tooltip.tsx
+- app/src/components/workflow/canvas/workflow-canvas.tsx
+- app/src/components/workflow/nodes/agent-node.tsx
+- app/src/components/workflow/nodes/conditional-node.tsx
+- app/src/components/workflow/nodes/end-node.tsx
+- app/src/components/workflow/nodes/llm-node.tsx
+- app/src/components/workflow/nodes/start-node.tsx
+- app/src/components/workflow/nodes/tool-node.tsx
+- app/src/contexts/websocket-context.tsx
+- app/src/hooks/use-barcode-scanner.ts
+- app/src/hooks/use-chat.ts
+- app/src/hooks/use-line-item-calculations.ts
+- app/src/hooks/use-prd-generation.ts
+- app/src/hooks/use-toast.ts
+- app/src/i18n/config.ts
+- app/src/i18n/messages/ar.json
+- app/src/i18n/messages/en.json
+- app/src/i18n/messages/es.json
+- app/src/i18n/messages/hi.json
+- app/src/i18n/messages/pt.json
+- app/src/i18n/messages/ta.json
+- app/src/i18n/messages/te.json
+- app/src/i18n/messages/vi.json
+- app/src/i18n/messages/zh-CN.json
+- app/src/i18n/messages/zh-TW.json
+- app/src/i18n/request.ts
+- app/src/instrumentation.ts
+- app/src/lib/agents/independent-verifier.ts
+- app/src/lib/api/activities.ts
+- app/src/lib/api/agents.ts
+- app/src/lib/api/ai-chat.ts
+- app/src/lib/api/ai-generate.ts
+- app/src/lib/api/ai-insights.ts
+- app/src/lib/api/ap2.ts
+- app/src/lib/api/approvals.ts
+- app/src/lib/api/auth.ts
+- app/src/lib/api/autonomous.ts
+- app/src/lib/api/autonomy.ts
+- app/src/lib/api/backend-url.ts
+- app/src/lib/api/backend.ts
+- app/src/lib/api/bank-feeds.ts
+- app/src/lib/api/billing.ts
+- app/src/lib/api/chat.ts
+- app/src/lib/api/cin7-bom.ts
+- app/src/lib/api/cin7-fulfilment.ts
+- app/src/lib/api/cin7-gl.ts
+- app/src/lib/api/cin7-grn.ts
+- app/src/lib/api/cin7-inventory-writeback.ts
+- app/src/lib/api/cin7-shadow-ai.ts
+- app/src/lib/api/cin7-shadow.ts
+- app/src/lib/api/cin7-webhook-subscriptions.ts
+- app/src/lib/api/cin7.ts
+- app/src/lib/api/client.ts
+- app/src/lib/api/contacts.ts
+- app/src/lib/api/contractors.ts
+- app/src/lib/api/copilot.ts
+- app/src/lib/api/customers.ts
+- app/src/lib/api/documents.ts
+- app/src/lib/api/heygen.ts
+- app/src/lib/api/index.ts
+- app/src/lib/api/inventory.ts
+- app/src/lib/api/invoices.ts
+- app/src/lib/api/marketing.ts
+- app/src/lib/api/marketplace.ts
+- app/src/lib/api/middleware.ts
+- app/src/lib/api/mobile.ts
+- app/src/lib/api/monitoring.ts
+- app/src/lib/api/notifications.ts
+- app/src/lib/api/orders.ts
+- app/src/lib/api/pos.ts
+- app/src/lib/api/products.ts
+- app/src/lib/api/purchase-orders.ts
+- app/src/lib/api/quotes.ts
+- app/src/lib/api/sendgrid.ts
+- app/src/lib/api/server.ts
+- app/src/lib/api/service-requests.ts
+- app/src/lib/api/settings.ts
+- app/src/lib/api/shadow.ts
+- app/src/lib/api/shipments-outbound.ts
+- app/src/lib/api/shipments.ts
+- app/src/lib/api/shopify.ts
+- app/src/lib/api/sla.ts
+- app/src/lib/api/suppliers.ts
+- app/src/lib/api/tasks.ts
+- app/src/lib/api/team.ts
+- app/src/lib/api/warehouse.ts
+- app/src/lib/api/workflows.ts
+- app/src/lib/api/workshop.ts
+- app/src/lib/api/xero.ts
+- app/src/lib/audit/api-route-auditor.ts
+- app/src/lib/audit/user-journey-runner.ts
+- app/src/lib/audit/ux-friction-detector.ts
+- app/src/lib/australian-context.ts
+- app/src/lib/config.ts
+- app/src/lib/design-system/config.ts
+- app/src/lib/design-system/index.ts
+- app/src/lib/design-system/library-registry.ts
+- app/src/lib/design-system/pattern-validator.ts
+- app/src/lib/hooks/use-autonomy-metrics.ts
+- app/src/lib/hooks/use-autosave.ts
+- app/src/lib/hooks/use-cin7-stream.ts
+- app/src/lib/hooks/use-form-autofill.ts
+- app/src/lib/hooks/use-inventory-forecast.ts
+- app/src/lib/hooks/use-recent-items.ts
+- app/src/lib/hooks/use-search-state.ts
+- app/src/lib/hooks/use-sse.ts
+- app/src/lib/hooks/use-websocket.ts
+- app/src/lib/image-generation/asset-manager.ts
+- app/src/lib/image-generation/types.ts
+- app/src/lib/logger.ts
+- app/src/lib/supabase/client.ts
+- app/src/lib/supabase/server.ts
+- app/src/lib/telemetry.ts
+- app/src/lib/tools/index.ts
+- app/src/lib/types/activities.ts
+- app/src/lib/types/cin7.ts
+- app/src/lib/types/contacts.ts
+- app/src/lib/types/inventory.ts
+- app/src/lib/types/invoices.ts
+- app/src/lib/types/marketplace.ts
+- app/src/lib/types/reconciliation.ts
+- app/src/lib/types/workflows.ts
+- app/src/lib/utils.test.ts
+- app/src/lib/utils.ts
+- app/src/lib/utils/calculations.test.ts
+- app/src/lib/utils/calculations.ts
+- app/src/lib/utils/csv-export.ts
+- app/src/lib/utils/debounce.ts
+- app/src/lib/utils/draft-storage.ts
+- app/src/lib/utils/storage.ts
+- app/src/middleware.ts
+- app/src/styles/design-system.css
+- app/src/types/contractor.ts
+- app/src/types/index.ts
+- app/src/types/prd.ts
+- app/src/types/workflow.ts
+- app/tailwind.config.ts
+- app/tests/accessibility/a11y.spec.ts
+- app/tests/e2e/approvals.spec.ts
+- app/tests/e2e/error-handling.spec.ts
+- app/tests/e2e/invoices.spec.ts
+- app/tests/e2e/reconciliation.spec.ts
+- app/tests/e2e/workflows.spec.ts
+- app/tests/visual/components.visual.spec.ts
+- app/tsconfig.json
+- app/vercel.json
+- app/vitest.config.ts
+- app/vitest.d.ts
+- app/vitest.setup.ts
+- backend/.claude/memory/context-snapshot.md
+- backend/.gitignore
+- backend/.python-version
+- backend/.vercelignore
+- backend/=0.39.0
+- backend/=6.11.0
+- backend/AGENTS.md
+- "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- backend/Dockerfile
+- backend/ISSUE-4-COMPLETION.md
+- backend/ISSUE-5-COMPLETION.md
+- backend/Procfile
+- backend/alembic.ini
+- backend/alembic/README
+- backend/alembic/env.py
+- backend/alembic/script.py.mako
+- backend/alembic/versions/001_add_approvals.py
+- backend/alembic/versions/002_add_semantic_search.py
+- backend/alembic/versions/003_add_missing_trigram_indexes.py
+- backend/alembic/versions/004_add_product_sync_bidirectional.py
+- backend/alembic/versions/005_add_shopify_extended_tables.py
+- backend/alembic/versions/006_add_mobile_order_tables.py
+- backend/alembic/versions/007_add_workflow_notification_indexes.py
+- backend/alembic/versions/008_merge_heads.py
+- backend/alembic/versions/009_add_pos_tables.py
+- backend/alembic/versions/00a_rename_invoice_date.py
+- backend/alembic/versions/00b_add_missing_inventory_tables.py
+- backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- backend/alembic/versions/00d_add_certification_tables.py
+- backend/alembic/versions/00e_add_prd_tables.py
+- backend/alembic/versions/00f_add_pricing_tier_tables.py
+- backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- backend/alembic/versions/68d51946645a_create_erp_schema.py
+- backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- backend/analyze_404_errors.py
+- backend/analyze_422_errors.py
+- backend/analyze_500_errors.py
+- backend/apply_i18n_migration.py
+- backend/apply_i18n_migration_v2.py
+- backend/apply_indexes.py
+- backend/apply_indexes_via_backend.py
+- backend/apply_pos_migration.py
+- backend/apply_search_indexes.py
+- backend/apply_sequences_migration.py
+- backend/benchmarks/after_indexes.txt
+- backend/benchmarks/before_indexes.txt
+- backend/benchmarks/comparison.md
+- backend/check_404_in_full_report.py
+- backend/check_backend_config.py
+- backend/check_categories.py
+- backend/check_db.py
+- backend/check_enum_def.py
+- backend/check_orders.py
+- backend/check_results.py
+- backend/check_runtime_config.py
+- backend/check_schema.py
+- backend/check_tables.py
+- backend/check_test_status.py
+- backend/cleanup_db.py
+- backend/conftest.py
+- backend/count_data.py
+- backend/create_admin.py
+- backend/create_demo_orders.py
+- backend/create_demo_orders_simple.py
+- backend/create_inventory_tables.py
+- backend/create_service_tables.py
+- backend/debug_response.py
+- backend/diagnose_db_connection.py
+- backend/docs/ISS-005-VERIFICATION.md
+- backend/docs/ISS-006-VERIFICATION.md
+- backend/docs/ISS-007-VERIFICATION.md
+- backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- backend/examples/use_agentic_layer.py
+- backend/fix_categories.py
+- backend/fix_categories_uppercase.py
+- backend/generate_endpoint.py
+- backend/generate_failures.py
+- backend/generate_password_hash.py
+- backend/inject_failure_patterns.py
+- backend/inject_insights_directly.py
+- backend/inject_test_data.py
+- backend/inject_test_failures.py
+- backend/list_google_models.py
+- backend/load_test_output.txt
+- backend/migrations/001_add_search_indexes.sql
+- backend/migrations/001_rollback.sql
+- backend/migrations/README.md
+- backend/migrations/add_ai_search.sql
+- backend/migrations/add_ap2_integration.sql
+- backend/migrations/add_auto_sync_enhancements.sql
+- backend/migrations/add_email_audit_tables.sql
+- backend/migrations/add_foreign_key_indexes.sql
+- backend/migrations/add_i18n_support.sql
+- backend/migrations/add_missing_fk_indexes.sql
+- backend/migrations/add_performance_indexes.sql
+- backend/migrations/add_phase4_inventory_indexes.sql
+- backend/migrations/add_portal_forms_tables.sql
+- backend/migrations/add_pos_system.sql
+- backend/migrations/add_search_indexes.sql
+- backend/migrations/add_sequences_for_numbers.sql
+- backend/migrations/add_shopify_extended.sql
+- backend/migrations/add_submission_notes_table.sql
+- backend/migrations/add_trigram_indexes.sql
+- backend/migrations/add_webhook_events_table.sql
+- backend/migrations/seed_ccw_products.sql
+- backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- backend/migrations/week3_enum_standardization.sql
+- backend/migrations/week3_timezone_standardization.sql
+- backend/pyproject.toml
+- backend/pytest.ini
+- backend/railway.json
+- backend/requirements.txt
+- backend/reset_admin_password.py
+- backend/run-setup-memory.ps1
+- backend/run-tests.ps1
+- backend/run_bugfix_tests.ps1
+- backend/run_bugfix_tests.sh
+- backend/run_migrations.py
+- backend/scripts/analyze_query_performance.py
+- backend/scripts/apply_foreign_key_indexes.py
+- backend/scripts/apply_phase4_indexes.py
+- backend/scripts/apply_trigram_indexes.py
+- backend/scripts/benchmark_search.py
+- backend/scripts/create_container_tables.sql
+- backend/scripts/create_sample_orders.py
+- backend/scripts/create_sample_quotes.py
+- backend/scripts/explain_queries.sh
+- backend/scripts/identify_500_sources.py
+- backend/scripts/implement_query_optimizations.md
+- backend/scripts/import_ccwonline_products.py
+- backend/scripts/insert_container_sample_data.sql
+- backend/scripts/integration_test_iss001.py
+- backend/scripts/monitor_indexes.py
+- backend/scripts/run_sql.py
+- backend/scripts/seed_ccw_cleaning.py
+- backend/scripts/seed_ccw_products.py
+- backend/scripts/setup-memory.py
+- backend/scripts/test_iss005_fixes.py
+- backend/scripts/validate_autosave_implementation.py
+- backend/scripts/validate_iss001_fix.py
+- backend/scripts/validate_iss003_actual.py
+- backend/scripts/validate_iss003_fix.py
+- backend/scripts/validate_iss005_fix.py
+- backend/scripts/verify_iss005_code.py
+- backend/scripts/verify_query_optimizations.py
+- backend/seed_data.py
+- backend/seed_demo_simple.sql
+- backend/seed_orders.py
+- backend/show_customers.py
+- backend/show_orders.py
+- backend/show_products.py
+- backend/show_quotes.py
+- backend/src/__init__.py
+- backend/src/agents/prd/__init__.py
+- backend/src/agents/prd/analysis_agent.py
+- backend/src/agents/prd/feature_decomposer.py
+- backend/src/agents/prd/prd_orchestrator.py
+- backend/src/agents/prd/roadmap_planner.py
+- backend/src/agents/prd/tech_spec_generator.py
+- backend/src/agents/prd/test_generator.py
+- backend/src/ai/__init__.py
+- backend/src/ai/agents/chat_assistant.py
+- backend/src/ai/agents/chat_state.py
+- backend/src/ai/agents/content_generator.py
+- backend/src/ai/agents/content_state.py
+- backend/src/ai/agents/insights_agent.py
+- backend/src/ai/agents/insights_state.py
+- backend/src/ai/agents/risk_assessor.py
+- backend/src/ai/agents/rollback_agent.py
+- backend/src/ai/agents/specialized/__init__.py
+- backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- backend/src/ai/agents/specialized/development_agent.py
+- backend/src/ai/agents/specialized/document_parser_agent.py
+- backend/src/ai/agents/specialized/form_autofill_agent.py
+- backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- backend/src/ai/agents/specialized/marketing_agent.py
+- backend/src/ai/agents/specialized/pricing_agent.py
+- backend/src/ai/agents/specialized/pricing_state.py
+- backend/src/ai/agents/specialized/procurement_agent.py
+- backend/src/ai/agents/specialized/procurement_state.py
+- backend/src/ai/agents/specialized/project_intelligence_agent.py
+- backend/src/ai/agents/specialized/query_agent.py
+- backend/src/ai/agents/specialized/recommendation_agent.py
+- backend/src/ai/agents/specialized/reconciliation_agent.py
+- backend/src/ai/agents/specialized/search_agent.py
+- backend/src/ai/agents/specialized/staff_copilot_agent.py
+- backend/src/ai/agents/specialized/task_executor_agent.py
+- backend/src/ai/agents/specialized/task_executor_state.py
+- backend/src/ai/agents/specialized/testing_agent.py
+- backend/src/ai/base_agent.py
+- backend/src/ai/generators/__init__.py
+- backend/src/ai/generators/email_generator.py
+- backend/src/ai/generators/quote_generator.py
+- backend/src/ai/learning/__init__.py
+- backend/src/ai/learning/learning_engine.py
+- backend/src/ai/learning/learning_repository.py
+- backend/src/ai/monitoring/__init__.py
+- backend/src/ai/monitoring/health_monitor.py
+- backend/src/ai/monitoring/metrics_collector.py
+- backend/src/ai/ollama_client.py
+- backend/src/ai/orchestration/__init__.py
+- backend/src/ai/orchestration/agent_registry.py
+- backend/src/ai/orchestration/autonomous_loop.py
+- backend/src/ai/orchestration/project_orchestrator.py
+- backend/src/ai/orchestration/supervisor_agent.py
+- backend/src/ai/orchestration/supervisor_state.py
+- backend/src/ai/prompts/__init__.py
+- backend/src/ai/prompts/system_prompts.py
+- backend/src/ai/protocol/__init__.py
+- backend/src/ai/protocol/confidence.py
+- backend/src/ai/protocol/error_handler.py
+- backend/src/ai/protocol/governor.py
+- backend/src/ai/protocol/message_bus.py
+- backend/src/ai/protocol/models.py
+- backend/src/ai/tools/__init__.py
+- backend/src/ai/tools/analytics_tools.py
+- backend/src/ai/tools/base.py
+- backend/src/ai/tools/erp_tools.py
+- backend/src/ai/tools/execution_tools.py
+- backend/src/ai/tools/inventory_intelligence.py
+- backend/src/ai/tools/pricing_tools.py
+- backend/src/ai/tools/procurement_tools.py
+- backend/src/api/__init__.py
+- backend/src/api/debug_main.py
+- backend/src/api/deps.py
+- backend/src/api/exceptions.py
+- backend/src/api/main.py
+- backend/src/api/middleware/__init__.py
+- backend/src/api/middleware/auth.py
+- backend/src/api/middleware/performance.py
+- backend/src/api/middleware/rate_limit.py
+- backend/src/api/middleware/rbac.py
+- backend/src/api/middleware/request_id.py
+- backend/src/api/middleware/security_headers.py
+- backend/src/api/middleware/tenant_isolation.py
+- backend/src/api/routers/prd.py
+- backend/src/api/routes/__init__.py
+- backend/src/api/routes/activities.py
+- backend/src/api/routes/agents_monitor.py
+- backend/src/api/routes/ai/__init__.py
+- backend/src/api/routes/ai/anomaly.py
+- backend/src/api/routes/ai/approval_gates.py
+- backend/src/api/routes/ai/assets.py
+- backend/src/api/routes/ai/autonomous_ops.py
+- backend/src/api/routes/ai/build_command.py
+- backend/src/api/routes/ai/chat.py
+- backend/src/api/routes/ai/cin7_anomaly.py
+- backend/src/api/routes/ai/cin7_forecast.py
+- backend/src/api/routes/ai/cin7_shadow_ai.py
+- backend/src/api/routes/ai/command_parser.py
+- backend/src/api/routes/ai/document_parser.py
+- backend/src/api/routes/ai/form_autofill.py
+- backend/src/api/routes/ai/gap_sync.py
+- backend/src/api/routes/ai/generate.py
+- backend/src/api/routes/ai/insights.py
+- backend/src/api/routes/ai/inventory_forecast.py
+- backend/src/api/routes/ai/learning.py
+- backend/src/api/routes/ai/marketing_ai.py
+- backend/src/api/routes/ai/monitoring.py
+- backend/src/api/routes/ai/project_intelligence.py
+- backend/src/api/routes/ai/protocol.py
+- backend/src/api/routes/ai/query.py
+- backend/src/api/routes/ai/requirement_verification.py
+- backend/src/api/routes/ai/specialized.py
+- backend/src/api/routes/ai/staff_copilot.py
+- backend/src/api/routes/ai/supervisor.py
+- backend/src/api/routes/ai/test_data.py
+- backend/src/api/routes/ai/test_failures.py
+- backend/src/api/routes/ai/toolshed.py
+- backend/src/api/routes/ai/toolshed_vault.py
+- backend/src/api/routes/analytics.py
+- backend/src/api/routes/approvals.py
+- backend/src/api/routes/audit_trail.py
+- backend/src/api/routes/autonomous_dev.py
+- backend/src/api/routes/autonomy_metrics.py
+- backend/src/api/routes/backorders.py
+- backend/src/api/routes/bank_feeds.py
+- backend/src/api/routes/billing.py
+- backend/src/api/routes/boardroom.py
+- backend/src/api/routes/certifications.py
+- backend/src/api/routes/chat.py
+- backend/src/api/routes/config.py
+- backend/src/api/routes/contacts.py
+- backend/src/api/routes/containers.py
+- backend/src/api/routes/contractors.py
+- backend/src/api/routes/crm_health.py
+- backend/src/api/routes/crm_onboarding.py
+- backend/src/api/routes/crm_personas.py
+- backend/src/api/routes/cron_jobs.py
+- backend/src/api/routes/customer_orders.py
+- backend/src/api/routes/customers.py
+- backend/src/api/routes/dashboard_stream.py
+- backend/src/api/routes/demo_auth.py
+- backend/src/api/routes/demo_dashboard.py
+- backend/src/api/routes/demo_lists.py
+- backend/src/api/routes/documents.py
+- backend/src/api/routes/email_audit.py
+- backend/src/api/routes/equipment_lifecycle.py
+- backend/src/api/routes/google_ai.py
+- backend/src/api/routes/health.py
+- backend/src/api/routes/integrations/__init__.py
+- backend/src/api/routes/integrations/ap2.py
+- backend/src/api/routes/integrations/cin7.py
+- backend/src/api/routes/integrations/cin7_bom.py
+- backend/src/api/routes/integrations/cin7_crm.py
+- backend/src/api/routes/integrations/cin7_fulfilment.py
+- backend/src/api/routes/integrations/cin7_gl.py
+- backend/src/api/routes/integrations/cin7_grn.py
+- backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- backend/src/api/routes/integrations/cin7_line_items.py
+- backend/src/api/routes/integrations/cin7_procurement.py
+- backend/src/api/routes/integrations/cin7_shadow_sync.py
+- backend/src/api/routes/integrations/cin7_stream.py
+- backend/src/api/routes/integrations/cin7_sync.py
+- backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- backend/src/api/routes/integrations/cin7_webhooks.py
+- backend/src/api/routes/integrations/elevenlabs.py
+- backend/src/api/routes/integrations/heygen.py
+- backend/src/api/routes/integrations/marketplace.py
+- backend/src/api/routes/integrations/sendgrid.py
+- backend/src/api/routes/integrations/shopify.py
+- backend/src/api/routes/integrations/shopify_theme.py
+- backend/src/api/routes/integrations/xero.py
+- backend/src/api/routes/inventory.py
+- backend/src/api/routes/inventory_stream.py
+- backend/src/api/routes/invoice_payments.py
+- backend/src/api/routes/invoices.py
+- backend/src/api/routes/jobs.py
+- backend/src/api/routes/mobile/__init__.py
+- backend/src/api/routes/mobile/guest_orders.py
+- backend/src/api/routes/monitoring/__init__.py
+- backend/src/api/routes/monitoring/alerts.py
+- backend/src/api/routes/monitoring/business_metrics.py
+- backend/src/api/routes/monitoring/infrastructure.py
+- backend/src/api/routes/monitoring/performance.py
+- backend/src/api/routes/notifications.py
+- backend/src/api/routes/orders.py
+- backend/src/api/routes/portal/__init__.py
+- backend/src/api/routes/portal/customer_portal.py
+- backend/src/api/routes/pos_transactions.py
+- backend/src/api/routes/pos_xero_reconciliation.py
+- backend/src/api/routes/prd.py
+- backend/src/api/routes/pricing.py
+- backend/src/api/routes/procurement.py
+- backend/src/api/routes/products.py
+- backend/src/api/routes/prometheus_metrics.py
+- backend/src/api/routes/public_stats.py
+- backend/src/api/routes/purchase_orders.py
+- backend/src/api/routes/quotes.py
+- backend/src/api/routes/recommendations.py
+- backend/src/api/routes/reconciliation.py
+- backend/src/api/routes/reconciliation_dashboard.py
+- backend/src/api/routes/search.py
+- backend/src/api/routes/service_requests.py
+- backend/src/api/routes/settings.py
+- backend/src/api/routes/shadow_analytics.py
+- backend/src/api/routes/shadow_mode.py
+- backend/src/api/routes/shipments.py
+- backend/src/api/routes/sla.py
+- backend/src/api/routes/stripe_webhooks.py
+- backend/src/api/routes/supplier_portal.py
+- backend/src/api/routes/suppliers.py
+- backend/src/api/routes/team.py
+- backend/src/api/routes/test_data_gen.py
+- backend/src/api/routes/translations.py
+- backend/src/api/routes/warehouse.py
+- backend/src/api/routes/webhooks.py
+- backend/src/api/routes/workflows.py
+- backend/src/api/routes/workshop/__init__.py
+- backend/src/api/routes/workshop/bookings.py
+- backend/src/api/routes/workshop/dashboard.py
+- backend/src/api/routes/workshop/equipment.py
+- backend/src/api/routes/workshop/reminders.py
+- backend/src/api/routes/workshop/templates.py
+- backend/src/api/schemas/invoicing.py
+- backend/src/api/schemas/prd.py
+- backend/src/auth/jwt.py
+- backend/src/auth/models.py
+- backend/src/auth/password_reset.py
+- backend/src/cache/decorators.py
+- backend/src/cache/redis_client.py
+- backend/src/config/__init__.py
+- backend/src/config/ap2_settings.py
+- backend/src/config/autonomy.py
+- backend/src/config/cin7_settings.py
+- backend/src/config/database.py
+- backend/src/config/elevenlabs_settings.py
+- backend/src/config/heygen_settings.py
+- backend/src/config/marketplace_settings.py
+- backend/src/config/secrets_manager.py
+- backend/src/config/sendgrid_settings.py
+- backend/src/config/settings.py
+- backend/src/config/shopify_settings.py
+- backend/src/config/xero_settings.py
+- backend/src/db/__init__.py
+- backend/src/db/ai_models.py
+- backend/src/db/ai_search_models.py
+- backend/src/db/ap2_models.py
+- backend/src/db/approvals_models.py
+- backend/src/db/audit_models.py
+- backend/src/db/certification_models.py
+- backend/src/db/cin7_bom_models.py
+- backend/src/db/cin7_fulfilment_models.py
+- backend/src/db/cin7_gl_models.py
+- backend/src/db/cin7_models.py
+- backend/src/db/cin7_shadow_models.py
+- backend/src/db/container_models.py
+- backend/src/db/crm_models.py
+- backend/src/db/crm_schemas.py
+- backend/src/db/customer_health_models.py
+- backend/src/db/demo_models.py
+- backend/src/db/email_audit_models.py
+- backend/src/db/email_models.py
+- backend/src/db/equipment_lifecycle_models.py
+- backend/src/db/generate_demo_purchases.py
+- backend/src/db/i18n_models.py
+- backend/src/db/i18n_schemas.py
+- backend/src/db/indexes.py
+- backend/src/db/integration_credential_models.py
+- backend/src/db/inventory_models.py
+- backend/src/db/inventory_schemas.py
+- backend/src/db/marketplace_models.py
+- backend/src/db/mobile_order_models.py
+- backend/src/db/models/__init__.py
+- backend/src/db/models/invoicing.py
+- backend/src/db/models/prd.py
+- backend/src/db/models_base.py
+- backend/src/db/portal_forms_models.py
+- backend/src/db/pos_models.py
+- backend/src/db/pricing_models.py
+- backend/src/db/schemas.py
+- backend/src/db/seed_demo.py
+- backend/src/db/service_models.py
+- backend/src/db/shadow_session_models.py
+- backend/src/db/shopify_extended_models.py
+- backend/src/db/shopify_models.py
+- backend/src/db/shopify_schemas.py
+- backend/src/db/submission_notes_models.py
+- backend/src/db/webhook_models.py
+- backend/src/db/workflow_models.py
+- backend/src/db/workshop_models.py
+- backend/src/db/xero_models.py
+- backend/src/db/xero_schemas.py
+- backend/src/emails/templates/order_confirmed.html
+- backend/src/emails/templates/order_delivered.html
+- backend/src/emails/templates/order_shipped.html
+- backend/src/emails/templates/quote_created.html
+- backend/src/emails/templates/quote_expiring.html
+- backend/src/events/__init__.py
+- backend/src/events/event_bus.py
+- backend/src/integrations/__init__.py
+- backend/src/integrations/ap2/__init__.py
+- backend/src/integrations/ap2/client.py
+- backend/src/integrations/ap2/security.py
+- backend/src/integrations/cin7/__init__.py
+- backend/src/integrations/cin7/change_detector.py
+- backend/src/integrations/cin7/client.py
+- backend/src/integrations/cin7/customer_sync.py
+- backend/src/integrations/cin7/demo_client.py
+- backend/src/integrations/cin7/event_dispatcher.py
+- backend/src/integrations/cin7/inventory_sync.py
+- backend/src/integrations/cin7/product_sync.py
+- backend/src/integrations/cin7/purchase_sync.py
+- backend/src/integrations/cin7/sales_sync.py
+- backend/src/integrations/cin7/supplier_sync.py
+- backend/src/integrations/elevenlabs/__init__.py
+- backend/src/integrations/elevenlabs/client.py
+- backend/src/integrations/elevenlabs/demo_client.py
+- backend/src/integrations/elevenlabs/live_client.py
+- backend/src/integrations/google/__init__.py
+- backend/src/integrations/google/client.py
+- backend/src/integrations/heygen/__init__.py
+- backend/src/integrations/heygen/client.py
+- backend/src/integrations/heygen/demo_client.py
+- backend/src/integrations/heygen/live_client.py
+- backend/src/integrations/http_utils.py
+- backend/src/integrations/marketplace/__init__.py
+- backend/src/integrations/marketplace/base.py
+- backend/src/integrations/marketplace/demo_channel.py
+- backend/src/integrations/marketplace/ebay_channel.py
+- backend/src/integrations/marketplace/facebook_channel.py
+- backend/src/integrations/marketplace/registry.py
+- backend/src/integrations/marketplace/shopify_channel.py
+- backend/src/integrations/marketplace/sync_engine.py
+- backend/src/integrations/payments/__init__.py
+- backend/src/integrations/payments/amex.py
+- backend/src/integrations/payments/eftpos.py
+- backend/src/integrations/payments/processor.py
+- backend/src/integrations/secrets_manager.py
+- backend/src/integrations/sendgrid/__init__.py
+- backend/src/integrations/sendgrid/client.py
+- backend/src/integrations/sendgrid/demo_client.py
+- backend/src/integrations/sendgrid/live_client.py
+- backend/src/integrations/sendgrid/processor.py
+- backend/src/integrations/sentry_client.py
+- backend/src/integrations/shopify/__init__.py
+- backend/src/integrations/shopify/client.py
+- backend/src/integrations/shopify/demo_client.py
+- backend/src/integrations/shopify/inventory.py
+- backend/src/integrations/shopify/inventory_sync.py
+- backend/src/integrations/shopify/metafields.py
+- backend/src/integrations/shopify/orders.py
+- backend/src/integrations/shopify/product_sync.py
+- backend/src/integrations/shopify/translations.py
+- backend/src/integrations/shopify/webhooks.py
+- backend/src/integrations/stripe/__init__.py
+- backend/src/integrations/stripe/client.py
+- backend/src/integrations/xero/__init__.py
+- backend/src/integrations/xero/auth.py
+- backend/src/integrations/xero/client.py
+- backend/src/integrations/xero/customers.py
+- backend/src/integrations/xero/demo_client.py
+- backend/src/integrations/xero/invoices.py
+- backend/src/integrations/xero/payments.py
+- backend/src/integrations/xero/pos_reconciliation.py
+- backend/src/integrations/xero/token_manager.py
+- backend/src/integrations/xero/webhook_security.py
+- backend/src/integrations/xero/webhooks.py
+- backend/src/monitoring/__init__.py
+- backend/src/monitoring/metrics.py
+- backend/src/rag/__init__.py
+- backend/src/rag/chunkers.py
+- backend/src/rag/models.py
+- backend/src/rag/parsers.py
+- backend/src/rag/pipeline.py
+- backend/src/rag/storage.py
+- backend/src/scheduler/bank_feed_scheduler.py
+- backend/src/security/__init__.py
+- backend/src/security/encryption.py
+- backend/src/security/webhook_verification.py
+- backend/src/services/__init__.py
+- backend/src/services/alert_manager.py
+- backend/src/services/audit_service.py
+- backend/src/services/auto_reorder.py
+- backend/src/services/autonomy_audit.py
+- backend/src/services/bank_feed_service.py
+- backend/src/services/business_metrics_service.py
+- backend/src/services/carrier_service.py
+- backend/src/services/circuit_breaker.py
+- backend/src/services/code_generation/README.md
+- backend/src/services/code_generation/__init__.py
+- backend/src/services/code_generation/context_builder.py
+- backend/src/services/code_generation/doc_generator.py
+- backend/src/services/code_generation/generator.py
+- backend/src/services/code_generation/prompts/doc_generation.txt
+- backend/src/services/code_generation/prompts/python_generation.txt
+- backend/src/services/code_generation/prompts/test_generation.txt
+- backend/src/services/code_generation/prompts/typescript_generation.txt
+- backend/src/services/code_generation/quality_checker.py
+- backend/src/services/code_generation/test_generator.py
+- backend/src/services/deployment_service.py
+- backend/src/services/document_extraction_service.py
+- backend/src/services/dunning.py
+- backend/src/services/email_audit_service.py
+- backend/src/services/email_notifications.py
+- backend/src/services/email_service.py
+- backend/src/services/embedding_service.py
+- backend/src/services/i18n_service.py
+- backend/src/services/notification_service.py
+- backend/src/services/order_state.py
+- backend/src/services/procurement_matching.py
+- backend/src/services/product_recognition_service.py
+- backend/src/services/recommendation_service.py
+- backend/src/services/reconciliation_alerts.py
+- backend/src/services/requirement_extractor.py
+- backend/src/services/requirement_tracer.py
+- backend/src/services/semantic_search_service.py
+- backend/src/services/sla_escalation.py
+- backend/src/services/sla_service.py
+- backend/src/services/sse_service.py
+- backend/src/services/system_alert_service.py
+- backend/src/services/tax_calculator.py
+- backend/src/services/webhook_service.py
+- backend/src/services/workflow_service.py
+- backend/src/services/workshop_scheduler.py
+- backend/src/state/__init__.py
+- backend/src/state/supabase.py
+- backend/src/telemetry/__init__.py
+- backend/src/telemetry/usage_tracker.py
+- backend/src/testing/__init__.py
+- backend/src/testing/shopify_mock.py
+- backend/src/testing/xero_mock.py
+- backend/src/utils/__init__.py
+- backend/src/utils/calculations.py
+- backend/src/utils/logging.py
+- backend/src/utils/supabase_client.py
+- backend/src/workflow/__init__.py
+- backend/src/workflow/engine.py
+- backend/src/workflow/models.py
+- backend/src/workflow/storage.py
+- backend/src/workflows/__init__.py
+- backend/src/workflows/pr_automation.py
+- backend/srcapimain.py
+- backend/srcapiroutesailearning.py.tmp
+- backend/start_for_testing.py
+- backend/start_load_test_server.py
+- backend/test_ai_inventory_intelligence.py
+- backend/test_api.py
+- backend/test_api_error.py
+- backend/test_customer_sync.py
+- backend/test_dashboard_data.py
+- backend/test_dashboard_data_with_failures.py
+- backend/test_db_connection.py
+- backend/test_dependency_injection.py
+- backend/test_endpoint.py
+- backend/test_expired_quote_validation.py
+- backend/test_failure_scenarios.py
+- backend/test_full_payment_flow.py
+- backend/test_google_ai_endpoints.py
+- backend/test_google_ai_integration.py
+- backend/test_insights_api.py
+- backend/test_multistore_inventory.py
+- backend/test_order_update_items_500.py
+- backend/test_outbound_shipment.json
+- backend/test_password.py
+- backend/test_payment_webhook.py
+- backend/test_po.json
+- backend/test_quote_404_issue.py
+- backend/test_quote_fixes.py
+- backend/test_quote_generate_endpoint.py
+- backend/test_quote_validation.py
+- backend/test_redis_connection.py
+- backend/test_search_performance.py
+- backend/test_shopify_connection.py
+- backend/test_shopify_integration.py
+- backend/test_supplier.json
+- backend/tests/FIXES_APPLIED.md
+- backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- backend/tests/TEST_STATUS_REPORT.md
+- backend/tests/TEST_STATUS_UPDATE.md
+- backend/tests/__init__.py
+- backend/tests/ai/test_reconciliation_agent.py
+- backend/tests/api/README_BUGFIX_TESTS.md
+- backend/tests/api/test_500_errors.py
+- backend/tests/api/test_approval_gates.py
+- backend/tests/api/test_approvals.py
+- backend/tests/api/test_approvals_integration.py
+- backend/tests/api/test_autonomous_ops.py
+- backend/tests/api/test_bank_feeds.py
+- backend/tests/api/test_bas_report.py
+- backend/tests/api/test_billing_gaps.py
+- backend/tests/api/test_build_command.py
+- backend/tests/api/test_certifications.py
+- backend/tests/api/test_command_parser.py
+- backend/tests/api/test_customer_orders.py
+- backend/tests/api/test_document_extraction.py
+- backend/tests/api/test_equipment_lifecycle.py
+- backend/tests/api/test_gap_sync.py
+- backend/tests/api/test_inventory.py
+- backend/tests/api/test_inventory_gaps.py
+- backend/tests/api/test_inventory_new_endpoints.py
+- backend/tests/api/test_inventory_uni172.py
+- backend/tests/api/test_invoice_payments.py
+- backend/tests/api/test_invoices_tax_integration.py
+- backend/tests/api/test_nl_query.py
+- backend/tests/api/test_orders_performance.py
+- backend/tests/api/test_portal.py
+- backend/tests/api/test_pos_terminals.py
+- backend/tests/api/test_pos_transactions.py
+- backend/tests/api/test_pricing_tiers.py
+- backend/tests/api/test_quote_404_errors.py
+- backend/tests/api/test_quote_422_errors.py
+- backend/tests/api/test_quote_http_methods.py
+- backend/tests/api/test_rbac.py
+- backend/tests/api/test_reconciliation_integration.py
+- backend/tests/api/test_requirement_verification.py
+- backend/tests/api/test_supplier_portal.py
+- backend/tests/api/test_tenant_isolation.py
+- backend/tests/api/test_translations.py
+- backend/tests/api/test_workflows_integration.py
+- backend/tests/api/test_workshop_routes.py
+- backend/tests/conftest.py
+- backend/tests/e2e/__init__.py
+- backend/tests/e2e/test_login_flow.py
+- backend/tests/e2e/test_order_flow.py
+- backend/tests/fixtures/__init__.py
+- backend/tests/fixtures/data.py
+- backend/tests/fixtures/pos_data.py
+- backend/tests/fixtures/shopify_fixtures.py
+- backend/tests/fixtures/xero_fixtures.py
+- backend/tests/integration/README.md
+- backend/tests/integration/__init__.py
+- backend/tests/integration/conftest.py
+- backend/tests/integration/run_all_cin7_tests.py
+- backend/tests/integration/run_phase3_tests.py
+- backend/tests/integration/run_phase4_tests.py
+- backend/tests/integration/run_phase5_tests.py
+- backend/tests/integration/run_phase6_tests.py
+- backend/tests/integration/run_phase7_tests.py
+- backend/tests/integration/run_protocol_tests.py
+- backend/tests/integration/test_ap2_integration.py
+- backend/tests/integration/test_api_endpoints.py
+- backend/tests/integration/test_autonomous_dev.py
+- backend/tests/integration/test_autonomous_pr_workflow.py
+- backend/tests/integration/test_cin7_crm_sync.py
+- backend/tests/integration/test_cin7_integration.py
+- backend/tests/integration/test_cin7_sync.py
+- backend/tests/integration/test_crm_module.py
+- backend/tests/integration/test_recommendations.py
+- backend/tests/integration/test_search.py
+- backend/tests/integration/test_shopify_extended.py
+- backend/tests/integration/test_webhooks.py
+- backend/tests/integration/test_xero_reconciliation.py
+- backend/tests/integrations/__init__.py
+- backend/tests/integrations/test_xero_token_manager.py
+- backend/tests/load/README.md
+- backend/tests/load/__init__.py
+- backend/tests/load/conftest.py
+- backend/tests/load/generators/customers.py
+- backend/tests/load/generators/misc.py
+- backend/tests/load/generators/orders.py
+- backend/tests/load/generators/products.py
+- backend/tests/load/generators/quotes.py
+- backend/tests/load/load_test_requirements.txt
+- backend/tests/load/load_test_scenarios.ps1
+- backend/tests/load/load_test_scenarios.sh
+- backend/tests/load/locustfile.py
+- backend/tests/load/locustfile_ai_features.py
+- backend/tests/load/reporters/html_reporter.py
+- backend/tests/load/reporters/json_reporter.py
+- backend/tests/load/reports/load_test_full_20260127_100548.html
+- backend/tests/load/reports/load_test_full_20260127_100548.json
+- backend/tests/load/reports/load_test_full_20260127_100703.html
+- backend/tests/load/reports/load_test_full_20260127_100703.json
+- backend/tests/load/reports/load_test_full_20260128_131600.html
+- backend/tests/load/reports/load_test_full_20260128_131600.json
+- backend/tests/load/reports/load_test_full_20260128_132757.html
+- backend/tests/load/reports/load_test_full_20260128_132757.json
+- backend/tests/load/reports/load_test_full_20260205_124803.html
+- backend/tests/load/reports/load_test_full_20260205_124803.json
+- backend/tests/load/reports/load_test_full_20260205_125037.html
+- backend/tests/load/reports/load_test_full_20260205_125037.json
+- backend/tests/load/reports/load_test_latest.html
+- backend/tests/load/reports/load_test_latest.json
+- backend/tests/load/reports/load_test_quick_20260128_122451.html
+- backend/tests/load/reports/load_test_quick_20260128_122451.json
+- backend/tests/load/reports/load_test_quick_20260205_095442.html
+- backend/tests/load/reports/load_test_quick_20260205_095442.json
+- backend/tests/load/reports/load_test_quick_20260205_193339.html
+- backend/tests/load/reports/load_test_quick_20260205_193339.json
+- backend/tests/load/reports/load_test_quick_20260205_195029.html
+- backend/tests/load/reports/load_test_quick_20260205_195029.json
+- backend/tests/load/reports/load_test_quick_20260205_212433.html
+- backend/tests/load/reports/load_test_quick_20260205_212433.json
+- backend/tests/load/reports/load_test_quick_20260205_214840.html
+- backend/tests/load/reports/load_test_quick_20260205_214840.json
+- backend/tests/load/reports/load_test_quick_20260206_000919.html
+- backend/tests/load/reports/load_test_quick_20260206_000919.json
+- backend/tests/load/reports/load_test_quick_latest.html
+- backend/tests/load/reports/load_test_quick_latest.json
+- backend/tests/load/reports/scenario_report.html
+- backend/tests/load/reports/scenario_report.json
+- backend/tests/load/run_full_load_test.py
+- backend/tests/load/run_quick_load_test.py
+- backend/tests/load/test_concurrent_number_generation.py
+- backend/tests/load/test_performance_load.py
+- backend/tests/load/test_scenarios.py
+- backend/tests/performance/__init__.py
+- backend/tests/run_integration_tests.ps1
+- backend/tests/run_integration_tests.sh
+- backend/tests/security/__init__.py
+- backend/tests/security/test_auth_security.py
+- backend/tests/security/test_encryption.py
+- backend/tests/security/test_injection_attacks.py
+- backend/tests/security/test_xss_csrf.py
+- backend/tests/services/__init__.py
+- backend/tests/services/code_generation/__init__.py
+- backend/tests/services/code_generation/test_context_builder.py
+- backend/tests/services/code_generation/test_doc_generator.py
+- backend/tests/services/code_generation/test_generator.py
+- backend/tests/services/code_generation/test_integration.py
+- backend/tests/services/code_generation/test_quality_checker.py
+- backend/tests/services/code_generation/test_test_generator.py
+- backend/tests/services/run_all_tests.py
+- backend/tests/services/test_auto_reorder.py
+- backend/tests/services/test_auto_reorder_integration.py
+- backend/tests/services/test_dunning.py
+- backend/tests/services/test_email_audit_service.py
+- backend/tests/services/test_order_state.py
+- backend/tests/services/test_procurement_matching.py
+- backend/tests/services/test_procurement_matching_integration.py
+- backend/tests/services/test_requirement_extractor.py
+- backend/tests/services/test_requirement_tracer.py
+- backend/tests/services/test_sla_escalation.py
+- backend/tests/services/test_tax_calculator.py
+- backend/tests/services/test_tax_calculator_integration.py
+- backend/tests/smoke/__init__.py
+- backend/tests/smoke/conftest.py
+- backend/tests/smoke/test_smoke.py
+- backend/tests/test_agent_orchestration.py
+- backend/tests/test_approvals_batch_2c.py
+- backend/tests/test_auth_security.py
+- backend/tests/test_autonomy_audit.py
+- backend/tests/test_autonomy_config.py
+- backend/tests/test_batch_2c_structure.py
+- backend/tests/test_billing.py
+- backend/tests/test_circuit_breaker.py
+- backend/tests/test_concurrent_number_generation.py
+- backend/tests/test_customers_api.py
+- backend/tests/test_error_handling.py
+- backend/tests/test_gap_batch_2b.py
+- backend/tests/test_gap_batch_2b_smoke.py
+- backend/tests/test_gap_batch_2c_2d.py
+- backend/tests/test_health.py
+- backend/tests/test_marketplace.py
+- backend/tests/test_orders_api.py
+- backend/tests/test_pr_automation.py
+- backend/tests/test_products_api.py
+- backend/tests/test_project_intelligence.py
+- backend/tests/test_prometheus_metrics.py
+- backend/tests/test_quotes_api.py
+- backend/tests/test_risk_assessor.py
+- backend/tests/test_rollback_mechanism.py
+- backend/tests/test_sequence_generation.py
+- backend/tests/test_shopify_mock.py
+- backend/tests/test_specialized_agents.py
+- backend/tests/test_toolshed_api.py
+- backend/tests/test_workflow_agent_integration.py
+- backend/tests/test_workflows_batch_2c.py
+- backend/tests/test_xero_mock.py
+- backend/tests/unit/test_number_generation.py
+- backend/tests/unit/test_reconciliation_logic.py
+- backend/tests/utils/__init__.py
+- backend/tests/utils/test_calculations.py
+- backend/tests/webhooks/__init__.py
+- backend/tests/webhooks/test_webhook_transactions.py
+- backend/update_supplier.json
+- backend/uv.lock
+- backend/vercel.json
+- backend/verify_i18n_migration.py
+- backend/verify_indexes.py
+- backend/verify_phase1.py
+- backend/verify_phase9_fixes.py
+- backend/verify_race_condition_fix.py
+- backend/verify_sequence_deployment.py
+- backend/verify_tables.py
+- docs/project-root/CLAUDE.md
+- eslint.config.mjs
+- lighthouserc.js
+- package.json
+- pnpm-lock.yaml
+- pnpm-workspace.yaml
+- scripts/boardroom/security-audit.js
+- scripts/dependency-checks.sh
+- scripts/deploy-phase4-backend.sh
+- scripts/deploy-phase4-frontend.sh
+- scripts/deploy.sh
+- scripts/dev-start.sh
+- scripts/dev.sh
+- scripts/health-check-phase4.sh
+- scripts/security-audit.ps1
+- scripts/setup.sh
+- scripts/test-phase4-sse.ps1
+- scripts/test-sse-events.ps1
+- scripts/test-sse-events.sh
+- scripts/verify-firewall.sh
+- scripts/verify-integration-tests.sh
+- scripts/verify-load-testing.sh
+- scripts/verify-penetration-testing.sh
+- scripts/verify-prometheus-grafana.sh
+- scripts/verify-query-performance.sh
+- scripts/verify-rate-limiting.sh
+- scripts/verify-secrets-management.sh
+- scripts/verify-secrets.sh
+- scripts/verify-security-audit.sh
+- scripts/verify-sentry.sh
+- scripts/verify-shopify-webhooks.sh
+- scripts/verify-uat.sh
+- scripts/verify-uptime-monitoring.sh
+- scripts/verify.sh
+- (staged) app/.dockerignore
+- (staged) app/.gitignore
+- (staged) app/AGENTS.md
+- (staged) app/Dockerfile
+- (staged) app/__tests__/app/approvals-page.test.tsx
+- (staged) app/__tests__/app/billing-page.test.tsx
+- (staged) app/__tests__/app/crm-health.test.tsx
+- (staged) app/__tests__/app/crm-onboarding.test.tsx
+- (staged) app/__tests__/app/crm-personas.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/ContactSubmissionsTable.test.tsx
+- (staged) app/__tests__/app/dashboard/submissions/DemoRequestsTable.test.tsx
+- (staged) app/__tests__/app/orders-integration.test.tsx
+- (staged) app/__tests__/app/quotes-integration.test.tsx
+- (staged) app/__tests__/app/reconciliation-page.test.tsx
+- (staged) app/__tests__/app/workflows-page.test.tsx
+- (staged) app/__tests__/components/EmptyState.test.tsx
+- (staged) app/__tests__/components/ErrorBoundary.test.tsx
+- (staged) app/__tests__/components/ui/pagination-controls.test.tsx
+- (staged) app/__tests__/e2e/billing.spec.ts
+- (staged) app/__tests__/e2e/onboarding.spec.ts
+- (staged) app/__tests__/lib/api/activities.test.ts
+- (staged) app/__tests__/lib/api/agents.test.ts
+- (staged) app/__tests__/lib/api/ai-chat.test.ts
+- (staged) app/__tests__/lib/api/ai-generate.test.ts
+- (staged) app/__tests__/lib/api/ai-insights.test.ts
+- (staged) app/__tests__/lib/api/ap2.test.ts
+- (staged) app/__tests__/lib/api/approvals-extended.test.ts
+- (staged) app/__tests__/lib/api/approvals.test.ts
+- (staged) app/__tests__/lib/api/auth.test.ts
+- (staged) app/__tests__/lib/api/autonomous.test.ts
+- (staged) app/__tests__/lib/api/autonomy.test.ts
+- (staged) app/__tests__/lib/api/bank-feeds.test.ts
+- (staged) app/__tests__/lib/api/billing.test.ts
+- (staged) app/__tests__/lib/api/chat.test.ts
+- (staged) app/__tests__/lib/api/cin7-bom.test.ts
+- (staged) app/__tests__/lib/api/cin7-fulfilment.test.ts
+- (staged) app/__tests__/lib/api/cin7-gl.test.ts
+- (staged) app/__tests__/lib/api/cin7-grn.test.ts
+- (staged) app/__tests__/lib/api/cin7-inventory-writeback.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow-ai.test.ts
+- (staged) app/__tests__/lib/api/cin7-shadow.test.ts
+- (staged) app/__tests__/lib/api/cin7-webhook-subscriptions.test.ts
+- (staged) app/__tests__/lib/api/cin7.test.ts
+- (staged) app/__tests__/lib/api/contacts.test.ts
+- (staged) app/__tests__/lib/api/contractors.test.ts
+- (staged) app/__tests__/lib/api/copilot.test.ts
+- (staged) app/__tests__/lib/api/customers.test.ts
+- (staged) app/__tests__/lib/api/documents.test.ts
+- (staged) app/__tests__/lib/api/inventory.test.ts
+- (staged) app/__tests__/lib/api/invoices-extended.test.ts
+- (staged) app/__tests__/lib/api/invoices.test.ts
+- (staged) app/__tests__/lib/api/marketing.test.ts
+- (staged) app/__tests__/lib/api/marketplace.test.ts
+- (staged) app/__tests__/lib/api/mobile.test.ts
+- (staged) app/__tests__/lib/api/monitoring.test.ts
+- (staged) app/__tests__/lib/api/notifications.test.ts
+- (staged) app/__tests__/lib/api/orders.test.ts
+- (staged) app/__tests__/lib/api/pos.test.ts
+- (staged) app/__tests__/lib/api/products.test.ts
+- (staged) app/__tests__/lib/api/purchase-orders.test.ts
+- (staged) app/__tests__/lib/api/quotes.test.ts
+- (staged) app/__tests__/lib/api/reconciliation.test.ts
+- (staged) app/__tests__/lib/api/sendgrid.test.ts
+- (staged) app/__tests__/lib/api/service-requests.test.ts
+- (staged) app/__tests__/lib/api/settings.test.ts
+- (staged) app/__tests__/lib/api/shadow.test.ts
+- (staged) app/__tests__/lib/api/shipments-outbound.test.ts
+- (staged) app/__tests__/lib/api/shipments.test.ts
+- (staged) app/__tests__/lib/api/shopify.test.ts
+- (staged) app/__tests__/lib/api/sla.test.ts
+- (staged) app/__tests__/lib/api/suppliers.test.ts
+- (staged) app/__tests__/lib/api/tasks.test.ts
+- (staged) app/__tests__/lib/api/team.test.ts
+- (staged) app/__tests__/lib/api/warehouse.test.ts
+- (staged) app/__tests__/lib/api/workflows-extended.test.ts
+- (staged) app/__tests__/lib/api/workflows.test.ts
+- (staged) app/__tests__/lib/api/workshop.test.ts
+- (staged) app/__tests__/lib/api/xero.test.ts
+- (staged) app/__tests__/lib/marketplace.test.ts
+- (staged) app/__tests__/lib/types/cin7.test.ts
+- (staged) app/__tests__/lib/types/marketplace.test.ts
+- (staged) app/__tests__/lib/types/reconciliation.test.ts
+- (staged) app/__tests__/lib/types/workflows.test.ts
+- (staged) app/__tests__/lib/utils/csv-export.test.ts
+- (staged) app/components.json
+- (staged) app/declarations.d.ts
+- (staged) app/e2e/README.md
+- (staged) app/e2e/auth.setup.ts
+- (staged) app/e2e/auth.spec.ts
+- (staged) app/e2e/autosave.spec.ts
+- (staged) app/e2e/billing.spec.ts
+- (staged) app/e2e/capture-error.spec.ts
+- (staged) app/e2e/crm-health.spec.ts
+- (staged) app/e2e/customers.spec.ts
+- (staged) app/e2e/debug-orders.spec.ts
+- (staged) app/e2e/fixtures/auth.ts
+- (staged) app/e2e/helpers/page-objects.ts
+- (staged) app/e2e/helpers/test-data.ts
+- (staged) app/e2e/mobile-photo-order.spec.ts
+- (staged) app/e2e/monitoring.spec.ts
+- (staged) app/e2e/orders.spec.ts
+- (staged) app/e2e/pos-reconciliation.spec.ts
+- (staged) app/e2e/pos-transactions.spec.ts
+- (staged) app/e2e/prd-generation.spec.ts
+- (staged) app/e2e/products.spec.ts
+- (staged) app/e2e/quotes.spec.ts
+- (staged) app/e2e/showroom.spec.ts
+- (staged) app/e2e/test-helper.ts
+- (staged) app/e2e/test-websocket-fix.spec.ts
+- (staged) app/e2e/warehouse.spec.ts
+- (staged) app/e2e/workshop.spec.ts
+- (staged) app/eslint.config.mjs
+- (staged) app/next-env.d.ts
+- (staged) app/next.config.ts
+- (staged) app/package.json
+- (staged) app/playwright.a11y.config.ts
+- (staged) app/playwright.config.ts
+- (staged) app/postcss.config.js
+- (staged) app/public/favicon.svg
+- (staged) app/public/manifest.json
+- (staged) app/public/test-api.html
+- (staged) app/scripts/dev-with-fallback.mjs
+- (staged) app/sentry.client.config.ts
+- (staged) app/sentry.edge.config.ts
+- (staged) app/sentry.server.config.ts
+- (staged) app/src/app/(auth)/layout.tsx
+- (staged) app/src/app/(auth)/login/page.tsx
+- (staged) app/src/app/(auth)/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/activities/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/activities/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/activities/page.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentList.tsx
+- (staged) app/src/app/(dashboard)/agents/components/AgentStats.tsx
+- (staged) app/src/app/(dashboard)/agents/components/LearningInsights.tsx
+- (staged) app/src/app/(dashboard)/agents/components/PerformanceTrends.tsx
+- (staged) app/src/app/(dashboard)/agents/components/TaskHistory.tsx
+- (staged) app/src/app/(dashboard)/agents/components/index.ts
+- (staged) app/src/app/(dashboard)/agents/page.tsx
+- (staged) app/src/app/(dashboard)/ai-assistant/page.tsx
+- (staged) app/src/app/(dashboard)/ai-ops/page.tsx
+- (staged) app/src/app/(dashboard)/ai-query/page.tsx
+- (staged) app/src/app/(dashboard)/alerts/page.tsx
+- (staged) app/src/app/(dashboard)/approvals/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous-dev/page.tsx
+- (staged) app/src/app/(dashboard)/autonomous/page.tsx
+- (staged) app/src/app/(dashboard)/backorders/page.tsx
+- (staged) app/src/app/(dashboard)/bank-feeds/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/ContactForm.tsx
+- (staged) app/src/app/(dashboard)/contacts/components/DeleteContactDialog.tsx
+- (staged) app/src/app/(dashboard)/contacts/page.tsx
+- (staged) app/src/app/(dashboard)/containers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/containers/page.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/ContractorForm.tsx
+- (staged) app/src/app/(dashboard)/contractors/components/DeleteContractorDialog.tsx
+- (staged) app/src/app/(dashboard)/contractors/page.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityForm.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/ActivityTimeline.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/components/DeleteActivityDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/customers/components/BulkDeleteCustomersDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/components/CustomerForm.tsx
+- (staged) app/src/app/(dashboard)/customers/components/DeleteCustomerDialog.tsx
+- (staged) app/src/app/(dashboard)/customers/health/page.tsx
+- (staged) app/src/app/(dashboard)/customers/layout.tsx
+- (staged) app/src/app/(dashboard)/customers/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/customers/page.tsx
+- (staged) app/src/app/(dashboard)/customers/personas/page.tsx
+- (staged) app/src/app/(dashboard)/dashboard/layout.tsx
+- (staged) app/src/app/(dashboard)/dashboard/page.tsx
+- (staged) app/src/app/(dashboard)/demo-live/page.tsx
+- (staged) app/src/app/(dashboard)/demo/contractor-demo.tsx
+- (staged) app/src/app/(dashboard)/demo/page.tsx
+- (staged) app/src/app/(dashboard)/emails/components/ConversationDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/components/EmailComposeDialog.tsx
+- (staged) app/src/app/(dashboard)/emails/page.tsx
+- (staged) app/src/app/(dashboard)/error.tsx
+- (staged) app/src/app/(dashboard)/faq/page.tsx
+- (staged) app/src/app/(dashboard)/insights/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/bom/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderPointDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/ReorderRuleDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockAdjustmentDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/components/StockTransferDialog.tsx
+- (staged) app/src/app/(dashboard)/inventory/forecast/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/reservations/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/stock/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/inventory/transfers/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/bas/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/DeleteInvoiceDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/FinancialReportTab.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceForm.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoicePrintView.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/InvoiceStatusBadge.tsx
+- (staged) app/src/app/(dashboard)/invoices/components/RecordPaymentDialog.tsx
+- (staged) app/src/app/(dashboard)/invoices/page.tsx
+- (staged) app/src/app/(dashboard)/invoices/types.ts
+- (staged) app/src/app/(dashboard)/layout.tsx
+- (staged) app/src/app/(dashboard)/loading.tsx
+- (staged) app/src/app/(dashboard)/marketing/page.tsx
+- (staged) app/src/app/(dashboard)/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/AlertCard.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/ApiPerformance.tsx
+- (staged) app/src/app/(dashboard)/monitoring/components/BusinessMetrics.tsx
+- (staged) app/src/app/(dashboard)/monitoring/page.tsx
+- (staged) app/src/app/(dashboard)/orders/[id]/invoice/page.tsx
+- (staged) app/src/app/(dashboard)/orders/components/BulkDeleteOrdersDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/DeleteOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderForm.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderPrintView.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusActions.tsx
+- (staged) app/src/app/(dashboard)/orders/components/OrderStatusTimeline.tsx
+- (staged) app/src/app/(dashboard)/orders/components/QuickCustomerAdd.tsx
+- (staged) app/src/app/(dashboard)/orders/fulfilment/page.tsx
+- (staged) app/src/app/(dashboard)/orders/layout.tsx
+- (staged) app/src/app/(dashboard)/orders/page.tsx
+- (staged) app/src/app/(dashboard)/orders/types.ts
+- (staged) app/src/app/(dashboard)/pos/components/Cart.tsx
+- (staged) app/src/app/(dashboard)/pos/components/POSTerminal.tsx
+- (staged) app/src/app/(dashboard)/pos/components/PaymentPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/components/ProductSearch.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/components/TerminalDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/locations/page.tsx
+- (staged) app/src/app/(dashboard)/pos/page.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BankAccountDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/BulkActionsPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/ExportDialog.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/components/FilterPanel.tsx
+- (staged) app/src/app/(dashboard)/pos/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/pos/staff/page.tsx
+- (staged) app/src/app/(dashboard)/pos/terminal/page.tsx
+- (staged) app/src/app/(dashboard)/pos/types.ts
+- (staged) app/src/app/(dashboard)/prd/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/prd/generate/page.tsx
+- (staged) app/src/app/(dashboard)/products/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/products/components/BulkDeleteProductsDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/DeleteProductDialog.tsx
+- (staged) app/src/app/(dashboard)/products/components/ProductForm.tsx
+- (staged) app/src/app/(dashboard)/products/layout.tsx
+- (staged) app/src/app/(dashboard)/products/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderForm.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/PurchaseOrderLineItems.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/ReceiveGoodsDialog.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/components/SupplierSelect.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/receiving/page.tsx
+- (staged) app/src/app/(dashboard)/purchase-orders/types.ts
+- (staged) app/src/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/DeleteQuoteDialog.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteForm.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuoteLineItems.tsx
+- (staged) app/src/app/(dashboard)/quotes/components/QuotePrintView.tsx
+- (staged) app/src/app/(dashboard)/quotes/generate/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/layout.tsx
+- (staged) app/src/app/(dashboard)/quotes/page.tsx
+- (staged) app/src/app/(dashboard)/quotes/types.ts
+- (staged) app/src/app/(dashboard)/reconciliation/components/PendingMatchesTable.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/components/SuggestionCard.tsx
+- (staged) app/src/app/(dashboard)/reconciliation/page.tsx
+- (staged) app/src/app/(dashboard)/reports/components/InventoryHealthDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/components/SalesKpiDashboard.tsx
+- (staged) app/src/app/(dashboard)/reports/layout.tsx
+- (staged) app/src/app/(dashboard)/reports/page.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/DeleteServiceRequestDialog.tsx
+- (staged) app/src/app/(dashboard)/service-requests/components/ServiceRequestForm.tsx
+- (staged) app/src/app/(dashboard)/service-requests/page.tsx
+- (staged) app/src/app/(dashboard)/settings/account/page.tsx
+- (staged) app/src/app/(dashboard)/settings/billing/page.tsx
+- (staged) app/src/app/(dashboard)/settings/company/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/ap2/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/AP2ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7ShadowSyncCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7SyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/Cin7WebhookSubscriptionsCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/SendGridConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifyConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/ShopifySyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroConnectionCard.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/components/XeroSyncControls.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/gl/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/marketplace/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/page.tsx
+- (staged) app/src/app/(dashboard)/settings/integrations/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/mobile/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/page.tsx
+- (staged) app/src/app/(dashboard)/settings/onboarding/wizard/page.tsx
+- (staged) app/src/app/(dashboard)/settings/setup/page.tsx
+- (staged) app/src/app/(dashboard)/settings/shadow/page.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/EditRoleDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/team/components/InviteTeamMemberForm.tsx
+- (staged) app/src/app/(dashboard)/settings/team/page.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/BulkTranslateDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/CoverageStats.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/ProductList.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationDashboard.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/components/TranslationEditDialog.tsx
+- (staged) app/src/app/(dashboard)/settings/translations/page.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/OutboundShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/components/ShipmentForm.tsx
+- (staged) app/src/app/(dashboard)/shipments/page.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/ContactSubmissionsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/DemoRequestsTable.tsx
+- (staged) app/src/app/(dashboard)/submissions/components/SubmissionDetailDialog.tsx
+- (staged) app/src/app/(dashboard)/submissions/page.tsx
+- (staged) app/src/app/(dashboard)/suppliers/components/SupplierForm.tsx
+- (staged) app/src/app/(dashboard)/suppliers/page.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/QueueStats.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskList.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSLAPanel.tsx
+- (staged) app/src/app/(dashboard)/tasks/components/TaskSubmissionForm.tsx
+- (staged) app/src/app/(dashboard)/tasks/page.tsx
+- (staged) app/src/app/(dashboard)/warehouse/page.tsx
+- (staged) app/src/app/(dashboard)/workflows/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/[id]/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/equipment/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/reminders/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/schedule/page.tsx
+- (staged) app/src/app/(dashboard)/workshop/templates/page.tsx
+- (staged) app/src/app/(guest)/layout.tsx
+- (staged) app/src/app/(guest)/order/[token]/GuestOrderClient.tsx
+- (staged) app/src/app/(guest)/order/[token]/page.tsx
+- (staged) app/src/app/(mobile)/layout.tsx
+- (staged) app/src/app/(mobile)/order/new/page.tsx
+- (staged) app/src/app/(portal)/layout.tsx
+- (staged) app/src/app/(portal)/portal/certifications/page.tsx
+- (staged) app/src/app/(portal)/portal/invoices/page.tsx
+- (staged) app/src/app/(portal)/portal/orders/page.tsx
+- (staged) app/src/app/(portal)/portal/page.tsx
+- (staged) app/src/app/(portal)/portal/service/page.tsx
+- (staged) app/src/app/(supplier)/layout.tsx
+- (staged) app/src/app/(supplier)/supplier/orders/page.tsx
+- (staged) app/src/app/(supplier)/supplier/page.tsx
+- (staged) app/src/app/api/activities/route.ts
+- (staged) app/src/app/api/activities/stats/route.ts
+- (staged) app/src/app/api/agents/insights/route.ts
+- (staged) app/src/app/api/agents/list/route.ts
+- (staged) app/src/app/api/agents/patterns/route.ts
+- (staged) app/src/app/api/agents/stats/route.ts
+- (staged) app/src/app/api/agents/tasks/recent/route.ts
+- (staged) app/src/app/api/ai/cin7-anomaly/sync-health/route.ts
+- (staged) app/src/app/api/ai/insights/dashboard/route.ts
+- (staged) app/src/app/api/ai/insights/sales/route.ts
+- (staged) app/src/app/api/ai/inventory-forecast/route.ts
+- (staged) app/src/app/api/ai/patterns/orders/route.ts
+- (staged) app/src/app/api/analytics/metrics/overview/route.ts
+- (staged) app/src/app/api/auth/login/route.ts
+- (staged) app/src/app/api/auth/logout/route.ts
+- (staged) app/src/app/api/backorders/route.ts
+- (staged) app/src/app/api/bank-feeds/accounts/route.ts
+- (staged) app/src/app/api/boardroom/cron/route.ts
+- (staged) app/src/app/api/ccw/products/route.ts
+- (staged) app/src/app/api/ccw/summary/route.ts
+- (staged) app/src/app/api/contact-submissions/route.ts
+- (staged) app/src/app/api/contacts/route.ts
+- (staged) app/src/app/api/containers/route.ts
+- (staged) app/src/app/api/cron/auto-reorder-inventory/route.ts
+- (staged) app/src/app/api/cron/check-expiring-quotes/route.ts
+- (staged) app/src/app/api/cron/check-sla-breaches/route.ts
+- (staged) app/src/app/api/cron/cleanup-old-runs/route.ts
+- (staged) app/src/app/api/cron/daily-report/route.ts
+- (staged) app/src/app/api/cron/health-check/route.ts
+- (staged) app/src/app/api/cron/nightly-full-sync/route.ts
+- (staged) app/src/app/api/cron/process-onboarding-emails/route.ts
+- (staged) app/src/app/api/cron/refresh-health-scores/route.ts
+- (staged) app/src/app/api/cron/refresh-xero-tokens/route.ts
+- (staged) app/src/app/api/cron/retry-failed-webhooks/route.ts
+- (staged) app/src/app/api/cron/run-autonomous-ops/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-cin7/route.ts
+- (staged) app/src/app/api/cron/shadow-sync-xero/route.ts
+- (staged) app/src/app/api/customers/route.ts
+- (staged) app/src/app/api/dashboard/aggregated/route.ts
+- (staged) app/src/app/api/dashboard/metrics-stream/route.ts
+- (staged) app/src/app/api/dashboard/order-status-breakdown/route.ts
+- (staged) app/src/app/api/dashboard/quote-conversion/route.ts
+- (staged) app/src/app/api/dashboard/revenue-by-location/route.ts
+- (staged) app/src/app/api/demo-requests/route.ts
+- (staged) app/src/app/api/health/route.ts
+- (staged) app/src/app/api/health/routes/route.ts
+- (staged) app/src/app/api/integrations/cin7/status/route.ts
+- (staged) app/src/app/api/integrations/cin7/stream/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/conversations/route.ts
+- (staged) app/src/app/api/integrations/sendgrid/status/route.ts
+- (staged) app/src/app/api/integrations/shopify/status/route.ts
+- (staged) app/src/app/api/integrations/xero/status/route.ts
+- (staged) app/src/app/api/inventory-stream/route.ts
+- (staged) app/src/app/api/inventory/reservations/route.ts
+- (staged) app/src/app/api/inventory/route.ts
+- (staged) app/src/app/api/inventory/stock-health/route.ts
+- (staged) app/src/app/api/inventory/transfer-suggestions/route.ts
+- (staged) app/src/app/api/inventory/transfers/route.ts
+- (staged) app/src/app/api/invoices/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/route.ts
+- (staged) app/src/app/api/monitoring/alerts/pos-failures/stream/route.ts
+- (staged) app/src/app/api/monitoring/alerts/route.ts
+- (staged) app/src/app/api/monitoring/health/route.ts
+- (staged) app/src/app/api/monitoring/metrics/route.ts
+- (staged) app/src/app/api/monitoring/range/route.ts
+- (staged) app/src/app/api/orders/route.ts
+- (staged) app/src/app/api/pos/locations/route.ts
+- (staged) app/src/app/api/pos/sales-staff/route.ts
+- (staged) app/src/app/api/pos/terminals/route.ts
+- (staged) app/src/app/api/products/route.ts
+- (staged) app/src/app/api/purchase-orders/route.ts
+- (staged) app/src/app/api/quotes/route.ts
+- (staged) app/src/app/api/submissions/statistics/route.ts
+- (staged) app/src/app/api/telemetry/route.ts
+- (staged) app/src/app/api/warehouse/ops/route.ts
+- (staged) app/src/app/api/webhooks/route.ts
+- (staged) app/src/app/api/workflows/[id]/execute/route.ts
+- (staged) app/src/app/api/workflows/[id]/route.ts
+- (staged) app/src/app/api/workflows/route.ts
+- (staged) app/src/app/dashboard-analytics/page.tsx
+- (staged) app/src/app/demo/i18n/page.tsx
+- (staged) app/src/app/design-system/page.tsx
+- (staged) app/src/app/error.tsx
+- (staged) app/src/app/favicon.ico/route.ts
+- (staged) app/src/app/globals.css
+- (staged) app/src/app/layout.tsx
+- (staged) app/src/app/not-found.tsx
+- (staged) app/src/app/page.tsx
+- (staged) app/src/app/playground/page.tsx
+- (staged) app/src/app/robots.ts
+- (staged) app/src/app/sitemap.ts
+- (staged) app/src/components/ClientOnly.tsx
+- (staged) app/src/components/ai-marketing/asset-library.tsx
+- (staged) app/src/components/ai-marketing/media-generator.tsx
+- (staged) app/src/components/ai/AIProductCopyGenerator.tsx
+- (staged) app/src/components/ai/AIQuoteGenerator.tsx
+- (staged) app/src/components/ai/QuoteCopilotChat.tsx
+- (staged) app/src/components/ai/StaffCopilotWidget.tsx
+- (staged) app/src/components/alerts/AnomalyAlert.tsx
+- (staged) app/src/components/auth/login-form.tsx
+- (staged) app/src/components/autonomous/ApprovalGateDialog.tsx
+- (staged) app/src/components/autonomous/ControlPanel.tsx
+- (staged) app/src/components/autonomous/FileChangesViewer.tsx
+- (staged) app/src/components/autonomous/PhaseTimeline.tsx
+- (staged) app/src/components/charts/CategorySalesChart.tsx
+- (staged) app/src/components/charts/RevenueChart.tsx
+- (staged) app/src/components/chat/ChatWidget.tsx
+- (staged) app/src/components/contractor-availability-live.tsx
+- (staged) app/src/components/contractor-availability.tsx
+- (staged) app/src/components/dashboard/AgentMetricsWidget.tsx
+- (staged) app/src/components/dashboard/Cin7SyncStatusWidget.tsx
+- (staged) app/src/components/dashboard/DemoVideoBanner.tsx
+- (staged) app/src/components/dashboard/DemoVideoLink.tsx
+- (staged) app/src/components/dashboard/InventoryForecastWidget.tsx
+- (staged) app/src/components/dashboard/OrderPatternsWidget.tsx
+- (staged) app/src/components/dashboard/OrderStatusBreakdownWidget.tsx
+- (staged) app/src/components/dashboard/QuoteConversionWidget.tsx
+- (staged) app/src/components/dashboard/RevenueByLocationWidget.tsx
+- (staged) app/src/components/dashboard/SalesInsightsWidget.tsx
+- (staged) app/src/components/dashboard/StockHealthWidget.tsx
+- (staged) app/src/components/dashboard/TransferSuggestionsWidget.tsx
+- (staged) app/src/components/errors/ErrorBoundary.tsx
+- (staged) app/src/components/forms/AutoFillSuggestion.tsx
+- (staged) app/src/components/insights/insight-card.tsx
+- (staged) app/src/components/inventory/LocationAwareProductSelect.tsx
+- (staged) app/src/components/inventory/MultiLocationStockCell.tsx
+- (staged) app/src/components/inventory/ReleaseReservationDialog.tsx
+- (staged) app/src/components/inventory/StockReservationDialog.tsx
+- (staged) app/src/components/inventory/TransferStatusBadge.tsx
+- (staged) app/src/components/landing/AnimatedCounter.tsx
+- (staged) app/src/components/landing/LiveStatsBar.tsx
+- (staged) app/src/components/layout/LanguageSwitcher.tsx
+- (staged) app/src/components/layout/NotificationBell.tsx
+- (staged) app/src/components/layout/ShadowModeBanner.tsx
+- (staged) app/src/components/layout/footer.tsx
+- (staged) app/src/components/layout/mobile-nav.tsx
+- (staged) app/src/components/layout/sidebar.tsx
+- (staged) app/src/components/marketing/feature-grid.tsx
+- (staged) app/src/components/marketing/hero-section.tsx
+- (staged) app/src/components/marketing/index.ts
+- (staged) app/src/components/marketing/testimonials.tsx
+- (staged) app/src/components/mobile/PhotoCaptureWidget.tsx
+- (staged) app/src/components/onboarding/CompanySetupStep.tsx
+- (staged) app/src/components/onboarding/FirstQuoteStep.tsx
+- (staged) app/src/components/onboarding/OnboardingWizard.tsx
+- (staged) app/src/components/onboarding/SampleDataStep.tsx
+- (staged) app/src/components/onboarding/ShopifyConnectStep.tsx
+- (staged) app/src/components/onboarding/TeamInviteStep.tsx
+- (staged) app/src/components/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-detail-view.tsx
+- (staged) app/src/components/prd/prd-generation-progress.tsx
+- (staged) app/src/components/prd/prd-generator-form.tsx
+- (staged) app/src/components/providers/i18n-provider.tsx
+- (staged) app/src/components/responsive-table/ResponsiveTable.tsx
+- (staged) app/src/components/responsive-table/index.ts
+- (staged) app/src/components/seo/FaqSchema.tsx
+- (staged) app/src/components/seo/JsonLd.tsx
+- (staged) app/src/components/transitions/FadeIn.tsx
+- (staged) app/src/components/transitions/PageTransition.tsx
+- (staged) app/src/components/transitions/RouteProgressBar.tsx
+- (staged) app/src/components/transitions/index.ts
+- (staged) app/src/components/ui/alert-dialog.tsx
+- (staged) app/src/components/ui/alert.tsx
+- (staged) app/src/components/ui/avatar.tsx
+- (staged) app/src/components/ui/badge.tsx
+- (staged) app/src/components/ui/bento-grid.tsx
+- (staged) app/src/components/ui/border-beam.tsx
+- (staged) app/src/components/ui/breadcrumb.tsx
+- (staged) app/src/components/ui/button.tsx
+- (staged) app/src/components/ui/card.tsx
+- (staged) app/src/components/ui/checkbox.tsx
+- (staged) app/src/components/ui/command-palette.tsx
+- (staged) app/src/components/ui/command.tsx
+- (staged) app/src/components/ui/dialog.tsx
+- (staged) app/src/components/ui/draft-recovery-alert.tsx
+- (staged) app/src/components/ui/dropdown-menu.tsx
+- (staged) app/src/components/ui/empty-state.tsx
+- (staged) app/src/components/ui/form.tsx
+- (staged) app/src/components/ui/input.tsx
+- (staged) app/src/components/ui/label.tsx
+- (staged) app/src/components/ui/loading.tsx
+- (staged) app/src/components/ui/motion.tsx
+- (staged) app/src/components/ui/order-status-badge.tsx
+- (staged) app/src/components/ui/pagination-controls.tsx
+- (staged) app/src/components/ui/popover.tsx
+- (staged) app/src/components/ui/progress.tsx
+- (staged) app/src/components/ui/real-time-indicator.tsx
+- (staged) app/src/components/ui/scroll-area.tsx
+- (staged) app/src/components/ui/select.tsx
+- (staged) app/src/components/ui/separator.tsx
+- (staged) app/src/components/ui/sheet.tsx
+- (staged) app/src/components/ui/skeleton.tsx
+- (staged) app/src/components/ui/switch.tsx
+- (staged) app/src/components/ui/table.tsx
+- (staged) app/src/components/ui/tabs.tsx
+- (staged) app/src/components/ui/textarea.tsx
+- (staged) app/src/components/ui/toast.tsx
+- (staged) app/src/components/ui/tooltip.tsx
+- (staged) app/src/components/workflow/canvas/workflow-canvas.tsx
+- (staged) app/src/components/workflow/nodes/agent-node.tsx
+- (staged) app/src/components/workflow/nodes/conditional-node.tsx
+- (staged) app/src/components/workflow/nodes/end-node.tsx
+- (staged) app/src/components/workflow/nodes/llm-node.tsx
+- (staged) app/src/components/workflow/nodes/start-node.tsx
+- (staged) app/src/components/workflow/nodes/tool-node.tsx
+- (staged) app/src/contexts/websocket-context.tsx
+- (staged) app/src/hooks/use-barcode-scanner.ts
+- (staged) app/src/hooks/use-chat.ts
+- (staged) app/src/hooks/use-line-item-calculations.ts
+- (staged) app/src/hooks/use-prd-generation.ts
+- (staged) app/src/hooks/use-toast.ts
+- (staged) app/src/i18n/config.ts
+- (staged) app/src/i18n/messages/ar.json
+- (staged) app/src/i18n/messages/en.json
+- (staged) app/src/i18n/messages/es.json
+- (staged) app/src/i18n/messages/hi.json
+- (staged) app/src/i18n/messages/pt.json
+- (staged) app/src/i18n/messages/ta.json
+- (staged) app/src/i18n/messages/te.json
+- (staged) app/src/i18n/messages/vi.json
+- (staged) app/src/i18n/messages/zh-CN.json
+- (staged) app/src/i18n/messages/zh-TW.json
+- (staged) app/src/i18n/request.ts
+- (staged) app/src/instrumentation.ts
+- (staged) app/src/lib/agents/independent-verifier.ts
+- (staged) app/src/lib/api/activities.ts
+- (staged) app/src/lib/api/agents.ts
+- (staged) app/src/lib/api/ai-chat.ts
+- (staged) app/src/lib/api/ai-generate.ts
+- (staged) app/src/lib/api/ai-insights.ts
+- (staged) app/src/lib/api/ap2.ts
+- (staged) app/src/lib/api/approvals.ts
+- (staged) app/src/lib/api/auth.ts
+- (staged) app/src/lib/api/autonomous.ts
+- (staged) app/src/lib/api/autonomy.ts
+- (staged) app/src/lib/api/backend-url.ts
+- (staged) app/src/lib/api/backend.ts
+- (staged) app/src/lib/api/bank-feeds.ts
+- (staged) app/src/lib/api/billing.ts
+- (staged) app/src/lib/api/chat.ts
+- (staged) app/src/lib/api/cin7-bom.ts
+- (staged) app/src/lib/api/cin7-fulfilment.ts
+- (staged) app/src/lib/api/cin7-gl.ts
+- (staged) app/src/lib/api/cin7-grn.ts
+- (staged) app/src/lib/api/cin7-inventory-writeback.ts
+- (staged) app/src/lib/api/cin7-shadow-ai.ts
+- (staged) app/src/lib/api/cin7-shadow.ts
+- (staged) app/src/lib/api/cin7-webhook-subscriptions.ts
+- (staged) app/src/lib/api/cin7.ts
+- (staged) app/src/lib/api/client.ts
+- (staged) app/src/lib/api/contacts.ts
+- (staged) app/src/lib/api/contractors.ts
+- (staged) app/src/lib/api/copilot.ts
+- (staged) app/src/lib/api/customers.ts
+- (staged) app/src/lib/api/documents.ts
+- (staged) app/src/lib/api/heygen.ts
+- (staged) app/src/lib/api/index.ts
+- (staged) app/src/lib/api/inventory.ts
+- (staged) app/src/lib/api/invoices.ts
+- (staged) app/src/lib/api/marketing.ts
+- (staged) app/src/lib/api/marketplace.ts
+- (staged) app/src/lib/api/middleware.ts
+- (staged) app/src/lib/api/mobile.ts
+- (staged) app/src/lib/api/monitoring.ts
+- (staged) app/src/lib/api/notifications.ts
+- (staged) app/src/lib/api/orders.ts
+- (staged) app/src/lib/api/pos.ts
+- (staged) app/src/lib/api/products.ts
+- (staged) app/src/lib/api/purchase-orders.ts
+- (staged) app/src/lib/api/quotes.ts
+- (staged) app/src/lib/api/sendgrid.ts
+- (staged) app/src/lib/api/server.ts
+- (staged) app/src/lib/api/service-requests.ts
+- (staged) app/src/lib/api/settings.ts
+- (staged) app/src/lib/api/shadow.ts
+- (staged) app/src/lib/api/shipments-outbound.ts
+- (staged) app/src/lib/api/shipments.ts
+- (staged) app/src/lib/api/shopify.ts
+- (staged) app/src/lib/api/sla.ts
+- (staged) app/src/lib/api/suppliers.ts
+- (staged) app/src/lib/api/tasks.ts
+- (staged) app/src/lib/api/team.ts
+- (staged) app/src/lib/api/warehouse.ts
+- (staged) app/src/lib/api/workflows.ts
+- (staged) app/src/lib/api/workshop.ts
+- (staged) app/src/lib/api/xero.ts
+- (staged) app/src/lib/audit/api-route-auditor.ts
+- (staged) app/src/lib/audit/user-journey-runner.ts
+- (staged) app/src/lib/audit/ux-friction-detector.ts
+- (staged) app/src/lib/australian-context.ts
+- (staged) app/src/lib/config.ts
+- (staged) app/src/lib/design-system/config.ts
+- (staged) app/src/lib/design-system/index.ts
+- (staged) app/src/lib/design-system/library-registry.ts
+- (staged) app/src/lib/design-system/pattern-validator.ts
+- (staged) app/src/lib/hooks/use-autonomy-metrics.ts
+- (staged) app/src/lib/hooks/use-autosave.ts
+- (staged) app/src/lib/hooks/use-cin7-stream.ts
+- (staged) app/src/lib/hooks/use-form-autofill.ts
+- (staged) app/src/lib/hooks/use-inventory-forecast.ts
+- (staged) app/src/lib/hooks/use-recent-items.ts
+- (staged) app/src/lib/hooks/use-search-state.ts
+- (staged) app/src/lib/hooks/use-sse.ts
+- (staged) app/src/lib/hooks/use-websocket.ts
+- (staged) app/src/lib/image-generation/asset-manager.ts
+- (staged) app/src/lib/image-generation/types.ts
+- (staged) app/src/lib/logger.ts
+- (staged) app/src/lib/supabase/client.ts
+- (staged) app/src/lib/supabase/server.ts
+- (staged) app/src/lib/telemetry.ts
+- (staged) app/src/lib/tools/index.ts
+- (staged) app/src/lib/types/activities.ts
+- (staged) app/src/lib/types/cin7.ts
+- (staged) app/src/lib/types/contacts.ts
+- (staged) app/src/lib/types/inventory.ts
+- (staged) app/src/lib/types/invoices.ts
+- (staged) app/src/lib/types/marketplace.ts
+- (staged) app/src/lib/types/reconciliation.ts
+- (staged) app/src/lib/types/workflows.ts
+- (staged) app/src/lib/utils.test.ts
+- (staged) app/src/lib/utils.ts
+- (staged) app/src/lib/utils/calculations.test.ts
+- (staged) app/src/lib/utils/calculations.ts
+- (staged) app/src/lib/utils/csv-export.ts
+- (staged) app/src/lib/utils/debounce.ts
+- (staged) app/src/lib/utils/draft-storage.ts
+- (staged) app/src/lib/utils/storage.ts
+- (staged) app/src/middleware.ts
+- (staged) app/src/styles/design-system.css
+- (staged) app/src/types/contractor.ts
+- (staged) app/src/types/index.ts
+- (staged) app/src/types/prd.ts
+- (staged) app/src/types/workflow.ts
+- (staged) app/tailwind.config.ts
+- (staged) app/tests/accessibility/a11y.spec.ts
+- (staged) app/tests/e2e/approvals.spec.ts
+- (staged) app/tests/e2e/error-handling.spec.ts
+- (staged) app/tests/e2e/invoices.spec.ts
+- (staged) app/tests/e2e/reconciliation.spec.ts
+- (staged) app/tests/e2e/workflows.spec.ts
+- (staged) app/tests/visual/components.visual.spec.ts
+- (staged) app/tsconfig.json
+- (staged) app/vercel.json
+- (staged) app/vitest.config.ts
+- (staged) app/vitest.d.ts
+- (staged) app/vitest.setup.ts
+- (staged) apps/web/lib/australian-context.ts
+- (staged) backend/.claude/memory/context-snapshot.md
+- (staged) backend/.gitignore
+- (staged) backend/.python-version
+- (staged) backend/.vercelignore
+- (staged) backend/=0.39.0
+- (staged) backend/=6.11.0
+- (staged) backend/AGENTS.md
+- (staged) "backend/C\357\200\272UsersPhillAppDataLocalTemptest_failures.txt"
+- (staged) backend/Dockerfile
+- (staged) backend/ISSUE-4-COMPLETION.md
+- (staged) backend/ISSUE-5-COMPLETION.md
+- (staged) backend/Procfile
+- (staged) backend/alembic.ini
+- (staged) backend/alembic/README
+- (staged) backend/alembic/env.py
+- (staged) backend/alembic/script.py.mako
+- (staged) backend/alembic/versions/001_add_approvals.py
+- (staged) backend/alembic/versions/002_add_semantic_search.py
+- (staged) backend/alembic/versions/003_add_missing_trigram_indexes.py
+- (staged) backend/alembic/versions/004_add_product_sync_bidirectional.py
+- (staged) backend/alembic/versions/005_add_shopify_extended_tables.py
+- (staged) backend/alembic/versions/006_add_mobile_order_tables.py
+- (staged) backend/alembic/versions/007_add_workflow_notification_indexes.py
+- (staged) backend/alembic/versions/008_merge_heads.py
+- (staged) backend/alembic/versions/009_add_pos_tables.py
+- (staged) backend/alembic/versions/00a_rename_invoice_date.py
+- (staged) backend/alembic/versions/00b_add_missing_inventory_tables.py
+- (staged) backend/alembic/versions/00c_add_equipment_lifecycle_tables.py
+- (staged) backend/alembic/versions/00d_add_certification_tables.py
+- (staged) backend/alembic/versions/00e_add_prd_tables.py
+- (staged) backend/alembic/versions/00f_add_pricing_tier_tables.py
+- (staged) backend/alembic/versions/00g_fix_product_variants_updated_at.py
+- (staged) backend/alembic/versions/28a0fb9f5a0a_add_background_jobs_table.py
+- (staged) backend/alembic/versions/4b2f1c8d9a01_add_order_activity_table.py
+- (staged) backend/alembic/versions/68d51946645a_create_erp_schema.py
+- (staged) backend/alembic/versions/7a9c1d2e3f4b_add_inventory_tables.py
+- (staged) backend/alembic/versions/a3f92b1e4d8c_add_ai_tables_for_langraph.py
+- (staged) backend/alembic/versions/b8c4e2f9a1d3_add_learning_engine_tables.py
+- (staged) backend/alembic/versions/bb5f3d8c8a16_add_invoicing_tables.py
+- (staged) backend/alembic/versions/c5d3e4f9b2a4_add_xero_integration_tables.py
+- (staged) backend/alembic/versions/d4f7a9b2e5c1_add_container_tracking_and_backorders.py
+- (staged) backend/alembic/versions/e0d600e2ca45_add_subtotal_and_tax_to_orders.py
+- (staged) backend/alembic/versions/e6f8a2b3c7d9_add_performance_indexes.py
+- (staged) backend/alembic/versions/f1g2h3i4j5k6_add_crm_contacts_activities.py
+- (staged) backend/alembic/versions/f25b3ce9e866_add_supplier_and_shipment_tracking.py
+- (staged) backend/alembic/versions/week2_add_timestamps_and_fk_indexes.py
+- (staged) backend/analyze_404_errors.py
+- (staged) backend/analyze_422_errors.py
+- (staged) backend/analyze_500_errors.py
+- (staged) backend/apply_i18n_migration.py
+- (staged) backend/apply_i18n_migration_v2.py
+- (staged) backend/apply_indexes.py
+- (staged) backend/apply_indexes_via_backend.py
+- (staged) backend/apply_pos_migration.py
+- (staged) backend/apply_search_indexes.py
+- (staged) backend/apply_sequences_migration.py
+- (staged) backend/benchmarks/after_indexes.txt
+- (staged) backend/benchmarks/before_indexes.txt
+- (staged) backend/benchmarks/comparison.md
+- (staged) backend/check_404_in_full_report.py
+- (staged) backend/check_backend_config.py
+- (staged) backend/check_categories.py
+- (staged) backend/check_db.py
+- (staged) backend/check_enum_def.py
+- (staged) backend/check_orders.py
+- (staged) backend/check_results.py
+- (staged) backend/check_runtime_config.py
+- (staged) backend/check_schema.py
+- (staged) backend/check_tables.py
+- (staged) backend/check_test_status.py
+- (staged) backend/cleanup_db.py
+- (staged) backend/conftest.py
+- (staged) backend/count_data.py
+- (staged) backend/create_admin.py
+- (staged) backend/create_demo_orders.py
+- (staged) backend/create_demo_orders_simple.py
+- (staged) backend/create_inventory_tables.py
+- (staged) backend/create_service_tables.py
+- (staged) backend/debug_response.py
+- (staged) backend/diagnose_db_connection.py
+- (staged) backend/docs/ISS-005-VERIFICATION.md
+- (staged) backend/docs/ISS-006-VERIFICATION.md
+- (staged) backend/docs/ISS-007-VERIFICATION.md
+- (staged) backend/docs/ISS-008-SHOPIFY-AUTH-GUIDE.md
+- (staged) backend/docs/ISS-009-BIDIRECTIONAL-SYNC-GUIDE.md
+- (staged) backend/docs/ISS-010-REALTIME-INVENTORY-SYNC-GUIDE.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-03.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-16.md
+- (staged) backend/docs/PRD-CCW-GAPS-2026-03-24.md
+- (staged) backend/examples/use_agentic_layer.py
+- (staged) backend/fix_categories.py
+- (staged) backend/fix_categories_uppercase.py
+- (staged) backend/generate_endpoint.py
+- (staged) backend/generate_failures.py
+- (staged) backend/generate_password_hash.py
+- (staged) backend/inject_failure_patterns.py
+- (staged) backend/inject_insights_directly.py
+- (staged) backend/inject_test_data.py
+- (staged) backend/inject_test_failures.py
+- (staged) backend/list_google_models.py
+- (staged) backend/load_test_output.txt
+- (staged) backend/migrations/001_add_search_indexes.sql
+- (staged) backend/migrations/001_rollback.sql
+- (staged) backend/migrations/README.md
+- (staged) backend/migrations/add_ai_search.sql
+- (staged) backend/migrations/add_ap2_integration.sql
+- (staged) backend/migrations/add_auto_sync_enhancements.sql
+- (staged) backend/migrations/add_email_audit_tables.sql
+- (staged) backend/migrations/add_foreign_key_indexes.sql
+- (staged) backend/migrations/add_i18n_support.sql
+- (staged) backend/migrations/add_missing_fk_indexes.sql
+- (staged) backend/migrations/add_performance_indexes.sql
+- (staged) backend/migrations/add_phase4_inventory_indexes.sql
+- (staged) backend/migrations/add_portal_forms_tables.sql
+- (staged) backend/migrations/add_pos_system.sql
+- (staged) backend/migrations/add_search_indexes.sql
+- (staged) backend/migrations/add_sequences_for_numbers.sql
+- (staged) backend/migrations/add_shopify_extended.sql
+- (staged) backend/migrations/add_submission_notes_table.sql
+- (staged) backend/migrations/add_trigram_indexes.sql
+- (staged) backend/migrations/add_webhook_events_table.sql
+- (staged) backend/migrations/seed_ccw_products.sql
+- (staged) backend/migrations/week2_add_timestamps_and_fk_indexes.sql
+- (staged) backend/migrations/week3_enum_standardization.sql
+- (staged) backend/migrations/week3_timezone_standardization.sql
+- (staged) backend/pyproject.toml
+- (staged) backend/pytest.ini
+- (staged) backend/railway.json
+- (staged) backend/requirements.txt
+- (staged) backend/reset_admin_password.py
+- (staged) backend/run-setup-memory.ps1
+- (staged) backend/run-tests.ps1
+- (staged) backend/run_bugfix_tests.ps1
+- (staged) backend/run_bugfix_tests.sh
+- (staged) backend/run_migrations.py
+- (staged) backend/scripts/analyze_query_performance.py
+- (staged) backend/scripts/apply_foreign_key_indexes.py
+- (staged) backend/scripts/apply_phase4_indexes.py
+- (staged) backend/scripts/apply_trigram_indexes.py
+- (staged) backend/scripts/benchmark_search.py
+- (staged) backend/scripts/create_container_tables.sql
+- (staged) backend/scripts/create_sample_orders.py
+- (staged) backend/scripts/create_sample_quotes.py
+- (staged) backend/scripts/explain_queries.sh
+- (staged) backend/scripts/identify_500_sources.py
+- (staged) backend/scripts/implement_query_optimizations.md
+- (staged) backend/scripts/import_ccwonline_products.py
+- (staged) backend/scripts/insert_container_sample_data.sql
+- (staged) backend/scripts/integration_test_iss001.py
+- (staged) backend/scripts/monitor_indexes.py
+- (staged) backend/scripts/run_sql.py
+- (staged) backend/scripts/seed_ccw_cleaning.py
+- (staged) backend/scripts/seed_ccw_products.py
+- (staged) backend/scripts/setup-memory.py
+- (staged) backend/scripts/test_iss005_fixes.py
+- (staged) backend/scripts/validate_autosave_implementation.py
+- (staged) backend/scripts/validate_iss001_fix.py
+- (staged) backend/scripts/validate_iss003_actual.py
+- (staged) backend/scripts/validate_iss003_fix.py
+- (staged) backend/scripts/validate_iss005_fix.py
+- (staged) backend/scripts/verify_iss005_code.py
+- (staged) backend/scripts/verify_query_optimizations.py
+- (staged) backend/seed_data.py
+- (staged) backend/seed_demo_simple.sql
+- (staged) backend/seed_orders.py
+- (staged) backend/show_customers.py
+- (staged) backend/show_orders.py
+- (staged) backend/show_products.py
+- (staged) backend/show_quotes.py
+- (staged) backend/src/__init__.py
+- (staged) backend/src/agents/prd/__init__.py
+- (staged) backend/src/agents/prd/analysis_agent.py
+- (staged) backend/src/agents/prd/feature_decomposer.py
+- (staged) backend/src/agents/prd/prd_orchestrator.py
+- (staged) backend/src/agents/prd/roadmap_planner.py
+- (staged) backend/src/agents/prd/tech_spec_generator.py
+- (staged) backend/src/agents/prd/test_generator.py
+- (staged) backend/src/ai/__init__.py
+- (staged) backend/src/ai/agents/chat_assistant.py
+- (staged) backend/src/ai/agents/chat_state.py
+- (staged) backend/src/ai/agents/content_generator.py
+- (staged) backend/src/ai/agents/content_state.py
+- (staged) backend/src/ai/agents/insights_agent.py
+- (staged) backend/src/ai/agents/insights_state.py
+- (staged) backend/src/ai/agents/risk_assessor.py
+- (staged) backend/src/ai/agents/rollback_agent.py
+- (staged) backend/src/ai/agents/specialized/__init__.py
+- (staged) backend/src/ai/agents/specialized/anomaly_detection_agent.py
+- (staged) backend/src/ai/agents/specialized/autonomous_ops_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_anomaly_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/cin7_shadow_agent.py
+- (staged) backend/src/ai/agents/specialized/development_agent.py
+- (staged) backend/src/ai/agents/specialized/document_parser_agent.py
+- (staged) backend/src/ai/agents/specialized/form_autofill_agent.py
+- (staged) backend/src/ai/agents/specialized/inventory_forecasting_agent.py
+- (staged) backend/src/ai/agents/specialized/marketing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_agent.py
+- (staged) backend/src/ai/agents/specialized/pricing_state.py
+- (staged) backend/src/ai/agents/specialized/procurement_agent.py
+- (staged) backend/src/ai/agents/specialized/procurement_state.py
+- (staged) backend/src/ai/agents/specialized/project_intelligence_agent.py
+- (staged) backend/src/ai/agents/specialized/query_agent.py
+- (staged) backend/src/ai/agents/specialized/recommendation_agent.py
+- (staged) backend/src/ai/agents/specialized/reconciliation_agent.py
+- (staged) backend/src/ai/agents/specialized/search_agent.py
+- (staged) backend/src/ai/agents/specialized/staff_copilot_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_agent.py
+- (staged) backend/src/ai/agents/specialized/task_executor_state.py
+- (staged) backend/src/ai/agents/specialized/testing_agent.py
+- (staged) backend/src/ai/base_agent.py
+- (staged) backend/src/ai/generators/__init__.py
+- (staged) backend/src/ai/generators/email_generator.py
+- (staged) backend/src/ai/generators/quote_generator.py
+- (staged) backend/src/ai/learning/__init__.py
+- (staged) backend/src/ai/learning/learning_engine.py
+- (staged) backend/src/ai/learning/learning_repository.py
+- (staged) backend/src/ai/monitoring/__init__.py
+- (staged) backend/src/ai/monitoring/health_monitor.py
+- (staged) backend/src/ai/monitoring/metrics_collector.py
+- (staged) backend/src/ai/ollama_client.py
+- (staged) backend/src/ai/orchestration/__init__.py
+- (staged) backend/src/ai/orchestration/agent_registry.py
+- (staged) backend/src/ai/orchestration/autonomous_loop.py
+- (staged) backend/src/ai/orchestration/project_orchestrator.py
+- (staged) backend/src/ai/orchestration/supervisor_agent.py
+- (staged) backend/src/ai/orchestration/supervisor_state.py
+- (staged) backend/src/ai/prompts/__init__.py
+- (staged) backend/src/ai/prompts/system_prompts.py
+- (staged) backend/src/ai/protocol/__init__.py
+- (staged) backend/src/ai/protocol/confidence.py
+- (staged) backend/src/ai/protocol/error_handler.py
+- (staged) backend/src/ai/protocol/governor.py
+- (staged) backend/src/ai/protocol/message_bus.py
+- (staged) backend/src/ai/protocol/models.py
+- (staged) backend/src/ai/tools/__init__.py
+- (staged) backend/src/ai/tools/analytics_tools.py
+- (staged) backend/src/ai/tools/base.py
+- (staged) backend/src/ai/tools/erp_tools.py
+- (staged) backend/src/ai/tools/execution_tools.py
+- (staged) backend/src/ai/tools/inventory_intelligence.py
+- (staged) backend/src/ai/tools/pricing_tools.py
+- (staged) backend/src/ai/tools/procurement_tools.py
+- (staged) backend/src/api/__init__.py
+- (staged) backend/src/api/debug_main.py
+- (staged) backend/src/api/deps.py
+- (staged) backend/src/api/exceptions.py
+- (staged) backend/src/api/main.py
+- (staged) backend/src/api/middleware/__init__.py
+- (staged) backend/src/api/middleware/auth.py
+- (staged) backend/src/api/middleware/performance.py
+- (staged) backend/src/api/middleware/rate_limit.py
+- (staged) backend/src/api/middleware/rbac.py
+- (staged) backend/src/api/middleware/request_id.py
+- (staged) backend/src/api/middleware/security_headers.py
+- (staged) backend/src/api/middleware/tenant_isolation.py
+- (staged) backend/src/api/routers/prd.py
+- (staged) backend/src/api/routes/__init__.py
+- (staged) backend/src/api/routes/activities.py
+- (staged) backend/src/api/routes/agents_monitor.py
+- (staged) backend/src/api/routes/ai/__init__.py
+- (staged) backend/src/api/routes/ai/anomaly.py
+- (staged) backend/src/api/routes/ai/approval_gates.py
+- (staged) backend/src/api/routes/ai/assets.py
+- (staged) backend/src/api/routes/ai/autonomous_ops.py
+- (staged) backend/src/api/routes/ai/build_command.py
+- (staged) backend/src/api/routes/ai/chat.py
+- (staged) backend/src/api/routes/ai/cin7_anomaly.py
+- (staged) backend/src/api/routes/ai/cin7_forecast.py
+- (staged) backend/src/api/routes/ai/cin7_shadow_ai.py
+- (staged) backend/src/api/routes/ai/command_parser.py
+- (staged) backend/src/api/routes/ai/document_parser.py
+- (staged) backend/src/api/routes/ai/form_autofill.py
+- (staged) backend/src/api/routes/ai/gap_sync.py
+- (staged) backend/src/api/routes/ai/generate.py
+- (staged) backend/src/api/routes/ai/insights.py
+- (staged) backend/src/api/routes/ai/inventory_forecast.py
+- (staged) backend/src/api/routes/ai/learning.py
+- (staged) backend/src/api/routes/ai/marketing_ai.py
+- (staged) backend/src/api/routes/ai/monitoring.py
+- (staged) backend/src/api/routes/ai/project_intelligence.py
+- (staged) backend/src/api/routes/ai/protocol.py
+- (staged) backend/src/api/routes/ai/query.py
+- (staged) backend/src/api/routes/ai/requirement_verification.py
+- (staged) backend/src/api/routes/ai/specialized.py
+- (staged) backend/src/api/routes/ai/staff_copilot.py
+- (staged) backend/src/api/routes/ai/supervisor.py
+- (staged) backend/src/api/routes/ai/test_data.py
+- (staged) backend/src/api/routes/ai/test_failures.py
+- (staged) backend/src/api/routes/ai/toolshed.py
+- (staged) backend/src/api/routes/ai/toolshed_vault.py
+- (staged) backend/src/api/routes/analytics.py
+- (staged) backend/src/api/routes/approvals.py
+- (staged) backend/src/api/routes/audit_trail.py
+- (staged) backend/src/api/routes/autonomous_dev.py
+- (staged) backend/src/api/routes/autonomy_metrics.py
+- (staged) backend/src/api/routes/backorders.py
+- (staged) backend/src/api/routes/bank_feeds.py
+- (staged) backend/src/api/routes/billing.py
+- (staged) backend/src/api/routes/boardroom.py
+- (staged) backend/src/api/routes/certifications.py
+- (staged) backend/src/api/routes/chat.py
+- (staged) backend/src/api/routes/config.py
+- (staged) backend/src/api/routes/contacts.py
+- (staged) backend/src/api/routes/containers.py
+- (staged) backend/src/api/routes/contractors.py
+- (staged) backend/src/api/routes/crm_health.py
+- (staged) backend/src/api/routes/crm_onboarding.py
+- (staged) backend/src/api/routes/crm_personas.py
+- (staged) backend/src/api/routes/cron_jobs.py
+- (staged) backend/src/api/routes/customer_orders.py
+- (staged) backend/src/api/routes/customers.py
+- (staged) backend/src/api/routes/dashboard_stream.py
+- (staged) backend/src/api/routes/demo_auth.py
+- (staged) backend/src/api/routes/demo_dashboard.py
+- (staged) backend/src/api/routes/demo_lists.py
+- (staged) backend/src/api/routes/documents.py
+- (staged) backend/src/api/routes/email_audit.py
+- (staged) backend/src/api/routes/equipment_lifecycle.py
+- (staged) backend/src/api/routes/google_ai.py
+- (staged) backend/src/api/routes/health.py
+- (staged) backend/src/api/routes/integrations/__init__.py
+- (staged) backend/src/api/routes/integrations/ap2.py
+- (staged) backend/src/api/routes/integrations/cin7.py
+- (staged) backend/src/api/routes/integrations/cin7_bom.py
+- (staged) backend/src/api/routes/integrations/cin7_crm.py
+- (staged) backend/src/api/routes/integrations/cin7_fulfilment.py
+- (staged) backend/src/api/routes/integrations/cin7_gl.py
+- (staged) backend/src/api/routes/integrations/cin7_grn.py
+- (staged) backend/src/api/routes/integrations/cin7_inventory_writeback.py
+- (staged) backend/src/api/routes/integrations/cin7_line_items.py
+- (staged) backend/src/api/routes/integrations/cin7_procurement.py
+- (staged) backend/src/api/routes/integrations/cin7_shadow_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_stream.py
+- (staged) backend/src/api/routes/integrations/cin7_sync.py
+- (staged) backend/src/api/routes/integrations/cin7_webhook_subscriptions.py
+- (staged) backend/src/api/routes/integrations/cin7_webhooks.py
+- (staged) backend/src/api/routes/integrations/elevenlabs.py
+- (staged) backend/src/api/routes/integrations/heygen.py
+- (staged) backend/src/api/routes/integrations/marketplace.py
+- (staged) backend/src/api/routes/integrations/sendgrid.py
+- (staged) backend/src/api/routes/integrations/shopify.py
+- (staged) backend/src/api/routes/integrations/shopify_theme.py
+- (staged) backend/src/api/routes/integrations/xero.py
+- (staged) backend/src/api/routes/inventory.py
+- (staged) backend/src/api/routes/inventory_stream.py
+- (staged) backend/src/api/routes/invoice_payments.py
+- (staged) backend/src/api/routes/invoices.py
+- (staged) backend/src/api/routes/jobs.py
+- (staged) backend/src/api/routes/mobile/__init__.py
+- (staged) backend/src/api/routes/mobile/guest_orders.py
+- (staged) backend/src/api/routes/monitoring/__init__.py
+- (staged) backend/src/api/routes/monitoring/alerts.py
+- (staged) backend/src/api/routes/monitoring/business_metrics.py
+- (staged) backend/src/api/routes/monitoring/infrastructure.py
+- (staged) backend/src/api/routes/monitoring/performance.py
+- (staged) backend/src/api/routes/notifications.py
+- (staged) backend/src/api/routes/orders.py
+- (staged) backend/src/api/routes/portal/__init__.py
+- (staged) backend/src/api/routes/portal/customer_portal.py
+- (staged) backend/src/api/routes/pos_transactions.py
+- (staged) backend/src/api/routes/pos_xero_reconciliation.py
+- (staged) backend/src/api/routes/prd.py
+- (staged) backend/src/api/routes/pricing.py
+- (staged) backend/src/api/routes/procurement.py
+- (staged) backend/src/api/routes/products.py
+- (staged) backend/src/api/routes/prometheus_metrics.py
+- (staged) backend/src/api/routes/public_stats.py
+- (staged) backend/src/api/routes/purchase_orders.py
+- (staged) backend/src/api/routes/quotes.py
+- (staged) backend/src/api/routes/recommendations.py
+- (staged) backend/src/api/routes/reconciliation.py
+- (staged) backend/src/api/routes/reconciliation_dashboard.py
+- (staged) backend/src/api/routes/search.py
+- (staged) backend/src/api/routes/service_requests.py
+- (staged) backend/src/api/routes/settings.py
+- (staged) backend/src/api/routes/shadow_analytics.py
+- (staged) backend/src/api/routes/shadow_mode.py
+- (staged) backend/src/api/routes/shipments.py
+- (staged) backend/src/api/routes/sla.py
+- (staged) backend/src/api/routes/stripe_webhooks.py
+- (staged) backend/src/api/routes/supplier_portal.py
+- (staged) backend/src/api/routes/suppliers.py
+- (staged) backend/src/api/routes/team.py
+- (staged) backend/src/api/routes/test_data_gen.py
+- (staged) backend/src/api/routes/translations.py
+- (staged) backend/src/api/routes/warehouse.py
+- (staged) backend/src/api/routes/webhooks.py
+- (staged) backend/src/api/routes/workflows.py
+- (staged) backend/src/api/routes/workshop/__init__.py
+- (staged) backend/src/api/routes/workshop/bookings.py
+- (staged) backend/src/api/routes/workshop/dashboard.py
+- (staged) backend/src/api/routes/workshop/equipment.py
+- (staged) backend/src/api/routes/workshop/reminders.py
+- (staged) backend/src/api/routes/workshop/templates.py
+- (staged) backend/src/api/schemas/invoicing.py
+- (staged) backend/src/api/schemas/prd.py
+- (staged) backend/src/auth/jwt.py
+- (staged) backend/src/auth/models.py
+- (staged) backend/src/auth/password_reset.py
+- (staged) backend/src/cache/decorators.py
+- (staged) backend/src/cache/redis_client.py
+- (staged) backend/src/config/__init__.py
+- (staged) backend/src/config/ap2_settings.py
+- (staged) backend/src/config/autonomy.py
+- (staged) backend/src/config/cin7_settings.py
+- (staged) backend/src/config/database.py
+- (staged) backend/src/config/elevenlabs_settings.py
+- (staged) backend/src/config/heygen_settings.py
+- (staged) backend/src/config/marketplace_settings.py
+- (staged) backend/src/config/secrets_manager.py
+- (staged) backend/src/config/sendgrid_settings.py
+- (staged) backend/src/config/settings.py
+- (staged) backend/src/config/shopify_settings.py
+- (staged) backend/src/config/xero_settings.py
+- (staged) backend/src/db/__init__.py
+- (staged) backend/src/db/ai_models.py
+- (staged) backend/src/db/ai_search_models.py
+- (staged) backend/src/db/ap2_models.py
+- (staged) backend/src/db/approvals_models.py
+- (staged) backend/src/db/audit_models.py
+- (staged) backend/src/db/certification_models.py
+- (staged) backend/src/db/cin7_bom_models.py
+- (staged) backend/src/db/cin7_fulfilment_models.py
+- (staged) backend/src/db/cin7_gl_models.py
+- (staged) backend/src/db/cin7_models.py
+- (staged) backend/src/db/cin7_shadow_models.py
+- (staged) backend/src/db/container_models.py
+- (staged) backend/src/db/crm_models.py
+- (staged) backend/src/db/crm_schemas.py
+- (staged) backend/src/db/customer_health_models.py
+- (staged) backend/src/db/demo_models.py
+- (staged) backend/src/db/email_audit_models.py
+- (staged) backend/src/db/email_models.py
+- (staged) backend/src/db/equipment_lifecycle_models.py
+- (staged) backend/src/db/generate_demo_purchases.py
+- (staged) backend/src/db/i18n_models.py
+- (staged) backend/src/db/i18n_schemas.py
+- (staged) backend/src/db/indexes.py
+- (staged) backend/src/db/integration_credential_models.py
+- (staged) backend/src/db/inventory_models.py
+- (staged) backend/src/db/inventory_schemas.py
+- (staged) backend/src/db/marketplace_models.py
+- (staged) backend/src/db/mobile_order_models.py
+- (staged) backend/src/db/models/__init__.py
+- (staged) backend/src/db/models/invoicing.py
+- (staged) backend/src/db/models/prd.py
+- (staged) backend/src/db/models_base.py
+- (staged) backend/src/db/portal_forms_models.py
+- (staged) backend/src/db/pos_models.py
+- (staged) backend/src/db/pricing_models.py
+- (staged) backend/src/db/schemas.py
+- (staged) backend/src/db/seed_demo.py
+- (staged) backend/src/db/service_models.py
+- (staged) backend/src/db/shadow_session_models.py
+- (staged) backend/src/db/shopify_extended_models.py
+- (staged) backend/src/db/shopify_models.py
+- (staged) backend/src/db/shopify_schemas.py
+- (staged) backend/src/db/submission_notes_models.py
+- (staged) backend/src/db/webhook_models.py
+- (staged) backend/src/db/workflow_models.py
+- (staged) backend/src/db/workshop_models.py
+- (staged) backend/src/db/xero_models.py
+- (staged) backend/src/db/xero_schemas.py
+- (staged) backend/src/emails/templates/order_confirmed.html
+- (staged) backend/src/emails/templates/order_delivered.html
+- (staged) backend/src/emails/templates/order_shipped.html
+- (staged) backend/src/emails/templates/quote_created.html
+- (staged) backend/src/emails/templates/quote_expiring.html
+- (staged) backend/src/events/__init__.py
+- (staged) backend/src/events/event_bus.py
+- (staged) backend/src/integrations/__init__.py
+- (staged) backend/src/integrations/ap2/__init__.py
+- (staged) backend/src/integrations/ap2/client.py
+- (staged) backend/src/integrations/ap2/security.py
+- (staged) backend/src/integrations/cin7/__init__.py
+- (staged) backend/src/integrations/cin7/change_detector.py
+- (staged) backend/src/integrations/cin7/client.py
+- (staged) backend/src/integrations/cin7/customer_sync.py
+- (staged) backend/src/integrations/cin7/demo_client.py
+- (staged) backend/src/integrations/cin7/event_dispatcher.py
+- (staged) backend/src/integrations/cin7/inventory_sync.py
+- (staged) backend/src/integrations/cin7/product_sync.py
+- (staged) backend/src/integrations/cin7/purchase_sync.py
+- (staged) backend/src/integrations/cin7/sales_sync.py
+- (staged) backend/src/integrations/cin7/supplier_sync.py
+- (staged) backend/src/integrations/elevenlabs/__init__.py
+- (staged) backend/src/integrations/elevenlabs/client.py
+- (staged) backend/src/integrations/elevenlabs/demo_client.py
+- (staged) backend/src/integrations/elevenlabs/live_client.py
+- (staged) backend/src/integrations/google/__init__.py
+- (staged) backend/src/integrations/google/client.py
+- (staged) backend/src/integrations/heygen/__init__.py
+- (staged) backend/src/integrations/heygen/client.py
+- (staged) backend/src/integrations/heygen/demo_client.py
+- (staged) backend/src/integrations/heygen/live_client.py
+- (staged) backend/src/integrations/http_utils.py
+- (staged) backend/src/integrations/marketplace/__init__.py
+- (staged) backend/src/integrations/marketplace/base.py
+- (staged) backend/src/integrations/marketplace/demo_channel.py
+- (staged) backend/src/integrations/marketplace/ebay_channel.py
+- (staged) backend/src/integrations/marketplace/facebook_channel.py
+- (staged) backend/src/integrations/marketplace/registry.py
+- (staged) backend/src/integrations/marketplace/shopify_channel.py
+- (staged) backend/src/integrations/marketplace/sync_engine.py
+- (staged) backend/src/integrations/payments/__init__.py
+- (staged) backend/src/integrations/payments/amex.py
+- (staged) backend/src/integrations/payments/eftpos.py
+- (staged) backend/src/integrations/payments/processor.py
+- (staged) backend/src/integrations/secrets_manager.py
+- (staged) backend/src/integrations/sendgrid/__init__.py
+- (staged) backend/src/integrations/sendgrid/client.py
+- (staged) backend/src/integrations/sendgrid/demo_client.py
+- (staged) backend/src/integrations/sendgrid/live_client.py
+- (staged) backend/src/integrations/sendgrid/processor.py
+- (staged) backend/src/integrations/sentry_client.py
+- (staged) backend/src/integrations/shopify/__init__.py
+- (staged) backend/src/integrations/shopify/client.py
+- (staged) backend/src/integrations/shopify/demo_client.py
+- (staged) backend/src/integrations/shopify/inventory.py
+- (staged) backend/src/integrations/shopify/inventory_sync.py
+- (staged) backend/src/integrations/shopify/metafields.py
+- (staged) backend/src/integrations/shopify/orders.py
+- (staged) backend/src/integrations/shopify/product_sync.py
+- (staged) backend/src/integrations/shopify/translations.py
+- (staged) backend/src/integrations/shopify/webhooks.py
+- (staged) backend/src/integrations/stripe/__init__.py
+- (staged) backend/src/integrations/stripe/client.py
+- (staged) backend/src/integrations/xero/__init__.py
+- (staged) backend/src/integrations/xero/auth.py
+- (staged) backend/src/integrations/xero/client.py
+- (staged) backend/src/integrations/xero/customers.py
+- (staged) backend/src/integrations/xero/demo_client.py
+- (staged) backend/src/integrations/xero/invoices.py
+- (staged) backend/src/integrations/xero/payments.py
+- (staged) backend/src/integrations/xero/pos_reconciliation.py
+- (staged) backend/src/integrations/xero/token_manager.py
+- (staged) backend/src/integrations/xero/webhook_security.py
+- (staged) backend/src/integrations/xero/webhooks.py
+- (staged) backend/src/monitoring/__init__.py
+- (staged) backend/src/monitoring/metrics.py
+- (staged) backend/src/rag/__init__.py
+- (staged) backend/src/rag/chunkers.py
+- (staged) backend/src/rag/models.py
+- (staged) backend/src/rag/parsers.py
+- (staged) backend/src/rag/pipeline.py
+- (staged) backend/src/rag/storage.py
+- (staged) backend/src/scheduler/bank_feed_scheduler.py
+- (staged) backend/src/security/__init__.py
+- (staged) backend/src/security/encryption.py
+- (staged) backend/src/security/webhook_verification.py
+- (staged) backend/src/services/__init__.py
+- (staged) backend/src/services/alert_manager.py
+- (staged) backend/src/services/audit_service.py
+- (staged) backend/src/services/auto_reorder.py
+- (staged) backend/src/services/autonomy_audit.py
+- (staged) backend/src/services/bank_feed_service.py
+- (staged) backend/src/services/business_metrics_service.py
+- (staged) backend/src/services/carrier_service.py
+- (staged) backend/src/services/circuit_breaker.py
+- (staged) backend/src/services/code_generation/README.md
+- (staged) backend/src/services/code_generation/__init__.py
+- (staged) backend/src/services/code_generation/context_builder.py
+- (staged) backend/src/services/code_generation/doc_generator.py
+- (staged) backend/src/services/code_generation/generator.py
+- (staged) backend/src/services/code_generation/prompts/doc_generation.txt
+- (staged) backend/src/services/code_generation/prompts/python_generation.txt
+- (staged) backend/src/services/code_generation/prompts/test_generation.txt
+- (staged) backend/src/services/code_generation/prompts/typescript_generation.txt
+- (staged) backend/src/services/code_generation/quality_checker.py
+- (staged) backend/src/services/code_generation/test_generator.py
+- (staged) backend/src/services/deployment_service.py
+- (staged) backend/src/services/document_extraction_service.py
+- (staged) backend/src/services/dunning.py
+- (staged) backend/src/services/email_audit_service.py
+- (staged) backend/src/services/email_notifications.py
+- (staged) backend/src/services/email_service.py
+- (staged) backend/src/services/embedding_service.py
+- (staged) backend/src/services/i18n_service.py
+- (staged) backend/src/services/notification_service.py
+- (staged) backend/src/services/order_state.py
+- (staged) backend/src/services/procurement_matching.py
+- (staged) backend/src/services/product_recognition_service.py
+- (staged) backend/src/services/recommendation_service.py
+- (staged) backend/src/services/reconciliation_alerts.py
+- (staged) backend/src/services/requirement_extractor.py
+- (staged) backend/src/services/requirement_tracer.py
+- (staged) backend/src/services/semantic_search_service.py
+- (staged) backend/src/services/sla_escalation.py
+- (staged) backend/src/services/sla_service.py
+- (staged) backend/src/services/sse_service.py
+- (staged) backend/src/services/system_alert_service.py
+- (staged) backend/src/services/tax_calculator.py
+- (staged) backend/src/services/webhook_service.py
+- (staged) backend/src/services/workflow_service.py
+- (staged) backend/src/services/workshop_scheduler.py
+- (staged) backend/src/state/__init__.py
+- (staged) backend/src/state/supabase.py
+- (staged) backend/src/telemetry/__init__.py
+- (staged) backend/src/telemetry/usage_tracker.py
+- (staged) backend/src/testing/__init__.py
+- (staged) backend/src/testing/shopify_mock.py
+- (staged) backend/src/testing/xero_mock.py
+- (staged) backend/src/utils/__init__.py
+- (staged) backend/src/utils/calculations.py
+- (staged) backend/src/utils/logging.py
+- (staged) backend/src/utils/supabase_client.py
+- (staged) backend/src/workflow/__init__.py
+- (staged) backend/src/workflow/engine.py
+- (staged) backend/src/workflow/models.py
+- (staged) backend/src/workflow/storage.py
+- (staged) backend/src/workflows/__init__.py
+- (staged) backend/src/workflows/pr_automation.py
+- (staged) backend/srcapimain.py
+- (staged) backend/srcapiroutesailearning.py.tmp
+- (staged) backend/start_for_testing.py
+- (staged) backend/start_load_test_server.py
+- (staged) backend/test_ai_inventory_intelligence.py
+- (staged) backend/test_api.py
+- (staged) backend/test_api_error.py
+- (staged) backend/test_customer_sync.py
+- (staged) backend/test_dashboard_data.py
+- (staged) backend/test_dashboard_data_with_failures.py
+- (staged) backend/test_db_connection.py
+- (staged) backend/test_dependency_injection.py
+- (staged) backend/test_endpoint.py
+- (staged) backend/test_expired_quote_validation.py
+- (staged) backend/test_failure_scenarios.py
+- (staged) backend/test_full_payment_flow.py
+- (staged) backend/test_google_ai_endpoints.py
+- (staged) backend/test_google_ai_integration.py
+- (staged) backend/test_insights_api.py
+- (staged) backend/test_multistore_inventory.py
+- (staged) backend/test_order_update_items_500.py
+- (staged) backend/test_outbound_shipment.json
+- (staged) backend/test_password.py
+- (staged) backend/test_payment_webhook.py
+- (staged) backend/test_po.json
+- (staged) backend/test_quote_404_issue.py
+- (staged) backend/test_quote_fixes.py
+- (staged) backend/test_quote_generate_endpoint.py
+- (staged) backend/test_quote_validation.py
+- (staged) backend/test_redis_connection.py
+- (staged) backend/test_search_performance.py
+- (staged) backend/test_shopify_connection.py
+- (staged) backend/test_shopify_integration.py
+- (staged) backend/test_supplier.json
+- (staged) backend/tests/FIXES_APPLIED.md
+- (staged) backend/tests/REFRESH_TOKEN_VERIFICATION.md
+- (staged) backend/tests/TEST_STATUS_REPORT.md
+- (staged) backend/tests/TEST_STATUS_UPDATE.md
+- (staged) backend/tests/__init__.py
+- (staged) backend/tests/ai/test_reconciliation_agent.py
+- (staged) backend/tests/api/README_BUGFIX_TESTS.md
+- (staged) backend/tests/api/test_500_errors.py
+- (staged) backend/tests/api/test_approval_gates.py
+- (staged) backend/tests/api/test_approvals.py
+- (staged) backend/tests/api/test_approvals_integration.py
+- (staged) backend/tests/api/test_autonomous_ops.py
+- (staged) backend/tests/api/test_bank_feeds.py
+- (staged) backend/tests/api/test_bas_report.py
+- (staged) backend/tests/api/test_billing_gaps.py
+- (staged) backend/tests/api/test_build_command.py
+- (staged) backend/tests/api/test_certifications.py
+- (staged) backend/tests/api/test_command_parser.py
+- (staged) backend/tests/api/test_customer_orders.py
+- (staged) backend/tests/api/test_document_extraction.py
+- (staged) backend/tests/api/test_equipment_lifecycle.py
+- (staged) backend/tests/api/test_gap_sync.py
+- (staged) backend/tests/api/test_inventory.py
+- (staged) backend/tests/api/test_inventory_gaps.py
+- (staged) backend/tests/api/test_inventory_new_endpoints.py
+- (staged) backend/tests/api/test_inventory_uni172.py
+- (staged) backend/tests/api/test_invoice_payments.py
+- (staged) backend/tests/api/test_invoices_tax_integration.py
+- (staged) backend/tests/api/test_nl_query.py
+- (staged) backend/tests/api/test_orders_performance.py
+- (staged) backend/tests/api/test_portal.py
+- (staged) backend/tests/api/test_pos_terminals.py
+- (staged) backend/tests/api/test_pos_transactions.py
+- (staged) backend/tests/api/test_pricing_tiers.py
+- (staged) backend/tests/api/test_quote_404_errors.py
+- (staged) backend/tests/api/test_quote_422_errors.py
+- (staged) backend/tests/api/test_quote_http_methods.py
+- (staged) backend/tests/api/test_rbac.py
+- (staged) backend/tests/api/test_reconciliation_integration.py
+- (staged) backend/tests/api/test_requirement_verification.py
+- (staged) backend/tests/api/test_supplier_portal.py
+- (staged) backend/tests/api/test_tenant_isolation.py
+- (staged) backend/tests/api/test_translations.py
+- (staged) backend/tests/api/test_workflows_integration.py
+- (staged) backend/tests/api/test_workshop_routes.py
+- (staged) backend/tests/conftest.py
+- (staged) backend/tests/e2e/__init__.py
+- (staged) backend/tests/e2e/test_login_flow.py
+- (staged) backend/tests/e2e/test_order_flow.py
+- (staged) backend/tests/fixtures/__init__.py
+- (staged) backend/tests/fixtures/data.py
+- (staged) backend/tests/fixtures/pos_data.py
+- (staged) backend/tests/fixtures/shopify_fixtures.py
+- (staged) backend/tests/fixtures/xero_fixtures.py
+- (staged) backend/tests/integration/README.md
+- (staged) backend/tests/integration/__init__.py
+- (staged) backend/tests/integration/conftest.py
+- (staged) backend/tests/integration/run_all_cin7_tests.py
+- (staged) backend/tests/integration/run_phase3_tests.py
+- (staged) backend/tests/integration/run_phase4_tests.py
+- (staged) backend/tests/integration/run_phase5_tests.py
+- (staged) backend/tests/integration/run_phase6_tests.py
+- (staged) backend/tests/integration/run_phase7_tests.py
+- (staged) backend/tests/integration/run_protocol_tests.py
+- (staged) backend/tests/integration/test_ap2_integration.py
+- (staged) backend/tests/integration/test_api_endpoints.py
+- (staged) backend/tests/integration/test_autonomous_dev.py
+- (staged) backend/tests/integration/test_autonomous_pr_workflow.py
+- (staged) backend/tests/integration/test_cin7_crm_sync.py
+- (staged) backend/tests/integration/test_cin7_integration.py
+- (staged) backend/tests/integration/test_cin7_sync.py
+- (staged) backend/tests/integration/test_crm_module.py
+- (staged) backend/tests/integration/test_recommendations.py
+- (staged) backend/tests/integration/test_search.py
+- (staged) backend/tests/integration/test_shopify_extended.py
+- (staged) backend/tests/integration/test_webhooks.py
+- (staged) backend/tests/integration/test_xero_reconciliation.py
+- (staged) backend/tests/integrations/__init__.py
+- (staged) backend/tests/integrations/test_xero_token_manager.py
+- (staged) backend/tests/load/README.md
+- (staged) backend/tests/load/__init__.py
+- (staged) backend/tests/load/conftest.py
+- (staged) backend/tests/load/generators/customers.py
+- (staged) backend/tests/load/generators/misc.py
+- (staged) backend/tests/load/generators/orders.py
+- (staged) backend/tests/load/generators/products.py
+- (staged) backend/tests/load/generators/quotes.py
+- (staged) backend/tests/load/load_test_requirements.txt
+- (staged) backend/tests/load/load_test_scenarios.ps1
+- (staged) backend/tests/load/load_test_scenarios.sh
+- (staged) backend/tests/load/locustfile.py
+- (staged) backend/tests/load/locustfile_ai_features.py
+- (staged) backend/tests/load/reporters/html_reporter.py
+- (staged) backend/tests/load/reporters/json_reporter.py
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100548.json
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.html
+- (staged) backend/tests/load/reports/load_test_full_20260127_100703.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_131600.json
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.html
+- (staged) backend/tests/load/reports/load_test_full_20260128_132757.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_124803.json
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.html
+- (staged) backend/tests/load/reports/load_test_full_20260205_125037.json
+- (staged) backend/tests/load/reports/load_test_latest.html
+- (staged) backend/tests/load/reports/load_test_latest.json
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.html
+- (staged) backend/tests/load/reports/load_test_quick_20260128_122451.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_095442.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_193339.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_195029.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_212433.json
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.html
+- (staged) backend/tests/load/reports/load_test_quick_20260205_214840.json
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.html
+- (staged) backend/tests/load/reports/load_test_quick_20260206_000919.json
+- (staged) backend/tests/load/reports/load_test_quick_latest.html
+- (staged) backend/tests/load/reports/load_test_quick_latest.json
+- (staged) backend/tests/load/reports/scenario_report.html
+- (staged) backend/tests/load/reports/scenario_report.json
+- (staged) backend/tests/load/run_full_load_test.py
+- (staged) backend/tests/load/run_quick_load_test.py
+- (staged) backend/tests/load/test_concurrent_number_generation.py
+- (staged) backend/tests/load/test_performance_load.py
+- (staged) backend/tests/load/test_scenarios.py
+- (staged) backend/tests/performance/__init__.py
+- (staged) backend/tests/run_integration_tests.ps1
+- (staged) backend/tests/run_integration_tests.sh
+- (staged) backend/tests/security/__init__.py
+- (staged) backend/tests/security/test_auth_security.py
+- (staged) backend/tests/security/test_encryption.py
+- (staged) backend/tests/security/test_injection_attacks.py
+- (staged) backend/tests/security/test_xss_csrf.py
+- (staged) backend/tests/services/__init__.py
+- (staged) backend/tests/services/code_generation/__init__.py
+- (staged) backend/tests/services/code_generation/test_context_builder.py
+- (staged) backend/tests/services/code_generation/test_doc_generator.py
+- (staged) backend/tests/services/code_generation/test_generator.py
+- (staged) backend/tests/services/code_generation/test_integration.py
+- (staged) backend/tests/services/code_generation/test_quality_checker.py
+- (staged) backend/tests/services/code_generation/test_test_generator.py
+- (staged) backend/tests/services/run_all_tests.py
+- (staged) backend/tests/services/test_auto_reorder.py
+- (staged) backend/tests/services/test_auto_reorder_integration.py
+- (staged) backend/tests/services/test_dunning.py
+- (staged) backend/tests/services/test_email_audit_service.py
+- (staged) backend/tests/services/test_order_state.py
+- (staged) backend/tests/services/test_procurement_matching.py
+- (staged) backend/tests/services/test_procurement_matching_integration.py
+- (staged) backend/tests/services/test_requirement_extractor.py
+- (staged) backend/tests/services/test_requirement_tracer.py
+- (staged) backend/tests/services/test_sla_escalation.py
+- (staged) backend/tests/services/test_tax_calculator.py
+- (staged) backend/tests/services/test_tax_calculator_integration.py
+- (staged) backend/tests/smoke/__init__.py
+- (staged) backend/tests/smoke/conftest.py
+- (staged) backend/tests/smoke/test_smoke.py
+- (staged) backend/tests/test_agent_orchestration.py
+- (staged) backend/tests/test_approvals_batch_2c.py
+- (staged) backend/tests/test_auth_security.py
+- (staged) backend/tests/test_autonomy_audit.py
+- (staged) backend/tests/test_autonomy_config.py
+- (staged) backend/tests/test_batch_2c_structure.py
+- (staged) backend/tests/test_billing.py
+- (staged) backend/tests/test_circuit_breaker.py
+- (staged) backend/tests/test_concurrent_number_generation.py
+- (staged) backend/tests/test_customers_api.py
+- (staged) backend/tests/test_error_handling.py
+- (staged) backend/tests/test_gap_batch_2b.py
+- (staged) backend/tests/test_gap_batch_2b_smoke.py
+- (staged) backend/tests/test_gap_batch_2c_2d.py
+- (staged) backend/tests/test_health.py
+- (staged) backend/tests/test_marketplace.py
+- (staged) backend/tests/test_orders_api.py
+- (staged) backend/tests/test_pr_automation.py
+- (staged) backend/tests/test_products_api.py
+- (staged) backend/tests/test_project_intelligence.py
+- (staged) backend/tests/test_prometheus_metrics.py
+- (staged) backend/tests/test_quotes_api.py
+- (staged) backend/tests/test_risk_assessor.py
+- (staged) backend/tests/test_rollback_mechanism.py
+- (staged) backend/tests/test_sequence_generation.py
+- (staged) backend/tests/test_shopify_mock.py
+- (staged) backend/tests/test_specialized_agents.py
+- (staged) backend/tests/test_toolshed_api.py
+- (staged) backend/tests/test_workflow_agent_integration.py
+- (staged) backend/tests/test_workflows_batch_2c.py
+- (staged) backend/tests/test_xero_mock.py
+- (staged) backend/tests/unit/test_number_generation.py
+- (staged) backend/tests/unit/test_reconciliation_logic.py
+- (staged) backend/tests/utils/__init__.py
+- (staged) backend/tests/utils/test_calculations.py
+- (staged) backend/tests/webhooks/__init__.py
+- (staged) backend/tests/webhooks/test_webhook_transactions.py
+- (staged) backend/update_supplier.json
+- (staged) backend/uv.lock
+- (staged) backend/vercel.json
+- (staged) backend/verify_i18n_migration.py
+- (staged) backend/verify_indexes.py
+- (staged) backend/verify_phase1.py
+- (staged) backend/verify_phase9_fixes.py
+- (staged) backend/verify_race_condition_fix.py
+- (staged) backend/verify_sequence_deployment.py
+- (staged) backend/verify_tables.py

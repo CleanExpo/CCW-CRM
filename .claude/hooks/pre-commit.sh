@@ -14,7 +14,7 @@ if [ -n "$FORBIDDEN" ]; then
 fi
 
 # 2. Check for console.log in src/
-CONSOLELOGS=$(find apps/web/src apps/web/app -type f -name "*.tsx" -o -name "*.ts" | xargs grep -l "console.log" 2>/dev/null || true)
+CONSOLELOGS=$(find app/src app/app -type f \( -name "*.tsx" -o -name "*.ts" \) 2>/dev/null | xargs grep -l "console.log" 2>/dev/null || true)
 if [ -n "$CONSOLELOGS" ]; then
   echo "⚠️ WARNING: console.log found:"
   echo "$CONSOLELOGS"
@@ -22,10 +22,10 @@ fi
 
 # 3. Run tests
 echo "Running tests..."
-pnpm run test || { echo "❌ Tests failed"; exit 1; }
+npm run test || { echo "❌ Tests failed"; exit 1; }
 
 # 4. Run type check
 echo "Running type check..."
-pnpm run type-check || { echo "❌ Type check failed"; exit 1; }
+npm run type-check || { echo "❌ Type check failed"; exit 1; }
 
 echo "✅ All checks passed"

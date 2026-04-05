@@ -21,7 +21,6 @@ on:
 
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '9.15.0'
   PYTHON_VERSION: '3.12'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -128,36 +127,31 @@ jobs:
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
 
       - name: Install backend dependencies
-        working-directory: apps/backend
+        working-directory: backend
         run: uv sync --all-extras
 
       - name: Install frontend dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Run backend tests
-        working-directory: apps/backend
+        working-directory: backend
         run: uv run pytest -v --tb=short
         env:
           DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
           REDIS_URL: redis://localhost:6379/0
 
       - name: Run frontend tests
-        run: pnpm run test
+        run: npm run test
 
       - name: Type check
-        run: pnpm run type-check
+        run: npm run type-check
 
   # ============================================================================
   # Build and Push Docker Images
@@ -199,8 +193,8 @@ jobs:
       - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/backend
-          file: ./apps/backend/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
@@ -221,7 +215,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./apps/web/Dockerfile
+          file: ./Dockerfile
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
