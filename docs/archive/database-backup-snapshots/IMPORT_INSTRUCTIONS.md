@@ -5,34 +5,40 @@ The schema has been split into smaller files for easier import through the Supab
 ## Import Order (IMPORTANT: Run in this exact order!)
 
 ### Step 1: Cleanup (01_cleanup.sql)
+
 - **File**: `01_cleanup.sql`
 - **Purpose**: Removes all existing tables, types, and objects from the public schema
 - **Expected Result**: "Cleanup complete"
 
 ### Step 2: Create Types (02_types.sql)
+
 - **File**: `02_types.sql` (122 lines)
 - **Purpose**: Creates all ENUM types (order_status, quote_status, product_category, etc.)
 - **Expected Result**: "Success. No rows returned" (this is normal for DDL)
 
 ### Step 3: Create Tables (03_tables.sql)
+
 - **File**: `03_tables.sql` (553 lines)
 - **Purpose**: Creates all table structures WITHOUT foreign key constraints
 - **Expected Result**: "Success. No rows returned"
 
 ### Step 4: Add Constraints (04_constraints.sql)
+
 - **File**: `04_constraints.sql` (91 lines)
 - **Purpose**: Adds foreign key constraints between tables
 - **Expected Result**: "Success. No rows returned"
 
 ### Step 5: Create Indexes (05_indexes.sql)
+
 - **File**: `05_indexes.sql` (125 lines)
 - **Purpose**: Creates all indexes for performance
 - **Expected Result**: "Success. No rows returned"
 
 ### Step 6: Verify Import (06_verify.sql)
+
 - **File**: `06_verify.sql`
 - **Purpose**: Verifies that all objects were created successfully
-- **Expected Results**: 
+- **Expected Results**:
   - Tables: ~40 (should see organizations, users, products, customers, orders, quotes, etc.)
   - Types: 8 (enum types)
   - Indexes: ~125
