@@ -178,7 +178,7 @@ verify_uat_environment_setup() {
 
     # Check if UAT data is loaded
     echo "Checking UAT test data..."
-    if cd apps/backend && python3 -c "
+    if cd backend && python3 -c "
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
