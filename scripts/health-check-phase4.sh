@@ -129,7 +129,7 @@ section "3. Data Stickiness & Autosave"
 
 # Check autosave implementation (check for hook file)
 log "Checking autosave implementation..."
-if [ -f "apps/web/lib/hooks/use-autosave.ts" ]; then
+if [ -f "app/lib/hooks/use-autosave.ts" ]; then
     pass "Autosave hook exists (use-autosave.ts)"
 else
     fail "Autosave hook not found"
@@ -137,7 +137,7 @@ fi
 
 # Check draft storage utility
 log "Checking draft storage utility..."
-if [ -f "apps/web/lib/utils/draft-storage.ts" ]; then
+if [ -f "app/lib/utils/draft-storage.ts" ]; then
     pass "Draft storage utility exists (draft-storage.ts)"
 else
     fail "Draft storage utility not found"
@@ -145,7 +145,7 @@ fi
 
 # Check recent items cache
 log "Checking recent items cache..."
-if [ -f "apps/web/lib/hooks/use-recent-items.ts" ]; then
+if [ -f "app/lib/hooks/use-recent-items.ts" ]; then
     pass "Recent items cache exists (use-recent-items.ts)"
 else
     warn "Recent items cache not found"
@@ -153,7 +153,7 @@ fi
 
 # Check breadcrumb component
 log "Checking breadcrumb component..."
-if [ -f "apps/web/components/ui/breadcrumb.tsx" ]; then
+if [ -f "app/components/ui/breadcrumb.tsx" ]; then
     pass "Breadcrumb component exists"
 else
     fail "Breadcrumb component not found"
@@ -179,7 +179,7 @@ fi
 
 # Check anomaly detection agent
 log "Checking anomaly detection agent..."
-if [ -f "apps/backend/src/ai/agents/specialized/anomaly_detection_agent.py" ]; then
+if [ -f "backend/src/ai/agents/specialized/anomaly_detection_agent.py" ]; then
     pass "Anomaly detection agent exists"
 else
     warn "Anomaly detection agent not found"
@@ -187,7 +187,7 @@ fi
 
 # Check inventory forecasting agent
 log "Checking inventory forecasting agent..."
-if [ -f "apps/backend/src/ai/agents/specialized/inventory_forecasting_agent.py" ]; then
+if [ -f "backend/src/ai/agents/specialized/inventory_forecasting_agent.py" ]; then
     pass "Inventory forecasting agent exists"
 else
     warn "Inventory forecasting agent not found"
@@ -198,7 +198,7 @@ section "5. Real-Time Infrastructure (SSE)"
 
 # Check SSE service
 log "Checking SSE service..."
-if [ -f "apps/backend/src/services/sse_service.py" ]; then
+if [ -f "backend/src/services/sse_service.py" ]; then
     pass "SSE service exists (sse_service.py)"
 else
     fail "SSE service not found"
@@ -218,7 +218,7 @@ fi
 
 # Check POS failure alerts
 log "Checking POS failure alerts..."
-if [ -f "apps/backend/src/api/routes/monitoring/alerts.py" ]; then
+if [ -f "backend/src/api/routes/monitoring/alerts.py" ]; then
     pass "Alert management system exists"
 else
     fail "Alert management system not found"
@@ -237,7 +237,7 @@ fi
 
 # Check real-time indicator component
 log "Checking real-time indicator component..."
-if [ -f "apps/web/components/ui/real-time-indicator.tsx" ]; then
+if [ -f "app/components/ui/real-time-indicator.tsx" ]; then
     pass "Real-time indicator component exists"
 else
     fail "Real-time indicator component not found"
@@ -245,7 +245,7 @@ fi
 
 # Check SSE hooks
 log "Checking SSE hooks..."
-if [ -f "apps/web/lib/hooks/use-sse.ts" ]; then
+if [ -f "app/lib/hooks/use-sse.ts" ]; then
     pass "SSE hooks exist (use-sse.ts)"
 else
     fail "SSE hooks not found"
