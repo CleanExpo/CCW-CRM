@@ -20,6 +20,7 @@ Complete operations guide for staging and production environments.
 ### Essential URLs
 
 **Staging:**
+
 - Frontend: https://staging.ccw-erp.com
 - API: https://api.staging.ccw-erp.com
 - Grafana: http://staging.ccw-erp.com:3001
@@ -27,6 +28,7 @@ Complete operations guide for staging and production environments.
 - Alertmanager: http://staging.ccw-erp.com:9093
 
 **Production:**
+
 - Frontend: https://ccw-erp.com
 - API: https://api.ccw-erp.com
 - Grafana: http://ccw-erp.com:3001
@@ -163,6 +165,7 @@ docker compose -f docker-compose.staging.yml up -d --build
 ### Deployment Steps
 
 1. **Create backup**
+
    ```bash
    ssh ubuntu@staging.ccw-erp.com
    cd /opt/ccw-erp
@@ -171,11 +174,13 @@ docker compose -f docker-compose.staging.yml up -d --build
    ```
 
 2. **Deploy**
+
    ```bash
    ./deployment/scripts/deploy-staging.sh --version v1.2.0
    ```
 
 3. **Verify deployment**
+
    ```bash
    # Run smoke tests
    ./deployment/scripts/smoke-tests.sh https://api.staging.ccw-erp.com
@@ -225,6 +230,7 @@ curl https://api.staging.ccw-erp.com/api/products?page=1&page_size=10 \
 **Login:** admin / (GRAFANA_ADMIN_PASSWORD)
 
 **Key Dashboards:**
+
 1. **API Performance** - Request rate, response time, error rate
 2. **System Resources** - CPU, memory, disk, network
 3. **Database** - Query performance, connections, slow queries
@@ -252,11 +258,13 @@ container_memory_usage_bytes{name="ccw-erp-backend-staging"}
 ### Alert Rules
 
 **Critical Alerts** (PagerDuty + Slack):
+
 - Database down (>1 minute)
 - API error rate >5% (>5 minutes)
 - Backend service down
 
 **Warning Alerts** (Slack only):
+
 - High response time >500ms p95 (>5 minutes)
 - High CPU >80% (>10 minutes)
 - High memory >85% (>10 minutes)
@@ -288,22 +296,26 @@ curl -X POST http://staging.ccw-erp.com:9093/api/v1/silences \
 ### Severity Levels
 
 **P0 - Critical** (Immediate response, <15 min)
+
 - Complete outage
 - Data loss
 - Security breach
 - Payment processing down
 
 **P1 - High** (Respond within 1 hour)
+
 - Major feature broken
 - High error rate (>10%)
 - Slow response times (p95 >2s)
 
 **P2 - Medium** (Respond within 4 hours)
+
 - Minor feature broken
 - Moderate error rate (5-10%)
 - Non-critical service degraded
 
 **P3 - Low** (Respond within 24 hours)
+
 - UI bug
 - Documentation issue
 - Low error rate (<5%)
@@ -311,12 +323,14 @@ curl -X POST http://staging.ccw-erp.com:9093/api/v1/silences \
 ### Incident Response Steps
 
 1. **Acknowledge**
+
    ```bash
    # Acknowledge in Slack
    # Post to #incidents channel
    ```
 
 2. **Assess**
+
    ```bash
    # Check Grafana dashboards
    # Check Sentry errors
@@ -325,6 +339,7 @@ curl -X POST http://staging.ccw-erp.com:9093/api/v1/silences \
    ```
 
 3. **Mitigate**
+
    ```bash
    # Quick fixes:
    # - Restart service: docker compose restart backend
@@ -333,6 +348,7 @@ curl -X POST http://staging.ccw-erp.com:9093/api/v1/silences \
    ```
 
 4. **Resolve**
+
    ```bash
    # Deploy fix
    ./deployment/scripts/deploy-staging.sh --version v1.2.1
@@ -423,6 +439,7 @@ SELECT * FROM pg_stat_activity;
 **Symptoms:** Containers keep restarting
 
 **Diagnosis:**
+
 ```bash
 # Check container logs
 docker compose -f docker-compose.staging.yml logs backend
@@ -432,12 +449,14 @@ docker compose -f docker-compose.staging.yml ps
 ```
 
 **Common Causes:**
+
 1. Database connection failure
 2. Missing environment variables
 3. Port conflicts
 4. Insufficient memory
 
 **Solution:**
+
 ```bash
 # 1. Verify database is running
 docker compose -f docker-compose.staging.yml logs postgres
@@ -458,6 +477,7 @@ docker compose -f docker-compose.staging.yml restart
 **Symptoms:** p95 >500ms in Grafana
 
 **Diagnosis:**
+
 ```bash
 # Check slow queries
 docker compose -f docker-compose.staging.yml exec postgres \
@@ -472,6 +492,7 @@ free -h
 ```
 
 **Solution:**
+
 1. Add missing database indexes
 2. Enable Redis caching
 3. Optimize slow queries
@@ -482,6 +503,7 @@ free -h
 **Symptoms:** Error rate >5% in Grafana
 
 **Diagnosis:**
+
 ```bash
 # Check Sentry for errors
 # Navigate to: https://sentry.io/your-project
@@ -494,6 +516,7 @@ docker compose -f docker-compose.staging.yml logs backend | grep "500 Internal S
 ```
 
 **Solution:**
+
 1. Identify error pattern in Sentry
 2. Check related code changes
 3. Review recent deployments
@@ -504,6 +527,7 @@ docker compose -f docker-compose.staging.yml logs backend | grep "500 Internal S
 **Symptoms:** "OperationalError: could not connect to server"
 
 **Diagnosis:**
+
 ```bash
 # Check PostgreSQL is running
 docker compose -f docker-compose.staging.yml ps postgres
@@ -517,6 +541,7 @@ docker compose -f docker-compose.staging.yml exec backend \
 ```
 
 **Solution:**
+
 ```bash
 # Restart PostgreSQL
 docker compose -f docker-compose.staging.yml restart postgres
@@ -532,6 +557,7 @@ docker compose -f docker-compose.staging.yml exec backend printenv DATABASE_URL
 ### Complete Outage
 
 1. **Immediate Actions** (<5 minutes)
+
    ```bash
    # Check if services are running
    ssh ubuntu@staging.ccw-erp.com
@@ -542,6 +568,7 @@ docker compose -f docker-compose.staging.yml exec backend printenv DATABASE_URL
    ```
 
 2. **If restart doesn't work** (<10 minutes)
+
    ```bash
    # Rollback to last known good version
    ./deployment/scripts/rollback.sh --version v1.1.0 --force
@@ -559,6 +586,7 @@ docker compose -f docker-compose.staging.yml exec backend printenv DATABASE_URL
    - Do not restart services
 
 2. **Assess damage**
+
    ```bash
    # Check database integrity
    docker compose -f docker-compose.staging.yml exec postgres \
@@ -566,6 +594,7 @@ docker compose -f docker-compose.staging.yml exec backend printenv DATABASE_URL
    ```
 
 3. **Restore from backup**
+
    ```bash
    # Find latest backup
    ssh ubuntu@staging.ccw-erp.com
@@ -583,6 +612,7 @@ docker compose -f docker-compose.staging.yml exec backend printenv DATABASE_URL
 ### Security Breach
 
 1. **IMMEDIATE ACTIONS**
+
    ```bash
    # Rotate all secrets
    # - JWT_SECRET_KEY
@@ -609,12 +639,14 @@ docker compose -f docker-compose.staging.yml exec backend printenv DATABASE_URL
 ## Maintenance Windows
 
 **Scheduled Maintenance:**
+
 - Day: Sunday
 - Time: 2:00 AM - 6:00 AM UTC
 - Frequency: Monthly
 - Notification: 48 hours advance
 
 **Emergency Maintenance:**
+
 - Approval: Team Lead
 - Notification: Immediate
 - Duration: As needed
@@ -624,11 +656,13 @@ docker compose -f docker-compose.staging.yml exec backend printenv DATABASE_URL
 ## Contact Information
 
 **On-Call Rotation:**
+
 - Week 1: Developer A (phone, email)
 - Week 2: Developer B (phone, email)
 - Escalation: Team Lead (phone, email)
 
 **Notification Channels:**
+
 - Slack: #ccw-erp-critical
 - Email: ops@ccw-erp.com
 - PagerDuty: (if configured)

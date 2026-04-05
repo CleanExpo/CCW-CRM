@@ -50,9 +50,7 @@
             ],
             "thresholds": {
               "mode": "absolute",
-              "steps": [
-                { "value": null, "color": "green" }
-              ]
+              "steps": [{ "value": null, "color": "green" }]
             }
           }
         }

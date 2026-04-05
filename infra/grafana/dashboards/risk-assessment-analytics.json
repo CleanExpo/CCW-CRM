@@ -420,7 +420,7 @@
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
-          },
+      },
       "description": "Total risk assessments in the selected time range",
       "fieldConfig": {
         "defaults": {

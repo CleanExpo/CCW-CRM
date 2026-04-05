@@ -7,6 +7,7 @@ Complete guide for deploying CCW-Online ERP to staging environment.
 **Objective:** Deploy application to staging environment and validate production readiness
 
 **Success Criteria:**
+
 - ✅ 99.9% uptime for 7 consecutive days
 - ✅ Zero P0 incidents
 - ✅ All monitoring operational
@@ -15,6 +16,7 @@ Complete guide for deploying CCW-Online ERP to staging environment.
 - ✅ Rollback plan tested
 
 **Timeline:**
+
 - Day 0: Initial deployment
 - Day 1-7: Stability monitoring
 - Day 7: Go/No-Go decision for production
@@ -26,6 +28,7 @@ Complete guide for deploying CCW-Online ERP to staging environment.
 ### Infrastructure Requirements
 
 **Server Specifications:**
+
 - **OS:** Ubuntu 22.04 LTS
 - **CPU:** 4 cores minimum (8 cores recommended)
 - **Memory:** 8GB minimum (16GB recommended)
@@ -33,6 +36,7 @@ Complete guide for deploying CCW-Online ERP to staging environment.
 - **Network:** 100Mbps minimum bandwidth
 
 **Services Required:**
+
 - Docker 24.0+
 - Docker Compose 2.20+
 - Nginx 1.24+
@@ -43,6 +47,7 @@ Complete guide for deploying CCW-Online ERP to staging environment.
 ### DNS Configuration
 
 Create DNS records for staging:
+
 ```
 staging.ccw-erp.com     →  A record to server IP
 api.staging.ccw-erp.com →  A record to server IP
@@ -215,6 +220,7 @@ vim .env.staging
 ```
 
 **Required Environment Variables:**
+
 ```bash
 # Environment
 ENVIRONMENT=staging
@@ -409,12 +415,14 @@ cd /opt/ccw-erp
 ### Day 0: Initial Deployment
 
 **Tasks:**
+
 - ✅ Deploy application
 - ✅ Configure monitoring
 - ✅ Run smoke tests
 - ✅ Verify all services healthy
 
 **Monitoring:**
+
 - Check dashboards every 2 hours
 - Monitor error rates
 - Review logs for warnings
@@ -422,6 +430,7 @@ cd /opt/ccw-erp
 ### Day 1-6: Continuous Monitoring
 
 **Daily Tasks:**
+
 - [ ] Check Grafana dashboards (morning & evening)
 - [ ] Review Sentry errors
 - [ ] Check disk space
@@ -430,6 +439,7 @@ cd /opt/ccw-erp
 - [ ] Check database performance
 
 **Metrics to Track:**
+
 ```
 Date: ___________
 Uptime: _____%
@@ -441,6 +451,7 @@ Incidents: _____
 ### Day 7: Go/No-Go Decision
 
 **Go-Live Checklist:**
+
 - [ ] 99.9% uptime achieved (max 43 seconds downtime)
 - [ ] Zero P0 incidents
 - [ ] Error rate <1%
@@ -450,6 +461,7 @@ Incidents: _____
 - [ ] Team trained
 
 **Decision:**
+
 - ✅ GO: Proceed to production deployment
 - ❌ NO-GO: Investigate issues, extend monitoring period
 
@@ -503,6 +515,7 @@ docker compose -f docker-compose.staging.yml restart
 **Symptoms:** Docker containers keep restarting
 
 **Diagnosis:**
+
 ```bash
 # Check container logs
 docker compose -f docker-compose.staging.yml logs backend
@@ -512,12 +525,14 @@ docker compose -f docker-compose.staging.yml ps
 ```
 
 **Common Causes:**
+
 1. Database connection failure
 2. Missing environment variables
 3. Port conflicts
 4. Insufficient memory
 
 **Solution:**
+
 ```bash
 # Verify database is running
 docker compose -f docker-compose.staging.yml logs postgres
@@ -535,6 +550,7 @@ docker stats
 **Symptoms:** Error rate >5%
 
 **Diagnosis:**
+
 ```bash
 # Check Sentry for errors
 # Navigate to: https://sentry.io/your-project
@@ -547,6 +563,7 @@ docker compose -f docker-compose.staging.yml logs backend | grep ERROR
 ```
 
 **Solution:**
+
 1. Identify error pattern
 2. Check related code changes
 3. Review recent deployments
@@ -557,6 +574,7 @@ docker compose -f docker-compose.staging.yml logs backend | grep ERROR
 **Symptoms:** p95 >500ms
 
 **Diagnosis:**
+
 ```bash
 # Check database slow queries
 docker compose -f docker-compose.staging.yml exec postgres \
@@ -571,6 +589,7 @@ free -h
 ```
 
 **Solution:**
+
 1. Add missing database indexes
 2. Enable Redis caching
 3. Optimize slow queries
@@ -618,15 +637,15 @@ free -h
 
 ### 7-Day Stability Checklist
 
-- [ ] Day 1: Uptime ___%, Incidents: ___
-- [ ] Day 2: Uptime ___%, Incidents: ___
-- [ ] Day 3: Uptime ___%, Incidents: ___
-- [ ] Day 4: Uptime ___%, Incidents: ___
-- [ ] Day 5: Uptime ___%, Incidents: ___
-- [ ] Day 6: Uptime ___%, Incidents: ___
-- [ ] Day 7: Uptime ___%, Incidents: ___
+- [ ] Day 1: Uptime **_%, Incidents: _**
+- [ ] Day 2: Uptime **_%, Incidents: _**
+- [ ] Day 3: Uptime **_%, Incidents: _**
+- [ ] Day 4: Uptime **_%, Incidents: _**
+- [ ] Day 5: Uptime **_%, Incidents: _**
+- [ ] Day 6: Uptime **_%, Incidents: _**
+- [ ] Day 7: Uptime **_%, Incidents: _**
 
-**Overall Uptime:** _____%
+**Overall Uptime:** **\_**%
 **Decision:** GO / NO-GO
 
 ---
@@ -634,6 +653,7 @@ free -h
 ## Appendix A: Server Access
 
 **SSH Access:**
+
 ```bash
 ssh ubuntu@staging-server-ip
 # Or
@@ -641,12 +661,14 @@ ssh ubuntu@staging.ccw-erp.com
 ```
 
 **Application Paths:**
+
 - Application: `/opt/ccw-erp`
 - Logs: `/var/log/ccw-erp/`
 - Backups: `/var/backups/ccw-erp/`
 - SSL Certificates: `/etc/letsencrypt/live/staging.ccw-erp.com/`
 
 **Service Endpoints:**
+
 - Frontend: https://staging.ccw-erp.com
 - API: https://api.staging.ccw-erp.com
 - Health Check: https://api.staging.ccw-erp.com/api/health
@@ -658,11 +680,13 @@ ssh ubuntu@staging.ccw-erp.com
 ## Appendix B: Emergency Contacts
 
 **On-Call Rotation:**
+
 - Week 1: Developer A (phone, email)
 - Week 2: Developer B (phone, email)
 - Escalation: Team Lead (phone, email)
 
 **Notification Channels:**
+
 - Slack: #ccw-erp-critical
 - Email: ops@ccw-erp.com
 - PagerDuty: (if configured)
@@ -672,12 +696,14 @@ ssh ubuntu@staging.ccw-erp.com
 ## Appendix C: Maintenance Windows
 
 **Scheduled Maintenance:**
+
 - Day: Sunday
 - Time: 2:00 AM - 6:00 AM UTC
 - Frequency: Monthly
 - Notification: 48 hours advance
 
 **Emergency Maintenance:**
+
 - Approval: Team Lead
 - Notification: Immediate
 - Duration: As needed

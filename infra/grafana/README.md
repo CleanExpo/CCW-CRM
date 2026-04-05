@@ -5,6 +5,7 @@
 ## Overview
 
 This Grafana dashboard provides comprehensive monitoring of the autonomous development framework, including:
+
 - System health status
 - Auto-merge success rates
 - Error rates and anomaly detection
@@ -24,12 +25,14 @@ This Grafana dashboard provides comprehensive monitoring of the autonomous devel
 ### 1. Install Grafana
 
 **macOS (Homebrew)**:
+
 ```bash
 brew install grafana
 brew services start grafana
 ```
 
 **Ubuntu/Debian**:
+
 ```bash
 sudo apt-get install -y software-properties-common
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
@@ -39,11 +42,13 @@ sudo systemctl start grafana-server
 ```
 
 **Windows (Chocolatey)**:
+
 ```powershell
 choco install grafana
 ```
 
 **Docker**:
+
 ```bash
 docker run -d -p 3000:3000 --name=grafana grafana/grafana-oss
 ```
@@ -70,6 +75,7 @@ docker run -d -p 3000:3000 --name=grafana grafana/grafana-oss
 ### 4. Import Dashboard
 
 **Option A: Via UI**
+
 1. Navigate to **Dashboards** → **Import**
 2. Click **Upload JSON file**
 3. Select `grafana/dashboards/autonomy-dashboard.json`
@@ -77,6 +83,7 @@ docker run -d -p 3000:3000 --name=grafana grafana/grafana-oss
 5. Click **Import**
 
 **Option B: Via API**
+
 ```bash
 curl -X POST http://localhost:3000/api/dashboards/db \
   -H "Content-Type: application/json" \
@@ -85,6 +92,7 @@ curl -X POST http://localhost:3000/api/dashboards/db \
 ```
 
 **Option C: Provisioning** (Automatic)
+
 ```bash
 # Copy dashboard to Grafana provisioning directory
 cp grafana/dashboards/autonomy-dashboard.json /etc/grafana/provisioning/dashboards/
@@ -98,24 +106,28 @@ sudo systemctl restart grafana-server
 ### System Overview Row
 
 **1. System Health**
+
 - Current health status (Healthy/Degraded/Unhealthy)
 - Color-coded indicator
 - Updates every 30 seconds
 - Endpoint: `/api/autonomy/health`
 
 **2. Auto-Merge Success Rate (24h)**
+
 - Percentage of PRs successfully auto-merged
 - Green: >95%, Yellow: 80-95%, Red: <80%
 - Includes trend line
 - Endpoint: `/api/autonomy/metrics?window_hours=24`
 
 **3. Error Rate (24h)**
+
 - Percentage of failures and reversions
 - Green: <5%, Yellow: 5-10%, Red: >10%
 - Includes trend line
 - Endpoint: `/api/autonomy/metrics?window_hours=24`
 
 **4. Active Anomalies**
+
 - Number of detected anomalies
 - Green: 0, Yellow: 1-2, Red: 3+
 - Endpoint: `/api/autonomy/anomalies?window_hours=24`
@@ -123,17 +135,20 @@ sudo systemctl restart grafana-server
 ### Activity Row
 
 **5. PR Activity Over Time**
+
 - Line chart showing PR creation, auto-merge, rejection trends
 - 24-hour time series
 - Stacked view option
 
 **6. PR Outcomes (24h)**
+
 - Pie chart of auto-merged vs rejected vs blocked
 - Shows distribution of outcomes
 
 ### Audit Log Row
 
 **7. Recent Audit Log**
+
 - Table of last 20 autonomous actions
 - Columns: timestamp, action, result, PR number, files changed
 - Color-coded results (green=success, red=failure, yellow=blocked)
@@ -143,6 +158,7 @@ sudo systemctl restart grafana-server
 ### Metrics Row
 
 **8-11. Key Metrics (24h)**
+
 - Total PRs Created
 - Auto-Merged Count
 - Rejected Count
@@ -151,22 +167,24 @@ sudo systemctl restart grafana-server
 ### Analysis Row
 
 **12. Risk Distribution (24h)**
+
 - Bar gauge showing distribution of risk levels (LOW, MEDIUM, HIGH)
 - Helps identify what types of changes are being attempted
 
 **13. Anomalies Table**
+
 - List of detected anomalies with descriptions
 - Real-time alerts for issues requiring attention
 
 ## API Endpoints Used
 
-| Panel | Endpoint | Refresh Rate |
-|-------|----------|--------------|
-| System Health | `GET /api/autonomy/health?window_hours=1` | 30s |
-| Metrics | `GET /api/autonomy/metrics?window_hours=24` | 30s |
-| Audit Log | `GET /api/autonomy/audit/recent?limit=20` | 30s |
-| Anomalies | `GET /api/autonomy/anomalies?window_hours=24` | 30s |
-| Prometheus Metrics | `GET /api/autonomy/metrics/prometheus` | 30s |
+| Panel              | Endpoint                                      | Refresh Rate |
+| ------------------ | --------------------------------------------- | ------------ |
+| System Health      | `GET /api/autonomy/health?window_hours=1`     | 30s          |
+| Metrics            | `GET /api/autonomy/metrics?window_hours=24`   | 30s          |
+| Audit Log          | `GET /api/autonomy/audit/recent?limit=20`     | 30s          |
+| Anomalies          | `GET /api/autonomy/anomalies?window_hours=24` | 30s          |
+| Prometheus Metrics | `GET /api/autonomy/metrics/prometheus`        | 30s          |
 
 ## Configuration
 
@@ -184,6 +202,7 @@ If your backend is not on `http://localhost:8000`, update the datasource URL:
 Default: 30 seconds
 
 To change:
+
 1. Open dashboard
 2. Click ⚙️ (Dashboard settings)
 3. Go to **General** tab
@@ -195,6 +214,7 @@ To change:
 Grafana supports alerting on thresholds:
 
 **Example: Alert on High Error Rate**
+
 1. Edit the "Error Rate" panel
 2. Go to **Alert** tab
 3. Create alert rule:
@@ -209,6 +229,7 @@ If you're using Prometheus for metrics scraping:
 ### 1. Add Prometheus Scrape Config
 
 Edit `prometheus.yml`:
+
 ```yaml
 scrape_configs:
   - job_name: 'autonomy_metrics'
@@ -230,11 +251,13 @@ scrape_configs:
 Change panel queries from JSON API to PromQL:
 
 **Example: Success Rate**
+
 ```promql
 autonomy_auto_merge_success_rate
 ```
 
 **Example: Error Rate**
+
 ```promql
 autonomy_error_rate
 ```
@@ -244,17 +267,20 @@ autonomy_error_rate
 ### Dashboard Shows "No Data"
 
 **Check backend is running:**
+
 ```bash
 curl http://localhost:8000/api/autonomy/health
 ```
 
 **Check datasource connection:**
+
 1. Go to **Data Sources** → **Autonomy Metrics**
 2. Click **Save & Test**
 3. Should see "Data source is working"
 
 **Check CORS settings:**
 If backend and Grafana are on different domains, ensure CORS is configured:
+
 ```python
 # apps/backend/src/api/main.py
 app.add_middleware(
@@ -269,6 +295,7 @@ app.add_middleware(
 ### Panels Show Errors
 
 **Check API endpoint manually:**
+
 ```bash
 curl http://localhost:8000/api/autonomy/metrics?window_hours=24
 ```
@@ -282,10 +309,12 @@ Open browser DevTools (F12) → Console tab for errors
 ### Data Not Updating
 
 **Verify refresh rate:**
+
 - Top-right corner should show auto-refresh interval (30s default)
 - Click dropdown to change or manually refresh
 
 **Check time range:**
+
 - Top-right shows time range (default: "Last 24 hours")
 - Adjust if needed
 
@@ -294,9 +323,11 @@ Open browser DevTools (F12) → Console tab for errors
 ### Reduce API Load
 
 **Increase refresh rate:**
+
 - Dashboard settings → Auto refresh → 1m or 5m
 
 **Cache responses:**
+
 ```python
 # Add caching to metrics endpoints
 from fastapi_cache import FastAPICache
@@ -311,6 +342,7 @@ async def get_metrics(...):
 ### Optimize Queries
 
 **Use smaller time windows for high-frequency panels:**
+
 - Health check: 1 hour window
 - Metrics: 24 hour window
 - Historical: 7 day window
@@ -363,17 +395,20 @@ Create multiple dashboard instances for different environments:
 ### Response Procedures
 
 **High Error Rate:**
+
 1. Check recent audit log for patterns
 2. Review rejected PRs
 3. Consider lowering autonomy level
 4. Investigate root cause
 
 **Protected File Violations:**
+
 1. Immediate investigation required
 2. Review agent logic
 3. Update protected file patterns if needed
 
 **Circuit Breaker Trips:**
+
 1. System auto-disabled
 2. Fix underlying issues
 3. Manually reset circuit breaker
@@ -382,6 +417,7 @@ Create multiple dashboard instances for different environments:
 ## Support
 
 For issues or questions:
+
 - Check [Phase 5 Documentation](../docs/phase-5/README.md)
 - Review [Troubleshooting Guide](../docs/phase-5/week-3-autonomous-framework.md#troubleshooting)
 - Open GitHub issue
