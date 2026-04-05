@@ -396,7 +396,7 @@ pytest tests/api/test_semantic_search.py
 
 **See Also**:
 - [DATABASE_SCHEMA_CHANGES.md](./DATABASE_SCHEMA_CHANGES.md) - Detailed schema documentation
-- [CLAUDE.md](../CLAUDE.md) - Project architecture guide
+- [CLAUDE.md](./project-root/CLAUDE.md) - Project architecture guide
 - [.claude/STARTUP.md](../.claude/STARTUP.md) - Development workflow
 
 **Last Updated**: 2026-02-02

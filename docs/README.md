@@ -7,7 +7,7 @@ Welcome to the CCW-Online ERP documentation. This directory contains all technic
 ## 📚 Documentation Index
 
 ### Getting Started
-- [**CLAUDE.md**](../CLAUDE.md) - Main project architecture guide (start here)
+- [**CLAUDE.md**](./project-root/CLAUDE.md) - Main project architecture guide (start here)
 - [**.claude/STARTUP.md**](../.claude/STARTUP.md) - Development workflow guide
 - [**.claude/CLAUDE.md**](../.claude/CLAUDE.md) - System instructions for AI development
 
@@ -50,7 +50,7 @@ Welcome to the CCW-Online ERP documentation. This directory contains all technic
 ## 🚀 Quick Start Paths
 
 ### For New Developers
-1. Read [CLAUDE.md](../CLAUDE.md) - Understand the project structure
+1. Read [CLAUDE.md](./project-root/CLAUDE.md) - Understand the project structure
 2. Read [.claude/STARTUP.md](../.claude/STARTUP.md) - Set up development environment
 3. Read [DATABASE_QUICK_REFERENCE.md](./DATABASE_QUICK_REFERENCE.md) - Learn database basics
 
@@ -60,7 +60,7 @@ Welcome to the CCW-Online ERP documentation. This directory contains all technic
 3. [DATABASE_OPTIMIZATION.md](./DATABASE_OPTIMIZATION.md) - Optimize queries
 
 ### For Frontend Development
-1. [CLAUDE.md](../CLAUDE.md) - Component patterns and conventions
+1. [CLAUDE.md](./project-root/CLAUDE.md) - Component patterns and conventions
 2. [API_IMPLEMENTATION_GUIDE.md](./API_IMPLEMENTATION_GUIDE.md) - API endpoints reference
 3. [I18N-DEMO-GUIDE.md](./I18N-DEMO-GUIDE.md) - Multi-language support
 
@@ -192,7 +192,7 @@ pnpm turbo run type-check lint
 ### API Questions
 - How to implement → [API_IMPLEMENTATION_GUIDE.md](./API_IMPLEMENTATION_GUIDE.md)
 - Specifications → [api/](./api/)
-- Authentication → [CLAUDE.md](../CLAUDE.md) (Auth section)
+- Authentication → [CLAUDE.md](./project-root/CLAUDE.md) (Auth section)
 
 ### Deployment Questions
 - Overview → [DEPLOYMENT_ROADMAP_SUMMARY.md](./DEPLOYMENT_ROADMAP_SUMMARY.md)
