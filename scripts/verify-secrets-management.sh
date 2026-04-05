@@ -77,7 +77,7 @@ echo ""
 
 # 2. Check if secrets manager module exists
 info "Checking Secrets Manager Module..."
-SECRETS_MANAGER_FILE="apps/backend/src/config/secrets_manager.py"
+SECRETS_MANAGER_FILE="backend/src/config/secrets_manager.py"
 
 if [ -f "$SECRETS_MANAGER_FILE" ]; then
     pass "Secrets manager module exists: $SECRETS_MANAGER_FILE"
