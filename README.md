@@ -1,6 +1,6 @@
 # CCW-Online ERP
 
-Full-stack ERP/CRM for equipment suppliers: **Next.js 15** (web), **FastAPI** (API), **PostgreSQL** on Supabase. Monorepo: `pnpm` + Turbo.
+Full-stack ERP/CRM for equipment suppliers: **Next.js** (App Router in `src/app/`), **FastAPI** (API in `backend/`), **PostgreSQL** on Supabase. One **npm** package at the repo root (no workspaces).
 
 ## Documentation
 
@@ -12,10 +12,12 @@ Legacy / scratch notes that used to live at the repository root are under **[doc
 ## Quick start
 
 ```bash
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
-**Environment:** the only committed template is [`.env.example`](.env.example). Copy the relevant sections into `apps/backend/.env` and `apps/web/.env.local` (see banners inside the file).
+**Environment:** the only committed template is [`.env.example`](.env.example). Copy the relevant sections into `backend/.env` and `.env.local` at the repo root (see banners inside the file).
+
+**Vercel:** leave **Root Directory** at **`.`** (repository root). Add a root `vercel.json` if you need framework settings.
 
 See `docs/README.md` and [CLAUDE.md](CLAUDE.md) for setup details and backend tests.
