@@ -33,8 +33,8 @@ WARNINGS=0
 # Configuration
 BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"
 SENTRY_DSN="${SENTRY_DSN:-}"
-FRONTEND_DIR="${FRONTEND_DIR:-apps/web}"
-BACKEND_DIR="${BACKEND_DIR:-apps/backend}"
+FRONTEND_DIR="${FRONTEND_DIR:-app}"
+BACKEND_DIR="${BACKEND_DIR:-backend}"
 
 # Helper functions
 pass() {
@@ -110,7 +110,7 @@ if [ -f "$FRONTEND_DIR/package.json" ]; then
         info "   Version: $version"
     else
         fail "Frontend: @sentry/nextjs NOT found in package.json"
-        info "   Install: pnpm add @sentry/nextjs --filter=web"
+        info "   Install: npm install @sentry/nextjs"
     fi
 else
     fail "Frontend: package.json not found at $FRONTEND_DIR/package.json"
@@ -685,7 +685,7 @@ else
     echo ""
     echo "Quick start:"
     echo "1. Backend: cd $BACKEND_DIR && uv add sentry-sdk[fastapi]"
-    echo "2. Frontend: pnpm add @sentry/nextjs --filter=web"
+    echo "2. Frontend: npm install @sentry/nextjs"
     echo "3. Configure SENTRY_DSN in environment"
     echo "4. Initialize Sentry in main.py and sentry.*.config.ts files"
     echo "5. Run this script again to verify"
