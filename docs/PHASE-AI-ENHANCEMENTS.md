@@ -893,9 +893,9 @@ export function InventoryForecastWidget() {
 - [ ] All 4 agents extend `BaseAgent` and register with orchestrator
 - [ ] All API endpoints follow existing patterns (Pydantic models, error handling)
 - [ ] All frontend components use shadcn/ui and Tailwind CSS
-- [ ] Type-check passes (`pnpm turbo run type-check`)
-- [ ] Lint passes (`pnpm turbo run lint`)
-- [ ] All tests pass (`pnpm turbo run test`)
+- [ ] Type-check passes (`pnpm run type-check`)
+- [ ] Lint passes (`pnpm run lint`)
+- [ ] All tests pass (`pnpm run test`)
 
 ### Performance Requirements
 

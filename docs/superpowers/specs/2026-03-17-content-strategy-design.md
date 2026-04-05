@@ -148,7 +148,7 @@ Execute in priority order, completing each module fully before moving to next:
 - Scan all pages in the module
 - Note spacing/font/button/border inconsistencies
 - Fix minor issues immediately, flag major ones
-- Run `pnpm turbo run type-check lint`
+- Run `pnpm run check`
 
 ### Step 2: Content Audit & Research (1-2 hours)
 
@@ -175,7 +175,7 @@ Execute in priority order, completing each module fully before moving to next:
 
 - Visual review of all pages
 - Test user flows (navigation, forms, error states)
-- Run full test suite: `pnpm turbo run type-check lint test`
+- Run full test suite: `pnpm run check:all`
 - Screenshot key pages for documentation
 
 ### Step 6: Linear Update & Handoff
@@ -263,9 +263,9 @@ Execute in priority order, completing each module fully before moving to next:
 
 ### Technical Quality
 
-- ✅ No TypeScript errors (`pnpm turbo run type-check`)
-- ✅ No ESLint warnings (`pnpm turbo run lint`)
-- ✅ All tests pass (`pnpm turbo run test`)
+- ✅ No TypeScript errors (`pnpm run type-check`)
+- ✅ No ESLint warnings (`pnpm run lint`)
+- ✅ All tests pass (`pnpm run test`)
 - ✅ No broken layouts or visual regressions
 
 ### Accessibility

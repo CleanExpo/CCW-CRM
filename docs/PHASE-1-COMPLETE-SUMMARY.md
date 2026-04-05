@@ -287,7 +287,7 @@ Phase 1 has successfully established a comprehensive internationalization (i18n)
 
 **Type Checking**: ✅ Passed
 ```bash
-pnpm turbo run type-check --filter=web
+pnpm --filter web run type-check
 ```
 **Result**: 0 errors, all TypeScript types valid
 

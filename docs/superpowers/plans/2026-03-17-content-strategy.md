@@ -481,7 +481,7 @@ Expected: All 4 files exist
 
 ```bash
 cd D:/CCW-ERP-CRM
-pnpm turbo run type-check lint test
+pnpm run check:all
 ```
 
 Expected: All checks pass (0 errors)
@@ -548,7 +548,7 @@ Each module follows this 6-step workflow. Use this template for all modules.
 - Scan all pages in module
 - Note spacing/font/button/border inconsistencies
 - Fix minor issues, document major ones
-- Run `pnpm turbo run type-check lint`
+- Run `pnpm run check`
 
 **Step 2: Content Audit & Research (1-2 hours)**
 
@@ -575,7 +575,7 @@ Each module follows this 6-step workflow. Use this template for all modules.
 
 - Visual review all pages
 - Test user flows
-- Run `pnpm turbo run type-check lint test`
+- Run `pnpm run check:all`
 - Screenshot key pages
 
 **Step 6: Linear Update & Handoff**
@@ -657,7 +657,7 @@ If found complex issues (e.g., entire component uses wrong pattern), document:
 - [ ] **Step 5: Run type-check and lint**
 
 ```bash
-pnpm turbo run type-check lint --filter=web
+pnpm --filter web run check
 ```
 
 Expected: 0 errors (warnings OK)
@@ -1147,7 +1147,7 @@ Similar pattern:
 - [ ] **Step 6: Run type-check**
 
 ```bash
-pnpm turbo run type-check --filter=web
+pnpm --filter web run type-check
 ```
 
 Expected: 0 errors
@@ -1194,7 +1194,7 @@ All flows should work without errors.
 - [ ] **Step 3: Run full test suite**
 
 ```bash
-pnpm turbo run type-check lint test --filter=web
+pnpm --filter web run check:all
 ```
 
 Expected: All pass (0 errors, warnings OK)

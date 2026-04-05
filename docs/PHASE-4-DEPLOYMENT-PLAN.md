@@ -179,7 +179,7 @@ pnpm build
 
 ```bash
 cd apps/web
-pnpm turbo run type-check
+pnpm run type-check
 ```
 
 **Status**: All TypeScript types valid

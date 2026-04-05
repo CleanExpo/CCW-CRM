@@ -715,9 +715,9 @@ await sse_service.publish("dashboard-activity", {
 ## 🚀 DEPLOYMENT READINESS
 
 ### Code Quality ✅
-- ✅ TypeScript type checking passes (`pnpm turbo run type-check`)
-- ✅ ESLint passes (`pnpm turbo run lint`)
-- ✅ All tests passing (`pnpm turbo run test`)
+- ✅ TypeScript type checking passes (`pnpm run type-check`)
+- ✅ ESLint passes (`pnpm run lint`)
+- ✅ All tests passing (`pnpm run test`)
 - ✅ No console errors in browser
 - ✅ No memory leaks detected
 
