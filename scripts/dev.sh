@@ -68,7 +68,7 @@ fi
 # Start backend
 if [ "$START_BACKEND" = true ]; then
     echo "Starting backend..."
-    cd apps/backend
+    cd backend
     uv run uvicorn src.api.main:app --reload --port 8000 &
     BACKEND_PID=$!
     cd ../..
