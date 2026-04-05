@@ -146,18 +146,18 @@ section "3. Authentication Security Testing Readiness"
 
 info "Checking authentication security implementation..."
 
-AUTH_FILE="apps/backend/src/api/routes/demo_auth.py"
+AUTH_FILE="backend/src/api/routes/demo_auth.py"
 
 if [[ -f "$AUTH_FILE" ]]; then
     # Check for bcrypt password hashing
-    if grep -q "bcrypt\|passlib" apps/backend/src 2>/dev/null; then
+    if grep -q "bcrypt\|passlib" backend/src 2>/dev/null; then
         pass "Password hashing implemented (bcrypt)"
     else
         fail "Password hashing may be weak"
     fi
 
     # Check for JWT implementation
-    if grep -q "jwt\|JWT" apps/backend/src 2>/dev/null; then
+    if grep -q "jwt\|JWT" backend/src 2>/dev/null; then
         pass "JWT authentication implemented"
     else
         fail "JWT authentication not found"
@@ -179,16 +179,16 @@ section "4. SQL Injection Protection Validation"
 info "Checking SQL injection protection mechanisms..."
 
 # Check for SQLAlchemy ORM usage (prevents SQL injection)
-if find apps/backend/src -name "*.py" -exec grep -l "SQLAlchemy\|from sqlalchemy" {} \; 2>/dev/null | grep -q "."; then
+if find backend/src -name "*.py" -exec grep -l "SQLAlchemy\|from sqlalchemy" {} \; 2>/dev/null | grep -q "."; then
     pass "SQLAlchemy ORM in use (prevents SQL injection)"
 else
     fail "ORM not found - may be vulnerable to SQL injection"
 fi
 
 # Check for raw SQL queries (potential vulnerability)
-if find apps/backend/src -name "*.py" -exec grep -l "execute.*f\"\|execute.*%" {} \; 2>/dev/null | grep -q "."; then
+if find backend/src -name "*.py" -exec grep -l "execute.*f\"\|execute.*%" {} \; 2>/dev/null | grep -q "."; then
     warn "Potential SQL injection: String formatting in execute() found"
-    info "Review: find apps/backend/src -exec grep -n 'execute.*f\"' {} +"
+    info "Review: find backend/src -exec grep -n 'execute.*f\"' {} +"
 else
     pass "No string formatting in SQL queries detected"
 fi
@@ -201,22 +201,22 @@ section "5. XSS Protection Validation"
 info "Checking XSS protection mechanisms..."
 
 # Check for React usage (auto-escaping)
-if find apps/web -name "*.tsx" -o -name "*.jsx" 2>/dev/null | head -1 | grep -q "."; then
+if find app -name "*.tsx" -o -name "*.jsx" 2>/dev/null | head -1 | grep -q "."; then
     pass "React framework in use (auto-escaping by default)"
 else
     warn "React not detected"
 fi
 
 # Check for dangerouslySetInnerHTML (XSS risk)
-if find apps/web -name "*.tsx" -o -name "*.jsx" 2>/dev/null -exec grep -l "dangerouslySetInnerHTML" {} \; | grep -q "."; then
+if find app -name "*.tsx" -o -name "*.jsx" 2>/dev/null -exec grep -l "dangerouslySetInnerHTML" {} \; | grep -q "."; then
     warn "dangerouslySetInnerHTML usage found (XSS risk)"
-    info "Review: grep -rn dangerouslySetInnerHTML apps/web/"
+    info "Review: grep -rn dangerouslySetInnerHTML app/"
 else
     pass "No dangerouslySetInnerHTML usage found"
 fi
 
 # Check for CSP headers
-if grep -r "Content-Security-Policy\|CSP" apps/backend/src docs/ 2>/dev/null | grep -q "."; then
+if grep -r "Content-Security-Policy\|CSP" backend/src docs/ 2>/dev/null | grep -q "."; then
     pass "Content Security Policy configured"
 else
     warn "Content Security Policy not explicitly configured"
@@ -230,14 +230,14 @@ section "6. CSRF Protection Validation"
 info "Checking CSRF protection mechanisms..."
 
 # Check for SameSite cookie attribute
-if grep -r "SameSite.*Strict\|SameSite.*Lax" apps/backend/src 2>/dev/null | grep -q "."; then
+if grep -r "SameSite.*Strict\|SameSite.*Lax" backend/src 2>/dev/null | grep -q "."; then
     pass "SameSite cookie attribute configured"
 else
     warn "SameSite cookie attribute not found"
 fi
 
 # Check for CSRF token implementation
-if grep -r "csrf\|CSRF" apps/backend/src 2>/dev/null | grep -q "."; then
+if grep -r "csrf\|CSRF" backend/src 2>/dev/null | grep -q "."; then
     pass "CSRF references found in codebase"
 else
     info "CSRF token not explicitly implemented (JWT in headers may be sufficient)"
@@ -251,28 +251,28 @@ section "7. API Security Testing Readiness"
 info "Checking API security measures..."
 
 # Check for rate limiting
-if [[ -f "apps/backend/src/api/middleware/rate_limit.py" ]]; then
+if [[ -f "backend/src/api/middleware/rate_limit.py" ]]; then
     pass "API rate limiting implemented"
 else
     fail "API rate limiting not found"
 fi
 
 # Check for authentication middleware
-if [[ -f "apps/backend/src/api/middleware/auth.py" ]]; then
+if [[ -f "backend/src/api/middleware/auth.py" ]]; then
     pass "Authentication middleware exists"
 else
     fail "Authentication middleware not found"
 fi
 
 # Check for input validation (Pydantic)
-if grep -r "from pydantic import\|BaseModel" apps/backend/src 2>/dev/null | grep -q "."; then
+if grep -r "from pydantic import\|BaseModel" backend/src 2>/dev/null | grep -q "."; then
     pass "Input validation implemented (Pydantic)"
 else
     warn "Input validation may be incomplete"
 fi
 
 # Check for CORS configuration
-if grep -r "CORSMiddleware\|CORS" apps/backend/src 2>/dev/null | grep -q "."; then
+if grep -r "CORSMiddleware\|CORS" backend/src 2>/dev/null | grep -q "."; then
     pass "CORS middleware configured"
 else
     warn "CORS configuration not found"
@@ -307,14 +307,14 @@ section "9. Session Management Testing Readiness"
 info "Checking session management security..."
 
 # Check for secure cookie flags
-if grep -r "secure.*=.*True\|httponly.*=.*True" apps/backend/src 2>/dev/null | grep -i "cookie" | grep -q "."; then
+if grep -r "secure.*=.*True\|httponly.*=.*True" backend/src 2>/dev/null | grep -i "cookie" | grep -q "."; then
     pass "Secure cookie flags configured"
 else
     warn "Secure cookie flags may not be configured"
 fi
 
 # Check for session timeout
-if grep -r "expire\|timeout\|TTL" apps/backend/src 2>/dev/null | grep -i "jwt\|session\|token" | grep -q "."; then
+if grep -r "expire\|timeout\|TTL" backend/src 2>/dev/null | grep -i "jwt\|session\|token" | grep -q "."; then
     pass "Session/token expiration configured"
 else
     warn "Session expiration not explicitly configured"
@@ -328,14 +328,14 @@ section "10. Access Control Testing Readiness"
 info "Checking access control implementation..."
 
 # Check for role-based access control
-if grep -r "role\|permission\|is_admin" apps/backend/src 2>/dev/null | grep -q "."; then
+if grep -r "role\|permission\|is_admin" backend/src 2>/dev/null | grep -q "."; then
     pass "Role-based access control references found"
 else
     warn "Access control may not be implemented"
 fi
 
 # Check for authorization checks
-if grep -r "Depends.*get_current_user\|require.*auth" apps/backend/src 2>/dev/null | grep -q "."; then
+if grep -r "Depends.*get_current_user\|require.*auth" backend/src 2>/dev/null | grep -q "."; then
     pass "Authorization checks in place"
 else
     warn "Authorization checks may be incomplete"
@@ -349,13 +349,13 @@ section "11. Dependency Vulnerability Scanning"
 info "Checking for dependency vulnerabilities..."
 
 # Frontend dependencies
-if [[ -f "apps/web/package.json" ]]; then
+if [[ -f "package.json" ]]; then
     if command -v npm &>/dev/null; then
         info "Running npm audit (frontend)..."
-        if cd apps/web && npm audit --audit-level=moderate 2>&1 | grep -q "found 0 vulnerabilities"; then
+        if npm audit --audit-level=moderate 2>&1 | grep -q "found 0 vulnerabilities"; then
             pass "Frontend dependencies: 0 vulnerabilities"
         else
-            warn "Frontend dependencies may have vulnerabilities (run: cd apps/web && npm audit)"
+            warn "Frontend dependencies may have vulnerabilities (run: npm audit)"
         fi
         cd "$PROJECT_ROOT"
     else
@@ -364,13 +364,13 @@ if [[ -f "apps/web/package.json" ]]; then
 fi
 
 # Backend dependencies
-if [[ -f "apps/backend/pyproject.toml" ]]; then
+if [[ -f "backend/pyproject.toml" ]]; then
     if command -v pip-audit &>/dev/null; then
         info "Running pip-audit (backend)..."
-        if cd apps/backend && pip-audit 2>&1 | grep -q "No known vulnerabilities found"; then
+        if cd backend && pip-audit 2>&1 | grep -q "No known vulnerabilities found"; then
             pass "Backend dependencies: 0 vulnerabilities"
         else
-            warn "Backend dependencies may have vulnerabilities (run: cd apps/backend && pip-audit)"
+            warn "Backend dependencies may have vulnerabilities (run: cd backend && pip-audit)"
         fi
         cd "$PROJECT_ROOT"
     else
@@ -510,7 +510,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 PRE_TEST_CHECKS=(
     "$AUDIT_FILE:Security audit completed (ISS-024)"
     "scripts/configure-firewall.sh:Firewall configured (ISS-026)"
-    "apps/backend/src/api/middleware/rate_limit.py:Rate limiting implemented (ISS-027)"
+    "backend/src/api/middleware/rate_limit.py:Rate limiting implemented (ISS-027)"
     ".env.example:Environment templates documented (ISS-025)"
 )
 
