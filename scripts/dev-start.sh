@@ -74,7 +74,7 @@ fi
 echo ""
 echo -e "${CYAN}🐍 Step 2: Starting FastAPI Backend...${NC}"
 
-cd apps/backend
+cd backend
 python -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 cd ../..
