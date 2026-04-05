@@ -14,12 +14,12 @@ supabase db push                  # Apply migrations
 supabase db reset                 # Reset database (destructive)
 
 # Testing
-pnpm turbo run test               # All tests
+pnpm run test               # All tests
 pnpm test --filter=web            # Frontend unit tests
 cd apps/backend && uv run pytest  # Backend unit tests
 
 # Quality Checks
-pnpm turbo run type-check lint    # All checks
+pnpm run check    # All checks
 .\scripts\health-check.ps1        # Comprehensive system health check
 ```
 
@@ -48,7 +48,7 @@ docs(skills): update orchestrator guide
 
 ```bash
 # Single command - all checks
-pnpm turbo run type-check lint test && echo "✅ Ready for PR"
+pnpm run check:all && echo "✅ Ready for PR"
 ```
 
 ## Architecture Layers

@@ -482,16 +482,16 @@ async def test_batch_stock_reservation(db_session, test_order, test_products):
 **Run All Tests**:
 ```bash
 # Frontend tests
-pnpm turbo run test --filter=web
+pnpm --filter web run test
 
 # Backend tests
 cd apps/backend && uv run pytest
 
 # Type checking
-pnpm turbo run type-check
+pnpm run type-check
 
 # Linting
-pnpm turbo run lint
+pnpm run lint
 ```
 
 **Success Criteria**:

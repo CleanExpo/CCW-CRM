@@ -73,6 +73,6 @@ export function useExample() {
 
 ```bash
 pnpm dev --filter=web              # Development server
-pnpm turbo run type-check --filter=web  # Type checking
-pnpm turbo run lint --filter=web   # Linting
+pnpm --filter web run type-check  # Type checking
+pnpm --filter web run lint   # Linting
 pnpm build --filter=web           # Build for production
