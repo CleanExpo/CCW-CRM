@@ -358,7 +358,7 @@ Write-Host "RECOMMENDATIONS" -ForegroundColor Cyan
 Write-Host "=" * 80 -ForegroundColor Cyan
 Write-Host ""
 Write-Host "1. Run 'pip install safety && safety check' for detailed dependency audit" -ForegroundColor White
-Write-Host "2. Run 'pnpm audit' in apps/web for frontend vulnerabilities" -ForegroundColor White
+Write-Host "2. Run 'pnpm audit' in app for frontend vulnerabilities" -ForegroundColor White
 Write-Host "3. Review SECURITY-AUDIT-CHECKLIST.md for manual checks" -ForegroundColor White
 Write-Host "4. Consider using OWASP ZAP for dynamic security testing" -ForegroundColor White
 Write-Host "5. Setup automated security scans in CI/CD pipeline" -ForegroundColor White
