@@ -539,7 +539,7 @@ if command -v curl >/dev/null 2>&1; then
         fi
     elif [ "$HTTP_STATUS" = "000" ]; then
         warn "Backend metrics endpoint not accessible"
-        info "Ensure backend is running: cd apps/backend && uv run uvicorn src.api.main:app --reload"
+        info "Ensure backend is running: cd backend && uv run uvicorn src.api.main:app --reload"
         info "Add metrics endpoint: see docs/MONITORING_SETUP.md"
     elif [ "$HTTP_STATUS" = "404" ]; then
         fail "Backend metrics endpoint not found (HTTP 404)"
