@@ -154,10 +154,10 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
 
       - name: Run frontend tests
-        run: pnpm turbo run test
+        run: pnpm run test
 
       - name: Type check
-        run: pnpm turbo run type-check
+        run: pnpm run type-check
 
   # ============================================================================
   # Build and Push Docker Images

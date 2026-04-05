@@ -147,14 +147,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm turbo run lint
+        run: pnpm run lint
 
       - name: Type check
-        run: pnpm turbo run type-check
+        run: pnpm run type-check
 
       - name: Run unit tests with coverage
         id: test
-        run: pnpm turbo run test:coverage
+        run: pnpm run test:coverage
 
       - name: Upload coverage report
         if: always()
@@ -194,7 +194,7 @@ jobs:
 
       - name: Build all packages
         id: build
-        run: pnpm turbo run build
+        run: pnpm run build
         env:
           NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
 

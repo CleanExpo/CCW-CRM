@@ -159,16 +159,16 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
 
       - name: Run frontend tests
-        run: pnpm turbo run test
+        run: pnpm run test
 
       - name: Type check
-        run: pnpm turbo run type-check
+        run: pnpm run type-check
 
       - name: Lint check
-        run: pnpm turbo run lint
+        run: pnpm run lint
 
       - name: Build check
-        run: pnpm turbo run build
+        run: pnpm run build
         env:
           NEXT_PUBLIC_BACKEND_URL: ${{ env.PRODUCTION_URL }}
 

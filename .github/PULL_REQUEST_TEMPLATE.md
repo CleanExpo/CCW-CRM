@@ -36,8 +36,8 @@ Steps to verify:
 ## Pre-merge Checklist
 
 - [ ] `npx tsc --noEmit` — zero TypeScript errors
-- [ ] `pnpm turbo run lint` — zero lint errors
-- [ ] `pnpm turbo run test` — all tests passing
+- [ ] `pnpm run lint` — zero lint errors
+- [ ] `pnpm run test` — all tests passing
 - [ ] `node scripts/ci/scan-secrets.js` — no hardcoded secrets
 - [ ] PR size < 500 lines (or justified in summary)
 - [ ] Linear issue references included
