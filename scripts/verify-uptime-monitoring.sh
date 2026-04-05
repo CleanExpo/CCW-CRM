@@ -72,43 +72,43 @@ section() {
 section "1. Health Endpoint Implementation"
 
 # Check if health.py exists
-if [ -f "apps/backend/src/api/routes/health.py" ]; then
+if [ -f "backend/src/api/routes/health.py" ]; then
     pass "Health endpoint file exists (health.py)"
 
     # Check for main health endpoint
-    if grep -q "def health_check\|async def health_check" "apps/backend/src/api/routes/health.py"; then
+    if grep -q "def health_check\|async def health_check" "backend/src/api/routes/health.py"; then
         pass "Main health check endpoint implemented (/api/health)"
     else
         fail "Main health check endpoint NOT found"
     fi
 
     # Check for database health check
-    if grep -q "def database_health_check\|database.*health" "apps/backend/src/api/routes/health.py"; then
+    if grep -q "def database_health_check\|database.*health" "backend/src/api/routes/health.py"; then
         pass "Database health check endpoint implemented"
     else
         warn "Database health check endpoint not found"
     fi
 
     # Check for readiness endpoint
-    if grep -q "def readiness_check\|async def readiness_check" "apps/backend/src/api/routes/health.py"; then
+    if grep -q "def readiness_check\|async def readiness_check" "backend/src/api/routes/health.py"; then
         pass "Readiness check endpoint implemented (/api/ready)"
     else
         warn "Readiness check endpoint not found (recommended for K8s)"
     fi
 
     # Check for liveness endpoint
-    if grep -q "def liveness_check\|liveness" "apps/backend/src/api/routes/health.py"; then
+    if grep -q "def liveness_check\|liveness" "backend/src/api/routes/health.py"; then
         pass "Liveness check endpoint implemented"
     else
         warn "Liveness check endpoint not found (optional)"
     fi
 else
-    fail "Health endpoint file NOT found: apps/backend/src/api/routes/health.py"
+    fail "Health endpoint file NOT found: backend/src/api/routes/health.py"
 fi
 
 # Check if health route is registered in main.py
-if [ -f "apps/backend/src/api/main.py" ]; then
-    if grep -q "health" "apps/backend/src/api/main.py"; then
+if [ -f "backend/src/api/main.py" ]; then
+    if grep -q "health" "backend/src/api/main.py"; then
         pass "Health routes registered in main.py"
     else
         warn "Health routes may not be registered in main.py"
@@ -176,7 +176,7 @@ if curl -s -f "$BACKEND_URL/api/health" > /dev/null 2>&1; then
     fi
 else
     fail "Health endpoint is NOT accessible at $BACKEND_URL/api/health"
-    info "   Start backend: cd apps/backend && uv run uvicorn src.api.main:app --reload"
+    info "   Start backend: cd backend && uv run uvicorn src.api.main:app --reload"
 fi
 
 # Test readiness endpoint
@@ -391,7 +391,7 @@ else
 fi
 
 # Check for custom status page
-if [ -f "apps/web/app/(public)/status/page.tsx" ] || [ -f "apps/web/app/status/page.tsx" ]; then
+if [ -f "app/app/(public)/status/page.tsx" ] || [ -f "app/app/status/page.tsx" ]; then
     pass "Custom status page exists in frontend"
 else
     warn "Custom status page not found in frontend"
@@ -737,7 +737,7 @@ else
     echo "Critical issues found. Please address the failures above."
     echo ""
     echo "Quick start:"
-    echo "1. Ensure backend is running: cd apps/backend && uv run uvicorn src.api.main:app --reload"
+    echo "1. Ensure backend is running: cd backend && uv run uvicorn src.api.main:app --reload"
     echo "2. Test health endpoint: curl $BACKEND_URL/api/health"
     echo "3. Deploy to production and get public URL"
     echo "4. Sign up for UptimeRobot: https://uptimerobot.com"
