@@ -7,7 +7,7 @@ set -e  # Exit on any error
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-BACKEND_DIR="$PROJECT_ROOT/apps/backend"
+BACKEND_DIR="$PROJECT_ROOT/backend"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$PROJECT_ROOT/logs/deploy-backend-$TIMESTAMP.log"
 
