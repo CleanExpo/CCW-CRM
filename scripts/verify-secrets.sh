@@ -245,28 +245,28 @@ section "4. Hardcoded Secrets Check"
 info "Scanning codebase for potential hardcoded secrets..."
 
 # Check for hardcoded JWT secrets (common patterns)
-if grep -r "jwt.*=.*['\"][A-Za-z0-9_-]{64,}['\"]" apps/backend/src --include="*.py" 2>/dev/null | grep -v "test" | grep -v "example"; then
+if grep -r "jwt.*=.*['\"][A-Za-z0-9_-]{64,}['\"]" backend/src --include="*.py" 2>/dev/null | grep -v "test" | grep -v "example"; then
     warn "Potential hardcoded JWT secret found in source code"
 else
     pass "No hardcoded JWT secrets found in source code"
 fi
 
 # Check for hardcoded database passwords
-if grep -r "password.*=.*['\"][^<>]" apps/backend/src/config --include="*.py" 2>/dev/null | grep -v "getenv\|env.get" | grep -v "example"; then
+if grep -r "password.*=.*['\"][^<>]" backend/src/config --include="*.py" 2>/dev/null | grep -v "getenv\|env.get" | grep -v "example"; then
     warn "Potential hardcoded database password found"
 else
     pass "No hardcoded database passwords found"
 fi
 
 # Check for hardcoded encryption keys
-if grep -r "ENCRYPTION_KEY.*=.*['\"][^<>]" apps/backend/src --include="*.py" 2>/dev/null | grep -v "getenv\|env.get" | grep -v "test"; then
+if grep -r "ENCRYPTION_KEY.*=.*['\"][^<>]" backend/src --include="*.py" 2>/dev/null | grep -v "getenv\|env.get" | grep -v "test"; then
     warn "Potential hardcoded encryption key found"
 else
     pass "No hardcoded encryption keys found"
 fi
 
 # Check for hardcoded API keys
-if grep -r "api_key.*=.*['\"][A-Za-z0-9_-]{20,}['\"]" apps/backend/src --include="*.py" 2>/dev/null | grep -v "getenv\|env.get" | grep -v "test" | grep -v "example"; then
+if grep -r "api_key.*=.*['\"][A-Za-z0-9_-]{20,}['\"]" backend/src --include="*.py" 2>/dev/null | grep -v "getenv\|env.get" | grep -v "test" | grep -v "example"; then
     warn "Potential hardcoded API key found"
 else
     pass "No hardcoded API keys found in source code"
@@ -353,14 +353,14 @@ section "7. Environment Variable Validation"
 info "Checking for environment variable usage in code..."
 
 # Check backend config files use environment variables
-if find apps/backend/src/config -name "*.py" -exec grep -l "os.getenv\|os.environ" {} \; 2>/dev/null | grep -q "."; then
+if find backend/src/config -name "*.py" -exec grep -l "os.getenv\|os.environ" {} \; 2>/dev/null | grep -q "."; then
     pass "Backend config uses environment variables"
 else
     warn "Backend config may not be reading from environment variables"
 fi
 
 # Check for proper default values (should not have sensitive defaults)
-if find apps/backend/src/config -name "*.py" -exec grep -l "getenv.*default.*['\"][^<>]" {} \; 2>/dev/null | grep -q "."; then
+if find backend/src/config -name "*.py" -exec grep -l "getenv.*default.*['\"][^<>]" {} \; 2>/dev/null | grep -q "."; then
     info "Environment variables have default values (verify they're safe)"
 else
     pass "No default values for sensitive environment variables"
@@ -371,30 +371,30 @@ fi
 # ============================================================================
 section "8. AWS Secrets Manager Integration"
 
-if [[ -f "apps/backend/src/config/secrets_manager.py" ]]; then
+if [[ -f "backend/src/config/secrets_manager.py" ]]; then
     pass "AWS Secrets Manager integration exists (secrets_manager.py)"
 
     # Check for required methods
-    if grep -q "def get_secret" apps/backend/src/config/secrets_manager.py; then
+    if grep -q "def get_secret" backend/src/config/secrets_manager.py; then
         pass "get_secret() method implemented"
     else
         warn "Missing get_secret() method"
     fi
 
-    if grep -q "def update_secret\|def rotate" apps/backend/src/config/secrets_manager.py; then
+    if grep -q "def update_secret\|def rotate" backend/src/config/secrets_manager.py; then
         pass "Secret rotation methods implemented"
     else
         warn "Missing secret rotation methods"
     fi
 
-    if grep -q "import boto3\|secretsmanager" apps/backend/src/config/secrets_manager.py; then
+    if grep -q "import boto3\|secretsmanager" backend/src/config/secrets_manager.py; then
         pass "boto3 AWS SDK integration present"
     else
         warn "Missing boto3 import for AWS Secrets Manager"
     fi
 
     # Check for fallback mechanism
-    if grep -q "fallback\|except\|try" apps/backend/src/config/secrets_manager.py; then
+    if grep -q "fallback\|except\|try" backend/src/config/secrets_manager.py; then
         pass "Fallback mechanism exists (graceful degradation)"
     else
         warn "No fallback if AWS Secrets Manager unavailable"
@@ -525,13 +525,13 @@ else
     warn "Secure cookies may not be configured"
 fi
 
-if grep -r "SameSite.*Strict\|SameSite.*Lax" apps/backend/src --include="*.py" 2>/dev/null | grep -q "."; then
+if grep -r "SameSite.*Strict\|SameSite.*Lax" backend/src --include="*.py" 2>/dev/null | grep -q "."; then
     pass "SameSite cookie attribute configured"
 else
     warn "SameSite cookie attribute may not be set"
 fi
 
-if grep -r "httponly.*True\|HttpOnly" apps/backend/src --include="*.py" 2>/dev/null | grep -q "."; then
+if grep -r "httponly.*True\|HttpOnly" backend/src --include="*.py" 2>/dev/null | grep -q "."; then
     pass "HttpOnly flag configured for cookies"
 else
     warn "HttpOnly flag may not be set (XSS risk)"
@@ -570,7 +570,7 @@ else
 fi
 
 # Check for AWS Secrets Manager integration (optional)
-if [[ -f "apps/backend/src/config/secrets_manager.py" ]]; then
+if [[ -f "backend/src/config/secrets_manager.py" ]]; then
     pass "AWS Secrets Manager integration available (optional)"
 else
     info "AWS Secrets Manager integration not present (optional)"
@@ -741,7 +741,7 @@ echo "Optional but Recommended:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 OPTIONAL_CHECKS=(
-    "apps/backend/src/config/secrets_manager.py:AWS Secrets Manager integration"
+    "backend/src/config/secrets_manager.py:AWS Secrets Manager integration"
     "docs/SECRETS_MANAGEMENT.md:Secret management guide"
 )
 
