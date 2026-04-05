@@ -5,10 +5,10 @@
  * Lighthouse analyzes web app performance, accessibility, SEO, and best practices.
  *
  * Installation:
- * - pnpm add -D @lhci/cli (already installed)
+ * - npm i -D @lhci/cli
  *
  * Usage:
- * - Local: pnpm run lighthouse
+ * - Local: npm run test:lighthouse
  * - CI: Runs automatically in GitHub Actions
  *
  * Lighthouse Server (optional):
@@ -23,7 +23,7 @@ module.exports = {
   ci: {
     collect: {
       // Build the application before running Lighthouse
-      startServerCommand: 'pnpm -C apps/web build && pnpm -C apps/web start -- -p 3005',
+      startServerCommand: 'npm run build && npm run start -- -p 3005',
       startServerReadyPattern: 'Ready',
       startServerReadyTimeout: 30000,
 
