@@ -492,7 +492,7 @@ else
 fi
 
 # Check backend security headers middleware
-if [[ -f "apps/backend/src/api/middleware/security_headers.py" ]]; then
+if [[ -f "backend/src/api/middleware/security_headers.py" ]]; then
     pass "Backend security headers middleware exists"
 else
     warn "Backend security headers middleware not found"
