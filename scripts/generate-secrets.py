@@ -13,8 +13,8 @@ Usage:
     # Display secrets to console
     python scripts/generate-secrets.py
 
-    # Write secrets to files (Docker secrets format)
-    python scripts/generate-secrets.py --output-dir secrets/
+    # Write secrets to files (Docker secrets format; use a path outside git)
+    python scripts/generate-secrets.py --output-dir /path/to/docker-secret-files
 
     # Generate JSON for AWS Secrets Manager
     python scripts/generate-secrets.py --json > secrets.json
@@ -238,7 +238,9 @@ def output_console(secrets_dict: dict[str, str], quiet: bool = False) -> None:
         print()
         print("NEXT STEPS:")
         print("1. Store in AWS Secrets Manager: aws secretsmanager create-secret ...")
-        print("   OR create Docker secret files: python scripts/generate-secrets.py --output-dir secrets/")
+        print(
+            "   OR create Docker secret files: python scripts/generate-secrets.py --output-dir /path/to/secret-files"
+        )
         print("2. Update deployment configuration to load from secrets")
         print("3. Set up secret rotation schedule (90 days)")
         print("4. Clear terminal history: history -c")
@@ -269,7 +271,7 @@ def main() -> int:
         epilog="""
 Examples:
   python scripts/generate-secrets.py                     # Display to console
-  python scripts/generate-secrets.py --output-dir secrets/  # Write to files
+  python scripts/generate-secrets.py --output-dir /path/to/secret-files  # Write to files
   python scripts/generate-secrets.py --json              # Output JSON for AWS
   python scripts/generate-secrets.py --quiet             # Minimal output
         """,
@@ -310,7 +312,7 @@ Examples:
                 print(f"  - {f}")
             print()
             print("IMPORTANT: Set restrictive permissions on these files!")
-            print("  Linux/macOS: chmod 600 secrets/*.txt")
+            print("  Linux/macOS: chmod 600 <output-dir>/*.txt")
             print("  Windows: Use icacls to restrict access")
     elif args.json:
         output_json(secrets_dict)

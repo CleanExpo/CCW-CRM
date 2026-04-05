@@ -82,13 +82,8 @@ playwright/.cache/
 *secret*.json
 *secrets*.json
 
-# Secret directory (keep README and .gitkeep)
-secrets/*.txt
-secrets/*.key
-secrets/*.pem
-secrets/*.env
-!secrets/README.md
-!secrets/.gitkeep
+# Local secret files at repo root (never commit)
+/secrets/
 
 # Credential files
 *_credentials.json
