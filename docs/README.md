@@ -115,7 +115,7 @@ alembic downgrade -1         # Rollback one migration
 ### Running Tests
 ```bash
 # All tests
-pnpm turbo run test
+pnpm run test
 
 # Backend only
 cd apps/backend && pytest
@@ -127,7 +127,7 @@ cd apps/web && pnpm test
 ### Code Quality
 ```bash
 # Type checking + linting
-pnpm turbo run type-check lint
+pnpm run type-check && pnpm run lint
 
 # Health check (comprehensive)
 .\scripts\health-check.ps1
