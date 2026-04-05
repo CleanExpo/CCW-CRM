@@ -123,7 +123,7 @@ if [ -f "$ALERT_RULES_FILE" ]; then
         fail "No alert rules found"
     fi
 else
-    fail "Alert rules file not found: $ALERT_RULES_FILE"
+    warn "Alert rules file not found: $ALERT_RULES_FILE (repo may not ship monitoring/)"
 fi
 
 ################################################################################
@@ -285,7 +285,7 @@ if [ -f "$ALERTMANAGER_CONFIG" ]; then
         fail "No alert routing configured"
     fi
 else
-    fail "AlertManager configuration not found: $ALERTMANAGER_CONFIG"
+    warn "AlertManager configuration not found: $ALERTMANAGER_CONFIG (repo may not ship monitoring/)"
 fi
 
 ################################################################################

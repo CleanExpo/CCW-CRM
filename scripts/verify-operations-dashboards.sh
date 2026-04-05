@@ -37,6 +37,11 @@ GRAFANA_USER="${GRAFANA_USER:-admin}"
 GRAFANA_PASSWORD="${GRAFANA_PASSWORD:-admin}"
 PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9090}"
 
+if [ ! -d "monitoring" ]; then
+    info "monitoring/ not present in repository; skipping Grafana/Prometheus file checks."
+    exit 0
+fi
+
 # Helper functions
 pass() {
     echo -e "${GREEN}✓${NC} $1"

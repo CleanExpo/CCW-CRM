@@ -75,5 +75,5 @@ Write-Host ""
 Write-Host "❓ Troubleshooting:" -ForegroundColor Cyan
 Write-Host "   • If no email arrives, check SMTP_PASSWORD in .env"
 Write-Host "   • Check AlertManager logs: docker logs ccw-alertmanager"
-Write-Host "   • Verify email configuration in monitoring/alertmanager/config.yml"
+Write-Host "   • Verify email configuration in your Alertmanager deployment"
 Write-Host ""
