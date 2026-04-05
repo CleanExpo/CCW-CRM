@@ -181,10 +181,10 @@ You are working on user story **{{TASK_ID}}** as part of the Ralph Wiggum autono
 4. **Verify Before Claiming Complete**
    Run these commands and ensure ALL pass:
    ```bash
-   pnpm turbo run type-check  # TypeScript must compile
-   pnpm turbo run lint        # No lint errors
-   pnpm turbo run test        # All tests pass
-   pnpm turbo run build       # Build succeeds
+   pnpm run type-check  # TypeScript must compile
+   pnpm run lint        # No lint errors
+   pnpm run test        # All tests pass
+   pnpm run build       # Build succeeds
    ```
 
    If E2E tests are required for this task:
@@ -371,7 +371,7 @@ run_verification() {
 
     # Type check
     print_info "  Running type check..."
-    if pnpm turbo run type-check --output-logs=errors-only 2>/dev/null; then
+    if pnpm run type-check 2>/dev/null; then
         print_success "  Type check: PASS"
     else
         print_error "  Type check: FAIL"
@@ -380,7 +380,7 @@ run_verification() {
 
     # Lint
     print_info "  Running lint..."
-    if pnpm turbo run lint --output-logs=errors-only 2>/dev/null; then
+    if pnpm run lint 2>/dev/null; then
         print_success "  Lint: PASS"
     else
         print_error "  Lint: FAIL"
@@ -389,7 +389,7 @@ run_verification() {
 
     # Unit tests
     print_info "  Running tests..."
-    if pnpm turbo run test --output-logs=errors-only 2>/dev/null; then
+    if pnpm run test 2>/dev/null; then
         print_success "  Tests: PASS"
     else
         print_error "  Tests: FAIL"
@@ -398,7 +398,7 @@ run_verification() {
 
     # Build
     print_info "  Running build..."
-    if pnpm turbo run build --output-logs=errors-only 2>/dev/null; then
+    if pnpm run build 2>/dev/null; then
         print_success "  Build: PASS"
     else
         print_error "  Build: FAIL"

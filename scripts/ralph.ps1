@@ -204,10 +204,10 @@ You are working on user story **{{TASK_ID}}** as part of the Ralph Wiggum autono
 4. **Verify Before Claiming Complete**
    Run these commands and ensure ALL pass:
    ```powershell
-   pnpm turbo run type-check  # TypeScript must compile
-   pnpm turbo run lint        # No lint errors
-   pnpm turbo run test        # All tests pass
-   pnpm turbo run build       # Build succeeds
+   pnpm run type-check  # TypeScript must compile
+   pnpm run lint        # No lint errors
+   pnpm run test        # All tests pass
+   pnpm run build       # Build succeeds
    ```
 
    If E2E tests are required for this task:
@@ -384,7 +384,7 @@ function Invoke-Verification {
 
     # Type check
     Write-Info "  Running type check..."
-    pnpm turbo run type-check --output-logs=errors-only 2>&1 | Out-Null
+    pnpm run type-check --output-logs=errors-only 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Success "  Type check: PASS"
     } else {
@@ -394,7 +394,7 @@ function Invoke-Verification {
 
     # Lint
     Write-Info "  Running lint..."
-    pnpm turbo run lint --output-logs=errors-only 2>&1 | Out-Null
+    pnpm run lint --output-logs=errors-only 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Success "  Lint: PASS"
     } else {
@@ -404,7 +404,7 @@ function Invoke-Verification {
 
     # Tests
     Write-Info "  Running tests..."
-    pnpm turbo run test --output-logs=errors-only 2>&1 | Out-Null
+    pnpm run test --output-logs=errors-only 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Success "  Tests: PASS"
     } else {
@@ -414,7 +414,7 @@ function Invoke-Verification {
 
     # Build
     Write-Info "  Running build..."
-    pnpm turbo run build --output-logs=errors-only 2>&1 | Out-Null
+    pnpm run build --output-logs=errors-only 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Success "  Build: PASS"
     } else {

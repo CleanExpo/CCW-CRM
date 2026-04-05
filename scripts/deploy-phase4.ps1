@@ -189,13 +189,13 @@ try {
     # Type check
     if (-not $SkipTests) {
         Write-Log "Running type checks..."
-        pnpm turbo run type-check --filter=web
+        pnpm --filter web run type-check
         Write-Success "Type checking passed"
     }
 
     # Build
     Write-Log "Building frontend..."
-    pnpm turbo run build --filter=web
+    pnpm --filter web run build
     Write-Success "Frontend build completed"
 
     # Start frontend

@@ -55,13 +55,13 @@ fi
 echo "Running pre-deployment checks..."
 
 echo "  Type checking..."
-pnpm turbo run type-check
+pnpm run type-check
 
 echo "  Linting..."
-pnpm turbo run lint
+pnpm run lint
 
 echo "  Building..."
-pnpm turbo run build
+pnpm run build
 
 echo -e "${GREEN}✓ All checks passed${NC}"
 echo ""

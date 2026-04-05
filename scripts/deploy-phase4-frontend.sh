@@ -70,7 +70,7 @@ fi
 # Step 3: Type checking
 log "Step 3: Running type checks..."
 
-pnpm turbo run type-check --filter=web >> "$LOG_FILE" 2>&1
+pnpm --filter web run type-check >> "$LOG_FILE" 2>&1
 
 if [ $? -eq 0 ]; then
     log "✅ Type checking passed"
@@ -82,7 +82,7 @@ fi
 # Step 4: Linting
 log "Step 4: Running linting..."
 
-pnpm turbo run lint --filter=web >> "$LOG_FILE" 2>&1
+pnpm --filter web run lint >> "$LOG_FILE" 2>&1
 
 if [ $? -eq 0 ]; then
     log "✅ Linting passed"
@@ -93,7 +93,7 @@ fi
 # Step 5: Build frontend
 log "Step 5: Building frontend..."
 
-pnpm turbo run build --filter=web >> "$LOG_FILE" 2>&1
+pnpm --filter web run build >> "$LOG_FILE" 2>&1
 
 if [ $? -eq 0 ]; then
     log "✅ Frontend build completed"
