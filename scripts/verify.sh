@@ -82,11 +82,11 @@ else
     check_fail "Node.js is not installed"
 fi
 
-if check_command pnpm; then
-    PNPM_VERSION=$(pnpm --version)
-    check_pass "pnpm installed (version $PNPM_VERSION)"
+if check_command npm; then
+    NPM_VERSION=$(npm --version)
+    check_pass "npm installed (version $NPM_VERSION)"
 else
-    check_fail "pnpm is not installed"
+    check_fail "npm is not installed"
 fi
 
 if check_command python || check_command python3; then
@@ -184,14 +184,14 @@ else
     check_fail "Root package.json not found"
 fi
 
-if [ -d "apps/web" ] && [ -f "apps/web/package.json" ]; then
-    check_pass "Frontend app exists (apps/web)"
+if [ -d "src/app" ] && [ -f "package.json" ] && grep -q '"next"' package.json 2>/dev/null; then
+    check_pass "Next.js app exists (src/app/, single package.json at repo root)"
 else
-    check_fail "Frontend app not found"
+    check_fail "Frontend app not found (expect src/app/ and next in root package.json)"
 fi
 
-if [ -d "apps/backend" ] && [ -f "apps/backend/pyproject.toml" ]; then
-    check_pass "Backend app exists (apps/backend)"
+if [ -d "backend" ] && [ -f "backend/pyproject.toml" ]; then
+    check_pass "Backend app exists (backend)"
 else
     check_fail "Backend app not found"
 fi
@@ -249,19 +249,19 @@ print_header "6. Dependencies"
 if [ -d "node_modules" ]; then
     check_pass "Root node_modules exists"
 else
-    check_fail "Root node_modules not found (run: pnpm install)"
+    check_fail "Root node_modules not found (run: npm install)"
 fi
 
-if [ -d "apps/web/node_modules" ]; then
-    check_pass "Frontend node_modules exists"
+if [ -d "node_modules" ]; then
+    check_pass "Node dependencies installed"
 else
-    check_fail "Frontend node_modules not found (run: pnpm install)"
+    check_fail "Dependencies missing (run: npm install)"
 fi
 
-if [ -d "apps/backend/.venv" ]; then
+if [ -d "backend/.venv" ]; then
     check_pass "Backend virtual environment exists"
 else
-    check_fail "Backend .venv not found (run: cd apps/backend && uv sync)"
+    check_fail "Backend .venv not found (run: cd backend && uv sync)"
 fi
 
 # Check 7: Service Health (if services are supposed to be running)
@@ -271,7 +271,7 @@ print_header "7. Service Health"
 if curl -s http://localhost:3000 >/dev/null 2>&1; then
     check_pass "Frontend is accessible (http://localhost:3000)"
 else
-    check_info "Frontend is not running (start: pnpm dev)"
+    check_info "Frontend is not running (start: npm run dev)"
 fi
 
 # Check if backend is running
@@ -284,7 +284,7 @@ if curl -s http://localhost:8000/health >/dev/null 2>&1; then
         check_pass "Backend health check responds correctly"
     fi
 else
-    check_info "Backend is not running (start: pnpm dev)"
+    check_info "Backend is not running (start backend + npm run dev for web)"
 fi
 
 # Summary
@@ -317,7 +317,7 @@ else
     echo "  - Missing prerequisites: Install from https://github.com/CleanExpo/NodeJS-Starter-V1"
     echo "  - Docker not running: Start Docker Desktop"
     echo "  - Services not started: Run 'docker compose up -d'"
-    echo "  - Dependencies not installed: Run 'pnpm install' and 'cd apps/backend && uv sync'"
+    echo "  - Dependencies not installed: Run 'npm install' and 'cd backend && uv sync'"
     echo "  - No .env file: Copy from .env.example"
     echo ""
     exit 1
