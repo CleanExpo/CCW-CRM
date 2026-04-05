@@ -191,28 +191,28 @@ verify_load_testing_infrastructure() {
     fi
 
     # Check load test directory
-    dir_exists "apps/backend/tests/load"
+    dir_exists "backend/tests/load"
 
     # Check locustfile
-    file_exists "apps/backend/tests/load/locustfile_ai_features.py"
+    file_exists "backend/tests/load/locustfile_ai_features.py"
 
     # Check full load test script
-    file_exists "apps/backend/tests/load/run_full_load_test.py"
+    file_exists "backend/tests/load/run_full_load_test.py"
 
     # Check quick load test script
-    if file_exists "apps/backend/tests/load/run_quick_load_test.py"; then
+    if file_exists "backend/tests/load/run_quick_load_test.py"; then
         :
     fi
 
     # Check test scenarios
-    file_exists "apps/backend/tests/load/test_scenarios.py"
+    file_exists "backend/tests/load/test_scenarios.py"
 
     # Check scenario generators
-    if [[ -d "apps/backend/tests/load/generators" ]]; then
+    if [[ -d "backend/tests/load/generators" ]]; then
         check_pass "Scenario generators directory exists"
 
         for module in "products" "customers" "orders" "quotes"; do
-            if [[ -f "apps/backend/tests/load/generators/${module}.py" ]]; then
+            if [[ -f "backend/tests/load/generators/${module}.py" ]]; then
                 check_pass "Scenario generator exists: ${module}.py"
             else
                 check_warn "Scenario generator missing: ${module}.py"
@@ -231,39 +231,39 @@ verify_load_test_configuration() {
     print_category "2. Load Test Configuration"
 
     # Check load test configuration in run_full_load_test.py
-    if grep -q "2000 product scenarios" apps/backend/tests/load/run_full_load_test.py 2>/dev/null; then
+    if grep -q "2000 product scenarios" backend/tests/load/run_full_load_test.py 2>/dev/null; then
         check_pass "Products load test configured (2000 scenarios)"
     else
         check_warn "Products load test configuration missing"
     fi
 
-    if grep -q "2000 customer scenarios" apps/backend/tests/load/run_full_load_test.py 2>/dev/null; then
+    if grep -q "2000 customer scenarios" backend/tests/load/run_full_load_test.py 2>/dev/null; then
         check_pass "Customers load test configured (2000 scenarios)"
     else
         check_warn "Customers load test configuration missing"
     fi
 
-    if grep -q "2000 order scenarios" apps/backend/tests/load/run_full_load_test.py 2>/dev/null; then
+    if grep -q "2000 order scenarios" backend/tests/load/run_full_load_test.py 2>/dev/null; then
         check_pass "Orders load test configured (2000 scenarios)"
     else
         check_warn "Orders load test configuration missing"
     fi
 
-    if grep -q "2000 quote scenarios" apps/backend/tests/load/run_full_load_test.py 2>/dev/null; then
+    if grep -q "2000 quote scenarios" backend/tests/load/run_full_load_test.py 2>/dev/null; then
         check_pass "Quotes load test configured (2000 scenarios)"
     else
         check_warn "Quotes load test configuration missing"
     fi
 
     # Check performance targets in locustfile
-    if grep -q "p95" apps/backend/tests/load/locustfile_ai_features.py 2>/dev/null; then
+    if grep -q "p95" backend/tests/load/locustfile_ai_features.py 2>/dev/null; then
         check_pass "Performance targets defined in locustfile"
     else
         check_warn "Performance targets not defined"
     fi
 
     # Check max concurrent configuration
-    if grep -q "max_concurrent" apps/backend/tests/load/run_full_load_test.py 2>/dev/null; then
+    if grep -q "max_concurrent" backend/tests/load/run_full_load_test.py 2>/dev/null; then
         check_pass "Concurrency limits configured"
     else
         check_warn "Concurrency limits not configured"
@@ -308,7 +308,7 @@ verify_test_environment_preparation() {
 
     # Check database seed data loaded
     echo "Checking if database has seed data..."
-    if cd apps/backend && python3 -c "
+    if cd backend && python3 -c "
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
@@ -333,7 +333,7 @@ print(asyncio.run(check_data()))
     cd - > /dev/null
 
     # Create load test reports directory
-    mkdir -p apps/backend/tests/load/reports
+    mkdir -p backend/tests/load/reports
     check_pass "Load test reports directory created"
 }
 
@@ -375,20 +375,20 @@ verify_database_connection_pool() {
     print_category "5. Database Connection Pool"
 
     # Check database configuration
-    if grep -r "pool_size" apps/backend/src/config/ 2>/dev/null | grep -q .; then
+    if grep -r "pool_size" backend/src/config/ 2>/dev/null | grep -q .; then
         check_pass "Database pool_size configured"
     else
         check_warn "Database pool_size not explicitly configured (using defaults)"
     fi
 
-    if grep -r "max_overflow" apps/backend/src/config/ 2>/dev/null | grep -q .; then
+    if grep -r "max_overflow" backend/src/config/ 2>/dev/null | grep -q .; then
         check_pass "Database max_overflow configured"
     else
         check_warn "Database max_overflow not configured"
     fi
 
     # Check SQLAlchemy async configuration
-    if grep -q "create_async_engine" apps/backend/src/config/database.py 2>/dev/null; then
+    if grep -q "create_async_engine" backend/src/config/database.py 2>/dev/null; then
         check_pass "Async database engine configured (SQLAlchemy async)"
     else
         check_warn "Async database engine configuration unclear"
@@ -396,7 +396,7 @@ verify_database_connection_pool() {
 
     # Verify database can handle concurrent connections
     echo "Testing database concurrent connections..."
-    if cd apps/backend && python3 -c "
+    if cd backend && python3 -c "
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
@@ -446,7 +446,7 @@ verify_redis_cache_health() {
     fi
 
     # Check Redis configuration in backend
-    if grep -r "redis" apps/backend/src/config/ 2>/dev/null | grep -q .; then
+    if grep -r "redis" backend/src/config/ 2>/dev/null | grep -q .; then
         check_pass "Redis configuration exists in backend"
     else
         check_warn "Redis configuration not found (optional)"
@@ -465,7 +465,7 @@ verify_products_load_testing() {
     echo ""
 
     # Run products load test
-    if cd apps/backend && python3 -m tests.load.generators.products 2>&1 | tee ../../load-test-products.log; then
+    if cd backend && python3 -m tests.load.generators.products 2>&1 | tee ../../load-test-products.log; then
         check_pass "Products load test executed"
     else
         check_warn "Products load test execution had issues"
@@ -497,7 +497,7 @@ verify_customers_load_testing() {
     echo ""
 
     # Run customers load test
-    if cd apps/backend && python3 -m tests.load.generators.customers 2>&1 | tee ../../load-test-customers.log; then
+    if cd backend && python3 -m tests.load.generators.customers 2>&1 | tee ../../load-test-customers.log; then
         check_pass "Customers load test executed"
     else
         check_warn "Customers load test execution had issues"
@@ -529,7 +529,7 @@ verify_orders_load_testing() {
     echo ""
 
     # Run orders load test
-    if cd apps/backend && python3 -m tests.load.generators.orders 2>&1 | tee ../../load-test-orders.log; then
+    if cd backend && python3 -m tests.load.generators.orders 2>&1 | tee ../../load-test-orders.log; then
         check_pass "Orders load test executed"
     else
         check_warn "Orders load test execution had issues"
@@ -561,7 +561,7 @@ verify_quotes_load_testing() {
     echo ""
 
     # Run quotes load test
-    if cd apps/backend && python3 -m tests.load.generators.quotes 2>&1 | tee ../../load-test-quotes.log; then
+    if cd backend && python3 -m tests.load.generators.quotes 2>&1 | tee ../../load-test-quotes.log; then
         check_pass "Quotes load test executed"
     else
         check_warn "Quotes load test execution had issues"
@@ -592,11 +592,11 @@ verify_response_time_analysis() {
     echo "Analyzing response times from load test results..."
 
     # Check if full load test results exist
-    if [[ -f "apps/backend/tests/load/reports/load_test_latest.json" ]]; then
+    if [[ -f "backend/tests/load/reports/load_test_latest.json" ]]; then
         check_pass "Load test results file found"
 
         # Extract response time metrics
-        if P95=$(jq -r '.summary.p95_response_time_ms' apps/backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
+        if P95=$(jq -r '.summary.p95_response_time_ms' backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
             P95_RESPONSE_TIME=$P95
             if [[ $(echo "$P95 < $TARGET_P95_MS" | bc -l) -eq 1 ]]; then
                 check_pass "P95 response time: ${P95}ms (target: <${TARGET_P95_MS}ms)"
@@ -605,15 +605,15 @@ verify_response_time_analysis() {
             fi
         fi
 
-        if P50=$(jq -r '.summary.p50_response_time_ms' apps/backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
+        if P50=$(jq -r '.summary.p50_response_time_ms' backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
             check_pass "P50 response time: ${P50}ms"
         fi
 
-        if P99=$(jq -r '.summary.p99_response_time_ms' apps/backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
+        if P99=$(jq -r '.summary.p99_response_time_ms' backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
             check_pass "P99 response time: ${P99}ms"
         fi
 
-        if AVG=$(jq -r '.summary.avg_response_time_ms' apps/backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
+        if AVG=$(jq -r '.summary.avg_response_time_ms' backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
             check_pass "Average response time: ${AVG}ms"
         fi
     else
@@ -630,10 +630,10 @@ verify_error_rate_analysis() {
 
     echo "Analyzing error rates from load test results..."
 
-    if [[ -f "apps/backend/tests/load/reports/load_test_latest.json" ]]; then
+    if [[ -f "backend/tests/load/reports/load_test_latest.json" ]]; then
         # Calculate error rate
-        TOTAL=$(jq -r '.summary.total_scenarios' apps/backend/tests/load/reports/load_test_latest.json 2>/dev/null)
-        FAILED=$(jq -r '.summary.failed' apps/backend/tests/load/reports/load_test_latest.json 2>/dev/null)
+        TOTAL=$(jq -r '.summary.total_scenarios' backend/tests/load/reports/load_test_latest.json 2>/dev/null)
+        FAILED=$(jq -r '.summary.failed' backend/tests/load/reports/load_test_latest.json 2>/dev/null)
 
         if [[ -n "$TOTAL" ]] && [[ -n "$FAILED" ]] && [[ "$TOTAL" -gt 0 ]]; then
             TOTAL_SCENARIOS=$TOTAL
@@ -649,7 +649,7 @@ verify_error_rate_analysis() {
         fi
 
         # Check error types
-        if jq -e '.summary.failures_by_status' apps/backend/tests/load/reports/load_test_latest.json > /dev/null 2>&1; then
+        if jq -e '.summary.failures_by_status' backend/tests/load/reports/load_test_latest.json > /dev/null 2>&1; then
             check_pass "Error types categorized by status code"
         fi
     fi
@@ -664,8 +664,8 @@ verify_concurrency_testing() {
 
     echo "Verifying concurrency handling..."
 
-    if [[ -f "apps/backend/tests/load/reports/load_test_latest.json" ]]; then
-        CONCURRENT=$(jq -r '.summary.total_scenarios' apps/backend/tests/load/reports/load_test_latest.json 2>/dev/null)
+    if [[ -f "backend/tests/load/reports/load_test_latest.json" ]]; then
+        CONCURRENT=$(jq -r '.summary.total_scenarios' backend/tests/load/reports/load_test_latest.json 2>/dev/null)
 
         if [[ -n "$CONCURRENT" ]] && [[ "$CONCURRENT" -ge 8000 ]]; then
             check_pass "Handled ${CONCURRENT} scenarios (target: 8000+)"
@@ -674,7 +674,7 @@ verify_concurrency_testing() {
         fi
 
         # Check scenarios per second (throughput)
-        if THROUGHPUT=$(jq -r '.summary.scenarios_per_second' apps/backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
+        if THROUGHPUT=$(jq -r '.summary.scenarios_per_second' backend/tests/load/reports/load_test_latest.json 2>/dev/null); then
             if [[ -n "$THROUGHPUT" ]]; then
                 check_pass "Throughput: ${THROUGHPUT} scenarios/second"
             fi
@@ -749,11 +749,11 @@ verify_performance_baseline_documentation() {
     echo "Checking performance baseline documentation..."
 
     # Check if baseline results are saved
-    if [[ -f "apps/backend/tests/load/reports/load_test_latest.json" ]]; then
+    if [[ -f "backend/tests/load/reports/load_test_latest.json" ]]; then
         check_pass "Load test results saved (latest)"
 
         # Check for timestamped reports
-        REPORT_COUNT=$(find apps/backend/tests/load/reports -name "load_test_full_*.json" 2>/dev/null | wc -l)
+        REPORT_COUNT=$(find backend/tests/load/reports -name "load_test_full_*.json" 2>/dev/null | wc -l)
         if [[ "$REPORT_COUNT" -gt 0 ]]; then
             check_pass "Timestamped load test reports exist ($REPORT_COUNT reports)"
         else
@@ -764,7 +764,7 @@ verify_performance_baseline_documentation() {
     fi
 
     # Check for HTML reports
-    if [[ -f "apps/backend/tests/load/reports/load_test_latest.html" ]]; then
+    if [[ -f "backend/tests/load/reports/load_test_latest.html" ]]; then
         check_pass "HTML load test report generated"
     else
         check_warn "HTML load test report not found"
@@ -874,7 +874,7 @@ print_summary() {
         echo ""
         echo "Required Actions:"
         if [[ $TOTAL_SCENARIOS -eq 0 ]]; then
-            echo "  - Run full load test suite (python apps/backend/tests/load/run_full_load_test.py)"
+            echo "  - Run full load test suite (python backend/tests/load/run_full_load_test.py)"
         fi
         if [[ $(echo "$PASS_RATE < $TARGET_PASS_RATE" | bc -l) -eq 1 ]]; then
             echo "  - Improve pass rate to ${TARGET_PASS_RATE}% (current: ${PASS_RATE}%)"
@@ -892,7 +892,7 @@ print_summary() {
 
     echo ""
     echo "Documentation: docs/ISS-030-VERIFICATION.md"
-    echo "Load Test Reports: apps/backend/tests/load/reports/"
+    echo "Load Test Reports: backend/tests/load/reports/"
 }
 
 ################################################################################
