@@ -90,7 +90,7 @@ if (Test-Path $envProductionPath) {
 $backendEnvPath = "apps\backend\.env.production"
 if (!(Test-Path $backendEnvPath)) {
     Write-Host "Creating $backendEnvPath from example..." -ForegroundColor Yellow
-    Copy-Item "apps\backend\.env.production.example" $backendEnvPath
+    Copy-Item ".env.example" $backendEnvPath
 }
 
 Write-Host "Updating $backendEnvPath..." -ForegroundColor Yellow
@@ -106,7 +106,7 @@ Write-Host "Updated $backendEnvPath successfully" -ForegroundColor Green
 $frontendEnvPath = "apps\web\.env.production.local"
 if (!(Test-Path $frontendEnvPath)) {
     Write-Host "Creating $frontendEnvPath from example..." -ForegroundColor Yellow
-    Copy-Item "apps\web\.env.production.local.example" $frontendEnvPath
+    Copy-Item ".env.example" $frontendEnvPath
 }
 
 Write-Host "Updating $frontendEnvPath..." -ForegroundColor Yellow

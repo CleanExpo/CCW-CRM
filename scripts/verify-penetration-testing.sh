@@ -511,7 +511,7 @@ PRE_TEST_CHECKS=(
     "$AUDIT_FILE:Security audit completed (ISS-024)"
     "scripts/configure-firewall.sh:Firewall configured (ISS-026)"
     "apps/backend/src/api/middleware/rate_limit.py:Rate limiting implemented (ISS-027)"
-    ".env.production.example:Production secrets documented (ISS-025)"
+    ".env.example:Environment templates documented (ISS-025)"
 )
 
 PRE_TEST_PASS=0

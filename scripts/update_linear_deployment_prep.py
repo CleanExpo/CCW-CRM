@@ -113,13 +113,13 @@ def main():
 - Configuration: `apps/web/vercel.json`
 - Security headers configured
 - Cron jobs configured
-- Environment template: `apps/web/.env.example`
+- Environment template: `/.env.example` (copy subset to `apps/web/.env.local`)
 
 **Backend (Railway)**
 - Configuration: `apps/backend/railway.json`
 - Dockerfile ready: `apps/backend/Dockerfile`
 - Health checks configured
-- Environment template: `apps/backend/.env.example`
+- Environment template: `/.env.example` (copy subset to `apps/backend/.env`)
 
 **Database (Supabase)**
 - PostgreSQL 15 + pgvector

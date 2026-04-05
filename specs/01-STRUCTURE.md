@@ -431,12 +431,11 @@ uvicorn src.api.main:app --reload
 - `.npmrc` — npm registry configuration ✅
 
 **Environment**:
-- `.env` — Current environment variables ✅
-- `.env.example` — Example environment template ✅
-- `.env.local` — Local overrides ✅
-- `.env.production` — Production environment ✅
-- `.env.production.example` — Production template ✅
-- `.env.shopify.example` — Shopify integration template ✅
+- `.env` — Current environment variables (gitignored) ✅
+- `.env.example` — **Only** committed env template; merged dev/staging/production + `apps/web` + `apps/backend` sections ✅
+- `.env.local` — Local overrides (gitignored, Next.js) ✅
+- `.env.production` — Production secrets file (gitignored; never commit) ✅
+- `apps/backend/.env`, `apps/web/.env.local` — Populate from subsets of `.env.example` ✅
 
 **Git**:
 - `.gitignore` — Git ignore rules ✅

@@ -217,15 +217,15 @@ fi
 
 section "5. Environment Variables"
 
-# Check .env.production.example
-if [ -f ".env.production.example" ]; then
-    if grep -q "SENTRY_DSN" ".env.production.example"; then
-        pass "SENTRY_DSN defined in .env.production.example"
+# Check .env.example (merged templates)
+if [ -f ".env.example" ]; then
+    if grep -q "SENTRY_DSN" ".env.example"; then
+        pass "SENTRY_DSN defined in .env.example"
     else
-        warn "SENTRY_DSN not found in .env.production.example"
+        warn "SENTRY_DSN not found in .env.example"
     fi
 else
-    warn ".env.production.example not found"
+    warn ".env.example not found"
 fi
 
 # Check if SENTRY_DSN is set in environment

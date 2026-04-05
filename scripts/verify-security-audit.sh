@@ -145,16 +145,16 @@ else
 fi
 
 # Check for secure JWT secret
-if [ -f ".env.production.example" ]; then
-    if grep -q "JWT_SECRET" ".env.production.example"; then
+if [ -f ".env.example" ]; then
+    if grep -q "JWT_SECRET_KEY" ".env.example"; then
         pass "JWT secret configured in environment"
 
         # Check if it's a placeholder
-        if grep "JWT_SECRET" ".env.production.example" | grep -q "GENERATE\|change-me\|secret"; then
+        if grep "JWT_SECRET_KEY" ".env.example" | grep -q "GENERATE\|change-me\|secret"; then
             pass "JWT secret is placeholder (must be generated for production)"
         fi
     else
-        fail "JWT_SECRET not found in environment configuration"
+        fail "JWT_SECRET_KEY not found in environment configuration"
     fi
 fi
 
@@ -343,8 +343,8 @@ else
 fi
 
 # Check for ENCRYPTION_KEY in environment
-if [ -f ".env.production.example" ]; then
-    if grep -q "ENCRYPTION_KEY" ".env.production.example"; then
+if [ -f ".env.example" ]; then
+    if grep -q "ENCRYPTION_KEY" ".env.example"; then
         pass "ENCRYPTION_KEY configured in environment"
     else
         warn "ENCRYPTION_KEY not in environment configuration"
@@ -683,7 +683,7 @@ if [ ! -f "$BACKEND_DIR/src/api/middleware/security_headers.py" ]; then
 fi
 
 # Secrets management
-if [ ! -f ".env.production.example" ]; then
+if [ ! -f ".env.example" ]; then
     warn "Production: Environment template missing"
     prod_ready=false
 fi

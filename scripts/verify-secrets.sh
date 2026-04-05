@@ -136,62 +136,62 @@ fi
 # ============================================================================
 section "2. Production Environment Template"
 
-if [[ -f ".env.production.example" ]]; then
-    pass "Production environment template exists (.env.production.example)"
+if [[ -f ".env.example" ]]; then
+    pass "Production environment template exists (.env.example)"
 
     # Check for required sections
-    if grep -q "JWT_SECRET_KEY" .env.production.example; then
+    if grep -q "JWT_SECRET_KEY" .env.example; then
         pass "JWT configuration section present"
     else
         fail "Missing JWT configuration in template"
     fi
 
-    if grep -q "ENCRYPTION_KEY" .env.production.example; then
+    if grep -q "ENCRYPTION_KEY" .env.example; then
         pass "Encryption key section present"
     else
         fail "Missing encryption key configuration"
     fi
 
-    if grep -q "DATABASE_URL\|POSTGRES_PASSWORD" .env.production.example; then
+    if grep -q "DATABASE_URL\|POSTGRES_PASSWORD" .env.example; then
         pass "Database configuration section present"
     else
         fail "Missing database configuration"
     fi
 
-    if grep -q "SENDGRID_API_KEY" .env.production.example; then
+    if grep -q "SENDGRID_API_KEY" .env.example; then
         pass "SendGrid email configuration present"
     else
         warn "Missing SendGrid configuration (may be optional)"
     fi
 
-    if grep -q "XERO_WEBHOOK_KEY\|AP2_WEBHOOK_SECRET\|FEDEX_WEBHOOK_SECRET" .env.production.example; then
+    if grep -q "XERO_WEBHOOK_KEY\|AP2_WEBHOOK_SECRET\|FEDEX_WEBHOOK_SECRET" .env.example; then
         pass "Webhook secrets configuration present"
     else
         warn "Missing webhook secrets configuration"
     fi
 
-    if grep -q "AWS_SECRET_NAME\|USE_AWS_SECRETS" .env.production.example; then
+    if grep -q "AWS_SECRET_NAME\|USE_AWS_SECRETS" .env.example; then
         pass "AWS Secrets Manager integration documented"
     else
         warn "AWS Secrets Manager configuration not documented"
     fi
 
     # Check for placeholder values (should not have real secrets)
-    if grep -q "GENERATE_WITH_SCRIPT\|YOUR_" .env.production.example; then
+    if grep -q "GENERATE_WITH_SCRIPT\|YOUR_" .env.example; then
         pass "Template uses placeholders (no real secrets)"
     else
         warn "Template may contain hardcoded values"
     fi
 
     # Check for security warnings
-    if grep -q "SECURITY WARNING\|DO NOT" .env.production.example; then
+    if grep -q "SECURITY WARNING\|DO NOT" .env.example; then
         pass "Security warning present in template"
     else
         warn "Missing security warning in template"
     fi
 
 else
-    fail "Production environment template not found (.env.production.example)"
+    fail "Production environment template not found (.env.example)"
 fi
 
 # ============================================================================
@@ -519,7 +519,7 @@ section "12. Secure Cookie Configuration"
 
 info "Checking secure cookie configuration..."
 
-if grep -r "SECURE_COOKIES\|secure.*cookie" .env.production.example 2>/dev/null | grep -q "true"; then
+if grep -r "SECURE_COOKIES\|secure.*cookie" .env.example 2>/dev/null | grep -q "true"; then
     pass "Secure cookies enabled in production template"
 else
     warn "Secure cookies may not be configured"
@@ -546,7 +546,7 @@ info "Verifying production deployment readiness..."
 
 CHECKLIST_ITEMS=(
     "scripts/generate-secrets.py:Secret generation script"
-    ".env.production.example:Environment template"
+    ".env.example:Environment template"
     "docs/SECRETS_GENERATION.md:Secrets documentation"
     ".gitignore:.gitignore configuration"
 )
@@ -708,7 +708,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 CRITICAL_CHECKS=(
     "scripts/generate-secrets.py:Secret generation script exists"
-    ".env.production.example:Production environment template"
+    ".env.example:Production environment template"
     "docs/SECRETS_GENERATION.md:Secrets documentation"
     ".gitignore:.env files excluded from git"
 )

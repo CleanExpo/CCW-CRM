@@ -472,16 +472,16 @@ fi
 # ============================================================================
 section "14. Production Configuration"
 
-if [[ -f ".env.production.example" ]]; then
+if [[ -f ".env.example" ]]; then
     # Check for rate limit settings
-    if grep -q "RATE_LIMIT\|rate_limit" .env.production.example; then
+    if grep -q "RATE_LIMIT\|rate_limit" .env.example; then
         pass "Rate limit settings in production environment template"
     else
         warn "Rate limit settings not in production template"
     fi
 
     # Check for Redis URL
-    if grep -q "REDIS_URL" .env.production.example; then
+    if grep -q "REDIS_URL" .env.example; then
         pass "Redis URL in production environment template"
     else
         warn "Redis URL not in production template"

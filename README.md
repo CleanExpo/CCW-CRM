@@ -16,4 +16,6 @@ pnpm install
 pnpm dev
 ```
 
-See `docs/README.md` and [CLAUDE.md](CLAUDE.md) for setup details, env files, and backend tests.
+**Environment:** the only committed template is [`.env.example`](.env.example). Copy the relevant sections into `apps/backend/.env` and `apps/web/.env.local` (see banners inside the file).
+
+See `docs/README.md` and [CLAUDE.md](CLAUDE.md) for setup details and backend tests.
