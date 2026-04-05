@@ -133,10 +133,6 @@ scripts/*linear*.js
 !scripts/get_linear_priorities.py
 .linear-api-key
 
-# Supabase
-supabase/.branches
-supabase/.temp
-
 # Docker
 .docker/
 

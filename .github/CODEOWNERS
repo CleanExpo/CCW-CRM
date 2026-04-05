@@ -5,7 +5,6 @@
 * @ccw-orchestrator
 
 # Security-sensitive files
-supabase/ @ccw-security-reviewer @ccw-orchestrator
 scripts/lib/approval-gate.js @ccw-security-reviewer
 scripts/lib/sandbox.js @ccw-security-reviewer
 hooks/ @ccw-security-reviewer
@@ -13,7 +12,6 @@ lib/au-privacy-compliance.js @ccw-security-reviewer @ccw-orchestrator
 
 # Database files
 *.sql @ccw-database-reviewer
-supabase/migrations/ @ccw-database-reviewer @ccw-security-reviewer
 
 # Infrastructure
 .github/ @ccw-infra-reviewer

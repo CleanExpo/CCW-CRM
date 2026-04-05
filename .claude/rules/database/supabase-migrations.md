@@ -1,8 +1,12 @@
 ---
-paths: supabase/**/*.sql
+paths:
+  - apps/backend/migrations/**/*.sql
+  - scripts/**/*.sql
 ---
 
 # Supabase Database Rules
+
+Tracked SQL in this repo lives under `apps/backend/migrations/` and `scripts/` (the former `supabase/migrations/` tree was removed).
 
 ## Database Configuration
 
