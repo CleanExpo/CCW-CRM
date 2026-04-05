@@ -13,21 +13,21 @@ Runs appropriate test suite based on scope:
 ### `/test` (all)
 ```bash
 # Frontend tests
-cd C:\CCW-Online ERP && pnpm turbo run test
+cd C:\CCW-Online ERP && pnpm run test
 
 # Backend tests
 cd C:\CCW-Online ERP\apps\backend && pytest
 
 # Type check
-cd C:\CCW-Online ERP && pnpm turbo run type-check
+cd C:\CCW-Online ERP && pnpm run type-check
 
 # Lint
-cd C:\CCW-Online ERP && pnpm turbo run lint
+cd C:\CCW-Online ERP && pnpm run lint
 ```
 
 ### `/test frontend`
 ```bash
-cd C:\CCW-Online ERP && pnpm turbo run test --filter=web
+cd C:\CCW-Online ERP && pnpm --filter web run test
 ```
 
 ### `/test backend`
@@ -119,7 +119,7 @@ cd C:\CCW-Online ERP\apps\web && pnpm test:perf
 
 ```bash
 # Check test coverage
-cd C:\CCW-Online ERP && pnpm turbo run test:coverage
+cd C:\CCW-Online ERP && pnpm run test:coverage
 ```
 
 Target coverage: 80%+ for critical paths

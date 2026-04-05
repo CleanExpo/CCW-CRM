@@ -11,7 +11,7 @@ Run before marking **any** task complete or creating a PR.
 
 ```bash
 # From monorepo root: D:\CCW-ERP-CRM
-pnpm turbo run type-check lint && cd apps/backend && uv run pytest -x -q --tb=short
+pnpm run check && cd apps/backend && uv run pytest -x -q --tb=short
 ```
 
 ---
@@ -31,7 +31,7 @@ curl -X POST http://localhost:8000/api/ai/toolshed/verify \
 ### Step 1: TypeScript Type-Check
 
 ```bash
-pnpm turbo run type-check
+pnpm run type-check
 ```
 
 Checks TypeScript compilation across all apps.
@@ -42,7 +42,7 @@ Checks TypeScript compilation across all apps.
 ### Step 2: ESLint
 
 ```bash
-pnpm turbo run lint
+pnpm run lint
 ```
 
 Checks ESLint violations across all apps.

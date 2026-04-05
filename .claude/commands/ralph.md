@@ -86,10 +86,10 @@ Tasks wait for dependencies to pass:
 ALL must pass before marking `passes: true`:
 
 ```bash
-pnpm turbo run type-check  # TypeScript compilation
-pnpm turbo run lint        # ESLint + Ruff
-pnpm turbo run test        # Vitest + Pytest unit tests
-pnpm turbo run build       # Production build
+pnpm run type-check  # TypeScript compilation
+pnpm run lint        # ESLint + Ruff
+pnpm run test        # Vitest + Pytest unit tests
+pnpm run build       # Production build
 ```
 
 ## Execution Steps
