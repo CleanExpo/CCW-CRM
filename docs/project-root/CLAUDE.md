@@ -5,17 +5,17 @@ Full-stack Equipment Supplier ERP/CRM. Next.js 15 + FastAPI + PostgreSQL (Supaba
 ## Commands
 
 - **Dev**: `pnpm dev` (all services via Turbo)
-- **Test**: `pnpm turbo run test` (single: `cd apps/web && npx vitest run path/to/file`)
-- **Type-check**: `pnpm turbo run type-check`
-- **Lint**: `pnpm turbo run lint`
-- **Build**: `pnpm turbo run build`
+- **Test**: `pnpm run test` (single: `cd apps/web && npx vitest run path/to/file`)
+- **Type-check**: `pnpm run type-check`
+- **Lint**: `pnpm run lint`
+- **Build**: `pnpm run build`
 - **Backend only**: `cd apps/backend && uv run uvicorn src.api.main:app --reload`
 - **Backend tests**: `cd apps/backend && uv run pytest`
 - **Format**: `pnpm format`
 
 ## Rules
 
-1. Run `pnpm turbo run type-check` after every code change. Zero errors required.
+1. Run `pnpm run type-check` after every code change. Zero errors required.
 2. Read the source files before making claims. Use Glob/Grep/Read, not speculation.
 3. Use `/plan` before coding. Show plan, get approval, then implement exactly as planned.
 4. Preserve existing API response shapes. Add optional fields freely; remove nothing.
@@ -64,7 +64,7 @@ commands, active task state from PROGRESS.md, and uncommitted decisions.
 When starting a fresh context window:
 1. Read `.claude/PROGRESS.md` for current state
 2. Read `git log --oneline -10` for recent changes
-3. Run `pnpm turbo run type-check` to verify environment
+3. Run `pnpm run type-check` to verify environment
 4. Continue from the next task in PROGRESS.md
 
 ## Skills
