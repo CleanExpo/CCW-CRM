@@ -7,7 +7,7 @@ set -e  # Exit on any error
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-FRONTEND_DIR="$PROJECT_ROOT/apps/web"
+FRONTEND_DIR="$PROJECT_ROOT/app"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$PROJECT_ROOT/logs/deploy-frontend-$TIMESTAMP.log"
 
@@ -50,11 +50,11 @@ log "Environment variables configured."
 # Step 2: Install dependencies
 log "Step 2: Installing dependencies..."
 
-cd "$FRONTEND_DIR"
+cd "$PROJECT_ROOT"
 
-if command -v pnpm &> /dev/null; then
-    log "Installing dependencies with pnpm..."
-    pnpm install >> "$LOG_FILE" 2>&1
+if command -v npm &> /dev/null; then
+    log "Installing dependencies with npm..."
+    npm ci >> "$LOG_FILE" 2>&1
 
     if [ $? -eq 0 ]; then
         log "✅ Dependencies installed"
@@ -63,14 +63,14 @@ if command -v pnpm &> /dev/null; then
         exit 1
     fi
 else
-    error "❌ pnpm not found. Please install pnpm first."
+    error "❌ npm not found. Please install Node.js."
     exit 1
 fi
 
 # Step 3: Type checking
 log "Step 3: Running type checks..."
 
-pnpm --filter web run type-check >> "$LOG_FILE" 2>&1
+npm run type-check >> "$LOG_FILE" 2>&1
 
 if [ $? -eq 0 ]; then
     log "✅ Type checking passed"
@@ -82,7 +82,7 @@ fi
 # Step 4: Linting
 log "Step 4: Running linting..."
 
-pnpm --filter web run lint >> "$LOG_FILE" 2>&1
+npm run lint >> "$LOG_FILE" 2>&1
 
 if [ $? -eq 0 ]; then
     log "✅ Linting passed"
@@ -93,7 +93,7 @@ fi
 # Step 5: Build frontend
 log "Step 5: Building frontend..."
 
-pnpm --filter web run build >> "$LOG_FILE" 2>&1
+npm run build >> "$LOG_FILE" 2>&1
 
 if [ $? -eq 0 ]; then
     log "✅ Frontend build completed"
@@ -109,7 +109,7 @@ cd "$FRONTEND_DIR"
 PORT=3000
 
 log "Starting Next.js server on port $PORT..."
-pnpm start --port $PORT > "$PROJECT_ROOT/logs/frontend-$TIMESTAMP.log" 2>&1 &
+npm run start -- -p $PORT > "$PROJECT_ROOT/logs/frontend-$TIMESTAMP.log" 2>&1 &
 FRONTEND_PID=$!
 
 # Wait for frontend to start
