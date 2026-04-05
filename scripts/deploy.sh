@@ -55,13 +55,13 @@ fi
 echo "Running pre-deployment checks..."
 
 echo "  Type checking..."
-pnpm run type-check
+npm run type-check
 
 echo "  Linting..."
-pnpm run lint
+npm run lint
 
 echo "  Building..."
-pnpm run build
+npm run build
 
 echo -e "${GREEN}✓ All checks passed${NC}"
 echo ""
@@ -76,9 +76,7 @@ if [ "$DEPLOY_FRONTEND" = true ]; then
         exit 1
     fi
 
-    cd apps/web
     vercel --prod
-    cd ../..
 
     echo -e "${GREEN}✓ Frontend deployed${NC}"
 fi
