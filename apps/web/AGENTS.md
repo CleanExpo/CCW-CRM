@@ -24,10 +24,10 @@ pnpm dev --filter=web
 pnpm build --filter=web
 
 # Type checking
-pnpm turbo run type-check --filter=web
+pnpm --filter web run type-check
 
 # Linting
-pnpm turbo run lint --filter=web
+pnpm --filter web run lint
 ```
 
 ## File Organization
