@@ -242,7 +242,14 @@
       "completion_criteria_present": false,
       "evidence_requirements_present": false,
       "rules_section": {
-        "architecture_layers": ["components", "hooks", "api", "services", "repositories", "database"],
+        "architecture_layers": [
+          "components",
+          "hooks",
+          "api",
+          "services",
+          "repositories",
+          "database"
+        ],
         "prohibited_imports": [
           "components/ cannot import from server/",
           "app/api/ cannot import from repositories/",
@@ -321,7 +328,13 @@
         "does_verification": true,
         "has_completion_checking": true,
         "verification_type": "self-attestation (default returns success=True)",
-        "agents_defined_in_file": ["FrontendAgent", "BackendAgent", "DatabaseAgent", "DevOpsAgent", "GeneralAgent"]
+        "agents_defined_in_file": [
+          "FrontendAgent",
+          "BackendAgent",
+          "DatabaseAgent",
+          "DevOpsAgent",
+          "GeneralAgent"
+        ]
       },
       {
         "path": "apps/backend/src/agents/orchestrator.py",
@@ -337,7 +350,14 @@
         "does_verification": true,
         "has_completion_checking": true,
         "verification_type": "Calls agent verification methods (build, tests, functionality)",
-        "task_statuses_defined": ["PENDING", "IN_PROGRESS", "VERIFYING", "COMPLETED", "FAILED", "BLOCKED"]
+        "task_statuses_defined": [
+          "PENDING",
+          "IN_PROGRESS",
+          "VERIFYING",
+          "COMPLETED",
+          "FAILED",
+          "BLOCKED"
+        ]
       },
       {
         "path": "apps/backend/src/agents/registry.py",
@@ -498,12 +518,12 @@
           {
             "path": "/health",
             "method": "GET",
-            "returns": {"status": "healthy", "timestamp": "ISO string", "version": "0.1.0"}
+            "returns": { "status": "healthy", "timestamp": "ISO string", "version": "0.1.0" }
           },
           {
             "path": "/ready",
             "method": "GET",
-            "returns": {"status": "ready", "timestamp": "ISO string"},
+            "returns": { "status": "ready", "timestamp": "ISO string" },
             "note": "Has TODO comment for adding dependency checks"
           }
         ]
@@ -633,26 +653,26 @@
   },
 
   "files_examined": [
-    {"path": "skills/ORCHESTRATOR.md", "lines": 72, "status": "complete"},
-    {"path": "skills/core/VERIFICATION.md", "lines": 110, "status": "complete"},
-    {"path": "skills/core/ERROR-HANDLING.md", "lines": 143, "status": "complete"},
-    {"path": "skills/core/CODING-STANDARDS.md", "lines": 127, "status": "complete"},
-    {"path": "skills/backend/AGENTS.md", "lines": 232, "status": "complete"},
-    {"path": "skills/devops/DEPLOYMENT.md", "lines": 165, "status": "complete"},
-    {"path": ".claude/settings.json", "lines": 201, "status": "complete"},
-    {"path": ".claude/commands/audit.md", "lines": 83, "status": "complete"},
-    {"path": ".claude/commands/verify.md", "lines": 103, "status": "complete"},
-    {"path": "apps/backend/src/agents/base_agent.py", "lines": 178, "status": "complete"},
-    {"path": "apps/backend/src/agents/orchestrator.py", "lines": 302, "status": "complete"},
-    {"path": "apps/backend/src/agents/registry.py", "lines": 109, "status": "complete"},
-    {"path": "apps/backend/src/graphs/nodes/validator.py", "lines": 119, "status": "complete"},
-    {"path": "apps/backend/src/api/routes/health.py", "lines": 28, "status": "complete"},
-    {"path": "apps/web/app/api/health/route.ts", "lines": 10, "status": "complete"},
-    {"path": "apps/backend/tests/test_orchestrator.py", "lines": 76, "status": "complete"},
-    {"path": "apps/backend/tests/test_agents.py", "lines": 119, "status": "complete"},
-    {"path": "apps/backend/tests/conftest.py", "lines": 21, "status": "complete"},
-    {"path": "apps/backend/pyproject.toml", "lines": 53, "status": "complete"},
-    {"path": "apps/web/package.json", "lines": 54, "status": "complete"},
-    {"path": "package.json", "lines": 40, "status": "complete"}
+    { "path": "skills/ORCHESTRATOR.md", "lines": 72, "status": "complete" },
+    { "path": "skills/core/VERIFICATION.md", "lines": 110, "status": "complete" },
+    { "path": "skills/core/ERROR-HANDLING.md", "lines": 143, "status": "complete" },
+    { "path": "skills/core/CODING-STANDARDS.md", "lines": 127, "status": "complete" },
+    { "path": "skills/backend/AGENTS.md", "lines": 232, "status": "complete" },
+    { "path": "skills/devops/DEPLOYMENT.md", "lines": 165, "status": "complete" },
+    { "path": ".claude/settings.json", "lines": 201, "status": "complete" },
+    { "path": ".claude/commands/audit.md", "lines": 83, "status": "complete" },
+    { "path": ".claude/commands/verify.md", "lines": 103, "status": "complete" },
+    { "path": "apps/backend/src/agents/base_agent.py", "lines": 178, "status": "complete" },
+    { "path": "apps/backend/src/agents/orchestrator.py", "lines": 302, "status": "complete" },
+    { "path": "apps/backend/src/agents/registry.py", "lines": 109, "status": "complete" },
+    { "path": "apps/backend/src/graphs/nodes/validator.py", "lines": 119, "status": "complete" },
+    { "path": "apps/backend/src/api/routes/health.py", "lines": 28, "status": "complete" },
+    { "path": "apps/web/app/api/health/route.ts", "lines": 10, "status": "complete" },
+    { "path": "apps/backend/tests/test_orchestrator.py", "lines": 76, "status": "complete" },
+    { "path": "apps/backend/tests/test_agents.py", "lines": 119, "status": "complete" },
+    { "path": "apps/backend/tests/conftest.py", "lines": 21, "status": "complete" },
+    { "path": "apps/backend/pyproject.toml", "lines": 53, "status": "complete" },
+    { "path": "apps/web/package.json", "lines": 54, "status": "complete" },
+    { "path": "package.json", "lines": 40, "status": "complete" }
   ]
 }
