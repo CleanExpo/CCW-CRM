@@ -224,7 +224,7 @@ async function envFileCheck(rootDir) {
  */
 async function dependencyVulnCheck(rootDir) {
   try {
-    const { stdout } = await execFileAsync('pnpm', ['audit', '--json'], {
+    const { stdout } = await execFileAsync('npm', ['audit', '--json'], {
       cwd: rootDir,
       timeout: 30_000,
     }).catch((err) => ({ stdout: err.stdout || '{}' }));
@@ -269,11 +269,11 @@ async function privacyActCheck(rootDir) {
       description: '/privacy page exists',
       test: async () => {
         try {
-          await fs.access(path.join(rootDir, 'apps/web/app/(dashboard)/privacy'));
+          await fs.access(path.join(rootDir, 'app/app/(dashboard)/privacy'));
           return true;
         } catch {
           try {
-            await fs.access(path.join(rootDir, 'apps/web/app/privacy'));
+            await fs.access(path.join(rootDir, 'app/app/privacy'));
             return true;
           } catch {
             return false;
