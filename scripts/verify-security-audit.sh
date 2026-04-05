@@ -36,8 +36,8 @@ FAILED=0
 WARNINGS=0
 
 # Configuration
-BACKEND_DIR="${BACKEND_DIR:-apps/backend}"
-FRONTEND_DIR="${FRONTEND_DIR:-apps/web}"
+BACKEND_DIR="${BACKEND_DIR:-backend}"
+FRONTEND_DIR="${FRONTEND_DIR:-app}"
 BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"
 
 # Helper functions
