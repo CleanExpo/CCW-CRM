@@ -78,12 +78,11 @@ else
     MISSING_DEPS=1
 fi
 
-if check_command pnpm; then
-    PNPM_VERSION=$(pnpm --version)
-    print_success "pnpm installed (version $PNPM_VERSION)"
+if check_command npm; then
+    NPM_VERSION=$(npm --version)
+    print_success "npm installed (version $NPM_VERSION)"
 else
-    print_error "pnpm is not installed"
-    echo "   Install: npm install -g pnpm"
+    print_error "npm is not installed (install Node.js)"
     MISSING_DEPS=1
 fi
 
@@ -120,13 +119,13 @@ print_success "All prerequisites installed!"
 # Step 2: Install dependencies
 print_header "Step 2/7: Installing Dependencies"
 
-print_info "Installing root dependencies with pnpm..."
-pnpm install --frozen-lockfile
+print_info "Installing Node dependencies..."
+npm install
 
-print_success "Root dependencies installed"
+print_success "Node dependencies installed"
 
 print_info "Installing backend dependencies with uv..."
-cd apps/backend
+cd backend
 uv sync
 cd ../..
 
@@ -283,7 +282,7 @@ else
 fi
 
 # Check file structure
-if [ -f "apps/backend/pyproject.toml" ] && [ -f "apps/web/package.json" ]; then
+if [ -f "backend/pyproject.toml" ] && [ -d "src/app" ]; then
     print_success "Project structure is valid"
 else
     print_error "Project structure appears incomplete"
@@ -305,7 +304,7 @@ echo ""
 echo "Next steps:"
 echo ""
 echo "  1. Start all services:"
-echo "     pnpm dev"
+echo "     npm run dev"
 echo ""
 echo "  2. Open in browser:"
 echo "     Frontend: http://localhost:3000"
