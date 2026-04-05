@@ -233,10 +233,10 @@ The framework uses a 4-agent system with clear responsibilities:
 **What It Does:**
 ```bash
 # Run all tests
-pnpm turbo run type-check lint test
+pnpm run check:all
 
 # Specific scopes:
-/test frontend    # pnpm turbo run test --filter=web
+/test frontend    # pnpm --filter web run test
 /test backend     # cd apps/backend && pytest
 /test unit        # Unit tests only
 /test e2e         # E2E tests only
@@ -659,7 +659,7 @@ Every 5 messages:
 
 ```bash
 # MANDATORY before marking task complete
-pnpm turbo run type-check lint test
+pnpm run check:all
 ```
 
 ### 5. Report Progress

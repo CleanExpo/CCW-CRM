@@ -172,7 +172,7 @@ fixture 'async_client' not found
 
 ### Type-Check Results
 
-**Command**: `pnpm turbo run type-check --filter=web`
+**Command**: `pnpm --filter web run type-check`
 
 **Status**: ✅ PASSED (0 errors, 49 warnings)
 
@@ -184,7 +184,7 @@ fixture 'async_client' not found
 
 ### Lint Results
 
-**Command**: `pnpm turbo run lint --filter=web`
+**Command**: `pnpm --filter web run lint`
 
 **Status**: ✅ PASSED (0 errors)
 

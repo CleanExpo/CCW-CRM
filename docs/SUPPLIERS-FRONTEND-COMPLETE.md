@@ -113,13 +113,13 @@ Implemented full CRUD (Create, Read, Update, Delete) functionality for the Suppl
 
 ### Type Check
 ```bash
-pnpm turbo run type-check --filter=web
+pnpm --filter web run type-check
 # ✅ PASSED - No TypeScript errors
 ```
 
 ### Lint Check
 ```bash
-pnpm turbo run lint --filter=web
+pnpm --filter web run lint
 # ✅ PASSED - No errors, only pre-existing warnings in other files
 ```
 

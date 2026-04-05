@@ -31,7 +31,7 @@ Three pages exist and are fully functional but are not accessible from the sideb
 - [ ] Add `{ name: "FAQ", href: "/faq", icon: HelpCircle }` to sidebar nav
 - [ ] Import `Megaphone` and `HelpCircle` from lucide-react (BarChart3 already imported)
 - [ ] Insert after the "Insights" entry
-- [ ] No TypeScript errors: `pnpm turbo run type-check --filter=web`
+- [ ] No TypeScript errors: `pnpm --filter web run type-check`
 - [ ] All three pages are navigable via sidebar links
 
 ### Technical Details

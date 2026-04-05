@@ -32,8 +32,8 @@ hotfix/<n>    ← critical production fixes (from main)
 - Branch is current with develop
 - All acceptance criteria in Linear issue are met
 - No TypeScript errors (npx tsc --noEmit)
-- No lint errors (pnpm turbo run lint)
-- All tests pass (pnpm turbo run test)
+- No lint errors (pnpm run lint)
+- All tests pass (pnpm run test)
 - Secrets scan clean (node scripts/ci/scan-secrets.js)
 - PR size < 1000 lines
 

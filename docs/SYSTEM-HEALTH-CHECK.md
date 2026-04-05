@@ -109,7 +109,7 @@ All agents initialized successfully:
 
 **Status**: ✅ PASS
 
-**Command**: `pnpm turbo run type-check --filter=web`
+**Command**: `pnpm --filter web run type-check`
 
 **Results**:
 - Errors: 0
@@ -124,7 +124,7 @@ All agents initialized successfully:
 
 **Status**: ✅ PASS
 
-**Command**: `pnpm turbo run lint --filter=web`
+**Command**: `pnpm --filter web run lint`
 
 **Results**:
 - Errors: 0

@@ -324,13 +324,13 @@ Synchronize documentation with actual codebase state.
 
 | Gate | Command | Status | Evidence |
 |------|---------|--------|----------|
-| TypeScript | `pnpm turbo run type-check` | ✅ **PASS** (0 errors) | `docs/verification/type-check-output.txt` |
+| TypeScript | `pnpm run type-check` | ✅ **PASS** (0 errors) | `docs/verification/type-check-output.txt` |
 | Frontend Tests | `pnpm test --filter=web` | ✅ **PASS** (154/154) | `docs/verification/frontend-tests.txt` |
-| Linting | `pnpm turbo run lint` | ⏳ Not run yet | - |
+| Linting | `pnpm run lint` | ⏳ Not run yet | - |
 | Backend Tests | `cd apps/backend && pytest` | ⏳ Not run yet | - |
 | Load Test (Quick) | `run_quick_load_test.py` | ⏳ Running | - |
 | Load Test (Full) | `run_full_load_test.py` | ⏳ Pending | - |
-| Build | `pnpm turbo run build` | ⏳ Not run yet | - |
+| Build | `pnpm run build` | ⏳ Not run yet | - |
 
 ---
 

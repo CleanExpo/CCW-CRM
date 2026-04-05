@@ -491,7 +491,7 @@ pnpm run verify
 
 ```bash
 # Run all checks (linting, type-check, tests)
-pnpm turbo run lint type-check test
+pnpm run check:all
 
 # Backend checks
 cd apps/backend
