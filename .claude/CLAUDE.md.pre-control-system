@@ -120,8 +120,8 @@ Every conversation:
 10. ☐ Run gstack `/cso` review for auth/data/security changes
 11. ☐ Implement exactly as planned
 12. ☐ Run `/sync-vault` after adding routes/pages/models
-13. ☐ Run `pnpm turbo run type-check` — fix all TypeScript errors
-14. ☐ Run `pnpm turbo run test` — all tests must pass
+13. ☐ Run `pnpm run type-check` — fix all TypeScript errors
+14. ☐ Run `pnpm run test` — all tests must pass
 15. ☐ Run gstack `/qa` after each sprint
 16. ☐ Run gstack `/retro` post-sprint
 17. ☐ Report changes (use progress format below)
@@ -195,7 +195,7 @@ D:\CCW-ERP-CRM/
 │    - Test as you go                 │
 ├─────────────────────────────────────┤
 │ 6. TEST                             │
-│    - Frontend: pnpm turbo run test  │
+│    - Frontend: pnpm run test  │
 │    - Backend: cd apps/backend && pytest│
 │    - Fix failures before continuing │
 ├─────────────────────────────────────┤

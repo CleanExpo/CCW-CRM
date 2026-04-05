@@ -14,11 +14,11 @@ cd apps/backend && uv run uvicorn src.api.main:app --reload  # Backend only
 supabase start && supabase db push
 
 # Quality
-pnpm turbo run type-check lint test
+pnpm run type-check lint test
 .\scripts\health-check.ps1
 
 # Pre-PR
-pnpm turbo run type-check lint test && echo "✅ Ready"
+pnpm run type-check lint test && echo "✅ Ready"
 ```
 
 ## Stack

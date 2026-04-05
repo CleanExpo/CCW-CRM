@@ -66,9 +66,9 @@ DURING_CODING:
   - Use existing API client (apiClient)
 
 AFTER_CODING:
-  - Run tests (pnpm turbo run test OR pytest)
-  - Run type check (pnpm turbo run type-check)
-  - Run lint (pnpm turbo run lint)
+  - Run tests (pnpm run test OR pytest)
+  - Run type check (pnpm run type-check)
+  - Run lint (pnpm run lint)
   - Report changes
   - Verify no new folders created
 
