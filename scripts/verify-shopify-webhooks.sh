@@ -44,7 +44,7 @@ WARNINGS=0
 # Configuration
 BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"
 WEBHOOK_URL="${WEBHOOK_URL:-}"
-BACKEND_DIR="apps/backend/src"
+BACKEND_DIR="backend/src"
 
 # Helper functions
 pass() {
@@ -237,7 +237,7 @@ if command -v curl >/dev/null 2>&1; then
         pass "Backend API is running ($BACKEND_URL)"
     elif [ "$HTTP_STATUS" = "000" ]; then
         warn "Backend API not accessible at $BACKEND_URL"
-        info "Start with: cd apps/backend && uv run uvicorn src.api.main:app --reload"
+        info "Start with: cd backend && uv run uvicorn src.api.main:app --reload"
     else
         warn "Backend API returned HTTP $HTTP_STATUS"
     fi
@@ -496,7 +496,7 @@ fi
 ################################################################################
 section "15. Database Migration"
 
-MIGRATIONS_DIR="apps/backend/alembic/versions"
+MIGRATIONS_DIR="backend/alembic/versions"
 
 if [ -d "$MIGRATIONS_DIR" ]; then
     # Check for webhook-related migrations
