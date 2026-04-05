@@ -15,7 +15,7 @@ version: 1.0.0
 
 ### 1. Full E2E Test Suite
 ```bash
-pnpm turbo run test
+pnpm run test
 # All tests must pass
 ```
 

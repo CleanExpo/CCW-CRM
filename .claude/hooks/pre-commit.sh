@@ -22,10 +22,10 @@ fi
 
 # 3. Run tests
 echo "Running tests..."
-pnpm turbo run test || { echo "❌ Tests failed"; exit 1; }
+pnpm run test || { echo "❌ Tests failed"; exit 1; }
 
 # 4. Run type check
 echo "Running type check..."
-pnpm turbo run type-check || { echo "❌ Type check failed"; exit 1; }
+pnpm run type-check || { echo "❌ Type check failed"; exit 1; }
 
 echo "✅ All checks passed"

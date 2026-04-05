@@ -15,17 +15,17 @@ Runs verification before git commit.
 
 ### 1. Verification Check
 ```bash
-pnpm turbo run type-check lint
+pnpm run check
 ```
 
 ### 2. Test Suite
 ```bash
-pnpm turbo run test
+pnpm run test
 ```
 
 ### 3. Build Verification
 ```bash
-pnpm turbo run build
+pnpm run build
 ```
 
 ### 4. Secret Scan
