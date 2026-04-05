@@ -40,9 +40,9 @@ Scopes: `web`, `backend`, `api`, `db`, `video`, `git`, `skills`, `cin7`, `billin
 
 ## PR Checklist
 
-- [ ] `pnpm turbo run type-check` — zero errors
-- [ ] `pnpm turbo run lint` — zero warnings
-- [ ] `pnpm turbo run test` — all pass
+- [ ] `pnpm run type-check` — zero errors
+- [ ] `pnpm run lint` — zero warnings
+- [ ] `pnpm run test` — all pass
 - [ ] No locked files modified (demo_models.py, middleware.ts, demo_auth.py)
 - [ ] No existing API response shapes broken
 - [ ] New routes/pages added to `docs/catalogs/`

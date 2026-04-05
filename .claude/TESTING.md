@@ -4,7 +4,7 @@
 
 ```bash
 # All tests (monorepo)
-pnpm turbo run test
+pnpm run test
 
 # Frontend only
 cd apps/web && npx vitest run
@@ -25,19 +25,19 @@ cd apps/backend && uv run pytest tests/path/to/test_file.py -v
 cd apps/backend && uv run pytest tests/integration/ -v
 
 # Type check (always run)
-pnpm turbo run type-check
+pnpm run type-check
 
 # Lint
-pnpm turbo run lint
+pnpm run lint
 
 # All quality checks
-pnpm turbo run type-check lint test
+pnpm run check:all
 ```
 
 ## Before You Say You're Done
 
-1. `pnpm turbo run type-check` — zero TypeScript errors
-2. `pnpm turbo run test` — all tests pass
+1. `pnpm run type-check` — zero TypeScript errors
+2. `pnpm run test` — all tests pass
 3. If you changed backend code: `cd apps/backend && uv run pytest`
 4. If you changed frontend code: `cd apps/web && npx vitest run`
 5. If you changed API contracts: verify both frontend and backend tests pass

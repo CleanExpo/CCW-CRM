@@ -416,13 +416,13 @@ logger.info(
 ### 1. Verify No Breaking Changes
 ```bash
 # Type check
-pnpm turbo run type-check
+pnpm run type-check
 
 # Lint
-pnpm turbo run lint
+pnpm run lint
 
 # Tests
-pnpm turbo run test
+pnpm run test
 cd apps/backend && pytest
 ```
 

@@ -20,7 +20,7 @@
 - Pending: connections-guide, first-look, overview, pos, products, purchase-orders, quotes, reports, settings, shipments, suppliers, tradies, vs-spreadsheets, warehouse, workflows, workshop
 
 #### TypeScript — ✅ 0 errors
-- `pnpm turbo run type-check` — 2 packages checked, 0 errors (cached)
+- `pnpm run type-check` — 2 packages checked, 0 errors (cached)
 
 #### Production Site — ✅ VERIFIED
 - Dashboard: `ccw-crm-web.vercel.app/dashboard` — loads correctly

@@ -15,7 +15,7 @@ npx tsc --noEmit 2>&1
 
 ### Linting
 ```bash
-pnpm turbo run lint 2>&1
+pnpm run lint 2>&1
 # Must exit 0
 ```
 - [ ] Zero ESLint errors
@@ -23,7 +23,7 @@ pnpm turbo run lint 2>&1
 
 ### Tests
 ```bash
-pnpm turbo run test 2>&1
+pnpm run test 2>&1
 # All tests must pass
 ```
 - [ ] All existing tests pass

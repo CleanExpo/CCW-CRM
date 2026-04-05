@@ -7,7 +7,7 @@
 1. **Run pre-review checks**
    ```bash
    npx tsc --noEmit        # TypeScript must pass
-   pnpm turbo run lint      # Lint must pass
+   pnpm run lint      # Lint must pass
    node scripts/ci/scan-secrets.js  # No secrets
    ```
 

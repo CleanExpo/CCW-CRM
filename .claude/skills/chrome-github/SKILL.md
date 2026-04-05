@@ -95,8 +95,8 @@ PR description template:
 - [bullet point changes]
 
 ## Test plan
-- [ ] TypeScript: `pnpm turbo run type-check` passes
-- [ ] Tests: `pnpm turbo run test` passes
+- [ ] TypeScript: `pnpm run type-check` passes
+- [ ] Tests: `pnpm run test` passes
 - [ ] Visual: production site checked
 
 🤖 Generated with Claude Code
