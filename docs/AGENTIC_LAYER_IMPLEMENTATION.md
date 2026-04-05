@@ -159,7 +159,7 @@ Created MCP ecosystem:
 - `apps/backend/src/tools/mcp_integration.py` - Core MCP protocol support
 - `apps/backend/src/tools/mcp_client.py` - Client for connecting to MCP servers
 - `apps/backend/src/tools/mcp_server.py` - Custom MCP server for domain memory
-- `mcp_config.json` - Configuration for all MCP servers
+- `docs/config/mcp_config.example.json` - Template MCP server config (copy to repo root as `mcp_config.json`, gitignored)
 
 **Configured MCP Servers**:
 | Server | Purpose | Status |
@@ -414,7 +414,7 @@ skills/
 .github/workflows/
 └── agent-pr-checks.yml                   # Agent PR validation (NEW)
 
-mcp_config.json                           # MCP servers config (NEW)
+docs/config/mcp_config.example.json       # MCP template; copy to ./mcp_config.json locally (gitignored)
 
 tests/agents/
 └── test_self_correction.py               # Self-correction tests (NEW)
@@ -731,7 +731,7 @@ SLACK_TEAM_ID=your_team_id
 
 ### MCP Configuration
 
-Edit `mcp_config.json` to enable/disable servers:
+Copy `docs/config/mcp_config.example.json` to `mcp_config.json` at the repo root and edit to enable/disable servers:
 
 ```json
 {

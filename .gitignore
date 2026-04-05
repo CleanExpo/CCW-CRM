@@ -144,6 +144,12 @@ supabase/.temp
 .claude/agents-lib/
 /lib/
 
+# Local MCP config (copy from docs/config/mcp_config.example.json)
+/mcp_config.json
+
+# Root OpenAPI dumps (fetch from running API: GET /openapi.json)
+/openapi.json
+
 # Misc
 *.tsbuildinfo
 .vercel

@@ -238,7 +238,7 @@ SELECT
 - `dashboard-metrics.json` - Metrics endpoint response
 - `dashboard-revenue.json` - Revenue chart data
 - `dashboard-top-products.json` - Top products data
-- `dashboard-activity.json` - Activity feed data
+- Activity feed sample was previously saved as `dashboard-activity.json` at repo root (removed; capture from the API when needed).
 - `dashboard-aggregated.json` - Aggregated endpoint error
 
 ---

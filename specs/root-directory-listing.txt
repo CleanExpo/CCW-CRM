@@ -91,7 +91,6 @@ drwxr-xr-x 1 Phill 197609      0 Feb  4 13:24 grafana/
 drwxr-xr-x 1 Phill 197609      0 Feb  3 22:10 logs/
 drwxr-xr-x 1 Phill 197609      0 Feb  2 21:03 marketing-addon/
 -rw-r--r-- 1 Phill 197609  14815 Jan 15 19:25 marketing-addon-integration-plan.md
--rw-r--r-- 1 Phill 197609   2671 Jan 14 20:16 mcp_config.json
 -rw-r--r-- 1 Phill 197609   6220 Jan 14 20:16 MIGRATION_GUIDE.md
 -rw-r--r-- 1 Phill 197609   4547 Jan 22 14:40 MIGRATION-INSTRUCTIONS.md
 -rw-r--r-- 1 Phill 197609   7631 Jan 22 14:40 MIGRATION-QUICK-START.md
@@ -103,7 +102,6 @@ drwxr-xr-x 1 Phill 197609      0 Feb  4 11:13 nginx/
 drwxr-xr-x 1 Phill 197609      0 Jan 20 14:49 node_modules/
 drwxr-xr-x 1 Phill 197609      0 Feb  4 11:13 NodeJS-Starter-V1/
 -rw-r--r-- 1 Phill 197609      0 Feb  5 16:07 nul
--rw-r--r-- 1 Phill 197609  93762 Jan  9 13:13 openapi.json
 -rw-r--r-- 1 Phill 197609   8358 Jan 22 14:40 OVERNIGHT_TEST_SUMMARY.md
 -rw-r--r-- 1 Phill 197609   1479 Jan 14 20:16 package.json
 -rw-r--r-- 1 Phill 197609  32368 Jan 22 14:40 package-lock.json
