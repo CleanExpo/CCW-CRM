@@ -35,7 +35,7 @@ hotfix/<name>   →  main      (critical fixes, needs CSO + CEO approval)
 Before creating any PR, verify:
 - [ ] Branch is up to date with base (`git pull origin develop`)
 - [ ] `npx tsc` passes — zero TypeScript errors
-- [ ] `pnpm turbo run lint` passes
+- [ ] `pnpm run lint` passes
 - [ ] All new tests passing
 - [ ] No hardcoded secrets (scan-secrets.js)
 - [ ] PR size < 500 lines (warn) or < 1000 lines (hard limit)

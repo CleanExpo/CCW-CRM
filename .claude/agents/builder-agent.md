@@ -329,13 +329,13 @@ Throughout build phase, continuously verify:
 
 ```bash
 # TypeScript compilation
-pnpm turbo run type-check
+pnpm run type-check
 
 # Linting
-pnpm turbo run lint
+pnpm run lint
 
 # Tests (run all)
-pnpm turbo run test
+pnpm run test
 ```
 
 Update build progress:
@@ -501,7 +501,7 @@ Phase 4 is the **deployment readiness gate**. This is where you:
 
 ```bash
 # Run full test suite
-pnpm turbo run type-check lint test
+pnpm run check:all
 
 # Should output:
 # ✅ Type check: PASS

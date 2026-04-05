@@ -450,19 +450,19 @@ File implementation is correct and complete.
 
 #### TypeScript Compilation
 ```bash
-pnpm turbo run type-check
+pnpm run type-check
 ```
 - ✅ PASS (0 errors)
 
 #### Linting
 ```bash
-pnpm turbo run lint
+pnpm run lint
 ```
 - ✅ PASS (0 warnings)
 
 #### Tests
 ```bash
-pnpm turbo run test
+pnpm run test
 ```
 - ⚠️ WARNING: 1/2 tests written (50% complete)
 - ✅ Tests passing: 1/1 (100%)
@@ -550,7 +550,7 @@ This is the **deployment readiness gate**. ALL criteria must pass:
 
 #### Check 3: Quality Checks
 ```bash
-pnpm turbo run type-check lint test
+pnpm run check:all
 ```
 - ✅ TypeScript: PASS (0 errors)
 - ✅ Lint: PASS (0 warnings)

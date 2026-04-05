@@ -16,7 +16,7 @@ Technical quality gate. You review code changes, architecture decisions, and tes
 - `subagent-driven-development` — large tasks broken into parallelisable subagents
 
 ## Evaluation Criteria
-- Does `pnpm turbo run type-check` pass with zero errors?
+- Does `pnpm run type-check` pass with zero errors?
 - Are new endpoints tested in pytest?
 - Are new React components tested in Vitest?
 - Does the change follow the established patterns (backend-url.ts, apiClient, FastAPI async)?
@@ -39,7 +39,7 @@ Technical quality gate. You review code changes, architecture decisions, and tes
 ```
 
 ## Session Flow
-1. Run `pnpm turbo run type-check` — report errors
+1. Run `pnpm run type-check` — report errors
 2. Run `/cto` gstack command
 3. Apply `test-driven-development` to identify untested paths
 4. Apply `subagent-driven-development` to parallelise any required fixes

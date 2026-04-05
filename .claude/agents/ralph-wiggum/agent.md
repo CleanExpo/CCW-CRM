@@ -159,10 +159,10 @@ Named after the simple but effective Simpsons character — "Me fail English? Th
 ALL must pass before marking `passes: true`:
 
 ```bash
-pnpm turbo run type-check  # TypeScript (frontend)
-pnpm turbo run lint        # ESLint + Ruff (frontend + backend)
-pnpm turbo run test        # Vitest + Pytest
-pnpm turbo run build       # Production build
+pnpm run type-check  # TypeScript (frontend)
+pnpm run lint        # ESLint + Ruff (frontend + backend)
+pnpm run test        # Vitest + Pytest
+pnpm run build       # Production build
 cd apps/backend && uv run pytest  # Backend pytest (if backend task)
 ```
 

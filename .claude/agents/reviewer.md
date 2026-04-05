@@ -88,7 +88,7 @@ Run through EVERY item. No skipping.
   - Critical paths covered
 
 - [ ] **All tests pass**
-  - `pnpm turbo run test` passes
+  - `pnpm run test` passes
   - `pytest` passes
   - No skipped tests without reason
 

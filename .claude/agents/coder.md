@@ -285,10 +285,10 @@ Before saying "done":
 ☐ No extra files created
 ☐ No extra folders created
 ☐ TypeScript types are correct
-☐ No TypeScript errors (`pnpm turbo run type-check`)
-☐ No lint errors (`pnpm turbo run lint`)
+☐ No TypeScript errors (`pnpm run type-check`)
+☐ No lint errors (`pnpm run lint`)
 ☐ Tests written for new code
-☐ Tests passing (`pnpm turbo run test` or `pytest`)
+☐ Tests passing (`pnpm run test` or `pytest`)
 ☐ Manually tested (if UI component)
 
 **Do NOT skip any box. All must be checked.**

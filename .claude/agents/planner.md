@@ -158,7 +158,7 @@ Use this **exact template**:
    - Backend: Pytest test for /api/example
 
 5. [ ] **Run full test suite** (2 min)
-   - pnpm turbo run test
+   - pnpm run test
    - Fix any failures
 
 **Total Estimated Time:** 32 minutes
@@ -238,7 +238,7 @@ After implementation is complete, run `/quality-gate`:
 
 ```bash
 # Quick CLI check
-pnpm turbo run type-check lint && cd apps/backend && uv run pytest -x -q --tb=short
+pnpm run check && cd apps/backend && uv run pytest -x -q --tb=short
 
 # Or via API
 curl -X POST http://localhost:8000/api/ai/toolshed/verify \

@@ -41,10 +41,10 @@ Checks:
 **Trigger**: After frontend code changes or when requested
 **Input**: Changed file paths
 **Output**: TypeScript compilation result (pass/fail with error list)
-**Tools**: Bash (`pnpm turbo run type-check`)
+**Tools**: Bash (`pnpm run type-check`)
 
 ```bash
-pnpm turbo run type-check 2>&1
+pnpm run type-check 2>&1
 ```
 
 Acceptance criteria:
@@ -58,10 +58,10 @@ Acceptance criteria:
 **Trigger**: After any code changes
 **Input**: Changed file paths
 **Output**: Lint result (pass/fail with violation list)
-**Tools**: Bash (`pnpm turbo run lint`)
+**Tools**: Bash (`pnpm run lint`)
 
 ```bash
-pnpm turbo run lint 2>&1
+pnpm run lint 2>&1
 ```
 
 Acceptance criteria:
@@ -74,11 +74,11 @@ Acceptance criteria:
 **Trigger**: After any code changes, before marking task complete
 **Input**: Changed file paths, test file paths
 **Output**: Test execution result with pass/fail counts and failure details
-**Tools**: Bash (`pnpm turbo run test`, `cd apps/backend && uv run pytest`)
+**Tools**: Bash (`pnpm run test`, `cd apps/backend && uv run pytest`)
 
 ```bash
 # Frontend
-pnpm turbo run test 2>&1
+pnpm run test 2>&1
 
 # Backend
 cd apps/backend && uv run pytest tests/ -v --tb=short 2>&1
