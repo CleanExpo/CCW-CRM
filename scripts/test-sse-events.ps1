@@ -11,7 +11,7 @@ try {
     Write-Host "✅ Backend is running" -ForegroundColor Green
 } catch {
     Write-Host "❌ Backend is not running at http://localhost:8000" -ForegroundColor Red
-    Write-Host "   Please start the backend first: cd apps/backend; uvicorn src.api.main:app --reload"
+    Write-Host "   Please start the backend first: cd backend; uvicorn src.api.main:app --reload"
     exit 1
 }
 
