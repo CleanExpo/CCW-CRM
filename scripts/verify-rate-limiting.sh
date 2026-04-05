@@ -72,7 +72,7 @@ echo ""
 # ============================================================================
 section "1. Rate Limit Middleware File"
 
-RATE_LIMIT_FILE="apps/backend/src/api/middleware/rate_limit.py"
+RATE_LIMIT_FILE="backend/src/api/middleware/rate_limit.py"
 
 if [[ -f "$RATE_LIMIT_FILE" ]]; then
     pass "Rate limit middleware exists ($RATE_LIMIT_FILE)"
@@ -114,8 +114,8 @@ fi
 # ============================================================================
 section "2. slowapi Dependency"
 
-if [[ -f "apps/backend/pyproject.toml" ]]; then
-    if grep -q "slowapi" apps/backend/pyproject.toml; then
+if [[ -f "backend/pyproject.toml" ]]; then
+    if grep -q "slowapi" backend/pyproject.toml; then
         pass "slowapi dependency listed in pyproject.toml"
     else
         fail "slowapi not in dependencies"
@@ -202,7 +202,7 @@ fi
 # ============================================================================
 section "4. Authentication Endpoint Protection"
 
-AUTH_FILE="apps/backend/src/api/routes/demo_auth.py"
+AUTH_FILE="backend/src/api/routes/demo_auth.py"
 
 if [[ -f "$AUTH_FILE" ]]; then
     pass "Authentication routes file exists"
@@ -292,8 +292,8 @@ if [[ -f "$RATE_LIMIT_FILE" ]]; then
     fi
 
     # Check for Redis dependency
-    if [[ -f "apps/backend/pyproject.toml" ]]; then
-        if grep -q "redis" apps/backend/pyproject.toml; then
+    if [[ -f "backend/pyproject.toml" ]]; then
+        if grep -q "redis" backend/pyproject.toml; then
             pass "Redis Python client in dependencies"
         else
             warn "Redis client not in dependencies (needed for distributed rate limiting)"
@@ -306,7 +306,7 @@ fi
 # ============================================================================
 section "7. Rate Limit Enabled in Settings"
 
-SETTINGS_FILE="apps/backend/src/config/settings.py"
+SETTINGS_FILE="backend/src/config/settings.py"
 
 if [[ -f "$SETTINGS_FILE" ]]; then
     if grep -q "rate_limit_enabled\|RATE_LIMIT_ENABLED" "$SETTINGS_FILE"; then
@@ -340,7 +340,7 @@ fi
 # ============================================================================
 section "8. Rate Limit Error Handler"
 
-MAIN_FILE="apps/backend/src/api/main.py"
+MAIN_FILE="backend/src/api/main.py"
 
 if [[ -f "$MAIN_FILE" ]]; then
     # Check for RateLimitExceeded import
@@ -386,7 +386,7 @@ fi
 # ============================================================================
 section "10. Rate Limit Bypass for Health Checks"
 
-HEALTH_FILE="apps/backend/src/api/routes/health.py"
+HEALTH_FILE="backend/src/api/routes/health.py"
 
 if [[ -f "$HEALTH_FILE" ]]; then
     # Check if health endpoints have rate limiting
@@ -450,9 +450,9 @@ section "13. Rate Limit Testing"
 
 info "Checking for rate limit tests..."
 
-if [[ -d "apps/backend/tests" ]]; then
+if [[ -d "backend/tests" ]]; then
     # Check for rate limit tests
-    if find apps/backend/tests -name "*rate*" -o -name "*limit*" 2>/dev/null | grep -q "."; then
+    if find backend/tests -name "*rate*" -o -name "*limit*" 2>/dev/null | grep -q "."; then
         pass "Rate limit test files found"
     else
         warn "No dedicated rate limit tests found"
@@ -460,7 +460,7 @@ if [[ -d "apps/backend/tests" ]]; then
     fi
 
     # Check for test imports
-    if grep -r "limiter\|RateLimits" apps/backend/tests/ 2>/dev/null | grep -q "."; then
+    if grep -r "limiter\|RateLimits" backend/tests/ 2>/dev/null | grep -q "."; then
         pass "Rate limit testing references found"
     else
         info "Rate limit testing may not be comprehensive"
@@ -562,7 +562,7 @@ for check in "${CRITICAL_CHECKS[@]}"; do
     pattern="${check%%:*}"
     desc="${check#*:}"
 
-    if [[ -f "$pattern" ]] || grep -r "$pattern" apps/backend/src 2>/dev/null | grep -q "."; then
+    if [[ -f "$pattern" ]] || grep -r "$pattern" backend/src 2>/dev/null | grep -q "."; then
         echo -e "${GREEN}✓${NC} $desc"
         ((CRITICAL_PASS++))
     else
