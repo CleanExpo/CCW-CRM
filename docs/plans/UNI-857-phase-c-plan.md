@@ -267,7 +267,7 @@ Also export the new types from `apps/web/lib/api/index.ts`.
 **Acceptance criteria**:
 
 - [ ] All 3 methods typed and exported
-- [ ] `pnpm turbo run type-check` passes
+- [ ] `pnpm run type-check` passes
 
 ---
 
@@ -454,7 +454,7 @@ No new frontend code needed. Both `AIProductCopyGenerator.tsx` and its integrati
 1. Confirm the component calls `POST /api/ai/generate/product-copy` (line 91 of `AIProductCopyGenerator.tsx`) — confirmed
 2. Confirm `ProductForm.tsx` passes `productName` and `productCategory` props to the component — confirmed
 3. Confirm `handleCopyGenerated` in `ProductForm.tsx` inserts result into the description field — confirmed
-4. Run `pnpm turbo run type-check` to confirm no TypeScript errors
+4. Run `pnpm run type-check` to confirm no TypeScript errors
 
 **What to check manually after backend is wired**:
 
@@ -653,7 +653,7 @@ export type { CopilotQueryRequest, CopilotQueryResponse } from './copilot';
 **Acceptance criteria**:
 
 - [ ] Typed, no `any` usage
-- [ ] `pnpm turbo run type-check` passes
+- [ ] `pnpm run type-check` passes
 
 ---
 

@@ -235,7 +235,7 @@ Automated Lighthouse CLI encountered Windows-specific resource locking issues. M
    - Proper TypeScript interfaces (no `any` types)
 
 7. ⚠️ **Add pre-commit hooks** to enforce:
-   - `pnpm turbo run type-check lint` must pass
+   - `pnpm run check` must pass
    - No TypeScript errors
    - ESLint warnings below threshold
 

@@ -1657,7 +1657,7 @@ Phase 1: Type Contracts (7 gaps)
 
 - **Risk:** Breaking changes to existing working pages
 - **Mitigation:** Test each type fix in isolation, verify frontend still compiles
-- **Validation:** Run `pnpm turbo run type-check` after each fix
+- **Validation:** Run `pnpm run type-check` after each fix
 
 **2. Business Logic Services (Phase 3)**
 
@@ -1697,7 +1697,7 @@ Phase 1: Type Contracts (7 gaps)
 
 ### Phase 1 Success Criteria
 
-- ✅ 0 TypeScript errors in `pnpm turbo run type-check`
+- ✅ 0 TypeScript errors in `pnpm run type-check`
 - ✅ All 7 type contracts documented in code comments
 - ✅ Frontend builds without warnings
 

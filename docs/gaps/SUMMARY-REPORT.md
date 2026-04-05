@@ -281,7 +281,7 @@ Phase 1 (Type Contracts) → 7 gaps
 
 | Risk                                   | Mitigation                            | Validation                             |
 | -------------------------------------- | ------------------------------------- | -------------------------------------- |
-| **Type Contract Mismatches** (Phase 1) | Test each fix in isolation            | `pnpm turbo run type-check` after each |
+| **Type Contract Mismatches** (Phase 1) | Test each fix in isolation            | `pnpm run type-check` after each |
 | **Complex Business Logic** (Phase 3)   | TDD approach, write tests first       | 100% code coverage before integration  |
 | **API Integration** (Phase 2)          | Follow type contracts exactly         | Integration tests + Postman collection |
 | **Test Suite Maintenance** (Phase 5)   | Shared utilities, deterministic tests | All tests pass consistently            |
@@ -299,7 +299,7 @@ Phase 1 (Type Contracts) → 7 gaps
 
 ### Phase 1 Success Criteria
 
-- ✅ 0 TypeScript errors in `pnpm turbo run type-check`
+- ✅ 0 TypeScript errors in `pnpm run type-check`
 - ✅ All 7 type contracts documented in code comments
 - ✅ Frontend builds without warnings
 

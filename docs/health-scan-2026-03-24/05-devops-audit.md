@@ -108,7 +108,7 @@ check_untyped_defs = false
 disallow_untyped_defs = false
 ```
 
-With all strictness flags disabled, even when mypy is eventually enabled it will catch almost nothing. The frontend runs `pnpm turbo run type-check` successfully, creating an asymmetry where the Python backend has zero static type checking in CI.
+With all strictness flags disabled, even when mypy is eventually enabled it will catch almost nothing. The frontend runs `pnpm run type-check` successfully, creating an asymmetry where the Python backend has zero static type checking in CI.
 
 **Recommendation**: Fix mypy errors progressively. Enable mypy in CI with a `--ignore-errors` baseline, graduating to strict mode per-module.
 

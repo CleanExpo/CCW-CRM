@@ -29,7 +29,7 @@ The frontend codebase demonstrates **EXCELLENT** TypeScript discipline and **GOO
 ### Analysis Method
 ```bash
 cd apps/web
-pnpm turbo run type-check --filter=web
+pnpm --filter web run type-check
 grep -r ": any" apps/web/app --include="*.tsx"
 grep -r "as any" apps/web/app --include="*.tsx"
 ```
