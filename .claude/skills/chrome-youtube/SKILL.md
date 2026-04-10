@@ -22,6 +22,7 @@ Automate or assist YouTube video management for the CCW channel through the brow
 - Updating video titles, descriptions, or chapter timestamps
 
 **Trigger phrases:**
+
 - "upload this video to youtube"
 - "open youtube studio"
 - "check my youtube uploads"
@@ -38,6 +39,7 @@ mcp__Claude_in_Chrome__navigate: https://studio.youtube.com
 ```
 
 Screenshot to confirm login and channel:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ```
@@ -47,6 +49,7 @@ Confirm channel name matches CCW channel. If wrong account → stop and tell use
 ### Step 2: Check Channel ID
 
 Navigate to Settings → Channel → Advanced settings:
+
 ```
 mcp__Claude_in_Chrome__navigate: https://studio.youtube.com/channel/settings/advanced
 mcp__Claude_in_Chrome__get_page_text
@@ -63,6 +66,7 @@ mcp__Claude_in_Chrome__get_page_text
 ```
 
 Extract video list:
+
 ```
 | Title                              | Status     | Visibility  |
 |------------------------------------|------------|-------------|
@@ -70,7 +74,7 @@ Extract video list:
 | CCW Boardroom EP001               | Processing | Unlisted    |
 ```
 
-Compare against `data/heygen/video-registry.json` upload status.
+Compare against `data/videos/video-registry.json` upload status.
 
 ### Step 4: Upload New Video
 
@@ -79,6 +83,7 @@ Compare against `data/heygen/video-registry.json` upload status.
 "Ready to upload `[filename]`. This will open the upload dialog. Confirm?"
 
 After confirmation:
+
 1. Click "Create" → "Upload videos"
 2. The file picker opens — tell user which file to select (cannot do file picking autonomously)
 3. Wait for processing to complete
@@ -118,7 +123,8 @@ In the description field, append YouTube chapter markers from `videoBrief.youtub
 ### Step 7: Update video-registry.json
 
 After upload, report the YouTube video ID and URL. User should update:
-`data/heygen/video-registry.json` with:
+`data/videos/video-registry.json` with:
+
 - `youtube_url`: the new video URL
 - `upload_status`: "uploaded"
 - `youtube_video_id`: extracted from the URL
@@ -153,4 +159,4 @@ Browser upload has no API quota. Use this skill for bulk upload days.
 **Version**: 1.0
 **Created**: April 2026
 **Tools**: `mcp__Claude_in_Chrome__*`
-**Related files**: `scripts/youtube_upload.py`, `data/heygen/video-registry.json`
+**Related files**: `scripts/youtube_upload.py`, `data/videos/video-registry.json`
