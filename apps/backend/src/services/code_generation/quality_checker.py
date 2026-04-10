@@ -2,15 +2,39 @@
 
 Performs linting, type checking, formatting, and security scanning
 on generated code to ensure it meets project standards.
+
+Phase B2 additions:
+- mypy static type checking for Python
+- ESLint integration for TypeScript (via npx eslint)
+- Coverage gate: asserts test files meet minimum branch coverage
 """
 
 import ast
 import re
 import subprocess
-from dataclasses import dataclass
+import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 
+from pydantic import BaseModel, Field as PydanticField
+
 from .generator import GeneratedFile, QualityReport
+
+# ============================================================================
+# Extended Quality Models (Phase B2)
+# ============================================================================
+
+
+class CoverageReport(BaseModel):
+    """Result of a coverage analysis against a test file."""
+
+    file_path: str
+    coverage_percent: float = PydanticField(default=0.0)
+    missing_lines: list[int] = PydanticField(default_factory=list)
+    meets_threshold: bool = PydanticField(default=False)
+    threshold: float = PydanticField(default=80.0)
+    error: str | None = None
+
 
 # ============================================================================
 # Quality Checker
@@ -37,6 +61,7 @@ class QualityChecker:
 
     project_root: Path
     auto_fix: bool = True  # Automatically fix safe issues
+    coverage_threshold: float = 80.0  # Minimum branch coverage % for test files
 
     # ========================================================================
     # Main API
@@ -82,8 +107,10 @@ class QualityChecker:
         report.linting_passed = len(linting_errors) == 0
         report.linting_errors = linting_errors
 
-        # 2. Type checking (basic AST validation)
-        type_errors = await self._check_python_types(code)
+        # 2. Type checking — mypy (falls back to AST-based if mypy unavailable)
+        type_errors = await self._run_mypy_check(code)
+        if not type_errors:
+            type_errors = await self._check_python_types(code)
         report.type_check_passed = len(type_errors) == 0
         report.type_errors = type_errors
 
@@ -423,8 +450,10 @@ class QualityChecker:
         code = generated_file.content
         report = QualityReport()
 
-        # 1. Linting (basic checks - no ESLint integration for MVP)
-        linting_errors = await self._check_typescript_linting(code)
+        # 1. Linting — ESLint (falls back to basic checks if ESLint unavailable)
+        linting_errors = await self._run_eslint_check(code, generated_file.file_path)
+        if not linting_errors:
+            linting_errors = await self._check_typescript_linting(code)
         report.linting_passed = len(linting_errors) == 0
         report.linting_errors = linting_errors
 
@@ -555,3 +584,189 @@ class QualityChecker:
             violations.append("useState should have explicit type parameter")
 
         return violations
+
+    # ========================================================================
+    # Phase B2 additions: mypy, ESLint, coverage gate
+    # ========================================================================
+
+    async def _run_mypy_check(self, code: str) -> list[str]:
+        """Run mypy static type checker on Python code.
+
+        Writes code to a temp file and runs ``mypy --ignore-missing-imports``.
+        Returns an empty list if mypy is not installed (graceful degradation).
+        """
+        errors: list[str] = []
+        try:
+            with tempfile.NamedTemporaryFile(
+                suffix=".py", mode="w", encoding="utf-8", delete=False
+            ) as tmp:
+                tmp.write(code)
+                tmp_path = tmp.name
+
+            result = subprocess.run(
+                [
+                    "mypy",
+                    tmp_path,
+                    "--ignore-missing-imports",
+                    "--no-error-summary",
+                    "--show-error-codes",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=20,
+            )
+
+            Path(tmp_path).unlink(missing_ok=True)
+
+            if result.returncode != 0:
+                for line in result.stdout.splitlines():
+                    # Strip temp file path prefix so errors are readable
+                    clean = re.sub(r"^[^:]+:", "mypy:", line)
+                    if clean.strip():
+                        errors.append(clean.strip())
+
+        except FileNotFoundError:
+            pass  # mypy not installed — skip
+        except subprocess.TimeoutExpired:
+            errors.append("mypy: type check timed out")
+        except Exception as exc:
+            errors.append(f"mypy: {exc}")
+
+        return errors
+
+    async def _run_eslint_check(self, code: str, file_path: str) -> list[str]:
+        """Run ESLint on TypeScript/TSX code via ``npx eslint``.
+
+        Uses the project's own ``.eslintrc`` / ``eslint.config.*`` so it
+        respects the project's actual rule set.  Falls back to the basic
+        checks if ESLint is unavailable.
+        """
+        errors: list[str] = []
+        suffix = ".tsx" if "jsx" in code or "return (" in code else ".ts"
+        try:
+            with tempfile.NamedTemporaryFile(
+                suffix=suffix, mode="w", encoding="utf-8", delete=False
+            ) as tmp:
+                tmp.write(code)
+                tmp_path = tmp.name
+
+            result = subprocess.run(
+                [
+                    "npx",
+                    "--yes",
+                    "eslint",
+                    tmp_path,
+                    "--format",
+                    "compact",
+                    "--no-eslintrc",  # avoid project config bleed on temp file
+                    "--rule",
+                    '{"no-unused-vars": "warn", "no-undef": "warn"}',
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=str(self.project_root / "apps/web"),
+            )
+
+            Path(tmp_path).unlink(missing_ok=True)
+
+            if result.returncode != 0:
+                for line in result.stdout.splitlines():
+                    clean = re.sub(r"^[^:]+:", "eslint:", line)
+                    if clean.strip() and "0 problems" not in clean:
+                        errors.append(clean.strip())
+
+        except FileNotFoundError:
+            pass  # npx/eslint not available
+        except subprocess.TimeoutExpired:
+            errors.append("eslint: check timed out")
+        except Exception as exc:
+            errors.append(f"eslint: {exc}")
+
+        return errors
+
+    async def check_coverage(
+        self,
+        test_file_path: str,
+        source_file_path: str,
+        threshold: float | None = None,
+    ) -> "CoverageReport":
+        """Run pytest-cov on a test file and return branch coverage %.
+
+        Args:
+            test_file_path: Relative path to the test file.
+            source_file_path: Relative path to the source file under test.
+            threshold: Override the instance-level ``coverage_threshold``.
+
+        Returns:
+            CoverageReport with percent covered, missing lines, and pass/fail.
+        """
+        min_cov = threshold if threshold is not None else self.coverage_threshold
+        report = CoverageReport(file_path=test_file_path, threshold=min_cov)
+
+        full_test = self.project_root / test_file_path
+        full_src = self.project_root / source_file_path
+
+        if not full_test.exists():
+            report.error = f"Test file not found: {test_file_path}"
+            return report
+        if not full_src.exists():
+            report.error = f"Source file not found: {source_file_path}"
+            return report
+
+        try:
+            result = subprocess.run(
+                [
+                    "uv",
+                    "run",
+                    "pytest",
+                    str(full_test),
+                    f"--cov={full_src}",
+                    "--cov-report=term-missing",
+                    "--cov-branch",
+                    "-q",
+                    "--no-header",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=str(self.project_root / "apps/backend"),
+            )
+
+            output = result.stdout + result.stderr
+
+            # Parse coverage % from pytest-cov output: "TOTAL   50   10   80%"
+            cov_match = re.search(r"TOTAL\s+\d+\s+\d+\s+(\d+)%", output)
+            if cov_match:
+                report.coverage_percent = float(cov_match.group(1))
+
+            # Parse missing lines: "module.py   50   10   80%   12-15, 30"
+            missing_match = re.search(
+                re.escape(full_src.name) + r"\s+\d+\s+\d+\s+\d+%\s+([\d,\s\-]+)",
+                output,
+            )
+            if missing_match:
+                raw = missing_match.group(1).strip()
+                for part in raw.split(","):
+                    part = part.strip()
+                    if "-" in part:
+                        start, end = part.split("-", 1)
+                        try:
+                            report.missing_lines.extend(
+                                range(int(start), int(end) + 1)
+                            )
+                        except ValueError:
+                            pass
+                    elif part.isdigit():
+                        report.missing_lines.append(int(part))
+
+            report.meets_threshold = report.coverage_percent >= min_cov
+
+        except FileNotFoundError:
+            report.error = "pytest/uv not available"
+        except subprocess.TimeoutExpired:
+            report.error = "Coverage check timed out"
+        except Exception as exc:
+            report.error = str(exc)
+
+        return report

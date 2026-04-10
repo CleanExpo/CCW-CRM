@@ -2,10 +2,14 @@
 
 This package provides AI-powered code generation capabilities including:
 - Context analysis and codebase understanding
-- LLM-powered code generation
+- LLM-powered single-file code generation
+- Multi-file feature generation (Phase B2)
+- Incremental updates to existing files (Phase B2)
+- DB schema + API contract context (Phase B2)
+- Pre-defined code templates (Phase B2)
 - Automated test generation
 - Documentation generation
-- Code quality validation
+- Code quality validation (Ruff, mypy, ESLint, coverage)
 """
 
 from .context_builder import (
@@ -23,8 +27,34 @@ from .generator import (
     GeneratedFile,
     QualityReport,
 )
-from .quality_checker import QualityChecker
+from .multi_file_generator import (
+    FeatureFile,
+    FeatureRequest,
+    FeatureResult,
+    MultiFileGenerator,
+)
+from .incremental_updater import (
+    IncrementalUpdater,
+    UpdateRequest,
+    UpdateResult,
+)
+from .schema_context import (
+    ColumnInfo,
+    DependencyEdge,
+    EndpointInfo,
+    ModelInfo,
+    RouteModuleInfo,
+    SchemaContext,
+    SchemaContextBuilder,
+)
+from .template_system import (
+    RenderedTemplate,
+    TemplateKind,
+    TemplateSystem,
+    TemplateVars,
+)
 from .test_generator import TestGenerator
+from .quality_checker import CoverageReport, QualityChecker
 
 __all__ = [
     # Context Builder
@@ -33,16 +63,39 @@ __all__ = [
     "ContextBuilder",
     "ProjectStructure",
     "StyleGuide",
-    # Code Generator
+    # Single-file Generator
     "CodeGenerationRequest",
     "CodeGenerationResult",
     "CodeGenerator",
     "GeneratedFile",
     "QualityReport",
+    # Multi-file Generator (Phase B2)
+    "FeatureFile",
+    "FeatureRequest",
+    "FeatureResult",
+    "MultiFileGenerator",
+    # Incremental Updater (Phase B2)
+    "IncrementalUpdater",
+    "UpdateRequest",
+    "UpdateResult",
+    # Schema Context (Phase B2)
+    "ColumnInfo",
+    "DependencyEdge",
+    "EndpointInfo",
+    "ModelInfo",
+    "RouteModuleInfo",
+    "SchemaContext",
+    "SchemaContextBuilder",
+    # Template System (Phase B2)
+    "RenderedTemplate",
+    "TemplateKind",
+    "TemplateSystem",
+    "TemplateVars",
     # Test Generator
     "TestGenerator",
     # Documentation Generator
     "DocGenerator",
-    # Quality Checker
+    # Quality Checker (extended Phase B2)
+    "CoverageReport",
     "QualityChecker",
 ]
