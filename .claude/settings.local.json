@@ -20,7 +20,50 @@
       "Bash(PYTHONIOENCODING=utf-8 PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python -m pytest:*)",
       "Bash(PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python:*)",
       "mcp__Desktop_Commander__read_file",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash([ -d \".claude/skills/$d\" ])"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '## Session start' && echo \"Branch: $(git branch --show-current 2>/dev/null)\" && git status --short 2>/dev/null | head -5"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'mkdir -p .claude/snapshots && git diff --stat > .claude/snapshots/pre-compact-diff.txt 2>/dev/null && echo \"auto-compact $(date +%Y-%m-%d_%H:%M)\" >> .claude/snapshots/compaction.log'"
+          }
+        ]
+      },
+      {
+        "matcher": "manual",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'mkdir -p .claude/snapshots && echo \"manual-compact $(date +%Y-%m-%d_%H:%M)\" >> .claude/snapshots/compaction.log'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '→ /next at milestone, /clear when switching tasks, /resume after compaction'"
+          }
+        ]
+      }
     ]
   }
 }
