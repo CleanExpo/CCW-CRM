@@ -1,0 +1,197 @@
+---
+title: "Is Your ERP Making Automated Decisions? A Checklist for Trade Suppliers Before December 2026"
+description: "New POLA Act 2024 rules require Australian businesses to disclose automated decision-making in their Privacy Policy by 10 December 2026. Here's how to audit your ERP and know exactly what to disclose."
+date: "2026-04-11"
+author: "CCW Online ERP"
+tags: ["privacy", "ERP", "compliance", "POLA Act", "automated decision-making", "checklist", "Australia"]
+status: draft
+canonical: /blog/erp-automated-decisions-compliance-checklist-australia
+related:
+  - /blog/pola-act-2024-automated-decision-making-equipment-suppliers
+  - /blog/customer-data-ai-practical-compliance-guide-trade-suppliers
+---
+
+# Is Your ERP Making Automated Decisions? A Checklist for Trade Suppliers Before December 2026
+
+Most equipment and trade suppliers know their ERP does more than store records. It approves credit, generates quotes, triggers reorders, routes jobs, and — increasingly — uses AI to do all of this faster and at scale.
+
+From **10 December 2026**, if your system is making or significantly influencing decisions about customers or employees using their personal information, the *Privacy and Other Legislation Amendment Act 2024* (POLA Act) requires you to say so in your Privacy Policy. Clearly. Specifically.
+
+This article gives you a practical audit checklist to identify which parts of your ERP trigger the new disclosure obligation — and exactly what to document for each one.
+
+---
+
+## The One-Sentence Test
+
+Before running through the checklist, apply this test to every automated feature in your stack:
+
+> *Does this system process personal information and produce an output that affects someone's credit, pricing, service level, employment, or access to goods — with little or no genuine human review before the output takes effect?*
+
+If yes: it's likely automated decision-making (ADM) under the new APP 1.8. You need to disclose it.
+
+If a human reviews every output and frequently overrides it before it takes effect: it may not qualify. Document that review process — it's your evidence that the system is a recommendation tool, not a decision-maker.
+
+---
+
+## Part A: Credit and Accounts
+
+### ✅ Checklist
+
+- [ ] **Automatic credit limit assignment** — Does your ERP set or adjust a new trade account's credit limit based on a formula or algorithm (e.g., trading history, payment score, ABN age)?
+- [ ] **Credit hold triggers** — Does your system automatically place an account on hold when an invoice is overdue by X days, without a human reviewing that specific account first?
+- [ ] **Account approval / rejection** — Does your new account onboarding workflow auto-approve or auto-reject trade account applications?
+- [ ] **Payment terms allocation** — Does the system automatically assign 7-day, 14-day, or 30-day terms based on customer data without sales review?
+
+### What to Document
+
+For each yes above:
+- What personal information is used (e.g., name, ABN, payment history, order volume)?
+- What is the decision or output (e.g., "credit limit set to $5,000")?
+- Can the customer request a human review? If so, how (email to accounts team, call to branch)?
+- Who owns this process — who do you contact internally if a customer disputes the outcome?
+
+---
+
+## Part B: Pricing and Quoting
+
+### ✅ Checklist
+
+- [ ] **Dynamic pricing** — Does your quoting engine or ERP automatically apply different prices to different customers based on their tier, order history, or segment?
+- [ ] **AI-assisted quotes** — Does your system use AI to recommend a quote price or margin based on historical data, with the sales rep accepting the suggestion without modification most of the time?
+- [ ] **Discount auto-approval** — Does your ERP automatically approve discounts below a certain threshold without a manager reviewing the specific quote?
+- [ ] **Volume break calculations** — Are volume pricing tiers applied automatically at invoice time based on order quantities?
+
+### What to Document
+
+Dynamic pricing and AI-assisted quoting are the most likely triggers here. Key questions:
+
+- How often do your sales reps materially modify the AI-suggested price? If the answer is "rarely," the AI is effectively making the decision.
+- Do different customer segments receive structurally different pricing from the same system? Customers receiving consistently lower prices due to algorithm-assigned tier classifications is ADM.
+- Document the personal data driving the segmentation (e.g., industry type, postcode, annual spend).
+
+---
+
+## Part C: Job Scheduling and Service Routing
+
+### ✅ Checklist
+
+- [ ] **Auto-assignment of technicians/contractors** — Does your job management or field service module automatically assign jobs to technicians based on location, skill, or availability algorithms?
+- [ ] **Priority queuing** — Does the system automatically queue jobs differently based on customer tier (e.g., contract customers get faster scheduling)?
+- [ ] **SLA breach escalation** — Does your system automatically escalate a job or notify a manager without a human making that escalation decision?
+- [ ] **Route optimisation** — Does your dispatch system automatically set the order and timing of technician routes, effectively determining when a customer receives service?
+
+### What to Document
+
+For trade suppliers with a service division, job scheduling ADM is frequently overlooked. A customer who is a "standard" account receiving a 5-day response time while a "priority" account receives same-day — driven by an algorithm applied to their account classification — is being affected by an automated decision.
+
+Document: the classification criteria, the personal information used (customer type, location, historical spend), and the service-level differential that results.
+
+---
+
+## Part D: Inventory and Order Fulfilment
+
+### ✅ Checklist
+
+- [ ] **Automatic backorder handling** — Does your ERP automatically push orders to backorder status and set an estimated delivery date without staff reviewing each order?
+- [ ] **Allocation during stock shortage** — Does your system automatically allocate scarce stock to certain customer orders over others (e.g., higher-value customers get priority)?
+- [ ] **Substitution logic** — Does your ERP automatically substitute an out-of-stock item with an equivalent, notifying the customer of the change without human review?
+- [ ] **Drop-shipping triggers** — Does your system automatically route certain orders to a supplier for direct delivery based on rules, without staff selection?
+
+### What to Document
+
+Allocation logic during stock shortages is the key risk here — if a customer misses a project deadline because your algorithm deprioritised their order in favour of a higher-volume account, that is an ADM affecting their interests. Document the allocation rules and the personal/account data that drives them.
+
+---
+
+## Part E: Human Resources and Staff Management
+
+If your business uses the same ERP (or a connected HR module) for employee management, ADM obligations extend to staff as well.
+
+### ✅ Checklist
+
+- [ ] **Auto-approval of leave requests** — Does your HR system automatically approve leave that doesn't conflict with coverage rules, without a manager reviewing the individual request?
+- [ ] **Performance scoring** — Does your system generate automated performance scores or KPI dashboards that feed into review processes?
+- [ ] **Rostering / shift allocation** — Does your workforce management system automatically generate rosters based on availability and rules, with managers typically accepting the output?
+- [ ] **Payroll exception flags** — Does your system automatically flag timesheets for underpayment or overpayment review?
+
+### What to Document
+
+ADM in employment contexts carries heightened sensitivity — employment decisions are explicitly recognised in the POLA Act as contexts where the "significant effect" threshold is more readily met. Document leave auto-approval logic carefully, particularly if employees have limited ability to request a human review.
+
+---
+
+## Part F: AI Assistants and Chat Tools
+
+### ✅ Checklist
+
+- [ ] **AI customer service / chat** — Does your website or ERP include an AI assistant that gives customers information about their account, order status, or pricing?
+- [ ] **AI email responses** — Does your system draft or send automated email responses to customer enquiries with little human review before sending?
+- [ ] **AI-generated quotes or recommendations** — Does an AI tool in your sales workflow generate product recommendations or configurations that customers act on directly?
+
+### What to Document
+
+Customer-facing AI tools are the fastest-growing category of ADM in the trade sector. If your AI assistant tells a customer their credit application was unsuccessful, or quotes a price based on their account profile, that is ADM.
+
+Key distinction: an AI that retrieves and displays information (e.g., "your order #1234 ships Friday") is not ADM — it is information retrieval. An AI that makes a classification, assessment, or recommendation affecting the customer's interests is ADM.
+
+---
+
+## Pulling It Together: What Goes in Your Privacy Policy
+
+Once you've completed the audit, your Privacy Policy needs a new section along these lines (template language — have your legal adviser review before publishing):
+
+---
+
+**Automated Decision-Making**
+
+We use automated decision-making systems to assist with the following processes:
+
+*[List each ADM process you identified, e.g.:]*
+
+- *Credit limit assessment: When you apply for a trade account, our system uses your trading history, payment behaviour, and account tenure to calculate a recommended credit limit. This process uses your name, ABN, account history, and payment record.*
+
+- *Job scheduling prioritisation: Our job management system automatically assigns scheduling priority based on your account type and service agreement. This affects your estimated response time for service requests.*
+
+If you would like a human to review a decision made about you by one of these systems, please contact us at [accounts@yourcompany.com.au] or call [phone number]. We will review your request within [X business days].
+
+---
+
+This language covers the four required elements of APP 1.8: that ADM is used, what personal information is involved, how it affects individuals, and how to request human review.
+
+---
+
+## Timeline
+
+| Date | Action |
+|---|---|
+| Now | Complete your ADM audit using this checklist |
+| Q3 2026 | Review OAIC's updated APP 1 guidance (expected mid-2026) |
+| Q4 2026 | Update Privacy Policy with ADM disclosures |
+| 10 December 2026 | APP 1.8 compliance deadline |
+| Ongoing | Review and update disclosures when new automated tools are added |
+
+---
+
+## One More Thing: Document Your Review Process
+
+If after completing the checklist you conclude that some of your automated tools do *not* trigger APP 1.8 — because a human genuinely reviews and frequently overrides the output — **document that conclusion now**.
+
+The OAIC may ask, in the event of a complaint, why a particular tool was not disclosed. "We considered it and concluded the human review was substantive" is a defensible position. "We didn't think about it" is not.
+
+A simple internal memo — dated, signed off by a director — noting your audit findings and reasoning is sufficient. Store it with your compliance records.
+
+---
+
+*Part 3 of this series covers data retention: what customer data you need to keep, what you should delete, and when — under both the POLA Act and the Australian Consumer Law record-keeping rules.*
+
+---
+
+## Further Reading
+
+- [OAIC — Automated decision-making and the Privacy Act](https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/privacy-and-technology)
+- [OAIC — Australian Privacy Principle 1: Open and transparent management of personal information](https://www.oaic.gov.au/privacy/australian-privacy-principles/australian-privacy-principles-guidelines/chapter-1-app-1-open-and-transparent-management-of-personal-information)
+- *Privacy and Other Legislation Amendment Act 2024* (Cth) — [Federal Register of Legislation](https://www.legislation.gov.au)
+
+---
+
+*This article is general information only and does not constitute legal advice. Consult a qualified Australian privacy lawyer for advice specific to your business.*

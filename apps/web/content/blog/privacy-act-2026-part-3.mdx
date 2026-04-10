@@ -1,0 +1,234 @@
+---
+title: "Customer Data & AI: What to Collect, What to Delete, and When — For Australian Trade Suppliers"
+description: "A practical data lifecycle guide for equipment and trade suppliers navigating the POLA Act 2024 ADM disclosure rules, Privacy Act data minimisation obligations, and Australian Consumer Law record-keeping requirements."
+date: "2026-04-11"
+author: "CCW Online ERP"
+tags: ["privacy", "data management", "compliance", "POLA Act", "data retention", "Australia", "ERP"]
+status: draft
+canonical: /blog/customer-data-ai-compliance-guide-trade-suppliers
+related:
+  - /blog/pola-act-2024-automated-decision-making-equipment-suppliers
+  - /blog/erp-automated-decisions-compliance-checklist-australia
+---
+
+# Customer Data & AI: What to Collect, What to Delete, and When — For Australian Trade Suppliers
+
+The cleanest Privacy Policy in the world means nothing if your ERP is sitting on eight years of customer data you no longer need, collected for a purpose long since fulfilled.
+
+The *Privacy Act 1988* (Cth) has always required APP entities to collect only what they need and to destroy or de-identify data when it is no longer required. The *Privacy and Other Legislation Amendment Act 2024* (POLA Act) does not change those rules — but it raises the stakes by linking automated decision-making (ADM) transparency to your Privacy Policy, which in turn invites scrutiny of everything else in that policy.
+
+This article covers:
+
+1. What customer data you actually need — and the principle that governs the rest
+2. How long you need to keep it under Australian Consumer Law and Tax law
+3. What to delete, and when
+4. How AI and ERP tools change your data collection obligations
+5. A practical data retention schedule for trade suppliers
+
+---
+
+## The Principle: Data Minimisation
+
+Under **APP 3** (Collection of solicited personal information), you must not collect personal information unless it is **reasonably necessary** for one or more of your functions or activities.
+
+Under **APP 11** (Security of personal information), you must take reasonable steps to **destroy or de-identify** personal information that you no longer need for any purpose for which it may be used or disclosed under the APPs.
+
+In plain terms: collect less, keep it only as long as you need it, then delete it.
+
+This is not new law. But it is frequently ignored, particularly by businesses that have grown their ERP database over many years without a documented retention policy. Data accumulated "just in case" is both a privacy liability and, increasingly, a cybersecurity risk — a breach affecting data you should have deleted years ago is harder to defend.
+
+---
+
+## Part 1: What You Actually Need to Collect
+
+### Trade Account Customers
+
+For a standard B2B trade account customer, you need:
+
+| Data | Why |
+|---|---|
+| Legal entity name and ABN | Tax invoicing, credit assessment, identity verification |
+| Trading name | Communications |
+| Registered and delivery addresses | Fulfilment, tax |
+| Primary contact name and role | Communications |
+| Phone and email | Order management, account communications |
+| Payment terms and credit limit | Account management |
+| Bank/payment details (if direct debit) | Payment processing |
+| Order and invoice history | ACL warranty, tax record-keeping |
+
+You generally do **not** need:
+- Date of birth of the contact person (unless extending personal credit)
+- Home address of a contact person
+- Driver's licence or passport details (unless required for a specific purpose, e.g., identity verification for a credit application)
+- Personal email or mobile of an individual where a business contact exists
+
+### Individual / Sole Trader Customers
+
+When your customer is a sole trader or individual (rather than a company), the Privacy Act's definition of "personal information" is engaged for most of the data above. The collection and retention obligations are stricter.
+
+Collect only what is required for the specific transaction. If a sole trader makes a cash sale, you need a name and receipt address — you do not need their date of birth, driver's licence, or personal mobile number.
+
+---
+
+## Part 2: How Long to Keep It
+
+The most common mistake in the trade sector is conflating "legal record-keeping obligations" with "we can keep all of this data forever." The retention periods below are the *minimum* you must keep data — not the maximum. Once the minimum period has passed and you have no other legitimate reason to hold it, APP 11 requires you to delete it.
+
+### Tax and Financial Records
+
+Under the *Income Tax Assessment Act 1997* (Cth) and the ATO's record-keeping rules:
+
+- **Tax invoices, receipts, payment records**: 5 years from the date of the transaction (or from when you lodged the relevant tax return, whichever is later)
+- **Payroll records** (wages, superannuation, leave): 5 years from the date of the entry
+- **GST records**: 5 years
+
+Practical note: if a customer's account is still active, you will naturally retain their records. The obligation to delete applies to closed accounts — a customer who last transacted with you in 2019 should not still be in your ERP's active customer database in 2026 with all their personal data intact.
+
+### Australian Consumer Law Warranty and Dispute Records
+
+Under the *Competition and Consumer Act 2010* (Cth) and state equivalents:
+
+- **Statutory warranty period for goods**: typically 2–3 years for equipment and tools (depending on price and nature of goods), extendable if a manufacturer's warranty is longer
+- **Record-keeping for warranty claims and disputes**: retain until the warranty period has expired and any dispute is resolved, plus a reasonable buffer (suggest 2 years after warranty expiry for most goods)
+
+For high-value plant and equipment (e.g., machinery, generators, compressors) where latent defects may not emerge for several years, a longer retention period is reasonable. Document your reasoning.
+
+### Credit and Account Records
+
+There is no specific statutory retention period for customer credit files under Australian credit law for trade credit (B2B). The *Privacy Act* sets the floor: keep it only as long as reasonably necessary.
+
+Practical guidance:
+
+- **Active account**: retain all credit information while the account is active plus 2 years after account closure (to handle any late invoices or disputes)
+- **Declined application**: retain for 1 year from the date of decision (to handle any disputes about the decision), then delete
+- **Guarantors**: retain in line with the guarantee period plus 2 years
+
+### Email and Communications Records
+
+Most ERP and CRM systems capture and store customer communications (emails, notes, chat logs). These do not have a specific statutory retention period. Apply the data minimisation principle:
+
+- Retain communications related to a specific order or dispute for the same period as the underlying record (i.e., 5–7 years)
+- Routine sales conversations, price inquiries not resulting in orders, or support queries with no unresolved outcome: delete after 2 years
+
+Marketing-related data (e.g., email campaign engagement data, prospect lists) should have the shortest retention window consistent with your business need — typically 2–3 years from last interaction, unless a specific consent or contract exists.
+
+---
+
+## Part 3: What to Delete and When
+
+### Inactive Customer Records
+
+A customer who has not placed an order in 5 years and has no outstanding warranty, credit, or dispute matters is a strong candidate for deletion or de-identification.
+
+**De-identification** (replacing identifying fields with pseudonymous IDs while retaining transaction history for financial reporting) is often preferable to full deletion for financial record-keeping purposes. An anonymised invoice record satisfies the ATO's requirements without retaining the customer's name and contact details.
+
+Your ERP should support a de-identification workflow. If it doesn't, raise it as a product requirement — the inability to de-identify records is itself a compliance gap.
+
+### Test and Demonstration Data
+
+Trade businesses that demo their ERP to staff or evaluate new software frequently populate test environments with real customer data. This data is almost always forgotten and rarely deleted.
+
+Audit your staging and test environments. Delete real customer data from any environment that doesn't require it. Use synthetic data for testing.
+
+### Duplicate Records
+
+Most ERPs accumulate duplicate customer records over time — same customer, different spellings, different account numbers from different data entry staff. Duplicates carry the same privacy risk as originals. Include duplicate identification and merging in your annual data hygiene process.
+
+### Data Requested for Deletion
+
+Under the Privacy Act, an individual has the right to request access to their personal information and, in some circumstances, to request its correction. If a former customer or employee requests deletion of their data, you must comply unless you have a legal obligation to retain it (e.g., tax record-keeping, warranty records, unresolved dispute).
+
+Document deletion requests and your response. If you decline a deletion request because a retention obligation applies, tell the requester which obligation and when the data will be deleted.
+
+---
+
+## Part 4: How AI Changes the Equation
+
+AI tools in your ERP create two new data challenges:
+
+### 1. Training Data Retention
+
+Some AI-assisted features (recommendation engines, pricing models, demand forecasting) are trained on historical order and customer data. This creates tension: the AI performs better with more historical data, but the Privacy Act requires you to delete data you no longer need.
+
+Resolve this by:
+
+- **Aggregating or de-identifying** historical data used for AI training. A demand forecast model does not need to know that *Smith Earthmoving* specifically bought 200 drill bits in March 2022 — it needs the volume and category data.
+- **Separating AI training data from operational customer records.** The operational record (with identifying information) has a defined retention period. The anonymised training data can be retained longer.
+
+### 2. AI-Generated Outputs as Records
+
+If your AI assistant generates a quote, a credit recommendation, or a service assessment, that output may be a business record. Retain AI-generated outputs that affect customer rights for the same period as the equivalent human-generated record.
+
+If your ADM system makes a credit decision and the customer later disputes it, you will need to be able to produce the decision, the data it was based on, and (under APP 1.8) evidence that the customer was informed about the ADM process. This is another reason to retain ADM records for at least 2 years after the decision.
+
+---
+
+## Part 5: A Practical Retention Schedule for Trade Suppliers
+
+Use this as a starting point. Adjust based on your specific business activities and get legal sign-off before finalising.
+
+| Data Category | Minimum Retention | Maximum / Delete By |
+|---|---|---|
+| Tax invoices and receipts | 5 years | 7 years after transaction (then de-identify or delete) |
+| Payroll / employee records | 5 years | 7 years after employment ends |
+| Customer contact details (active account) | While account active | 2 years after account closure |
+| Customer contact details (declined application) | 1 year from decision | 1 year from decision |
+| Warranty-related correspondence | Duration of warranty + 2 years | 3–5 years post-sale (depending on goods) |
+| Credit files (active account) | While account active | 2 years after account closure |
+| Sales emails / communications | Related to order: 5 years | Routine: 2 years |
+| Marketing / prospect data | While consent valid | 3 years from last interaction |
+| AI training data (de-identified) | Ongoing if de-identified | Review annually |
+| ADM decision records | 2 years from decision | 7 years if linked to a financial record |
+
+---
+
+## Getting Your ERP to Help, Not Hinder
+
+A data retention policy that exists only in a document and is never enforced is worse than useless — it creates evidence that you knew the obligation existed and ignored it.
+
+Your ERP should support:
+
+1. **Account closure workflow** that flags records for de-identification review after a configurable retention period
+2. **Audit log of data deletions** (for compliance evidence and dispute defence)
+3. **ADM decision logging** so you can produce records of automated decisions if requested
+4. **Data export for access requests** (an individual requesting access to their data should receive it within 30 days under APP 12)
+
+If your current ERP does not support these functions, document the gap and raise it with your vendor. The OAIC's accountability principle (APP 1) requires you to take reasonable steps to implement practices, procedures, and systems to comply — not to achieve perfect compliance immediately, but to have a plan and be working towards it.
+
+---
+
+## Summary
+
+| Action | When |
+|---|---|
+| Map all personal data your ERP collects | Now |
+| Draft a data retention schedule | Q2 2026 |
+| De-identify or delete inactive customer records (5+ years, no warranty/dispute pending) | Q3 2026 |
+| Update Privacy Policy with ADM disclosures (see Part 1 and Part 2 of this series) | Q4 2026 |
+| Test your data access and deletion request workflow | Q4 2026 |
+| APP 1.8 compliance deadline | 10 December 2026 |
+
+---
+
+## The Whole Picture
+
+This three-part series has covered the essentials of the POLA Act 2024's automated decision-making rules for equipment and trade suppliers:
+
+- **Part 1**: What the law requires and who it applies to
+- **Part 2**: Which ERP features trigger the disclosure obligation and what to document
+- **Part 3 (this article)**: What data to collect, how long to keep it, and what to delete
+
+The businesses that will navigate the December 2026 deadline smoothly are those that start their audit now — not in November. The changes are not technically complex. They require clarity about what your systems actually do, a written retention policy, and an updated Privacy Policy that reflects reality.
+
+---
+
+## Further Reading
+
+- [OAIC — APP 11: Security of personal information](https://www.oaic.gov.au/privacy/australian-privacy-principles/australian-privacy-principles-guidelines/chapter-11-app-11-security-of-personal-information)
+- [OAIC — APP 12: Access to personal information](https://www.oaic.gov.au/privacy/australian-privacy-principles/australian-privacy-principles-guidelines/chapter-12-app-12-access-to-personal-information)
+- [ATO — Record-keeping for business](https://www.ato.gov.au/business/record-keeping-for-business/)
+- [ACCC — Consumer guarantees](https://www.accc.gov.au/consumers/consumer-rights-guarantees/consumer-guarantees)
+
+---
+
+*This article is general information only and does not constitute legal advice. Consult a qualified Australian privacy lawyer for advice specific to your business.*
