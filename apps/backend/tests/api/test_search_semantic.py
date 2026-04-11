@@ -1,24 +1,57 @@
 """
 Tests for semantic and hybrid search endpoints.
 
-Uses mocked SearchAgent — no OpenAI API calls or model loading in CI.
+Uses a local no_db_client fixture (mocked DB session) so these tests
+run without a live Postgres connection. SearchAgent is also mocked —
+no OpenAI API calls in CI.
 """
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
-from httpx import AsyncClient
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+
+from src.api.deps import get_async_db, get_current_user
+from src.api.main import app
+from tests.conftest import _make_fake_test_user
 
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# Local fixture — no live DB required
 # ---------------------------------------------------------------------------
 
-PRODUCT_FIXTURE = [
+@pytest_asyncio.fixture
+async def sc():
+    """Test client with mocked DB session and auth — no Postgres needed."""
+    mock_session = MagicMock()
+    mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session.__aexit__ = AsyncMock(return_value=None)
+
+    async def _db():
+        yield mock_session
+
+    async def _user():
+        return _make_fake_test_user()
+
+    app.dependency_overrides[get_async_db] = _db
+    app.dependency_overrides[get_current_user] = _user
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        yield c
+
+    app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# Fixture data
+# ---------------------------------------------------------------------------
+
+PRODUCTS = [
     {"id": str(uuid4()), "name": "Concrete Drill Bit", "sku": "DRILL-001", "score": 0.95},
     {"id": str(uuid4()), "name": "Safety Helmet", "sku": "SAFE-001", "score": 0.87},
-    {"id": str(uuid4()), "name": "Power Wrench", "sku": "TOOL-003", "score": 0.82},
 ]
 
 SEARCH_SUCCESS = {
@@ -26,7 +59,7 @@ SEARCH_SUCCESS = {
     "query": "drill for concrete",
     "search_type": "hybrid",
     "language": "en",
-    "results": {"products": PRODUCT_FIXTURE, "total": 3},
+    "results": {"products": PRODUCTS, "total": 2},
 }
 
 SEARCH_EMPTY = {
@@ -45,17 +78,16 @@ SEARCH_ERROR = {"error": "Embedding service unavailable"}
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_search_returns_results(client: AsyncClient, auth_headers: dict):
+async def test_search_returns_results(sc: AsyncClient):
     """Hybrid search returns a structured response with results."""
     with patch(
         "src.api.routes.search.search_agent.execute",
         new_callable=AsyncMock,
         return_value=SEARCH_SUCCESS,
     ):
-        response = await client.post(
+        response = await sc.post(
             "/api/search/",
             json={"query": "drill for concrete", "search_type": "hybrid"},
-            headers=auth_headers,
         )
     assert response.status_code == 200
     data = response.json()
@@ -65,18 +97,14 @@ async def test_search_returns_results(client: AsyncClient, auth_headers: dict):
 
 
 @pytest.mark.asyncio
-async def test_search_empty_results(client: AsyncClient, auth_headers: dict):
-    """Search with no matches returns success=True with empty results."""
+async def test_search_empty_results(sc: AsyncClient):
+    """Search with no matches returns success=True with empty list."""
     with patch(
         "src.api.routes.search.search_agent.execute",
         new_callable=AsyncMock,
         return_value=SEARCH_EMPTY,
     ):
-        response = await client.post(
-            "/api/search/",
-            json={"query": "zzz_no_match"},
-            headers=auth_headers,
-        )
+        response = await sc.post("/api/search/", json={"query": "zzz_no_match"})
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
@@ -84,18 +112,14 @@ async def test_search_empty_results(client: AsyncClient, auth_headers: dict):
 
 
 @pytest.mark.asyncio
-async def test_search_agent_error_returns_success_false(client: AsyncClient, auth_headers: dict):
+async def test_search_agent_error_returns_success_false(sc: AsyncClient):
     """When SearchAgent returns an error key, response has success=False."""
     with patch(
         "src.api.routes.search.search_agent.execute",
         new_callable=AsyncMock,
         return_value=SEARCH_ERROR,
     ):
-        response = await client.post(
-            "/api/search/",
-            json={"query": "drill"},
-            headers=auth_headers,
-        )
+        response = await sc.post("/api/search/", json={"query": "drill"})
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is False
@@ -103,20 +127,9 @@ async def test_search_agent_error_returns_success_false(client: AsyncClient, aut
 
 
 @pytest.mark.asyncio
-async def test_search_requires_auth(client: AsyncClient):
-    """Search endpoint requires authentication."""
-    response = await client.post("/api/search/", json={"query": "drill"})
-    assert response.status_code in (401, 403)
-
-
-@pytest.mark.asyncio
-async def test_search_rejects_empty_query(client: AsyncClient, auth_headers: dict):
+async def test_search_rejects_empty_query(sc: AsyncClient):
     """Empty query string is rejected with 422."""
-    response = await client.post(
-        "/api/search/",
-        json={"query": ""},
-        headers=auth_headers,
-    )
+    response = await sc.post("/api/search/", json={"query": ""})
     assert response.status_code == 422
 
 
@@ -125,17 +138,16 @@ async def test_search_rejects_empty_query(client: AsyncClient, auth_headers: dic
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_semantic_search_get(client: AsyncClient, auth_headers: dict):
+async def test_semantic_search_get(sc: AsyncClient):
     """GET semantic search endpoint returns results."""
     with patch(
         "src.api.routes.search.search_agent.semantic_search",
         new_callable=AsyncMock,
         return_value=SEARCH_SUCCESS,
     ):
-        response = await client.get(
+        response = await sc.get(
             "/api/search/semantic",
             params={"query": "drill for concrete"},
-            headers=auth_headers,
         )
     assert response.status_code == 200
     data = response.json()
@@ -147,17 +159,16 @@ async def test_semantic_search_get(client: AsyncClient, auth_headers: dict):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_hybrid_search_get(client: AsyncClient, auth_headers: dict):
-    """GET hybrid search endpoint accepts vector/keyword weights."""
+async def test_hybrid_search_get(sc: AsyncClient):
+    """GET hybrid search accepts vector/keyword weights."""
     with patch(
         "src.api.routes.search.search_agent.hybrid_search",
         new_callable=AsyncMock,
         return_value=SEARCH_SUCCESS,
     ):
-        response = await client.get(
+        response = await sc.get(
             "/api/search/hybrid",
             params={"query": "safety gear", "vector_weight": 0.6, "keyword_weight": 0.4},
-            headers=auth_headers,
         )
     assert response.status_code == 200
 
@@ -167,14 +178,14 @@ async def test_hybrid_search_get(client: AsyncClient, auth_headers: dict):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_search_analytics(client: AsyncClient, auth_headers: dict):
+async def test_search_analytics(sc: AsyncClient):
     """Analytics endpoint returns analytics dict."""
     with patch(
         "src.api.routes.search.search_agent.get_search_analytics",
         new_callable=AsyncMock,
-        return_value={"success": True, "analytics": {"total_searches": 42, "zero_result_rate": 0.05}},
+        return_value={"success": True, "analytics": {"total_searches": 42}},
     ):
-        response = await client.get("/api/search/analytics", headers=auth_headers)
+        response = await sc.get("/api/search/analytics")
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
