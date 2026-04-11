@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 const FAQ_ITEMS: { q: string; a: string }[] = [
   {
@@ -35,46 +35,64 @@ export function LandingFaq() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-3">
+    <div className="mx-auto max-w-6xl space-y-4">
       {FAQ_ITEMS.map((item, i) => {
         const isOpen = open === i;
+        const num = String(i + 1).padStart(2, '0');
         return (
           <div
             key={item.q}
             className={cn(
-              'overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/40 shadow-sm backdrop-blur-sm transition-all duration-300',
-              isOpen && 'border-primary/30 bg-zinc-900/70 shadow-lg shadow-primary/10 ring-1 ring-primary/20'
+              'group/card overflow-hidden rounded-2xl border border-white/[0.1] bg-zinc-900/35 shadow-md backdrop-blur-md transition-all duration-300',
+              isOpen &&
+                'border-sky-500/35 bg-zinc-900/75 shadow-xl ring-1 shadow-sky-950/40 ring-sky-500/20'
             )}
           >
             <button
               type="button"
               onClick={() => setOpen(isOpen ? null : i)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold text-white md:px-7 md:py-5 md:text-lg"
+              className="flex w-full items-start gap-4 px-6 py-5 text-left transition-colors hover:bg-white/[0.03] md:gap-5 md:px-8 md:py-6"
               aria-expanded={isOpen}
               aria-controls={`faq-panel-${i}`}
               id={`faq-trigger-${i}`}
             >
-              <span className="pr-2">{item.q}</span>
-              <ChevronDown
+              <span
                 className={cn(
-                  'h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-300',
-                  isOpen && 'rotate-180 text-primary'
+                  'mt-0.5 shrink-0 text-[11px] font-bold tracking-widest text-zinc-600 tabular-nums transition-colors md:text-xs',
+                  isOpen && 'text-sky-400/90'
                 )}
-              />
+                aria-hidden
+              >
+                {num}
+              </span>
+              <span className="min-w-0 flex-1 pr-2 text-base leading-snug font-semibold tracking-tight text-white md:text-lg">
+                {item.q}
+              </span>
+              <span
+                className={cn(
+                  'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-zinc-400 transition-all duration-300',
+                  'group-hover/card:border-white/15 group-hover/card:bg-white/[0.07] group-hover/card:text-zinc-200',
+                  isOpen && 'rotate-180 border-sky-500/30 bg-sky-500/15 text-sky-200'
+                )}
+              >
+                <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
+              </span>
             </button>
             <div
               id={`faq-panel-${i}`}
               role="region"
               aria-labelledby={`faq-trigger-${i}`}
               className={cn(
-                'grid transition-[grid-template-rows] duration-300 ease-out',
+                'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
                 isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
               )}
             >
               <div className="min-h-0 overflow-hidden">
-                <p className="border-t border-white/[0.06] px-5 pb-6 pt-0 text-sm leading-relaxed text-zinc-300 md:px-7 md:text-base md:leading-relaxed">
-                  {item.a}
-                </p>
+                <div className="border-t border-white/[0.08] bg-gradient-to-b from-white/[0.02] to-transparent px-6 pt-5 pb-7 md:px-8 md:pt-6 md:pb-8">
+                  <p className="text-sm leading-relaxed text-zinc-300 md:text-base md:leading-relaxed">
+                    {item.a}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
