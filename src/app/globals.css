@@ -261,6 +261,9 @@
   --animate-spin-slow: spin 3s linear infinite;
   --animate-pulse-soft: pulse-soft 2s var(--ease-smooth) infinite;
   --animate-shimmer: shimmer 2s linear infinite;
+  --animate-landing-aurora: landing-aurora 18s ease-in-out infinite;
+  --animate-landing-float: landing-float 5s ease-in-out infinite;
+  --animate-landing-drift: landing-drift 22s linear infinite;
 }
 
 /* ============================================
@@ -342,6 +345,42 @@
   }
   50% {
     background-position: 100% 50%;
+  }
+}
+
+/* Marketing landing — premium motion */
+@keyframes landing-aurora {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    opacity: 0.55;
+    transform: translate(-3%, 2%) scale(1.04) rotate(4deg);
+  }
+  66% {
+    opacity: 0.45;
+    transform: translate(2%, -3%) scale(1.02) rotate(-3deg);
+  }
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes landing-drift {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
