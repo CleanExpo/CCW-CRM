@@ -72,7 +72,7 @@ export function LandingFaq() {
               )}
             >
               <div className="min-h-0 overflow-hidden">
-                <p className="border-t border-white/[0.06] px-5 pb-6 pt-0 text-sm leading-relaxed text-zinc-400 md:px-7 md:text-base md:leading-relaxed">
+                <p className="border-t border-white/[0.06] px-5 pb-6 pt-0 text-sm leading-relaxed text-zinc-300 md:px-7 md:text-base md:leading-relaxed">
                   {item.a}
                 </p>
               </div>
