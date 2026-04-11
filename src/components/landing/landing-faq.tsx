@@ -42,14 +42,14 @@ export function LandingFaq() {
           <div
             key={item.q}
             className={cn(
-              'rounded-2xl border border-border/80 bg-card/80 shadow-sm transition-shadow',
-              isOpen && 'shadow-md ring-1 ring-primary/15'
+              'overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/40 shadow-sm backdrop-blur-sm transition-all duration-300',
+              isOpen && 'border-primary/30 bg-zinc-900/70 shadow-lg shadow-primary/10 ring-1 ring-primary/20'
             )}
           >
             <button
               type="button"
               onClick={() => setOpen(isOpen ? null : i)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold text-foreground md:px-6 md:py-5 md:text-lg"
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold text-white md:px-7 md:py-5 md:text-lg"
               aria-expanded={isOpen}
               aria-controls={`faq-panel-${i}`}
               id={`faq-trigger-${i}`}
@@ -57,7 +57,7 @@ export function LandingFaq() {
               <span className="pr-2">{item.q}</span>
               <ChevronDown
                 className={cn(
-                  'h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200',
+                  'h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-300',
                   isOpen && 'rotate-180 text-primary'
                 )}
               />
@@ -67,12 +67,12 @@ export function LandingFaq() {
               role="region"
               aria-labelledby={`faq-trigger-${i}`}
               className={cn(
-                'grid transition-[grid-template-rows] duration-200 ease-out',
+                'grid transition-[grid-template-rows] duration-300 ease-out',
                 isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
               )}
             >
               <div className="min-h-0 overflow-hidden">
-                <p className="text-muted-foreground border-t border-border/60 px-5 pb-5 pt-0 text-sm leading-relaxed md:px-6 md:text-base md:leading-relaxed">
+                <p className="border-t border-white/[0.06] px-5 pb-6 pt-0 text-sm leading-relaxed text-zinc-400 md:px-7 md:text-base md:leading-relaxed">
                   {item.a}
                 </p>
               </div>
