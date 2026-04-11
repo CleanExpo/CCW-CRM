@@ -58,7 +58,7 @@ export const LiveStatsBar = memo(function LiveStatsBar({ stats }: LiveStatsBarPr
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
           </span>
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">Live platform data</span>
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-300">Live platform data</span>
         </div>
 
         <motion.div
@@ -88,7 +88,7 @@ export const LiveStatsBar = memo(function LiveStatsBar({ stats }: LiveStatsBarPr
                     <AnimatedCounter value={stats[item.key] as number} />
                   )}
                 </div>
-                <div className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                <div className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-300">
                   {item.label}
                 </div>
               </motion.div>
