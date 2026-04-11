@@ -7,6 +7,7 @@ Welcome to the CCW-Online ERP documentation. This directory contains all technic
 ## 📚 Documentation Index
 
 ### Getting Started
+- [**PRODUCT-OVERVIEW.md**](./PRODUCT-OVERVIEW.md) - Business-focused product summary for stakeholders and new hires
 - [**CLAUDE.md**](./project-root/CLAUDE.md) - Main project architecture guide (start here)
 - [**.claude/STARTUP.md**](../.claude/STARTUP.md) - Development workflow guide
 - [**.claude/CLAUDE.md**](../.claude/CLAUDE.md) - System instructions for AI development
