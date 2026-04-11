@@ -126,7 +126,7 @@ export function HeroPremiumShowcase() {
                 Live
               </div>
               <p className="text-lg font-bold tracking-tight text-white">Quote → Order</p>
-              <p className="text-muted-foreground text-xs">Single thread of truth</p>
+              <p className="text-xs text-zinc-300">Single thread of truth</p>
             </div>
             <div
               className={cn(floatCard, 'absolute bottom-[8%] right-0 max-w-[150px] sm:right-[2%]')}
@@ -137,14 +137,14 @@ export function HeroPremiumShowcase() {
                 Stock
               </div>
               <p className="text-lg font-bold tracking-tight text-white">By branch</p>
-              <p className="text-muted-foreground text-xs">Transfers &amp; alerts</p>
+              <p className="text-xs text-zinc-300">Transfers &amp; alerts</p>
             </div>
           </div>
 
           {/* Right stack — product UI abstraction */}
           <div className="border-border/60 flex w-full flex-col justify-center gap-4 rounded-2xl border bg-black/40 p-5 md:max-w-[280px] md:border-l md:bg-zinc-950/50">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-muted-foreground text-[10px] font-semibold uppercase tracking-widest">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-300">
                 Command view
               </span>
               <Sparkles className="text-primary h-4 w-4 opacity-90" />
@@ -178,7 +178,7 @@ export function HeroPremiumShowcase() {
                 </div>
               ))}
             </div>
-            <p className="text-muted-foreground border-t border-white/[0.06] pt-3 text-center text-[11px] leading-relaxed">
+            <p className="border-t border-white/[0.06] pt-3 text-center text-[11px] leading-relaxed text-zinc-300">
               One spine for sales, warehouse &amp; finance — built for equipment wholesalers.
             </p>
           </div>
