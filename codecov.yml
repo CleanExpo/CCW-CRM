@@ -19,17 +19,17 @@ coverage:
           - frontend
     patch:
       default:
-        target: 75%
+        target: 75%   ff
         threshold: 5%
 
 flags:
   backend:
     paths:
-      - backend/src/
+      - apps/backend/src/
     carryforward: true
   frontend:
     paths:
-      - src/
+      - apps/web/
     carryforward: true
 
 comment:
