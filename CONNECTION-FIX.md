@@ -3,6 +3,7 @@
 ## Current Status ✅
 
 Both services are running and healthy:
+
 - **Backend**: http://localhost:8000 ✅ (responding correctly)
 - **Frontend**: http://localhost:3006 ✅ (running)
 - **Database**: PostgreSQL on port 5434 ✅ (healthy)
@@ -10,6 +11,7 @@ Both services are running and healthy:
 ## Issue Diagnosis
 
 The connection between frontend and backend is correctly configured:
+
 - ✅ Backend API responding: `curl http://localhost:8000/health` works
 - ✅ Login endpoint working: `curl -X POST http://localhost:8000/api/auth/login` works
 - ✅ CORS configured correctly: `["http://localhost:3000","http://localhost:3005","http://localhost:3006"]`
@@ -22,6 +24,7 @@ The connection between frontend and backend is correctly configured:
 The issue may be stale data or cached errors. Clear everything:
 
 **In Chrome/Edge:**
+
 1. Open DevTools (F12)
 2. Go to **Application** tab
 3. Under **Storage**, click **Clear site data**
@@ -33,6 +36,7 @@ The issue may be stale data or cached errors. Clear everything:
 6. Close DevTools
 
 **Or use browser shortcut:**
+
 - Press `Ctrl+Shift+Delete`
 - Select "Cookies and other site data" and "Cached images and files"
 - Click Clear data
@@ -51,6 +55,7 @@ pnpm dev --filter=web
 ### Step 3: Navigate to Login Page
 
 Open a **NEW BROWSER TAB** (to ensure clean state):
+
 ```
 http://localhost:3006/login
 ```
@@ -79,6 +84,7 @@ After clicking "Sign In":
 ### Step 6: Access Dashboard
 
 After successful login:
+
 - You should be automatically redirected to: `http://localhost:3006/dashboard`
 - Dashboard should load all data without "Failed to fetch" errors
 
@@ -91,6 +97,7 @@ After successful login:
 **Symptom**: Console shows `CORS policy: No 'Access-Control-Allow-Origin' header`
 
 **Fix**:
+
 ```bash
 # Restart backend to reload CORS settings
 cd D:\CCW-ERP-CRM\apps\backend
@@ -102,11 +109,13 @@ uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 **Symptom**: Console shows `TypeError: Failed to fetch` or `Network request failed`
 
 **Possible Causes**:
+
 1. Backend not running
 2. Firewall blocking localhost connections
 3. Wrong port
 
 **Fix**:
+
 ```bash
 # Verify backend is running
 curl http://localhost:8000/health
@@ -124,6 +133,7 @@ uv run uvicorn src.api.main:app --reload
 **Symptom**: Login succeeds but dashboard shows 401 errors
 
 **Fix**: Clear localStorage and login again
+
 ```javascript
 // Open browser console (F12 → Console tab) and run:
 localStorage.clear();
@@ -137,20 +147,25 @@ window.location.href = '/login';
 Test the full flow manually:
 
 ### Test 1: Backend Health
+
 ```bash
 curl http://localhost:8000/health
 ```
+
 **Expected**: `{"status":"healthy"}`
 
 ### Test 2: Login Endpoint
+
 ```bash
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@demo.com","password":"demo123"}'
 ```
+
 **Expected**: JSON with `access_token` and `user` object
 
 ### Test 3: Dashboard Endpoint with Token
+
 ```bash
 # First get token from Test 2, then:
 TOKEN="your_token_here"
@@ -158,6 +173,7 @@ TOKEN="your_token_here"
 curl http://localhost:8000/api/dashboard/aggregated \
   -H "Authorization: Bearer $TOKEN"
 ```
+
 **Expected**: Dashboard data with metrics, charts, etc.
 
 ---
@@ -167,13 +183,14 @@ curl http://localhost:8000/api/dashboard/aggregated \
 If browser issues persist, I can create a simple test page that bypasses Next.js routing.
 
 Create `apps/web/public/test-connection.html`:
+
 ```html
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>API Connection Test</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Backend Connection Test</h1>
     <button onclick="testHealth()">Test Health</button>
     <button onclick="testLogin()">Test Login</button>
@@ -181,56 +198,56 @@ Create `apps/web/public/test-connection.html`:
     <pre id="output"></pre>
 
     <script>
-        const API_URL = 'http://localhost:8000';
-        const output = document.getElementById('output');
+      const API_URL = 'http://localhost:8000';
+      const output = document.getElementById('output');
 
-        async function testHealth() {
-            try {
-                const response = await fetch(`${API_URL}/health`);
-                const data = await response.json();
-                output.textContent = 'Health Check: ' + JSON.stringify(data, null, 2);
-            } catch (error) {
-                output.textContent = 'Health Check Error: ' + error.message;
-            }
+      async function testHealth() {
+        try {
+          const response = await fetch(`${API_URL}/health`);
+          const data = await response.json();
+          output.textContent = 'Health Check: ' + JSON.stringify(data, null, 2);
+        } catch (error) {
+          output.textContent = 'Health Check Error: ' + error.message;
+        }
+      }
+
+      async function testLogin() {
+        try {
+          const response = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: 'admin@demo.com',
+              password: 'demo123',
+            }),
+          });
+          const data = await response.json();
+          localStorage.setItem('auth_token', data.access_token);
+          output.textContent = 'Login Success: ' + JSON.stringify(data, null, 2);
+        } catch (error) {
+          output.textContent = 'Login Error: ' + error.message;
+        }
+      }
+
+      async function testDashboard() {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          output.textContent = 'Error: No token. Run Test Login first.';
+          return;
         }
 
-        async function testLogin() {
-            try {
-                const response = await fetch(`${API_URL}/api/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: 'admin@demo.com',
-                        password: 'demo123'
-                    })
-                });
-                const data = await response.json();
-                localStorage.setItem('auth_token', data.access_token);
-                output.textContent = 'Login Success: ' + JSON.stringify(data, null, 2);
-            } catch (error) {
-                output.textContent = 'Login Error: ' + error.message;
-            }
+        try {
+          const response = await fetch(`${API_URL}/api/dashboard/aggregated`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await response.json();
+          output.textContent = 'Dashboard Data: ' + JSON.stringify(data, null, 2);
+        } catch (error) {
+          output.textContent = 'Dashboard Error: ' + error.message;
         }
-
-        async function testDashboard() {
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
-                output.textContent = 'Error: No token. Run Test Login first.';
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/api/dashboard/aggregated`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                output.textContent = 'Dashboard Data: ' + JSON.stringify(data, null, 2);
-            } catch (error) {
-                output.textContent = 'Dashboard Error: ' + error.message;
-            }
-        }
+      }
     </script>
-</body>
+  </body>
 </html>
 ```
 
@@ -255,11 +272,13 @@ Then access: `http://localhost:3006/test-connection.html`
 ## Expected Result After Fix
 
 **Login Success:**
+
 - ✅ Toast notification: "Welcome back, admin@demo.com!"
 - ✅ Redirect to: http://localhost:3006/dashboard
 - ✅ Dashboard loads in <2 seconds
 
 **Dashboard Shows:**
+
 - **22 products** in catalog
 - **8 customers** registered
 - **4 active orders** in progress

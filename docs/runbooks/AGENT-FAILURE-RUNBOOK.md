@@ -33,12 +33,14 @@ node -e "const {queryLogs,GOVERNANCE_LOG}=require('./scripts/lib/audit-logger');
 ## 2. Common failure patterns
 
 ### Circuit breaker open (Supabase/API timeout)
+
 ```bash
 # Wait for auto-reset (10 minutes) OR manually reset:
 node -e "const {getBreaker}=require('./scripts/lib/circuit-breaker'); getBreaker('supabase').reset(); console.log('reset')"
 ```
 
 ### CRON session stale — resume from checkpoint
+
 ```bash
 # Get last checkpoint from stale session
 node -e "
@@ -52,6 +54,7 @@ node -e "
 ```
 
 ### Missing Linear issue update
+
 ```bash
 # Check if CRON completed but Linear wasn't updated
 # Look in cron audit log for last session
@@ -63,6 +66,7 @@ cat logs/cron.jsonl 2>/dev/null | tail -20
 ## 3. Escalation
 
 If above steps don't resolve:
+
 1. Check Supabase dashboard for DB connectivity
 2. Check Railway logs for FastAPI backend errors
 3. Check Vercel deployment logs for frontend errors
@@ -71,6 +75,7 @@ If above steps don't resolve:
 ---
 
 ## Related
+
 - `scripts/lib/session-manager.js` — session lifecycle
 - `scripts/lib/circuit-breaker.js` — API protection
 - `scripts/lib/audit-logger.js` — structured logs

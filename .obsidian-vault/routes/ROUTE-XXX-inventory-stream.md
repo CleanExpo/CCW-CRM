@@ -22,17 +22,16 @@ Provides Server-Sent Events stream for real-time inventory updates.
 Prevents overselling by pushing stock changes instantly to all connected clients.
 
 Usage:
-    Frontend connects via EventSource:
-    const eventSource = new EventSource('/api/inventory-stream');
-    eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        // Update UI with new stock levels
-    };
+Frontend connects via EventSource:
+const eventSource = new EventSource('/api/inventory-stream');
+eventSource.onmessage = (event) => {
+const data = JSON.parse(event.data);
+// Update UI with new stock levels
+};
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -43,7 +42,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -69,6 +67,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

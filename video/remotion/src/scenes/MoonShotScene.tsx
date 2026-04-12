@@ -39,11 +39,7 @@ export const MoonShotScene: React.FC<MoonShotSceneProps> = ({ moonShot }) => {
     >
       {/* Stars */}
       {stars.map((star, i) => {
-        const twinkle = interpolate(
-          (frame + i * 7) % (fps * 2),
-          [0, fps, fps * 2],
-          [0.3, 1, 0.3]
-        );
+        const twinkle = interpolate((frame + i * 7) % (fps * 2), [0, fps, fps * 2], [0.3, 1, 0.3]);
         return (
           <div
             key={i}

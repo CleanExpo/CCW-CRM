@@ -7,11 +7,41 @@ import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 
 const TIMELINE = [
-  { step: '1', label: 'Day 1', title: 'Environment Setup', desc: 'Configure env vars, deploy backend to Railway, frontend to Vercel', color: '#3b82f6' },
-  { step: '2', label: 'Day 1–2', title: 'Connect Integrations', desc: 'Cin7 API key, Xero OAuth app, Supabase project — all linked and tested', color: '#8b5cf6' },
-  { step: '3', label: 'Day 2–3', title: 'Data Migration', desc: 'Import existing products, customers, orders from Cin7 into CCW', color: '#06b6d4' },
-  { step: '4', label: 'Day 3–5', title: 'Team Onboarding', desc: 'Staff accounts created, roles assigned, training videos reviewed', color: '#10b981' },
-  { step: '5', label: 'Day 5+', title: 'Go Live', desc: 'CCW ERP is your live system of record — real-time sync with Cin7 + Xero', color: '#f59e0b' },
+  {
+    step: '1',
+    label: 'Day 1',
+    title: 'Environment Setup',
+    desc: 'Configure env vars, deploy backend to Railway, frontend to Vercel',
+    color: '#3b82f6',
+  },
+  {
+    step: '2',
+    label: 'Day 1–2',
+    title: 'Connect Integrations',
+    desc: 'Cin7 API key, Xero OAuth app, Supabase project — all linked and tested',
+    color: '#8b5cf6',
+  },
+  {
+    step: '3',
+    label: 'Day 2–3',
+    title: 'Data Migration',
+    desc: 'Import existing products, customers, orders from Cin7 into CCW',
+    color: '#06b6d4',
+  },
+  {
+    step: '4',
+    label: 'Day 3–5',
+    title: 'Team Onboarding',
+    desc: 'Staff accounts created, roles assigned, training videos reviewed',
+    color: '#10b981',
+  },
+  {
+    step: '5',
+    label: 'Day 5+',
+    title: 'Go Live',
+    desc: 'CCW ERP is your live system of record — real-time sync with Cin7 + Xero',
+    color: '#f59e0b',
+  },
 ];
 
 export const ExpectationsScene: React.FC = () => {
@@ -123,7 +153,9 @@ export const ExpectationsScene: React.FC = () => {
                 >
                   {item.label}
                 </span>
-                <span style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9' }}>{item.title}</span>
+                <span style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9' }}>
+                  {item.title}
+                </span>
               </div>
               <div style={{ fontSize: 16, color: '#64748b', lineHeight: 1.5 }}>{item.desc}</div>
             </div>

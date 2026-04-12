@@ -8,11 +8,12 @@
 ## Primary Stakeholders (Required)
 
 ### Business Owner
-- **Name**: ___________________
+
+- **Name**: ********\_\_\_********
 - **Role**: Final Approval Authority
-- **Email**: ___________________
-- **Availability**: ___________________
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: __________
+- **Email**: ********\_\_\_********
+- **Availability**: ********\_\_\_********
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
 - **Focus Areas**:
   - Overall system usability
   - Strategic business features
@@ -23,11 +24,12 @@
 ---
 
 ### Sales Manager
-- **Name**: ___________________
+
+- **Name**: ********\_\_\_********
 - **Role**: Quote and Order Workflows
-- **Email**: ___________________
-- **Availability**: ___________________
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: __________
+- **Email**: ********\_\_\_********
+- **Availability**: ********\_\_\_********
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
 - **Focus Areas**:
   - Quotes Module (all 10 test cases)
   - Orders Module (all 10 test cases)
@@ -39,11 +41,12 @@
 ---
 
 ### Warehouse Manager
-- **Name**: ___________________
+
+- **Name**: ********\_\_\_********
 - **Role**: Inventory and Order Fulfillment
-- **Email**: ___________________
-- **Availability**: ___________________
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: __________
+- **Email**: ********\_\_\_********
+- **Availability**: ********\_\_\_********
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
 - **Focus Areas**:
   - Products Module (all 8 test cases)
   - Orders Module (fulfillment workflow)
@@ -55,11 +58,12 @@
 ---
 
 ### Customer Service Lead
-- **Name**: ___________________
+
+- **Name**: ********\_\_\_********
 - **Role**: Customer Support and Portal
-- **Email**: ___________________
-- **Availability**: ___________________
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: __________
+- **Email**: ********\_\_\_********
+- **Availability**: ********\_\_\_********
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
 - **Focus Areas**:
   - Customers Module (all 7 test cases)
   - Orders Module (order tracking)
@@ -73,11 +77,12 @@
 ## Secondary Stakeholders (Optional but Recommended)
 
 ### Finance/Accounting
-- **Name**: ___________________
+
+- **Name**: ********\_\_\_********
 - **Role**: Financial Data Accuracy
-- **Email**: ___________________
-- **Availability**: ___________________
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: __________
+- **Email**: ********\_\_\_********
+- **Availability**: ********\_\_\_********
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
 - **Focus Areas**:
   - Order totals accuracy
   - Quote totals accuracy
@@ -87,11 +92,12 @@
 ---
 
 ### IT/Technical Lead
-- **Name**: ___________________
+
+- **Name**: ********\_\_\_********
 - **Role**: System Stability and Performance
-- **Email**: ___________________
-- **Availability**: ___________________
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: __________
+- **Email**: ********\_\_\_********
+- **Availability**: ********\_\_\_********
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
 - **Focus Areas**:
   - System performance observations
   - Error handling
@@ -101,11 +107,12 @@
 ---
 
 ### End Users (Representatives)
-- **Names**: ___________________
+
+- **Names**: ********\_\_\_********
 - **Roles**: Daily Operations
-- **Email**: ___________________
-- **Availability**: ___________________
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: __________
+- **Email**: ********\_\_\_********
+- **Availability**: ********\_\_\_********
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
 - **Focus Areas**:
   - Day-to-day usability
   - Workflow efficiency
@@ -116,12 +123,12 @@
 
 ## UAT Session Schedule
 
-| Session # | Stakeholder | Date | Time | Duration | Location | Status |
-|-----------|-------------|------|------|----------|----------|--------|
-| Session 1 | Sales Manager | TBD | TBD | 1 hour | Virtual/In-Person | ☐ Scheduled |
-| Session 2 | Warehouse Manager | TBD | TBD | 1 hour | Virtual/In-Person | ☐ Scheduled |
-| Session 3 | Customer Service Lead | TBD | TBD | 1 hour | Virtual/In-Person | ☐ Scheduled |
-| Session 4 | Business Owner | TBD | TBD | 1 hour | Virtual/In-Person | ☐ Scheduled |
+| Session # | Stakeholder           | Date | Time | Duration | Location          | Status      |
+| --------- | --------------------- | ---- | ---- | -------- | ----------------- | ----------- |
+| Session 1 | Sales Manager         | TBD  | TBD  | 1 hour   | Virtual/In-Person | ☐ Scheduled |
+| Session 2 | Warehouse Manager     | TBD  | TBD  | 1 hour   | Virtual/In-Person | ☐ Scheduled |
+| Session 3 | Customer Service Lead | TBD  | TBD  | 1 hour   | Virtual/In-Person | ☐ Scheduled |
+| Session 4 | Business Owner        | TBD  | TBD  | 1 hour   | Virtual/In-Person | ☐ Scheduled |
 
 **Total Scheduled Time**: 4 hours (primary stakeholders)
 
@@ -130,26 +137,31 @@
 ## UAT Environment Access
 
 ### Frontend Access
+
 - **URL**: http://localhost:3000
 - **Environment**: Local Development (UAT Configuration)
 
 ### Backend API Access
+
 - **URL**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs (Swagger UI)
 
 ### Test Credentials
 
 **Admin/Business Owner**:
+
 - Email: admin@demo.com
 - Password: demo123
 - Role: Administrator (full access)
 
 **Sales User**:
+
 - Email: sales@demo.com
 - Password: demo123
 - Role: Sales (quotes, orders, customers access)
 
 **Warehouse User**:
+
 - Email: warehouse@demo.com
 - Password: demo123
 - Role: Warehouse (products, inventory, orders access)
@@ -161,17 +173,20 @@
 ## Communication Plan
 
 ### Before UAT Sessions
+
 - **1 Week Prior**: Send calendar invites to all stakeholders
 - **3 Days Prior**: Distribute UAT test cases document (UAT_TEST_CASES.md)
 - **1 Day Prior**: Send reminder email with access instructions and credentials
 - **1 Hour Prior**: Verify UAT environment is running and accessible
 
 ### During UAT Sessions
-- **Session Facilitator**: ___________________
-- **Technical Support**: ___________________
-- **Note Taker**: ___________________
+
+- **Session Facilitator**: ********\_\_\_********
+- **Technical Support**: ********\_\_\_********
+- **Note Taker**: ********\_\_\_********
 
 ### After UAT Sessions
+
 - **Immediate**: Compile session notes in UAT_SESSION_LOG.md
 - **Same Day**: Document issues in UAT_ISSUES.md
 - **Within 24 Hours**: Prioritize and assign critical issues
@@ -182,6 +197,7 @@
 ## Stakeholder Responsibilities
 
 ### Stakeholders Should:
+
 - ✅ Attend scheduled UAT session
 - ✅ Follow test cases provided
 - ✅ Provide honest feedback (positive and negative)
@@ -191,6 +207,7 @@
 - ✅ Participate in sign-off decision
 
 ### Stakeholders Should NOT:
+
 - ❌ Rush through test cases
 - ❌ Skip test cases without reason
 - ❌ Withhold negative feedback
@@ -202,6 +219,7 @@
 ## Escalation Process
 
 ### For Critical Issues During UAT:
+
 1. **Identify**: Tester identifies blocking issue
 2. **Document**: Facilitator documents in UAT_ISSUES.md with "Critical" priority
 3. **Notify**: Development team notified immediately
@@ -211,6 +229,7 @@
 7. **Continue**: Resume UAT session
 
 ### For Non-Critical Issues:
+
 1. Document in UAT_ISSUES.md with appropriate priority
 2. Continue with remaining test cases
 3. Address during issue resolution phase
@@ -231,19 +250,22 @@
 ## Contact Information
 
 ### UAT Coordination
-- **UAT Lead**: ___________________
-- **Email**: ___________________
-- **Phone**: ___________________
+
+- **UAT Lead**: ********\_\_\_********
+- **Email**: ********\_\_\_********
+- **Phone**: ********\_\_\_********
 
 ### Technical Support
-- **Development Lead**: ___________________
-- **Email**: ___________________
-- **Phone**: ___________________
+
+- **Development Lead**: ********\_\_\_********
+- **Email**: ********\_\_\_********
+- **Phone**: ********\_\_\_********
 
 ### Business Owner
-- **Name**: ___________________
-- **Email**: ___________________
-- **Phone**: ___________________
+
+- **Name**: ********\_\_\_********
+- **Email**: ********\_\_\_********
+- **Phone**: ********\_\_\_********
 
 ---
 

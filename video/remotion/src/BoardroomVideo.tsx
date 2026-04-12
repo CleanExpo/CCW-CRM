@@ -14,13 +14,7 @@
  */
 
 import React from 'react';
-import {
-  AbsoluteFill,
-  Audio,
-  Sequence,
-  staticFile,
-  useVideoConfig,
-} from 'remotion';
+import { AbsoluteFill, Audio, Sequence, staticFile, useVideoConfig } from 'remotion';
 import { BoardroomVideoProps } from './types';
 import { IntroScene } from './scenes/IntroScene';
 import { IntelligenceScene } from './scenes/IntelligenceScene';
@@ -76,44 +70,48 @@ export const BoardroomVideo: React.FC<BoardroomVideoProps> = ({
 
   // Calculate sequence starts
   let cursor = 0;
-  const introStart = cursor; cursor += INTRO;
-  const intelligenceStart = cursor; cursor += INTELLIGENCE;
-  const buildStart = cursor; cursor += BUILD_STATUS;
-  const boardStarts = BOARD_MEMBER_HIGHLIGHTS.map(() => { const s = cursor; cursor += BOARD_MEMBER; return s; });
-  const moonStart = cursor; cursor += MOON_SHOT;
-  const ctaStart = cursor; cursor += CTA;
+  const introStart = cursor;
+  cursor += INTRO;
+  const intelligenceStart = cursor;
+  cursor += INTELLIGENCE;
+  const buildStart = cursor;
+  cursor += BUILD_STATUS;
+  const boardStarts = BOARD_MEMBER_HIGHLIGHTS.map(() => {
+    const s = cursor;
+    cursor += BOARD_MEMBER;
+    return s;
+  });
+  const moonStart = cursor;
+  cursor += MOON_SHOT;
+  const ctaStart = cursor;
+  cursor += CTA;
   const outroStart = cursor;
 
   return (
     <AbsoluteFill>
       {/* Background narration audio */}
-      {narrationPath && (
-        <Audio src={narrationPath} />
-      )}
+      {narrationPath && <Audio src={narrationPath} />}
 
       <Sequence from={introStart} durationInFrames={INTRO}>
-        <IntroScene
-          title={videoBrief.title}
-          sessionId={sessionId}
-          date={sessionDate}
-        />
+        <IntroScene title={videoBrief.title} sessionId={sessionId} date={sessionDate} />
       </Sequence>
 
       <Sequence from={intelligenceStart} durationInFrames={INTELLIGENCE}>
-        <IntelligenceScene findings={findings.length > 0 ? findings : ['Intelligence gathering in progress...']} />
-      </Sequence>
-
-      <Sequence from={buildStart} durationInFrames={BUILD_STATUS}>
-        <BuildStatusScene
-          status={buildStatus as 'GREEN' | 'AMBER' | 'RED'}
-          reason={buildReason}
+        <IntelligenceScene
+          findings={findings.length > 0 ? findings : ['Intelligence gathering in progress...']}
         />
       </Sequence>
 
+      <Sequence from={buildStart} durationInFrames={BUILD_STATUS}>
+        <BuildStatusScene status={buildStatus as 'GREEN' | 'AMBER' | 'RED'} reason={buildReason} />
+      </Sequence>
+
       {BOARD_MEMBER_HIGHLIGHTS.map((member, i) => {
-        const insight = (videoBrief as any).boardOutputs?.[member.key]
-          ?.split('\n')
-          .find((line: string) => line.length > 30 && !line.startsWith('#')) || 'Key insight from this session.';
+        const insight =
+          (videoBrief as any).boardOutputs?.[member.key]
+            ?.split('\n')
+            .find((line: string) => line.length > 30 && !line.startsWith('#')) ||
+          'Key insight from this session.';
 
         return (
           <Sequence key={member.key} from={boardStarts[i]} durationInFrames={BOARD_MEMBER}>

@@ -15,7 +15,7 @@
       "id": 1,
       "type": "gauge",
       "title": "Redis Status",
-      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
       "targets": [
         {
           "expr": "redis_up{job=\"redis\"}",
@@ -27,9 +27,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "red", "value": 0},
-              {"color": "green", "value": 1}
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0 },
+              { "color": "green", "value": 1 }
             ]
           }
         }
@@ -39,7 +39,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Memory Usage",
-      "gridPos": {"h": 8, "w": 8, "x": 4, "y": 0},
+      "gridPos": { "h": 8, "w": 8, "x": 4, "y": 0 },
       "targets": [
         {
           "expr": "redis_memory_used_bytes",
@@ -62,7 +62,7 @@
       "id": 3,
       "type": "stat",
       "title": "Cache Hit Rate",
-      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
       "targets": [
         {
           "expr": "rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) * 100",
@@ -75,9 +75,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 70},
-              {"color": "green", "value": 85}
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "green", "value": 85 }
             ]
           }
         }
@@ -87,7 +87,7 @@
       "id": 4,
       "type": "stat",
       "title": "Connected Clients",
-      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
       "targets": [
         {
           "expr": "redis_connected_clients",
@@ -99,9 +99,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 50},
-              {"color": "red", "value": 100}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 100 }
             ]
           }
         }
@@ -111,7 +111,7 @@
       "id": 5,
       "type": "gauge",
       "title": "Memory Usage %",
-      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 4},
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 4 },
       "targets": [
         {
           "expr": "redis_memory_used_bytes / redis_memory_max_bytes * 100",
@@ -125,10 +125,10 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 70},
-              {"color": "orange", "value": 80},
-              {"color": "red", "value": 95}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 95 }
             ]
           }
         }
@@ -138,7 +138,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Operations per Second",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
       "targets": [
         {
           "expr": "rate(redis_commands_processed_total[5m])",
@@ -156,7 +156,7 @@
       "id": 7,
       "type": "timeseries",
       "title": "Cache Hits vs Misses",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "targets": [
         {
           "expr": "rate(redis_keyspace_hits_total[5m])",
@@ -179,7 +179,7 @@
       "id": 8,
       "type": "timeseries",
       "title": "Evicted Keys",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
       "targets": [
         {
           "expr": "rate(redis_evicted_keys_total[5m])",
@@ -197,7 +197,7 @@
       "id": 9,
       "type": "stat",
       "title": "Total Keys",
-      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 12},
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 12 },
       "targets": [
         {
           "expr": "sum(redis_db_keys)",
@@ -209,7 +209,7 @@
       "id": 10,
       "type": "stat",
       "title": "Uptime",
-      "gridPos": {"h": 4, "w": 8, "x": 0, "y": 16},
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 16 },
       "targets": [
         {
           "expr": "redis_uptime_in_seconds",
@@ -226,7 +226,7 @@
       "id": 11,
       "type": "timeseries",
       "title": "Network I/O",
-      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 16},
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 16 },
       "targets": [
         {
           "expr": "rate(redis_net_input_bytes_total[5m])",
@@ -249,7 +249,7 @@
       "id": 12,
       "type": "stat",
       "title": "Blocked Clients",
-      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 12},
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 12 },
       "targets": [
         {
           "expr": "redis_blocked_clients{job=\"redis\"}",
@@ -261,9 +261,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 1},
-              {"color": "red", "value": 5}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
             ]
           }
         }
@@ -273,7 +273,7 @@
       "id": 13,
       "type": "timeseries",
       "title": "Expired Keys",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
       "targets": [
         {
           "expr": "rate(redis_expired_keys_total{job=\"redis\"}[5m])",
@@ -291,7 +291,7 @@
       "id": 14,
       "type": "stat",
       "title": "Rejected Connections",
-      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 12},
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 12 },
       "targets": [
         {
           "expr": "redis_rejected_connections_total{job=\"redis\"}",
@@ -303,9 +303,9 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 1},
-              {"color": "red", "value": 10}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 10 }
             ]
           }
         }

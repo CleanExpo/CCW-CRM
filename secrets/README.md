@@ -9,12 +9,14 @@ This directory contains secret files for Docker secrets and local development.
 This directory should contain the following files (created manually or via script):
 
 ### Development Secrets
+
 - `postgres_password.txt` - PostgreSQL password
 - `redis_password.txt` - Redis password (if authentication enabled)
 - `jwt_secret.txt` - JWT signing key
 - `encryption_key.txt` - Database field encryption key
 
 ### Integration Secrets (Optional)
+
 - `sendgrid_api_key.txt` - SendGrid API key for emails
 - `sentry_dsn.txt` - Sentry error tracking DSN
 - `slack_webhook_url.txt` - Slack webhook for alerts

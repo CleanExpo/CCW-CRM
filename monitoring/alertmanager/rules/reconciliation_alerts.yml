@@ -14,7 +14,7 @@ groups:
           severity: warning
           component: reconciliation
         annotations:
-          summary: "Bank feed auto-match rate below 60%"
+          summary: 'Bank feed auto-match rate below 60%'
           description: |
             Auto-match rate has dropped to {{ $value | humanizePercentage }}.
             This may indicate:
@@ -37,7 +37,7 @@ groups:
           severity: critical
           component: reconciliation
         annotations:
-          summary: "Bank feed sync failures detected for {{ $labels.provider }}"
+          summary: 'Bank feed sync failures detected for {{ $labels.provider }}'
           description: |
             More than 50% of bank feed syncs are failing for provider {{ $labels.provider }}.
 
@@ -57,7 +57,7 @@ groups:
           severity: warning
           component: reconciliation
         annotations:
-          summary: "Large backlog of pending feeds for {{ $labels.account }}"
+          summary: 'Large backlog of pending feeds for {{ $labels.account }}'
           description: |
             Account {{ $labels.account }} has {{ $value }} pending bank feeds.
 
@@ -75,7 +75,7 @@ groups:
           severity: warning
           component: reconciliation
         annotations:
-          summary: "Bank feed reconciliation delayed"
+          summary: 'Bank feed reconciliation delayed'
           description: |
             No reconciliation activity detected in the last 48 hours.
 
@@ -95,7 +95,7 @@ groups:
           severity: warning
           component: reconciliation
         annotations:
-          summary: "Bank feed webhook errors detected"
+          summary: 'Bank feed webhook errors detected'
           description: |
             Webhook endpoint is returning {{ $labels.status }} errors at {{ $value | humanize }} req/s.
 
@@ -121,7 +121,7 @@ groups:
           severity: info
           component: reconciliation
         annotations:
-          summary: "No webhooks received for {{ $labels.provider }}"
+          summary: 'No webhooks received for {{ $labels.provider }}'
           description: |
             Provider {{ $labels.provider }} has not sent any webhooks in the last 6 hours,
             but there are pending feeds.
@@ -143,7 +143,7 @@ groups:
           severity: info
           component: reconciliation
         annotations:
-          summary: "Large backlog of AI suggestions not being actioned"
+          summary: 'Large backlog of AI suggestions not being actioned'
           description: |
             {{ $value }} AI suggestions generated in the last 24 hours.
 

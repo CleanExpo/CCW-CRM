@@ -9,7 +9,10 @@ const PROMETHEUS_URL = process.env.PROMETHEUS_URL;
  */
 export async function GET(request: NextRequest) {
   if (!PROMETHEUS_URL) {
-    return NextResponse.json({ error: 'Prometheus not configured in this environment', data: [] }, { status: 503 });
+    return NextResponse.json(
+      { error: 'Prometheus not configured in this environment', data: [] },
+      { status: 503 }
+    );
   }
   try {
     const { searchParams } = new URL(request.url);

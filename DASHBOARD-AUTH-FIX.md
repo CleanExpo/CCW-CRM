@@ -19,6 +19,7 @@ The dashboard is trying to load data from the API but **you're not authenticated
 ### Step 1: Navigate to Login Page
 
 Open your browser to:
+
 ```
 http://localhost:3006/login
 ```
@@ -33,6 +34,7 @@ Password: demo123
 ### Step 3: Verify Authentication
 
 After successful login, you should be automatically redirected to:
+
 ```
 http://localhost:3006/dashboard
 ```
@@ -57,12 +59,13 @@ The dashboard should now load without errors.
 ### Verify Token in Console
 
 In browser console, run:
+
 ```javascript
 // Check localStorage
-localStorage.getItem('auth_token')
+localStorage.getItem('auth_token');
 
 // Check cookies
-document.cookie.split('; ').find(c => c.startsWith('auth_token'))
+document.cookie.split('; ').find((c) => c.startsWith('auth_token'));
 ```
 
 Should return a JWT token like: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
@@ -82,6 +85,7 @@ curl -X POST http://localhost:8000/api/auth/login \
 **Expected response**: Should return `access_token` and user info
 
 **If this fails**, backend has an issue (check backend logs):
+
 ```bash
 docker logs nodejs-starter-backend --tail 50
 ```
@@ -96,12 +100,14 @@ curl http://localhost:3006
 ### Check CORS Configuration
 
 Backend should allow requests from `localhost:3006`:
+
 ```bash
 # Check backend .env
 grep CORS_ORIGINS apps/backend/.env
 ```
 
 Should include:
+
 ```
 CORS_ORIGINS=["http://localhost:3000","http://localhost:3005","http://localhost:3006"]
 ```
@@ -137,6 +143,7 @@ Should return dashboard data (not 401 error).
 ### 3. Manually Set Token in Browser
 
 In browser console:
+
 ```javascript
 localStorage.setItem('auth_token', 'YOUR_JWT_TOKEN_HERE');
 location.reload();
@@ -161,6 +168,7 @@ location.reload();
 ### How Login Fixes It
 
 When you login:
+
 1. Frontend calls `POST /api/auth/login` with credentials
 2. Backend validates password, generates JWT token
 3. Frontend receives token
@@ -185,6 +193,7 @@ When you login:
 ## 🚀 Expected Result After Login
 
 **Dashboard should display**:
+
 - **Metrics**:
   - Total Products: 22
   - Total Customers: 8
@@ -201,6 +210,7 @@ When you login:
 ---
 
 **If you're still seeing errors after following these steps, please share:**
+
 1. Browser console output (full error)
 2. Network tab showing failed requests
 3. Backend logs: `docker logs nodejs-starter-backend --tail 100`

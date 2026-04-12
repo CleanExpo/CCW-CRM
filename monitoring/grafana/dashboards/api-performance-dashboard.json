@@ -1,10 +1,6 @@
 {
   "title": "CCW ERP - API Performance",
-  "tags": [
-    "ccw-erp",
-    "api",
-    "performance"
-  ],
+  "tags": ["ccw-erp", "api", "performance"],
   "timezone": "browser",
   "schemaVersion": 16,
   "version": 1,
@@ -72,20 +68,14 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [
-                0.5
-              ],
+              "params": [0.5],
               "type": "gt"
             },
             "operator": {
               "type": "and"
             },
             "query": {
-              "params": [
-                "A",
-                "5m",
-                "now"
-              ]
+              "params": ["A", "5m", "now"]
             },
             "reducer": {
               "params": [],
@@ -156,9 +146,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -184,9 +172,7 @@
       "options": {
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },

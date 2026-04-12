@@ -12,6 +12,7 @@
 Comprehensive structural analysis of CCW-Online ERP monorepo. System is a full-stack Equipment Supplier ERP built with Next.js 15 (frontend) and FastAPI (backend) using pnpm workspaces and Turbo for build orchestration.
 
 **Key Findings**:
+
 - ✅ Well-structured monorepo with clear separation
 - ✅ Modern tech stack (Next.js 15, React 19, FastAPI, Python 3.12)
 - ⚠️ Extensive directory structure with many top-level folders (potential organization concern)
@@ -33,10 +34,12 @@ Total JSON files: 6889
 ### Breakdown by Location
 
 **Frontend (apps/web)**:
+
 - Sample TSX files in `specs/web-tsx-files.txt`
 - Total TSX/TS files: ~874 (across app, components, lib)
 
 **Backend (apps/backend)**:
+
 - Sample Python files in `specs/backend-py-files.txt`
 - Total Python files: 917
 - Key locations:
@@ -82,6 +85,7 @@ Total JSON files: 6889
 ```
 
 **⚠️ CONCERN**: 20+ top-level directories. Many appear to be custom frameworks or business-specific folders (`.beads/`, `.business-consistency/`, `.content-creation/`, `.copywriting/`, `.journeys/`, `.zap/`). This is atypical for a monorepo and may indicate:
+
 1. Custom organizational structure
 2. Legacy folders from previous iterations
 3. Need for consolidation
@@ -94,11 +98,12 @@ Total JSON files: 6889
 
 ```yaml
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
 ```
 
 **Analysis**:
+
 - Standard pnpm workspace structure
 - Apps directory for applications (web, backend)
 - Packages directory for shared code (currently unused/empty based on directory listing)
@@ -142,6 +147,7 @@ packages:
 ```
 
 **Analysis**:
+
 - ✅ Proper task dependency configuration (`dependsOn: ["^build"]` ensures dependencies build first)
 - ✅ Dev task set to persistent (correct for long-running dev servers)
 - ✅ Cache disabled for dev/clean (correct behavior)
@@ -157,6 +163,7 @@ packages:
 **Package Manager**: pnpm@9.15.0
 
 **Required Engines**:
+
 ```json
 {
   "node": ">=20.0.0",
@@ -165,6 +172,7 @@ packages:
 ```
 
 **Root Scripts**:
+
 ```json
 {
   "setup": "bash scripts/setup.sh",
@@ -188,6 +196,7 @@ packages:
 ```
 
 **Analysis**:
+
 - ✅ Standard monorepo script pattern (delegates to turbo)
 - ✅ Docker commands for database/services
 - ✅ Setup scripts for both Unix and Windows
@@ -201,6 +210,7 @@ packages:
 **Evidence**: `specs/web-dependencies.json`
 
 ### Core Framework
+
 ```
 next: 15.1.0                    — Next.js (App Router)
 react: ^19.0.0                  — React
@@ -209,6 +219,7 @@ typescript: ^5.7.2              — TypeScript
 ```
 
 ### UI Components (Radix UI)
+
 ```
 @radix-ui/react-alert-dialog: ^1.1.15
 @radix-ui/react-avatar: ^1.1.2
@@ -228,6 +239,7 @@ typescript: ^5.7.2              — TypeScript
 ```
 
 ### Form Management
+
 ```
 react-hook-form: ^7.54.1        — Form state management
 @hookform/resolvers: ^3.9.1     — Form validation resolvers
@@ -235,6 +247,7 @@ zod: ^3.24.1                    — Schema validation
 ```
 
 ### Styling
+
 ```
 tailwindcss: ^4.0.0             — CSS framework
 @tailwindcss/postcss: ^4.1.18   — PostCSS integration
@@ -244,11 +257,13 @@ clsx: ^2.1.1                    — Conditional classes
 ```
 
 ### Internationalization
+
 ```
 next-intl: ^3.26.5              — i18n for Next.js
 ```
 
 ### UI Libraries
+
 ```
 lucide-react: ^0.468.0          — Icon library
 recharts: ^3.5.1                — Charts
@@ -260,6 +275,7 @@ date-fns: ^4.1.0                — Date utilities
 ```
 
 ### Dev Dependencies
+
 ```
 vitest: ^2.1.8                  — Testing framework
 @testing-library/react: ^16.1.0 — React testing utilities
@@ -272,6 +288,7 @@ prettier: ^3.4.2                — Code formatting
 ```
 
 **Analysis**:
+
 - ✅ Modern dependency versions (Next.js 15, React 19, TypeScript 5.7)
 - ✅ Comprehensive UI component library (Radix UI)
 - ✅ Full testing stack (unit, E2E, visual regression, performance)
@@ -286,6 +303,7 @@ prettier: ^3.4.2                — Code formatting
 **Evidence**: apps/backend/pyproject.toml
 
 ### Core Framework
+
 ```python
 fastapi>=0.115.0               — Web framework
 uvicorn[standard]>=0.32.0      — ASGI server
@@ -294,6 +312,7 @@ pydantic-settings>=2.6.0       — Settings management
 ```
 
 ### Database
+
 ```python
 sqlalchemy>=2.0.0              — ORM (async)
 asyncpg>=0.29.0                — Async PostgreSQL driver
@@ -303,6 +322,7 @@ alembic>=1.13.0                — Database migrations
 ```
 
 ### Caching & Performance
+
 ```python
 redis>=5.0.0                   — Redis async client
 slowapi>=0.1.9                 — Rate limiting
@@ -311,12 +331,14 @@ prometheus-client>=0.19.0      — Prometheus client
 ```
 
 ### Authentication
+
 ```python
 python-jose[cryptography]>=3.3.0  — JWT tokens
 passlib[bcrypt]>=1.7.0         — Password hashing
 ```
 
 ### AI/LLM Stack
+
 ```python
 langchain>=0.1.0               — LangChain framework
 langchain-community>=0.0.20    — Community integrations
@@ -327,6 +349,7 @@ anthropic>=0.39.0              — Claude API
 ```
 
 ### Payments & Notifications
+
 ```python
 stripe>=7.0.0                  — Payment processing
 sendgrid>=6.11.0               — Email notifications
@@ -334,6 +357,7 @@ fastapi-mail>=1.4.1            — Email system alerts
 ```
 
 ### Utilities
+
 ```python
 httpx>=0.27.0                  — Async HTTP client
 pyyaml>=6.0.0                  — YAML parsing
@@ -343,6 +367,7 @@ apscheduler>=3.10.0            — Job scheduling
 ```
 
 ### Dev Dependencies
+
 ```python
 pytest>=8.3.0                  — Testing framework
 pytest-asyncio>=0.24.0         — Async test support
@@ -353,6 +378,7 @@ ruff>=0.7.0                    — Linting
 ```
 
 **Analysis**:
+
 - ✅ Modern async-first stack (FastAPI, SQLAlchemy 2.0, asyncpg)
 - ✅ Comprehensive AI/LLM integration (LangChain, LangGraph, Anthropic)
 - ✅ Production-ready features (Redis caching, rate limiting, metrics)
@@ -370,6 +396,7 @@ ruff>=0.7.0                    — Linting
 **Evidence**: turbo.json
 
 **Tasks Configured**:
+
 1. `build` — Production build (depends on upstream builds)
 2. `dev` — Development server (no cache, persistent)
 3. `lint` — Code linting (depends on upstream lint)
@@ -379,6 +406,7 @@ ruff>=0.7.0                    — Linting
 7. `clean` — Clean build artifacts (no cache)
 
 **Analysis**:
+
 - ✅ Proper dependency chain (`dependsOn: ["^build"]` ensures dependencies build first)
 - ✅ Cache configuration appropriate (cache disabled for dev/clean)
 - ✅ Global dependencies tracked (.env files)
@@ -386,6 +414,7 @@ ruff>=0.7.0                    — Linting
 ### Frontend Build (Next.js)
 
 **Scripts** (from apps/web/package.json):
+
 ```json
 {
   "dev": "node ./scripts/dev-with-fallback.mjs",
@@ -397,6 +426,7 @@ ruff>=0.7.0                    — Linting
 ```
 
 **Analysis**:
+
 - ✅ Custom dev script with fallback mechanism
 - ✅ Standard Next.js build process
 - ✅ Type checking with TypeScript compiler
@@ -407,11 +437,13 @@ ruff>=0.7.0                    — Linting
 **Evidence**: No explicit build step required for Python
 
 **Development**:
+
 ```bash
 uvicorn src.api.main:app --reload
 ```
 
 **Analysis**:
+
 - ✅ No build step needed (Python is interpreted)
 - ✅ Hot reload during development
 - ⚠️ No explicit production deployment configuration in pyproject.toml
@@ -425,12 +457,14 @@ uvicorn src.api.main:app --reload
 ### Configuration Files Present
 
 **Package Management**:
+
 - `package.json` — Root package configuration ✅
 - `pnpm-workspace.yaml` — Workspace definition ✅
 - `turbo.json` — Build orchestration ✅
 - `.npmrc` — npm registry configuration ✅
 
 **Environment**:
+
 - `.env` — Current environment variables ✅
 - `.env.example` — Example environment template ✅
 - `.env.local` — Local overrides ✅
@@ -439,27 +473,34 @@ uvicorn src.api.main:app --reload
 - `.env.shopify.example` — Shopify integration template ✅
 
 **Git**:
+
 - `.gitignore` — Git ignore rules ✅
 - `.husky/` — Git hooks ✅
 
 **Code Quality**:
+
 - `.prettierrc` — Prettier configuration ✅
 - `.prettierignore` — Prettier ignore rules ✅
 - `eslint.config.js` (presumably in apps/web) ✅
 
 **VS Code**:
+
 - `.vscode/` — Editor settings ✅
 
 **CI/CD**:
+
 - `.github/` — GitHub Actions workflows ✅
 
 **Testing**:
+
 - `.percy.yml` — Visual regression testing ✅
 
 **Security**:
+
 - `.zap/` — ZAP security testing ✅
 
 **Analysis**:
+
 - ✅ Comprehensive configuration coverage
 - ✅ Environment templates provided
 - ✅ Code quality tools configured
@@ -472,6 +513,7 @@ uvicorn src.api.main:app --reload
 ### Unauthorized Folders
 
 **Expected Monorepo Structure**:
+
 ```
 /
 ├── apps/          — Applications
@@ -482,6 +524,7 @@ uvicorn src.api.main:app --reload
 ```
 
 **Actual Structure**:
+
 ```
 /
 ├── apps/          ✅
@@ -497,6 +540,7 @@ uvicorn src.api.main:app --reload
 ```
 
 **Non-Standard Folders**:
+
 1. `.beads/` — Custom task management framework
 2. `.business-consistency/` — Business logic validation
 3. `.content-creation/` — Content guidelines
@@ -513,12 +557,14 @@ uvicorn src.api.main:app --reload
 **Severity**: ⚠️ **MEDIUM**
 
 **Impact**:
+
 - Organizational complexity
 - Potential confusion for new developers
 - Possible redundancy (`.docs/` vs `docs/`)
 - Deployment risk (may accidentally include non-production files)
 
 **Recommendation**:
+
 1. Consolidate `.docs/` into `docs/`
 2. Move `.beads/`, `.business-consistency/`, `.content-creation/`, `.copywriting/`, `.journeys/` into `docs/frameworks/` or similar
 3. Move `audit-reports/` into `docs/audits/`
@@ -531,25 +577,26 @@ uvicorn src.api.main:app --reload
 
 ### Frontend Critical Dependencies
 
-| Package | Version | Purpose | Risk Level |
-|---------|---------|---------|------------|
-| next | 15.1.0 | Core framework | HIGH — Major upgrades break features |
-| react | ^19.0.0 | UI library | HIGH — Major version (potential breaking changes) |
-| typescript | ^5.7.2 | Type safety | MEDIUM — Breaking changes rare |
-| next-intl | ^3.26.5 | i18n | MEDIUM — Core to multi-language support |
-| @radix-ui/* | Various | UI primitives | MEDIUM — Multiple packages (upgrade coordination) |
+| Package      | Version | Purpose        | Risk Level                                        |
+| ------------ | ------- | -------------- | ------------------------------------------------- |
+| next         | 15.1.0  | Core framework | HIGH — Major upgrades break features              |
+| react        | ^19.0.0 | UI library     | HIGH — Major version (potential breaking changes) |
+| typescript   | ^5.7.2  | Type safety    | MEDIUM — Breaking changes rare                    |
+| next-intl    | ^3.26.5 | i18n           | MEDIUM — Core to multi-language support           |
+| @radix-ui/\* | Various | UI primitives  | MEDIUM — Multiple packages (upgrade coordination) |
 
 ### Backend Critical Dependencies
 
-| Package | Version | Purpose | Risk Level |
-|---------|---------|---------|------------|
-| fastapi | >=0.115.0 | Core framework | HIGH — API contract changes |
-| sqlalchemy | >=2.0.0 | ORM | HIGH — Database interaction layer |
-| pydantic | >=2.9.0 | Validation | HIGH — API contracts depend on this |
-| langchain | >=0.1.0 | AI orchestration | HIGH — Rapidly evolving, breaking changes common |
-| anthropic | >=0.39.0 | Claude API | MEDIUM — Anthropic controls breaking changes |
+| Package    | Version   | Purpose          | Risk Level                                       |
+| ---------- | --------- | ---------------- | ------------------------------------------------ |
+| fastapi    | >=0.115.0 | Core framework   | HIGH — API contract changes                      |
+| sqlalchemy | >=2.0.0   | ORM              | HIGH — Database interaction layer                |
+| pydantic   | >=2.9.0   | Validation       | HIGH — API contracts depend on this              |
+| langchain  | >=0.1.0   | AI orchestration | HIGH — Rapidly evolving, breaking changes common |
+| anthropic  | >=0.39.0  | Claude API       | MEDIUM — Anthropic controls breaking changes     |
 
 **Analysis**:
+
 - ⚠️ React 19 is bleeding-edge (released late 2024) — potential ecosystem compatibility issues
 - ⚠️ LangChain 0.1.0 is early version — expect breaking changes
 - ✅ SQLAlchemy 2.0 is stable
@@ -560,20 +607,20 @@ uvicorn src.api.main:app --reload
 
 ## Monorepo Health Check
 
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| Workspace configuration valid | ✅ PASS | pnpm-workspace.yaml exists and valid |
-| Turbo pipeline configured | ✅ PASS | turbo.json exists with proper tasks |
-| Root package.json present | ✅ PASS | package.json exists with scripts |
-| Apps directory exists | ✅ PASS | apps/web and apps/backend present |
-| Build scripts defined | ✅ PASS | `pnpm build` runs turbo build |
-| Type checking configured | ✅ PASS | TypeScript + mypy configured |
-| Linting configured | ✅ PASS | ESLint + ruff configured |
-| Testing configured | ✅ PASS | Vitest + Pytest configured |
-| Git hooks configured | ✅ PASS | Husky present |
-| Environment templates | ✅ PASS | .env.example files exist |
-| Consistent folder structure | ⚠️ WARN | 20+ top-level folders (non-standard) |
-| No unauthorized build artifacts | ✅ PASS | .gitignore properly configured |
+| Criterion                       | Status  | Evidence                             |
+| ------------------------------- | ------- | ------------------------------------ |
+| Workspace configuration valid   | ✅ PASS | pnpm-workspace.yaml exists and valid |
+| Turbo pipeline configured       | ✅ PASS | turbo.json exists with proper tasks  |
+| Root package.json present       | ✅ PASS | package.json exists with scripts     |
+| Apps directory exists           | ✅ PASS | apps/web and apps/backend present    |
+| Build scripts defined           | ✅ PASS | `pnpm build` runs turbo build        |
+| Type checking configured        | ✅ PASS | TypeScript + mypy configured         |
+| Linting configured              | ✅ PASS | ESLint + ruff configured             |
+| Testing configured              | ✅ PASS | Vitest + Pytest configured           |
+| Git hooks configured            | ✅ PASS | Husky present                        |
+| Environment templates           | ✅ PASS | .env.example files exist             |
+| Consistent folder structure     | ⚠️ WARN | 20+ top-level folders (non-standard) |
+| No unauthorized build artifacts | ✅ PASS | .gitignore properly configured       |
 
 **Overall Health**: ✅ **GOOD** (with organizational improvements recommended)
 
@@ -602,6 +649,7 @@ uvicorn src.api.main:app --reload
 **Prerequisites Met**: ✅ specs/01-STRUCTURE.md created
 
 **Phase 2 will examine**:
+
 - API route inventory
 - Database schema
 - Service layer architecture

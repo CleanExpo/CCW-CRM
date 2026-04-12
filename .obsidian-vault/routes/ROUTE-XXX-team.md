@@ -19,6 +19,7 @@ last_verified: '2026-03-23'
 Team Management API endpoints.
 
 Provides team member management for multi-tenant organizations:
+
 - List team members (users in current organization)
 - Invite new members
 - Update member roles (RBAC integration)
@@ -27,7 +28,6 @@ Provides team member management for multi-tenant organizations:
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -38,7 +38,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -64,6 +63,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

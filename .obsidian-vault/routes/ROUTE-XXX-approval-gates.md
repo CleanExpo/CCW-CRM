@@ -22,19 +22,18 @@ Manages approval gates for autonomous execution workflow.
 Allows users to approve/reject phase transitions in manual approval mode.
 
 Approval Gates:
-  Gate 1 (after Phase 1 Discovery): Review codebase analysis
-  Gate 2 (after Phase 2 Architecture): Review design before build
-  Gate 3 (after Phase 4 Build Final): Review implementation before finalize
+Gate 1 (after Phase 1 Discovery): Review codebase analysis
+Gate 2 (after Phase 2 Architecture): Review design before build
+Gate 3 (after Phase 4 Build Final): Review implementation before finalize
 
 Endpoints:
-  POST /api/ai/autonomous/gates/{task_id}/approve - Approve a gate
-  POST /api/ai/autonomous/gates/{task_id}/reject  - Reject a gate with feedback
-  GET  /api/ai/autonomous/gates/{task_id}         - List all gates for task
+POST /api/ai/autonomous/gates/{task_id}/approve - Approve a gate
+POST /api/ai/autonomous/gates/{task_id}/reject - Reject a gate with feedback
+GET /api/ai/autonomous/gates/{task_id} - List all gates for task
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -45,7 +44,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -71,6 +69,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

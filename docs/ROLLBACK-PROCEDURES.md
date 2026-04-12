@@ -9,6 +9,7 @@ This guide explains how to use the automatic rollback system to recover from fai
 ## Overview
 
 The rollback system consists of:
+
 - **RollbackAgent**: Autonomous agent that plans and executes rollbacks
 - **DeploymentService**: Deployment orchestration with automatic rollback integration
 - **Prometheus Metrics**: Real-time rollback tracking and alerting
@@ -21,6 +22,7 @@ The rollback system consists of:
 ### Automatic Rollback (Default)
 
 Rollbacks trigger automatically on:
+
 - ✅ **Test Failures** - Critical test suite failures
 - ✅ **Build Failures** - Compilation or build errors
 - ✅ **Runtime Errors** - Error rate exceeds 5%
@@ -64,6 +66,7 @@ print(f"Duration: {result.duration_seconds}s")
 **Trigger Condition**: Critical test failures detected post-deployment
 
 **Criteria**:
+
 ```python
 failure_details = {
     "critical_test_failures": 5  # Must be > 0
@@ -71,6 +74,7 @@ failure_details = {
 ```
 
 **Automatic Actions**:
+
 1. Stop deployment pipeline
 2. Create rollback plan
 3. Execute git revert to previous passing commit
@@ -78,6 +82,7 @@ failure_details = {
 5. Verify all tests pass
 
 **Metrics Recorded**:
+
 - `rollbacks_triggered_total{trigger_reason="test_failure"}`
 - `rollback_duration_seconds`
 - `test_executions_total{suite="rollback_verification"}`
@@ -91,6 +96,7 @@ failure_details = {
 **Criteria**: Any build failure triggers immediate rollback
 
 **Automatic Actions**:
+
 1. Stop deployment pipeline
 2. Revert to last successful build
 3. Re-run build process
@@ -98,6 +104,7 @@ failure_details = {
 5. Deploy previous version
 
 **Metrics Recorded**:
+
 - `rollbacks_triggered_total{trigger_reason="build_failure"}`
 - `deployment_failures_total{stage="build"}`
 
@@ -108,6 +115,7 @@ failure_details = {
 **Trigger Condition**: Error rate exceeds threshold
 
 **Criteria**:
+
 ```python
 failure_details = {
     "error_rate": 0.10  # 10% error rate (threshold: 5%)
@@ -117,6 +125,7 @@ failure_details = {
 **Requires Manual Approval**: Yes (due to potential false positives)
 
 **Automatic Actions**:
+
 1. Alert operators
 2. Create rollback plan
 3. Wait for approval
@@ -124,6 +133,7 @@ failure_details = {
 5. Monitor error rates
 
 **Metrics Recorded**:
+
 - `rollbacks_triggered_total{trigger_reason="runtime_error"}`
 - `autonomous_system_errors_total{component="deployment"}`
 
@@ -134,6 +144,7 @@ failure_details = {
 **Trigger Condition**: Service health checks fail repeatedly
 
 **Criteria**:
+
 ```python
 failure_details = {
     "consecutive_failures": 3  # Must be >= 3
@@ -141,6 +152,7 @@ failure_details = {
 ```
 
 **Automatic Actions**:
+
 1. Stop sending traffic to unhealthy instances
 2. Create rollback plan
 3. Execute rollback
@@ -148,6 +160,7 @@ failure_details = {
 5. Resume normal traffic
 
 **Metrics Recorded**:
+
 - `rollbacks_triggered_total{trigger_reason="health_check_failure"}`
 - `deployment_failures_total{stage="verify"}`
 
@@ -158,6 +171,7 @@ failure_details = {
 **Trigger Condition**: Operator manually initiates rollback
 
 **Use Cases**:
+
 - Unexpected behavior not caught by automated checks
 - Performance degradation
 - Customer-reported critical issues
@@ -168,11 +182,13 @@ failure_details = {
 **Option 1: Via Python API** (see Quick Start above)
 
 **Option 2: Via CLI** (coming soon)
+
 ```bash
 python -m src.cli.rollback trigger --commit abc123 --reason manual
 ```
 
 **Option 3: Via Dashboard** (coming soon)
+
 - Navigate to Deployments → Recent Deployments
 - Select deployment to rollback
 - Click "Trigger Rollback"
@@ -283,6 +299,7 @@ plan = RollbackPlan(
 ### Phase 4: Verification & Monitoring
 
 After rollback completes:
+
 1. **Immediate Checks** (0-5 minutes)
    - Service health endpoints
    - Critical API endpoints
@@ -310,11 +327,13 @@ After rollback completes:
 **Duration**: 60 seconds between rollbacks
 
 **Behavior**:
+
 - If rollback triggered within cooldown period, it's rejected
 - Logs warning: `"Rollback cooldown active, skipping"`
 - Operators can override for manual rollbacks
 
 **Example**:
+
 ```python
 # First rollback at 10:00:00
 result1 = await rollback_agent.execute_rollback(plan1, "rollback-1")
@@ -338,16 +357,19 @@ should_trigger = await rollback_agent.should_trigger_rollback(trigger, details)
 **When Used**: Most deployments
 
 **How It Works**:
+
 1. `git checkout <target_commit>`
 2. Rebuild application
 3. Restart services
 
 **Pros**:
+
 - Simple and fast
 - Preserves git history
 - Easy to verify
 
 **Cons**:
+
 - Requires rebuild
 - May need database migration rollback
 
@@ -358,15 +380,18 @@ should_trigger = await rollback_agent.should_trigger_rollback(trigger, details)
 **When Used**: Production deployments with artifacts
 
 **How It Works**:
+
 1. Deploy previous known-good artifact (Docker image, tarball, etc.)
 2. Restart services
 3. No rebuild needed
 
 **Pros**:
+
 - Fastest rollback (no build)
 - Predictable state
 
 **Cons**:
+
 - Requires artifact storage
 - Database state may be inconsistent
 
@@ -377,15 +402,18 @@ should_trigger = await rollback_agent.should_trigger_rollback(trigger, details)
 **When Used**: Database-heavy rollbacks
 
 **How It Works**:
+
 1. Restore database snapshot from before deployment
 2. Restore application code
 3. Restart services
 
 **Pros**:
+
 - Complete state restoration
 - Handles complex database changes
 
 **Cons**:
+
 - Slowest rollback
 - May lose recent data
 - Requires snapshot infrastructure
@@ -397,15 +425,18 @@ should_trigger = await rollback_agent.should_trigger_rollback(trigger, details)
 **When Used**: Automated rollback fails
 
 **How It Works**:
+
 1. Alert operators
 2. Provide rollback plan and logs
 3. Operators manually execute rollback
 4. Update rollback status
 
 **Pros**:
+
 - Human judgment for complex situations
 
 **Cons**:
+
 - Requires on-call engineer
 - Slower response time
 - Manual effort
@@ -419,6 +450,7 @@ should_trigger = await rollback_agent.should_trigger_rollback(trigger, details)
 Navigate to: **Autonomous Execution Overview** → **Rollbacks**
 
 **Key Panels**:
+
 1. **Rollbacks (24h)** - Total rollback count
 2. **Rollback Reasons** - Pie chart of trigger reasons
 3. **Rollback Duration** - Time to complete rollbacks
@@ -443,10 +475,12 @@ rate(rollbacks_failed_total[1h])
 ### Alerts
 
 **Critical Alerts**:
+
 - `rollbacks_failed_total > 0` → Manual intervention needed
 - Rollback success rate < 90% → Investigate rollback issues
 
 **Warning Alerts**:
+
 - Rollbacks > 3 in 1 hour → Possible instability
 - Rollback duration p95 > 120s → Rollback performance degraded
 
@@ -457,12 +491,15 @@ rate(rollbacks_failed_total[1h])
 ### Rollback Failed
 
 **Symptoms**:
+
 - `rollback_status = FAILED`
 - `requires_manual_intervention = True`
 - Alert: "Rollback failed requiring manual intervention"
 
 **Steps**:
+
 1. Check rollback logs:
+
    ```python
    result = await rollback_agent.execute_rollback(...)
    print("\n".join(result.logs))
@@ -474,6 +511,7 @@ rate(rollbacks_failed_total[1h])
    - Verification failed? (health checks, error rates)
 
 3. Manually execute failed step:
+
    ```bash
    # Example: Manual git revert
    git checkout <target_commit>
@@ -497,18 +535,22 @@ rate(rollbacks_failed_total[1h])
 ### Rollback Partially Succeeded
 
 **Symptoms**:
+
 - `rollback_status = PARTIAL`
 - Some components rolled back, others failed
 - Services in mixed state
 
 **Steps**:
+
 1. Check which components failed:
+
    ```python
    print(f"Rolled back: {result.components_rolled_back}")
    print(f"Failed: {result.components_failed}")
    ```
 
 2. Manually rollback failed components:
+
    ```bash
    # Example: Backend succeeded, frontend failed
    cd apps/frontend
@@ -530,12 +572,15 @@ rate(rollbacks_failed_total[1h])
 ### Rollback Cooldown Blocking
 
 **Symptoms**:
+
 - `should_trigger_rollback()` returns False
 - Logs: "Rollback cooldown active"
 - Urgent rollback needed but blocked
 
 **Steps**:
+
 1. Check last rollback time:
+
    ```python
    agent = get_rollback_agent()
    if agent.last_rollback_time:
@@ -544,6 +589,7 @@ rate(rollbacks_failed_total[1h])
    ```
 
 2. Override cooldown (manual rollback only):
+
    ```python
    # Reset cooldown
    agent.last_rollback_time = None
@@ -561,24 +607,29 @@ rate(rollbacks_failed_total[1h])
 ### Verification Failures
 
 **Symptoms**:
+
 - Rollback executes but verification fails
 - Health checks fail
 - Error rates still elevated
 
 **Steps**:
+
 1. Give services time to stabilize:
+
    ```bash
    # Wait 30-60 seconds for services to fully restart
    sleep 60
    ```
 
 2. Check service logs:
+
    ```bash
    docker logs ccw-backend
    docker logs ccw-frontend
    ```
 
 3. Manually verify critical endpoints:
+
    ```bash
    curl -I http://localhost:8000/api/health
    curl -I http://localhost:8000/api/products
@@ -723,6 +774,7 @@ active = service.get_active_deployments() -> list[DeploymentResult]
 ## Support
 
 For issues or questions:
+
 1. Check Grafana rollback dashboard
 2. Review Prometheus rollback metrics
 3. Check rollback logs in `result.logs`

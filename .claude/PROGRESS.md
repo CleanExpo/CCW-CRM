@@ -6,15 +6,15 @@
 
 ## Active Tasks
 
-| Task | Status | Linear |
-|------|--------|--------|
-| Remotion scene redesign (emoji-free) | DONE | — |
-| YouTube uploads (10/27 done) | BLOCKED (channel limit) | UNI-1751 |
-| ElevenLabs audio regeneration | DONE | UNI-1752 |
-| YouTube OAuth → Unite-Group Nexus | DONE | — |
-| Supabase JWT hook activation | DONE | UNI-1753 |
-| Leaked password protection | N/A (custom auth, not applicable) | — |
-| Vercel YOUTUBE_CHANNEL_ID env var | DONE | — |
+| Task                                 | Status                            | Linear   |
+| ------------------------------------ | --------------------------------- | -------- |
+| Remotion scene redesign (emoji-free) | DONE                              | —        |
+| YouTube uploads (10/27 done)         | BLOCKED (channel limit)           | UNI-1751 |
+| ElevenLabs audio regeneration        | DONE                              | UNI-1752 |
+| YouTube OAuth → Unite-Group Nexus    | DONE                              | —        |
+| Supabase JWT hook activation         | DONE                              | UNI-1753 |
+| Leaked password protection           | N/A (custom auth, not applicable) | —        |
+| Vercel YOUTUBE_CHANNEL_ID env var    | DONE                              | —        |
 
 ## Completed This Session (2026-04-01 continued)
 
@@ -39,21 +39,21 @@
 
 ## Decisions Log
 
-| Decision | Rationale | Date |
-|----------|-----------|------|
-| Remove Supabase from ConnectionsGuide | CCW manages infra; clients only connect Shopify + Xero | 2026-04-01 |
-| RLS USING(true) on 20 operational tables | Single-tenant MVP; org-scoped on 13 PII tables | 2026-03-30 |
-| Custom JWT over Supabase Auth | demo_auth.py locked; migration deferred | 2026-03-30 |
-| YouTube private (not unlisted) | Internal training videos for now | 2026-04-01 |
+| Decision                                 | Rationale                                              | Date       |
+| ---------------------------------------- | ------------------------------------------------------ | ---------- |
+| Remove Supabase from ConnectionsGuide    | CCW manages infra; clients only connect Shopify + Xero | 2026-04-01 |
+| RLS USING(true) on 20 operational tables | Single-tenant MVP; org-scoped on 13 PII tables         | 2026-03-30 |
+| Custom JWT over Supabase Auth            | demo_auth.py locked; migration deferred                | 2026-03-30 |
+| YouTube private (not unlisted)           | Internal training videos for now                       | 2026-04-01 |
 
 ## Blockers (User Action Required)
 
 1. ~~**ELEVENLABS_API_KEY**~~ — DONE: audio generated via .env.local (pulled from Vercel)
 1. ~~**Supabase JWT hook**~~ — DONE: `public.custom_access_token_hook` enabled 2026-04-01
-2. ~~**Leaked password protection**~~ — N/A: project uses custom JWT auth, not Supabase native auth
-3. ~~**Vercel env**~~ — DONE: `YOUTUBE_CHANNEL_ID=UChN8nQFig73BoefyMBIsN-w` set via CLI 2026-04-01
-4. ~~**YouTube OAuth credentials**~~ — DONE: migrated to Unite-Group Nexus (`gen-lang-client-0999991687`)
-5. **YouTube uploads (17 pending)** — CRON retries daily at 9:07 AM. Channel daily limit resets midnight Pacific.
+1. ~~**Leaked password protection**~~ — N/A: project uses custom JWT auth, not Supabase native auth
+1. ~~**Vercel env**~~ — DONE: `YOUTUBE_CHANNEL_ID=UChN8nQFig73BoefyMBIsN-w` set via CLI 2026-04-01
+1. ~~**YouTube OAuth credentials**~~ — DONE: migrated to Unite-Group Nexus (`gen-lang-client-0999991687`)
+1. **YouTube uploads (17 pending)** — CRON retries daily at 9:07 AM. Channel daily limit resets midnight Pacific.
 
 ## Notes for Next Context Window
 

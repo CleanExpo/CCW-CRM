@@ -10,8 +10,8 @@ groups:
           severity: warning
           component: backend
         annotations:
-          summary: "High API response time"
-          description: "p95 response time is {{ $value }}s (threshold: 0.5s)"
+          summary: 'High API response time'
+          description: 'p95 response time is {{ $value }}s (threshold: 0.5s)'
 
       - alert: HighErrorRate
         expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
@@ -20,8 +20,8 @@ groups:
           severity: critical
           component: backend
         annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          summary: 'High error rate detected'
+          description: 'Error rate is {{ $value | humanizePercentage }} (threshold: 5%)'
 
   - name: system_resources
     interval: 30s
@@ -33,8 +33,8 @@ groups:
           severity: warning
           component: system
         annotations:
-          summary: "High CPU usage"
-          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+          summary: 'High CPU usage'
+          description: 'CPU usage is {{ $value }}% on {{ $labels.instance }}'
 
       - alert: HighMemoryUsage
         expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
@@ -43,8 +43,8 @@ groups:
           severity: warning
           component: system
         annotations:
-          summary: "High memory usage"
-          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+          summary: 'High memory usage'
+          description: 'Memory usage is {{ $value }}% on {{ $labels.instance }}'
 
   - name: database
     interval: 30s
@@ -56,8 +56,8 @@ groups:
           severity: critical
           component: database
         annotations:
-          summary: "PostgreSQL is down"
-          description: "PostgreSQL database has been down for more than 1 minute"
+          summary: 'PostgreSQL is down'
+          description: 'PostgreSQL database has been down for more than 1 minute'
 
       - alert: PostgreSQLSlowQueries
         expr: rate(pg_stat_activity_max_tx_duration[5m]) > 10
@@ -66,8 +66,8 @@ groups:
           severity: warning
           component: database
         annotations:
-          summary: "Slow database queries detected"
-          description: "Average query time is {{ $value }}s"
+          summary: 'Slow database queries detected'
+          description: 'Average query time is {{ $value }}s'
 
   - name: cache
     interval: 30s
@@ -79,8 +79,8 @@ groups:
           severity: warning
           component: cache
         annotations:
-          summary: "Redis is down"
-          description: "Redis cache has been down for more than 1 minute"
+          summary: 'Redis is down'
+          description: 'Redis cache has been down for more than 1 minute'
 
       - alert: HighCacheMissRate
         expr: rate(redis_keyspace_misses_total[5m]) / rate(redis_keyspace_hits_total[5m]) > 0.5
@@ -89,8 +89,8 @@ groups:
           severity: warning
           component: cache
         annotations:
-          summary: "High cache miss rate"
-          description: "Cache miss rate is {{ $value | humanizePercentage }}"
+          summary: 'High cache miss rate'
+          description: 'Cache miss rate is {{ $value | humanizePercentage }}'
 
   - name: container_resources
     interval: 30s
@@ -105,8 +105,8 @@ groups:
           severity: warning
           component: container
         annotations:
-          summary: "Container {{ $labels.name }} memory usage is above 80%"
-          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit"
+          summary: 'Container {{ $labels.name }} memory usage is above 80%'
+          description: 'Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit'
 
       # Container memory usage critical (95% of limit)
       - alert: ContainerMemoryUsageCritical
@@ -118,8 +118,8 @@ groups:
           severity: critical
           component: container
         annotations:
-          summary: "CRITICAL: Container {{ $labels.name }} memory usage is above 95%"
-          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit - OOM kill imminent"
+          summary: 'CRITICAL: Container {{ $labels.name }} memory usage is above 95%'
+          description: 'Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit - OOM kill imminent'
 
       # Container CPU usage high (warning at 80% of limit)
       - alert: ContainerCPUUsageHigh
@@ -131,8 +131,8 @@ groups:
           severity: warning
           component: container
         annotations:
-          summary: "Container {{ $labels.name }} CPU usage is above 80%"
-          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its CPU limit"
+          summary: 'Container {{ $labels.name }} CPU usage is above 80%'
+          description: 'Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its CPU limit'
 
       # Container CPU usage critical (95% of limit)
       - alert: ContainerCPUUsageCritical
@@ -144,8 +144,8 @@ groups:
           severity: critical
           component: container
         annotations:
-          summary: "CRITICAL: Container {{ $labels.name }} CPU usage is above 95%"
-          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its CPU limit - throttling likely"
+          summary: 'CRITICAL: Container {{ $labels.name }} CPU usage is above 95%'
+          description: 'Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its CPU limit - throttling likely'
 
       # Container restart detected
       - alert: ContainerRestarted
@@ -155,8 +155,8 @@ groups:
           severity: warning
           component: container
         annotations:
-          summary: "Container {{ $labels.name }} has restarted"
-          description: "Container {{ $labels.name }} was restarted in the last 5 minutes"
+          summary: 'Container {{ $labels.name }} has restarted'
+          description: 'Container {{ $labels.name }} was restarted in the last 5 minutes'
 
       # Container restart loop (multiple restarts)
       - alert: ContainerRestartLoop
@@ -166,8 +166,8 @@ groups:
           severity: critical
           component: container
         annotations:
-          summary: "CRITICAL: Container {{ $labels.name }} is in a restart loop"
-          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last 15 minutes"
+          summary: 'CRITICAL: Container {{ $labels.name }} is in a restart loop'
+          description: 'Container {{ $labels.name }} has restarted {{ $value }} times in the last 15 minutes'
 
       # Container OOM killed
       - alert: ContainerOOMKilled
@@ -177,8 +177,8 @@ groups:
           severity: critical
           component: container
         annotations:
-          summary: "CRITICAL: Container {{ $labels.name }} was OOM killed"
-          description: "Container {{ $labels.name }} was killed due to out of memory"
+          summary: 'CRITICAL: Container {{ $labels.name }} was OOM killed'
+          description: 'Container {{ $labels.name }} was killed due to out of memory'
 
       # Container not running (service down)
       - alert: ContainerDown
@@ -190,5 +190,5 @@ groups:
           severity: critical
           component: container
         annotations:
-          summary: "Container {{ $labels.name }} is not running or just started"
-          description: "Container {{ $labels.name }} may be down or unstable"
+          summary: 'Container {{ $labels.name }} is not running or just started'
+          description: 'Container {{ $labels.name }} may be down or unstable'

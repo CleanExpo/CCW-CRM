@@ -3,7 +3,7 @@
 **Date**: 2026-02-05
 **Git Commit**: f422237644294b9df14c08e1ea53469658112289
 **Duration**: Phase 3 Execution
-**Evidence Files**: specs/frontend-*.txt
+**Evidence Files**: specs/frontend-\*.txt
 **Prerequisites**: ✅ Phase 2 complete (`specs/02-BACKEND.md` exists)
 
 ---
@@ -13,6 +13,7 @@
 Comprehensive frontend analysis of Next.js 15 application with 255 TSX components across auth, dashboard, portal, and UI layers. System demonstrates excellent TypeScript hygiene with zero compilation errors, but has significant ESLint warnings primarily from `any` type usage (186 occurrences) and missing React Hook dependencies.
 
 **Key Findings**:
+
 - ✅ **TypeScript**: 0 errors (100% type-safe compilation)
 - ⚠️ **ESLint**: 186 warnings (primarily `any` types + hook dependencies)
 - ⚠️ **any Types**: 186 occurrences (production code violation)
@@ -28,6 +29,7 @@ Comprehensive frontend analysis of Next.js 15 application with 255 TSX component
 **Evidence**: `specs/frontend-ui-components.txt`, `specs/frontend-pages.txt`
 
 ### Total Count
+
 ```
 255 TSX components total
 ```
@@ -82,6 +84,7 @@ tooltip.tsx               — Tooltips
 ```
 
 **Analysis**:
+
 - ✅ Comprehensive shadcn/ui component library
 - ✅ Custom components (order-status-badge, draft-recovery-alert, real-time-indicator)
 - ✅ Animation support (motion.tsx, framer-motion)
@@ -96,6 +99,7 @@ tooltip.tsx               — Tooltips
 **Route Groups**:
 
 ##### (auth) — 4 pages
+
 ```
 login/page.tsx            — User login
 signup/page.tsx           — User registration
@@ -104,6 +108,7 @@ layout.tsx                — Auth layout wrapper
 ```
 
 ##### (dashboard) — 48 pages
+
 ```
 **Core Pages**:
 dashboard/page.tsx        — Main dashboard with metrics
@@ -161,6 +166,7 @@ prd/[id]/page.tsx         — PRD detail view
 ```
 
 ##### (portal) — 5 pages (Customer self-service)
+
 ```
 internet/page.tsx         — Internet orders
 phone/page.tsx            — Phone orders
@@ -170,6 +176,7 @@ layout.tsx                — Portal layout
 ```
 
 ##### /portal — 9 pages (Second portal implementation)
+
 ```
 auth/login/page.tsx       — Portal login
 auth/verify/page.tsx      — Magic link verification
@@ -186,6 +193,7 @@ layout.tsx                — Portal layout
 ```
 
 ##### Root Pages — 4 pages
+
 ```
 page.tsx                  — Home/landing page
 layout.tsx                — Root layout
@@ -196,6 +204,7 @@ playground/page.tsx       — Component playground
 ```
 
 **Analysis**:
+
 - ✅ Comprehensive ERP coverage (products, customers, orders, quotes, inventory)
 - ✅ Full POS system (terminal, reconciliation, locations, staff)
 - ✅ AI-powered features (assistant, insights, forecasting, agents)
@@ -249,6 +258,7 @@ app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx
 ```
 
 **Analysis**:
+
 - ✅ Excellent component organization by feature domain
 - ✅ AI integration components throughout
 - ✅ Reusable form components
@@ -276,6 +286,7 @@ cd apps/web && pnpm type-check
 ### **✅ EXCELLENT: ZERO TypeScript ERRORS**
 
 **Analysis**:
+
 - ✅ All 255 TSX components type-check successfully
 - ✅ All lib/ utilities type-safe
 - ✅ All API client code type-safe
@@ -312,12 +323,14 @@ cd apps/web && pnpm lint
 **Severity**: ⚠️ **P2 — MEDIUM** (Production code quality issue)
 
 **Distribution**:
+
 - Error catch blocks: ~80 occurrences (`catch (error: any)`)
 - Function parameters: ~30 occurrences
 - Type assertions: ~25 occurrences (`as any`)
 - Callback parameters: ~16 occurrences
 
 **Sample Violations**:
+
 ```typescript
 // app/(auth)/signup/page.tsx:77
 } catch (error: any) {
@@ -333,12 +346,14 @@ suggestion: any;
 ```
 
 **Impact**:
+
 - Type safety bypassed
 - IntelliSense/autocomplete reduced
 - Runtime errors not caught at compile time
 - Code maintainability reduced
 
 **Remediation Pattern**:
+
 ```typescript
 // ❌ Before
 catch (error: any) {
@@ -370,6 +385,7 @@ function handleData(data: DataShape) { ... }
 **Severity**: ⚠️ **P3 — LOW** (Potential stale closure bugs)
 
 **Sample Violations**:
+
 ```typescript
 // app/(dashboard)/autonomous-dev/page.tsx:98
 Warning: React Hook useEffect has a missing dependency: 'fetchData'.
@@ -384,11 +400,13 @@ Extract it to a separate variable so it can be statically checked.
 ```
 
 **Impact**:
+
 - Potential stale closure bugs
 - useEffect may not re-run when it should
 - Memory leaks possible if cleanup not triggered
 
 **Remediation**:
+
 ```typescript
 // ❌ Before
 useEffect(() => {
@@ -401,17 +419,22 @@ useEffect(() => {
 }, [fetchData]); // Include dependency
 
 // Or wrap in useCallback
-const fetchData = useCallback(async () => {
-  // ...
-}, [/* deps */]);
+const fetchData = useCallback(
+  async () => {
+    // ...
+  },
+  [
+    /* deps */
+  ]
+);
 ```
 
 ### Lint Violation Summary
 
-| Violation Type | Count | Severity | Remediation Time |
-|----------------|-------|----------|------------------|
-| `any` types | 151 | P2 | 20-30 hours |
-| React Hook deps | 35 | P3 | 5-8 hours |
+| Violation Type  | Count | Severity | Remediation Time |
+| --------------- | ----- | -------- | ---------------- |
+| `any` types     | 151   | P2       | 20-30 hours      |
+| React Hook deps | 35    | P3       | 5-8 hours        |
 
 **Total**: **186 warnings**
 
@@ -458,18 +481,20 @@ app/(dashboard)/orders/page.tsx:76:
 ```
 
 **Analysis**:
+
 - ✅ **ACCEPTABLE for development** — Error logging in catch blocks
 - ⚠️ **Should be replaced with proper logger** in production
 
 **Recommendation**: Replace with structured logging service
+
 ```typescript
 // ❌ Current
-console.error("Failed to load orders:", error);
+console.error('Failed to load orders:', error);
 
 // ✅ Production-ready
-logger.error("Failed to load orders", {
+logger.error('Failed to load orders', {
   error: error.message,
-  component: "OrdersPage",
+  component: 'OrdersPage',
   userId: session?.user?.id,
 });
 ```
@@ -495,10 +520,10 @@ app/(dashboard)/orders/components/OrderDetailDialog.tsx:164:
 
 ### console.log Violation Summary
 
-| Category | Count | Severity | Action Required |
-|----------|-------|----------|-----------------|
-| console.error (acceptable) | 48 | P3 | SHOULD FIX (replace with logger) |
-| console.log (debug) | 2 | P3 | SHOULD FIX (remove or logger.debug) |
+| Category                   | Count | Severity | Action Required                     |
+| -------------------------- | ----- | -------- | ----------------------------------- |
+| console.error (acceptable) | 48    | P3       | SHOULD FIX (replace with logger)    |
+| console.log (debug)        | 2     | P3       | SHOULD FIX (remove or logger.debug) |
 
 **Total**: **50 console statements**
 
@@ -570,6 +595,7 @@ locations: 1, // TODO: Get actual usage from API
 #### E. False Positives (lib/agents/independent-verifier.ts) — 7 occurrences
 
 **Analysis**: These are regex patterns searching FOR TODO comments, not actual TODOs
+
 ```typescript
 /TODO(?::|$|\s)/gi,
 /FIXME(?::|$|\s)/gi,
@@ -579,13 +605,13 @@ locations: 1, // TODO: Get actual usage from API
 
 ### TODO Comment Summary
 
-| Category | Count | Severity | Impact |
-|----------|-------|----------|--------|
-| Missing API implementations | 11 | P1 | Core features non-functional |
-| Missing dependencies | 2 | P2 | AI assistant incomplete |
-| Data placeholders | 1 | P3 | Minor data accuracy issue |
-| Monitoring placeholder | 1 | P3 | Alerting incomplete |
-| False positives (verifier) | 7 | N/A | Acceptable |
+| Category                    | Count | Severity | Impact                       |
+| --------------------------- | ----- | -------- | ---------------------------- |
+| Missing API implementations | 11    | P1       | Core features non-functional |
+| Missing dependencies        | 2     | P2       | AI assistant incomplete      |
+| Data placeholders           | 1     | P3       | Minor data accuracy issue    |
+| Monitoring placeholder      | 1     | P3       | Alerting incomplete          |
+| False positives (verifier)  | 7     | N/A      | Acceptable                   |
 
 **Total**: **15 real TODOs** (excluding false positives)
 
@@ -609,6 +635,7 @@ app/(dashboard)/[module]/
 ```
 
 **Analysis**:
+
 - ✅ Excellent feature-based organization
 - ✅ Co-located components with their pages
 - ✅ Clear naming conventions
@@ -632,6 +659,7 @@ async function Page() {
 ```
 
 **Analysis**:
+
 - ✅ Simple state management (no global state library needed for MVP)
 - ✅ Server Components for data fetching
 - ✅ Client Components only where interactivity needed
@@ -641,6 +669,7 @@ async function Page() {
 **From component analysis**:
 
 1. **Client-side fetching** (useEffect + apiClient)
+
 ```typescript
 useEffect(() => {
   async function loadData() {
@@ -652,6 +681,7 @@ useEffect(() => {
 ```
 
 2. **Real-time updates** (SSE)
+
 ```typescript
 // From components/dashboard/StockHealthWidget.tsx
 useEffect(() => {
@@ -664,6 +694,7 @@ useEffect(() => {
 ```
 
 **Analysis**:
+
 - ✅ Real-time metrics via Server-Sent Events
 - ✅ Proper error handling in data fetching
 - ⚠️ Many useEffect hooks with missing dependencies (ESLint warnings)
@@ -677,6 +708,7 @@ useEffect(() => {
 **Note**: Build not executed during audit (would require `pnpm build`)
 
 **Estimated Concerns**:
+
 - 255 TSX components
 - Recharts library (heavy charting library)
 - ReactFlow library (flow diagrams)
@@ -688,6 +720,7 @@ useEffect(() => {
 ### Code Splitting
 
 **From Next.js 15 App Router**:
+
 - ✅ Automatic route-based code splitting
 - ✅ Dynamic imports where used
 - ✅ Server Components reduce client JS bundle
@@ -699,6 +732,7 @@ useEffect(() => {
 **Method**: Quick grep scan (not comprehensive)
 
 **Findings**:
+
 - ✅ Radix UI primitives (accessible by default)
 - ✅ Proper semantic HTML (Button, Link components)
 - ✅ Form labels (from react-hook-form + shadcn/ui)
@@ -732,25 +766,25 @@ useEffect(() => {
 
 ### P1 — HIGH (Must Fix Before Production)
 
-| # | Finding | Count | Impact | Remediation Time |
-|---|---------|-------|--------|------------------|
-| 1 | Missing API implementations | 11 | Signup, settings, onboarding non-functional | 15-20 hours |
-| 2 | Missing dependencies (react-markdown) | 2 | AI assistant incomplete | 1 hour |
+| #   | Finding                               | Count | Impact                                      | Remediation Time |
+| --- | ------------------------------------- | ----- | ------------------------------------------- | ---------------- |
+| 1   | Missing API implementations           | 11    | Signup, settings, onboarding non-functional | 15-20 hours      |
+| 2   | Missing dependencies (react-markdown) | 2     | AI assistant incomplete                     | 1 hour           |
 
 ### P2 — MEDIUM (Should Fix)
 
-| # | Finding | Count | Impact | Remediation Time |
-|---|---------|-------|--------|------------------|
-| 1 | `any` types | 186 | Type safety bypassed, maintainability reduced | 20-30 hours |
+| #   | Finding     | Count | Impact                                        | Remediation Time |
+| --- | ----------- | ----- | --------------------------------------------- | ---------------- |
+| 1   | `any` types | 186   | Type safety bypassed, maintainability reduced | 20-30 hours      |
 
 ### P3 — LOW (Nice to Have)
 
-| # | Finding | Count | Impact | Remediation Time |
-|---|---------|-------|--------|------------------|
-| 1 | React Hook dependencies | 35 | Potential stale closure bugs | 5-8 hours |
-| 2 | console.error statements | 48 | Should replace with structured logger | 8 hours |
-| 3 | console.log statements | 2 | Debug logs in production | 5 min |
-| 4 | Data placeholders | 2 | Minor data accuracy issues | 2 hours |
+| #   | Finding                  | Count | Impact                                | Remediation Time |
+| --- | ------------------------ | ----- | ------------------------------------- | ---------------- |
+| 1   | React Hook dependencies  | 35    | Potential stale closure bugs          | 5-8 hours        |
+| 2   | console.error statements | 48    | Should replace with structured logger | 8 hours          |
+| 3   | console.log statements   | 2     | Debug logs in production              | 5 min            |
+| 4   | Data placeholders        | 2     | Minor data accuracy issues            | 2 hours          |
 
 ---
 
@@ -761,6 +795,7 @@ useEffect(() => {
 **Prerequisites Met**: ✅ specs/03-FRONTEND.md created
 
 **Phase 4 will examine**:
+
 - API integration points
 - State management across boundaries
 - Data fetching strategies

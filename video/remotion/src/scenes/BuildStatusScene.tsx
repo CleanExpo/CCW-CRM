@@ -30,11 +30,7 @@ export const BuildStatusScene: React.FC<BuildStatusSceneProps> = ({ status, reas
   });
 
   // Pulse the status indicator
-  const pulse = interpolate(
-    frame % (fps * 1.5),
-    [0, fps * 0.75, fps * 1.5],
-    [1, 1.05, 1]
-  );
+  const pulse = interpolate(frame % (fps * 1.5), [0, fps * 0.75, fps * 1.5], [1, 1.05, 1]);
 
   return (
     <AbsoluteFill

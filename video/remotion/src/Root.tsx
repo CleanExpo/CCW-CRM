@@ -18,7 +18,8 @@ const DEFAULT_PROPS: BoardroomVideoProps = {
     description: 'The autonomous CCW boardroom deliberates on AI automation for trades businesses.',
     tags: ['CCW', 'AI', 'trades', 'Australia', 'automation'],
     duration_iso: 'PT8M',
-    script: 'Welcome to the CCW Boardroom. Today we explore the latest in AI automation for trades businesses across Australia and New Zealand.',
+    script:
+      'Welcome to the CCW Boardroom. Today we explore the latest in AI automation for trades businesses across Australia and New Zealand.',
     youtube: {
       chapters: [
         { timestamp: '0:00', title: 'Intro' },

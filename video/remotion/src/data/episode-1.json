@@ -3,7 +3,14 @@
   "videoBrief": {
     "title": "CCW Boardroom — Episode 1: The Operating System for Equipment Suppliers",
     "description": "The inaugural CCW Boardroom session. Meet the board, review the platform build status, and learn what CCW ERP means for Australian equipment suppliers.",
-    "tags": ["CCW ERP", "equipment supplier", "boardroom", "Australia", "ERP software", "AI agents"],
+    "tags": [
+      "CCW ERP",
+      "equipment supplier",
+      "boardroom",
+      "Australia",
+      "ERP software",
+      "AI agents"
+    ],
     "duration_iso": "PT2M30S",
     "script": "",
     "youtube": {

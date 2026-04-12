@@ -3,6 +3,7 @@
 ## 🎯 Current Status
 
 All services are running and configured correctly:
+
 - ✅ **Backend API**: http://localhost:8000 (FastAPI)
 - ✅ **Frontend**: http://localhost:3006 (Next.js)
 - ✅ **Database**: PostgreSQL on port 5434 (Healthy)
@@ -17,6 +18,7 @@ All services are running and configured correctly:
 1. **Open your browser** (Chrome, Edge, Firefox)
 
 2. **Navigate to the test page:**
+
    ```
    http://localhost:3006/test-api.html
    ```
@@ -32,6 +34,7 @@ All services are running and configured correctly:
    - ✅ Dashboard API: Should load metrics and data
 
 **What you'll see:**
+
 - All 3 status badges turn green (✓ Healthy, ✓ Authenticated, ✓ Loaded)
 - Dashboard data showing 22 products, 8 customers, 4 active orders
 - Response times <100ms
@@ -47,6 +50,7 @@ All services are running and configured correctly:
 **IMPORTANT**: Old cached data may cause issues.
 
 In Chrome/Edge:
+
 1. Press `F12` to open DevTools
 2. Go to **Application** tab
 3. Click **Clear site data** button
@@ -57,6 +61,7 @@ Or press `Ctrl+Shift+Delete` → Clear cookies and cache
 #### Step 2: Navigate to Login
 
 Open a **new browser tab**:
+
 ```
 http://localhost:3006/login
 ```
@@ -71,6 +76,7 @@ Click **Sign In**
 #### Step 4: Access Dashboard
 
 After successful login:
+
 - You'll be redirected to: `http://localhost:3006/dashboard`
 - Dashboard will load all data automatically
 - Takes ~2 seconds for initial load
@@ -82,6 +88,7 @@ After successful login:
 Once logged in, you should see:
 
 ### Metrics Widget
+
 - **22 products** in catalog
 - **8 customers** registered
 - **4 active orders** in progress
@@ -89,22 +96,26 @@ Once logged in, you should see:
 - **3 low stock alerts** needing reorder
 
 ### Revenue Chart
+
 - **January 2026**: $287,556 in delivered orders
 - 6-month trend showing business growth
 
 ### Top Products
+
 1. **Excavator 320D** - $250,000 (2 units) - 87% of revenue
 2. Cordless Drill 18V - $1,899 (10 units)
 3. Lumber 2x4x8 - $1,798 (200 units)
 4. ... and 7 more products
 
 ### Category Distribution
+
 - **Heavy Machinery**: 95.6% of revenue
 - Building Materials: 1.3%
 - Power Tools: 1.2%
 - Safety Equipment: 0.9%
 
 ### Performance Highlights
+
 - **All dashboard endpoints respond in <100ms** ⚡
 - **Order creation: 115ms** for 10 items (was 34,800ms = 97% improvement)
 - **Quote creation: 24ms** for 8 items (99.7% improvement)
@@ -163,10 +174,13 @@ cat apps/backend/.env | grep CORS
 Once you have the dashboard loaded, follow this demo flow:
 
 ### 1. Overview (30 seconds)
+
 > "This is our Equipment ERP system for managing products, customers, orders, and quotes. Everything is real-time with sub-100ms response times."
 
 ### 2. Dashboard Metrics (2 minutes)
+
 > "Let me show you the key metrics:
+>
 > - We have 22 products in our catalog
 > - 8 active customers
 > - 4 orders currently in progress
@@ -174,21 +188,27 @@ Once you have the dashboard loaded, follow this demo flow:
 > - 3 items flagged for low stock requiring reorder"
 
 ### 3. Performance Highlights (2 minutes) ⭐
+
 > "The system's performance is exceptional. We achieved a 97% improvement on order creation:
+>
 > - **Before**: 34.8 seconds to create an order with 10 items
 > - **After**: 115 milliseconds - that's 302 times faster
 > - Quote creation: 24 milliseconds for 8 items
 > - All dashboard data loads in under 100 milliseconds"
 
 ### 4. Revenue Analytics (2 minutes)
+
 > "Looking at revenue trends:
+>
 > - January 2026: $287,556 in delivered orders
 > - Top product is the Excavator 320D at $250K from just 2 units
 > - Heavy machinery represents 95.6% of our revenue
 > - The system tracks everything in real-time with instant updates"
 
 ### 5. Technical Stack (1 minute)
+
 > "Built on modern technology:
+>
 > - Next.js 15 with React 19 frontend
 > - FastAPI Python backend with async processing
 > - PostgreSQL database with optimized queries
@@ -196,7 +216,9 @@ Once you have the dashboard loaded, follow this demo flow:
 > - All containerized with Docker for easy deployment"
 
 ### 6. Wrap-up (1 minute)
+
 > "The system is production-ready:
+>
 > - 100% test coverage on critical paths
 > - All performance benchmarks met or exceeded
 > - Secure JWT authentication

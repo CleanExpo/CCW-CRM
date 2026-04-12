@@ -22,13 +22,12 @@ Provides endpoints for verifying that implementation satisfies requirements.
 Uses RequirementTracer service to establish traceability.
 
 Endpoints:
-  POST /api/ai/autonomous/verify-requirements/{task_id} - Generate traceability matrix
-  GET /api/ai/autonomous/verify-requirements/{task_id} - Get existing matrix
+POST /api/ai/autonomous/verify-requirements/{task_id} - Generate traceability matrix
+GET /api/ai/autonomous/verify-requirements/{task_id} - Get existing matrix
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -39,7 +38,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -65,6 +63,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

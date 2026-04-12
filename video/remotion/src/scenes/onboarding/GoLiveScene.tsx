@@ -9,9 +9,21 @@ import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remo
 const NEXT_STEPS = [
   { letter: 'W', color: '#3b82f6', text: 'Watch the module walkthrough videos for each section' },
   { letter: 'U', color: '#8b5cf6', text: 'Create staff accounts via Settings → Users' },
-  { letter: 'S', color: '#06b6d4', text: 'Run your first Cin7 sync: Settings → Integrations → Cin7 → Sync Now' },
-  { letter: 'D', color: '#f59e0b', text: 'Check the Dashboard — your live metrics will appear within minutes' },
-  { letter: 'AI', color: '#10b981', text: 'Try the AI Assistant for instant inventory + order queries' },
+  {
+    letter: 'S',
+    color: '#06b6d4',
+    text: 'Run your first Cin7 sync: Settings → Integrations → Cin7 → Sync Now',
+  },
+  {
+    letter: 'D',
+    color: '#f59e0b',
+    text: 'Check the Dashboard — your live metrics will appear within minutes',
+  },
+  {
+    letter: 'AI',
+    color: '#10b981',
+    text: 'Try the AI Assistant for instant inventory + order queries',
+  },
 ];
 
 export const GoLiveScene: React.FC = () => {
@@ -33,12 +45,9 @@ export const GoLiveScene: React.FC = () => {
     });
 
   // Pulsing glow
-  const glowOpacity = interpolate(
-    frame % (fps * 2),
-    [0, fps, fps * 2],
-    [0.4, 0.8, 0.4],
-    { extrapolateRight: 'clamp' }
-  );
+  const glowOpacity = interpolate(frame % (fps * 2), [0, fps, fps * 2], [0.4, 0.8, 0.4], {
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <AbsoluteFill

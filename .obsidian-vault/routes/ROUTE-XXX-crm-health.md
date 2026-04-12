@@ -19,20 +19,21 @@ last_verified: '2026-03-23'
 CRM Client Health Dashboard — UNI-1114
 
 Computes a 0–100 health score per customer based on existing data:
-- Recency      (30pts): days since last order
-- Volume       (30pts): total order count
-- Engagement   (20pts): quote activity
-- Account      (20pts): account is_active flag
+
+- Recency (30pts): days since last order
+- Volume (30pts): total order count
+- Engagement (20pts): quote activity
+- Account (20pts): account is_active flag
 
 Status thresholds:
-- Green  (70–100): healthy, active client
-- Amber  (40–69):  at-risk, needs attention
-- Red    (0–39):   churned or dormant
+
+- Green (70–100): healthy, active client
+- Amber (40–69): at-risk, needs attention
+- Red (0–39): churned or dormant
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -43,7 +44,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -69,6 +69,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

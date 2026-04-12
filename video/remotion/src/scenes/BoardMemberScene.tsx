@@ -23,8 +23,12 @@ export const BoardMemberScene: React.FC<BoardMemberSceneProps> = ({
   const { fps } = useVideoConfig();
 
   const headerOpacity = interpolate(frame, [0, fps * 0.3], [0, 1], { extrapolateRight: 'clamp' });
-  const contentOpacity = interpolate(frame, [fps * 0.3, fps * 0.7], [0, 1], { extrapolateRight: 'clamp' });
-  const contentSlide = interpolate(frame, [fps * 0.3, fps * 0.7], [20, 0], { extrapolateRight: 'clamp' });
+  const contentOpacity = interpolate(frame, [fps * 0.3, fps * 0.7], [0, 1], {
+    extrapolateRight: 'clamp',
+  });
+  const contentSlide = interpolate(frame, [fps * 0.3, fps * 0.7], [20, 0], {
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <AbsoluteFill

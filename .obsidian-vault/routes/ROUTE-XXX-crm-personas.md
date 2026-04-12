@@ -22,18 +22,17 @@ Auto-classify customers by business type and behaviour using existing order data
 No new paid APIs — purely derived from Orders + Quotes.
 
 Personas:
-  high_value       — lifetime spend >= $10,000
-  equipment_buyer  — orders contain high-unit-price items (>= $1,000/item)
-  consumables      — frequent orders (>=5) with low avg order value
-  contractor       — 2-4 orders, moderate value
-  new_account      — customer created in last 30 days
-  dormant          — no order in 90+ days AND has prior orders
-  unclassified     — fallback
+high_value — lifetime spend >= $10,000
+equipment_buyer — orders contain high-unit-price items (>= $1,000/item)
+consumables — frequent orders (>=5) with low avg order value
+contractor — 2-4 orders, moderate value
+new_account — customer created in last 30 days
+dormant — no order in 90+ days AND has prior orders
+unclassified — fallback
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -44,7 +43,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -70,6 +68,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

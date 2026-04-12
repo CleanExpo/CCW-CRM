@@ -14,7 +14,10 @@ export const OutroScene: React.FC<OutroSceneProps> = ({ sessionId }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const fadeOut = interpolate(frame, [fps * 3, fps * 4], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const fadeOut = interpolate(frame, [fps * 3, fps * 4], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <AbsoluteFill

@@ -11,7 +11,7 @@
  * - Automatic token refresh on 401
  */
 
-import { getBackendUrl } from "@/lib/api/backend-url";
+import { getBackendUrl } from '@/lib/api/backend-url';
 
 const BACKEND_URL = getBackendUrl();
 

@@ -15,31 +15,31 @@ All cron jobs follow this flow:
 
 ### High-Frequency (Every 5–15 Minutes)
 
-| Schedule | Endpoint | Description | Layer |
-|----------|----------|-------------|-------|
-| `*/5 * * * *` | `/api/cron/health-check` | Ping backend, measure latency, detect outages | Frontend |
-| `*/5 * * * *` | `/api/cron/retry-failed-webhooks` | ISS-036: Retry failed webhooks with exponential backoff | Backend |
-| `*/15 * * * *` | `/api/cron/refresh-xero-tokens` | Proactively refresh Xero OAuth tokens before expiry | Backend |
-| `*/15 * * * *` | `/api/cron/check-sla-breaches` | UNI-174 ST-4: Scan for SLA breaches, fire escalations | Backend |
+| Schedule       | Endpoint                          | Description                                             | Layer    |
+| -------------- | --------------------------------- | ------------------------------------------------------- | -------- |
+| `*/5 * * * *`  | `/api/cron/health-check`          | Ping backend, measure latency, detect outages           | Frontend |
+| `*/5 * * * *`  | `/api/cron/retry-failed-webhooks` | ISS-036: Retry failed webhooks with exponential backoff | Backend  |
+| `*/15 * * * *` | `/api/cron/refresh-xero-tokens`   | Proactively refresh Xero OAuth tokens before expiry     | Backend  |
+| `*/15 * * * *` | `/api/cron/check-sla-breaches`    | UNI-174 ST-4: Scan for SLA breaches, fire escalations   | Backend  |
 
 ### Hourly
 
-| Schedule | Endpoint | Description | Layer |
-|----------|----------|-------------|-------|
+| Schedule    | Endpoint                       | Description                                                                         | Layer   |
+| ----------- | ------------------------------ | ----------------------------------------------------------------------------------- | ------- |
 | `0 * * * *` | `/api/cron/run-autonomous-ops` | Claude Sonnet reviews ERP state — draft POs, payment reminders, flag unmatched txns | Backend |
 
 ### Daily
 
-| Schedule (UTC) | AEST | Endpoint | Description | Layer |
-|----------------|------|----------|-------------|-------|
-| `0 0 * * *` | 10:00 AM | `/api/cron/refresh-health-scores` | UNI-1114/1112: Refresh CRM persona tags for all customers | Backend |
-| `0 2 * * *` | 12:00 PM | `/api/cron/cleanup-old-runs` | Delete completed/failed agent runs older than 30 days | Frontend |
-| `0 9 * * *` | 7:00 PM | `/api/cron/daily-report` | Generate daily summary of agent activity and success rates | Frontend |
-| `0 9 * * *` | 7:00 PM | `/api/cron/check-expiring-quotes` | Check quotes expiring in 3 days, send notifications | Backend |
-| `0 9 * * *` | 7:00 PM | `/api/cron/process-onboarding-emails` | UNI-1113: Send due onboarding touchpoint emails | Backend |
-| `0 19 * * *` | 5:00 AM+1 | `/api/cron/shadow-sync-cin7` | Shadow sync: pull products, orders, customers from Cin7 | Backend |
-| `0 20 * * *` | 6:00 AM+1 | `/api/cron/shadow-sync-xero` | Shadow sync: pull invoices, payments, accounts from Xero | Backend |
-| `0 21 * * *` | 7:00 AM+1 | `/api/cron/auto-reorder-inventory` | Sprint 4: Scan inventory, create draft POs for low-stock items | Backend |
+| Schedule (UTC) | AEST      | Endpoint                              | Description                                                    | Layer    |
+| -------------- | --------- | ------------------------------------- | -------------------------------------------------------------- | -------- |
+| `0 0 * * *`    | 10:00 AM  | `/api/cron/refresh-health-scores`     | UNI-1114/1112: Refresh CRM persona tags for all customers      | Backend  |
+| `0 2 * * *`    | 12:00 PM  | `/api/cron/cleanup-old-runs`          | Delete completed/failed agent runs older than 30 days          | Frontend |
+| `0 9 * * *`    | 7:00 PM   | `/api/cron/daily-report`              | Generate daily summary of agent activity and success rates     | Frontend |
+| `0 9 * * *`    | 7:00 PM   | `/api/cron/check-expiring-quotes`     | Check quotes expiring in 3 days, send notifications            | Backend  |
+| `0 9 * * *`    | 7:00 PM   | `/api/cron/process-onboarding-emails` | UNI-1113: Send due onboarding touchpoint emails                | Backend  |
+| `0 19 * * *`   | 5:00 AM+1 | `/api/cron/shadow-sync-cin7`          | Shadow sync: pull products, orders, customers from Cin7        | Backend  |
+| `0 20 * * *`   | 6:00 AM+1 | `/api/cron/shadow-sync-xero`          | Shadow sync: pull invoices, payments, accounts from Xero       | Backend  |
+| `0 21 * * *`   | 7:00 AM+1 | `/api/cron/auto-reorder-inventory`    | Sprint 4: Scan inventory, create draft POs for low-stock items | Backend  |
 
 **Total: 13 scheduled cron jobs**
 
@@ -93,6 +93,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 All cron endpoints verify the `CRON_SECRET` header:
 
 **Frontend (Next.js):**
+
 ```typescript
 const authHeader = request.headers.get("authorization");
 if (authHeader !== \`Bearer \${process.env.CRON_SECRET}\`) {
@@ -101,6 +102,7 @@ if (authHeader !== \`Bearer \${process.env.CRON_SECRET}\`) {
 ```
 
 **Backend (FastAPI):**
+
 ```python
 def verify_cron_secret(authorization: str | None = Header(None)) -> bool:
     cron_secret = os.getenv("CRON_SECRET")
@@ -119,11 +121,11 @@ Vercel automatically sets the `Authorization` header and restricts cron calls to
 
 Located in `apps/backend/src/scheduler/bank_feed_scheduler.py`. Runs inside the FastAPI process:
 
-| Job ID | Schedule | Description |
-|--------|----------|-------------|
-| `bank_feed_sync_hourly` | Every hour at :05 | Sync accounts with 1-hour interval |
-| `bank_feed_sync_4hour` | Every 4 hours at :10 | Sync accounts with 4-hour interval |
-| `bank_feed_sync_daily` | Daily at 9:00 AM | Sync accounts with 24-hour interval (default) |
+| Job ID                  | Schedule             | Description                                   |
+| ----------------------- | -------------------- | --------------------------------------------- |
+| `bank_feed_sync_hourly` | Every hour at :05    | Sync accounts with 1-hour interval            |
+| `bank_feed_sync_4hour`  | Every 4 hours at :10 | Sync accounts with 4-hour interval            |
+| `bank_feed_sync_daily`  | Daily at 9:00 AM     | Sync accounts with 24-hour interval (default) |
 
 ### Workshop Scheduler
 
@@ -162,12 +164,12 @@ curl -X POST http://localhost:8000/api/cron/check-expiring-quotes \\
 
 These backend endpoints provide monitoring data without a schedule:
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/cron/xero-token-health` | GET | Xero OAuth connection health and expiry times |
-| `/api/cron/webhook-health` | GET | Webhook processing stats, reliability rate (target: 99%) |
-| `/api/cron/dead-letter-queue` | GET | Webhooks that exceeded max retries |
-| `/api/cron/dead-letter-queue/{id}/retry` | POST | Manually retry a dead-letter webhook |
+| Endpoint                                 | Method | Description                                              |
+| ---------------------------------------- | ------ | -------------------------------------------------------- |
+| `/api/cron/xero-token-health`            | GET    | Xero OAuth connection health and expiry times            |
+| `/api/cron/webhook-health`               | GET    | Webhook processing stats, reliability rate (target: 99%) |
+| `/api/cron/dead-letter-queue`            | GET    | Webhooks that exceeded max retries                       |
+| `/api/cron/dead-letter-queue/{id}/retry` | POST   | Manually retry a dead-letter webhook                     |
 
 ## Adding New Cron Jobs
 
@@ -239,11 +241,11 @@ vercel --prod
 
 ## File Reference
 
-| File | Purpose |
-|------|---------|
-| `apps/web/vercel.json` | Vercel cron schedule configuration |
-| `apps/web/app/api/cron/*/route.ts` | Frontend cron route handlers (13 routes) |
-| `apps/backend/src/api/routes/cron_jobs.py` | Backend cron endpoint implementations |
-| `apps/backend/src/scheduler/bank_feed_scheduler.py` | APScheduler bank feed sync |
-| `apps/backend/src/services/workshop_scheduler.py` | Workshop service reminder scheduler |
-| `docs/CRON_JOBS.md` | This documentation |
+| File                                                | Purpose                                  |
+| --------------------------------------------------- | ---------------------------------------- |
+| `apps/web/vercel.json`                              | Vercel cron schedule configuration       |
+| `apps/web/app/api/cron/*/route.ts`                  | Frontend cron route handlers (13 routes) |
+| `apps/backend/src/api/routes/cron_jobs.py`          | Backend cron endpoint implementations    |
+| `apps/backend/src/scheduler/bank_feed_scheduler.py` | APScheduler bank feed sync               |
+| `apps/backend/src/services/workshop_scheduler.py`   | Workshop service reminder scheduler      |
+| `docs/CRON_JOBS.md`                                 | This documentation                       |

@@ -11,6 +11,7 @@
 Autonomous Mode is a fully automated development workflow that takes a simple task description and delivers production-ready code - complete with tests, validation, and deployment preparation.
 
 **Think of it as:**
+
 > A senior development team working 24/7 to implement your feature requests with perfect pattern-following and comprehensive testing.
 
 ---
@@ -34,12 +35,14 @@ This creates the execution state directory.
 ### 3. Approve Each Phase
 
 When prompted, say:
+
 - `"proceed"` to continue
 - `"cancel"` to stop
 
 ### 4. Review Results
 
 You'll receive a completion report with:
+
 - Files changed
 - Tests written
 - Quality metrics
@@ -78,6 +81,7 @@ You'll receive a completion report with:
 ```
 
 Example:
+
 ```
 /autonomous "Add export to CSV button on products page"
 ```
@@ -91,16 +95,19 @@ Example:
 ```
 
 Example:
+
 ```
 /autonomous "Add tooltips to all buttons" --auto
 ```
 
 **When to use:**
+
 - Simple, safe changes
 - You trust the system
 - Want speed over control
 
 **When NOT to use:**
+
 - First time using autonomous mode
 - Complex changes
 - Database-related tasks
@@ -115,17 +122,20 @@ Example:
 ```
 
 Example:
+
 ```
 /autonomous "Redesign dashboard layout" --max-phases 2
 ```
 
 **What happens:**
+
 - Runs Phase 1 (Discovery)
 - Runs Phase 2 (Architecture)
 - **STOPS** for your review
 - You can resume later with `/autonomous --resume task_...`
 
 **When to use:**
+
 - Want to review design before implementation
 - Uncertain about approach
 - Large changes
@@ -140,6 +150,7 @@ Example:
 ```
 
 **When to use:**
+
 - Session timed out
 - You paused for review
 - Accidental cancellation
@@ -152,26 +163,31 @@ Example:
 ### Phase 1: Discovery (5-10 min)
 
 **What it does:**
+
 - Analyzes the codebase
 - Finds existing patterns
 - Documents constraints
 - Recommends files to change
 
 **Output:**
+
 - Discovery report
 - Pattern analysis
 - Constraint list
 - Complexity assessment
 
 **You'll see:**
+
 ```markdown
 ## 🔍 Phase 1: Discovery Complete
 
 **Patterns Found:**
+
 - Dashboard widgets follow Card + React.memo pattern
 - API endpoints use FastAPI + Pydantic
 
 **Constraints:**
+
 - No database schema changes
 - Must follow existing patterns
 
@@ -183,22 +199,26 @@ Example:
 ### Phase 2: Architecture (10-15 min)
 
 **What it does:**
+
 - Designs the complete solution
 - Specifies each component
 - Creates implementation plan
 - Identifies approval needs
 
 **Output:**
+
 - Architecture document
 - Component specifications
 - File-by-file plan
 - Time estimate
 
 **You'll see:**
+
 ```markdown
 ## 🏗️ Phase 2: Architecture Complete
 
 **Design:**
+
 - Create: RecentQuotesWidget.tsx
 - Modify: dashboard/page.tsx
 - Create: GET /api/dashboard/recent-quotes
@@ -215,28 +235,34 @@ Example:
 ### Phase 3: Build (20-40 min)
 
 **What it does:**
+
 - Implements code exactly as designed
 - Writes tests for each file
 - Validates continuously
 - Reports progress every 5 minutes
 
 **Output:**
+
 - Implemented code
 - Test files
 - Progress updates
 
 **You'll see:**
+
 ```markdown
 ## 📊 Build Progress: 2/4 files complete
 
 **Completed:**
+
 - ✅ RecentQuotesWidget.tsx
 - ✅ RecentQuotesWidget.test.tsx
 
 **In Progress:**
+
 - 🔨 dashboard/page.tsx
 
 **Quality:**
+
 - TypeScript: ✅ Passing
 - Tests: ✅ 2/2 passing
 
@@ -248,21 +274,25 @@ Example:
 ### Phase 4: Build Final (10-15 min)
 
 **What it does:**
+
 - Completes remaining work
 - Achieves 100% test pass rate
 - Validates deployment readiness
 - Strict quality gate
 
 **Output:**
+
 - Final code
 - All tests passing
 - Quality report
 
 **You'll see:**
+
 ```markdown
 ## ✅ Phase 4: Build Final Complete
 
 **Quality Report:**
+
 - ✅ TypeScript: 0 errors
 - ✅ Lint: 0 warnings
 - ✅ Tests: 4/4 passing (100%)
@@ -277,18 +307,21 @@ Example:
 ### Phase 5: Finalize (5-10 min)
 
 **What it does:**
+
 - Final verification
 - Deployment readiness check
 - Creates rollback plan
 - Documents everything
 
 **Output:**
+
 - Completion report
 - File change manifest
 - Rollback plan
 - Next steps
 
 **You'll see:**
+
 ```markdown
 ## 🎉 Autonomous Execution Complete!
 
@@ -298,6 +331,7 @@ Example:
 **Status:** ✅ Ready for deployment
 
 **Next Steps:**
+
 1. Review changes
 2. Test manually
 3. Deploy when ready
@@ -310,11 +344,13 @@ Example:
 ### Proceeding to Next Phase
 
 When you see:
+
 ```markdown
 **Ready for Phase 2?**
 ```
 
 Say:
+
 - `"proceed"`
 - `"continue"`
 - `"approved"`
@@ -326,11 +362,13 @@ Say:
 ### Canceling
 
 At any time, say:
+
 - `"cancel"`
 - `"stop"`
 - `"abort"`
 
 **What happens:**
+
 - Current step completes safely
 - State saved to disk
 - You can resume later
@@ -340,11 +378,13 @@ At any time, say:
 ### Pausing for Review
 
 Say:
+
 - `"pause"`
 - `"hold"`
 - `"wait"`
 
 **Use cases:**
+
 - Want to review architecture before build
 - Need to discuss with team
 - Taking a break
@@ -354,6 +394,7 @@ Say:
 ### Asking Questions
 
 During execution, you can ask:
+
 - `"show me the architecture"`
 - `"what phase are we on?"`
 - `"how much time left?"`
@@ -367,7 +408,7 @@ During execution, you can ask:
 
 After Phase 5, you'll receive a comprehensive report:
 
-```markdown
+````markdown
 ## 🎉 Completion Report
 
 **Task:** Add Recent Quotes widget
@@ -377,10 +418,12 @@ After Phase 5, you'll receive a comprehensive report:
 ### Files Changed
 
 **Created (2):**
+
 - apps/web/components/dashboard/RecentQuotesWidget.tsx
-- apps/web/__tests__/components/dashboard/RecentQuotesWidget.test.tsx
+- apps/web/**tests**/components/dashboard/RecentQuotesWidget.test.tsx
 
 **Modified (2):**
+
 - apps/web/app/(dashboard)/dashboard/page.tsx
 - apps/backend/src/api/routes/demo_dashboard.py
 
@@ -396,14 +439,18 @@ After Phase 5, you'll receive a comprehensive report:
 **Status:** ✅ READY
 
 **Rollback Plan:**
+
 ```bash
 git revert [commit-hash]
 ```
+````
 
 **Next Steps:**
+
 1. Review code changes
 2. Test feature manually
 3. Commit and deploy
+
 ```
 
 ---
@@ -450,7 +497,9 @@ For each file, you get:
 
 **Task:**
 ```
+
 /autonomous "Add a Recent Orders widget to dashboard"
+
 ```
 
 **What happens:**
@@ -468,7 +517,9 @@ For each file, you get:
 
 **Task:**
 ```
+
 /autonomous "Fix bug where order totals don't include tax"
+
 ```
 
 **What happens:**
@@ -486,7 +537,9 @@ For each file, you get:
 
 **Task:**
 ```
+
 /autonomous "Add semantic search to products" --max-phases 2
+
 ```
 
 **What happens:**
@@ -496,8 +549,10 @@ For each file, you get:
 
 **You review architecture, then:**
 ```
+
 /autonomous --resume task_20260205_150000
-```
+
+````
 
 **Continues:**
 4. Implements semantic search (45 min)
@@ -515,18 +570,20 @@ For each file, you get:
 **Solution:**
 ```powershell
 .\scripts\autonomous\init-execution.ps1
-```
+````
 
 ---
 
 ### Problem: "Task already in progress"
 
 **Check what's running:**
+
 ```powershell
 .\scripts\autonomous\validate-state.ps1
 ```
 
 **Options:**
+
 1. Resume current task: `/autonomous --resume task_...`
 2. Cancel and cleanup: `.\scripts\autonomous\cleanup-execution.ps1`
 
@@ -535,6 +592,7 @@ For each file, you get:
 ### Problem: "Validation keeps failing"
 
 **What to do:**
+
 1. Check validation report:
    ```powershell
    Get-Content .claude\.execution\validation-reports\phase-3-validation.json
@@ -548,6 +606,7 @@ For each file, you get:
 ### Problem: "No progress updates"
 
 **What to do:**
+
 1. Check execution log:
    ```powershell
    Get-Content .claude\.execution\execution-log.jsonl -Tail 10
@@ -561,21 +620,25 @@ For each file, you get:
 ### Problem: "Forbidden change detected"
 
 **What happened:**
+
 - Architecture tried to modify database schema, auth code, or break APIs
 - System automatically BLOCKED
 
 **What to do:**
+
 1. Review alternative approaches suggested
 2. Revise task requirements
 3. Approve alternative approach
 
 **Example:**
+
 ```markdown
 ## 🚫 BLOCKED: Forbidden Change
 
 This task requires modifying database schema (forbidden).
 
 **Alternative approaches:**
+
 1. Use existing metadata JSON field
 2. Handle in application layer only
 3. Request schema change approval separately
@@ -606,16 +669,18 @@ Complete multiple features sequentially:
 ### Batch Processing (Future)
 
 Not yet supported, but planned:
+
 ```
 /autonomous --batch tasks.json
 ```
 
 Where `tasks.json`:
+
 ```json
 [
-  {"task": "Add logout button", "auto": true},
-  {"task": "Add export CSV", "auto": true},
-  {"task": "Fix tax calculation", "auto": false}
+  { "task": "Add logout button", "auto": true },
+  { "task": "Add export CSV", "auto": true },
+  { "task": "Fix tax calculation", "auto": false }
 ]
 ```
 
@@ -632,18 +697,21 @@ Edit `.claude/agents/validator-agent.md` to add project-specific checks.
 ### Writing Good Task Descriptions
 
 **✅ Good:**
+
 - "Add a logout button to the sidebar"
 - "Fix calculation error in order totals where tax isn't included"
 - "Refactor customer form to use React Hook Form pattern"
 - "Add GET /api/dashboard/stats endpoint returning user count and order count"
 
 **❌ Bad:**
+
 - "Improve dashboard" (too vague)
 - "Fix bugs" (which bugs?)
 - "Make it better" (what specifically?)
 - "Update things" (what things?)
 
 **Characteristics of good descriptions:**
+
 - Specific action ("Add", "Fix", "Refactor")
 - Clear target ("logout button", "order totals", "customer form")
 - Context when needed ("to sidebar", "where tax isn't included")
@@ -654,6 +722,7 @@ Edit `.claude/agents/validator-agent.md` to add project-specific checks.
 ### Choosing Approval Mode
 
 **Use Manual Mode when:**
+
 - First time using autonomous
 - Complex features
 - Database-related (will be blocked anyway)
@@ -661,6 +730,7 @@ Edit `.claude/agents/validator-agent.md` to add project-specific checks.
 - Want maximum control
 
 **Use Auto Mode when:**
+
 - Simple UI components
 - Following established patterns
 - Bug fixes (non-breaking)
@@ -672,6 +742,7 @@ Edit `.claude/agents/validator-agent.md` to add project-specific checks.
 ### When to Review Architecture
 
 **Review architecture (--max-phases 2) when:**
+
 - Large features
 - Uncertain approach
 - Multiple valid solutions
@@ -683,6 +754,7 @@ Edit `.claude/agents/validator-agent.md` to add project-specific checks.
 ### Managing Execution State
 
 **Check state regularly:**
+
 ```powershell
 # Current status
 .\scripts\autonomous\validate-state.ps1
@@ -692,6 +764,7 @@ Edit `.claude/agents/validator-agent.md` to add project-specific checks.
 ```
 
 **Clean up periodically:**
+
 ```powershell
 # Archive tasks older than 7 days
 .\scripts\autonomous\cleanup-execution.ps1 -ArchiveOlderThanDays 7
@@ -725,6 +798,7 @@ git push
 ### Tip 3: Review Before Deploying
 
 Even though autonomous mode produces deployment-ready code, always:
+
 1. Review the code changes
 2. Test manually in development
 3. Run full test suite
@@ -735,11 +809,13 @@ Even though autonomous mode produces deployment-ready code, always:
 Break large features into smaller autonomous tasks:
 
 **Instead of:**
+
 ```
 /autonomous "Build complete user management system"
 ```
 
 **Do:**
+
 ```
 /autonomous "Add user list page"
 /autonomous "Add create user form"
@@ -750,6 +826,7 @@ Break large features into smaller autonomous tasks:
 ### Tip 5: Use Verbose Logs for Learning
 
 First few times, enable verbose mode:
+
 ```
 /autonomous "task" --verbose
 ```
@@ -795,11 +872,13 @@ A: For safe, pattern-following work: yes. For critical changes: review first.
 ## Getting Help
 
 **Documentation:**
+
 - Architecture: `docs/specs/AUTONOMOUS-FRAMEWORK-ARCHITECTURE.md`
 - This guide: `docs/guides/USING-AUTONOMOUS-MODE.md`
 - Command reference: `.claude/commands/autonomous.md`
 
 **Support:**
+
 - Check execution logs: `.claude/.execution/execution-log.jsonl`
 - Validate state: `.\scripts\autonomous\validate-state.ps1`
 - GitHub issues: `https://github.com/anthropics/claude-code/issues`

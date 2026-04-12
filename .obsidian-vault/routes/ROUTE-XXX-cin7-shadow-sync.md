@@ -21,15 +21,15 @@ Cin7 Shadow Sync API endpoints.
 Phase A of the Shadow Transition System (UNI-1260).
 
 Provides routes for:
-  - Triggering a shadow poll (detect gaps between Cin7 and ERP)
-  - Querying shadow sync status summary
-  - Listing / filtering sync gaps
-  - Resolving or ignoring individual gaps
+
+- Triggering a shadow poll (detect gaps between Cin7 and ERP)
+- Querying shadow sync status summary
+- Listing / filtering sync gaps
+- Resolving or ignoring individual gaps
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -40,7 +40,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -66,6 +65,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

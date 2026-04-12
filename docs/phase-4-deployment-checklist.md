@@ -9,6 +9,7 @@
 ## 📋 PRE-DEPLOYMENT CHECKLIST
 
 ### 1. Environment Variables
+
 Ensure all required environment variables are set in production:
 
 ```bash
@@ -28,6 +29,7 @@ NEXT_PUBLIC_APP_URL=https://yourdomain.com
 ```
 
 ### 2. Database Migrations
+
 Run all pending migrations:
 
 ```bash
@@ -42,11 +44,13 @@ python verify_indexes.py
 ```
 
 **Expected Output**:
+
 - ✅ 66+ indexes across all tables
 - ✅ All foreign key indexes present
 - ✅ Trigram indexes for search fields
 
 ### 3. Dependencies
+
 Verify all dependencies are installed:
 
 ```bash
@@ -60,6 +64,7 @@ uv sync
 ```
 
 ### 4. Build Tests
+
 Run full test suite before deployment:
 
 ```bash
@@ -74,11 +79,13 @@ uv run pytest                # All pytest tests
 ```
 
 **Success Criteria**:
+
 - ✅ All type-checks pass (0 errors)
 - ✅ All lints pass (0 errors)
 - ✅ All tests pass (100%)
 
 ### 5. E2E Tests
+
 Run end-to-end tests on staging:
 
 ```bash
@@ -92,11 +99,13 @@ pnpm playwright test e2e/products.spec.ts
 ```
 
 **Success Criteria**:
+
 - ✅ All autosave tests pass
 - ✅ All form submission tests pass
 - ✅ All navigation tests pass
 
 ### 6. Performance Benchmarks
+
 Run performance tests to establish baseline:
 
 ```bash
@@ -110,6 +119,7 @@ python tests/load/run_full_load_test.py
 ```
 
 **Success Criteria**:
+
 - ✅ Dashboard loads in <2s
 - ✅ Products API call count = 1 (not 51)
 - ✅ Order creation <1.5s
@@ -121,6 +131,7 @@ python tests/load/run_full_load_test.py
 ## 🚀 DEPLOYMENT STEPS
 
 ### Step 1: Backup Current State
+
 ```bash
 # Database backup
 pg_dump -h localhost -U postgres ccw_erp > backup_$(date +%Y%m%d_%H%M%S).sql
@@ -152,6 +163,7 @@ curl https://api.yourdomain.com/health
 ```
 
 **Expected Response**:
+
 ```json
 {
   "status": "healthy",
@@ -177,6 +189,7 @@ curl https://yourdomain.com/api/health
 ```
 
 **Verify**:
+
 - ✅ Site loads successfully
 - ✅ Dashboard renders within 2s
 - ✅ No console errors
@@ -185,6 +198,7 @@ curl https://yourdomain.com/api/health
 ### Step 4: Verify Features
 
 #### Autosave (Critical)
+
 1. Open any form (Orders, Quotes, Customers)
 2. Fill in data
 3. Wait 2 seconds
@@ -195,6 +209,7 @@ curl https://yourdomain.com/api/health
 8. **Verify**: All data restored
 
 #### Performance (Critical)
+
 1. Navigate to Products page
 2. Open network tab
 3. **Verify**: Only 1 API call for products + stock
@@ -204,6 +219,7 @@ curl https://yourdomain.com/api/health
 7. **Verify**: "Live Metrics" badge visible
 
 #### Real-Time Updates (Critical)
+
 1. Open Dashboard
 2. Create a new order in another tab
 3. **Verify**: Dashboard metrics update within 1s
@@ -217,11 +233,13 @@ curl https://yourdomain.com/api/health
 ### Smoke Tests (15 minutes)
 
 #### Test 1: User Login
+
 - ✅ Login with admin@demo.com / demo123
 - ✅ Redirect to dashboard
 - ✅ Dashboard loads successfully
 
 #### Test 2: Create Order (Autosave)
+
 - ✅ Click "New Order"
 - ✅ Fill customer, location, notes
 - ✅ Add 2 line items
@@ -232,6 +250,7 @@ curl https://yourdomain.com/api/health
 - ✅ Submit order successfully
 
 #### Test 3: Products Performance
+
 - ✅ Navigate to Products page
 - ✅ Open network tab
 - ✅ Refresh page
@@ -239,12 +258,14 @@ curl https://yourdomain.com/api/health
 - ✅ Verify stock data visible
 
 #### Test 4: Real-Time Dashboard
+
 - ✅ Open dashboard
 - ✅ Check "Live Metrics" indicator (green badge)
 - ✅ Create new order
 - ✅ Verify active_orders count updates within 1s
 
 #### Test 5: Recent Items
+
 - ✅ Create order with Customer A
 - ✅ Create second order
 - ✅ Open customer dropdown
@@ -253,26 +274,32 @@ curl https://yourdomain.com/api/health
 ### Monitoring (24 hours)
 
 #### Application Metrics (Prometheus/Grafana)
+
 Monitor these dashboards:
+
 - **API Response Times**: p50, p95, p99 latencies
 - **Database Queries**: Query duration, connection pool
 - **SSE Connections**: Active connections, reconnects
 - **Cache Hit Rates**: Redis cache effectiveness
 
 **Alerts to Configure**:
+
 - API p95 latency >500ms
 - Database connection pool >80% capacity
 - SSE connections >1000
 - Error rate >1%
 
 #### Error Tracking (Sentry)
+
 Watch for these errors:
+
 - Autosave localStorage quota exceeded
 - SSE connection failures
 - Database deadlocks
 - API timeout errors
 
 **Success Criteria (24h)**:
+
 - ✅ Error rate <0.5%
 - ✅ p95 API latency <300ms
 - ✅ No autosave data loss reports
@@ -285,6 +312,7 @@ Watch for these errors:
 ### If Critical Issues Detected
 
 #### 1. Quick Rollback (Fronten)
+
 ```bash
 # Revert to previous deployment
 vercel rollback  # Or your hosting provider's rollback command
@@ -296,6 +324,7 @@ pnpm deploy
 ```
 
 #### 2. Database Rollback (if needed)
+
 ```bash
 # Downgrade migrations (ONLY if database changes cause issues)
 cd apps/backend
@@ -306,6 +335,7 @@ alembic current
 ```
 
 #### 3. Backend Rollback
+
 ```bash
 cd apps/backend
 git checkout phase-4-pre-deployment
@@ -315,21 +345,25 @@ sudo systemctl restart ccw-backend
 ### Rollback Decision Tree
 
 **Issue: Autosave not working**
+
 - **Impact**: Low (feature enhancement, not breaking)
 - **Action**: Fix forward (disable feature flag if exists)
 - **Rollback**: NOT NEEDED
 
 **Issue: Performance regression**
+
 - **Impact**: High (users experiencing slow site)
 - **Action**: Check database indexes, verify Redis
 - **Rollback**: If >50% slower, rollback immediately
 
 **Issue: Real-time SSE errors**
+
 - **Impact**: Medium (fallback to polling exists)
 - **Action**: Disable SSE connections via feature flag
 - **Rollback**: NOT NEEDED (graceful degradation)
 
 **Issue: Database errors**
+
 - **Impact**: CRITICAL (data integrity)
 - **Action**: ROLLBACK IMMEDIATELY
 - **Steps**: Restore database backup, downgrade migrations, rollback code
@@ -339,32 +373,36 @@ sudo systemctl restart ccw-backend
 ## 📊 SUCCESS METRICS (Week 1)
 
 ### Performance (Expected Improvements)
-| Metric | Before Phase 4 | Target | Actual | Status |
-|--------|----------------|--------|--------|--------|
-| Dashboard load time | 5-8s | <2s | ___ | ☐ |
-| Products API calls | 51 | 1 | ___ | ☐ |
-| Order creation time | 3-5s | <1.5s | ___ | ☐ |
-| p95 API latency | ~500ms | <300ms | ___ | ☐ |
+
+| Metric              | Before Phase 4 | Target | Actual | Status |
+| ------------------- | -------------- | ------ | ------ | ------ |
+| Dashboard load time | 5-8s           | <2s    | \_\_\_ | ☐      |
+| Products API calls  | 51             | 1      | \_\_\_ | ☐      |
+| Order creation time | 3-5s           | <1.5s  | \_\_\_ | ☐      |
+| p95 API latency     | ~500ms         | <300ms | \_\_\_ | ☐      |
 
 ### UX (Expected Improvements)
-| Metric | Before Phase 4 | Target | Actual | Status |
-|--------|----------------|--------|--------|--------|
-| Form data loss incidents | High | 0 | ___ | ☐ |
-| User complaints (autosave) | - | <5 | ___ | ☐ |
-| Recent items usage rate | 0% | >70% | ___ | ☐ |
+
+| Metric                     | Before Phase 4 | Target | Actual | Status |
+| -------------------------- | -------------- | ------ | ------ | ------ |
+| Form data loss incidents   | High           | 0      | \_\_\_ | ☐      |
+| User complaints (autosave) | -              | <5     | \_\_\_ | ☐      |
+| Recent items usage rate    | 0%             | >70%   | \_\_\_ | ☐      |
 
 ### Stability
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Uptime | >99.9% | ___ | ☐ |
-| Error rate | <0.5% | ___ | ☐ |
-| SSE connection success | >95% | ___ | ☐ |
+
+| Metric                 | Target | Actual | Status |
+| ---------------------- | ------ | ------ | ------ |
+| Uptime                 | >99.9% | \_\_\_ | ☐      |
+| Error rate             | <0.5%  | \_\_\_ | ☐      |
+| SSE connection success | >95%   | \_\_\_ | ☐      |
 
 ---
 
 ## 🚨 KNOWN LIMITATIONS
 
 ### Phase 4 Limitations
+
 1. **AI Features Not Enabled**: Smart form auto-fill, anomaly detection not in this release
    - Reason: Additional testing required
    - Timeline: Phase 4.1 (2-3 weeks)
@@ -383,11 +421,13 @@ sudo systemctl restart ccw-backend
 ## 📞 SUPPORT CONTACTS
 
 ### Deployment Issues
+
 - **On-Call Engineer**: [Name] - [Phone]
 - **DevOps Team**: [Email]
 - **Database Admin**: [Name] - [Phone]
 
 ### Monitoring Dashboards
+
 - **Grafana**: https://grafana.yourdomain.com
 - **Sentry**: https://sentry.io/ccw-erp
 - **Status Page**: https://status.yourdomain.com
@@ -397,17 +437,20 @@ sudo systemctl restart ccw-backend
 ## ✅ DEPLOYMENT SIGN-OFF
 
 ### Pre-Deployment Approval
-- ☐ Technical Lead: _________________ Date: _______
-- ☐ QA Lead: _________________ Date: _______
-- ☐ Product Owner: _________________ Date: _______
+
+- ☐ Technical Lead: ********\_******** Date: **\_\_\_**
+- ☐ QA Lead: ********\_******** Date: **\_\_\_**
+- ☐ Product Owner: ********\_******** Date: **\_\_\_**
 
 ### Post-Deployment Verification
-- ☐ Smoke tests passed: _________________ Date: _______
-- ☐ 24h monitoring reviewed: _________________ Date: _______
-- ☐ No critical issues: _________________ Date: _______
+
+- ☐ Smoke tests passed: ********\_******** Date: **\_\_\_**
+- ☐ 24h monitoring reviewed: ********\_******** Date: **\_\_\_**
+- ☐ No critical issues: ********\_******** Date: **\_\_\_**
 
 ### Final Sign-Off
-- ☐ Deployment SUCCESSFUL: _________________ Date: _______
+
+- ☐ Deployment SUCCESSFUL: ********\_******** Date: **\_\_\_**
 
 ---
 

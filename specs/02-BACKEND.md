@@ -3,7 +3,7 @@
 **Date**: 2026-02-05
 **Git Commit**: f422237644294b9df14c08e1ea53469658112289
 **Duration**: Phase 2 Execution
-**Evidence Files**: specs/backend-*.txt
+**Evidence Files**: specs/backend-\*.txt
 **Prerequisites**: ✅ Phase 1 complete (`specs/01-STRUCTURE.md` exists)
 
 ---
@@ -13,6 +13,7 @@
 Comprehensive backend analysis of FastAPI application with extensive AI/LLM integration. System has 68 API route files serving 100+ endpoints across 15+ functional domains including AI agents, autonomous development, billing, inventory, and ERP operations.
 
 **Key Findings**:
+
 - ✅ Large-scale API surface (100+ endpoints)
 - ✅ Comprehensive AI/LLM integration (LangChain, LangGraph, Anthropic Claude)
 - ✅ Well-structured service layer (24 service classes, 9,829 total lines)
@@ -29,6 +30,7 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 **Evidence**: `specs/backend-routes.txt`
 
 ### Total Count
+
 ```
 68 route files in src/api/routes/
 100+ total API endpoints across all routes
@@ -37,86 +39,97 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 ###Element Breakdown by Domain
 
 #### 1. AI & Machine Learning (`src/api/routes/ai/`)
+
 **File Count**: 14 route files
 
-| File | Endpoints | Purpose |
-|------|-----------|---------|
-| anomaly.py | 1 | Anomaly detection for business metrics |
-| assets.py | 3 | AI-generated asset management |
-| chat.py | 5 | Conversational AI assistant |
-| document_parser.py | 1 | Document parsing and extraction |
-| form_autofill.py | 1 | Intelligent form auto-filling |
-| generate.py | 5 | Content generation (quotes, emails, summaries, images, copy) |
-| insights.py | 3 | Business insights generation |
-| inventory_forecast.py | 2 | Inventory forecasting |
-| learning.py | 10 | Agent learning, pattern extraction, variant testing |
-| monitoring.py | 6 | Agent monitoring and health checks |
-| specialized.py | 4 | Specialized agents (pricing, procurement, task executor) |
-| supervisor.py | 2 | Task routing and analysis |
-| test_data.py | 1 | Test data generation |
-| test_failures.py | 1 | Failure scenario generation |
+| File                  | Endpoints | Purpose                                                      |
+| --------------------- | --------- | ------------------------------------------------------------ |
+| anomaly.py            | 1         | Anomaly detection for business metrics                       |
+| assets.py             | 3         | AI-generated asset management                                |
+| chat.py               | 5         | Conversational AI assistant                                  |
+| document_parser.py    | 1         | Document parsing and extraction                              |
+| form_autofill.py      | 1         | Intelligent form auto-filling                                |
+| generate.py           | 5         | Content generation (quotes, emails, summaries, images, copy) |
+| insights.py           | 3         | Business insights generation                                 |
+| inventory_forecast.py | 2         | Inventory forecasting                                        |
+| learning.py           | 10        | Agent learning, pattern extraction, variant testing          |
+| monitoring.py         | 6         | Agent monitoring and health checks                           |
+| specialized.py        | 4         | Specialized agents (pricing, procurement, task executor)     |
+| supervisor.py         | 2         | Task routing and analysis                                    |
+| test_data.py          | 1         | Test data generation                                         |
+| test_failures.py      | 1         | Failure scenario generation                                  |
 
 **Total AI Endpoints**: 45+
 
 **Analysis**:
+
 - ✅ Comprehensive AI capabilities (chat, document parsing, forecasting, learning)
 - ✅ Monitoring and health checks for AI agents
 - ⚠️ Many "test_data" endpoints — should these be in production code?
 
 #### 2. Autonomous Development (`src/api/routes/autonomous_dev.py`)
+
 **Endpoints**: 9
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| /projects | POST | Create new development project |
-| /projects/{project_id}/progress | GET | Get project progress |
-| /status | GET | Get execution loop status |
-| /status/detailed | GET | Get detailed status |
-| /start | POST | Start execution loop |
-| /stop | POST | Stop execution loop |
-| /projects/resume | POST | Resume project |
-| /projects | GET | List all projects |
-| /agents/activity | GET | Get agent activity |
+| Route                           | Method | Purpose                        |
+| ------------------------------- | ------ | ------------------------------ |
+| /projects                       | POST   | Create new development project |
+| /projects/{project_id}/progress | GET    | Get project progress           |
+| /status                         | GET    | Get execution loop status      |
+| /status/detailed                | GET    | Get detailed status            |
+| /start                          | POST   | Start execution loop           |
+| /stop                           | POST   | Stop execution loop            |
+| /projects/resume                | POST   | Resume project                 |
+| /projects                       | GET    | List all projects              |
+| /agents/activity                | GET    | Get agent activity             |
 
 **Analysis**:
+
 - ✅ Full autonomous development framework
 - ⚠️ Execution loop control (start/stop) — potential resource management concern
 
 #### 3. Business Operations
 
 **Approvals** (`approvals.py`): 7 endpoints
+
 - CRUD for approval workflows
 - Multi-step approval process
 - Pending approvals list
 
 **Backorders** (`backorders.py`): 9 endpoints
+
 - CRUD for backorders
 - Allocation and fulfillment
 - Customer notifications
 
 **Bank Feeds** (`bank_feeds.py`): 14 endpoints
+
 - Bank feed sync and reconciliation
 - Account management
 - Webhook integration
 - Daily summaries and alerts
 
 **Containers** (`containers.py`): 7 endpoints
+
 - Container tracking
 - Receiving process
 - Arrival notifications
 
 **Contractors** (`contractors.py`): 8 endpoints
+
 - Contractor management
 - Availability scheduling
 - Location-based search
 
 **Customers** (`customers.py`, `customer_orders.py`): 6 endpoints
+
 - CRUD for customers
 - Order history
 
 **Orders** (embedded in demo_lists.py): List orders endpoint
 
 **Quotes** (`quotes.py`): Multiple endpoints
+
 - CRUD for quotes
 - Quote-to-order conversion
 - AI quote generation integration
@@ -124,6 +137,7 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 #### 4. Integrations
 
 **Xero** (`integrations/xero.py`): 9 endpoints
+
 - Organization linking
 - Customer/product sync
 - Invoice sync
@@ -136,11 +150,13 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 #### 5. Billing & Payments
 
 **Billing** (`billing.py`): 6 endpoints
+
 - Subscription management (Stripe)
 - Invoice retrieval
 - Webhook handling
 
 **Payment Methods**:
+
 - AMEX (`integrations/payments/amex.py`)
 - EFTPOS (`integrations/payments/eftpos.py`)
 
@@ -149,6 +165,7 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 **Portal Auth** (`portal_auth.py`): Magic link authentication for customers
 
 **Demo Auth** (`demo_auth.py`): 9 endpoints (⛔ DO NOT MODIFY)
+
 - Login/logout
 - Registration
 - Password reset
@@ -158,6 +175,7 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 #### 7. Dashboard & Metrics
 
 **Demo Dashboard** (`demo_dashboard.py`): 10 endpoints
+
 - Aggregated metrics
 - Revenue charts
 - Category distribution
@@ -166,6 +184,7 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 - SSE streaming metrics
 
 **Autonomy Metrics** (`autonomy_metrics.py`): 5 endpoints
+
 - Prometheus metrics export
 - Audit trails
 - Anomaly detection
@@ -174,6 +193,7 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 #### 8. Translation & i18n
 
 **Translations** (`translations.py`): Multiple endpoints
+
 - AI-powered translation service
 - Language management
 - Translation dashboard
@@ -181,6 +201,7 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 #### 9. Configuration
 
 **Config** (`config.py`): 6 endpoints
+
 - Business configuration
 - Settings info
 - Frontend config
@@ -190,16 +211,16 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 
 ### Route Distribution Summary
 
-| Domain | Files | Est. Endpoints | Complexity |
-|--------|-------|----------------|------------|
-| AI & Machine Learning | 14 | 45+ | HIGH |
-| Autonomous Development | 1 | 9 | HIGH |
-| Business Operations | 10 | 50+ | MEDIUM |
-| Integrations | 5 | 15+ | MEDIUM |
-| Authentication | 2 | 10 | CRITICAL |
-| Dashboard/Metrics | 2 | 15 | MEDIUM |
-| Translations | 1 | 8+ | MEDIUM |
-| Configuration | 1 | 6 | LOW |
+| Domain                 | Files | Est. Endpoints | Complexity |
+| ---------------------- | ----- | -------------- | ---------- |
+| AI & Machine Learning  | 14    | 45+            | HIGH       |
+| Autonomous Development | 1     | 9              | HIGH       |
+| Business Operations    | 10    | 50+            | MEDIUM     |
+| Integrations           | 5     | 15+            | MEDIUM     |
+| Authentication         | 2     | 10             | CRITICAL   |
+| Dashboard/Metrics      | 2     | 15             | MEDIUM     |
+| Translations           | 1     | 8+             | MEDIUM     |
+| Configuration          | 1     | 6              | LOW        |
 
 **Total**: 68 route files, 150+ distinct API endpoints
 
@@ -212,6 +233,7 @@ Comprehensive backend analysis of FastAPI application with extensive AI/LLM inte
 ### Core Tables (from demo_models.py)
 
 #### 1. Organization (Line 83)
+
 ```python
 class Organization(Base):
     id: UUID
@@ -226,6 +248,7 @@ class Organization(Base):
 **Relationships**: One-to-many with Products, Customers (via organization_id FK)
 
 #### 2. Product (Line 106)
+
 ```python
 class Product(Base):
     id: UUID
@@ -244,16 +267,19 @@ class Product(Base):
 ```
 
 **Relationships**:
+
 - one-to-many OrderItem (back_populates="product")
 - one-to-many QuoteItem (back_populates="product")
 - one-to-many ProductTranslation (cascade delete)
 
 **Analysis**:
+
 - ✅ pgvector embedding column for semantic search
 - ✅ Indexed SKU for fast lookups
 - ✅ Multi-language support via ProductTranslation
 
 #### 3. Customer (Line 152)
+
 ```python
 class Customer(Base):
     id: UUID
@@ -270,14 +296,17 @@ class Customer(Base):
 ```
 
 **Relationships**:
+
 - one-to-many Order
 - one-to-many Quote
 
 **Analysis**:
+
 - ✅ Xero integration fields
 - ✅ Indexed email for lookups
 
 #### 4. Order (Line 192)
+
 ```python
 class Order(Base):
     id: UUID
@@ -295,17 +324,20 @@ class Order(Base):
 ```
 
 **Relationships**:
+
 - many-to-one Customer
 - one-to-many OrderItem (cascade delete)
 - one-to-many OutboundShipment
 - one-to-many OrderActivity (cascade delete)
 
 **Analysis**:
+
 - ✅ Comprehensive shipping tracking
 - ✅ Xero integration
 - ✅ Activity audit trail
 
 #### 5. OrderItem (Line 250)
+
 ```python
 class OrderItem(Base):
     id: UUID
@@ -318,14 +350,17 @@ class OrderItem(Base):
 ```
 
 **Relationships**:
+
 - many-to-one Order
 - many-to-one Product
 
 **Analysis**:
+
 - ✅ CASCADE delete ensures orphaned items are removed
 - ✅ Denormalized line_total for performance
 
 #### 6. OrderActivity (Line 283)
+
 ```python
 class OrderActivity(Base):
     id: UUID
@@ -340,10 +375,12 @@ class OrderActivity(Base):
 **Purpose**: Audit trail for order changes
 
 **Analysis**:
+
 - ✅ JSON metadata for flexible event storage
 - ✅ Indexed event_type for filtering
 
 #### 7. Quote (Line 309)
+
 ```python
 class Quote(Base):
     id: UUID
@@ -359,14 +396,17 @@ class Quote(Base):
 ```
 
 **Relationships**:
+
 - many-to-one Customer
 - one-to-many QuoteItem (cascade delete)
 
 **Analysis**:
+
 - ✅ Expiration tracking (valid_until)
 - ✅ Similar structure to Order (enables easy conversion)
 
 #### 8. QuoteItem (Line 353)
+
 ```python
 class QuoteItem(Base):
     id: UUID
@@ -381,6 +421,7 @@ class QuoteItem(Base):
 **Analysis**: Mirror of OrderItem structure
 
 #### 9. ConversationHistory (Line 389)
+
 ```python
 class ConversationHistory(Base):
     id: UUID
@@ -394,6 +435,7 @@ class ConversationHistory(Base):
 **Purpose**: Chat AI conversation history
 
 #### 10. AgentExecution (Line 407)
+
 ```python
 class AgentExecution(Base):
     id: UUID
@@ -410,11 +452,13 @@ class AgentExecution(Base):
 **Purpose**: Agent execution tracking and monitoring
 
 **Analysis**:
+
 - ✅ Performance tracking (execution_time_ms)
 - ✅ Error capturing
 - ✅ JSON result storage
 
 #### 11. AIGeneratedContent (Line 435)
+
 ```python
 class AIGeneratedContent(Base):
     id: UUID
@@ -429,6 +473,7 @@ class AIGeneratedContent(Base):
 **Purpose**: AI content generation audit trail
 
 #### 12. BackgroundJob (Line 456)
+
 ```python
 class BackgroundJob(Base):
     id: UUID
@@ -444,17 +489,17 @@ class BackgroundJob(Base):
 
 ### Database Health Assessment
 
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| Primary keys defined | ✅ PASS | All tables use UUID PKs |
-| Foreign keys defined | ✅ PASS | Proper CASCADE on deletes |
-| Indexes present | ✅ PASS | SKU, email, status fields indexed |
-| Timestamps present | ✅ PASS | created_at/updated_at on all tables |
-| Soft deletes | ⚠️ PARTIAL | is_active field on some tables |
-| Vector search support | ✅ PASS | pgvector embedding on Product |
-| JSON flexibility | ✅ PASS | meta_data/result/payload fields |
-| Multi-tenancy | ✅ PASS | organization_id on core tables |
-| Integration fields | ✅ PASS | xero_* fields for sync |
+| Criterion             | Status     | Evidence                            |
+| --------------------- | ---------- | ----------------------------------- |
+| Primary keys defined  | ✅ PASS    | All tables use UUID PKs             |
+| Foreign keys defined  | ✅ PASS    | Proper CASCADE on deletes           |
+| Indexes present       | ✅ PASS    | SKU, email, status fields indexed   |
+| Timestamps present    | ✅ PASS    | created_at/updated_at on all tables |
+| Soft deletes          | ⚠️ PARTIAL | is_active field on some tables      |
+| Vector search support | ✅ PASS    | pgvector embedding on Product       |
+| JSON flexibility      | ✅ PASS    | meta_data/result/payload fields     |
+| Multi-tenancy         | ✅ PASS    | organization_id on core tables      |
+| Integration fields    | ✅ PASS    | xero\_\* fields for sync            |
 
 **Overall Schema Health**: ✅ **EXCELLENT**
 
@@ -468,30 +513,31 @@ class BackgroundJob(Base):
 
 **Total**: 24 service files, 9,829 lines of code
 
-| Service | Lines | Classes | Purpose |
-|---------|-------|---------|---------|
-| alert_manager.py | 245 | 1 | System alerting |
-| autonomy_audit.py | 541 | 5 | Autonomy metrics & audit |
-| bank_feed_service.py | 626 | 1 | Bank reconciliation |
-| business_metrics_service.py | 316 | 1 | Business intelligence |
-| carrier_service.py | 513 | 5 | Shipping carriers (AusPost, StarTrack, EasyPost) |
-| circuit_breaker.py | 429 | 5 | Circuit breaker pattern |
-| code_generation/ | 2,466 | 5 | AI code generation (context, docs, tests, quality) |
-| deployment_service.py | 472 | 4 | Deployment automation |
-| email_notifications.py | 394 | 1 | Email sending |
-| email_service.py | 48 | 1 | Email service wrapper |
-| embedding_service.py | 396 | 1 | Vector embeddings (pgvector) |
-| i18n_service.py | 454 | 1 | Translation service |
-| notification_service.py | 468 | 4 | Multi-channel notifications |
-| recommendation_service.py | 779 | 1 | Product recommendations |
-| reconciliation_alerts.py | 347 | 2 | Reconciliation alerting |
-| semantic_search_service.py | 618 | 1 | Vector-based search |
-| sse_service.py | 241 | 1 | Server-sent events |
-| system_alert_service.py | 374 | 1 | System monitoring |
+| Service                     | Lines | Classes | Purpose                                            |
+| --------------------------- | ----- | ------- | -------------------------------------------------- |
+| alert_manager.py            | 245   | 1       | System alerting                                    |
+| autonomy_audit.py           | 541   | 5       | Autonomy metrics & audit                           |
+| bank_feed_service.py        | 626   | 1       | Bank reconciliation                                |
+| business_metrics_service.py | 316   | 1       | Business intelligence                              |
+| carrier_service.py          | 513   | 5       | Shipping carriers (AusPost, StarTrack, EasyPost)   |
+| circuit_breaker.py          | 429   | 5       | Circuit breaker pattern                            |
+| code_generation/            | 2,466 | 5       | AI code generation (context, docs, tests, quality) |
+| deployment_service.py       | 472   | 4       | Deployment automation                              |
+| email_notifications.py      | 394   | 1       | Email sending                                      |
+| email_service.py            | 48    | 1       | Email service wrapper                              |
+| embedding_service.py        | 396   | 1       | Vector embeddings (pgvector)                       |
+| i18n_service.py             | 454   | 1       | Translation service                                |
+| notification_service.py     | 468   | 4       | Multi-channel notifications                        |
+| recommendation_service.py   | 779   | 1       | Product recommendations                            |
+| reconciliation_alerts.py    | 347   | 2       | Reconciliation alerting                            |
+| semantic_search_service.py  | 618   | 1       | Vector-based search                                |
+| sse_service.py              | 241   | 1       | Server-sent events                                 |
+| system_alert_service.py     | 374   | 1       | System monitoring                                  |
 
 ### Service Layer Analysis
 
 **Strengths**:
+
 - ✅ Clear separation of concerns (one service = one domain)
 - ✅ Comprehensive coverage (carrier integration, AI, search, notifications)
 - ✅ Circuit breaker pattern for resilience
@@ -499,6 +545,7 @@ class BackgroundJob(Base):
 - ✅ Code generation services for autonomous development
 
 **Concerns**:
+
 - ⚠️ code_generation/ subdirectory has 2,466 lines across 5 files — potential for monolithic services
 - ⚠️ recommendation_service.py at 779 lines — may need decomposition
 
@@ -530,6 +577,7 @@ Found 1 error in 1 file (errors prevented further checking)
 **Error**: Unexpected indent
 
 **Evidence** (from file read):
+
 ```python
 141:        """
 142:        # Sync each account
@@ -540,6 +588,7 @@ Found 1 error in 1 file (errors prevented further checking)
 **Root Cause**: Line 143 has excessive indentation (should be 8 spaces, has 16 spaces)
 
 **Impact**:
+
 - ❌ File cannot be imported without SyntaxError
 - ❌ Bank feed scheduler is non-functional
 - ❌ Any code importing this module will fail
@@ -548,6 +597,7 @@ Found 1 error in 1 file (errors prevented further checking)
 **Severity**: **P0 — PRODUCTION BLOCKER**
 
 **Remediation**:
+
 ```python
 # Fix indentation at line 143-145
         # Sync each account
@@ -568,6 +618,7 @@ Found 1 error in 1 file (errors prevented further checking)
 **Total Findings**: 48 occurrences of "password", "secret", "api_key", "token"
 
 **Analysis**:
+
 ```python
 # ✅ SAFE - Using settings from environment
 self.client = AsyncAnthropic(api_key=settings.anthropic_api_key)
@@ -593,6 +644,7 @@ All secrets properly loaded from environment variables via `settings` object.
 **Search Pattern**: `execute.*%` (string formatting in SQL)
 
 **Findings**: 1 occurrence
+
 ```python
 src/api/routes/ai/test_failures.py:170:
     "execute_batch_operation (75% success but VERY SLOW - task_executor)",
@@ -607,12 +659,14 @@ All database queries use SQLAlchemy ORM with parameterized queries.
 ### 3. Authentication & Authorization
 
 **JWT Implementation**:
+
 - ✅ JWT tokens via `python-jose[cryptography]`
 - ✅ Password hashing via `passlib[bcrypt]`
 - ✅ Token expiration handling
 - ⛔ Auth routes in `demo_auth.py` (DO NOT MODIFY per instructions)
 
 **Token Handling**:
+
 ```python
 # From src/ai/agents/specialized/task_executor_agent.py
 confirmation_token = secrets.token_urlsafe(32)  # ✅ Cryptographically secure
@@ -637,6 +691,7 @@ confirmation_token = secrets.token_urlsafe(32)  # ✅ Cryptographically secure
 **Breakdown by Category**:
 
 #### A. Database Seeding Scripts (ACCEPTABLE)
+
 ```python
 # src/db/seed_demo.py (23 occurrences)
 print("[OK] Created demo admin user (admin@demo.com / demo123)")
@@ -650,6 +705,7 @@ print(f"[OK] Synced {len(products)} products")
 **Verdict**: ✅ **ACCEPTABLE** — These are CLI/migration scripts, not web server code
 
 #### B. API Exception Handler (VIOLATION)
+
 ```python
 # src/api/exceptions.py:129-132 (4 occurrences)
 print(f"[UNHANDLED EXCEPTION] {type(exc).__name__}: {str(exc)}")
@@ -661,6 +717,7 @@ print(f"[REQUEST] {request.method} {request.url.path}")
 **Impact**: Exception details printed to stdout instead of proper logging
 
 **Remediation**: Replace with structured logging (structlog)
+
 ```python
 logger.error(
     "Unhandled exception",
@@ -672,6 +729,7 @@ logger.error(
 ```
 
 #### C. Debug Print Statements (VIOLATION)
+
 ```python
 # src/api/routes/portal_auth.py:133-135 (3 occurrences)
 print(f"[MAGIC LINK] Customer: {customer.email}")
@@ -691,6 +749,7 @@ print(f"Generated {prd['total_user_stories']} user stories")
 **Remediation**: Replace all with logger.debug() or logger.info()
 
 #### D. Development Mode Print Statements (ACCEPTABLE with caveat)
+
 ```python
 # src/services/notification_service.py:105-107
 print(f"[DEV MODE] Email would be sent to {notification.to_email}")
@@ -703,12 +762,12 @@ print("⚠️  Sentry DSN not configured, skipping initialization")
 
 ### print() Violation Summary
 
-| Category | Count | Severity | Action Required |
-|----------|-------|----------|-----------------|
-| Seeding scripts | 110 | N/A | No action (acceptable) |
-| Exception handler | 4 | P1 | MUST FIX (replace with logger) |
-| Debug statements | 5 | P2 | SHOULD FIX (replace with logger) |
-| Dev mode | 3 | P3 | NICE TO HAVE (replace with logger) |
+| Category          | Count | Severity | Action Required                    |
+| ----------------- | ----- | -------- | ---------------------------------- |
+| Seeding scripts   | 110   | N/A      | No action (acceptable)             |
+| Exception handler | 4     | P1       | MUST FIX (replace with logger)     |
+| Debug statements  | 5     | P2       | SHOULD FIX (replace with logger)   |
+| Dev mode          | 3     | P3       | NICE TO HAVE (replace with logger) |
 
 **Total Production Code Violations**: 7 (P1) + 5 (P2) = **12 violations**
 
@@ -723,6 +782,7 @@ print("⚠️  Sentry DSN not configured, skipping initialization")
 **Breakdown by Category**:
 
 #### A. Critical Missing Implementations (P1)
+
 ```python
 # src/api/routes/integrations/xero.py (9 occurrences)
 # TODO: Get organization_id from authenticated user session
@@ -737,6 +797,7 @@ print("⚠️  Sentry DSN not configured, skipping initialization")
 **Impact**: Missing authentication context, event publishing, email notifications
 
 #### B. Integration Placeholders (P2)
+
 ```python
 # src/integrations/payments/amex.py:83
 # TODO: Integrate with real AMEX gateway SDK
@@ -751,6 +812,7 @@ print("⚠️  Sentry DSN not configured, skipping initialization")
 **Impact**: Payment gateways and carrier integrations are stubs
 
 #### C. Feature Gaps (P3)
+
 ```python
 # src/api/routes/quotes.py:558
 # TODO: Integrate with AI quote generation service at /api/ai/generate/quote
@@ -765,6 +827,7 @@ print("⚠️  Sentry DSN not configured, skipping initialization")
 **Impact**: AI features incomplete, learning disabled
 
 #### D. Low Priority (P4)
+
 ```python
 # src/telemetry/usage_tracker.py:46
 # TODO: Implement state store when needed
@@ -775,12 +838,12 @@ language="en",  # TODO: Use customer preferred language
 
 ### TODO Comment Summary
 
-| Category | Count | Severity | Impact |
-|----------|-------|----------|--------|
-| Critical missing implementations | 12 | P1 | Authentication, events, emails broken |
-| Integration placeholders | 8 | P2 | Payment/carrier integrations are stubs |
-| Feature gaps | 15 | P3 | AI features incomplete |
-| Low priority | 13 | P4 | Nice-to-have improvements |
+| Category                         | Count | Severity | Impact                                 |
+| -------------------------------- | ----- | -------- | -------------------------------------- |
+| Critical missing implementations | 12    | P1       | Authentication, events, emails broken  |
+| Integration placeholders         | 8     | P2       | Payment/carrier integrations are stubs |
+| Feature gaps                     | 15    | P3       | AI features incomplete                 |
+| Low priority                     | 13    | P4       | Nice-to-have improvements              |
 
 **Total**: **48 TODO comments** indicating significant technical debt
 
@@ -795,6 +858,7 @@ language="en",  # TODO: Use customer preferred language
 ```
 
 **Files with highest endpoint density**:
+
 1. `ai/learning.py` — 10 endpoints (learning, patterns, variants)
 2. `demo_dashboard.py` — 10 endpoints (metrics, charts, activity)
 3. `bank_feeds.py` — 14 endpoints (sync, reconcile, accounts, webhook)
@@ -802,6 +866,7 @@ language="en",  # TODO: Use customer preferred language
 5. `backorders.py` — 9 endpoints (CRUD, allocation, fulfillment)
 
 **Analysis**:
+
 - ⚠️ Some files have high endpoint density (10-14 endpoints) — may benefit from splitting
 - ✅ Most files have 1-5 endpoints (good separation of concerns)
 
@@ -810,6 +875,7 @@ language="en",  # TODO: Use customer preferred language
 **Evidence**: `specs/backend-functions.txt`
 
 **Sample Signatures**:
+
 ```python
 async def detect_anomaly(...)
 async def send_message(...)
@@ -823,6 +889,7 @@ async def list_backorders(...)
 ### Error Handling Patterns
 
 **From src/api/exceptions.py**:
+
 - Custom exception classes defined
 - Global exception handler registered
 - ❌ Exception handler uses print() instead of logger (P1 violation)
@@ -834,6 +901,7 @@ async def list_backorders(...)
 ### 1. Caching
 
 **From dependencies**:
+
 ```python
 redis>=5.0.0  # Redis async client
 ```
@@ -845,6 +913,7 @@ redis>=5.0.0  # Redis async client
 ### 2. Connection Pooling
 
 **From demo_models.py**:
+
 ```python
 # SQLAlchemy 2.0 with async engine
 asyncpg>=0.29.0  # Async PostgreSQL driver
@@ -855,6 +924,7 @@ asyncpg>=0.29.0  # Async PostgreSQL driver
 ### 3. Rate Limiting
 
 **From dependencies**:
+
 ```python
 slowapi>=0.1.9  # Rate limiting
 ```
@@ -882,33 +952,33 @@ slowapi>=0.1.9  # Rate limiting
 
 ### P0 — CRITICAL (Production Blockers)
 
-| # | Finding | File:Line | Impact | Remediation Time |
-|---|---------|-----------|--------|------------------|
-| 1 | Syntax error (unexpected indent) | scheduler/bank_feed_scheduler.py:143 | Bank feed scheduler non-functional | 5 min |
+| #   | Finding                          | File:Line                            | Impact                             | Remediation Time |
+| --- | -------------------------------- | ------------------------------------ | ---------------------------------- | ---------------- |
+| 1   | Syntax error (unexpected indent) | scheduler/bank_feed_scheduler.py:143 | Bank feed scheduler non-functional | 5 min            |
 
 ### P1 — HIGH (Must Fix Before Production)
 
-| # | Finding | File:Line | Impact | Remediation Time |
-|---|---------|-----------|--------|------------------|
-| 1 | print() in exception handler | api/exceptions.py:129-132 | No structured error logging | 15 min |
-| 2 | Missing organization_id from auth | integrations/xero.py (9 locations) | Xero integration broken | 2 hours |
-| 3 | Missing email sending | demo_auth.py:340 | Password reset emails not sent | 1 hour |
-| 4 | Missing event publishing | backorders.py:734 | Event bus integration incomplete | 1 hour |
+| #   | Finding                           | File:Line                          | Impact                           | Remediation Time |
+| --- | --------------------------------- | ---------------------------------- | -------------------------------- | ---------------- |
+| 1   | print() in exception handler      | api/exceptions.py:129-132          | No structured error logging      | 15 min           |
+| 2   | Missing organization_id from auth | integrations/xero.py (9 locations) | Xero integration broken          | 2 hours          |
+| 3   | Missing email sending             | demo_auth.py:340                   | Password reset emails not sent   | 1 hour           |
+| 4   | Missing event publishing          | backorders.py:734                  | Event bus integration incomplete | 1 hour           |
 
 ### P2 — MEDIUM (Should Fix)
 
-| # | Finding | Count | Impact | Remediation Time |
-|---|---------|-------|--------|------------------|
-| 1 | Debug print() statements | 5 | No structured logging for webhooks/magic links | 30 min |
-| 2 | Integration stubs (AMEX, EFTPOS, carriers) | 8 | Payment/shipping integrations non-functional | 40 hours |
-| 3 | AI feature gaps | 15 | Incomplete AI capabilities | 60 hours |
+| #   | Finding                                    | Count | Impact                                         | Remediation Time |
+| --- | ------------------------------------------ | ----- | ---------------------------------------------- | ---------------- |
+| 1   | Debug print() statements                   | 5     | No structured logging for webhooks/magic links | 30 min           |
+| 2   | Integration stubs (AMEX, EFTPOS, carriers) | 8     | Payment/shipping integrations non-functional   | 40 hours         |
+| 3   | AI feature gaps                            | 15    | Incomplete AI capabilities                     | 60 hours         |
 
 ### P3 — LOW (Nice to Have)
 
-| # | Finding | Count | Impact | Remediation Time |
-|---|---------|-------|--------|------------------|
-| 1 | Dev mode print() statements | 3 | Should use logger | 15 min |
-| 2 | Low-priority TODOs | 13 | Minor feature enhancements | 20 hours |
+| #   | Finding                     | Count | Impact                     | Remediation Time |
+| --- | --------------------------- | ----- | -------------------------- | ---------------- |
+| 1   | Dev mode print() statements | 3     | Should use logger          | 15 min           |
+| 2   | Low-priority TODOs          | 13    | Minor feature enhancements | 20 hours         |
 
 ---
 
@@ -919,6 +989,7 @@ slowapi>=0.1.9  # Rate limiting
 **Prerequisites Met**: ✅ specs/02-BACKEND.md created
 
 **Phase 3 will examine**:
+
 - Component inventory (React/TypeScript)
 - Type checking results
 - Lint violations

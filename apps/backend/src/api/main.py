@@ -563,6 +563,10 @@ try:
 except ImportError:
     pass
 
+# Autonomy Metrics
+from .routes import autonomy_metrics
+app.include_router(autonomy_metrics.router, tags=["Autonomy Metrics"])
+
 # Translation management router (✅ IMPLEMENTED)
 app.include_router(translations.router, tags=["Translation Management"])
 

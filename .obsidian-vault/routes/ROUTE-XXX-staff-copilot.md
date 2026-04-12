@@ -19,13 +19,12 @@ last_verified: '2026-03-23'
 Staff Copilot AI API endpoints.
 
 Provides 2 endpoints:
-  POST /api/ai/copilot/query   — Main query endpoint
-  GET  /api/ai/copilot/health  — Health / status check
+POST /api/ai/copilot/query — Main query endpoint
+GET /api/ai/copilot/health — Health / status check
 
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -36,7 +35,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -62,6 +60,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

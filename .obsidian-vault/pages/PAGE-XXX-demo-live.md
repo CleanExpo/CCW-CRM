@@ -14,7 +14,6 @@ last_verified: '2026-03-23'
 
             Live Contractor Availability
 
-
 ## Overview
 
 Page at /dashboard/demo-live

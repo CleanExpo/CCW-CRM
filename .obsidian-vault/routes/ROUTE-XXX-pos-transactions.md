@@ -19,6 +19,7 @@ last_verified: '2026-03-23'
 POS Transaction API endpoints.
 
 Handles:
+
 - Creating POS transactions (walk-in and order-based sales)
 - Processing payments (EFTPOS, AMEX, bank transfer, cash)
 - Location routing (QLD branch routing logic)
@@ -27,7 +28,6 @@ Handles:
 <!-- AUTO-GENERATED -->
 
 ## Endpoints
-
 
 ## Database Models Used
 
@@ -38,7 +38,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -64,6 +63,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

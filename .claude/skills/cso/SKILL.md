@@ -19,6 +19,7 @@ allowed-tools:
   - WebSearch
   - AskUserQuestion
 ---
+
 <!-- AUTO-GENERATED from SKILL.md.tmpl — do not edit directly -->
 <!-- Regenerate: bun run gen:skill-docs -->
 
@@ -118,6 +119,7 @@ ask the user about telemetry. Use AskUserQuestion:
 > Change anytime with `gstack-config set telemetry off`.
 
 Options:
+
 - A) Help gstack get better! (recommended)
 - B) No thanks
 
@@ -125,10 +127,11 @@ If A: run `~/.claude/skills/gstack/bin/gstack-config set telemetry community`
 
 If B: ask a follow-up AskUserQuestion:
 
-> How about anonymous mode? We just learn that *someone* used gstack — no unique ID,
+> How about anonymous mode? We just learn that _someone_ used gstack — no unique ID,
 > no way to connect sessions. Just a counter that helps us know if anyone's out there.
 
 Options:
+
 - A) Sure, anonymous is fine
 - B) No thanks, fully off
 
@@ -136,6 +139,7 @@ If B→A: run `~/.claude/skills/gstack/bin/gstack-config set telemetry anonymous
 If B→B: run `~/.claude/skills/gstack/bin/gstack-config set telemetry off`
 
 Always run:
+
 ```bash
 touch ~/.gstack/.telemetry-prompted
 ```
@@ -150,6 +154,7 @@ ask the user about proactive behavior. Use AskUserQuestion:
 > a bug. We recommend keeping this on — it speeds up every part of your workflow.
 
 Options:
+
 - A) Keep it on (recommended)
 - B) Turn it off — I'll type /commands myself
 
@@ -157,6 +162,7 @@ If A: run `~/.claude/skills/gstack/bin/gstack-config set proactive true`
 If B: run `~/.claude/skills/gstack/bin/gstack-config set proactive false`
 
 Always run:
+
 ```bash
 touch ~/.gstack/.proactive-prompted
 ```
@@ -173,13 +179,13 @@ Use AskUserQuestion:
 > instead of answering directly. It's a one-time addition, about 15 lines.
 
 Options:
+
 - A) Add routing rules to CLAUDE.md (recommended)
 - B) No thanks, I'll invoke skills manually
 
 If A: Append this section to the end of CLAUDE.md:
 
 ```markdown
-
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill
@@ -187,6 +193,7 @@ tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
 The skill has specialized workflows that produce better results than ad-hoc answers.
 
 Key routing rules:
+
 - Product ideas, "is this worth building", brainstorming → invoke office-hours
 - Bugs, errors, "why is this broken", 500 errors → invoke investigate
 - Ship, deploy, push, create PR → invoke ship
@@ -239,6 +246,7 @@ Use concrete tools, workflows, commands, files, outputs, evals, and tradeoffs wh
 Avoid filler, throat-clearing, generic optimism, founder cosplay, and unsupported claims.
 
 **Writing rules:**
+
 - No em dashes. Use commas, periods, or "..." instead.
 - No AI vocabulary: delve, crucial, robust, comprehensive, nuanced, multifaceted, furthermore, moreover, additionally, pivotal, landscape, tapestry, underscore, foster, showcase, intricate, vibrant, fundamental, significant, interplay.
 - No banned phrases: "here's the kicker", "here's the thing", "plot twist", "let me break this down", "the bottom line", "make no mistake", "can't stress this enough".
@@ -255,6 +263,7 @@ Avoid filler, throat-clearing, generic optimism, founder cosplay, and unsupporte
 ## AskUserQuestion Format
 
 **ALWAYS follow this structure for every AskUserQuestion call:**
+
 1. **Re-ground:** State the project, the current branch (use the `_BRANCH` value printed by the preamble — NOT any branch from conversation history or gitStatus), and the current plan/task. (1-2 sentences)
 2. **Simplify:** Explain the problem in plain English a smart 16-year-old could follow. No raw function names, no internal jargon, no implementation details. Use concrete examples and analogies. Say what it DOES, not what it's called.
 3. **Recommend:** `RECOMMENDATION: Choose [X] because [one-line reason]` — always prefer the complete option over shortcuts (see Completeness Principle). Include `Completeness: X/10` for each option. Calibration: 10 = complete implementation (all edge cases, full coverage), 7 = covers happy path but skips some edges, 3 = shortcut that defers significant work. If both options are 8+, pick the higher; if one is ≤5, flag it.
@@ -270,12 +279,12 @@ AI makes completeness near-free. Always recommend the complete option over short
 
 **Effort reference** — always show both scales:
 
-| Task type | Human team | CC+gstack | Compression |
-|-----------|-----------|-----------|-------------|
-| Boilerplate | 2 days | 15 min | ~100x |
-| Tests | 1 day | 15 min | ~50x |
-| Feature | 1 week | 30 min | ~30x |
-| Bug fix | 4 hours | 15 min | ~20x |
+| Task type   | Human team | CC+gstack | Compression |
+| ----------- | ---------- | --------- | ----------- |
+| Boilerplate | 2 days     | 15 min    | ~100x       |
+| Tests       | 1 day      | 15 min    | ~50x        |
+| Feature     | 1 week     | 30 min    | ~30x        |
+| Bug fix     | 4 hours    | 15 min    | ~20x        |
 
 Include `Completeness: X/10` for each option (10=all edge cases, 7=happy path, 3=shortcut).
 
@@ -286,6 +295,7 @@ If `_CONTRIB` is `true`: you are in **contributor mode**. At the end of each maj
 **File only:** gstack tooling bugs where the input was reasonable but gstack failed. **Skip:** user app bugs, network errors, auth failures on user's site.
 
 **To file:** write `~/.gstack/contributor-logs/{slug}.md`:
+
 ```
 # {Title}
 **What I tried:** {action} | **What happened:** {result} | **Rating:** {0-10}
@@ -295,11 +305,13 @@ If `_CONTRIB` is `true`: you are in **contributor mode**. At the end of each maj
 {one sentence}
 **Date:** {YYYY-MM-DD} | **Version:** {version} | **Skill:** /{skill}
 ```
+
 Slug: lowercase hyphens, max 60 chars. Skip if exists. Max 3/session. File inline, don't stop.
 
 ## Completion Status Protocol
 
 When completing a skill workflow, report status using one of:
+
 - **DONE** — All steps completed successfully. Evidence provided for each claim.
 - **DONE_WITH_CONCERNS** — Completed, but with issues the user should know about. List each concern.
 - **BLOCKED** — Cannot proceed. State what is blocking and what was tried.
@@ -310,11 +322,13 @@ When completing a skill workflow, report status using one of:
 It is always OK to stop and say "this is too hard for me" or "I'm not confident in this result."
 
 Bad work is worse than no work. You will not be penalized for escalating.
+
 - If you have attempted a task 3 times without success, STOP and escalate.
 - If you are uncertain about a security-sensitive change, STOP and escalate.
 - If the scope of work exceeds what you can verify, STOP and escalate.
 
 Escalation format:
+
 ```
 STATUS: BLOCKED | NEEDS_CONTEXT
 REASON: [1-2 sentences]
@@ -377,14 +391,15 @@ Then write a `## GSTACK REVIEW REPORT` section to the end of the plan file:
 - If the output is `NO_REVIEWS` or empty: write this placeholder table:
 
 \`\`\`markdown
+
 ## GSTACK REVIEW REPORT
 
-| Review | Trigger | Why | Runs | Status | Findings |
-|--------|---------|-----|------|--------|----------|
-| CEO Review | \`/plan-ceo-review\` | Scope & strategy | 0 | — | — |
-| Codex Review | \`/codex review\` | Independent 2nd opinion | 0 | — | — |
-| Eng Review | \`/plan-eng-review\` | Architecture & tests (required) | 0 | — | — |
-| Design Review | \`/plan-design-review\` | UI/UX gaps | 0 | — | — |
+| Review        | Trigger                 | Why                             | Runs | Status | Findings |
+| ------------- | ----------------------- | ------------------------------- | ---- | ------ | -------- |
+| CEO Review    | \`/plan-ceo-review\`    | Scope & strategy                | 0    | —      | —        |
+| Codex Review  | \`/codex review\`       | Independent 2nd opinion         | 0    | —      | —        |
+| Eng Review    | \`/plan-eng-review\`    | Architecture & tests (required) | 0    | —      | —        |
+| Design Review | \`/plan-design-review\` | UI/UX gaps                      | 0    | —      | —        |
 
 **VERDICT:** NO REVIEWS YET — run \`/autoplan\` for full review pipeline, or individual reviews above.
 \`\`\`
@@ -402,9 +417,11 @@ The real attack surface isn't your code — it's your dependencies. Most teams a
 You do NOT make code changes. You produce a **Security Posture Report** with concrete findings, severity ratings, and remediation plans.
 
 ## User-invocable
+
 When the user types `/cso`, run this skill.
 
 ## Arguments
+
 - `/cso` — full daily audit (all phases, 8/10 confidence gate)
 - `/cso --comprehensive` — monthly deep scan (all phases, 2/10 bar — surfaces more)
 - `/cso --infra` — infrastructure-only (Phases 0-6, 12-14)
@@ -436,6 +453,7 @@ The bash blocks throughout this skill show WHAT patterns to search for, not HOW 
 Before hunting for bugs, detect the tech stack and build an explicit mental model of the codebase. This phase changes HOW you think for the rest of the audit.
 
 **Stack detection:**
+
 ```bash
 ls package.json tsconfig.json 2>/dev/null && echo "STACK: Node/TypeScript"
 ls Gemfile 2>/dev/null && echo "STACK: Ruby"
@@ -448,6 +466,7 @@ find . -maxdepth 1 \( -name '*.csproj' -o -name '*.sln' \) 2>/dev/null | grep -q
 ```
 
 **Framework detection:**
+
 ```bash
 grep -q "next" package.json 2>/dev/null && echo "FRAMEWORK: Next.js"
 grep -q "express" package.json 2>/dev/null && echo "FRAMEWORK: Express"
@@ -465,6 +484,7 @@ grep -q "laravel" composer.json 2>/dev/null && echo "FRAMEWORK: Laravel"
 **Soft gate, not hard gate:** Stack detection determines scan PRIORITY, not scan SCOPE. In subsequent phases, PRIORITIZE scanning for detected languages/frameworks first and most thoroughly. However, do NOT skip undetected languages entirely — after the targeted scan, run a brief catch-all pass with high-signal patterns (SQL injection, command injection, hardcoded secrets, SSRF) across ALL file types. A Python service nested in `ml/` that wasn't detected at root still gets basic coverage.
 
 **Mental model:**
+
 - Read CLAUDE.md, README, key config files
 - Map the application architecture: what components exist, how they connect, where trust boundaries are
 - Identify the data flow: where does user input enter? Where does it exit? What transformations happen?
@@ -480,6 +500,7 @@ Map what an attacker sees — both code surface and infrastructure surface.
 **Code surface:** Use the Grep tool to find endpoints, auth boundaries, external integrations, file upload paths, admin routes, webhook handlers, background jobs, and WebSocket channels. Scope file extensions to detected stacks from Phase 0. Count each category.
 
 **Infrastructure surface:**
+
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
 { find .github/workflows -maxdepth 1 \( -name '*.yml' -o -name '*.yaml' \) 2>/dev/null; [ -f .gitlab-ci.yml ] && echo .gitlab-ci.yml; } | wc -l
@@ -489,6 +510,7 @@ ls .env .env.* 2>/dev/null
 ```
 
 **Output:**
+
 ```
 ATTACK SURFACE MAP
 ══════════════════
@@ -516,6 +538,7 @@ INFRASTRUCTURE SURFACE
 Scan git history for leaked credentials, check tracked `.env` files, find CI configs with inline secrets.
 
 **Git history — known secret prefixes:**
+
 ```bash
 git log -p --all -S "AKIA" --diff-filter=A -- "*.env" "*.yml" "*.yaml" "*.json" "*.toml" 2>/dev/null
 git log -p --all -S "sk-" --diff-filter=A -- "*.env" "*.yml" "*.json" "*.ts" "*.js" "*.py" 2>/dev/null
@@ -525,21 +548,23 @@ git log -p --all -G "password|secret|token|api_key" -- "*.env" "*.yml" "*.json" 
 ```
 
 **.env files tracked by git:**
+
 ```bash
 git ls-files '*.env' '.env.*' 2>/dev/null | grep -v '.example\|.sample\|.template'
 grep -q "^\.env$\|^\.env\.\*" .gitignore 2>/dev/null && echo ".env IS gitignored" || echo "WARNING: .env NOT in .gitignore"
 ```
 
 **CI configs with inline secrets (not using secret stores):**
+
 ```bash
 for f in $(find .github/workflows -maxdepth 1 \( -name '*.yml' -o -name '*.yaml' \) 2>/dev/null) .gitlab-ci.yml .circleci/config.yml; do
   [ -f "$f" ] && grep -n "password:\|token:\|secret:\|api_key:" "$f" | grep -v '\${{' | grep -v 'secrets\.'
 done 2>/dev/null
 ```
 
-**Severity:** CRITICAL for active secret patterns in git history (AKIA, sk_live_, ghp_, xoxb-). HIGH for .env tracked by git, CI configs with inline credentials. MEDIUM for suspicious .env.example values.
+**Severity:** CRITICAL for active secret patterns in git history (AKIA, sk*live*, ghp\_, xoxb-). HIGH for .env tracked by git, CI configs with inline credentials. MEDIUM for suspicious .env.example values.
 
-**FP rules:** Placeholders ("your_", "changeme", "TODO") excluded. Test fixtures excluded unless same value in non-test code. Rotated secrets still flagged (they were exposed). `.env.local` in `.gitignore` is expected.
+**FP rules:** Placeholders ("your\_", "changeme", "TODO") excluded. Test fixtures excluded unless same value in non-test code. Rotated secrets still flagged (they were exposed). `.env.local` in `.gitignore` is expected.
 
 **Diff mode:** Replace `git log -p --all` with `git log -p <base>..HEAD`.
 
@@ -548,6 +573,7 @@ done 2>/dev/null
 Goes beyond `npm audit`. Checks actual supply chain risk.
 
 **Package manager detection:**
+
 ```bash
 [ -f package.json ] && echo "DETECTED: npm/yarn/bun"
 [ -f Gemfile ] && echo "DETECTED: bundler"
@@ -571,6 +597,7 @@ Goes beyond `npm audit`. Checks actual supply chain risk.
 Check who can modify workflows and what secrets they can access.
 
 **GitHub Actions analysis:** For each workflow file, check for:
+
 - Unpinned third-party actions (not SHA-pinned) — use Grep for `uses:` lines missing `@[sha]`
 - `pull_request_target` (dangerous: fork PRs get write access)
 - Script injection via `${{ github.event.* }}` in `run:` steps
@@ -616,6 +643,7 @@ Find inbound endpoints that accept anything.
 Check for AI/LLM-specific vulnerabilities. This is a new attack class.
 
 Use Grep to search for these patterns:
+
 - **Prompt injection vectors:** User input flowing into system prompts or tool schemas — look for string interpolation near system prompt construction
 - **Unsanitized LLM output:** `dangerouslySetInnerHTML`, `v-html`, `innerHTML`, `.html()`, `raw()` rendering LLM responses
 - **Tool/function calling without validation:** `tool_choice`, `function_call`, `tools=`, `functions=`
@@ -623,6 +651,7 @@ Use Grep to search for these patterns:
 - **Eval/exec of LLM output:** `eval()`, `exec()`, `Function()`, `new Function` processing AI responses
 
 **Key checks (beyond grep):**
+
 - Trace user content flow — does it enter system prompts or tool schemas?
 - RAG poisoning: can external documents influence AI behavior via retrieval?
 - Tool calling permissions: are LLM tool calls validated before execution?
@@ -644,13 +673,14 @@ ls -la .claude/skills/ 2>/dev/null
 ```
 
 Use Grep to search all local skill SKILL.md files for suspicious patterns:
+
 - `curl`, `wget`, `fetch`, `http`, `exfiltrat` (network exfiltration)
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `env.`, `process.env` (credential access)
 - `IGNORE PREVIOUS`, `system override`, `disregard`, `forget your instructions` (prompt injection)
 
 **Tier 2 — global skills (requires permission):** Before scanning globally installed skills or user settings, use AskUserQuestion:
 "Phase 8 can scan your globally installed AI coding agent skills and hooks for malicious patterns. This reads files outside the repo. Want to include this?"
-Options: A) Yes — scan global skills too  B) No — repo-local only
+Options: A) Yes — scan global skills too B) No — repo-local only
 
 If approved, run the same Grep patterns on globally installed skill files and check hooks in user settings.
 
@@ -663,53 +693,64 @@ If approved, run the same Grep patterns on globally installed skill files and ch
 For each OWASP category, perform targeted analysis. Use the Grep tool for all searches — scope file extensions to detected stacks from Phase 0.
 
 #### A01: Broken Access Control
+
 - Check for missing auth on controllers/routes (skip_before_action, skip_authorization, public, no_auth)
 - Check for direct object reference patterns (params[:id], req.params.id, request.args.get)
 - Can user A access user B's resources by changing IDs?
 - Is there horizontal/vertical privilege escalation?
 
 #### A02: Cryptographic Failures
+
 - Weak crypto (MD5, SHA1, DES, ECB) or hardcoded secrets
 - Is sensitive data encrypted at rest and in transit?
 - Are keys/secrets properly managed (env vars, not hardcoded)?
 
 #### A03: Injection
+
 - SQL injection: raw queries, string interpolation in SQL
 - Command injection: system(), exec(), spawn(), popen
 - Template injection: render with params, eval(), html_safe, raw()
 - LLM prompt injection: see Phase 7 for comprehensive coverage
 
 #### A04: Insecure Design
+
 - Rate limits on authentication endpoints?
 - Account lockout after failed attempts?
 - Business logic validated server-side?
 
 #### A05: Security Misconfiguration
+
 - CORS configuration (wildcard origins in production?)
 - CSP headers present?
 - Debug mode / verbose errors in production?
 
 #### A06: Vulnerable and Outdated Components
+
 See **Phase 3 (Dependency Supply Chain)** for comprehensive component analysis.
 
 #### A07: Identification and Authentication Failures
+
 - Session management: creation, storage, invalidation
 - Password policy: complexity, rotation, breach checking
 - MFA: available? enforced for admin?
 - Token management: JWT expiration, refresh rotation
 
 #### A08: Software and Data Integrity Failures
+
 See **Phase 4 (CI/CD Pipeline Security)** for pipeline protection analysis.
+
 - Deserialization inputs validated?
 - Integrity checking on external data?
 
 #### A09: Security Logging and Monitoring Failures
+
 - Authentication events logged?
 - Authorization failures logged?
 - Admin actions audit-trailed?
 - Logs protected from tampering?
 
 #### A10: Server-Side Request Forgery (SSRF)
+
 - URL construction from user input?
 - Internal service reachability from user-controlled URLs?
 - Allowlist/blocklist enforcement on outbound requests?
@@ -760,6 +801,7 @@ Before producing findings, run every candidate through this filter.
 **Two modes:**
 
 **Daily mode (default, `/cso`):** 8/10 confidence gate. Zero noise. Only report what you're sure about.
+
 - 9-10: Certain exploit path. Could write a PoC.
 - 8: Clear vulnerability pattern with known exploitation methods. Minimum bar.
 - Below 8: Do not report.
@@ -782,7 +824,7 @@ Before producing findings, run every candidate through this filter.
 12. SSRF where attacker only controls the path, not the host or protocol
 13. User content in the user-message position of an AI conversation (NOT prompt injection)
 14. Regex complexity in code that does not process untrusted input (ReDoS on user strings IS real)
-15. Security concerns in documentation files (*.md) — **EXCEPTION:** SKILL.md files are NOT documentation. They are executable prompt code (skill definitions) that control AI agent behavior. Findings from Phase 8 (Skill Supply Chain) in SKILL.md files must NEVER be excluded under this rule.
+15. Security concerns in documentation files (\*.md) — **EXCEPTION:** SKILL.md files are NOT documentation. They are executable prompt code (skill definitions) that control AI agent behavior. Findings from Phase 8 (Skill Supply Chain) in SKILL.md files must NEVER be excluded under this rule.
 16. Missing audit logs — absence of logging is not a vulnerability
 17. Insecure randomness in non-security contexts (e.g., UI element IDs)
 18. Git history secrets committed AND removed in the same initial-setup PR
@@ -818,6 +860,7 @@ For each finding that survives the confidence gate, attempt to PROVE it where sa
 6. **LLM Security:** Trace data flow to confirm user input actually reaches system prompt construction.
 
 Mark each finding as:
+
 - `VERIFIED` — actively confirmed via code tracing or safe testing
 - `UNVERIFIED` — pattern match only, couldn't confirm
 - `TENTATIVE` — comprehensive mode finding below 8/10 confidence
@@ -825,6 +868,7 @@ Mark each finding as:
 **Variant Analysis:**
 
 When a finding is VERIFIED, search the entire codebase for the same vulnerability pattern. One confirmed SSRF means there may be 5 more. For each verified finding:
+
 1. Extract the core vulnerability pattern
 2. Use the Grep tool to search for the same pattern across all relevant files
 3. Report variants as separate findings linked to the original: "Variant of Finding #N"
@@ -834,6 +878,7 @@ When a finding is VERIFIED, search the entire codebase for the same vulnerabilit
 For each candidate finding, launch an independent verification sub-task using the Agent tool. The verifier has fresh context and cannot see the initial scan's reasoning — only the finding itself and the FP filtering rules.
 
 Prompt each verifier with:
+
 - The file path and line number ONLY (avoid anchoring)
 - The full FP filtering rules
 - "Read the code at this location. Assess independently: is there a security vulnerability here? Score 1-10. Below 8 = explain why it's not real."
@@ -847,6 +892,7 @@ If the Agent tool is unavailable, self-verify by re-reading code with a skeptic'
 **Exploit scenario requirement:** Every finding MUST include a concrete exploit scenario — a step-by-step attack path an attacker would follow. "This pattern is insecure" is not a finding.
 
 **Findings table:**
+
 ```
 SECURITY FINDINGS
 ═════════════════
@@ -862,13 +908,13 @@ SECURITY FINDINGS
 
 Every finding MUST include a confidence score (1-10):
 
-| Score | Meaning | Display rule |
-|-------|---------|-------------|
-| 9-10 | Verified by reading specific code. Concrete bug or exploit demonstrated. | Show normally |
-| 7-8 | High confidence pattern match. Very likely correct. | Show normally |
-| 5-6 | Moderate. Could be a false positive. | Show with caveat: "Medium confidence, verify this is actually an issue" |
-| 3-4 | Low confidence. Pattern is suspicious but may be fine. | Suppress from main report. Include in appendix only. |
-| 1-2 | Speculation. | Only report if severity would be P0. |
+| Score | Meaning                                                                  | Display rule                                                            |
+| ----- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| 9-10  | Verified by reading specific code. Concrete bug or exploit demonstrated. | Show normally                                                           |
+| 7-8   | High confidence pattern match. Very likely correct.                      | Show normally                                                           |
+| 5-6   | Moderate. Could be a false positive.                                     | Show with caveat: "Medium confidence, verify this is actually an issue" |
+| 3-4   | Low confidence. Pattern is suspicious but may be fine.                   | Suppress from main report. Include in appendix only.                    |
+| 1-2   | Speculation.                                                             | Only report if severity would be P0.                                    |
 
 **Finding format:**
 
@@ -884,6 +930,7 @@ too low. Log the corrected pattern as a learning so future reviews catch it with
 higher confidence.
 
 For each finding:
+
 ```
 ## Finding N: [Title] — [File:Line]
 
@@ -899,6 +946,7 @@ For each finding:
 ```
 
 **Incident Response Playbooks:** When a leaked secret is found, include:
+
 1. **Revoke** the credential immediately
 2. **Rotate** — generate a new credential
 3. **Scrub history** — `git filter-repo` or BFG Repo-Cleaner
@@ -907,6 +955,7 @@ For each finding:
 6. **Check for abuse** — review provider's audit logs
 
 **Trend Tracking:** If prior reports exist in `.gstack/security-reports/`:
+
 ```
 SECURITY POSTURE TREND
 ══════════════════════
@@ -923,6 +972,7 @@ Match findings across reports using the `fingerprint` field (sha256 of category 
 **Protection file check:** Check if the project has a `.gitleaks.toml` or `.secretlintrc`. If none exists, recommend creating one.
 
 **Remediation Roadmap:** For the top 5 findings, present via AskUserQuestion:
+
 1. Context: The vulnerability, its severity, exploitation scenario
 2. RECOMMENDATION: Choose [X] because [reason]
 3. Options:
@@ -948,43 +998,70 @@ Write findings to `.gstack/security-reports/{date}-{HHMMSS}.json` using this sch
   "diff_mode": false,
   "phases_run": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
   "attack_surface": {
-    "code": { "public_endpoints": 0, "authenticated": 0, "admin": 0, "api": 0, "uploads": 0, "integrations": 0, "background_jobs": 0, "websockets": 0 },
-    "infrastructure": { "ci_workflows": 0, "webhook_receivers": 0, "container_configs": 0, "iac_configs": 0, "deploy_targets": 0, "secret_management": "unknown" }
+    "code": {
+      "public_endpoints": 0,
+      "authenticated": 0,
+      "admin": 0,
+      "api": 0,
+      "uploads": 0,
+      "integrations": 0,
+      "background_jobs": 0,
+      "websockets": 0
+    },
+    "infrastructure": {
+      "ci_workflows": 0,
+      "webhook_receivers": 0,
+      "container_configs": 0,
+      "iac_configs": 0,
+      "deploy_targets": 0,
+      "secret_management": "unknown"
+    }
   },
-  "findings": [{
-    "id": 1,
-    "severity": "CRITICAL",
-    "confidence": 9,
-    "status": "VERIFIED",
-    "phase": 2,
-    "phase_name": "Secrets Archaeology",
-    "category": "Secrets",
-    "fingerprint": "sha256-of-category-file-title",
-    "title": "...",
-    "file": "...",
-    "line": 0,
-    "commit": "...",
-    "description": "...",
-    "exploit_scenario": "...",
-    "impact": "...",
-    "recommendation": "...",
-    "playbook": "...",
-    "verification": "independently verified | self-verified"
-  }],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "CRITICAL",
+      "confidence": 9,
+      "status": "VERIFIED",
+      "phase": 2,
+      "phase_name": "Secrets Archaeology",
+      "category": "Secrets",
+      "fingerprint": "sha256-of-category-file-title",
+      "title": "...",
+      "file": "...",
+      "line": 0,
+      "commit": "...",
+      "description": "...",
+      "exploit_scenario": "...",
+      "impact": "...",
+      "recommendation": "...",
+      "playbook": "...",
+      "verification": "independently verified | self-verified"
+    }
+  ],
   "supply_chain_summary": {
-    "direct_deps": 0, "transitive_deps": 0,
-    "critical_cves": 0, "high_cves": 0,
-    "install_scripts": 0, "lockfile_present": true, "lockfile_tracked": true,
+    "direct_deps": 0,
+    "transitive_deps": 0,
+    "critical_cves": 0,
+    "high_cves": 0,
+    "install_scripts": 0,
+    "lockfile_present": true,
+    "lockfile_tracked": true,
     "tools_skipped": []
   },
   "filter_stats": {
-    "candidates_scanned": 0, "hard_exclusion_filtered": 0,
-    "confidence_gate_filtered": 0, "verification_filtered": 0, "reported": 0
+    "candidates_scanned": 0,
+    "hard_exclusion_filtered": 0,
+    "confidence_gate_filtered": 0,
+    "verification_filtered": 0,
+    "reported": 0
   },
   "totals": { "critical": 0, "high": 0, "medium": 0, "tentative": 0 },
   "trend": {
     "prior_report_date": null,
-    "resolved": 0, "persistent": 0, "new": 0,
+    "resolved": 0,
+    "persistent": 0,
+    "new": 0,
     "direction": "first_run"
   }
 }

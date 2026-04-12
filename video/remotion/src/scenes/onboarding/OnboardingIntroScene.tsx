@@ -13,8 +13,14 @@ export const OnboardingIntroScene: React.FC = () => {
   const fadeIn = interpolate(frame, [0, fps * 0.6], [0, 1], { extrapolateRight: 'clamp' });
   const slideY = interpolate(frame, [0, fps * 0.6], [50, 0], { extrapolateRight: 'clamp' });
 
-  const taglineOpacity = interpolate(frame, [fps * 0.8, fps * 1.4], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const taglineSlide = interpolate(frame, [fps * 0.8, fps * 1.4], [30, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const taglineOpacity = interpolate(frame, [fps * 0.8, fps * 1.4], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const taglineSlide = interpolate(frame, [fps * 0.8, fps * 1.4], [30, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   const bulletOpacity = (index: number) =>
     interpolate(frame, [fps * (1.6 + index * 0.4), fps * (2.0 + index * 0.4)], [0, 1], {
@@ -87,7 +93,8 @@ export const OnboardingIntroScene: React.FC = () => {
             maxWidth: 520,
           }}
         >
-          Your complete business operating system for equipment suppliers — built for trades, designed for growth.
+          Your complete business operating system for equipment suppliers — built for trades,
+          designed for growth.
         </div>
       </div>
 

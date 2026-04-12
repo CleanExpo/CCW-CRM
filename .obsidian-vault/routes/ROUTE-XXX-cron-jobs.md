@@ -21,6 +21,7 @@ Cron job endpoints for scheduled tasks.
 These endpoints are called by Vercel Cron or other schedulers.
 
 Recommended cron schedule (vercel.json):
+
 ```json
 {
   "crons": [
@@ -46,7 +47,6 @@ ISS-036: Added webhook retry job for failed webhook processing.
 
 ## Endpoints
 
-
 ## Database Models Used
 
 See code for model references
@@ -56,7 +56,6 @@ See code for model references
 - External APIs: None
 - Internal services: Database
 - Background tasks: None
-
 
 <!-- END AUTO-GENERATED -->
 
@@ -82,6 +81,6 @@ No related pages yet
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author             |
+| ---------- | ------------------------ | ------------------ |
 | 2026-03-23 | Auto-generated from code | vault-generator.py |

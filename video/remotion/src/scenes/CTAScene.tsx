@@ -52,7 +52,8 @@ export const CTAScene: React.FC<CTASceneProps> = ({ nextSessionDate }) => {
           Subscribe for the next session
         </h2>
         <p style={{ fontSize: 22, color: '#94a3b8', marginBottom: 48 }}>
-          CCW Boardroom runs 4× daily — every major AI update, market shift, and product decision, live.
+          CCW Boardroom runs 4× daily — every major AI update, market shift, and product decision,
+          live.
         </p>
 
         {nextSessionDate && (

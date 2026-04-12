@@ -3,22 +3,26 @@
 ## ✅ All Services Ready
 
 ### Frontend (Next.js)
+
 - **URL**: http://localhost:3006
 - **Status**: ✅ Ready
 - **Build Time**: 6 seconds
 
 ### Backend API (FastAPI)
+
 - **URL**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
 - **Status**: ✅ Healthy (Docker)
 
 ### Database (PostgreSQL)
+
 - **Host**: localhost:5434
 - **Database**: starter_db
 - **Status**: ✅ Healthy
 - **Data**: Demo data loaded (22 products, 8 customers, 7 orders, 4 quotes)
 
 ### Cache (Redis)
+
 - **Host**: localhost:6381
 - **Status**: ✅ Healthy
 
@@ -27,6 +31,7 @@
 ## 🎬 Ready for Demo
 
 ### Login Credentials
+
 - **Email**: admin@demo.com
 - **Password**: demo123
 
@@ -55,10 +60,10 @@
 
 ### Performance Achievements
 
-| Module | Old Time | New Time | Improvement |
-|--------|----------|----------|-------------|
-| **Orders** | 34,800ms | 115ms | **97% faster** |
-| **Quotes** | ~8,000ms | 24ms | **99.7% faster** |
+| Module     | Old Time | New Time | Improvement      |
+| ---------- | -------- | -------- | ---------------- |
+| **Orders** | 34,800ms | 115ms    | **97% faster**   |
+| **Quotes** | ~8,000ms | 24ms     | **99.7% faster** |
 
 **Root Cause**: Bulk database inserts replaced individual INSERT operations, reducing round-trips from N+1 to 1-2 queries.
 
