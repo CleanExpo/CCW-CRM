@@ -89,7 +89,9 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={isMarketing ? 'text-sm font-semibold text-zinc-200' : undefined}>
+              <FormLabel
+                className={isMarketing ? 'text-sm font-semibold text-zinc-200' : undefined}
+              >
                 Email
               </FormLabel>
               <FormControl>
@@ -115,7 +117,9 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={isMarketing ? 'text-sm font-semibold text-zinc-200' : undefined}>
+              <FormLabel
+                className={isMarketing ? 'text-sm font-semibold text-zinc-200' : undefined}
+              >
                 Password
               </FormLabel>
               <FormControl>
@@ -153,7 +157,7 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
                   onCheckedChange={field.onChange}
                   className={
                     isMarketing
-                      ? 'h-5 w-5 border-zinc-500 data-[state=checked]:border-transparent data-[state=checked]:bg-gradient-brand data-[state=checked]:text-white'
+                      ? 'data-[state=checked]:bg-gradient-brand h-5 w-5 border-zinc-500 data-[state=checked]:border-transparent data-[state=checked]:text-white'
                       : undefined
                   }
                 />
@@ -161,7 +165,7 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
               <FormLabel
                 className={
                   isMarketing
-                    ? 'cursor-pointer text-sm font-medium leading-snug text-zinc-300'
+                    ? 'cursor-pointer text-sm leading-snug font-medium text-zinc-300'
                     : 'cursor-pointer text-sm font-normal'
                 }
               >
@@ -181,7 +185,9 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
               : 'w-full'
           }
           disabled={isLoading}
-          rightIcon={isMarketing && !isLoading ? <ArrowRight className="h-4 w-4 opacity-90" /> : undefined}
+          rightIcon={
+            isMarketing && !isLoading ? <ArrowRight className="h-4 w-4 opacity-90" /> : undefined
+          }
         >
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
@@ -190,19 +196,29 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
           className={
             isMarketing
               ? 'mt-5 text-center text-xs text-zinc-500'
-              : 'mt-4 text-center text-xs text-slate-400'
+              : 'mt-4 space-y-1 text-center text-xs text-slate-600'
           }
         >
-          <a
-            href="/forgot-password"
-            className={
-              isMarketing
-                ? 'font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-sky-300 hover:underline'
-                : 'hover:text-slate-600 hover:underline'
-            }
-          >
-            Forgot your password?
-          </a>
+          <p>
+            <a
+              href="/forgot-password"
+              className={
+                isMarketing
+                  ? 'font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-sky-300 hover:underline'
+                  : 'hover:underline'
+              }
+            >
+              Forgot your password?
+            </a>
+          </p>
+          {!isMarketing && (
+            <p>
+              No account?{' '}
+              <a href="/register" className="font-medium hover:underline">
+                Create one
+              </a>
+            </p>
+          )}
         </div>
       </form>
     </Form>
