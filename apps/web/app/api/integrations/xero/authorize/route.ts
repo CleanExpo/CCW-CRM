@@ -22,14 +22,20 @@ export async function GET() {
   }
 
   const state = crypto.randomBytes(16).toString('hex');
+
+  // Granular scopes required for apps created after March 2026.
+  // accounting.transactions is deprecated — use granular equivalents.
   const scopes = [
     'openid',
     'profile',
     'email',
-    'accounting.transactions',
+    'offline_access',
     'accounting.contacts',
     'accounting.settings',
-    'offline_access',
+    'accounting.invoices',
+    'accounting.payments',
+    'accounting.banktransactions',
+    'accounting.manualjournals',
   ].join(' ');
 
   const params = new URLSearchParams({
@@ -42,9 +48,18 @@ export async function GET() {
 
   const authorizationUrl = `https://login.xero.com/identity/connect/authorize?${params}`;
 
-  return NextResponse.json({
+  // Store state in cookie for CSRF validation in callback
+  const response = NextResponse.json({
     mode: 'live',
     authorization_url: authorizationUrl,
     state,
   });
+  response.cookies.set('xero_oauth_state', state, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 600, // 10 minutes
+    path: '/',
+  });
+  return response;
 }

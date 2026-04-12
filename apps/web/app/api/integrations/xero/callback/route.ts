@@ -9,6 +9,16 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
+  const returnedState = searchParams.get('state');
+
+  // Validate CSRF state
+  const storedState = request.cookies.get('xero_oauth_state')?.value;
+  if (!storedState || returnedState !== storedState) {
+    const appBase2 = process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : 'https://ccw-crm-web.vercel.app';
+    return NextResponse.redirect(`${appBase2}/settings/integrations?xero_error=invalid_state`);
+  }
 
   const appBase = process.env.NEXT_PUBLIC_VERCEL_URL
     ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
@@ -60,6 +70,7 @@ export async function GET(request: NextRequest) {
       refresh_token: string;
       expires_in: number;
       token_type: string;
+      scope?: string;
     };
 
     // Get connected tenants
@@ -88,7 +99,7 @@ export async function GET(request: NextRequest) {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         expires_at: expiresAt,
-        scopes: ['accounting.transactions', 'accounting.contacts'],
+        scopes: tokens.scope ? tokens.scope.split(' ') : [],
         is_active: true,
         updated_at: new Date().toISOString(),
       },

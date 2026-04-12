@@ -37,7 +37,7 @@ export async function POST() {
 
     // Verify against Shopify Admin API
     const shopifyRes = await fetch(
-      `https://${connection.shop_domain}/admin/api/2024-01/shop.json`,
+      `https://${connection.shop_domain}/admin/api/2026-01/shop.json`,
       {
         headers: {
           'X-Shopify-Access-Token': connection.access_token,
