@@ -16,7 +16,6 @@ from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_async_db
 from src.db.demo_models import Product as ProductModel
 from src.db.inventory_models import ProductStockByLocation
-from src.db.models import User
 from src.db.schemas import (
     PaginatedResponse,
     Product,

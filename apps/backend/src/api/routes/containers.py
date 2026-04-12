@@ -10,8 +10,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.api.deps import get_current_user
-from src.api.deps import get_optional_user
+from src.api.deps import get_current_user, get_optional_user
 from src.config.database import get_async_db
 from src.db.container_models import (
     Backorder,

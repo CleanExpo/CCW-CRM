@@ -14,8 +14,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from src.api.deps import get_current_user
-from src.api.deps import get_optional_user
+from src.api.deps import get_current_user, get_optional_user
 from src.db.models import User
 from src.integrations.google import generate_text_with_google, get_google_ai_client
 

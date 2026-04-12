@@ -16,8 +16,7 @@ from src.ai.orchestration.project_orchestrator import (
     Task,
     get_project_orchestrator,
 )
-from src.api.deps import get_async_db
-from src.api.deps import get_current_user
+from src.api.deps import get_async_db, get_current_user
 
 router = APIRouter(prefix="/api/autonomous", tags=["Autonomous Development"], dependencies=[Depends(get_current_user)])
 

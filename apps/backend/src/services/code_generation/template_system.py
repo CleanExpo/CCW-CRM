@@ -16,13 +16,10 @@ Templates:
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 
 from pydantic import BaseModel, Field
-
 
 # ============================================================================
 # Template registry

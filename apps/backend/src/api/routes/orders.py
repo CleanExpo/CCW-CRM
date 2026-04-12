@@ -12,8 +12,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from src.api.deps import get_current_user
-from src.api.deps import get_optional_user
+from src.api.deps import get_current_user, get_optional_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_async_db
 from src.config.settings import Settings, get_settings

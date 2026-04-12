@@ -20,9 +20,8 @@ import anthropic
 from pydantic import BaseModel, Field
 
 from .context_builder import CodeContext, ContextBuilder
-from .generator import CodeGenerator, CodeGenerationRequest, GeneratedFile, QualityReport
+from .generator import CodeGenerator, GeneratedFile, QualityReport
 from .quality_checker import QualityChecker
-
 
 # ============================================================================
 # Data Models
@@ -292,7 +291,7 @@ Language: {language}
 ## Project conventions
 Framework: {framework}
 Naming: {style.naming_convention if style else 'snake_case'}
-Common imports: {', '.join((style.common_imports[:8] if style else []))}
+Common imports: {', '.join(style.common_imports[:8] if style else [])}
 
 ## Already generated files (import from these for consistency)
 {siblings_section if siblings_section else "This is the first file — establish the data models."}
@@ -378,7 +377,7 @@ Generate {import_map.get(role, role)} now:"""
         camel = "".join(w.capitalize() for w in ref.split("_"))
         return [
             f"apps/backend/src/api/routes/{ref}.py",
-            f"apps/backend/src/db/demo_models.py",
+            "apps/backend/src/db/demo_models.py",
             f"apps/web/app/(dashboard)/{ref}/components/{camel}Form.tsx",
         ]
 

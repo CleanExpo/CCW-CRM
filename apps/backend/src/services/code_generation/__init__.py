@@ -27,17 +27,18 @@ from .generator import (
     GeneratedFile,
     QualityReport,
 )
+from .incremental_updater import (
+    IncrementalUpdater,
+    UpdateRequest,
+    UpdateResult,
+)
 from .multi_file_generator import (
     FeatureFile,
     FeatureRequest,
     FeatureResult,
     MultiFileGenerator,
 )
-from .incremental_updater import (
-    IncrementalUpdater,
-    UpdateRequest,
-    UpdateResult,
-)
+from .quality_checker import CoverageReport, QualityChecker
 from .schema_context import (
     ColumnInfo,
     DependencyEdge,
@@ -54,7 +55,6 @@ from .template_system import (
     TemplateVars,
 )
 from .test_generator import TestGenerator
-from .quality_checker import CoverageReport, QualityChecker
 
 __all__ = [
     # Context Builder

@@ -19,7 +19,6 @@ from fastapi import APIRouter, Depends, Query, Request
 from sse_starlette.sse import EventSourceResponse
 
 from src.api.deps import get_current_user
-
 from src.services.sse_service import sse_service
 
 logger = structlog.get_logger(__name__)
