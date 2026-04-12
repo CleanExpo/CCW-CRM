@@ -70,7 +70,7 @@ Extract video list:
 | CCW Boardroom EP001               | Processing | Unlisted    |
 ```
 
-Compare against `data/heygen/video-registry.json` upload status.
+Compare against `data/videos/video-registry.json` upload status.
 
 ### Step 4: Upload New Video
 
@@ -118,7 +118,7 @@ In the description field, append YouTube chapter markers from `videoBrief.youtub
 ### Step 7: Update video-registry.json
 
 After upload, report the YouTube video ID and URL. User should update:
-`data/heygen/video-registry.json` with:
+`data/videos/video-registry.json` with:
 - `youtube_url`: the new video URL
 - `upload_status`: "uploaded"
 - `youtube_video_id`: extracted from the URL
@@ -153,4 +153,4 @@ Browser upload has no API quota. Use this skill for bulk upload days.
 **Version**: 1.0
 **Created**: April 2026
 **Tools**: `mcp__Claude_in_Chrome__*`
-**Related files**: `scripts/youtube_upload.py`, `data/heygen/video-registry.json`
+**Related files**: `scripts/youtube_upload.py`, `data/videos/video-registry.json`

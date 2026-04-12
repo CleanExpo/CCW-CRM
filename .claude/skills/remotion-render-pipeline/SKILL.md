@@ -63,10 +63,10 @@ If validation fails:
 ```bash
 # Windows path — use forward slashes in bash
 cp "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM\video\remotion\out\[video-name].mp4" \
-   "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM\data\heygen\downloads\[video-name].mp4"
+   "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM\data\videos\downloads\[video-name].mp4"
 ```
 
-The upload script reads from `data/heygen/downloads/`. The filename must match the key in `VIDEO_METADATA` inside `scripts/youtube_upload.py`.
+The upload script reads from `data/videos/downloads/`. The filename must match the key in `VIDEO_METADATA` inside `scripts/youtube_upload.py`.
 
 ---
 
@@ -78,10 +78,10 @@ python scripts/youtube_upload.py --upload
 ```
 
 This script:
-- Reads all files from `data/heygen/downloads/`
+- Reads all files from `data/videos/downloads/`
 - Matches filenames to `VIDEO_METADATA` dict for title + description
 - Uploads each to the CCW YouTube channel
-- Appends results (video ID, YouTube URL, upload timestamp) to `data/heygen/youtube-upload-log.json`
+- Appends results (video ID, YouTube URL, upload timestamp) to `data/videos/youtube-upload-log.json`
 
 If the command exits with a quota error, see the **Quota Awareness** section below.
 
@@ -97,7 +97,7 @@ python scripts/youtube_upload.py --status
 Or read the log directly:
 
 ```bash
-cat "data/heygen/youtube-upload-log.json"
+cat "data/videos/youtube-upload-log.json"
 ```
 
 Note the `youtubeId` (format: `dQw4w9WgXcQ`) for each uploaded video — you need it for Step 6.
@@ -140,7 +140,7 @@ Must return zero errors before committing. If errors appear, fix them before Ste
 
 ```bash
 cd "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM"
-git add data/heygen/ apps/web/components/dashboard/DemoVideoBanner.tsx video/remotion/
+git add data/videos/ apps/web/components/dashboard/DemoVideoBanner.tsx video/remotion/
 git commit -m "feat(video): render and publish [video-name] to YouTube"
 git push origin fix/railway-cache-auth-500
 ```
@@ -165,7 +165,7 @@ YouTube Data API v3 limits apply to all uploads.
 - The upload script will exit with a `quotaExceeded` error
 - Do NOT retry in a loop — wait for quota reset
 - The automated daily cron runs at **7:07pm AEST** (youtube-upload-ccw-training scheduled task)
-- The cron will pick up any files still in `data/heygen/downloads/` automatically
+- The cron will pick up any files still in `data/videos/downloads/` automatically
 - Check cron status in Windows Task Scheduler or run manually after reset
 
 **To check quota remaining:**
@@ -201,7 +201,7 @@ VIDEO_METADATA = {
 }
 ```
 
-The key must exactly match the filename (without `.mp4`) placed in `data/heygen/downloads/`.
+The key must exactly match the filename (without `.mp4`) placed in `data/videos/downloads/`.
 
 ---
 
@@ -231,10 +231,10 @@ npm run render:all
 ls -la out/
 
 # Step 3: Copy all to upload queue
-cp out/firstlook.mp4       ../../../data/heygen/downloads/firstlook.mp4
-cp out/connections-guide.mp4 ../../../data/heygen/downloads/connections-guide.mp4
-cp out/onboarding.mp4      ../../../data/heygen/downloads/onboarding.mp4
-cp out/boardroom.mp4       ../../../data/heygen/downloads/boardroom.mp4
+cp out/firstlook.mp4       ../../../data/videos/downloads/firstlook.mp4
+cp out/connections-guide.mp4 ../../../data/videos/downloads/connections-guide.mp4
+cp out/onboarding.mp4      ../../../data/videos/downloads/onboarding.mp4
+cp out/boardroom.mp4       ../../../data/videos/downloads/boardroom.mp4
 
 # Step 4: Upload (will stop at 6 — split across 2 days if needed due to quota)
 cd "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM"
@@ -255,9 +255,9 @@ python scripts/youtube_upload.py --status
 | Render scripts | `video/remotion/package.json` |
 | Root composition | `video/remotion/src/Root.tsx` |
 | Output MP4s | `video/remotion/out/` (gitignored) |
-| Upload queue | `data/heygen/downloads/` |
+| Upload queue | `data/videos/downloads/` |
 | Upload script | `scripts/youtube_upload.py` |
-| Upload log | `data/heygen/youtube-upload-log.json` |
+| Upload log | `data/videos/youtube-upload-log.json` |
 | Video banner component | `apps/web/components/dashboard/DemoVideoBanner.tsx` |
 
 ---

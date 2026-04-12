@@ -1,7 +1,7 @@
 """
 CCW YouTube Bulk Uploader — YouTube Data API v3
 ================================================
-Uploads all 24 HeyGen demo videos to YouTube as Unlisted,
+Uploads demo videos to YouTube as Unlisted,
 records video IDs, then patches DemoVideoBanner.tsx + video-registry.json.
 
 SETUP (one time):
@@ -28,13 +28,13 @@ from pathlib import Path
 
 # ── Config ──────────────────────────────────────────────────────────────────
 REPO_ROOT = Path(__file__).parent.parent
-DOWNLOADS_DIR = REPO_ROOT / "data" / "heygen" / "downloads"
-REGISTRY_FILE = REPO_ROOT / "data" / "heygen" / "video-registry.json"
-RESULTS_FILE  = REPO_ROOT / "data" / "heygen" / "video-registry-results.json"
+DOWNLOADS_DIR = REPO_ROOT / "data" / "videos" / "downloads"
+REGISTRY_FILE = REPO_ROOT / "data" / "videos" / "video-registry.json"
+RESULTS_FILE  = REPO_ROOT / "data" / "videos" / "video-registry-results.json"
 BANNER_FILE   = REPO_ROOT / "apps" / "web" / "components" / "dashboard" / "DemoVideoBanner.tsx"
 OAUTH_CREDS   = REPO_ROOT / "scripts" / "youtube_oauth_client.json"
 TOKEN_FILE    = REPO_ROOT / "scripts" / ".youtube_token.json"
-UPLOAD_LOG    = REPO_ROOT / "data" / "heygen" / "youtube-upload-log.json"
+UPLOAD_LOG    = REPO_ROOT / "data" / "videos" / "youtube-upload-log.json"
 
 CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "UChN8nQFig73BoefyMBIsN-w")
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload",
@@ -167,7 +167,7 @@ def upload_video(youtube, module: str, mp4_path: Path) -> str | None:
 # ── Patch files ───────────────────────────────────────────────────────────────
 
 def update_video_registry(upload_log: dict):
-    """Update data/heygen/video-registry.json with YouTube IDs."""
+    """Update data/videos/video-registry.json with YouTube IDs."""
     with open(REGISTRY_FILE) as f:
         registry = json.load(f)
 

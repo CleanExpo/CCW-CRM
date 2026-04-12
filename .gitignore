@@ -185,11 +185,8 @@ video/remotion/public/audio/*.mp3
 scripts/.youtube_token.json
 scripts/youtube_oauth_client.json
 
-# HeyGen session data
-data/sessions/
-
-# HeyGen downloaded videos (large binaries — re-download from HeyGen as needed)
-data/heygen/downloads/
+# Downloaded videos (large binaries)
+data/videos/downloads/
 
 # Remotion build output
 video/remotion/out/

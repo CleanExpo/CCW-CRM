@@ -3,17 +3,21 @@
 Import data chunks to Supabase using direct PostgreSQL connection.
 """
 
+import os
 import psycopg2
 import sys
 from pathlib import Path
 import time
 
-# Supabase connection details
-DB_HOST = "db.vwfgksqkajnpfjospbpe.supabase.co"
-DB_PORT = "5432"
-DB_NAME = "postgres"
-DB_USER = "postgres"
-DB_PASSWORD = "SUPABASE_DB_PASSWORD_REDACTED"
+# Supabase connection details — read from environment
+DB_HOST = os.environ.get("SUPABASE_DB_HOST", "db.vwfgksqkajnpfjospbpe.supabase.co")
+DB_PORT = os.environ.get("SUPABASE_DB_PORT", "5432")
+DB_NAME = os.environ.get("SUPABASE_DB_NAME", "postgres")
+DB_USER = os.environ.get("SUPABASE_DB_USER", "postgres")
+DB_PASSWORD = os.environ.get("SUPABASE_DB_PASSWORD", "")
+if not DB_PASSWORD:
+    print("[ERROR] SUPABASE_DB_PASSWORD environment variable not set")
+    sys.exit(1)
 
 def connect_to_db():
     """Connect to Supabase PostgreSQL database."""

@@ -36,7 +36,7 @@ All CCW Remotion videos — check this before starting any new production.
 
 ### Step 1 — Script
 
-Write the narration script for each scene. Follow `heygen-script-optimizer` pacing rules:
+Write the narration script for each scene. Follow these pacing rules:
 
 - ~140 words per minute
 - Each scene = one narration segment
@@ -198,7 +198,7 @@ Expected render time per video: ~2–5 minutes on a modern Windows machine.
 cd "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM"
 
 # Step 1: Copy rendered file to YouTube upload queue
-copy video\remotion\out\firstlook.mp4 data\heygen\downloads\firstlook.mp4
+copy video\remotion\out\firstlook.mp4 data\videos\downloads\firstlook.mp4
 
 # Step 2: Upload (appends to the existing 10-video upload log)
 python scripts/youtube_upload.py --upload

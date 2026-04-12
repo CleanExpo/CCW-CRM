@@ -1,7 +1,7 @@
 ---
 name: youtube-uploader
 description: >
-  Autonomously uploads CCW HeyGen demo videos to YouTube as Unlisted,
+  Autonomously uploads CCW demo videos to YouTube as Unlisted,
   collects video IDs, and patches DemoVideoBanner.tsx + video-registry.json.
   One-time OAuth setup required. Handles resume, retries, and ID propagation.
 allowed-tools:
@@ -16,7 +16,7 @@ allowed-tools:
 
 ## Purpose
 
-Upload all 24 CCW ERP demo videos from `data/heygen/downloads/` to YouTube as **Unlisted**,
+Upload all 24 CCW ERP demo videos from `data/videos/downloads/` to YouTube as **Unlisted**,
 then automatically update `DemoVideoBanner.tsx` and `video-registry.json` with the YouTube IDs.
 
 ## Prerequisites
@@ -40,9 +40,9 @@ then automatically update `DemoVideoBanner.tsx` and `video-registry.json` with t
 
 | File | Description |
 |------|-------------|
-| `data/heygen/downloads/*.mp4` | 24 downloaded HeyGen videos |
+| `data/videos/downloads/*.mp4` | Downloaded demo videos |
 | `scripts/youtube_oauth_client.json` | Google OAuth credentials |
-| `data/heygen/video-registry.json` | Registry to patch with YouTube IDs |
+| `data/videos/video-registry.json` | Registry to patch with YouTube IDs |
 | `apps/web/components/dashboard/DemoVideoBanner.tsx` | Banner component to patch |
 
 ## Usage
@@ -57,7 +57,7 @@ python scripts/youtube_upload.py --status
 python scripts/youtube_upload.py --upload
 ```
 - Uploads each MP4 as **Unlisted** with CCW-branded title + description + tags
-- Resume-safe: saves `data/heygen/youtube-upload-log.json` after each video
+- Resume-safe: saves `data/videos/youtube-upload-log.json` after each video
 - Re-running skips already-uploaded videos
 - After all uploads: auto-patches `video-registry.json` + `DemoVideoBanner.tsx`
 
@@ -69,14 +69,14 @@ python scripts/youtube_upload.py --patch-only
 ### Commit after upload
 ```bash
 cd "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM"
-git add data/heygen/youtube-upload-log.json data/heygen/video-registry.json apps/web/components/dashboard/DemoVideoBanner.tsx
+git add data/videos/youtube-upload-log.json data/videos/video-registry.json apps/web/components/dashboard/DemoVideoBanner.tsx
 git commit -m "feat(youtube): add YouTube IDs for all 24 CCW demo videos"
 git push origin fix/railway-cache-auth-500
 ```
 
 ## What Gets Updated
 
-### `data/heygen/video-registry.json`
+### `data/videos/video-registry.json`
 Each video entry gets:
 ```json
 {
@@ -92,7 +92,7 @@ Each `youtubeId: null` entry gets patched to:
 youtubeId: "dQw4w9WgXcQ",
 ```
 
-### `data/heygen/youtube-upload-log.json`
+### `data/videos/youtube-upload-log.json`
 Full upload audit log with timestamps:
 ```json
 {
@@ -111,7 +111,7 @@ Full upload audit log with timestamps:
 # Step 1: Verify downloads exist
 python -c "
 import os
-d = r'C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM\data\heygen\downloads'
+d = r'C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM\data\videos\downloads'
 files = os.listdir(d)
 print(f'{len(files)} MP4 files ready')
 "
@@ -126,7 +126,7 @@ python scripts/youtube_upload.py --upload
 cd apps/web && npx tsc --noEmit
 
 # Step 5: Commit everything
-git add data/heygen/youtube-upload-log.json data/heygen/video-registry.json \
+git add data/videos/youtube-upload-log.json data/videos/video-registry.json \
         apps/web/components/dashboard/DemoVideoBanner.tsx
 git commit -m "feat(youtube): add YouTube IDs for all 24 CCW demo videos"
 git push origin fix/railway-cache-auth-500
@@ -146,7 +146,7 @@ All videos uploaded with:
 - **Upload script**: `scripts/youtube_upload.py`
 - **OAuth creds**: `scripts/youtube_oauth_client.json` (you provide)
 - **Token cache**: `scripts/.youtube_token.json` (auto-generated)
-- **Upload log**: `data/heygen/youtube-upload-log.json` (auto-generated)
+- **Upload log**: `data/videos/youtube-upload-log.json` (auto-generated)
 
 ## Troubleshooting
 
