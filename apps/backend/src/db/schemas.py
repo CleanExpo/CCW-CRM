@@ -1,12 +1,11 @@
 """Pydantic schemas for ERP API."""
-from datetime import date, datetime
+from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_serializer, field_validator, model_validator
 
-from src.db.demo_models import OrderStatus, QuoteStatus
-from src.db.erp_models import ProductCategory
+from src.db.demo_models import OrderStatus, ProductCategory, QuoteStatus
 
 
 # Organization schemas
@@ -168,6 +167,14 @@ class OrderItemCreate(BaseModel):
     quantity: int = Field(ge=1, description="Quantity must be at least 1")
 
 
+# PHASE 4 OPTIMIZATION: OrderItemUpdate with optional id for diff-based updates
+class OrderItemUpdate(BaseModel):
+    """Order item for updates - includes optional id to enable diff-based updates."""
+    id: UUID | None = None  # If provided, update existing item; if None, create new item
+    product_id: UUID
+    quantity: int = Field(ge=1, description="Quantity must be at least 1")
+
+
 class OrderItem(OrderItemBase):
     id: UUID
     order_id: UUID
@@ -202,7 +209,7 @@ class OrderUpdate(BaseModel):
     carrier_name: str | None = None
     shipped_date: datetime | None = None
     estimated_delivery_date: datetime | None = None
-    items: list[OrderItemCreate] | None = None
+    items: list[OrderItemUpdate] | None = None  # PHASE 4: Use OrderItemUpdate for diff-based updates
     subtotal: Decimal | None = None
     tax: Decimal | None = None
     total: Decimal | None = None
@@ -273,40 +280,126 @@ class QuoteItem(QuoteItemBase):
 class QuoteBase(BaseModel):
     customer_id: UUID
     status: QuoteStatus = QuoteStatus.DRAFT
-    valid_until: date | None = None
+    valid_until: datetime | None = None  # Match database type
     notes: str | None = None
 
     @field_validator("valid_until", mode="before")
     @classmethod
     def normalize_valid_until(cls, value):
-        """Normalize valid_until to date type, accepting datetime or ISO date strings."""
+        """Convert date or string to datetime with UTC timezone."""
         if value is None:
             return value
         if isinstance(value, datetime):
-            return value.date()
+            # Ensure timezone aware
+            if value.tzinfo is None:
+                return value.replace(tzinfo=UTC)
+            return value
         if isinstance(value, date):
+            # Convert date to datetime at midnight UTC
+            return datetime.combine(value, time.min, tzinfo=UTC)
+        if isinstance(value, str):
+            # Try parsing ISO format
+            try:
+                dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=UTC)
+                return dt
+            except (ValueError, AttributeError):
+                pass
+        return value
+
+    @field_serializer('valid_until')
+    def serialize_valid_until(self, value: datetime | None) -> str | None:
+        """Serialize datetime as ISO date string for API responses."""
+        if value is None:
+            return None
+        return value.date().isoformat()
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_status(cls, value):
+        """Accept both enum and string, validate against allowed values."""
+        if isinstance(value, QuoteStatus):
             return value
         if isinstance(value, str):
-            # Try parsing ISO format (YYYY-MM-DD)
+            # Validate string is a valid enum value
             try:
-                return datetime.fromisoformat(value.replace('Z', '+00:00')).date()
-            except (ValueError, AttributeError):
-                # If that fails, let Pydantic handle it (will raise validation error)
-                pass
+                return QuoteStatus(value)
+            except ValueError:
+                # Provide helpful error message with valid options
+                valid = [s.value for s in QuoteStatus]
+                raise ValueError(f"Invalid status '{value}'. Must be one of: {', '.join(valid)}")
         return value
 
 
 class QuoteCreate(QuoteBase):
-    valid_until: date
+    valid_until: datetime | None = None  # Made optional to match backend logic
     items: list[QuoteItemCreate] = Field(min_length=1, description="Quote must have at least one item")
 
 
 class QuoteUpdate(BaseModel):
     customer_id: UUID | None = None
     status: QuoteStatus | None = None
-    valid_until: date | None = None
+    valid_until: datetime | None = None
     notes: str | None = None
-    items: list[QuoteItemCreate] | None = Field(None, min_length=1, description="If provided, quote must have at least one item")
+    items: list[QuoteItemCreate] | None = Field(None, description="If provided, quote must have at least one item")
+
+    @model_validator(mode="after")
+    def validate_items(self):
+        """Ensure quotes have at least one item if items are being updated."""
+        if self.items is not None and len(self.items) == 0:
+            raise ValueError("Quote must have at least one item. Cannot update to zero items.")
+        return self
+
+    @field_validator("valid_until", mode="before")
+    @classmethod
+    def normalize_valid_until(cls, value):
+        """Convert date or string to datetime with UTC timezone."""
+        if value is None:
+            return value
+        if isinstance(value, datetime):
+            # Ensure timezone aware
+            if value.tzinfo is None:
+                return value.replace(tzinfo=UTC)
+            return value
+        if isinstance(value, date):
+            # Convert date to datetime at midnight UTC
+            return datetime.combine(value, time.min, tzinfo=UTC)
+        if isinstance(value, str):
+            # Try parsing ISO format
+            try:
+                dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=UTC)
+                return dt
+            except (ValueError, AttributeError):
+                pass
+        return value
+
+    @field_serializer('valid_until')
+    def serialize_valid_until(self, value: datetime | None) -> str | None:
+        """Serialize datetime as ISO date string for API responses."""
+        if value is None:
+            return None
+        return value.date().isoformat()
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_status(cls, value):
+        """Accept both enum and string, validate against allowed values."""
+        if value is None:
+            return value
+        if isinstance(value, QuoteStatus):
+            return value
+        if isinstance(value, str):
+            # Validate string is a valid enum value
+            try:
+                return QuoteStatus(value)
+            except ValueError:
+                # Provide helpful error message with valid options
+                valid = [s.value for s in QuoteStatus]
+                raise ValueError(f"Invalid status '{value}'. Must be one of: {', '.join(valid)}")
+        return value
 
 
 class Quote(QuoteBase):

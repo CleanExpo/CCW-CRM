@@ -10,20 +10,19 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.cache.decorators import cached, invalidate_cache
-from src.config.database import get_db
-from src.db.erp_models import Product as ProductModel
+from src.config.database import get_async_db
+from src.db.demo_models import Product as ProductModel
 from src.db.inventory_models import ProductStockByLocation
 from src.db.schemas import (
     PaginatedResponse,
     Product,
     ProductCreate,
     ProductUpdate,
-    ProductWithStock,
     StockByLocation,
 )
+from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
@@ -37,7 +36,7 @@ async def list_products(
     category: str | None = None,
     is_active: bool | None = None,
     include_stock: bool = Query(True, description="Include multi-location stock data"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """List products with pagination and filters.
 
@@ -136,7 +135,7 @@ async def list_products(
 @router.get("/{product_id}", response_model=Product)
 async def get_product(
     product_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single product by ID."""
     query = select(ProductModel).where(ProductModel.id == product_id)
@@ -152,7 +151,7 @@ async def get_product(
 @router.post("", response_model=Product, status_code=201)
 async def create_product(
     product_data: ProductCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Create a new product."""
     # Check if SKU already exists
@@ -173,6 +172,22 @@ async def create_product(
     await invalidate_cache("dashboard_inventory")
     await invalidate_cache("dashboard_top_products")
 
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "total_products",
+        "change": "increment",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "product_created",
+        "title": "New Product",
+        "description": f"Product {product.name} created",
+        "link": f"/products/{product.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     return Product.model_validate(product)
 
 
@@ -180,7 +195,7 @@ async def create_product(
 async def update_product(
     product_id: UUID,
     product_data: ProductUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Update a product.
 
@@ -212,10 +227,11 @@ async def update_product(
     # PHASE: Enhanced Shopify Integration - Task 1.2: Automatic Metafield Sync
     # Check if product has Shopify mapping and sync metafields automatically
     try:
+        import structlog
+
         from src.db.shopify_models import ShopifyProductMapping
         from src.integrations.shopify.metafields import get_metafield_manager
         from src.services.sse_service import sse_service
-        import structlog
 
         logger = structlog.get_logger(__name__)
 
@@ -283,13 +299,22 @@ async def update_product(
         )
         # Continue with product update success
 
+    # Publish real-time dashboard update
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "product_updated",
+        "title": "Product Updated",
+        "description": f"Product {product.name} updated",
+        "link": f"/products/{product.id}",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
     return Product.model_validate(product)
 
 
-@router.delete("/{product_id}", status_code=204)
+@router.delete("/{product_id}", status_code=204, response_model=None)
 async def delete_product(
     product_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Soft delete a product (set is_active to False)."""
     # Get existing product
@@ -301,6 +326,7 @@ async def delete_product(
         raise HTTPException(status_code=404, detail="Product not found")
 
     # Soft delete
+    product_name = product.name
     product.is_active = False
     await db.commit()
 
@@ -309,5 +335,21 @@ async def delete_product(
     await invalidate_cache("api_products_list")
     await invalidate_cache("dashboard_inventory")
     await invalidate_cache("dashboard_top_products")
+
+    # Publish real-time events
+    await sse_service.publish("dashboard-metrics", {
+        "type": "metrics_updated",
+        "metric": "total_products",
+        "change": "decrement",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    await sse_service.publish("dashboard-activity", {
+        "activity_type": "product_deleted",
+        "title": "Product Deleted",
+        "description": f"Product {product_name} deleted",
+        "link": "/products",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
 
     return None

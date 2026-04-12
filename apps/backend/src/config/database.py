@@ -27,8 +27,8 @@ def get_database_url(async_mode: bool = False) -> str:
     """
     settings = get_settings()
 
-    # Default to local PostgreSQL if not configured
-    db_url = settings.database_url or "postgresql://starter_user:local_dev_password@localhost:5432/starter_db"
+    # Default to local PostgreSQL if not configured (port 5434 matches docker-compose.yml)
+    db_url = settings.database_url or "postgresql://starter_user:local_dev_password@localhost:5434/starter_db"
 
     # Convert to async URL if needed
     if async_mode and not db_url.startswith("postgresql+asyncpg"):
@@ -63,10 +63,14 @@ async_engine = create_async_engine(
     get_database_url(async_mode=True),
     echo=get_settings().debug,
     pool_pre_ping=True,
-    pool_size=20,  # Support 20 concurrent requests
-    max_overflow=30,  # Burst up to 50 total connections
+    pool_size=5,  # Smaller pool for serverless/pooler environments
+    max_overflow=10,  # Burst up to 15 total connections
     pool_timeout=30,  # Wait 30s before failing connection request
     pool_recycle=3600,  # Recycle connections after 1 hour
+    connect_args={
+        "statement_cache_size": 0,  # Required for pgbouncer/Supabase pooler
+        "prepared_statement_cache_size": 0,  # Disable prepared statement cache
+    },
 )
 
 # Asynchronous session factory
@@ -103,6 +107,10 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Get asynchronous database session (FastAPI dependency).
 
+    Automatically rolls back the session on unhandled exceptions so that
+    a failed ``await db.commit()`` in any route never leaves the connection
+    in a dirty state.
+
     Yields:
         Async database session
 
@@ -117,6 +125,9 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
+        except Exception:
+            await session.rollback()
+            raise
         finally:
             await session.close()
 
@@ -144,5 +155,3 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-# Alias for convenience
-get_db = get_async_db

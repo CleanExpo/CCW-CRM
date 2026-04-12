@@ -7,15 +7,15 @@ Provides vector-based semantic search using product embeddings with multi-langua
 import time
 from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import httpx
 import structlog
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import get_settings
-from src.db.ai_search_models import ProductEmbedding, SearchQuery
+from src.db.ai_search_models import SearchQuery
 from src.db.demo_models import Product
 
 logger = structlog.get_logger(__name__)

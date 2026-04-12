@@ -1,13 +1,16 @@
-"use client";
+'use client';
 
-import { useState, useEffect, memo } from "react";
-import { Package, AlertTriangle, TrendingDown } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { MultiLocationStockCell, type StockByLocation } from "@/components/inventory/MultiLocationStockCell";
-import { apiClient } from "@/lib/api/client";
-import Link from "next/link";
+import { useState, useEffect, memo } from 'react';
+import { Package, AlertTriangle, TrendingDown } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  MultiLocationStockCell,
+  type StockByLocation,
+} from '@/components/inventory/MultiLocationStockCell';
+import { apiClient } from '@/lib/api/client';
+import Link from 'next/link';
 
 interface LowStockProduct {
   id: string;
@@ -34,10 +37,13 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
     async function fetchStockHealth() {
       try {
         setLoading(true);
-        const response = await apiClient.get<StockHealthData>("/api/inventory/stock-health?threshold=20");
+        const response = await apiClient.get<StockHealthData>(
+          '/api/inventory/stock-health?threshold=20'
+        );
         setStockHealth(response);
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to load stock health data";
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to load stock health data';
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -91,8 +97,8 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
             </CardTitle>
             <CardDescription>
               {totalIssues === 0
-                ? "All products have healthy stock levels"
-                : `${totalIssues} product${totalIssues > 1 ? "s" : ""} requiring attention`}
+                ? 'All products have healthy stock levels'
+                : `${totalIssues} product${totalIssues > 1 ? 's' : ''} requiring attention`}
             </CardDescription>
           </div>
           <Button asChild variant="outline" size="sm">
@@ -102,8 +108,8 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
       </CardHeader>
       <CardContent>
         {totalIssues === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <div className="text-muted-foreground py-8 text-center">
+            <Package className="mx-auto mb-2 h-12 w-12 opacity-50" />
             <p className="text-sm">All products have sufficient stock</p>
           </div>
         ) : (
@@ -111,7 +117,7 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
             {/* Critical Stock (Out of Stock Everywhere) */}
             {stockHealth && stockHealth.critical.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="mb-3 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
                   <h4 className="text-sm font-semibold text-red-600">
                     Critical - Out of Stock ({stockHealth.critical.length})
@@ -121,18 +127,18 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
                   {stockHealth.critical.map((product) => (
                     <div
                       key={product.id}
-                      className="flex justify-between items-start p-3 rounded-lg border border-red-200 bg-red-50"
+                      className="flex items-start justify-between rounded-lg border border-red-200 bg-red-50 p-3"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm text-muted-foreground">
+                          <span className="text-muted-foreground font-mono text-sm">
                             {product.sku}
                           </span>
                           <Badge variant="destructive" className="text-xs">
                             OUT OF STOCK
                           </Badge>
                         </div>
-                        <p className="font-medium mt-1">{product.name}</p>
+                        <p className="mt-1 font-medium">{product.name}</p>
                         <div className="mt-2">
                           <MultiLocationStockCell
                             productId={product.id}
@@ -141,7 +147,7 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
                         </div>
                       </div>
                       <Button asChild size="sm" variant="default" className="ml-4">
-                        <Link href={`/procurement?reorder=${product.id}` as any}>Order Now</Link>
+                        <Link href={`/procurement?reorder=${product.id}`}>Order Now</Link>
                       </Button>
                     </div>
                   ))}
@@ -152,7 +158,7 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
             {/* Low Stock (Total < 20) */}
             {stockHealth && stockHealth.low.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="mb-3 flex items-center gap-2">
                   <TrendingDown className="h-4 w-4 text-yellow-600" />
                   <h4 className="text-sm font-semibold text-yellow-600">
                     Low Stock - Reorder Soon ({stockHealth.low.length})
@@ -162,18 +168,21 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
                   {stockHealth.low.map((product) => (
                     <div
                       key={product.id}
-                      className="flex justify-between items-start p-3 rounded-lg border border-yellow-200 bg-yellow-50"
+                      className="flex items-start justify-between rounded-lg border border-yellow-200 bg-yellow-50 p-3"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm text-muted-foreground">
+                          <span className="text-muted-foreground font-mono text-sm">
                             {product.sku}
                           </span>
-                          <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
+                          <Badge
+                            variant="secondary"
+                            className="bg-yellow-100 text-xs text-yellow-800"
+                          >
                             LOW STOCK
                           </Badge>
                         </div>
-                        <p className="font-medium mt-1">{product.name}</p>
+                        <p className="mt-1 font-medium">{product.name}</p>
                         <div className="mt-2">
                           <MultiLocationStockCell
                             productId={product.id}
@@ -182,7 +191,7 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
                         </div>
                       </div>
                       <Button asChild size="sm" variant="outline" className="ml-4">
-                        <Link href={`/procurement?reorder=${product.id}` as any}>Reorder</Link>
+                        <Link href={`/procurement?reorder=${product.id}`}>Reorder</Link>
                       </Button>
                     </div>
                   ))}
@@ -193,7 +202,7 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
             {/* Warning (Out at one location but available elsewhere) */}
             {stockHealth && stockHealth.warning.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="mb-3 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-orange-600" />
                   <h4 className="text-sm font-semibold text-orange-600">
                     Location Imbalance ({stockHealth.warning.length})
@@ -203,18 +212,21 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
                   {stockHealth.warning.map((product) => (
                     <div
                       key={product.id}
-                      className="flex justify-between items-start p-3 rounded-lg border border-orange-200 bg-orange-50"
+                      className="flex items-start justify-between rounded-lg border border-orange-200 bg-orange-50 p-3"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm text-muted-foreground">
+                          <span className="text-muted-foreground font-mono text-sm">
                             {product.sku}
                           </span>
-                          <Badge variant="outline" className="text-xs border-orange-400 text-orange-700">
+                          <Badge
+                            variant="outline"
+                            className="border-orange-400 text-xs text-orange-700"
+                          >
                             NEEDS TRANSFER
                           </Badge>
                         </div>
-                        <p className="font-medium mt-1">{product.name}</p>
+                        <p className="mt-1 font-medium">{product.name}</p>
                         <div className="mt-2">
                           <MultiLocationStockCell
                             productId={product.id}
@@ -223,7 +235,7 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
                         </div>
                       </div>
                       <Button asChild size="sm" variant="outline" className="ml-4">
-                        <Link href={`/inventory/transfers?product=${product.id}` as any}>Transfer</Link>
+                        <Link href={`/inventory/transfers?product=${product.id}`}>Transfer</Link>
                       </Button>
                     </div>
                   ))}

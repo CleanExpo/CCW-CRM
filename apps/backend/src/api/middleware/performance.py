@@ -2,8 +2,8 @@
 
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import Callable
 
 import structlog
 from fastapi import Request, Response

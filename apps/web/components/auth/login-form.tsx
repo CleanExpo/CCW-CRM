@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -13,14 +13,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { authApi } from "@/lib/api/auth";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { authApi } from '@/lib/api/auth';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  rememberMe: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -33,8 +35,9 @@ export function LoginForm() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
+      rememberMe: true,
     },
   });
 
@@ -45,21 +48,22 @@ export function LoginForm() {
       const response = await authApi.login({
         email: values.email,
         password: values.password,
+        rememberMe: values.rememberMe,
       });
 
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Welcome back, ${response.user.email}!`,
       });
 
-      // Redirect to dashboard
-      router.push("/dashboard");
-      router.refresh();
+      // Force full page reload to trigger middleware authentication check
+      // This ensures the auth cookie is properly validated server-side
+      window.location.href = '/dashboard';
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
+      const errorMessage = error instanceof Error ? error.message : 'Invalid email or password';
       toast({
-        variant: "destructive",
-        title: "Login Failed",
+        variant: 'destructive',
+        title: 'Login Failed',
         description: errorMessage,
       });
     } finally {
@@ -77,12 +81,7 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input
-                  type="email"
-                  placeholder="admin@demo.com"
-                  autoComplete="email"
-                  {...field}
-                />
+                <Input type="email" placeholder="you@company.com" autoComplete="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -108,13 +107,29 @@ export function LoginForm() {
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="rememberMe"
+          render={({ field }) => (
+            <FormItem className="flex items-center gap-2 space-y-0">
+              <FormControl>
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+              <FormLabel className="cursor-pointer text-sm font-normal">
+                Keep me signed in
+              </FormLabel>
+            </FormItem>
+          )}
+        />
+
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign In"}
+          {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
 
-        <div className="text-sm text-muted-foreground text-center mt-4">
-          <p>Demo Credentials:</p>
-          <p className="font-mono">admin@demo.com / demo123</p>
+        <div className="mt-4 text-center text-xs text-slate-400">
+          <a href="/forgot-password" className="hover:text-slate-600 hover:underline">
+            Forgot your password?
+          </a>
         </div>
       </form>
     </Form>

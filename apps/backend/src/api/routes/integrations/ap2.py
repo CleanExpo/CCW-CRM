@@ -14,7 +14,7 @@ from typing import Annotated
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,8 +22,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config.ap2_settings import get_ap2_settings
 from src.config.database import get_async_db
 from src.db.ap2_models import (
-    AP2AgentInteraction,
-    AP2Connection,
     AP2Mandate,
     AP2MandateStatus,
     AP2MandateType,
@@ -629,6 +627,90 @@ async def process_voice_input(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process voice input: {str(e)}",
         )
+
+
+@router.get("/mandates")
+async def list_mandates(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    page: int = 1,
+    page_size: int = 20,
+    mandate_type: str | None = None,
+) -> dict:
+    """List AP2 mandates with optional type filter."""
+    from sqlalchemy import func
+
+    query = select(AP2Mandate).order_by(AP2Mandate.created_at.desc())
+    if mandate_type:
+        try:
+            query = query.where(AP2Mandate.mandate_type == AP2MandateType(mandate_type))
+        except ValueError:
+            pass
+
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar_one()
+
+    offset = (page - 1) * page_size
+    result = await db.execute(query.offset(offset).limit(page_size))
+    mandates = result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "mandate_id": str(m.id),
+                "mandate_type": m.mandate_type.value,
+                "status": m.status.value,
+                "expires_at": m.expires_at.isoformat(),
+                "parent_mandate_id": str(m.parent_mandate_id) if m.parent_mandate_id else None,
+                "payment_amount": float(m.payment_amount) if m.payment_amount else None,
+                "payment_currency": m.payment_currency,
+                "created_at": m.created_at.isoformat(),
+            }
+            for m in mandates
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+@router.get("/transactions")
+async def list_transactions(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    page: int = 1,
+    page_size: int = 20,
+) -> dict:
+    """List AP2 transactions (paginated)."""
+    from sqlalchemy import func
+
+    query = select(AP2Transaction).order_by(AP2Transaction.created_at.desc())
+
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar_one()
+
+    offset = (page - 1) * page_size
+    result = await db.execute(query.offset(offset).limit(page_size))
+    transactions = result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "transaction_id": str(t.id),
+                "mandate_id": str(t.mandate_id),
+                "status": t.status.value,
+                "amount": float(t.amount),
+                "currency": t.currency,
+                "payment_method": t.payment_method,
+                "completed_at": t.completed_at.isoformat() if t.completed_at else None,
+                "failed_at": t.failed_at.isoformat() if t.failed_at else None,
+                "error_message": t.error_message,
+                "created_at": t.created_at.isoformat(),
+            }
+            for t in transactions
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @router.post("/webhooks")

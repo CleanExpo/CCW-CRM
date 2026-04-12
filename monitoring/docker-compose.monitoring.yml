@@ -25,7 +25,7 @@ services:
     container_name: ccw-prometheus
     restart: unless-stopped
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/alert-rules-prod.yml:/etc/prometheus/alert-rules-prod.yml:ro
@@ -46,10 +46,14 @@ services:
     container_name: ccw-grafana
     restart: unless-stopped
     ports:
-      - "3001:3000"  # Port 3001 to avoid conflict with Next.js
+      - '3001:3000' # Port 3001 to avoid conflict with Next.js
     volumes:
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      # Provisioning configurations
+      - ./grafana/provisioning/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./grafana/provisioning/datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      # Dashboard JSON files
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      # Grafana data persistence
       - grafana-data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
@@ -68,7 +72,7 @@ services:
     container_name: ccw-alertmanager
     restart: unless-stopped
     ports:
-      - "9093:9093"
+      - '9093:9093'
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager-data:/alertmanager
@@ -84,7 +88,7 @@ services:
     container_name: ccw-node-exporter
     restart: unless-stopped
     ports:
-      - "9100:9100"
+      - '9100:9100'
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
@@ -102,25 +106,25 @@ services:
     container_name: ccw-postgres-exporter
     restart: unless-stopped
     ports:
-      - "9187:9187"
+      - '9187:9187'
     environment:
       - DATA_SOURCE_NAME=postgresql://starter_user:local_dev_password@postgres:5432/starter_db?sslmode=disable
     networks:
       - monitoring
-      - default  # Connect to main app network
+      - default # Connect to main app network
 
   # Redis Exporter - Cache metrics
   redis-exporter:
-    image: oliver006/redis_exporter:latest
+    image: oliver006/redis_exporter:v1.55.0
     container_name: ccw-redis-exporter
     restart: unless-stopped
     ports:
-      - "9121:9121"
+      - '9122:9121' # External 9122 to avoid conflict with other processes
     environment:
-      - REDIS_ADDR=redis:6379
+      - REDIS_ADDR=redis://redis:6379
     networks:
       - monitoring
-      - default  # Connect to main app network
+      - default # Connect to main app network
 
   # cAdvisor - Container metrics
   cadvisor:
@@ -128,7 +132,7 @@ services:
     container_name: ccw-cadvisor
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - '8080:8080'
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -154,4 +158,4 @@ networks:
     driver: bridge
   default:
     external: true
-    name: ccw-erp_default  # Connect to main application network
+    name: ccw-erp_default # Connect to main application network

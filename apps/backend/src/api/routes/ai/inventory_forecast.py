@@ -1,6 +1,5 @@
 """Inventory Forecasting API endpoints."""
-
-from typing import Any
+from __future__ import annotations
 
 import structlog
 from fastapi import APIRouter, HTTPException, Query

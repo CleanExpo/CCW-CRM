@@ -6,13 +6,13 @@ import type {
   ImageCategory,
   ImageGenerationConfig,
   IconGenerationConfig,
-} from "./types";
+} from './types';
 
 /* ----------------------------------------
    Asset Manager Configuration
    ---------------------------------------- */
-const MANIFEST_PATH = "public/images/asset-manifest.json";
-const BASE_IMAGE_PATH = "public/images";
+const MANIFEST_PATH = 'public/images/asset-manifest.json';
+const BASE_IMAGE_PATH = 'public/images';
 
 /* ----------------------------------------
    In-Memory Manifest (for client-side)
@@ -28,18 +28,18 @@ function generateAssetId(): string {
 
 function getFileExtension(mimeType: string): string {
   const mimeToExt: Record<string, string> = {
-    "image/png": "png",
-    "image/jpeg": "jpg",
-    "image/webp": "webp",
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/webp': 'webp',
   };
-  return mimeToExt[mimeType] || "png";
+  return mimeToExt[mimeType] || 'png';
 }
 
 function sanitizeFilename(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 /* ----------------------------------------
@@ -47,7 +47,7 @@ function sanitizeFilename(name: string): string {
    ---------------------------------------- */
 export function createEmptyManifest(): AssetManifest {
   return {
-    version: "1.0.0",
+    version: '1.0.0',
     lastUpdated: new Date(),
     assets: [],
   };
@@ -70,7 +70,6 @@ export async function saveManifest(manifest: AssetManifest): Promise<void> {
 
   // In a real implementation, this would write to the file system
   // This is a placeholder for the API route implementation
-  console.log("[AssetManager] Manifest updated:", manifest.assets.length, "assets");
 }
 
 /* ----------------------------------------
@@ -86,15 +85,14 @@ export async function registerImageAsset(
 ): Promise<BrandAsset> {
   const manifest = await loadManifest();
 
-  const filename =
-    options.filename || sanitizeFilename(image.config.context) || image.id;
+  const filename = options.filename || sanitizeFilename(image.config.context) || image.id;
   const extension = getFileExtension(image.mimeType);
   const subdirectory = options.subdirectory || image.config.category;
   const relativePath = `/images/${subdirectory}/${filename}.${extension}`;
 
   const asset: BrandAsset = {
     id: generateAssetId(),
-    type: "image",
+    type: 'image',
     path: relativePath,
     altText: image.altText,
     category: image.config.category,
@@ -121,15 +119,15 @@ export async function registerIconAsset(
 
   const filename = options.filename || sanitizeFilename(icon.name) || icon.id;
   const extension = icon.format;
-  const subdirectory = options.subdirectory || "icons";
+  const subdirectory = options.subdirectory || 'icons';
   const relativePath = `/images/${subdirectory}/${filename}.${extension}`;
 
   const asset: BrandAsset = {
     id: generateAssetId(),
-    type: "icon",
+    type: 'icon',
     path: relativePath,
     altText: icon.name,
-    category: "icon",
+    category: 'icon',
     tags: options.tags || [icon.config.style, icon.config.description],
     config: icon.config,
     createdAt: new Date(),
@@ -149,9 +147,7 @@ export async function getAssetById(id: string): Promise<BrandAsset | null> {
   return manifest.assets.find((asset) => asset.id === id) || null;
 }
 
-export async function getAssetsByCategory(
-  category: ImageCategory
-): Promise<BrandAsset[]> {
+export async function getAssetsByCategory(category: ImageCategory): Promise<BrandAsset[]> {
   const manifest = await loadManifest();
   return manifest.assets.filter((asset) => asset.category === category);
 }
@@ -196,20 +192,18 @@ export async function deleteAsset(id: string): Promise<boolean> {
 /* ----------------------------------------
    Tag Extraction
    ---------------------------------------- */
-function extractTags(
-  config: ImageGenerationConfig | IconGenerationConfig
-): string[] {
+function extractTags(config: ImageGenerationConfig | IconGenerationConfig): string[] {
   const tags: string[] = [];
 
-  if ("style" in config && typeof config.style === "string") {
+  if ('style' in config && typeof config.style === 'string') {
     tags.push(config.style);
   }
 
-  if ("category" in config) {
+  if ('category' in config) {
     tags.push((config as ImageGenerationConfig).category);
   }
 
-  if ("context" in config) {
+  if ('context' in config) {
     // Extract keywords from context
     const contextWords = (config as ImageGenerationConfig).context
       .toLowerCase()
@@ -218,7 +212,7 @@ function extractTags(
     tags.push(...contextWords.slice(0, 5));
   }
 
-  if ("description" in config) {
+  if ('description' in config) {
     tags.push((config as IconGenerationConfig).description);
   }
 
@@ -228,10 +222,7 @@ function extractTags(
 /* ----------------------------------------
    Usage Tracking
    ---------------------------------------- */
-export async function trackAssetUsage(
-  assetId: string,
-  filePath: string
-): Promise<void> {
+export async function trackAssetUsage(assetId: string, filePath: string): Promise<void> {
   const manifest = await loadManifest();
   const asset = manifest.assets.find((a) => a.id === assetId);
 
@@ -246,9 +237,7 @@ export async function trackAssetUsage(
 
 export async function getUnusedAssets(): Promise<BrandAsset[]> {
   const manifest = await loadManifest();
-  return manifest.assets.filter(
-    (asset) => !asset.usedIn || asset.usedIn.length === 0
-  );
+  return manifest.assets.filter((asset) => !asset.usedIn || asset.usedIn.length === 0);
 }
 
 /* ----------------------------------------
@@ -304,6 +293,6 @@ export async function importManifest(jsonString: string): Promise<void> {
     manifest.lastUpdated = new Date();
     await saveManifest(manifest);
   } catch (error) {
-    throw new Error("Invalid manifest JSON");
+    throw new Error('Invalid manifest JSON');
   }
 }

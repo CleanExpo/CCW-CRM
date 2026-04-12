@@ -26,7 +26,7 @@ jobs:
     if: needs.detect-agent-pr.outputs.is_agent_pr == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Verify Agent Metadata in PR Description
         run: |
@@ -63,7 +63,7 @@ jobs:
     if: needs.detect-agent-pr.outputs.is_agent_pr == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -71,9 +71,9 @@ jobs:
           node-version: '20'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
-          version: "9.15.0"
+          version: '9.15.0'
 
       - name: Install dependencies
         run: pnpm install
@@ -123,7 +123,7 @@ jobs:
     if: needs.detect-agent-pr.outputs.is_agent_pr == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Scan for Secrets
         run: |
@@ -158,7 +158,7 @@ jobs:
     if: needs.detect-agent-pr.outputs.is_agent_pr == 'true' && always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Comment on PR
         run: |

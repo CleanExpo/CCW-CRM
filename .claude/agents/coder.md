@@ -1,3 +1,8 @@
+---
+name: Coder Agent
+description: Writes and modifies code following approved implementation plans
+---
+
 # CODER AGENT
 
 **Version**: 2.0.0
@@ -81,6 +86,7 @@ Starting with step 1...
 **Status:** ✅ Complete
 
 Key changes:
+
 - Added Button component from shadcn/ui
 - Added loading state with useState
 - Added error handling with toast
@@ -96,12 +102,14 @@ Key changes:
 3. Ask @planner for clarification
 
 **DO NOT:**
+
 - Guess and hope
 - Try a different approach without approval
 - Skip the problematic part
 - Move on and come back later
 
 **Instead, say:**
+
 ```
 ⚠️ Stuck on Step [X]
 

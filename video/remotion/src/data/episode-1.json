@@ -1,0 +1,41 @@
+{
+  "sessionId": "CCW-BOARD-EP001",
+  "videoBrief": {
+    "title": "CCW Boardroom — Episode 1: The Operating System for Equipment Suppliers",
+    "description": "The inaugural CCW Boardroom session. Meet the board, review the platform build status, and learn what CCW ERP means for Australian equipment suppliers.",
+    "tags": [
+      "CCW ERP",
+      "equipment supplier",
+      "boardroom",
+      "Australia",
+      "ERP software",
+      "AI agents"
+    ],
+    "duration_iso": "PT2M30S",
+    "script": "",
+    "youtube": {
+      "chapters": [
+        { "timestamp": "0:00", "title": "Intro" },
+        { "timestamp": "0:05", "title": "Intelligence Brief" },
+        { "timestamp": "0:35", "title": "Build Status" },
+        { "timestamp": "0:45", "title": "The Architect — Systems Design" },
+        { "timestamp": "1:00", "title": "The Revenue Guardian — Revenue Strategy" },
+        { "timestamp": "1:15", "title": "The Agent Whisperer — AI Architecture" },
+        { "timestamp": "1:30", "title": "The Integration Maestro — Integrations" },
+        { "timestamp": "1:45", "title": "Moon Shot" },
+        { "timestamp": "2:05", "title": "Call to Action" },
+        { "timestamp": "2:25", "title": "Outro" }
+      ]
+    }
+  },
+  "buildStatus": "AMBER",
+  "buildReason": "Platform at 82% production readiness. 14 modules live, video pipeline complete, RLS security deployed across all tables. Remaining: Xero OAuth, Stripe webhook activation, YouTube content ramp.",
+  "intelligence": "Australian equipment suppliers lose $2.3B annually to manual inventory processes and disconnected systems.\nThe cleaning equipment market is growing 8.2% YoY — fastest in the trades sector.\nCompetitors are still on legacy ERPs (MYOB, Reckon) with zero AI integration — CCW has a 12-month head start.",
+  "boardOutputs": {
+    "architect": "The modular architecture is proving its worth. 14 independently deployable modules with zero cross-contamination. The Remotion video pipeline ships training content without touching the core ERP. Next priority: decouple the Cin7 sync engine into a standalone service.",
+    "revenue_guardian": "With 35 active customers and a 38.9% quote conversion rate, the pipeline is healthy. The immediate revenue unlock is Stripe billing activation — recurring SaaS revenue from day one. Focus: convert the 7 pending quotes worth $850K+ in pipeline value.",
+    "agent_whisperer": "The AI agent framework is operational with 14 Superpowers skills and 29 gstack commands. The boardroom CRON runs autonomously. Next frontier: Agent Teams with parallel execution — each teammate in its own context window solves the token limit bottleneck.",
+    "integration_maestro": "Shopify and Xero are the two client-facing connections — everything else is CCW infrastructure. The 2-connection onboarding flow means clients are live in under 10 minutes. Priority: complete Xero OAuth setup on Railway to unlock accounting sync."
+  },
+  "moonShot": "Imagine every equipment supplier in Australia running their entire operation from a single AI-powered dashboard. Orders, inventory, customers, suppliers, invoicing — all connected, all intelligent, all autonomous. That is what CCW is building. The equipment industry has never had purpose-built software. We are changing that."
+}

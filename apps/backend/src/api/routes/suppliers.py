@@ -225,7 +225,7 @@ async def update_supplier(
     return SupplierResponse.model_validate(supplier)
 
 
-@router.delete("/{supplier_id}", status_code=204)
+@router.delete("/{supplier_id}", status_code=204, response_model=None)
 async def delete_supplier(
     supplier_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],

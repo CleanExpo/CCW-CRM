@@ -11,8 +11,8 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_async_db
 from src.ai.agents.specialized import RecommendationAgent
+from src.api.deps import get_async_db
 
 router = APIRouter(prefix="/api/recommendations", tags=["AI Recommendations"])
 

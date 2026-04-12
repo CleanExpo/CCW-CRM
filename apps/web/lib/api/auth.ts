@@ -1,10 +1,11 @@
 /**
  * Authentication API
  *
- * Handles login, logout, registration, and user management.
+ * Uses Supabase Auth for production, falls back to FastAPI backend for local dev.
  */
 
-import { apiClient } from "./client";
+import { getSupabase } from '@/lib/supabase/client';
+import { apiClient } from './client';
 
 export interface User {
   id: string;
@@ -19,6 +20,7 @@ export interface User {
 export interface LoginRequest {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface LoginResponse {
@@ -39,6 +41,15 @@ export interface RegisterResponse {
 }
 
 /**
+ * Check if we should use Supabase Auth (production) or FastAPI (local dev)
+ */
+function isSupabaseAuthEnabled(): boolean {
+  // Use Supabase Auth when NEXT_PUBLIC_SUPABASE_URL is configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  return supabaseUrl.length > 0 && supabaseUrl.includes('supabase.co');
+}
+
+/**
  * Authentication API methods
  */
 export const authApi = {
@@ -46,14 +57,41 @@ export const authApi = {
    * Login with email and password
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>(
-      "/api/auth/login",
-      credentials
-    );
+    const { rememberMe = true } = credentials;
 
-    // Store token in cookie
-    if (response.access_token) {
-      document.cookie = `auth_token=${response.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+    // Always use the same-origin proxy route for login.
+    // This solves two problems:
+    // 1. Supabase Auth intercepts when NEXT_PUBLIC_SUPABASE_URL is set,
+    //    but users are in public.users not auth.users
+    // 2. Cross-domain cookies: Railway backend sets Domain=localhost
+    //    which browsers on vercel.app ignore. The proxy sets the cookie
+    //    on the correct domain so Next.js middleware can read it.
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: credentials.email,
+        password: credentials.password,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.detail || errorData.error || 'Login failed');
+    }
+
+    const response: LoginResponse = await res.json();
+
+    // Store token in client-side storage for subsequent API calls
+    // (the proxy also sets an httpOnly cookie for SSR middleware)
+    if (response.access_token && typeof window !== 'undefined') {
+      if (rememberMe) {
+        localStorage.setItem('auth_token', response.access_token);
+        sessionStorage.removeItem('auth_token');
+      } else {
+        sessionStorage.setItem('auth_token', response.access_token);
+        localStorage.removeItem('auth_token');
+      }
     }
 
     return response;
@@ -63,21 +101,56 @@ export const authApi = {
    * Register a new user
    */
   async register(data: RegisterRequest): Promise<RegisterResponse> {
-    return apiClient.post<RegisterResponse>("/api/auth/register", data);
+    if (isSupabaseAuthEnabled()) {
+      const { data: authData, error } = await getSupabase().auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: { full_name: data.full_name },
+        },
+      });
+
+      if (error) throw new Error(error.message);
+
+      return {
+        user: {
+          id: authData.user?.id || '',
+          email: authData.user?.email || '',
+          full_name: data.full_name,
+          is_active: true,
+          is_admin: false,
+          created_at: authData.user?.created_at || new Date().toISOString(),
+        },
+        message: 'User registered successfully',
+      };
+    }
+
+    return apiClient.post<RegisterResponse>('/api/auth/register', data);
   },
 
   /**
    * Logout (clear auth token)
    */
   async logout(): Promise<void> {
-    // Clear token cookie
-    document.cookie = "auth_token=; path=/; max-age=0";
+    // Clear token from both storage locations
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_token');
+    }
 
-    // Optionally call backend logout endpoint if it exists
+    // Clear the httpOnly auth cookie via the proxy route
     try {
-      await apiClient.post("/api/auth/logout");
+      await fetch('/api/auth/logout', { method: 'POST' });
     } catch {
-      // Ignore errors - token is already cleared
+      // Ignore errors - token is already cleared from client storage
+    }
+
+    if (isSupabaseAuthEnabled()) {
+      try {
+        await getSupabase().auth.signOut();
+      } catch {
+        // Ignore - Supabase session may not exist
+      }
     }
   },
 
@@ -85,10 +158,25 @@ export const authApi = {
    * Get current user
    */
   async getCurrentUser(): Promise<User | null> {
+    if (isSupabaseAuthEnabled()) {
+      const {
+        data: { user },
+      } = await getSupabase().auth.getUser();
+      if (!user) return null;
+
+      return {
+        id: user.id,
+        email: user.email || '',
+        full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+        is_active: true,
+        is_admin: user.user_metadata?.is_admin ?? true,
+        created_at: user.created_at,
+      };
+    }
+
     try {
-      return await apiClient.get<User>("/api/auth/me");
-    } catch (error) {
-      // Not authenticated
+      return await apiClient.get<User>('/api/auth/me');
+    } catch {
       return null;
     }
   },
@@ -97,18 +185,44 @@ export const authApi = {
    * Update current user profile
    */
   async updateProfile(data: Partial<User>): Promise<User> {
-    return apiClient.patch<User>("/api/auth/me", data);
+    if (isSupabaseAuthEnabled()) {
+      const { data: authData, error } = await getSupabase().auth.updateUser({
+        data: { full_name: data.full_name },
+      });
+
+      if (error) throw new Error(error.message);
+
+      return {
+        id: authData.user?.id || '',
+        email: authData.user?.email || '',
+        full_name: authData.user?.user_metadata?.full_name,
+        is_active: true,
+        is_admin: authData.user?.user_metadata?.is_admin ?? true,
+        created_at: authData.user?.created_at || new Date().toISOString(),
+      };
+    }
+
+    return apiClient.patch<User>('/api/auth/me', data);
   },
 
   /**
    * Change password
    */
   async changePassword(
-    currentPassword: string,
+    _currentPassword: string,
     newPassword: string
   ): Promise<{ message: string }> {
-    return apiClient.post("/api/auth/change-password", {
-      current_password: currentPassword,
+    if (isSupabaseAuthEnabled()) {
+      const { error } = await getSupabase().auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw new Error(error.message);
+      return { message: 'Password changed successfully' };
+    }
+
+    return apiClient.post('/api/auth/change-password', {
+      current_password: _currentPassword,
       new_password: newPassword,
     });
   },
@@ -117,18 +231,32 @@ export const authApi = {
    * Request password reset
    */
   async requestPasswordReset(email: string): Promise<{ message: string }> {
-    return apiClient.post("/api/auth/forgot-password", { email });
+    if (isSupabaseAuthEnabled()) {
+      const { error } = await getSupabase().auth.resetPasswordForEmail(email);
+      if (error) throw new Error(error.message);
+      return {
+        message: 'If an account exists with that email, a password reset link has been sent.',
+      };
+    }
+
+    return apiClient.post('/api/auth/forgot-password', { email });
   },
 
   /**
    * Reset password with token
    */
-  async resetPassword(
-    token: string,
-    newPassword: string
-  ): Promise<{ message: string }> {
-    return apiClient.post("/api/auth/reset-password", {
-      token,
+  async resetPassword(_token: string, newPassword: string): Promise<{ message: string }> {
+    if (isSupabaseAuthEnabled()) {
+      const { error } = await getSupabase().auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw new Error(error.message);
+      return { message: 'Password has been reset successfully' };
+    }
+
+    return apiClient.post('/api/auth/reset-password', {
+      token: _token,
       new_password: newPassword,
     });
   },

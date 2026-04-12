@@ -9,22 +9,26 @@ Australian-first API for managing contractor schedules with:
 - SQLAlchemy ORM with async support
 """
 
-from datetime import date as DateType, time as TimeType
+import re
+from datetime import date as DateType
 from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, field_validator
-import re
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.models_base import (
     AustralianState,
-    AvailabilitySlot as AvailabilitySlotModel,
     AvailabilityStatus,
+)
+from src.db.models_base import (
+    AvailabilitySlot as AvailabilitySlotModel,
+)
+from src.db.models_base import (
     Contractor as ContractorModel,
 )
 
@@ -143,7 +147,7 @@ class ErrorResponse(BaseModel):
 # ============================================================================
 
 router = APIRouter(
-    prefix="/contractors",
+    prefix="/api/contractors",
     tags=["contractors"],
     responses={
         404: {"model": ErrorResponse, "description": "Contractor not found"},
@@ -163,7 +167,7 @@ async def list_contractors(
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     state: AustralianState | None = Query(None, description="Filter by Australian state (e.g., QLD, NSW)"),
     specialisation: str | None = Query(None, description="Filter by specialisation"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> ContractorList:
     """
     List contractors with optional filtering.
@@ -202,7 +206,7 @@ async def list_contractors(
         ]
 
     return ContractorList(
-        contractors=[Contractor.model_validate(c) for c in contractors],
+        contractors=[Contractor.model_validate(c).model_dump() for c in contractors],
         total=total,
         page=page,
         page_size=page_size,
@@ -217,7 +221,7 @@ async def list_contractors(
 )
 async def get_contractor(
     contractor_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Contractor:
     """Get contractor by ID."""
     query = (
@@ -246,7 +250,7 @@ async def get_contractor(
 )
 async def create_contractor(
     contractor: ContractorCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Contractor:
     """Create new contractor."""
     new_contractor = ContractorModel(
@@ -274,7 +278,7 @@ async def create_contractor(
 async def update_contractor(
     contractor_id: UUID,
     updates: ContractorUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Contractor:
     """Update contractor."""
     # Get existing contractor
@@ -302,12 +306,13 @@ async def update_contractor(
 @router.delete(
     "/{contractor_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="Delete contractor",
     description="Remove contractor from system",
 )
 async def delete_contractor(
     contractor_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """Delete contractor (cascades to availability slots)."""
     query = select(ContractorModel).where(ContractorModel.id == contractor_id)
@@ -336,7 +341,7 @@ async def delete_contractor(
 async def add_availability_slot(
     contractor_id: UUID,
     slot: AvailabilitySlotCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> AvailabilitySlot:
     """Add availability slot."""
     # Check if contractor exists
@@ -380,7 +385,7 @@ async def add_availability_slot(
 async def get_contractor_availability(
     contractor_id: UUID,
     status_filter: AvailabilityStatus | None = Query(None, alias="status", description="Filter by status"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> list[AvailabilitySlot]:
     """Get contractor availability."""
     # Check if contractor exists
@@ -405,7 +410,7 @@ async def get_contractor_availability(
     result = await db.execute(query)
     slots = result.scalars().all()
 
-    return [AvailabilitySlot.model_validate(s) for s in slots]
+    return [AvailabilitySlot.model_validate(s).model_dump() for s in slots]
 
 
 @router.get(
@@ -419,7 +424,7 @@ async def search_by_location(
     state: AustralianState = Query(AustralianState.QLD, description="Australian state (default: QLD)"),
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> ContractorList:
     """Search contractors by location."""
     # Query contractors with matching availability slots
@@ -450,7 +455,7 @@ async def search_by_location(
     contractors = result.scalars().all()
 
     return ContractorList(
-        contractors=[Contractor.model_validate(c) for c in contractors],
+        contractors=[Contractor.model_validate(c).model_dump() for c in contractors],
         total=total,
         page=page,
         page_size=page_size,

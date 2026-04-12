@@ -1,4 +1,5 @@
 """Chat assistant API endpoints."""
+from __future__ import annotations
 
 from typing import Annotated
 from uuid import UUID, uuid4
@@ -11,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.agents.chat_assistant import ChatAssistant
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.demo_models import ConversationHistory
 
 logger = structlog.get_logger(__name__)
@@ -205,7 +206,7 @@ async def stream_message(
 @router.get("/history/{conversation_id}")
 async def get_conversation_history(
     conversation_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     limit: int = 50,
 ) -> ConversationHistoryResponse:
     """
@@ -284,7 +285,7 @@ async def get_conversation_history(
 @router.delete("/history/{conversation_id}")
 async def delete_conversation(
     conversation_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict[str, str]:
     """
     Delete a conversation and its history.

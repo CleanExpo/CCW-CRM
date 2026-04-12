@@ -8,9 +8,12 @@ These models are optimized for quick demo setup with essential fields only.
 import enum
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
+try:
+    from pgvector.sqlalchemy import Vector
+except ImportError:
+    from sqlalchemy import LargeBinary as Vector  # Fallback when pgvector not installed
 from sqlalchemy import (
     Boolean,
     Column,
@@ -22,16 +25,17 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import JSON, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
-from pgvector.sqlalchemy import Vector
-
-from .models_base import Base  # Use existing Base class
 
 # Import related models to ensure they are registered with SQLAlchemy
 # This prevents "failed to locate a name" errors when using string-based relationships
-from . import i18n_models  # noqa: F401 - For ProductTranslation
-from . import inventory_models  # noqa: F401 - For OutboundShipment
+from . import (
+    i18n_models,  # noqa: F401 - For ProductTranslation
+    inventory_models,  # noqa: F401 - For OutboundShipment
+)
+from .models_base import Base  # Use existing Base class
 
 
 class OrderStatus(str, enum.Enum):
@@ -271,6 +275,12 @@ class OrderItem(Base):
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     # Relationships
     order = relationship("Order", back_populates="order_items")
@@ -373,6 +383,12 @@ class QuoteItem(Base):
     line_total: Decimal = Column(Numeric(10, 2), nullable=False)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     # Relationships

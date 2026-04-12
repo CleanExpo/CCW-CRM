@@ -1,11 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`);
@@ -13,26 +9,20 @@ export async function GET(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("Error fetching workflow:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch workflow" },
-      { status: 500 }
-    );
+    console.error('Error fetching workflow:', error);
+    return NextResponse.json({ error: 'Failed to fetch workflow' }, { status: 500 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const body = await request.json();
 
     const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
     });
@@ -41,11 +31,8 @@ export async function PUT(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("Error updating workflow:", error);
-    return NextResponse.json(
-      { error: "Failed to update workflow" },
-      { status: 500 }
-    );
+    console.error('Error updating workflow:', error);
+    return NextResponse.json({ error: 'Failed to update workflow' }, { status: 500 });
   }
 }
 
@@ -56,7 +43,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
 
     if (response.status === 204) {
@@ -66,10 +53,7 @@ export async function DELETE(
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("Error deleting workflow:", error);
-    return NextResponse.json(
-      { error: "Failed to delete workflow" },
-      { status: 500 }
-    );
+    console.error('Error deleting workflow:', error);
+    return NextResponse.json({ error: 'Failed to delete workflow' }, { status: 500 });
   }
 }

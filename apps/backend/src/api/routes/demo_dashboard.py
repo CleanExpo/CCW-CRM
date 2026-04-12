@@ -36,7 +36,7 @@ router = APIRouter(prefix="/api/dashboard", tags=["Demo Dashboard"])
 
 
 @router.get("/aggregated")
-@cached(ttl=60, key_prefix="dashboard_aggregated")  # 1 minute cache
+@cached(ttl=60, key_prefix="dashboard_aggregated")
 async def get_aggregated_dashboard(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ):
@@ -149,79 +149,71 @@ class AggregatedDashboardData(BaseModel):
 
 
 @router.get("/metrics", response_model=DashboardMetrics)
-@cached(ttl=60, key_prefix="dashboard_metrics")  # 1 minute cache - metrics need to be fairly fresh
+@cached(ttl=60, key_prefix="dashboard_metrics")
 async def get_dashboard_metrics(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> DashboardMetrics:
-    """Get dashboard metrics - OPTIMIZED with combined queries."""
+    """Get dashboard metrics - FIXED: Using separate queries to avoid cross join issues."""
     now = datetime.now(UTC)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # OPTIMIZATION: Combine all simple counts into a single query using Common Table Expression (CTE)
-    from sqlalchemy import case, literal_column
-
-    # Single query for all metrics using conditional aggregation
-    combined_result = await db.execute(
-        select(
-            # Revenue this month (delivered orders)
-            func.sum(
-                case(
-                    (
-                        (Order.order_date >= month_start)
-                        & (func.cast(Order.status, String) == "delivered"),
-                        Order.total,
-                    ),
-                    else_=literal_column("0"),
-                )
-            ).label("total_revenue"),
-            # Active orders count
-            func.count(
-                case(
-                    (
-                        func.cast(Order.status, String).in_(
-                            ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED"]
-                        ),
-                        Order.id,
-                    )
-                )
-            ).label("active_orders"),
-            # Product and customer counts via subquery
-            func.count(case((Product.is_active, Product.id))).label("total_products"),
-            func.count(
-                case(((Product.stock <= 10) & (Product.is_active), Product.id))
-            ).label("low_stock_alerts"),
-        )
-        .select_from(Order)
-        .outerjoin(Product, literal_column("true"))  # Cross join for product counts
+    # Revenue this month (delivered orders)
+    revenue_result = await db.execute(
+        select(func.sum(Order.total))
+        .where(Order.order_date >= month_start)
+        .where(func.cast(Order.status, String) == "delivered")
     )
-    metrics_row = combined_result.one()
+    total_revenue = revenue_result.scalar() or Decimal(0)
 
-    # Separate queries only for entities not in Order table (more efficient than cross join)
+    # Active orders count
+    active_orders_result = await db.execute(
+        select(func.count(Order.id))
+        .where(func.cast(Order.status, String).in_(
+            ["pending", "confirmed", "processing", "shipped"]
+        ))
+    )
+    active_orders = active_orders_result.scalar() or 0
+
+    # Total products
+    products_result = await db.execute(
+        select(func.count(Product.id)).where(Product.is_active)
+    )
+    total_products = products_result.scalar() or 0
+
+    # Low stock alerts
+    low_stock_result = await db.execute(
+        select(func.count(Product.id))
+        .where(Product.is_active)
+        .where(Product.stock <= 10)
+    )
+    low_stock_alerts = low_stock_result.scalar() or 0
+
+    # Total customers
     customer_count_result = await db.execute(
         select(func.count(Customer.id)).where(Customer.is_active)
     )
     total_customers = customer_count_result.scalar() or 0
 
+    # Pending quotes
     pending_quotes_result = await db.execute(
         select(func.count(Quote.id)).where(
-            func.cast(Quote.status, String).in_(["DRAFT", "PENDING", "SENT"])
+            func.cast(Quote.status, String).in_(["draft", "pending", "sent"])
         )
     )
     pending_quotes = pending_quotes_result.scalar() or 0
 
-    # RESULT: Reduced from 6 queries to 3 queries (50% reduction)
     return DashboardMetrics(
-        total_revenue_this_month=str(metrics_row.total_revenue or Decimal(0)),
-        active_orders=metrics_row.active_orders or 0,
-        total_products=metrics_row.total_products or 0,
+        total_revenue_this_month=str(total_revenue),
+        active_orders=active_orders,
+        total_products=total_products,
         total_customers=total_customers,
-        low_stock_alerts=metrics_row.low_stock_alerts or 0,
+        low_stock_alerts=low_stock_alerts,
         pending_quotes=pending_quotes,
     )
 
 
 @router.get("/charts/revenue", response_model=list[RevenueDataPoint])
-# @cached(ttl=300, key_prefix="dashboard_revenue")  # Temporarily disabled - caching issue with Pydantic models
+@cached(ttl=300, key_prefix="dashboard_revenue")
 async def get_revenue_chart(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[RevenueDataPoint]:
@@ -280,7 +272,7 @@ async def get_revenue_chart(
 
 
 @router.get("/charts/categories", response_model=list[CategoryDataPoint])
-@cached(ttl=300, key_prefix="dashboard_categories")  # 5 minute cache
+@cached(ttl=300, key_prefix="dashboard_categories")
 async def get_category_distribution(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[CategoryDataPoint]:
@@ -319,7 +311,7 @@ async def get_category_distribution(
 
 
 @router.get("/charts/top-products", response_model=list[TopProductDataPoint])
-# @cached(ttl=300, key_prefix="dashboard_top_products")  # Temporarily disabled - caching issue with Pydantic models
+@cached(ttl=300, key_prefix="dashboard_top_products")
 async def get_top_products(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[TopProductDataPoint]:
@@ -350,7 +342,7 @@ async def get_top_products(
 
 
 @router.get("/charts/inventory", response_model=list[InventoryDataPoint])
-@cached(ttl=120, key_prefix="dashboard_inventory")  # 2 minute cache
+@cached(ttl=120, key_prefix="dashboard_inventory")
 async def get_inventory_status(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[InventoryDataPoint]:
@@ -395,7 +387,7 @@ async def get_inventory_status(
 
 
 @router.get("/activity", response_model=list[ActivityItem])
-@cached(ttl=30, key_prefix="dashboard_activity")  # 30 second cache - activity feed should be fresh
+@cached(ttl=30, key_prefix="dashboard_activity")
 async def get_recent_activity(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     limit: int = 20,
@@ -485,7 +477,7 @@ class OrderStatusBreakdown(BaseModel):
 
 
 @router.get("/order-status-breakdown", response_model=OrderStatusBreakdown)
-@cached(ttl=60, key_prefix="dashboard_order_status")  # 1 minute cache
+@cached(ttl=60, key_prefix="dashboard_order_status")
 async def get_order_status_breakdown(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> OrderStatusBreakdown:
@@ -545,7 +537,7 @@ class QuoteConversionData(BaseModel):
 
 
 @router.get("/quote-conversion", response_model=QuoteConversionData)
-@cached(ttl=120, key_prefix="dashboard_quote_conversion")  # 2 minute cache
+@cached(ttl=120, key_prefix="dashboard_quote_conversion")
 async def get_quote_conversion(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> QuoteConversionData:
@@ -614,7 +606,7 @@ class RevenueByLocationData(BaseModel):
 
 
 @router.get("/revenue-by-location", response_model=RevenueByLocationData)
-@cached(ttl=300, key_prefix="dashboard_revenue_location")  # 5 minute cache
+@cached(ttl=300, key_prefix="dashboard_revenue_location")
 async def get_revenue_by_location(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> RevenueByLocationData:

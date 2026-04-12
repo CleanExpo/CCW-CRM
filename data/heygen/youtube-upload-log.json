@@ -1,0 +1,62 @@
+{
+  "ai-assistant": {
+    "youtubeId": "gcLW2hEWX0o",
+    "youtubeUrl": "https://youtu.be/gcLW2hEWX0o",
+    "title": "CCW ERP \u2014 AI Assistant",
+    "uploadedAt": "2026-04-01T08:00:13Z"
+  },
+  "backorders": {
+    "youtubeId": "Tz3UwG2dxFI",
+    "youtubeUrl": "https://youtu.be/Tz3UwG2dxFI",
+    "title": "CCW ERP \u2014 Backorder & Auto-Reorder",
+    "uploadedAt": "2026-04-01T08:00:20Z"
+  },
+  "contacts": {
+    "youtubeId": "RxiIu-pIU2s",
+    "youtubeUrl": "https://youtu.be/RxiIu-pIU2s",
+    "title": "CCW ERP \u2014 Contacts & CRM",
+    "uploadedAt": "2026-04-01T08:00:27Z"
+  },
+  "customers": {
+    "youtubeId": "7JOQYDRdV4s",
+    "youtubeUrl": "https://youtu.be/7JOQYDRdV4s",
+    "title": "CCW ERP \u2014 Customer Management",
+    "uploadedAt": "2026-04-01T08:00:33Z"
+  },
+  "dashboard": {
+    "youtubeId": "oJxtk6x_1KY",
+    "youtubeUrl": "https://youtu.be/oJxtk6x_1KY",
+    "title": "CCW ERP \u2014 Dashboard Overview",
+    "uploadedAt": "2026-04-01T08:00:41Z"
+  },
+  "integration-story": {
+    "youtubeId": "gaknxVbBboY",
+    "youtubeUrl": "https://youtu.be/gaknxVbBboY",
+    "title": "The CCW ERP Integration Story",
+    "uploadedAt": "2026-04-01T08:00:47Z"
+  },
+  "integrations": {
+    "youtubeId": "EoPkfYQtwLc",
+    "youtubeUrl": "https://youtu.be/EoPkfYQtwLc",
+    "title": "CCW ERP \u2014 Cin7 & Xero Integration",
+    "uploadedAt": "2026-04-01T08:00:53Z"
+  },
+  "invoices": {
+    "youtubeId": "3SOV0oloZiE",
+    "youtubeUrl": "https://youtu.be/3SOV0oloZiE",
+    "title": "CCW ERP \u2014 Invoicing & Billing",
+    "uploadedAt": "2026-04-01T08:00:59Z"
+  },
+  "marketing": {
+    "youtubeId": "K3ugQV77amw",
+    "youtubeUrl": "https://youtu.be/K3ugQV77amw",
+    "title": "CCW ERP \u2014 Marketing Campaigns",
+    "uploadedAt": "2026-04-01T08:01:07Z"
+  },
+  "orders": {
+    "youtubeId": "CsZSnI9dcPg",
+    "youtubeUrl": "https://youtu.be/CsZSnI9dcPg",
+    "title": "CCW ERP \u2014 Orders & Fulfilment",
+    "uploadedAt": "2026-04-01T08:01:14Z"
+  }
+}

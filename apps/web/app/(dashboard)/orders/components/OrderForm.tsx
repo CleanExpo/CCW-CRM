@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useState, useEffect, useCallback } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -21,45 +21,45 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { OrderLineItems, LineItem } from "./OrderLineItems";
-import { QuickCustomerAdd } from "./QuickCustomerAdd";
-import { Order, Customer, OrderItem } from "../types";
-import { Plus } from "lucide-react";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { OrderLineItems, LineItem } from './OrderLineItems';
+import { QuickCustomerAdd } from './QuickCustomerAdd';
+import { Order, Customer, OrderItem } from '../types';
+import { Plus } from 'lucide-react';
 // PHASE 4: Autosave + Recent Items imports
-import { useAutosave } from "@/lib/hooks/use-autosave";
-import { DraftRecoveryAlert } from "@/components/ui/draft-recovery-alert";
-import { useRecentItems } from "@/lib/hooks/use-recent-items";
+import { useAutosave } from '@/lib/hooks/use-autosave';
+import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
+import { useRecentItems } from '@/lib/hooks/use-recent-items';
 // PHASE AI: Form Auto-Fill imports
-import { useFormAutoFill } from "@/lib/hooks/use-form-autofill";
-import { ProductAutoFillSuggestion } from "@/components/forms/AutoFillSuggestion";
+import { useFormAutoFill } from '@/lib/hooks/use-form-autofill';
+import { ProductAutoFillSuggestion } from '@/components/forms/AutoFillSuggestion';
 // PHASE AI: Anomaly Detection imports
-import { AnomalyAlert } from "@/components/alerts/AnomalyAlert";
+import { AnomalyAlert } from '@/components/alerts/AnomalyAlert';
 
 const ORDER_STATUSES = [
-  { value: "draft", label: "Draft" },
-  { value: "pending", label: "Pending" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "processing", label: "Processing" },
-  { value: "shipped", label: "Shipped" },
-  { value: "delivered", label: "Delivered" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: 'draft', label: 'Draft' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'shipped', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
 ] as const;
 
 const formSchema = z.object({
-  customer_id: z.string().min(1, "Customer is required"),
-  fulfillment_location: z.string().min(1, "Fulfillment location is required"),
-  status: z.string().min(1, "Status is required"),
+  customer_id: z.string().min(1, 'Customer is required'),
+  fulfillment_location: z.string().min(1, 'Fulfillment location is required'),
+  status: z.string().min(1, 'Status is required'),
   notes: z.string().optional(),
 });
 
@@ -77,9 +77,20 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>("brisbane");
+  const [selectedLocation, setSelectedLocation] = useState<string>('brisbane');
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [anomalyDetected, setAnomalyDetected] = useState<any>(null);
+  const [anomalyDetected, setAnomalyDetected] = useState<
+    | {
+        is_anomaly?: boolean;
+        severity: string;
+        description: string;
+        recommended_action: string;
+        confidence: number;
+        details?: Record<string, unknown>;
+      }
+    | 'bypass'
+    | null
+  >(null);
   const [showAnomalyAlert, setShowAnomalyAlert] = useState(false);
   const { toast } = useToast();
   const isEdit = !!order;
@@ -87,28 +98,33 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customer_id: "",
-      fulfillment_location: "brisbane",
-      status: "draft",
-      notes: "",
+      customer_id: '',
+      fulfillment_location: 'brisbane',
+      status: 'draft',
+      notes: '',
     },
   });
 
   // PHASE 4: Recent customers cache - speeds up order entry
   const { recentItems: recentCustomers, addRecentItem: addRecentCustomer } =
     useRecentItems<Customer>({
-      key: "recent-customers",
+      key: 'recent-customers',
       maxItems: 10,
     });
 
   // PHASE AI: Form auto-fill suggestions based on customer history
-  const selectedCustomerId = form.watch("customer_id");
-  const { suggestions, confidence, source, loading: autoFillLoading, fetchSuggestions } =
-    useFormAutoFill({
-      formType: "order",
-      customerId: selectedCustomerId || undefined,
-      limit: 10,
-    });
+  const selectedCustomerId = form.watch('customer_id');
+  const {
+    suggestions,
+    confidence,
+    source,
+    loading: autoFillLoading,
+    fetchSuggestions,
+  } = useFormAutoFill({
+    formType: 'order',
+    customerId: selectedCustomerId || undefined,
+    limit: 10,
+  });
 
   // Fetch auto-fill suggestions when customer selected
   useEffect(() => {
@@ -118,7 +134,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   }, [selectedCustomerId, isEdit, fetchSuggestions]);
 
   // PHASE 4: Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = isEdit ? `order-form-${order?.id}` : "order-form-new";
+  const draftKey = isEdit ? `order-form-${order?.id}` : 'order-form-new';
   const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
     key: draftKey,
     formValues: {
@@ -127,10 +143,11 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     },
     onRestore: (draft) => {
       // Restore form fields
-      if (draft.customer_id) form.setValue("customer_id", draft.customer_id);
-      if (draft.fulfillment_location) form.setValue("fulfillment_location", draft.fulfillment_location);
-      if (draft.status) form.setValue("status", draft.status);
-      if (draft.notes) form.setValue("notes", draft.notes);
+      if (draft.customer_id) form.setValue('customer_id', draft.customer_id);
+      if (draft.fulfillment_location)
+        form.setValue('fulfillment_location', draft.fulfillment_location);
+      if (draft.status) form.setValue('status', draft.status);
+      if (draft.notes) form.setValue('notes', draft.notes);
       // Restore line items
       if (Array.isArray(draft.lineItems) && draft.lineItems.length > 0) {
         setLineItems(draft.lineItems);
@@ -143,11 +160,11 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const loadCustomers = useCallback(async () => {
     try {
       const response = await apiClient.get<{ items: Customer[] }>(
-        "/api/customers?page=1&page_size=100"
+        '/api/customers?page=1&page_size=100'
       );
       setCustomers(response.items || []);
     } catch (error) {
-      console.error("Failed to load customers:", error);
+      console.error('Failed to load customers:', error);
     }
   }, []);
 
@@ -160,9 +177,9 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     // Reload customers list
     loadCustomers();
     // Auto-select the newly created customer
-    form.setValue("customer_id", customer.id);
+    form.setValue('customer_id', customer.id);
     toast({
-      title: "Customer Added",
+      title: 'Customer Added',
       description: `${customer.company_name} has been selected for this order.`,
     });
   }
@@ -170,13 +187,13 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   // Reset form when order changes or dialog opens
   useEffect(() => {
     if (order) {
-      const location = order.fulfillment_location || "brisbane";
+      const location = order.fulfillment_location || 'brisbane';
       setSelectedLocation(location);
       form.reset({
         customer_id: order.customer_id,
         fulfillment_location: location,
         status: order.status,
-        notes: order.notes || "",
+        notes: order.notes || '',
       });
       // Convert API strings to numbers for line items
       const items = (order.items || order.order_items || [])
@@ -191,12 +208,12 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
       setLineItems(items);
     } else {
-      setSelectedLocation("brisbane");
+      setSelectedLocation('brisbane');
       form.reset({
-        customer_id: "",
-        fulfillment_location: "brisbane",
-        status: "draft",
-        notes: "",
+        customer_id: '',
+        fulfillment_location: 'brisbane',
+        status: 'draft',
+        notes: '',
       });
       setLineItems([]);
     }
@@ -208,7 +225,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     const errors: string[] = [];
 
     if (lineItems.length === 0) {
-      errors.push("At least one line item is required");
+      errors.push('At least one line item is required');
     }
 
     lineItems.forEach((item, index) => {
@@ -238,9 +255,9 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
           description: string;
           recommended_action: string;
           confidence: number;
-          details: Record<string, any>;
-        }>("/api/ai/anomaly", {
-          detection_type: "order_amount",
+          details: Record<string, unknown>;
+        }>('/api/ai/anomaly', {
+          detection_type: 'order_amount',
           customer_id: values.customer_id,
           amount: orderTotal,
         });
@@ -248,14 +265,14 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         // If anomaly detected with high/critical severity, show alert
         if (
           anomalyCheck.is_anomaly &&
-          (anomalyCheck.severity === "high" || anomalyCheck.severity === "critical")
+          (anomalyCheck.severity === 'high' || anomalyCheck.severity === 'critical')
         ) {
           setAnomalyDetected(anomalyCheck);
           setShowAnomalyAlert(true);
           return; // Stop submission, wait for user confirmation
         }
       } catch (error) {
-        console.error("Anomaly check failed:", error);
+        console.error('Anomaly check failed:', error);
         // Continue with order creation even if anomaly check fails
       }
     }
@@ -263,12 +280,14 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     setIsLoading(true);
 
     try {
+      // PHASE 4 OPTIMIZATION: Include item IDs for diff-based updates
       const payload = {
         customer_id: values.customer_id,
         fulfillment_location: values.fulfillment_location,
         status: values.status,
         notes: values.notes || null,
         items: lineItems.map((item) => ({
+          id: item.id || undefined, // Include ID for updates (enables diff-based backend logic)
           product_id: item.product_id,
           quantity: item.quantity,
         })),
@@ -277,14 +296,14 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
       if (isEdit && order) {
         await apiClient.put(`/api/orders/${order.id}`, payload);
         toast({
-          title: "Success",
-          description: "Order updated successfully",
+          title: 'Success',
+          description: 'Order updated successfully',
         });
       } else {
-        await apiClient.post("/api/orders", payload);
+        await apiClient.post('/api/orders', payload);
         toast({
-          title: "Success",
-          description: "Order created successfully",
+          title: 'Success',
+          description: 'Order created successfully',
         });
       }
 
@@ -301,12 +320,10 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
       onSuccess();
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : `Failed to ${isEdit ? "update" : "create"} order`;
+        error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} order`;
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -320,13 +337,13 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Order" : "Create Order"}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Order' : 'Create Order'}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the order information and line items below."
-              : "Fill in the order details and add line items to create a new order."}
+              ? 'Update the order information and line items below.'
+              : 'Fill in the order details and add line items to create a new order.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -378,7 +395,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                 name="customer_id"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="mb-2 flex items-center justify-between">
                       <FormLabel>Customer</FormLabel>
                       <Button
                         type="button"
@@ -387,7 +404,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                         onClick={() => setQuickAddOpen(true)}
                         className="h-6 px-2"
                       >
-                        <Plus className="h-3 w-3 mr-1" />
+                        <Plus className="mr-1 h-3 w-3" />
                         Quick Add
                       </Button>
                     </div>
@@ -406,13 +423,11 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                                 🕒 {customer.customer_number} - {customer.company_name}
                               </SelectItem>
                             ))}
-                            <div className="border-t my-1" />
+                            <div className="my-1 border-t" />
                           </>
                         )}
                         {customers
-                          .filter(
-                            (c) => !recentCustomers.some((recent) => recent.id === c.id)
-                          )
+                          .filter((c) => !recentCustomers.some((recent) => recent.id === c.id))
                           .map((customer) => (
                             <SelectItem key={customer.id} value={customer.id}>
                               {customer.customer_number} - {customer.company_name}
@@ -489,7 +504,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                       },
                     ]);
                     toast({
-                      title: "Product Added",
+                      title: 'Product Added',
                       description: `${product.name} added with quantity ${product.avg_quantity}`,
                     });
                   }}
@@ -504,7 +519,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                     }));
                     setLineItems((prev) => [...prev, ...newItems]);
                     toast({
-                      title: "Products Added",
+                      title: 'Products Added',
                       description: `Added ${newItems.length} products based on customer history`,
                     });
                   }}
@@ -516,10 +531,10 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
             )}
 
             {/* PHASE AI: Anomaly Alert */}
-            {showAnomalyAlert && anomalyDetected && (
+            {showAnomalyAlert && anomalyDetected && typeof anomalyDetected !== 'string' && (
               <AnomalyAlert
-                isAnomaly={anomalyDetected.is_anomaly}
-                severity={anomalyDetected.severity}
+                isAnomaly={anomalyDetected.is_anomaly ?? false}
+                severity={anomalyDetected.severity as 'high' | 'low' | 'medium' | 'critical'}
                 description={anomalyDetected.description}
                 recommendedAction={anomalyDetected.recommended_action}
                 confidence={anomalyDetected.confidence}
@@ -527,7 +542,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                 onProceedAnyway={() => {
                   setShowAnomalyAlert(false);
                   // Resubmit form with anomaly flag set to skip check
-                  setAnomalyDetected("bypass");
+                  setAnomalyDetected('bypass');
                   form.handleSubmit(onSubmit)();
                 }}
                 onDismiss={() => {
@@ -545,7 +560,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
             />
 
             {lineItems.length > 0 && (
-              <div className="rounded-lg border p-4 bg-muted/50">
+              <div className="bg-muted/50 rounded-lg border p-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
@@ -555,7 +570,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                     <span>Tax (10% GST):</span>
                     <span>${tax.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-base font-bold border-t pt-2">
+                  <div className="flex justify-between border-t pt-2 text-base font-bold">
                     <span>Total:</span>
                     <span>${total.toFixed(2)}</span>
                   </div>
@@ -573,7 +588,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : isEdit ? "Update Order" : "Create Order"}
+                {isLoading ? 'Saving...' : isEdit ? 'Update Order' : 'Create Order'}
               </Button>
             </DialogFooter>
           </form>

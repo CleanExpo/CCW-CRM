@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api/client";
+import React, { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api/client';
 import {
   Table,
   TableBody,
@@ -9,20 +9,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Building2, Mail, Calendar } from "lucide-react";
-import { format } from "date-fns";
-import { SubmissionDetailDialog } from "./SubmissionDetailDialog";
-import { toast } from "sonner";
+} from '@/components/ui/select';
+import { Building2, Mail, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
+import { SubmissionDetailDialog } from './SubmissionDetailDialog';
+import { toast } from 'sonner';
 
 interface DemoRequest {
   id: string;
@@ -33,7 +33,7 @@ interface DemoRequest {
   product_interest: string | null;
   preferred_date: string | null;
   notes: string | null;
-  status: "pending" | "scheduled" | "completed" | "cancelled";
+  status: 'pending' | 'scheduled' | 'completed' | 'cancelled';
   created_at: string;
   updated_at: string;
 }
@@ -47,10 +47,10 @@ interface PaginatedResponse {
 }
 
 const statusColors = {
-  pending: "bg-yellow-100 text-yellow-800",
-  scheduled: "bg-blue-100 text-blue-800",
-  completed: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
+  pending: 'bg-yellow-100 text-yellow-800',
+  scheduled: 'bg-blue-100 text-blue-800',
+  completed: 'bg-green-100 text-green-800',
+  cancelled: 'bg-red-100 text-red-800',
 };
 
 interface DemoRequestsTableProps {
@@ -59,7 +59,11 @@ interface DemoRequestsTableProps {
   onDataChange?: () => void;
 }
 
-export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: DemoRequestsTableProps) {
+export function DemoRequestsTable({
+  searchQuery,
+  statusFilter,
+  onDataChange,
+}: DemoRequestsTableProps) {
   const [data, setData] = useState<PaginatedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +73,7 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
 
   useEffect(() => {
     fetchDemoRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchQuery, statusFilter]);
 
   async function fetchDemoRequests() {
@@ -84,8 +89,8 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
       }
       const response = await apiClient.get<PaginatedResponse>(url);
       setData(response);
-    } catch (err: any) {
-      setError(err.message || "Failed to load demo requests");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load demo requests');
     } finally {
       setLoading(false);
     }
@@ -96,11 +101,11 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
       await apiClient.patch(`/api/demo-requests/${submissionId}/status`, {
         status: newStatus,
       });
-      toast.success("Status updated");
+      toast.success('Status updated');
       fetchDemoRequests();
       onDataChange?.(); // Notify parent to refresh statistics
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to update status");
+      toast.error(error instanceof Error ? error.message : 'Failed to update status');
     }
   }
 
@@ -110,12 +115,12 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
   }
 
   if (loading && !data) {
-    return <div className="text-center py-8 text-muted-foreground">Loading demo requests...</div>;
+    return <div className="text-muted-foreground py-8 text-center">Loading demo requests...</div>;
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <p className="text-destructive mb-4">{error}</p>
         <Button onClick={fetchDemoRequests} variant="outline">
           Retry
@@ -126,8 +131,8 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
 
   if (!data || data.items.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+      <div className="text-muted-foreground py-12 text-center">
+        <Building2 className="mx-auto mb-4 h-12 w-12 opacity-50" />
         <p className="text-lg font-medium">No demo requests yet</p>
         <p className="text-sm">Demo requests from potential customers will appear here</p>
       </div>
@@ -152,19 +157,19 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
               {data.items.map((request) => (
                 <TableRow
                   key={request.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="hover:bg-muted/50 cursor-pointer"
                   onClick={() => handleRowClick(request.id)}
                 >
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <Building2 className="text-muted-foreground h-4 w-4" />
                       {request.company_name}
                     </div>
                   </TableCell>
                   <TableCell>{request.contact_name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <Mail className="text-muted-foreground h-4 w-4" />
                       {request.email}
                     </div>
                   </TableCell>
@@ -174,9 +179,7 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
                       onValueChange={(value) => handleStatusChange(request.id, value)}
                     >
                       <SelectTrigger className="w-[130px]">
-                        <Badge className={statusColors[request.status]}>
-                          {request.status}
-                        </Badge>
+                        <Badge className={statusColors[request.status]}>{request.status}</Badge>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Pending</SelectItem>
@@ -187,9 +190,9 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm">
                       <Calendar className="h-4 w-4" />
-                      {format(new Date(request.created_at), "MMM d, yyyy")}
+                      {format(new Date(request.created_at), 'MMM d, yyyy')}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -201,8 +204,8 @@ export function DemoRequestsTable({ searchQuery, statusFilter, onDataChange }: D
         {/* Pagination */}
         {data.total_pages > 1 && (
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {(page - 1) * data.page_size + 1} to{" "}
+            <p className="text-muted-foreground text-sm">
+              Showing {(page - 1) * data.page_size + 1} to{' '}
               {Math.min(page * data.page_size, data.total)} of {data.total} requests
             </p>
             <div className="flex gap-2">

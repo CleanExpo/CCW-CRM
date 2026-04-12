@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -20,23 +20,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import type { Location, POSTerminal } from "../../types";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import type { Location, POSTerminal } from '../../types';
 
 const terminalSchema = z.object({
-  terminal_code: z.string().min(1, "Terminal code is required"),
-  location_id: z.string().min(1, "Location is required"),
-  terminal_type: z.enum(["physical", "virtual"]),
+  terminal_code: z.string().min(1, 'Terminal code is required'),
+  location_id: z.string().min(1, 'Location is required'),
+  terminal_type: z.enum(['physical', 'virtual']),
   provider: z.string().optional(),
   serial_number: z.string().optional(),
   is_active: z.boolean(),
@@ -47,7 +48,7 @@ type TerminalFormData = z.infer<typeof terminalSchema>;
 interface TerminalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode: "create" | "edit";
+  mode: 'create' | 'edit';
   terminal?: POSTerminal;
   locations: Location[];
   onSuccess: () => void;
@@ -67,32 +68,32 @@ export function TerminalDialog({
   const form = useForm<TerminalFormData>({
     resolver: zodResolver(terminalSchema),
     defaultValues: {
-      terminal_code: "",
-      location_id: "",
-      terminal_type: "physical",
-      provider: "",
-      serial_number: "",
+      terminal_code: '',
+      location_id: '',
+      terminal_type: 'physical',
+      provider: '',
+      serial_number: '',
       is_active: true,
     },
   });
 
   useEffect(() => {
-    if (mode === "edit" && terminal) {
+    if (mode === 'edit' && terminal) {
       form.reset({
         terminal_code: terminal.terminal_id,
         location_id: terminal.location_code,
-        terminal_type: terminal.terminal_type as "physical" | "virtual",
-        provider: "",
-        serial_number: "",
+        terminal_type: terminal.terminal_type as 'physical' | 'virtual',
+        provider: '',
+        serial_number: '',
         is_active: terminal.is_active,
       });
     } else {
       form.reset({
-        terminal_code: "",
-        location_id: "",
-        terminal_type: "physical",
-        provider: "",
-        serial_number: "",
+        terminal_code: '',
+        location_id: '',
+        terminal_type: 'physical',
+        provider: '',
+        serial_number: '',
         is_active: true,
       });
     }
@@ -109,34 +110,24 @@ export function TerminalDialog({
         is_active: data.is_active,
       };
 
-      const url =
-        mode === "create"
-          ? "/api/pos/terminals"
-          : `/api/pos/terminals/${terminal?.id}`;
-
-      const response = await fetch(url, {
-        method: mode === "create" ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to save terminal");
+      if (mode === 'create') {
+        await apiClient.post('/api/pos/terminals', payload);
+      } else {
+        await apiClient.put(`/api/pos/terminals/${terminal?.id}`, payload);
       }
 
       toast({
-        title: "Success",
-        description: `Terminal ${mode === "create" ? "created" : "updated"} successfully`,
+        title: 'Success',
+        description: `Terminal ${mode === 'create' ? 'created' : 'updated'} successfully`,
       });
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save terminal",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save terminal',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -147,13 +138,11 @@ export function TerminalDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {mode === "create" ? "Create Terminal" : "Edit Terminal"}
-          </DialogTitle>
+          <DialogTitle>{mode === 'create' ? 'Create Terminal' : 'Edit Terminal'}</DialogTitle>
           <DialogDescription>
-            {mode === "create"
-              ? "Add a new POS terminal to a location"
-              : "Update terminal configuration"}
+            {mode === 'create'
+              ? 'Add a new POS terminal to a location'
+              : 'Update terminal configuration'}
           </DialogDescription>
         </DialogHeader>
 
@@ -166,11 +155,7 @@ export function TerminalDialog({
                 <FormItem>
                   <FormLabel>Terminal Code</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="TERM-001"
-                      {...field}
-                      disabled={mode === "edit"}
-                    />
+                    <Input placeholder="TERM-001" {...field} disabled={mode === 'edit'} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -267,15 +252,12 @@ export function TerminalDialog({
                 <FormItem className="flex items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <FormLabel>Active</FormLabel>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-muted-foreground text-sm">
                       Terminal can accept transactions
                     </div>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -291,11 +273,7 @@ export function TerminalDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading
-                  ? "Saving..."
-                  : mode === "create"
-                  ? "Create"
-                  : "Update"}
+                {isLoading ? 'Saving...' : mode === 'create' ? 'Create' : 'Update'}
               </Button>
             </DialogFooter>
           </form>

@@ -13,7 +13,6 @@ This prevents webhook spoofing and replay attacks.
 import hashlib
 import hmac
 import time
-from typing import Any
 
 import structlog
 

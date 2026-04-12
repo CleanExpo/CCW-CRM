@@ -10,7 +10,6 @@ For local development, secrets are loaded from environment variables.
 import json
 import os
 from functools import lru_cache
-from typing import Any
 
 import structlog
 
@@ -74,7 +73,7 @@ class SecretsManager:
 
             # Secrets can be stored as string or JSON
             if "SecretString" in response:
-                secret_string = response["SecretString"]
+                secret_string: str = str(response["SecretString"])
                 try:
                     # Try parsing as JSON (for secrets with multiple keys)
                     secret_dict = json.loads(secret_string)
@@ -82,7 +81,7 @@ class SecretsManager:
                     if "/" in secret_name:
                         key = secret_name.split("/")[-1]
                         if key in secret_dict:
-                            return secret_dict[key]
+                            return str(secret_dict[key])
                     # Otherwise return the whole secret
                     return secret_string
                 except json.JSONDecodeError:

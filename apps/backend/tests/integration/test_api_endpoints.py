@@ -31,7 +31,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from src.api.main import app
 from src.db.models.subscription import Subscription, SubscriptionStatus, SubscriptionTier
-from src.db.models_base import Customer, Organization, Product, Quote, User
+from src.db.demo_models import Customer, Organization, Product, Quote
+from src.db.models_base import User
 
 
 # Test database URL (use in-memory SQLite for fast tests)

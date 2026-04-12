@@ -1,0 +1,66 @@
+# CCW-ERP-CRM — Root .dockerignore
+# Excludes files from Docker build context for faster builds
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Node / pnpm
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/build
+**/.cache
+
+# Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.venv
+**/*.egg-info
+**/dist-info
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+
+# Test artefacts
+**/coverage
+**/.nyc_output
+apps/web/__tests__
+apps/backend/tests
+
+# Dev & local config
+**/.env
+**/.env.local
+**/.env.development
+**/.env.test
+**/docker-compose.override.yml
+
+# Logs
+**/*.log
+**/logs
+
+# IDE / Editor
+.vscode
+.idea
+**/*.swp
+**/*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code / project docs (not needed in image)
+.claude
+docs
+*.md
+!apps/backend/src/**/*.md
+
+# CI / GitHub Actions
+.github
+
+# Deployment configs (not needed at build time)
+deployment
+scripts

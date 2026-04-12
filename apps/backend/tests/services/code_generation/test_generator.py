@@ -4,9 +4,11 @@ Tests AI-powered code generation with Claude, including prompt engineering,
 syntax validation, and error handling.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.services.code_generation.generator import (
     CodeGenerationRequest,
     CodeGenerationResult,
@@ -14,7 +16,6 @@ from src.services.code_generation.generator import (
     GeneratedFile,
     QualityReport,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -32,9 +33,7 @@ def mock_anthropic_client():
     """Mock Anthropic client."""
     mock_client = MagicMock()
     mock_response = MagicMock()
-    mock_response.content = [
-        MagicMock(text="# Generated code\nprint('Hello, World!')")
-    ]
+    mock_response.content = [MagicMock(text="# Generated code\nprint('Hello, World!')")]
     mock_client.messages.create.return_value = mock_response
     return mock_client
 
@@ -42,9 +41,7 @@ def mock_anthropic_client():
 @pytest.fixture
 def code_generator(project_root, mock_anthropic_client):
     """CodeGenerator instance with mocked client."""
-    generator = CodeGenerator(
-        project_root=project_root, anthropic_api_key="test-key-123"
-    )
+    generator = CodeGenerator(project_root=project_root, anthropic_api_key="test-key-123")
     generator.client = mock_anthropic_client
     return generator
 
@@ -56,13 +53,11 @@ def code_generator(project_root, mock_anthropic_client):
 
 def test_code_generator_initialization(project_root):
     """Test CodeGenerator initializes correctly."""
-    generator = CodeGenerator(
-        project_root=project_root, anthropic_api_key="test-key"
-    )
+    generator = CodeGenerator(project_root=project_root, anthropic_api_key="test-key")
 
     assert generator.project_root == project_root
-    assert generator.model == "claude-sonnet-4-20250514"
-    assert generator.fallback_model == "claude-haiku-4-20250910"
+    assert generator.model == "claude-opus-4-6"
+    assert generator.fallback_model == "claude-haiku-4-5-20251001"
     assert generator.max_retries == 2
 
 
@@ -137,9 +132,7 @@ def test_code_generation_result_validation():
     )
     report = QualityReport()
 
-    result = CodeGenerationResult(
-        generated_files=[file], quality_report=report, pr_ready=True
-    )
+    result = CodeGenerationResult(generated_files=[file], quality_report=report, pr_ready=True)
 
     assert len(result.generated_files) == 1
     assert result.pr_ready is True
@@ -213,9 +206,7 @@ async def test_generate_with_reference_files(code_generator, mock_anthropic_clie
         reference_files=["apps/backend/src/api/routes/orders.py"],
     )
 
-    mock_anthropic_client.messages.create.return_value.content[0].text = (
-        "def test(): pass"
-    )
+    mock_anthropic_client.messages.create.return_value.content[0].text = "def test(): pass"
 
     result = await code_generator.generate(request)
 
@@ -232,11 +223,13 @@ async def test_generate_with_reference_files(code_generator, mock_anthropic_clie
 @pytest.mark.asyncio
 async def test_build_prompt_python(code_generator):
     """Test building Python generation prompt."""
-    from src.services.code_generation.context_builder import CodeContext, StyleGuide, ProjectStructure
-
-    request = CodeGenerationRequest(
-        requirement="Add endpoint", target_language="python"
+    from src.services.code_generation.context_builder import (
+        CodeContext,
+        ProjectStructure,
+        StyleGuide,
     )
+
+    request = CodeGenerationRequest(requirement="Add endpoint", target_language="python")
 
     context = CodeContext(
         structure=ProjectStructure.from_project_root(code_generator.project_root),
@@ -264,11 +257,13 @@ async def test_build_prompt_python(code_generator):
 @pytest.mark.asyncio
 async def test_build_prompt_typescript(code_generator):
     """Test building TypeScript generation prompt."""
-    from src.services.code_generation.context_builder import CodeContext, StyleGuide, ProjectStructure
-
-    request = CodeGenerationRequest(
-        requirement="Add form", target_language="typescript"
+    from src.services.code_generation.context_builder import (
+        CodeContext,
+        ProjectStructure,
+        StyleGuide,
     )
+
+    request = CodeGenerationRequest(requirement="Add form", target_language="typescript")
 
     context = CodeContext(
         structure=ProjectStructure.from_project_root(code_generator.project_root),
@@ -406,13 +401,9 @@ password = config.get("password")
 @pytest.mark.asyncio
 async def test_call_llm_success(code_generator, mock_anthropic_client):
     """Test successful LLM call."""
-    mock_anthropic_client.messages.create.return_value.content[0].text = (
-        "def test(): pass"
-    )
+    mock_anthropic_client.messages.create.return_value.content[0].text = "def test(): pass"
 
-    result = await code_generator._call_llm(
-        prompt="Generate code", target_language="python"
-    )
+    result = await code_generator._call_llm(prompt="Generate code", target_language="python")
 
     assert result == "def test(): pass"
     mock_anthropic_client.messages.create.assert_called_once()
@@ -426,24 +417,18 @@ def test():
     pass
 ```"""
 
-    result = await code_generator._call_llm(
-        prompt="Generate code", target_language="python"
-    )
+    result = await code_generator._call_llm(prompt="Generate code", target_language="python")
 
     assert result == "def test():\n    pass"
     assert "```" not in result
 
 
 @pytest.mark.asyncio
-async def test_call_llm_uses_fallback_for_simple_tasks(
-    code_generator, mock_anthropic_client
-):
+async def test_call_llm_uses_fallback_for_simple_tasks(code_generator, mock_anthropic_client):
     """Test that simple tasks use Haiku model."""
     mock_anthropic_client.messages.create.return_value.content[0].text = "code"
 
-    await code_generator._call_llm(
-        prompt="Simple code generation task", target_language="python"
-    )
+    await code_generator._call_llm(prompt="Simple code generation task", target_language="python")
 
     # Should use fallback model for simple tasks
     call_args = mock_anthropic_client.messages.create.call_args
@@ -461,9 +446,7 @@ async def test_call_llm_retries_on_rate_limit(code_generator, mock_anthropic_cli
         MagicMock(content=[MagicMock(text="def test(): pass")]),
     ]
 
-    result = await code_generator._call_llm(
-        prompt="Generate code", target_language="python"
-    )
+    result = await code_generator._call_llm(prompt="Generate code", target_language="python")
 
     assert result == "def test(): pass"
     assert mock_anthropic_client.messages.create.call_count == 2
@@ -477,7 +460,11 @@ async def test_call_llm_retries_on_rate_limit(code_generator, mock_anthropic_cli
 @pytest.mark.asyncio
 async def test_infer_file_path_python_endpoint(code_generator):
     """Test inferring file path for Python endpoint."""
-    from src.services.code_generation.context_builder import CodeContext, StyleGuide, ProjectStructure
+    from src.services.code_generation.context_builder import (
+        CodeContext,
+        ProjectStructure,
+        StyleGuide,
+    )
 
     context = CodeContext(
         structure=ProjectStructure.from_project_root(code_generator.project_root),
@@ -503,7 +490,11 @@ async def test_infer_file_path_python_endpoint(code_generator):
 @pytest.mark.asyncio
 async def test_infer_file_path_typescript_component(code_generator):
     """Test inferring file path for TypeScript component."""
-    from src.services.code_generation.context_builder import CodeContext, StyleGuide, ProjectStructure
+    from src.services.code_generation.context_builder import (
+        CodeContext,
+        ProjectStructure,
+        StyleGuide,
+    )
 
     context = CodeContext(
         structure=ProjectStructure.from_project_root(code_generator.project_root),

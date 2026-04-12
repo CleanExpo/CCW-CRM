@@ -22,21 +22,13 @@ from src.api.main import app
 from src.config.database import AsyncSessionLocal, get_async_db
 
 # Import test data fixtures
-pytest_plugins = ["tests.fixtures.data", "tests.fixtures.pos_data"]
+pytest_plugins = ["tests.fixtures.data", "tests.fixtures.pos_data", "tests.fixtures.shopify_fixtures", "tests.fixtures.xero_fixtures"]
 
 
 @pytest.fixture
 def anyio_backend() -> str:
     """Use asyncio backend for async tests."""
     return "asyncio"
-
-
-@pytest.fixture(scope="session")
-def event_loop() -> asyncio.AbstractEventLoop:
-    """Create a single event loop for async tests to avoid cross-loop DB errors."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest_asyncio.fixture(scope="function")

@@ -3,11 +3,11 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .models import Base
+from .models_base import Base
 
 
 class EmailConversation(Base):
@@ -64,13 +64,13 @@ class EmailConversation(Base):
 
     # Related entities
     related_order_ids: Mapped[dict | None] = mapped_column(
-        JSON, nullable=True
+        JSONB, nullable=True
     )  # List of order IDs mentioned
     related_product_ids: Mapped[dict | None] = mapped_column(
-        JSON, nullable=True
+        JSONB, nullable=True
     )  # List of product IDs mentioned
     related_quote_ids: Mapped[dict | None] = mapped_column(
-        JSON, nullable=True
+        JSONB, nullable=True
     )  # List of quote IDs mentioned
 
     # Message count
@@ -132,17 +132,17 @@ class EmailMessage(Base):
     to_email: Mapped[str] = mapped_column(String(255), nullable=False)
     to_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    # CC/BCC (JSON arrays)
-    cc_emails: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    bcc_emails: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # CC/BCC (JSONB arrays)
+    cc_emails: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    bcc_emails: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Content
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
     body_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     body_html: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # Attachments (JSON array of {filename, content_type, size, url})
-    attachments: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Attachments (JSONB array of {filename, content_type, size, url})
+    attachments: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # AI processing
     was_ai_generated: Mapped[bool] = mapped_column(
@@ -211,8 +211,8 @@ class EmailTemplate(Base):
         String(50), nullable=False, index=True
     )  # order|quote|invoice|support|marketing
 
-    # Variables expected in this template (JSON array)
-    required_variables: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Variables expected in this template (JSONB array)
+    required_variables: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -260,7 +260,7 @@ class EmailWebhookLog(Base):
     )
 
     # Full webhook payload
-    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
 
     # Processing status
     processed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

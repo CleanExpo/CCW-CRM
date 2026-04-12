@@ -3,6 +3,7 @@
 Provides RESTful endpoints for Xero OAuth2 flow, invoice sync, and webhooks.
 """
 
+import secrets
 from typing import Annotated
 from uuid import UUID
 
@@ -11,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
 from src.config.xero_settings import XeroSettings, get_xero_settings
 from src.integrations.xero import get_xero_client
@@ -72,28 +74,33 @@ def get_webhook_handler(
 
 @router.get("/authorize")
 async def start_authorization(
+    org_id: CurrentOrganization,
     xero_auth: Annotated[XeroAuth, Depends(get_xero_auth)],
     settings: Annotated[XeroSettings, Depends(get_xero_settings)],
 ) -> dict:
     """Start Xero OAuth2 authorization flow.
 
+    Encodes organization_id into the OAuth state parameter so the callback
+    can associate the Xero tenant with the correct organization.
+
     Returns:
         Dict with authorization URL and state parameter
     """
     if settings.is_demo_mode:
-        logger.info("Demo mode: Simulating OAuth authorization")
+        logger.info("Demo mode: Simulating OAuth authorization", org_id=str(org_id))
         return {
             "mode": "demo",
             "message": "Demo mode active - OAuth flow simulated",
-            "authorization_url": settings.redirect_uri + "?code=demo_auth_code&state=demo_state",
-            "state": "demo_state",
-            "instructions": "In demo mode, Xero integration works without real API calls. "
-            "To test OAuth callback, visit the authorization_url above.",
+            "authorization_url": settings.redirect_uri + f"?code=demo_auth_code&state={org_id}|demo",
+            "state": f"{org_id}|demo",
+            "instructions": "In demo mode, Xero integration works without real API calls.",
         }
 
-    auth_url, state = xero_auth.get_authorization_url()
+    # Encode org_id into state so callback can identify the organization
+    encoded_state = f"{str(org_id)}|{secrets.token_urlsafe(16)}"
+    auth_url, state = xero_auth.get_authorization_url(state=encoded_state)
 
-    logger.info("OAuth authorization started", redirect_uri=settings.redirect_uri)
+    logger.info("OAuth authorization started", redirect_uri=settings.redirect_uri, org_id=str(org_id))
 
     return {
         "mode": "live",
@@ -140,6 +147,18 @@ async def oauth_callback(
                 status_code=status.HTTP_302_FOUND,
             )
 
+        # Extract organization_id from the state parameter (set during /authorize)
+        state_param = request.query_params.get("state", "")
+        try:
+            org_id_str = state_param.split("|")[0]
+            organization_id = UUID(org_id_str)
+        except (ValueError, IndexError):
+            logger.error("OAuth callback: invalid state parameter", state=state_param)
+            return RedirectResponse(
+                url="/settings/integrations?xero_error=invalid_state",
+                status_code=status.HTTP_302_FOUND,
+            )
+
         # Exchange authorization code for tokens
         token_data = await xero_auth.exchange_code_for_tokens(code)
 
@@ -151,13 +170,6 @@ async def oauth_callback(
 
         # Use first tenant (in production, let user choose)
         tenant = connections[0]
-
-        # TODO: Get organization_id from authenticated user session
-        # For now, we'll use a placeholder
-        # In production, extract from JWT token or session
-        from uuid import uuid4
-
-        organization_id = uuid4()  # Replace with actual org ID
 
         # Store connection in database
         await xero_auth.store_connection(
@@ -194,6 +206,7 @@ async def oauth_callback(
 
 @router.get("/status")
 async def get_connection_status(
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     xero_auth: Annotated[XeroAuth, Depends(get_xero_auth)],
     settings: Annotated[XeroSettings, Depends(get_xero_settings)],
@@ -203,8 +216,6 @@ async def get_connection_status(
     Returns:
         Connection status and details
     """
-    # TODO: Get organization_id from authenticated user
-    # For now, return demo/disconnected status
     if settings.is_demo_mode:
         return {
             "connected": True,
@@ -212,6 +223,20 @@ async def get_connection_status(
             "tenant_name": "Demo Organization",
             "tenant_id": "demo-tenant-123",
             "message": "Running in demo mode - no real Xero connection",
+        }
+
+    # Live mode — check if real OAuth app credentials are configured
+    _demo_prefixes = ("demo_", "")
+    has_real_credentials = bool(
+        settings.client_id
+        and not any(settings.client_id.startswith(p) for p in _demo_prefixes)
+    )
+
+    if not has_real_credentials:
+        return {
+            "connected": False,
+            "mode": "not_configured",
+            "message": "Set XERO_CLIENT_ID and XERO_CLIENT_SECRET environment variables to enable Xero integration",
         }
 
     return {
@@ -223,6 +248,7 @@ async def get_connection_status(
 
 @router.post("/disconnect")
 async def disconnect_xero(
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     xero_auth: Annotated[XeroAuth, Depends(get_xero_auth)],
 ) -> dict:
@@ -231,9 +257,7 @@ async def disconnect_xero(
     Returns:
         Success status
     """
-    # TODO: Get organization_id from authenticated user
-    # For now, return success
-    logger.info("Xero disconnection requested")
+    logger.info("Xero disconnection requested", org_id=str(org_id))
 
     return {
         "success": True,
@@ -249,6 +273,7 @@ async def disconnect_xero(
 @router.post("/sync-order/{order_id}")
 async def sync_order_to_invoice(
     order_id: UUID,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     invoice_sync: Annotated[XeroInvoiceSync, Depends(get_invoice_sync)],
     settings: Annotated[XeroSettings, Depends(get_xero_settings)],
@@ -261,13 +286,7 @@ async def sync_order_to_invoice(
     Returns:
         Sync result with invoice details
     """
-    # TODO: Get organization_id from authenticated user
-    # For demo mode, use fixed demo org ID
-    if settings.is_demo_mode:
-        organization_id = UUID("00000000-0000-0000-0000-000000000001")
-    else:
-        from uuid import uuid4
-        organization_id = uuid4()
+    organization_id = org_id
 
     try:
         # Update invoice sync to use demo mode
@@ -303,6 +322,7 @@ async def sync_order_to_invoice(
 
 @router.post("/sync-all")
 async def bulk_sync_orders(
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     invoice_sync: Annotated[XeroInvoiceSync, Depends(get_invoice_sync)],
     settings: Annotated[XeroSettings, Depends(get_xero_settings)],
@@ -316,13 +336,7 @@ async def bulk_sync_orders(
     Returns:
         Sync statistics
     """
-    # TODO: Get organization_id from authenticated user
-    # For demo mode, use fixed demo org ID
-    if settings.is_demo_mode:
-        organization_id = UUID("00000000-0000-0000-0000-000000000001")
-    else:
-        from uuid import uuid4
-        organization_id = uuid4()
+    organization_id = org_id
 
     try:
         result = await invoice_sync.bulk_sync_unsynced_orders(db, organization_id, max_orders)
@@ -335,6 +349,7 @@ async def bulk_sync_orders(
 @router.get("/invoice/{order_id}")
 async def get_invoice_for_order(
     order_id: UUID,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     invoice_sync: Annotated[XeroInvoiceSync, Depends(get_invoice_sync)],
     settings: Annotated[XeroSettings, Depends(get_xero_settings)],
@@ -347,13 +362,7 @@ async def get_invoice_for_order(
     Returns:
         Xero invoice data or error if not synced
     """
-    # TODO: Get organization_id from authenticated user
-    # For demo mode, use fixed demo org ID
-    if settings.is_demo_mode:
-        organization_id = UUID("00000000-0000-0000-0000-000000000001")
-    else:
-        from uuid import uuid4
-        organization_id = uuid4()
+    organization_id = org_id
 
     try:
         invoice = await invoice_sync.get_invoice_details(db, organization_id, order_id)
@@ -378,6 +387,7 @@ async def get_invoice_for_order(
 
 @router.post("/poll-payments")
 async def poll_recent_payments(
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     payment_sync: Annotated[XeroPaymentSync, Depends(get_payment_sync)],
     settings: Annotated[XeroSettings, Depends(get_xero_settings)],
@@ -391,13 +401,7 @@ async def poll_recent_payments(
     Returns:
         Sync statistics (total, synced, skipped)
     """
-    # TODO: Get organization_id from authenticated user
-    # For demo mode, use fixed demo org ID
-    if settings.is_demo_mode:
-        organization_id = UUID("00000000-0000-0000-0000-000000000001")
-    else:
-        from uuid import uuid4
-        organization_id = uuid4()
+    organization_id = org_id
 
     try:
         result = await payment_sync.poll_recent_payments(db, organization_id, hours_back)
@@ -415,6 +419,7 @@ async def poll_recent_payments(
 @router.post("/sync-customer/{customer_id}")
 async def sync_customer_to_xero(
     customer_id: UUID,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     customer_sync: Annotated[XeroCustomerSync, Depends(get_customer_sync)],
     settings: Annotated[XeroSettings, Depends(get_xero_settings)],
@@ -429,13 +434,7 @@ async def sync_customer_to_xero(
     Returns:
         Sync result with contact details
     """
-    # TODO: Get organization_id from authenticated user
-    # For demo mode, use fixed demo org ID
-    if settings.is_demo_mode:
-        organization_id = UUID("00000000-0000-0000-0000-000000000001")
-    else:
-        from uuid import uuid4
-        organization_id = uuid4()
+    organization_id = org_id
 
     try:
         result = await customer_sync.sync_customer_to_xero(
@@ -453,6 +452,7 @@ async def sync_customer_to_xero(
 
 @router.post("/sync-customers")
 async def bulk_sync_customers(
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     customer_sync: Annotated[XeroCustomerSync, Depends(get_customer_sync)],
     settings: Annotated[XeroSettings, Depends(get_xero_settings)],
@@ -466,13 +466,7 @@ async def bulk_sync_customers(
     Returns:
         Sync statistics
     """
-    # TODO: Get organization_id from authenticated user
-    # For demo mode, use fixed demo org ID
-    if settings.is_demo_mode:
-        organization_id = UUID("00000000-0000-0000-0000-000000000001")
-    else:
-        from uuid import uuid4
-        organization_id = uuid4()
+    organization_id = org_id
 
     try:
         result = await customer_sync.bulk_sync_customers(db, organization_id, max_customers)

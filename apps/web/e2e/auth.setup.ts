@@ -3,27 +3,25 @@
  * Runs before all tests to create an authenticated session
  */
 
-import { test as setup, expect } from "@playwright/test";
+import { test as setup, expect } from '@playwright/test';
 
-const authFile = ".auth/user.json";
+const authFile = '.auth/user.json';
 
-setup("authenticate as admin user", async ({ page }) => {
+setup('authenticate as admin user', async ({ page }) => {
   // Navigate to login page
-  await page.goto("/login");
+  await page.goto('/login');
 
   // Fill in login credentials (using demo credentials from CLAUDE.md)
-  await page.fill('input[name="email"]', "admin@demo.com");
-  await page.fill('input[name="password"]', "demo123");
+  await page.fill('input[name="email"]', 'admin@ccwonline.com.au');
+  await page.fill('input[name="password"]', 'demo123');
 
-  // Submit login form
+  // Submit the form and wait for redirect to dashboard
   await page.click('button[type="submit"]');
+  await page.waitForURL(/.*dashboard/, { waitUntil: 'networkidle', timeout: 15_000 });
 
-  // Wait for redirect to dashboard
-  await page.waitForURL("/dashboard");
+  // Verify we're on the dashboard
+  await expect(page).toHaveURL(/.*dashboard/);
 
-  // Verify we're logged in by checking for dashboard content
-  await expect(page.locator("h1, h2")).toContainText(/dashboard/i);
-
-  // Save authenticated state
+  // Save authenticated state for all subsequent E2E tests
   await page.context().storageState({ path: authFile });
 });

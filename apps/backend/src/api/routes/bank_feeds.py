@@ -1,11 +1,12 @@
 """Bank Feed API endpoints for reconciliation."""
 
 from datetime import date, timedelta
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,7 @@ from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.models import User
 from src.db.pos_models import BankAccount, BankFeed
+from src.db.webhook_models import WebhookEvent, WebhookStatus
 from src.monitoring import metrics
 from src.services.bank_feed_service import BankFeedService
 from src.services.reconciliation_alerts import ReconciliationAlertsService
@@ -91,14 +93,14 @@ async def sync_bank_feeds(
             return BankFeedSyncResponse(**result)
         else:
             # Sync all active accounts
-            result = await db.execute(
+            accounts_result = await db.execute(
                 select(BankAccount).where(
                     BankAccount.is_active == True,  # noqa: E712
                     BankAccount.feed_provider.isnot(None),
                     BankAccount.feed_provider != "manual",
                 )
             )
-            accounts = result.scalars().all()
+            accounts = accounts_result.scalars().all()
 
             total_transactions = 0
             successful_syncs = 0
@@ -119,7 +121,7 @@ async def sync_bank_feeds(
                 except Exception as e:
                     failed_syncs += 1
                     # Track failed sync
-                    metrics.bank_feed_sync_failures.labels(
+                    metrics.bank_feed_sync_failure.labels(
                         provider=account.feed_provider or "xero"
                     ).inc()
                     logger.error(
@@ -176,10 +178,12 @@ async def reconcile_bank_feed(
 async def list_unreconciled_feeds(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    account_id: Optional[UUID] = Query(None, description="Filter by account"),
-    start_date: Optional[date] = Query(None, description="Start date"),
-    end_date: Optional[date] = Query(None, description="End date"),
-) -> list[dict]:
+    account_id: UUID | None = Query(None, description="Filter by account"),
+    start_date: date | None = Query(None, description="Start date"),
+    end_date: date | None = Query(None, description="End date"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+) -> dict:
     """
     List unreconciled bank feed transactions.
 
@@ -196,24 +200,34 @@ async def list_unreconciled_feeds(
     if end_date:
         query = query.where(BankFeed.transaction_date <= end_date)
 
-    query = query.order_by(BankFeed.transaction_date.desc()).limit(100)
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar_one()
+
+    query = query.order_by(BankFeed.transaction_date.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
 
     result = await db.execute(query)
     feeds = result.scalars().all()
 
-    return [
-        {
-            "id": feed.id,
-            "bank_account_id": feed.bank_account_id,
-            "transaction_date": feed.transaction_date.isoformat(),
-            "description": feed.description,
-            "reference": feed.reference,
-            "credit": float(feed.credit) if feed.credit else None,
-            "debit": float(feed.debit) if feed.debit else None,
-            "balance": float(feed.balance) if feed.balance else None,
-        }
-        for feed in feeds
-    ]
+    return {
+        "items": [
+            {
+                "id": feed.id,
+                "bank_account_id": feed.bank_account_id,
+                "transaction_date": feed.transaction_date.isoformat(),
+                "description": feed.description,
+                "reference": feed.reference,
+                "credit": float(feed.credit) if feed.credit else None,
+                "debit": float(feed.debit) if feed.debit else None,
+                "balance": float(feed.balance) if feed.balance else None,
+            }
+            for feed in feeds
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
 
 
 @router.get("/accounts")
@@ -250,20 +264,20 @@ class BankAccountCreate(BaseModel):
     bank_name: str
     account_type: str = Field(default="checking", pattern="^(checking|savings|credit)$")
     feed_provider: str = Field(default="manual", pattern="^(xero|yodlee|basiq|manual)$")
-    location_code: Optional[str] = None
+    location_code: str | None = None
 
 
 class BankAccountUpdate(BaseModel):
     """Update a bank account."""
 
-    account_name: Optional[str] = None
-    account_number: Optional[str] = None
-    bsb: Optional[str] = Field(None, pattern=r"^\d{3}-\d{3}$", description="BSB format: XXX-XXX")
-    bank_name: Optional[str] = None
-    account_type: Optional[str] = Field(None, pattern="^(checking|savings|credit)$")
-    feed_provider: Optional[str] = Field(None, pattern="^(xero|yodlee|basiq|manual)$")
-    location_code: Optional[str] = None
-    is_active: Optional[bool] = None
+    account_name: str | None = None
+    account_number: str | None = None
+    bsb: str | None = Field(None, pattern=r"^\d{3}-\d{3}$", description="BSB format: XXX-XXX")
+    bank_name: str | None = None
+    account_type: str | None = Field(None, pattern="^(checking|savings|credit)$")
+    feed_provider: str | None = Field(None, pattern="^(xero|yodlee|basiq|manual)$")
+    location_code: str | None = None
+    is_active: bool | None = None
 
 
 @router.post("/accounts", response_model=dict, status_code=201)
@@ -348,7 +362,7 @@ async def update_bank_account(
     }
 
 
-@router.delete("/accounts/{account_id}", status_code=204)
+@router.delete("/accounts/{account_id}", status_code=204, response_model=None)
 async def delete_bank_account(
     account_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
@@ -563,11 +577,11 @@ async def bulk_reconcile_transactions(
 async def export_reconciliation_data(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    account_id: Optional[UUID] = Query(None, description="Filter by account"),
-    start_date: Optional[date] = Query(None, description="Start date"),
-    end_date: Optional[date] = Query(None, description="End date"),
-    status: Optional[str] = Query(None, description="matched, unmatched, all"),
-) -> dict:
+    account_id: UUID | None = Query(None, description="Filter by account"),
+    start_date: date | None = Query(None, description="Start date"),
+    end_date: date | None = Query(None, description="End date"),
+    status: str | None = Query(None, description="matched, unmatched, all"),
+) -> Response:
     """
     Export reconciliation data as CSV.
 
@@ -576,6 +590,7 @@ async def export_reconciliation_data(
     """
     import csv
     import io
+
     from src.db.pos_models import POSTransaction
 
     # Build query for bank feeds
@@ -618,10 +633,10 @@ async def export_reconciliation_data(
         amount = float(feed.credit) if feed.credit else float(-feed.debit) if feed.debit else 0
         discrepancy = ""
 
-        if feed.pos_transaction_id:
+        if feed.matched_pos_transaction_id:
             # Get POS transaction to calculate discrepancy
             pos_result = await db.execute(
-                select(POSTransaction).where(POSTransaction.id == feed.pos_transaction_id)
+                select(POSTransaction).where(POSTransaction.id == feed.matched_pos_transaction_id)
             )
             pos_trans = pos_result.scalar_one_or_none()
             if pos_trans:
@@ -632,7 +647,7 @@ async def export_reconciliation_data(
             str(feed.id),
             feed.description,
             f"{amount:.2f}",
-            str(feed.pos_transaction_id) if feed.pos_transaction_id else "",
+            str(feed.matched_pos_transaction_id) if feed.matched_pos_transaction_id else "",
             feed.match_status,
             discrepancy,
             feed.reference or "",
@@ -648,3 +663,176 @@ async def export_reconciliation_data(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=reconciliation-{date.today()}.csv"},
     )
+
+
+# ========== Phase 1: Webhook Support ==========
+
+
+class WebhookPayload(BaseModel):
+    """Webhook payload from bank feed provider."""
+
+    account_id: str = Field(..., description="Provider's account ID")
+    event_type: str = Field(..., description="Event type (e.g., 'transaction.created')")
+    data: dict = Field(..., description="Event data from provider")
+    signature: str | None = Field(None, description="HMAC signature for verification")
+    event_id: str | None = Field(None, description="Provider's unique event ID for idempotency")
+
+
+@router.post("/webhook/{provider}")
+async def bank_feed_webhook(
+    provider: str,
+    payload: WebhookPayload,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """
+    Webhook endpoint for real-time bank feed notifications (Phase 1).
+
+    Supported providers:
+    - xero
+    - yodlee
+    - basiq
+
+    Security:
+    - Verifies HMAC signature
+    - Requires webhook_enabled = TRUE on account
+    - Rate limited (TODO: implement rate limiting)
+    """
+    logger.info(
+        "Received bank feed webhook",
+        provider=provider,
+        event_type=payload.event_type,
+        account_id=payload.account_id,
+    )
+
+    # Find bank account by provider and feed_account_id
+    result = await db.execute(
+        select(BankAccount).where(
+            BankAccount.feed_provider == provider,
+            BankAccount.feed_account_id == payload.account_id,
+            BankAccount.webhook_enabled == True,  # noqa: E712
+        )
+    )
+    account = result.scalar_one_or_none()
+
+    if not account:
+        logger.warning(
+            "Bank account not found or webhooks disabled",
+            provider=provider,
+            account_id=payload.account_id,
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Bank account not found or webhooks not enabled",
+        )
+
+    # Verify HMAC signature
+    if account.webhook_secret:
+        if not payload.signature:
+            logger.warning("Webhook signature missing")
+            raise HTTPException(status_code=401, detail="Signature required")
+
+        if not _verify_webhook_signature(
+            payload.data, payload.signature, account.webhook_secret
+        ):
+            logger.warning("Invalid webhook signature")
+            raise HTTPException(status_code=401, detail="Invalid signature")
+
+    # Idempotency: skip duplicate events if event_id provided
+    if payload.event_id:
+        existing = await db.execute(
+            select(WebhookEvent).where(
+                WebhookEvent.source == f"bank_feed_{provider}",
+                WebhookEvent.event_id == payload.event_id,
+            )
+        )
+        if existing.scalar_one_or_none() is not None:
+            logger.info(
+                "Duplicate bank feed webhook — skipping",
+                provider=provider,
+                event_id=payload.event_id,
+            )
+            return {
+                "status": "duplicate",
+                "event_id": payload.event_id,
+                "event_type": payload.event_type,
+            }
+
+    # Trigger immediate sync for this account
+    try:
+        service = BankFeedService(db)
+
+        # Sync last 7 days (webhook triggers catch-up)
+        end_date = date.today()
+        start_date = end_date - timedelta(days=7)
+
+        sync_result = await service.sync_bank_feeds(
+            account_id=account.id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        logger.info(
+            "Webhook triggered sync completed",
+            account_id=str(account.id),
+            transactions_synced=sync_result["transactions_synced"],
+        )
+
+        # Persist event for idempotency (only after successful sync)
+        if payload.event_id:
+            event_record = WebhookEvent(
+                source=f"bank_feed_{provider}",
+                event_type=payload.event_type,
+                event_id=payload.event_id,
+                payload=payload.data,
+                status=WebhookStatus.COMPLETED.value,
+            )
+            db.add(event_record)
+            await db.commit()
+
+        # Track webhook success metric
+        metrics.bank_feed_webhook_received.labels(provider=provider).inc()
+
+        return {
+            "status": "success",
+            "account_id": str(account.id),
+            "transactions_synced": sync_result["transactions_synced"],
+            "event_type": payload.event_type,
+        }
+
+    except Exception as e:
+        logger.error(
+            "Webhook sync failed",
+            account_id=str(account.id),
+            error=str(e),
+        )
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+
+def _verify_webhook_signature(data: dict, signature: str, secret: str) -> bool:
+    """
+    Verify HMAC-SHA256 signature for webhook.
+
+    Args:
+        data: Webhook payload data
+        signature: Provided signature (hex-encoded)
+        secret: Webhook secret
+
+    Returns:
+        True if signature is valid
+    """
+    import hashlib
+    import hmac
+    import json
+
+    # Serialize data to consistent JSON string
+    payload_str = json.dumps(data, sort_keys=True, separators=(",", ":"))
+
+    # Calculate expected signature
+    expected_signature = hmac.new(
+        secret.encode("utf-8"),
+        payload_str.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    # Constant-time comparison
+    return hmac.compare_digest(expected_signature, signature)

@@ -15,6 +15,7 @@ from .context_builder import (
     ProjectStructure,
     StyleGuide,
 )
+from .doc_generator import DocGenerator
 from .generator import (
     CodeGenerationRequest,
     CodeGenerationResult,
@@ -22,9 +23,8 @@ from .generator import (
     GeneratedFile,
     QualityReport,
 )
-from .test_generator import TestGenerator
-from .doc_generator import DocGenerator
 from .quality_checker import QualityChecker
+from .test_generator import TestGenerator
 
 __all__ = [
     # Context Builder

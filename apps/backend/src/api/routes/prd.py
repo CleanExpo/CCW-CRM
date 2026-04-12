@@ -8,6 +8,8 @@ import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.api.deps import get_current_user
 from src.api.schemas.prd import (
     AgentRunDetail,
     PRDCostSummary,
@@ -17,11 +19,9 @@ from src.api.schemas.prd import (
     PRDListResponse,
     PRDSummary,
 )
-from src.db.models.prd import PRD, AgentRun, APIUsage
-
-from src.api.deps import get_current_user
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.models import User
+from src.db.models.prd import PRD, AgentRun, APIUsage
 
 logger = structlog.get_logger(__name__)
 
@@ -118,7 +118,7 @@ async def generate_prd(
     request: PRDGenerateRequest,
     background_tasks: BackgroundTasks,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> PRDGenerateResponse:
     """
     Generate a Product Requirements Document from plain English requirements.
@@ -176,7 +176,7 @@ async def generate_prd(
 async def get_prd(
     prd_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> PRDDetail:
     """
     Get a generated PRD by ID.
@@ -211,7 +211,7 @@ async def get_prd(
 @router.get("", response_model=PRDListResponse)
 async def list_prds(
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     status_filter: str | None = Query(None, description="Filter by status"),
@@ -256,12 +256,12 @@ async def list_prds(
     )
 
 
-@router.delete("/{prd_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{prd_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_prd(
     prd_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-) -> None:
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+):
     """
     Delete a PRD.
 
@@ -296,7 +296,7 @@ async def delete_prd(
 async def get_prd_agent_runs(
     prd_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> list[AgentRunDetail]:
     """
     Get agent execution history for a PRD.
@@ -338,7 +338,7 @@ async def get_prd_agent_runs(
 async def get_prd_cost(
     prd_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> PRDCostSummary:
     """
     Get cost summary for a PRD.

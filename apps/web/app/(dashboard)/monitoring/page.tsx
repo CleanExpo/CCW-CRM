@@ -1,16 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   LineChart,
   Line,
@@ -24,7 +18,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from "recharts";
+} from 'recharts';
 import {
   Activity,
   Database,
@@ -40,16 +34,23 @@ import {
   MemoryStick,
   Zap,
   ArrowUpDown,
-} from "lucide-react";
-import { BusinessMetrics } from "./components/BusinessMetrics";
-import { ApiPerformance } from "./components/ApiPerformance";
-import { AlertCard } from "./components/AlertCard";
+} from 'lucide-react';
+import { BusinessMetrics } from './components/BusinessMetrics';
+import { ApiPerformance } from './components/ApiPerformance';
+import { AlertCard } from './components/AlertCard';
+import {
+  getHealth,
+  getMetrics,
+  getPrometheusAlerts,
+  getRangeData,
+  getAlerts,
+} from '@/lib/api/monitoring';
 
 // ─── Types ─────────────────────────────────────────────────────
 
 interface ServiceStatus {
   job: string;
-  health: "up" | "down" | "unknown";
+  health: 'up' | 'down' | 'unknown';
   lastScrape: string;
   lastError: string;
 }
@@ -71,10 +72,10 @@ interface PrometheusAlert {
 interface SystemAlert {
   id: number;
   type: string;
-  severity: "info" | "warning" | "error" | "critical";
+  severity: 'info' | 'warning' | 'error' | 'critical';
   title: string;
   message: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   acknowledged: boolean;
   acknowledged_at?: string;
@@ -96,26 +97,26 @@ interface ChartDataPoint {
 // ─── Helpers ───────────────────────────────────────────────────
 
 function formatBytes(bytes: number | null): string {
-  if (bytes === null || isNaN(bytes)) return "N/A";
-  if (bytes === 0) return "0 B";
+  if (bytes === null || isNaN(bytes)) return 'N/A';
+  if (bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 function formatNumber(val: number | null, decimals = 1): string {
-  if (val === null || isNaN(val)) return "N/A";
+  if (val === null || isNaN(val)) return 'N/A';
   return val.toFixed(decimals);
 }
 
 function formatPercent(val: number | null): string {
-  if (val === null || isNaN(val)) return "N/A";
-  return (val * 100).toFixed(1) + "%";
+  if (val === null || isNaN(val)) return 'N/A';
+  return (val * 100).toFixed(1) + '%';
 }
 
 function formatUptime(seconds: number | null): string {
-  if (seconds === null || isNaN(seconds)) return "N/A";
+  if (seconds === null || isNaN(seconds)) return 'N/A';
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
@@ -126,21 +127,21 @@ function formatUptime(seconds: number | null): string {
 
 function formatTime(isoString: string): string {
   try {
-    return new Date(isoString).toLocaleTimeString("en-AU", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+    return new Date(isoString).toLocaleTimeString('en-AU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
     });
   } catch {
-    return "";
+    return '';
   }
 }
 
 const SERVICE_LABELS: Record<string, { label: string; icon: typeof Database }> = {
-  postgres: { label: "PostgreSQL", icon: Database },
-  redis: { label: "Redis", icon: HardDrive },
-  "ccw-backend": { label: "Backend API", icon: Server },
-  prometheus: { label: "Prometheus", icon: Activity },
+  postgres: { label: 'PostgreSQL', icon: Database },
+  redis: { label: 'Redis', icon: HardDrive },
+  'ccw-backend': { label: 'Backend API', icon: Server },
+  prometheus: { label: 'Prometheus', icon: Activity },
 };
 
 // ─── Component ─────────────────────────────────────────────────
@@ -151,12 +152,12 @@ export default function MonitoringPage() {
   const [prometheusAlerts, setPrometheusAlerts] = useState<PrometheusAlert[]>([]);
   const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
   const [alertSummary, setAlertSummary] = useState({ total_rules: 0, firing: 0, pending: 0 });
-  const [prometheusStatus, setPrometheusStatus] = useState<"up" | "down">("down");
+  const [prometheusStatus, setPrometheusStatus] = useState<'up' | 'down'>('down');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
-  const [duration, setDuration] = useState("1h");
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [duration, setDuration] = useState('1h');
 
   // Time-series chart data
   const [pgConnectionsData, setPgConnectionsData] = useState<ChartDataPoint[]>([]);
@@ -171,58 +172,44 @@ export default function MonitoringPage() {
       setRefreshing(true);
 
       // Fetch all data in parallel
-      const [healthRes, metricsRes, alertsRes] = await Promise.all([
-        fetch("/api/monitoring/health", { cache: "no-store" }),
-        fetch("/api/monitoring/metrics", { cache: "no-store" }),
-        fetch("/api/monitoring/alerts", { cache: "no-store" }),
-      ]);
-
       const [healthData, metricsData, alertsData] = await Promise.all([
-        healthRes.json(),
-        metricsRes.json(),
-        alertsRes.json(),
+        getHealth(),
+        getMetrics(),
+        getPrometheusAlerts(),
       ]);
 
       setServices(healthData.services || []);
-      setPrometheusStatus(healthData.prometheus || "down");
+      setPrometheusStatus(healthData.prometheus || 'down');
       setMetrics(metricsData.metrics || {});
       setPrometheusAlerts(alertsData.alerts || []);
       setAlertSummary(alertsData.summary || { total_rules: 0, firing: 0, pending: 0 });
-      setLastUpdated(new Date().toLocaleTimeString("en-AU"));
+      setLastUpdated(new Date().toLocaleTimeString('en-AU'));
 
       // Fetch system alerts (unresolved only)
       try {
-        const systemAlertsRes = await fetch("/api/monitoring/alerts?acknowledged=false", {
-          cache: "no-store",
-        });
-        if (systemAlertsRes.ok) {
-          const systemAlertsData = await systemAlertsRes.json();
-          setSystemAlerts(systemAlertsData.alerts || []);
-        }
+        const systemAlertsData = await getAlerts({ acknowledged: false });
+        setSystemAlerts(systemAlertsData.alerts || []);
       } catch (error) {
-        console.error("Failed to fetch system alerts:", error);
+        console.error('Failed to fetch system alerts:', error);
       }
 
       // Fetch chart data
-      const step = duration === "1h" ? "15" : duration === "6h" ? "60" : "300";
+      const step = duration === '1h' ? '15' : duration === '6h' ? '60' : '300';
       const chartQueries = [
-        { key: "pg_connections", query: "sum(pg_stat_activity_count)" },
-        { key: "redis_memory", query: "redis_memory_used_bytes" },
-        { key: "redis_ops", query: "rate(redis_commands_processed_total[5m])" },
-        { key: "pg_ops", query: 'rate(pg_stat_database_xact_commit{datname="starter_db"}[5m])' },
+        { key: 'pg_connections', query: 'sum(pg_stat_activity_count)' },
+        { key: 'redis_memory', query: 'redis_memory_used_bytes' },
+        { key: 'redis_ops', query: 'rate(redis_commands_processed_total[5m])' },
+        { key: 'pg_ops', query: 'rate(pg_stat_database_xact_commit{datname="starter_db"}[5m])' },
       ];
 
       const chartResults = await Promise.allSettled(
-        chartQueries.map((q) =>
-          fetch(
-            `/api/monitoring/range?query=${encodeURIComponent(q.query)}&duration=${duration}&step=${step}`,
-            { cache: "no-store" }
-          ).then((r) => r.json())
-        )
+        chartQueries.map((q) => getRangeData({ query: q.query, duration, step }))
       );
 
-      const toChartData = (result: PromiseSettledResult<any>): ChartDataPoint[] => {
-        if (result.status !== "fulfilled") return [];
+      const toChartData = (
+        result: PromiseSettledResult<{ series?: Array<{ values?: TimeSeriesPoint[] }> }>
+      ): ChartDataPoint[] => {
+        if (result.status !== 'fulfilled') return [];
         const values = result.value?.series?.[0]?.values || [];
         return values.map((v: TimeSeriesPoint) => ({
           time: formatTime(v.time),
@@ -232,7 +219,7 @@ export default function MonitoringPage() {
 
       setPgConnectionsData(toChartData(chartResults[0]));
       setRedisMemoryData(
-        chartResults[1].status === "fulfilled"
+        chartResults[1].status === 'fulfilled'
           ? (chartResults[1].value?.series?.[0]?.values || []).map((v: TimeSeriesPoint) => ({
               time: formatTime(v.time),
               value: v.value / (1024 * 1024), // Convert to MB
@@ -242,7 +229,7 @@ export default function MonitoringPage() {
       setRedisOpsData(toChartData(chartResults[2]));
       setPgOpsData(toChartData(chartResults[3]));
     } catch (error) {
-      console.error("Failed to fetch monitoring data:", error);
+      console.error('Failed to fetch monitoring data:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -267,8 +254,8 @@ export default function MonitoringPage() {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Loading monitoring data...</p>
+          <RefreshCw className="text-muted-foreground h-8 w-8 animate-spin" />
+          <p className="text-muted-foreground text-sm">Loading monitoring data...</p>
         </div>
       </div>
     );
@@ -290,7 +277,7 @@ export default function MonitoringPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">System Monitoring</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Infrastructure health and performance metrics
           </p>
         </div>
@@ -298,7 +285,7 @@ export default function MonitoringPage() {
           <select
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
-            className="rounded-md border bg-background px-3 py-1.5 text-sm"
+            className="bg-background rounded-md border px-3 py-1.5 text-sm"
           >
             <option value="1h">Last 1 hour</option>
             <option value="6h">Last 6 hours</option>
@@ -308,21 +295,21 @@ export default function MonitoringPage() {
             variant="outline"
             size="sm"
             onClick={() => setAutoRefresh(!autoRefresh)}
-            className={autoRefresh ? "border-green-500 text-green-600" : ""}
+            className={autoRefresh ? 'border-green-500 text-green-600' : ''}
           >
             {autoRefresh ? (
               <Wifi className="mr-1.5 h-3.5 w-3.5" />
             ) : (
               <WifiOff className="mr-1.5 h-3.5 w-3.5" />
             )}
-            {autoRefresh ? "Live" : "Paused"}
+            {autoRefresh ? 'Live' : 'Paused'}
           </Button>
           <Button variant="outline" size="sm" onClick={fetchData} disabled={refreshing}>
-            <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           {lastUpdated && (
-            <span className="text-xs text-muted-foreground">Updated {lastUpdated}</span>
+            <span className="text-muted-foreground text-xs">Updated {lastUpdated}</span>
           )}
         </div>
       </div>
@@ -331,43 +318,43 @@ export default function MonitoringPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {Object.entries(SERVICE_LABELS).map(([job, { label, icon: Icon }]) => {
           const service = services.find((s) => s.job === job);
-          const isUp = service?.health === "up";
-          const isDown = service?.health === "down";
+          const isUp = service?.health === 'up';
+          const isDown = service?.health === 'down';
           return (
             <Card key={job} className="relative overflow-hidden">
               <CardContent className="flex items-center gap-3 p-4">
                 <div
                   className={`rounded-lg p-2 ${
                     isUp
-                      ? "bg-green-500/10 text-green-600"
+                      ? 'bg-green-500/10 text-green-600'
                       : isDown
-                      ? "bg-red-500/10 text-red-600"
-                      : "bg-muted text-muted-foreground"
+                        ? 'bg-red-500/10 text-red-600'
+                        : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{label}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{label}</p>
                   <div className="flex items-center gap-1.5">
                     {isUp ? (
                       <CheckCircle2 className="h-3 w-3 text-green-600" />
                     ) : isDown ? (
                       <AlertTriangle className="h-3 w-3 text-red-600" />
                     ) : (
-                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      <Clock className="text-muted-foreground h-3 w-3" />
                     )}
                     <span
                       className={`text-xs ${
-                        isUp ? "text-green-600" : isDown ? "text-red-600" : "text-muted-foreground"
+                        isUp ? 'text-green-600' : isDown ? 'text-red-600' : 'text-muted-foreground'
                       }`}
                     >
-                      {isUp ? "Healthy" : isDown ? "Down" : "Unknown"}
+                      {isUp ? 'Healthy' : isDown ? 'Down' : 'Unknown'}
                     </span>
                   </div>
                 </div>
                 {service?.lastError && (
-                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                  <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
                     Error
                   </Badge>
                 )}
@@ -383,8 +370,20 @@ export default function MonitoringPage() {
           icon={Database}
           label="DB Connections"
           value={formatNumber(metrics.pg_connections, 0)}
-          subtext={metrics.pg_max_connections ? `of ${formatNumber(metrics.pg_max_connections, 0)} max` : undefined}
-          status={pgConnectionPct !== null ? (pgConnectionPct > 80 ? "critical" : pgConnectionPct > 60 ? "warning" : "good") : "neutral"}
+          subtext={
+            metrics.pg_max_connections
+              ? `of ${formatNumber(metrics.pg_max_connections, 0)} max`
+              : undefined
+          }
+          status={
+            pgConnectionPct !== null
+              ? pgConnectionPct > 80
+                ? 'critical'
+                : pgConnectionPct > 60
+                  ? 'warning'
+                  : 'good'
+              : 'neutral'
+          }
         />
         <MetricCard
           icon={HardDrive}
@@ -393,11 +392,11 @@ export default function MonitoringPage() {
           status={
             metrics.pg_database_size !== null
               ? metrics.pg_database_size > 10737418240
-                ? "critical"
+                ? 'critical'
                 : metrics.pg_database_size > 5368709120
-                ? "warning"
-                : "good"
-              : "neutral"
+                  ? 'warning'
+                  : 'good'
+              : 'neutral'
           }
         />
         <MetricCard
@@ -405,7 +404,15 @@ export default function MonitoringPage() {
           label="Redis Memory"
           value={formatBytes(metrics.redis_memory_used)}
           subtext={redisMemoryPct !== null ? `${redisMemoryPct.toFixed(1)}% used` : undefined}
-          status={redisMemoryPct !== null ? (redisMemoryPct > 90 ? "critical" : redisMemoryPct > 70 ? "warning" : "good") : "neutral"}
+          status={
+            redisMemoryPct !== null
+              ? redisMemoryPct > 90
+                ? 'critical'
+                : redisMemoryPct > 70
+                  ? 'warning'
+                  : 'good'
+              : 'neutral'
+          }
         />
         <MetricCard
           icon={Zap}
@@ -414,11 +421,11 @@ export default function MonitoringPage() {
           status={
             metrics.redis_hit_rate !== null
               ? metrics.redis_hit_rate < 0.7
-                ? "critical"
+                ? 'critical'
                 : metrics.redis_hit_rate < 0.85
-                ? "warning"
-                : "good"
-              : "neutral"
+                  ? 'warning'
+                  : 'good'
+              : 'neutral'
           }
         />
         <MetricCard
@@ -434,9 +441,9 @@ export default function MonitoringPage() {
           status={
             metrics.redis_connected_clients !== null
               ? metrics.redis_connected_clients > 100
-                ? "warning"
-                : "good"
-              : "neutral"
+                ? 'warning'
+                : 'good'
+              : 'neutral'
           }
         />
       </div>
@@ -463,7 +470,7 @@ export default function MonitoringPage() {
             {/* PostgreSQL Connections */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <Database className="h-4 w-4 text-blue-500" />
                   Database Connections
                 </CardTitle>
@@ -474,10 +481,16 @@ export default function MonitoringPage() {
                   <EmptyChart />
                 ) : (
                   <ResponsiveContainer width="100%" height={220}>
-                    <AreaChart data={pgConnectionsData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <AreaChart
+                      data={pgConnectionsData}
+                      margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="time" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                      />
+                      <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                       <Tooltip content={<MetricTooltip label="Connections" />} />
                       <Area
                         type="monotone"
@@ -497,7 +510,7 @@ export default function MonitoringPage() {
             {/* Redis Memory */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <MemoryStick className="h-4 w-4 text-red-500" />
                   Redis Memory Usage
                 </CardTitle>
@@ -508,11 +521,17 @@ export default function MonitoringPage() {
                   <EmptyChart />
                 ) : (
                   <ResponsiveContainer width="100%" height={220}>
-                    <AreaChart data={redisMemoryData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <AreaChart
+                      data={redisMemoryData}
+                      margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="time" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                      />
                       <YAxis
-                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                         tickFormatter={(v) => `${v.toFixed(0)} MB`}
                       />
                       <Tooltip content={<MetricTooltip label="Memory" unit=" MB" />} />
@@ -534,7 +553,7 @@ export default function MonitoringPage() {
             {/* PostgreSQL Transactions */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <Database className="h-4 w-4 text-blue-500" />
                   Transaction Rate
                 </CardTitle>
@@ -547,8 +566,11 @@ export default function MonitoringPage() {
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={pgOpsData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="time" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                      />
+                      <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                       <Tooltip content={<MetricTooltip label="Commits/s" />} />
                       <Line
                         type="monotone"
@@ -567,7 +589,7 @@ export default function MonitoringPage() {
             {/* Redis Operations */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <Zap className="h-4 w-4 text-yellow-500" />
                   Redis Operations
                 </CardTitle>
@@ -578,10 +600,16 @@ export default function MonitoringPage() {
                   <EmptyChart />
                 ) : (
                   <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={redisOpsData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <LineChart
+                      data={redisOpsData}
+                      margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="time" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                      />
+                      <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                       <Tooltip content={<MetricTooltip label="Ops/s" />} />
                       <Line
                         type="monotone"
@@ -603,7 +631,10 @@ export default function MonitoringPage() {
             <MiniStat label="Redis Uptime" value={formatUptime(metrics.redis_uptime)} />
             <MiniStat label="Total Redis Keys" value={formatNumber(metrics.redis_total_keys, 0)} />
             <MiniStat label="DB Commits/s" value={formatNumber(metrics.pg_commits_rate)} />
-            <MiniStat label="Evicted Keys/s" value={formatNumber(metrics.redis_evicted_keys_rate)} />
+            <MiniStat
+              label="Evicted Keys/s"
+              value={formatNumber(metrics.redis_evicted_keys_rate)}
+            />
           </div>
         </TabsContent>
 
@@ -630,11 +661,9 @@ export default function MonitoringPage() {
             {systemAlerts.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                  <CheckCircle2 className="h-8 w-8 text-green-500 mb-2" />
+                  <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
                   <p className="text-sm font-medium">All Clear</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    No active system alerts
-                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">No active system alerts</p>
                 </CardContent>
               </Card>
             ) : (
@@ -667,23 +696,27 @@ export default function MonitoringPage() {
               <Card>
                 <CardContent className="p-4 text-center">
                   <p className="text-2xl font-bold">{alertSummary.total_rules}</p>
-                  <p className="text-xs text-muted-foreground">Alert Rules</p>
+                  <p className="text-muted-foreground text-xs">Alert Rules</p>
                 </CardContent>
               </Card>
-              <Card className={alertSummary.firing > 0 ? "border-red-500/50" : ""}>
+              <Card className={alertSummary.firing > 0 ? 'border-red-500/50' : ''}>
                 <CardContent className="p-4 text-center">
-                  <p className={`text-2xl font-bold ${alertSummary.firing > 0 ? "text-red-600" : ""}`}>
+                  <p
+                    className={`text-2xl font-bold ${alertSummary.firing > 0 ? 'text-red-600' : ''}`}
+                  >
                     {alertSummary.firing}
                   </p>
-                  <p className="text-xs text-muted-foreground">Firing</p>
+                  <p className="text-muted-foreground text-xs">Firing</p>
                 </CardContent>
               </Card>
-              <Card className={alertSummary.pending > 0 ? "border-yellow-500/50" : ""}>
+              <Card className={alertSummary.pending > 0 ? 'border-yellow-500/50' : ''}>
                 <CardContent className="p-4 text-center">
-                  <p className={`text-2xl font-bold ${alertSummary.pending > 0 ? "text-yellow-600" : ""}`}>
+                  <p
+                    className={`text-2xl font-bold ${alertSummary.pending > 0 ? 'text-yellow-600' : ''}`}
+                  >
                     {alertSummary.pending}
                   </p>
-                  <p className="text-xs text-muted-foreground">Pending</p>
+                  <p className="text-muted-foreground text-xs">Pending</p>
                 </CardContent>
               </Card>
             </div>
@@ -692,9 +725,9 @@ export default function MonitoringPage() {
             {prometheusAlerts.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                  <CheckCircle2 className="h-8 w-8 text-green-500 mb-2" />
+                  <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
                   <p className="text-sm font-medium">All Clear</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-muted-foreground mt-1 text-xs">
                     No active infrastructure alerts
                   </p>
                 </CardContent>
@@ -705,39 +738,41 @@ export default function MonitoringPage() {
                   <Card
                     key={`${alert.name}-${i}`}
                     className={
-                      alert.state === "firing"
-                        ? "border-red-500/50 bg-red-500/5"
-                        : alert.state === "pending"
-                        ? "border-yellow-500/50 bg-yellow-500/5"
-                        : ""
+                      alert.state === 'firing'
+                        ? 'border-red-500/50 bg-red-500/5'
+                        : alert.state === 'pending'
+                          ? 'border-yellow-500/50 bg-yellow-500/5'
+                          : ''
                     }
                   >
                     <CardContent className="flex items-start gap-3 p-4">
-                      {alert.state === "firing" ? (
-                        <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                      {alert.state === 'firing' ? (
+                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                       ) : (
-                        <Clock className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
+                        <Clock className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
                       )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-sm">{alert.name}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex items-center gap-2">
+                          <p className="text-sm font-medium">{alert.name}</p>
                           <Badge
-                            variant={alert.severity === "critical" ? "destructive" : "secondary"}
-                            className="text-[10px] px-1.5 py-0"
+                            variant={alert.severity === 'critical' ? 'destructive' : 'secondary'}
+                            className="px-1.5 py-0 text-[10px]"
                           >
                             {alert.severity}
                           </Badge>
                           <Badge
-                            variant={alert.state === "firing" ? "destructive" : "outline"}
-                            className="text-[10px] px-1.5 py-0"
+                            variant={alert.state === 'firing' ? 'destructive' : 'outline'}
+                            className="px-1.5 py-0 text-[10px]"
                           >
                             {alert.state}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{alert.summary || alert.description}</p>
+                        <p className="text-muted-foreground text-sm">
+                          {alert.summary || alert.description}
+                        </p>
                         {alert.activeAt && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Since {new Date(alert.activeAt).toLocaleString("en-AU")}
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            Since {new Date(alert.activeAt).toLocaleString('en-AU')}
                           </p>
                         )}
                       </div>
@@ -766,33 +801,33 @@ function MetricCard({
   label: string;
   value: string;
   subtext?: string;
-  status: "good" | "warning" | "critical" | "neutral";
+  status: 'good' | 'warning' | 'critical' | 'neutral';
 }) {
   const statusColor = {
-    good: "text-green-600",
-    warning: "text-yellow-600",
-    critical: "text-red-600",
-    neutral: "text-foreground",
+    good: 'text-green-600',
+    warning: 'text-yellow-600',
+    critical: 'text-red-600',
+    neutral: 'text-foreground',
   }[status];
 
   const bgColor = {
-    good: "bg-green-500/10",
-    warning: "bg-yellow-500/10",
-    critical: "bg-red-500/10",
-    neutral: "bg-muted",
+    good: 'bg-green-500/10',
+    warning: 'bg-yellow-500/10',
+    critical: 'bg-red-500/10',
+    neutral: 'bg-muted',
   }[status];
 
   return (
     <Card>
       <CardContent className="p-3">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="mb-2 flex items-center gap-2">
           <div className={`rounded p-1 ${bgColor}`}>
             <Icon className={`h-3.5 w-3.5 ${statusColor}`} />
           </div>
-          <span className="text-xs text-muted-foreground truncate">{label}</span>
+          <span className="text-muted-foreground truncate text-xs">{label}</span>
         </div>
         <p className={`text-lg font-semibold ${statusColor}`}>{value}</p>
-        {subtext && <p className="text-[11px] text-muted-foreground mt-0.5">{subtext}</p>}
+        {subtext && <p className="text-muted-foreground mt-0.5 text-[11px]">{subtext}</p>}
       </CardContent>
     </Card>
   );
@@ -803,22 +838,27 @@ function MiniStat({ label, value }: { label: string; value: string }) {
     <Card>
       <CardContent className="p-3 text-center">
         <p className="text-sm font-medium">{value}</p>
-        <p className="text-[11px] text-muted-foreground">{label}</p>
+        <p className="text-muted-foreground text-[11px]">{label}</p>
       </CardContent>
     </Card>
   );
 }
 
-function MetricTooltip({ active, payload, label, unit }: any) {
+interface MetricTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number; payload?: { time?: string } }>;
+  label?: string;
+  unit?: string;
+}
+
+function MetricTooltip({ active, payload, unit }: MetricTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border bg-background p-2.5 shadow-md">
-      <p className="text-xs text-muted-foreground mb-1">{payload[0]?.payload?.time}</p>
+    <div className="bg-background rounded-lg border p-2.5 shadow-md">
+      <p className="text-muted-foreground mb-1 text-xs">{payload[0]?.payload?.time}</p>
       <p className="text-sm font-medium">
-        {typeof payload[0]?.value === "number"
-          ? payload[0].value.toFixed(2)
-          : payload[0]?.value}
-        {unit || ""}
+        {typeof payload[0]?.value === 'number' ? payload[0].value.toFixed(2) : payload[0]?.value}
+        {unit || ''}
       </p>
     </div>
   );
@@ -826,11 +866,11 @@ function MetricTooltip({ active, payload, label, unit }: any) {
 
 function EmptyChart() {
   return (
-    <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
+    <div className="text-muted-foreground flex h-[220px] items-center justify-center text-sm">
       <div className="text-center">
-        <Activity className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <Activity className="mx-auto mb-2 h-8 w-8 opacity-30" />
         <p>No data available</p>
-        <p className="text-xs mt-1">Waiting for metrics...</p>
+        <p className="mt-1 text-xs">Waiting for metrics...</p>
       </div>
     </div>
   );

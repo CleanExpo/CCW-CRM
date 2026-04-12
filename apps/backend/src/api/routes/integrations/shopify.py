@@ -6,11 +6,13 @@ and syncing inventory.
 PHASE: Enhanced Shopify Integration - Task 1.3: Bulk metafield sync endpoints.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
+from uuid import uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -298,6 +300,70 @@ async def get_connection_status(
     }
 
 
+class ShopifyConfigureRequest(BaseModel):
+    """Credentials to configure the Shopify integration."""
+
+    shop_domain: str = Field(min_length=1, description="e.g. my-store.myshopify.com")
+    access_token: str = Field(min_length=1, description="Shopify Admin API access token")
+    api_key: str = Field(default="", description="Shopify API key (optional)")
+    api_secret: str = Field(default="", description="Shopify API secret (optional)")
+    webhook_secret: str = Field(default="", description="Webhook HMAC secret (optional)")
+
+
+@router.post("/configure")
+async def configure_shopify(
+    request: ShopifyConfigureRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Save Shopify credentials to the database.
+
+    Creates or updates the ShopifyConnection record. The store is NOT
+    contacted during this call — use POST /connect to validate and activate.
+    """
+    logger.info("configuring_shopify_credentials", shop_domain=request.shop_domain)
+
+    result = await db.execute(
+        select(ShopifyConnection).where(
+            ShopifyConnection.shop_domain == request.shop_domain
+        )
+    )
+    conn = result.scalars().first()
+
+    if conn:
+        conn.access_token = request.access_token
+        conn.api_key = request.api_key
+        conn.api_secret = request.api_secret
+        conn.webhook_secret = request.webhook_secret
+        conn.is_active = True
+    else:
+        conn = ShopifyConnection(
+            id=uuid4(),
+            shop_domain=request.shop_domain,
+            shop_name=request.shop_domain,
+            access_token=request.access_token,
+            api_key=request.api_key,
+            api_secret=request.api_secret,
+            webhook_secret=request.webhook_secret,
+            is_active=True,
+        )
+        db.add(conn)
+
+    try:
+        await db.commit()
+        await db.refresh(conn)
+    except Exception:
+        await db.rollback()
+        raise
+
+    logger.info("shopify_credentials_saved", shop_domain=conn.shop_domain)
+    return {
+        "connected": True,
+        "mode": "live",
+        "shop_domain": conn.shop_domain,
+        "message": "Credentials saved. Use Connect to verify and activate.",
+    }
+
+
 @router.post("/connect")
 async def connect_shopify(
     settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
@@ -363,7 +429,11 @@ async def connect_shopify(
             )
             db.add(connection)
 
-        await db.commit()
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
 
         return {
             "success": True,
@@ -404,7 +474,11 @@ async def disconnect_shopify(
 
     if connection:
         connection.is_active = False
-        await db.commit()
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
 
     return {"success": True, "message": "Shopify connection disconnected"}
 
@@ -830,6 +904,7 @@ async def sync_inventory_to_shopify_realtime(
 
         # Get product mapping to get Shopify IDs
         from sqlalchemy import select
+
         from src.db.shopify_models import ShopifyProductMapping
 
         stmt = select(ShopifyProductMapping).where(
@@ -903,6 +978,7 @@ async def sync_inventory_from_shopify_realtime(
     try:
         # Get product mapping
         from sqlalchemy import select
+
         from src.db.shopify_models import ShopifyProductMapping
 
         stmt = select(ShopifyProductMapping).where(
@@ -1050,6 +1126,7 @@ async def resolve_inventory_conflict(
 
         # Get product mapping
         from sqlalchemy import select
+
         from src.db.shopify_models import ShopifyProductMapping
 
         stmt = select(ShopifyProductMapping).where(
@@ -1159,8 +1236,9 @@ async def reconcile_inventory(
 
     try:
         from sqlalchemy import select
-        from src.db.shopify_models import ShopifyProductMapping
+
         from src.db.models.prd import Product
+        from src.db.shopify_models import ShopifyProductMapping
 
         # Get all mapped products
         stmt = select(ShopifyProductMapping).where(
@@ -1478,6 +1556,7 @@ async def sync_product_metafields(
         Sync result with synced metafield count and errors.
     """
     from uuid import UUID
+
     from src.db.shopify_models import ShopifyProductMapping
     from src.integrations.shopify.metafields import get_metafield_manager
     from src.services.sse_service import sse_service
@@ -1560,8 +1639,9 @@ async def get_inventory_sync_status(
     Returns:
         Sync health metrics and statistics
     """
+    from sqlalchemy import and_, func
+
     from src.db.shopify_extended_models import ShopifyInventorySync, ShopifyInventorySyncQueue
-    from sqlalchemy import func, and_
 
     logger.info("fetching_inventory_sync_status")
 
@@ -1685,6 +1765,7 @@ async def sync_translations_to_shopify(
         Sync result with synced languages
     """
     from uuid import UUID
+
     from src.db.shopify_models import ShopifyProductMapping
     from src.integrations.shopify.translations import get_translation_syncer
 
@@ -1753,6 +1834,7 @@ async def sync_translations_from_shopify(
         Sync result with synced languages
     """
     from uuid import UUID
+
     from src.db.shopify_models import ShopifyProductMapping
     from src.integrations.shopify.translations import get_translation_syncer
 

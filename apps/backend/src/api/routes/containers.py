@@ -18,7 +18,7 @@ from src.db.container_models import (
     ContainerItem,
     ContainerStatus,
 )
-from src.db.erp_models import Product
+from src.db.demo_models import Product
 from src.db.inventory_models import PurchaseOrder, Supplier
 from src.db.models import User
 from src.events.event_bus import get_event_bus
@@ -564,8 +564,16 @@ async def receive_container(
 
     await db.commit()
 
-    # TODO: Add stock to warehouse inventory
-    # This will be implemented when we add ProductStockByLocation updates
+    # Update product stock levels from received quantities
+    for container_item in container.items:
+        if container_item.quantity_received and container_item.quantity_received > 0:
+            product_result = await db.execute(
+                select(Product).where(Product.id == container_item.product_id)
+            )
+            product = product_result.scalar_one_or_none()
+            if product:
+                available_qty = container_item.quantity_received - (container_item.quantity_damaged or 0)
+                product.stock = (product.stock or 0) + available_qty
 
     # Publish event to trigger backorder fulfillment
     event_bus = get_event_bus()
@@ -616,7 +624,7 @@ async def receive_container(
     return ContainerResponse(**container_dict)
 
 
-@router.delete("/{container_id}", status_code=204)
+@router.delete("/{container_id}", status_code=204, response_model=None)
 async def delete_container(
     container_id: UUID,
     db: AsyncSession = Depends(get_async_db),

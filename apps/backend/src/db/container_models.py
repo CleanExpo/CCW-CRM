@@ -31,9 +31,9 @@ from sqlalchemy.orm import relationship
 
 # Import related models for SQLAlchemy relationship resolution
 # These need to be imported so string-based relationships can be resolved
-from .erp_models import Customer, Order, Product  # noqa: F401
+from .demo_models import Customer, Order, Product  # noqa: F401
 from .inventory_models import PurchaseOrder, Supplier  # noqa: F401
-from .models import Base
+from .models_base import Base
 
 
 class ContainerStatus(str, enum.Enum):
@@ -72,10 +72,10 @@ class Container(Base):
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     container_number: str = Column(String(50), nullable=False, unique=True, index=True)
     purchase_order_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("purchase_orders.id"), nullable=True, index=True
+        PGUUID(as_uuid=True), ForeignKey("purchase_orders.id", ondelete="SET NULL"), nullable=True, index=True
     )
     supplier_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("suppliers.id"), nullable=True, index=True
+        PGUUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
     # Shipment Details
@@ -121,7 +121,7 @@ class Container(Base):
     internal_notes: str | None = Column(Text, nullable=True)
 
     # Metadata
-    created_by: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_by: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
@@ -218,7 +218,7 @@ class ContainerItem(Base):
         nullable=False, index=True
     )
     product_id: UUID = Column(
-        PGUUID(as_uuid=True), ForeignKey("products.id"), nullable=False, index=True
+        PGUUID(as_uuid=True), ForeignKey("products.id", ondelete="RESTRICT"), nullable=False, index=True
     )
 
     # Quantities
@@ -299,17 +299,17 @@ class Backorder(Base):
 
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     order_id: UUID = Column(
-        PGUUID(as_uuid=True), ForeignKey("orders.id"), nullable=False, index=True
+        PGUUID(as_uuid=True), ForeignKey("orders.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     order_item_id: UUID | None = Column(
         PGUUID(as_uuid=True), nullable=True, index=True,
         comment="Reference to specific order item if applicable"
     )
     product_id: UUID = Column(
-        PGUUID(as_uuid=True), ForeignKey("products.id"), nullable=False, index=True
+        PGUUID(as_uuid=True), ForeignKey("products.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     customer_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("customers.id"), nullable=True, index=True
+        PGUUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
     # Quantities
@@ -323,7 +323,7 @@ class Backorder(Base):
 
     # Container Allocation
     container_id: UUID | None = Column(
-        PGUUID(as_uuid=True), ForeignKey("containers.id"), nullable=True, index=True,
+        PGUUID(as_uuid=True), ForeignKey("containers.id", ondelete="SET NULL"), nullable=True, index=True,
         comment="Container from which stock will be allocated"
     )
 
@@ -358,7 +358,7 @@ class Backorder(Base):
     internal_notes: str | None = Column(Text, nullable=True)
 
     # Metadata
-    created_by: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_by: UUID | None = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )

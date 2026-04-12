@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface BreadcrumbItem {
   label: string;
@@ -34,24 +34,26 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className={cn("flex items-center space-x-1 text-sm", className)}>
+    <nav aria-label="Breadcrumb" className={cn('flex items-center space-x-1 text-sm', className)}>
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
 
         return (
           <React.Fragment key={index}>
             {index > 0 && (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <ChevronRight className="text-muted-foreground h-4 w-4" aria-hidden="true" />
             )}
             {item.href && !isLast ? (
               <Link
-                href={item.href as any}
+                href={item.href}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 {item.label}
               </Link>
             ) : (
-              <span className={cn(isLast ? "font-medium text-foreground" : "text-muted-foreground")}>
+              <span
+                className={cn(isLast ? 'text-foreground font-medium' : 'text-muted-foreground')}
+              >
                 {item.label}
               </span>
             )}

@@ -4,9 +4,9 @@
  * Validates JWT tokens and handles protected routes.
  */
 
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 interface User {
   id: string;
@@ -24,7 +24,7 @@ async function verifyToken(token: string): Promise<User | null> {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      cache: "no-store",
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -46,7 +46,7 @@ export async function updateSession(request: NextRequest) {
   });
 
   // Get auth token from cookies
-  const token = request.cookies.get("auth_token")?.value;
+  const token = request.cookies.get('auth_token')?.value;
 
   // Verify token if present
   let user: User | null = null;
@@ -55,34 +55,33 @@ export async function updateSession(request: NextRequest) {
 
     // Clear invalid token
     if (!user) {
-      response.cookies.delete("auth_token");
+      response.cookies.delete('auth_token');
     }
   }
 
-  // Protected routes - TEMPORARILY DISABLED FOR TESTING
-  // const protectedPaths = ["/dashboard"];
-  // const isProtectedPath = protectedPaths.some((path) =>
-  //   request.nextUrl.pathname.startsWith(path)
-  // );
+  // Protected routes — all paths except explicitly public ones require authentication
+  // Note: /api/cron routes use their own CRON_SECRET auth, not session cookies
+  const publicPaths = ['/login', '/register', '/guest', '/faq', '/', '/api/cron', '/api/auth'];
+  const isPublicPath = publicPaths.some(
+    (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+  );
 
-  // if (isProtectedPath && !user) {
-  //   const url = request.nextUrl.clone();
-  //   url.pathname = "/login";
-  //   url.searchParams.set("redirect", request.nextUrl.pathname);
-  //   return NextResponse.redirect(url);
-  // }
+  if (!isPublicPath && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('redirect', request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
 
   // Redirect logged in users away from auth pages
-  const authPaths = ["/login", "/register"];
-  const isAuthPath = authPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
+  const authPaths = ['/login', '/register'];
+  const isAuthPath = authPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
   if (isAuthPath && user) {
     const url = request.nextUrl.clone();
-    const redirect = request.nextUrl.searchParams.get("redirect");
-    url.pathname = redirect || "/dashboard";
-    url.searchParams.delete("redirect");
+    const redirect = request.nextUrl.searchParams.get('redirect');
+    url.pathname = redirect || '/dashboard';
+    url.searchParams.delete('redirect');
     return NextResponse.redirect(url);
   }
 

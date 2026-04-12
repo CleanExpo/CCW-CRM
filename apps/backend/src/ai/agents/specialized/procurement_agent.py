@@ -62,10 +62,74 @@ class ProcurementAgent(BaseAgent):
         # Build LangGraph state graph
         self.graph = self._build_graph()
 
+        # Protocol v1.0: Agent Card
+        self._protocol_card = self._build_agent_card()
+
         logger.info("Procurement agent initialized")
 
         # Register with agent registry after full initialization
         self._schedule_registration()
+
+        # Register protocol card with registry
+        self._register_protocol_card()
+
+    @staticmethod
+    def _build_agent_card() -> Any:
+        """Build protocol AgentCard for this agent."""
+        try:
+            from src.ai.protocol.models import AgentCard, DelegationRule, PermissionTier
+
+            return AgentCard(
+                agent_id="procurement_agent",
+                name="Procurement Agent",
+                version="1.0.0",
+                description="Manages inventory levels and procurement recommendations",
+                capabilities=[
+                    "procurement",
+                    "inventory_management",
+                    "supplier_recommendation",
+                    "inventory_replenishment",
+                    "reorder_calculation",
+                ],
+                boundaries=[
+                    "Cannot place purchase orders directly",
+                    "Cannot modify supplier contracts",
+                    "Cannot approve spending above threshold",
+                ],
+                inputs={
+                    "inventory_data": "Current stock levels and sales velocity",
+                    "category": "Product category filter",
+                    "context": "Additional procurement context",
+                },
+                outputs={
+                    "reorder_recommendations": "List of products needing reorder",
+                    "supplier_suggestions": "Recommended suppliers per product",
+                    "stockout_risks": "Products at risk of stockout",
+                },
+                delegation_rules=[
+                    DelegationRule(
+                        capability="inventory_management",
+                        max_chain_depth=2,
+                    ),
+                ],
+                permission_tier=PermissionTier.STANDARD,
+                max_concurrent=5,
+                timeout_seconds=45,
+            )
+        except ImportError:
+            return None
+
+    def _register_protocol_card(self) -> None:
+        """Register protocol card with agent registry."""
+        if self._protocol_card is None:
+            return
+        try:
+            from src.ai.orchestration import get_agent_registry
+
+            registry = get_agent_registry()
+            registry.register_agent_card(self.agent_id, self._protocol_card)
+        except Exception as e:
+            logger.debug("Could not register protocol card", error=str(e))
 
     def _build_graph(self) -> StateGraph:
         """Build LangGraph state graph for procurement operations."""

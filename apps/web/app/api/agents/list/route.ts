@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
  * GET /api/agents/list
@@ -7,13 +8,11 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     // Fetch agents from monitoring API
-    const agentsRes = await fetch(`${backendUrl}/api/ai/monitoring/agents`, {
-      cache: "no-store",
+    const agentsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/agents`, {
+      cache: 'no-store',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
@@ -27,22 +26,19 @@ export async function GET() {
     const agentsWithStats = await Promise.all(
       agentsData.agents.map(async (agent: Record<string, unknown>) => {
         try {
-          const statsRes = await fetch(
-            `${backendUrl}/api/ai/monitoring/stats/${agent.agent_id}`,
-            {
-              cache: "no-store",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          const statsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/stats/${agent.agent_id}`, {
+            cache: 'no-store',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
 
           if (!statsRes.ok) {
             // Return agent without stats if fetch fails
             return {
               agent_id: agent.agent_id,
               agent_type: agent.name,
-              status: "active",
+              status: 'active',
               task_count: 0,
               success_rate: 0,
               capabilities: agent.capabilities,
@@ -55,11 +51,9 @@ export async function GET() {
           return {
             agent_id: agent.agent_id,
             agent_type: agent.name,
-            status: stats.error_rate_percent < 50 ? "active" : "degraded",
+            status: stats.error_rate_percent < 50 ? 'active' : 'degraded',
             task_count: stats.total_executions,
-            success_rate: stats.total_executions > 0
-              ? 1 - (stats.error_rate_percent / 100)
-              : 0,
+            success_rate: stats.total_executions > 0 ? 1 - stats.error_rate_percent / 100 : 0,
             capabilities: agent.capabilities,
           };
         } catch (error) {
@@ -67,7 +61,7 @@ export async function GET() {
           return {
             agent_id: agent.agent_id,
             agent_type: agent.name,
-            status: "active",
+            status: 'active',
             task_count: 0,
             success_rate: 0,
             capabilities: agent.capabilities,
@@ -78,7 +72,7 @@ export async function GET() {
 
     return NextResponse.json(agentsWithStats);
   } catch (error: unknown) {
-    console.error("Error fetching agent list:", error);
+    console.error('Error fetching agent list:', error);
     return NextResponse.json([]);
   }
 }

@@ -4,16 +4,19 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+logger = structlog.get_logger(__name__)
+
 from src.api.deps import get_optional_user
 from src.config.database import get_async_db
 from src.db.container_models import Backorder, BackorderStatus, Container
-from src.db.erp_models import Customer, Order, Product
+from src.db.demo_models import Customer, Order, Product
 from src.db.models import User
 from src.events.event_bus import get_event_bus
 from src.services.alert_manager import get_alert_manager
@@ -680,7 +683,7 @@ async def fulfill_backorder(
     return BackorderResponse(**backorder_dict)
 
 
-@router.post("/{backorder_id}/notify", status_code=204)
+@router.post("/{backorder_id}/notify", status_code=204, response_model=None)
 async def notify_customer(
     backorder_id: UUID,
     notify_data: BackorderNotifyRequest,
@@ -731,21 +734,23 @@ async def notify_customer(
 
     await db.commit()
 
-    # TODO: Publish event when event bus is initialized
-    # event_bus = get_event_bus()
-    # await event_bus.publish(
-    #     "backorder.customer_notified",
-    #     payload={
-    #         "backorder_id": str(backorder.id),
-    #         "customer_id": str(backorder.customer_id),
-    #         "notification_type": notify_data.notification_type,
-    #         "email_sent": email_sent,
-    #     },
-    #     source="api",
-    # )
+    try:
+        from src.events import get_event_bus
+        event_bus = get_event_bus()
+        await event_bus.publish(
+            "backorder.customer_notified",
+            payload={
+                "backorder_id": str(backorder.id),
+                "customer_id": str(backorder.customer_id),
+                "notification_type": notify_data.notification_type,
+            },
+            source="api",
+        )
+    except Exception as exc:
+        logger.debug("event_publish_failed", error=str(exc))  # non-critical
 
 
-@router.delete("/{backorder_id}", status_code=204)
+@router.delete("/{backorder_id}", status_code=204, response_model=None)
 async def cancel_backorder(
     backorder_id: UUID,
     db: AsyncSession = Depends(get_async_db),

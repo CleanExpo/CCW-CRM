@@ -6,7 +6,7 @@ import structlog
 from pydantic import Field
 from sqlalchemy import or_, select
 
-from src.config.database import get_db
+from src.config.database import get_async_db
 from src.db.demo_models import Customer, Order, Product, Quote
 
 from .base import BaseTool, ToolInput, ToolOutput
@@ -44,7 +44,7 @@ class SearchProductsTool(BaseTool):
             ToolOutput with list of matching products
         """
         try:
-            async for db in get_db():
+            async for db in get_async_db():
                 # Build query
                 stmt = select(Product).where(Product.is_active)
 
@@ -133,7 +133,7 @@ class SearchCustomersTool(BaseTool):
             ToolOutput with list of matching customers
         """
         try:
-            async for db in get_db():
+            async for db in get_async_db():
                 # Build query
                 stmt = select(Customer).where(Customer.is_active)
 
@@ -225,7 +225,7 @@ class SearchOrdersTool(BaseTool):
             ToolOutput with list of matching orders
         """
         try:
-            async for db in get_db():
+            async for db in get_async_db():
                 # Build query
                 stmt = select(Order).order_by(Order.order_date.desc())
 
@@ -316,7 +316,7 @@ class GetQuoteDetailsTool(BaseTool):
             ToolOutput with quote details
         """
         try:
-            async for db in get_db():
+            async for db in get_async_db():
                 # Parse UUID
                 try:
                     quote_uuid = UUID(quote_id)

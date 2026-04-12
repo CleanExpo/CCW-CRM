@@ -7,7 +7,7 @@ following project patterns and conventions.
 import ast
 import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +15,6 @@ import anthropic
 from pydantic import BaseModel, Field
 
 from .context_builder import CodeContext, ContextBuilder
-
 
 # ============================================================================
 # Data Models
@@ -26,19 +25,13 @@ class CodeGenerationRequest(BaseModel):
     """Request for code generation."""
 
     requirement: str = Field(description="Natural language requirement")
-    context: dict[str, Any] = Field(
-        default_factory=dict, description="Additional context"
-    )
+    context: dict[str, Any] = Field(default_factory=dict, description="Additional context")
     target_language: str = Field(description="python or typescript")
-    generation_type: str = Field(
-        default="feature", description="feature, bug_fix, or refactor"
-    )
+    generation_type: str = Field(default="feature", description="feature, bug_fix, or refactor")
     reference_files: list[str] = Field(
         default_factory=list, description="Files to use as reference"
     )
-    constraints: dict[str, Any] = Field(
-        default_factory=dict, description="Generation constraints"
-    )
+    constraints: dict[str, Any] = Field(default_factory=dict, description="Generation constraints")
 
 
 class GeneratedFile(BaseModel):
@@ -73,13 +66,9 @@ class CodeGenerationResult(BaseModel):
     tests: list[GeneratedFile] = Field(
         default_factory=list, description="Generated tests (Task #71)"
     )
-    documentation: list[str] = Field(
-        default_factory=list, description="Generated docs (Task #72)"
-    )
+    documentation: list[str] = Field(default_factory=list, description="Generated docs (Task #72)")
     quality_report: QualityReport = Field(description="Quality check results")
-    pr_ready: bool = Field(
-        default=False, description="Whether code is ready for PR"
-    )
+    pr_ready: bool = Field(default=False, description="Whether code is ready for PR")
 
 
 # ============================================================================
@@ -102,8 +91,8 @@ class CodeGenerator:
 
     project_root: Path
     anthropic_api_key: str | None = None
-    model: str = "claude-sonnet-4-20250514"  # Claude Sonnet 4.5
-    fallback_model: str = "claude-haiku-4-20250910"  # Claude Haiku
+    model: str = "claude-opus-4-6"  # Claude Opus 4-6
+    fallback_model: str = "claude-haiku-4-5-20251001"  # Claude Haiku 4.5
     max_retries: int = 2
 
     def __post_init__(self):
@@ -128,9 +117,7 @@ class CodeGenerator:
         # Initialize documentation generator
         from .doc_generator import DocGenerator
 
-        self.doc_generator = DocGenerator(
-            project_root=self.project_root, anthropic_api_key=api_key
-        )
+        self.doc_generator = DocGenerator(project_root=self.project_root, anthropic_api_key=api_key)
 
         # Initialize quality checker
         from .quality_checker import QualityChecker
@@ -141,9 +128,7 @@ class CodeGenerator:
     # Main API
     # ========================================================================
 
-    async def generate(
-        self, request: CodeGenerationRequest
-    ) -> CodeGenerationResult:
+    async def generate(self, request: CodeGenerationRequest) -> CodeGenerationResult:
         """Generate code based on request.
 
         Args:
@@ -205,10 +190,8 @@ class CodeGenerator:
                     imports=imports,
                 )
                 # Add documentation summary
-                documentation_list.append(
-                    f"Added comprehensive documentation to {file_path}"
-                )
-            except Exception as e:
+                documentation_list.append(f"Added comprehensive documentation to {file_path}")
+            except Exception:
                 # Documentation generation failure shouldn't block code generation
                 pass
 
@@ -220,7 +203,7 @@ class CodeGenerator:
                     generated_file=generated_file, test_type="unit"
                 )
                 tests.extend(generated_tests)
-            except Exception as e:
+            except Exception:
                 # Test generation failure shouldn't block code generation
                 # Log warning but continue
                 pass
@@ -241,9 +224,7 @@ class CodeGenerator:
     # Prompt Engineering
     # ========================================================================
 
-    async def _build_prompt(
-        self, request: CodeGenerationRequest, context: CodeContext
-    ) -> str:
+    async def _build_prompt(self, request: CodeGenerationRequest, context: CodeContext) -> str:
         """Build prompt from template with context injection.
 
         Args:
@@ -264,9 +245,7 @@ class CodeGenerator:
 
         # Extract style guide based on language
         style = (
-            context.backend_style
-            if request.target_language == "python"
-            else context.frontend_style
+            context.backend_style if request.target_language == "python" else context.frontend_style
         )
 
         # Build reference patterns section
@@ -276,7 +255,8 @@ class CodeGenerator:
 
         # Build similar code section
         similar_code = await self._format_similar_code(
-            context.similar_files[:2], context  # Top 2 similar files
+            context.similar_files[:2],
+            context,  # Top 2 similar files
         )
 
         # Build dependencies section
@@ -314,9 +294,7 @@ class CodeGenerator:
 
         return "".join(formatted)
 
-    async def _format_similar_code(
-        self, file_paths: list[str], context: CodeContext
-    ) -> str:
+    async def _format_similar_code(self, file_paths: list[str], context: CodeContext) -> str:
         """Format similar code snippets for prompt."""
         if not file_paths:
             return "No similar code found."
@@ -400,7 +378,8 @@ class CodeGenerator:
                 if attempt < self.max_retries:
                     # Exponential backoff
                     import asyncio
-                    await asyncio.sleep(2 ** attempt)
+
+                    await asyncio.sleep(2**attempt)
                     continue
                 raise Exception(f"Rate limit exceeded: {str(e)}")
 
@@ -437,9 +416,7 @@ class CodeGenerator:
     # Syntax Validation
     # ========================================================================
 
-    async def _validate_syntax(
-        self, code: str, language: str
-    ) -> tuple[bool, list[str]]:
+    async def _validate_syntax(self, code: str, language: str) -> tuple[bool, list[str]]:
         """Validate generated code syntax.
 
         Args:
@@ -548,9 +525,7 @@ class CodeGenerator:
     # File Path Inference
     # ========================================================================
 
-    async def _infer_file_path(
-        self, requirement: str, language: str, context: CodeContext
-    ) -> str:
+    async def _infer_file_path(self, requirement: str, language: str, context: CodeContext) -> str:
         """Infer appropriate file path for generated code.
 
         Args:
@@ -575,7 +550,9 @@ class CodeGenerator:
 
         else:  # TypeScript
             # Check if it's a component
-            if any(word in requirement.lower() for word in ["component", "form", "dialog", "modal"]):
+            if any(
+                word in requirement.lower() for word in ["component", "form", "dialog", "modal"]
+            ):
                 return "apps/web/components/generated/GeneratedComponent.tsx"
             # Page
             elif "page" in requirement.lower():

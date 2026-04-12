@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sparkles,
   Send,
@@ -22,15 +22,15 @@ import {
   DollarSign,
   ShoppingCart,
   Loader2,
-} from "lucide-react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+} from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
   suggestions?: QuickAction[];
@@ -57,7 +57,7 @@ interface QuotePreview {
 interface QuoteCopilotChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onQuoteCreated?: (quoteData: any) => void;
+  onQuoteCreated?: (quoteData: Record<string, unknown>) => void;
   initialMessage?: string;
 }
 
@@ -83,7 +83,7 @@ export function QuoteCopilotChat({
 }: QuoteCopilotChatProps) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(() => `quote-copilot-${Date.now()}`);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -105,17 +105,20 @@ export function QuoteCopilotChat({
       if (messages.length === 0) {
         const greeting: Message = {
           id: `msg-${Date.now()}`,
-          role: "assistant",
-          content: initialMessage || "Hi! I'm your Quote Copilot. I'll help you create a quote by asking a few questions. Let's start: **Who is this quote for?** You can tell me the customer name or company.",
+          role: 'assistant',
+          content:
+            initialMessage ||
+            "Hi! I'm your Quote Copilot. I'll help you create a quote by asking a few questions. Let's start: **Who is this quote for?** You can tell me the customer name or company.",
           timestamp: new Date(),
           suggestions: [
-            { label: "List Customers", action: "list_customers" },
-            { label: "New Customer", action: "new_customer" },
+            { label: 'List Customers', action: 'list_customers' },
+            { label: 'New Customer', action: 'new_customer' },
           ],
         };
         setMessages([greeting]);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const sendMessage = async (messageText?: string) => {
@@ -125,13 +128,13 @@ export function QuoteCopilotChat({
     // Add user message
     const userMessage: Message = {
       id: `msg-${Date.now()}-user`,
-      role: "user",
+      role: 'user',
       content: text,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    setInput('');
     setIsTyping(true);
 
     try {
@@ -141,7 +144,7 @@ export function QuoteCopilotChat({
         suggestions?: QuickAction[];
         quote_preview?: QuotePreview;
         action?: string;
-      }>("/api/ai/copilot/quote", {
+      }>('/api/ai/copilot/quote', {
         session_id: sessionId,
         message: text,
         context: {
@@ -152,7 +155,7 @@ export function QuoteCopilotChat({
       // Add assistant response
       const assistantMessage: Message = {
         id: `msg-${Date.now()}-assistant`,
-        role: "assistant",
+        role: 'assistant',
         content: response.message,
         timestamp: new Date(),
         suggestions: response.suggestions,
@@ -162,21 +165,21 @@ export function QuoteCopilotChat({
       setMessages((prev) => [...prev, assistantMessage]);
 
       // Handle special actions
-      if (response.action === "create_quote" && response.quote_preview?.ready) {
+      if (response.action === 'create_quote' && response.quote_preview?.ready) {
         // Quote is ready to be created
         setTimeout(() => {
           toast({
-            title: "Quote Ready",
+            title: 'Quote Ready',
             description: "Your quote is ready! Click 'Create Quote' to finalize.",
           });
         }, 500);
       }
-    } catch (error: any) {
-      console.error("Failed to send message:", error);
+    } catch (error: unknown) {
+      console.error('Failed to send message:', error);
 
       const errorMessage: Message = {
         id: `msg-${Date.now()}-error`,
-        role: "assistant",
+        role: 'assistant',
         content: "I'm having trouble processing that. Could you rephrase or try again?",
         timestamp: new Date(),
       };
@@ -184,9 +187,10 @@ export function QuoteCopilotChat({
       setMessages((prev) => [...prev, errorMessage]);
 
       toast({
-        title: "Communication Error",
-        description: error.message || "Failed to communicate with Quote Copilot.",
-        variant: "destructive",
+        title: 'Communication Error',
+        description:
+          error instanceof Error ? error.message : 'Failed to communicate with Quote Copilot.',
+        variant: 'destructive',
       });
     } finally {
       setIsTyping(false);
@@ -196,11 +200,11 @@ export function QuoteCopilotChat({
   const handleQuickAction = (action: string) => {
     // Handle predefined actions
     const actionMessages: Record<string, string> = {
-      list_customers: "Show me the customer list",
-      new_customer: "I need to create a quote for a new customer",
-      add_products: "I want to add products to this quote",
-      review_quote: "Let me review the quote details",
-      create_quote: "Create the quote now",
+      list_customers: 'Show me the customer list',
+      new_customer: 'I need to create a quote for a new customer',
+      add_products: 'I want to add products to this quote',
+      review_quote: 'Let me review the quote details',
+      create_quote: 'Create the quote now',
     };
 
     const message = actionMessages[action] || action;
@@ -210,18 +214,18 @@ export function QuoteCopilotChat({
   const handleCreateQuote = () => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.quoteData && onQuoteCreated) {
-      onQuoteCreated(lastMessage.quoteData);
+      onQuoteCreated(lastMessage.quoteData as unknown as Record<string, unknown>);
       onOpenChange(false);
       setMessages([]);
       toast({
-        title: "Quote Created",
-        description: "Quote has been created from the conversation.",
+        title: 'Quote Created',
+        description: 'Quote has been created from the conversation.',
       });
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -229,11 +233,11 @@ export function QuoteCopilotChat({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[600px] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+      <DialogContent className="flex h-[600px] max-w-2xl flex-col p-0">
+        <DialogHeader className="border-b px-6 pt-6 pb-4">
           <DialogTitle className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-gradient-brand/10 border border-white/10">
-              <Sparkles className="h-5 w-5 text-brand-primary" />
+            <div className="bg-gradient-brand/10 rounded-lg border border-white/10 p-2">
+              <Sparkles className="text-brand-primary h-5 w-5" />
             </div>
             Quote Copilot
           </DialogTitle>
@@ -254,75 +258,66 @@ export function QuoteCopilotChat({
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                   className={cn(
-                    "flex gap-3",
-                    message.role === "user" ? "justify-end" : "justify-start"
+                    'flex gap-3',
+                    message.role === 'user' ? 'justify-end' : 'justify-start'
                   )}
                 >
-                  {message.role === "assistant" && (
+                  {message.role === 'assistant' && (
                     <div className="flex-shrink-0">
-                      <div className="p-2 rounded-full bg-gradient-brand/10 border border-white/10">
-                        <Bot className="h-4 w-4 text-brand-primary" />
+                      <div className="bg-gradient-brand/10 rounded-full border border-white/10 p-2">
+                        <Bot className="text-brand-primary h-4 w-4" />
                       </div>
                     </div>
                   )}
 
                   <div
                     className={cn(
-                      "max-w-[80%] rounded-lg p-4",
-                      message.role === "user"
-                        ? "bg-brand-primary text-primary-foreground"
-                        : "bg-muted/50 border border-white/10"
+                      'max-w-[80%] rounded-lg p-4',
+                      message.role === 'user'
+                        ? 'bg-brand-primary text-primary-foreground'
+                        : 'bg-muted/50 border border-white/10'
                     )}
                   >
                     <div
                       className={cn(
-                        "text-sm whitespace-pre-wrap",
-                        message.role === "user" ? "text-primary-foreground" : "text-foreground"
+                        'text-sm whitespace-pre-wrap',
+                        message.role === 'user' ? 'text-primary-foreground' : 'text-foreground'
                       )}
                       dangerouslySetInnerHTML={{
-                        __html: message.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"),
+                        __html: message.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
                       }}
                     />
 
                     {/* Quote Preview */}
                     {message.quoteData && (
-                      <div className="mt-3 p-3 rounded-lg bg-card/50 border border-white/10 space-y-2">
+                      <div className="bg-card/50 mt-3 space-y-2 rounded-lg border border-white/10 p-3">
                         <div className="flex items-center gap-2 text-xs font-medium">
                           <ShoppingCart className="h-3 w-3" />
                           Quote Preview
                         </div>
                         {message.quoteData.customer && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             Customer: {message.quoteData.customer}
                           </p>
                         )}
                         <div className="space-y-1">
                           {message.quoteData.products.map((product, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-between text-xs"
-                            >
+                            <div key={idx} className="flex items-center justify-between text-xs">
                               <span>
                                 {product.quantity}x {product.name}
                               </span>
-                              <span className="font-medium">
-                                ${product.price.toFixed(2)}
-                              </span>
+                              <span className="font-medium">${product.price.toFixed(2)}</span>
                             </div>
                           ))}
                         </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                        <div className="flex items-center justify-between border-t border-white/10 pt-2">
                           <span className="text-xs font-semibold">Total</span>
-                          <span className="text-sm font-bold text-brand-primary">
+                          <span className="text-brand-primary text-sm font-bold">
                             ${message.quoteData.total.toFixed(2)}
                           </span>
                         </div>
                         {message.quoteData.ready && (
-                          <Button
-                            size="sm"
-                            onClick={handleCreateQuote}
-                            className="w-full mt-2"
-                          >
+                          <Button size="sm" onClick={handleCreateQuote} className="mt-2 w-full">
                             <CheckCircle2 className="mr-2 h-4 w-4" />
                             Create This Quote
                           </Button>
@@ -332,14 +327,14 @@ export function QuoteCopilotChat({
 
                     {/* Quick Actions */}
                     {message.suggestions && message.suggestions.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         {message.suggestions.map((suggestion, idx) => (
                           <Button
                             key={idx}
                             variant="outline"
                             size="sm"
                             onClick={() => handleQuickAction(suggestion.action)}
-                            className="text-xs h-7"
+                            className="h-7 text-xs"
                           >
                             {suggestion.label}
                           </Button>
@@ -347,18 +342,18 @@ export function QuoteCopilotChat({
                       </div>
                     )}
 
-                    <p className="text-xs text-muted-foreground mt-2 opacity-50">
+                    <p className="text-muted-foreground mt-2 text-xs opacity-50">
                       {message.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
+                        hour: '2-digit',
+                        minute: '2-digit',
                       })}
                     </p>
                   </div>
 
-                  {message.role === "user" && (
+                  {message.role === 'user' && (
                     <div className="flex-shrink-0">
-                      <div className="p-2 rounded-full bg-brand-primary/10 border border-brand-primary/20">
-                        <User className="h-4 w-4 text-brand-primary" />
+                      <div className="bg-brand-primary/10 border-brand-primary/20 rounded-full border p-2">
+                        <User className="text-brand-primary h-4 w-4" />
                       </div>
                     </div>
                   )}
@@ -374,15 +369,24 @@ export function QuoteCopilotChat({
                 className="flex gap-3"
               >
                 <div className="flex-shrink-0">
-                  <div className="p-2 rounded-full bg-gradient-brand/10 border border-white/10">
-                    <Bot className="h-4 w-4 text-brand-primary" />
+                  <div className="bg-gradient-brand/10 rounded-full border border-white/10 p-2">
+                    <Bot className="text-brand-primary h-4 w-4" />
                   </div>
                 </div>
-                <div className="bg-muted/50 border border-white/10 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-lg border border-white/10 p-4">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div
+                      className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full"
+                      style={{ animationDelay: '0ms' }}
+                    />
+                    <div
+                      className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full"
+                      style={{ animationDelay: '150ms' }}
+                    />
+                    <div
+                      className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full"
+                      style={{ animationDelay: '300ms' }}
+                    />
                   </div>
                 </div>
               </motion.div>
@@ -391,7 +395,7 @@ export function QuoteCopilotChat({
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="px-6 py-4 border-t bg-muted/30">
+        <div className="bg-muted/30 border-t px-6 py-4">
           <div className="flex gap-2">
             <Input
               ref={inputRef}
@@ -402,11 +406,7 @@ export function QuoteCopilotChat({
               disabled={isTyping}
               className="flex-1"
             />
-            <Button
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || isTyping}
-              size="icon"
-            >
+            <Button onClick={() => sendMessage()} disabled={!input.trim() || isTyping} size="icon">
               {isTyping ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -414,7 +414,7 @@ export function QuoteCopilotChat({
               )}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-2 text-xs">
             Press Enter to send • Shift+Enter for new line
           </p>
         </div>

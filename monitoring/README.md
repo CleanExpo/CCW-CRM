@@ -8,19 +8,20 @@ This monitoring infrastructure provides comprehensive observability for CCW-Onli
 
 ### Components
 
-| Component | Purpose | Access URL |
-|-----------|---------|------------|
-| **Prometheus** | Metrics collection & alerting | http://localhost:9090 |
-| **Grafana** | Metrics visualization | http://localhost:3001 |
-| **Alertmanager** | Alert routing & notifications | http://localhost:9093 |
-| **Sentry** | Error tracking & performance | https://sentry.io |
-| **Node Exporter** | System metrics | http://localhost:9100 |
-| **Postgres Exporter** | Database metrics | http://localhost:9187 |
-| **Redis Exporter** | Cache metrics | http://localhost:9121 |
+| Component             | Purpose                       | Access URL            |
+| --------------------- | ----------------------------- | --------------------- |
+| **Prometheus**        | Metrics collection & alerting | http://localhost:9090 |
+| **Grafana**           | Metrics visualization         | http://localhost:3001 |
+| **Alertmanager**      | Alert routing & notifications | http://localhost:9093 |
+| **Sentry**            | Error tracking & performance  | https://sentry.io     |
+| **Node Exporter**     | System metrics                | http://localhost:9100 |
+| **Postgres Exporter** | Database metrics              | http://localhost:9187 |
+| **Redis Exporter**    | Cache metrics                 | http://localhost:9121 |
 
 ### Key Metrics Tracked
 
 **API Performance:**
+
 - Request rate (req/sec)
 - Response time (p50, p95, p99)
 - Error rate (4xx, 5xx)
@@ -28,24 +29,28 @@ This monitoring infrastructure provides comprehensive observability for CCW-Onli
 - Success rate
 
 **System Resources:**
+
 - CPU usage
 - Memory usage
 - Disk I/O
 - Network traffic
 
 **Database:**
+
 - Query performance
 - Connection pool status
 - Slow queries
 - Database size
 
 **Cache:**
+
 - Hit/miss rate
 - Memory usage
 - Eviction rate
 - Connection count
 
 **Business Metrics:**
+
 - Orders created
 - Quotes generated
 - Revenue
@@ -100,6 +105,7 @@ docker-compose -f docker-compose.monitoring.yml ps
 ### 3. Access Dashboards
 
 **Grafana:**
+
 ```
 URL: http://localhost:3001
 Username: admin
@@ -107,6 +113,7 @@ Password: (from GRAFANA_ADMIN_PASSWORD env var or default: admin)
 ```
 
 **Prometheus:**
+
 ```
 URL: http://localhost:9090
 Query examples:
@@ -115,6 +122,7 @@ Query examples:
 ```
 
 **Alertmanager:**
+
 ```
 URL: http://localhost:9093
 View active alerts and silences
@@ -131,44 +139,97 @@ View active alerts and silences
 
 ## Grafana Dashboards
 
-### Pre-configured Dashboards
+### Auto-Provisioned Dashboards
 
-1. **API Performance Dashboard**
-   - Request rate by endpoint
-   - Response time (p95, p99)
-   - Error rate
-   - Success rate gauge
-   - Active requests
+All dashboards are automatically loaded on Grafana startup via provisioning. No manual import required.
 
-2. **System Resources Dashboard** (create manually)
-   - CPU usage
-   - Memory usage
-   - Disk I/O
-   - Network traffic
+| Dashboard                | UID                        | Description                                            |
+| ------------------------ | -------------------------- | ------------------------------------------------------ |
+| **System Overview**      | `ccw-system-overview`      | Service health, API rates, response times, error rates |
+| **Database Performance** | `ccw-database-performance` | PostgreSQL connections, transactions, cache, locks     |
+| **Container Resources**  | `ccw-container-resources`  | CPU, memory, network, disk I/O per container           |
+| **Application Metrics**  | `ccw-application-metrics`  | Orders, quotes, auth, cache, background jobs           |
+| **Redis Metrics**        | `redis-metrics`            | Cache hit rate, memory, operations, evictions          |
+| **API Performance**      | -                          | Request rates, response times by endpoint              |
+| **Business Metrics**     | -                          | Orders, revenue, POS transactions, bank feeds          |
 
-3. **Database Performance Dashboard** (create manually)
-   - Query rate
-   - Slow queries
-   - Connection pool
-   - Database size
+### Dashboard Features
 
-4. **Business Metrics Dashboard** (create manually)
-   - Orders per hour
-   - Revenue trends
-   - Active users
-   - Subscription metrics
+**System Overview Dashboard:**
 
-### Importing Dashboards
+- Service health status (Backend, PostgreSQL, Redis)
+- Request rate by HTTP method
+- Response time percentiles (P50, P95, P99)
+- Error rates (4xx, 5xx)
+- Slowest endpoints table
+- Service uptime timeline
 
-1. Navigate to Grafana (http://localhost:3001)
-2. Click **+** → **Import**
-3. Upload dashboard JSON from `grafana/dashboards/`
-4. Select Prometheus datasource
-5. Click **Import**
+**Database Performance Dashboard:**
+
+- Connection pool usage with max limit
+- Transaction commit/rollback rates
+- Row operations (insert/update/delete/fetch)
+- Buffer cache hit rate
+- Database locks over time
+- Database size growth trend
+- Connections by state (pie chart)
+
+**Container Resources Dashboard:**
+
+- Running container count
+- Total CPU and memory usage
+- Network Rx/Tx rates
+- Per-container CPU and memory
+- Container restart counts (24h)
+- Memory limit utilization
+- Host system CPU and memory
+
+**Application Metrics Dashboard:**
+
+- Orders and quotes created (24h)
+- Quote conversion rate
+- Authentication success rate
+- Cache hit rate
+- Background job queue depth
+- API endpoint response times
+- Cache hits vs misses
+- Revenue tracking
+
+### Dashboard File Locations
+
+```
+monitoring/grafana/
+├── dashboards/                    # Dashboard JSON files
+│   ├── system-overview.json
+│   ├── postgresql_metrics.json
+│   ├── container-resources.json
+│   ├── application-metrics.json
+│   ├── redis_metrics.json
+│   ├── api-performance-dashboard.json
+│   └── business_metrics.json
+└── provisioning/
+    ├── dashboards/
+    │   └── dashboards.yml         # Dashboard provisioning config
+    └── datasources/
+        └── datasources.yml        # Prometheus datasource config
+```
+
+### Accessing Dashboards
+
+After starting the monitoring stack, dashboards are available at:
+
+- http://localhost:3001 (Grafana)
+- Navigate to Dashboards → Browse → CCW ERP folder
+- Or use direct links with dashboard UIDs:
+  - System Overview: http://localhost:3001/d/ccw-system-overview
+  - Database: http://localhost:3001/d/ccw-database-performance
+  - Containers: http://localhost:3001/d/ccw-container-resources
+  - Application: http://localhost:3001/d/ccw-application-metrics
 
 ### Creating Custom Dashboards
 
 Example panel - Request Rate:
+
 ```
 Query: rate(http_requests_total[5m])
 Legend: {{method}} {{endpoint}}
@@ -176,6 +237,7 @@ Type: Graph
 ```
 
 Example panel - p95 Response Time:
+
 ```
 Query: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
 Legend: p95
@@ -194,11 +256,13 @@ All alert rules are defined in `prometheus/alert-rules-prod.yml`.
 #### API Performance Alerts
 
 **HighResponseTime**
+
 - **Trigger:** p95 response time > 500ms for 5 minutes
 - **Severity:** Warning
 - **Action:** Investigate slow endpoints
 
 **HighErrorRate**
+
 - **Trigger:** Error rate > 5% for 5 minutes
 - **Severity:** Critical
 - **Action:** Immediate investigation required
@@ -206,11 +270,13 @@ All alert rules are defined in `prometheus/alert-rules-prod.yml`.
 #### System Resource Alerts
 
 **HighCPUUsage**
+
 - **Trigger:** CPU > 80% for 10 minutes
 - **Severity:** Warning
 - **Action:** Scale horizontally or optimize code
 
 **HighMemoryUsage**
+
 - **Trigger:** Memory > 85% for 10 minutes
 - **Severity:** Warning
 - **Action:** Investigate memory leaks or scale
@@ -218,11 +284,13 @@ All alert rules are defined in `prometheus/alert-rules-prod.yml`.
 #### Database Alerts
 
 **PostgreSQLDown**
+
 - **Trigger:** Database unreachable for 1 minute
 - **Severity:** Critical
 - **Action:** Immediate intervention required
 
 **PostgreSQLSlowQueries**
+
 - **Trigger:** Average query time > 10s for 5 minutes
 - **Severity:** Warning
 - **Action:** Review slow queries, add indexes
@@ -230,11 +298,13 @@ All alert rules are defined in `prometheus/alert-rules-prod.yml`.
 #### Cache Alerts
 
 **RedisDown**
+
 - **Trigger:** Redis unreachable for 1 minute
 - **Severity:** Warning
 - **Action:** Investigate cache failure (app continues with degraded performance)
 
 **HighCacheMissRate**
+
 - **Trigger:** Cache miss rate > 50% for 10 minutes
 - **Severity:** Warning
 - **Action:** Review cache strategy
@@ -282,7 +352,7 @@ initialize_sentry()
 Add to `apps/web/app/layout.tsx`:
 
 ```typescript
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -305,13 +375,13 @@ except Exception as e:
 
 ```typescript
 // Frontend
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 try {
   await riskyOperation();
 } catch (error) {
   Sentry.captureException(error, {
-    tags: { operation: "risky_op" },
+    tags: { operation: 'risky_op' },
   });
 }
 ```
@@ -325,6 +395,7 @@ export SENTRY_RELEASE=$(git rev-parse HEAD)
 ```
 
 Sentry will track errors per release, enabling:
+
 - Release health monitoring
 - Regression detection
 - Source map uploads (frontend)
@@ -398,6 +469,7 @@ curl -u admin:admin http://localhost:3001/api/dashboards/uid/DASHBOARD_UID | jq 
 ### Problem: Prometheus can't scrape backend metrics
 
 **Solution:**
+
 1. Check backend is running: `curl http://localhost:8000/api/health`
 2. Check metrics endpoint: `curl http://localhost:8000/api/metrics`
 3. Check Prometheus targets: http://localhost:9090/targets
@@ -406,6 +478,7 @@ curl -u admin:admin http://localhost:3001/api/dashboards/uid/DASHBOARD_UID | jq 
 ### Problem: Grafana shows "No data"
 
 **Solution:**
+
 1. Check Prometheus datasource: Settings → Data Sources
 2. Test connection: Should show "Data source is working"
 3. Verify query syntax in panel
@@ -414,6 +487,7 @@ curl -u admin:admin http://localhost:3001/api/dashboards/uid/DASHBOARD_UID | jq 
 ### Problem: Alerts not firing
 
 **Solution:**
+
 1. Check alert rules loaded: http://localhost:9090/rules
 2. Verify alert condition: Run query in Prometheus
 3. Check for duration (alert needs to be active for specified time)
@@ -422,6 +496,7 @@ curl -u admin:admin http://localhost:3001/api/dashboards/uid/DASHBOARD_UID | jq 
 ### Problem: Slack notifications not working
 
 **Solution:**
+
 1. Verify `SLACK_WEBHOOK_URL` is correct
 2. Test webhook manually:
    ```bash
@@ -433,6 +508,7 @@ curl -u admin:admin http://localhost:3001/api/dashboards/uid/DASHBOARD_UID | jq 
 ### Problem: Sentry not capturing errors
 
 **Solution:**
+
 1. Verify `SENTRY_DSN` is configured
 2. Check Sentry initialization logs on startup
 3. Trigger test error: `sentry_sdk.capture_message("Test")`
@@ -444,15 +520,16 @@ curl -u admin:admin http://localhost:3001/api/dashboards/uid/DASHBOARD_UID | jq 
 
 Monitoring overhead:
 
-| Component | CPU | Memory | Storage |
-|-----------|-----|--------|---------|
-| Prometheus | ~100MB | ~500MB | ~1GB/day (30-day retention) |
-| Grafana | ~50MB | ~200MB | ~100MB |
-| Alertmanager | ~20MB | ~50MB | ~10MB |
-| Exporters | ~30MB | ~100MB | Minimal |
-| **Total** | **~200MB** | **~850MB** | **~1GB/day** |
+| Component    | CPU        | Memory     | Storage                     |
+| ------------ | ---------- | ---------- | --------------------------- |
+| Prometheus   | ~100MB     | ~500MB     | ~1GB/day (30-day retention) |
+| Grafana      | ~50MB      | ~200MB     | ~100MB                      |
+| Alertmanager | ~20MB      | ~50MB      | ~10MB                       |
+| Exporters    | ~30MB      | ~100MB     | Minimal                     |
+| **Total**    | **~200MB** | **~850MB** | **~1GB/day**                |
 
 **Backend overhead:**
+
 - Sentry SDK: <5% CPU, <50MB memory
 - Metrics endpoint: <1ms per request
 
@@ -463,23 +540,27 @@ Monitoring overhead:
 ## Maintenance
 
 ### Daily
+
 - Check dashboard for anomalies
 - Review error rate trends
 - Verify backups running
 
 ### Weekly
+
 - Review slow queries
 - Check disk space (Prometheus data)
 - Review Sentry error trends
 - Test alert notifications
 
 ### Monthly
+
 - Update Grafana dashboards
 - Review and tune alert thresholds
 - Clean up old Prometheus data
 - Update documentation
 
 ### Quarterly
+
 - Performance review (p95 trends)
 - Capacity planning (scale up/out?)
 - Security audit of monitoring stack
@@ -499,6 +580,20 @@ Monitoring overhead:
 
 ---
 
-**Last Updated:** February 3, 2026
+**Last Updated:** February 12, 2026
 **Stack Version:** Prometheus 2.x, Grafana 10.x, Sentry Latest
 **Maintenance:** Operations Team
+
+---
+
+## Changelog
+
+### ISS-039: Grafana Dashboard Provisioning (2026-02-12)
+
+- Added auto-provisioning for all dashboards (no manual import required)
+- Created System Overview dashboard with service health and API metrics
+- Enhanced Database Performance dashboard with comprehensive PostgreSQL metrics
+- Created Container Resources dashboard for Docker container monitoring
+- Created Application Metrics dashboard for business operations monitoring
+- Fixed docker-compose volume mounts for proper provisioning
+- All dashboards organized under "CCW ERP" folder in Grafana

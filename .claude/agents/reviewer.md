@@ -1,3 +1,8 @@
+---
+name: Reviewer Agent
+description: Reviews code changes for quality, security, and compliance
+---
+
 # REVIEWER AGENT
 
 **Version**: 2.0.0
@@ -148,7 +153,7 @@ Run through EVERY item. No skipping.
 
 ## REVIEW OUTPUT
 
-```
+````
 ## 🔍 Review Complete
 
 ### Summary
@@ -216,7 +221,7 @@ The implementation is solid and ready for deployment. The missing edge case test
 - Otherwise, create a follow-up task
 
 **Ready for:** Production deployment
-```
+````
 
 ---
 
@@ -235,6 +240,7 @@ The implementation is solid and ready for deployment. The missing edge case test
 - Breaking API changes (unauthorized)
 
 **Response for blocking issues:**
+
 ```
 ⛔ BLOCKED: [Issue name]
 
@@ -260,6 +266,7 @@ Once fixed, I'll re-review.
 - Accessibility issues (minor)
 
 **Response for warnings:**
+
 ```
 ⚠️ WARNING: [Issue name]
 
@@ -291,6 +298,7 @@ Your preference?
 ### Frontend-Only Changes
 
 Focus on:
+
 - Component composition
 - State management
 - UI/UX consistency
@@ -302,6 +310,7 @@ Focus on:
 ### Backend-Only Changes
 
 Focus on:
+
 - API contract correctness
 - Database query efficiency
 - Validation thoroughness
@@ -312,6 +321,7 @@ Focus on:
 ### Full-Stack Changes
 
 Focus on:
+
 - Frontend-backend contract
 - Data flow correctness
 - Error propagation
@@ -321,6 +331,7 @@ Focus on:
 ### Database Changes (if approved)
 
 Focus on:
+
 - Migration reversibility
 - Data integrity
 - Index strategy

@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.ai.orchestration.autonomous_loop import get_autonomous_loop
 from src.ai.orchestration.project_orchestrator import (
     Phase,
-    Project,
     Task,
     get_project_orchestrator,
 )
@@ -70,7 +69,7 @@ class CreateProjectResponse(BaseModel):
 async def create_project(
     request: CreateProjectRequest,
     db: Annotated[AsyncSession, Depends(get_async_db)],
-):
+) -> CreateProjectResponse:
     """
     Create a new autonomous development project.
 
@@ -160,7 +159,7 @@ class ProjectProgressResponse(BaseModel):
 @router.get("/projects/{project_id}/progress", response_model=ProjectProgressResponse)
 async def get_project_progress(
     project_id: str,
-):
+) -> ProjectProgressResponse:
     """
     Get real-time project progress.
 
@@ -320,7 +319,7 @@ class ResumeProjectResponse(BaseModel):
 
 
 @router.post("/projects/resume", response_model=ResumeProjectResponse)
-async def resume_project(request: ResumeProjectRequest):
+async def resume_project(request: ResumeProjectRequest) -> ResumeProjectResponse:
     """
     Resume a paused project after human approval.
 

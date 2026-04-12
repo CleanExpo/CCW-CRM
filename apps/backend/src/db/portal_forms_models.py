@@ -2,12 +2,12 @@
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import Column, DateTime, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 
-from .models import Base
+from .models_base import Base
 
 
 class ContactSource(str, enum.Enum):
@@ -47,8 +47,8 @@ class ContactSubmission(Base):
     message = Column(Text, nullable=False)
     source = Column(String(20), nullable=False)  # Uses CHECK constraint in DB
     status = Column(String(20), default="new", nullable=False)  # Uses CHECK constraint in DB
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
 
 class DemoRequest(Base):
@@ -65,5 +65,5 @@ class DemoRequest(Base):
     preferred_date = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     status = Column(String(20), default="pending", nullable=False)  # Uses CHECK constraint in DB
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)

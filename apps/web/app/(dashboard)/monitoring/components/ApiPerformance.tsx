@@ -1,14 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -16,15 +10,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Activity, AlertCircle, TrendingUp, Zap } from "lucide-react";
+} from '@/components/ui/table';
+import { Activity, AlertCircle, TrendingUp, Zap } from 'lucide-react';
 import {
   getPerformanceStats,
   getSlowestEndpoints,
   getErrorEndpoints,
   type PerformanceStats as PerformanceStatsType,
   type EndpointStats,
-} from "@/lib/api/monitoring";
+} from '@/lib/api/monitoring';
 
 export function ApiPerformance() {
   const [stats, setStats] = useState<PerformanceStatsType | null>(null);
@@ -52,8 +46,8 @@ export function ApiPerformance() {
       setSlowest(slowestData.endpoints);
       setErrors(errorsData.endpoints);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || "Failed to load performance data");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load performance data');
     } finally {
       setLoading(false);
     }
@@ -62,7 +56,7 @@ export function ApiPerformance() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-sm text-muted-foreground">Loading performance data...</div>
+        <div className="text-muted-foreground text-sm">Loading performance data...</div>
       </div>
     );
   }
@@ -71,7 +65,7 @@ export function ApiPerformance() {
     return (
       <Card className="border-destructive">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-destructive">
+          <div className="text-destructive flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
             <span className="text-sm">{error}</span>
           </div>
@@ -101,10 +95,10 @@ export function ApiPerformance() {
           subtext={`${stats.total_errors} errors`}
           status={
             stats.overall_error_rate > 5
-              ? "critical"
+              ? 'critical'
               : stats.overall_error_rate > 1
-              ? "warning"
-              : "good"
+                ? 'warning'
+                : 'good'
           }
         />
         <MetricCard
@@ -113,10 +107,10 @@ export function ApiPerformance() {
           value={`${stats.avg_response_time_ms.toFixed(0)}ms`}
           status={
             stats.avg_response_time_ms > 1000
-              ? "warning"
+              ? 'warning'
               : stats.avg_response_time_ms > 2000
-              ? "critical"
-              : "good"
+                ? 'critical'
+                : 'good'
           }
         />
         <MetricCard
@@ -125,10 +119,10 @@ export function ApiPerformance() {
           value={`${stats.p95_response_time_ms.toFixed(0)}ms`}
           status={
             stats.p95_response_time_ms > 2000
-              ? "critical"
+              ? 'critical'
               : stats.p95_response_time_ms > 1000
-              ? "warning"
-              : "good"
+                ? 'warning'
+                : 'good'
           }
         />
       </div>
@@ -141,7 +135,7 @@ export function ApiPerformance() {
         </CardHeader>
         <CardContent>
           {slowest.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-muted-foreground py-4 text-center text-sm">
               No endpoint data available yet
             </p>
           ) : (
@@ -229,41 +223,40 @@ function MetricCard({
   label: string;
   value: string;
   subtext?: string;
-  status: "good" | "warning" | "critical" | "neutral";
+  status: 'good' | 'warning' | 'critical' | 'neutral';
 }) {
   const statusColor = {
-    good: "text-green-600",
-    warning: "text-yellow-600",
-    critical: "text-red-600",
-    neutral: "text-foreground",
+    good: 'text-green-600',
+    warning: 'text-yellow-600',
+    critical: 'text-red-600',
+    neutral: 'text-foreground',
   }[status];
 
   const bgColor = {
-    good: "bg-green-500/10",
-    warning: "bg-yellow-500/10",
-    critical: "bg-red-500/10",
-    neutral: "bg-muted",
+    good: 'bg-green-500/10',
+    warning: 'bg-yellow-500/10',
+    critical: 'bg-red-500/10',
+    neutral: 'bg-muted',
   }[status];
 
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="mb-2 flex items-center gap-2">
           <div className={`rounded p-1.5 ${bgColor}`}>
             <Icon className={`h-4 w-4 ${statusColor}`} />
           </div>
-          <span className="text-xs text-muted-foreground truncate">{label}</span>
+          <span className="text-muted-foreground truncate text-xs">{label}</span>
         </div>
         <p className={`text-xl font-semibold ${statusColor}`}>{value}</p>
-        {subtext && <p className="text-xs text-muted-foreground mt-1">{subtext}</p>}
+        {subtext && <p className="text-muted-foreground mt-1 text-xs">{subtext}</p>}
       </CardContent>
     </Card>
   );
 }
 
 function ResponseTimeBadge({ ms }: { ms: number }) {
-  const variant =
-    ms > 2000 ? "destructive" : ms > 1000 ? "secondary" : "outline";
+  const variant = ms > 2000 ? 'destructive' : ms > 1000 ? 'secondary' : 'outline';
 
   return (
     <Badge variant={variant} className="text-xs">
@@ -273,8 +266,7 @@ function ResponseTimeBadge({ ms }: { ms: number }) {
 }
 
 function ErrorRateBadge({ rate }: { rate: number }) {
-  const variant =
-    rate > 5 ? "destructive" : rate > 1 ? "secondary" : "outline";
+  const variant = rate > 5 ? 'destructive' : rate > 1 ? 'secondary' : 'outline';
 
   return (
     <Badge variant={variant} className="text-xs">

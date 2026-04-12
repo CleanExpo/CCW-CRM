@@ -14,7 +14,6 @@ Production implementation will integrate with actual terminal provider SDKs.
 import asyncio
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -36,12 +35,12 @@ class EFTPOSResponse(BaseModel):
     success: bool
     status: str  # 'approved', 'declined', 'cancelled', 'timeout', 'error'
     transaction_id: str
-    approval_code: Optional[str] = None
+    approval_code: str | None = None
     merchant_id: str
     terminal_id: str
     amount: Decimal
-    card_type: Optional[str] = None  # 'visa', 'mastercard', 'eftpos'
-    card_last_4: Optional[str] = None
+    card_type: str | None = None  # 'visa', 'mastercard', 'eftpos'
+    card_last_4: str | None = None
     response_text: str
     timestamp: datetime
 
@@ -61,7 +60,7 @@ class EFTPOSClient:
     Production will integrate with Tyro/PC-EFTPOS SDKs.
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key
         self.mock_mode = True  # Set to False when integrating real terminal
 

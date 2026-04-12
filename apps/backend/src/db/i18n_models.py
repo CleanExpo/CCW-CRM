@@ -1,13 +1,14 @@
 """SQLAlchemy models for internationalization (i18n) tables."""
 
-from datetime import datetime
-from uuid import UUID, uuid4
+from datetime import UTC, datetime
+from uuid import uuid4
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
-from .demo_models import Base
+from .models_base import Base
 
 
 class Language(Base):
@@ -22,8 +23,8 @@ class Language(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     is_rtl = Column(Boolean, nullable=False, default=False)
     sort_order = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     product_translations = relationship("ProductTranslation", back_populates="language", cascade="all, delete-orphan")
@@ -63,8 +64,8 @@ class ProductTranslation(Base):
     meta_title = Column(String(255))
     meta_description = Column(String(500))
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     language = relationship("Language", back_populates="product_translations")
@@ -85,8 +86,8 @@ class CategoryTranslation(Base):
     language_code = Column(String(10), ForeignKey("languages.code", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     language = relationship("Language", back_populates="category_translations")
@@ -107,8 +108,8 @@ class UITranslation(Base):
     language_code = Column(String(10), ForeignKey("languages.code", ondelete="CASCADE"), nullable=False, index=True)
     value = Column(Text, nullable=False)
     context = Column(Text)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     language = relationship("Language", back_populates="ui_translations")
@@ -129,8 +130,8 @@ class EmailTemplateTranslation(Base):
     subject = Column(String(255), nullable=False)
     body_html = Column(Text, nullable=False)
     body_text = Column(Text)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     language = relationship("Language", back_populates="email_template_translations")
@@ -148,13 +149,13 @@ class TranslationQueue(Base):
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     entity_type = Column(String(50), nullable=False, index=True)
     entity_id = Column(PGUUID(as_uuid=True), nullable=False, index=True)
-    target_language = Column(String(10), ForeignKey("languages.code"), nullable=False)
+    target_language = Column(String(10), ForeignKey("languages.code", ondelete="RESTRICT"), nullable=False)
     status = Column(String(50), nullable=False, default="pending", index=True)
     priority = Column(Integer, nullable=False, default=5)
     error_message = Column(Text)
     attempts = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     language = relationship("Language", back_populates="translation_queue")

@@ -1,14 +1,15 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { useMemo } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+} from '@/components/ui/select';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface PaginationControlsProps {
   currentPage: number;
@@ -32,8 +33,8 @@ export function PaginationControls({
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
-  // Generate page numbers to display
-  const getPageNumbers = () => {
+  // PHASE 4 OPTIMIZATION: Memoize page numbers calculation to prevent O(n) recalculation on every render
+  const pageNumbers = useMemo(() => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
 
@@ -51,20 +52,20 @@ export function PaginationControls({
         for (let i = 2; i <= Math.min(maxVisible, totalPages - 1); i++) {
           pages.push(i);
         }
-        pages.push("...");
+        pages.push('...');
       } else if (currentPage >= totalPages - 2) {
         // Near end
-        pages.push("...");
+        pages.push('...');
         for (let i = Math.max(totalPages - maxVisible + 1, 2); i < totalPages; i++) {
           pages.push(i);
         }
       } else {
         // Middle
-        pages.push("...");
+        pages.push('...');
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           pages.push(i);
         }
-        pages.push("...");
+        pages.push('...');
       }
 
       // Always show last page
@@ -72,14 +73,12 @@ export function PaginationControls({
     }
 
     return pages;
-  };
-
-  const pageNumbers = getPageNumbers();
+  }, [currentPage, totalPages]);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4">
+    <div className="flex flex-col items-center justify-between gap-4 px-2 py-4 sm:flex-row">
       {/* Items count */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-muted-foreground text-sm">
         Showing {startItem}-{endItem} of {totalItems} items
       </div>
 
@@ -87,7 +86,7 @@ export function PaginationControls({
       <div className="flex items-center gap-2">
         {/* Page size selector */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Items per page:</span>
+          <span className="text-muted-foreground text-sm">Items per page:</span>
           <Select
             value={pageSize.toString()}
             onValueChange={(value) => onPageSizeChange(Number(value))}
@@ -131,14 +130,14 @@ export function PaginationControls({
 
           {/* Page numbers */}
           {pageNumbers.map((pageNum, idx) =>
-            pageNum === "..." ? (
-              <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
+            pageNum === '...' ? (
+              <span key={`ellipsis-${idx}`} className="text-muted-foreground px-2">
                 ...
               </span>
             ) : (
               <Button
                 key={pageNum}
-                variant={currentPage === pageNum ? "default" : "outline"}
+                variant={currentPage === pageNum ? 'default' : 'outline'}
                 size="icon"
                 onClick={() => onPageChange(pageNum as number)}
                 className="h-8 w-8"

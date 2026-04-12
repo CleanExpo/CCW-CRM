@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     Column,
     DateTime,
@@ -15,9 +14,10 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
-from .models import Base
+from .models_base import Base
 
 
 class PatternType(str, enum.Enum):
@@ -60,10 +60,10 @@ class LearningPattern(Base):
     confidence = Column(Float, nullable=False)
 
     # JSON fields
-    conditions = Column(JSON, nullable=False, default=dict)
-    actions = Column(JSON, nullable=False, default=list)
-    outcomes = Column(JSON, nullable=False, default=dict)
-    pattern_metadata = Column(JSON, nullable=False, default=dict)
+    conditions = Column(JSONB, nullable=False, default=dict)
+    actions = Column(JSONB, nullable=False, default=list)
+    outcomes = Column(JSONB, nullable=False, default=dict)
+    pattern_metadata = Column(JSONB, nullable=False, default=dict)
 
     # Timestamps
     first_observed = Column(DateTime(timezone=True), nullable=False)
@@ -92,7 +92,7 @@ class LearningInsight(Base):
     expected_improvement = Column(Float, nullable=False)
 
     # JSON field for supporting patterns
-    supporting_patterns = Column(JSON, nullable=False, default=list)
+    supporting_patterns = Column(JSONB, nullable=False, default=list)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))

@@ -132,7 +132,7 @@ async def list_products(
             id=str(p.id),
             sku=p.sku,
             name=p.name,
-            category=p.category.value,
+            category=p.category.value if hasattr(p.category, 'value') else str(p.category),
             price=str(p.price),
             cost=str(p.cost),
             stock=p.stock,
@@ -211,6 +211,7 @@ async def list_customers(
 
 
 @router.get("/orders")
+@cached(ttl=300, key_prefix="orders")
 async def list_orders(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
@@ -269,7 +270,7 @@ async def list_orders(
             id=str(order.id),
             order_number=order.order_number,
             customer_name=customer_name,
-            status=order.status.value,
+            status=order.status.value if hasattr(order.status, 'value') else str(order.status),
             total=str(order.total),
             order_date=order.order_date,
             item_count=item_count,  # Already fetched in single query
@@ -287,6 +288,7 @@ async def list_orders(
 
 
 @router.get("/quotes")
+@cached(ttl=300, key_prefix="quotes")
 async def list_quotes(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     page: int = Query(1, ge=1),
@@ -345,7 +347,7 @@ async def list_quotes(
             id=str(quote.id),
             quote_number=quote.quote_number,
             customer_name=customer_name,
-            status=quote.status.value,
+            status=quote.status.value if hasattr(quote.status, 'value') else str(quote.status),
             total=str(quote.total),
             quote_date=quote.quote_date,
             valid_until=quote.valid_until,

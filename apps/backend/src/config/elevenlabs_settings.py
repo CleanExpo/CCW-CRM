@@ -165,3 +165,8 @@ logger.info(
     default_voice=elevenlabs_settings.default_voice_id,
     model=elevenlabs_settings.default_model_id,
 )
+
+
+def get_elevenlabs_settings() -> ElevenLabsSettings:
+    """Get ElevenLabs settings instance (for dependency injection)."""
+    return elevenlabs_settings

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -12,23 +12,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Sparkles } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Sparkles } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 const formSchema = z.object({
-  customer_name: z.string().min(2, "Customer name required"),
-  customer_email: z.string().email("Valid email required"),
-  description: z.string().min(10, "Add a brief description"),
+  customer_name: z.string().min(2, 'Customer name required'),
+  customer_email: z.string().email('Valid email required'),
+  description: z.string().min(10, 'Add a brief description'),
   estimated_value: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 interface FirstQuoteStepProps {
-  onComplete: (data?: any) => void;
+  onComplete: (data?: Record<string, unknown>) => void;
   onBack: () => void;
   canGoBack: boolean;
 }
@@ -40,20 +41,27 @@ export function FirstQuoteStep({ onComplete, onBack }: FirstQuoteStepProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customer_name: "",
-      customer_email: "",
-      description: "",
-      estimated_value: "",
+      customer_name: '',
+      customer_email: '',
+      description: '',
+      estimated_value: '',
     },
   });
 
   async function onSubmit(values: FormData) {
     setIsCreating(true);
     try {
-      // TODO: Create quote via API
-      // const quote = await quotesApi.create(values);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      onComplete({ quote: values, useAI });
+      const quote = await apiClient
+        .post<{ id: string; quote_number: string }>('/api/quotes', {
+          title: values.description.slice(0, 80),
+          customer_name: values.customer_name,
+          customer_email: values.customer_email,
+          notes: values.description,
+          estimated_value: values.estimated_value ? parseFloat(values.estimated_value) : undefined,
+          use_ai: useAI,
+        })
+        .catch(() => undefined);
+      onComplete({ quote, useAI });
     } finally {
       setIsCreating(false);
     }
@@ -129,34 +137,30 @@ export function FirstQuoteStep({ onComplete, onBack }: FirstQuoteStepProps) {
               <FormItem>
                 <FormLabel>Estimated Value (Optional)</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="5000"
-                    {...field}
-                    disabled={isCreating}
-                  />
+                  <Input type="number" placeholder="5000" {...field} disabled={isCreating} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <div className="rounded-lg border p-4 bg-accent/50">
+          <div className="bg-accent/50 rounded-lg border p-4">
             <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+              <Sparkles className="text-primary mt-0.5 h-5 w-5" />
               <div className="flex-1">
-                <h4 className="font-medium mb-1">AI-Powered Quote Generation</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Let AI suggest products and pricing based on your description (Professional plan and above)
+                <h4 className="mb-1 font-medium">AI-Powered Quote Generation</h4>
+                <p className="text-muted-foreground mb-3 text-sm">
+                  Let AI suggest products and pricing based on your description (Professional plan
+                  and above)
                 </p>
                 <Button
                   type="button"
-                  variant={useAI ? "default" : "outline"}
+                  variant={useAI ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setUseAI(!useAI)}
                   disabled={isCreating}
                 >
-                  {useAI ? "AI Enabled" : "Enable AI Suggestions"}
+                  {useAI ? 'AI Enabled' : 'Enable AI Suggestions'}
                 </Button>
               </div>
             </div>

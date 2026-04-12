@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
  * GET /api/agents/stats
@@ -8,13 +9,11 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
     // Fetch system health from monitoring API
-    const healthRes = await fetch(`${backendUrl}/api/ai/monitoring/system`, {
-      cache: "no-store",
+    const healthRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/system`, {
+      cache: 'no-store',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
@@ -25,10 +24,10 @@ export async function GET() {
     const health = await healthRes.json();
 
     // Fetch agent list to get total count
-    const agentsRes = await fetch(`${backendUrl}/api/ai/monitoring/agents`, {
-      cache: "no-store",
+    const agentsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/agents`, {
+      cache: 'no-store',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
@@ -45,16 +44,14 @@ export async function GET() {
       total_tasks: health.recent_executions || 0,
       successful_tasks: health.completed || 0,
       failed_tasks: health.failed || 0,
-      success_rate: health.recent_executions > 0
-        ? health.completed / health.recent_executions
-        : 0,
+      success_rate: health.recent_executions > 0 ? health.completed / health.recent_executions : 0,
       avg_iterations: 1.5, // TODO: Calculate from execution metadata
       avg_duration_seconds: (health.avg_response_time_ms || 0) / 1000,
     };
 
     return NextResponse.json(stats);
   } catch (error: unknown) {
-    console.error("Error fetching agent stats:", error);
+    console.error('Error fetching agent stats:', error);
 
     // Return fallback data on error
     return NextResponse.json({

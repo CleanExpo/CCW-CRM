@@ -1,7 +1,8 @@
 """Internationalization service for content translation."""
+from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -9,7 +10,10 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.ai.ollama_client import get_ollama_client
+try:
+    from src.ai.ollama_client import get_ollama_client
+except ImportError:
+    get_ollama_client = None  # type: ignore[assignment]
 from src.db.demo_models import Product
 from src.db.i18n_models import (
     CategoryTranslation,
@@ -313,7 +317,7 @@ IMPORTANT: Return ONLY the JSON object, no other text.
             existing.meta_description = translation_data.get("meta_description")
             existing.translation_status = translation_status
             existing.translated_by = translated_by
-            existing.translated_at = datetime.utcnow()
+            existing.translated_at = datetime.now(UTC)
             return existing
         else:
             # Create new
@@ -327,7 +331,7 @@ IMPORTANT: Return ONLY the JSON object, no other text.
                 meta_description=translation_data.get("meta_description"),
                 translation_status=translation_status,
                 translated_by=translated_by,
-                translated_at=datetime.utcnow(),
+                translated_at=datetime.now(UTC),
             )
             db.add(translation)
             return translation

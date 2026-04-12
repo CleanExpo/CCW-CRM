@@ -1,103 +1,74 @@
-/**
- * TaskHistory Component
- *
- * Displays recent task executions with status and metrics.
- */
+'use client';
 
-interface Task {
-  task_id: string;
-  status: string;
-  description?: string;
-  agent_type: string;
-  verified: boolean;
-  iterations: number;
-  duration_seconds?: number;
-  created_at: string;
-}
+import { useEffect, useState } from 'react';
+import { agentsApi, type AgentTask } from '@/lib/api/agents';
 
 interface TaskHistoryProps {
-  limit?: number
+  limit?: number;
 }
 
-async function fetchRecentTasks(limit: number) {
-  try {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
-    const res = await fetch(
-      `${backendUrl}/api/agents/tasks/recent?limit=${limit}`,
-      {
-        cache: 'no-store',
-        next: { revalidate: 0 }
-      }
-    )
+export function TaskHistory({ limit = 10 }: TaskHistoryProps) {
+  const [tasks, setTasks] = useState<AgentTask[]>([]);
 
-    if (!res.ok) {
-      return []
-    }
-
-    return res.json()
-  } catch (error) {
-    console.error('Failed to fetch recent tasks:', error)
-    return []
-  }
-}
-
-export async function TaskHistory({ limit = 10 }: TaskHistoryProps) {
-  const tasks = await fetchRecentTasks(limit)
+  useEffect(() => {
+    agentsApi
+      .getRecentTasks(limit)
+      .then(setTasks)
+      .catch(() => setTasks([]));
+  }, [limit]);
 
   if (tasks.length === 0) {
     return (
-      <div className="bg-white p-8 rounded-lg shadow text-center">
-        <p className="text-gray-600">No recent tasks</p>
+      <div className="rounded-lg bg-white p-8 text-center shadow">
+        <p className="text-gray-600">No recent task history</p>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="rounded-lg bg-white shadow">
       <div className="divide-y">
-        {tasks.map((task: Task) => {
-          const statusIcon =
-            task.status === 'completed' ? '[OK]' : task.status === 'failed' ? '[X]' : '[>]'
+        {tasks.map((task) => {
           const statusColor =
             task.status === 'completed'
-              ? 'text-green-600'
+              ? 'bg-green-100 text-green-800'
               : task.status === 'failed'
-                ? 'text-red-600'
-                : 'text-yellow-600'
+                ? 'bg-red-100 text-red-800'
+                : task.status === 'in_progress'
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-100 text-gray-800';
 
           return (
-            <div key={task.task_id} className="p-4 hover:bg-gray-50 transition">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className={`font-bold ${statusColor}`}>{statusIcon}</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {task.description || task.task_id}
+            <div key={task.task_id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium">
+                      {task.description || task.task_id.substring(0, 16)}
+                    </span>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${statusColor}`}>
+                      {task.status}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <span className="px-2 py-1 bg-gray-100 rounded">
-                      {task.agent_type}
-                    </span>
-                    {task.verified && (
-                      <span className="text-green-600 font-medium">Verified</span>
-                    )}
-                    <span>
-                      {task.iterations > 1 && `${task.iterations} iterations`}
-                    </span>
-                    {task.duration_seconds && (
-                      <span>{task.duration_seconds.toFixed(0)}s</span>
-                    )}
-                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {task.agent_type} · {task.iterations} iteration
+                    {task.iterations !== 1 ? 's' : ''}
+                    {task.duration_seconds != null && ` · ${task.duration_seconds.toFixed(1)}s`}
+                  </p>
                 </div>
-                <div className="text-xs text-gray-400">
-                  {new Date(task.created_at).toLocaleTimeString()}
+                <div className="shrink-0 text-xs text-gray-400">
+                  {new Date(task.created_at).toLocaleDateString('en-AU', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
                 </div>
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }

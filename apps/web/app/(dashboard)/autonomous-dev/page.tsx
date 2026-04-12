@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { PlayCircle, StopCircle, RefreshCw, CheckCircle2, XCircle, Clock } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { PlayCircle, StopCircle, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ExecutionLoopStatus {
   is_running: boolean;
@@ -58,30 +58,34 @@ export default function AutonomousDevPage() {
   // Fetch status
   const fetchStatus = async () => {
     try {
-      const response = await apiClient.get<ExecutionLoopStatus>("/api/autonomous/status");
+      const response = await apiClient.get<ExecutionLoopStatus>('/api/autonomous/status');
       setStatus(response);
-    } catch (error: any) {
-      console.error("Failed to fetch status:", error);
+    } catch (error: unknown) {
+      console.error('Failed to fetch status:', error);
     }
   };
 
   // Fetch projects
   const fetchProjects = async () => {
     try {
-      const response = await apiClient.get<{ projects: ProjectProgress[] }>("/api/autonomous/projects");
+      const response = await apiClient.get<{ projects: ProjectProgress[] }>(
+        '/api/autonomous/projects'
+      );
       setProjects(response.projects || []);
-    } catch (error: any) {
-      console.error("Failed to fetch projects:", error);
+    } catch (error: unknown) {
+      console.error('Failed to fetch projects:', error);
     }
   };
 
   // Fetch agent activity
   const fetchAgents = async () => {
     try {
-      const response = await apiClient.get<{ agents: AgentActivity[] }>("/api/autonomous/agents/activity");
+      const response = await apiClient.get<{ agents: AgentActivity[] }>(
+        '/api/autonomous/agents/activity'
+      );
       setAgents(response.agents || []);
-    } catch (error: any) {
-      console.error("Failed to fetch agents:", error);
+    } catch (error: unknown) {
+      console.error('Failed to fetch agents:', error);
     }
   };
 
@@ -95,6 +99,7 @@ export default function AutonomousDevPage() {
   // Initial load
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-refresh every 5 seconds
@@ -106,22 +111,23 @@ export default function AutonomousDevPage() {
     }, 5000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh]);
 
   // Start execution loop
   const handleStart = async () => {
     try {
-      await apiClient.post("/api/autonomous/start", {});
+      await apiClient.post('/api/autonomous/start', {});
       toast({
-        title: "Started",
-        description: "Autonomous execution loop started",
+        title: 'Started',
+        description: 'Autonomous execution loop started',
       });
       await fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to start execution loop",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to start execution loop',
+        variant: 'destructive',
       });
     }
   };
@@ -129,17 +135,17 @@ export default function AutonomousDevPage() {
   // Stop execution loop
   const handleStop = async () => {
     try {
-      await apiClient.post("/api/autonomous/stop", {});
+      await apiClient.post('/api/autonomous/stop', {});
       toast({
-        title: "Stopped",
-        description: "Autonomous execution loop stopped",
+        title: 'Stopped',
+        description: 'Autonomous execution loop stopped',
       });
       await fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to stop execution loop",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to stop execution loop',
+        variant: 'destructive',
       });
     }
   };
@@ -147,17 +153,17 @@ export default function AutonomousDevPage() {
   // Resume project
   const handleResume = async (projectId: string) => {
     try {
-      await apiClient.post("/api/autonomous/projects/resume", { project_id: projectId });
+      await apiClient.post('/api/autonomous/projects/resume', { project_id: projectId });
       toast({
-        title: "Resumed",
-        description: "Project resumed",
+        title: 'Resumed',
+        description: 'Project resumed',
       });
       await fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to resume project",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to resume project',
+        variant: 'destructive',
       });
     }
   };
@@ -172,9 +178,9 @@ export default function AutonomousDevPage() {
 
   if (isLoading && !status) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <RefreshCw className="mx-auto mb-4 h-8 w-8 animate-spin" />
           <p className="text-muted-foreground">Loading autonomous development dashboard...</p>
         </div>
       </div>
@@ -182,23 +188,21 @@ export default function AutonomousDevPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Autonomous Development</h1>
-          <p className="text-muted-foreground">Monitor and manage autonomous development projects</p>
+          <p className="text-muted-foreground">
+            Monitor and manage autonomous development projects
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setAutoRefresh(!autoRefresh)}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? "animate-spin" : ""}`} />
-            {autoRefresh ? "Auto-refresh On" : "Auto-refresh Off"}
+          <Button variant="outline" size="sm" onClick={() => setAutoRefresh(!autoRefresh)}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${autoRefresh ? 'animate-spin' : ''}`} />
+            {autoRefresh ? 'Auto-refresh On' : 'Auto-refresh Off'}
           </Button>
           <Button variant="outline" size="sm" onClick={fetchData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
         </div>
@@ -209,8 +213,8 @@ export default function AutonomousDevPage() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Execution Loop Status</span>
-            <Badge variant={status?.is_running ? "default" : "secondary"}>
-              {status?.is_running ? "Running" : "Stopped"}
+            <Badge variant={status?.is_running ? 'default' : 'secondary'}>
+              {status?.is_running ? 'Running' : 'Stopped'}
             </Badge>
           </CardTitle>
           <CardDescription>
@@ -218,34 +222,38 @@ export default function AutonomousDevPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
             <div>
-              <p className="text-sm text-muted-foreground">Projects Completed</p>
+              <p className="text-muted-foreground text-sm">Projects Completed</p>
               <p className="text-2xl font-bold">{status?.total_projects_completed || 0}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Tasks Completed</p>
-              <p className="text-2xl font-bold text-green-600">{status?.total_tasks_completed || 0}</p>
+              <p className="text-muted-foreground text-sm">Tasks Completed</p>
+              <p className="text-2xl font-bold text-green-600">
+                {status?.total_tasks_completed || 0}
+              </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Tasks Failed</p>
+              <p className="text-muted-foreground text-sm">Tasks Failed</p>
               <p className="text-2xl font-bold text-red-600">{status?.total_tasks_failed || 0}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Uptime</p>
-              <p className="text-2xl font-bold">{status ? formatUptime(status.uptime_seconds) : "0h 0m 0s"}</p>
+              <p className="text-muted-foreground text-sm">Uptime</p>
+              <p className="text-2xl font-bold">
+                {status ? formatUptime(status.uptime_seconds) : '0h 0m 0s'}
+              </p>
             </div>
           </div>
 
           <div className="flex gap-2">
             {!status?.is_running ? (
               <Button onClick={handleStart}>
-                <PlayCircle className="h-4 w-4 mr-2" />
+                <PlayCircle className="mr-2 h-4 w-4" />
                 Start Execution Loop
               </Button>
             ) : (
               <Button variant="destructive" onClick={handleStop}>
-                <StopCircle className="h-4 w-4 mr-2" />
+                <StopCircle className="mr-2 h-4 w-4" />
                 Stop Execution Loop
               </Button>
             )}
@@ -259,7 +267,8 @@ export default function AutonomousDevPage() {
           <CardHeader>
             <CardTitle>Projects</CardTitle>
             <CardDescription>
-              {status?.active_projects.length || 0} active, {status?.paused_projects.length || 0} paused
+              {status?.active_projects.length || 0} active, {status?.paused_projects.length || 0}{' '}
+              paused
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -269,29 +278,27 @@ export default function AutonomousDevPage() {
                 const isPaused = status?.paused_projects.includes(project.project_id);
 
                 return (
-                  <div key={project.project_id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
+                  <div key={project.project_id} className="rounded-lg border p-4">
+                    <div className="mb-2 flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold">{project.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {project.current_phase ? `Phase: ${project.current_phase}` : "Not started"}
+                        <p className="text-muted-foreground text-sm">
+                          {project.current_phase
+                            ? `Phase: ${project.current_phase}`
+                            : 'Not started'}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {isActive && (
                           <Badge variant="default">
-                            <Clock className="h-3 w-3 mr-1" />
+                            <Clock className="mr-1 h-3 w-3" />
                             Active
                           </Badge>
                         )}
-                        {isPaused && (
-                          <Badge variant="secondary">
-                            Paused (Awaiting Approval)
-                          </Badge>
-                        )}
+                        {isPaused && <Badge variant="secondary">Paused (Awaiting Approval)</Badge>}
                         {project.statistics.success_rate === 100 && (
                           <Badge variant="outline" className="text-green-600">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
                             Completed
                           </Badge>
                         )}
@@ -306,12 +313,14 @@ export default function AutonomousDevPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span>Progress</span>
-                        <span className="font-semibold">{project.progress_percentage.toFixed(1)}%</span>
+                        <span className="font-semibold">
+                          {project.progress_percentage.toFixed(1)}%
+                        </span>
                       </div>
                       <Progress value={project.progress_percentage} className="h-2" />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 mt-4 text-sm">
+                    <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Phases</p>
                         <p className="font-semibold">
@@ -326,7 +335,9 @@ export default function AutonomousDevPage() {
                       </div>
                       <div>
                         <p className="text-muted-foreground">Success Rate</p>
-                        <p className="font-semibold">{project.statistics.success_rate.toFixed(1)}%</p>
+                        <p className="font-semibold">
+                          {project.statistics.success_rate.toFixed(1)}%
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -347,20 +358,20 @@ export default function AutonomousDevPage() {
           <CardContent>
             <div className="space-y-4">
               {agents.map((agent) => (
-                <div key={agent.agent_id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
+                <div key={agent.agent_id} className="rounded-lg border p-4">
+                  <div className="mb-2 flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold">{agent.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {agent.capabilities.join(", ")}
+                      <p className="text-muted-foreground text-sm">
+                        {agent.capabilities.join(', ')}
                       </p>
                     </div>
-                    <Badge variant={agent.health_status === "active" ? "default" : "secondary"}>
-                      {agent.health_status || "unknown"}
+                    <Badge variant={agent.health_status === 'active' ? 'default' : 'secondary'}>
+                      {agent.health_status || 'unknown'}
                     </Badge>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-4 mt-4 text-sm">
+                  <div className="mt-4 grid grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Active</p>
                       <p className="font-semibold">{agent.active_executions}</p>
@@ -390,7 +401,7 @@ export default function AutonomousDevPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-4">No projects found</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Create a new autonomous development project to get started
             </p>
           </CardContent>

@@ -20,39 +20,39 @@ npm install @anthropic-ai/sdk
 
 ### Latest Models (Claude 4.5)
 
-| Model ID | Alias | Description | Context | Max Output |
-|----------|-------|-------------|---------|------------|
-| `claude-sonnet-4-5-20250929` | `claude-sonnet-4-5` | Smartest model for complex agents and coding | 200K (1M beta) | 64K |
-| `claude-haiku-4-5-20251001` | `claude-haiku-4-5` | Fastest with near-frontier intelligence | 200K | 64K |
-| `claude-opus-4-1-20250805` | `claude-opus-4-1` | Exceptional for specialized reasoning | 200K | 32K |
+| Model ID                     | Alias               | Description                                  | Context        | Max Output |
+| ---------------------------- | ------------------- | -------------------------------------------- | -------------- | ---------- |
+| `claude-sonnet-4-5-20250929` | `claude-sonnet-4-5` | Smartest model for complex agents and coding | 200K (1M beta) | 64K        |
+| `claude-haiku-4-5-20251001`  | `claude-haiku-4-5`  | Fastest with near-frontier intelligence      | 200K           | 64K        |
+| `claude-opus-4-1-20250805`   | `claude-opus-4-1`   | Exceptional for specialized reasoning        | 200K           | 32K        |
 
 ### Claude 4 Models
 
-| Model ID | Alias | Description |
-|----------|-------|-------------|
-| `claude-sonnet-4-20250514` | `claude-sonnet-4-0` | Fast, balanced performance |
-| `claude-opus-4-20250514` | `claude-opus-4-0` | Powerful reasoning |
+| Model ID                 | Alias               | Description                |
+| ------------------------ | ------------------- | -------------------------- |
+| `claude-sonnet-4-6`      | `claude-sonnet-4-6` | Fast, balanced performance |
+| `claude-opus-4-20250514` | `claude-opus-4-0`   | Powerful reasoning         |
 
 ### Claude 3.7 Models
 
-| Model ID | Alias |
-|----------|-------|
+| Model ID                     | Alias                      |
+| ---------------------------- | -------------------------- |
 | `claude-3-7-sonnet-20250219` | `claude-3-7-sonnet-latest` |
 
 ### Claude 3.5 Models
 
-| Model ID | Alias |
-|----------|-------|
-| `claude-3-5-haiku-20241022` | `claude-3-5-haiku-latest` |
-| `claude-3-5-sonnet-20241022` | `claude-3-5-sonnet-latest` (deprecated) |
+| Model ID                    | Alias               |
+| --------------------------- | ------------------- |
+| `claude-haiku-4-5-20251001` | `claude-haiku-4-5`  |
+| `claude-sonnet-4-6`         | `claude-sonnet-4-6` |
 
 ### Pricing
 
-| Model | Input | Output |
-|-------|-------|--------|
-| Claude Sonnet 4.5 | $3/MTok | $15/MTok |
-| Claude Haiku 4.5 | $1/MTok | $5/MTok |
-| Claude Opus 4.1 | $15/MTok | $75/MTok |
+| Model             | Input    | Output   |
+| ----------------- | -------- | -------- |
+| Claude Sonnet 4.5 | $3/MTok  | $15/MTok |
+| Claude Haiku 4.5  | $1/MTok  | $5/MTok  |
+| Claude Opus 4.1   | $15/MTok | $75/MTok |
 
 ## Client Setup
 
@@ -73,7 +73,7 @@ client = anthropic.Anthropic(
 import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
-    apiKey: 'my_api_key', // defaults to process.env["ANTHROPIC_API_KEY"]
+  apiKey: 'my_api_key', // defaults to process.env["ANTHROPIC_API_KEY"]
 });
 ```
 
@@ -96,9 +96,9 @@ print(message.content)
 
 ```typescript
 const msg = await anthropic.messages.create({
-    model: "claude-sonnet-4-5-20250929",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: "Hello, Claude" }],
+  model: 'claude-sonnet-4-5-20250929',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Hello, Claude' }],
 });
 console.log(msg);
 ```
@@ -155,15 +155,15 @@ async with client.messages.stream(
 
 ```typescript
 const stream = await anthropic.messages.stream({
-    model: "claude-sonnet-4-5-20250929",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: "Hello, Claude" }],
+  model: 'claude-sonnet-4-5-20250929',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Hello, Claude' }],
 });
 
 for await (const event of stream) {
-    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        process.stdout.write(event.delta.text);
-    }
+  if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+    process.stdout.write(event.delta.text);
+  }
 }
 ```
 
@@ -199,24 +199,26 @@ for block in response.content:
 
 ```typescript
 const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5-20250929",
-    max_tokens: 16000,
-    thinking: {
-        type: "enabled",
-        budget_tokens: 10000
+  model: 'claude-sonnet-4-5-20250929',
+  max_tokens: 16000,
+  thinking: {
+    type: 'enabled',
+    budget_tokens: 10000,
+  },
+  messages: [
+    {
+      role: 'user',
+      content: 'Are there an infinite number of prime numbers such that n mod 4 == 3?',
     },
-    messages: [{
-        role: "user",
-        content: "Are there an infinite number of prime numbers such that n mod 4 == 3?"
-    }]
+  ],
 });
 
 for (const block of response.content) {
-    if (block.type === "thinking") {
-        console.log(`Thinking summary: ${block.thinking}`);
-    } else if (block.type === "text") {
-        console.log(`Response: ${block.text}`);
-    }
+  if (block.type === 'thinking') {
+    console.log(`Thinking summary: ${block.thinking}`);
+  } else if (block.type === 'text') {
+    console.log(`Response: ${block.text}`);
+  }
 }
 ```
 

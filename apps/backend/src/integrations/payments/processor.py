@@ -9,8 +9,6 @@ Unified interface for processing payments across multiple gateways:
 """
 
 from decimal import Decimal
-from typing import Optional
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -255,20 +253,20 @@ class PaymentProcessor:
                 raise PaymentProcessingError(f"EFTPOS refund failed: {response.response_text}")
 
         elif transaction.payment_method == "amex":
-            response = await self.amex_client.refund(
+            amex_response = await self.amex_client.refund(
                 transaction_id=transaction.payment_gateway_ref or "",
                 amount=amount,
             )
 
-            if response.success:
+            if amex_response.success:
                 return {
                     "status": "refunded",
-                    "gateway_ref": response.transaction_id,
-                    "response_text": response.response_text,
-                    "raw_response": response.dict(),
+                    "gateway_ref": amex_response.transaction_id,
+                    "response_text": amex_response.response_text,
+                    "raw_response": amex_response.dict(),
                 }
             else:
-                raise PaymentProcessingError(f"AMEX refund failed: {response.response_text}")
+                raise PaymentProcessingError(f"AMEX refund failed: {amex_response.response_text}")
 
         elif transaction.payment_method in ["bank_transfer", "cash"]:
             # Manual refund process

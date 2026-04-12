@@ -51,10 +51,72 @@ class PricingAgent(BaseAgent):
         # Build LangGraph state graph
         self.graph = self._build_graph()
 
+        # Protocol v1.0: Agent Card
+        self._protocol_card = self._build_agent_card()
+
         logger.info("Pricing agent initialized")
 
         # Register with agent registry after full initialization
         self._schedule_registration()
+
+        # Register protocol card with registry
+        self._register_protocol_card()
+
+    @staticmethod
+    def _build_agent_card() -> Any:
+        """Build protocol AgentCard for this agent."""
+        try:
+            from src.ai.protocol.models import AgentCard, DelegationRule, PermissionTier
+
+            return AgentCard(
+                agent_id="pricing_agent",
+                name="Pricing Agent",
+                version="1.0.0",
+                description="Analyzes costs and recommends optimal pricing strategies",
+                capabilities=[
+                    "pricing",
+                    "cost_analysis",
+                    "price_optimization",
+                    "margin_calculation",
+                ],
+                boundaries=[
+                    "Cannot modify product prices directly",
+                    "Cannot approve pricing changes",
+                    "Cannot access competitor pricing systems",
+                ],
+                inputs={
+                    "product_id": "UUID of the product to analyze",
+                    "context": "Additional context (market segment, customer tier)",
+                },
+                outputs={
+                    "price_recommendation": "Recommended price with reasoning",
+                    "margin_analysis": "Profit margin breakdown",
+                    "confidence": "Confidence score for the recommendation",
+                },
+                delegation_rules=[
+                    DelegationRule(
+                        capability="cost_analysis",
+                        max_chain_depth=2,
+                    ),
+                ],
+                permission_tier=PermissionTier.STANDARD,
+                max_concurrent=5,
+                timeout_seconds=30,
+            )
+        except ImportError:
+            return None
+
+    def _register_protocol_card(self) -> None:
+        """Register protocol card with agent registry."""
+        if self._protocol_card is None:
+            return
+        try:
+            from src.ai.orchestration import get_agent_registry
+
+            registry = get_agent_registry()
+            registry.register_agent_card(self.agent_id, self._protocol_card)
+        except Exception as e:
+            logger.debug("Could not register protocol card", error=str(e))
 
     def _build_graph(self) -> StateGraph:
         """Build LangGraph state graph for pricing operations."""

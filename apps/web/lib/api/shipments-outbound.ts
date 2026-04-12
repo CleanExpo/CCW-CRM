@@ -1,20 +1,20 @@
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
 /**
  * Outbound shipment status
  */
 export type OutboundShipmentStatus =
-  | "pending"
-  | "in_transit"
-  | "out_for_delivery"
-  | "delivered"
-  | "exception"
-  | "returned";
+  | 'pending'
+  | 'in_transit'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'exception'
+  | 'returned';
 
 /**
  * Location options for warehouse origin
  */
-export type WarehouseLocation = "brisbane" | "sydney" | "melbourne";
+export type WarehouseLocation = 'brisbane' | 'sydney' | 'melbourne';
 
 /**
  * Outbound shipment interface (matches backend OutboundShipmentResponse)
@@ -32,7 +32,7 @@ export interface OutboundShipment {
   shipped_date?: string;
   expected_delivery_date?: string;
   actual_delivery_date?: string;
-  tracking_events?: any;
+  tracking_events?: unknown;
   last_tracking_update?: string;
   notes?: string;
   created_at: string;
@@ -99,14 +99,16 @@ export const outboundShipmentsApi = {
    */
   async list(params: OutboundShipmentListParams = {}): Promise<PaginatedOutboundShipments> {
     const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
-    if (params.location) queryParams.append("location", params.location);
-    if (params.status) queryParams.append("status", params.status);
-    if (params.order_id) queryParams.append("order_id", params.order_id);
-    if (params.tracking_number) queryParams.append("tracking_number", params.tracking_number);
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params.location) queryParams.append('location', params.location);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.order_id) queryParams.append('order_id', params.order_id);
+    if (params.tracking_number) queryParams.append('tracking_number', params.tracking_number);
 
-    return apiClient.get<PaginatedOutboundShipments>(`/api/shipments/outbound?${queryParams.toString()}`);
+    return apiClient.get<PaginatedOutboundShipments>(
+      `/api/shipments/outbound?${queryParams.toString()}`
+    );
   },
 
   /**
@@ -120,7 +122,7 @@ export const outboundShipmentsApi = {
    * Create a new outbound shipment
    */
   async create(data: OutboundShipmentCreate): Promise<OutboundShipment> {
-    return apiClient.post<OutboundShipment>("/api/shipments/outbound", data);
+    return apiClient.post<OutboundShipment>('/api/shipments/outbound', data);
   },
 
   /**

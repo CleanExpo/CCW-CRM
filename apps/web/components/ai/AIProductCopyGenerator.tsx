@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,21 +8,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Sparkles, Loader2, Copy, Check } from "lucide-react";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/select';
+import { Sparkles, Loader2, Copy, Check } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AIProductCopyGeneratorProps {
   open: boolean;
@@ -32,17 +32,21 @@ interface AIProductCopyGeneratorProps {
   onCopyGenerated: (generatedCopy: string, copyType: string) => void;
 }
 
-type CopyType = "description" | "features" | "marketing" | "technical";
+type CopyType = 'description' | 'features' | 'marketing' | 'technical';
 
 interface AIProductCopyResponse {
   generated_copy: string;
 }
 
 const COPY_TYPES = [
-  { value: "description", label: "Product Description", placeholder: "Detailed product overview..." },
-  { value: "features", label: "Feature List", placeholder: "Key features and benefits..." },
-  { value: "marketing", label: "Marketing Pitch", placeholder: "Compelling sales copy..." },
-  { value: "technical", label: "Technical Specs", placeholder: "Technical specifications..." },
+  {
+    value: 'description',
+    label: 'Product Description',
+    placeholder: 'Detailed product overview...',
+  },
+  { value: 'features', label: 'Feature List', placeholder: 'Key features and benefits...' },
+  { value: 'marketing', label: 'Marketing Pitch', placeholder: 'Compelling sales copy...' },
+  { value: 'technical', label: 'Technical Specs', placeholder: 'Technical specifications...' },
 ] as const;
 
 /**
@@ -68,9 +72,9 @@ export function AIProductCopyGenerator({
   onCopyGenerated,
 }: AIProductCopyGeneratorProps) {
   const { toast } = useToast();
-  const [copyType, setCopyType] = useState<CopyType>("description");
-  const [productInfo, setProductInfo] = useState("");
-  const [generatedCopy, setGeneratedCopy] = useState("");
+  const [copyType, setCopyType] = useState<CopyType>('description');
+  const [productInfo, setProductInfo] = useState('');
+  const [generatedCopy, setGeneratedCopy] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -79,33 +83,37 @@ export function AIProductCopyGenerator({
   const handleGenerate = async () => {
     if (!productInfo.trim() && !productName) {
       toast({
-        title: "Information needed",
-        description: "Please provide product details or key information",
-        variant: "destructive",
+        title: 'Information needed',
+        description: 'Please provide product details or key information',
+        variant: 'destructive',
       });
       return;
     }
 
     setIsGenerating(true);
     try {
-      const response = await apiClient.post<AIProductCopyResponse>("/api/ai/generate/product-copy", {
-        product_name: productName || "Product",
-        product_category: productCategory || "general",
-        copy_type: copyType,
-        key_info: productInfo.trim(),
-      });
+      const response = await apiClient.post<AIProductCopyResponse>(
+        '/api/ai/generate/product-copy',
+        {
+          product_name: productName || 'Product',
+          product_category: productCategory || 'general',
+          copy_type: copyType,
+          key_info: productInfo.trim(),
+        }
+      );
 
-      setGeneratedCopy(response.generated_copy || "");
+      setGeneratedCopy(response.generated_copy || '');
       toast({
-        title: "Copy Generated",
+        title: 'Copy Generated',
         description: `AI generated ${selectedType?.label.toLowerCase()}. Review and use as needed.`,
       });
-    } catch (error: any) {
-      console.error("Failed to generate copy:", error);
+    } catch (error: unknown) {
+      console.error('Failed to generate copy:', error);
       toast({
-        title: "Generation Failed",
-        description: error.message || "AI copy generation failed. Please try again.",
-        variant: "destructive",
+        title: 'Generation Failed',
+        description:
+          error instanceof Error ? error.message : 'AI copy generation failed. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsGenerating(false);
@@ -117,15 +125,15 @@ export function AIProductCopyGenerator({
       await navigator.clipboard.writeText(generatedCopy);
       setCopied(true);
       toast({
-        title: "Copied",
-        description: "Copy has been copied to clipboard",
+        title: 'Copied',
+        description: 'Copy has been copied to clipboard',
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast({
-        title: "Copy Failed",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
+        title: 'Copy Failed',
+        description: 'Failed to copy to clipboard',
+        variant: 'destructive',
       });
     }
   };
@@ -134,23 +142,23 @@ export function AIProductCopyGenerator({
     if (generatedCopy) {
       onCopyGenerated(generatedCopy, copyType);
       onOpenChange(false);
-      setGeneratedCopy("");
-      setProductInfo("");
+      setGeneratedCopy('');
+      setProductInfo('');
     }
   };
 
   const handleCancel = () => {
     onOpenChange(false);
-    setGeneratedCopy("");
-    setProductInfo("");
+    setGeneratedCopy('');
+    setProductInfo('');
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkles className="text-primary h-5 w-5" />
             Generate Product Copy with AI
           </DialogTitle>
           <DialogDescription>
@@ -161,10 +169,10 @@ export function AIProductCopyGenerator({
         <div className="space-y-4 py-4">
           {/* Product Name Display */}
           {productName && (
-            <div className="rounded-lg bg-muted p-3">
+            <div className="bg-muted rounded-lg p-3">
               <p className="text-sm font-medium">Product: {productName}</p>
               {productCategory && (
-                <p className="text-sm text-muted-foreground">Category: {productCategory}</p>
+                <p className="text-muted-foreground text-sm">Category: {productCategory}</p>
               )}
             </div>
           )}
@@ -197,7 +205,7 @@ export function AIProductCopyGenerator({
               onChange={(e) => setProductInfo(e.target.value)}
               disabled={isGenerating}
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               List key features, specifications, or selling points
             </p>
           </div>
@@ -226,12 +234,7 @@ export function AIProductCopyGenerator({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Generated Copy</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopyToClipboard}
-                  disabled={copied}
-                >
+                <Button variant="ghost" size="sm" onClick={handleCopyToClipboard} disabled={copied}>
                   {copied ? (
                     <>
                       <Check className="mr-2 h-4 w-4" />
@@ -245,16 +248,16 @@ export function AIProductCopyGenerator({
                   )}
                 </Button>
               </div>
-              <div className="rounded-lg border bg-muted/50 p-4">
+              <div className="bg-muted/50 rounded-lg border p-4">
                 <p className="text-sm whitespace-pre-wrap">{generatedCopy}</p>
               </div>
             </div>
           )}
 
           {/* Tips Section */}
-          <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
-            <p className="font-medium mb-2">💡 Tips for best results:</p>
-            <ul className="list-disc list-inside space-y-1">
+          <div className="bg-muted text-muted-foreground rounded-lg p-4 text-sm">
+            <p className="mb-2 font-medium">💡 Tips for best results:</p>
+            <ul className="list-inside list-disc space-y-1">
               <li>Include specific features, specifications, and benefits</li>
               <li>Mention target audience or use cases</li>
               <li>Add unique selling points or competitive advantages</li>
@@ -267,11 +270,7 @@ export function AIProductCopyGenerator({
           <Button variant="outline" onClick={handleCancel} disabled={isGenerating}>
             Cancel
           </Button>
-          {generatedCopy && (
-            <Button onClick={handleUseGenerated}>
-              Use This Copy
-            </Button>
-          )}
+          {generatedCopy && <Button onClick={handleUseGenerated}>Use This Copy</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,18 +1,17 @@
 """Alert management API endpoints for monitoring."""
 
 from datetime import datetime, timedelta
-from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config.database import get_async_db
+from src.db.pos_models import POSTransaction
 from src.services.alert_manager import get_alert_manager
 from src.services.sse_service import sse_service
-from src.config.database import get_db
-from src.db.pos_models import POSTransaction
 
 logger = structlog.get_logger(__name__)
 
@@ -224,7 +223,7 @@ class POSFailureAlert(BaseModel):
 
 @router.get("/pos-failures")
 async def get_pos_failures(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     hours: int = Query(24, ge=1, le=168, description="Hours to look back (1-168)"),
 ) -> dict:
     """

@@ -1,12 +1,17 @@
 """Agent Registry for managing and discovering AI agents."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import structlog
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from src.ai.protocol.models import AgentCard
 
 logger = structlog.get_logger(__name__)
 
@@ -49,12 +54,14 @@ class AgentMetadata(BaseModel):
     active_executions: int = 0
     total_executions: int = 0
     failed_executions: int = 0
+    # Protocol v1.0: Optional agent card for protocol governance
+    agent_card: AgentCard | None = None
 
 
 class AgentRegistry:
     """Central registry for AI agents."""
 
-    _instance: "AgentRegistry | None" = None
+    _instance: AgentRegistry | None = None
 
     def __new__(cls):
         """Singleton pattern."""
@@ -173,6 +180,44 @@ class AgentRegistry:
             Agent metadata or None
         """
         return self._metadata.get(agent_id)
+
+    def get_agent_card(self, agent_id: str) -> AgentCard | None:
+        """Get an agent's protocol card.
+
+        Args:
+            agent_id: Agent identifier
+
+        Returns:
+            AgentCard or None if not registered
+        """
+        metadata = self._metadata.get(agent_id)
+        if metadata:
+            return metadata.agent_card
+        return None
+
+    def register_agent_card(self, agent_id: str, card: AgentCard) -> bool:
+        """Register a protocol agent card for an existing agent.
+
+        Args:
+            agent_id: Agent identifier
+            card: The AgentCard to register
+
+        Returns:
+            True if registered successfully
+        """
+        if agent_id not in self._metadata:
+            logger.warning("Cannot register card for unknown agent", agent_id=agent_id)
+            return False
+
+        self._metadata[agent_id].agent_card = card
+        logger.info(
+            "Agent card registered",
+            agent_id=agent_id,
+            permission_tier=card.permission_tier.value
+            if hasattr(card, "permission_tier")
+            else "unknown",
+        )
+        return True
 
     def find_agents_by_capability(self, capability: str) -> list[tuple[str, Any, AgentMetadata]]:
         """Find agents that provide a specific capability.

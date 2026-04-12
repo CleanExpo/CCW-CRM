@@ -1,11 +1,16 @@
 """Live SendGrid client for real email sending."""
 
+import asyncio
 from typing import Any
 
 import httpx
 import structlog
 
 logger = structlog.get_logger(__name__)
+
+_RETRY_STATUSES = {429, 500, 502, 503, 504}  # Transient errors worth retrying
+_MAX_RETRIES = 3
+_BACKOFF_BASE = 0.5  # seconds (0.5s, 1s, 2s)
 
 
 class SendGridLiveClient:
@@ -107,35 +112,66 @@ class SendGridLiveClient:
         if attachments:
             payload["attachments"] = attachments
 
-        # Send via SendGrid API
+        # Send via SendGrid API with exponential backoff retry
+        last_error: Exception | None = None
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self.base_url}/mail/send",
-                json=payload,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                timeout=30.0,
-            )
+            for attempt in range(_MAX_RETRIES):
+                try:
+                    response = await client.post(
+                        f"{self.base_url}/mail/send",
+                        json=payload,
+                        headers={
+                            "Authorization": f"Bearer {self.api_key}",
+                            "Content-Type": "application/json",
+                        },
+                        timeout=30.0,
+                    )
 
-            response.raise_for_status()
+                    if response.status_code in _RETRY_STATUSES and attempt < _MAX_RETRIES - 1:
+                        wait = _BACKOFF_BASE * (2 ** attempt)
+                        logger.warning(
+                            "sendgrid_transient_error_retrying",
+                            status=response.status_code,
+                            attempt=attempt + 1,
+                            wait_seconds=wait,
+                        )
+                        await asyncio.sleep(wait)
+                        continue
 
-            # SendGrid returns 202 Accepted with X-Message-Id header
-            message_id = response.headers.get("X-Message-Id", "unknown")
+                    response.raise_for_status()
 
-            logger.info(
-                "email_sent_via_sendgrid",
-                message_id=message_id,
-                to=to_email,
-                subject=subject,
-            )
+                    # SendGrid returns 202 Accepted with X-Message-Id header
+                    message_id = response.headers.get("X-Message-Id", "unknown")
 
-            return {
-                "success": True,
-                "message_id": message_id,
-                "status": "accepted",
-            }
+                    logger.info(
+                        "email_sent_via_sendgrid",
+                        message_id=message_id,
+                        to=to_email,
+                        subject=subject,
+                        attempts=attempt + 1,
+                    )
+
+                    return {
+                        "success": True,
+                        "message_id": message_id,
+                        "status": "accepted",
+                    }
+
+                except httpx.TransportError as e:
+                    last_error = e
+                    if attempt < _MAX_RETRIES - 1:
+                        wait = _BACKOFF_BASE * (2 ** attempt)
+                        logger.warning(
+                            "sendgrid_network_error_retrying",
+                            error=str(e),
+                            attempt=attempt + 1,
+                            wait_seconds=wait,
+                        )
+                        await asyncio.sleep(wait)
+                    else:
+                        raise
+
+            raise last_error or httpx.HTTPError("Max retries exceeded")
 
     async def send_bulk_email(
         self,
