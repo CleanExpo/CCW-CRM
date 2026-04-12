@@ -11,10 +11,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_async_db
 from src.db.demo_models import Product as ProductModel
 from src.db.inventory_models import ProductStockByLocation
+from src.db.models import User
 from src.db.schemas import (
     PaginatedResponse,
     Product,
@@ -24,7 +26,7 @@ from src.db.schemas import (
 )
 from src.services.sse_service import sse_service
 
-router = APIRouter(prefix="/api/products", tags=["products"])
+router = APIRouter(prefix="/api/products", tags=["products"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("", response_model=PaginatedResponse)

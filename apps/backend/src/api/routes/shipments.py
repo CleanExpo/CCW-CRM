@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Order
 from src.db.inventory_models import InboundShipment, OutboundShipment, PurchaseOrder, Supplier
@@ -27,7 +28,7 @@ from src.security.webhook_verification import (
     get_usps_verifier,
 )
 
-router = APIRouter(prefix="/api/shipments", tags=["Shipments"])
+router = APIRouter(prefix="/api/shipments", tags=["Shipments"], dependencies=[Depends(get_current_user)])
 logger = structlog.get_logger(__name__)
 
 

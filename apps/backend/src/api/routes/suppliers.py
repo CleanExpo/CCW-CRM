@@ -13,10 +13,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.inventory_models import Supplier
 
-router = APIRouter(prefix="/api/suppliers", tags=["Suppliers"])
+router = APIRouter(prefix="/api/suppliers", tags=["Suppliers"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic models for request/response validation

@@ -11,6 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.api.deps import get_current_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_async_db
 from src.config.settings import Settings, get_settings
@@ -34,7 +35,7 @@ from src.services.email_notifications import email_service
 from src.services.sse_service import sse_service
 from src.utils.calculations import calculate_line_total, calculate_totals
 
-router = APIRouter(prefix="/api/quotes", tags=["quotes"])
+router = APIRouter(prefix="/api/quotes", tags=["quotes"], dependencies=[Depends(get_current_user)])
 
 
 class StatusUpdate(BaseModel):
