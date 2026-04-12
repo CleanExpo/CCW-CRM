@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Equipment Supplier ERP - Full-stack Python FastAPI + Next.js",
 
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "claude-sonnet-4-6",
   "maxTokens": 64000,
 
   "permissions": {
@@ -35,11 +35,7 @@
       "Bash(tasklist *)",
       "Bash(taskkill *)"
     ],
-    "deny": [
-      "Bash(rm -rf /)",
-      "Bash(sudo rm *)",
-      "Bash(del /s /q C:\\*)"
-    ]
+    "deny": ["Bash(rm -rf /)", "Bash(sudo rm *)", "Bash(del /s /q C:\\*)"]
   },
 
   "commands": {
@@ -80,26 +76,6 @@
       "Always run: pnpm turbo run type-check lint test before marking complete",
       "Phase changes require smoke test verification",
       "Backend restarts must be WITHOUT --reload for stability"
-    ]
-  },
-
-  "memory": {
-    "project": {
-      "type": "monorepo-fastapi-nextjs",
-      "backend": "Python 3.12 + FastAPI + SQLAlchemy + PostgreSQL",
-      "frontend": "Next.js 15 + React 19 + TypeScript",
-      "database": "PostgreSQL 15 via Docker"
-    },
-    "current_phase": "Phase 2 - Performance Optimization",
-    "completed": [
-      "Phase 1: JSONDecodeError elimination (exception handlers)",
-      "Phase 2.1: Database performance indexes (12 indexes)",
-      "Phase 2.2: N+1 query pattern fixes"
-    ],
-    "pending": [
-      "Phase 2.3: Connection pool increase",
-      "Phase 2.4: Background job system for AI",
-      "Phase 2.5: Redis caching layer"
     ]
   }
 }
