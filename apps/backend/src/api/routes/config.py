@@ -5,9 +5,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from src.api.deps import get_current_user
 from src.config.settings import Settings, get_settings
 
-router = APIRouter(prefix="/api/config", tags=["Configuration"])
+router = APIRouter(prefix="/api/config", tags=["Configuration"], dependencies=[Depends(get_current_user)])
 
 
 class BusinessConfig(BaseModel):

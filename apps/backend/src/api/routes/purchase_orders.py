@@ -19,6 +19,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
@@ -28,7 +29,7 @@ from src.db.inventory_models import (
     Supplier,
 )
 
-router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"])
+router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic models

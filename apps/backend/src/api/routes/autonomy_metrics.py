@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import APIRouter, Query
 
+from src.api.deps import get_current_user
 from src.services.autonomy_audit import (
     AuditAction,
     AuditResult,
@@ -20,7 +21,7 @@ from src.services.autonomy_audit import (
     get_audit_service,
 )
 
-router = APIRouter(prefix="/api/autonomy", tags=["Autonomy Metrics"])
+router = APIRouter(prefix="/api/autonomy", tags=["Autonomy Metrics"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("/metrics")

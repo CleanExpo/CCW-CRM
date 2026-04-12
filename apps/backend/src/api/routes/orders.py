@@ -12,7 +12,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from src.api.deps import get_optional_user
+from src.api.deps import get_current_user, get_optional_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_async_db
 from src.config.settings import Settings, get_settings
@@ -36,7 +36,7 @@ from src.services.sse_service import sse_service
 from src.utils.calculations import calculate_line_total, calculate_totals
 
 logger = structlog.get_logger(__name__)
-router = APIRouter(prefix="/api/orders", tags=["orders"])
+router = APIRouter(prefix="/api/orders", tags=["orders"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("/status-stream")

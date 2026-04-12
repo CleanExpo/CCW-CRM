@@ -1,4 +1,5 @@
 """Webhook infrastructure for external integrations."""
+# SECURITY: Webhook authentication uses HMAC signatures, not JWT. Do not add get_current_user here.
 
 import hashlib
 import hmac
