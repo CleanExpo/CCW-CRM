@@ -126,7 +126,7 @@ export function LoginForm() {
           {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
 
-        <div className="mt-4 space-y-2 text-center text-xs text-slate-400">
+        <div className="mt-4 space-y-2 text-center text-xs text-slate-600">
           <div>
             <a href="/forgot-password" className="hover:text-slate-600 hover:underline">
               Forgot your password?

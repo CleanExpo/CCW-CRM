@@ -11,7 +11,7 @@ Part of Phase 5 (Autonomous Development Framework) - Week 3 monitoring.
 from datetime import UTC
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from src.api.deps import get_current_user
 from src.services.autonomy_audit import (
