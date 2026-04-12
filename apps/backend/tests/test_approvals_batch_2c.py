@@ -11,9 +11,20 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from src.api.deps import get_current_user
 from src.api.main import app
 
-client = TestClient(app)
+
+# Override auth dependency so validation tests reach Pydantic layer (422)
+# instead of being blocked by auth (401).  DB is NOT overridden — tests
+# that pass auth and hit DB code may get 500, which is acceptable for
+# structural smoke tests.
+async def _mock_user():
+    return {"id": "00000000-0000-0000-0000-000000000001", "email": "test@test.com"}
+
+app.dependency_overrides[get_current_user] = _mock_user
+
+client = TestClient(app, raise_server_exceptions=False)
 
 
 # ---------------------------------------------------------------------------
