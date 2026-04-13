@@ -56,9 +56,9 @@ export function LoginForm() {
         description: `Welcome back, ${response.user.email}!`,
       });
 
-      // Force full page reload to trigger middleware authentication check
-      // This ensures the auth cookie is properly validated server-side
-      window.location.href = '/dashboard';
+      // First-time users see the setup wizard; returning users go straight to dashboard
+      const onboardingDone = localStorage.getItem('onboarding_completed');
+      window.location.href = onboardingDone ? '/dashboard' : '/onboarding';
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Invalid email or password';
       toast({
