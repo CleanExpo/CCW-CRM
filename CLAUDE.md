@@ -1,1 +1,0 @@
-docs/project-root/CLAUDE.md

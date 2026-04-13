@@ -5,7 +5,6 @@ Full-stack ERP/CRM for equipment suppliers: **Next.js** (App Router in `src/app/
 ## Documentation
 
 - **[Documentation index](docs/README.md)** — guides, runbooks, and references
-- **[CLAUDE.md](CLAUDE.md)** — development commands, rules, and architecture pointers for contributors and AI tooling
 
 Legacy / scratch notes that used to live at the repository root are under **[docs/project-root/](docs/project-root/)** (including the previous long-form starter README).
 
@@ -20,4 +19,4 @@ npm run dev
 
 **Vercel:** leave **Root Directory** at **`.`** (repository root). Add a root `vercel.json` if you need framework settings.
 
-See `docs/README.md` and [CLAUDE.md](CLAUDE.md) for setup details and backend tests.
+See `docs/README.md` for setup details and backend tests.

@@ -222,9 +222,13 @@ verify_frontend_test_infrastructure() {
         check_fail "vitest not installed"
     fi
 
-    # Check Vitest configuration
-    if file_exists "vitest.config.ts"; then
-        :
+    # Check Vitest configuration (vitest.config.* or package.json "vitest" block)
+    if file_exists "vitest.config.ts" || file_exists "vitest.config.mts"; then
+        check_pass "Vitest configuration file present"
+    elif node -e "const p=require('./package.json'); process.exit(p.vitest?0:1)" 2>/dev/null; then
+        check_pass "Vitest configuration in package.json"
+    else
+        check_warn "Vitest configuration missing (add vitest.config.* or package.json vitest)"
     fi
 
     # Check testing-library packages

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Ensure package-lock.json matches workspace package.json files (npm).
-# Called by .husky/pre-commit when lockfile-related files are staged.
+# Run manually or from CI when validating lockfile sync.
 
 set -euo pipefail
 

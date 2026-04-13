@@ -7,6 +7,9 @@ tmpclaude-*
 .journeys/
 .planning/
 
+# Husky (optional local git hooks; not tracked)
+.husky/
+
 # Dependencies
 node_modules/
 .pnpm-store/

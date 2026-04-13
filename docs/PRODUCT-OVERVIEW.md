@@ -2,9 +2,9 @@
 
 **Audience:** Leadership, product, customer success, and new engineers  
 **Intent:** Business-focused summary of what the product is, what it aims to achieve, what documentation says is built, and what still needs work  
-**Sources:** `README.md`, `docs/README.md`, `docs/project-root/CLAUDE.md`, user and training docs, gap analyses, PRDs, phase summaries, integration and page/route catalogs, and independent audit notes  
+**Sources:** `README.md`, `docs/README.md`, user and training docs, gap analyses, PRDs, phase summaries, integration and page/route catalogs, and independent audit notes  
 
-**Note on paths:** Some catalogs and audits refer to folders such as `apps/web` and `apps/backend`. The contributor guide also describes a **single package at the repo root** with the App Router under `src/app/`, and optional backend work under `backend/`. Treat path names as **documentation anchors**; your checkout may use the root `src/` layout described in `README.md` and `docs/project-root/CLAUDE.md`.
+**Note on paths:** Some catalogs and audits refer to folders such as `apps/web` and `apps/backend`. The contributor guide also describes a **single package at the repo root** with the App Router under `src/app/`, and optional backend work under `backend/`. Treat path names as **documentation anchors**; your checkout may use the root `src/` layout described in `README.md` and `docs/README.md`.
 
 ---
 
@@ -166,7 +166,7 @@ The **principal swarm review** (`docs/swarm-review-2026-03-24/00-master-synthesi
 
 ### 6.5 Documentation and repository drift
 
-- **Catalog path conventions** (`apps/web`, `apps/backend`) may **not** match a **root `src/`** layout in every branch. **When in doubt, trust `README.md` and `docs/project-root/CLAUDE.md` for the checkout you are in**, and update catalogs when structures change.
+- **Catalog path conventions** (`apps/web`, `apps/backend`) may **not** match a **root `src/`** layout in every branch. **When in doubt, trust `README.md` and `docs/README.md` for the checkout you are in**, and update catalogs when structures change.
 
 ---
 

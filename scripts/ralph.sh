@@ -174,7 +174,7 @@ You are working on user story **{{TASK_ID}}** as part of the Ralph Wiggum autono
 
 3. **Implement the Task**
    - Write code to satisfy ALL acceptance criteria
-   - Follow project conventions (check CLAUDE.md)
+   - Follow project conventions (check README.md and docs/README.md)
    - Add or update tests as needed
    - Handle edge cases
 

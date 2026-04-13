@@ -24,8 +24,7 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "verify": "bash scripts/verify.sh",
     "deps:check": "npm install --package-lock-only --ignore-scripts --no-audit --no-fund",
-    "deps:clean": "npm run clean && npm install",
-    "prepare": "husky"
+    "deps:clean": "npm run clean && npm install"
   },
   "dependencies": {
     "@composio/core": "^0.6.3",
@@ -94,7 +93,6 @@
     "eslint": "^9.17.0",
     "eslint-config-next": "15.1.0",
     "eslint-formatter-compact": "^9.0.1",
-    "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "lint-staged": "^15.2.10",
     "minimatch": "^10.0.1",
@@ -109,6 +107,13 @@
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
     "*.{json,md,yml,yaml}": ["prettier --write"]
+  },
+  "vitest": {
+    "test": {
+      "environment": "jsdom",
+      "globals": true,
+      "exclude": ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/e2e/**"]
+    }
   },
   "engines": {
     "node": ">=20.0.0",
