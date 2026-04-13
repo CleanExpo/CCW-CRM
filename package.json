@@ -105,14 +105,24 @@
     "vitest": "^2.1.8"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
-    "*.{json,md,yml,yaml}": ["prettier --write"]
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "vitest": {
     "test": {
       "environment": "jsdom",
       "globals": true,
-      "exclude": ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/e2e/**"]
+      "exclude": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/.next/**",
+        "**/e2e/**"
+      ]
     }
   },
   "engines": {
