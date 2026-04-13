@@ -3,9 +3,9 @@ Validation script for ISS-005 fix (500 internal server errors).
 
 Verifies that all scalar_one() calls have been replaced with proper error handling.
 """
+import re
 import sys
 from pathlib import Path
-import re
 
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
@@ -45,7 +45,7 @@ if problematic_files:
         print(f"  - {filename}:{lineno}: {line[:80]}")
     sys.exit(1)
 else:
-    print(f"[PASS] No problematic scalar_one() calls found")
+    print("[PASS] No problematic scalar_one() calls found")
 
 # Test 2: Verify error handling added
 print("\n[TEST 2] Checking for proper error handling...")
@@ -67,7 +67,7 @@ for py_file in [routes_path / "orders.py", routes_path / "quotes.py", routes_pat
     matches = re.findall(pattern, content)
     files_checked[py_file.name] = len(matches)
 
-print(f"[PASS] Error handling patterns found:")
+print("[PASS] Error handling patterns found:")
 for filename, count in files_checked.items():
     print(f"  - {filename}: {count} scalar_one_or_none() with null checks")
 
@@ -81,14 +81,14 @@ if orders_file.exists():
     # Look for the specific fix in stock reservation
     if 'stock = result.scalar_one_or_none()' in content:
         if 'Stock record not found for product' in content or 'stock record was deleted' in content.lower():
-            print(f"[PASS] Stock reservation has proper error handling")
+            print("[PASS] Stock reservation has proper error handling")
         else:
-            print(f"[WARN] Stock reservation uses scalar_one_or_none() but error message not found")
+            print("[WARN] Stock reservation uses scalar_one_or_none() but error message not found")
     else:
-        print(f"[FAIL] Stock reservation still uses scalar_one()")
+        print("[FAIL] Stock reservation still uses scalar_one()")
         sys.exit(1)
 else:
-    print(f"[FAIL] orders.py not found")
+    print("[FAIL] orders.py not found")
     sys.exit(1)
 
 # Test 4: Check imports for HTTPException

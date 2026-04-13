@@ -269,9 +269,9 @@ check("core missing id", Cin7SalesSyncer._extract_order_id({}, "core") is None)
 check("omni missing id", Cin7SalesSyncer._extract_order_id({}, "omni") is None)
 
 # --- AST verification for cin7_crm.py endpoints ---
-import ast
+import ast  # noqa: E402
+import os  # noqa: E402
 
-import os
 _backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 with open(os.path.join(_backend_dir, "src", "api", "routes", "integrations", "cin7_crm.py")) as fh:
     tree = ast.parse(fh.read())

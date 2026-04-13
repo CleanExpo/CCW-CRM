@@ -1,6 +1,8 @@
 """Count records in key tables."""
 import asyncio
+
 from sqlalchemy import text
+
 from src.config.database import async_engine
 
 

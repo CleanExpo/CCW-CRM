@@ -1,6 +1,6 @@
 """Test fixtures for POS-related data."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 from uuid import uuid4

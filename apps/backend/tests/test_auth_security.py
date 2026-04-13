@@ -4,10 +4,8 @@ Comprehensive authentication and security tests.
 Tests all authentication flows, security features, and edge cases.
 """
 
-import pytest
 from httpx import AsyncClient
 
-from src.auth.jwt import create_access_token, create_refresh_token
 from src.auth.password_reset import create_password_reset_token
 
 

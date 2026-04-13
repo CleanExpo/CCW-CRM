@@ -1,15 +1,15 @@
 """Generate Customer Order History Endpoint."""
 import asyncio
-import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv('../../.env')
 
-from src.services.code_generation import (
-    CodeGenerator,
+from src.services.code_generation import (  # noqa: E402
     CodeGenerationRequest,
+    CodeGenerator,
 )
 
 

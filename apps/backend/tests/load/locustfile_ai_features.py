@@ -17,10 +17,10 @@ Performance targets:
 - AP2 Mandates: <1000ms (p95)
 """
 
-from locust import HttpUser, task, between, tag
 import random
-import json
 from uuid import uuid4
+
+from locust import HttpUser, between, tag, task
 
 
 class AIFeatureUser(HttpUser):

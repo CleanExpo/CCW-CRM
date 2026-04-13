@@ -11,11 +11,9 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from decimal import Decimal
-from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
 
 from src.db.demo_models import Customer
 from src.db.models.invoicing import Invoice

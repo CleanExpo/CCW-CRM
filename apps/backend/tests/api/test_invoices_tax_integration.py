@@ -4,9 +4,7 @@ Invoices Tax Calculation Integration Tests (GAP-025 / RA-193)
 Tests for invoices tax calculation endpoint using tax_calculator service.
 """
 
-from decimal import Decimal
 
-import pytest
 from fastapi.testclient import TestClient
 
 from src.api.main import app

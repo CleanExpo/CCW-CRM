@@ -737,7 +737,7 @@ async def cancel_invoice(
 # GAP-025 / RA-193: Tax Calculation (Batch 2D)
 # ---------------------------------------------------------------------------
 
-from src.services.tax_calculator import calculate_tax as calc_tax_pure
+from src.services.tax_calculator import calculate_tax as calc_tax_pure  # noqa: E402
 
 
 class TaxLineItem(BaseModel):

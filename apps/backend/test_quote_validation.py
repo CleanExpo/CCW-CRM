@@ -1,7 +1,8 @@
 """Test quote validation fixes."""
 import asyncio
-import httpx
 from datetime import datetime, timedelta
+
+import httpx
 
 BASE_URL = "http://localhost:8001"
 

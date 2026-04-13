@@ -9,9 +9,9 @@ Setup:
 3. Run: python scripts/create_phase5_issues.py
 """
 import json
-import urllib.request
-import sys
 import os
+import sys
+import urllib.request
 from pathlib import Path
 
 if sys.stdout.encoding != 'utf-8':

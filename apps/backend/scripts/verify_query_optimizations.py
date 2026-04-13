@@ -107,7 +107,8 @@ print("\n[TEST 6] Scanning for remaining N+1 patterns...")
 remaining_n1_patterns = []
 
 # Pattern: for loop with db.execute inside
-import re
+import re  # noqa: E402
+
 for file_name, content in [
     ("orders.py", orders_content),
     ("quotes.py", quotes_content),

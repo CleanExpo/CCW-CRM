@@ -1,9 +1,10 @@
 """Tests for ReconciliationAgent (Phase 2)."""
 
-import pytest
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
+
+import pytest
 
 from src.ai.agents.specialized.reconciliation_agent import ReconciliationAgent
 from src.db.pos_models import BankFeed, POSTransaction
@@ -44,7 +45,7 @@ class TestReconciliationAgent:
     async def test_exact_match_high_confidence(self, sample_bank_feed, sample_pos_transaction):
         """Test that exact amount and date match gives high confidence."""
         # Create mock DB session
-        from unittest.mock import AsyncMock, MagicMock
+        from unittest.mock import AsyncMock
 
         db = AsyncMock()
         agent = ReconciliationAgent(db)

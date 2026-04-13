@@ -5,8 +5,8 @@ Generates a machine-readable JSON report with all scenario results.
 """
 
 import json
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List
 
 
 def generate_json_report(summary: Dict[str, Any], results: List[Any], output_path: str):

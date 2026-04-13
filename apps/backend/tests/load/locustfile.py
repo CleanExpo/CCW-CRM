@@ -20,11 +20,9 @@ Target Performance:
     - Sustained load: 10+ minutes
 """
 
-import json
 import random
 import uuid
 from datetime import datetime, timedelta
-from typing import Any
 
 from locust import HttpUser, TaskSet, between, tag, task
 
@@ -425,7 +423,6 @@ class MultiTenantUser(AuthenticatedUser):
 # Default user class (can be overridden with --user-classes flag)
 # Example: locust -f locustfile.py --user-classes NormalUser ReadHeavyUser
 if __name__ == "__main__":
-    import sys
 
     print(__doc__)
     print("\n" + "=" * 80)

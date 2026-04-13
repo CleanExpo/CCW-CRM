@@ -8,10 +8,8 @@ from fastapi.testclient import TestClient
 
 from src.api.main import app
 from src.integrations.marketplace.base import (
-    BaseMarketplaceChannel,
     ChannelOrder,
     ChannelProduct,
-    ConnectionResult,
 )
 from src.integrations.marketplace.demo_channel import (
     EbayDemoChannel,

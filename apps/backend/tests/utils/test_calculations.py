@@ -1,13 +1,14 @@
 """Tests for calculation utilities."""
 
-import pytest
 from decimal import Decimal
+
+import pytest
 
 from src.utils.calculations import (
     calculate_line_total,
-    calculate_unit_price,
-    calculate_totals,
     calculate_margin,
+    calculate_totals,
+    calculate_unit_price,
     validate_price_vs_cost,
 )
 

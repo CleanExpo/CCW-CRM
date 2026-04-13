@@ -9,8 +9,8 @@ Generates a comprehensive HTML report with:
 - Concurrency issues
 """
 
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List
 
 
 def generate_html_report(summary: Dict[str, Any], results: List[Any], output_path: str):

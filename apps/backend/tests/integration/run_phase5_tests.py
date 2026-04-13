@@ -5,9 +5,13 @@ import hashlib
 import hmac
 import os
 import sys
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+# Import cin7_webhooks directly to avoid integrations/__init__.py import chain
+# which pulls in xero → database → psycopg2
+import importlib.util as _ilu
 
 from src.integrations.cin7.change_detector import (
     detect_customer_changes,
@@ -34,9 +38,6 @@ from src.integrations.cin7.event_dispatcher import (
     build_sales_event,
     build_sync_result_event,
 )
-# Import cin7_webhooks directly to avoid integrations/__init__.py import chain
-# which pulls in xero → database → psycopg2
-import importlib.util as _ilu
 
 _wh_spec = _ilu.spec_from_file_location(
     "cin7_webhooks",

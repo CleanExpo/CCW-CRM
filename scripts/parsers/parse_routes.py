@@ -1,7 +1,6 @@
 """Route parser - Extract metadata from FastAPI route files using AST."""
 
 import ast
-import re
 from pathlib import Path
 from typing import Any
 

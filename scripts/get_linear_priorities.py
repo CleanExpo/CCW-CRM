@@ -11,8 +11,9 @@ Usage:
     LINEAR_API_KEY="your_key" python scripts/get_linear_priorities.py
 """
 
-import sys
 import os
+import sys
+
 import requests
 
 # Linear API configuration

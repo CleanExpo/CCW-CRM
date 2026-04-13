@@ -8,15 +8,13 @@ The Invoice SQLAlchemy model uses invoice_date but the original migration
 bb5f3d8c8a16_add_invoicing_tables created the column as issue_date.
 This migration aligns the DB schema with the model definition.
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision: str = '00a_rename_invoice_date'
-down_revision: Union[str, Sequence[str], None] = '009_add_pos_tables'
+down_revision: str | Sequence[str] | None = '009_add_pos_tables'
 branch_labels = None
 depends_on = None
 

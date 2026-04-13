@@ -6,9 +6,8 @@ Searches for patterns that commonly cause unhandled exceptions:
 2. Missing null checks
 3. Database operations without try-except
 """
-import sys
-from pathlib import Path
 import re
+from pathlib import Path
 
 backend_path = Path(__file__).parent.parent
 routes_path = backend_path / "src" / "api" / "routes"
@@ -105,11 +104,11 @@ else:
 print("\n" + "=" * 80)
 print("ANALYSIS SUMMARY")
 print("=" * 80)
-print(f"\nTotal issues found:")
+print("\nTotal issues found:")
 print(f"  - scalar_one() without error handling: {len(scalar_one_files)}")
 print(f"  - Endpoints missing 404 handling: {len(missing_404_files)}")
 print(f"  - Unprotected DB operations: {len(unprotected_ops)}")
-print(f"\nPriority fixes:")
+print("\nPriority fixes:")
 print("  1. Fix scalar_one() in stock reservation (orders.py:144)")
 print("  2. Add proper error handling to all scalar_one() calls")
 print("  3. Add try-except blocks around DB operations")

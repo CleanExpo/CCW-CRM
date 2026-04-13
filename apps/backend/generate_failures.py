@@ -9,6 +9,7 @@ Instead, we'll generate synthetic execution data by making API calls.
 """
 
 import asyncio
+
 import httpx
 
 
@@ -82,19 +83,19 @@ async def generate_and_extract():
                 by_type[insight['insight_type']] += 1
 
             print(f"\n   [OK] Total insights: {all_insights['total']}")
-            print(f"\n   By Priority:")
+            print("\n   By Priority:")
             print(f"      - High:   {priority_counts['high']} (Critical issues requiring immediate attention)")
             print(f"      - Medium: {priority_counts['medium']} (Important optimizations)")
             print(f"      - Low:    {priority_counts['low']} (General improvements)")
 
-            print(f"\n   By Type:")
+            print("\n   By Type:")
             print(f"      - Prompt Improvement:    {by_type['prompt_improvement']}")
             print(f"      - Process Optimization:  {by_type['process_optimization']}")
             print(f"      - Error Prevention:      {by_type['error_prevention']}")
 
             # Show sample insights
             if all_insights['insights']:
-                print(f"\n   Sample Insights:")
+                print("\n   Sample Insights:")
                 for idx, insight in enumerate(all_insights['insights'][:3], 1):
                     print(f"\n   {idx}. [{insight['priority'].upper()}] {insight['title']}")
                     print(f"      Agent: {insight['agent_id']}")
@@ -115,9 +116,9 @@ async def generate_and_extract():
         print(f"  Medium priority: {priority_counts['medium']}")
         print(f"  Low priority:    {priority_counts['low']}")
 
-        print(f"\nView dashboard at: http://localhost:3000/agents")
-        print(f"\nNote: Current insights are based on health check data (100% success).")
-        print(f"To generate HIGH/MEDIUM priority insights, we need actual task failures.")
+        print("\nView dashboard at: http://localhost:3000/agents")
+        print("\nNote: Current insights are based on health check data (100% success).")
+        print("To generate HIGH/MEDIUM priority insights, we need actual task failures.")
         print("="*70 + "\n")
 
 

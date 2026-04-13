@@ -5,7 +5,6 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.config.database import get_database_url
-from src.db.demo_models import Customer, Order  # Import referenced models
 from src.db.models import Base
 from src.db.service_models import ServiceRequest
 

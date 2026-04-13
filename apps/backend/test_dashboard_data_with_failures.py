@@ -1,8 +1,8 @@
 """Generate test data with failures and performance issues for insights."""
 
 import asyncio
-from datetime import UTC, datetime, timedelta
 import random
+from datetime import UTC, datetime, timedelta
 
 from src.ai.monitoring import get_metrics_collector
 
@@ -93,13 +93,13 @@ async def generate_realistic_test_data():
         execution_count += 1
 
     print(f"Generated {execution_count} test executions with varied performance")
-    print(f"")
-    print(f"Expected patterns:")
-    print(f"  - SUCCESS patterns: Fast tasks with >80% success rate")
-    print(f"  - FAILURE patterns: Tasks with <30% success rate (will trigger insights)")
-    print(f"  - OPTIMIZATION patterns: Slow tasks (>3s) that succeed (will trigger insights)")
-    print(f"")
-    print(f"Dashboard: http://localhost:3000/agents")
+    print("")
+    print("Expected patterns:")
+    print("  - SUCCESS patterns: Fast tasks with >80% success rate")
+    print("  - FAILURE patterns: Tasks with <30% success rate (will trigger insights)")
+    print("  - OPTIMIZATION patterns: Slow tasks (>3s) that succeed (will trigger insights)")
+    print("")
+    print("Dashboard: http://localhost:3000/agents")
 
 
 if __name__ == "__main__":

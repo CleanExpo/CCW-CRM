@@ -7,12 +7,6 @@ from datetime import UTC, datetime
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from src.integrations.cin7.supplier_sync import (
-    extract_core_supplier_fields,
-    generate_supplier_code,
-    map_erp_supplier_to_core,
-    map_erp_supplier_to_omni,
-)
 from src.integrations.cin7.purchase_sync import (
     CIN7_CORE_PO_STATUS,
     CIN7_OMNI_PO_STATUS,
@@ -24,6 +18,12 @@ from src.integrations.cin7.purchase_sync import (
     map_cin7_omni_po_status,
     map_erp_po_to_core,
     map_erp_po_to_omni,
+)
+from src.integrations.cin7.supplier_sync import (
+    extract_core_supplier_fields,
+    generate_supplier_code,
+    map_erp_supplier_to_core,
+    map_erp_supplier_to_omni,
 )
 
 passed = 0

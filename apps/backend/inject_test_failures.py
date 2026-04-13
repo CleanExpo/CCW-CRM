@@ -6,9 +6,7 @@ this script makes HTTP requests to record test executions.
 """
 
 import asyncio
-import random
-from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+
 import httpx
 
 

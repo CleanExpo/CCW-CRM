@@ -1,6 +1,8 @@
 """Check what tables exist in the database."""
 import asyncio
+
 from sqlalchemy import text
+
 from src.config.database import async_engine
 
 

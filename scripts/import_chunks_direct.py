@@ -88,7 +88,7 @@ def verify_data(conn):
         results = cursor.fetchall()
         cursor.close()
 
-        print(f"\n[OK] Data Verification Results:")
+        print("\n[OK] Data Verification Results:")
         print(f"{'Table Name':<20} {'Row Count':<10}")
         print("-" * 30)
         total_rows = 0
@@ -124,7 +124,7 @@ def main():
             missing_files.append(str(chunk_file))
 
     if missing_files:
-        print(f"[ERROR] Missing chunk files:")
+        print("[ERROR] Missing chunk files:")
         for f in missing_files:
             print(f"  - {f}")
         return 1
@@ -157,7 +157,7 @@ def main():
 
             # Brief pause between chunks
             if i < len(chunks):
-                print(f"[INFO] Pausing 2 seconds before next chunk...")
+                print("[INFO] Pausing 2 seconds before next chunk...")
                 time.sleep(2)
 
         # Verify data was imported
@@ -172,8 +172,8 @@ def main():
         print("\n" + "=" * 60)
         print("[SUCCESS] All chunks imported successfully!")
         print("=" * 60)
-        print(f"\nView your data at:")
-        print(f"https://supabase.com/dashboard/project/vwfgksqkajnpfjospbpe/editor")
+        print("\nView your data at:")
+        print("https://supabase.com/dashboard/project/vwfgksqkajnpfjospbpe/editor")
 
         return 0
 

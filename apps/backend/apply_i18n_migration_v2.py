@@ -58,8 +58,7 @@ def apply_migration():
 
     except Exception as e:
         # Don't print exception message if it contains Unicode
-        print(f"[FAIL] Migration failed - check database logs for details")
-        import traceback
+        print("[FAIL] Migration failed - check database logs for details")
         print("Traceback (ASCII-safe):")
         error_str = str(e)
         # Replace non-ASCII characters

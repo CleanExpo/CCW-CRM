@@ -5,9 +5,10 @@ This script uses the same database connection settings as the backend API.
 """
 
 import asyncio
-from pathlib import Path
-from sqlalchemy import text
 import sys
+from pathlib import Path
+
+from sqlalchemy import text
 
 # Add src to path to import backend modules
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -111,14 +112,14 @@ async def apply_indexes():
                     print("[SKIP] (pg_trgm extension not available)")
                     skip_count += 1
                 else:
-                    print(f"[ERROR] Error")
+                    print("[ERROR] Error")
                     print(f"    {error_msg[:100]}")
                     error_count += 1
 
     await async_engine.dispose()
 
     print(f"\n{'='*60}")
-    print(f"Index Application Complete!")
+    print("Index Application Complete!")
     print(f"{'='*60}")
     print(f"  [OK] Successfully created: {success_count}")
     print(f"  [SKIP] Already existed/skipped: {skip_count}")

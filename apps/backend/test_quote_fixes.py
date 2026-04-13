@@ -3,8 +3,9 @@ Quick test to verify quote module fixes.
 Tests the endpoints that were causing 405 and 404 errors.
 """
 import asyncio
-import httpx
 from datetime import datetime, timedelta
+
+import httpx
 
 BASE_URL = "http://localhost:8001"
 
@@ -84,7 +85,7 @@ async def test_quote_endpoints():
         update_data = {'status': 'accepted'}
         resp = await client.put(f"{BASE_URL}/api/quotes/{quote_id}", json=update_data)
         if resp.status_code == 200:
-            print(f"[OK] Quote updated to accepted")
+            print("[OK] Quote updated to accepted")
         else:
             print(f"[FAILED] Quote update failed: {resp.status_code}")
             print(resp.text)
@@ -106,7 +107,7 @@ async def test_quote_endpoints():
         print("\n[Test 6] Verifying /convert endpoint returns 404...")
         resp = await client.post(f"{BASE_URL}/api/quotes/{quote_id}/convert")
         if resp.status_code == 404:
-            print(f"[OK] Correct 404 error for /convert endpoint")
+            print("[OK] Correct 404 error for /convert endpoint")
         else:
             print(f"[INFO] Got status {resp.status_code} for /convert (expected 404)")
 

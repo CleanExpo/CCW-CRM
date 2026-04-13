@@ -12,7 +12,9 @@ This script creates all POS tables and seed data:
 
 import asyncio
 from pathlib import Path
+
 from sqlalchemy import text
+
 from src.config.database import async_engine
 
 

@@ -4,8 +4,10 @@ Tests codebase analysis, pattern detection, and context generation
 for AI-powered code generation.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from src.services.code_generation.context_builder import (
     CodeContext,
     CodePattern,
@@ -13,7 +15,6 @@ from src.services.code_generation.context_builder import (
     ProjectStructure,
     StyleGuide,
 )
-
 
 # ============================================================================
 # Fixtures

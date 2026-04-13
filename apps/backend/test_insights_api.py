@@ -1,6 +1,7 @@
 """Test script to directly call insights API logic."""
 
 import asyncio
+
 from src.ai.learning.learning_repository import LearningRepository
 
 

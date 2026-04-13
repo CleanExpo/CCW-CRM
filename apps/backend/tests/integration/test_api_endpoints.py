@@ -20,19 +20,16 @@ Usage:
     pytest tests/integration/test_api_endpoints.py --cov=src --cov-report=html
 """
 
-import json
 import uuid
 from datetime import datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session, sessionmaker
-
-from src.api.main import app
-from src.db.models.subscription import Subscription, SubscriptionStatus, SubscriptionTier
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from src.db.erp_models import Customer, Organization, Product, Quote, User
 
+from src.api.main import app
 
 # Test database URL (use in-memory SQLite for fast tests)
 TEST_DATABASE_URL = "sqlite:///:memory:"

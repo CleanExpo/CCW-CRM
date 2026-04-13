@@ -10,9 +10,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.services.requirement_tracer import (
-    RequirementTrace,
     RequirementTracer,
-    TraceabilityMatrix,
     get_tracer,
 )
 

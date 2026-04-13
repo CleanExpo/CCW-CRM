@@ -1,14 +1,14 @@
 """Tests for Phase 5 Week 1 - Agent Orchestration Foundation."""
 
 import pytest
+
+from src.ai.agents.chat_assistant import ChatAssistant
+from src.ai.agents.content_generator import ContentGenerator
+from src.ai.agents.insights_agent import InsightsAgent
 from src.ai.orchestration import (
-    AgentRegistry,
     AgentStatus,
     get_agent_registry,
 )
-from src.ai.agents.chat_assistant import ChatAssistant
-from src.ai.agents.insights_agent import InsightsAgent
-from src.ai.agents.content_generator import ContentGenerator
 
 
 class TestAgentRegistry:

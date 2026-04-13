@@ -18,12 +18,12 @@ ENV (optional overrides):
   YOUTUBE_PLAYLIST_ID  — if you want videos added to a playlist
 """
 
-import os
-import sys
-import json
-import time
 import argparse
+import json
+import os
 import re
+import sys
+import time
 from pathlib import Path
 
 # ── Config ──────────────────────────────────────────────────────────────────
@@ -79,8 +79,8 @@ TAGS = ["CCW ERP", "equipment supplier", "inventory management", "Australia", "t
 
 def get_authenticated_service():
     """Return an authenticated YouTube API service object."""
-    from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
 
@@ -257,7 +257,7 @@ def cmd_upload(args):
                 with open(UPLOAD_LOG, "w") as f:
                     json.dump(upload_log, f, indent=2)
             else:
-                print(f"  FAILED — will retry on next run")
+                print("  FAILED — will retry on next run")
 
             # Small delay between uploads
             if mp4 != pending[-1]:

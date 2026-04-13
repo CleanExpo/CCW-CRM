@@ -3,10 +3,10 @@
 PreToolUse hook (matcher: Task) — validates agent dispatch routing.
 Receives tool input on stdin as JSON. Logs dispatch for audit trail.
 """
-import sys
 import json
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 try:
     data = json.loads(sys.stdin.read())

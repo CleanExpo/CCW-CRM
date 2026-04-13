@@ -1,8 +1,6 @@
 """Tests for tax calculation engine (GAP-028)."""
 from decimal import Decimal
 
-import pytest
-
 from src.services.tax_calculator import (
     TaxType,
     calculate_reverse_tax,

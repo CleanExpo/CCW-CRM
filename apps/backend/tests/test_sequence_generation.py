@@ -6,8 +6,10 @@ order and quote numbers even under concurrent load.
 """
 
 import asyncio
+
 import pytest
 from sqlalchemy import text
+
 from src.config.database import get_async_db
 
 
@@ -128,7 +130,7 @@ async def test_sequence_format():
         assert quote_num.startswith("Q-2026-"), f"Invalid quote format: {quote_num}"
         assert len(quote_num) == 13, f"Invalid quote length: {quote_num} (expected 13 chars: Q-YYYY-NNNNNN)"
 
-        print(f"\n✅ Number format validation passed")
+        print("\n✅ Number format validation passed")
         print(f"   Order: {order_num} (format: ORD-YYYY-NNNNNN, 15 chars)")
         print(f"   Quote: {quote_num} (format: Q-YYYY-NNNNNN, 13 chars)")
         break

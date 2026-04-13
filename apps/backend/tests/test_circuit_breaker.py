@@ -6,7 +6,6 @@ Part of Phase 5 (Autonomous Development Framework) - Week 2 tests.
 """
 
 import asyncio
-from datetime import datetime, timezone
 
 import pytest
 
@@ -17,7 +16,6 @@ from src.services.circuit_breaker import (
     CircuitBreakerManager,
     CircuitState,
 )
-
 
 # ============================================================
 # HELPER FUNCTIONS

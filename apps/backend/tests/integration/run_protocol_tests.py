@@ -9,7 +9,6 @@ Usage:
 """
 
 import ast
-import os
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -39,12 +38,11 @@ print("\n" + "=" * 70)
 print("AGENTS PROTOCOL v1.0 - Model Tests")
 print("=" * 70)
 
-from src.ai.protocol.models import (
+from src.ai.protocol.models import (  # noqa: E402
     AgentCard,
     AgentMessage,
     ConfidenceScore,
     DelegationRequest,
-    DelegationRule,
     ErrorClassification,
     ErrorType,
     EscalationTrigger,
@@ -171,8 +169,7 @@ print("\n" + "=" * 70)
 print("AGENTS PROTOCOL v1.0 - Governor Pure Function Tests")
 print("=" * 70)
 
-from src.ai.protocol.governor import (
-    build_handoff_package,
+from src.ai.protocol.governor import (  # noqa: E402
     calculate_confidence,
     classify_error,
     detect_delegation_loop,
@@ -356,7 +353,7 @@ print("\n" + "=" * 70)
 print("AGENTS PROTOCOL v1.0 - Message Bus Tests")
 print("=" * 70)
 
-from src.ai.protocol.message_bus import create_message, create_response, is_expired
+from src.ai.protocol.message_bus import create_message, create_response, is_expired  # noqa: E402
 
 # --- create_message ---
 print("\n--- create_message ---")
@@ -402,10 +399,9 @@ print("\n" + "=" * 70)
 print("AGENTS PROTOCOL v1.0 - Error Handler Tests")
 print("=" * 70)
 
-from src.ai.protocol.error_handler import (
+from src.ai.protocol.error_handler import (  # noqa: E402
     calculate_backoff,
     classify_exception,
-    format_error_response,
     should_retry,
 )
 
@@ -471,7 +467,7 @@ print("\n" + "=" * 70)
 print("AGENTS PROTOCOL v1.0 - Confidence Scoring Tests")
 print("=" * 70)
 
-from src.ai.protocol.confidence import (
+from src.ai.protocol.confidence import (  # noqa: E402
     aggregate_confidence,
     score_from_completeness,
     score_from_execution,

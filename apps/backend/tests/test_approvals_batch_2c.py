@@ -4,7 +4,7 @@ Tests for Phase 2 Batch 2C - Approvals Endpoints.
 GAP-022: GET /api/approvals/pending-my-approval-v2
 GAP-023: POST /api/approvals/bulk-approve-v2
 """
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 

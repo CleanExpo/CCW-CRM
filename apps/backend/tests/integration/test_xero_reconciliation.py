@@ -1,13 +1,10 @@
 """Integration tests for Xero reconciliation."""
 
-from decimal import Decimal
-from uuid import uuid4
 
 import pytest
 import respx
 from httpx import AsyncClient, Response
 
-from src.db.pos_models import POSTransaction
 from tests.fixtures.pos_data import create_pos_transaction_payload
 
 

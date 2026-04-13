@@ -1,6 +1,8 @@
 """Reset admin password to demo123 (matches seed script hash)."""
 import asyncio
+
 from sqlalchemy import select, update
+
 from src.config.database import AsyncSessionLocal
 from src.db.models import User
 
@@ -26,9 +28,9 @@ async def reset_admin_password():
         )
         user = result.scalar_one()
 
-        print(f"\nReset admin@demo.com password")
+        print("\nReset admin@demo.com password")
         print(f"Email: {user.email}")
-        print(f"Password: demo123")
+        print("Password: demo123")
         print(f"Hash: {user.password_hash[:60]}...")
         print("\nPassword has been reset. Tests should now work.")
 

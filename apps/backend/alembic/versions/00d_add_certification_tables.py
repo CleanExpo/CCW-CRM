@@ -4,13 +4,12 @@ Revision ID: 00d_add_certification_tables
 Revises: 00c_equipment_lifecycle
 Create Date: 2026-03-25
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-import sqlalchemy as sa
 from alembic import op
 
 revision: str = "00d_add_certification_tables"
-down_revision: Union[str, Sequence[str], None] = "00c_equipment_lifecycle"
+down_revision: str | Sequence[str] | None = "00c_equipment_lifecycle"
 branch_labels = None
 depends_on = None
 

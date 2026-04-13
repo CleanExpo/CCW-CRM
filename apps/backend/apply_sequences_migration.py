@@ -7,7 +7,9 @@ race conditions in concurrent order/quote creation.
 
 import asyncio
 from pathlib import Path
+
 from sqlalchemy import text
+
 from src.config.database import async_engine
 
 

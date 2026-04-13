@@ -3,6 +3,7 @@
 import asyncio
 from datetime import UTC, datetime
 
+
 async def inject_insights():
     """Inject insights directly into the database."""
 
@@ -111,8 +112,8 @@ async def inject_insights():
 
     print("Dashboard: http://localhost:3000/agents")
     print("\nYou should now see:")
-    print(f"  • Red cards for 2 high-priority insights")
-    print(f"  • Orange cards for 2 medium-priority insights")
+    print("  • Red cards for 2 high-priority insights")
+    print("  • Orange cards for 2 medium-priority insights")
     print("="*70 + "\n")
 
 

@@ -21,9 +21,9 @@ def generate_hash():
 
     if is_valid:
         print("\nThis hash can be used in:")
-        print(f"  1. Update seed_demo.py line 122:")
+        print("  1. Update seed_demo.py line 122:")
         print(f'     password_hash="{hash_str}"')
-        print(f"  2. Update database:")
+        print("  2. Update database:")
         print(f"     UPDATE users SET password_hash = '{hash_str}' WHERE email = 'admin@demo.com';")
 
 

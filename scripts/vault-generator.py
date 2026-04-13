@@ -20,12 +20,12 @@ import click
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from scripts.parsers.parse_routes import RouteParser
-from scripts.parsers.parse_pages import PageParser
-from scripts.parsers.parse_models import ModelParser
-from scripts.parsers.parse_components import ComponentParser
 from scripts.parsers.parse_api_clients import ApiClientParser
+from scripts.parsers.parse_components import ComponentParser
 from scripts.parsers.parse_integrations import IntegrationParser
+from scripts.parsers.parse_models import ModelParser
+from scripts.parsers.parse_pages import PageParser
+from scripts.parsers.parse_routes import RouteParser
 
 REPO_ROOT = Path(__file__).parent.parent
 VAULT_ROOT = REPO_ROOT / ".obsidian-vault"
@@ -275,7 +275,7 @@ def main(entity_types: str, incremental: bool, verify_only: bool, no_preserve: b
         print(f"Valid types: {', '.join(PARSER_MAP.keys())}, all")
         sys.exit(1)
 
-    print(f"Vault Generator")
+    print("Vault Generator")
     print(f"  Entity types: {', '.join(types)}")
     print(f"  Mode: {'Incremental (git diff)' if incremental else 'Full scan'}")
     print(f"  Preserve human content: {not no_preserve}")

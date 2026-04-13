@@ -1,15 +1,12 @@
 """Tests for POS transaction endpoints."""
 
-from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
 
 from tests.fixtures.pos_data import (
-    create_location_payload,
     create_pos_transaction_payload,
-    create_terminal_payload,
 )
 
 

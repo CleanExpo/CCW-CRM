@@ -14,19 +14,19 @@ Configuration:
 Expected runtime: 2-3 hours
 """
 import asyncio
-import sys
 import json
-from pathlib import Path
-from datetime import datetime
+import sys
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from tests.load.conftest import ScenarioRunner
-from tests.load.generators.products import ProductScenarioGenerator
 from tests.load.generators.customers import CustomerScenarioGenerator
 from tests.load.generators.orders import OrderScenarioGenerator
+from tests.load.generators.products import ProductScenarioGenerator
 from tests.load.generators.quotes import QuoteScenarioGenerator
 from tests.load.reporters.html_reporter import generate_html_report
 
@@ -63,7 +63,7 @@ class LoadTestOrchestrator:
         summary['scenarios_per_second'] = count / phase_duration if phase_duration > 0 else 0
 
         # Print phase summary
-        print(f"\nPhase Complete:")
+        print("\nPhase Complete:")
         print(f"  Duration: {phase_duration:.1f}s ({count/phase_duration:.1f} scenarios/sec)")
         print(f"  Pass Rate: {summary['pass_rate']:.1f}%")
         print(f"  Avg Response Time: {summary['avg_response_time_ms']:.0f}ms")
@@ -81,11 +81,11 @@ class LoadTestOrchestrator:
         print("FULL LOAD TEST SUITE - PHASE 9")
         print("="*80)
         print(f"Start Time: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Configuration:")
+        print("Configuration:")
         print(f"  Base URL: {self.base_url}")
         print(f"  Max Concurrent: {self.max_concurrent}")
-        print(f"  Total Scenarios: 8,000+")
-        print(f"  Estimated Runtime: 2-3 hours")
+        print("  Total Scenarios: 8,000+")
+        print("  Estimated Runtime: 2-3 hours")
         print("="*80)
 
         all_results = []
@@ -242,12 +242,12 @@ class LoadTestOrchestrator:
         print(f"Start Time: {summary['start_time']}")
         print(f"End Time: {summary['end_time']}")
         print(f"Total Duration: {summary['total_duration_seconds']:.1f}s ({summary['total_duration_seconds']/3600:.2f} hours)")
-        print(f"\nScenarios:")
+        print("\nScenarios:")
         print(f"  Total: {summary['total_scenarios']}")
         print(f"  Passed: {summary['passed']} ({summary['pass_rate']:.1f}%)")
         print(f"  Failed: {summary['failed']}")
         print(f"  Throughput: {summary['scenarios_per_second']:.2f} scenarios/sec")
-        print(f"\nResponse Times:")
+        print("\nResponse Times:")
         print(f"  Average: {summary['avg_response_time_ms']:.0f}ms")
         print(f"  P50: {summary['p50_response_time_ms']:.0f}ms")
         print(f"  P95: {summary['p95_response_time_ms']:.0f}ms")
@@ -256,16 +256,16 @@ class LoadTestOrchestrator:
         print(f"  Max: {summary['max_response_time_ms']:.0f}ms")
 
         if summary['failures_by_status']:
-            print(f"\nFailures by Status Code:")
+            print("\nFailures by Status Code:")
             for status, count in sorted(summary['failures_by_status'].items()):
                 print(f"  {status}: {count}")
 
         if summary['failures_by_scenario_type']:
-            print(f"\nFailures by Scenario Type:")
+            print("\nFailures by Scenario Type:")
             for stype, count in sorted(summary['failures_by_scenario_type'].items()):
                 print(f"  {stype}: {count}")
 
-        print(f"\nPhase Breakdown:")
+        print("\nPhase Breakdown:")
         for phase_summary in summary['phase_summaries']:
             print(f"  {phase_summary['phase_name']}:")
             print(f"    Pass Rate: {phase_summary['pass_rate']:.1f}%")

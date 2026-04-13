@@ -1,6 +1,5 @@
 """Component parser - Extract metadata from React component files."""
 
-import re
 from pathlib import Path
 from typing import Any
 
@@ -128,7 +127,7 @@ Document any known issues or TODOs
         reference_pattern = file_path.name == "login-form.tsx"
 
         return {
-            "id": f"COMPONENT-XXX",
+            "id": "COMPONENT-XXX",
             "slug": slug,
             "name": name,
             "file": file_path,

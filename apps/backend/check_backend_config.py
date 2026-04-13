@@ -2,6 +2,7 @@
 """Check what configuration the backend is actually loading."""
 
 import sys
+
 sys.path.insert(0, 'src')
 
 from config.settings import get_settings
@@ -30,7 +31,7 @@ print(f"\nExpected DB URL: {expected_db}")
 print(f"Actual DB URL:   {actual_db}")
 print(f"Match: {expected_db == actual_db}")
 
-print(f"\nExpected Skip Auth: True")
+print("\nExpected Skip Auth: True")
 print(f"Actual Skip Auth:   {settings.skip_auth_enforcement}")
 print(f"Match: {settings.skip_auth_enforcement == True}")
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Check what configuration the running backend actually uses."""
-import httpx
 import json
+
+import httpx
 
 # Check config endpoint
 try:

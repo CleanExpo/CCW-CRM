@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 # Load environment variables
 from dotenv import load_dotenv
+
 env_path = Path(__file__).parent.parent.parent / ".env.local"
 load_dotenv(env_path)
 
@@ -15,6 +16,7 @@ load_dotenv(env_path)
 async def test_endpoints():
     """Test all Google AI endpoints."""
     from fastapi.testclient import TestClient
+
     from src.api.main import app
 
     client = TestClient(app)

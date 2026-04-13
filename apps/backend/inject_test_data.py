@@ -1,8 +1,8 @@
 """Directly inject test data into running backend's metrics collector."""
 
 import asyncio
-from datetime import UTC, datetime, timedelta
 import random
+from datetime import UTC, datetime, timedelta
 
 from src.ai.monitoring import get_metrics_collector
 
@@ -92,14 +92,14 @@ async def main():
     print(f"\nGenerated {stats['total']} test executions")
     print(f"  Succeeded: {stats['succeeded']}")
     print(f"  Failed: {stats['failed']}")
-    print(f"\nExpected patterns:")
-    print(f"  - SUCCESS: Fast tasks with >80% success rate")
-    print(f"  - FAILURE: Tasks with <30% success rate (will trigger HIGH priority insights)")
-    print(f"  - OPTIMIZATION: Slow tasks (>3s) that succeed (will trigger MEDIUM priority insights)")
-    print(f"\nNext steps:")
-    print(f"  1. POST /api/ai/learning/extract-patterns?lookback_hours=5&min_observations=3")
-    print(f"  2. POST /api/ai/learning/generate-insights?min_confidence=0.4")
-    print(f"  3. Check dashboard: http://localhost:3000/agents")
+    print("\nExpected patterns:")
+    print("  - SUCCESS: Fast tasks with >80% success rate")
+    print("  - FAILURE: Tasks with <30% success rate (will trigger HIGH priority insights)")
+    print("  - OPTIMIZATION: Slow tasks (>3s) that succeed (will trigger MEDIUM priority insights)")
+    print("\nNext steps:")
+    print("  1. POST /api/ai/learning/extract-patterns?lookback_hours=5&min_observations=3")
+    print("  2. POST /api/ai/learning/generate-insights?min_confidence=0.4")
+    print("  3. Check dashboard: http://localhost:3000/agents")
 
 
 if __name__ == "__main__":

@@ -7,10 +7,8 @@ from pathlib import Path
 import pytest
 
 from src.services.code_generation.schema_context import (
-    SchemaContext,
     SchemaContextBuilder,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

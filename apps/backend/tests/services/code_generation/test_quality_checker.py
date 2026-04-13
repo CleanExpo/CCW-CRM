@@ -4,11 +4,12 @@ Tests code quality validation including linting, type checking,
 formatting, security scanning, and best practices.
 """
 
-import pytest
 from pathlib import Path
-from src.services.code_generation.quality_checker import QualityChecker
-from src.services.code_generation.generator import GeneratedFile
 
+import pytest
+
+from src.services.code_generation.generator import GeneratedFile
+from src.services.code_generation.quality_checker import QualityChecker
 
 # ============================================================================
 # Fixtures

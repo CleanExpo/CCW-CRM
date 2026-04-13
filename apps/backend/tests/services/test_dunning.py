@@ -2,8 +2,6 @@
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
-import pytest
-
 from src.services.dunning import (
     DunningLevel,
     calculate_days_overdue,

@@ -28,13 +28,13 @@ async def test_payment_webhook_flow():
         order_number = "ORD-2026-005"
         xero_invoice_id = "93810347-9dd7-483e-b0cc-4875b6455b11"
 
-        print(f"\n=== Using pre-synced order ===")
+        print("\n=== Using pre-synced order ===")
         print(f"Order: {order_number}")
         print(f"Order ID: {order_id}")
         print(f"Invoice ID: {xero_invoice_id}")
 
         # Step 1: Simulate a payment webhook
-        print(f"\n=== Step 1: Simulating payment webhook ===")
+        print("\n=== Step 1: Simulating payment webhook ===")
 
         # Create a mock payment webhook payload (similar to what Xero sends)
         webhook_payload = {
@@ -86,12 +86,12 @@ async def test_payment_webhook_flow():
             print(f"Results: {json.dumps(webhook_result, indent=2)}")
 
             # Step 2: Verify the order was updated
-            print(f"\n=== Step 2: Verifying order status ===")
+            print("\n=== Step 2: Verifying order status ===")
             response = await client.get(f"{base_url}/api/orders/{order_id}")
             if response.status_code == 200:
                 updated_order = response.json()
                 print(f"Order status: {updated_order.get('status')}")
-                print(f"Expected: DELIVERED (if payment webhook processed correctly)")
+                print("Expected: DELIVERED (if payment webhook processed correctly)")
 
                 if updated_order.get("status") == "delivered" or updated_order.get("status") == "DELIVERED":
                     print("\n[SUCCESS] Payment webhook flow working correctly!")

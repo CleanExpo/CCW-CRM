@@ -9,11 +9,12 @@ Generates 2,000 quote management scenarios covering:
 """
 
 import random
-from uuid import uuid4
-from typing import List, Tuple, Callable
-from faker import Faker
+from collections.abc import Callable
 from datetime import datetime, timedelta
+from typing import List, Tuple
+from uuid import uuid4
 
+from faker import Faker
 
 QUOTE_STATUSES = ['draft', 'pending', 'sent', 'accepted', 'rejected', 'expired']
 

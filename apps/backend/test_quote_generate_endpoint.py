@@ -1,11 +1,13 @@
 """Quick test to verify /api/quotes/generate endpoint works."""
 import asyncio
+
 import httpx
+
 
 async def test_quote_generate():
     """Test the quote generate endpoint."""
     base_url = "http://localhost:8000"
-    
+
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Test 1: Call generate endpoint
         print("Testing POST /api/quotes/generate...")
@@ -18,8 +20,8 @@ async def test_quote_generate():
                 }
             )
             print(f"Status Code: {response.status_code}")
-            print(f"Expected: 201 or 400 (if no data)")
-            
+            print("Expected: 201 or 400 (if no data)")
+
             if response.status_code == 405:
                 print("❌ FAILED: Got 405 Method Not Allowed")
                 return False
@@ -32,7 +34,7 @@ async def test_quote_generate():
                 print(f"⚠️  Got unexpected status code: {response.status_code}")
                 print(f"Response: {response.text}")
                 return True  # Not a 405, so routing is fixed
-                
+
         except Exception as e:
             print(f"Error: {e}")
             return False

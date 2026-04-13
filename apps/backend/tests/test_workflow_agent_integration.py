@@ -1,6 +1,5 @@
 """Tests for Phase 5 Week 3 - Workflow Engine + Agent Integration."""
 
-from decimal import Decimal
 from uuid import uuid4
 
 import pytest

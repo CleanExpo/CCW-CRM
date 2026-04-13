@@ -1,8 +1,8 @@
 """Test to reproduce 500 error when updating order items."""
 import asyncio
-import httpx
 import uuid
-from datetime import datetime
+
+import httpx
 
 
 async def test_order_update_items():
@@ -95,8 +95,8 @@ async def test_order_update_items():
         print(f"\nResponse status: {response.status_code}")
 
         if response.status_code == 500:
-            print(f"GOT 500 ERROR (reproducing the bug)")
-            print(f"Error details:")
+            print("GOT 500 ERROR (reproducing the bug)")
+            print("Error details:")
             try:
                 error_data = response.json()
                 import json
@@ -105,7 +105,7 @@ async def test_order_update_items():
                 print(response.text)
             return False
         elif response.status_code == 200:
-            print(f"Order updated successfully")
+            print("Order updated successfully")
             order = response.json()
             print(f"Order number: {order['order_number']}")
             print(f"Total: {order['total']}")

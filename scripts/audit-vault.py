@@ -10,7 +10,7 @@ Usage:
 import argparse
 import re
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent

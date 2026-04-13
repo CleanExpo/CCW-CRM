@@ -1,6 +1,9 @@
 import asyncio
+
 from sqlalchemy import text
+
 from src.config.database import async_engine
+
 
 async def check():
     async with async_engine.connect() as conn:

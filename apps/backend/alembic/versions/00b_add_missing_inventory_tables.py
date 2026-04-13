@@ -8,15 +8,13 @@ These models exist in inventory_models.py but were never included in any Alembic
 migration. The existing 7a9c1d2e3f4b_add_inventory_tables only created
 product_stock_by_location, stock_transfers, stock_reservations, stock_adjustments.
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision: str = '00b_add_missing_inventory_tables'
-down_revision: Union[str, Sequence[str], None] = '00a_rename_invoice_date'
+down_revision: str | Sequence[str] | None = '00a_rename_invoice_date'
 branch_labels = None
 depends_on = None
 

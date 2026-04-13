@@ -5,7 +5,6 @@ Uses TestClient — no real DB required. Tests route registration,
 request validation, and 404/422 behaviour.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from src.api.main import app

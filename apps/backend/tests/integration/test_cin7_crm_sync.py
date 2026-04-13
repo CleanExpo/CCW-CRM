@@ -6,8 +6,6 @@ and ERP-to-Cin7 payload construction.
 
 from datetime import UTC, datetime
 
-import pytest
-
 from src.db.demo_models import OrderStatus, QuoteStatus
 from src.integrations.cin7.customer_sync import (
     extract_core_customer_fields,
@@ -20,8 +18,6 @@ from src.integrations.cin7.sales_sync import (
     CIN7_CORE_ORDER_STATUS,
     CIN7_OMNI_ORDER_STATUS,
     CIN7_OMNI_QUOTE_STATUS,
-    ERP_TO_CIN7_CORE_ORDER_STATUS,
-    ERP_TO_CIN7_OMNI_QUOTE_STATUS,
     Cin7SalesSyncer,
     generate_order_number,
     generate_quote_number,

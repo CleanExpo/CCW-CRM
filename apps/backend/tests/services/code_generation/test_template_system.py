@@ -7,7 +7,6 @@ import ast
 import pytest
 
 from src.services.code_generation.template_system import (
-    RenderedTemplate,
     TemplateKind,
     TemplateSystem,
     TemplateVars,

@@ -141,7 +141,7 @@ Document known issues or limitations
         routes_prefix = f"/api/integrations/{slug}"
 
         return {
-            "id": f"INTEGRATION-XXX",
+            "id": "INTEGRATION-XXX",
             "slug": slug,
             "name": name,
             "provider": provider,

@@ -3,6 +3,7 @@
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -52,7 +53,7 @@ for migration_file in contractor_migrations:
         # Note: We need to use the PostgreSQL connection or execute via SQL editor
         # For now, let's just print the SQL and inform the user
         print(f"  SQL loaded ({len(sql)} chars)")
-        print(f"  [INFO] Migration needs to be run via Supabase SQL Editor")
+        print("  [INFO] Migration needs to be run via Supabase SQL Editor")
         print()
 
     except Exception as e:
@@ -134,7 +135,7 @@ if response.lower() in ['yes', 'y']:
     print("[INFO] SQL prepared - needs to be run via Supabase Dashboard SQL Editor")
     print()
     print("Copy this SQL and run it at:")
-    print(f"https://supabase.com/dashboard/project/ywxwcrmyfovqnquglynh/sql/new")
+    print("https://supabase.com/dashboard/project/ywxwcrmyfovqnquglynh/sql/new")
     print()
     print(create_contractors_sql)
 else:

@@ -1,13 +1,11 @@
 """Tests for bank feed and reconciliation endpoints."""
 
-from datetime import datetime
-from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
 
-from tests.fixtures.pos_data import create_bank_account_payload, create_bank_feed_payload
+from tests.fixtures.pos_data import create_bank_account_payload
 
 
 @pytest.mark.asyncio

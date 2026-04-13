@@ -12,10 +12,12 @@ This script runs a comprehensive verification of:
 import asyncio
 import sys
 from pathlib import Path
+
 from sqlalchemy import text
-from src.config.database import async_engine, AsyncSessionLocal
+
 from src.api.routes.orders import generate_order_number
 from src.api.routes.quotes import generate_quote_number
+from src.config.database import AsyncSessionLocal, async_engine
 
 
 async def verify_migration():
@@ -74,7 +76,7 @@ async def verify_number_generation():
             print(f"[PASS] Generated order number: {order_num}")
 
             if not order_num.startswith("ORD-2026-"):
-                print(f"[FAIL] FAIL: Order number should start with ORD-2026-")
+                print("[FAIL] FAIL: Order number should start with ORD-2026-")
                 return False
 
             # Length check: ORD-YYYY-NNNNNN = 3 + 1 + 4 + 1 + 6 = 15 characters
@@ -87,7 +89,7 @@ async def verify_number_generation():
             print(f"[PASS] Generated quote number: {quote_num}")
 
             if not quote_num.startswith("Q-2026-"):
-                print(f"[FAIL] FAIL: Quote number should start with Q-2026-")
+                print("[FAIL] FAIL: Quote number should start with Q-2026-")
                 return False
 
             # Length check: Q-YYYY-NNNNNN = 1 + 1 + 4 + 1 + 6 = 13 characters
@@ -127,7 +129,7 @@ async def verify_uniqueness():
             print(f"[FAIL] FAIL: Order numbers not unique: {len(set(order_nums))}/100")
             return False
 
-        print(f"[PASS] PASS: 100 concurrent order numbers are all unique")
+        print("[PASS] PASS: 100 concurrent order numbers are all unique")
 
         # Generate 100 quote numbers concurrently
         quote_nums = await asyncio.gather(*[generate_quote() for _ in range(100)])
@@ -136,7 +138,7 @@ async def verify_uniqueness():
             print(f"[FAIL] FAIL: Quote numbers not unique: {len(set(quote_nums))}/100")
             return False
 
-        print(f"[PASS] PASS: 100 concurrent quote numbers are all unique")
+        print("[PASS] PASS: 100 concurrent quote numbers are all unique")
         return True
 
     except Exception as e:
@@ -170,14 +172,14 @@ async def verify_stress_test():
             print(f"[FAIL] FAIL: Order numbers not unique: {len(set(order_nums))}/1000")
             return False
 
-        print(f"[PASS] PASS: 1000 concurrent order numbers are all unique")
+        print("[PASS] PASS: 1000 concurrent order numbers are all unique")
 
         # Check quote numbers
         if len(quote_nums) != len(set(quote_nums)):
             print(f"[FAIL] FAIL: Quote numbers not unique: {len(set(quote_nums))}/1000")
             return False
 
-        print(f"[PASS] PASS: 1000 concurrent quote numbers are all unique")
+        print("[PASS] PASS: 1000 concurrent quote numbers are all unique")
         return True
 
     except Exception as e:

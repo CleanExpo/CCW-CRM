@@ -1,7 +1,9 @@
 """Unit tests for order/quote number generation."""
 import asyncio
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.api.routes.orders import generate_order_number
 from src.api.routes.quotes import generate_quote_number
 from src.config.database import AsyncSessionLocal
@@ -127,4 +129,4 @@ async def test_stress_test_1000_concurrent(db: AsyncSession):
     # Verify all quote numbers are unique
     assert len(quote_nums) == len(set(quote_nums)), f"All quote numbers should be unique: {len(set(quote_nums))}/1000"
 
-    print(f"\n✅ Stress test passed: 1000 concurrent generations, all unique")
+    print("\n✅ Stress test passed: 1000 concurrent generations, all unique")

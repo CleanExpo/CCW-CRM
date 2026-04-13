@@ -11,20 +11,21 @@ This test runs comprehensive scenarios across all system endpoints to identify:
 Expected runtime: 2-3 hours
 """
 
-import pytest
-import asyncio
 from pathlib import Path
+
+import pytest
+
+from tests.load.generators.customers import CustomerScenarioGenerator
+from tests.load.generators.misc import (
+    AIScenarioGenerator,
+    AuthScenarioGenerator,
+    EdgeCaseScenarioGenerator,
+)
+from tests.load.generators.orders import OrderScenarioGenerator
 
 # Import scenario generators
 from tests.load.generators.products import ProductScenarioGenerator
-from tests.load.generators.customers import CustomerScenarioGenerator
-from tests.load.generators.orders import OrderScenarioGenerator
 from tests.load.generators.quotes import QuoteScenarioGenerator
-from tests.load.generators.misc import (
-    AuthScenarioGenerator,
-    EdgeCaseScenarioGenerator,
-    AIScenarioGenerator,
-)
 
 # Import reporters
 from tests.load.reporters.html_reporter import generate_html_report
@@ -144,7 +145,7 @@ async def test_10000_realistic_scenarios(scenario_runner, base_url):
     print("\n" + "=" * 80)
     print("[SUCCESS] LOAD TEST COMPLETE!")
     print("=" * 80)
-    print(f"\n[SUMMARY] Results:")
+    print("\n[SUMMARY] Results:")
     print(f"   Total Scenarios: {summary['total']:,}")
     print(f"   Passed: {summary['passed']:,} ({summary['pass_rate']:.1f}%)")
     print(f"   Failed: {summary['failed']:,} ({100 - summary['pass_rate']:.1f}%)")
@@ -152,7 +153,7 @@ async def test_10000_realistic_scenarios(scenario_runner, base_url):
     print(f"   P95 Response Time: {summary['p95_response_time_ms']:.0f}ms")
     print(f"   P99 Response Time: {summary['p99_response_time_ms']:.0f}ms")
 
-    print(f"\n[REPORTS] Reports saved:")
+    print("\n[REPORTS] Reports saved:")
     print(f"   HTML: {html_path}")
     print(f"   JSON: {json_path}")
 
@@ -204,7 +205,7 @@ async def test_quick_smoke_test(scenario_runner, base_url):
     results = await scenario_runner.run_scenarios(scenarios)
     summary = scenario_runner.get_summary()
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"   Passed: {summary['passed']}/{summary['total']} ({summary['pass_rate']:.1f}%)")
     print(f"   Failed: {summary['failed']}/{summary['total']}")
     print(f"   Avg Response Time: {summary['avg_response_time_ms']:.0f}ms")

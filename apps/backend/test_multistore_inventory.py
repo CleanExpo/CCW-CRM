@@ -10,7 +10,6 @@ This script tests:
 """
 
 import asyncio
-import json
 
 import httpx
 
@@ -44,7 +43,7 @@ async def test_multistore_inventory():
         print(f"  ID: {product_id}")
 
         # Step 2: Add stock to multiple locations
-        print(f"\n=== Step 2: Adding Stock to Multiple Locations ===")
+        print("\n=== Step 2: Adding Stock to Multiple Locations ===")
 
         locations = [
             {"location": "brisbane", "quantity": 50},
@@ -74,7 +73,7 @@ async def test_multistore_inventory():
                 print(f"  New Stock: {result.get('new_quantity')}")
 
         # Step 3: Check stock across all locations
-        print(f"\n=== Step 3: Checking Stock Across All Locations ===")
+        print("\n=== Step 3: Checking Stock Across All Locations ===")
         response = await client.get(
             f"{base_url}/api/inventory/product/{product_id}/locations"
         )
@@ -87,7 +86,7 @@ async def test_multistore_inventory():
             print(f"  Total Stock: {stock_data.get('total_stock')}")
             print(f"  Total Available: {stock_data.get('total_available')}")
             print(f"  Total Reserved: {stock_data.get('total_reserved')}")
-            print(f"\n  By Location:")
+            print("\n  By Location:")
             for loc in stock_data.get("locations", []):
                 print(
                     f"    - {loc['location']}: {loc['stock']} units "
@@ -95,7 +94,7 @@ async def test_multistore_inventory():
                 )
 
         # Step 4: Transfer stock between locations
-        print(f"\n=== Step 4: Transferring Stock (Sydney -> Brisbane) ===")
+        print("\n=== Step 4: Transferring Stock (Sydney -> Brisbane) ===")
         response = await client.post(
             f"{base_url}/api/inventory/transfer",
             json={
@@ -111,7 +110,7 @@ async def test_multistore_inventory():
             print(f"[ERROR] Transfer failed: {response.text}")
         else:
             transfer_data = response.json()
-            print(f"[SUCCESS] Transfer completed:")
+            print("[SUCCESS] Transfer completed:")
             print(f"  Transfer ID: {transfer_data.get('transfer_id')}")
             print(f"  From: {transfer_data.get('from_location')}")
             print(f"  To: {transfer_data.get('to_location')}")
@@ -119,19 +118,19 @@ async def test_multistore_inventory():
             print(f"  Status: {transfer_data.get('status')}")
 
         # Step 5: Verify stock after transfer
-        print(f"\n=== Step 5: Verifying Stock After Transfer ===")
+        print("\n=== Step 5: Verifying Stock After Transfer ===")
         response = await client.get(
             f"{base_url}/api/inventory/product/{product_id}/locations"
         )
 
         if response.status_code == 200:
             stock_data = response.json()
-            print(f"[SUCCESS] Updated stock levels:")
+            print("[SUCCESS] Updated stock levels:")
             for loc in stock_data.get("locations", []):
                 print(f"  {loc['location']}: {loc['stock']} units (Available: {loc['available']})")
 
         # Step 6: Get an order for reservation test
-        print(f"\n=== Step 6: Testing Stock Reservation ===")
+        print("\n=== Step 6: Testing Stock Reservation ===")
         response = await client.get(f"{base_url}/api/orders?page=1&page_size=1")
 
         if response.status_code != 200:
@@ -161,7 +160,7 @@ async def test_multistore_inventory():
                 else:
                     reserve_data = response.json()
                     reservation_id = reserve_data.get("reservation_id")
-                    print(f"[SUCCESS] Stock reserved:")
+                    print("[SUCCESS] Stock reserved:")
                     print(f"  Reservation ID: {reservation_id}")
                     print(f"  Order ID: {order_id}")
                     print(f"  Location: {reserve_data.get('location')}")
@@ -169,14 +168,14 @@ async def test_multistore_inventory():
                     print(f"  Expires: {reserve_data.get('expires_at')}")
 
                     # Check updated stock levels
-                    print(f"\n  Checking updated stock with reservation:")
+                    print("\n  Checking updated stock with reservation:")
                     response = await client.get(
                         f"{base_url}/api/inventory/product/{product_id}/locations"
                     )
                     if response.status_code == 200:
                         stock_data = response.json()
                         brisbane_stock = next(
-                            (l for l in stock_data.get("locations", []) if l["location"] == "brisbane"),
+                            (loc for loc in stock_data.get("locations", []) if loc["location"] == "brisbane"),
                             None,
                         )
                         if brisbane_stock:
@@ -187,18 +186,18 @@ async def test_multistore_inventory():
                             )
 
                     # Release the reservation
-                    print(f"\n  Releasing reservation...")
+                    print("\n  Releasing reservation...")
                     response = await client.post(
                         f"{base_url}/api/inventory/release/{reservation_id}"
                     )
 
                     if response.status_code == 200:
-                        print(f"  [SUCCESS] Reservation released")
+                        print("  [SUCCESS] Reservation released")
                     else:
                         print(f"  [ERROR] Failed to release: {response.text}")
 
         # Step 7: Check stock at a specific location
-        print(f"\n=== Step 7: Checking Stock at Brisbane Location ===")
+        print("\n=== Step 7: Checking Stock at Brisbane Location ===")
         response = await client.get(
             f"{base_url}/api/inventory/by-location?location=brisbane&page_size=10"
         )
@@ -207,7 +206,7 @@ async def test_multistore_inventory():
             print(f"[ERROR] Failed to get location stock: {response.text}")
         else:
             loc_data = response.json()
-            print(f"[SUCCESS] Products at Brisbane:")
+            print("[SUCCESS] Products at Brisbane:")
             print(f"  Total Products: {loc_data.get('total')}")
             for item in loc_data.get("items", [])[:5]:
                 print(
@@ -216,14 +215,14 @@ async def test_multistore_inventory():
                 )
 
         # Step 8: Check low stock products
-        print(f"\n=== Step 8: Checking Low Stock Products ===")
+        print("\n=== Step 8: Checking Low Stock Products ===")
         response = await client.get(f"{base_url}/api/inventory/low-stock?threshold=25")
 
         if response.status_code != 200:
             print(f"[ERROR] Failed to get low stock: {response.text}")
         else:
             low_stock_data = response.json()
-            print(f"[SUCCESS] Products below 25 units:")
+            print("[SUCCESS] Products below 25 units:")
             print(f"  Total Products: {low_stock_data.get('total_products')}")
             for prod in low_stock_data.get("products", [])[:3]:
                 print(f"\n  {prod['product_name']} ({prod['product_sku']}):")
@@ -234,7 +233,7 @@ async def test_multistore_inventory():
                     )
 
         # Step 9: Get transfer history
-        print(f"\n=== Step 9: Checking Transfer History ===")
+        print("\n=== Step 9: Checking Transfer History ===")
         response = await client.get(
             f"{base_url}/api/inventory/transfers?page=1&page_size=5"
         )
@@ -243,7 +242,7 @@ async def test_multistore_inventory():
             print(f"[ERROR] Failed to get transfers: {response.text}")
         else:
             transfers_data = response.json()
-            print(f"[SUCCESS] Recent transfers:")
+            print("[SUCCESS] Recent transfers:")
             print(f"  Total Transfers: {transfers_data.get('total')}")
             for transfer in transfers_data.get("items", []):
                 print(

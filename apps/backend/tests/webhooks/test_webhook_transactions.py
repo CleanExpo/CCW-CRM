@@ -15,7 +15,6 @@ Run with:
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy import select
@@ -23,11 +22,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.webhook_models import WebhookEvent, WebhookStatus
 from src.services.webhook_service import (
-    WebhookService,
     WebhookProcessingError,
-    WebhookDuplicateError,
+    WebhookService,
 )
-
 
 # ============================================================================
 # Fixtures

@@ -8,13 +8,10 @@ Provides team member management for multi-tenant organizations:
 - Remove members
 """
 
-import structlog
-
-logger = structlog.get_logger(__name__)
-
 from typing import Annotated
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import func, or_, select
@@ -25,6 +22,8 @@ from src.api.middleware.rbac import require_permission
 from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
 from src.db.models_base import User
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/team", tags=["Team Management"], dependencies=[Depends(get_current_user)])
 

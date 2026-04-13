@@ -11,21 +11,20 @@ Options:
 """
 
 import asyncio
-import sys
 import random
+import sys
 from decimal import Decimal
-from typing import List, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, List
 
 import httpx
 from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.db.demo_models import Product, ProductCategory, OrderItem, QuoteItem
 from src.config.database import get_async_db
+from src.db.demo_models import OrderItem, Product, ProductCategory, QuoteItem
 
 
 async def fetch_shopify_products(limit: int = 250) -> List[Dict[str, Any]]:
@@ -230,7 +229,7 @@ if __name__ == "__main__":
         clear_existing = True
 
     print(f"{'='*80}")
-    print(f"CCWonline.com.au Product Import Script")
+    print("CCWonline.com.au Product Import Script")
     print(f"{'='*80}")
     print(f"Mode: {'DRY RUN (no changes)' if dry_run else 'LIVE IMPORT'}")
     print(f"Limit: {limit} products")

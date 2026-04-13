@@ -18,8 +18,9 @@ print("=" * 80)
 # Test 1: Verify schemas import successfully
 print("\n[TEST 1] Verifying schemas import...")
 try:
-    from src.db.schemas import OrderItemCreate, QuoteItemCreate
     from uuid import uuid4
+
+    from src.db.schemas import OrderItemCreate, QuoteItemCreate
     print("[PASS] Schemas imported successfully")
 except Exception as e:
     print(f"[FAIL] Could not import schemas: {e}")
@@ -33,7 +34,7 @@ try:
         product_id=test_product_id,
         quantity=5
     )
-    print(f"[PASS] OrderItemCreate accepted valid payload")
+    print("[PASS] OrderItemCreate accepted valid payload")
     print(f"       product_id: {order_item.product_id}")
     print(f"       quantity: {order_item.quantity}")
 except Exception as e:
@@ -49,12 +50,12 @@ try:
         quantity=5,
         unit_price=100  # This should be rejected
     )
-    print(f"[FAIL] OrderItemCreate accepted unit_price (should reject)")
-    print(f"       Schema should NOT have unit_price field")
+    print("[FAIL] OrderItemCreate accepted unit_price (should reject)")
+    print("       Schema should NOT have unit_price field")
     sys.exit(1)
 except Exception as e:
     if "unit_price" in str(e).lower() or "extra" in str(e).lower():
-        print(f"[PASS] OrderItemCreate correctly rejected unit_price")
+        print("[PASS] OrderItemCreate correctly rejected unit_price")
         print(f"       Error: {e}")
     else:
         print(f"[WARN] OrderItemCreate rejected but with unexpected error: {e}")
@@ -67,7 +68,7 @@ try:
         product_id=test_product_id,
         quantity=10
     )
-    print(f"[PASS] QuoteItemCreate accepted valid payload")
+    print("[PASS] QuoteItemCreate accepted valid payload")
     print(f"       product_id: {quote_item.product_id}")
     print(f"       quantity: {quote_item.quantity}")
 except Exception as e:
@@ -83,12 +84,12 @@ try:
         quantity=10,
         unit_price=150  # This should be rejected
     )
-    print(f"[FAIL] QuoteItemCreate accepted unit_price (should reject)")
-    print(f"       Schema should NOT have unit_price field")
+    print("[FAIL] QuoteItemCreate accepted unit_price (should reject)")
+    print("       Schema should NOT have unit_price field")
     sys.exit(1)
 except Exception as e:
     if "unit_price" in str(e).lower() or "extra" in str(e).lower():
-        print(f"[PASS] QuoteItemCreate correctly rejected unit_price")
+        print("[PASS] QuoteItemCreate correctly rejected unit_price")
         print(f"       Error: {e}")
     else:
         print(f"[WARN] QuoteItemCreate rejected but with unexpected error: {e}")
@@ -97,7 +98,8 @@ except Exception as e:
 print("\n[TEST 6] Checking backend price-fetching logic...")
 try:
     import inspect
-    from src.api.routes import quotes, orders
+
+    from src.api.routes import orders, quotes
 
     # Check quotes.py
     quotes_source = inspect.getsource(quotes)

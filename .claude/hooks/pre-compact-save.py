@@ -3,10 +3,10 @@
 PreCompact hook — saves critical context to disk before compaction.
 Receives JSON on stdin: {"session_id": "...", "transcript_path": "..."}
 """
-import sys
 import json
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 try:
     data = json.loads(sys.stdin.read())

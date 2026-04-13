@@ -3,8 +3,8 @@ Apply foreign key indexes migration for ISS-007.
 
 Adds B-tree indexes on FK columns for 40% faster JOIN queries.
 """
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 backend_path = Path(__file__).parent.parent
@@ -13,6 +13,7 @@ sys.path.insert(0, str(backend_path))
 async def apply_migration():
     """Apply the foreign key indexes migration."""
     from sqlalchemy import text
+
     from src.config.database import get_async_db
 
     print("=" * 80)
@@ -63,7 +64,7 @@ async def apply_migration():
         try:
             print("[PASS] Database connection established")
 
-            print(f"\n[STEP 2] Creating indexes...")
+            print("\n[STEP 2] Creating indexes...")
             created_count = 0
             skipped_count = 0
 
@@ -86,7 +87,7 @@ async def apply_migration():
                         print(f"\n[ERROR] Failed to create index: {e}")
                         raise
 
-            print(f"\n[STEP 3] Verifying indexes...")
+            print("\n[STEP 3] Verifying indexes...")
             result = await db.execute(text("""
                 SELECT
                     tablename,
@@ -100,13 +101,13 @@ async def apply_migration():
             """))
             index_stats = result.fetchall()
 
-            print(f"[PASS] Index summary by table:")
+            print("[PASS] Index summary by table:")
             total_indexes = 0
             for table, count, size in index_stats:
                 print(f"  - {table}: {count} indexes, {size}")
                 total_indexes += count
 
-            print(f"\n[STEP 4] Checking foreign key coverage...")
+            print("\n[STEP 4] Checking foreign key coverage...")
             result = await db.execute(text("""
                 SELECT
                     tc.table_name,
@@ -140,26 +141,26 @@ async def apply_migration():
                 if missing_fks:
                     print(f"[WARN] Foreign keys without indexes: {', '.join(missing_fks)}")
                 else:
-                    print(f"[PASS] All foreign keys are indexed")
+                    print("[PASS] All foreign keys are indexed")
 
             print("\n" + "=" * 80)
             print("MIGRATION SUMMARY")
             print("=" * 80)
-            print(f"\n[SUCCESS] Foreign key indexes migration completed!")
+            print("\n[SUCCESS] Foreign key indexes migration completed!")
             print(f"\nIndexes created: {created_count}")
             print(f"Already existing: {skipped_count}")
             print(f"Total indexes on core tables: {total_indexes}")
-            print(f"\nExpected performance improvements:")
-            print(f"  - JOIN queries: 40% faster")
-            print(f"  - Customer/Product lookups: 50% faster")
-            print(f"  - Date range queries: 30% faster")
-            print(f"\nIndexes added:")
-            print(f"  Orders: customer_id, organization_id, status+date, order_date")
-            print(f"  Order Items: order_id, product_id, order_id+product_id")
-            print(f"  Quotes: customer_id, organization_id, status+date, valid_until")
-            print(f"  Quote Items: quote_id, product_id, quote_id+product_id")
-            print(f"  Products: organization_id, category, category+active")
-            print(f"  Customers: organization_id, active")
+            print("\nExpected performance improvements:")
+            print("  - JOIN queries: 40% faster")
+            print("  - Customer/Product lookups: 50% faster")
+            print("  - Date range queries: 30% faster")
+            print("\nIndexes added:")
+            print("  Orders: customer_id, organization_id, status+date, order_date")
+            print("  Order Items: order_id, product_id, order_id+product_id")
+            print("  Quotes: customer_id, organization_id, status+date, valid_until")
+            print("  Quote Items: quote_id, product_id, quote_id+product_id")
+            print("  Products: organization_id, category, category+active")
+            print("  Customers: organization_id, active")
             print("=" * 80)
 
         except Exception as e:

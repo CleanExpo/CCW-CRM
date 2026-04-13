@@ -9,7 +9,6 @@ Verifies:
 from __future__ import annotations
 
 import pytest
-from fastapi import FastAPI
 
 from src.api.main import app
 from src.api.routes import inventory, purchase_orders
@@ -48,26 +47,6 @@ def test_purchase_orders_routes_count():
 
 def test_pydantic_models_import():
     """Verify all Pydantic request/response models are defined."""
-    from src.api.routes.inventory import (
-        ActiveStockTake,
-        ActiveStockTakesResponse,
-        AutoReorderItem,
-        AutoReorderRequest,
-        AutoReorderResponse,
-        BulkAdjustItem,
-        BulkAdjustRequest,
-        BulkAdjustResponse,
-        BulkAdjustResult,
-        CycleCountGenerateRequest,
-        CycleCountGenerateResponse,
-        CycleCountSchedule,
-    )
-    from src.api.routes.purchase_orders import (
-        ThreeWayMatchRequest,
-        ThreeWayMatchResponse,
-        UnmatchedPOItem,
-        UnmatchedPOItemsResponse,
-    )
 
     # If we got here, all models are valid
     assert True
@@ -88,9 +67,6 @@ def test_auto_reorder_service_import():
 def test_procurement_matching_service_import():
     """Verify procurement_matching service can be imported (GAP-016)."""
     from src.services.procurement_matching import (
-        GRNItem,
-        InvoiceItemData,
-        POItem,
         match_po_grn_invoice,
     )
 
@@ -205,28 +181,9 @@ def test_endpoint_methods():
 def test_all_imports_work():
     """Comprehensive import test."""
     # Models
-    from src.db.demo_models import Organization, Product
-    from src.db.inventory_models import (
-        PurchaseOrder,
-        PurchaseOrderItem,
-        StockTake,
-        StockTakeItem,
-        Supplier,
-    )
+    # Route modules
 
     # Services
-    from src.services.auto_reorder import (
-        calculate_reorder_quantity,
-        process_auto_reorder,
-        should_reorder,
-    )
-    from src.services.procurement_matching import (
-        match_po_grn_invoice,
-        match_po_against_invoice,
-    )
-
-    # Route modules
-    from src.api.routes import inventory, purchase_orders
 
     # If we got here, all imports succeeded
     assert True

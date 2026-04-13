@@ -11,14 +11,11 @@ history:
 
 This is a no-op merge migration with no schema changes.
 """
-from typing import Sequence, Union
-
-from alembic import op
-import sqlalchemy as sa
+from collections.abc import Sequence
 
 # revision identifiers, used by Alembic.
 revision: str = '008_merge_heads'
-down_revision: Union[str, Sequence[str], None] = (
+down_revision: str | Sequence[str] | None = (
     '007',
     'w2_timestamps_fk_idx',
 )

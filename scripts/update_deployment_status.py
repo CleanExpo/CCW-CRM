@@ -11,10 +11,11 @@ Usage:
     LINEAR_API_KEY="your_key" python scripts/update_deployment_status.py
 """
 
-import sys
 import os
-import requests
+import sys
 from datetime import datetime
+
+import requests
 
 # Linear API configuration
 LINEAR_API_KEY = os.getenv("LINEAR_API_KEY", "")

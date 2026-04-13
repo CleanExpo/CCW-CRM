@@ -1,9 +1,8 @@
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
@@ -29,10 +28,47 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# Import models here when created
-from src.db.models import Base
-from src.db.demo_models import *  # Import all demo models (Product, Customer, Order, etc.)
-from src.db.inventory_models import *  # Import all inventory models (Supplier, PurchaseOrder, etc.)
+# Import models here when created (after env setup, so noqa: E402 is intentional)
+# These side-effect imports register models with SQLAlchemy metadata for autogenerate
+from src.db.demo_models import (  # noqa: E402,F401
+    AgentExecution,
+    AIGeneratedContent,
+    BackgroundJob,
+    ConversationHistory,
+    Customer,
+    JobStatus,
+    Order,
+    OrderActivity,
+    OrderItem,
+    OrderStatus,
+    Organization,
+    Product,
+    ProductCategory,
+    Quote,
+    QuoteItem,
+    QuoteStatus,
+)
+from src.db.inventory_models import (  # noqa: E402,F401
+    CarrierConfiguration,
+    InboundShipment,
+    OutboundShipment,
+    ProductAttribute,
+    ProductBarcode,
+    ProductStockByLocation,
+    ProductVariant,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    ReorderRule,
+    StockAdjustment,
+    StockReservation,
+    StockTake,
+    StockTakeItem,
+    StockTransfer,
+    StoreLocation,
+    Supplier,
+)
+from src.db.models import Base  # noqa: E402
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

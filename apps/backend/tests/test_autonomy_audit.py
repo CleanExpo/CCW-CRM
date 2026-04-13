@@ -5,7 +5,6 @@ Tests audit logging, metrics calculation, and anomaly detection.
 Part of Phase 5 (Autonomous Development Framework) - Week 3 tests.
 """
 
-from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -15,10 +14,8 @@ from src.services.autonomy_audit import (
     AuditEntry,
     AuditResult,
     AutonomyAuditService,
-    AutonomyMetrics,
     get_audit_service,
 )
-
 
 # ============================================================
 # AUDIT ENTRY TESTS

@@ -30,13 +30,13 @@ async def test_shopify_integration():
             return
 
         status_data = response.json()
-        print(f"[SUCCESS] Connection status:")
+        print("[SUCCESS] Connection status:")
         print(f"  Mode: {status_data.get('mode')}")
         print(f"  Connected: {status_data.get('connected')}")
         print(f"  Shop: {status_data.get('shop_domain', 'N/A')}")
 
         # Step 2: Test order import
-        print(f"\n=== Step 2: Testing Order Import ===")
+        print("\n=== Step 2: Testing Order Import ===")
 
         # Import single order (using demo Shopify order ID)
         demo_order_id = 1001
@@ -48,14 +48,14 @@ async def test_shopify_integration():
             print(f"[ERROR] Single order import failed: {response.text}")
         else:
             order_data = response.json()
-            print(f"[SUCCESS] Order imported:")
+            print("[SUCCESS] Order imported:")
             print(f"  Order Number: {order_data.get('order_number')}")
             print(f"  Order ID: {order_data.get('order_id')}")
             print(f"  Total: ${order_data.get('total')}")
             print(f"  Status: {order_data.get('status')}")
 
         # Import multiple orders
-        print(f"\n=== Step 3: Testing Bulk Order Import ===")
+        print("\n=== Step 3: Testing Bulk Order Import ===")
         response = await client.post(
             f"{base_url}/api/integrations/shopify/import-orders?max_orders=5"
         )
@@ -64,13 +64,13 @@ async def test_shopify_integration():
             print(f"[ERROR] Bulk order import failed: {response.text}")
         else:
             bulk_data = response.json()
-            print(f"[SUCCESS] Bulk import completed:")
+            print("[SUCCESS] Bulk import completed:")
             print(f"  Imported: {bulk_data.get('imported_count')} orders")
             for order in bulk_data.get("orders", [])[:3]:
                 print(f"    - {order['order_number']}: ${order['total']}")
 
         # Step 4: Get a product to sync
-        print(f"\n=== Step 4: Getting Product for Sync Test ===")
+        print("\n=== Step 4: Getting Product for Sync Test ===")
         response = await client.get(f"{base_url}/api/products?page=1&page_size=1")
 
         if response.status_code != 200:
@@ -94,7 +94,7 @@ async def test_shopify_integration():
         print(f"  Current Stock: {product_stock}")
 
         # Step 5: Sync product to Shopify
-        print(f"\n=== Step 5: Syncing Product to Shopify ===")
+        print("\n=== Step 5: Syncing Product to Shopify ===")
         response = await client.post(
             f"{base_url}/api/integrations/shopify/sync-product/{product_id}"
         )
@@ -103,12 +103,12 @@ async def test_shopify_integration():
             print(f"[ERROR] Product sync failed: {response.text}")
         else:
             sync_data = response.json()
-            print(f"[SUCCESS] Product synced to Shopify:")
+            print("[SUCCESS] Product synced to Shopify:")
             print(f"  Action: {sync_data.get('action', 'N/A')}")
             print(f"  Shopify Product ID: {sync_data.get('shopify_product_id', 'N/A')}")
 
         # Step 6: Sync inventory
-        print(f"\n=== Step 6: Syncing Product Inventory ===")
+        print("\n=== Step 6: Syncing Product Inventory ===")
         response = await client.post(
             f"{base_url}/api/integrations/shopify/sync-inventory/{product_id}"
         )
@@ -117,12 +117,12 @@ async def test_shopify_integration():
             print(f"[ERROR] Inventory sync failed: {response.text}")
         else:
             inv_data = response.json()
-            print(f"[SUCCESS] Inventory synced:")
+            print("[SUCCESS] Inventory synced:")
             print(f"  Product ID: {inv_data.get('product_id', 'N/A')}")
             print(f"  Stock Updated: {inv_data.get('stock_updated', 'N/A')}")
 
         # Step 7: Test bulk inventory sync
-        print(f"\n=== Step 7: Testing Bulk Inventory Sync ===")
+        print("\n=== Step 7: Testing Bulk Inventory Sync ===")
         response = await client.post(
             f"{base_url}/api/integrations/shopify/sync-all-inventory"
         )
@@ -131,12 +131,12 @@ async def test_shopify_integration():
             print(f"[ERROR] Bulk inventory sync failed: {response.text}")
         else:
             bulk_inv_data = response.json()
-            print(f"[SUCCESS] Bulk inventory sync completed:")
+            print("[SUCCESS] Bulk inventory sync completed:")
             print(f"  Total Synced: {bulk_inv_data.get('synced_count', 0)}")
             print(f"  Failed: {bulk_inv_data.get('failed_count', 0)}")
 
         # Step 8: Simulate webhook
-        print(f"\n=== Step 8: Testing Webhook Handler ===")
+        print("\n=== Step 8: Testing Webhook Handler ===")
 
         # Create mock webhook payload for order creation
         webhook_payload = {
@@ -195,7 +195,7 @@ async def test_shopify_integration():
             print(f"[ERROR] Webhook processing failed: {response.text}")
         else:
             webhook_result = response.json()
-            print(f"[SUCCESS] Webhook processed:")
+            print("[SUCCESS] Webhook processed:")
             print(f"  Result: {json.dumps(webhook_result, indent=2)}")
 
         # Summary

@@ -1,8 +1,6 @@
 """Tests for order state machine service (GAP-027)."""
 from datetime import UTC, datetime
 
-import pytest
-
 from src.services.order_state import (
     can_transition,
     get_next_states,

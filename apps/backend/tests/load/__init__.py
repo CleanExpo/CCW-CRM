@@ -1,4 +1,4 @@
-"""
+r"""
 Load testing package for CCW-Online ERP.
 
 This package provides comprehensive load testing capabilities using Locust.

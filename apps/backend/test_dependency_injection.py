@@ -3,11 +3,13 @@
 
 import asyncio
 import sys
+
 sys.path.insert(0, 'src')
 
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from config.database import get_async_db
 
 # Create a minimal FastAPI app
@@ -26,7 +28,7 @@ async def test_database(db: AsyncSession = Depends(get_async_db)):
 async def test_directly():
     """Test the dependency directly without FastAPI routing."""
     print("Testing get_async_db dependency directly...")
-    
+
     # Call the dependency generator
     async for db in get_async_db():
         try:
@@ -43,9 +45,9 @@ async def test_directly():
 async def test_with_test_client():
     """Test using FastAPI TestClient."""
     print("\nTesting with FastAPI TestClient...")
-    
-    from httpx import AsyncClient, ASGITransport
-    
+
+    from httpx import ASGITransport, AsyncClient
+
     try:
         async with AsyncClient(
             transport=ASGITransport(app=app),
@@ -62,7 +64,7 @@ async def test_with_test_client():
 async def main():
     # Test 1: Direct dependency call (should work based on previous tests)
     await test_directly()
-    
+
     # Test 2: Through FastAPI (this is what fails in production)
     await test_with_test_client()
 

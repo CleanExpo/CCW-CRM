@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.agents.orchestrator import OrchestratorAgent
 from src.agents.subagent_manager import SubTask
 from src.memory.session_manager import SessionManager
+
 from src.utils import get_logger
 
 logger = get_logger(__name__)
@@ -29,11 +30,11 @@ async def task_1_simple_backend_feature():
     orchestrator = OrchestratorAgent()
 
     print("\n[1/5] Initializing orchestrator...")
-    print(f"  - Agent registry: Ready")
-    print(f"  - Independent verifier: Ready")
+    print("  - Agent registry: Ready")
+    print("  - Independent verifier: Ready")
     print(f"  - Tool registry: {orchestrator.get_context_stats()['total_tools']} tools")
-    print(f"  - Subagent manager: Ready")
-    print(f"  - MCP integration: Configured")
+    print("  - Subagent manager: Ready")
+    print("  - MCP integration: Configured")
 
     print("\n[2/5] Executing task via orchestrator...")
 
@@ -111,26 +112,26 @@ async def task_2_multi_agent_feature():
         )
     ]
 
-    print(f"\n[1/4] Planning parallel execution:")
+    print("\n[1/4] Planning parallel execution:")
     print(f"  Total subtasks: {len(subtasks)}")
-    print(f"\n  Execution waves (dependency resolution):")
-    print(f"    Wave 1: database_migration")
-    print(f"    Wave 2: backend_api + frontend_ui (parallel)")
-    print(f"    Wave 3: integration_tests")
+    print("\n  Execution waves (dependency resolution):")
+    print("    Wave 1: database_migration")
+    print("    Wave 2: backend_api + frontend_ui (parallel)")
+    print("    Wave 3: integration_tests")
 
-    print(f"\n[2/4] Coordinating subagents...")
+    print("\n[2/4] Coordinating subagents...")
 
     # Execute coordination
     results = await orchestrator.coordinate_parallel(subtasks)
 
-    print(f"\n[3/4] Results collected:")
+    print("\n[3/4] Results collected:")
     for result in results:
         status_icon = "[OK]" if result.status == "completed" else "[X]"
         print(f"    {status_icon} {result.subtask_id}: {result.status}")
         if result.duration_seconds:
             print(f"         Duration: {result.duration_seconds:.1f}s")
 
-    print(f"\n[4/4] Merging results...")
+    print("\n[4/4] Merging results...")
     merged = await orchestrator.merge_results(results)
 
     print(f"  Total outputs: {len(merged.get('combined_outputs', []))}")
@@ -197,8 +198,8 @@ async def task_3_learning_demonstration():
     ]
 
     print(f"  Executed {len(task_outcomes)} tasks:")
-    print(f"    - 2 successful")
-    print(f"    - 1 failed (learning opportunity)")
+    print("    - 2 successful")
+    print("    - 1 failed (learning opportunity)")
 
     print("\n[3/4] Ending session and capturing learnings...")
     summary = await session_manager.end_session(
@@ -206,7 +207,7 @@ async def task_3_learning_demonstration():
         task_outcomes=task_outcomes
     )
 
-    print(f"\n[4/4] Session summary:")
+    print("\n[4/4] Session summary:")
     print(f"  Duration: {summary.duration_seconds:.1f}s")
     print(f"  Completed: {summary.tasks_completed}")
     print(f"  Failed: {summary.tasks_failed}")

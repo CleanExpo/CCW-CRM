@@ -5,19 +5,19 @@ Tests autonomous PR creation, risk assessment, and auto-merge logic.
 Part of Phase 5 (Autonomous Development Framework) - Week 3 tests.
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
+from src.ai.agents.risk_assessor import ApprovalPolicy, RiskLevel, get_risk_assessor
+from src.services.circuit_breaker import CircuitBreakerManager, CircuitState
 from src.workflows.pr_automation import (
+    AutoMergeDecision,
     PRAutomationWorkflow,
     PRContext,
-    AutoMergeDecision,
     PROutcome,
     create_pr_workflow,
 )
-from src.ai.agents.risk_assessor import RiskLevel, ApprovalPolicy, get_risk_assessor
-from src.services.circuit_breaker import CircuitBreakerManager, CircuitState
-
 
 # ============================================================
 # FIXTURES

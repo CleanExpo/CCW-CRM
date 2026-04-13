@@ -4,22 +4,21 @@ Tests category mapping, field mapping, location mapping, stock aggregation,
 and sync endpoint responses.
 """
 
-import pytest
 
 from src.db.demo_models import ProductCategory
 from src.db.inventory_models import StoreLocation
+from src.integrations.cin7.inventory_sync import (
+    CIN7_TO_ERP_LOCATION,
+    Cin7InventorySyncer,
+    map_cin7_location,
+    map_erp_location,
+)
 from src.integrations.cin7.product_sync import (
     CIN7_TO_ERP_CATEGORY,
     ERP_TO_CIN7_CATEGORY,
     Cin7ProductSyncer,
     map_cin7_category,
     map_erp_category,
-)
-from src.integrations.cin7.inventory_sync import (
-    CIN7_TO_ERP_LOCATION,
-    Cin7InventorySyncer,
-    map_cin7_location,
-    map_erp_location,
 )
 
 

@@ -16,9 +16,10 @@ print("=" * 80)
 
 # Import FastAPI test client
 try:
-    from fastapi.testclient import TestClient
-    from src.api.routes import orders, quotes
     from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from src.api.routes import orders, quotes
     print("\n[PASS] Imports successful")
 except Exception as e:
     print(f"\n[FAIL] Import error: {e}")
@@ -40,11 +41,11 @@ try:
 
     # We expect 404 (no such order in test), NOT 405 (method not allowed)
     if response.status_code == 405:
-        print(f"[FAIL] Got 405 Method Not Allowed - endpoint not accepting PATCH!")
+        print("[FAIL] Got 405 Method Not Allowed - endpoint not accepting PATCH!")
         print(f"Response: {response.text}")
         sys.exit(1)
     elif response.status_code == 404:
-        print(f"[PASS] Got 404 Not Found (expected - no test data)")
+        print("[PASS] Got 404 Not Found (expected - no test data)")
         print("       Endpoint accepts PATCH method correctly")
     elif response.status_code in [400, 401, 403, 422]:
         print(f"[PASS] Got {response.status_code} (expected - validation/auth error)")
@@ -66,10 +67,10 @@ try:
     )
 
     if response.status_code == 405:
-        print(f"[FAIL] Got 405 - PUT endpoint not working!")
+        print("[FAIL] Got 405 - PUT endpoint not working!")
         sys.exit(1)
     elif response.status_code == 404:
-        print(f"[PASS] Got 404 (expected - no test data)")
+        print("[PASS] Got 404 (expected - no test data)")
         print("       PUT endpoint still works (backwards compatible)")
     elif response.status_code in [400, 401, 403, 422]:
         print(f"[PASS] Got {response.status_code} (expected)")
@@ -91,11 +92,11 @@ try:
     )
 
     if response.status_code == 405:
-        print(f"[FAIL] Got 405 Method Not Allowed - endpoint not accepting PATCH!")
+        print("[FAIL] Got 405 Method Not Allowed - endpoint not accepting PATCH!")
         print(f"Response: {response.text}")
         sys.exit(1)
     elif response.status_code == 404:
-        print(f"[PASS] Got 404 Not Found (expected - no test data)")
+        print("[PASS] Got 404 Not Found (expected - no test data)")
         print("       Endpoint accepts PATCH method correctly")
     elif response.status_code in [400, 401, 403, 422]:
         print(f"[PASS] Got {response.status_code} (expected)")
@@ -116,10 +117,10 @@ try:
     )
 
     if response.status_code == 405:
-        print(f"[FAIL] Got 405 - /convert endpoint not accepting POST!")
+        print("[FAIL] Got 405 - /convert endpoint not accepting POST!")
         sys.exit(1)
     elif response.status_code == 404:
-        print(f"[PASS] Got 404 (expected - no test data)")
+        print("[PASS] Got 404 (expected - no test data)")
         print("       /convert alias works correctly")
     elif response.status_code in [400, 401, 403, 422]:
         print(f"[PASS] Got {response.status_code} (expected)")
@@ -140,10 +141,10 @@ try:
     )
 
     if response.status_code == 405:
-        print(f"[FAIL] Got 405 - /convert-to-order not working!")
+        print("[FAIL] Got 405 - /convert-to-order not working!")
         sys.exit(1)
     elif response.status_code == 404:
-        print(f"[PASS] Got 404 (expected - no test data)")
+        print("[PASS] Got 404 (expected - no test data)")
         print("       /convert-to-order works correctly")
     elif response.status_code in [400, 401, 403, 422]:
         print(f"[PASS] Got {response.status_code} (expected)")
@@ -173,10 +174,10 @@ try:
 
         if response.status_code == 405:
             print(f"[FAIL] {method} {path} returned 405!")
-            print(f"       This means the fix didn't work properly")
+            print("       This means the fix didn't work properly")
             sys.exit(1)
 
-    print(f"[PASS] None of the endpoints returned 405")
+    print("[PASS] None of the endpoints returned 405")
     print("       All methods are properly configured")
 
 except Exception as e:

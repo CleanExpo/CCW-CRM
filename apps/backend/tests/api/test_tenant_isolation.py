@@ -5,17 +5,16 @@ Ensures that tenants can ONLY access their own data and cannot access
 other organizations' data (critical for SaaS security).
 """
 
+from uuid import UUID, uuid4
+
 import pytest
-from uuid import uuid4, UUID
-from fastapi import Request, HTTPException
+from fastapi import HTTPException
 
 from src.api.middleware.tenant_isolation import (
     get_current_organization_id,
-    validate_tenant_access,
     get_tenant_query_filter,
-    apply_tenant_filter,
+    validate_tenant_access,
 )
-
 
 # Test Fixtures
 
@@ -214,9 +213,11 @@ async def test_cross_tenant_access_prevention_products(db_session):
 
     This is a critical security test for multi-tenant isolation.
     """
-    from sqlalchemy import select
-    from src.db.demo_models import Product, Organization
     from uuid import uuid4
+
+    from sqlalchemy import select
+
+    from src.db.demo_models import Organization, Product
 
     # Create two test organizations
     org_a_id = uuid4()
@@ -292,9 +293,11 @@ async def test_cross_tenant_access_prevention_products(db_session):
 @pytest.mark.asyncio
 async def test_cross_tenant_access_prevention_customers(db_session):
     """Test that customers from one organization cannot be accessed by another."""
-    from sqlalchemy import select
-    from src.db.demo_models import Customer, Organization
     from uuid import uuid4
+
+    from sqlalchemy import select
+
+    from src.db.demo_models import Customer, Organization
 
     # Create two test organizations
     org_a_id = uuid4()

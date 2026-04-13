@@ -7,8 +7,8 @@ writes results to data/heygen/video-registry-results.json
 
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 API_KEY = "sk_V2_hgu_kdZxljU8Ogy_jXnqyf9F8VKcowMEqlzlZ83UHNHGZqZX"
@@ -612,7 +612,7 @@ def main():
         time.sleep(3)  # Brief pause between submissions
 
     print(f"\n{'='*60}")
-    print(f"ALL JOBS SUBMITTED. POLLING FOR COMPLETION...")
+    print("ALL JOBS SUBMITTED. POLLING FOR COMPLETION...")
     print(f"{'='*60}\n")
 
     for job in jobs:

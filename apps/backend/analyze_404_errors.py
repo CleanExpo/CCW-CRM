@@ -18,6 +18,6 @@ for name, count in counter.most_common(20):
     print(f'  {name}: {count}')
 
 # Show a few examples
-print(f'\nFirst 5 examples:')
+print('\nFirst 5 examples:')
 for s in errors_404[:5]:
     print(f"  - {s['scenario_name']}: {s.get('status_code')}")

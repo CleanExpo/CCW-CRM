@@ -2,9 +2,10 @@
 Test for ISS-001: Fix Quote Module 405 Errors
 Tests all HTTP methods on quote endpoints to identify 405 errors
 """
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
-from uuid import uuid4
 
 
 @pytest.mark.asyncio

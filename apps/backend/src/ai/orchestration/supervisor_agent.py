@@ -8,8 +8,8 @@ from langgraph.graph import END, StateGraph
 
 from src.ai.base_agent import BaseAgent
 from src.ai.orchestration import get_agent_registry
-from src.config import get_settings
 from src.ai.orchestration.supervisor_state import SupervisorState
+from src.config import get_settings
 
 logger = structlog.get_logger(__name__)
 

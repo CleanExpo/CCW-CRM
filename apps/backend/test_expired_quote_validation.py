@@ -1,16 +1,18 @@
 """Test to reproduce 422 validation error on expired quotes."""
 import asyncio
-import httpx
 import uuid
 from datetime import datetime, timedelta
+
+import httpx
+
 
 async def test_expired_quote_validation():
     """Test creating a quote with past valid_until date."""
     base_url = "http://localhost:8000"
-    
+
     async with httpx.AsyncClient(timeout=30.0) as client:
         print("=== Testing Expired Quote Validation ===\n")
-        
+
         # Step 1: Create a customer
         print("Step 1: Creating customer...")
         customer_data = {
@@ -25,14 +27,14 @@ async def test_expired_quote_validation():
             'postal_code': '12345',
             'country': 'USA',
         }
-        
+
         response = await client.post(f"{base_url}/api/customers", json=customer_data)
         if response.status_code != 201:
             print(f"❌ Customer creation failed: {response.status_code}")
             return False
         customer_id = response.json()['id']
         print(f"✅ Customer created: {customer_id}")
-        
+
         # Step 2: Create a product
         print("\nStep 2: Creating product...")
         product_data = {
@@ -43,19 +45,19 @@ async def test_expired_quote_validation():
             'cost': 50.00,
             'stock': 1000,
         }
-        
+
         response = await client.post(f"{base_url}/api/products", json=product_data)
         if response.status_code != 201:
             print(f"❌ Product creation failed: {response.status_code}")
             return False
         product_id = response.json()['id']
         print(f"✅ Product created: {product_id}")
-        
+
         # Step 3: Create a quote with EXPIRED valid_until date
         print("\nStep 3: Creating quote with EXPIRED date...")
         expired_date = (datetime.now() - timedelta(days=30)).date().isoformat()
         print(f"Using expired date: {expired_date}")
-        
+
         quote_data = {
             'customer_id': customer_id,
             'status': 'draft',
@@ -68,16 +70,16 @@ async def test_expired_quote_validation():
                 }
             ],
         }
-        
+
         print(f"Request data: {quote_data}")
-        
+
         response = await client.post(f"{base_url}/api/quotes", json=quote_data)
-        
+
         print(f"\nResponse status: {response.status_code}")
-        
+
         if response.status_code == 422:
-            print(f"❌ Got 422 Validation Error (reproducing the bug)")
-            print(f"Error details:")
+            print("❌ Got 422 Validation Error (reproducing the bug)")
+            print("Error details:")
             try:
                 error_data = response.json()
                 import json
@@ -86,7 +88,7 @@ async def test_expired_quote_validation():
                 print(response.text)
             return False
         elif response.status_code == 201:
-            print(f"✅ Quote created successfully (expired dates are allowed)")
+            print("✅ Quote created successfully (expired dates are allowed)")
             quote = response.json()
             print(f"Quote number: {quote['quote_number']}")
             print(f"Valid until: {quote['valid_until']}")

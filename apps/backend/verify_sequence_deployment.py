@@ -5,9 +5,9 @@ This script directly tests the database sequences to confirm they generate
 unique numbers without race conditions.
 """
 
-import asyncpg
 import asyncio
-from datetime import datetime
+
+import asyncpg
 
 
 async def verify_sequences():
@@ -120,11 +120,11 @@ async def verify_sequences():
 
         # Verify uniqueness
         if len(mixed_orders) != len(set(mixed_orders)):
-            print(f"  [FAIL] Duplicate order numbers in mixed test")
+            print("  [FAIL] Duplicate order numbers in mixed test")
             return False
 
         if len(mixed_quotes) != len(set(mixed_quotes)):
-            print(f"  [FAIL] Duplicate quote numbers in mixed test")
+            print("  [FAIL] Duplicate quote numbers in mixed test")
             return False
 
         print(f"  [OK] Generated {len(mixed_orders)} unique orders + {len(mixed_quotes)} unique quotes")

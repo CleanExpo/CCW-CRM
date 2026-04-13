@@ -419,7 +419,7 @@ class AutonomyConfig:
             logger.warning(
                 "Invalid AGENT_AUTONOMY_LEVEL, defaulting to NONE",
                 provided=level_str,
-                valid_values=[l.value for l in AutonomyLevel],
+                valid_values=[lvl.value for lvl in AutonomyLevel],
             )
             level = AutonomyLevel.NONE
 

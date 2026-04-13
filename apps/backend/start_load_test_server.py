@@ -2,6 +2,7 @@
 """Start uvicorn server with SKIP_AUTH_ENFORCEMENT enabled for load testing."""
 
 import os
+
 import uvicorn
 
 # Enable auth skip for load testing

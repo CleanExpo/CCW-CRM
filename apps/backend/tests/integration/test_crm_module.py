@@ -11,7 +11,6 @@ Run: python apps/backend/tests/integration/test_crm_module.py
 import ast
 import os
 import sys
-from datetime import UTC, datetime, timedelta, timezone
 
 # Setup path so we can import from src.*
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -36,8 +35,9 @@ def check(label: str, condition: bool) -> None:
 # ================================================================
 print("\n=== 1. CRM Models ===")
 
-from src.db.crm_models import Activity as ActivityModel
-from src.db.crm_models import ActivityType, Contact as ContactModel
+from src.db.crm_models import Activity as ActivityModel  # noqa: E402
+from src.db.crm_models import ActivityType  # noqa: E402
+from src.db.crm_models import Contact as ContactModel  # noqa: E402
 
 # Contact model fields
 contact_cols = {c.name for c in ContactModel.__table__.columns}
@@ -80,15 +80,11 @@ check("ActivityType.TASK exists", ActivityType.TASK.value == "task")
 # ================================================================
 print("\n=== 2. CRM Schemas ===")
 
-from src.db.crm_schemas import (
-    Activity as ActivitySchema,
+from src.db.crm_schemas import (  # noqa: E402
     ActivityComplete,
     ActivityCreate,
-    ActivityUpdate,
     ActivityWithRelations,
-    Contact as ContactSchema,
     ContactCreate,
-    ContactUpdate,
     ContactWithCustomer,
     PaginatedActivities,
     PaginatedContacts,
@@ -346,7 +342,7 @@ check(
 # ================================================================
 print("\n=== 7. DB Package Exports ===")
 
-from src.db import Activity, Contact
+from src.db import Activity, Contact  # noqa: E402
 
 check("Contact exported from src.db", Contact is ContactModel)
 check("Activity exported from src.db", Activity is ActivityModel)

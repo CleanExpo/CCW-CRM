@@ -9,9 +9,10 @@ Adds three tables supporting the mobile photo-to-order workflow:
 - product_recognition_images: Stores AI photo recognition results
 - guest_order_tokens: Shareable approval links sent to customers
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '006_add_mobile_order_tables'

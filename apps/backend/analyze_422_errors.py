@@ -13,11 +13,11 @@ if errors_422:
     # Breakdown by scenario
     names = [r['scenario_name'].rsplit('_', 1)[0] for r in errors_422]
     counter = Counter(names)
-    
+
     print("\nBreakdown by scenario type:")
     for name, count in counter.most_common(20):
         print(f"  {name}: {count}")
-    
+
     print("\nFirst 10 examples:")
     for r in errors_422[:10]:
         print(f"  - {r['scenario_name']}: {r.get('status_code')}")

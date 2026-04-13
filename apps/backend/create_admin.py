@@ -1,10 +1,11 @@
 """Quick script to create admin@demo.com user for E2E testing."""
 import asyncio
+import uuid
+
 from passlib.context import CryptContext
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-import uuid
 
 # Import models
 from src.auth.models import User

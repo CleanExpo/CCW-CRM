@@ -16,19 +16,16 @@ Part of Phase 5 (Autonomous Development Framework) - Week 3 integration tests.
 import pytest
 
 from src.config.autonomy import (
+    AUTONOMY_RULES_BY_LEVEL,
     AutonomyConfig,
     AutonomyLevel,
-    AUTONOMY_RULES_BY_LEVEL,
-    get_autonomy_config,
     reload_autonomy_config,
 )
 from src.services.autonomy_audit import (
     AuditAction,
     AuditResult,
     AutonomyAuditService,
-    get_audit_service,
 )
-
 
 # ============================================================
 # FIXTURES

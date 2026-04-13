@@ -8,8 +8,8 @@ Checks:
 4. clearDraft() called on success
 5. Draft recovery UI present
 """
-import sys
 import io
+import sys
 from pathlib import Path
 
 # Force UTF-8 output to handle emojis
@@ -73,7 +73,7 @@ for form_info in forms_to_check:
     print(f"  Path: {form_path.relative_to(web_path)}")
 
     if not form_path.exists():
-        print(f"  [FAIL] File not found!")
+        print("  [FAIL] File not found!")
         all_pass = False
         results.append((form_name, "FAIL", "File not found"))
         continue

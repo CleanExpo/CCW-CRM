@@ -119,7 +119,7 @@ def main():
             return 1
 
         print("\n[OK] Import completed successfully!")
-        print(f"[OK] Database ready at: https://supabase.com/dashboard/project/vwfgksqkajnpfjospbpe/database/tables")
+        print("[OK] Database ready at: https://supabase.com/dashboard/project/vwfgksqkajnpfjospbpe/database/tables")
         return 0
 
     finally:

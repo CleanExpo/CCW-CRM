@@ -1,5 +1,6 @@
 """Simple test script to verify API routes work."""
 import asyncio
+
 from src.api.main import app
 from src.config.database import async_engine
 

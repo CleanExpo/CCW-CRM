@@ -9,8 +9,10 @@ Generates 2,000 product CRUD scenarios covering:
 """
 
 import random
+from collections.abc import Callable
+from typing import List, Tuple
 from uuid import uuid4
-from typing import List, Tuple, Callable
+
 from faker import Faker
 
 # Valid product categories from the system

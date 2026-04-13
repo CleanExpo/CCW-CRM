@@ -4,13 +4,12 @@ Revision ID: 00c_equipment_lifecycle
 Revises: 00b_add_missing_inventory_tables
 Create Date: 2026-03-25
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-import sqlalchemy as sa
 from alembic import op
 
 revision: str = "00c_equipment_lifecycle"
-down_revision: Union[str, Sequence[str], None] = "00b_add_missing_inventory_tables"
+down_revision: str | Sequence[str] | None = "00b_add_missing_inventory_tables"
 branch_labels = None
 depends_on = None
 

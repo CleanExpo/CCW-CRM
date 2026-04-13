@@ -94,10 +94,10 @@ try:
 except ImportError:
     autonomous_dev = recommendations = search = test_data_gen = ai_inventory_forecast = None  # type: ignore[assignment]
 
-from .routes.integrations import (
+from .routes.integrations import (  # noqa: E402
     anthropic as anthropic_integration,
 )
-from .routes.integrations import (
+from .routes.integrations import (  # noqa: E402
     ap2,
     cin7,
     cin7_crm,
@@ -425,7 +425,7 @@ app.add_middleware(AuthMiddleware)
 app.add_middleware(RequestIdMiddleware)
 
 # Performance monitoring middleware
-from src.api.middleware.performance import PerformanceMiddleware, get_performance_metrics
+from src.api.middleware.performance import PerformanceMiddleware, get_performance_metrics  # noqa: E402
 
 performance_metrics = get_performance_metrics()
 app.add_middleware(PerformanceMiddleware, metrics=performance_metrics)
@@ -520,7 +520,7 @@ except (ImportError, AttributeError):
     pass  # Skip if AI dependencies not available
 
 # Autonomy Metrics
-from .routes import autonomy_metrics
+from .routes import autonomy_metrics  # noqa: E402
 
 app.include_router(autonomy_metrics.router, tags=["Autonomy Metrics"])
 
@@ -646,12 +646,12 @@ except ImportError:
 app.include_router(google_ai.router, tags=["Google AI"])
 
 # Sprint 2 — Industry DNA models (register with SQLAlchemy metadata)
-import src.db.certification_models  # noqa: F401
-import src.db.equipment_lifecycle_models  # noqa: F401
-import src.db.pricing_models  # noqa: F401
+import src.db.certification_models  # noqa: E402,F401
+import src.db.equipment_lifecycle_models  # noqa: E402,F401
+import src.db.pricing_models  # noqa: E402,F401
 
 # Workflow Automation, SLA, and In-App Notification models (UNI-174)
-import src.db.workflow_models  # noqa: F401 - registers tables with SQLAlchemy metadata
+import src.db.workflow_models  # noqa: E402,F401 - registers tables with SQLAlchemy metadata
 
 # Workflow, SLA, and Notification API routes (UNI-174 ST-4)
 try:
@@ -809,7 +809,7 @@ except (ImportError, AttributeError) as e:
     logger.warning("Shadow mode routes not available", error=str(e))
 
 # Real-Time Infrastructure - SSE Streams (Phase 4)
-from src.api.routes import dashboard_stream, inventory_stream
+from src.api.routes import dashboard_stream, inventory_stream  # noqa: E402
 
 app.include_router(inventory_stream.router, tags=["Real-Time Inventory"])
 app.include_router(dashboard_stream.router, tags=["Real-Time Dashboard"])

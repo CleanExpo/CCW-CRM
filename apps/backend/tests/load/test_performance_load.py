@@ -13,21 +13,20 @@ Usage:
     cd apps/backend
     pytest tests/load/test_performance_load.py -v --tb=short
 """
-import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
-from uuid import uuid4, UUID
+
 import pytest
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.demo_models import Order, OrderItem, Product, Customer
-from src.db.inventory_models import ProductStockByLocation, StockReservation
 from src.api.routes.orders import (
     deduct_stock_for_order,
     reserve_stock_for_order,
 )
+from src.db.demo_models import Customer, Order, OrderItem, Product
+from src.db.inventory_models import ProductStockByLocation
 
 
 class LoadTestMetrics:

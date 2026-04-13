@@ -1,46 +1,47 @@
 """Run all service tests without pytest conftest issues."""
 import sys
+
 sys.path.insert(0, '.')
 
-from tests.services.test_procurement_matching import (
-    TestMatchPoGrnInvoice,
-    TestGetVarianceSummary,
-    TestIsVarianceAcceptable,
+from tests.services.test_auto_reorder import (
+    TestApplyQuantityBreaks,
+    TestCalculateExpectedDelivery,
+    TestCalculateReorderQuantity,
+    TestGeneratePoNumber,
+    TestShouldReorder,
+)
+from tests.services.test_dunning import (
+    TestCalculateDaysOverdue,
+    TestGenerateDunningLetter,
+    TestGetDunningLevel,
+    TestGetDunningSchedule,
+    TestShouldSendDunningPure,
 )
 from tests.services.test_order_state import (
     TestCanTransition,
     TestGetNextStates,
-    TestValidateTransition,
     TestGetStateLifecycle,
     TestIsTerminalState,
+    TestValidateTransition,
 )
-from tests.services.test_tax_calculator import (
-    TestCalculateTax,
-    TestCalculateReverseTax,
-    TestGetTaxRateInfo,
-    TestTaxBreakdown,
-)
-from tests.services.test_dunning import (
-    TestGetDunningLevel,
-    TestCalculateDaysOverdue,
-    TestGenerateDunningLetter,
-    TestShouldSendDunningPure,
-    TestGetDunningSchedule,
-)
-from tests.services.test_auto_reorder import (
-    TestCalculateReorderQuantity,
-    TestShouldReorder,
-    TestGeneratePoNumber,
-    TestCalculateExpectedDelivery,
-    TestApplyQuantityBreaks,
+from tests.services.test_procurement_matching import (
+    TestGetVarianceSummary,
+    TestIsVarianceAcceptable,
+    TestMatchPoGrnInvoice,
 )
 from tests.services.test_sla_escalation import (
-    TestIsSlaBreached,
-    TestCalculateHoursOverdue,
-    TestCalculateEscalationLevel,
-    TestGetEscalationAssignee,
     TestBuildEscalationMessage,
+    TestCalculateEscalationLevel,
+    TestCalculateHoursOverdue,
+    TestGetEscalationAssignee,
+    TestIsSlaBreached,
     TestShouldEscalate,
+)
+from tests.services.test_tax_calculator import (
+    TestCalculateReverseTax,
+    TestCalculateTax,
+    TestGetTaxRateInfo,
+    TestTaxBreakdown,
 )
 
 

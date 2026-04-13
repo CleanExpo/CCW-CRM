@@ -2,9 +2,10 @@
 Test for ISS-003: Fix Quote Module 422 Errors
 Tests Pydantic validation issues: date formats, missing fields, quantity validation
 """
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
-from uuid import uuid4
 
 
 @pytest.mark.asyncio
@@ -196,7 +197,7 @@ async def test_quote_with_invalid_product_id(client: AsyncClient):
 
     response = await client.post("/api/quotes", json=payload)
     # Might be 422 (validation) or 400 (business logic)
-    assert response.status_code in [400, 422], f"Expected 400/422 for invalid product"
+    assert response.status_code in [400, 422], "Expected 400/422 for invalid product"
 
 
 @pytest.mark.asyncio

@@ -4,8 +4,8 @@ Comprehensive Customers API tests.
 Tests all CRUD operations, validation, pagination, and edge cases.
 """
 
-import pytest
 from uuid import uuid4
+
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

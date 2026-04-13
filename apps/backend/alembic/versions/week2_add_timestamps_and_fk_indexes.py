@@ -12,9 +12,8 @@ Expected Impact:
 - Schema health: +7-8 points
 - Query performance: 20-50% improvement on JOINs
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'w2_timestamps_fk_idx'

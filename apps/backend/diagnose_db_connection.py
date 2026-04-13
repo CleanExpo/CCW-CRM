@@ -2,10 +2,10 @@
 """Comprehensive database connection diagnostics."""
 
 import asyncio
-import sys
-from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
 import asyncpg
+from sqlalchemy import create_engine, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 print("=" * 80)
 print("DATABASE CONNECTION DIAGNOSTICS")
@@ -46,7 +46,7 @@ async def test_sqlalchemy_async_asyncpg():
     try:
         url = f"postgresql+asyncpg://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
         print(f"   URL: {url}")
-        
+
         engine = create_async_engine(
             url,
             echo=False,  # Disable verbose logging for now
@@ -55,13 +55,13 @@ async def test_sqlalchemy_async_asyncpg():
             max_overflow=10,
             pool_timeout=30,
         )
-        
+
         async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-        
+
         async with async_session() as session:
             result = await session.execute(text("SELECT 1"))
             value = result.scalar()
-            print(f"[PASS] SQLAlchemy async (asyncpg) works")
+            print("[PASS] SQLAlchemy async (asyncpg) works")
             print(f"   Query result: {value}")
             return True
     except Exception as e:
@@ -78,7 +78,7 @@ def test_sqlalchemy_sync_psycopg2():
     try:
         url = f"postgresql+psycopg2://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
         print(f"   URL: {url}")
-        
+
         engine = create_engine(
             url,
             echo=False,
@@ -87,11 +87,11 @@ def test_sqlalchemy_sync_psycopg2():
             max_overflow=10,
             pool_timeout=30,
         )
-        
+
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))
             value = result.scalar()
-            print(f"[PASS] SQLAlchemy sync (psycopg2) works")
+            print("[PASS] SQLAlchemy sync (psycopg2) works")
             print(f"   Query result: {value}")
             return True
     except Exception as e:
@@ -107,18 +107,18 @@ async def test_sqlalchemy_async_no_pool():
     print("\n[TEST 4] SQLAlchemy async without connection pooling...")
     try:
         url = f"postgresql+asyncpg://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
-        
+
         from sqlalchemy.pool import NullPool
         engine = create_async_engine(
             url,
             echo=False,
             poolclass=NullPool,  # Disable pooling
         )
-        
+
         async with engine.connect() as conn:
             result = await conn.execute(text("SELECT 1"))
             value = result.scalar()
-            print(f"[PASS] SQLAlchemy async without pooling works")
+            print("[PASS] SQLAlchemy async without pooling works")
             print(f"   Query result: {value}")
             return True
     except Exception as e:
@@ -131,13 +131,13 @@ async def test_sqlalchemy_async_no_pool():
 
 async def main():
     results = {}
-    
+
     # Run all tests
     results['asyncpg_direct'] = await test_asyncpg_direct()
     results['sqlalchemy_async_asyncpg'] = await test_sqlalchemy_async_asyncpg()
     results['sqlalchemy_sync_psycopg2'] = test_sqlalchemy_sync_psycopg2()
     results['sqlalchemy_async_no_pool'] = await test_sqlalchemy_async_no_pool()
-    
+
     # Summary
     print("\n" + "=" * 80)
     print("SUMMARY")
@@ -145,9 +145,9 @@ async def main():
     for test_name, result in results.items():
         status = "[PASS]" if result else "[FAIL]"
         print(f"{status} {test_name}")
-    
+
     print("\n" + "=" * 80)
-    
+
     # Determine root cause
     if results['asyncpg_direct'] and not results['sqlalchemy_async_asyncpg']:
         print("ROOT CAUSE: Issue is with SQLAlchemy async engine, not asyncpg driver")
@@ -157,7 +157,7 @@ async def main():
             print("SPECIFIC ISSUE: SQLAlchemy async engine configuration")
     elif not results['asyncpg_direct']:
         print("ROOT CAUSE: asyncpg driver cannot connect to database")
-    
+
     return results
 
 if __name__ == "__main__":

@@ -20,8 +20,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 # Load environment variables from .env.local
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
 
 # Load .env.local file from project root
 project_root = Path(__file__).parent.parent.parent
@@ -31,9 +32,9 @@ if env_path.exists():
     print(f"[INFO] Loaded environment from: {env_path}")
     # Verify the key was loaded
     if os.getenv("GOOGLE_AI_API_KEY"):
-        print(f"[INFO] GOOGLE_AI_API_KEY is set")
+        print("[INFO] GOOGLE_AI_API_KEY is set")
     else:
-        print(f"[WARNING] GOOGLE_AI_API_KEY not found in environment")
+        print("[WARNING] GOOGLE_AI_API_KEY not found in environment")
 else:
     print(f"[WARNING] .env.local not found at: {env_path}")
     print("[INFO] Attempting to load from default .env")
@@ -57,7 +58,7 @@ async def test_google_ai_client():
         print("[TEST 2] Initializing Google AI client...")
         try:
             client = get_google_ai_client()
-            print(f"[PASS] Client initialized successfully")
+            print("[PASS] Client initialized successfully")
             print(f"        Default model: {client.config.default_model}")
             print(f"        Max retries: {client.config.max_retries}")
             print(f"        Timeout: {client.config.timeout_seconds}s\n")

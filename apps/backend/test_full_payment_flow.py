@@ -28,7 +28,7 @@ async def test_complete_payment_flow():
         print(f"Selected order: {order_number} (ID: {order_id})")
 
         # Step 2: Sync order to Xero to create invoice
-        print(f"\n=== Step 2: Syncing order to Xero ===")
+        print("\n=== Step 2: Syncing order to Xero ===")
         response = await client.post(f"{base_url}/api/integrations/xero/sync-order/{order_id}")
 
         if response.status_code != 200:
@@ -36,7 +36,7 @@ async def test_complete_payment_flow():
             return
 
         sync_result = response.json()
-        print(f"[SUCCESS] Order synced to Xero!")
+        print("[SUCCESS] Order synced to Xero!")
         print(f"  Invoice ID: {sync_result.get('xero_invoice_id')}")
         print(f"  Invoice Number: {sync_result.get('xero_invoice_number')}")
         print(f"  Total: ${sync_result.get('total')}")
@@ -44,7 +44,7 @@ async def test_complete_payment_flow():
         xero_invoice_id = sync_result.get("xero_invoice_id")
 
         # Step 3: Simulate payment webhook
-        print(f"\n=== Step 3: Simulating payment webhook ===")
+        print("\n=== Step 3: Simulating payment webhook ===")
 
         webhook_payload = {
             "events": [
@@ -90,11 +90,11 @@ async def test_complete_payment_flow():
             return
 
         webhook_result = response.json()
-        print(f"[SUCCESS] Webhook processed!")
+        print("[SUCCESS] Webhook processed!")
         print(f"Results: {json.dumps(webhook_result, indent=2)}")
 
         # Step 4: Verify order was updated
-        print(f"\n=== Step 4: Verifying order status ===")
+        print("\n=== Step 4: Verifying order status ===")
         response = await client.get(f"{base_url}/api/orders?page=1&page_size=100")
 
         if response.status_code != 200:
@@ -120,7 +120,7 @@ async def test_complete_payment_flow():
             print("Results:")
             print(f"  1. Order {order_number} synced to Xero")
             print(f"  2. Invoice created with ID: {xero_invoice_id}")
-            print(f"  3. Payment webhook processed successfully")
+            print("  3. Payment webhook processed successfully")
             print(f"  4. Order status updated to: {updated_order.get('status')}")
             print("="*60)
         else:

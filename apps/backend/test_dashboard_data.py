@@ -1,8 +1,8 @@
 """Generate test data for dashboard testing."""
 
 import asyncio
-from datetime import UTC, datetime, timedelta
 import random
+from datetime import UTC, datetime, timedelta
 
 from src.ai.monitoring import get_metrics_collector
 
@@ -75,8 +75,8 @@ async def generate_test_data():
             },
         )
 
-    print(f"Generated 50 test executions")
-    print(f"Check dashboard at: http://localhost:3008/agents")
+    print("Generated 50 test executions")
+    print("Check dashboard at: http://localhost:3008/agents")
 
 
 if __name__ == "__main__":

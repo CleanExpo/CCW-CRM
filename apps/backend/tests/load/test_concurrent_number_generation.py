@@ -2,10 +2,11 @@
 Test for ISS-004: Verify race condition fix with concurrent operations
 Tests that PostgreSQL SEQUENCE eliminates race conditions at high concurrency
 """
-import pytest
 import asyncio
-from httpx import AsyncClient
 from collections import Counter
+
+import pytest
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
@@ -76,7 +77,7 @@ async def test_concurrent_quote_creation_no_conflicts(client: AsyncClient):
     # Extract quote numbers
     quote_numbers = [r["quote_number"] for r in successful if r["quote_number"]]
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Total requests: {num_concurrent}")
     print(f"  Successful (201): {len(successful)}")
     print(f"  Conflicts (409): {len(conflicts)}")
@@ -84,12 +85,12 @@ async def test_concurrent_quote_creation_no_conflicts(client: AsyncClient):
     print(f"  Unique quote numbers: {len(set(quote_numbers))}")
 
     if conflicts:
-        print(f"\nConflict errors:")
+        print("\nConflict errors:")
         for c in conflicts[:3]:
             print(f"  - {c['error'][:100]}")
 
     if errors:
-        print(f"\nOther errors:")
+        print("\nOther errors:")
         for e in errors[:3]:
             print(f"  - Status {e['status']}: {e['error'][:100] if e['error'] else 'Unknown'}")
 
@@ -164,7 +165,7 @@ async def test_concurrent_order_creation_no_conflicts(client: AsyncClient):
     # Extract order numbers
     order_numbers = [r["order_number"] for r in successful if r["order_number"]]
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Successful (201): {len(successful)}")
     print(f"  Conflicts (409): {len(conflicts)}")
     print(f"  Unique order numbers: {len(set(order_numbers))}")
@@ -225,7 +226,7 @@ async def test_extreme_concurrency_50_requests(client: AsyncClient):
     conflicts = sum(1 for s in statuses if s == 409)
     valid_numbers = [n for n in quote_numbers if n]
 
-    print(f"Results:")
+    print("Results:")
     print(f"  Successful: {successful}/{num_concurrent}")
     print(f"  Conflicts: {conflicts}")
     print(f"  Unique numbers: {len(set(valid_numbers))}/{len(valid_numbers)}")

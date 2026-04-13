@@ -3,8 +3,6 @@ from datetime import date, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
-
 from src.services.auto_reorder import (
     apply_quantity_breaks,
     calculate_expected_delivery,

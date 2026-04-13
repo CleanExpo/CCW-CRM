@@ -4,15 +4,16 @@ Tests the complete end-to-end pipeline: Request → Context → Code → Tests �
 """
 
 import os
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.services.code_generation.generator import (
-    CodeGenerator,
     CodeGenerationRequest,
     CodeGenerationResult,
+    CodeGenerator,
 )
-
 
 # ============================================================================
 # Fixtures

@@ -8,15 +8,13 @@ Creates the Point-of-Sale tables that were previously only in the standalone
 migrations/add_pos_system.sql and migrations/add_auto_sync_enhancements.sql
 files. These are required by bank_feeds, reconciliation, and POS routes.
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision: str = '009_add_pos_tables'
-down_revision: Union[str, Sequence[str], None] = '008_merge_heads'
+down_revision: str | Sequence[str] | None = '008_merge_heads'
 branch_labels = None
 depends_on = None
 

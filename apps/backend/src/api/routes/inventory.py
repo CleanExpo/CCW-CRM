@@ -208,7 +208,7 @@ async def list_all_inventory(
         except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid location. Must be one of: {', '.join([l.value for l in StoreLocation])}",
+                detail=f"Invalid location. Must be one of: {', '.join([loc.value for loc in StoreLocation])}",
             )
 
     # Apply low stock filter if requested

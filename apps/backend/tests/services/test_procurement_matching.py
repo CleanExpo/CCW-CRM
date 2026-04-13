@@ -1,8 +1,6 @@
 """Tests for procurement matching service (GAP-026)."""
 from decimal import Decimal
-from uuid import UUID, uuid4
-
-import pytest
+from uuid import uuid4
 
 from src.services.procurement_matching import (
     GRNItem,

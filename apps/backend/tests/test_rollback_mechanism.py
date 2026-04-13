@@ -24,7 +24,6 @@ from src.services.deployment_service import (
     DeploymentStatus,
 )
 
-
 # ============================================================
 # ROLLBACK AGENT TESTS
 # ============================================================

@@ -116,6 +116,7 @@ def client(test_app, db_session):
 def create_test_user(db_session, email: str = None, role: str = "owner", organization=None):
     """Helper to create a test user."""
     from src.auth.password import hash_password
+
     from src.db.models_base import Organization, User
 
     if organization is None:

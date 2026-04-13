@@ -5,20 +5,17 @@ Tests configuration loading, file pattern matching, and autonomy rules.
 Part of Phase 5 (Autonomous Development Framework) - Week 3 tests.
 """
 
-import os
-import pytest
+
 
 from src.config.autonomy import (
+    AUTONOMY_RULES_BY_LEVEL,
     AutonomyConfig,
     AutonomyLevel,
     AutonomyRules,
     FilePattern,
-    AUTONOMY_RULES_BY_LEVEL,
-    PROTECTED_FILES,
     get_autonomy_config,
     reload_autonomy_config,
 )
-
 
 # ============================================================
 # FILE PATTERN MATCHING TESTS

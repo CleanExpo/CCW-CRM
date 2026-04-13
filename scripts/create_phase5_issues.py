@@ -1,11 +1,12 @@
 import json
-import urllib.request
 import sys
+import urllib.request
 
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
 
 import os
+
 api_key = os.environ.get("LINEAR_API_KEY", "YOUR_LINEAR_API_KEY_HERE")
 project_id = "40c7dc3d-35ff-4e2c-ac1e-f903c1f5c856"
 

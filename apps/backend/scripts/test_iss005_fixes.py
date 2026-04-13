@@ -5,7 +5,6 @@ Tests that previously-failing scenarios now return proper error codes instead of
 """
 import sys
 from pathlib import Path
-import asyncio
 from uuid import uuid4
 
 backend_path = Path(__file__).parent.parent
@@ -18,9 +17,10 @@ print("=" * 80)
 
 # Import FastAPI test client
 try:
-    from fastapi.testclient import TestClient
-    from src.api.routes import orders, quotes, purchase_orders
     from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from src.api.routes import orders, purchase_orders, quotes
     print("\n[PASS] Imports successful")
 except Exception as e:
     print(f"\n[FAIL] Import error: {e}")
@@ -42,10 +42,10 @@ try:
     response = client.get(f"/api/orders/{fake_id}")
 
     if response.status_code == 404:
-        print(f"[PASS] Got 404 as expected")
+        print("[PASS] Got 404 as expected")
         test_results.append(("GET non-existent order", "PASS", 404))
     elif response.status_code == 500:
-        print(f"[FAIL] Got 500 error - fix didn't work!")
+        print("[FAIL] Got 500 error - fix didn't work!")
         print(f"       Response: {response.text[:200]}")
         test_results.append(("GET non-existent order", "FAIL", 500))
     else:
@@ -65,10 +65,10 @@ try:
     )
 
     if response.status_code == 404:
-        print(f"[PASS] Got 404 as expected")
+        print("[PASS] Got 404 as expected")
         test_results.append(("PUT non-existent order", "PASS", 404))
     elif response.status_code == 500:
-        print(f"[FAIL] Got 500 error")
+        print("[FAIL] Got 500 error")
         print(f"       Response: {response.text[:200]}")
         test_results.append(("PUT non-existent order", "FAIL", 500))
     else:
@@ -85,10 +85,10 @@ try:
     response = client.delete(f"/api/orders/{fake_id}")
 
     if response.status_code == 404:
-        print(f"[PASS] Got 404 as expected")
+        print("[PASS] Got 404 as expected")
         test_results.append(("DELETE non-existent order", "PASS", 404))
     elif response.status_code == 500:
-        print(f"[FAIL] Got 500 error")
+        print("[FAIL] Got 500 error")
         print(f"       Response: {response.text[:200]}")
         test_results.append(("DELETE non-existent order", "FAIL", 500))
     else:
@@ -105,10 +105,10 @@ try:
     response = client.get(f"/api/quotes/{fake_id}")
 
     if response.status_code == 404:
-        print(f"[PASS] Got 404 as expected")
+        print("[PASS] Got 404 as expected")
         test_results.append(("GET non-existent quote", "PASS", 404))
     elif response.status_code == 500:
-        print(f"[FAIL] Got 500 error")
+        print("[FAIL] Got 500 error")
         print(f"       Response: {response.text[:200]}")
         test_results.append(("GET non-existent quote", "FAIL", 500))
     else:
@@ -128,10 +128,10 @@ try:
     )
 
     if response.status_code == 404:
-        print(f"[PASS] Got 404 as expected")
+        print("[PASS] Got 404 as expected")
         test_results.append(("PUT non-existent quote", "PASS", 404))
     elif response.status_code == 500:
-        print(f"[FAIL] Got 500 error")
+        print("[FAIL] Got 500 error")
         print(f"       Response: {response.text[:200]}")
         test_results.append(("PUT non-existent quote", "FAIL", 500))
     else:
@@ -148,10 +148,10 @@ try:
     response = client.delete(f"/api/quotes/{fake_id}")
 
     if response.status_code == 404:
-        print(f"[PASS] Got 404 as expected")
+        print("[PASS] Got 404 as expected")
         test_results.append(("DELETE non-existent quote", "PASS", 404))
     elif response.status_code == 500:
-        print(f"[FAIL] Got 500 error")
+        print("[FAIL] Got 500 error")
         print(f"       Response: {response.text[:200]}")
         test_results.append(("DELETE non-existent quote", "FAIL", 500))
     else:
@@ -167,10 +167,10 @@ try:
     response = client.get("/api/orders/not-a-uuid")
 
     if response.status_code == 422:
-        print(f"[PASS] Got 422 (validation error) as expected")
+        print("[PASS] Got 422 (validation error) as expected")
         test_results.append(("Invalid UUID format", "PASS", 422))
     elif response.status_code == 500:
-        print(f"[FAIL] Got 500 error")
+        print("[FAIL] Got 500 error")
         print(f"       Response: {response.text[:200]}")
         test_results.append(("Invalid UUID format", "FAIL", 500))
     else:
@@ -190,10 +190,10 @@ try:
     )
 
     if response.status_code == 422:
-        print(f"[PASS] Got 422 (validation error) as expected")
+        print("[PASS] Got 422 (validation error) as expected")
         test_results.append(("Malformed JSON", "PASS", 422))
     elif response.status_code == 500:
-        print(f"[FAIL] Got 500 error")
+        print("[FAIL] Got 500 error")
         print(f"       Response: {response.text[:200]}")
         test_results.append(("Malformed JSON", "FAIL", 500))
     else:

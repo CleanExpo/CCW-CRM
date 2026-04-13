@@ -4,11 +4,12 @@ Comprehensive Products API tests.
 Tests all CRUD operations, validation, pagination, and edge cases.
 """
 
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import uuid4
 
 from src.db.demo_models import Product
 

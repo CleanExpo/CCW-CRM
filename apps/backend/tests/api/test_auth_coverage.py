@@ -15,7 +15,6 @@ that regression from happening again.
 """
 from __future__ import annotations
 
-import pytest
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 

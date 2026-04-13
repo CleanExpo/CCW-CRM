@@ -4,8 +4,8 @@ Apply trigram indexes migration for ISS-006.
 Adds pg_trgm extension and GIN indexes for fast wildcard searches.
 Expected improvement: Customer search 3500ms → <1000ms, Product search 1700ms → <500ms
 """
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 backend_path = Path(__file__).parent.parent
@@ -14,6 +14,7 @@ sys.path.insert(0, str(backend_path))
 async def apply_migration():
     """Apply the trigram indexes migration."""
     from sqlalchemy import text
+
     from src.config.database import get_async_db
 
     print("=" * 80)
@@ -44,7 +45,7 @@ async def apply_migration():
             in_comment_block = False
 
         # Skip empty lines and single-line comments
-        if not stripped or (stripped.startswith('--') and not 'Migration:' in line):
+        if not stripped or (stripped.startswith('--') and 'Migration:' not in line):
             continue
 
         current_statement.append(line)
@@ -65,7 +66,7 @@ async def apply_migration():
             print("[PASS] Database connection established")
 
             # Apply each statement
-            print(f"\n[STEP 2] Applying migration statements...")
+            print("\n[STEP 2] Applying migration statements...")
             for i, statement in enumerate(statements, 1):
                 # Skip verification/test queries
                 if 'SELECT' in statement.upper() and ('pg_indexes' in statement or 'pg_extension' in statement):
@@ -79,7 +80,7 @@ async def apply_migration():
                     if 'CREATE EXTENSION' in statement:
                         print("Creating pg_trgm extension")
                     elif 'DROP INDEX' in statement:
-                        print(f"Dropping index (if exists)")
+                        print("Dropping index (if exists)")
                     elif 'CREATE INDEX' in statement and 'company_name' in statement:
                         print("Creating index on customers.company_name")
                     elif 'CREATE INDEX' in statement and 'contact_name' in statement:
@@ -104,7 +105,7 @@ async def apply_migration():
                     error_str = str(e)
                     # Ignore "already exists" errors (idempotent migration)
                     if 'already exists' in error_str.lower():
-                        print(f"      (already exists, skipping)")
+                        print("      (already exists, skipping)")
                     else:
                         print(f"\n[ERROR] Failed: {e}")
                         raise

@@ -9,19 +9,19 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.container_models import Container
 from src.db.demo_models import (
     Customer,
     Order,
     Product,
     Quote,
 )
-from src.db.models import User
 from src.db.inventory_models import (
-    Supplier,
-    PurchaseOrder,
     InboundShipment,
+    PurchaseOrder,
+    Supplier,
 )
-from src.db.container_models import Container
+from src.db.models import User
 from src.db.service_models import ServiceRequest
 
 

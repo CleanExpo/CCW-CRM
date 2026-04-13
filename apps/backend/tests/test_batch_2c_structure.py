@@ -6,15 +6,13 @@ Does NOT require database or authentication.
 """
 from uuid import uuid4
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.deps import get_current_user
-from src.api.routes.workflows import router as workflows_router
 from src.api.routes.approvals import router as approvals_router
+from src.api.routes.workflows import router as workflows_router
 from src.config.database import get_async_db
-
 
 # Create minimal test app with just the routers we're testing
 test_app = FastAPI()

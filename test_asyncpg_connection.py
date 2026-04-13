@@ -2,10 +2,11 @@
 """Test asyncpg connection to verify database credentials."""
 
 import asyncio
-import asyncpg
 import os
 import sys
 from pathlib import Path
+
+import asyncpg
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent / "apps" / "backend"))
@@ -40,7 +41,7 @@ async def test_connection():
         port = int(host_port[1])
         database = host_port_db[1]
 
-        print(f"Connecting with:")
+        print("Connecting with:")
         print(f"  User: {user}")
         print(f"  Host: {host}")
         print(f"  Port: {port}")

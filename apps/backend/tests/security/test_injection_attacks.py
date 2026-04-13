@@ -7,7 +7,7 @@ Part of Phase 5 Week 1 - Security Test Coverage.
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.demo_models import Customer, Order, Product

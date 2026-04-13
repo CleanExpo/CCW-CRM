@@ -2,7 +2,9 @@
 """Test database connection to verify credentials work."""
 
 import asyncio
+
 import asyncpg
+
 
 async def test_connection():
     """Test database connection with asyncpg."""

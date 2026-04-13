@@ -7,8 +7,8 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import or_, select
+
 from src.config.database import AsyncSessionLocal
 from src.db.demo_models import Customer, Product
 

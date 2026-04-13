@@ -1,12 +1,16 @@
 """Test endpoint to debug serialization."""
-from fastapi import FastAPI, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.schemas import Order, PaginatedResponse
 import sys
+
+from fastapi import Depends, FastAPI
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.db.schemas import PaginatedResponse
+
 sys.path.insert(0, 'C:\\CCW-Online ERP\\NodeJS-Starter-V1\\apps\\backend')
+import uvicorn
+
 from src.api.routes.orders import list_orders
 from src.config.database import get_db
-import uvicorn
 
 app = FastAPI()
 

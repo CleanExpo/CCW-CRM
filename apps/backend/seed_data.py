@@ -1,10 +1,10 @@
 """Seed database with sample ERP data."""
-import os
 import asyncio
+import os
+from datetime import datetime, timedelta
+
 import asyncpg
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
-import random
 
 load_dotenv()
 
@@ -64,21 +64,21 @@ async def seed_database():
             VALUES ($1, 'admin@ccw.com', $2, 'Admin User', 'admin', true, true)
             RETURNING id
         """, org_id, hashed_password)
-        print(f"   Created admin user: admin@ccw.com")
+        print("   Created admin user: admin@ccw.com")
 
         manager_id = await conn.fetchval("""
             INSERT INTO users (organization_id, email, hashed_password, full_name, role, is_admin, is_active)
             VALUES ($1, 'manager@ccw.com', $2, 'Sales Manager', 'manager', false, true)
             RETURNING id
         """, org_id, hashed_password)
-        print(f"   Created manager user: manager@ccw.com")
+        print("   Created manager user: manager@ccw.com")
 
         employee_id = await conn.fetchval("""
             INSERT INTO users (organization_id, email, hashed_password, full_name, role, is_admin, is_active)
             VALUES ($1, 'employee@ccw.com', $2, 'John Smith', 'employee', false, true)
             RETURNING id
         """, org_id, hashed_password)
-        print(f"   Created employee user: employee@ccw.com")
+        print("   Created employee user: employee@ccw.com")
 
         # Create products
         print("\n3. Creating products...")
@@ -296,7 +296,7 @@ async def seed_database():
             stock_count += 1
 
         print(f"   Created multi-location inventory for {stock_count} products")
-        print(f"   Stock distributed across Brisbane, Sydney, and Melbourne")
+        print("   Stock distributed across Brisbane, Sydney, and Melbourne")
 
         # Add a few products that need to be created for the demo
         print("\n8. Creating additional demo products...")
@@ -332,7 +332,7 @@ async def seed_database():
                    (gen_random_uuid(), $1, 'melbourne', 22, 0, 10, 20, NOW(), NOW())
         """, cord_id)
 
-        print(f"   Created 2 additional products with multi-location stock")
+        print("   Created 2 additional products with multi-location stock")
 
         print("\n=== Database seeding completed successfully! ===")
         print("\nMulti-location inventory seeded:")

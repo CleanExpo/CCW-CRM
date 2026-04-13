@@ -6,6 +6,7 @@ This script reads the SQL migration file and applies all indexes to improve quer
 
 import asyncio
 from pathlib import Path
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -55,13 +56,13 @@ async def apply_indexes():
 
                 await conn.execute(text(statement))
                 success_count += 1
-                print(f"  ✓ Success")
+                print("  ✓ Success")
 
             except Exception as e:
                 error_msg = str(e)
                 # If index already exists, that's okay
                 if "already exists" in error_msg.lower():
-                    print(f"  ⊘ Skipped (already exists)")
+                    print("  ⊘ Skipped (already exists)")
                     skip_count += 1
                 else:
                     print(f"  ✗ Error: {error_msg}")
@@ -69,7 +70,7 @@ async def apply_indexes():
     await engine.dispose()
 
     print(f"\n{'='*60}")
-    print(f"Index application complete!")
+    print("Index application complete!")
     print(f"  - Successfully created: {success_count}")
     print(f"  - Already existed: {skip_count}")
     print(f"  - Total processed: {len(statements)}")

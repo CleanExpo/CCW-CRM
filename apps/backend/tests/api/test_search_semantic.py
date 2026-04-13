@@ -17,7 +17,6 @@ from src.api.deps import get_async_db, get_current_user
 from src.api.main import app
 from tests.conftest import _make_fake_test_user
 
-
 # ---------------------------------------------------------------------------
 # Local fixture — no live DB required
 # ---------------------------------------------------------------------------

@@ -2,9 +2,10 @@
 Test for ISS-005: Fix 30 Internal Server Errors
 Systematically test endpoints to identify unhandled exceptions
 """
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
-from uuid import uuid4
 
 
 @pytest.mark.asyncio

@@ -123,7 +123,7 @@ See code for backend route mappings
         exports = match.group(1) if match else f"{module}Api"
 
         return {
-            "id": f"CLIENT-XXX",
+            "id": "CLIENT-XXX",
             "slug": slug,
             "name": module.capitalize(),
             "file": file_path,

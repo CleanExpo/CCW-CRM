@@ -7,7 +7,6 @@ request validation, and error handling behaviour.
 
 import uuid
 
-import pytest
 from fastapi.testclient import TestClient
 
 from src.api.main import app

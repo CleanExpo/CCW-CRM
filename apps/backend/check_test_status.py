@@ -7,10 +7,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from tests.load.conftest import ScenarioRunner
-from tests.load.generators.products import ProductScenarioGenerator
 from tests.load.generators.customers import CustomerScenarioGenerator
 from tests.load.generators.orders import OrderScenarioGenerator
+from tests.load.generators.products import ProductScenarioGenerator
 from tests.load.generators.quotes import QuoteScenarioGenerator
+
 
 async def main():
     base_url = "http://127.0.0.1:8000"

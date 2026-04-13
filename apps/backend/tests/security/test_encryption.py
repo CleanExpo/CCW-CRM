@@ -1,6 +1,5 @@
 """Tests for encryption utilities."""
 
-import os
 
 import pytest
 

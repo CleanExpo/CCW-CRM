@@ -3,8 +3,9 @@ Verification script for ISS-004: Race Condition Fix
 Tests PostgreSQL SEQUENCE atomicity at high concurrency
 """
 import asyncio
-import asyncpg
 from collections import Counter
+
+import asyncpg
 
 
 async def test_concurrent_quote_generation():
@@ -38,13 +39,13 @@ async def test_concurrent_quote_generation():
         print(f"  {i}. {num}")
 
     duplicates = len(quote_numbers) - len(set(quote_numbers))
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Total generated: {len(quote_numbers)}")
     print(f"  Unique numbers: {len(set(quote_numbers))}")
     print(f"  Duplicates: {duplicates}")
 
     if duplicates == 0:
-        print(f"  ✅ PASSED: Zero duplicates")
+        print("  ✅ PASSED: Zero duplicates")
     else:
         print(f"  ❌ FAILED: Found {duplicates} duplicates")
 
@@ -61,13 +62,13 @@ async def test_concurrent_quote_generation():
     print(f"Generated {len(order_numbers)} order numbers")
     duplicates = len(order_numbers) - len(set(order_numbers))
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Total generated: {len(order_numbers)}")
     print(f"  Unique numbers: {len(set(order_numbers))}")
     print(f"  Duplicates: {duplicates}")
 
     if duplicates == 0:
-        print(f"  ✅ PASSED: Zero duplicates under stress")
+        print("  ✅ PASSED: Zero duplicates under stress")
     else:
         print(f"  ❌ FAILED: Found {duplicates} duplicates")
         # Show duplicate numbers
@@ -89,7 +90,7 @@ async def test_concurrent_quote_generation():
     print(f"  Duplicates: {duplicates}")
 
     if duplicates == 0:
-        print(f"  ✅ PASSED: Zero duplicates at 100x concurrency")
+        print("  ✅ PASSED: Zero duplicates at 100x concurrency")
     else:
         print(f"  ❌ FAILED: Found {duplicates} duplicates")
 

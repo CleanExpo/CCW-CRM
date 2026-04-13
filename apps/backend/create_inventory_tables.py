@@ -8,7 +8,6 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.config.database import get_database_url
-from src.db.demo_models import Product, Order  # Import referenced models
 from src.db.inventory_models import (
     ProductStockByLocation,
     StockAdjustment,

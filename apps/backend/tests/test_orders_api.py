@@ -4,14 +4,15 @@ Comprehensive Orders API tests.
 Tests CRUD operations, line items, status management, and order number generation.
 """
 
-import pytest
 from uuid import UUID
+
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.settings import get_settings
-from src.db.demo_models import Order, OrderItem, Customer, Product
+from src.db.demo_models import Customer, Order, Product
 from src.db.inventory_models import ProductStockByLocation, StockReservation
 from src.utils.calculations import calculate_totals
 

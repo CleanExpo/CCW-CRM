@@ -8,6 +8,7 @@ failure patterns in the database.
 import asyncio
 from datetime import UTC, datetime
 
+
 async def inject_failure_patterns():
     """Inject realistic failure patterns into database."""
 
@@ -214,7 +215,7 @@ async def inject_failure_patterns():
             print(f"  MEDIUM priority: {priority_counts['medium']} (Performance issues)")
             print(f"  LOW priority:    {priority_counts['low']} (General improvements)")
 
-            print(f"\nDashboard: http://localhost:3000/agents")
+            print("\nDashboard: http://localhost:3000/agents")
             print("\nYou should now see:")
             print(f"  • Red cards for {priority_counts['high']} high-priority insights")
             print(f"  • Orange cards for {priority_counts['medium']} medium-priority insights")

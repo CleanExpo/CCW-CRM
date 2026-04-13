@@ -8,14 +8,17 @@ This test creates orders and quotes concurrently to verify that:
 """
 
 import asyncio
-import pytest
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
-from datetime import datetime, timezone, timedelta
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
-from httpx import AsyncClient, ASGITransport
+
 from src.api.main import app
-from src.db.demo_models import Order as OrderModel, Quote as QuoteModel, Customer as CustomerModel, Product as ProductModel
 from src.config.database import get_async_db
+from src.db.demo_models import Customer as CustomerModel
+from src.db.demo_models import Product as ProductModel
 
 
 @pytest.mark.asyncio

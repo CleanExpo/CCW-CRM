@@ -4,13 +4,12 @@ Revision ID: 00f_add_pricing_tier_tables
 Revises: 00d_add_certification_tables
 Create Date: 2026-03-25
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-import sqlalchemy as sa
 from alembic import op
 
 revision: str = "00f_add_pricing_tier_tables"
-down_revision: Union[str, Sequence[str], None] = "00d_add_certification_tables"
+down_revision: str | Sequence[str] | None = "00d_add_certification_tables"
 branch_labels = None
 depends_on = None
 

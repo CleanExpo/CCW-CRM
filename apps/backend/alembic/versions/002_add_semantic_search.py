@@ -5,8 +5,8 @@ Revises: 001_add_approvals
 Create Date: 2026-02-02
 
 """
+
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '002_add_semantic_search'

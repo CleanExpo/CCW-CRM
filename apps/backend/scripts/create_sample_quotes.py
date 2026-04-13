@@ -6,19 +6,20 @@ Usage:
 """
 
 import asyncio
-import sys
 import random
-from pathlib import Path
+import sys
 from datetime import datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 from uuid import uuid4
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.db.demo_models import Customer, Product, Quote, QuoteItem, QuoteStatus
-from src.config.database import get_async_db
 from sqlalchemy import select
+
+from src.config.database import get_async_db
+from src.db.demo_models import Customer, Product, Quote, QuoteItem, QuoteStatus
 
 
 async def create_sample_quotes(count: int = 10):
@@ -162,7 +163,7 @@ if __name__ == "__main__":
         count = int(sys.argv[idx + 1])
 
     print(f"{'='*80}")
-    print(f"Create Sample Quotes with CCWonline Products")
+    print("Create Sample Quotes with CCWonline Products")
     print(f"{'='*80}")
     print(f"Quotes to create: {count}")
     print(f"{'='*80}\n")

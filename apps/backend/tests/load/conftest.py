@@ -7,9 +7,11 @@ to identify system breaks, race conditions, and weaknesses.
 
 import asyncio
 import time
-from typing import Callable, List, Dict, Any, Optional
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import httpx
 import pytest
 from faker import Faker

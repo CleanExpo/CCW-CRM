@@ -47,7 +47,7 @@ async def test_customer_sync():
         print(f"Customer ID: {customer_id}")
 
         # Step 2: Sync customer to Xero
-        print(f"\n=== Step 2: Syncing customer to Xero ===")
+        print("\n=== Step 2: Syncing customer to Xero ===")
         response = await client.post(
             f"{base_url}/api/integrations/xero/sync-customer/{customer_id}"
         )
@@ -57,7 +57,7 @@ async def test_customer_sync():
             return
 
         sync_result = response.json()
-        print(f"[SUCCESS] Customer synced to Xero!")
+        print("[SUCCESS] Customer synced to Xero!")
         print(f"  Action: {sync_result.get('action', 'N/A')}")
         print(f"  Xero Contact ID: {sync_result.get('xero_contact_id')}")
         print(f"  Message: {sync_result.get('message', 'N/A')}")
@@ -69,7 +69,7 @@ async def test_customer_sync():
             return
 
         # Step 3: Verify xero_contact_id was stored
-        print(f"\n=== Step 3: Verifying contact ID was stored ===")
+        print("\n=== Step 3: Verifying contact ID was stored ===")
         response = await client.get(f"{base_url}/api/customers?page=1&page_size=100")
 
         if response.status_code != 200:
@@ -86,10 +86,10 @@ async def test_customer_sync():
 
         # Check if xero_contact_id is in the response (it might not be exposed in the API)
         print(f"Customer data refreshed: {customer_name}")
-        print(f"  (Note: xero_contact_id may not be exposed in API response)")
+        print("  (Note: xero_contact_id may not be exposed in API response)")
 
         # Step 4: Simulate a contact webhook
-        print(f"\n=== Step 4: Simulating contact update webhook ===")
+        print("\n=== Step 4: Simulating contact update webhook ===")
 
         # Create mock contact webhook payload
         webhook_payload = {
@@ -134,11 +134,11 @@ async def test_customer_sync():
             return
 
         webhook_result = response.json()
-        print(f"[SUCCESS] Contact webhook processed!")
+        print("[SUCCESS] Contact webhook processed!")
         print(f"Results: {json.dumps(webhook_result, indent=2)}")
 
         # Step 5: Test bulk sync
-        print(f"\n=== Step 5: Testing bulk customer sync ===")
+        print("\n=== Step 5: Testing bulk customer sync ===")
         response = await client.post(
             f"{base_url}/api/integrations/xero/sync-customers?max_customers=5"
         )
@@ -148,7 +148,7 @@ async def test_customer_sync():
             return
 
         bulk_result = response.json()
-        print(f"[SUCCESS] Bulk sync completed!")
+        print("[SUCCESS] Bulk sync completed!")
         print(f"  Total customers: {bulk_result.get('total')}")
         print(f"  Synced: {bulk_result.get('synced')}")
         print(f"  Failed: {bulk_result.get('failed')}")
@@ -160,7 +160,7 @@ async def test_customer_sync():
         print("Results:")
         print(f"  1. Customer '{customer_name}' synced to Xero")
         print(f"  2. Contact ID stored: {xero_contact_id}")
-        print(f"  3. Contact webhook processed successfully")
+        print("  3. Contact webhook processed successfully")
         print(f"  4. Bulk sync completed: {bulk_result.get('synced')} customers synced")
         print("=" * 60)
 

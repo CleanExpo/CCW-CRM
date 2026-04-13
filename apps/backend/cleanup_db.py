@@ -1,5 +1,6 @@
 """Clean up existing database tables before running migrations."""
 import os
+
 import asyncpg
 from dotenv import load_dotenv
 

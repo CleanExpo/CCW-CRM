@@ -13,9 +13,7 @@ Usage:
     python scripts/verify_integrations.py
 """
 import sys
-import re
 from pathlib import Path
-from typing import List, Dict, Tuple
 
 
 class IntegrationVerifier:

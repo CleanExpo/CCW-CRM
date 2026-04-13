@@ -11,10 +11,9 @@ Runs comprehensive load tests and provides executive oversight:
 Usage:
     python scripts/run_load_tests_with_oversight.py
 """
+import re
 import subprocess
 import sys
-import json
-import re
 from datetime import datetime
 from pathlib import Path
 

@@ -3,9 +3,9 @@ Code-level verification for ISS-005 fixes.
 
 Verifies the actual code changes without requiring database connection.
 """
+import re
 import sys
 from pathlib import Path
-import re
 
 backend_path = Path(__file__).parent.parent
 routes_path = backend_path / "src" / "api" / "routes"
@@ -177,11 +177,11 @@ for filename, patterns in patterns_found.items():
     print(f"       - HTTPException: {patterns['HTTPException']}")
 
     if patterns["scalar_one_or_none"] > 0 and ratio > 0.5:
-        print(f"[PASS] Consistent error handling pattern")
+        print("[PASS] Consistent error handling pattern")
     elif patterns["scalar_one_or_none"] == 0:
-        print(f"[WARN] No scalar_one_or_none() calls found")
+        print("[WARN] No scalar_one_or_none() calls found")
     else:
-        print(f"[WARN] Low ratio of null checks to queries")
+        print("[WARN] Low ratio of null checks to queries")
 
 # Summary
 print("\n" + "=" * 80)

@@ -10,7 +10,7 @@ Identifies:
 """
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import Dict, List
 
 backend_path = Path(__file__).parent.parent
 routes_path = backend_path / "src" / "api" / "routes"
@@ -176,7 +176,7 @@ print("\n" + "=" * 80)
 print("ANALYSIS RESULTS")
 print("=" * 80)
 
-print(f"\n[SUMMARY]")
+print("\n[SUMMARY]")
 print(f"  Total issues found: {len(all_issues)}")
 print(f"  High priority: {len(high_priority)}")
 print(f"  Medium priority: {len(medium_priority)}")

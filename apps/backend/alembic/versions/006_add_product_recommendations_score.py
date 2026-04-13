@@ -5,8 +5,8 @@ Revises:
 Create Date: 2026-04-14
 """
 
+
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers
 revision = "006_add_product_recommendations_score"

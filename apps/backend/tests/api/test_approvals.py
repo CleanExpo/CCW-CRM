@@ -2,10 +2,9 @@
 Tests for approval workflow API endpoints.
 """
 
-import pytest
 from uuid import uuid4
 
-from src.db.approvals_models import Approval, ApprovalStatus, ApprovalStep, ApprovalType
+import pytest
 
 
 @pytest.mark.asyncio

@@ -3,7 +3,7 @@
 import asyncio
 import os
 import sys
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 # CRITICAL: Set environment variables BEFORE any imports
 os.environ["RATE_LIMIT_ENABLED"] = "false"
@@ -15,7 +15,7 @@ if sys.platform.startswith("win"):
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_current_user

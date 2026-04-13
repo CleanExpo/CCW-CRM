@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "00g_variants_updated_at"
 down_revision: str | None = "00f_add_pricing_tier_tables"

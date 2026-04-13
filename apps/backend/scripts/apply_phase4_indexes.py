@@ -81,7 +81,7 @@ async def apply_indexes():
                         except Exception as e:
                             # Ignore "already exists" errors
                             if "already exists" in str(e):
-                                print(f"  ⚠️  Index already exists, skipping...")
+                                print("  ⚠️  Index already exists, skipping...")
                             else:
                                 print(f"  ❌ Error: {e}")
                                 raise

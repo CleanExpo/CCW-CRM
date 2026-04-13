@@ -21,9 +21,10 @@ print("=" * 80)
 # Test 1: Verify schemas import successfully
 print("\n[TEST 1] Verifying schemas import...")
 try:
-    from src.db.schemas import OrderItemCreate, QuoteItemCreate, OrderCreate, QuoteCreate
-    from uuid import uuid4
     from datetime import date, timedelta
+    from uuid import uuid4
+
+    from src.db.schemas import OrderCreate, OrderItemCreate, QuoteCreate, QuoteItemCreate
     print("[PASS] Schemas imported successfully")
 except Exception as e:
     print(f"[FAIL] Could not import schemas: {e}")
@@ -37,11 +38,11 @@ try:
         product_id=test_product_id,
         quantity=0  # Should be rejected
     )
-    print(f"[FAIL] OrderItemCreate accepted quantity=0 (should reject)")
+    print("[FAIL] OrderItemCreate accepted quantity=0 (should reject)")
     sys.exit(1)
 except Exception as e:
     if "quantity" in str(e).lower() or "greater" in str(e).lower():
-        print(f"[PASS] OrderItemCreate correctly rejected quantity=0")
+        print("[PASS] OrderItemCreate correctly rejected quantity=0")
         print(f"       Error: {e}")
     else:
         print(f"[WARN] OrderItemCreate rejected but with unexpected error: {e}")
@@ -54,11 +55,11 @@ try:
         product_id=test_product_id,
         quantity=-5  # Should be rejected
     )
-    print(f"[FAIL] OrderItemCreate accepted negative quantity (should reject)")
+    print("[FAIL] OrderItemCreate accepted negative quantity (should reject)")
     sys.exit(1)
 except Exception as e:
     if "quantity" in str(e).lower() or "greater" in str(e).lower():
-        print(f"[PASS] OrderItemCreate correctly rejected negative quantity")
+        print("[PASS] OrderItemCreate correctly rejected negative quantity")
     else:
         print(f"[WARN] Rejected but with unexpected error: {e}")
 
@@ -70,7 +71,7 @@ try:
         product_id=test_product_id,
         quantity=5
     )
-    print(f"[PASS] OrderItemCreate accepted valid quantity=5")
+    print("[PASS] OrderItemCreate accepted valid quantity=5")
 except Exception as e:
     print(f"[FAIL] OrderItemCreate rejected valid quantity: {e}")
     sys.exit(1)
@@ -83,11 +84,11 @@ try:
         product_id=test_product_id,
         quantity=0  # Should be rejected
     )
-    print(f"[FAIL] QuoteItemCreate accepted quantity=0 (should reject)")
+    print("[FAIL] QuoteItemCreate accepted quantity=0 (should reject)")
     sys.exit(1)
 except Exception as e:
     if "quantity" in str(e).lower():
-        print(f"[PASS] QuoteItemCreate correctly rejected quantity=0")
+        print("[PASS] QuoteItemCreate correctly rejected quantity=0")
     else:
         print(f"[WARN] Rejected but with unexpected error: {e}")
 
@@ -100,11 +101,11 @@ try:
         status="draft",
         items=[]  # Empty - should be rejected
     )
-    print(f"[FAIL] OrderCreate accepted empty items array (should reject)")
+    print("[FAIL] OrderCreate accepted empty items array (should reject)")
     sys.exit(1)
 except Exception as e:
     if "items" in str(e).lower() or "length" in str(e).lower():
-        print(f"[PASS] OrderCreate correctly rejected empty items array")
+        print("[PASS] OrderCreate correctly rejected empty items array")
         print(f"       Error: {e}")
     else:
         print(f"[WARN] Rejected but with unexpected error: {e}")
@@ -120,11 +121,11 @@ try:
         valid_until=valid_until,
         items=[]  # Empty - should be rejected
     )
-    print(f"[FAIL] QuoteCreate accepted empty items array (should reject)")
+    print("[FAIL] QuoteCreate accepted empty items array (should reject)")
     sys.exit(1)
 except Exception as e:
     if "items" in str(e).lower() or "length" in str(e).lower():
-        print(f"[PASS] QuoteCreate correctly rejected empty items array")
+        print("[PASS] QuoteCreate correctly rejected empty items array")
         print(f"       Error: {e}")
     else:
         print(f"[WARN] Rejected but with unexpected error: {e}")
@@ -143,11 +144,11 @@ try:
         items=[quote_item]
         # Missing valid_until - should be rejected
     )
-    print(f"[FAIL] QuoteCreate accepted missing valid_until (should reject)")
+    print("[FAIL] QuoteCreate accepted missing valid_until (should reject)")
     sys.exit(1)
 except Exception as e:
     if "valid_until" in str(e).lower() or "required" in str(e).lower():
-        print(f"[PASS] QuoteCreate correctly rejected missing valid_until")
+        print("[PASS] QuoteCreate correctly rejected missing valid_until")
         print(f"       Error: {e}")
     else:
         print(f"[WARN] Rejected but with unexpected error: {e}")
@@ -165,7 +166,7 @@ try:
         status="draft",
         items=[order_item]
     )
-    print(f"[PASS] Valid OrderCreate accepted")
+    print("[PASS] Valid OrderCreate accepted")
 
     # Valid quote
     quote_item = QuoteItemCreate(product_id=test_product_id, quantity=10)
@@ -176,7 +177,7 @@ try:
         valid_until=valid_until,
         items=[quote_item]
     )
-    print(f"[PASS] Valid QuoteCreate accepted")
+    print("[PASS] Valid QuoteCreate accepted")
 except Exception as e:
     print(f"[FAIL] Valid payloads rejected: {e}")
     sys.exit(1)

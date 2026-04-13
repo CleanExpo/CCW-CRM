@@ -1,8 +1,6 @@
 """Page parser - Extract metadata from Next.js page.tsx files."""
 
-import json
 import re
-import subprocess
 from pathlib import Path
 from typing import Any
 

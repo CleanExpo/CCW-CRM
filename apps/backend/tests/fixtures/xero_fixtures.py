@@ -8,8 +8,6 @@ Part of Phase 5 (Autonomous Development Framework) - Week 2 implementation.
 import pytest
 
 from src.testing.xero_mock import (
-    XeroMockClient,
-    XeroMockConfig,
     XeroMockMode,
     create_xero_mock,
 )

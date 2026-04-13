@@ -2,11 +2,12 @@
 
 import asyncio
 import sys
+
 sys.path.insert(0, 'C:\\CCW-Online ERP\\apps\\backend')
 
 from tests.load.conftest import ScenarioRunner
-from tests.load.generators.products import ProductScenarioGenerator
 from tests.load.generators.customers import CustomerScenarioGenerator
+from tests.load.generators.products import ProductScenarioGenerator
 
 
 async def main():

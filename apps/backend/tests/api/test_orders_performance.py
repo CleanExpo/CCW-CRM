@@ -5,18 +5,19 @@ Tests verify that optimizations are working:
 2. Batch stock reservation
 3. Batch stock deduction
 """
-import pytest
 from decimal import Decimal
 from uuid import uuid4
-from sqlalchemy import select, func
+
+import pytest
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.demo_models import Order, OrderItem, Product, Customer
-from src.db.inventory_models import ProductStockByLocation, StockReservation
 from src.api.routes.orders import (
     deduct_stock_for_order,
     reserve_stock_for_order,
 )
+from src.db.demo_models import Customer, Order, OrderItem, Product
+from src.db.inventory_models import ProductStockByLocation, StockReservation
 
 
 @pytest.mark.asyncio

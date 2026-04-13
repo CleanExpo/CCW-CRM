@@ -1,6 +1,8 @@
 """Verify supplier and shipment tracking tables exist."""
 import asyncio
+
 from sqlalchemy import text
+
 from src.config.database import async_engine
 
 

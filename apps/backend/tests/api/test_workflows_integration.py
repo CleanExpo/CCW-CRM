@@ -4,8 +4,8 @@ Workflows Integration Tests
 Tests for workflows SLA escalation and execution stats endpoints (Phase 2 - Batch 2C)
 """
 
-import pytest
 from fastapi.testclient import TestClient
+
 from src.api.main import app
 
 client = TestClient(app)

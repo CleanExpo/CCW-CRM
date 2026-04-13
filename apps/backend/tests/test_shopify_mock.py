@@ -10,12 +10,9 @@ import asyncio
 import pytest
 
 from src.testing.shopify_mock import (
-    ShopifyMockClient,
-    ShopifyMockConfig,
     ShopifyMockMode,
     create_shopify_mock,
 )
-
 
 # ============================================================
 # BASIC FUNCTIONALITY TESTS

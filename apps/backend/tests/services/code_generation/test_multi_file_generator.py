@@ -3,17 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from src.services.code_generation.multi_file_generator import (
     FeatureFile,
     FeatureRequest,
-    FeatureResult,
     MultiFileGenerator,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

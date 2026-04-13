@@ -6,7 +6,6 @@ Tests for reconciliation match-suggestions and auto-match endpoints.
 
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 
 from src.api.main import app

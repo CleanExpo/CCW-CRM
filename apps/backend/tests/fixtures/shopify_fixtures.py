@@ -8,8 +8,6 @@ Part of Phase 5 (Autonomous Development Framework) - Week 2 implementation.
 import pytest
 
 from src.testing.shopify_mock import (
-    ShopifyMockClient,
-    ShopifyMockConfig,
     ShopifyMockMode,
     create_shopify_mock,
 )

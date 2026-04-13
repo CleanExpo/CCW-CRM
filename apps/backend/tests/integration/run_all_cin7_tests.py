@@ -1,7 +1,7 @@
 """Run all Cin7 tests (Phase 1+2+3) outside pytest to avoid conftest.py deps."""
 
-import sys
 import os
+import sys
 
 # Ensure correct PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -25,7 +25,7 @@ def check(desc, condition):
 # PHASE 1: Settings + Client tests
 # ============================================================
 
-from src.config.cin7_settings import Cin7Settings, get_cin7_settings
+from src.config.cin7_settings import Cin7Settings  # noqa: E402
 
 s = Cin7Settings()
 
@@ -38,12 +38,12 @@ check("p1 settings core_base_url", "dearsystems.com" in s.core_base_url)
 check("p1 settings omni_base_url", "cin7.com" in s.omni_base_url)
 
 # Demo client tests
-from src.integrations.cin7.demo_client import Cin7CoreDemoClient, Cin7OmniDemoClient
+from src.integrations.cin7.demo_client import Cin7CoreDemoClient, Cin7OmniDemoClient  # noqa: E402
 
 core_demo = Cin7CoreDemoClient()
 omni_demo = Cin7OmniDemoClient()
 
-import asyncio
+import asyncio  # noqa: E402
 
 
 async def run_demo_tests():
@@ -132,7 +132,7 @@ passed += dp
 failed += df
 
 # Unified client
-from src.integrations.cin7.client import Cin7Client
+from src.integrations.cin7.client import Cin7Client  # noqa: E402
 
 check("p1 unified client has core", hasattr(Cin7Client, "__init__"))
 
@@ -144,20 +144,20 @@ p1_failed = failed
 # PHASE 2: Product + Inventory sync tests
 # ============================================================
 
-from src.db.demo_models import ProductCategory
-from src.db.inventory_models import StoreLocation
-from src.integrations.cin7.product_sync import (
+from src.db.demo_models import ProductCategory  # noqa: E402
+from src.db.inventory_models import StoreLocation  # noqa: E402
+from src.integrations.cin7.inventory_sync import (  # noqa: E402
+    CIN7_TO_ERP_LOCATION,
+    Cin7InventorySyncer,
+    map_cin7_location,
+    map_erp_location,
+)
+from src.integrations.cin7.product_sync import (  # noqa: E402
     CIN7_TO_ERP_CATEGORY,
     ERP_TO_CIN7_CATEGORY,
     Cin7ProductSyncer,
     map_cin7_category,
     map_erp_category,
-)
-from src.integrations.cin7.inventory_sync import (
-    CIN7_TO_ERP_LOCATION,
-    Cin7InventorySyncer,
-    map_cin7_location,
-    map_erp_location,
 )
 
 # Category mapping
@@ -269,15 +269,15 @@ print(f"  Phase 2: {p2_passed} passed, {p2_failed} failed")
 # PHASE 3: Customer + Sales + Quotes sync tests
 # ============================================================
 
-from src.db.demo_models import OrderStatus, QuoteStatus
-from src.integrations.cin7.customer_sync import (
+from src.db.demo_models import OrderStatus, QuoteStatus  # noqa: E402
+from src.integrations.cin7.customer_sync import (  # noqa: E402
     extract_core_customer_fields,
     extract_omni_contact_fields,
     generate_customer_number,
     map_erp_customer_to_core,
     map_erp_customer_to_omni,
 )
-from src.integrations.cin7.sales_sync import (
+from src.integrations.cin7.sales_sync import (  # noqa: E402
     CIN7_CORE_ORDER_STATUS,
     CIN7_OMNI_ORDER_STATUS,
     CIN7_OMNI_QUOTE_STATUS,
@@ -505,7 +505,7 @@ check("p3 core missing id", Cin7SalesSyncer._extract_order_id({}, "core") is Non
 check("p3 omni missing id", Cin7SalesSyncer._extract_order_id({}, "omni") is None)
 
 # AST verification for cin7_crm.py endpoints
-import ast
+import ast  # noqa: E402
 
 _backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 with open(os.path.join(_backend_dir, "src", "api", "routes", "integrations", "cin7_crm.py")) as fh:
@@ -530,13 +530,7 @@ print(f"  Phase 3: {p3_passed} passed, {p3_failed} failed")
 # PHASE 4: Procurement (Suppliers + Purchase Orders)
 # ============================================================
 
-from src.integrations.cin7.supplier_sync import (
-    extract_core_supplier_fields,
-    generate_supplier_code,
-    map_erp_supplier_to_core,
-    map_erp_supplier_to_omni,
-)
-from src.integrations.cin7.purchase_sync import (
+from src.integrations.cin7.purchase_sync import (  # noqa: E402
     CIN7_CORE_PO_STATUS,
     CIN7_OMNI_PO_STATUS,
     ERP_TO_CIN7_CORE_PO_STATUS,
@@ -547,6 +541,12 @@ from src.integrations.cin7.purchase_sync import (
     map_cin7_omni_po_status,
     map_erp_po_to_core,
     map_erp_po_to_omni,
+)
+from src.integrations.cin7.supplier_sync import (  # noqa: E402
+    extract_core_supplier_fields,
+    generate_supplier_code,
+    map_erp_supplier_to_core,
+    map_erp_supplier_to_omni,
 )
 
 # Supplier field extraction
@@ -678,10 +678,13 @@ print(f"  Phase 4: {p4_passed} passed, {p4_failed} failed")
 # PHASE 5: Webhooks + Real-time Events
 # ============================================================
 
-import hashlib
-import hmac
+import hashlib  # noqa: E402
+import hmac  # noqa: E402
 
-from src.integrations.cin7.change_detector import (
+# Import cin7_webhooks directly to avoid integrations/__init__.py chain
+import importlib.util as _ilu  # noqa: E402
+
+from src.integrations.cin7.change_detector import (  # noqa: E402
     detect_customer_changes,
     detect_inventory_changes,
     detect_product_changes,
@@ -689,7 +692,7 @@ from src.integrations.cin7.change_detector import (
     format_modified_since,
     format_modified_since_omni,
 )
-from src.integrations.cin7.event_dispatcher import (
+from src.integrations.cin7.event_dispatcher import (  # noqa: E402
     ALL_CIN7_EVENTS,
     CIN7_EVENT_CUSTOMER_CHANGED,
     CIN7_EVENT_INVENTORY_CHANGED,
@@ -706,9 +709,6 @@ from src.integrations.cin7.event_dispatcher import (
     build_sales_event,
     build_sync_result_event,
 )
-
-# Import cin7_webhooks directly to avoid integrations/__init__.py chain
-import importlib.util as _ilu
 
 _wh_spec = _ilu.spec_from_file_location(
     "cin7_webhooks",
@@ -836,8 +836,9 @@ print(f"  Phase 5: {p5_passed} passed, {p5_failed} failed")
 # PHASE 6: AI Agents (forecasting + anomaly detection)
 # ============================================================
 
-import importlib.util as _ilu6
-import types as _types6
+import importlib.util as _ilu6  # noqa: E402
+import types as _types6  # noqa: E402
+
 
 # Mock BaseAgent to avoid asyncpg import chain
 class _MockBaseAgent6:
@@ -884,7 +885,7 @@ _an_mod = _ilu6.module_from_spec(_an_spec)
 _an_spec.loader.exec_module(_an_mod)
 
 # Forecasting pure functions
-from datetime import timedelta
+from datetime import timedelta  # noqa: E402
 
 calc_velocity = _fc_mod.calculate_sync_velocity
 estimate_reorder = _fc_mod.estimate_cin7_reorder_point
@@ -1016,20 +1017,32 @@ print(f"  Phase 7: {p7_passed} passed, {p7_failed} failed")
 # PHASE 8: Agents Protocol v1.0 (Governance Layer)
 # ============================================================
 
-from src.ai.protocol.models import (
+from src.ai.protocol.models import (  # noqa: E402
     AgentCard as _AgentCard8,
-    AgentMessage as _AgentMessage8,
+)
+from src.ai.protocol.models import (  # noqa: E402
     ConfidenceScore as _ConfidenceScore8,
+)
+from src.ai.protocol.models import (  # noqa: E402
     DelegationRequest as _DelegationRequest8,
-    EscalationTrigger as _EscalationTrigger8,
-    EscalationTriggerType as _EscalationTriggerType8,
+)
+from src.ai.protocol.models import (  # noqa: E402
     ErrorType as _ErrorType8,
-    HandoffPackage as _HandoffPackage8,
+)
+from src.ai.protocol.models import (  # noqa: E402
+    EscalationTrigger as _EscalationTrigger8,
+)
+from src.ai.protocol.models import (  # noqa: E402
+    EscalationTriggerType as _EscalationTriggerType8,
+)
+from src.ai.protocol.models import (  # noqa: E402
     MessageType as _MessageType8,
+)
+from src.ai.protocol.models import (  # noqa: E402
     PermissionTier as _PermissionTier8,
-    Priority as _Priority8,
+)
+from src.ai.protocol.models import (  # noqa: E402
     ProtocolVersion as _ProtocolVersion8,
-    Severity as _Severity8,
 )
 
 # Protocol Version
@@ -1046,12 +1059,20 @@ check("p8 card creation", _card8.agent_id == "test-agent")
 check("p8 card tier", _card8.permission_tier == _PermissionTier8.STANDARD)
 
 # Governor pure functions
-from src.ai.protocol.governor import (
-    validate_delegation as _validate_delegation8,
+from src.ai.protocol.governor import (  # noqa: E402
     classify_error as _classify_error8,
-    should_escalate as _should_escalate8,
-    validate_permissions as _validate_permissions8,
+)
+from src.ai.protocol.governor import (  # noqa: E402
     detect_delegation_loop as _detect_delegation_loop8,
+)
+from src.ai.protocol.governor import (  # noqa: E402
+    should_escalate as _should_escalate8,
+)
+from src.ai.protocol.governor import (  # noqa: E402
+    validate_delegation as _validate_delegation8,
+)
+from src.ai.protocol.governor import (  # noqa: E402
+    validate_permissions as _validate_permissions8,
 )
 
 # Delegation validation
@@ -1088,7 +1109,8 @@ check("p8 admin can delete", _validate_permissions8(_admin8, "delete") is True)
 check("p8 readonly no create", _validate_permissions8(_ro8, "create") is False)
 
 # Message bus
-from src.ai.protocol.message_bus import create_message as _cm8, create_response as _cr8, is_expired as _ie8
+from src.ai.protocol.message_bus import create_message as _cm8  # noqa: E402
+from src.ai.protocol.message_bus import create_response as _cr8  # noqa: E402
 
 _msg8 = _cm8("a", "b", _MessageType8.REQUEST, {"key": "val"})
 check("p8 message sender", _msg8.sender_id == "a")
@@ -1097,14 +1119,17 @@ check("p8 response correlation", _resp8.correlation_id == _msg8.correlation_id)
 check("p8 response type", _resp8.message_type == _MessageType8.RESPONSE)
 
 # Error handler
-from src.ai.protocol.error_handler import classify_exception as _ce8, should_retry as _sr8, calculate_backoff as _cb8
+from src.ai.protocol.error_handler import calculate_backoff as _cb8  # noqa: E402
+from src.ai.protocol.error_handler import classify_exception as _ce8  # noqa: E402
+from src.ai.protocol.error_handler import should_retry as _sr8  # noqa: E402
 
 check("p8 classify timeout", _ce8(TimeoutError("t")).retryable is True)
 check("p8 retry allowed", _sr8(_ce8(TimeoutError("t")), 0) is True)
 check("p8 backoff exponential", _cb8("exponential", 3, 1.0) == 8.0)
 
 # Confidence scoring
-from src.ai.protocol.confidence import score_from_execution as _sfe8, aggregate_confidence as _ac8
+from src.ai.protocol.confidence import aggregate_confidence as _ac8  # noqa: E402
+from src.ai.protocol.confidence import score_from_execution as _sfe8  # noqa: E402
 
 check("p8 fast execution", _sfe8(500, 1000) == 1.0)
 _agg8 = _ac8({"a": 0.9, "b": 0.8})

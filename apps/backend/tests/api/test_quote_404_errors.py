@@ -2,10 +2,11 @@
 Test for ISS-002: Fix Quote Module 404 Errors
 Reproduce and fix issues where quotes are created but cannot be retrieved
 """
+import asyncio
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
-from uuid import uuid4
-import asyncio
 
 
 @pytest.mark.asyncio
@@ -111,7 +112,7 @@ async def test_quote_persist_after_commit(client: AsyncClient):
 
     # Try to get it
     get_response = await client.get(f"/api/quotes/{quote_id}")
-    assert get_response.status_code == 200, f"Quote disappeared after commit"
+    assert get_response.status_code == 200, "Quote disappeared after commit"
 
 
 @pytest.mark.asyncio
@@ -155,7 +156,7 @@ async def test_quote_not_cascade_deleted(client: AsyncClient):
 
     # Quote should still exist regardless of update result
     get_response = await client.get(f"/api/quotes/{quote_id}")
-    assert get_response.status_code == 200, f"Quote was deleted when items were removed"
+    assert get_response.status_code == 200, "Quote was deleted when items were removed"
     if update_response.status_code == 200:
         assert len(get_response.json()["items"]) == 0
 

@@ -1,6 +1,5 @@
 """Tests for Prometheus metrics endpoint and autonomous development metrics."""
 
-import pytest
 from httpx import AsyncClient
 
 from src.monitoring.metrics import (

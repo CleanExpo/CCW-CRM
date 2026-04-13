@@ -16,7 +16,7 @@ output_lines = []
 # Always inject the prohibitions from CONSTITUTION (critical, compact)
 if constitution.exists():
     lines = constitution.read_text(encoding="utf-8").splitlines()
-    prohibition_lines = [l for l in lines if l.strip().startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8."))]
+    prohibition_lines = [line for line in lines if line.strip().startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8."))]
     output_lines.append("COMPASS CHECK (auto-injected) — PROHIBITIONS ACTIVE:")
     output_lines.extend(prohibition_lines[:8])
 

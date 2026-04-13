@@ -9,10 +9,11 @@ Generates 2,000 order management scenarios covering:
 """
 
 import random
+from collections.abc import Callable
+from typing import List, Tuple
 from uuid import uuid4
-from typing import List, Tuple, Callable
-from faker import Faker
 
+from faker import Faker
 
 ORDER_STATUSES = ['draft', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']
 

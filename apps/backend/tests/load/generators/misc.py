@@ -7,9 +7,10 @@ Includes:
 - AI feature scenarios (500 total)
 """
 
-import random
+from collections.abc import Callable
+from typing import List, Tuple
 from uuid import uuid4
-from typing import List, Tuple, Callable
+
 from faker import Faker
 
 

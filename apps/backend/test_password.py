@@ -1,7 +1,9 @@
 """Debug password verification."""
 import asyncio
+
 import bcrypt
 from sqlalchemy import select
+
 from src.config.database import AsyncSessionLocal
 from src.db.models import User
 
