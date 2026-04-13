@@ -27,64 +27,20 @@ Full-stack Equipment Supplier ERP/CRM. Next.js + FastAPI + PostgreSQL (Supabase)
 10. New routes/pages/models: check `docs/catalogs/` first, update after adding.
 11. Three locked files exist — see Architecture doc for details.
 12. Commit messages: `feat|fix|chore|docs(scope): description`.
-13. Report changes using the progress format in PROGRESS.md after each task.
+13. Report changes in commit messages and PR descriptions; optional notes under `docs/` when useful.
 14. After any task, run relevant test scope and verify output before reporting done.
 
 ## Architecture
 
-Read `.claude/ARCHITECTURE.md` before structural changes or new features.
+Before structural changes or new features, read `docs/README.md`, `docs/catalogs/`, and `docs/PRODUCT-OVERVIEW.md` as needed.
 
 ## Standards
 
-Read `.claude/STANDARDS.md` before writing new modules or refactoring.
+Follow existing patterns in `src/` (TypeScript strict, shadcn/ui, `apiClient`). See `eslint.config.mjs` and this file’s Rules section.
 
 ## Testing
 
-Read `.claude/TESTING.md` for verification. After any task, run the relevant
-test scope and verify output before reporting completion.
-
-## Current State
-
-Read `.claude/PROGRESS.md` at the start of every new context window.
-Update it when completing tasks or making significant decisions.
-
-## Memory
-
-Living state is in `.claude/memory/`:
-- `current-state.md` — active sprint, in-progress work
-- `CONSTITUTION.md` — immutable prohibitions
-- `decisions-log.md` — append-only architecture decisions
-
-## Context Management
-
-Context will be compacted automatically. Do not stop tasks early due to
-context concerns. When compacting, preserve: modified file list, test
-commands, active task state from PROGRESS.md, and uncommitted decisions.
-
-When starting a fresh context window:
-1. Read `.claude/PROGRESS.md` for current state
-2. Read `git log --oneline -10` for recent changes
-3. Run `npm run type-check` to verify environment
-4. Continue from the next task in PROGRESS.md
-
-## Skills
-
-Skills live in `.claude/skills/[name]/SKILL.md`. Read `.claude/skills/CHROME-SKILLS-INDEX.md` for the full Chrome automation index.
-
-**Auto-discovery rule**: Before any task involving a browser, Linear, Vercel, Supabase, YouTube, or GitHub — scan `.claude/skills/` with Glob and use the matching skill. Do NOT ask the user which skill to use.
-
-**Auto-generation rule**: If no skill exists for a task, create `.claude/skills/[task-name]/SKILL.md` before starting. Follow the format of existing skills.
-
-### Chrome browser skills (use `mcp__Claude_in_Chrome__*` tools)
-
-| Skill directory       | Use for                                          |
-|-----------------------|--------------------------------------------------|
-| `chrome-linear`       | View/triage Linear board, update issue statuses  |
-| `chrome-vercel`       | Deployment status, build logs, env vars          |
-| `chrome-supabase`     | RLS audit, SQL editor, JWT hook activation       |
-| `chrome-youtube`      | Upload/schedule videos, channel status           |
-| `chrome-github`       | PRs, CI status, diffs, merges                    |
-| `chrome-prod`         | Full smoke test of ccw-crm-web.vercel.app        |
+Run `npm run test` / `npm run type-check` as appropriate. See `docs/testing/` for historical verification notes.
 
 ## Investigation Rule
 

@@ -2,7 +2,7 @@
 
 **Audience:** Leadership, product, customer success, and new engineers  
 **Intent:** Business-focused summary of what the product is, what it aims to achieve, what documentation says is built, and what still needs work  
-**Sources:** `README.md`, `docs/README.md`, `docs/project-root/CLAUDE.md`, `.claude/ARCHITECTURE.md`, user and training docs, gap analyses, PRDs, phase summaries, integration and page/route catalogs, and independent audit notes  
+**Sources:** `README.md`, `docs/README.md`, `docs/project-root/CLAUDE.md`, user and training docs, gap analyses, PRDs, phase summaries, integration and page/route catalogs, and independent audit notes  
 
 **Note on paths:** Some catalogs and audits refer to folders such as `apps/web` and `apps/backend`. The contributor guide also describes a **single package at the repo root** with the App Router under `src/app/`, and optional backend work under `backend/`. Treat path names as **documentation anchors**; your checkout may use the root `src/` layout described in `README.md` and `docs/project-root/CLAUDE.md`.
 
@@ -35,7 +35,7 @@ Documentation and internal audits describe a **broad, ambitious platform** (doze
 
 ## 3. Key features and functionality
 
-The following is synthesized from **user guide** (`docs/user-guide/USER_GUIDE.md`), **catalogs** (`docs/catalogs/`), and **architecture** (`.claude/ARCHITECTURE.md`). It is **not** a guarantee that every item is complete or exposed in every deployment; it reflects **documented product intent**.
+The following is synthesized from **user guide** (`docs/user-guide/USER_GUIDE.md`), **catalogs** (`docs/catalogs/`), and **architecture notes in `docs/`**. It is **not** a guarantee that every item is complete or exposed in every deployment; it reflects **documented product intent**.
 
 ### 3.1 Core ERP / CRM (day-to-day operations)
 
@@ -78,7 +78,7 @@ The following is synthesized from **user guide** (`docs/user-guide/USER_GUIDE.md
 
 ### 3.6 AI, automation, and “agentic” capabilities
 
-- **Agentic layer** documentation (`docs/AGENTIC_LAYER_IMPLEMENTATION.md`, `.claude/` agents/skills) describes **self-review loops, memory, orchestration**, and many **named agents** aligned to business domains (inventory, security, performance, etc.).
+- **Agentic layer** documentation (`docs/AGENTIC_LAYER_IMPLEMENTATION.md`) describes **self-review loops, memory, orchestration**, and agent-style automation themes aligned to business domains (inventory, security, performance, etc.).
 - **Training audit** notes that **many agents exist** but **end-user adoption and discoverability** are weak without UI entry points and training—i.e. **capability exists on paper** but **productization** is an ongoing theme.
 
 ### 3.7 Internationalization and content
@@ -125,7 +125,7 @@ This section reflects **written completion reports, catalogs, and guides**—**n
 ### 5.3 AI / engineering systems
 
 - **Agentic infrastructure** (prompting, feedback loops, memory patterns) is documented as **implemented and tested** to a point, with **hardening** called out as follow-up (`docs/AGENTIC_LAYER_IMPLEMENTATION.md`).
-- **Developer experience:** Extensive `.claude/` skills, commands, and workflows support **fast, repeatable delivery**—this is **delivery capability**, not end-user feature parity.
+- **Developer experience:** Tooling and scripts in-repo support **fast, repeatable delivery**—this is **delivery capability**, not end-user feature parity.
 
 ### 5.4 User-facing documentation
 
@@ -177,7 +177,7 @@ The **principal swarm review** (`docs/swarm-review-2026-03-24/00-master-synthesi
 | **End-user language** | `docs/user-guide/USER_GUIDE.md` |
 | **What screens exist (inventory)** | `docs/catalogs/PAGES.md` |
 | **What APIs exist (inventory)** | `docs/catalogs/ROUTES.md`, `docs/api/` |
-| **Integrations story** | `docs/catalogs/INTEGRATIONS.md`, `.claude/ARCHITECTURE.md` |
+| **Integrations story** | `docs/catalogs/INTEGRATIONS.md`, `docs/README.md` |
 | **Backlog narrative** | `docs/gaps/SUMMARY-REPORT.md`, `docs/PRD-CCW-GAPS-2026-03-24.md` |
 | **Risk / readiness tone** | `docs/swarm-review-2026-03-24/00-master-synthesis.md`, `docs/security/SECURITY_AUDIT_SUMMARY.md` |
 | **Onboarding strategy** | `docs/training-audit-2026-03-24/00-training-audit-overview.md` |

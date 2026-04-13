@@ -1,6 +1,12 @@
 # Temporary Claude files
 tmpclaude-*
 
+# Agent / planning trees removed from version control (recreate locally if needed)
+.claude/
+.docs/
+.journeys/
+.planning/
+
 # Dependencies
 node_modules/
 .pnpm-store/
