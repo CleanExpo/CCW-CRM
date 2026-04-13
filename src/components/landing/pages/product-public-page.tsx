@@ -2,8 +2,11 @@ import Link from 'next/link';
 import {
   ArrowRight,
   BarChart3,
+  Gauge,
   Link2,
+  MapPin,
   Shield,
+  Target,
   Users,
   Warehouse,
   Zap,
@@ -13,6 +16,29 @@ import { MarketingHeroBackdrop, ProductSpineGraphic, UiMockupStrip } from '@/com
 import { marketingSectionRule, marketingSectionY, marketingShell } from '@/components/landing/marketing-shell';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+const ICP_ROWS = [
+  {
+    title: 'Australian wholesale',
+    body: 'Branches, GST-aware workflows, and APAC hosting posture discussed in implementation docs.',
+    icon: MapPin,
+  },
+  {
+    title: 'Equipment & SKUs',
+    body: 'Catalog, variants, and stock semantics that match distributors—not lightweight retail SKUs only.',
+    icon: Target,
+  },
+  {
+    title: 'Multi-role teams',
+    body: 'Sales counter, warehouse floor, and finance office each get purpose-built paths—not one generic app.',
+    icon: Users,
+  },
+  {
+    title: 'Serious throughput',
+    body: 'Designed for order volume and integration load as you connect inventory and accounting systems.',
+    icon: Gauge,
+  },
+];
 
 const PILLARS = [
   {
@@ -142,6 +168,89 @@ export function ProductPublicPage() {
                 <span>AI-assisted workflows embedded where they earn trust—not a disconnected chat-only layer.</span>
               </li>
             </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className={cn(marketingSectionY, marketingSectionRule, 'bg-zinc-950/50')}>
+        <div className={marketingShell}>
+          <MarketingSectionHeading
+            kicker="Who it fits"
+            title="Built for distributors who move real stock"
+            description="If your world is quotes, branches, receiving docks, and reconciliation—not generic CRM leads—this product language will feel familiar."
+          />
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {ICP_ROWS.map(({ title, body, icon: Icon }) => (
+              <div
+                key={title}
+                className="rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900/70 to-black p-6 shadow-lg ring-1 ring-white/[0.04] transition-all hover:border-sky-500/20"
+              >
+                <div className="mb-4 inline-flex rounded-xl border border-sky-500/30 bg-sky-500/10 p-2.5">
+                  <Icon className="h-5 w-5 text-sky-200" strokeWidth={2} />
+                </div>
+                <h3 className="font-bold text-white">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={cn(marketingSectionY, marketingSectionRule)}>
+        <div className={cn(marketingShell, 'grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16')}>
+          <div>
+            <p className="text-xs font-bold tracking-[0.22em] text-sky-400 uppercase">Outcomes</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white md:text-4xl">
+              Fewer hand-offs, clearer ownership
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-zinc-300">
+              When catalog, customers, and orders share one spine, leadership stops reconciling three systems for every
+              escalation—and teams stop duplicating data in spreadsheets.
+            </p>
+            <ul className="mt-8 space-y-4 text-zinc-300">
+              <li className="flex gap-3 border-l-2 border-sky-500/50 pl-4">
+                <span className="font-semibold text-white">Single thread for an order</span> from quote acceptance through
+                pick/pack signals your floor can trust.
+              </li>
+              <li className="flex gap-3 border-l-2 border-violet-500/40 pl-4">
+                <span className="font-semibold text-white">Finance sees the same truth</span> sales promised—without manual
+                exports every Friday.
+              </li>
+            </ul>
+          </div>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_70%_30%,rgba(56,189,248,0.12),transparent_55%)]" />
+            <UiMockupStrip className="relative z-10 shadow-2xl" />
+          </div>
+        </div>
+      </section>
+
+      <section
+        className={cn(
+          marketingSectionY,
+          'relative overflow-hidden border-t border-white/[0.08] bg-gradient-to-br from-zinc-950 via-black to-indigo-950/40'
+        )}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_100%,rgba(99,102,241,0.15),transparent)]" />
+        <div className={cn(marketingShell, 'relative text-center')}>
+          <h2 className="text-2xl font-extrabold tracking-tight text-white md:text-3xl">See the full capability map</h2>
+          <p className="mx-auto mt-3 max-w-xl text-zinc-400">
+            Features, pricing, and rollout detail live on dedicated pages—same visual system, zero login required to browse.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Button
+              className="h-12 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-8 font-semibold text-white shadow-lg"
+              asChild
+            >
+              <Link href="/features">Browse features</Link>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-12 rounded-xl border-white/20 bg-white/5 px-8 font-semibold text-white hover:bg-white/10"
+              asChild
+            >
+              <Link href="/pricing">View pricing</Link>
+            </Button>
           </div>
         </div>
       </section>
