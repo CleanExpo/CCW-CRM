@@ -96,6 +96,8 @@ except ImportError:
 
 from .routes.integrations import (
     anthropic as anthropic_integration,
+)
+from .routes.integrations import (
     ap2,
     cin7,
     cin7_crm,
