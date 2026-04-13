@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -158,6 +158,8 @@ export default function DashboardPage() {
   const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(true);
 
   useEffect(() => {
+    const isMounted = { current: true };
+
     async function loadDashboardData() {
       try {
         // PHASE 4 OPTIMIZATION: Use aggregated endpoint (1 API call instead of 6)
@@ -176,6 +178,8 @@ export default function DashboardPage() {
               .get<CertStats>('/api/certifications/stats')
               .catch(() => ({ expiring_soon: 0, expiring_alerts: [] })),
           ]);
+
+        if (!isMounted.current) return;
 
         // Destructure aggregated data
         setMetrics(dashboardData.metrics);
@@ -216,6 +220,7 @@ export default function DashboardPage() {
         }
         setUrgentItems(urgent);
       } catch (error) {
+        if (!isMounted.current) return;
         console.error('Failed to load dashboard data:', error);
         setMetrics(null);
         setRevenueData([]);
@@ -224,11 +229,14 @@ export default function DashboardPage() {
         setActivity([]);
         setInsights([]);
       } finally {
-        setLoading(false);
+        if (isMounted.current) setLoading(false);
       }
     }
 
     loadDashboardData();
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   // PHASE 4: Handle real-time POS failure alerts
@@ -246,22 +254,27 @@ export default function DashboardPage() {
   // PHASE 4: Handle real-time dashboard metrics updates
   useEffect(() => {
     if (metricsUpdate) {
-      // Refresh specific metrics based on the update
-      async function refreshMetrics() {
+      let cancelled = false;
+
+      // Debounce refresh to avoid excessive API calls (wait 500ms before refreshing)
+      const timeout = setTimeout(async () => {
         try {
           const dashboardData = await apiClient.get<AggregatedDashboardData>(
             '/api/dashboard/aggregated'
           );
-          setMetrics(dashboardData.metrics);
-          setActivity(dashboardData.recent_activity);
+          if (!cancelled) {
+            setMetrics(dashboardData.metrics);
+            setActivity(dashboardData.recent_activity);
+          }
         } catch (error) {
-          console.error('Failed to refresh metrics:', error);
+          if (!cancelled) console.error('Failed to refresh metrics:', error);
         }
-      }
+      }, 500);
 
-      // Debounce refresh to avoid excessive API calls (wait 500ms before refreshing)
-      const timeout = setTimeout(refreshMetrics, 500);
-      return () => clearTimeout(timeout);
+      return () => {
+        cancelled = true;
+        clearTimeout(timeout);
+      };
     }
   }, [metricsUpdate]);
 
