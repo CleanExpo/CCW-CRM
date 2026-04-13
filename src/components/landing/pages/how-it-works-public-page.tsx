@@ -1,10 +1,34 @@
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CalendarClock, CheckCircle2, MessageSquare, Shield } from 'lucide-react';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
 import { MarketingHeroBackdrop, RolloutPathGraphic, UiMockupStrip } from '@/components/landing/marketing-page-visuals';
 import { marketingSectionRule, marketingSectionY, marketingShell } from '@/components/landing/marketing-shell';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+const PRINCIPLES = [
+  {
+    title: 'No forced big-bang',
+    body: 'Prove quote-to-order value first, then widen inventory and integrations when data ownership is clear.',
+    icon: Shield,
+  },
+  {
+    title: 'Branch reality first',
+    body: 'Workflows reflect how your sites actually operate—not a theoretical “best practice” chart from a slide.',
+    icon: MessageSquare,
+  },
+  {
+    title: 'Time-boxed milestones',
+    body: 'Each phase ends with demos and checkpoints so leadership stays aligned and teams know what “done” means.',
+    icon: CalendarClock,
+  },
+];
+
+const FIRST_PHASES = [
+  { window: 'Weeks 1–2', label: 'Discovery & alignment', detail: 'Map quotes, branches, and hand-offs you already run.' },
+  { window: 'Weeks 3–6', label: 'Core workflows live', detail: 'Catalog hygiene, quotes, and orders on one spine.' },
+  { window: 'Weeks 7–12', label: 'Depth & integrations', detail: 'Layer inventory themes and connector milestones by priority.' },
+];
 
 const STEPS = [
   {
@@ -57,6 +81,52 @@ export function HowItWorksPublicPage() {
         </div>
       </section>
 
+      <section className={cn(marketingSectionY, marketingSectionRule, 'bg-zinc-950/60')}>
+        <div className={marketingShell}>
+          <MarketingSectionHeading
+            kicker="Principles"
+            title="How we keep rollouts honest"
+            description="Discipline beats heroics—your operators already have day jobs, so the plan respects attention spans and cash flow."
+          />
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
+            {PRINCIPLES.map(({ title, body, icon: Icon }) => (
+              <div
+                key={title}
+                className="rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900/90 to-black p-8 shadow-xl ring-1 ring-white/[0.04]"
+              >
+                <div className="mb-4 inline-flex rounded-xl bg-white/[0.06] p-3 ring-1 ring-white/10">
+                  <Icon className="h-6 w-6 text-sky-200" strokeWidth={2} />
+                </div>
+                <h2 className="text-lg font-bold text-white">{title}</h2>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-400">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={cn(marketingSectionY, marketingSectionRule)}>
+        <div className={marketingShell}>
+          <MarketingSectionHeading
+            kicker="Early momentum"
+            title="What the first ~90 days often look like"
+            description="Timelines vary by branches and integrations—these bands are illustrative, not a fixed contract."
+          />
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
+            {FIRST_PHASES.map((p) => (
+              <div
+                key={p.label}
+                className="relative overflow-hidden rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 to-zinc-950 p-6 text-left shadow-lg"
+              >
+                <p className="text-xs font-bold tracking-wider text-sky-400 uppercase">{p.window}</p>
+                <h3 className="mt-2 text-lg font-bold text-white">{p.label}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-300">{p.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className={cn(marketingSectionY, marketingSectionRule, 'bg-zinc-950/40')}>
         <div className={marketingShell}>
           <MarketingSectionHeading
@@ -95,6 +165,32 @@ export function HowItWorksPublicPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className={cn(marketingSectionY, marketingSectionRule, 'border-white/[0.06]')}>
+        <div className={cn(marketingShell, 'grid gap-10 lg:grid-cols-2 lg:items-center')}>
+          <div>
+            <p className="text-xs font-bold tracking-[0.22em] text-sky-400 uppercase">Governance</p>
+            <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-white md:text-3xl">
+              Steering that does not vanish after kick-off
+            </h2>
+            <p className="mt-4 text-zinc-400">
+              We expect recurring reviews with your project sponsor—so priorities stay visible when the next urgent
+              shipment lands.
+            </p>
+            <ul className="mt-6 space-y-3 text-sm text-zinc-300">
+              <li className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" />
+                Weekly or fortnightly checkpoint options during active build-out.
+              </li>
+              <li className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" />
+                Clear owners for data migration vs change management vs integration.
+              </li>
+            </ul>
+          </div>
+          <UiMockupStrip className="mx-auto max-w-md shadow-2xl lg:ml-auto" />
         </div>
       </section>
 
