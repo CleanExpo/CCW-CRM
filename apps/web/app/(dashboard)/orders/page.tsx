@@ -13,7 +13,25 @@ import { OrderForm } from './components/OrderForm';
 import { DeleteOrderDialog } from './components/DeleteOrderDialog';
 import { BulkDeleteOrdersDialog } from './components/BulkDeleteOrdersDialog';
 import { OrderDetailDialog } from './components/OrderDetailDialog';
-import { Pencil, Trash2, Plus, Eye, Download, Copy, FileText, ShoppingCart } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  Eye,
+  Download,
+  Copy,
+  FileText,
+  ShoppingCart,
+  Search,
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Order } from './types';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
@@ -43,13 +61,27 @@ export default function OrdersPage() {
   // PHASE 4: Search state persistence - remembers pagination on navigation
   const { state: searchState, updateField } = useSearchState({
     key: 'orders-list',
-    defaultState: { page: 1, pageSize: 50 },
+    defaultState: { page: 1, pageSize: 50, search: '', status: '' },
   });
 
   const page = searchState.page || 1;
   const pageSize = searchState.pageSize || 50;
   const setPage = (value: number) => updateField('page', value);
   const setPageSize = (value: number) => updateField('pageSize', value);
+
+  const rawSearch = (searchState.search as string) || '';
+  const statusFilter = (searchState.status as string) || '';
+  const [searchInput, setSearchInput] = useState(rawSearch);
+
+  // Debounce the search input 300ms, reset to page 1 on change
+  useEffect(() => {
+    const id = setTimeout(() => {
+      updateField('search', searchInput);
+      updateField('page', 1);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [searchInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
@@ -60,9 +92,14 @@ export default function OrdersPage() {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<PaginatedResponse>(
-        `/api/orders?page=${page}&page_size=${pageSize}`
-      );
+      const params = new URLSearchParams({
+        page: String(page),
+        page_size: String(pageSize),
+      });
+      if (rawSearch) params.set('search', rawSearch);
+      if (statusFilter) params.set('status', statusFilter);
+
+      const response = await apiClient.get<PaginatedResponse>(`/api/orders?${params.toString()}`);
 
       // Map API response to frontend format
       const mappedOrders = response.items.map((order) => ({
@@ -88,7 +125,7 @@ export default function OrdersPage() {
       setLoading(false);
       setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
-  }, [page, pageSize, toast]);
+  }, [page, pageSize, rawSearch, statusFilter, toast]);
 
   useEffect(() => {
     loadOrders();
@@ -267,6 +304,39 @@ export default function OrdersPage() {
                   )}
                 </CardDescription>
               </div>
+            </div>
+            {/* Search + status filter toolbar */}
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="relative flex-1">
+                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                <Input
+                  placeholder="Search by order number…"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select
+                value={statusFilter || 'all'}
+                onValueChange={(v) => {
+                  updateField('status', v === 'all' ? '' : v);
+                  updateField('page', 1);
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-44">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent>
