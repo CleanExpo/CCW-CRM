@@ -7,8 +7,8 @@ import structlog
 from langgraph.graph import END, StateGraph
 
 from src.ai.base_agent import BaseAgent
-from src.ai.ollama_client import get_ollama_client
 from src.ai.orchestration import get_agent_registry
+from src.config import get_settings
 from src.ai.orchestration.supervisor_state import SupervisorState
 
 logger = structlog.get_logger(__name__)
@@ -69,7 +69,8 @@ class SupervisorAgent(BaseAgent):
         self.estimated_execution_time = 60
         self.requires_verification = False
 
-        self.ollama = get_ollama_client()
+        self._settings = get_settings()
+        self._anthropic_key = self._settings.anthropic_api_key
         self.registry = get_agent_registry()
         self.graph = self._build_graph()
 
@@ -106,16 +107,24 @@ class SupervisorAgent(BaseAgent):
         logger.info("Analyzing task", task_preview=task[:100])
 
         try:
-            # Use Ollama to classify intent
-            prompt = INTENT_CLASSIFICATION_PROMPT.format(task=task)
-            response = await self.ollama.chat(
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,  # Low temperature for consistent classification
-                max_tokens=200,
-            )
-
-            # Parse JSON response
             import json
+
+            import anthropic
+
+            # Use Anthropic claude-haiku for fast, cheap intent classification
+            # (~200 tokens per call, ~$0.0004 — negligible cost)
+            if not self._anthropic_key:
+                raise ValueError("ANTHROPIC_API_KEY not configured")
+
+            client = anthropic.AsyncAnthropic(api_key=self._anthropic_key)
+            prompt = INTENT_CLASSIFICATION_PROMPT.format(task=task)
+            message = await client.messages.create(
+                model="claude-haiku-4-5",
+                max_tokens=200,
+                temperature=0.3,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            response = message.content[0].text
 
             classification = json.loads(response.strip())
 
@@ -140,7 +149,7 @@ class SupervisorAgent(BaseAgent):
 
         # Initialize metadata
         state.setdefault("metadata", {})
-        state["metadata"]["analysis_method"] = "ollama" if not state.get("error") else "fallback"
+        state["metadata"]["analysis_method"] = "anthropic" if not state.get("error") else "fallback"
 
         return state
 
