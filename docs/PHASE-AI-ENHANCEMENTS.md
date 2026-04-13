@@ -895,7 +895,7 @@ export function InventoryForecastWidget() {
 - [ ] All frontend components use shadcn/ui and Tailwind CSS
 - [ ] Type-check passes (`pnpm run type-check`)
 - [ ] Lint passes (`pnpm run lint`)
-- [ ] All tests pass (`pnpm run test`)
+- [ ] `npm run check` passes; unit tests via `npx vitest run` when run
 
 ### Performance Requirements
 

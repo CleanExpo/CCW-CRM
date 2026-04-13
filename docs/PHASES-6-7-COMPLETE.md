@@ -541,7 +541,7 @@ locust -f locustfile_ai_features.py --host=http://localhost:8000
 
 1. **Run Full Test Suite**:
    ```bash
-   pnpm run check:all
+   npm run check
    pytest tests/integration/ -v
    ```
 

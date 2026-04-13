@@ -491,7 +491,7 @@ pnpm run verify
 
 ```bash
 # Run all checks (linting, type-check, tests)
-pnpm run check:all
+npm run check
 
 # Backend checks
 cd apps/backend

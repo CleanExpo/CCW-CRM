@@ -232,14 +232,14 @@ The framework uses a 4-agent system with clear responsibilities:
 
 **What It Does:**
 ```bash
-# Run all tests
-pnpm run check:all
+# Typecheck + lint (no separate npm test script at repo root)
+npm run check
 
 # Specific scopes:
-/test frontend    # pnpm --filter web run test
-/test backend     # cd apps/backend && pytest
-/test unit        # Unit tests only
-/test e2e         # E2E tests only
+/test frontend    # npx vitest run
+/test backend     # backend tests if present (e.g. pytest in backend/)
+/test unit        # npx vitest run
+/test e2e         # npx playwright test
 ```
 
 **Output:**
@@ -659,7 +659,7 @@ Every 5 messages:
 
 ```bash
 # MANDATORY before marking task complete
-pnpm run check:all
+npm run check
 ```
 
 ### 5. Report Progress

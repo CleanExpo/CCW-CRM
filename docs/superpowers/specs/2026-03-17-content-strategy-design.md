@@ -175,7 +175,7 @@ Execute in priority order, completing each module fully before moving to next:
 
 - Visual review of all pages
 - Test user flows (navigation, forms, error states)
-- Run full test suite: `pnpm run check:all`
+- Run typecheck and lint: `npm run check`
 - Screenshot key pages for documentation
 
 ### Step 6: Linear Update & Handoff
@@ -265,7 +265,7 @@ Execute in priority order, completing each module fully before moving to next:
 
 - ✅ No TypeScript errors (`pnpm run type-check`)
 - ✅ No ESLint warnings (`pnpm run lint`)
-- ✅ All tests pass (`pnpm run test`)
+- ✅ Typecheck and lint pass (`npm run check`); unit tests via `npx vitest run` when applicable
 - ✅ No broken layouts or visual regressions
 
 ### Accessibility

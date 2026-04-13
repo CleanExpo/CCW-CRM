@@ -717,7 +717,7 @@ await sse_service.publish("dashboard-activity", {
 ### Code Quality ✅
 - ✅ TypeScript type checking passes (`pnpm run type-check`)
 - ✅ ESLint passes (`pnpm run lint`)
-- ✅ All tests passing (`pnpm run test`)
+- ✅ `npm run check` passing; unit tests via `npx vitest run` when run
 - ✅ No console errors in browser
 - ✅ No memory leaks detected
 

@@ -32,7 +32,7 @@ ISS-029 validates the complete integration test suite for CCW-Online ERP, ensuri
 ./scripts/verify-integration-tests.sh
 
 # Manual test execution
-pnpm run test                    # All tests
+npx vitest run                   # Unit tests (no npm script)
 cd apps/backend && pytest -v           # Backend only
 cd apps/web && pnpm test run           # Frontend only
 
@@ -523,7 +523,7 @@ jobs:
 
 ```bash
 # Single command - all tests
-pnpm run test
+npx vitest run
 
 # Backend tests only
 cd apps/backend && pytest -v

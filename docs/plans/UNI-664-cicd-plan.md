@@ -97,12 +97,12 @@
    cd apps/web && pnpm test -- --reporter=verbose 2>&1 | grep -A 10 "FAIL"
    ```
 2. Fix the root cause of each failure OR add `test.skip` with a comment linking to the backlog issue (UNI-1254 covers missing Vitest tests).
-3. Confirm `pnpm run test` passes with zero failures.
+3. Confirm `npm run check` passes; run `npx vitest run` for unit tests with zero failures.
 4. Delete `.github/workflows/e2e-tests.yml` (its logic is already in `ci.yml` under the `e2e-tests` job). This avoids double-billing runner minutes and confusing duplicate statuses on PRs.
 
 **Acceptance criteria:**
 
-- `pnpm run test` exits 0 with no failures.
+- `npm run check` exits 0; `npx vitest run` exits 0 with no failures when tests are run.
 - Only one E2E workflow file exists (in `ci.yml`).
 - `ci.yml` passes end-to-end on `main` and on a test PR.
 
@@ -509,7 +509,7 @@ After UNI-664 is complete, the following secrets must be present:
 
 ## Definition of Done for UNI-664
 
-- [ ] `pnpm run test` exits 0 with no failures (SUB-1)
+- [ ] `npm run check` and `npx vitest run` exit 0 with no failures (SUB-1)
 - [ ] `ci.yml` runs successfully on every PR to `main`
 - [ ] Every PR to `main` receives a bot comment with Vercel preview URL (SUB-3)
 - [ ] GitHub `staging` environment exists with secrets configured (SUB-2)
