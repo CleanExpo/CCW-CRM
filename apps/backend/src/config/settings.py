@@ -245,6 +245,12 @@ class Settings(BaseSettings):
         default=24, description="Performance metrics retention in hours"
     )
 
+    # BetterStack Log Drain
+    betterstack_source_token: str = Field(
+        default="",
+        description="BetterStack source token for log drain (https://logs.betterstack.com)",
+    )
+
     # Sentry Error Tracking
     sentry_dsn: str = Field(
         default="",

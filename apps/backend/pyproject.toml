@@ -45,6 +45,7 @@ dependencies = [
     "anthropic>=0.39.0", # Claude API for code generation
     "sse-starlette>=3.2.0",
     "sentry-sdk[fastapi]>=2.52.0",
+    "logtail-python>=0.3.0",  # BetterStack log drain
     # Supabase client (state store, RAG storage, migrations)
     "supabase>=2.0.0",
 ]
