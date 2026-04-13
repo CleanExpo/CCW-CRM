@@ -126,6 +126,8 @@ class CustomerBase(BaseModel):
     xero_synced_at: datetime | None = None
     is_active: bool = True
 
+
+class CustomerCreate(CustomerBase):
     @field_validator(
         "customer_number",
         "company_name",
@@ -139,14 +141,10 @@ class CustomerBase(BaseModel):
     )
     @classmethod
     def sanitise_string_fields(cls, v: str | None) -> str | None:
-        """Escape HTML/XSS payloads and strip whitespace."""
+        """Escape HTML/XSS payloads and strip whitespace on input."""
         if v is None or not isinstance(v, str):
             return v
         return html.escape(v.strip())
-
-
-class CustomerCreate(CustomerBase):
-    pass
 
 
 class CustomerUpdate(BaseModel):
