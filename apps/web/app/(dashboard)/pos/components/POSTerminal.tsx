@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -12,9 +13,10 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Monitor, CheckCircle2 } from 'lucide-react';
+import { MapPin, Monitor, CheckCircle2, Search, X } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
+import { Customer } from '@/lib/api/customers';
 import { ProductSearch } from './ProductSearch';
 import { Cart } from './Cart';
 import { PaymentPanel } from './PaymentPanel';
@@ -42,6 +44,13 @@ export function POSTerminal() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Optional customer lookup
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerResults, setCustomerResults] = useState<Customer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
+  const customerSearchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load initial data
   const loadPOSData = useCallback(async () => {
@@ -77,6 +86,44 @@ export function POSTerminal() {
   useEffect(() => {
     loadPOSData();
   }, [loadPOSData]);
+
+  // Debounced customer search
+  const handleCustomerSearchChange = useCallback((value: string) => {
+    setCustomerSearch(value);
+    setCustomerSearchOpen(true);
+
+    if (customerSearchRef.current) clearTimeout(customerSearchRef.current);
+
+    if (!value.trim()) {
+      setCustomerResults([]);
+      return;
+    }
+
+    customerSearchRef.current = setTimeout(async () => {
+      try {
+        const result = await apiClient.get<{ items: Customer[] }>(
+          `/api/customers?search=${encodeURIComponent(value)}&page_size=8`
+        );
+        setCustomerResults(result.items ?? []);
+      } catch {
+        setCustomerResults([]);
+      }
+    }, 300);
+  }, []);
+
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setCustomerSearch(customer.company_name);
+    setCustomerSearchOpen(false);
+    setCustomerResults([]);
+  };
+
+  const handleClearCustomer = () => {
+    setSelectedCustomer(null);
+    setCustomerSearch('');
+    setCustomerResults([]);
+    setCustomerSearchOpen(false);
+  };
 
   // Filter terminals by selected location
   const locationTerminals = terminals.filter((t) => t.location_code === selectedLocation);
@@ -169,6 +216,7 @@ export function POSTerminal() {
       const request: CreateTransactionRequest = {
         terminal_id: selectedTerminal,
         sales_staff_id: selectedStaffId || undefined,
+        customer_id: selectedCustomer?.id || undefined,
         payment_method: method,
         amount: total,
         items: cartItems.map((item) => ({
@@ -276,6 +324,48 @@ export function POSTerminal() {
       </div>
 
       <Separator />
+
+      {/* Optional customer lookup */}
+      <div className="relative">
+        <div className="flex items-center gap-2">
+          <Search className="text-muted-foreground h-4 w-4 shrink-0" />
+          <Input
+            placeholder="Customer (optional — leave blank for walk-in)"
+            value={customerSearch}
+            onChange={(e) => handleCustomerSearchChange(e.target.value)}
+            onFocus={() => customerSearch && setCustomerSearchOpen(true)}
+            className="flex-1"
+          />
+          {selectedCustomer && (
+            <button
+              type="button"
+              onClick={handleClearCustomer}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Clear customer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {customerSearchOpen && customerResults.length > 0 && (
+          <div className="bg-background border-border absolute top-full right-0 left-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-md border shadow-md">
+            {customerResults.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className="hover:bg-accent w-full px-4 py-2 text-left text-sm"
+                onClick={() => handleSelectCustomer(c)}
+              >
+                <span className="font-medium">{c.company_name}</span>
+                {c.customer_number && (
+                  <span className="text-muted-foreground ml-2 text-xs">#{c.customer_number}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Mobile: tabbed layout */}
       <div className="lg:hidden">
