@@ -3,7 +3,7 @@
 import hashlib
 import hmac
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 import structlog
@@ -44,7 +44,7 @@ async def handle_contact_form_webhook(
     request: Request,
     x_webhook_signature: Annotated[str | None, Header()] = None,
     settings: Settings = Depends(get_settings),
-):
+) -> dict[str, Any]:
     """
     Webhook endpoint for contact form submissions.
 
@@ -106,7 +106,7 @@ async def handle_demo_request_webhook(
     request: Request,
     x_webhook_signature: Annotated[str | None, Header()] = None,
     settings: Settings = Depends(get_settings),
-):
+) -> dict[str, Any]:
     """
     Webhook endpoint for demo request submissions.
 
