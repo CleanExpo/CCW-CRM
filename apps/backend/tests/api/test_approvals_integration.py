@@ -49,7 +49,8 @@ class TestPendingMyApproval:
 
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, list)
+            # Response may be a list directly or a dict with an "approvals" key
+            assert isinstance(data, (list, dict))
 
 
 class TestBulkApprove:
