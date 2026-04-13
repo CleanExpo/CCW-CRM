@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Layers3, LogIn } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { marketingShell } from '@/components/landing/marketing-shell';
 
@@ -61,16 +61,16 @@ export function MarketingHeader() {
         </nav>
 
         <div className="flex shrink-0 justify-center md:justify-end">
-          <Button
-            size="sm"
-            className="rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 px-5 font-semibold text-white shadow-lg shadow-sky-500/25 hover:opacity-95"
-            asChild
+          <Link
+            href="/login"
+            className={cn(
+              buttonVariants({ variant: 'gradient', size: 'sm' }),
+              'min-h-9 min-w-[7.5rem] rounded-lg px-5 text-sm font-semibold shadow-lg shadow-sky-500/30 ring-1 ring-white/20 hover:brightness-110'
+            )}
           >
-            <Link href="/login">
-              <LogIn className="mr-1.5 h-4 w-4" />
-              Log in
-            </Link>
-          </Button>
+            <LogIn className="h-4 w-4 shrink-0" aria-hidden />
+            Log in
+          </Link>
         </div>
       </div>
     </header>
