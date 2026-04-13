@@ -11,14 +11,22 @@ from src.api.deps import get_current_user
 from src.api.main import app
 
 
-# Override auth dependency so validation tests reach Pydantic layer (422)
-# instead of being blocked by auth (401).  DB is NOT overridden — tests
-# that pass auth and hit DB code may get 500, which is acceptable for
-# structural smoke tests (all assertions use `in [...]` status checks).
 async def _mock_user():
+    """Bypass auth so tests reach Pydantic validation (422) not auth (401)."""
     return {"id": "00000000-0000-0000-0000-000000000001", "email": "test@test.com"}
 
-app.dependency_overrides[get_current_user] = _mock_user
+
+@pytest.fixture(autouse=True)
+def _override_auth():
+    """Set auth override before each test, restore after.
+
+    Module-level overrides get wiped by conftest's app.dependency_overrides.clear()
+    so we re-apply per-test via this autouse fixture.
+    """
+    app.dependency_overrides[get_current_user] = _mock_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
 
 client = TestClient(app, raise_server_exceptions=False)
 
