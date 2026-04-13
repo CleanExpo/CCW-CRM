@@ -122,7 +122,7 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager."""
-    setup_logging(debug=settings.debug)
+    setup_logging(debug=settings.debug, betterstack_token=settings.betterstack_source_token)
     logger.info("Starting application", environment=settings.environment)
 
     # Validate production secrets at startup — fail fast on misconfiguration
