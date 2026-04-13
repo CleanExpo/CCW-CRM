@@ -28,7 +28,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import get_settings
-from src.db.demo_models import Customer, Order, Quote
+from src.db.demo_models import Customer, Order, Quote, User
+from src.db.workflow_models import InAppNotification
 
 
 class NotificationEvent(str, Enum):
@@ -424,7 +425,54 @@ class NotificationService:
             html_body=html_body,
         )
 
+        # Write in-app notification for all admin users
+        admin_result = await db.execute(
+            select(User).where(User.role == "admin")
+        )
+        admin_users = admin_result.scalars().all()
+        for admin in admin_users:
+            await self.write_in_app_notification(
+                db,
+                user_id=admin.id,
+                title="Quote Expiring Soon",
+                message=f"{quote.quote_number} expires in {days_remaining} day(s) — ${quote.total:,.2f}",
+                notification_type="system",
+                entity_type="quote",
+                entity_id=quote.id,
+            )
+        await db.commit()
+
         return await self.send_email(notification)
+
+    async def write_in_app_notification(
+        self,
+        db: AsyncSession,
+        *,
+        user_id: UUID,
+        title: str,
+        message: str,
+        notification_type: str,
+        entity_type: str | None = None,
+        entity_id: UUID | None = None,
+    ) -> None:
+        """Write a single in-app notification row for the given user."""
+        notification = InAppNotification(
+            user_id=user_id,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            is_read=False,
+        )
+        db.add(notification)
+        await db.flush()
+        logger.info(
+            "in_app_notification_written",
+            user_id=str(user_id),
+            title=title,
+            notification_type=notification_type,
+        )
 
     async def check_expiring_quotes(self, db: AsyncSession) -> int:
         """

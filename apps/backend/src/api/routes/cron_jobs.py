@@ -824,6 +824,24 @@ async def auto_reorder_inventory(
 
     logger.info("auto_reorder_cron: found low-stock products", count=len(low_stock_products))
 
+    # Write in-app notification for admin users about low-stock products
+    from src.db.demo_models import User as UserModel
+
+    admin_result = await db.execute(select(UserModel).where(UserModel.role == "admin"))
+    admin_users = admin_result.scalars().all()
+    notification_svc = get_notification_service()
+    for admin in admin_users:
+        await notification_svc.write_in_app_notification(
+            db,
+            user_id=admin.id,
+            title="Low Stock Alert",
+            message=f"{len(low_stock_products)} product(s) below reorder threshold — auto-reorder initiated",
+            notification_type="system",
+            entity_type="inventory",
+            entity_id=None,
+        )
+    await db.commit()
+
     created_pos: list[dict] = []
     skipped: list[dict] = []
 
