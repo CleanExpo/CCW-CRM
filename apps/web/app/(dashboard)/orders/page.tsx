@@ -80,7 +80,7 @@ export default function OrdersPage() {
       updateField('page', 1);
     }, 300);
     return () => clearTimeout(id);
-  }, [searchInput]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchInput, updateField]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
