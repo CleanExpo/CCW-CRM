@@ -44,7 +44,20 @@ from .models import (
     Severity,
 )
 
+try:
+    from .cards import ALL_CARDS, load_all_cards
+except ImportError:
+    ALL_CARDS = {}  # type: ignore[assignment]
+
+    def load_all_cards() -> dict:  # type: ignore[misc]
+        """Fallback when cards module is unavailable."""
+        return {}
+
+
 __all__ = [
+    # Cards
+    "ALL_CARDS",
+    "load_all_cards",
     # Models
     "AgentCard",
     "AgentMessage",

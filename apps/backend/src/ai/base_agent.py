@@ -15,6 +15,7 @@ from src.config.database import get_db_session as db_session_context
 
 if TYPE_CHECKING:
     from src.ai.orchestration.agent_registry import AgentHealthReport
+    from src.ai.protocol.models import AgentCard
 
 logger = structlog.get_logger(__name__)
 
@@ -336,6 +337,91 @@ class BaseAgent(ABC):
         finally:
             # Decrement active executions
             registry.decrement_active_executions(self.agent_id)
+
+    @property
+    def agent_card(self) -> "AgentCard | None":
+        """Look up this agent's protocol card from AgentRegistry.
+
+        Returns:
+            AgentCard if registered, None otherwise.
+        """
+        try:
+            from src.ai.orchestration import get_agent_registry
+
+            registry = get_agent_registry()
+            return registry.get_agent_card(self.agent_id)
+        except Exception as e:
+            logger.debug("Failed to retrieve agent card", agent_id=self.agent_id, error=str(e))
+            return None
+
+    async def protocol_execute(
+        self,
+        task: str,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Execute task with protocol governance (permission check + confidence scoring).
+
+        Wraps execute() with:
+        - Permission validation via AgentCard (gracefully skipped if card absent)
+        - ConfidenceScore calculation appended to result
+        - structlog protocol event
+
+        Args:
+            task: Task description or user input
+            context: Additional context for execution
+
+        Returns:
+            Execution result dict with ``confidence`` key added, or
+            ``{"error": "Permission denied", "agent_id": ...}`` if rejected.
+        """
+        from src.ai.protocol.governor import calculate_confidence, validate_permissions
+        from src.ai.protocol.models import ConfidenceScore
+
+        card = self.agent_card
+
+        # Permission check — skip gracefully if no card registered
+        if card is not None and not validate_permissions(card, "execute"):
+            logger.warning(
+                "Protocol execute: permission denied",
+                agent_id=self.agent_id,
+                agent_name=self.name,
+            )
+            return {"error": "Permission denied", "agent_id": self.agent_id, "execution_time_ms": 0}
+
+        start_time = time.time()
+        result = await self.execute(task, context)
+        execution_time_ms = int((time.time() - start_time) * 1000)
+
+        # Determine agent health for confidence calculation
+        health_score: float = 1.0
+        try:
+            health_report = await self.health_check()
+            from src.ai.orchestration import AgentStatus
+
+            health_score = (
+                1.0
+                if health_report.status == AgentStatus.ACTIVE
+                else (0.5 if health_report.status == AgentStatus.DEGRADED else 0.0)
+            )
+        except Exception as e:
+            logger.debug("health_check failed in protocol_execute", agent_id=self.agent_id, error=str(e))
+            health_score = 0.5
+
+        confidence: ConfidenceScore = calculate_confidence(
+            result, execution_time_ms, health_score
+        )
+
+        logger.info(
+            "protocol_execute",
+            agent_id=self.agent_id,
+            agent_name=self.name,
+            execution_time_ms=execution_time_ms,
+            confidence_score=confidence.score,
+            confidence_reasoning=confidence.reasoning,
+        )
+
+        result["_protocol"] = {"confidence": confidence.model_dump()}
+        return result
 
     def __repr__(self) -> str:
         """String representation of the agent."""

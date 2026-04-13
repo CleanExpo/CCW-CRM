@@ -7,11 +7,13 @@ Provides management endpoints for the protocol governance layer:
 - Protocol health and audit log
 """
 
+import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.ai.protocol.governor import get_protocol_governor
 from src.ai.protocol.message_bus import get_message_bus
@@ -78,6 +80,34 @@ class AuditLogResponse(BaseModel):
     total: int
 
 
+class EscalationRequest(BaseModel):
+    """Request to trigger an escalation."""
+
+    agent_id: str
+    reason: str
+    confidence_score: float
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
+class EscalationResponse(BaseModel):
+    """Escalation acknowledgement."""
+
+    acknowledged: bool
+    escalation_id: str
+    agent_id: str
+    reason: str
+    timestamp: str
+
+
+class ComplianceResponse(BaseModel):
+    """Agent protocol compliance response."""
+
+    agent_id: str
+    has_protocol_card: bool
+    compliance_level: str
+    details: dict[str, Any]
+
+
 # ─── Endpoints ────────────────────────────────────────────────────────────
 
 
@@ -117,6 +147,62 @@ async def list_agent_cards() -> list[dict[str, Any]]:
     except Exception as e:
         logger.error("Failed to list agent cards", error=str(e))
         return []
+
+
+@router.get("/agents/{agent_id}/compliance")
+async def get_agent_compliance(agent_id: str) -> ComplianceResponse:
+    """Get protocol compliance level for an agent."""
+    from src.ai.orchestration import get_agent_registry
+
+    registry = get_agent_registry()
+    metadata = registry.get_metadata(agent_id)
+
+    if metadata is None:
+        raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")
+
+    if metadata.agent_card is None:
+        return ComplianceResponse(
+            agent_id=agent_id,
+            has_protocol_card=False,
+            compliance_level="none",
+            details={},
+        )
+
+    card = metadata.agent_card
+
+    # Bronze: has agent_id, name, capabilities, permission_tier
+    bronze_fields = {
+        "agent_id": bool(getattr(card, "agent_id", None)),
+        "name": bool(getattr(card, "name", None)),
+        "capabilities": bool(getattr(card, "capabilities", None)),
+        "permission_tier": bool(getattr(card, "permission_tier", None)),
+    }
+    is_bronze = all(bronze_fields.values())
+
+    # Silver: bronze + boundaries, delegation_rules, escalation_triggers, timeout_seconds > 0
+    silver_fields = {
+        "boundaries": bool(getattr(card, "boundaries", None)),
+        "delegation_rules": bool(getattr(card, "delegation_rules", None)),
+        "escalation_triggers": bool(getattr(card, "escalation_triggers", None)),
+        "timeout_seconds_positive": (getattr(card, "timeout_seconds", 0) or 0) > 0,
+    }
+    is_silver = is_bronze and all(silver_fields.values())
+
+    if is_silver:
+        level = "silver"
+    elif is_bronze:
+        level = "bronze"
+    else:
+        level = "none"
+
+    details = {**bronze_fields, **silver_fields}
+
+    return ComplianceResponse(
+        agent_id=agent_id,
+        has_protocol_card=True,
+        compliance_level=level,
+        details=details,
+    )
 
 
 @router.get("/agents/{agent_id}")
@@ -209,3 +295,44 @@ async def get_audit_log(limit: int = 50) -> AuditLogResponse:
         entries=entries,
         total=len(all_entries),
     )
+
+
+@router.post("/escalate")
+async def escalate(request: EscalationRequest) -> EscalationResponse:
+    """Record an agent escalation event."""
+    try:
+        governor = get_protocol_governor()
+        escalation_id = str(uuid.uuid4())
+        timestamp = datetime.now(UTC).isoformat()
+
+        governor._record_event(
+            "escalation_triggered",
+            {
+                "escalation_id": escalation_id,
+                "agent_id": request.agent_id,
+                "reason": request.reason,
+                "confidence_score": request.confidence_score,
+                "context": request.context,
+                "timestamp": timestamp,
+            },
+        )
+
+        logger.warning(
+            "agent_escalation",
+            agent_id=request.agent_id,
+            reason=request.reason,
+            confidence_score=request.confidence_score,
+        )
+
+        governor._escalations_triggered += 1
+
+        return EscalationResponse(
+            acknowledged=True,
+            escalation_id=escalation_id,
+            agent_id=request.agent_id,
+            reason=request.reason,
+            timestamp=timestamp,
+        )
+    except Exception as e:
+        logger.error("escalation_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Escalation recording failed")
