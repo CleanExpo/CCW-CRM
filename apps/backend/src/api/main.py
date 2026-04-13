@@ -95,6 +95,7 @@ except ImportError:
     autonomous_dev = recommendations = search = test_data_gen = ai_inventory_forecast = None  # type: ignore[assignment]
 
 from .routes.integrations import (
+    anthropic as anthropic_integration,
     ap2,
     cin7,
     cin7_crm,
@@ -574,6 +575,7 @@ app.include_router(xero.router, prefix="/api", tags=["Xero Integration"])
 app.include_router(shopify.router, tags=["Shopify Integration"])
 app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
+app.include_router(anthropic_integration.router, tags=["Anthropic Integration"])
 app.include_router(elevenlabs.router, tags=["ElevenLabs Integration"])
 app.include_router(heygen.router, tags=["HeyGen Integration"])
 app.include_router(ap2.router, tags=["AP2 Integration"])
