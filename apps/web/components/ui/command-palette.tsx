@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 import {
   CommandDialog,
   CommandEmpty,
@@ -58,6 +59,7 @@ export function CommandPalette() {
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<SearchResult[]>([]);
   const [searching, setSearching] = React.useState(false);
+  const [searchError, setSearchError] = React.useState(false);
   const debouncedQuery = useDebounce(query, 300);
 
   React.useEffect(() => {
@@ -76,6 +78,7 @@ export function CommandPalette() {
     if (!open) {
       setQuery('');
       setResults([]);
+      setSearchError(false);
     }
   }, [open]);
 
@@ -87,6 +90,7 @@ export function CommandPalette() {
     }
     let cancelled = false;
     async function search() {
+      setSearchError(false);
       setSearching(true);
       try {
         const q = encodeURIComponent(debouncedQuery);
@@ -139,6 +143,12 @@ export function CommandPalette() {
             });
           }
         }
+
+        const allFailed =
+          customers.status === 'rejected' &&
+          products.status === 'rejected' &&
+          orders.status === 'rejected';
+        setSearchError(allFailed);
         setResults(next);
       } finally {
         if (!cancelled) setSearching(false);
@@ -147,120 +157,127 @@ export function CommandPalette() {
     search();
     return () => {
       cancelled = true;
+      setSearching(false);
     };
   }, [debouncedQuery]);
 
-  const navigate = (path: string) => {
-    setOpen(false);
-    router.push(path);
-  };
+  const navigate = React.useCallback(
+    (path: string) => {
+      setOpen(false);
+      router.push(path as Route);
+    },
+    [router]
+  );
 
-  const commands: Command[] = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      description: 'View overview and metrics',
-      icon: LayoutDashboard,
-      action: () => navigate('/dashboard'),
-      keywords: ['home', 'overview'],
-    },
-    {
-      id: 'products',
-      label: 'Products',
-      description: 'Manage product catalog',
-      icon: Package,
-      action: () => navigate('/products'),
-      keywords: ['catalog', 'items', 'inventory'],
-    },
-    {
-      id: 'customers',
-      label: 'Customers',
-      description: 'Manage customer accounts',
-      icon: Users,
-      action: () => navigate('/customers'),
-      keywords: ['clients', 'accounts'],
-    },
-    {
-      id: 'orders',
-      label: 'Orders',
-      description: 'View and manage orders',
-      icon: ShoppingCart,
-      action: () => navigate('/orders'),
-      keywords: ['sales', 'purchases'],
-    },
-    {
-      id: 'quotes',
-      label: 'Quotes',
-      description: 'Create and manage quotes',
-      icon: FileText,
-      action: () => navigate('/quotes'),
-      keywords: ['proposals', 'estimates'],
-    },
-    {
-      id: 'suppliers',
-      label: 'Suppliers',
-      description: 'Manage supplier relationships',
-      icon: Truck,
-      action: () => navigate('/suppliers'),
-      keywords: ['vendors'],
-    },
-    {
-      id: 'new-product',
-      label: 'New Product',
-      description: 'Create a new product',
-      icon: Package,
-      action: () => navigate('/products?action=new'),
-      keywords: ['create', 'add'],
-    },
-    {
-      id: 'new-customer',
-      label: 'New Customer',
-      description: 'Add a new customer',
-      icon: UserPlus,
-      action: () => navigate('/customers?action=new'),
-      keywords: ['create', 'add'],
-    },
-    {
-      id: 'new-quote',
-      label: 'New Quote',
-      description: 'Create a new quote',
-      icon: FileText,
-      action: () => navigate('/quotes?action=new'),
-      keywords: ['create', 'add', 'proposal'],
-    },
-    {
-      id: 'settings-account',
-      label: 'Account Settings',
-      description: 'Manage your account',
-      icon: Settings,
-      action: () => navigate('/settings/account'),
-      keywords: ['profile', 'preferences'],
-    },
-    {
-      id: 'settings-team',
-      label: 'Team Management',
-      description: 'Manage team members and roles',
-      icon: Users,
-      action: () => navigate('/settings/team'),
-      keywords: ['users', 'permissions'],
-    },
-    {
-      id: 'settings-company',
-      label: 'Company Settings',
-      description: 'Update company information',
-      icon: Building2,
-      action: () => navigate('/settings/company'),
-      keywords: ['organization', 'business'],
-    },
-    {
-      id: 'settings-billing',
-      label: 'Billing & Subscription',
-      description: 'Manage billing and plans',
-      icon: CreditCard,
-      action: () => navigate('/settings/billing'),
-      keywords: ['payment', 'subscription', 'plan'],
-    },
-  ];
+  const commands: Command[] = React.useMemo(
+    () => [
+      {
+        id: 'dashboard',
+        label: 'Dashboard',
+        description: 'View overview and metrics',
+        icon: LayoutDashboard,
+        action: () => navigate('/dashboard'),
+        keywords: ['home', 'overview'],
+      },
+      {
+        id: 'products',
+        label: 'Products',
+        description: 'Manage product catalog',
+        icon: Package,
+        action: () => navigate('/products'),
+        keywords: ['catalog', 'items', 'inventory'],
+      },
+      {
+        id: 'customers',
+        label: 'Customers',
+        description: 'Manage customer accounts',
+        icon: Users,
+        action: () => navigate('/customers'),
+        keywords: ['clients', 'accounts'],
+      },
+      {
+        id: 'orders',
+        label: 'Orders',
+        description: 'View and manage orders',
+        icon: ShoppingCart,
+        action: () => navigate('/orders'),
+        keywords: ['sales', 'purchases'],
+      },
+      {
+        id: 'quotes',
+        label: 'Quotes',
+        description: 'Create and manage quotes',
+        icon: FileText,
+        action: () => navigate('/quotes'),
+        keywords: ['proposals', 'estimates'],
+      },
+      {
+        id: 'suppliers',
+        label: 'Suppliers',
+        description: 'Manage supplier relationships',
+        icon: Truck,
+        action: () => navigate('/suppliers'),
+        keywords: ['vendors'],
+      },
+      {
+        id: 'new-product',
+        label: 'New Product',
+        description: 'Create a new product',
+        icon: Package,
+        action: () => navigate('/products?action=new'),
+        keywords: ['create', 'add'],
+      },
+      {
+        id: 'new-customer',
+        label: 'New Customer',
+        description: 'Add a new customer',
+        icon: UserPlus,
+        action: () => navigate('/customers?action=new'),
+        keywords: ['create', 'add'],
+      },
+      {
+        id: 'new-quote',
+        label: 'New Quote',
+        description: 'Create a new quote',
+        icon: FileText,
+        action: () => navigate('/quotes?action=new'),
+        keywords: ['create', 'add', 'proposal'],
+      },
+      {
+        id: 'settings-account',
+        label: 'Account Settings',
+        description: 'Manage your account',
+        icon: Settings,
+        action: () => navigate('/settings/account'),
+        keywords: ['profile', 'preferences'],
+      },
+      {
+        id: 'settings-team',
+        label: 'Team Management',
+        description: 'Manage team members and roles',
+        icon: Users,
+        action: () => navigate('/settings/team'),
+        keywords: ['users', 'permissions'],
+      },
+      {
+        id: 'settings-company',
+        label: 'Company Settings',
+        description: 'Update company information',
+        icon: Building2,
+        action: () => navigate('/settings/company'),
+        keywords: ['organization', 'business'],
+      },
+      {
+        id: 'settings-billing',
+        label: 'Billing & Subscription',
+        description: 'Manage billing and plans',
+        icon: CreditCard,
+        action: () => navigate('/settings/billing'),
+        keywords: ['payment', 'subscription', 'plan'],
+      },
+    ],
+    [navigate]
+  );
 
   const navigationCommands = commands.filter((cmd) =>
     ['dashboard', 'products', 'customers', 'orders', 'quotes', 'suppliers'].includes(cmd.id)
@@ -293,6 +310,8 @@ export function CommandPalette() {
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
               </div>
+            ) : searchError ? (
+              <CommandEmpty>Search unavailable — check your connection</CommandEmpty>
             ) : results.length === 0 ? (
               <CommandEmpty>No results for &ldquo;{debouncedQuery}&rdquo;</CommandEmpty>
             ) : (
