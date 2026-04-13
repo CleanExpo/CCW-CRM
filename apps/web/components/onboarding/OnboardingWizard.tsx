@@ -8,8 +8,9 @@ import { CheckCircle2 } from 'lucide-react';
 import { WelcomeStep } from './WelcomeStep';
 import { XeroConnectStep } from './XeroConnectStep';
 import { ShopifyConnectStep } from './ShopifyConnectStep';
+import { AnthropicConnectStep } from './AnthropicConnectStep';
 
-export type OnboardingStep = 'welcome' | 'xero' | 'shopify';
+export type OnboardingStep = 'welcome' | 'xero' | 'shopify' | 'anthropic';
 
 interface StepConfig {
   id: OnboardingStep;
@@ -34,6 +35,12 @@ const STEPS: StepConfig[] = [
     id: 'shopify',
     title: 'Connect Shopify',
     description: 'Sync products & stock',
+    optional: true,
+  },
+  {
+    id: 'anthropic',
+    title: 'Claude AI',
+    description: 'Activate AI features',
     optional: true,
   },
 ];
@@ -90,6 +97,8 @@ export function OnboardingWizard() {
         return <XeroConnectStep {...commonProps} />;
       case 'shopify':
         return <ShopifyConnectStep {...commonProps} />;
+      case 'anthropic':
+        return <AnthropicConnectStep {...commonProps} />;
     }
   };
 
