@@ -1,4 +1,5 @@
 """Pydantic schemas for ERP API."""
+import html
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from uuid import UUID
@@ -125,6 +126,24 @@ class CustomerBase(BaseModel):
     xero_synced_at: datetime | None = None
     is_active: bool = True
 
+    @field_validator(
+        "customer_number",
+        "company_name",
+        "contact_name",
+        "phone",
+        "address",
+        "city",
+        "state",
+        "postcode",
+        mode="before",
+    )
+    @classmethod
+    def sanitise_string_fields(cls, v: str | None) -> str | None:
+        """Escape HTML/XSS payloads and strip whitespace."""
+        if v is None or not isinstance(v, str):
+            return v
+        return html.escape(v.strip())
+
 
 class CustomerCreate(CustomerBase):
     pass
@@ -142,6 +161,23 @@ class CustomerUpdate(BaseModel):
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     is_active: bool | None = None
+
+    @field_validator(
+        "company_name",
+        "contact_name",
+        "phone",
+        "address",
+        "city",
+        "state",
+        "postcode",
+        mode="before",
+    )
+    @classmethod
+    def sanitise_string_fields(cls, v: str | None) -> str | None:
+        """Escape HTML/XSS payloads and strip whitespace."""
+        if v is None or not isinstance(v, str):
+            return v
+        return html.escape(v.strip())
 
 
 class Customer(CustomerBase):
