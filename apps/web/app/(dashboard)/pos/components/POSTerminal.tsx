@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin, Monitor, CheckCircle2 } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
@@ -210,7 +211,7 @@ export function POSTerminal() {
 
   if (loading) {
     return (
-      <div className="flex h-[600px] items-center justify-center">
+      <div className="flex h-64 items-center justify-center lg:h-[600px]">
         <div className="text-center">
           <div className="border-primary mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2" />
           <p className="text-muted-foreground">Loading POS Terminal...</p>
@@ -276,8 +277,54 @@ export function POSTerminal() {
 
       <Separator />
 
-      {/* Main Terminal Layout */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      {/* Mobile: tabbed layout */}
+      <div className="lg:hidden">
+        <Tabs defaultValue="products">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="cart">
+              Cart{cartItems.length > 0 ? ` (${cartItems.length})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="payment">Payment</TabsTrigger>
+          </TabsList>
+          <TabsContent value="products">
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductSearch onAddProduct={handleAddProduct} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="cart">
+            <Card>
+              <CardContent className="p-4">
+                <Cart
+                  items={cartItems}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onRemoveItem={handleRemoveItem}
+                  onClearCart={handleClearCart}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="payment">
+            <PaymentPanel
+              total={total}
+              items={cartItems}
+              salesStaff={locationStaff}
+              selectedStaffId={selectedStaffId}
+              onSelectStaff={setSelectedStaffId}
+              onProcessPayment={handleProcessPayment}
+              isProcessing={isProcessing}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Desktop: 3-panel grid */}
+      <div className="hidden gap-4 lg:grid lg:grid-cols-12">
         {/* Product Search - Left Panel */}
         <div className="lg:col-span-5">
           <Card className="h-[600px]">
