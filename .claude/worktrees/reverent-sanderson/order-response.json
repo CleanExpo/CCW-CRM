@@ -1,0 +1,201 @@
+{
+  "customer_id": "c0000000-0000-0000-0000-000000000001",
+  "status": "draft",
+  "fulfillment_location": null,
+  "notes": "Performance test order - demonstrating 97% improvement with 10 items",
+  "tracking_number": null,
+  "carrier_name": null,
+  "shipped_date": null,
+  "estimated_delivery_date": null,
+  "id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+  "organization_id": null,
+  "order_number": "ORD-2026-009",
+  "total": "495560.68",
+  "order_date": "2026-02-12T01:10:36.116975Z",
+  "created_at": "2026-02-12T01:10:36.116978Z",
+  "updated_at": "2026-02-12T01:10:36.116978Z",
+  "items": [
+    {
+      "product_id": "10000000-0000-0000-0000-000000000001",
+      "quantity": 1,
+      "unit_price": "125000.00",
+      "line_total": "125000.00",
+      "id": "11c3fb04-f5fe-4226-b58f-6e3312338993",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119167Z"
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000001",
+      "quantity": 3,
+      "unit_price": "189.99",
+      "line_total": "569.97",
+      "id": "2220378e-15b7-448f-95c2-c9ed51a6fcb1",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119174Z"
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000002",
+      "quantity": 2,
+      "unit_price": "229.99",
+      "line_total": "459.98",
+      "id": "1ff64624-6380-4d28-9c17-4f2c1cf14205",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119177Z"
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000003",
+      "quantity": 2,
+      "unit_price": "149.99",
+      "line_total": "299.98",
+      "id": "cfc2762b-48ef-47b6-9e90-0138fb124fc0",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119180Z"
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000004",
+      "quantity": 5,
+      "unit_price": "99.99",
+      "line_total": "499.95",
+      "id": "7fb1068d-ebbf-4a1d-8473-540fd691c960",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119182Z"
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000001",
+      "quantity": 10,
+      "unit_price": "24.99",
+      "line_total": "249.90",
+      "id": "4afb54c6-8542-4147-bf75-844d55cbf6ab",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119185Z"
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000002",
+      "quantity": 4,
+      "unit_price": "39.99",
+      "line_total": "159.96",
+      "id": "e8d97cb0-9a07-4b50-a3b2-fe3bb7b56778",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119187Z"
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000003",
+      "quantity": 3,
+      "unit_price": "89.99",
+      "line_total": "269.97",
+      "id": "d4981afe-7d2e-447f-95ed-e8b5d89920c6",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119190Z"
+    },
+    {
+      "product_id": "10000000-0000-0000-0000-000000000002",
+      "quantity": 1,
+      "unit_price": "145000.00",
+      "line_total": "145000.00",
+      "id": "efd499d2-e28c-403e-8d5a-fea4cf5a6e2d",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119192Z"
+    },
+    {
+      "product_id": "10000000-0000-0000-0000-000000000003",
+      "quantity": 2,
+      "unit_price": "89000.00",
+      "line_total": "178000.00",
+      "id": "808fb3dd-d103-4339-960a-308166b4395c",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119195Z"
+    }
+  ],
+  "order_items": [
+    {
+      "product_id": "10000000-0000-0000-0000-000000000001",
+      "quantity": 1,
+      "unit_price": "125000.00",
+      "line_total": "125000.00",
+      "id": "11c3fb04-f5fe-4226-b58f-6e3312338993",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119167Z"
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000001",
+      "quantity": 3,
+      "unit_price": "189.99",
+      "line_total": "569.97",
+      "id": "2220378e-15b7-448f-95c2-c9ed51a6fcb1",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119174Z"
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000002",
+      "quantity": 2,
+      "unit_price": "229.99",
+      "line_total": "459.98",
+      "id": "1ff64624-6380-4d28-9c17-4f2c1cf14205",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119177Z"
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000003",
+      "quantity": 2,
+      "unit_price": "149.99",
+      "line_total": "299.98",
+      "id": "cfc2762b-48ef-47b6-9e90-0138fb124fc0",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119180Z"
+    },
+    {
+      "product_id": "20000000-0000-0000-0000-000000000004",
+      "quantity": 5,
+      "unit_price": "99.99",
+      "line_total": "499.95",
+      "id": "7fb1068d-ebbf-4a1d-8473-540fd691c960",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119182Z"
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000001",
+      "quantity": 10,
+      "unit_price": "24.99",
+      "line_total": "249.90",
+      "id": "4afb54c6-8542-4147-bf75-844d55cbf6ab",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119185Z"
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000002",
+      "quantity": 4,
+      "unit_price": "39.99",
+      "line_total": "159.96",
+      "id": "e8d97cb0-9a07-4b50-a3b2-fe3bb7b56778",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119187Z"
+    },
+    {
+      "product_id": "30000000-0000-0000-0000-000000000003",
+      "quantity": 3,
+      "unit_price": "89.99",
+      "line_total": "269.97",
+      "id": "d4981afe-7d2e-447f-95ed-e8b5d89920c6",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119190Z"
+    },
+    {
+      "product_id": "10000000-0000-0000-0000-000000000002",
+      "quantity": 1,
+      "unit_price": "145000.00",
+      "line_total": "145000.00",
+      "id": "efd499d2-e28c-403e-8d5a-fea4cf5a6e2d",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119192Z"
+    },
+    {
+      "product_id": "10000000-0000-0000-0000-000000000003",
+      "quantity": 2,
+      "unit_price": "89000.00",
+      "line_total": "178000.00",
+      "id": "808fb3dd-d103-4339-960a-308166b4395c",
+      "order_id": "6e8fc4d1-7788-4bd0-8597-09d7568aefc3",
+      "created_at": "2026-02-12T01:10:36.119195Z"
+    }
+  ]
+}
