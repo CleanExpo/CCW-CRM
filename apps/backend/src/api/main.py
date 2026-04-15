@@ -56,6 +56,7 @@ from .routes import (
     google_ai,
     health,
     inventory,
+    bas_report,  # BAS report generation (UNI-1816)
     invoice_payments,  # Invoice payments for UNI-173
     invoices,  # Invoices for UNI-173
     jobs,
@@ -449,6 +450,8 @@ app.include_router(activities.router, tags=["Activities"])  # CRM Activities
 app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+# BAS Report (UNI-1816)
+app.include_router(bas_report.router, tags=["BAS Report"])
 # Invoicing & Payments (UNI-173)
 app.include_router(invoices.router, tags=["Invoices"])
 app.include_router(invoice_payments.router, tags=["Invoice Payments"])
