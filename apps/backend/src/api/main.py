@@ -64,6 +64,7 @@ from .routes import (
     prd,
     pricing,  # Customer trade pricing tiers (Sprint 2)
     procurement,
+    product_variants,  # Product variant CRUD + Shopify sync (UNI-1867, UNI-1866)
     products,
     prometheus_metrics,  # Prometheus metrics endpoint
     public_stats,  # Public landing page stats (no auth required)
@@ -443,6 +444,7 @@ app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
 # CRUD routers registered after demo_lists to override read-only routes
 app.include_router(products.router, tags=["Products"])
+app.include_router(product_variants.router, tags=["Product Variants"])
 app.include_router(customers.router, tags=["Customers"])
 app.include_router(contacts.router, tags=["Contacts"])  # CRM Contacts
 app.include_router(activities.router, tags=["Activities"])  # CRM Activities
