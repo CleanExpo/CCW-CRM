@@ -207,6 +207,45 @@ class DemoXeroClient:
             "Edition": "BUSINESS",
         }
 
+    async def create_credit_note(
+        self,
+        contact_id: str,
+        description: str,
+        amount: float,
+        reference: str | None = None,
+    ) -> dict:
+        """Return mock credit note data (UNI-1814)."""
+        credit_note_id = str(uuid.uuid4())
+
+        logger.info(
+            "Demo: Created credit note",
+            contact_id=contact_id,
+            amount=amount,
+            credit_note_id=credit_note_id,
+        )
+
+        return {
+            "CreditNoteID": credit_note_id,
+            "Type": "ACCREC",
+            "Status": "SUBMITTED",
+            "CreditNoteNumber": f"CN-DEMO-{credit_note_id[:8].upper()}",
+            "Contact": {"ContactID": contact_id},
+            "LineItems": [
+                {
+                    "Description": description,
+                    "Quantity": 1.0,
+                    "UnitAmount": amount,
+                    "TaxType": "OUTPUT2",
+                }
+            ],
+            "SubTotal": amount,
+            "TotalTax": round(amount * 0.1, 2),
+            "Total": round(amount * 1.1, 2),
+            "AmountDue": round(amount * 1.1, 2),
+            "AmountCredited": 0.0,
+            "DateString": datetime.now().strftime("%Y-%m-%d"),
+        }
+
     async def close(self) -> None:
         """No-op for demo client."""
         logger.info("Demo: Client closed")

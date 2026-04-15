@@ -1,4 +1,4 @@
-"""Invoicing and payment models for UNI-173."""
+"""Invoicing and payment models for UNI-173, UNI-1810."""
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Date,
+    DateTime,
     ForeignKey,
     Integer,
     String,
@@ -86,6 +87,9 @@ class Invoice(Base):
     )
     payments: Mapped[list["InvoicePayment"]] = relationship(
         "InvoicePayment", back_populates="invoice", cascade="all, delete-orphan"
+    )
+    credit_notes: Mapped[list["CreditNote"]] = relationship(
+        "CreditNote", back_populates="invoice", cascade="all, delete-orphan"
     )
     customer: Mapped["Customer"] = relationship("Customer", foreign_keys=[customer_id])
     order: Mapped["Order | None"] = relationship("Order", foreign_keys=[order_id])
@@ -180,3 +184,53 @@ class InvoicePayment(Base):
     __table_args__ = (
         CheckConstraint("amount > 0", name="invoice_payments_amount_positive"),
     )
+
+
+class CreditNote(Base):
+    """Credit note (adjustment note) for ATO-compliant invoice reversals (UNI-1810).
+
+    A credit note is issued when an invoice needs to be fully or partially reversed
+    due to a return, pricing error, or dispute. Issuing a credit note reduces the
+    originating invoice's amount_due.
+    """
+
+    __tablename__ = "credit_notes"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    invoice_id: Mapped[UUID] = mapped_column(
+        ForeignKey("invoices.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    credit_note_number: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
+    )
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), default="draft", nullable=False, index=True
+    )  # draft | issued | applied
+
+    # Xero sync (UNI-1814)
+    xero_credit_note_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    invoice: Mapped["Invoice"] = relationship("Invoice", back_populates="credit_notes")
+
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="credit_notes_amount_positive"),
+        CheckConstraint(
+            "status IN ('draft', 'issued', 'applied')",
+            name="credit_notes_status_valid",
+        ),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<CreditNote(number={self.credit_note_number},"
+            f" amount={self.amount}, status={self.status})>"
+        )
