@@ -20,7 +20,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.api.deps import get_current_user
+from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
+from src.config.xero_settings import XeroSettings, get_xero_settings
 from src.db.demo_models import Product
 from src.db.inventory_models import (
     ProductStockByLocation,
@@ -28,6 +30,9 @@ from src.db.inventory_models import (
     PurchaseOrderItem,
     Supplier,
 )
+from src.integrations.xero import get_xero_client
+from src.integrations.xero.auth import XeroAuth
+from src.integrations.xero.bills import push_purchase_order_as_bill
 
 router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"], dependencies=[Depends(get_current_user)])
 
@@ -642,3 +647,84 @@ async def get_unmatched_po_items(
         items=items,
         total=len(items)
     )
+
+
+# ============================================
+# UNI-1815: Sync Purchase Order to Xero as Bill
+# ============================================
+
+
+def _get_xero_auth_for_po(
+    settings: Annotated[XeroSettings, Depends(get_xero_settings)],
+) -> XeroAuth:
+    return XeroAuth(
+        client_id=settings.client_id,
+        client_secret=settings.client_secret,
+        redirect_uri=settings.redirect_uri,
+        scopes=settings.scopes_list,
+    )
+
+
+@router.post("/{po_id}/sync-to-xero")
+async def sync_purchase_order_to_xero(
+    po_id: UUID,
+    org_id: CurrentOrganization,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    xero_auth: Annotated[XeroAuth, Depends(_get_xero_auth_for_po)],
+    settings: Annotated[XeroSettings, Depends(get_xero_settings)],
+) -> dict:
+    """Push a purchase order to Xero as an Accounts Payable bill (ACCPAY invoice)."""
+    result = await db.execute(
+        select(PurchaseOrder)
+        .options(selectinload(PurchaseOrder.items))
+        .where(PurchaseOrder.id == po_id)
+    )
+    po = result.scalar_one_or_none()
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+
+    supplier_result = await db.execute(select(Supplier).where(Supplier.id == po.supplier_id))
+    supplier = supplier_result.scalar_one_or_none()
+    if not supplier or not supplier.xero_contact_id:
+        raise HTTPException(status_code=400, detail="Supplier has no linked Xero contact ID")
+
+    connection = await xero_auth.get_active_connection(db, org_id)
+    if not connection:
+        raise HTTPException(status_code=400, detail="No active Xero connection for this organisation")
+
+    demo_mode = connection.access_token.startswith("demo_")
+    xero_client = get_xero_client(
+        access_token=connection.access_token,
+        tenant_id=connection.tenant_id,
+        demo_mode=demo_mode,
+    )
+
+    try:
+        po_data = {
+            "supplier_contact_id": supplier.xero_contact_id,
+            "reference": po.po_number,
+            "date": po.order_date.date().isoformat() if po.order_date else datetime.now().date().isoformat(),
+            "due_date": (
+                po.expected_delivery_date.date().isoformat()
+                if po.expected_delivery_date
+                else datetime.now().date().isoformat()
+            ),
+            "line_items": [
+                {
+                    "description": f"Product {item.product_id}",
+                    "quantity": item.quantity,
+                    "unit_amount": float(item.unit_cost),
+                }
+                for item in po.items
+            ],
+        }
+
+        bill_id = await push_purchase_order_as_bill(xero_client, po_data)
+
+        po.xero_purchase_order_id = bill_id
+        po.xero_synced_at = datetime.now()
+        await db.commit()
+    finally:
+        await xero_client.close()
+
+    return {"xero_bill_id": bill_id}
