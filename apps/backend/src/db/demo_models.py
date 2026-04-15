@@ -170,6 +170,9 @@ class Customer(Base):
     state: str | None = Column(String(50), nullable=True)
     postcode: str | None = Column(String(10), nullable=True)
 
+    # UNI-1821: Per-customer payment terms (days); used for invoice due_date and Xero sync
+    payment_terms_days: int = Column(Integer, default=30, nullable=False)
+
     # Xero integration fields
     xero_contact_id: str | None = Column(String(255), nullable=True)
     xero_synced_at: datetime | None = Column(DateTime(timezone=True), nullable=True)

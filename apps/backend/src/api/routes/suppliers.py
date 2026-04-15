@@ -9,7 +9,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +18,19 @@ from src.config.database import get_async_db
 from src.db.inventory_models import Supplier
 
 router = APIRouter(prefix="/api/suppliers", tags=["Suppliers"], dependencies=[Depends(get_current_user)])
+
+
+def _validate_abn(abn: str) -> bool:
+    """Validate an Australian Business Number using the ABN checksum algorithm.
+
+    UNI-1820: Prevents invalid ABNs from reaching Xero bill sync.
+    """
+    digits = [int(c) for c in abn.replace(" ", "") if c.isdigit()]
+    if len(digits) != 11:
+        return False
+    weights = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
+    digits[0] -= 1
+    return sum(w * d for w, d in zip(weights, digits)) % 89 == 0
 
 
 # Pydantic models for request/response validation
@@ -39,6 +52,17 @@ class SupplierCreate(BaseModel):
     preferred_carrier: str | None = Field(None, max_length=100, description="Preferred shipping carrier")  # noqa: E501
     notes: str | None = Field(None, description="Additional notes")
 
+    @field_validator("abn", mode="before")
+    @classmethod
+    def validate_abn_field(cls, v: str | None) -> str | None:
+        """UNI-1820: Validate ABN checksum before Xero bill sync."""
+        if v is None:
+            return v
+        normalised = v.replace(" ", "")
+        if not _validate_abn(normalised):
+            raise ValueError("Invalid ABN — must be 11 digits and pass ABN checksum")
+        return normalised
+
 
 class SupplierUpdate(BaseModel):
     """Schema for updating an existing supplier."""
@@ -57,6 +81,17 @@ class SupplierUpdate(BaseModel):
     preferred_carrier: str | None = Field(None, max_length=100)
     is_active: bool | None = None
     notes: str | None = None
+
+    @field_validator("abn", mode="before")
+    @classmethod
+    def validate_abn_field(cls, v: str | None) -> str | None:
+        """UNI-1820: Validate ABN checksum before Xero bill sync."""
+        if v is None:
+            return v
+        normalised = v.replace(" ", "")
+        if not _validate_abn(normalised):
+            raise ValueError("Invalid ABN — must be 11 digits and pass ABN checksum")
+        return normalised
 
 
 class SupplierResponse(BaseModel):

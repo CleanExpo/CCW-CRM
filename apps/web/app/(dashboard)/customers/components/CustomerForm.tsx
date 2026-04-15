@@ -51,7 +51,8 @@ const formSchema = z.object({
     .regex(/^\d{11}$/, 'ABN must be exactly 11 digits')
     .optional()
     .or(z.literal('')),
-  is_active: z.boolean().default(true),
+// UNI-1821: Per-customer payment terms (days)
+  payment_terms_days: z.coerce.number().int().min(0).max(365).default(30),  is_active: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -68,7 +69,8 @@ interface Customer {
   state: string | null;
   postcode: string | null;
   abn: string | null;
-  is_active: boolean;
+// UNI-1821: Per-customer payment terms
+  payment_terms_days: number;  is_active: boolean;
 }
 
 interface CustomerFormProps {
@@ -96,7 +98,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       state: '',
       postcode: '',
       abn: '',
-      is_active: true,
+payment_terms_days: 30,      is_active: true,
     },
   });
 
@@ -129,7 +131,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           state: customer.state || '',
           postcode: customer.postcode || '',
           abn: customer.abn || '',
-          is_active: customer.is_active,
+payment_terms_days: customer.payment_terms_days ?? 30,          is_active: customer.is_active,
         });
       } else {
         form.reset({
@@ -143,7 +145,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           state: '',
           postcode: '',
           abn: '',
-          is_active: true,
+payment_terms_days: 30,          is_active: true,
         });
       }
     }
@@ -212,6 +214,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 city: '',
                 state: '',
                 postcode: '',
+                payment_terms_days: 30,
                 is_active: true,
               });
             }}
@@ -371,6 +374,24 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 )}
               />
             </div>
+
+            {/* UNI-1821: Per-customer payment terms */}
+            <FormField
+              control={form.control}
+              name="payment_terms_days"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Terms (days)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} max={365} placeholder="30" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Number of days after invoice date when payment is due (e.g. 30, 60)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

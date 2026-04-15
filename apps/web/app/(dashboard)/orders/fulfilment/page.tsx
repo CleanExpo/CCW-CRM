@@ -145,7 +145,7 @@ const DEMO_FULFILMENTS: Cin7Fulfilment[] = [
     status: 'shipped',
     pick_location: 'Zone B - Shelf 7',
     tracking_number: '1Z999AA10123456784',
-    carrier: 'UPS',
+    carrier: 'AusPost eParcel',
     shipped_at: '2024-03-01T09:00:00Z',
     delivered_at: null,
     notes: null,

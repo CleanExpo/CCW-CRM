@@ -1,22 +1,16 @@
 import { apiClient } from '@/lib/api/client';
 
+// UNI-1847: Values must match backend ServiceStatus enum exactly
 export type ServiceStatus =
   | 'submitted'
-  | 'under_review'
-  | 'quote_sent'
+  | 'quoted'
   | 'approved'
-  | 'scheduled'
   | 'in_progress'
   | 'completed'
   | 'cancelled';
 
-export type RequestType =
-  | 'repair'
-  | 'maintenance'
-  | 'inspection'
-  | 'installation'
-  | 'warranty'
-  | 'other';
+// UNI-1847: Values must match backend RequestType enum exactly
+export type RequestType = 'repair' | 'maintenance' | 'installation';
 
 export interface ServiceRequest {
   id: string;
