@@ -4,6 +4,8 @@ from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from uuid import UUID
 
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, Field, field_serializer, field_validator, model_validator
 
 from src.db.demo_models import OrderStatus, ProductCategory, QuoteStatus
@@ -125,6 +127,11 @@ class CustomerBase(BaseModel):
     abn: str | None = None  # Australian Business Number (11 digits, no spaces)
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
+    # UNI-1831: B2B / B2C customer type.
+    customer_type: Literal["B2B", "B2C"] = "B2B"
+    # UNI-1829: Credit management fields (stored in customer_credit_profiles).
+    credit_limit: Decimal | None = Field(default=None, ge=0)
+    credit_hold: bool = False
     is_active: bool = True
 
 
@@ -160,6 +167,11 @@ class CustomerUpdate(BaseModel):
     abn: str | None = None  # Australian Business Number (11 digits, no spaces)
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
+    # UNI-1831: Allow updating customer type.
+    customer_type: Literal["B2B", "B2C"] | None = None
+    # UNI-1829: Credit management updates.
+    credit_limit: Decimal | None = Field(default=None, ge=0)
+    credit_hold: bool | None = None
     is_active: bool | None = None
 
     @field_validator(

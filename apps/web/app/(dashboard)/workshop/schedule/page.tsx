@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { workshopApi, type WorkshopBooking } from '@/lib/api/workshop';
+import { workshopApi, type WorkshopBooking, type SignOffMethod } from '@/lib/api/workshop';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
@@ -35,6 +35,8 @@ export default function WorkshopSchedulePage() {
   const [location, setLocation] = useState('');
   const [weekStart, setWeekStart] = useState(new Date());
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
+  const [signingOff, setSigningOff] = useState<string | null>(null); // booking id being signed off
+  const [signOffLoading, setSignOffLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -79,6 +81,27 @@ export default function WorkshopSchedulePage() {
       const bd = new Date(b.scheduled_date);
       return bd.toDateString() === date.toDateString();
     });
+  }
+
+  async function handleSignOff(bookingId: string, method: SignOffMethod) {
+    setSignOffLoading(true);
+    try {
+      await workshopApi.signOffBooking(bookingId, method);
+      toast({
+        title: 'Sign-off recorded',
+        description: `Job ${bookingId.slice(0, 8)} signed off via ${method}`,
+      });
+      setSigningOff(null);
+      await load();
+    } catch (error: unknown) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to record sign-off',
+        variant: 'destructive',
+      });
+    } finally {
+      setSignOffLoading(false);
+    }
   }
 
   return (
@@ -192,6 +215,7 @@ export default function WorkshopSchedulePage() {
                       <th className="px-3 py-2 text-left">Date / Time</th>
                       <th className="px-3 py-2 text-left">Location</th>
                       <th className="px-3 py-2 text-left">Status</th>
+                      <th className="px-3 py-2 text-left">Sign-off</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -210,6 +234,42 @@ export default function WorkshopSchedulePage() {
                           <Badge className={STATUS_COLORS[b.status] || ''}>
                             {b.status.replace('_', ' ')}
                           </Badge>
+                        </td>
+                        <td className="px-3 py-2">
+                          {b.status === 'completed' &&
+                            !b.customer_signed_off &&
+                            (signingOff === b.id ? (
+                              <div className="flex gap-1">
+                                {(['digital', 'phone', 'in-person'] as SignOffMethod[]).map((m) => (
+                                  <button
+                                    key={m}
+                                    onClick={() => handleSignOff(b.id, m)}
+                                    disabled={signOffLoading}
+                                    className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs capitalize disabled:opacity-50"
+                                  >
+                                    {m}
+                                  </button>
+                                ))}
+                                <button
+                                  onClick={() => setSigningOff(null)}
+                                  className="rounded border px-2 py-0.5 text-xs"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setSigningOff(b.id)}
+                                className="hover:bg-muted rounded border px-2 py-0.5 text-xs"
+                              >
+                                Request Sign-off
+                              </button>
+                            ))}
+                          {b.customer_signed_off && (
+                            <span className="text-xs text-green-600">
+                              ✓ Signed off ({b.sign_off_method})
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))}

@@ -3,6 +3,7 @@
 Performance optimized with cache invalidation on writes.
 """
 from datetime import datetime, timedelta
+from decimal import Decimal
 from uuid import UUID
 
 import structlog
@@ -16,11 +17,14 @@ from src.api.deps import get_current_user, get_optional_user
 from src.cache.decorators import invalidate_cache
 from src.config.database import get_async_db
 from src.config.settings import Settings, get_settings
+from src.db.customer_credit_models import CustomerCreditProfile
+from src.db.demo_models import Customer as CustomerModel
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderActivity as OrderActivityModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
 from src.db.inventory_models import ProductStockByLocation, StockAdjustment, StockReservation
+from src.db.models.invoicing import Invoice
 from src.db.models import User
 from src.db.schemas import (
     Order,
@@ -566,6 +570,51 @@ async def create_order(
     settings: Settings = Depends(get_settings),
 ):
     """Create a new order with items."""
+    # UNI-1829: Enforce credit hold and credit limit before any processing.
+    credit_stmt = select(CustomerCreditProfile).where(
+        CustomerCreditProfile.customer_id == order_data.customer_id
+    )
+    credit_result = await db.execute(credit_stmt)
+    credit_profile = credit_result.scalar_one_or_none()
+
+    if credit_profile is not None:
+        if credit_profile.credit_hold:
+            raise HTTPException(
+                status_code=422,
+                detail={"error": "Account on credit hold"},
+            )
+
+        if credit_profile.credit_limit is not None:
+            # Sum unpaid invoice totals for this customer (outstanding balance)
+            balance_stmt = select(func.coalesce(func.sum(Invoice.amount_due), Decimal("0"))).where(
+                and_(
+                    Invoice.customer_id == order_data.customer_id,
+                    Invoice.status.in_(["draft", "sent", "overdue"]),
+                )
+            )
+            balance_result = await db.execute(balance_stmt)
+            outstanding_balance: Decimal = balance_result.scalar_one()
+
+            # Estimate order total from product prices
+            product_ids_for_check = [item.product_id for item in order_data.items]
+            price_result = await db.execute(
+                select(ProductModel.id, ProductModel.price).where(
+                    ProductModel.id.in_(product_ids_for_check)
+                )
+            )
+            price_rows = price_result.all()
+            prices_by_id = {row[0]: row[1] for row in price_rows}
+            order_total_estimate = sum(
+                prices_by_id.get(item.product_id, Decimal("0")) * item.quantity
+                for item in order_data.items
+            )
+
+            if outstanding_balance + order_total_estimate > credit_profile.credit_limit:
+                raise HTTPException(
+                    status_code=422,
+                    detail={"error": "Order exceeds credit limit"},
+                )
+
     # Generate order number
     order_number = await generate_order_number(db)
 
