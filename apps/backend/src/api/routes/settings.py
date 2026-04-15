@@ -4,11 +4,13 @@ from typing import Annotated
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.middleware.rate_limit import RateLimits, limiter
+from src.api.middleware.rbac import require_permission
 from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
 from src.db.demo_models import Organization
@@ -37,11 +39,14 @@ class UpdateCompanyRequest(BaseModel):
 
 
 @router.get("/company")
+@limiter.limit(RateLimits.API)
+@require_permission("settings:company")
 async def get_company_settings(
+    request: Request,
     org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> CompanySettingsResponse:
-    """Get current organization settings."""
+    """Get current organization settings. Requires admin or owner role."""
     result = await db.execute(select(Organization).where(Organization.id == org_id))
     org = result.scalar_one_or_none()
 
@@ -60,12 +65,15 @@ async def get_company_settings(
 
 
 @router.put("/company")
+@limiter.limit(RateLimits.API)
+@require_permission("settings:company")
 async def update_company_settings(
+    request: Request,
     data: UpdateCompanyRequest,
     org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> CompanySettingsResponse:
-    """Update organization name."""
+    """Update organization name. Requires admin or owner role."""
     result = await db.execute(select(Organization).where(Organization.id == org_id))
     org = result.scalar_one_or_none()
 

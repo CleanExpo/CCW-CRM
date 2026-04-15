@@ -7,7 +7,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy.exc import DatabaseError, IntegrityError, OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -25,7 +24,7 @@ from .exceptions import (
     validation_exception_handler,
 )
 from .middleware.auth import AuthMiddleware
-from .middleware.rate_limit import limiter
+from .middleware.rate_limit import limiter, rate_limit_exceeded_handler
 from .middleware.request_id import RequestIdMiddleware
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
@@ -399,7 +398,7 @@ All errors return JSON with this format:
 
 # Rate limiter state (for SlowAPI)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 # Global exception handlers (order matters - most specific first, generic last)
 # These ensure ALL errors return JSON, preventing HTML error pages that cause JSONDecodeError
