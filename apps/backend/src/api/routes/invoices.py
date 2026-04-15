@@ -368,7 +368,12 @@ async def generate_invoice_from_order(
     order_id: UUID,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> InvoiceResponse:
-    """Generate an invoice from a confirmed or delivered order."""
+    """Create or return the Invoice for a confirmed/delivered order (idempotent).
+
+    UNI-1803: If an invoice already exists for this order_id it is returned
+    directly (HTTP 201 preserved for compatibility).  Callers can POST safely
+    on every page load without risk of duplicate invoice records.
+    """
     # 1. Load order with items and products
     order_result = await db.execute(
         select(Order)
@@ -389,15 +394,16 @@ async def generate_invoice_from_order(
             detail="Can only generate invoices for confirmed or delivered orders",
         )
 
-    # 3. Check no existing invoice for this order
+    # 3. Return existing invoice if one already exists for this order (idempotent).
     existing_result = await db.execute(
-        select(Invoice.id).where(Invoice.order_id == order_id).limit(1)
+        select(Invoice)
+        .options(selectinload(Invoice.items))
+        .where(Invoice.order_id == order_id)
+        .limit(1)
     )
-    if existing_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=409,
-            detail="Invoice already exists for this order",
-        )
+    existing_invoice = existing_result.scalar_one_or_none()
+    if existing_invoice:
+        return InvoiceResponse.model_validate(existing_invoice)
 
     # 4. Generate invoice number
     invoice_number = await generate_invoice_number(db)
