@@ -127,6 +127,9 @@ class CustomerBase(BaseModel):
     is_active: bool = True
 
 
+AU_STATES = {"NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"}
+
+
 class CustomerCreate(CustomerBase):
     @field_validator(
         "customer_number",
@@ -145,6 +148,19 @@ class CustomerCreate(CustomerBase):
         if v is None or not isinstance(v, str):
             return v
         return html.escape(v.strip())
+
+    @field_validator("state", mode="after")
+    @classmethod
+    def validate_au_state(cls, v: str | None) -> str | None:
+        """Uppercase and validate AU state/territory code."""
+        if v is None:
+            return v
+        upper = v.upper()
+        if upper not in AU_STATES:
+            raise ValueError(
+                f"Invalid AU state: {v}. Must be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT"
+            )
+        return upper
 
 
 class CustomerUpdate(BaseModel):
@@ -176,6 +192,19 @@ class CustomerUpdate(BaseModel):
         if v is None or not isinstance(v, str):
             return v
         return html.escape(v.strip())
+
+    @field_validator("state", mode="after")
+    @classmethod
+    def validate_au_state(cls, v: str | None) -> str | None:
+        """Uppercase and validate AU state/territory code."""
+        if v is None:
+            return v
+        upper = v.upper()
+        if upper not in AU_STATES:
+            raise ValueError(
+                f"Invalid AU state: {v}. Must be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT"
+            )
+        return upper
 
 
 class Customer(CustomerBase):

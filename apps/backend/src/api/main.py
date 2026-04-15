@@ -31,6 +31,7 @@ from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
     activities,  # CRM activities
     agents_monitor,  # Agent monitoring dashboard (UNI-1246)
+    tpar,  # TPAR data collection (UNI-1863)
     approvals,
     audit_trail,  # Entity-level audit trail
     backorders,
@@ -486,6 +487,8 @@ app.include_router(pricing.router, tags=["Pricing Tiers"])
 app.include_router(settings_routes.router, tags=["Settings"])
 # Agent monitoring dashboard
 app.include_router(agents_monitor.router, tags=["Agent Monitoring"])
+# TPAR — Taxable Payments Annual Report (UNI-1863)
+app.include_router(tpar.router, tags=["TPAR"])
 app.include_router(warehouse.router, tags=["Warehouse"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
@@ -816,6 +819,55 @@ app.include_router(dashboard_stream.router, tags=["Real-Time Dashboard"])
 
 # PRD Generation router (✅ IMPLEMENTED)
 app.include_router(prd.router, tags=["PRD Generation"])
+
+# ASD Essential Eight compliance controls (UNI-1857)
+try:
+    from src.api.routes import security_controls
+    app.include_router(security_controls.router, tags=["Security Controls"])
+except ImportError:
+    pass
+
+# NDB Notifiable Data Breaches incident workflow (UNI-1858)
+try:
+    from src.api.routes import ndb_incident
+    app.include_router(ndb_incident.router, tags=["NDB Incident Response"])
+except ImportError:
+    pass
+
+# UNI-1844: AU Utils (state codes reference list)
+try:
+    from src.api.routes import utils as utils_routes
+    app.include_router(utils_routes.router, tags=["Utils"])
+except (ImportError, AttributeError):
+    pass
+
+# UNI-1848: RCTI (Recipient-Created Tax Invoice) support
+try:
+    from src.api.routes import rcti
+    app.include_router(rcti.router, tags=["RCTI"])
+except (ImportError, AttributeError):
+    pass
+
+# UNI-1846: AU Customs Import Documentation
+try:
+    from src.api.routes import customs_docs
+    app.include_router(customs_docs.router, tags=["Customs Docs"])
+except (ImportError, AttributeError):
+    pass
+
+# UNI-1862: Privacy Act APP 12 (access/correction/deletion requests + data export)
+try:
+    from src.api.routes import privacy_access
+    app.include_router(privacy_access.router, tags=["Privacy / APP 12"])
+except (ImportError, AttributeError):
+    pass
+
+# UNI-1860: Xero Payroll STP Phase 2
+try:
+    from src.api.routes import payroll
+    app.include_router(payroll.router, tags=["Payroll / STP Phase 2"])
+except (ImportError, AttributeError):
+    pass
 
 
 @app.get("/")

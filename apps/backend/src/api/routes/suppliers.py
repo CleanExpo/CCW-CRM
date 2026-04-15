@@ -9,7 +9,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +18,20 @@ from src.config.database import get_async_db
 from src.db.inventory_models import Supplier
 
 router = APIRouter(prefix="/api/suppliers", tags=["Suppliers"], dependencies=[Depends(get_current_user)])
+
+AU_STATES = {"NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"}
+
+
+def _validate_au_state(v: str | None) -> str | None:
+    """Uppercase and validate AU state/territory code."""
+    if v is None:
+        return v
+    upper = v.upper()
+    if upper not in AU_STATES:
+        raise ValueError(
+            f"Invalid AU state: {v}. Must be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT"
+        )
+    return upper
 
 
 # Pydantic models for request/response validation
@@ -39,6 +53,11 @@ class SupplierCreate(BaseModel):
     preferred_carrier: str | None = Field(None, max_length=100, description="Preferred shipping carrier")  # noqa: E501
     notes: str | None = Field(None, description="Additional notes")
 
+    @field_validator("state", mode="after")
+    @classmethod
+    def validate_au_state(cls, v: str | None) -> str | None:
+        return _validate_au_state(v)
+
 
 class SupplierUpdate(BaseModel):
     """Schema for updating an existing supplier."""
@@ -57,6 +76,11 @@ class SupplierUpdate(BaseModel):
     preferred_carrier: str | None = Field(None, max_length=100)
     is_active: bool | None = None
     notes: str | None = None
+
+    @field_validator("state", mode="after")
+    @classmethod
+    def validate_au_state(cls, v: str | None) -> str | None:
+        return _validate_au_state(v)
 
 
 class SupplierResponse(BaseModel):
