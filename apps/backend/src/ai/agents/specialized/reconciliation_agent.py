@@ -5,6 +5,29 @@ Uses fuzzy matching and pattern learning to suggest POS transaction matches
 for bank feed entries with improved accuracy.
 """
 
+AGENT_CARD = {
+    "name": "reconciliation_agent",
+    "display_name": "Reconciliation Agent",
+    "description": "AI-powered bank feed reconciliation using fuzzy matching and pattern learning to suggest POS transaction matches with confidence scoring",
+    "version": "1.0.0",
+    "capabilities": ["bank_reconciliation", "fuzzy_matching", "confidence_scoring", "pattern_learning", "pos_matching"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "feed_id": {"type": "string", "description": "Bank feed UUID to generate match suggestions for"},
+            "max_suggestions": {"type": "integer", "description": "Maximum number of match suggestions to return (default: 3)"},
+        },
+        "required": ["feed_id"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 from datetime import timedelta
 from decimal import Decimal
 from uuid import UUID

@@ -5,6 +5,34 @@ Provides context-aware form auto-fill suggestions based on customer history,
 order patterns, and common workflows to reduce manual data entry.
 """
 
+AGENT_CARD = {
+    "name": "form_autofill_agent",
+    "display_name": "Form Auto-Fill Agent",
+    "description": "Provides context-aware form auto-fill suggestions based on customer history, order patterns, and common workflows to reduce manual data entry",
+    "version": "1.0.0",
+    "capabilities": ["form_autofill", "customer_history", "pattern_detection", "duplicate_detection"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "form_type": {
+                "type": "string",
+                "enum": ["order", "quote", "customer", "contact"],
+                "description": "Type of form to auto-fill",
+            },
+            "customer_id": {"type": "string", "description": "Customer UUID for history-based suggestions"},
+            "partial_data": {"type": "object", "description": "Partial form data already entered by the user"},
+        },
+        "required": ["form_type"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
