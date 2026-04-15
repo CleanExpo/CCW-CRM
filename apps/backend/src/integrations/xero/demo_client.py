@@ -35,6 +35,7 @@ class DemoXeroClient:
         email: str | None = None,
         phone: str | None = None,
         address: dict | None = None,
+        tax_number: str | None = None,
     ) -> dict:
         """Return mock contact data."""
         contact_id = str(uuid.uuid4())
