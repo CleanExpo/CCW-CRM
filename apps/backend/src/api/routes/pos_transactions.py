@@ -817,6 +817,50 @@ async def create_xero_invoice_from_pos_transaction(
         )
 
 
+# ============================================================
+# EFTPOS TERMINAL ENDPOINTS (UNI-1878)
+# ============================================================
+
+
+@router.get("/eftpos/initiate")
+async def eftpos_initiate_purchase(
+    amount: Decimal = Query(..., gt=0, description="Transaction amount in AUD"),
+    ref: str = Query(..., description="Unique transaction reference"),
+    current_user: Annotated[User, Depends(get_current_user)] = None,
+) -> dict:
+    """Initiate an EFTPOS purchase via Linkly/PC-EFTPOS cloud API.
+
+    Returns session_id to poll for completion via /eftpos/status.
+    """
+    from src.integrations.payments.eftpos_terminal import EFTPOSTerminal
+
+    terminal = EFTPOSTerminal()
+    try:
+        result = await terminal.initiate_purchase(amount=amount, txn_ref=ref)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"EFTPOS error: {str(e)}")
+
+
+@router.get("/eftpos/status")
+async def eftpos_transaction_status(
+    session_id: str = Query(..., description="Session ID returned by /eftpos/initiate"),
+    current_user: Annotated[User, Depends(get_current_user)] = None,
+) -> dict:
+    """Poll EFTPOS transaction status by session ID.
+
+    Returns status, approved flag, and receipt_text from Linkly cloud.
+    """
+    from src.integrations.payments.eftpos_terminal import EFTPOSTerminal
+
+    terminal = EFTPOSTerminal()
+    try:
+        result = await terminal.get_transaction_status(session_id=session_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"EFTPOS error: {str(e)}")
+
+
 @router.post("/xero/bulk-invoices", response_model=BulkXeroInvoiceResponse)
 async def bulk_create_xero_invoices(
     db: Annotated[AsyncSession, Depends(get_async_db)],

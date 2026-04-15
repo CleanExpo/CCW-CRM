@@ -152,12 +152,15 @@ export default function DashboardPage() {
 
   // PHASE 4: Real-time POS failure monitoring
   const [posFailureCount, setPosFailureCount] = useState(0);
+  // Guard: track last seen transaction_id to prevent badge cycling on SSE reconnect
+  const prevPosFailureIdRef = useRef<string | null>(null);
   const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(true);
 
   // PHASE 4: Real-time dashboard metrics
   const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     const isMounted = { current: true };
 
     async function loadDashboardData() {
@@ -166,17 +169,33 @@ export default function DashboardPage() {
         // Expected performance: 70% faster (5-8s → <2s)
         const [dashboardData, insightsData, posFailures, warrantyStats, certStats] =
           await Promise.all([
-            apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
-            getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
+            apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated', {
+              signal: controller.signal,
+            }),
+            getDashboardInsights(3).catch((e) => {
+              if (e.name === 'AbortError') throw e;
+              return { insights: [], total: 0, categories: [] };
+            }),
             apiClient
-              .get<{ alert_count: number }>('/api/monitoring/alerts/pos-failures?hours=24')
-              .catch(() => ({ alert_count: 0 })),
+              .get<{
+                alert_count: number;
+              }>('/api/monitoring/alerts/pos-failures?hours=24', { signal: controller.signal })
+              .catch((e) => {
+                if (e.name === 'AbortError') throw e;
+                return { alert_count: 0 };
+              }),
             apiClient
-              .get<EquipmentStats>('/api/equipment/stats')
-              .catch(() => ({ expiring_soon: 0, warranty_alerts: [] })),
+              .get<EquipmentStats>('/api/equipment/stats', { signal: controller.signal })
+              .catch((e) => {
+                if (e.name === 'AbortError') throw e;
+                return { expiring_soon: 0, warranty_alerts: [] };
+              }),
             apiClient
-              .get<CertStats>('/api/certifications/stats')
-              .catch(() => ({ expiring_soon: 0, expiring_alerts: [] })),
+              .get<CertStats>('/api/certifications/stats', { signal: controller.signal })
+              .catch((e) => {
+                if (e.name === 'AbortError') throw e;
+                return { expiring_soon: 0, expiring_alerts: [] };
+              }),
           ]);
 
         if (!isMounted.current) return;
@@ -220,6 +239,7 @@ export default function DashboardPage() {
         }
         setUrgentItems(urgent);
       } catch (error) {
+        if ((error as { name?: string }).name === 'AbortError') return;
         if (!isMounted.current) return;
         console.error('Failed to load dashboard data:', error);
         setMetrics(null);
@@ -236,12 +256,15 @@ export default function DashboardPage() {
     loadDashboardData();
     return () => {
       isMounted.current = false;
+      controller.abort();
     };
   }, []);
 
   // PHASE 4: Handle real-time POS failure alerts
+  // Guard against badge cycling: only fire when transaction_id is actually new
   useEffect(() => {
-    if (posFailure) {
+    if (posFailure && posFailure.transaction_id !== prevPosFailureIdRef.current) {
+      prevPosFailureIdRef.current = posFailure.transaction_id;
       setPosFailureCount((prev) => prev + 1);
       toast({
         title: 'POS Payment Failed',
@@ -254,25 +277,26 @@ export default function DashboardPage() {
   // PHASE 4: Handle real-time dashboard metrics updates
   useEffect(() => {
     if (metricsUpdate) {
-      let cancelled = false;
+      const controller = new AbortController();
 
       // Debounce refresh to avoid excessive API calls (wait 500ms before refreshing)
       const timeout = setTimeout(async () => {
         try {
           const dashboardData = await apiClient.get<AggregatedDashboardData>(
-            '/api/dashboard/aggregated'
+            '/api/dashboard/aggregated',
+            { signal: controller.signal }
           );
-          if (!cancelled) {
-            setMetrics(dashboardData.metrics);
-            setActivity(dashboardData.recent_activity);
-          }
+          setMetrics(dashboardData.metrics);
+          setActivity(dashboardData.recent_activity);
         } catch (error) {
-          if (!cancelled) console.error('Failed to refresh metrics:', error);
+          if ((error as { name?: string }).name !== 'AbortError') {
+            console.error('Failed to refresh metrics:', error);
+          }
         }
       }, 500);
 
       return () => {
-        cancelled = true;
+        controller.abort();
         clearTimeout(timeout);
       };
     }
