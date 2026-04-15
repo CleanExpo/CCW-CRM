@@ -104,6 +104,38 @@ def get_current_organization_id(request: Request) -> UUID:
     return org_uuid
 
 
+def assert_org_access(session_org_id: UUID, resource_org_id: UUID | None, resource_name: str = "Resource") -> None:
+    """
+    UNI-1855: Enforce that a requested resource's org matches the session org.
+
+    Call this whenever a route receives an org-scoped resource to prevent
+    cross-tenant data leakage even if the caller supplies a crafted ID.
+
+    Args:
+        session_org_id:   The org UUID from the authenticated session.
+        resource_org_id:  The org UUID stored on the resource being accessed.
+        resource_name:    Label for log/error messages (e.g. "Order", "Customer").
+
+    Raises:
+        HTTPException 403 if org mismatch is detected.
+        HTTPException 404 if resource_org_id is None (treat as not found).
+    """
+    if resource_org_id is None:
+        raise HTTPException(status_code=404, detail=f"{resource_name} not found")
+
+    if resource_org_id != session_org_id:
+        logger.warning(
+            "Cross-org access attempt blocked by tenant isolation",
+            session_org_id=str(session_org_id),
+            resource_org_id=str(resource_org_id),
+            resource=resource_name,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: resource belongs to a different organisation.",
+        )
+
+
 # Type alias for dependency injection
 CurrentOrganization = Annotated[UUID, Depends(get_current_organization_id)]
 

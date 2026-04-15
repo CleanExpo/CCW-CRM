@@ -49,6 +49,7 @@ from .routes import (
     customer_orders,
     customers,
     demo_auth,
+    org_switch,  # UNI-1855: org context switch (issues fresh tokens, scoped to new org)
     demo_dashboard,
     demo_lists,
     email_audit,  # Email audit trail for GDPR compliance (ISS-037)
@@ -439,6 +440,7 @@ app.include_router(approvals.router, tags=["Approvals"])
 app.include_router(audit_trail.router, tags=["Audit Trail"])
 # app.include_router(auth_signup.router, tags=["Signup"])  # TODO: auth_signup not implemented yet
 app.include_router(demo_auth.router, tags=["Authentication"])
+app.include_router(org_switch.router, tags=["Authentication"])  # UNI-1855
 app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
 # CRUD routers registered after demo_lists to override read-only routes
