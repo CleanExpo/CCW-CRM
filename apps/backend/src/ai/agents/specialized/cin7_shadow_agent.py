@@ -8,34 +8,6 @@ UNI-1262: Shadow Transition System Phase C
 
 from __future__ import annotations
 
-AGENT_CARD = {
-    "name": "cin7_shadow_agent",
-    "display_name": "Cin7 Shadow Gap Analysis Agent",
-    "description": "Analyzes Cin7->ERP sync gaps, classifies severity, generates prioritized recommendations, and auto-resolves stale conflicts",
-    "version": "1.0.0",
-    "capabilities": ["cin7_shadow_gap_analysis", "cin7_auto_resolve", "cin7_sync_recommendations"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "action": {
-                "type": "string",
-                "enum": ["analyze_gaps", "auto_resolve", "get_recommendations"],
-                "description": "Shadow analysis action to perform",
-            },
-            "max_age_hours": {"type": "integer", "description": "Maximum age of gaps to consider for auto-resolve"},
-            "severity_filter": {"type": "string", "enum": ["low", "medium", "high", "critical"], "description": "Filter gaps by severity"},
-        },
-        "required": ["action"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Any

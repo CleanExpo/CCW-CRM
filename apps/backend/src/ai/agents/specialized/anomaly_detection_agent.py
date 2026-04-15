@@ -5,38 +5,6 @@ Detects unusual patterns and outliers in business data using statistical
 analysis to alert before issues escalate.
 """
 
-AGENT_CARD = {
-    "name": "anomaly_detection_agent",
-    "display_name": "Anomaly Detection Agent",
-    "description": "Detects unusual patterns and outliers in business data using statistical z-score analysis to alert before issues escalate",
-    "version": "1.0.0",
-    "capabilities": ["anomaly_detection", "statistical_analysis", "outlier_detection", "fraud_detection"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "detection_type": {
-                "type": "string",
-                "enum": ["order_amount", "inventory", "pricing", "pos_failures"],
-                "description": "Type of anomaly to detect",
-            },
-            "entity_id": {"type": "string", "description": "UUID of the entity to check"},
-            "order_id": {"type": "string", "description": "Order UUID for order_amount checks"},
-            "product_id": {"type": "string", "description": "Product UUID for inventory/pricing checks"},
-            "location": {"type": "string", "description": "Location filter for POS/inventory checks"},
-            "terminal_id": {"type": "string", "description": "POS terminal UUID filter"},
-            "time_window_minutes": {"type": "integer", "description": "Time window for POS failure detection"},
-        },
-        "required": ["detection_type"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 import statistics
 from datetime import UTC, datetime, timedelta
 from typing import Any

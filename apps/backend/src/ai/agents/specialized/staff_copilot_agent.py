@@ -1,34 +1,5 @@
 """Staff Copilot Agent — answers operational ERP/CRM queries for staff."""
 
-AGENT_CARD = {
-    "name": "staff_copilot_agent",
-    "display_name": "Staff Copilot Agent",
-    "description": "Answers staff queries about orders, inventory, customers, and operations — provides order summaries, customer profiles, and next-action suggestions",
-    "version": "1.0.0",
-    "capabilities": ["staff_query", "order_summary", "customer_summary", "next_action_suggestion", "erp_assistant"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "action": {
-                "type": "string",
-                "enum": ["general_query", "summarise_order", "summarise_customer", "suggest_next_action"],
-                "description": "Type of staff assistance to provide",
-            },
-            "query": {"type": "string", "description": "Natural language question or request"},
-            "order_id": {"type": "string", "description": "Order UUID for order summary requests"},
-            "customer_id": {"type": "string", "description": "Customer UUID for customer summary requests"},
-        },
-        "required": ["action"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 import os
 from collections.abc import AsyncGenerator
 from typing import Any

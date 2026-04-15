@@ -1,33 +1,5 @@
 """Task executor agent with user confirmation flow for write operations."""
 
-AGENT_CARD = {
-    "name": "task_executor_agent",
-    "display_name": "Task Executor Agent",
-    "description": "Executes ERP write operations with mandatory user confirmation flow — creates orders, updates records, and processes bulk actions safely",
-    "version": "1.0.0",
-    "capabilities": ["task_execution", "action_execution", "user_confirmation", "write_operations"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "action_type": {
-                "type": "string",
-                "enum": ["create_order", "update_customer", "bulk_update", "send_email", "create_purchase_order"],
-                "description": "Type of write operation to execute",
-            },
-            "payload": {"type": "object", "description": "Action-specific data payload"},
-            "confirmation_token": {"type": "string", "description": "User confirmation token (required for write operations)"},
-        },
-        "required": ["action_type", "payload"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 import secrets
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta

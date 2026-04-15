@@ -1,38 +1,7 @@
 """
 Project Intelligence Agent — Meta-agent for codebase auditing, gap analysis, and PRD generation.
 Reads from catalog files (docs/catalogs/) rather than scanning raw code.
-"""
 
-from __future__ import annotations
-
-AGENT_CARD = {
-    "name": "project_intelligence_agent",
-    "display_name": "Project Intelligence Agent",
-    "description": "Meta-agent for codebase auditing, gap analysis, and PRD generation — reads catalog files and syncs findings to Linear",
-    "version": "1.0.0",
-    "capabilities": ["codebase_audit", "gap_analysis", "prd_generation", "issue_sync", "dep_graph"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "skill": {
-                "type": "string",
-                "enum": ["scan_routes", "scan_pages", "scan_agents", "scan_packages", "cross_ref", "generate_prd", "sync_linear", "dep_graph", "score_coverage", "full_audit"],
-                "description": "Audit skill to execute",
-            },
-            "target": {"type": "string", "description": "Specific target file or module for scoped audits"},
-        },
-        "required": ["skill"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
-"""
 Skills (1:10 Law — exactly 10):
 1. scan_routes     - Scan routes directory, update ROUTES catalog
 2. scan_pages      - Scan frontend pages, update PAGES catalog
@@ -45,6 +14,7 @@ Skills (1:10 Law — exactly 10):
 9. issue_sync      - Prepare issues for Linear
 10. health         - Agent health check
 """
+from __future__ import annotations
 
 import json
 import re

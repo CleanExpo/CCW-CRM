@@ -1,33 +1,5 @@
 """Marketing Agent for AI-powered campaign generation and audience analysis."""
 
-AGENT_CARD = {
-    "name": "marketing_agent",
-    "display_name": "Marketing Agent",
-    "description": "Generates campaign copy, social posts, email sequences, and audience segment analysis for CCW products",
-    "version": "1.0.0",
-    "capabilities": ["generate_campaign", "analyze_audience", "get_stats", "marketing_copy", "audience_segmentation", "campaign_management"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "action": {"type": "string", "enum": ["generate_campaign", "analyze_audience", "get_stats"]},
-            "product_name": {"type": "string", "description": "Name of the product to market"},
-            "target_audience": {"type": "string", "description": "Description of the target audience"},
-            "campaign_type": {"type": "string", "enum": ["email", "social", "sms"]},
-            "tone": {"type": "string", "enum": ["professional", "friendly", "urgent", "casual"]},
-            "product_category": {"type": "string", "description": "Category for audience segmentation"},
-            "location": {"type": "string", "description": "Geographic location for audience targeting"},
-        },
-        "required": ["action"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 import os
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime

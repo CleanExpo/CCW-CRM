@@ -4,35 +4,6 @@ Testing Agent for autonomous test generation and execution.
 Generates and runs tests for code validation.
 """
 
-AGENT_CARD = {
-    "name": "testing_agent",
-    "display_name": "Testing Agent",
-    "description": "Generates and executes unit and integration tests for code validation — includes coverage analysis and failure root-cause analysis",
-    "version": "1.0.0",
-    "capabilities": ["test_generation", "unit_tests", "integration_tests", "test_execution", "coverage_analysis", "failure_analysis"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "action": {
-                "type": "string",
-                "enum": ["generate_tests", "run_tests", "analyze_coverage", "analyze_failure"],
-                "description": "Testing action to perform",
-            },
-            "target_file": {"type": "string", "description": "Path to the file to generate tests for"},
-            "test_type": {"type": "string", "enum": ["unit", "integration", "e2e"], "description": "Type of tests to generate"},
-            "failure_output": {"type": "string", "description": "Test failure output to analyze"},
-        },
-        "required": ["action"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 import json
 import subprocess
 from collections.abc import AsyncGenerator

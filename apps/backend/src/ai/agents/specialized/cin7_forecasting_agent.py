@@ -4,30 +4,6 @@ AI-powered demand prediction for Cin7-synced products using
 sync history, velocity analysis, and seasonal pattern detection.
 """
 
-AGENT_CARD = {
-    "name": "cin7_forecasting_agent",
-    "display_name": "Cin7 Forecasting Agent",
-    "description": "AI-powered demand prediction for Cin7-synced products using sync history, velocity analysis, and seasonal pattern detection",
-    "version": "1.0.0",
-    "capabilities": ["cin7_forecasting", "sync_demand_prediction", "cin7_reorder_recommendations"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "product_id": {"type": "string", "description": "Product UUID to forecast"},
-            "horizon_days": {"type": "integer", "description": "Forecast horizon in days"},
-            "include_seasonality": {"type": "boolean", "description": "Whether to factor in seasonal patterns"},
-        },
-        "required": ["product_id"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 import math
 import statistics
 from datetime import UTC, datetime, timedelta

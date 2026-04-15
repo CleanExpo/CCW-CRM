@@ -1,37 +1,5 @@
 """Procurement agent for inventory management and supplier recommendations."""
 
-AGENT_CARD = {
-    "name": "procurement_agent",
-    "display_name": "Procurement Agent",
-    "description": "Manages inventory levels and generates procurement recommendations including supplier selection, reorder calculations, and inventory replenishment planning",
-    "version": "1.0.0",
-    "capabilities": ["procurement", "inventory_management", "supplier_recommendation", "inventory_replenishment", "reorder_calculation"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "action": {
-                "type": "string",
-                "enum": ["check_reorder_points", "recommend_supplier", "create_draft_po", "audit_inventory"],
-                "description": "Procurement action to perform",
-            },
-            "product_ids": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "List of product UUIDs to process",
-            },
-            "supplier_id": {"type": "string", "description": "Preferred supplier UUID"},
-        },
-        "required": ["action"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID

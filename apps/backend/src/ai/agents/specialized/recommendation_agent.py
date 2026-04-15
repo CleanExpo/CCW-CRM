@@ -4,35 +4,6 @@ Recommendation Agent for intelligent product recommendations.
 Provides personalized product recommendations using multiple algorithms.
 """
 
-AGENT_CARD = {
-    "name": "recommendation_agent",
-    "display_name": "Recommendation Agent",
-    "description": "Provides intelligent product recommendations using collaborative filtering and content-based algorithms — similar products, frequently bought together, and personalised recommendations",
-    "version": "1.0.0",
-    "capabilities": ["product_recommendations", "similar_products", "frequently_bought_together", "personalized_recommendations", "interaction_tracking", "recommendation_precomputation"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "action": {
-                "type": "string",
-                "enum": ["get_recommendations", "get_similar", "get_frequently_bought_together", "track_interaction", "precompute"],
-                "description": "Recommendation action to perform",
-            },
-            "product_id": {"type": "string", "description": "Product UUID for similarity/FBT recommendations"},
-            "customer_id": {"type": "string", "description": "Customer UUID for personalised recommendations"},
-            "limit": {"type": "integer", "description": "Maximum number of recommendations to return"},
-        },
-        "required": ["action"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 import json
 from collections.abc import AsyncGenerator
 from typing import Any

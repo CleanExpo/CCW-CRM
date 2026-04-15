@@ -4,34 +4,6 @@ Detects anomalies in Cin7 sync data — sync frequency spikes, price drift
 between ERP and Cin7, stock mismatches, and mapping coverage gaps.
 """
 
-AGENT_CARD = {
-    "name": "cin7_anomaly_agent",
-    "display_name": "Cin7 Anomaly Detection Agent",
-    "description": "Detects anomalies in Cin7 sync data including sync frequency spikes, price drift between ERP and Cin7, stock mismatches, and mapping coverage gaps",
-    "version": "1.0.0",
-    "capabilities": ["cin7_anomaly_detection", "sync_failure_detection", "cin7_data_quality"],
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "detection_type": {
-                "type": "string",
-                "enum": ["sync_frequency", "price_drift", "stock_mismatch", "mapping_coverage"],
-                "description": "Type of Cin7 anomaly to detect",
-            },
-            "product_id": {"type": "string", "description": "Product UUID for product-level checks"},
-            "time_window_hours": {"type": "integer", "description": "Time window for sync frequency analysis"},
-        },
-        "required": ["detection_type"],
-    },
-    "output_schema": {
-        "type": "object",
-        "properties": {
-            "content": {"type": "string"},
-            "metadata": {"type": "object"},
-        },
-    },
-}
-
 import statistics
 from datetime import datetime
 from typing import Any

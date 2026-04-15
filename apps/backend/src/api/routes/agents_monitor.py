@@ -2,59 +2,16 @@
 
 Provides read-only visibility into agent execution stats, task history,
 performance trends, and learning insights for the Agents Dashboard.
-
-Also exposes AgentCard discovery endpoints for orchestration layer routing.
 """
 
 from datetime import UTC, datetime, timedelta
-from importlib import import_module
 
 import structlog
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/agents", tags=["Agent Monitoring"])
-
-# ---------------------------------------------------------------------------
-# AgentCard registry — maps agent name -> module path
-# ---------------------------------------------------------------------------
-
-_AGENT_MODULES: dict[str, str] = {
-    "anomaly_detection_agent": "src.ai.agents.specialized.anomaly_detection_agent",
-    "autonomous_ops_agent": "src.ai.agents.specialized.autonomous_ops_agent",
-    "cin7_anomaly_agent": "src.ai.agents.specialized.cin7_anomaly_agent",
-    "cin7_forecasting_agent": "src.ai.agents.specialized.cin7_forecasting_agent",
-    "cin7_shadow_agent": "src.ai.agents.specialized.cin7_shadow_agent",
-    "development_agent": "src.ai.agents.specialized.development_agent",
-    "document_parser_agent": "src.ai.agents.specialized.document_parser_agent",
-    "form_autofill_agent": "src.ai.agents.specialized.form_autofill_agent",
-    "inventory_forecasting_agent": "src.ai.agents.specialized.inventory_forecasting_agent",
-    "marketing_agent": "src.ai.agents.specialized.marketing_agent",
-    "pricing_agent": "src.ai.agents.specialized.pricing_agent",
-    "procurement_agent": "src.ai.agents.specialized.procurement_agent",
-    "project_intelligence_agent": "src.ai.agents.specialized.project_intelligence_agent",
-    "query_agent": "src.ai.agents.specialized.query_agent",
-    "recommendation_agent": "src.ai.agents.specialized.recommendation_agent",
-    "reconciliation_agent": "src.ai.agents.specialized.reconciliation_agent",
-    "search_agent": "src.ai.agents.specialized.search_agent",
-    "staff_copilot_agent": "src.ai.agents.specialized.staff_copilot_agent",
-    "task_executor_agent": "src.ai.agents.specialized.task_executor_agent",
-    "testing_agent": "src.ai.agents.specialized.testing_agent",
-}
-
-
-def _load_agent_card(agent_name: str) -> dict | None:
-    """Dynamically load AGENT_CARD from an agent module."""
-    module_path = _AGENT_MODULES.get(agent_name)
-    if not module_path:
-        return None
-    try:
-        mod = import_module(module_path)
-        return getattr(mod, "AGENT_CARD", None)
-    except Exception as exc:
-        logger.warning("agent_card_load_failed", agent=agent_name, error=str(exc))
-        return None
 
 
 def _get_collector():
@@ -259,39 +216,3 @@ async def get_agent_insights() -> dict:
             })
 
     return {"insights": insights}
-
-
-# ─── AgentCard discovery ──────────────────────────────────────────────────────
-
-@router.get("/cards")
-async def list_agent_cards() -> list[dict]:
-    """Return AgentCard metadata for all registered AI agents.
-
-    Enables orchestration-layer agent discovery, capability-based routing,
-    and composition planning.
-    """
-    cards = []
-    for agent_name in _AGENT_MODULES:
-        card = _load_agent_card(agent_name)
-        if card is not None:
-            cards.append(card)
-    return sorted(cards, key=lambda c: c.get("name", ""))
-
-
-@router.get("/cards/{agent_name}")
-async def get_agent_card(agent_name: str) -> dict:
-    """Return the AgentCard metadata for a specific agent by name.
-
-    Args:
-        agent_name: Snake-case agent name (e.g. ``marketing_agent``).
-
-    Raises:
-        404 if the agent does not exist or has no AGENT_CARD.
-    """
-    card = _load_agent_card(agent_name)
-    if card is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Agent '{agent_name}' not found or has no AGENT_CARD",
-        )
-    return card
