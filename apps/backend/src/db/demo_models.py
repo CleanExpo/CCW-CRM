@@ -133,6 +133,11 @@ class Product(Base):
         Vector(1536), nullable=True, comment="Vector embedding for semantic search"
     )
 
+    # UNI-1808: GST applicability flag.
+    # True (default) — product attracts 10% AU GST (TaxType "OUTPUT2" in Xero).
+    # False — product is GST-exempt (e.g. certain medical equipment) → "EXEMPTOUTPUT".
+    is_gst_applicable: bool = Column(Boolean, default=True, nullable=False)
+
     is_active: bool = Column(Boolean, default=True, nullable=False)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
@@ -169,6 +174,13 @@ class Customer(Base):
     city: str | None = Column(String(100), nullable=True)
     state: str | None = Column(String(50), nullable=True)
     postcode: str | None = Column(String(10), nullable=True)
+
+    # UNI-1831: B2B / B2C customer type.
+    # "B2B" (default) — business customer; receives GST-inclusive pricing and
+    #   a full tax invoice so they can claim GST credits.
+    # "B2C" — consumer customer; TaxType is omitted from Xero line items
+    #   because consumers do not claim GST input credits.
+    customer_type: str = Column(String(3), default="B2B", nullable=False)
 
     # Xero integration fields
     xero_contact_id: str | None = Column(String(255), nullable=True)
