@@ -14,7 +14,6 @@ processing occurs. Unsigned or tampered requests are rejected with 400.
 """
 from __future__ import annotations
 
-import json as _json
 import os
 from decimal import Decimal
 from typing import Annotated, Any
@@ -33,6 +32,13 @@ router = APIRouter(prefix="/api/webhooks", tags=["Stripe Webhooks"])
 
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
+if not STRIPE_WEBHOOK_SECRET:
+    logger.critical(
+        "STRIPE_WEBHOOK_SECRET is not set. "
+        "All incoming Stripe webhook requests will be rejected with HTTP 503 "
+        "until this environment variable is configured."
+    )
+
 
 @router.post("/stripe")
 async def stripe_webhook(
@@ -46,6 +52,12 @@ async def stripe_webhook(
     events that were successfully received but had non-critical processing
     errors.
     """
+    if not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(
+            status_code=503,
+            detail="Webhook secret not configured",
+        )
+
     payload = await request.body()
     signature = request.headers.get("stripe-signature", "")
 
@@ -93,23 +105,16 @@ def _verify_signature(payload: bytes, signature: str) -> dict[Any, Any] | None:
     Returns None if verification fails (missing secret, bad signature, etc.).
     """
     if not STRIPE_WEBHOOK_SECRET:
-        logger.warning(
-            "STRIPE_WEBHOOK_SECRET not set — accepting webhook without verification. "
-            "Set the env var in production."
-        )
-        # In development without a secret, attempt to parse payload anyway
-        try:
-            result: dict[Any, Any] = _json.loads(payload)
-            return result
-        except Exception:
-            return None
+        # Secret is not configured; reject unconditionally.
+        # The startup critical log already flagged this condition.
+        return None
 
     try:
         import stripe
 
         event = stripe.Webhook.construct_event(payload, signature, STRIPE_WEBHOOK_SECRET)
         return dict(event)
-    except stripe.SignatureVerificationError as exc:
+    except stripe.error.SignatureVerificationError as exc:
         logger.warning("Stripe signature verification failed", error=str(exc))
         return None
     except Exception as exc:

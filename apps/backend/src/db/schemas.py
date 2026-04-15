@@ -121,6 +121,7 @@ class CustomerBase(BaseModel):
     city: str | None = None
     state: str | None = None
     postcode: str | None = None
+    abn: str | None = None  # Australian Business Number (11 digits, no spaces)
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     is_active: bool = True
@@ -139,6 +140,7 @@ class CustomerUpdate(BaseModel):
     city: str | None = None
     state: str | None = None
     postcode: str | None = None
+    abn: str | None = None  # Australian Business Number (11 digits, no spaces)
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     is_active: bool | None = None

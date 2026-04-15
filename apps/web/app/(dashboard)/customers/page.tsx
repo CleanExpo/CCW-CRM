@@ -34,6 +34,7 @@ interface Customer {
   city: string | null;
   state: string | null;
   postcode: string | null;
+  abn: string | null;
   is_active: boolean;
 }
 

@@ -127,6 +127,7 @@ class XeroClient:
         email: str | None = None,
         phone: str | None = None,
         address: dict | None = None,
+        tax_number: str | None = None,
     ) -> dict:
         """Create or update a contact (customer) in Xero.
 
@@ -135,6 +136,7 @@ class XeroClient:
             email: Contact email address
             phone: Contact phone number
             address: Contact address dict with street, city, state, postal_code, country
+            tax_number: Australian Business Number (ABN) — stored as TaxNumber in Xero
 
         Returns:
             Created/updated contact data
@@ -163,6 +165,9 @@ class XeroClient:
                     "Country": address.get("country", ""),
                 }
             ]
+
+        if tax_number:
+            contact_data["TaxNumber"] = tax_number  # ABN for Australian contacts
 
         payload = {"Contacts": [contact_data]}
 

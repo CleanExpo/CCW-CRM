@@ -194,6 +194,7 @@ class XeroInvoiceSync:
             email=customer.email,
             phone=customer.phone,
             address=address,
+            tax_number=getattr(customer, "abn", None),  # ABN for Australian B2B invoices
         )
 
         logger.info(
@@ -231,6 +232,7 @@ class XeroInvoiceSync:
                     "description": f"{item.product.name} (SKU: {item.product.sku})",
                     "quantity": float(item.quantity),
                     "unit_amount": float(item.unit_price),
+                    "TaxType": "OUTPUT2",  # Australian GST on income (10%)
                 }
             )
 
