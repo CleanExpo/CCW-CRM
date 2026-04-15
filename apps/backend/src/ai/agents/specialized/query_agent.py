@@ -9,6 +9,29 @@ Runs in demo mode (no ANTHROPIC_API_KEY) returning canned realistic answers.
 
 from __future__ import annotations
 
+AGENT_CARD = {
+    "name": "query_agent",
+    "display_name": "NL ERP Query Agent",
+    "description": "Converts plain English questions into safe read-only SQL queries against the ERP database, executes them, and returns natural-language explanations",
+    "version": "1.0.0",
+    "capabilities": ["natural_language_query", "erp_search", "analytics"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Natural language question about ERP data"},
+            "db": {"type": "object", "description": "Optional async database session for live query execution"},
+        },
+        "required": ["query"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 import os
 from collections.abc import AsyncGenerator
 from typing import Any

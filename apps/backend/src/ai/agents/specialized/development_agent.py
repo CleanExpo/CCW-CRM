@@ -4,6 +4,34 @@ Development Agent for autonomous code generation.
 Generates production-quality code following project patterns and conventions.
 """
 
+AGENT_CARD = {
+    "name": "development_agent",
+    "display_name": "Development Agent",
+    "description": "Generates production-quality code following project patterns and conventions — API endpoints, database models, services, and frontend components",
+    "version": "1.0.0",
+    "capabilities": ["code_generation", "api_endpoints", "database_models", "services", "components", "pattern_following"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "task": {"type": "string", "description": "Code generation task description"},
+            "target_type": {
+                "type": "string",
+                "enum": ["api_endpoint", "model", "service", "component", "test"],
+                "description": "Type of code artifact to generate",
+            },
+            "context": {"type": "object", "description": "Additional context such as existing models or schemas"},
+        },
+        "required": ["task"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 import json
 from collections.abc import AsyncGenerator
 from pathlib import Path

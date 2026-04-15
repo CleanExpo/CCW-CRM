@@ -4,6 +4,31 @@ Inventory Forecasting Agent.
 AI-powered demand prediction and stock replenishment recommendations.
 """
 
+AGENT_CARD = {
+    "name": "inventory_forecasting_agent",
+    "display_name": "Inventory Forecasting Agent",
+    "description": "AI-powered inventory demand prediction and stock replenishment recommendations using seasonal pattern detection and safety stock calculation",
+    "version": "1.0.0",
+    "capabilities": ["inventory_forecasting", "demand_prediction", "reorder_recommendations", "seasonal_pattern_detection", "safety_stock_calculation"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "product_id": {"type": "string", "description": "Product UUID to forecast"},
+            "horizon_days": {"type": "integer", "description": "Forecast horizon in days (default: 30)"},
+            "include_safety_stock": {"type": "boolean", "description": "Whether to include safety stock calculation"},
+            "location": {"type": "string", "description": "Warehouse location filter"},
+        },
+        "required": ["product_id"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 from datetime import datetime, timedelta
 from typing import Any
 
