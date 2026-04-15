@@ -12,6 +12,20 @@ import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils/calculations';
 import type { Order, OrderItem } from '../../types';
 
+// UNI-1806: Bank details sourced from env vars (set NEXT_PUBLIC_BANK_BSB and
+// NEXT_PUBLIC_BANK_ACCOUNT in Vercel / .env.local). No hardcoded values.
+const BANK_BSB = process.env.NEXT_PUBLIC_BANK_BSB ?? '';
+const BANK_ACCOUNT = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? '';
+
+interface InvoiceRecord {
+  id: string;
+  invoice_number: string;
+  invoice_date: string;
+  due_date: string;
+  status: string;
+  total: string;
+}
+
 export default function InvoicePage() {
   const params = useParams();
   const router = useRouter();
@@ -19,6 +33,8 @@ export default function InvoicePage() {
   const orderId = params.id as string;
 
   const [order, setOrder] = useState<Order | null>(null);
+  // UNI-1803: real Invoice record fetched from backend
+  const [invoice, setInvoice] = useState<InvoiceRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadOrder = useCallback(async () => {
@@ -26,6 +42,21 @@ export default function InvoicePage() {
     try {
       const orderData = await apiClient.get<Order>(`/api/orders/${orderId}`);
       setOrder(orderData);
+
+      // UNI-1803: Create or fetch the real Invoice record for this order.
+      // POST is idempotent on the backend — returns existing invoice if one
+      // already exists for this order_id.
+      try {
+        const invoiceData = await apiClient.post<InvoiceRecord>(
+          `/api/invoices/from-order/${orderId}`,
+          {}
+        );
+        setInvoice(invoiceData);
+      } catch {
+        // Invoice creation may fail if the order is not yet confirmed/delivered.
+        // Fall back gracefully — invoiceNumber will be derived from order_number.
+        setInvoice(null);
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to load order';
       toast({
@@ -46,9 +77,11 @@ export default function InvoicePage() {
   const handlePrint = () => {
     window.print();
   };
+
   const handleExportCsv = () => {
     if (!order) return;
-    const invoiceNumber = order.order_number.replace('ORD-', 'INV-');
+    // UNI-1803: prefer the real invoice number when available
+    const invoiceNumber = invoice?.invoice_number ?? order.order_number.replace('ORD-', 'INV-');
     const headers = [
       'invoice_number',
       'order_number',
@@ -96,11 +129,19 @@ export default function InvoicePage() {
   const subtotal = Number(order.total) / 1.1;
   const tax = Number(order.total) - subtotal;
 
-  // Generate invoice number from order number
-  const invoiceNumber = order.order_number.replace('ORD-', 'INV-');
-  const invoiceDate = new Date();
-  const dueDate = new Date(invoiceDate);
-  dueDate.setDate(dueDate.getDate() + 30);
+  // UNI-1803: use real invoice number from Invoice model when available;
+  // fall back to client-side derivation for non-invoiceable orders.
+  const invoiceNumber = invoice?.invoice_number ?? order.order_number.replace('ORD-', 'INV-');
+
+  // Use dates from the real invoice record when available
+  const invoiceDate = invoice?.invoice_date ? new Date(invoice.invoice_date) : new Date();
+  const dueDate = invoice?.due_date
+    ? new Date(invoice.due_date)
+    : (() => {
+        const d = new Date(invoiceDate);
+        d.setDate(d.getDate() + 30);
+        return d;
+      })();
 
   return (
     <>
@@ -155,7 +196,9 @@ export default function InvoicePage() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-primary text-3xl font-bold">CCW Online</h1>
-              <p className="text-muted-foreground mt-1 text-sm">Equipment Supplier & Distributor</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Equipment Supplier &amp; Distributor
+              </p>
               <div className="mt-4 text-sm">
                 <p>123 Equipment Street</p>
                 <p>Brisbane QLD 4000, Australia</p>
@@ -165,7 +208,8 @@ export default function InvoicePage() {
               </div>
             </div>
             <div className="text-right">
-              <h2 className="text-2xl font-bold text-red-600">INVOICE</h2>
+              {/* UNI-1804: ATO GST Act 1999 s.29-70 requires "Tax Invoice" heading */}
+              <h2 className="text-2xl font-bold text-red-600">Tax Invoice</h2>
               <div className="mt-4 space-y-1 text-sm">
                 <p>
                   <span className="font-semibold">Invoice #:</span> {invoiceNumber}
@@ -240,6 +284,7 @@ export default function InvoicePage() {
         </div>
 
         {/* Payment Instructions */}
+        {/* UNI-1806: Bank details from NEXT_PUBLIC_BANK_BSB / NEXT_PUBLIC_BANK_ACCOUNT env vars */}
         <div className="mb-8 border-l-4 border-blue-500 bg-blue-50 p-4">
           <h3 className="mb-2 text-sm font-semibold">PAYMENT INSTRUCTIONS</h3>
           <div className="space-y-1 text-xs">
@@ -249,12 +294,16 @@ export default function InvoicePage() {
             <p>
               <strong>Account Name:</strong> CCW Online Pty Ltd
             </p>
-            <p>
-              <strong>BSB:</strong> 063-000
-            </p>
-            <p>
-              <strong>Account Number:</strong> 1234 5678
-            </p>
+            {BANK_BSB ? (
+              <p>
+                <strong>BSB:</strong> {BANK_BSB}
+              </p>
+            ) : null}
+            {BANK_ACCOUNT ? (
+              <p>
+                <strong>Account Number:</strong> {BANK_ACCOUNT}
+              </p>
+            ) : null}
             <p>
               <strong>Reference:</strong> {invoiceNumber}
             </p>
@@ -271,7 +320,7 @@ export default function InvoicePage() {
 
         {/* Terms & Conditions */}
         <div className="mt-8 border-t-2 border-gray-200 pt-6">
-          <h3 className="mb-3 text-sm font-semibold">PAYMENT TERMS & CONDITIONS</h3>
+          <h3 className="mb-3 text-sm font-semibold">PAYMENT TERMS &amp; CONDITIONS</h3>
           <div className="text-muted-foreground space-y-2 text-xs">
             <p>
               <strong>Payment Due:</strong> Payment is due within 30 days of the invoice date.
