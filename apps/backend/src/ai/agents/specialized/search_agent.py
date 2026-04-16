@@ -4,6 +4,32 @@ Search Agent for intelligent product search.
 Orchestrates semantic search using embeddings and multi-language support.
 """
 
+AGENT_CARD = {
+    "name": "search_agent",
+    "display_name": "Search Agent",
+    "description": "Orchestrates intelligent product search using semantic embeddings and multi-language support with hybrid keyword and vector search",
+    "version": "1.0.0",
+    "capabilities": ["semantic_search", "product_search", "keyword_search", "hybrid_search", "multi_language_search", "search_analytics"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Search query string"},
+            "language": {"type": "string", "description": "Query language (default: en)"},
+            "limit": {"type": "integer", "description": "Maximum number of results to return"},
+            "search_mode": {"type": "string", "enum": ["semantic", "keyword", "hybrid"], "description": "Search algorithm to use"},
+            "filters": {"type": "object", "description": "Optional filters (category, price range, stock status)"},
+        },
+        "required": ["query"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 import json
 from collections.abc import AsyncGenerator
 from typing import Any

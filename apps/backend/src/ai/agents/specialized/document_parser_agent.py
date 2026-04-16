@@ -5,6 +5,38 @@ Parses emails and documents to extract structured order data using NLP
 and pattern matching.
 """
 
+AGENT_CARD = {
+    "name": "document_parser_agent",
+    "display_name": "Document Parser Agent",
+    "description": "Parses emails and documents to extract structured order data using NLP and pattern matching — supports email, PDF, and plain text input",
+    "version": "1.0.0",
+    "capabilities": ["document_parsing", "email_parsing", "pdf_parsing", "nlp_extraction", "product_matching"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "document_type": {
+                "type": "string",
+                "enum": ["email", "pdf", "text"],
+                "description": "Type of document to parse",
+            },
+            "content": {"type": "string", "description": "Raw document text or base64-encoded PDF content"},
+            "extract_fields": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Specific fields to extract (e.g. customer_name, products, quantities)",
+            },
+        },
+        "required": ["document_type", "content"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 import re
 from typing import Any
 
