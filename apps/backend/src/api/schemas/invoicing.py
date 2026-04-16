@@ -304,3 +304,31 @@ class PaymentListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+# ---------------------------------------------------------------------------
+# Credit Note schemas (UNI-1810)
+# ---------------------------------------------------------------------------
+
+
+class CreditNoteCreate(BaseModel):
+    """Request body for creating a credit note."""
+
+    reason: str = Field(..., min_length=1, max_length=1000, description="Reason for the credit note")
+    amount: Decimal = Field(..., gt=0, description="Credit note amount (must be <= invoice total)")
+
+
+class CreditNoteResponse(BaseModel):
+    """Credit note detail response."""
+
+    id: UUID
+    invoice_id: UUID
+    credit_note_number: str
+    reason: str
+    amount: Decimal
+    status: str  # draft | issued | applied
+    xero_credit_note_id: str | None = None
+    created_at: datetime
+    issued_at: datetime | None = None
+
+    model_config = {"from_attributes": True}

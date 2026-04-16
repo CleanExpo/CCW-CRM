@@ -127,6 +127,7 @@ class XeroClient:
         email: str | None = None,
         phone: str | None = None,
         address: dict | None = None,
+        tax_number: str | None = None,
     ) -> dict:
         """Create or update a contact (customer) in Xero.
 
@@ -135,6 +136,7 @@ class XeroClient:
             email: Contact email address
             phone: Contact phone number
             address: Contact address dict with street, city, state, postal_code, country
+            tax_number: Australian Business Number (ABN) — stored as TaxNumber in Xero
 
         Returns:
             Created/updated contact data
@@ -163,6 +165,9 @@ class XeroClient:
                     "Country": address.get("country", ""),
                 }
             ]
+
+        if tax_number:
+            contact_data["TaxNumber"] = tax_number  # ABN for Australian contacts
 
         payload = {"Contacts": [contact_data]}
 
@@ -387,6 +392,61 @@ class XeroClient:
         result = await self._make_request("GET", "/BankTransactions", params=params)
 
         return result.get("BankTransactions", [])
+
+    async def create_credit_note(
+        self,
+        contact_id: str,
+        description: str,
+        amount: float,
+        reference: str | None = None,
+    ) -> dict:
+        """Create a credit note in Xero (UNI-1814).
+
+        Args:
+            contact_id: Xero contact ID
+            description: Credit note line item description
+            amount: Credit note amount (positive, Xero handles sign)
+            reference: Internal reference (e.g. credit note number)
+
+        Returns:
+            Created credit note data including CreditNoteID
+
+        Raises:
+            XeroAPIError: If creation fails
+        """
+        payload = {
+            "CreditNotes": [
+                {
+                    "Type": "ACCREC",
+                    "Contact": {"ContactID": contact_id},
+                    "LineItems": [
+                        {
+                            "Description": description,
+                            "Quantity": 1,
+                            "UnitAmount": amount,
+                            "TaxType": "OUTPUT2",  # GST on Income (Australia)
+                        }
+                    ],
+                    "Status": "SUBMITTED",
+                    **({"Reference": reference} if reference else {}),
+                }
+            ]
+        }
+
+        logger.info("Creating Xero credit note", contact_id=contact_id, amount=amount)
+
+        result = await self._make_request("POST", "/CreditNotes", data=payload)
+
+        credit_notes = result.get("CreditNotes", [])
+        if credit_notes:
+            cn = credit_notes[0]
+            logger.info(
+                "Successfully created credit note",
+                credit_note_id=cn.get("CreditNoteID"),
+            )
+            return cn
+
+        raise XeroAPIError("No credit note returned from Xero")
 
     async def close(self) -> None:
         """Close HTTP client."""

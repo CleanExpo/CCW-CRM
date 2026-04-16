@@ -128,6 +128,7 @@ class XeroCustomerSync:
                 email=customer.email,
                 phone=customer.phone,
                 address=address,
+                tax_number=getattr(customer, "abn", None),  # ABN for Australian B2B invoices
             )
 
             # Store Xero contact ID

@@ -9,6 +9,33 @@ Runs in demo mode (structured mock data) when ANTHROPIC_API_KEY is absent.
 
 from __future__ import annotations
 
+AGENT_CARD = {
+    "name": "autonomous_ops_agent",
+    "display_name": "Autonomous Operations Agent",
+    "description": "ERP decision engine that autonomously handles purchase order creation, dunning, bank reconciliation, and SLA monitoring using Claude Sonnet 4.6",
+    "version": "1.0.0",
+    "capabilities": ["autonomous_ops", "purchase_order_creation", "dunning", "bank_reconciliation", "sla_monitoring"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "string",
+                "enum": ["check_low_stock", "run_dunning", "reconcile_bank", "monitor_sla", "full_cycle"],
+                "description": "Autonomous operation to execute",
+            },
+            "dry_run": {"type": "boolean", "description": "If true, recommend actions without executing them"},
+        },
+        "required": ["action"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 import os
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
