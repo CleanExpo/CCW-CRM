@@ -1,22 +1,40 @@
 # Progress
 
-**Phase**: Go-Live — Sprint 2 Bug Fixes
-**Last Updated**: 2026-04-13
-**Branch**: `claude/festive-keller` → PR #69 into `ai-updates`
+**Phase**: Go-Live — Sprint 3 Infrastructure
+**Last Updated**: 2026-04-14
+**Branch**: `ai-updates` (active deployment branch)
+**PR**: #71 open claude/festive-keller → ai-updates
 
 ## Active Tasks
 
-| Task                                | Status | Linear   |
-| ----------------------------------- | ------ | -------- |
-| XSS sanitisation on customer fields | DONE   | UNI-1783 |
-| Anthropic API key backend endpoint  | DONE   | UNI-1776 |
-| Anthropic API key Settings UI       | DONE   | UNI-1776 |
-| Anthropic step in onboarding wizard | DONE   | UNI-1776 |
-| Customer Discard button resets form | DONE   | UNI-1784 |
-| POS mobile tabbed layout            | DONE   | UNI-1787 |
-| Dashboard stale setState guard      | DONE   | —        |
+| Task                                   | Status | Linear   |
+| -------------------------------------- | ------ | -------- |
+| XSS sanitisation on customer fields    | DONE   | UNI-1783 |
+| Anthropic API key backend endpoint     | DONE   | UNI-1776 |
+| Anthropic API key Settings UI          | DONE   | UNI-1776 |
+| Anthropic step in onboarding wizard    | DONE   | UNI-1776 |
+| Customer Discard button resets form    | DONE   | UNI-1784 |
+| POS mobile tabbed layout               | DONE   | UNI-1787 |
+| Dashboard stale setState guard         | DONE   | —        |
+| BetterStack log drain (logtail-python) | DONE   | —        |
+| E2E auth.setup.ts onboarding redirect  | DONE   | —        |
+| SupervisorAgent Ollama → Anthropic     | DONE   | UNI-1792 |
+| score column migration (006)           | DONE   | —        |
+| Async DB pool 5→20 / 10→40             | DONE   | —        |
+| Webhook stubs → structlog + httpx      | DONE   | —        |
+| Ruff I001 import sort supervisor_agent | DONE   | —        |
 
-## Completed This Session (2026-04-13)
+## Completed This Session (2026-04-14)
+
+- [x] BetterStack log drain: logtail-python SDK + structlog stdlib bridge
+- [x] fix(e2e): auth.setup.ts handles /onboarding redirect — CI unblocked
+- [x] fix(ai): SupervisorAgent now calls Anthropic claude-haiku-4-5, not Ollama
+- [x] fix(db): Alembic migration 006 — score column on product_recommendations
+- [x] fix(backend): async_engine pool_size 5→20, max_overflow 10→40
+- [x] fix(backend): webhook stubs replaced with structlog + httpx forwarding
+- [x] fix(lint): ruff I001 import sort in supervisor_agent.py
+
+## Completed Previous Session (2026-04-13)
 
 - [x] Dark smoke test run: injection, rapid nav, mobile, CSV, auth bypass
 - [x] Bugs logged to Linear: UNI-1783, UNI-1784, UNI-1787

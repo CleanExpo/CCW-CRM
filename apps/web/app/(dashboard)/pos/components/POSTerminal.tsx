@@ -269,7 +269,7 @@ export function POSTerminal() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-hidden">
       {/* Terminal Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -367,8 +367,8 @@ export function POSTerminal() {
         )}
       </div>
 
-      {/* Mobile: tabbed layout */}
-      <div className="lg:hidden">
+      {/* Mobile/tablet: tabbed layout */}
+      <div className="overflow-x-hidden xl:hidden">
         <Tabs defaultValue="products">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="products">Products</TabsTrigger>
@@ -414,9 +414,9 @@ export function POSTerminal() {
       </div>
 
       {/* Desktop: 3-panel grid */}
-      <div className="hidden gap-4 lg:grid lg:grid-cols-12">
+      <div className="hidden gap-4 xl:grid xl:grid-cols-12">
         {/* Product Search - Left Panel */}
-        <div className="lg:col-span-5">
+        <div className="xl:col-span-5">
           <Card className="h-[600px]">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Products</CardTitle>
@@ -428,7 +428,7 @@ export function POSTerminal() {
         </div>
 
         {/* Cart - Middle Panel */}
-        <div className="lg:col-span-4">
+        <div className="xl:col-span-4">
           <Card className="h-[600px]">
             <CardContent className="h-full p-4">
               <Cart
@@ -442,7 +442,7 @@ export function POSTerminal() {
         </div>
 
         {/* Payment - Right Panel */}
-        <div className="lg:col-span-3">
+        <div className="xl:col-span-3">
           <PaymentPanel
             total={total}
             items={cartItems}

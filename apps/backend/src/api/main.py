@@ -35,6 +35,7 @@ from .routes import (
     audit_trail,  # Entity-level audit trail
     backorders,
     bank_feeds,
+    bas_report,  # BAS report generation (UNI-1816)
     billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
     boardroom,  # Boardroom AI session endpoint (4x daily CRON)
     certifications,  # IICRC/ISSA/ARCR certification tracking (Sprint 2)
@@ -52,6 +53,7 @@ from .routes import (
     demo_dashboard,
     demo_lists,
     email_audit,  # Email audit trail for GDPR compliance (ISS-037)
+    eod_reconciliation,  # EOD cash reconciliation (UNI-1849)
     equipment_lifecycle,  # Equipment serial numbers + warranty tracking (Sprint 2)
     google_ai,
     health,
@@ -64,21 +66,27 @@ from .routes import (
     prd,
     pricing,  # Customer trade pricing tiers (Sprint 2)
     procurement,
+    product_variants,  # Product variant CRUD + Shopify sync (UNI-1867, UNI-1866)
     products,
     prometheus_metrics,  # Prometheus metrics endpoint
     public_stats,  # Public landing page stats (no auth required)
     purchase_orders,
     quotes,
+    receipts,  # Digital receipts + thermal printer (UNI-1845)
     reconciliation,
     reconciliation_dashboard,
     service_requests,
     shipments,
+    stripe_connection,  # Stripe API connection management (UNI-1859)
     stripe_webhooks,  # Stripe webhook receiver
     suppliers,
     team,
+    tpar,  # TPAR data collection (UNI-1863)
+    tracking_notifications,  # Customer tracking notifications (UNI-1851)
     translations,
     warehouse,  # Warehouse operations feed (UNI-1251)
     webhooks,
+    xero_tracking,
 )
 from .routes import (
     settings as settings_routes,  # Account and company settings
@@ -122,7 +130,7 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager."""
-    setup_logging(debug=settings.debug)
+    setup_logging(debug=settings.debug, betterstack_token=settings.betterstack_source_token)
     logger.info("Starting application", environment=settings.environment)
 
     # Validate production secrets at startup — fail fast on misconfiguration
@@ -443,12 +451,15 @@ app.include_router(demo_lists.router, tags=["Demo Lists"])
 app.include_router(demo_dashboard.router, tags=["Dashboard"])
 # CRUD routers registered after demo_lists to override read-only routes
 app.include_router(products.router, tags=["Products"])
+app.include_router(product_variants.router, tags=["Product Variants"])
 app.include_router(customers.router, tags=["Customers"])
 app.include_router(contacts.router, tags=["Contacts"])  # CRM Contacts
 app.include_router(activities.router, tags=["Activities"])  # CRM Activities
 app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+# BAS Report (UNI-1816)
+app.include_router(bas_report.router, tags=["BAS Report"])
 # Invoicing & Payments (UNI-173)
 app.include_router(invoices.router, tags=["Invoices"])
 app.include_router(invoice_payments.router, tags=["Invoice Payments"])
@@ -466,6 +477,10 @@ app.include_router(webhooks.router, tags=["Webhooks"])
 app.include_router(boardroom.router, tags=["Boardroom"])
 # Stripe webhook receiver (invoice.paid, invoice.payment_failed, subscription.updated, checkout)
 app.include_router(stripe_webhooks.router, tags=["Stripe Webhooks"])
+# Stripe connection management (UNI-1859)
+app.include_router(stripe_connection.router, tags=["Stripe Connection"])
+# Customer tracking notifications (UNI-1851)
+app.include_router(tracking_notifications.router, tags=["Tracking Notifications"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])
 # Team management router (multi-tenant user management)
@@ -486,6 +501,8 @@ app.include_router(pricing.router, tags=["Pricing Tiers"])
 app.include_router(settings_routes.router, tags=["Settings"])
 # Agent monitoring dashboard
 app.include_router(agents_monitor.router, tags=["Agent Monitoring"])
+# TPAR — Taxable Payments Annual Report (UNI-1863)
+app.include_router(tpar.router, tags=["TPAR"])
 app.include_router(warehouse.router, tags=["Warehouse"])
 # Purchase order router
 app.include_router(purchase_orders.router, tags=["Purchase Orders"])
@@ -493,6 +510,7 @@ app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 app.include_router(procurement.router, tags=["Procurement"])
 # Shipment tracking router
 app.include_router(shipments.router, tags=["Shipment Tracking"])
+app.include_router(shipments.webhook_router, tags=["Shipping Webhooks"])
 # Container tracking and backorder management
 app.include_router(containers.router, tags=["Container Tracking"])
 app.include_router(backorders.router, tags=["Backorder Management"])
@@ -574,6 +592,7 @@ app.include_router(translations.router, tags=["Translation Management"])
 
 # Integration routers (✅ ALL IMPLEMENTED)
 app.include_router(xero.router, prefix="/api", tags=["Xero Integration"])
+app.include_router(xero_tracking.router, tags=["Xero Tracking"])
 app.include_router(shopify.router, tags=["Shopify Integration"])
 app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
@@ -762,9 +781,11 @@ app.include_router(email_audit.router, tags=["Email Audit"])
 
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])
+app.include_router(receipts.router, tags=["POS Receipts"])  # UNI-1845
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
 app.include_router(reconciliation.router, tags=["Reconciliation"])
 app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashboard"])
+app.include_router(eod_reconciliation.router, tags=["POS EOD Reconciliation"])  # UNI-1849
 
 # Monitoring routers (system alerts, business metrics, performance)
 try:
@@ -816,6 +837,55 @@ app.include_router(dashboard_stream.router, tags=["Real-Time Dashboard"])
 
 # PRD Generation router (✅ IMPLEMENTED)
 app.include_router(prd.router, tags=["PRD Generation"])
+
+# ASD Essential Eight compliance controls (UNI-1857)
+try:
+    from src.api.routes import security_controls
+    app.include_router(security_controls.router, tags=["Security Controls"])
+except ImportError:
+    pass
+
+# NDB Notifiable Data Breaches incident workflow (UNI-1858)
+try:
+    from src.api.routes import ndb_incident
+    app.include_router(ndb_incident.router, tags=["NDB Incident Response"])
+except ImportError:
+    pass
+
+# UNI-1844: AU Utils (state codes reference list)
+try:
+    from src.api.routes import utils as utils_routes
+    app.include_router(utils_routes.router, tags=["Utils"])
+except (ImportError, AttributeError):
+    pass
+
+# UNI-1848: RCTI (Recipient-Created Tax Invoice) support
+try:
+    from src.api.routes import rcti
+    app.include_router(rcti.router, tags=["RCTI"])
+except (ImportError, AttributeError):
+    pass
+
+# UNI-1846: AU Customs Import Documentation
+try:
+    from src.api.routes import customs_docs
+    app.include_router(customs_docs.router, tags=["Customs Docs"])
+except (ImportError, AttributeError):
+    pass
+
+# UNI-1862: Privacy Act APP 12 (access/correction/deletion requests + data export)
+try:
+    from src.api.routes import privacy_access
+    app.include_router(privacy_access.router, tags=["Privacy / APP 12"])
+except (ImportError, AttributeError):
+    pass
+
+# UNI-1860: Xero Payroll STP Phase 2
+try:
+    from src.api.routes import payroll
+    app.include_router(payroll.router, tags=["Payroll / STP Phase 2"])
+except (ImportError, AttributeError):
+    pass
 
 
 @app.get("/")

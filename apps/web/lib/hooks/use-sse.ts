@@ -93,9 +93,12 @@ export function useSSE<T = unknown>({
     connectedAt: null as Date | null,
   });
 
+  const MIN_RECONNECT_INTERVAL_MS = 5000;
+
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isManuallyClosedRef = useRef(false);
+  const lastConnectAttemptRef = useRef<number>(0);
 
   // Close connection
   const close = useCallback(() => {
@@ -115,6 +118,11 @@ export function useSSE<T = unknown>({
   // Connect to SSE
   const connect = useCallback(() => {
     if (!enabled || eventSourceRef.current) return;
+
+    // Guard: don't reconnect within MIN_RECONNECT_INTERVAL_MS of last attempt
+    const now = Date.now();
+    if (now - lastConnectAttemptRef.current < MIN_RECONNECT_INTERVAL_MS) return;
+    lastConnectAttemptRef.current = now;
 
     try {
       isManuallyClosedRef.current = false;
