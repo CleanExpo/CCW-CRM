@@ -181,6 +181,8 @@ class Customer(Base):
     # "B2C" — consumer customer; TaxType is omitted from Xero line items
     #   because consumers do not claim GST input credits.
     customer_type: str = Column(String(3), default="B2B", nullable=False)
+    # Australian Business Number (added by add_abn_to_customers migration)
+    abn: str | None = Column(String(20), nullable=True, index=True)
 
     # Xero integration fields
     xero_contact_id: str | None = Column(String(255), nullable=True)
