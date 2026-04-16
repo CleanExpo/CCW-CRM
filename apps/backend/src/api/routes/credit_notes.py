@@ -156,7 +156,7 @@ async def issue_credit_note(
     # Reduce invoice outstanding amount
     invoice: Invoice = cn.invoice
     new_amount_due = max(invoice.amount_due - cn.amount, 0)
-    invoice.amount_due = new_amount_due
+    invoice.amount_due = new_amount_due  # type: ignore[assignment]
 
     await db.flush()
 
