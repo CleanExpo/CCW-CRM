@@ -8,6 +8,7 @@ from typing import AsyncGenerator
 # CRITICAL: Set environment variables BEFORE any imports
 os.environ["RATE_LIMIT_ENABLED"] = "false"
 os.environ["SKIP_AUTH_ENFORCEMENT"] = "true"  # Bypass auth middleware for tests
+os.environ["PORTAL_DEMO_MODE"] = "true"  # Return fixture data in portal tests (UNI-1869)
 
 # Windows asyncpg compatibility: ensure selector event loop in tests.
 if sys.platform.startswith("win"):
