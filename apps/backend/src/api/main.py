@@ -61,7 +61,6 @@ from .routes import (
     jobs,
     orders,
     pos_transactions,
-    receipts,  # Digital receipts + thermal printer (UNI-1845)
     prd,
     pricing,  # Customer trade pricing tiers (Sprint 2)
     procurement,
@@ -70,6 +69,7 @@ from .routes import (
     public_stats,  # Public landing page stats (no auth required)
     purchase_orders,
     quotes,
+    receipts,  # Digital receipts + thermal printer (UNI-1845)
     reconciliation,
     reconciliation_dashboard,
     service_requests,

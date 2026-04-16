@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
@@ -10,11 +11,13 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.models import User
 from src.db.pos_models import POSTransaction
 from src.services.email_service import EmailService
+
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/pos", tags=["POS Receipts"])
 ABN_NUMBER = os.getenv("ABN_NUMBER", "")
