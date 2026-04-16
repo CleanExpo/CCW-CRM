@@ -284,6 +284,42 @@ class StripeClient:
         except Exception as e:
             raise Exception(f"Webhook verification failed: {str(e)}")
 
+    # Connection / Account Methods
+
+    async def get_account(self) -> dict:
+        """Retrieve the connected Stripe account details."""
+        try:
+            account = stripe.Account.retrieve()
+            return dict(account)
+        except StripeError as e:
+            raise Exception(f"Failed to retrieve Stripe account: {str(e)}")
+
+    async def list_webhooks(self) -> list[dict]:
+        """List all configured Stripe webhook endpoints."""
+        try:
+            response = stripe.WebhookEndpoint.list(limit=100)
+            return [dict(we) for we in response.data]
+        except StripeError as e:
+            raise Exception(f"Failed to list webhook endpoints: {str(e)}")
+
+    async def create_webhook(self, url: str, events: list[str]) -> dict:
+        """Register a new webhook endpoint with Stripe.
+
+        Args:
+            url: The HTTPS URL to receive webhook events
+            events: List of Stripe event types to subscribe to
+
+        Returns:
+            The created WebhookEndpoint object as a dict
+        """
+        try:
+            endpoint = stripe.WebhookEndpoint.create(
+                url=url,
+                enabled_events=events,
+            )
+            return dict(endpoint)
+        except StripeError as e:
+            raise Exception(f"Failed to create webhook endpoint: {str(e)}")
     # Refunds (UNI-1813)
 
     async def create_refund(

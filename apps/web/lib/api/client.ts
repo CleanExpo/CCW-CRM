@@ -196,9 +196,19 @@ async function fetchApi<T>(
       await retryDelay(attempt - 1);
     }
 
-    // Create a fresh AbortController for each attempt
+    // Create a fresh AbortController for each attempt, combining timeout + caller signal
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
+    // If the caller passed a signal (e.g. from a component unmount AbortController),
+    // forward its abort to our internal controller so in-flight requests are cancelled.
+    const callerSignal = options.signal as AbortSignal | undefined;
+    if (callerSignal) {
+      if (callerSignal.aborted) {
+        clearTimeout(timeoutId);
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      callerSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
 
     try {
       const response = await fetch(url, {

@@ -72,14 +72,17 @@ from .routes import (
     public_stats,  # Public landing page stats (no auth required)
     purchase_orders,
     quotes,
+    receipts,  # Digital receipts + thermal printer (UNI-1845)
     reconciliation,
     reconciliation_dashboard,
     service_requests,
     shipments,
+    stripe_connection,  # Stripe API connection management (UNI-1859)
     stripe_webhooks,  # Stripe webhook receiver
     suppliers,
     team,
     tpar,  # TPAR data collection (UNI-1863)
+    tracking_notifications,  # Customer tracking notifications (UNI-1851)
     translations,
     warehouse,  # Warehouse operations feed (UNI-1251)
     webhooks,
@@ -474,6 +477,10 @@ app.include_router(webhooks.router, tags=["Webhooks"])
 app.include_router(boardroom.router, tags=["Boardroom"])
 # Stripe webhook receiver (invoice.paid, invoice.payment_failed, subscription.updated, checkout)
 app.include_router(stripe_webhooks.router, tags=["Stripe Webhooks"])
+# Stripe connection management (UNI-1859)
+app.include_router(stripe_connection.router, tags=["Stripe Connection"])
+# Customer tracking notifications (UNI-1851)
+app.include_router(tracking_notifications.router, tags=["Tracking Notifications"])
 # Supplier management router
 app.include_router(suppliers.router, tags=["Suppliers"])
 # Team management router (multi-tenant user management)
@@ -774,6 +781,7 @@ app.include_router(email_audit.router, tags=["Email Audit"])
 
 # POS System router
 app.include_router(pos_transactions.router, tags=["POS System"])
+app.include_router(receipts.router, tags=["POS Receipts"])  # UNI-1845
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
 app.include_router(reconciliation.router, tags=["Reconciliation"])
 app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashboard"])
