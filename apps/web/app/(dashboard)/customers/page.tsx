@@ -35,6 +35,9 @@ interface Customer {
   state: string | null;
   postcode: string | null;
   abn: string | null;
+  /** UNI-1829: Credit management fields */
+  credit_limit: number | null;
+  credit_hold: boolean;
   is_active: boolean;
 }
 

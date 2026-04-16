@@ -135,6 +135,9 @@ class CustomerBase(BaseModel):
     # "B2B" (default) — business; receives tax invoices and can claim GST credits.
     # "B2C" — consumer; TaxType omitted from Xero line items (no GST credit claims).
     customer_type: Literal["B2B", "B2C"] = "B2B"
+    # UNI-1829: Credit management fields (stored in customer_credit_profiles).
+    credit_limit: Decimal | None = Field(default=None, ge=0)
+    credit_hold: bool = False
     is_active: bool = True
 
 
@@ -172,6 +175,9 @@ class CustomerUpdate(BaseModel):
     xero_synced_at: datetime | None = None
     # UNI-1831: Allow updating customer type (B2B / B2C).
     customer_type: Literal["B2B", "B2C"] | None = None
+    # UNI-1829: Credit management updates.
+    credit_limit: Decimal | None = Field(default=None, ge=0)
+    credit_hold: bool | None = None
     is_active: bool | None = None
 
     @field_validator(

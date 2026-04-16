@@ -129,6 +129,12 @@ class WorkshopBooking(Base):
     hours_on_completion = Column(Float, nullable=True)
     technician_notes = Column(Text, nullable=True)
     customer_notes = Column(Text, nullable=True)
+
+    # UNI-1836: Customer sign-off on job completion (ACL compliance)
+    customer_signed_off = Column(Boolean, nullable=False, default=False)
+    sign_off_at = Column(DateTime(timezone=True), nullable=True)
+    sign_off_method = Column(String(20), nullable=True)  # "digital" | "phone" | "in-person"
+
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
