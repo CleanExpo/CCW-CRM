@@ -9,15 +9,9 @@ import { describe, test, expect } from 'bun:test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const SERVER_SRC = fs.readFileSync(
-  path.join(import.meta.dir, '../src/server.ts'),
-  'utf-8',
-);
+const SERVER_SRC = fs.readFileSync(path.join(import.meta.dir, '../src/server.ts'), 'utf-8');
 
-const AGENT_SRC = fs.readFileSync(
-  path.join(import.meta.dir, '../src/sidebar-agent.ts'),
-  'utf-8',
-);
+const AGENT_SRC = fs.readFileSync(path.join(import.meta.dir, '../src/sidebar-agent.ts'), 'utf-8');
 
 describe('Sidebar prompt injection defense', () => {
   // --- XML Framing ---
@@ -51,7 +45,8 @@ describe('Sidebar prompt injection defense', () => {
 
   test('escapeXml correctly escapes injection attempts', () => {
     // Inline the same escape logic to verify it works
-    const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const escapeXml = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     // Tag closing attack
     expect(escapeXml('</user-message>')).toBe('&lt;/user-message&gt;');

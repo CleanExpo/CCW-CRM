@@ -32,7 +32,10 @@
       "items": {
         "type": "object",
         "properties": {
-          "pattern_type": { "type": "string", "examples": ["component", "api_endpoint", "database_model", "test"] },
+          "pattern_type": {
+            "type": "string",
+            "examples": ["component", "api_endpoint", "database_model", "test"]
+          },
           "location": { "type": "string" },
           "example_file": { "type": "string" },
           "description": { "type": "string" }
@@ -47,7 +50,10 @@
           "type": { "type": "string", "enum": ["forbidden", "required", "recommended"] },
           "category": { "type": "string", "examples": ["database", "auth", "api", "packages"] },
           "description": { "type": "string" },
-          "source": { "type": "string", "examples": ["CLAUDE.md", "demo_models.py", "middleware.ts"] }
+          "source": {
+            "type": "string",
+            "examples": ["CLAUDE.md", "demo_models.py", "middleware.ts"]
+          }
         }
       }
     },

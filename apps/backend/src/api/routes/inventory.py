@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
@@ -33,7 +34,7 @@ from src.db.inventory_models import (
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/api/inventory", tags=["Multi-Store Inventory"])
+router = APIRouter(prefix="/api/inventory", tags=["Multi-Store Inventory"], dependencies=[Depends(get_current_user)])
 
 
 # ============================================

@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.api.routes.demo_auth import get_current_user
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.approvals_models import (
     Approval,
@@ -27,7 +27,7 @@ from src.db.approvals_models import (
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/api/approvals", tags=["Approvals"])
+router = APIRouter(prefix="/api/approvals", tags=["Approvals"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic Schemas

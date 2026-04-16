@@ -845,3 +845,98 @@ async def calculate_tax_endpoint(
         grand_total=subtotal + total_tax,
         line_items=line_item_results,
     )
+
+
+# ---------------------------------------------------------------------------
+# UNI-1813: Stripe Refunds + Xero Sync
+# ---------------------------------------------------------------------------
+
+class RefundRequest(BaseModel):
+    """Request body for invoice refund."""
+
+    amount: Decimal | None = Field(default=None, description="Amount to refund (None = full refund)")
+    reason: str = Field(default="requested_by_customer", description="Refund reason")
+
+
+@router.post("/{invoice_id}/refund")
+async def refund_invoice(
+    invoice_id: UUID,
+    data: RefundRequest,
+    background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Issue a Stripe refund for a paid invoice and push a Xero credit note."""
+    from src.integrations.stripe.client import StripeClient
+
+    result = await db.execute(select(Invoice).where(Invoice.id == invoice_id))
+    invoice = result.scalar_one_or_none()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    if not invoice.stripe_payment_intent_id:
+        raise HTTPException(status_code=422, detail="Invoice not paid via Stripe")
+
+    amount_cents: int | None = None
+    if data.amount is not None:
+        amount_cents = int(data.amount * 100)
+
+    stripe_client = StripeClient()
+    refund = await stripe_client.create_refund(
+        invoice.stripe_payment_intent_id, amount_cents, data.reason
+    )
+
+    invoice.status = "refunded"
+    invoice.updated_at = datetime.utcnow()
+    await db.commit()
+
+    # Non-blocking Xero credit note push
+    async def _push_credit_note() -> None:
+        try:
+            from src.integrations.xero.credit_notes import push_credit_note
+            await push_credit_note(invoice_id=str(invoice.id), amount=data.amount or invoice.total)
+        except Exception:
+            pass
+
+    background_tasks.add_task(_push_credit_note)
+
+    return {
+        "refund_id": refund.get("id"),
+        "status": refund.get("status"),
+        "amount": refund.get("amount"),
+        "currency": refund.get("currency"),
+        "invoice_status": "refunded",
+    }
+
+
+# ---------------------------------------------------------------------------
+# UNI-1818: Stripe Payment Links on Invoices
+# ---------------------------------------------------------------------------
+
+@router.post("/{invoice_id}/payment-link")
+async def create_payment_link(
+    invoice_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Generate a Stripe Payment Link for an invoice and store it."""
+    from src.integrations.stripe.client import StripeClient
+
+    result = await db.execute(select(Invoice).where(Invoice.id == invoice_id))
+    invoice = result.scalar_one_or_none()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    amount_cents = int(invoice.total * 100)
+    description = f"Invoice {invoice.invoice_number}"
+
+    stripe_client = StripeClient()
+    link_data = await stripe_client.create_payment_link(
+        invoice_id=str(invoice_id),
+        amount_cents=amount_cents,
+        description=description,
+    )
+
+    invoice.stripe_payment_link = link_data["url"]
+    invoice.updated_at = datetime.utcnow()
+    await db.commit()
+
+    return {"payment_link": link_data["url"], "link_id": link_data["id"]}

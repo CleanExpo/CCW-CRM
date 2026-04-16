@@ -17,7 +17,7 @@
 #   docker compose -f docker-compose.production.yml logs -f
 #   docker compose -f docker-compose.production.yml down
 
-version: "3.9"
+version: '3.9'
 
 services:
   # ===========================================================================
@@ -32,14 +32,15 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-starter_db}
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+      POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./apps/backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "127.0.0.1:5432:5432"  # Only accessible from localhost
+      - '127.0.0.1:5432:5432' # Only accessible from localhost
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-starter_user} -d ${POSTGRES_DB:-starter_db}"]
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-starter_user} -d ${POSTGRES_DB:-starter_db}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,16 +50,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4"
+          cpus: '4'
           memory: 4G
         reservations:
-          cpus: "1"
+          cpus: '1'
           memory: 1G
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "50m"
-        max-file: "10"
+        max-size: '50m'
+        max-file: '10'
 
   # ===========================================================================
   # Redis Cache
@@ -77,9 +78,9 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "127.0.0.1:6379:6379"  # Only accessible from localhost
+      - '127.0.0.1:6379:6379' # Only accessible from localhost
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -89,16 +90,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: '2'
           memory: 1G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 256M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "20m"
-        max-file: "5"
+        max-size: '20m'
+        max-file: '5'
 
   # ===========================================================================
   # Backend API (FastAPI)
@@ -110,7 +111,7 @@ services:
     environment:
       # Environment
       ENVIRONMENT: production
-      DEBUG: "false"
+      DEBUG: 'false'
       LOG_LEVEL: INFO
 
       # Database
@@ -121,7 +122,7 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_DB: 0
-      CACHE_ENABLED: "true"
+      CACHE_ENABLED: 'true'
 
       # JWT
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
@@ -148,17 +149,17 @@ services:
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
 
       # Feature Flags
-      FEATURE_ANALYTICS_ENABLED: "true"
-      FEATURE_AI_ENABLED: "true"
+      FEATURE_ANALYTICS_ENABLED: 'true'
+      FEATURE_AI_ENABLED: 'true'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8000:8000"  # Only accessible from localhost (nginx proxies)
+      - '127.0.0.1:8000:8000' # Only accessible from localhost (nginx proxies)
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -168,16 +169,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4"
+          cpus: '4'
           memory: 4G
         reservations:
-          cpus: "1"
+          cpus: '1'
           memory: 1G
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "100m"
-        max-file: "10"
+        max-size: '100m'
+        max-file: '10'
 
   # ===========================================================================
   # Frontend Web (Next.js)
@@ -195,9 +196,10 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "127.0.0.1:3000:3000"  # Only accessible from localhost (nginx proxies)
+      - '127.0.0.1:3000:3000' # Only accessible from localhost (nginx proxies)
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -207,16 +209,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: '2'
           memory: 2G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 512M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "50m"
-        max-file: "10"
+        max-size: '50m'
+        max-file: '10'
 
   # ===========================================================================
   # Nginx Reverse Proxy
@@ -231,15 +233,15 @@ services:
       - /var/www/certbot:/var/www/certbot:ro
       - nginx_logs:/var/log/nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     depends_on:
       backend:
         condition: service_healthy
       web:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "nginx", "-t"]
+      test: ['CMD', 'nginx', '-t']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -248,16 +250,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1"
+          cpus: '1'
           memory: 512M
         reservations:
-          cpus: "0.25"
+          cpus: '0.25'
           memory: 128M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "50m"
-        max-file: "10"
+        max-size: '50m'
+        max-file: '10'
 
 networks:
   ccw-internal:

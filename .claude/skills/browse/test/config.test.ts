@@ -1,5 +1,11 @@
 import { describe, test, expect } from 'bun:test';
-import { resolveConfig, ensureStateDir, readVersionHash, getGitRoot, getRemoteSlug } from '../src/config';
+import {
+  resolveConfig,
+  ensureStateDir,
+  readVersionHash,
+  getGitRoot,
+  getRemoteSlug,
+} from '../src/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -42,7 +48,9 @@ describe('config', () => {
   describe('ensureStateDir', () => {
     test('creates directory if it does not exist', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-config-test-${Date.now()}`);
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({
+        BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json'),
+      });
       expect(fs.existsSync(config.stateDir)).toBe(false);
       ensureStateDir(config);
       expect(fs.existsSync(config.stateDir)).toBe(true);
@@ -65,7 +73,9 @@ describe('config', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
       fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules/\n');
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({
+        BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json'),
+      });
       ensureStateDir(config);
       const content = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
       expect(content).toContain('.gstack/');
@@ -77,7 +87,9 @@ describe('config', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
       fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules/\n.gstack/\n');
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({
+        BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json'),
+      });
       ensureStateDir(config);
       const content = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
       expect(content).toBe('node_modules/\n.gstack/\n');
@@ -88,7 +100,9 @@ describe('config', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
       fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules');
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({
+        BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json'),
+      });
       ensureStateDir(config);
       const content = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
       expect(content).toBe('node_modules\n.gstack/\n');
@@ -101,7 +115,9 @@ describe('config', () => {
       // Create a read-only .gitignore (no .gstack/ entry → would try to append)
       fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules/\n');
       fs.chmodSync(path.join(tmpDir, '.gitignore'), 0o444);
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({
+        BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json'),
+      });
       ensureStateDir(config); // should not throw
       // Verify warning was written to server log
       const logPath = path.join(config.stateDir, 'browse-server.log');
@@ -119,7 +135,9 @@ describe('config', () => {
     test('skips if no .gitignore exists', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({
+        BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json'),
+      });
       ensureStateDir(config);
       expect(fs.existsSync(path.join(tmpDir, '.gitignore'))).toBe(false);
       fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -192,8 +210,9 @@ describe('resolveServerScript', () => {
   });
 
   test('throws when server.ts cannot be found', () => {
-    expect(() => resolveServerScript({}, '/nonexistent/$bunfs', '/nonexistent/browse'))
-      .toThrow('Cannot find server.ts');
+    expect(() => resolveServerScript({}, '/nonexistent/$bunfs', '/nonexistent/browse')).toThrow(
+      'Cannot find server.ts'
+    );
   });
 });
 
@@ -244,7 +263,8 @@ describe('version mismatch detection', () => {
     const currentVersion: string | null = null;
     const stateVersion: string | undefined = 'abc123';
     // Version mismatch only triggers when both are present
-    const shouldRestart = currentVersion !== null && stateVersion !== undefined && currentVersion !== stateVersion;
+    const shouldRestart =
+      currentVersion !== null && stateVersion !== undefined && currentVersion !== stateVersion;
     expect(shouldRestart).toBe(false);
   });
 });
@@ -258,7 +278,7 @@ describe('isServerHealthy', () => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ status: 'healthy' }));
     });
-    await new Promise<void>(resolve => server.listen(0, resolve));
+    await new Promise<void>((resolve) => server.listen(0, resolve));
     const port = server.address().port;
     try {
       expect(await isServerHealthy(port)).toBe(true);
@@ -272,7 +292,7 @@ describe('isServerHealthy', () => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ status: 'unhealthy' }));
     });
-    await new Promise<void>(resolve => server.listen(0, resolve));
+    await new Promise<void>((resolve) => server.listen(0, resolve));
     const port = server.address().port;
     try {
       expect(await isServerHealthy(port)).toBe(false);
@@ -291,7 +311,7 @@ describe('isServerHealthy', () => {
       res.writeHead(500);
       res.end('Internal Server Error');
     });
-    await new Promise<void>(resolve => server.listen(0, resolve));
+    await new Promise<void>((resolve) => server.listen(0, resolve));
     const port = server.address().port;
     try {
       expect(await isServerHealthy(port)).toBe(false);

@@ -21,6 +21,7 @@ Navigate to the Linear workspace in Chrome, capture the board, triage backlog is
 - Verifying that MCP updates actually appeared in the UI
 
 **Trigger phrases:**
+
 - "open linear in browser"
 - "screenshot my linear board"
 - "triage linear visually"
@@ -37,6 +38,7 @@ mcp__Claude_in_Chrome__navigate: https://linear.app
 ```
 
 Take a screenshot to confirm login state:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ```
@@ -75,6 +77,7 @@ Present a structured table to the user:
 ### Step 4: Triage Actions (per user instruction)
 
 For each issue to update:
+
 1. Click the issue row to open it
 2. Find the status selector
 3. Click to change status (Backlog → In Progress → Done)
@@ -88,6 +91,7 @@ mcp__Claude_in_Chrome__computer: { action: "click", coordinate: [x, y] }
 ### Step 5: Final Board Screenshot
 
 After all updates:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ```
@@ -101,6 +105,7 @@ Report: issues triaged, final states, any failures.
 **User:** "Open linear and show me what's in backlog"
 
 **Response:**
+
 ```
 Opening Linear in Chrome...
 [screenshot of board]
@@ -120,6 +125,7 @@ Which would you like to update?
 ## VERIFICATION
 
 After any status change, confirm:
+
 - Issue shows correct status colour in the board column
 - The status label text matches the intended state
 - Board column count updated correctly

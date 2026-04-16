@@ -4,20 +4,31 @@ export const runtime = 'edge';
 
 export async function GET() {
   const encoder = new TextEncoder();
+  let interval: ReturnType<typeof setInterval> | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
   const stream = new ReadableStream({
     start(controller) {
       controller.enqueue(encoder.encode('event: connected\ndata: {"status":"connected"}\n\n'));
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(': keep-alive\n\n'));
         } catch {
           clearInterval(interval);
         }
       }, 15000);
-      setTimeout(() => {
+      timeout = setTimeout(() => {
         clearInterval(interval);
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          // Controller already closed by client disconnect — ignore
+        }
       }, 25000);
+    },
+    cancel() {
+      clearInterval(interval);
+      clearTimeout(timeout);
     },
   });
 

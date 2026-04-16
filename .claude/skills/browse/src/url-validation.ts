@@ -4,10 +4,10 @@
  */
 
 const BLOCKED_METADATA_HOSTS = new Set([
-  '169.254.169.254',  // AWS/GCP/Azure instance metadata
-  'fd00::',           // IPv6 unique local (metadata in some cloud setups)
+  '169.254.169.254', // AWS/GCP/Azure instance metadata
+  'fd00::', // IPv6 unique local (metadata in some cloud setups)
   'metadata.google.internal', // GCP metadata
-  'metadata.azure.internal',  // Azure IMDS
+  'metadata.azure.internal', // Azure IMDS
 ]);
 
 /**
@@ -18,9 +18,7 @@ const BLOCKED_METADATA_HOSTS = new Set([
  */
 function normalizeHostname(hostname: string): string {
   // Strip IPv6 brackets
-  let h = hostname.startsWith('[') && hostname.endsWith(']')
-    ? hostname.slice(1, -1)
-    : hostname;
+  let h = hostname.startsWith('[') && hostname.endsWith(']') ? hostname.slice(1, -1) : hostname;
   // Strip trailing dot
   if (h.endsWith('.')) h = h.slice(0, -1);
   return h;
@@ -37,7 +35,8 @@ function isMetadataIp(hostname: string): boolean {
     const normalized = probe.hostname;
     if (BLOCKED_METADATA_HOSTS.has(normalized)) return true;
     // Also check after stripping trailing dot
-    if (normalized.endsWith('.') && BLOCKED_METADATA_HOSTS.has(normalized.slice(0, -1))) return true;
+    if (normalized.endsWith('.') && BLOCKED_METADATA_HOSTS.has(normalized.slice(0, -1)))
+      return true;
   } catch {
     // Not a valid hostname — can't be a metadata IP
   }
@@ -53,7 +52,7 @@ async function resolvesToBlockedIp(hostname: string): Promise<boolean> {
     const dns = await import('node:dns');
     const { resolve4 } = dns.promises;
     const addresses = await resolve4(hostname);
-    return addresses.some(addr => BLOCKED_METADATA_HOSTS.has(addr));
+    return addresses.some((addr) => BLOCKED_METADATA_HOSTS.has(addr));
   } catch {
     // DNS resolution failed — not a rebinding risk
     return false;
@@ -87,7 +86,7 @@ export async function validateNavigationUrl(url: string): Promise<void> {
   // resolution adds latency that breaks concurrent E2E tests under load.
   const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
   const isPrivateNet = /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(hostname);
-  if (!isLoopback && !isPrivateNet && await resolvesToBlockedIp(hostname)) {
+  if (!isLoopback && !isPrivateNet && (await resolvesToBlockedIp(hostname))) {
     throw new Error(
       `Blocked: ${parsed.hostname} resolves to a cloud metadata IP. Possible DNS rebinding attack.`
     );

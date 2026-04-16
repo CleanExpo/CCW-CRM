@@ -1,12 +1,13 @@
 """Audit trail API — entity-level change history."""
-from datetime import datetime
+import os
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.routes.demo_auth import get_current_user
@@ -102,6 +103,35 @@ async def list_audit_logs(
         page_size=page_size,
         total_pages=(total + page_size - 1) // page_size,
     )
+
+
+@router.get("/retention-policy")
+async def get_retention_policy() -> dict:
+    """Return the current audit log retention and archive policy from env vars."""
+    return {
+        "retention_days": int(os.getenv("AUDIT_RETENTION_DAYS", "2555")),
+        "archive_after_days": int(os.getenv("AUDIT_ARCHIVE_AFTER_DAYS", "365")),
+    }
+
+
+@router.delete("/purge-expired")
+async def purge_expired_audit_logs(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    """Delete AuditLog entries older than AUDIT_RETENTION_DAYS. Requires admin role."""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
+
+    retention_days = int(os.getenv("AUDIT_RETENTION_DAYS", "2555"))
+    cutoff = datetime.now(UTC) - timedelta(days=retention_days)
+
+    result = await db.execute(delete(AuditLog).where(AuditLog.created_at < cutoff))
+    await db.commit()
+
+    purged_count = result.rowcount
+    logger.info("Audit logs purged", purged_count=purged_count, retention_days=retention_days, cutoff=cutoff.isoformat())
+    return {"purged_count": purged_count}
 
 
 @router.get("/{entity_type}/{entity_id}", response_model=list[AuditLogResponse])

@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ArrowRight, Package, User, Calendar, Clock, CheckCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import type { StockTransfer } from "@/lib/types/inventory";
-import { apiClient } from "@/lib/api/client";
-import { TransferStatusBadge } from "@/components/inventory/TransferStatusBadge";
-import { format } from "date-fns";
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, ArrowRight, Package, User, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import type { StockTransfer } from '@/lib/types/inventory';
+import { apiClient } from '@/lib/api/client';
+import { TransferStatusBadge } from '@/components/inventory/TransferStatusBadge';
+import { format } from 'date-fns';
 
 export default function TransferDetailPage() {
   const params = useParams();
@@ -25,17 +25,19 @@ export default function TransferDetailPage() {
     async function loadTransfer() {
       setLoading(true);
       try {
-        const response = await apiClient.get<StockTransfer>(`/api/inventory/transfers/${transferId}`);
+        const response = await apiClient.get<StockTransfer>(
+          `/api/inventory/transfers/${transferId}`
+        );
         setTransfer(response);
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Failed to load transfer";
-        console.error("Failed to load transfer:", error);
+        const message = error instanceof Error ? error.message : 'Failed to load transfer';
+        console.error('Failed to load transfer:', error);
         toast({
-          variant: "destructive",
-          title: "Error",
+          variant: 'destructive',
+          title: 'Error',
           description: message,
         });
-        router.push("/inventory/transfers");
+        router.push('/inventory/transfers');
       } finally {
         setLoading(false);
       }
@@ -47,82 +49,82 @@ export default function TransferDetailPage() {
   }, [transferId, toast, router]);
 
   const handleBackToList = () => {
-    router.push("/inventory/transfers");
+    router.push('/inventory/transfers');
   };
 
   const handleMarkInTransit = async () => {
-    if (!transfer || transfer.status !== "pending") return;
+    if (!transfer || transfer.status !== 'pending') return;
 
     try {
       await apiClient.post(`/api/inventory/transfers/${transferId}/status`, {
-        status: "in_transit",
+        status: 'in_transit',
       });
 
       toast({
-        title: "Success",
-        description: "Transfer marked as in transit",
+        title: 'Success',
+        description: 'Transfer marked as in transit',
       });
 
       // Reload transfer
       const updated = await apiClient.get<StockTransfer>(`/api/inventory/transfers/${transferId}`);
       setTransfer(updated);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to update transfer";
+      const message = error instanceof Error ? error.message : 'Failed to update transfer';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     }
   };
 
   const handleMarkCompleted = async () => {
-    if (!transfer || transfer.status !== "in_transit") return;
+    if (!transfer || transfer.status !== 'in_transit') return;
 
     try {
       await apiClient.post(`/api/inventory/transfers/${transferId}/status`, {
-        status: "completed",
+        status: 'completed',
       });
 
       toast({
-        title: "Success",
-        description: "Transfer marked as completed",
+        title: 'Success',
+        description: 'Transfer marked as completed',
       });
 
       // Reload transfer
       const updated = await apiClient.get<StockTransfer>(`/api/inventory/transfers/${transferId}`);
       setTransfer(updated);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to update transfer";
+      const message = error instanceof Error ? error.message : 'Failed to update transfer';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     }
   };
 
   const handleCancelTransfer = async () => {
-    if (!transfer || transfer.status !== "pending") return;
+    if (!transfer || transfer.status !== 'pending') return;
 
     try {
       await apiClient.post(`/api/inventory/transfers/${transferId}/status`, {
-        status: "cancelled",
+        status: 'cancelled',
       });
 
       toast({
-        title: "Success",
-        description: "Transfer cancelled",
+        title: 'Success',
+        description: 'Transfer cancelled',
       });
 
       // Reload transfer
       const updated = await apiClient.get<StockTransfer>(`/api/inventory/transfers/${transferId}`);
       setTransfer(updated);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to cancel transfer";
+      const message = error instanceof Error ? error.message : 'Failed to cancel transfer';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     }
@@ -155,9 +157,7 @@ export default function TransferDetailPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Transfer Details</h1>
-            <p className="text-muted-foreground">
-              Transfer ID: {transfer.id.slice(0, 8)}...
-            </p>
+            <p className="text-muted-foreground">Transfer ID: {transfer.id.slice(0, 8)}...</p>
           </div>
         </div>
         <TransferStatusBadge status={transfer.status} />
@@ -172,41 +172,43 @@ export default function TransferDetailPage() {
         <CardContent className="space-y-6">
           {/* Product */}
           <div className="flex items-start gap-4">
-            <Package className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <Package className="text-muted-foreground mt-0.5 h-5 w-5" />
             <div className="flex-1">
-              <div className="text-sm text-muted-foreground">Product</div>
-              <div className="font-medium">{transfer.product_name || "—"}</div>
-              <div className="text-sm text-muted-foreground font-mono">{transfer.product_sku || "—"}</div>
+              <div className="text-muted-foreground text-sm">Product</div>
+              <div className="font-medium">{transfer.product_name || '—'}</div>
+              <div className="text-muted-foreground font-mono text-sm">
+                {transfer.product_sku || '—'}
+              </div>
             </div>
           </div>
 
           {/* Transfer Route */}
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <div className="text-sm text-muted-foreground">From Location</div>
-              <div className="font-medium text-lg">{formatLocation(transfer.from_location)}</div>
+              <div className="text-muted-foreground text-sm">From Location</div>
+              <div className="text-lg font-medium">{formatLocation(transfer.from_location)}</div>
             </div>
-            <ArrowRight className="h-6 w-6 text-muted-foreground" />
+            <ArrowRight className="text-muted-foreground h-6 w-6" />
             <div className="flex-1">
-              <div className="text-sm text-muted-foreground">To Location</div>
-              <div className="font-medium text-lg">{formatLocation(transfer.to_location)}</div>
+              <div className="text-muted-foreground text-sm">To Location</div>
+              <div className="text-lg font-medium">{formatLocation(transfer.to_location)}</div>
             </div>
           </div>
 
           {/* Quantity */}
           <div>
-            <div className="text-sm text-muted-foreground">Quantity</div>
-            <div className="font-bold text-2xl">{transfer.quantity} units</div>
+            <div className="text-muted-foreground text-sm">Quantity</div>
+            <div className="text-2xl font-bold">{transfer.quantity} units</div>
           </div>
 
           {/* Initiated */}
           <div className="flex items-start gap-4">
-            <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <User className="text-muted-foreground mt-0.5 h-5 w-5" />
             <div>
-              <div className="text-sm text-muted-foreground">Initiated By</div>
+              <div className="text-muted-foreground text-sm">Initiated By</div>
               <div className="font-medium">{transfer.initiated_by}</div>
-              <div className="text-sm text-muted-foreground">
-                <Calendar className="h-3 w-3 inline mr-1" />
+              <div className="text-muted-foreground text-sm">
+                <Calendar className="mr-1 inline h-3 w-3" />
                 {format(new Date(transfer.initiated_at), "MMM d, yyyy 'at' h:mm a")}
               </div>
             </div>
@@ -215,12 +217,12 @@ export default function TransferDetailPage() {
           {/* Completed */}
           {transfer.completed_at && (
             <div className="flex items-start gap-4">
-              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle className="mt-0.5 h-5 w-5 text-green-600" />
               <div>
-                <div className="text-sm text-muted-foreground">Completed By</div>
-                <div className="font-medium">{transfer.completed_by || "—"}</div>
-                <div className="text-sm text-muted-foreground">
-                  <Calendar className="h-3 w-3 inline mr-1" />
+                <div className="text-muted-foreground text-sm">Completed By</div>
+                <div className="font-medium">{transfer.completed_by || '—'}</div>
+                <div className="text-muted-foreground text-sm">
+                  <Calendar className="mr-1 inline h-3 w-3" />
                   {format(new Date(transfer.completed_at), "MMM d, yyyy 'at' h:mm a")}
                 </div>
               </div>
@@ -230,7 +232,7 @@ export default function TransferDetailPage() {
           {/* Reason */}
           {transfer.reason && (
             <div>
-              <div className="text-sm text-muted-foreground">Reason</div>
+              <div className="text-muted-foreground text-sm">Reason</div>
               <div className="font-medium">{transfer.reason}</div>
             </div>
           )}
@@ -238,7 +240,7 @@ export default function TransferDetailPage() {
           {/* Notes */}
           {transfer.notes && (
             <div>
-              <div className="text-sm text-muted-foreground">Notes</div>
+              <div className="text-muted-foreground text-sm">Notes</div>
               <div className="text-sm">{transfer.notes}</div>
             </div>
           )}
@@ -255,14 +257,18 @@ export default function TransferDetailPage() {
           <div className="space-y-4">
             {/* Pending */}
             <div className="flex items-start gap-4">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                transfer.status !== "cancelled" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"
-              }`}>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                  transfer.status !== 'cancelled'
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+              >
                 <Clock className="h-4 w-4" />
               </div>
               <div className="flex-1">
                 <div className="font-medium">Pending</div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-muted-foreground text-sm">
                   {format(new Date(transfer.initiated_at), "MMM d, yyyy 'at' h:mm a")}
                 </div>
               </div>
@@ -270,51 +276,55 @@ export default function TransferDetailPage() {
 
             {/* In Transit */}
             <div className="flex items-start gap-4">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                transfer.status === "in_transit" || transfer.status === "completed"
-                  ? "bg-blue-100 text-blue-600"
-                  : "bg-gray-100 text-gray-400"
-              }`}>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                  transfer.status === 'in_transit' || transfer.status === 'completed'
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+              >
                 <Package className="h-4 w-4" />
               </div>
               <div className="flex-1">
                 <div className="font-medium">In Transit</div>
-                <div className="text-sm text-muted-foreground">
-                  {transfer.status === "in_transit" || transfer.status === "completed"
-                    ? "In progress"
-                    : "Not started"}
+                <div className="text-muted-foreground text-sm">
+                  {transfer.status === 'in_transit' || transfer.status === 'completed'
+                    ? 'In progress'
+                    : 'Not started'}
                 </div>
               </div>
             </div>
 
             {/* Completed */}
             <div className="flex items-start gap-4">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                transfer.status === "completed"
-                  ? "bg-green-100 text-green-600"
-                  : "bg-gray-100 text-gray-400"
-              }`}>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                  transfer.status === 'completed'
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+              >
                 <CheckCircle className="h-4 w-4" />
               </div>
               <div className="flex-1">
                 <div className="font-medium">Completed</div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-muted-foreground text-sm">
                   {transfer.completed_at
                     ? format(new Date(transfer.completed_at), "MMM d, yyyy 'at' h:mm a")
-                    : "Not completed"}
+                    : 'Not completed'}
                 </div>
               </div>
             </div>
 
             {/* Cancelled */}
-            {transfer.status === "cancelled" && (
+            {transfer.status === 'cancelled' && (
               <div className="flex items-start gap-4">
-                <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 text-gray-600">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
                   <Clock className="h-4 w-4" />
                 </div>
                 <div className="flex-1">
                   <div className="font-medium">Cancelled</div>
-                  <div className="text-sm text-muted-foreground">Transfer was cancelled</div>
+                  <div className="text-muted-foreground text-sm">Transfer was cancelled</div>
                 </div>
               </div>
             )}
@@ -330,28 +340,24 @@ export default function TransferDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            {transfer.status === "pending" && (
+            {transfer.status === 'pending' && (
               <>
-                <Button onClick={handleMarkInTransit}>
-                  Mark as In Transit
-                </Button>
+                <Button onClick={handleMarkInTransit}>Mark as In Transit</Button>
                 <Button variant="outline" onClick={handleCancelTransfer}>
                   Cancel Transfer
                 </Button>
               </>
             )}
-            {transfer.status === "in_transit" && (
-              <Button onClick={handleMarkCompleted}>
-                Mark as Completed
-              </Button>
+            {transfer.status === 'in_transit' && (
+              <Button onClick={handleMarkCompleted}>Mark as Completed</Button>
             )}
-            {transfer.status === "completed" && (
-              <div className="text-sm text-muted-foreground">
+            {transfer.status === 'completed' && (
+              <div className="text-muted-foreground text-sm">
                 Transfer is completed. No actions available.
               </div>
             )}
-            {transfer.status === "cancelled" && (
-              <div className="text-sm text-muted-foreground">
+            {transfer.status === 'cancelled' && (
+              <div className="text-muted-foreground text-sm">
                 Transfer was cancelled. No actions available.
               </div>
             )}

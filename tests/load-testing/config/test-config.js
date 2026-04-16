@@ -25,13 +25,13 @@ export const testConfig = {
   // Performance thresholds
   thresholds: {
     // 95% of requests should complete within 500ms
-    'http_req_duration': ['p(95)<500'],
+    http_req_duration: ['p(95)<500'],
 
     // 99% of requests should complete within 1000ms
     'http_req_duration{type:api}': ['p(99)<1000'],
 
     // Error rate should be less than 1%
-    'http_req_failed': ['rate<0.01'],
+    http_req_failed: ['rate<0.01'],
 
     // 95% of authentication requests should complete within 300ms
     'http_req_duration{endpoint:auth}': ['p(95)<300'],
@@ -49,7 +49,7 @@ export const testConfig = {
     'http_req_duration{operation:ai}': ['p(95)<2000'],
 
     // Minimum requests per second
-    'http_reqs': ['rate>10'],
+    http_reqs: ['rate>10'],
   },
 
   // Load test scenarios
@@ -75,11 +75,11 @@ export const testConfig = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '2m', target: 10 },  // Ramp up to 10 users
-        { duration: '5m', target: 10 },  // Stay at 10 users
-        { duration: '2m', target: 20 },  // Ramp up to 20 users
-        { duration: '5m', target: 20 },  // Stay at 20 users
-        { duration: '2m', target: 0 },   // Ramp down
+        { duration: '2m', target: 10 }, // Ramp up to 10 users
+        { duration: '5m', target: 10 }, // Stay at 10 users
+        { duration: '2m', target: 20 }, // Ramp up to 20 users
+        { duration: '5m', target: 20 }, // Stay at 20 users
+        { duration: '2m', target: 0 }, // Ramp down
       ],
       tags: { scenario: 'load' },
     },
@@ -89,13 +89,13 @@ export const testConfig = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '2m', target: 20 },  // Ramp up to 20
-        { duration: '5m', target: 20 },  // Stay at 20
-        { duration: '2m', target: 50 },  // Ramp up to 50
-        { duration: '5m', target: 50 },  // Stay at 50
+        { duration: '2m', target: 20 }, // Ramp up to 20
+        { duration: '5m', target: 20 }, // Stay at 20
+        { duration: '2m', target: 50 }, // Ramp up to 50
+        { duration: '5m', target: 50 }, // Stay at 50
         { duration: '2m', target: 100 }, // Ramp up to 100
         { duration: '5m', target: 100 }, // Stay at 100
-        { duration: '2m', target: 0 },   // Ramp down
+        { duration: '2m', target: 0 }, // Ramp down
       ],
       tags: { scenario: 'stress' },
     },
@@ -105,12 +105,12 @@ export const testConfig = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '1m', target: 10 },   // Normal load
+        { duration: '1m', target: 10 }, // Normal load
         { duration: '30s', target: 100 }, // Sudden spike
-        { duration: '1m', target: 100 },  // Maintain spike
-        { duration: '30s', target: 10 },  // Return to normal
-        { duration: '1m', target: 10 },   // Normal load
-        { duration: '1m', target: 0 },    // Ramp down
+        { duration: '1m', target: 100 }, // Maintain spike
+        { duration: '30s', target: 10 }, // Return to normal
+        { duration: '1m', target: 10 }, // Normal load
+        { duration: '1m', target: 0 }, // Ramp down
       ],
       tags: { scenario: 'spike' },
     },
