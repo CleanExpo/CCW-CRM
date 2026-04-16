@@ -22,7 +22,7 @@ from fastapi.testclient import TestClient
 
 from src.api.main import app
 from src.db.models.subscription import Subscription, SubscriptionStatus, SubscriptionTier
-from src.db.demo_models import Organization, Product
+from src.db.erp_models import Organization, Product
 
 
 @pytest.fixture

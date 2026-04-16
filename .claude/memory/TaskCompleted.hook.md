@@ -24,13 +24,13 @@ teammate.output != null
 
 Run in order — first failure blocks synthesis:
 
-| Check | Target | Pass Condition |
-|---|---|---|
-| 1. Output exists | teammate.output | Non-null, non-empty string |
-| 2. Output format | task.expectedFormat | Matches JSON schema or markdown format |
-| 3. TypeScript errors | changed .ts/.tsx files | `npx tsc --noEmit` exits 0 |
-| 4. No hallucinated paths | output file paths | All paths actually exist on disk |
-| 5. Schema validation | JSON outputs | Matches expected schema |
+| Check                    | Target                 | Pass Condition                         |
+| ------------------------ | ---------------------- | -------------------------------------- |
+| 1. Output exists         | teammate.output        | Non-null, non-empty string             |
+| 2. Output format         | task.expectedFormat    | Matches JSON schema or markdown format |
+| 3. TypeScript errors     | changed .ts/.tsx files | `npx tsc --noEmit` exits 0             |
+| 4. No hallucinated paths | output file paths      | All paths actually exist on disk       |
+| 5. Schema validation     | JSON outputs           | Matches expected schema                |
 
 ## Implementation Script
 
@@ -87,10 +87,12 @@ exit 0
 ## Lead Agent Response
 
 **On gate PASS (exit 0)**:
+
 - Include teammate output in synthesis
 - Mark teammate as `VERIFIED`
 
 **On gate FAIL (exit 1)**:
+
 - Do NOT include unverified output in synthesis
 - Log failure in `debrief.json.gateFailures[]`
 - If >1 teammate fails: degrade to single-agent mode
@@ -99,11 +101,12 @@ exit 0
 ## Integration Point
 
 Register in `.claude/agents/orchestrator/CLAUDE.md` under `quality_gates`:
+
 ```yaml
 quality_gates:
   - hook: TaskCompleted
     script: .claude/memory/validate-task-completed.sh
-    blocking: true  # Synthesis blocked until gate passes or teammate is skipped
+    blocking: true # Synthesis blocked until gate passes or teammate is skipped
 ```
 
 ## TypeScript Gate Detail

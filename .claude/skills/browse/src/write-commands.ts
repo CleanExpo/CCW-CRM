@@ -6,7 +6,11 @@
  */
 
 import type { BrowserManager } from './browser-manager';
-import { findInstalledBrowsers, importCookies, listSupportedBrowserNames } from './cookie-import-browser';
+import {
+  findInstalledBrowsers,
+  importCookies,
+  listSupportedBrowserNames,
+} from './cookie-import-browser';
 import { validateNavigationUrl } from './url-validation';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -24,7 +28,7 @@ export async function handleWriteCommand(
 
   switch (command) {
     case 'goto': {
-      if (inFrame) throw new Error('Cannot use goto inside a frame. Run \'frame main\' first.');
+      if (inFrame) throw new Error("Cannot use goto inside a frame. Run 'frame main' first.");
       const url = args[0];
       if (!url) throw new Error('Usage: browse goto <url>');
       await validateNavigationUrl(url);
@@ -34,19 +38,19 @@ export async function handleWriteCommand(
     }
 
     case 'back': {
-      if (inFrame) throw new Error('Cannot use back inside a frame. Run \'frame main\' first.');
+      if (inFrame) throw new Error("Cannot use back inside a frame. Run 'frame main' first.");
       await page.goBack({ waitUntil: 'domcontentloaded', timeout: 15000 });
       return `Back → ${page.url()}`;
     }
 
     case 'forward': {
-      if (inFrame) throw new Error('Cannot use forward inside a frame. Run \'frame main\' first.');
+      if (inFrame) throw new Error("Cannot use forward inside a frame. Run 'frame main' first.");
       await page.goForward({ waitUntil: 'domcontentloaded', timeout: 15000 });
       return `Forward → ${page.url()}`;
     }
 
     case 'reload': {
-      if (inFrame) throw new Error('Cannot use reload inside a frame. Run \'frame main\' first.');
+      if (inFrame) throw new Error("Cannot use reload inside a frame. Run 'frame main' first.");
       await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 });
       return `Reloaded ${page.url()}`;
     }
@@ -60,7 +64,7 @@ export async function handleWriteCommand(
       if (role === 'option') {
         const resolved = await bm.resolveRef(selector);
         if ('locator' in resolved) {
-          const optionInfo = await resolved.locator.evaluate(el => {
+          const optionInfo = await resolved.locator.evaluate((el) => {
             if (el.tagName !== 'OPTION') return null; // custom [role=option], not real <option>
             const option = el as HTMLOptionElement;
             const select = option.closest('select');
@@ -68,7 +72,9 @@ export async function handleWriteCommand(
             return { value: option.value, text: option.text };
           });
           if (optionInfo) {
-            await resolved.locator.locator('xpath=ancestor::select').selectOption(optionInfo.value, { timeout: 5000 });
+            await resolved.locator
+              .locator('xpath=ancestor::select')
+              .selectOption(optionInfo.value, { timeout: 5000 });
             return `Selected "${optionInfo.text}" (auto-routed from click on <option>) → now at ${page.url()}`;
           }
           // Real <option> with no parent <select> or custom [role=option] — fall through to normal click
@@ -84,11 +90,13 @@ export async function handleWriteCommand(
         }
       } catch (err: any) {
         // Enhanced error guidance: clicking <option> elements always fails (not visible / timeout)
-        const isOption = 'locator' in resolved
-          ? await resolved.locator.evaluate(el => el.tagName === 'OPTION').catch(() => false)
-          : await target.locator(resolved.selector).evaluate(
-              el => el.tagName === 'OPTION'
-            ).catch(() => false);
+        const isOption =
+          'locator' in resolved
+            ? await resolved.locator.evaluate((el) => el.tagName === 'OPTION').catch(() => false)
+            : await target
+                .locator(resolved.selector)
+                .evaluate((el) => el.tagName === 'OPTION')
+                .catch(() => false);
         if (isOption) {
           throw new Error(
             `Cannot click <option> elements. Use 'browse select <parent-select> <value>' instead of 'click' for dropdown options.`
@@ -174,7 +182,8 @@ export async function handleWriteCommand(
 
     case 'wait': {
       const selector = args[0];
-      if (!selector) throw new Error('Usage: browse wait <selector|--networkidle|--load|--domcontentloaded>');
+      if (!selector)
+        throw new Error('Usage: browse wait <selector|--networkidle|--load|--domcontentloaded>');
       if (selector === '--networkidle') {
         const timeout = args[1] ? parseInt(args[1], 10) : 15000;
         await page.waitForLoadState('networkidle', { timeout });
@@ -200,7 +209,8 @@ export async function handleWriteCommand(
 
     case 'viewport': {
       const size = args[0];
-      if (!size || !size.includes('x')) throw new Error('Usage: browse viewport <WxH> (e.g., 375x812)');
+      if (!size || !size.includes('x'))
+        throw new Error('Usage: browse viewport <WxH> (e.g., 375x812)');
       const [w, h] = size.split('x').map(Number);
       await bm.setViewport(w, h);
       return `Viewport set to ${w}x${h}`;
@@ -208,28 +218,38 @@ export async function handleWriteCommand(
 
     case 'cookie': {
       const cookieStr = args[0];
-      if (!cookieStr || !cookieStr.includes('=')) throw new Error('Usage: browse cookie <name>=<value>');
+      if (!cookieStr || !cookieStr.includes('='))
+        throw new Error('Usage: browse cookie <name>=<value>');
       const eq = cookieStr.indexOf('=');
       const name = cookieStr.slice(0, eq);
       const value = cookieStr.slice(eq + 1);
       const url = new URL(page.url());
-      await page.context().addCookies([{
-        name,
-        value,
-        domain: url.hostname,
-        path: '/',
-      }]);
+      await page.context().addCookies([
+        {
+          name,
+          value,
+          domain: url.hostname,
+          path: '/',
+        },
+      ]);
       return `Cookie set: ${name}=****`;
     }
 
     case 'header': {
       const headerStr = args[0];
-      if (!headerStr || !headerStr.includes(':')) throw new Error('Usage: browse header <name>:<value>');
+      if (!headerStr || !headerStr.includes(':'))
+        throw new Error('Usage: browse header <name>:<value>');
       const sep = headerStr.indexOf(':');
       const name = headerStr.slice(0, sep).trim();
       const value = headerStr.slice(sep + 1).trim();
       await bm.setExtraHeader(name, value);
-      const sensitiveHeaders = ['authorization', 'cookie', 'set-cookie', 'x-api-key', 'x-auth-token'];
+      const sensitiveHeaders = [
+        'authorization',
+        'cookie',
+        'set-cookie',
+        'x-api-key',
+        'x-auth-token',
+      ];
       const redactedValue = sensitiveHeaders.includes(name.toLowerCase()) ? '****' : value;
       return `Header set: ${name}: ${redactedValue}`;
     }
@@ -247,7 +267,8 @@ export async function handleWriteCommand(
 
     case 'upload': {
       const [selector, ...filePaths] = args;
-      if (!selector || filePaths.length === 0) throw new Error('Usage: browse upload <selector> <file1> [file2...]');
+      if (!selector || filePaths.length === 0)
+        throw new Error('Usage: browse upload <selector> <file1> [file2...]');
 
       // Validate all files exist before upload
       for (const fp of filePaths) {
@@ -261,10 +282,12 @@ export async function handleWriteCommand(
         await target.locator(resolved.selector).setInputFiles(filePaths);
       }
 
-      const fileInfo = filePaths.map(fp => {
-        const stat = fs.statSync(fp);
-        return `${path.basename(fp)} (${stat.size}B)`;
-      }).join(', ');
+      const fileInfo = filePaths
+        .map((fp) => {
+          const stat = fs.statSync(fp);
+          return `${path.basename(fp)} (${stat.size}B)`;
+        })
+        .join(', ');
       return `Uploaded: ${fileInfo}`;
     }
 
@@ -272,9 +295,7 @@ export async function handleWriteCommand(
       const text = args.length > 0 ? args.join(' ') : null;
       bm.setDialogAutoAccept(true);
       bm.setDialogPromptText(text);
-      return text
-        ? `Dialogs will be accepted with text: "${text}"`
-        : 'Dialogs will be accepted';
+      return text ? `Dialogs will be accepted with text: "${text}"` : 'Dialogs will be accepted';
     }
 
     case 'dialog-dismiss': {
@@ -290,7 +311,7 @@ export async function handleWriteCommand(
       if (path.isAbsolute(filePath)) {
         const safeDirs = [TEMP_DIR, process.cwd()];
         const resolved = path.resolve(filePath);
-        if (!safeDirs.some(dir => isPathWithin(resolved, dir))) {
+        if (!safeDirs.some((dir) => isPathWithin(resolved, dir))) {
           throw new Error(`Path must be within: ${safeDirs.join(', ')}`);
         }
       }
@@ -300,7 +321,11 @@ export async function handleWriteCommand(
       if (!fs.existsSync(filePath)) throw new Error(`File not found: ${filePath}`);
       const raw = fs.readFileSync(filePath, 'utf-8');
       let cookies: any[];
-      try { cookies = JSON.parse(raw); } catch { throw new Error(`Invalid JSON in ${filePath}`); }
+      try {
+        cookies = JSON.parse(raw);
+      } catch {
+        throw new Error(`Invalid JSON in ${filePath}`);
+      }
       if (!Array.isArray(cookies)) throw new Error('Cookie file must contain a JSON array');
 
       // Auto-fill domain from current page URL when missing (consistent with cookie command)
@@ -308,7 +333,8 @@ export async function handleWriteCommand(
       const defaultDomain = pageUrl.hostname;
 
       for (const c of cookies) {
-        if (!c.name || c.value === undefined) throw new Error('Each cookie must have "name" and "value" fields');
+        if (!c.name || c.value === undefined)
+          throw new Error('Each cookie must have "name" and "value" fields');
         if (!c.domain) c.domain = defaultDomain;
         if (!c.path) c.path = '/';
       }
@@ -324,7 +350,8 @@ export async function handleWriteCommand(
       const browserArg = args[0];
       const domainIdx = args.indexOf('--domain');
       const profileIdx = args.indexOf('--profile');
-      const profile = (profileIdx !== -1 && profileIdx + 1 < args.length) ? args[profileIdx + 1] : 'Default';
+      const profile =
+        profileIdx !== -1 && profileIdx + 1 < args.length ? args[profileIdx + 1] : 'Default';
 
       if (domainIdx !== -1 && domainIdx + 1 < args.length) {
         // Direct import mode — no UI
@@ -345,7 +372,9 @@ export async function handleWriteCommand(
 
       const browsers = findInstalledBrowsers();
       if (browsers.length === 0) {
-        throw new Error(`No Chromium browsers found. Supported: ${listSupportedBrowserNames().join(', ')}`);
+        throw new Error(
+          `No Chromium browsers found. Supported: ${listSupportedBrowserNames().join(', ')}`
+        );
       }
 
       const pickerUrl = `http://127.0.0.1:${port}/cookie-picker`;
@@ -355,7 +384,7 @@ export async function handleWriteCommand(
         // open may fail silently — URL is in the message below
       }
 
-      return `Cookie picker opened at ${pickerUrl}\nDetected browsers: ${browsers.map(b => b.name).join(', ')}\nSelect domains to import, then close the picker when done.`;
+      return `Cookie picker opened at ${pickerUrl}\nDetected browsers: ${browsers.map((b) => b.name).join(', ')}\nSelect domains to import, then close the picker when done.`;
     }
 
     default:

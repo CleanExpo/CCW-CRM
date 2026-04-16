@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,10 +10,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { activitiesApi } from "@/lib/api/activities";
-import type { ActivityWithRelations } from "@/lib/types/activities";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { activitiesApi } from '@/lib/api/activities';
+import type { ActivityWithRelations } from '@/lib/types/activities';
 
 interface DeleteActivityDialogProps {
   activity: ActivityWithRelations | null;
@@ -39,17 +39,17 @@ export function DeleteActivityDialog({
       await activitiesApi.delete(activity.id);
 
       toast({
-        title: "Success",
-        description: "Activity deleted successfully",
+        title: 'Success',
+        description: 'Activity deleted successfully',
       });
 
       onSuccess();
       onOpenChange(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to delete activity";
+      const message = error instanceof Error ? error.message : 'Failed to delete activity';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -65,8 +65,8 @@ export function DeleteActivityDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Activity?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete the{" "}
-            <span className="font-semibold">{activity.activity_type}</span> activity{" "}
+            This will permanently delete the{' '}
+            <span className="font-semibold">{activity.activity_type}</span> activity{' '}
             <span className="font-semibold">&quot;{activity.subject}&quot;</span>.
             <br />
             <br />
@@ -76,7 +76,7 @@ export function DeleteActivityDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete} disabled={isLoading}>
-            {isLoading ? "Deleting..." : "Delete"}
+            {isLoading ? 'Deleting...' : 'Delete'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

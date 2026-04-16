@@ -21,6 +21,7 @@ Provide visual confirmation of CCW production deployment state on Vercel — bui
 - Setting a new environment variable (e.g. `YOUTUBE_CHANNEL_ID`)
 
 **Trigger phrases:**
+
 - "check vercel deployment"
 - "is the latest deploy green?"
 - "open vercel build logs"
@@ -37,6 +38,7 @@ mcp__Claude_in_Chrome__navigate: https://vercel.com/dashboard
 ```
 
 Screenshot to confirm login:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ```
@@ -55,11 +57,13 @@ mcp__Claude_in_Chrome__computer: { action: "click", coordinate: [x, y] }
 ### Step 3: Check Deployment Status
 
 On the project page:
+
 ```
 mcp__Claude_in_Chrome__get_page_text
 ```
 
 Extract:
+
 - Latest deployment status (Ready / Building / Error)
 - Commit hash and message that triggered it
 - Deployment URL
@@ -70,6 +74,7 @@ Screenshot the deployments list.
 ### Step 4: Check Build Logs (if Building or Error)
 
 Click the latest deployment → "Build Logs":
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "click", coordinate: [x, y] }
 mcp__Claude_in_Chrome__get_page_text
@@ -81,12 +86,14 @@ Report them to the user.
 ### Step 5: Check Environment Variables (read-only)
 
 Navigate to Settings → Environment Variables:
+
 ```
 mcp__Claude_in_Chrome__navigate: [project-url]/settings/environment-variables
 mcp__Claude_in_Chrome__get_page_text
 ```
 
 List env var NAMES (never values) that are configured. Confirm presence of:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `YOUTUBE_CHANNEL_ID`
@@ -101,6 +108,7 @@ If user asks to add/update an env var, **pause and confirm before typing**:
 "Ready to set `[KEY_NAME]` on Vercel production. Please confirm and provide the value."
 
 After user confirms:
+
 1. Click "Add New" or edit existing
 2. Type key name
 3. User must type value themselves (sensitive data — do not type secrets)
@@ -110,6 +118,7 @@ After user confirms:
 ## VERIFICATION
 
 After deployment:
+
 - Status badge shows "Ready" (green)
 - Domain resolves: screenshot `https://ccw-crm-web.vercel.app`
 - No error toasts on the production site

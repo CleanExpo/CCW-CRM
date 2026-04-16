@@ -284,6 +284,108 @@ class StripeClient:
         except Exception as e:
             raise Exception(f"Webhook verification failed: {str(e)}")
 
+    # Connection / Account Methods
+
+    async def get_account(self) -> dict:
+        """Retrieve the connected Stripe account details."""
+        try:
+            account = stripe.Account.retrieve()
+            return dict(account)
+        except StripeError as e:
+            raise Exception(f"Failed to retrieve Stripe account: {str(e)}")
+
+    async def list_webhooks(self) -> list[dict]:
+        """List all configured Stripe webhook endpoints."""
+        try:
+            response = stripe.WebhookEndpoint.list(limit=100)
+            return [dict(we) for we in response.data]
+        except StripeError as e:
+            raise Exception(f"Failed to list webhook endpoints: {str(e)}")
+
+    async def create_webhook(self, url: str, events: list[str]) -> dict:
+        """Register a new webhook endpoint with Stripe.
+
+        Args:
+            url: The HTTPS URL to receive webhook events
+            events: List of Stripe event types to subscribe to
+
+        Returns:
+            The created WebhookEndpoint object as a dict
+        """
+        try:
+            endpoint = stripe.WebhookEndpoint.create(
+                url=url,
+                enabled_events=events,
+            )
+            return dict(endpoint)
+        except StripeError as e:
+            raise Exception(f"Failed to create webhook endpoint: {str(e)}")
+    # Refunds (UNI-1813)
+
+    async def create_refund(
+        self,
+        payment_intent_id: str,
+        amount_cents: int | None = None,
+        reason: str = "requested_by_customer",
+    ) -> dict:
+        """Create a Stripe refund for a payment intent.
+
+        Args:
+            payment_intent_id: Stripe PaymentIntent ID
+            amount_cents: Amount to refund in cents (None = full refund)
+            reason: Refund reason (requested_by_customer, duplicate, fraudulent)
+
+        Returns:
+            Stripe Refund object as dict
+        """
+        try:
+            params: dict[str, Any] = {
+                "payment_intent": payment_intent_id,
+                "reason": reason,
+            }
+            if amount_cents is not None:
+                params["amount"] = amount_cents
+            refund = stripe.Refund.create(**params)
+            return dict(refund)
+        except StripeError as e:
+            raise Exception(f"Failed to create refund: {str(e)}")
+
+    # Payment Links (UNI-1818)
+
+    async def create_payment_link(
+        self,
+        invoice_id: str,
+        amount_cents: int,
+        description: str,
+        currency: str = "aud",
+    ) -> dict:
+        """Create a Stripe Payment Link for an invoice.
+
+        Creates a one-time price then wraps it in a payment link.
+
+        Args:
+            invoice_id: Internal invoice ID (stored as metadata)
+            amount_cents: Amount in cents
+            description: Product description shown on checkout
+            currency: ISO currency code (default: aud)
+
+        Returns:
+            {"url": payment_link_url, "id": link_id}
+        """
+        try:
+            price = stripe.Price.create(
+                unit_amount=amount_cents,
+                currency=currency,
+                product_data={"name": description},
+            )
+            link = stripe.PaymentLink.create(
+                line_items=[{"price": price.id, "quantity": 1}],
+                metadata={"invoice_id": invoice_id},
+            )
+            return {"url": link.url, "id": link.id}
+        except StripeError as e:
+            raise Exception(f"Failed to create payment link: {str(e)}")
+
     # Helper Methods
 
     @staticmethod

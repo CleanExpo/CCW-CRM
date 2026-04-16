@@ -17,8 +17,12 @@ function mockBrowserManager() {
     bm: {
       getPage: () => ({
         context: () => ({
-          addCookies: (cookies: any[]) => { addedCookies.push(...cookies); },
-          clearCookies: (opts: { domain: string }) => { clearedDomains.push(opts.domain); },
+          addCookies: (cookies: any[]) => {
+            addedCookies.push(...cookies);
+          },
+          clearCookies: (opts: { domain: string }) => {
+            clearedDomains.push(opts.domain);
+          },
         }),
       }),
     } as any,
@@ -246,7 +250,7 @@ describe('cookie-picker-routes', () => {
       const url = makeUrl('/cookie-picker/browsers');
       const req = new Request('http://127.0.0.1:9470', {
         method: 'GET',
-        headers: { 'Authorization': 'Bearer test-secret-token' },
+        headers: { Authorization: 'Bearer test-secret-token' },
       });
 
       const res = await handleCookiePickerRoute(url, req, bm, 'test-secret-token');

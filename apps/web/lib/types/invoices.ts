@@ -4,19 +4,19 @@
  */
 
 export enum InvoiceStatus {
-  DRAFT = "draft",
-  SENT = "sent",
-  PAID = "paid",
-  OVERDUE = "overdue",
-  CANCELLED = "cancelled",
+  DRAFT = 'draft',
+  SENT = 'sent',
+  PAID = 'paid',
+  OVERDUE = 'overdue',
+  CANCELLED = 'cancelled',
 }
 
 export enum PaymentMethod {
-  CASH = "cash",
-  CHECK = "check",
-  BANK_TRANSFER = "bank_transfer",
-  CREDIT_CARD = "credit_card",
-  OTHER = "other",
+  CASH = 'cash',
+  CHECK = 'check',
+  BANK_TRANSFER = 'bank_transfer',
+  CREDIT_CARD = 'credit_card',
+  OTHER = 'other',
 }
 
 /**
@@ -30,15 +30,15 @@ export interface InvoiceItem {
   id: string;
   invoice_id: string;
   product_id: string;
-  product_name?: string;  // Populated by backend join
-  product_sku?: string;   // Populated by backend join
+  product_name?: string; // Populated by backend join
+  product_sku?: string; // Populated by backend join
   description: string;
   quantity: number;
   unit_price: number;
   tax_rate: number;
   tax_amount: number;
-  subtotal: number;       // Calculated: quantity × unit_price
-  total: number;          // Calculated: subtotal + tax_amount
+  subtotal: number; // Calculated: quantity × unit_price
+  total: number; // Calculated: subtotal + tax_amount
   created_at: string;
   updated_at: string;
 }
@@ -46,7 +46,7 @@ export interface InvoiceItem {
 export interface InvoicePayment {
   id: string;
   invoice_id: string;
-  payment_date: string;   // ISO date string
+  payment_date: string; // ISO date string
   amount: number;
   payment_method: PaymentMethod;
   reference_number?: string;
@@ -62,15 +62,15 @@ export interface Invoice {
   customer_id: string;
   customer_name?: string; // Populated by backend join
   customer_email?: string; // Populated by backend join
-  invoice_date: string;   // ISO date string
-  due_date: string;       // ISO date string
+  invoice_date: string; // ISO date string
+  due_date: string; // ISO date string
   status: InvoiceStatus;
   notes?: string;
-  subtotal: number;       // Calculated from items
-  tax_total: number;      // Calculated from items
-  total: number;          // subtotal + tax_total
-  amount_paid: number;    // Sum of payments
-  amount_due: number;     // total - amount_paid
+  subtotal: number; // Calculated from items
+  tax_total: number; // Calculated from items
+  total: number; // subtotal + tax_total
+  amount_paid: number; // Sum of payments
+  amount_due: number; // total - amount_paid
   items: InvoiceItem[];
   payments?: InvoicePayment[];
   created_at: string;

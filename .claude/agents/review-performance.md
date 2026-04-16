@@ -15,7 +15,7 @@ description: Specialist performance reviewer — checks for N+1 queries, missing
 2. **Missing pagination** — unbounded queries without LIMIT
 3. **React re-renders** — missing useMemo/useCallback on expensive computations
 4. **Bundle size** — large new dependencies without justification
-5. **API response size** — SELECT * or returning unnecessary fields
+5. **API response size** — SELECT \* or returning unnecessary fields
 
 ## THRESHOLDS
 
@@ -29,7 +29,7 @@ description: Specialist performance reviewer — checks for N+1 queries, missing
 2. Flag unbounded SELECT queries without pagination
 3. Check React components for missing memoization on expensive renders
 4. Estimate bundle size impact of new npm dependencies
-5. Flag SELECT * queries (prefer explicit column lists)
+5. Flag SELECT \* queries (prefer explicit column lists)
 6. Check API responses for unnecessary data inclusion
 7. Detect synchronous operations that should be async
 8. Flag missing database indexes on frequently queried columns

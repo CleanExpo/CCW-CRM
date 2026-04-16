@@ -51,6 +51,7 @@ This directory contains runtime state for autonomous task execution. Files in th
 **Schema**: `schemas/task-state.schema.json`
 
 **Example**:
+
 ```json
 {
   "task_id": "task_20260205_143022",
@@ -80,6 +81,7 @@ This directory contains runtime state for autonomous task execution. Files in th
 **Format**: JSON Lines (one JSON object per line)
 
 **Example**:
+
 ```jsonl
 {"timestamp":"2026-02-05T14:30:22Z","event":"task_started","task_id":"task_20260205_143022","agent":"lead","message":"Received task from user"}
 {"timestamp":"2026-02-05T14:30:25Z","event":"phase_started","task_id":"task_20260205_143022","phase":1,"agent":"discovery","message":"Beginning discovery phase"}
@@ -95,12 +97,12 @@ This directory contains runtime state for autonomous task execution. Files in th
 
 Each phase produces a handoff document for the next phase:
 
-| File | From Agent | To Agent | Contents |
-|------|------------|----------|----------|
-| `phase-1-discovery.json` | Discovery | Architect | Codebase analysis, patterns found, constraints |
-| `phase-2-architecture.json` | Architect | Builder | System design, component specs, file list |
-| `phase-3-build.json` | Builder | Builder | Intermediate build state (for resumption) |
-| `phase-4-build-final.json` | Builder | Finalizer | Final build output, files changed, test results |
+| File                        | From Agent | To Agent  | Contents                                        |
+| --------------------------- | ---------- | --------- | ----------------------------------------------- |
+| `phase-1-discovery.json`    | Discovery  | Architect | Codebase analysis, patterns found, constraints  |
+| `phase-2-architecture.json` | Architect  | Builder   | System design, component specs, file list       |
+| `phase-3-build.json`        | Builder    | Builder   | Intermediate build state (for resumption)       |
+| `phase-4-build-final.json`  | Builder    | Finalizer | Final build output, files changed, test results |
 
 **Schema**: `schemas/handoff.schema.json`
 
@@ -112,13 +114,13 @@ Each phase produces a handoff document for the next phase:
 
 Each phase is validated before proceeding to the next:
 
-| File | Phase | Validates |
-|------|-------|-----------|
-| `phase-1-validation.json` | Discovery | Discovery report completeness, accuracy |
-| `phase-2-validation.json` | Architecture | Design quality, constraint compliance |
+| File                      | Phase              | Validates                                    |
+| ------------------------- | ------------------ | -------------------------------------------- |
+| `phase-1-validation.json` | Discovery          | Discovery report completeness, accuracy      |
+| `phase-2-validation.json` | Architecture       | Design quality, constraint compliance        |
 | `phase-3-validation.json` | Build (continuous) | Code quality, tests, implementation progress |
-| `phase-4-validation.json` | Build (final) | All code complete, all tests pass |
-| `phase-5-validation.json` | Finalization | Deployment readiness, documentation |
+| `phase-4-validation.json` | Build (final)      | All code complete, all tests pass            |
+| `phase-5-validation.json` | Finalization       | Deployment readiness, documentation          |
 
 **Schema**: `schemas/validation-report.schema.json`
 
@@ -127,6 +129,7 @@ Each phase is validated before proceeding to the next:
 ## State Lifecycle
 
 ### 1. Task Initialization
+
 ```
 User: /autonomous "Add feature X"
     ↓
@@ -136,6 +139,7 @@ Execution log started
 ```
 
 ### 2. Phase Execution
+
 ```
 For each phase (1-5):
     ↓
@@ -148,6 +152,7 @@ If fail: Retry or escalate to user
 ```
 
 ### 3. Task Completion
+
 ```
 Finalizer produces completion report
     ↓
@@ -157,6 +162,7 @@ Execution log closed
 ```
 
 ### 4. Task Resumption (After Interruption)
+
 ```
 User: /autonomous --resume task_20260205_143022
     ↓
@@ -176,6 +182,7 @@ All state files are validated against JSON schemas to ensure consistency and ena
 ### task-state.schema.json
 
 Defines structure of `current-task.json`:
+
 - `task_id`: Unique identifier (format: task_YYYYMMDD_HHMMSS)
 - `created_at`: ISO 8601 timestamp
 - `user_request`: Original user task description
@@ -190,6 +197,7 @@ Defines structure of `current-task.json`:
 ### handoff.schema.json
 
 Defines structure of phase handoff documents:
+
 - `from_phase`: Integer 1-5
 - `from_agent`: String
 - `to_phase`: Integer 1-5
@@ -202,6 +210,7 @@ Defines structure of phase handoff documents:
 ### validation-report.schema.json
 
 Defines structure of validation reports:
+
 - `phase`: Integer 1-5
 - `agent`: String (validator)
 - `timestamp`: ISO 8601 timestamp
@@ -251,11 +260,13 @@ Get-Content .claude\.execution\validation-reports\phase-2-validation.json | Conv
 ## State Cleanup
 
 **When to clean**:
+
 - Task completed successfully (archive after 24 hours)
 - Task failed (archive after 7 days for debugging)
 - Disk space concerns (archive older tasks)
 
 **Cleanup script**:
+
 ```powershell
 .\scripts\autonomous\cleanup-execution.ps1 -ArchiveAll
 ```
@@ -269,6 +280,7 @@ Archives are stored in: `.claude/.execution/archives/YYYY-MM-DD/`
 ### Corrupted State
 
 If state becomes corrupted:
+
 ```powershell
 # Validate state integrity
 .\scripts\autonomous\validate-state.ps1
@@ -280,6 +292,7 @@ If state becomes corrupted:
 ### Lost Task State
 
 If `current-task.json` is lost but execution log exists:
+
 ```powershell
 # Reconstruct from execution log
 .\scripts\autonomous\reconstruct-state.ps1 -FromLog
@@ -297,6 +310,7 @@ If `current-task.json` is lost but execution log exists:
 4. **Large file sizes** - Validation reports can be verbose
 
 **What IS versioned**:
+
 - Schemas (`.execution/schemas/`) - Structural definitions
 - README (this file) - Documentation
 - PowerShell utilities (`scripts/autonomous/`) - Tools
@@ -310,11 +324,13 @@ If `current-task.json` is lost but execution log exists:
 **Symptom**: Task shows "in_progress" but no activity
 
 **Check**:
+
 1. View execution log for last event
 2. Check if validator is blocking
 3. Review validation report for failures
 
 **Fix**:
+
 ```powershell
 # Retry current phase
 .\scripts\autonomous\retry-phase.ps1
@@ -328,6 +344,7 @@ If `current-task.json` is lost but execution log exists:
 **Symptom**: `current-task.json` exists but task is actually complete
 
 **Fix**:
+
 ```powershell
 # Clean up stale task
 .\scripts\autonomous\cleanup-execution.ps1 -Force

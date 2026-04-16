@@ -20,6 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.models_base import (
     AustralianState,
@@ -149,6 +150,7 @@ class ErrorResponse(BaseModel):
 router = APIRouter(
     prefix="/api/contractors",
     tags=["contractors"],
+    dependencies=[Depends(get_current_user)],
     responses={
         404: {"model": ErrorResponse, "description": "Contractor not found"},
         422: {"model": ErrorResponse, "description": "Validation error (invalid ABN, mobile, etc.)"},

@@ -15,8 +15,22 @@
  *   restores state. Falls back to clean slate on any failure.
  */
 
-import { chromium, type Browser, type BrowserContext, type BrowserContextOptions, type Page, type Locator, type Cookie } from 'playwright';
-import { addConsoleEntry, addNetworkEntry, addDialogEntry, networkBuffer, type DialogEntry } from './buffers';
+import {
+  chromium,
+  type Browser,
+  type BrowserContext,
+  type BrowserContextOptions,
+  type Page,
+  type Locator,
+  type Cookie,
+} from 'playwright';
+import {
+  addConsoleEntry,
+  addNetworkEntry,
+  addDialogEntry,
+  networkBuffer,
+  type DialogEntry,
+} from './buffers';
 import { validateNavigationUrl } from './url-validation';
 
 export interface RefEntry {
@@ -30,7 +44,10 @@ export interface BrowserState {
   pages: Array<{
     url: string;
     isActive: boolean;
-    storage: { localStorage: Record<string, string>; sessionStorage: Record<string, string> } | null;
+    storage: {
+      localStorage: Record<string, string>;
+      sessionStorage: Record<string, string>;
+    } | null;
   }>;
 }
 
@@ -71,10 +88,14 @@ export class BrowserManager {
   private connectionMode: 'launched' | 'headed' = 'launched';
   private intentionalDisconnect = false;
 
-  getConnectionMode(): 'launched' | 'headed' { return this.connectionMode; }
+  getConnectionMode(): 'launched' | 'headed' {
+    return this.connectionMode;
+  }
 
   // ─── Watch Mode Methods ─────────────────────────────────
-  isWatching(): boolean { return this.watching; }
+  isWatching(): boolean {
+    return this.watching;
+  }
 
   startWatch(): void {
     this.watching = true;
@@ -163,7 +184,7 @@ export class BrowserManager {
         `--disable-extensions-except=${extensionsDir}`,
         `--load-extension=${extensionsDir}`,
         '--window-position=-9999,-9999',
-        '--window-size=1,1',
+        '--window-size=1,1'
       );
       useHeadless = false; // extensions require headed mode; off-screen window simulates headless
       console.log(`[browse] Extensions loaded from: ${extensionsDir}`);
@@ -248,7 +269,7 @@ export class BrowserManager {
     this.context = await chromium.launchPersistentContext(userDataDir, {
       headless: false,
       args: launchArgs,
-      viewport: null,  // Use browser's default viewport (real window size)
+      viewport: null, // Use browser's default viewport (real window size)
       // Playwright adds flags that block extension loading
       ignoreDefaultArgs: [
         '--disable-extensions',
@@ -307,7 +328,9 @@ export class BrowserManager {
       this.activeTabId = id;
       this.wirePageEvents(page);
       // Inject indicator on restored page (addInitScript only fires on new navigations)
-      try { await page.evaluate(indicatorScript); } catch {}
+      try {
+        await page.evaluate(indicatorScript);
+      } catch {}
     } else {
       await this.newTab();
     }
@@ -323,7 +346,7 @@ export class BrowserManager {
     }
 
     // Headed mode defaults
-    this.dialogAutoAccept = false;  // Don't dismiss user's real dialogs
+    this.dialogAutoAccept = false; // Don't dismiss user's real dialogs
     this.isHeaded = true;
     this.consecutiveFailures = 0;
   }
@@ -336,14 +359,14 @@ export class BrowserManager {
         if (this.browser) this.browser.removeAllListeners('disconnected');
         await Promise.race([
           this.context ? this.context.close() : Promise.resolve(),
-          new Promise(resolve => setTimeout(resolve, 5000)),
+          new Promise((resolve) => setTimeout(resolve, 5000)),
         ]).catch(() => {});
       } else {
         // Launched mode: close the browser we spawned
         this.browser.removeAllListeners('disconnected');
         await Promise.race([
           this.browser.close(),
-          new Promise(resolve => setTimeout(resolve, 5000)),
+          new Promise((resolve) => setTimeout(resolve, 5000)),
         ]).catch(() => {});
       }
       this.browser = null;
@@ -420,7 +443,9 @@ export class BrowserManager {
     return this.pages.size;
   }
 
-  async getTabListWithTitles(): Promise<Array<{ id: number; url: string; title: string; active: boolean }>> {
+  async getTabListWithTitles(): Promise<
+    Array<{ id: number; url: string; title: string; active: boolean }>
+  > {
     const tabs: Array<{ id: number; url: string; title: string; active: boolean }> = [];
     for (const [id, page] of this.pages) {
       tabs.push({
@@ -466,15 +491,13 @@ export class BrowserManager {
       const ref = selector.slice(1); // "e3" or "c1"
       const entry = this.refMap.get(ref);
       if (!entry) {
-        throw new Error(
-          `Ref ${selector} not found. Run 'snapshot' to get fresh refs.`
-        );
+        throw new Error(`Ref ${selector} not found. Run 'snapshot' to get fresh refs.`);
       }
       const count = await entry.locator.count();
       if (count === 0) {
         throw new Error(
           `Ref ${selector} (${entry.role} "${entry.name}") is stale — element no longer exists. ` +
-          `Run 'snapshot' for fresh refs.`
+            `Run 'snapshot' for fresh refs.`
         );
       }
       return { locator: entry.locator };
@@ -631,23 +654,31 @@ export class BrowserManager {
       this.wirePageEvents(page);
 
       if (saved.url) {
-        await page.goto(saved.url, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+        await page
+          .goto(saved.url, { waitUntil: 'domcontentloaded', timeout: 15000 })
+          .catch(() => {});
       }
 
       if (saved.storage) {
         try {
-          await page.evaluate((s: { localStorage: Record<string, string>; sessionStorage: Record<string, string> }) => {
-            if (s.localStorage) {
-              for (const [k, v] of Object.entries(s.localStorage)) {
-                localStorage.setItem(k, v);
+          await page.evaluate(
+            (s: {
+              localStorage: Record<string, string>;
+              sessionStorage: Record<string, string>;
+            }) => {
+              if (s.localStorage) {
+                for (const [k, v] of Object.entries(s.localStorage)) {
+                  localStorage.setItem(k, v);
+                }
               }
-            }
-            if (s.sessionStorage) {
-              for (const [k, v] of Object.entries(s.sessionStorage)) {
-                sessionStorage.setItem(k, v);
+              if (s.sessionStorage) {
+                for (const [k, v] of Object.entries(s.sessionStorage)) {
+                  sessionStorage.setItem(k, v);
+                }
               }
-            }
-          }, saved.storage);
+            },
+            saved.storage
+          );
         } catch {}
       }
 
@@ -771,7 +802,11 @@ export class BrowserManager {
             if (fs.existsSync(stateFile)) {
               const stateData = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
               if (stateData.token) {
-                fs.writeFileSync(path.join(extensionPath, '.auth.json'), JSON.stringify({ token: stateData.token }), { mode: 0o600 });
+                fs.writeFileSync(
+                  path.join(extensionPath, '.auth.json'),
+                  JSON.stringify({ token: stateData.token }),
+                  { mode: 0o600 }
+                );
               }
             }
           } catch {}
@@ -824,7 +859,7 @@ export class BrowserManager {
 
       await this.restoreState(state);
       this.isHeaded = true;
-      this.dialogAutoAccept = false;  // User controls dialogs in headed mode
+      this.dialogAutoAccept = false; // User controls dialogs in headed mode
 
       // 4. Close old headless browser (fire-and-forget)
       oldBrowser.removeAllListeners('disconnected');

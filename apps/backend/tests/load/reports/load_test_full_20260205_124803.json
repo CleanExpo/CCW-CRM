@@ -38,46 +38,16 @@
           "ConnectError": 1700
         },
         "slowest_scenarios": [
-          [
-            "product_list_108",
-            3780.6317806243896
-          ],
-          [
-            "product_list_36",
-            3752.329111099243
-          ],
-          [
-            "product_list_146",
-            3738.508462905884
-          ],
-          [
-            "product_list_74",
-            3731.4023971557617
-          ],
-          [
-            "product_read_112",
-            3698.793649673462
-          ],
-          [
-            "product_list_106",
-            3679.7306537628174
-          ],
-          [
-            "product_list_32",
-            3666.285514831543
-          ],
-          [
-            "product_list_6",
-            3640.657901763916
-          ],
-          [
-            "product_read_76",
-            3638.6077404022217
-          ],
-          [
-            "product_list_42",
-            3632.5433254241943
-          ]
+          ["product_list_108", 3780.6317806243896],
+          ["product_list_36", 3752.329111099243],
+          ["product_list_146", 3738.508462905884],
+          ["product_list_74", 3731.4023971557617],
+          ["product_read_112", 3698.793649673462],
+          ["product_list_106", 3679.7306537628174],
+          ["product_list_32", 3666.285514831543],
+          ["product_list_6", 3640.657901763916],
+          ["product_read_76", 3638.6077404022217],
+          ["product_list_42", 3632.5433254241943]
         ],
         "phase_name": "Products",
         "phase_duration_seconds": 2994.788034,
@@ -98,46 +68,16 @@
           "ConnectError": 1800
         },
         "slowest_scenarios": [
-          [
-            "customer_pagination_16",
-            3369.1108226776123
-          ],
-          [
-            "customer_concurrent_search_10",
-            3363.295316696167
-          ],
-          [
-            "customer_pagination_38",
-            3323.676586151123
-          ],
-          [
-            "customer_list_54",
-            3322.7131366729736
-          ],
-          [
-            "customer_filter_active_78",
-            3307.3348999023438
-          ],
-          [
-            "customer_filter_active_92",
-            3294.9976921081543
-          ],
-          [
-            "customer_list_154",
-            3288.224935531616
-          ],
-          [
-            "customer_list_138",
-            3287.1909141540527
-          ],
-          [
-            "customer_read_174",
-            3284.453868865967
-          ],
-          [
-            "customer_search_email_48",
-            3281.811237335205
-          ]
+          ["customer_pagination_16", 3369.1108226776123],
+          ["customer_concurrent_search_10", 3363.295316696167],
+          ["customer_pagination_38", 3323.676586151123],
+          ["customer_list_54", 3322.7131366729736],
+          ["customer_filter_active_78", 3307.3348999023438],
+          ["customer_filter_active_92", 3294.9976921081543],
+          ["customer_list_154", 3288.224935531616],
+          ["customer_list_138", 3287.1909141540527],
+          ["customer_read_174", 3284.453868865967],
+          ["customer_search_email_48", 3281.811237335205]
         ],
         "phase_name": "Customers",
         "phase_duration_seconds": 2896.448301,
@@ -158,46 +98,16 @@
           "ConnectError": 2000
         },
         "slowest_scenarios": [
-          [
-            "order_create_valid_282",
-            3423.067808151245
-          ],
-          [
-            "order_create_valid_298",
-            3408.6596965789795
-          ],
-          [
-            "order_create_valid_318",
-            3365.92698097229
-          ],
-          [
-            "order_create_valid_296",
-            3360.4071140289307
-          ],
-          [
-            "order_create_valid_306",
-            3349.982500076294
-          ],
-          [
-            "order_create_valid_272",
-            3343.0986404418945
-          ],
-          [
-            "order_create_valid_266",
-            3335.9577655792236
-          ],
-          [
-            "order_create_valid_372",
-            3326.672315597534
-          ],
-          [
-            "order_create_valid_234",
-            3325.819253921509
-          ],
-          [
-            "order_create_invalid_customer_84",
-            3325.5040645599365
-          ]
+          ["order_create_valid_282", 3423.067808151245],
+          ["order_create_valid_298", 3408.6596965789795],
+          ["order_create_valid_318", 3365.92698097229],
+          ["order_create_valid_296", 3360.4071140289307],
+          ["order_create_valid_306", 3349.982500076294],
+          ["order_create_valid_272", 3343.0986404418945],
+          ["order_create_valid_266", 3335.9577655792236],
+          ["order_create_valid_372", 3326.672315597534],
+          ["order_create_valid_234", 3325.819253921509],
+          ["order_create_invalid_customer_84", 3325.5040645599365]
         ],
         "phase_name": "Orders",
         "phase_duration_seconds": 2891.507333,
@@ -218,46 +128,16 @@
           "ConnectError": 1900
         },
         "slowest_scenarios": [
-          [
-            "quote_expired_148",
-            5143.242359161377
-          ],
-          [
-            "quote_expired_80",
-            4910.200834274292
-          ],
-          [
-            "quote_expired_152",
-            4460.518598556519
-          ],
-          [
-            "quote_expired_62",
-            4447.326183319092
-          ],
-          [
-            "quote_large_28",
-            4442.7924156188965
-          ],
-          [
-            "quote_expired_78",
-            4420.415878295898
-          ],
-          [
-            "quote_expired_166",
-            4417.37699508667
-          ],
-          [
-            "quote_expired_118",
-            4412.500381469727
-          ],
-          [
-            "quote_large_38",
-            4390.93542098999
-          ],
-          [
-            "quote_large_24",
-            4353.356599807739
-          ]
+          ["quote_expired_148", 5143.242359161377],
+          ["quote_expired_80", 4910.200834274292],
+          ["quote_expired_152", 4460.518598556519],
+          ["quote_expired_62", 4447.326183319092],
+          ["quote_large_28", 4442.7924156188965],
+          ["quote_expired_78", 4420.415878295898],
+          ["quote_expired_166", 4417.37699508667],
+          ["quote_expired_118", 4412.500381469727],
+          ["quote_large_38", 4390.93542098999],
+          ["quote_large_24", 4353.356599807739]
         ],
         "phase_name": "Quotes",
         "phase_duration_seconds": 3017.080761,

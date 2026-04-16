@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,31 +20,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { inventoryApi } from "@/lib/api/inventory";
-import type { StoreLocation } from "@/lib/types/inventory";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { inventoryApi } from '@/lib/api/inventory';
+import type { StoreLocation } from '@/lib/types/inventory';
 
 const reservationSchema = z.object({
-  product_id: z.string().min(1, "Product is required"),
-  order_id: z.string().min(1, "Order ID is required"),
-  location: z.enum(["brisbane", "sydney", "melbourne"], {
-    required_error: "Location is required",
+  product_id: z.string().min(1, 'Product is required'),
+  order_id: z.string().min(1, 'Order ID is required'),
+  location: z.enum(['brisbane', 'sydney', 'melbourne'], {
+    required_error: 'Location is required',
   }),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+  quantity: z.coerce.number().min(1, 'Quantity must be at least 1'),
   expires_in_hours: z.coerce
     .number()
-    .min(1, "Expiration must be at least 1 hour")
-    .max(72, "Expiration cannot exceed 72 hours")
+    .min(1, 'Expiration must be at least 1 hour')
+    .max(72, 'Expiration cannot exceed 72 hours')
     .optional(),
 });
 
@@ -73,17 +73,17 @@ export function StockReservationDialog({
   const form = useForm<ReservationFormData>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
-      product_id: productId || "",
-      order_id: "",
-      location: "brisbane",
+      product_id: productId || '',
+      order_id: '',
+      location: 'brisbane',
       quantity: 1,
       expires_in_hours: 24,
     },
   });
 
   // Update product_id when prop changes
-  if (productId && form.getValues("product_id") !== productId) {
-    form.setValue("product_id", productId);
+  if (productId && form.getValues('product_id') !== productId) {
+    form.setValue('product_id', productId);
   }
 
   async function onSubmit(values: ReservationFormData) {
@@ -102,7 +102,7 @@ export function StockReservationDialog({
       });
 
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Reserved ${values.quantity} units successfully`,
       });
 
@@ -110,10 +110,10 @@ export function StockReservationDialog({
       onSuccess?.();
       onOpenChange(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to reserve stock";
+      const message = error instanceof Error ? error.message : 'Failed to reserve stock';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -129,13 +129,13 @@ export function StockReservationDialog({
           <DialogDescription>
             {productName && productSku ? (
               <span>
-                Reserve stock for{" "}
+                Reserve stock for{' '}
                 <span className="font-semibold">
                   {productName} ({productSku})
                 </span>
               </span>
             ) : (
-              "Reserve stock for an order"
+              'Reserve stock for an order'
             )}
           </DialogDescription>
         </DialogHeader>
@@ -169,9 +169,7 @@ export function StockReservationDialog({
                   <FormControl>
                     <Input placeholder="Enter order ID" {...field} disabled={isLoading} />
                   </FormControl>
-                  <FormDescription>
-                    The order this reservation is for
-                  </FormDescription>
+                  <FormDescription>The order this reservation is for</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -200,9 +198,7 @@ export function StockReservationDialog({
                       <SelectItem value="melbourne">Melbourne</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    Where to reserve the stock from
-                  </FormDescription>
+                  <FormDescription>Where to reserve the stock from</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -224,9 +220,7 @@ export function StockReservationDialog({
                       disabled={isLoading}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Number of units to reserve
-                  </FormDescription>
+                  <FormDescription>Number of units to reserve</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -267,7 +261,7 @@ export function StockReservationDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Reserving..." : "Reserve Stock"}
+                {isLoading ? 'Reserving...' : 'Reserve Stock'}
               </Button>
             </DialogFooter>
           </form>

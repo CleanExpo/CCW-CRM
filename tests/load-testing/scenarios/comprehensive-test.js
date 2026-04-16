@@ -47,10 +47,10 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '2m', target: 10 },   // Warm up
-        { duration: '10m', target: 20 },  // Normal load
-        { duration: '5m', target: 50 },   // Peak load
-        { duration: '2m', target: 0 },    // Cool down
+        { duration: '2m', target: 10 }, // Warm up
+        { duration: '10m', target: 20 }, // Normal load
+        { duration: '5m', target: 50 }, // Peak load
+        { duration: '2m', target: 0 }, // Cool down
       ],
       gracefulRampDown: '30s',
     },
@@ -68,11 +68,7 @@ export function setup() {
   checkHealth(baseUrl);
 
   // Authenticate once in setup phase and return token to all VUs
-  const token = authenticate(
-    baseUrl,
-    testConfig.auth.email,
-    testConfig.auth.password
-  );
+  const token = authenticate(baseUrl, testConfig.auth.email, testConfig.auth.password);
 
   if (!token) {
     console.error('[ERROR] Authentication failed in setup phase');
@@ -165,21 +161,16 @@ function runAuthenticationScenarios() {
 }
 
 function testLogin() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/auth/me`,
-    authToken,
-    { endpoint: 'auth', scenario: 'login' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/auth/me`, authToken, {
+    endpoint: 'auth',
+    scenario: 'login',
+  });
   validateResponse(res, 200, ['id', 'email']);
 }
 
 function testLoginInvalid() {
   // Test with random invalid credentials (should fail gracefully)
-  const res = authenticate(
-    baseUrl,
-    `invalid${randomString(5)}@test.com`,
-    randomString(10)
-  );
+  const res = authenticate(baseUrl, `invalid${randomString(5)}@test.com`, randomString(10));
   // We expect this to fail, so we don't use the result
 }
 
@@ -199,11 +190,10 @@ function testPasswordChange() {
 }
 
 function testGetCurrentUser() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/auth/me`,
-    authToken,
-    { endpoint: 'user', scenario: 'get_current' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/auth/me`, authToken, {
+    endpoint: 'user',
+    scenario: 'get_current',
+  });
   validateResponse(res, 200, ['id', 'email', 'full_name']);
 }
 
@@ -255,42 +245,38 @@ function runProductScenarios() {
 }
 
 function testListProducts() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/products?page=1&page_size=50`,
-    authToken,
-    { endpoint: 'products', scenario: 'list' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products?page=1&page_size=50`, authToken, {
+    endpoint: 'products',
+    scenario: 'list',
+  });
   validateResponse(res, 200, ['data', 'total']);
 }
 
 function testGetProduct() {
   const productId = randomInt(1, 100);
-  const res = authenticatedGet(
-    `${baseUrl}/api/products/${productId}`,
-    authToken,
-    { endpoint: 'products', scenario: 'get_one' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products/${productId}`, authToken, {
+    endpoint: 'products',
+    scenario: 'get_one',
+  });
   // May be 200 or 404, both are valid for load testing
 }
 
 function testSearchProducts() {
   const searchTerms = ['drill', 'hammer', 'saw', 'tool', 'equipment'];
   const term = randomChoice(searchTerms);
-  const res = authenticatedGet(
-    `${baseUrl}/api/products?search=${term}`,
-    authToken,
-    { endpoint: 'products', scenario: 'search' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products?search=${term}`, authToken, {
+    endpoint: 'products',
+    scenario: 'search',
+  });
   validateResponse(res, 200);
 }
 
 function testFilterProductsByCategory() {
   const category = randomChoice(testData.categories);
-  const res = authenticatedGet(
-    `${baseUrl}/api/products?category=${category}`,
-    authToken,
-    { endpoint: 'products', scenario: 'filter_category' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products?category=${category}`, authToken, {
+    endpoint: 'products',
+    scenario: 'filter_category',
+  });
   validateResponse(res, 200);
 }
 
@@ -306,22 +292,19 @@ function testFilterProductsByPrice() {
 }
 
 function testFilterProductsByStock() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/products?in_stock=true`,
-    authToken,
-    { endpoint: 'products', scenario: 'filter_stock' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products?in_stock=true`, authToken, {
+    endpoint: 'products',
+    scenario: 'filter_stock',
+  });
   validateResponse(res, 200);
 }
 
 function testCreateProduct() {
   const product = generateTestProduct();
-  const res = authenticatedPost(
-    `${baseUrl}/api/products`,
-    authToken,
-    product,
-    { endpoint: 'products', scenario: 'create' }
-  );
+  const res = authenticatedPost(`${baseUrl}/api/products`, authToken, product, {
+    endpoint: 'products',
+    scenario: 'create',
+  });
   // May fail due to duplicate SKU, which is fine for load testing
 }
 
@@ -331,12 +314,10 @@ function testUpdateProduct() {
     price: randomInt(10, 1000),
     stock: randomInt(0, 100),
   };
-  const res = authenticatedPut(
-    `${baseUrl}/api/products/${productId}`,
-    authToken,
-    updateData,
-    { endpoint: 'products', scenario: 'update' }
-  );
+  const res = authenticatedPut(`${baseUrl}/api/products/${productId}`, authToken, updateData, {
+    endpoint: 'products',
+    scenario: 'update',
+  });
 }
 
 function testDeleteProduct() {
@@ -352,11 +333,10 @@ function testBulkProductImport() {
 
 function testProductPagination() {
   const page = randomInt(1, 5);
-  const res = authenticatedGet(
-    `${baseUrl}/api/products?page=${page}&page_size=20`,
-    authToken,
-    { endpoint: 'products', scenario: 'pagination' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products?page=${page}&page_size=20`, authToken, {
+    endpoint: 'products',
+    scenario: 'pagination',
+  });
   validateResponse(res, 200);
 }
 
@@ -364,29 +344,26 @@ function testProductSorting() {
   const sortOptions = ['name', 'price', 'stock', 'created_at'];
   const sortBy = randomChoice(sortOptions);
   const order = randomChoice(['asc', 'desc']);
-  const res = authenticatedGet(
-    `${baseUrl}/api/products?sort=${sortBy}&order=${order}`,
-    authToken,
-    { endpoint: 'products', scenario: 'sorting' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products?sort=${sortBy}&order=${order}`, authToken, {
+    endpoint: 'products',
+    scenario: 'sorting',
+  });
   validateResponse(res, 200);
 }
 
 function testLowStockProducts() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/products?low_stock=true`,
-    authToken,
-    { endpoint: 'products', scenario: 'low_stock' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products?low_stock=true`, authToken, {
+    endpoint: 'products',
+    scenario: 'low_stock',
+  });
   validateResponse(res, 200);
 }
 
 function testInactiveProducts() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/products?is_active=false`,
-    authToken,
-    { endpoint: 'products', scenario: 'inactive' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/products?is_active=false`, authToken, {
+    endpoint: 'products',
+    scenario: 'inactive',
+  });
   validateResponse(res, 200);
 }
 
@@ -428,63 +405,56 @@ function runCustomerScenarios() {
 }
 
 function testListCustomers() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers?page=1&page_size=50`,
-    authToken,
-    { endpoint: 'customers', scenario: 'list' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers?page=1&page_size=50`, authToken, {
+    endpoint: 'customers',
+    scenario: 'list',
+  });
   validateResponse(res, 200);
 }
 
 function testGetCustomer() {
   const customerId = randomInt(1, 50);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers/${customerId}`,
-    authToken,
-    { endpoint: 'customers', scenario: 'get_one' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers/${customerId}`, authToken, {
+    endpoint: 'customers',
+    scenario: 'get_one',
+  });
 }
 
 function testSearchCustomers() {
   const searchTerms = ['test', 'company', 'corp', 'ltd', 'inc'];
   const term = randomChoice(searchTerms);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers?search=${term}`,
-    authToken,
-    { endpoint: 'customers', scenario: 'search' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers?search=${term}`, authToken, {
+    endpoint: 'customers',
+    scenario: 'search',
+  });
   validateResponse(res, 200);
 }
 
 function testFilterCustomersByState() {
   const state = randomChoice(testData.states);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers?state=${state}`,
-    authToken,
-    { endpoint: 'customers', scenario: 'filter_state' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers?state=${state}`, authToken, {
+    endpoint: 'customers',
+    scenario: 'filter_state',
+  });
   validateResponse(res, 200);
 }
 
 function testFilterCustomersByCity() {
   const cities = ['Sydney', 'Melbourne', 'Brisbane', 'Perth'];
   const city = randomChoice(cities);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers?city=${city}`,
-    authToken,
-    { endpoint: 'customers', scenario: 'filter_city' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers?city=${city}`, authToken, {
+    endpoint: 'customers',
+    scenario: 'filter_city',
+  });
   validateResponse(res, 200);
 }
 
 function testCreateCustomer() {
   const customer = generateTestCustomer();
-  const res = authenticatedPost(
-    `${baseUrl}/api/customers`,
-    authToken,
-    customer,
-    { endpoint: 'customers', scenario: 'create' }
-  );
+  const res = authenticatedPost(`${baseUrl}/api/customers`, authToken, customer, {
+    endpoint: 'customers',
+    scenario: 'create',
+  });
 }
 
 function testUpdateCustomer() {
@@ -493,12 +463,10 @@ function testUpdateCustomer() {
     phone: `+61${randomInt(400000000, 499999999)}`,
     email: `updated.${randomString(8)}@test.com`,
   };
-  const res = authenticatedPut(
-    `${baseUrl}/api/customers/${customerId}`,
-    authToken,
-    updateData,
-    { endpoint: 'customers', scenario: 'update' }
-  );
+  const res = authenticatedPut(`${baseUrl}/api/customers/${customerId}`, authToken, updateData, {
+    endpoint: 'customers',
+    scenario: 'update',
+  });
 }
 
 function testDeleteCustomer() {
@@ -508,67 +476,60 @@ function testDeleteCustomer() {
 
 function testCustomerOrderHistory() {
   const customerId = randomInt(1, 50);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers/${customerId}/orders`,
-    authToken,
-    { endpoint: 'customers', scenario: 'order_history' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers/${customerId}/orders`, authToken, {
+    endpoint: 'customers',
+    scenario: 'order_history',
+  });
 }
 
 function testCustomerQuoteHistory() {
   const customerId = randomInt(1, 50);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers/${customerId}/quotes`,
-    authToken,
-    { endpoint: 'customers', scenario: 'quote_history' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers/${customerId}/quotes`, authToken, {
+    endpoint: 'customers',
+    scenario: 'quote_history',
+  });
 }
 
 function testCustomerInvoices() {
   const customerId = randomInt(1, 50);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers/${customerId}/invoices`,
-    authToken,
-    { endpoint: 'customers', scenario: 'invoices' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers/${customerId}/invoices`, authToken, {
+    endpoint: 'customers',
+    scenario: 'invoices',
+  });
 }
 
 function testActiveCustomers() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers?is_active=true`,
-    authToken,
-    { endpoint: 'customers', scenario: 'active' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers?is_active=true`, authToken, {
+    endpoint: 'customers',
+    scenario: 'active',
+  });
   validateResponse(res, 200);
 }
 
 function testInactiveCustomers() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers?is_active=false`,
-    authToken,
-    { endpoint: 'customers', scenario: 'inactive' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers?is_active=false`, authToken, {
+    endpoint: 'customers',
+    scenario: 'inactive',
+  });
   validateResponse(res, 200);
 }
 
 function testCustomerPagination() {
   const page = randomInt(1, 3);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers?page=${page}&page_size=20`,
-    authToken,
-    { endpoint: 'customers', scenario: 'pagination' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers?page=${page}&page_size=20`, authToken, {
+    endpoint: 'customers',
+    scenario: 'pagination',
+  });
   validateResponse(res, 200);
 }
 
 function testCustomerSorting() {
   const sortOptions = ['company_name', 'created_at', 'customer_number'];
   const sortBy = randomChoice(sortOptions);
-  const res = authenticatedGet(
-    `${baseUrl}/api/customers?sort=${sortBy}`,
-    authToken,
-    { endpoint: 'customers', scenario: 'sorting' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/customers?sort=${sortBy}`, authToken, {
+    endpoint: 'customers',
+    scenario: 'sorting',
+  });
   validateResponse(res, 200);
 }
 
@@ -605,21 +566,19 @@ function runOrderScenarios() {
 }
 
 function testListOrders() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/orders?page=1&page_size=50`,
-    authToken,
-    { endpoint: 'orders', scenario: 'list' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/orders?page=1&page_size=50`, authToken, {
+    endpoint: 'orders',
+    scenario: 'list',
+  });
   validateResponse(res, 200);
 }
 
 function testGetOrder() {
   const orderId = randomInt(1, 100);
-  const res = authenticatedGet(
-    `${baseUrl}/api/orders/${orderId}`,
-    authToken,
-    { endpoint: 'orders', scenario: 'get_one' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/orders/${orderId}`, authToken, {
+    endpoint: 'orders',
+    scenario: 'get_one',
+  });
 }
 
 function testCreateOrder() {
@@ -630,12 +589,10 @@ function testCreateOrder() {
     status: 'draft',
     notes: `Load test order ${randomString(10)}`,
   };
-  const res = authenticatedPost(
-    `${baseUrl}/api/orders`,
-    authToken,
-    order,
-    { endpoint: 'orders', scenario: 'create' }
-  );
+  const res = authenticatedPost(`${baseUrl}/api/orders`, authToken, order, {
+    endpoint: 'orders',
+    scenario: 'create',
+  });
 }
 
 function testUpdateOrder() {
@@ -643,12 +600,10 @@ function testUpdateOrder() {
   const updateData = {
     notes: `Updated ${randomString(10)}`,
   };
-  const res = authenticatedPut(
-    `${baseUrl}/api/orders/${orderId}`,
-    authToken,
-    updateData,
-    { endpoint: 'orders', scenario: 'update' }
-  );
+  const res = authenticatedPut(`${baseUrl}/api/orders/${orderId}`, authToken, updateData, {
+    endpoint: 'orders',
+    scenario: 'update',
+  });
 }
 
 function testDeleteOrder() {
@@ -658,21 +613,19 @@ function testDeleteOrder() {
 
 function testFilterOrdersByStatus() {
   const status = randomChoice(testData.orderStatuses);
-  const res = authenticatedGet(
-    `${baseUrl}/api/orders?status=${status}`,
-    authToken,
-    { endpoint: 'orders', scenario: 'filter_status' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/orders?status=${status}`, authToken, {
+    endpoint: 'orders',
+    scenario: 'filter_status',
+  });
   validateResponse(res, 200);
 }
 
 function testFilterOrdersByCustomer() {
   const customerId = randomInt(1, 50);
-  const res = authenticatedGet(
-    `${baseUrl}/api/orders?customer_id=${customerId}`,
-    authToken,
-    { endpoint: 'orders', scenario: 'filter_customer' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/orders?customer_id=${customerId}`, authToken, {
+    endpoint: 'orders',
+    scenario: 'filter_customer',
+  });
   validateResponse(res, 200);
 }
 
@@ -728,22 +681,19 @@ function testOrderDelivery() {
 
 function testOrderItems() {
   const orderId = randomInt(1, 100);
-  const res = authenticatedGet(
-    `${baseUrl}/api/orders/${orderId}/items`,
-    authToken,
-    { endpoint: 'orders', scenario: 'items' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/orders/${orderId}/items`, authToken, {
+    endpoint: 'orders',
+    scenario: 'items',
+  });
 }
 
 function testAddOrderItem() {
   const orderId = randomInt(1, 100);
   const item = generateOrderItem(randomInt(1, 100));
-  const res = authenticatedPost(
-    `${baseUrl}/api/orders/${orderId}/items`,
-    authToken,
-    item,
-    { endpoint: 'orders', scenario: 'add_item' }
-  );
+  const res = authenticatedPost(`${baseUrl}/api/orders/${orderId}/items`, authToken, item, {
+    endpoint: 'orders',
+    scenario: 'add_item',
+  });
 }
 
 function testUpdateOrderItem() {
@@ -764,28 +714,25 @@ function testRemoveOrderItem() {
 
 function testOrderTotal() {
   const orderId = randomInt(1, 100);
-  const res = authenticatedGet(
-    `${baseUrl}/api/orders/${orderId}/total`,
-    authToken,
-    { endpoint: 'orders', scenario: 'total' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/orders/${orderId}/total`, authToken, {
+    endpoint: 'orders',
+    scenario: 'total',
+  });
 }
 
 function testPendingOrders() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/orders?status=pending`,
-    authToken,
-    { endpoint: 'orders', scenario: 'pending' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/orders?status=pending`, authToken, {
+    endpoint: 'orders',
+    scenario: 'pending',
+  });
   validateResponse(res, 200);
 }
 
 function testCompletedOrders() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/orders?status=delivered`,
-    authToken,
-    { endpoint: 'orders', scenario: 'completed' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/orders?status=delivered`, authToken, {
+    endpoint: 'orders',
+    scenario: 'completed',
+  });
   validateResponse(res, 200);
 }
 
@@ -817,21 +764,19 @@ function runQuoteScenarios() {
 }
 
 function testListQuotes() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/quotes?page=1&page_size=50`,
-    authToken,
-    { endpoint: 'quotes', scenario: 'list' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/quotes?page=1&page_size=50`, authToken, {
+    endpoint: 'quotes',
+    scenario: 'list',
+  });
   validateResponse(res, 200);
 }
 
 function testGetQuote() {
   const quoteId = randomInt(1, 100);
-  const res = authenticatedGet(
-    `${baseUrl}/api/quotes/${quoteId}`,
-    authToken,
-    { endpoint: 'quotes', scenario: 'get_one' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/quotes/${quoteId}`, authToken, {
+    endpoint: 'quotes',
+    scenario: 'get_one',
+  });
 }
 
 function testCreateQuote() {
@@ -843,12 +788,10 @@ function testCreateQuote() {
     status: 'draft',
     notes: `Load test quote ${randomString(10)}`,
   };
-  const res = authenticatedPost(
-    `${baseUrl}/api/quotes`,
-    authToken,
-    quote,
-    { endpoint: 'quotes', scenario: 'create' }
-  );
+  const res = authenticatedPost(`${baseUrl}/api/quotes`, authToken, quote, {
+    endpoint: 'quotes',
+    scenario: 'create',
+  });
 }
 
 function testUpdateQuote() {
@@ -856,12 +799,10 @@ function testUpdateQuote() {
   const updateData = {
     notes: `Updated ${randomString(10)}`,
   };
-  const res = authenticatedPut(
-    `${baseUrl}/api/quotes/${quoteId}`,
-    authToken,
-    updateData,
-    { endpoint: 'quotes', scenario: 'update' }
-  );
+  const res = authenticatedPut(`${baseUrl}/api/quotes/${quoteId}`, authToken, updateData, {
+    endpoint: 'quotes',
+    scenario: 'update',
+  });
 }
 
 function testDeleteQuote() {
@@ -870,21 +811,19 @@ function testDeleteQuote() {
 
 function testFilterQuotesByStatus() {
   const status = randomChoice(testData.quoteStatuses);
-  const res = authenticatedGet(
-    `${baseUrl}/api/quotes?status=${status}`,
-    authToken,
-    { endpoint: 'quotes', scenario: 'filter_status' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/quotes?status=${status}`, authToken, {
+    endpoint: 'quotes',
+    scenario: 'filter_status',
+  });
   validateResponse(res, 200);
 }
 
 function testFilterQuotesByCustomer() {
   const customerId = randomInt(1, 50);
-  const res = authenticatedGet(
-    `${baseUrl}/api/quotes?customer_id=${customerId}`,
-    authToken,
-    { endpoint: 'quotes', scenario: 'filter_customer' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/quotes?customer_id=${customerId}`, authToken, {
+    endpoint: 'quotes',
+    scenario: 'filter_customer',
+  });
   validateResponse(res, 200);
 }
 
@@ -919,38 +858,34 @@ function testQuoteRejection() {
 }
 
 function testQuoteExpiry() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/quotes?status=expired`,
-    authToken,
-    { endpoint: 'quotes', scenario: 'expired' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/quotes?status=expired`, authToken, {
+    endpoint: 'quotes',
+    scenario: 'expired',
+  });
   validateResponse(res, 200);
 }
 
 function testQuoteItems() {
   const quoteId = randomInt(1, 100);
-  const res = authenticatedGet(
-    `${baseUrl}/api/quotes/${quoteId}/items`,
-    authToken,
-    { endpoint: 'quotes', scenario: 'items' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/quotes/${quoteId}/items`, authToken, {
+    endpoint: 'quotes',
+    scenario: 'items',
+  });
 }
 
 function testPendingQuotes() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/quotes?status=pending`,
-    authToken,
-    { endpoint: 'quotes', scenario: 'pending' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/quotes?status=pending`, authToken, {
+    endpoint: 'quotes',
+    scenario: 'pending',
+  });
   validateResponse(res, 200);
 }
 
 function testAcceptedQuotes() {
-  const res = authenticatedGet(
-    `${baseUrl}/api/quotes?status=accepted`,
-    authToken,
-    { endpoint: 'quotes', scenario: 'accepted' }
-  );
+  const res = authenticatedGet(`${baseUrl}/api/quotes?status=accepted`, authToken, {
+    endpoint: 'quotes',
+    scenario: 'accepted',
+  });
   validateResponse(res, 200);
 }
 

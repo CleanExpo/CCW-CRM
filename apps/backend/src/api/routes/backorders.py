@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 logger = structlog.get_logger(__name__)
 
-from src.api.deps import get_optional_user
+from src.api.deps import get_current_user, get_optional_user
 from src.config.database import get_async_db
 from src.db.container_models import Backorder, BackorderStatus, Container
 from src.db.demo_models import Customer, Order, Product
@@ -22,7 +22,7 @@ from src.events.event_bus import get_event_bus
 from src.services.alert_manager import get_alert_manager
 from src.services.email_notifications import email_service
 
-router = APIRouter(prefix="/api/backorders", tags=["Backorder Management"])
+router = APIRouter(prefix="/api/backorders", tags=["Backorder Management"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic Models

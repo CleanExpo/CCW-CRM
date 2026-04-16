@@ -6,7 +6,12 @@
 'use strict';
 
 const assert = require('assert');
-const { CircuitBreaker, getBreaker, getAllStatus, STATES } = require('../../scripts/lib/circuit-breaker');
+const {
+  CircuitBreaker,
+  getBreaker,
+  getAllStatus,
+  STATES,
+} = require('../../scripts/lib/circuit-breaker');
 
 let passed = 0;
 let failed = 0;
@@ -53,10 +58,14 @@ test('starts in CLOSED state', () => {
   // --- Trip to OPEN ---
   await testAsync('trips to OPEN after failureThreshold', async () => {
     const cb = new CircuitBreaker('test-trip', { failureThreshold: 3, resetTimeout: 1000 });
-    const failFn = async () => { throw new Error('simulated failure'); };
+    const failFn = async () => {
+      throw new Error('simulated failure');
+    };
 
     for (let i = 0; i < 3; i++) {
-      try { await cb.execute(failFn); } catch (_) {}
+      try {
+        await cb.execute(failFn);
+      } catch (_) {}
     }
 
     assert.strictEqual(cb.state, STATES.OPEN, `Expected OPEN, got ${cb.state}`);
@@ -66,11 +75,18 @@ test('starts in CLOSED state', () => {
   // --- OPEN state blocks ---
   await testAsync('OPEN state throws without calling fn', async () => {
     const cb = new CircuitBreaker('test-open', { failureThreshold: 1, resetTimeout: 9999999 });
-    try { await cb.execute(async () => { throw new Error('fail'); }); } catch (_) {}
+    try {
+      await cb.execute(async () => {
+        throw new Error('fail');
+      });
+    } catch (_) {}
 
     let fnCalled = false;
     try {
-      await cb.execute(async () => { fnCalled = true; return 'ok'; });
+      await cb.execute(async () => {
+        fnCalled = true;
+        return 'ok';
+      });
       assert.fail('Should have thrown');
     } catch (e) {
       assert.ok(e.message.includes('OPEN'), 'Error should mention OPEN state');
@@ -81,10 +97,14 @@ test('starts in CLOSED state', () => {
   // --- HALF_OPEN recovery ---
   await testAsync('transitions OPEN → HALF_OPEN → CLOSED on success', async () => {
     const cb = new CircuitBreaker('test-recover', { failureThreshold: 1, resetTimeout: 1 });
-    try { await cb.execute(async () => { throw new Error('fail'); }); } catch (_) {}
+    try {
+      await cb.execute(async () => {
+        throw new Error('fail');
+      });
+    } catch (_) {}
 
     // Wait for resetTimeout
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 10));
 
     // Next call should go through (HALF_OPEN)
     const result = await cb.execute(async () => 'recovered');
@@ -97,7 +117,9 @@ test('starts in CLOSED state', () => {
     const cb = new CircuitBreaker('test-cap', { failureThreshold: 100 });
     for (let i = 0; i < 15; i++) {
       try {
-        await cb.execute(async () => { throw new Error(`err ${i}`); });
+        await cb.execute(async () => {
+          throw new Error(`err ${i}`);
+        });
       } catch (_) {}
     }
     assert.ok(cb.errors.length <= 10, `Expected <= 10 errors, got ${cb.errors.length}`);

@@ -1,1 +1,10 @@
-{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBkZW1vLmNvbSIsInVzZXJfaWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzcwODg4NjA3fQ.Uxf0n80T26YvG8s7L1Apxv3bOYtFo__RIroRjl8OFGc","token_type":"bearer","user":{"id":"00000000-0000-0000-0000-000000000001","email":"admin@demo.com","full_name":"Demo Administrator","is_admin":true}}
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBkZW1vLmNvbSIsInVzZXJfaWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzcwODg4NjA3fQ.Uxf0n80T26YvG8s7L1Apxv3bOYtFo__RIroRjl8OFGc",
+  "token_type": "bearer",
+  "user": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "email": "admin@demo.com",
+    "full_name": "Demo Administrator",
+    "is_admin": true
+  }
+}
