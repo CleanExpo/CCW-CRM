@@ -12,9 +12,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.agents.specialized import SearchAgent
-from src.api.deps import get_async_db
+from src.api.deps import get_async_db, get_current_user
 
-router = APIRouter(prefix="/api/search", tags=["AI Search"])
+router = APIRouter(prefix="/api/search", tags=["AI Search"], dependencies=[Depends(get_current_user)])
 
 # Initialize search agent
 search_agent = SearchAgent()

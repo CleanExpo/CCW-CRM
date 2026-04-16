@@ -338,6 +338,63 @@ class Cin7InventorySyncer:
             return int(item.get("Allocated", 0))
         return int(item.get("stockOnHand", 0)) - int(item.get("stockAvailable", 0))
 
+    # ------------------------------------------------------------------
+    # UNI-1877: Multi-location stock sync
+    # ------------------------------------------------------------------
+
+    async def sync_multi_location_stock(
+        self,
+        location_codes: list[str] | None = None,
+    ) -> dict:
+        """Pull per-location stock from Cin7 Core and log what would be upserted.
+
+        Uses /ref/location to list locations, then /ref/productavailability
+        per location (Core API proxies availability per-location via SKU).
+        Returns {"locations_synced": N, "total_products": M, "errors": []}.
+        """
+        errors: list[str] = []
+        total_products = 0
+
+        try:
+            loc_data = await self._retry_with_backoff(self.client.core.get_locations)
+            locations: list[dict] = loc_data if isinstance(loc_data, list) else loc_data.get("LocationList", [])
+        except Exception as exc:
+            errors.append(f"fetch_locations: {exc}")
+            return {"locations_synced": 0, "total_products": 0, "errors": errors}
+
+        if location_codes:
+            locations = [
+                loc for loc in locations
+                if loc.get("Name") in location_codes or loc.get("ID") in location_codes
+            ]
+
+        synced_locs = 0
+        for loc in locations:
+            loc_name = loc.get("Name", "unknown")
+            try:
+                avail = await self._retry_with_backoff(
+                    self.client.core.get_product_availability
+                )
+                items = avail.get("ProductAvailabilityList", [])
+                loc_items = [i for i in items if i.get("Location") == loc_name]
+                total_products += len(loc_items)
+                logger.info(
+                    "cin7_multi_location_stock_would_upsert",
+                    location=loc_name,
+                    products=len(loc_items),
+                )
+                synced_locs += 1
+            except Exception as exc:
+                errors.append(f"location={loc_name}: {exc}")
+
+        logger.info(
+            "cin7_multi_location_sync_complete",
+            locations_synced=synced_locs,
+            total_products=total_products,
+            errors=len(errors),
+        )
+        return {"locations_synced": synced_locs, "total_products": total_products, "errors": errors}
+
     async def _retry_with_backoff(self, func: Any, **kwargs: Any) -> Any:
         """Call *func* with exponential backoff on failure."""
         last_error: Exception | None = None

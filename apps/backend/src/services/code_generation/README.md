@@ -29,9 +29,11 @@ print(result.generated_files[0].content)
 ## Components
 
 ### 1. CodeGenerator (`generator.py`)
+
 Main orchestrator that coordinates all sub-components.
 
 **Usage**:
+
 ```python
 generator = CodeGenerator(
     project_root=Path("/path/to/project"),
@@ -40,34 +42,42 @@ generator = CodeGenerator(
 ```
 
 ### 2. ContextBuilder (`context_builder.py`)
+
 Analyzes codebase to understand patterns and conventions.
 
 **What it does**:
+
 - Maps project structure
 - Detects code patterns (API routes, React components, services)
 - Finds similar code examples
 - Extracts style guides (naming, imports, frameworks)
 
 ### 3. TestGenerator (`test_generator.py`)
+
 Automatically generates unit tests for generated code.
 
 **Supports**:
+
 - pytest (Python)
 - Vitest (TypeScript)
 - Endpoint tests
 - Component tests
 
 ### 4. DocGenerator (`doc_generator.py`)
+
 Adds comprehensive documentation to generated code.
 
 **Styles**:
+
 - Google-style docstrings (Python)
 - JSDoc (TypeScript)
 
 ### 5. QualityChecker (`quality_checker.py`)
+
 Validates code quality across multiple dimensions.
 
 **Checks**:
+
 - Linting (Ruff for Python)
 - Type annotations
 - Formatting (Black for Python)
@@ -187,6 +197,7 @@ result = await generator.generate(request)
 ### Security Checks
 
 Automatically scans for:
+
 - ❌ Hardcoded secrets (API keys, passwords)
 - ❌ SQL injection vulnerabilities
 - ❌ XSS vulnerabilities (dangerouslySetInnerHTML)
@@ -196,6 +207,7 @@ Automatically scans for:
 ### Type Safety
 
 Ensures:
+
 - ✅ All functions have return type annotations
 - ✅ All parameters have type annotations
 - ✅ No `any` types in TypeScript
@@ -203,6 +215,7 @@ Ensures:
 ### Best Practices
 
 Validates:
+
 - ✅ Code complexity (< 10 cyclomatic complexity)
 - ✅ Error handling in async functions
 - ✅ No unused imports
@@ -213,12 +226,14 @@ Validates:
 ## Testing
 
 Run tests:
+
 ```bash
 cd apps/backend
 pytest tests/services/code_generation/ -v
 ```
 
 Test coverage:
+
 - Context Builder: 26 tests
 - Code Generator: 27 tests
 - Test Generator: 26 tests
@@ -357,6 +372,7 @@ See [phase-5-week-4-code-generation.md](../../../../../docs/phase-5-week-4-code-
 ## Support
 
 For issues or questions:
+
 1. Check documentation
 2. Review test examples
 3. Run `pytest tests/services/code_generation/ -v`

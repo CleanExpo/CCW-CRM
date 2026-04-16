@@ -54,7 +54,10 @@ const CONDITIONAL_RULES = [
     operation: 'api:external:read',
     check: (params) => {
       if (params && params.callsPerMinute && params.callsPerMinute > 60) {
-        return { approved: false, reason: `Exceeds rate limit (${params.callsPerMinute} > 60/min)` };
+        return {
+          approved: false,
+          reason: `Exceeds rate limit (${params.callsPerMinute} > 60/min)`,
+        };
       }
       return { approved: true };
     },
@@ -63,7 +66,10 @@ const CONDITIONAL_RULES = [
     operation: 'email:send',
     check: (params) => {
       if (params && params.recipients && params.recipients.length > 10) {
-        return { approved: false, reason: `Exceeds maxRecipients (${params.recipients.length} > 10)` };
+        return {
+          approved: false,
+          reason: `Exceeds maxRecipients (${params.recipients.length} > 10)`,
+        };
       }
       return { approved: true };
     },
@@ -71,7 +77,13 @@ const CONDITIONAL_RULES = [
   {
     operation: 'slack:send',
     check: (params) => {
-      const ALLOWED_CHANNELS = ['#ccw-board', '#ccw-releases', '#ccw-security', '#ccw-alerts', '#general'];
+      const ALLOWED_CHANNELS = [
+        '#ccw-board',
+        '#ccw-releases',
+        '#ccw-security',
+        '#ccw-alerts',
+        '#general',
+      ];
       if (params && params.channel && !ALLOWED_CHANNELS.includes(params.channel)) {
         return { approved: false, reason: `Channel "${params.channel}" not in whitelist` };
       }
@@ -232,10 +244,11 @@ function denyRequest(requestId, denier = 'human', reason = '') {
  */
 function listPendingRequests() {
   ensureApprovalsDir();
-  return fs.readdirSync(APPROVALS_DIR)
-    .filter(f => f.endsWith('.json'))
-    .map(f => JSON.parse(fs.readFileSync(path.join(APPROVALS_DIR, f), 'utf8')))
-    .filter(r => r.status === 'pending');
+  return fs
+    .readdirSync(APPROVALS_DIR)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => JSON.parse(fs.readFileSync(path.join(APPROVALS_DIR, f), 'utf8')))
+    .filter((r) => r.status === 'pending');
 }
 
 module.exports = {

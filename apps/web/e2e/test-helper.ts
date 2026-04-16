@@ -2,7 +2,7 @@
  * E2E Test Helpers
  */
 
-import { Page } from "@playwright/test";
+import { Page } from '@playwright/test';
 
 /**
  * Login helper that works around cross-domain cookie issues
@@ -12,5 +12,5 @@ export async function loginAsAdmin(page: Page, baseUrl: string) {
   // DEV MODE: Skip real authentication for testing
   // Just navigate directly - middleware should allow access in dev mode
   await page.goto(`${baseUrl}/dashboard`);
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState('networkidle');
 }

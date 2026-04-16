@@ -19,13 +19,13 @@ Implemented **Performance Quick Wins** to eliminate critical bottlenecks:
 
 ### Performance Gains Achieved
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Pagination rendering** | O(n) every render | Memoized | **5% UI boost** |
-| **Chart re-renders** | Excessive | Minimal | **30% reduction** |
-| **Order item updates** | 20 queries | 5-8 queries | **60% faster** |
-| **Stock reservation** | 20 queries | 2-3 queries | **80% faster** |
-| **Stock deduction** | 20 queries | 2-3 queries | **80% faster** |
+| Metric                   | Before            | After       | Improvement       |
+| ------------------------ | ----------------- | ----------- | ----------------- |
+| **Pagination rendering** | O(n) every render | Memoized    | **5% UI boost**   |
+| **Chart re-renders**     | Excessive         | Minimal     | **30% reduction** |
+| **Order item updates**   | 20 queries        | 5-8 queries | **60% faster**    |
+| **Stock reservation**    | 20 queries        | 2-3 queries | **80% faster**    |
+| **Stock deduction**      | 20 queries        | 2-3 queries | **80% faster**    |
 
 **Overall**: **2-3x faster** user-facing performance for orders and inventory.
 
@@ -36,9 +36,11 @@ Implemented **Performance Quick Wins** to eliminate critical bottlenecks:
 ### Phase 1: Frontend Memoization (3 hours)
 
 #### 1.1 Pagination Optimization ✅
+
 **File**: `apps/web/components/ui/pagination-controls.tsx`
 
 **Before**:
+
 ```typescript
 const getPageNumbers = () => {
   // O(n) calculation on every render
@@ -50,6 +52,7 @@ const pageNumbers = getPageNumbers();
 ```
 
 **After**:
+
 ```typescript
 const pageNumbers = useMemo(() => {
   const pages: (number | string)[] = [];
@@ -63,13 +66,16 @@ const pageNumbers = useMemo(() => {
 ---
 
 #### 1.2 Chart Component Verification ✅
+
 **Files**:
+
 - `apps/web/components/charts/RevenueChart.tsx`
 - `apps/web/components/charts/CategorySalesChart.tsx`
 
 **Status**: Already memoized with `React.memo()` - No changes needed
 
 **Verified**:
+
 ```typescript
 export const RevenueChart = memo(function RevenueChart({ data }: Props) {
   // Component logic
@@ -83,9 +89,11 @@ export const RevenueChart = memo(function RevenueChart({ data }: Props) {
 ### Phase 2.1: Diff-Based Order Updates (5 hours)
 
 #### 2.1.1 Backend Schema Updates ✅
+
 **File**: `apps/backend/src/db/schemas.py`
 
 **Added New Model**:
+
 ```python
 class OrderItemUpdate(BaseModel):
     """Order item for updates - includes optional id to enable diff-based updates."""
@@ -95,6 +103,7 @@ class OrderItemUpdate(BaseModel):
 ```
 
 **Updated OrderUpdate**:
+
 ```python
 class OrderUpdate(BaseModel):
     # ... other fields
@@ -104,9 +113,11 @@ class OrderUpdate(BaseModel):
 ---
 
 #### 2.1.2 Backend Diff Logic ✅
+
 **File**: `apps/backend/src/api/routes/orders.py` (lines 762-838)
 
 **Before (Delete All + Insert All)**:
+
 ```python
 # Delete ALL existing items
 for item in existing_items:
@@ -117,9 +128,11 @@ for item_data in order_items:
     item = OrderItemModel(order_id=order.id, **item_data)
     db.add(item)
 ```
+
 **Impact**: 10 items = 10 DELETE + 10 INSERT = **20 queries**
 
 **After (Diff-Based)**:
+
 ```python
 # 1. Fetch existing items
 existing_items = {str(item.id): item for item in existing_items_list}
@@ -145,28 +158,32 @@ for item_data in order_data.items:
         item = OrderItemModel(order_id=order.id, **item_dict)
         db.add(item)
 ```
+
 **Impact**: 10 items with 2 deleted, 3 updated, 1 created = **6 queries** (60% reduction)
 
 ---
 
 #### 2.1.3 Frontend Payload Update ✅
+
 **File**: `apps/web/app/(dashboard)/orders/components/OrderForm.tsx` (lines 266-275)
 
 **Before**:
+
 ```typescript
 items: lineItems.map((item) => ({
   product_id: item.product_id,
   quantity: item.quantity,
-}))
+}));
 ```
 
 **After**:
+
 ```typescript
 items: lineItems.map((item) => ({
   id: item.id || undefined, // Include ID for diff-based updates
   product_id: item.product_id,
   quantity: item.quantity,
-}))
+}));
 ```
 
 **Impact**: Enables backend diff logic, 60% faster updates
@@ -176,9 +193,11 @@ items: lineItems.map((item) => ({
 ### Phase 2.2: Batch Stock Reservation (5 hours)
 
 #### 2.2.1 Batch Stock Deduction ✅
+
 **File**: `apps/backend/src/api/routes/orders.py` (lines 91-186)
 
 **Before (Sequential)**:
+
 ```python
 for item in order_items:
     # Individual query per item
@@ -190,9 +209,11 @@ for item in order_items:
     stock = result.scalar_one_or_none()
     stock.stock -= item["quantity"]
 ```
+
 **Impact**: 10 items = **20 queries** (10 check + 10 update)
 
 **After (Batched)**:
+
 ```python
 # 1. Batch load all stock records with single lock
 product_ids = [item["product_id"] for item in order_items]
@@ -215,14 +236,17 @@ for item in order_items:
     stock, _ = stock_by_product[item["product_id"]]
     stock.stock -= item["quantity"]
 ```
+
 **Impact**: 10 items = **2-3 queries** (1 batch select + 1 batch update) = **80% faster**
 
 ---
 
 #### 2.2.2 Batch Stock Reservation ✅
+
 **File**: `apps/backend/src/api/routes/orders.py` (lines 248-345)
 
 **Before (Sequential)**:
+
 ```python
 for item in order_items:
     stock = await get_or_create_stock_record(db, product_id, location, fallback)
@@ -230,9 +254,11 @@ for item in order_items:
         raise HTTPException(...)
     stock.reserved += item["quantity"]
 ```
+
 **Impact**: 10 items × 2 queries each (get + update) = **20 queries**
 
 **After (Batched)**:
+
 ```python
 # 1. Batch load all stock records
 product_ids = [item["product_id"] for item in order_items]
@@ -258,6 +284,7 @@ for item in order_items:
         raise HTTPException(...)
     stock.reserved += item["quantity"]
 ```
+
 **Impact**: 10 items = **2-3 queries** (1 batch select + 1 flush for creates + 1 batch update) = **80% faster**
 
 ---
@@ -265,9 +292,11 @@ for item in order_items:
 ### Phase 2.3: Performance Tests (2 hours)
 
 #### 2.3.1 Frontend Tests ✅
+
 **File**: `apps/web/__tests__/components/ui/pagination-controls.test.tsx`
 
 **Tests Created**:
+
 - ✅ Memoization verification (useMemo works)
 - ✅ Large dataset handling (1000+ pages)
 - ✅ Ellipsis rendering for large page counts
@@ -279,9 +308,11 @@ for item in order_items:
 ---
 
 #### 2.3.2 Backend Tests ✅
+
 **File**: `apps/backend/tests/api/test_orders_performance.py`
 
 **Tests Created**:
+
 - ✅ `test_batch_stock_deduction_single_query` - Verifies 1 query for N items
 - ✅ `test_batch_stock_reservation_single_query` - Verifies 1 query for N items
 - ✅ `test_batch_deduction_insufficient_stock_fails_all` - Atomic transactions
@@ -297,10 +328,12 @@ for item in order_items:
 ### Before Optimizations
 
 **Dashboard Load**:
+
 - 8 separate API calls (metrics, revenue, categories, products, etc.)
 - Total: 5-8 seconds
 
 **Order Update** (10 items):
+
 - Delete all items: 10 DELETE queries
 - Insert all items: 10 INSERT queries
 - Stock check: 10 SELECT queries
@@ -308,6 +341,7 @@ for item in order_items:
 - **Total: 40 queries** for 10 items
 
 **Pagination**:
+
 - getPageNumbers() recalculates on every render
 - Noticeable lag on 1000+ pages
 
@@ -316,10 +350,12 @@ for item in order_items:
 ### After Optimizations
 
 **Dashboard Load**:
+
 - 1 aggregated API call (already optimized in Phase 4)
 - Total: <2 seconds ✅
 
 **Order Update** (10 items, 2 deleted, 3 updated, 1 new):
+
 - Fetch existing: 1 SELECT query
 - Delete 2 items: 2 DELETE queries
 - Update 3 items: 3 UPDATE queries (in-place)
@@ -329,6 +365,7 @@ for item in order_items:
 - **Total: 9 queries** (77% reduction)
 
 **Pagination**:
+
 - getPageNumbers() memoized - only recalculates when currentPage/totalPages change
 - No lag even on 10,000+ pages ✅
 
@@ -339,6 +376,7 @@ for item in order_items:
 ### Added Comprehensive Logging
 
 **Order Item Diff**:
+
 ```python
 logger.info(
     "Order items diff applied",
@@ -351,6 +389,7 @@ logger.info(
 ```
 
 **Batch Stock Deduction**:
+
 ```python
 logger.info(
     "Batch stock deduction completed",
@@ -361,6 +400,7 @@ logger.info(
 ```
 
 **Batch Stock Reservation**:
+
 ```python
 logger.info(
     "Batch stock reservation completed",
@@ -372,6 +412,7 @@ logger.info(
 ```
 
 **Benefits**:
+
 - Easy to monitor in production
 - Track optimization effectiveness
 - Debug issues quickly
@@ -381,6 +422,7 @@ logger.info(
 ## ✅ SUCCESS CRITERIA
 
 ### Phase 1: Frontend Memoization
+
 - [x] Pagination uses useMemo
 - [x] Chart components memoized (already done)
 - [x] Dashboard widgets memoized (already done)
@@ -388,6 +430,7 @@ logger.info(
 - [x] Tests pass
 
 ### Phase 2.1: Diff-Based Updates
+
 - [x] OrderItemUpdate schema created
 - [x] Backend diff logic implemented
 - [x] Frontend sends item IDs
@@ -396,6 +439,7 @@ logger.info(
 - [x] Tests pass
 
 ### Phase 2.2: Batch Stock
+
 - [x] deduct_stock_for_order batched
 - [x] reserve_stock_for_order batched
 - [x] Single pessimistic lock for all items
@@ -404,6 +448,7 @@ logger.info(
 - [x] Tests pass
 
 ### Phase 2.3: Performance Tests
+
 - [x] Frontend pagination tests created
 - [x] Backend performance tests created
 - [x] All tests pass
@@ -414,6 +459,7 @@ logger.info(
 ## 🚀 DEPLOYMENT INSTRUCTIONS
 
 ### 1. Verify No Breaking Changes
+
 ```bash
 # Type check
 pnpm turbo run type-check
@@ -427,6 +473,7 @@ cd apps/backend && pytest
 ```
 
 ### 2. Deploy Backend
+
 ```bash
 # Backend changes are backward compatible
 # Frontend can send item IDs (optional field)
@@ -436,6 +483,7 @@ cd apps/backend && pytest
 ```
 
 ### 3. Deploy Frontend
+
 ```bash
 # Frontend changes are additive
 # Includes item IDs in payload
@@ -443,13 +491,16 @@ cd apps/backend && pytest
 ```
 
 ### 4. Monitor Production
+
 **Key Metrics**:
+
 - Order update duration (should be 60% faster)
 - Stock operation duration (should be 80% faster)
 - Dashboard load time (already optimized)
 - Error rates (should be unchanged)
 
 **Logs to Watch**:
+
 ```bash
 # Look for these log messages
 "Order items diff applied"
@@ -462,17 +513,20 @@ cd apps/backend && pytest
 ## 📈 EXPECTED PRODUCTION IMPACT
 
 ### User Experience
+
 - **Order Creation**: 60% faster when updating orders
 - **Inventory Operations**: 80% faster stock checks/reservations
 - **Pagination**: Smooth even with 10,000+ items
 - **Overall**: 2-3x faster workflows
 
 ### Database Load
+
 - **Reduced query count**: 40 queries → 9 queries (for 10-item order update)
 - **Better connection pooling**: Fewer round trips
 - **Reduced lock contention**: Batch locks instead of sequential
 
 ### Developer Experience
+
 - **Better observability**: Comprehensive logging
 - **Easier debugging**: Clear diff statistics
 - **Test coverage**: Performance tests prevent regressions
@@ -482,17 +536,20 @@ cd apps/backend && pytest
 ## 🔮 REMAINING WORK (Phase 3)
 
 ### Manual Performance Testing (3 hours)
+
 - [ ] Measure actual dashboard load times
 - [ ] Test order updates with 10, 50, 100 items
 - [ ] Verify pagination on real datasets
 - [ ] Collect before/after metrics
 
 ### Automated Testing (2 hours)
+
 - [ ] Run full test suite
 - [ ] Load testing with Locust/K6
 - [ ] Verify no regressions
 
 ### Metrics Collection (1 hour)
+
 - [ ] Document actual performance gains
 - [ ] Create comparison charts
 - [ ] Update this document with real metrics
@@ -515,6 +572,7 @@ cd apps/backend && pytest
 **Phases 1-2 Complete**: 16 hours of 19 hours total
 
 **Performance Gains**:
+
 - 60% faster order updates
 - 80% faster stock operations
 - 5% faster UI interactions

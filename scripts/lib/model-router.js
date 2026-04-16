@@ -18,9 +18,9 @@ const MODELS = {
 
 // Cost per 1M tokens (input/output rates in USD)
 const COST_PER_1M = {
-  haiku:  { input: 0.25,  output: 1.25  },
-  sonnet: { input: 3.00,  output: 15.00 },
-  opus:   { input: 15.00, output: 75.00 },
+  haiku: { input: 0.25, output: 1.25 },
+  sonnet: { input: 3.0, output: 15.0 },
+  opus: { input: 15.0, output: 75.0 },
 };
 
 // Task types that use haiku (fast/cheap)
@@ -187,9 +187,7 @@ function estimateSavings(tasks = []) {
     });
   }
 
-  const savingsPercent = opusCost > 0
-    ? Math.round(((opusCost - routedCost) / opusCost) * 100)
-    : 0;
+  const savingsPercent = opusCost > 0 ? Math.round(((opusCost - routedCost) / opusCost) * 100) : 0;
 
   return {
     opusCost: Math.round(opusCost * 10000) / 10000,

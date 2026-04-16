@@ -6,9 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from src.agents.orchestrator import OrchestratorAgent
+from src.api.deps import get_current_user
 from src.utils import get_logger
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 logger = get_logger(__name__)
 
 

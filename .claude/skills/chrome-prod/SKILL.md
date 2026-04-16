@@ -21,6 +21,7 @@ Run a visual smoke test of `ccw-crm-web.vercel.app` after every deployment. Conf
 - Scheduled production health check
 
 **Trigger phrases:**
+
 - "check the production site"
 - "run the smoke test"
 - "verify live site after deploy"
@@ -37,11 +38,13 @@ mcp__Claude_in_Chrome__navigate: https://ccw-crm-web.vercel.app
 ```
 
 Screenshot homepage/login:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ```
 
 Check:
+
 - Page loads (no 500/404)
 - Login form is visible
 - No "Application Error" overlays
@@ -62,16 +65,19 @@ Alternatively, if user provides a demo/test account with no sensitive data, proc
 ### Step 3: Dashboard Check
 
 After login, screenshot the dashboard:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ```
 
 Verify:
+
 - Dashboard renders (not a blank page)
 - Navigation sidebar is visible
 - No error toasts or red banners
 
 Read page text for any error messages:
+
 ```
 mcp__Claude_in_Chrome__get_page_text
 ```
@@ -79,16 +85,19 @@ mcp__Claude_in_Chrome__get_page_text
 ### Step 4: DemoVideoBanner Check
 
 Find the video banner component on the dashboard:
+
 ```
 mcp__Claude_in_Chrome__find: { selector: "[data-testid='demo-video-banner'], .demo-video-banner, [class*='video-banner']" }
 ```
 
 Screenshot the banner area:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ```
 
 Verify:
+
 - Banner renders (not a blank grey box)
 - Video thumbnails or play buttons visible
 - No broken image icons
@@ -104,6 +113,7 @@ Navigate to each core module and screenshot:
 4. **Products** — `https://ccw-crm-web.vercel.app/products`
 
 For each:
+
 ```
 mcp__Claude_in_Chrome__navigate: [module-url]
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
@@ -111,6 +121,7 @@ mcp__Claude_in_Chrome__get_page_text
 ```
 
 Check:
+
 - Module title in header
 - Data table renders (even if empty)
 - No unhandled error messages
@@ -118,6 +129,7 @@ Check:
 ### Step 6: Console Error Check
 
 Read browser console for JavaScript errors:
+
 ```
 mcp__Claude_in_Chrome__read_console_messages
 ```

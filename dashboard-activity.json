@@ -1,1 +1,65 @@
-[{"type":"quote","title":"Quote QT-2026-004","description":"Smith Brothers Construction - $376848.48","timestamp":"2026-02-12T01:16:40.756611Z","status":"sent"},{"type":"order","title":"Order ORD-2026-009","description":"Smith Brothers Construction - $495560.68","timestamp":"2026-02-12T01:10:36.116978Z","status":"draft"},{"type":"order","title":"Order ORD-2026-008","description":"Smith Brothers Construction - $495560.68","timestamp":"2026-02-12T01:10:20.970517Z","status":"draft"},{"type":"order","title":"Order ORD-2026-007","description":"Smith Brothers Construction - $495560.68","timestamp":"2026-02-12T01:10:00.034596Z","status":"draft"},{"type":"quote","title":"Quote QT-2026-001","description":"Miller Group Landscaping - $2068.90","timestamp":"2026-02-12T00:25:41.820571Z","status":"sent"},{"type":"quote","title":"Quote QT-2026-002","description":"Davis Construction Corp - $338305.00","timestamp":"2026-02-12T00:25:41.820571Z","status":"accepted"},{"type":"customer","title":"New Customer","description":"Johnson & Sons Electrical","timestamp":"2026-02-12T00:25:41.803570Z","status":"active"},{"type":"customer","title":"New Customer","description":"Williams Plumbing Co","timestamp":"2026-02-12T00:25:41.803570Z","status":"active"},{"type":"customer","title":"New Customer","description":"Smith Brothers Construction","timestamp":"2026-02-12T00:25:41.803570Z","status":"active"}]
+[
+  {
+    "type": "quote",
+    "title": "Quote QT-2026-004",
+    "description": "Smith Brothers Construction - $376848.48",
+    "timestamp": "2026-02-12T01:16:40.756611Z",
+    "status": "sent"
+  },
+  {
+    "type": "order",
+    "title": "Order ORD-2026-009",
+    "description": "Smith Brothers Construction - $495560.68",
+    "timestamp": "2026-02-12T01:10:36.116978Z",
+    "status": "draft"
+  },
+  {
+    "type": "order",
+    "title": "Order ORD-2026-008",
+    "description": "Smith Brothers Construction - $495560.68",
+    "timestamp": "2026-02-12T01:10:20.970517Z",
+    "status": "draft"
+  },
+  {
+    "type": "order",
+    "title": "Order ORD-2026-007",
+    "description": "Smith Brothers Construction - $495560.68",
+    "timestamp": "2026-02-12T01:10:00.034596Z",
+    "status": "draft"
+  },
+  {
+    "type": "quote",
+    "title": "Quote QT-2026-001",
+    "description": "Miller Group Landscaping - $2068.90",
+    "timestamp": "2026-02-12T00:25:41.820571Z",
+    "status": "sent"
+  },
+  {
+    "type": "quote",
+    "title": "Quote QT-2026-002",
+    "description": "Davis Construction Corp - $338305.00",
+    "timestamp": "2026-02-12T00:25:41.820571Z",
+    "status": "accepted"
+  },
+  {
+    "type": "customer",
+    "title": "New Customer",
+    "description": "Johnson & Sons Electrical",
+    "timestamp": "2026-02-12T00:25:41.803570Z",
+    "status": "active"
+  },
+  {
+    "type": "customer",
+    "title": "New Customer",
+    "description": "Williams Plumbing Co",
+    "timestamp": "2026-02-12T00:25:41.803570Z",
+    "status": "active"
+  },
+  {
+    "type": "customer",
+    "title": "New Customer",
+    "description": "Smith Brothers Construction",
+    "timestamp": "2026-02-12T00:25:41.803570Z",
+    "status": "active"
+  }
+]

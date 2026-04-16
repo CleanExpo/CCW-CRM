@@ -3,7 +3,7 @@
  * Wraps the FastAPI backend at /api/integrations/heygen/*.
  */
 
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from '@/lib/api/client';
 
 export interface GenerateVideoRequest {
   script: string;
@@ -25,7 +25,7 @@ export interface GenerateVideoResponse {
 export interface VideoStatusResponse {
   success: boolean;
   video_id: string;
-  status: "pending" | "processing" | "waiting" | "completed" | "failed";
+  status: 'pending' | 'processing' | 'waiting' | 'completed' | 'failed';
   video_url: string | null;
   thumbnail_url: string | null;
   duration: number | null;
@@ -68,10 +68,7 @@ export const heygenApi = {
    * Submit async video generation. Returns video_id for polling.
    */
   generateVideo(request: GenerateVideoRequest): Promise<GenerateVideoResponse> {
-    return apiClient.post<GenerateVideoResponse>(
-      "/api/integrations/heygen/generate",
-      request
-    );
+    return apiClient.post<GenerateVideoResponse>('/api/integrations/heygen/generate', request);
   },
 
   /**
@@ -87,20 +84,20 @@ export const heygenApi = {
    * List available HeyGen avatars.
    */
   listAvatars(): Promise<AvatarListResponse> {
-    return apiClient.get<AvatarListResponse>("/api/integrations/heygen/avatars");
+    return apiClient.get<AvatarListResponse>('/api/integrations/heygen/avatars');
   },
 
   /**
    * List available HeyGen voices.
    */
   listVoices(): Promise<VoiceListResponse> {
-    return apiClient.get<VoiceListResponse>("/api/integrations/heygen/voices");
+    return apiClient.get<VoiceListResponse>('/api/integrations/heygen/voices');
   },
 
   /**
    * Get remaining HeyGen API quota.
    */
   getQuota(): Promise<QuotaResponse> {
-    return apiClient.get<QuotaResponse>("/api/integrations/heygen/quota");
+    return apiClient.get<QuotaResponse>('/api/integrations/heygen/quota');
   },
 };

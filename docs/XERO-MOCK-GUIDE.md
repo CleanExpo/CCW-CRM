@@ -53,6 +53,7 @@ Available fixtures: `xero_mock`, `xero_mock_rate_limit`, `xero_mock_timeout`, `x
 ## Testing Patterns
 
 ### Test Error Handling
+
 ```python
 client = create_xero_mock(mode=XeroMockMode.SERVER_ERROR)
 with pytest.raises(Exception):
@@ -60,6 +61,7 @@ with pytest.raises(Exception):
 ```
 
 ### Test Circuit Breaker
+
 ```python
 manager = get_circuit_breaker_manager()
 client = create_xero_mock(mode=XeroMockMode.TIMEOUT)
@@ -75,6 +77,7 @@ assert breaker.state == CircuitState.OPEN
 ```
 
 ### Call Tracking
+
 ```python
 client = create_xero_mock(call_tracking=True)
 await client.create_contact(name="Test")
@@ -85,6 +88,7 @@ assert client.get_call_count("create_contact") == 1
 ```
 
 ### Custom Responses
+
 ```python
 def custom_contact(**kwargs):
     return {"ContactID": "custom-id", "Name": kwargs["name"]}

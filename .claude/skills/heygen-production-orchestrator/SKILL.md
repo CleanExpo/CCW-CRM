@@ -86,6 +86,7 @@ For each module in the production run (sequential, max 3 minutes between submiss
 ### Step 3: YouTube Upload Instructions
 
 For each completed video:
+
 ```
 Upload to: https://studio.youtube.com/channel/UCxJtkvKEpNUhulVZ0suU6yw
 Title:     CCW ERP — [Module Name] Demo
@@ -98,6 +99,7 @@ Visibility: Unlisted (until review) → Public
 ### Step 4: Link Back to CCW
 
 After YouTube upload, update the CCW demo video registry:
+
 ```
 File: data/heygen/video-registry.json
 Entry: { module, videoId, youtubeId, youtubeUrl, duration, uploadedAt }
@@ -125,6 +127,7 @@ The `DemoVideoLink` component in the CCW dashboard reads this registry to displa
 ## Batch Mode
 
 Tier-based batch production:
+
 - `--tier 1` → 14 core module videos (~$1.65)
 - `--tier 2` → 6 secondary module videos (~$0.42)
 - `--tier 3` → 4 cross-cutting overviews (~$0.60)

@@ -46,9 +46,7 @@ export function getGitRoot(): string | null {
  * tests for isolation), all paths are derived from it. Otherwise, the
  * project root is detected via git or cwd.
  */
-export function resolveConfig(
-  env: Record<string, string | undefined> = process.env,
-): BrowseConfig {
+export function resolveConfig(env: Record<string, string | undefined> = process.env): BrowseConfig {
   let stateFile: string;
   let stateDir: string;
   let projectDir: string;
@@ -85,7 +83,9 @@ export function ensureStateDir(config: BrowseConfig): void {
       throw new Error(`Cannot create state directory ${config.stateDir}: permission denied`);
     }
     if (err.code === 'ENOTDIR') {
-      throw new Error(`Cannot create state directory ${config.stateDir}: a file exists at that path`);
+      throw new Error(
+        `Cannot create state directory ${config.stateDir}: a file exists at that path`
+      );
     }
     throw err;
   }
@@ -103,7 +103,10 @@ export function ensureStateDir(config: BrowseConfig): void {
       // Write warning to server log (visible even in daemon mode)
       const logPath = path.join(config.stateDir, 'browse-server.log');
       try {
-        fs.appendFileSync(logPath, `[${new Date().toISOString()}] Warning: could not update .gitignore at ${gitignorePath}: ${err.message}\n`);
+        fs.appendFileSync(
+          logPath,
+          `[${new Date().toISOString()}] Warning: could not update .gitignore at ${gitignorePath}: ${err.message}\n`
+        );
       } catch {
         // stateDir write failed too — nothing more we can do
       }

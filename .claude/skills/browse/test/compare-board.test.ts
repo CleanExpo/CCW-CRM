@@ -65,7 +65,9 @@ beforeAll(async () => {
 });
 
 afterAll(() => {
-  try { server.stop(); } catch {}
+  try {
+    server.stop();
+  } catch {}
   fs.rmSync(tmpDir, { recursive: true, force: true });
   setTimeout(() => process.exit(0), 500);
 });
@@ -74,51 +76,53 @@ afterAll(() => {
 
 describe('Comparison board DOM structure', () => {
   test('has hidden status element', async () => {
-    const status = await handleReadCommand('js', [
-      'document.getElementById("status").textContent'
-    ], bm);
+    const status = await handleReadCommand(
+      'js',
+      ['document.getElementById("status").textContent'],
+      bm
+    );
     expect(status).toBe('');
   });
 
   test('has hidden feedback-result element', async () => {
-    const result = await handleReadCommand('js', [
-      'document.getElementById("feedback-result").textContent'
-    ], bm);
+    const result = await handleReadCommand(
+      'js',
+      ['document.getElementById("feedback-result").textContent'],
+      bm
+    );
     expect(result).toBe('');
   });
 
   test('has submit button', async () => {
-    const exists = await handleReadCommand('js', [
-      '!!document.getElementById("submit-btn")'
-    ], bm);
+    const exists = await handleReadCommand('js', ['!!document.getElementById("submit-btn")'], bm);
     expect(exists).toBe('true');
   });
 
   test('has regenerate button', async () => {
-    const exists = await handleReadCommand('js', [
-      '!!document.getElementById("regen-btn")'
-    ], bm);
+    const exists = await handleReadCommand('js', ['!!document.getElementById("regen-btn")'], bm);
     expect(exists).toBe('true');
   });
 
   test('has 3 variant cards', async () => {
-    const count = await handleReadCommand('js', [
-      'document.querySelectorAll(".variant").length'
-    ], bm);
+    const count = await handleReadCommand(
+      'js',
+      ['document.querySelectorAll(".variant").length'],
+      bm
+    );
     expect(count).toBe('3');
   });
 
   test('has pick radio buttons for each variant', async () => {
-    const count = await handleReadCommand('js', [
-      'document.querySelectorAll("input[name=\\"preferred\\"]").length'
-    ], bm);
+    const count = await handleReadCommand(
+      'js',
+      ['document.querySelectorAll("input[name=\\"preferred\\"]").length'],
+      bm
+    );
     expect(count).toBe('3');
   });
 
   test('has star ratings for each variant', async () => {
-    const count = await handleReadCommand('js', [
-      'document.querySelectorAll(".stars").length'
-    ], bm);
+    const count = await handleReadCommand('js', ['document.querySelectorAll(".stars").length'], bm);
     expect(count).toBe('3');
   });
 });
@@ -131,20 +135,22 @@ describe('Submit feedback flow', () => {
     await handleWriteCommand('goto', [boardUrl], bm);
 
     // Click submit without picking anything
-    await handleReadCommand('js', [
-      'document.getElementById("submit-btn").click()'
-    ], bm);
+    await handleReadCommand('js', ['document.getElementById("submit-btn").click()'], bm);
 
     // Status should be "submitted"
-    const status = await handleReadCommand('js', [
-      'document.getElementById("status").textContent'
-    ], bm);
+    const status = await handleReadCommand(
+      'js',
+      ['document.getElementById("status").textContent'],
+      bm
+    );
     expect(status).toBe('submitted');
 
     // Read feedback JSON
-    const raw = await handleReadCommand('js', [
-      'document.getElementById("feedback-result").textContent'
-    ], bm);
+    const raw = await handleReadCommand(
+      'js',
+      ['document.getElementById("feedback-result").textContent'],
+      bm
+    );
     const feedback = JSON.parse(raw);
     expect(feedback.preferred).toBeNull();
     expect(feedback.regenerated).toBe(false);
@@ -156,45 +162,57 @@ describe('Submit feedback flow', () => {
     await handleWriteCommand('goto', [boardUrl], bm);
 
     // Pick variant B
-    await handleReadCommand('js', [
-      'document.querySelectorAll("input[name=\\"preferred\\"]")[1].click()'
-    ], bm);
+    await handleReadCommand(
+      'js',
+      ['document.querySelectorAll("input[name=\\"preferred\\"]")[1].click()'],
+      bm
+    );
 
     // Rate variant A: 4 stars (click the 4th star)
-    await handleReadCommand('js', [
-      'document.querySelectorAll(".stars")[0].querySelectorAll(".star")[3].click()'
-    ], bm);
+    await handleReadCommand(
+      'js',
+      ['document.querySelectorAll(".stars")[0].querySelectorAll(".star")[3].click()'],
+      bm
+    );
 
     // Rate variant B: 5 stars
-    await handleReadCommand('js', [
-      'document.querySelectorAll(".stars")[1].querySelectorAll(".star")[4].click()'
-    ], bm);
+    await handleReadCommand(
+      'js',
+      ['document.querySelectorAll(".stars")[1].querySelectorAll(".star")[4].click()'],
+      bm
+    );
 
     // Add comment on variant A
-    await handleReadCommand('js', [
-      'document.querySelectorAll(".feedback-input")[0].value = "Good spacing but wrong colors"'
-    ], bm);
+    await handleReadCommand(
+      'js',
+      ['document.querySelectorAll(".feedback-input")[0].value = "Good spacing but wrong colors"'],
+      bm
+    );
 
     // Add overall feedback
-    await handleReadCommand('js', [
-      'document.getElementById("overall-feedback").value = "Go with B, make the CTA bigger"'
-    ], bm);
+    await handleReadCommand(
+      'js',
+      ['document.getElementById("overall-feedback").value = "Go with B, make the CTA bigger"'],
+      bm
+    );
 
     // Submit
-    await handleReadCommand('js', [
-      'document.getElementById("submit-btn").click()'
-    ], bm);
+    await handleReadCommand('js', ['document.getElementById("submit-btn").click()'], bm);
 
     // Verify status
-    const status = await handleReadCommand('js', [
-      'document.getElementById("status").textContent'
-    ], bm);
+    const status = await handleReadCommand(
+      'js',
+      ['document.getElementById("status").textContent'],
+      bm
+    );
     expect(status).toBe('submitted');
 
     // Read and verify structured feedback
-    const raw = await handleReadCommand('js', [
-      'document.getElementById("feedback-result").textContent'
-    ], bm);
+    const raw = await handleReadCommand(
+      'js',
+      ['document.getElementById("feedback-result").textContent'],
+      bm
+    );
     const feedback = JSON.parse(raw);
 
     expect(feedback.preferred).toBe('B');
@@ -206,16 +224,20 @@ describe('Submit feedback flow', () => {
   });
 
   test('submit button is disabled after submission', async () => {
-    const disabled = await handleReadCommand('js', [
-      'document.getElementById("submit-btn").disabled'
-    ], bm);
+    const disabled = await handleReadCommand(
+      'js',
+      ['document.getElementById("submit-btn").disabled'],
+      bm
+    );
     expect(disabled).toBe('true');
   });
 
   test('success message is visible after submission', async () => {
-    const display = await handleReadCommand('js', [
-      'document.getElementById("success-msg").style.display'
-    ], bm);
+    const display = await handleReadCommand(
+      'js',
+      ['document.getElementById("success-msg").style.display'],
+      bm
+    );
     expect(display).toBe('block');
   });
 });
@@ -228,22 +250,26 @@ describe('Regenerate flow', () => {
     await handleWriteCommand('goto', [boardUrl], bm);
 
     // Click "Totally different" chiclet then regenerate
-    await handleReadCommand('js', [
-      'document.querySelector(".regen-chiclet[data-action=\\"different\\"]").click()'
-    ], bm);
-    await handleReadCommand('js', [
-      'document.getElementById("regen-btn").click()'
-    ], bm);
+    await handleReadCommand(
+      'js',
+      ['document.querySelector(".regen-chiclet[data-action=\\"different\\"]").click()'],
+      bm
+    );
+    await handleReadCommand('js', ['document.getElementById("regen-btn").click()'], bm);
 
-    const status = await handleReadCommand('js', [
-      'document.getElementById("status").textContent'
-    ], bm);
+    const status = await handleReadCommand(
+      'js',
+      ['document.getElementById("status").textContent'],
+      bm
+    );
     expect(status).toBe('regenerate');
 
     // Verify regenerate action in feedback
-    const raw = await handleReadCommand('js', [
-      'document.getElementById("feedback-result").textContent'
-    ], bm);
+    const raw = await handleReadCommand(
+      'js',
+      ['document.getElementById("feedback-result").textContent'],
+      bm
+    );
     const feedback = JSON.parse(raw);
     expect(feedback.regenerated).toBe(true);
     expect(feedback.regenerateAction).toBe('different');
@@ -254,18 +280,20 @@ describe('Regenerate flow', () => {
     await handleWriteCommand('goto', [boardUrl], bm);
 
     // Click "More like this" on variant B
-    await handleReadCommand('js', [
-      'document.querySelectorAll(".more-like-this")[1].click()'
-    ], bm);
+    await handleReadCommand('js', ['document.querySelectorAll(".more-like-this")[1].click()'], bm);
 
-    const status = await handleReadCommand('js', [
-      'document.getElementById("status").textContent'
-    ], bm);
+    const status = await handleReadCommand(
+      'js',
+      ['document.getElementById("status").textContent'],
+      bm
+    );
     expect(status).toBe('regenerate');
 
-    const raw = await handleReadCommand('js', [
-      'document.getElementById("feedback-result").textContent'
-    ], bm);
+    const raw = await handleReadCommand(
+      'js',
+      ['document.getElementById("feedback-result").textContent'],
+      bm
+    );
     const feedback = JSON.parse(raw);
     expect(feedback.regenerated).toBe(true);
     expect(feedback.regenerateAction).toBe('more_like_B');
@@ -276,18 +304,20 @@ describe('Regenerate flow', () => {
     await handleWriteCommand('goto', [boardUrl], bm);
 
     // Type custom regeneration text
-    await handleReadCommand('js', [
-      'document.getElementById("regen-custom-input").value = "V3 layout with V1 colors"'
-    ], bm);
+    await handleReadCommand(
+      'js',
+      ['document.getElementById("regen-custom-input").value = "V3 layout with V1 colors"'],
+      bm
+    );
 
     // Click regenerate (no chiclet selected = custom)
-    await handleReadCommand('js', [
-      'document.getElementById("regen-btn").click()'
-    ], bm);
+    await handleReadCommand('js', ['document.getElementById("regen-btn").click()'], bm);
 
-    const raw = await handleReadCommand('js', [
-      'document.getElementById("feedback-result").textContent'
-    ], bm);
+    const raw = await handleReadCommand(
+      'js',
+      ['document.getElementById("feedback-result").textContent'],
+      bm
+    );
     const feedback = JSON.parse(raw);
     expect(feedback.regenerated).toBe(true);
     expect(feedback.regenerateAction).toBe('V3 layout with V1 colors');
@@ -301,9 +331,11 @@ describe('Agent polling pattern (simulates what $B eval does)', () => {
     // Fresh page — simulates agent's first poll
     await handleWriteCommand('goto', [boardUrl], bm);
 
-    const status = await handleReadCommand('js', [
-      'document.getElementById("status").textContent'
-    ], bm);
+    const status = await handleReadCommand(
+      'js',
+      ['document.getElementById("status").textContent'],
+      bm
+    );
     expect(status).toBe('');
   });
 
@@ -311,29 +343,35 @@ describe('Agent polling pattern (simulates what $B eval does)', () => {
     await handleWriteCommand('goto', [boardUrl], bm);
 
     // Poll 1: empty (user hasn't acted)
-    const poll1 = await handleReadCommand('js', [
-      'document.getElementById("status").textContent'
-    ], bm);
+    const poll1 = await handleReadCommand(
+      'js',
+      ['document.getElementById("status").textContent'],
+      bm
+    );
     expect(poll1).toBe('');
 
     // User acts: pick A, submit
-    await handleReadCommand('js', [
-      'document.querySelectorAll("input[name=\\"preferred\\"]")[0].click()'
-    ], bm);
-    await handleReadCommand('js', [
-      'document.getElementById("submit-btn").click()'
-    ], bm);
+    await handleReadCommand(
+      'js',
+      ['document.querySelectorAll("input[name=\\"preferred\\"]")[0].click()'],
+      bm
+    );
+    await handleReadCommand('js', ['document.getElementById("submit-btn").click()'], bm);
 
     // Poll 2: submitted
-    const poll2 = await handleReadCommand('js', [
-      'document.getElementById("status").textContent'
-    ], bm);
+    const poll2 = await handleReadCommand(
+      'js',
+      ['document.getElementById("status").textContent'],
+      bm
+    );
     expect(poll2).toBe('submitted');
 
     // Read feedback (what the agent does after seeing "submitted")
-    const raw = await handleReadCommand('js', [
-      'document.getElementById("feedback-result").textContent'
-    ], bm);
+    const raw = await handleReadCommand(
+      'js',
+      ['document.getElementById("feedback-result").textContent'],
+      bm
+    );
     const feedback = JSON.parse(raw);
     expect(feedback.preferred).toBe('A');
     expect(typeof feedback.ratings).toBe('object');

@@ -12,12 +12,15 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') || '10';
 
     // Fetch recent executions from monitoring API
-    const executionsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/executions?limit=${limit}`, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const executionsRes = await fetch(
+      `${BACKEND_URL}/api/ai/monitoring/executions?limit=${limit}`,
+      {
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     if (!executionsRes.ok) {
       throw new Error(`Failed to fetch executions: ${executionsRes.statusText}`);

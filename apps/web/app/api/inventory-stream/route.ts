@@ -4,23 +4,38 @@ export const runtime = 'edge';
 
 export async function GET() {
   const encoder = new TextEncoder();
+  let interval: ReturnType<typeof setInterval> | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
   const stream = new ReadableStream({
     start(controller) {
       // Send initial connection event
       controller.enqueue(encoder.encode('event: connected\ndata: {"status":"connected"}\n\n'));
-      // Keep-alive every 30s (Vercel edge functions have 30s timeout for streaming)
-      const interval = setInterval(() => {
+
+      // Keep-alive ping every 15s
+      interval = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(': keep-alive\n\n'));
         } catch {
           clearInterval(interval);
         }
       }, 15000);
-      // Clean up on close
-      setTimeout(() => {
+
+      // Close after 25s (Vercel edge 30s limit)
+      timeout = setTimeout(() => {
         clearInterval(interval);
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          // Controller already closed by client disconnect — ignore
+        }
       }, 25000);
+    },
+    cancel() {
+      // Client disconnected — clean up timers so the timeout doesn't
+      // attempt to close an already-cancelled controller
+      clearInterval(interval);
+      clearTimeout(timeout);
     },
   });
 

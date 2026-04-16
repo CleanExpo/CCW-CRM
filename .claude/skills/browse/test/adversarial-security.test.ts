@@ -13,7 +13,7 @@ describe('Adversarial security', () => {
   test('sidepanel escapes entry.command in activity feed', () => {
     const source = fs.readFileSync(
       path.join(import.meta.dir, '../../extension/sidepanel.js'),
-      'utf-8',
+      'utf-8'
     );
     // entry.command must be wrapped in escapeHtml() to prevent XSS injection
     // via crafted command names in the activity feed
@@ -23,7 +23,7 @@ describe('Adversarial security', () => {
   test('freeze hook uses trailing slash in boundary check', () => {
     const source = fs.readFileSync(
       path.join(import.meta.dir, '../../freeze/bin/check-freeze.sh'),
-      'utf-8',
+      'utf-8'
     );
     // The boundary check must use "${FREEZE_DIR}/" with a trailing slash
     // to prevent prefix collision (e.g., /app matching /application)
