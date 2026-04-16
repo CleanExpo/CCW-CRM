@@ -2,6 +2,7 @@
 
 Manages Bronze/Silver/Gold/Platinum pricing tiers and their
 assignment to customers, enabling discounted pricing for trade accounts.
+Also provides volume/quantity-break pricing (UNI-1843).
 """
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -14,14 +15,111 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Customer, Product  # noqa: F401 (Customer used for FK check)
+from src.db.models import User
 from src.db.pricing_models import CustomerPricingAssignment, PricingTier
 
 router = APIRouter(prefix="/api/pricing", tags=["Pricing Tiers"])
 
+# In-memory store for volume tiers (no suitable DB model yet — UNI-1843)
+_volume_pricing_store: dict[str, list[dict]] = {}
+
+
+# ─── Volume Pricing Schemas ──────────────────────────────────────────────────
+
+
+class VolumePriceTier(BaseModel):
+    min_quantity: int
+    max_quantity: int | None = None
+    unit_price: Decimal
+
+
+class ProductVolumePricing(BaseModel):
+    product_id: UUID
+    tiers: list[VolumePriceTier]
+
+
+class VolumePriceCalculationResponse(BaseModel):
+    product_id: UUID
+    quantity: int
+    unit_price: Decimal
+    line_total: Decimal
+    tier_applied: str
+
 
 # ─── Pydantic schemas ───────────────────────────────────────────────────────
+
+
+# ─── Volume Pricing Endpoints (UNI-1843) ────────────────────────────────────
+
+
+@router.get("/volume/{product_id}", response_model=ProductVolumePricing | dict)
+async def get_volume_pricing(product_id: UUID) -> ProductVolumePricing | dict:
+    """Return volume/quantity-break tiers for a product."""
+    key = str(product_id)
+    if key not in _volume_pricing_store:
+        return {"product_id": str(product_id), "tiers": [], "note": "not yet configured"}
+    tiers = [VolumePriceTier(**t) for t in _volume_pricing_store[key]]
+    return ProductVolumePricing(product_id=product_id, tiers=tiers)
+
+
+@router.post("/volume/{product_id}")
+async def upsert_volume_pricing(
+    product_id: UUID,
+    payload: ProductVolumePricing,
+    _: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Upsert volume/quantity-break tiers for a product (auth required)."""
+    _volume_pricing_store[str(product_id)] = [t.model_dump() for t in payload.tiers]
+    return {"saved": True, "tiers": [t.model_dump() for t in payload.tiers]}
+
+
+@router.get("/calculate/volume", response_model=VolumePriceCalculationResponse)
+async def calculate_volume_price(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    product_id: UUID = Query(...),
+    quantity: int = Query(..., ge=1),
+) -> VolumePriceCalculationResponse:
+    """Calculate unit price and line total using volume tiers; falls back to list price."""
+    key = str(product_id)
+    matched_tier: VolumePriceTier | None = None
+
+    if key in _volume_pricing_store:
+        raw_tiers = sorted(_volume_pricing_store[key], key=lambda t: t["min_quantity"])
+        for raw in raw_tiers:
+            t = VolumePriceTier(**raw)
+            if quantity >= t.min_quantity and (t.max_quantity is None or quantity <= t.max_quantity):
+                matched_tier = t
+                break
+
+    if matched_tier:
+        unit_price = matched_tier.unit_price
+        tier_label = (
+            f"{matched_tier.min_quantity}+"
+            if matched_tier.max_quantity is None
+            else f"{matched_tier.min_quantity}–{matched_tier.max_quantity}"
+        )
+    else:
+        # Fall through to standard product price
+        product_result = await db.execute(
+            select(Product).where(Product.id == product_id)  # type: ignore[arg-type]
+        )
+        product = product_result.scalar_one_or_none()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        unit_price = Decimal(str(product.price))
+        tier_label = "standard"
+
+    line_total = (unit_price * quantity).quantize(Decimal("0.01"))
+    return VolumePriceCalculationResponse(
+        product_id=product_id,
+        quantity=quantity,
+        unit_price=unit_price.quantize(Decimal("0.01")),
+        line_total=line_total,
+        tier_applied=tier_label,
+    )
 
 
 class PricingTierCreate(BaseModel):

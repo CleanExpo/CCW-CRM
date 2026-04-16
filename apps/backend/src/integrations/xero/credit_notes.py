@@ -1,8 +1,6 @@
-"""Xero credit note creation.
+"""Xero credit note integration for POS refunds."""
 
-Handles pushing credit notes to Xero for refunded orders.
-UNI-1817: Shopify Refunds + Xero Credit Note Sync.
-"""
+from datetime import UTC, datetime
 
 import structlog
 
@@ -17,59 +15,53 @@ async def push_credit_note(
     amount: float | str,
     description: str,
     reference: str,
-) -> dict:
-    """Create a credit note in Xero for a refunded amount.
+) -> str:
+    """Create an ACCREC credit note in Xero and return its CreditNoteID.
 
     Args:
-        xero_client: Authenticated Xero API client
-        contact_id: Xero contact (customer) ID
-        amount: Refund amount (positive value)
-        description: Line item description for the credit note
-        reference: External reference (e.g. SHOPIFY-REFUND-<id>)
+        xero_client: Authenticated XeroClient instance.
+        contact_id: Xero ContactID to apply the credit note to.
+        amount: Refund amount (positive value).
+        description: Line-item description.
+        reference: Internal reference (e.g. refund transaction number).
 
     Returns:
-        Created credit note data from Xero
+        The CreditNoteID string from Xero.
 
     Raises:
-        XeroAPIError: If the Xero API call fails
+        XeroAPIError: If the API request fails.
+        ValueError: If Xero returns an empty response.
     """
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     payload = {
         "CreditNotes": [
             {
-                "Type": "ACCRECCREDIT",
+                "Type": "ACCREC",
                 "Contact": {"ContactID": contact_id},
+                "Date": today,
+                "DueDate": today,
+                "Status": "AUTHORISED",
                 "Reference": reference,
-                "Status": "DRAFT",
                 "LineItems": [
                     {
                         "Description": description,
-                        "Quantity": 1,
-                        "UnitAmount": float(amount),
+                        "Quantity": "1.00",
+                        "UnitAmount": str(amount),
                         "AccountCode": "200",
+                        "TaxType": "OUTPUT2",
                     }
                 ],
             }
         ]
     }
 
-    logger.info(
-        "creating_xero_credit_note",
-        contact_id=contact_id,
-        amount=amount,
-        reference=reference,
-    )
-
+    logger.info("Pushing credit note to Xero", reference=reference, amount=amount)
     result = await xero_client._make_request("POST", "/CreditNotes", data=payload)
 
     credit_notes = result.get("CreditNotes", [])
-    if credit_notes:
-        credit_note = credit_notes[0]
-        logger.info(
-            "xero_credit_note_created",
-            credit_note_id=credit_note.get("CreditNoteID"),
-            reference=reference,
-        )
-        return credit_note
+    if not credit_notes:
+        raise ValueError("No CreditNote returned from Xero")
 
-    from src.integrations.xero.client import XeroAPIError
-    raise XeroAPIError("No credit note returned from Xero")
+    credit_note_id = credit_notes[0].get("CreditNoteID")
+    logger.info("Credit note created in Xero", credit_note_id=credit_note_id)
+    return credit_note_id

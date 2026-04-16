@@ -35,6 +35,7 @@ from .routes import (
     audit_trail,  # Entity-level audit trail
     backorders,
     bank_feeds,
+    bas_report,  # BAS report generation (UNI-1816)
     billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
     boardroom,  # Boardroom AI session endpoint (4x daily CRON)
     certifications,  # IICRC/ISSA/ARCR certification tracking (Sprint 2)
@@ -52,6 +53,7 @@ from .routes import (
     demo_dashboard,
     demo_lists,
     email_audit,  # Email audit trail for GDPR compliance (ISS-037)
+    eod_reconciliation,  # EOD cash reconciliation (UNI-1849)
     equipment_lifecycle,  # Equipment serial numbers + warranty tracking (Sprint 2)
     google_ai,
     health,
@@ -80,6 +82,7 @@ from .routes import (
     translations,
     warehouse,  # Warehouse operations feed (UNI-1251)
     webhooks,
+    xero_tracking,
 )
 from .routes import (
     settings as settings_routes,  # Account and company settings
@@ -123,7 +126,7 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager."""
-    setup_logging(debug=settings.debug)
+    setup_logging(debug=settings.debug, betterstack_token=settings.betterstack_source_token)
     logger.info("Starting application", environment=settings.environment)
 
     # Validate production secrets at startup — fail fast on misconfiguration
@@ -451,6 +454,8 @@ app.include_router(activities.router, tags=["Activities"])  # CRM Activities
 app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+# BAS Report (UNI-1816)
+app.include_router(bas_report.router, tags=["BAS Report"])
 # Invoicing & Payments (UNI-173)
 app.include_router(invoices.router, tags=["Invoices"])
 app.include_router(invoice_payments.router, tags=["Invoice Payments"])
@@ -495,6 +500,7 @@ app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 app.include_router(procurement.router, tags=["Procurement"])
 # Shipment tracking router
 app.include_router(shipments.router, tags=["Shipment Tracking"])
+app.include_router(shipments.webhook_router, tags=["Shipping Webhooks"])
 # Container tracking and backorder management
 app.include_router(containers.router, tags=["Container Tracking"])
 app.include_router(backorders.router, tags=["Backorder Management"])
@@ -576,6 +582,7 @@ app.include_router(translations.router, tags=["Translation Management"])
 
 # Integration routers (✅ ALL IMPLEMENTED)
 app.include_router(xero.router, prefix="/api", tags=["Xero Integration"])
+app.include_router(xero_tracking.router, tags=["Xero Tracking"])
 app.include_router(shopify.router, tags=["Shopify Integration"])
 app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
@@ -767,6 +774,7 @@ app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
 app.include_router(reconciliation.router, tags=["Reconciliation"])
 app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashboard"])
+app.include_router(eod_reconciliation.router, tags=["POS EOD Reconciliation"])  # UNI-1849
 
 # Monitoring routers (system alerts, business metrics, performance)
 try:
