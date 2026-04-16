@@ -62,23 +62,23 @@
 
 ## Result
 
-| Check | Status | Notes |
-|---|---|---|
-| Backend health | | |
-| Frontend loads | | |
-| Login | | |
-| Dashboard | | |
-| Products CRUD | | |
-| Customers CRUD | | |
-| Orders CRUD | | |
-| Quotes CRUD | | |
-| POS | | |
-| Integrations | | |
-| Navigation | | |
-| Mobile | | |
-| CSV Export | | |
-| Cron Jobs | | |
+| Check          | Status | Notes |
+| -------------- | ------ | ----- |
+| Backend health |        |       |
+| Frontend loads |        |       |
+| Login          |        |       |
+| Dashboard      |        |       |
+| Products CRUD  |        |       |
+| Customers CRUD |        |       |
+| Orders CRUD    |        |       |
+| Quotes CRUD    |        |       |
+| POS            |        |       |
+| Integrations   |        |       |
+| Navigation     |        |       |
+| Mobile         |        |       |
+| CSV Export     |        |       |
+| Cron Jobs      |        |       |
 
 **Overall**: ✅ PASS / ❌ FAIL
 
-**Tested by**: _______________  **Date**: _______________
+**Tested by**: **\*\***\_\_\_**\*\*** **Date**: **\*\***\_\_\_**\*\***

@@ -1,11 +1,13 @@
 # Plan: POS Bank Feed Auto-Sync Enhancement
 
 ## Objective
+
 Enhance the existing bank feed reconciliation system with robust auto-sync capabilities, reducing manual data entry time and improving reconciliation accuracy.
 
 ## Current State Analysis
 
 ### ✅ What Already Exists
+
 1. **Database Models** (pos_models.py):
    - BankAccount with feed_provider integration
    - BankFeed with match_status tracking
@@ -65,12 +67,14 @@ Enhance the existing bank feed reconciliation system with robust auto-sync capab
    - Display sync progress indicator
 
 **Files to Create/Modify**:
+
 - `apps/backend/src/db/pos_models.py` - Add sync_interval_hours field
 - `apps/backend/src/scheduler/bank_feed_scheduler.py` - Dynamic intervals
 - `apps/backend/src/api/routes/bank_feeds.py` - Add webhook endpoint
 - `apps/backend/src/api/routes/bank_feeds.py` - Enhance manual sync
 
 **Success Criteria**:
+
 - ✅ Accounts can be set to sync hourly, every 4 hours, or daily
 - ✅ Webhook triggers immediate sync
 - ✅ Manual "Sync Now" works from UI
@@ -102,11 +106,13 @@ Enhance the existing bank feed reconciliation system with robust auto-sync capab
    - Store match patterns in database for future reference
 
 **Files to Create/Modify**:
+
 - `apps/backend/src/services/bank_feed_service.py` - Enhanced matching
 - `apps/backend/src/ai/agents/specialized/reconciliation_agent.py` - NEW
 - `apps/backend/src/db/pos_models.py` - Add match_suggestions field
 
 **Success Criteria**:
+
 - ✅ Fuzzy matching increases auto-match rate by 15%+
 - ✅ AI suggestions available for manual review
 - ✅ Confidence scoring improves over time with learning
@@ -133,6 +139,7 @@ Enhance the existing bank feed reconciliation system with robust auto-sync capab
    - Search and filter by date range, amount, status
 
 **Files to Create**:
+
 - `apps/backend/src/api/routes/reconciliation_dashboard.py` - NEW
 - `apps/web/app/(dashboard)/reconciliation/page.tsx` - NEW
 - `apps/web/app/(dashboard)/reconciliation/components/ReconciliationDashboard.tsx` - NEW
@@ -140,6 +147,7 @@ Enhance the existing bank feed reconciliation system with robust auto-sync capab
 - `apps/web/app/(dashboard)/reconciliation/components/SuggestionCard.tsx` - NEW
 
 **Success Criteria**:
+
 - ✅ Dashboard shows real-time reconciliation status
 - ✅ Pending matches display with AI suggestions
 - ✅ Bulk approval workflow works smoothly
@@ -173,11 +181,13 @@ Enhance the existing bank feed reconciliation system with robust auto-sync capab
    - Table: Unmatched transactions (top 10 by amount)
 
 **Files to Modify**:
+
 - `apps/backend/src/monitoring/metrics.py` - Add reconciliation metrics
 - `monitoring/grafana/dashboards/business_metrics.json` - Add panels
 - `monitoring/alertmanager/rules/reconciliation_alerts.yml` - NEW
 
 **Success Criteria**:
+
 - ✅ Metrics exposed in /metrics endpoint
 - ✅ Grafana dashboard shows reconciliation health
 - ✅ Alerts fire correctly for failure scenarios
@@ -202,10 +212,12 @@ Enhance the existing bank feed reconciliation system with robust auto-sync capab
    - Prevent duplicate transactions on retry
 
 **Files to Modify**:
+
 - `apps/backend/src/services/bank_feed_service.py` - Add retry logic
 - `apps/backend/src/scheduler/bank_feed_scheduler.py` - Handle retries
 
 **Success Criteria**:
+
 - ✅ Failed syncs automatically retry up to 3 times
 - ✅ Partial syncs don't lose data
 - ✅ No duplicate transactions created on retry
@@ -216,6 +228,7 @@ Enhance the existing bank feed reconciliation system with robust auto-sync capab
 ## Database Migrations Required
 
 ### Migration 1: Add Sync Configuration Fields
+
 ```sql
 ALTER TABLE bank_accounts
 ADD COLUMN sync_interval_hours INTEGER DEFAULT 24,
@@ -227,6 +240,7 @@ ADD COLUMN match_suggestions JSONB;
 ```
 
 ### Migration 2: Add Retry Tracking
+
 ```sql
 ALTER TABLE bank_accounts
 ADD COLUMN sync_retry_count INTEGER DEFAULT 0,
@@ -234,6 +248,7 @@ ADD COLUMN last_sync_error TEXT;
 ```
 
 **File to Create**:
+
 - `apps/backend/migrations/add_auto_sync_enhancements.py`
 
 ---
@@ -241,18 +256,21 @@ ADD COLUMN last_sync_error TEXT;
 ## Testing Strategy
 
 ### Unit Tests
+
 - Enhanced matching algorithm accuracy
 - Confidence scoring with edge cases
 - Retry logic with mocked failures
 - Webhook signature verification
 
 ### Integration Tests
+
 - Full sync workflow (Xero mock → DB → auto-match)
 - Webhook endpoint trigger → sync → reconcile
 - Bulk approval workflow
 - Dashboard API responses
 
 ### E2E Tests
+
 - User triggers manual sync from UI
 - User approves suggested matches
 - User views reconciliation dashboard
@@ -262,12 +280,14 @@ ADD COLUMN last_sync_error TEXT;
 ## Success Metrics
 
 ### Before Enhancement
+
 - Auto-match rate: ~65-70% (estimated from current algorithm)
 - Manual intervention: 30-35% of transactions
 - Sync frequency: Daily (once per day)
 - Average time to reconciliation: 24-48 hours
 
 ### After Enhancement (Target)
+
 - Auto-match rate: **85%+** (15% improvement)
 - Manual intervention: **<20%** (10-15% reduction)
 - Sync frequency: **Configurable** (hourly to daily)
@@ -278,16 +298,19 @@ ADD COLUMN last_sync_error TEXT;
 ## Risks & Mitigation
 
 ### Risk 1: Increased API Costs
+
 - **Impact**: More frequent syncs = more API calls to Xero/Yodlee
 - **Mitigation**: Make hourly sync opt-in, default to 4-hour intervals
 - **Fallback**: Rate limit syncs to prevent excessive calls
 
 ### Risk 2: False Positive Auto-Matches
+
 - **Impact**: Incorrect matches cause accounting errors
 - **Mitigation**: Keep 80% confidence threshold, require manual approval for 60-80%
 - **Monitoring**: Track manual override rate
 
 ### Risk 3: Webhook Security
+
 - **Impact**: Unauthorized webhook triggers could pollute data
 - **Mitigation**: HMAC signature verification, rate limiting
 - **Testing**: Penetration test webhook endpoint
@@ -296,14 +319,14 @@ ADD COLUMN last_sync_error TEXT;
 
 ## Timeline Estimate
 
-| Phase | Effort | Dependencies |
-|-------|--------|--------------|
-| Phase 1: Enhanced Scheduler | 4 hours | None |
-| Phase 2: Improved Matching | 3 hours | Phase 1 (optional) |
-| Phase 3: Dashboard | 3 hours | Phase 2 (for suggestions) |
-| Phase 4: Monitoring | 1.5 hours | Phase 1-3 |
-| Phase 5: Error Recovery | 1 hour | Phase 1 |
-| **Total** | **12.5 hours** | |
+| Phase                       | Effort         | Dependencies              |
+| --------------------------- | -------------- | ------------------------- |
+| Phase 1: Enhanced Scheduler | 4 hours        | None                      |
+| Phase 2: Improved Matching  | 3 hours        | Phase 1 (optional)        |
+| Phase 3: Dashboard          | 3 hours        | Phase 2 (for suggestions) |
+| Phase 4: Monitoring         | 1.5 hours      | Phase 1-3                 |
+| Phase 5: Error Recovery     | 1 hour         | Phase 1                   |
+| **Total**                   | **12.5 hours** |                           |
 
 **Recommended Approach**: Implement Phases 1-2 first (7 hours), validate auto-match improvement, then proceed with dashboard and monitoring.
 
@@ -312,6 +335,7 @@ ADD COLUMN last_sync_error TEXT;
 ## Breaking Changes
 
 **None** - All enhancements are backward compatible:
+
 - New fields have defaults
 - Existing sync schedule (9 AM daily) remains unless changed
 - Existing API endpoints unchanged

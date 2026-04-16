@@ -123,7 +123,12 @@ In the description field, append YouTube chapter markers from `videoBrief.youtub
 ### Step 7: Update video-registry.json
 
 After upload, report the YouTube video ID and URL. User should update:
+<<<<<<< HEAD
 `data/videos/video-registry.json` with:
+=======
+`data/heygen/video-registry.json` with:
+
+> > > > > > > origin/ai-updates
 
 - `youtube_url`: the new video URL
 - `upload_status`: "uploaded"

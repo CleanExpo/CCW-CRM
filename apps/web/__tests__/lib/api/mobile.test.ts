@@ -87,7 +87,7 @@ describe('getGuestOrder', () => {
     const result = await getGuestOrder('tok-xyz');
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/guest/order/tok-xyz'),
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(result).toEqual(mockOrder);
   });
@@ -113,7 +113,7 @@ describe('approveGuestOrder', () => {
     await approveGuestOrder('tok-xyz');
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/guest/order/tok-xyz/approve'),
-      expect.objectContaining({ method: 'POST' }),
+      expect.objectContaining({ method: 'POST' })
     );
   });
 });
@@ -137,7 +137,7 @@ describe('uploadProductPhoto', () => {
     const result = await uploadProductPhoto(mockFile);
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/mobile/photo-upload'),
-      expect.objectContaining({ method: 'POST' }),
+      expect.objectContaining({ method: 'POST' })
     );
     expect(result).toEqual(mockResponse);
   });

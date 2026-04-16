@@ -39,35 +39,6 @@ def verify_webhook_signature(
     return hmac.compare_digest(signature, expected_signature)
 
 
-async def _forward_webhook(event_data: dict, forward_url: str) -> bool:
-    """Forward webhook payload to a configured URL.
-
-    Returns True if forwarding succeeded, False otherwise.
-    """
-    if not forward_url:
-        return False
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(forward_url, json=event_data)
-            response.raise_for_status()
-            logger.info(
-                "webhook_forwarded",
-                url=forward_url,
-                status_code=response.status_code,
-                event_type=event_data.get("event_type"),
-            )
-            return True
-    except httpx.HTTPError as exc:
-        logger.warning(
-            "webhook_forward_failed",
-            url=forward_url,
-            error=str(exc),
-            event_type=event_data.get("event_type"),
-        )
-        return False
-
-
 @router.post("/contact-form")
 async def handle_contact_form_webhook(
     request: Request,
@@ -108,17 +79,26 @@ async def handle_contact_form_webhook(
     # Parse event data
     event_data = await request.json()
 
-    logger.info("webhook_received", event_type="contact.submitted", event_id=event_data.get("event_id"))
+    logger.info(
+        "contact_form_webhook_received",
+        event_type=event_data.get("event_type"),
+        event_id=event_data.get("event_id"),
+    )
 
     # Forward to configured webhook URL if set
-    forward_url = getattr(settings, "webhook_forward_url", "")
-    forwarded = await _forward_webhook(event_data, forward_url)
+    if settings.webhook_contact_form_url:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(settings.webhook_contact_form_url, json=event_data)
+                logger.info(
+                    "contact_form_webhook_forwarded",
+                    forward_url=settings.webhook_contact_form_url,
+                    status_code=resp.status_code,
+                )
+        except Exception as exc:
+            logger.error("contact_form_webhook_forward_failed", error=str(exc))
 
-    return {
-        "status": "received",
-        "event_id": event_data.get("event_id"),
-        "forwarded": forwarded,
-    }
+    return {"status": "received", "event_id": event_data.get("event_id")}
 
 
 @router.post("/demo-request")
@@ -159,17 +139,27 @@ async def handle_demo_request_webhook(
     # Parse event data
     event_data = await request.json()
 
-    logger.info("webhook_received", event_type="demo.requested", event_id=event_data.get("event_id"))
+    logger.info(
+        "demo_request_webhook_received",
+        event_type=event_data.get("event_type"),
+        event_id=event_data.get("event_id"),
+        company=event_data.get("data", {}).get("company_name"),
+    )
 
     # Forward to configured webhook URL if set
-    forward_url = getattr(settings, "webhook_forward_url", "")
-    forwarded = await _forward_webhook(event_data, forward_url)
+    if settings.webhook_demo_request_url:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(settings.webhook_demo_request_url, json=event_data)
+                logger.info(
+                    "demo_request_webhook_forwarded",
+                    forward_url=settings.webhook_demo_request_url,
+                    status_code=resp.status_code,
+                )
+        except Exception as exc:
+            logger.error("demo_request_webhook_forward_failed", error=str(exc))
 
-    return {
-        "status": "received",
-        "event_id": event_data.get("event_id"),
-        "forwarded": forwarded,
-    }
+    return {"status": "received", "event_id": event_data.get("event_id")}
 
 
 @router.get("/test")

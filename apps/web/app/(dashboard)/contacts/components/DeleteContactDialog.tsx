@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,10 +10,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+} from '@/components/ui/alert-dialog';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface Contact {
   id: string;
@@ -44,10 +44,10 @@ export function DeleteContactDialog({
       await apiClient.delete(`/api/contacts/${contact.id}`);
       onSuccess();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to delete contact";
+      const message = error instanceof Error ? error.message : 'Failed to delete contact';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -61,13 +61,13 @@ export function DeleteContactDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Contact</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete{" "}
+            Are you sure you want to delete{' '}
             <span className="font-semibold">
               {contact.first_name} {contact.last_name}
             </span>
             {contact.email && (
               <>
-                {" "}
+                {' '}
                 (<span className="font-mono text-sm">{contact.email}</span>)
               </>
             )}

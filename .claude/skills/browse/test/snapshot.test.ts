@@ -27,7 +27,9 @@ beforeAll(async () => {
 });
 
 afterAll(() => {
-  try { testServer.server.stop(); } catch {}
+  try {
+    testServer.server.stop();
+  } catch {}
   setTimeout(() => process.exit(0), 500);
 });
 
@@ -107,7 +109,9 @@ describe('Ref resolution', () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     const snap = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
     // Find a button ref
-    const buttonLine = snap.split('\n').find(l => l.includes('[button]') && l.includes('"Submit"'));
+    const buttonLine = snap
+      .split('\n')
+      .find((l) => l.includes('[button]') && l.includes('"Submit"'));
     expect(buttonLine).toBeDefined();
     const refMatch = buttonLine!.match(/@(e\d+)/);
     expect(refMatch).toBeDefined();
@@ -120,7 +124,9 @@ describe('Ref resolution', () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     const snap = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
     // Find a textbox ref (Username)
-    const textboxLine = snap.split('\n').find(l => l.includes('[textbox]') && l.includes('"Username"'));
+    const textboxLine = snap
+      .split('\n')
+      .find((l) => l.includes('[textbox]') && l.includes('"Username"'));
     expect(textboxLine).toBeDefined();
     const refMatch = textboxLine!.match(/@(e\d+)/);
     expect(refMatch).toBeDefined();
@@ -132,7 +138,7 @@ describe('Ref resolution', () => {
   test('hover @ref works after snapshot', async () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     const snap = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
-    const linkLine = snap.split('\n').find(l => l.includes('[link]'));
+    const linkLine = snap.split('\n').find((l) => l.includes('[link]'));
     expect(linkLine).toBeDefined();
     const refMatch = linkLine!.match(/@(e\d+)/);
     const ref = `@${refMatch![1]}`;
@@ -144,7 +150,9 @@ describe('Ref resolution', () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     const snap = await handleMetaCommand('snapshot', [], bm, shutdown);
     // Find a heading ref
-    const headingLine = snap.split('\n').find(l => l.includes('[heading]') && l.includes('"Snapshot Test"'));
+    const headingLine = snap
+      .split('\n')
+      .find((l) => l.includes('[heading]') && l.includes('"Snapshot Test"'));
     expect(headingLine).toBeDefined();
     const refMatch = headingLine!.match(/@(e\d+)/);
     const ref = `@${refMatch![1]}`;
@@ -155,7 +163,9 @@ describe('Ref resolution', () => {
   test('css @ref returns computed CSS', async () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     const snap = await handleMetaCommand('snapshot', [], bm, shutdown);
-    const headingLine = snap.split('\n').find(l => l.includes('[heading]') && l.includes('"Snapshot Test"'));
+    const headingLine = snap
+      .split('\n')
+      .find((l) => l.includes('[heading]') && l.includes('"Snapshot Test"'));
     const refMatch = headingLine!.match(/@(e\d+)/);
     const ref = `@${refMatch![1]}`;
     const result = await handleReadCommand('css', [ref, 'font-family'], bm);
@@ -165,7 +175,9 @@ describe('Ref resolution', () => {
   test('attrs @ref returns element attributes', async () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     const snap = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
-    const textboxLine = snap.split('\n').find(l => l.includes('[textbox]') && l.includes('"Username"'));
+    const textboxLine = snap
+      .split('\n')
+      .find((l) => l.includes('[textbox]') && l.includes('"Username"'));
     const refMatch = textboxLine!.match(/@(e\d+)/);
     const ref = `@${refMatch![1]}`;
     const result = await handleReadCommand('attrs', [ref], bm);
@@ -201,7 +213,6 @@ describe('Ref invalidation', () => {
   });
 });
 
-
 // ─── Ref Staleness Detection ────────────────────────────────────
 
 describe('Ref staleness detection', () => {
@@ -216,15 +227,17 @@ describe('Ref staleness detection', () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     const snap = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
     // Find a button ref
-    const buttonLine = snap.split('\n').find(l => l.includes('[button]') && l.includes('"Submit"'));
+    const buttonLine = snap
+      .split('\n')
+      .find((l) => l.includes('[button]') && l.includes('"Submit"'));
     expect(buttonLine).toBeDefined();
     const refMatch = buttonLine!.match(/@(e\d+)/);
     expect(refMatch).toBeDefined();
     const ref = `@${refMatch![1]}`;
-    
+
     // Remove the button from DOM (simulates SPA re-render)
     await handleReadCommand('js', ['document.querySelector("button[type=submit]").remove()'], bm);
-    
+
     // Try to click — should get descriptive staleness error
     try {
       await handleWriteCommand('click', [ref], bm);
@@ -240,7 +253,7 @@ describe('Ref staleness detection', () => {
   test('valid ref still resolves normally after staleness check', async () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     const snap = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
-    const linkLine = snap.split('\n').find(l => l.includes('[link]'));
+    const linkLine = snap.split('\n').find((l) => l.includes('[link]'));
     expect(linkLine).toBeDefined();
     const refMatch = linkLine!.match(/@(e\d+)/);
     const ref = `@${refMatch![1]}`;
@@ -267,7 +280,11 @@ describe('Snapshot diff', () => {
     // Take first snapshot
     await handleMetaCommand('snapshot', [], bm, shutdown);
     // Modify DOM
-    await handleReadCommand('js', ['document.querySelector("h1").textContent = "Changed Title"'], bm);
+    await handleReadCommand(
+      'js',
+      ['document.querySelector("h1").textContent = "Changed Title"'],
+      bm
+    );
     // Take diff
     const diff = await handleMetaCommand('snapshot', ['-D'], bm, shutdown);
     expect(diff).toContain('---');
@@ -281,9 +298,9 @@ describe('Snapshot diff', () => {
     await handleMetaCommand('snapshot', [], bm, shutdown);
     const diff = await handleMetaCommand('snapshot', ['-D'], bm, shutdown);
     // All lines should be unchanged (prefixed with space)
-    const lines = diff.split('\n').filter(l => l.startsWith('+') || l.startsWith('-'));
+    const lines = diff.split('\n').filter((l) => l.startsWith('+') || l.startsWith('-'));
     // Header lines start with --- and +++ so filter those
-    const contentChanges = lines.filter(l => !l.startsWith('---') && !l.startsWith('+++'));
+    const contentChanges = lines.filter((l) => !l.startsWith('---') && !l.startsWith('+++'));
     expect(contentChanges.length).toBe(0);
   });
 });
@@ -315,7 +332,12 @@ describe('Annotated screenshots', () => {
   test('snapshot -a -i only annotates interactive', async () => {
     const screenshotPath = '/tmp/browse-test-annotated-i.png';
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
-    const result = await handleMetaCommand('snapshot', ['-i', '-a', '-o', screenshotPath], bm, shutdown);
+    const result = await handleMetaCommand(
+      'snapshot',
+      ['-i', '-a', '-o', screenshotPath],
+      bm,
+      shutdown
+    );
     expect(result).toContain('[button]');
     expect(result).toContain('[link]');
     expect(result).toContain('annotated screenshot');
@@ -326,10 +348,16 @@ describe('Annotated screenshots', () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
     await handleMetaCommand('snapshot', ['-a'], bm, shutdown);
     // Check that overlays are removed
-    const overlays = await handleReadCommand('js', ['document.querySelectorAll(".__browse_annotation__").length'], bm);
+    const overlays = await handleReadCommand(
+      'js',
+      ['document.querySelectorAll(".__browse_annotation__").length'],
+      bm
+    );
     expect(overlays).toBe('0');
     // Clean up default file
-    try { fs.unlinkSync('/tmp/browse-annotated.png'); } catch {}
+    try {
+      fs.unlinkSync('/tmp/browse-annotated.png');
+    } catch {}
   });
 });
 
@@ -360,7 +388,7 @@ describe('Cursor-interactive', () => {
     await handleWriteCommand('goto', [baseUrl + '/cursor-interactive.html'], bm);
     const snap = await handleMetaCommand('snapshot', ['-C'], bm, shutdown);
     // Find a @c ref
-    const cLine = snap.split('\n').find(l => l.includes('@c'));
+    const cLine = snap.split('\n').find((l) => l.includes('@c'));
     if (cLine) {
       const refMatch = cLine.match(/@(c\d+)/);
       if (refMatch) {

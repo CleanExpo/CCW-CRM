@@ -10,7 +10,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.api.deps import get_optional_user
+from src.api.deps import get_current_user, get_optional_user
 from src.config.database import get_async_db
 from src.db.container_models import (
     Backorder,
@@ -24,7 +24,7 @@ from src.db.models import User
 from src.events.event_bus import get_event_bus
 from src.services.alert_manager import get_alert_manager
 
-router = APIRouter(prefix="/api/containers", tags=["Container Tracking"])
+router = APIRouter(prefix="/api/containers", tags=["Container Tracking"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic Models

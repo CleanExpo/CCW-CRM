@@ -10,10 +10,10 @@ Maximum length: 400 lines. Minimum: 150 lines.
 
 ```markdown
 ---
-project: {{ PROJECT_NAME }}
-business: {{ BUSINESS_NAME }}
+project: { { PROJECT_NAME } }
+business: { { BUSINESS_NAME } }
 version: 1.0
-updated: {{ DATE }}
+updated: { { DATE } }
 author: Phill McGurk (CEO)
 ai_tooling: Superpowers 14 + gstack 29
 ---
@@ -33,13 +33,13 @@ You are enhancing {{ PROJECT_NAME }} — {{ ONE_SENTENCE_DESCRIPTION }}.
 
 ## 🚫 ABSOLUTE PROHIBITIONS
 
-| Forbidden | Why | Exception |
-|---|---|---|
-| Modifying {{ LOCKED_FILE_1 }} | {{ REASON }} | NEVER |
-| Modifying {{ LOCKED_FILE_2 }} | {{ REASON }} | NEVER |
-| Installing unlisted packages | Dependency hell | Ask first |
-| Coding without a plan | Wasted effort | NEVER |
-| Assuming user intent | Wrong direction | Always ASK |
+| Forbidden                     | Why             | Exception  |
+| ----------------------------- | --------------- | ---------- |
+| Modifying {{ LOCKED_FILE_1 }} | {{ REASON }}    | NEVER      |
+| Modifying {{ LOCKED_FILE_2 }} | {{ REASON }}    | NEVER      |
+| Installing unlisted packages  | Dependency hell | Ask first  |
+| Coding without a plan         | Wasted effort   | NEVER      |
+| Assuming user intent          | Wrong direction | Always ASK |
 
 ---
 
@@ -79,17 +79,18 @@ Do NOT upgrade major versions without explicit approval.
 ---
 
 ## 📁 KEY PATHS
-
 ```
+
 {{ REPO_ROOT }}/
-├── {{ FRONTEND_PATH }}/    # {{ FRONTEND_DESCRIPTION }}
-├── {{ BACKEND_PATH }}/     # {{ BACKEND_DESCRIPTION }}
-├── .claude/                # Framework (READ ONLY)
-│   ├── agents/             # Board member + specialist agents
-│   ├── memory/             # State files (CONSTITUTION, current-state, etc.)
-│   └── skills/             # Superpowers + gstack
-├── docs/                   # Documentation
-└── scripts/                # Utility scripts
+├── {{ FRONTEND_PATH }}/ # {{ FRONTEND_DESCRIPTION }}
+├── {{ BACKEND_PATH }}/ # {{ BACKEND_DESCRIPTION }}
+├── .claude/ # Framework (READ ONLY)
+│ ├── agents/ # Board member + specialist agents
+│ ├── memory/ # State files (CONSTITUTION, current-state, etc.)
+│ └── skills/ # Superpowers + gstack
+├── docs/ # Documentation
+└── scripts/ # Utility scripts
+
 ```
 
 ---
@@ -124,11 +125,14 @@ Do NOT upgrade major versions without explicit approval.
 
 After each task:
 ```
+
 ## ✅ Task Complete
+
 **What was done:** [list]
 **Files changed:** [list with (created/modified)]
 **Tests:** ✅ Passing | ❌ Failing: [reason]
 **Next steps:** [if any]
+
 ```
 
 ---

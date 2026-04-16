@@ -15,8 +15,14 @@ const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ccw-audit-test-'));
 process.env.CCW_SESSION_ID = 'test-session-001';
 
 // Override LOG_DIR by patching before require
-const { logGovernance, logCron, logSecurity, queryLogs, calculateBlastRadius, LOG_DIR } =
-  require('../../scripts/lib/audit-logger');
+const {
+  logGovernance,
+  logCron,
+  logSecurity,
+  queryLogs,
+  calculateBlastRadius,
+  LOG_DIR,
+} = require('../../scripts/lib/audit-logger');
 
 let passed = 0;
 let failed = 0;
@@ -130,7 +136,10 @@ test('queryLogs: filters by type', () => {
   const govLog = path.join(LOG_DIR, 'governance.jsonl');
   const results = queryLogs(govLog, { type: 'GOVERNANCE' });
   assert.ok(results.length > 0, 'should return governance entries');
-  assert.ok(results.every(r => r.type === 'GOVERNANCE'), 'all results should be GOVERNANCE type');
+  assert.ok(
+    results.every((r) => r.type === 'GOVERNANCE'),
+    'all results should be GOVERNANCE type'
+  );
 });
 
 test('queryLogs: respects limit', () => {

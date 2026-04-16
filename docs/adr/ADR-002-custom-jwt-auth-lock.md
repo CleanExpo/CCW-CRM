@@ -7,6 +7,7 @@
 ## Context
 
 CCW uses a custom JWT authentication system in:
+
 - `apps/backend/src/api/routes/demo_auth.py` — auth endpoints
 - `apps/web/middleware.ts` — JWT validation middleware
 
@@ -17,6 +18,7 @@ This system uses `JWT_SECRET_KEY` for signing and bcrypt against `public.users.h
 **Lock these files. No modifications without explicit CEO approval.**
 
 The auth system works correctly in production. Modifying auth code introduces severe risk:
+
 - Production lockout if JWT validation breaks
 - Security vulnerabilities from incorrect changes
 - Breaking changes to the frontend auth flow

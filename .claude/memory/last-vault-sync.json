@@ -1,9 +1,7 @@
 {
   "last_commit_hash": "9773bd7f3024796c7c995851aa72df5b13fc1b48",
   "timestamp": "2026-03-23T19:03:28.544591Z",
-  "entity_types": [
-    "routes"
-  ],
+  "entity_types": ["routes"],
   "incremental": false,
   "summary": {
     "synced": {

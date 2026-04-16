@@ -108,10 +108,7 @@
   },
   "rollback_plan": {
     "method": "git revert",
-    "commands": [
-      "git revert HEAD",
-      "pnpm dev"
-    ],
+    "commands": ["git revert HEAD", "pnpm dev"],
     "estimated_time": "< 1 minute",
     "risk": "very_low"
   },

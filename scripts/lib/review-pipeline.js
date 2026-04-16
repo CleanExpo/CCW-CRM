@@ -8,24 +8,27 @@
 const { execFileSync } = require('child_process');
 
 const REVIEWERS = {
-  security:      { agent: 'review-security',      model: 'opus',   mandatory: false },
-  database:      { agent: 'review-database',      model: 'sonnet', mandatory: false },
-  codeQuality:   { agent: 'review-code-quality',  model: 'sonnet', mandatory: true  },
-  testCoverage:  { agent: 'review-test-coverage', model: 'sonnet', mandatory: true  },
-  infrastructure:{ agent: 'review-infrastructure',model: 'haiku',  mandatory: false },
-  performance:   { agent: 'review-performance',   model: 'haiku',  mandatory: false },
+  security: { agent: 'review-security', model: 'opus', mandatory: false },
+  database: { agent: 'review-database', model: 'sonnet', mandatory: false },
+  codeQuality: { agent: 'review-code-quality', model: 'sonnet', mandatory: true },
+  testCoverage: { agent: 'review-test-coverage', model: 'sonnet', mandatory: true },
+  infrastructure: { agent: 'review-infrastructure', model: 'haiku', mandatory: false },
+  performance: { agent: 'review-performance', model: 'haiku', mandatory: false },
 };
 
 // File pattern → reviewer routing rules
 const ROUTING_RULES = [
-  { pattern: /\.(sql|migration)$/i,           reviewers: ['database', 'security'] },
+  { pattern: /\.(sql|migration)$/i, reviewers: ['database', 'security'] },
   { pattern: /rls|policy|auth|login|session|token|jwt/i, reviewers: ['security'] },
-  { pattern: /payment|billing|stripe|invoice/i,reviewers: ['security'] },
-  { pattern: /\.test\.|__tests__|spec\./i,    reviewers: ['testCoverage'] },
+  { pattern: /payment|billing|stripe|invoice/i, reviewers: ['security'] },
+  { pattern: /\.test\.|__tests__|spec\./i, reviewers: ['testCoverage'] },
   { pattern: /dockerfile|docker-compose|\.github|ci\.yml/i, reviewers: ['infrastructure'] },
-  { pattern: /\.env|\.secret|credential/i,   reviewers: ['security'] },
-  { pattern: /query|select|insert|update|delete|supabase/i, reviewers: ['database', 'performance'] },
-  { pattern: /\.(jsx?|tsx?)$/i,              reviewers: ['codeQuality'] },
+  { pattern: /\.env|\.secret|credential/i, reviewers: ['security'] },
+  {
+    pattern: /query|select|insert|update|delete|supabase/i,
+    reviewers: ['database', 'performance'],
+  },
+  { pattern: /\.(jsx?|tsx?)$/i, reviewers: ['codeQuality'] },
 ];
 
 /**
@@ -72,12 +75,12 @@ function routeReviewers(diffAnalysis) {
   for (const file of diffAnalysis.files) {
     for (const rule of ROUTING_RULES) {
       if (rule.pattern.test(file)) {
-        rule.reviewers.forEach(r => required.add(r));
+        rule.reviewers.forEach((r) => required.add(r));
       }
     }
   }
 
-  return Array.from(required).map(name => ({
+  return Array.from(required).map((name) => ({
     name,
     ...REVIEWERS[name],
   }));
@@ -127,7 +130,7 @@ function aggregateReports(reports = []) {
     for (const severity of ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']) {
       if (Array.isArray(report.findings && report.findings[severity])) {
         findings[severity].push(
-          ...report.findings[severity].map(f => ({ ...f, source: report.reviewer }))
+          ...report.findings[severity].map((f) => ({ ...f, source: report.reviewer }))
         );
       }
     }
@@ -136,7 +139,7 @@ function aggregateReports(reports = []) {
   // Deduplicate by file:line:description
   for (const severity of Object.keys(findings)) {
     const seen = new Set();
-    findings[severity] = findings[severity].filter(f => {
+    findings[severity] = findings[severity].filter((f) => {
       const key = `${f.file || ''}:${f.line || ''}:${f.description || ''}`;
       if (seen.has(key)) return false;
       seen.add(key);
@@ -155,7 +158,7 @@ function aggregateReports(reports = []) {
 function makeDecision(aggregated) {
   if (aggregated.findings.CRITICAL.length > 0) return 'BLOCK';
   if (aggregated.findings.HIGH.length > 0) return 'NEEDS_WORK';
-  if (aggregated.verdicts.some(v => v.verdict === 'REQUEST_CHANGES')) return 'NEEDS_WORK';
+  if (aggregated.verdicts.some((v) => v.verdict === 'REQUEST_CHANGES')) return 'NEEDS_WORK';
   return 'SHIP';
 }
 
@@ -185,7 +188,9 @@ function generateReport({ diffAnalysis, sizeCheck, assignedReviewers, aggregated
     `  LOW:      ${aggregated.findings.LOW.length}`,
     '',
     `REVIEWERS`,
-    ...aggregated.verdicts.map(v => `  ${v.reviewer}: ${v.verdict} (${Math.round((v.confidence || 0.5) * 100)}%)`),
+    ...aggregated.verdicts.map(
+      (v) => `  ${v.reviewer}: ${v.verdict} (${Math.round((v.confidence || 0.5) * 100)}%)`
+    ),
     divider,
   ];
 

@@ -95,6 +95,12 @@ Enums: `OrderStatus` (7 states), `QuoteStatus` (6 states), `ProductCategory` (8 
 | YouTube    | Video hosting             | OAuth2 via `scripts/youtube_upload.py`          |
 | ElevenLabs | Narration audio           | API key (not yet configured)                    |
 
+# <<<<<<< HEAD
+
+| HeyGen | Avatar videos | API key in Railway env |
+
+> > > > > > > origin/ai-updates
+
 ## AI Tooling
 
 | Tool          | Location                      | Count                     |

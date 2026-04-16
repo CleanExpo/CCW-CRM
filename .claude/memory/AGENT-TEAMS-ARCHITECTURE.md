@@ -12,13 +12,13 @@ Agent Teams is an experimental Claude Code feature where a **Lead agent** breaks
 
 Key difference from Superpowers subagents:
 
-| Feature | Superpowers Subagents | Agent Teams |
-|---|---|---|
-| Context window | Shared 200k tokens | 200k per teammate |
-| Execution | Sequential or simulated parallel | True parallel |
-| Coordination | Via Tool calls in same context | Lead ↔ Teammate API |
-| Use case | Linear task chains | Truly parallel, independent work |
-| Token bottleneck | Yes — shared pool depletes | No — each teammate has full budget |
+| Feature          | Superpowers Subagents            | Agent Teams                        |
+| ---------------- | -------------------------------- | ---------------------------------- |
+| Context window   | Shared 200k tokens               | 200k per teammate                  |
+| Execution        | Sequential or simulated parallel | True parallel                      |
+| Coordination     | Via Tool calls in same context   | Lead ↔ Teammate API                |
+| Use case         | Linear task chains               | Truly parallel, independent work   |
+| Token bottleneck | Yes — shared pool depletes       | No — each teammate has full budget |
 
 ---
 
@@ -40,6 +40,7 @@ Lead Agent (Orchestrator)
 ## Unite-Group Use Cases
 
 ### 1. CCW Boardroom Parallel Deliberation
+
 - **Lead**: Orchestrator agent (OPUS)
 - **Teammates**:
   - Teammate A: Architect + Product Oracle (SONNET)
@@ -49,11 +50,13 @@ Lead Agent (Orchestrator)
 - **Benefit**: Session time drops from ~45min to ~12min (4x parallel)
 
 ### 2. Multi-Repo Documentation Sync
+
 - **Lead**: Scout agent
 - **Teammates**: One per repo (CCW, CARSI, RestoreAssist, G-Pilot, Bron)
 - **Benefit**: Sync all 5 repos in the time it takes to sync 1
 
 ### 3. Parallel Security Audit
+
 - **Lead**: Security Sentinel (CSO role)
 - **Teammates**:
   - Teammate A: OWASP Top 10 pattern scanner
@@ -67,17 +70,21 @@ Lead Agent (Orchestrator)
 ## Configuration
 
 ### Enable Agent Teams
+
 ```bash
 export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 ```
 
 ### Agent Configs
+
 Each agent must have its own `.claude/agents/{name}/CLAUDE.md` defining:
+
 - Role and capabilities
 - Available tools
 - Output format expected by Lead
 
 ### Existing Agent Configs (already have structure)
+
 ```
 .claude/agents/
 ├── orchestrator/           # Lead agent
@@ -97,11 +104,13 @@ Each agent must have its own `.claude/agents/{name}/CLAUDE.md` defining:
 ## Quality Gates
 
 ### TeammateIdle Hook
+
 - Trigger: Teammate has no output for >300 seconds
 - Action: Log idle, notify Lead, optionally restart
 - File: `.claude/memory/TeammateIdle.hook.md`
 
 ### TaskCompleted Hook
+
 - Trigger: Teammate marks task done
 - Action: Validate output (type-check, schema, tests)
 - File: `.claude/memory/TaskCompleted.hook.md`
@@ -110,11 +119,11 @@ Each agent must have its own `.claude/agents/{name}/CLAUDE.md` defining:
 
 ## Implementation Phases
 
-| Phase | Target | Action |
-|---|---|---|
-| 1 (now) | Enable + test | Enable flag, test with 2 teammates (security audit split) |
-| 2 (Apr 2026) | Boardroom parallel | Split board deliberation across 4 teammates |
-| 3 (May 2026) | All 7 projects | Multi-repo doc sync, per-project audits |
+| Phase        | Target             | Action                                                    |
+| ------------ | ------------------ | --------------------------------------------------------- |
+| 1 (now)      | Enable + test      | Enable flag, test with 2 teammates (security audit split) |
+| 2 (Apr 2026) | Boardroom parallel | Split board deliberation across 4 teammates               |
+| 3 (May 2026) | All 7 projects     | Multi-repo doc sync, per-project audits                   |
 
 ---
 

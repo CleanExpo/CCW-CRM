@@ -10,6 +10,7 @@
 All migrations live in `supabase/migrations/` with timestamp-prefixed filenames.
 
 Applied migrations to date:
+
 - `20260331180001` — Fix agent_run_summaries security_invoker view
 - `20260331190001` — RLS on 9 sensitive credential tables
 - `20260331190002` — Fix mutable search_path on 10 functions
@@ -22,11 +23,13 @@ Applied migrations to date:
 ## How to Write a Migration
 
 ### 1. Create the file
+
 ```
 supabase/migrations/YYYYMMDDHHMMSS_description.sql
 ```
 
 ### 2. Use the standard header
+
 ```sql
 -- =============================================================================
 -- Migration: Description (UNI-XXXX)
@@ -36,6 +39,7 @@ supabase/migrations/YYYYMMDDHHMMSS_description.sql
 ```
 
 ### 3. Idempotency rules (MANDATORY)
+
 - Tables: `CREATE TABLE IF NOT EXISTS`
 - Indexes: `CREATE INDEX IF NOT EXISTS`
 - Columns: `ALTER TABLE x ADD COLUMN IF NOT EXISTS`
@@ -43,12 +47,15 @@ supabase/migrations/YYYYMMDDHHMMSS_description.sql
 - Never: `DROP TABLE` (use soft deletes or archive strategies)
 
 ### 4. RLS requirement
+
 Every new table with user data must have:
+
 ```sql
 ALTER TABLE public.table_name ENABLE ROW LEVEL SECURITY;
 ```
 
 ### 5. Supabase MCP limitations
+
 - No `CREATE INDEX CONCURRENTLY` (transactions don't support it)
 - No `ALTER SYSTEM` commands
 - Migrations run as postgres superuser

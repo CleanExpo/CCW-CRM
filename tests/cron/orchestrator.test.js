@@ -8,38 +8,67 @@ const path = require('path');
 // Mock heavy dependencies
 jest.mock('@anthropic-ai/sdk', () => ({
   default: jest.fn().mockImplementation(() => ({
-    messages: { create: jest.fn().mockResolvedValue({ content: [{ text: '{"status":"ok"}' }] }) }
-  }))
+    messages: { create: jest.fn().mockResolvedValue({ content: [{ text: '{"status":"ok"}' }] }) },
+  })),
 }));
 
-jest.mock('../../scripts/boardroom/browse-competitive', () => ({
-  runCompetitiveIntelligence: jest.fn().mockResolvedValue({ status: 'ok', intel: [] })
-}), { virtual: true });
+jest.mock(
+  '../../scripts/boardroom/browse-competitive',
+  () => ({
+    runCompetitiveIntelligence: jest.fn().mockResolvedValue({ status: 'ok', intel: [] }),
+  }),
+  { virtual: true }
+);
 
-jest.mock('../../scripts/boardroom/security-audit', () => ({
-  runSecurityAudit: jest.fn().mockResolvedValue({ status: 'ok', findings: [] })
-}), { virtual: true });
+jest.mock(
+  '../../scripts/boardroom/security-audit',
+  () => ({
+    runSecurityAudit: jest.fn().mockResolvedValue({ status: 'ok', findings: [] }),
+  }),
+  { virtual: true }
+);
 
-jest.mock('../../scripts/boardroom/qa-check', () => ({
-  runQACheck: jest.fn().mockResolvedValue({ status: 'ok', passed: true })
-}), { virtual: true });
+jest.mock(
+  '../../scripts/boardroom/qa-check',
+  () => ({
+    runQACheck: jest.fn().mockResolvedValue({ status: 'ok', passed: true }),
+  }),
+  { virtual: true }
+);
 
 describe('CRON Orchestrator', () => {
   describe('Phase validation', () => {
     it('defines 22 session phases', () => {
       const PHASES = [
-        'bootstrap', 'preflight', 'scout-swarm', 'competitive-intel',
-        'board-deliberation', 'security-audit', 'witness', 'debrief-json',
-        'elevenlabs', 'remotion', 'youtube', 'linear', 'qa-check', 'retro',
-        'session-state-save', 'cost-tracker', 'governance-capture', 'compliance-check',
-        'sanitise-output', 'approval-gate', 'verification-loop', 'post-cron-audit'
+        'bootstrap',
+        'preflight',
+        'scout-swarm',
+        'competitive-intel',
+        'board-deliberation',
+        'security-audit',
+        'witness',
+        'debrief-json',
+        'elevenlabs',
+        'remotion',
+        'youtube',
+        'linear',
+        'qa-check',
+        'retro',
+        'session-state-save',
+        'cost-tracker',
+        'governance-capture',
+        'compliance-check',
+        'sanitise-output',
+        'approval-gate',
+        'verification-loop',
+        'post-cron-audit',
       ];
       expect(PHASES).toHaveLength(22);
     });
 
     it('all phases have string identifiers', () => {
       const PHASES = ['bootstrap', 'preflight', 'scout-swarm', 'board-deliberation'];
-      PHASES.forEach(p => expect(typeof p).toBe('string'));
+      PHASES.forEach((p) => expect(typeof p).toBe('string'));
     });
   });
 
@@ -95,7 +124,9 @@ describe('CRON Orchestrator', () => {
     it('opens after failure threshold', async () => {
       const { CircuitBreaker } = require('../../scripts/lib/circuit-breaker');
       const breaker = new CircuitBreaker('test-service', { failureThreshold: 2 });
-      const failFn = async () => { throw new Error('API error'); };
+      const failFn = async () => {
+        throw new Error('API error');
+      };
       await expect(breaker.execute(failFn)).rejects.toThrow();
       await expect(breaker.execute(failFn)).rejects.toThrow();
       expect(breaker.state).toBe('open');
@@ -104,7 +135,11 @@ describe('CRON Orchestrator', () => {
     it('blocks calls when open', async () => {
       const { CircuitBreaker } = require('../../scripts/lib/circuit-breaker');
       const breaker = new CircuitBreaker('test-open', { failureThreshold: 1, resetTimeout: 60000 });
-      await expect(breaker.execute(async () => { throw new Error('fail'); })).rejects.toThrow();
+      await expect(
+        breaker.execute(async () => {
+          throw new Error('fail');
+        })
+      ).rejects.toThrow();
       await expect(breaker.execute(async () => 'ok')).rejects.toThrow(/OPEN/);
     });
   });

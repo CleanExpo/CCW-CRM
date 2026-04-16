@@ -11,17 +11,17 @@
 
 All files that MUST exist across the Unite-Group stack:
 
-| # | Project | Path | Business | Owner | Status | Last Updated |
-|---|---|---|---|---|---|---|
-| 1 | CCW-ERP-CRM root | `CLAUDE.md` | CCW | Phill McGurk | ✅ v4.1 | 2026-03-31 |
-| 2 | CCW .claude | `.claude/CLAUDE.md` | CCW | Phill McGurk | ✅ v4.1 | 2026-03-31 |
-| 3 | CCW Boardroom | `scripts/claude_md_template.md` | CCW | Boardroom | ✅ v3.0 | 2026-03-29 |
-| 4 | CARSI root | `CLAUDE.md` | CARSI | G-Pilot | ⚠️ NEEDS AUDIT | 2026-02-xx |
-| 5 | RestoreAssist root | `CLAUDE.md` | RestoreAssist | RA team | ⚠️ NEEDS AUDIT | 2026-xx-xx |
-| 6 | G-Pilot Hub root | `CLAUDE.md` | G-Pilot | G-Pilot | ⚠️ NEEDS AUDIT | 2026-xx-xx |
-| 7 | Bron Clone | `CLAUDE.md` | Bron | Unite-Group | ❌ MISSING | — |
-| 8 | Unite-Group global | `~/.claude/CLAUDE.md` | All | Phill McGurk | ✅ active | 2026-03-xx |
-| 9 | NodeJS Starter V1 | `CLAUDE.md` | Template | G-Pilot | 🔴 CANCELLED | — |
+| #   | Project            | Path                            | Business      | Owner        | Status         | Last Updated |
+| --- | ------------------ | ------------------------------- | ------------- | ------------ | -------------- | ------------ |
+| 1   | CCW-ERP-CRM root   | `CLAUDE.md`                     | CCW           | Phill McGurk | ✅ v4.1        | 2026-03-31   |
+| 2   | CCW .claude        | `.claude/CLAUDE.md`             | CCW           | Phill McGurk | ✅ v4.1        | 2026-03-31   |
+| 3   | CCW Boardroom      | `scripts/claude_md_template.md` | CCW           | Boardroom    | ✅ v3.0        | 2026-03-29   |
+| 4   | CARSI root         | `CLAUDE.md`                     | CARSI         | G-Pilot      | ⚠️ NEEDS AUDIT | 2026-02-xx   |
+| 5   | RestoreAssist root | `CLAUDE.md`                     | RestoreAssist | RA team      | ⚠️ NEEDS AUDIT | 2026-xx-xx   |
+| 6   | G-Pilot Hub root   | `CLAUDE.md`                     | G-Pilot       | G-Pilot      | ⚠️ NEEDS AUDIT | 2026-xx-xx   |
+| 7   | Bron Clone         | `CLAUDE.md`                     | Bron          | Unite-Group  | ❌ MISSING     | —            |
+| 8   | Unite-Group global | `~/.claude/CLAUDE.md`           | All           | Phill McGurk | ✅ active      | 2026-03-xx   |
+| 9   | NodeJS Starter V1  | `CLAUDE.md`                     | Template      | G-Pilot      | 🔴 CANCELLED   | —            |
 
 ---
 
@@ -29,17 +29,17 @@ All files that MUST exist across the Unite-Group stack:
 
 Every CLAUDE.md MUST contain these sections (or the audit fails):
 
-| Section | Required | Max length |
-|---|---|---|
-| Prime Directive | ✅ | 50 words |
-| Absolute Prohibitions table | ✅ | 10 rows max |
-| Mandatory Session Sequence | ✅ | 18 steps (standard) |
-| Tech Stack | ✅ | Stack table only |
-| Key Paths / Structure | ✅ | File tree |
-| Board Member → Skill Bindings | ✅ | Standard table |
-| Command Reference | ✅ | 6 commands |
-| Progress Report Format | ✅ | Template block |
-| Immutable Rules | ✅ | 6-8 rules |
+| Section                       | Required | Max length          |
+| ----------------------------- | -------- | ------------------- |
+| Prime Directive               | ✅       | 50 words            |
+| Absolute Prohibitions table   | ✅       | 10 rows max         |
+| Mandatory Session Sequence    | ✅       | 18 steps (standard) |
+| Tech Stack                    | ✅       | Stack table only    |
+| Key Paths / Structure         | ✅       | File tree           |
+| Board Member → Skill Bindings | ✅       | Standard table      |
+| Command Reference             | ✅       | 6 commands          |
+| Progress Report Format        | ✅       | Template block      |
+| Immutable Rules               | ✅       | 6-8 rules           |
 
 ---
 
@@ -59,11 +59,11 @@ CLAUDE.md files MUST NOT contain:
 
 ## Length Limits
 
-| Limit | Value |
-|---|---|
-| Maximum lines | 500 |
-| Minimum lines | 100 |
-| Ideal target | 200–350 lines |
+| Limit         | Value         |
+| ------------- | ------------- |
+| Maximum lines | 500           |
+| Minimum lines | 100           |
+| Ideal target  | 200–350 lines |
 
 Files exceeding 500 lines are split into `CLAUDE.md` (main) + `.claude/CLAUDE-EXTENDED.md`
 
@@ -103,9 +103,9 @@ When a CLAUDE.md fails audit:
 
 ## Fortnightly Schedule
 
-| Date | Session | Action |
-|---|---|---|
-| Mon 2026-04-13 | Next audit | Full inventory scan |
-| Mon 2026-04-27 | Audit 2 | Verify fixes from Audit 1 |
-| Mon 2026-05-11 | Audit 3 | + new projects since last audit |
-| Monthly | Architecture review | Architect updates master template if needed |
+| Date           | Session             | Action                                      |
+| -------------- | ------------------- | ------------------------------------------- |
+| Mon 2026-04-13 | Next audit          | Full inventory scan                         |
+| Mon 2026-04-27 | Audit 2             | Verify fixes from Audit 1                   |
+| Mon 2026-05-11 | Audit 3             | + new projects since last audit             |
+| Monthly        | Architecture review | Architect updates master template if needed |

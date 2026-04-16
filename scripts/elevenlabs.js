@@ -107,7 +107,9 @@ export async function generateCEONarration(script, sessionId) {
 
     const buffers = [];
     for (let i = 0; i < chunks.length; i++) {
-      console.log(`[ElevenLabs] Rendering chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+      console.log(
+        `[ElevenLabs] Rendering chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
+      );
       const audioBuffer = await callElevenLabsAPI(chunks[i], voiceId, apiKey);
       buffers.push(Buffer.from(audioBuffer));
     }

@@ -1,29 +1,29 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSearchState } from "@/lib/hooks/use-search-state";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSearchState } from '@/lib/hooks/use-search-state';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Package, Clock, AlertTriangle, Box, Search } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import type { StockReservation } from "@/lib/types/inventory";
-import { apiClient } from "@/lib/api/client";
-import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
-import { PaginationControls } from "@/components/ui/pagination-controls";
-import { StockReservationDialog } from "@/components/inventory/StockReservationDialog";
-import { ReleaseReservationDialog } from "@/components/inventory/ReleaseReservationDialog";
-import { format, formatDistanceToNow, isPast, differenceInHours } from "date-fns";
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Package, Clock, AlertTriangle, Box, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import type { StockReservation } from '@/lib/types/inventory';
+import { apiClient } from '@/lib/api/client';
+import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
+import { PaginationControls } from '@/components/ui/pagination-controls';
+import { StockReservationDialog } from '@/components/inventory/StockReservationDialog';
+import { ReleaseReservationDialog } from '@/components/inventory/ReleaseReservationDialog';
+import { format, formatDistanceToNow, isPast, differenceInHours } from 'date-fns';
 
 interface PaginatedReservationsResponse {
   items: StockReservation[];
@@ -49,35 +49,35 @@ export default function ReservationsPage() {
 
   // Search state persistence
   const { state: searchState, updateField } = useSearchState({
-    key: "inventory-reservations-list",
+    key: 'inventory-reservations-list',
     defaultState: {
       page: 1,
       pageSize: 50,
-      search: "",
-      status: "all",
-      location: "all",
+      search: '',
+      status: 'all',
+      location: 'all',
     },
   });
 
   const page = searchState.page || 1;
   const pageSize = searchState.pageSize || 50;
-  const searchQuery = searchState.search || "";
-  const statusFilter = searchState.status || "all";
-  const locationFilter = searchState.location || "all";
+  const searchQuery = searchState.search || '';
+  const statusFilter = searchState.status || 'all';
+  const locationFilter = searchState.location || 'all';
 
-  const setPage = (value: number) => updateField("page", value);
-  const setPageSize = (value: number) => updateField("pageSize", value);
+  const setPage = (value: number) => updateField('page', value);
+  const setPageSize = (value: number) => updateField('pageSize', value);
   const setSearchQuery = (value: string) => {
-    updateField("search", value);
-    updateField("page", 1);
+    updateField('search', value);
+    updateField('page', 1);
   };
   const setStatusFilter = (value: string) => {
-    updateField("status", value);
-    updateField("page", 1);
+    updateField('status', value);
+    updateField('page', 1);
   };
   const setLocationFilter = (value: string) => {
-    updateField("location", value);
-    updateField("page", 1);
+    updateField('location', value);
+    updateField('page', 1);
   };
 
   // Load reservations
@@ -85,10 +85,10 @@ export default function ReservationsPage() {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
-      queryParams.append("page", page.toString());
-      queryParams.append("page_size", pageSize.toString());
-      if (statusFilter !== "all") queryParams.append("status", statusFilter);
-      if (locationFilter !== "all") queryParams.append("location", locationFilter);
+      queryParams.append('page', page.toString());
+      queryParams.append('page_size', pageSize.toString());
+      if (statusFilter !== 'all') queryParams.append('status', statusFilter);
+      if (locationFilter !== 'all') queryParams.append('location', locationFilter);
 
       const response = await apiClient.get<PaginatedReservationsResponse>(
         `/api/inventory/reservations?${queryParams.toString()}`
@@ -112,11 +112,11 @@ export default function ReservationsPage() {
       setTotalPages(response.total_pages);
       setLastUpdated(new Date());
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to load reservations";
-      console.error("Failed to load reservations:", error);
+      const message = error instanceof Error ? error.message : 'Failed to load reservations';
+      console.error('Failed to load reservations:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
       setReservations([]);
@@ -136,11 +136,11 @@ export default function ReservationsPage() {
 
   // Calculate summary stats
   const getSummaryStats = () => {
-    const activeCount = reservations.filter((r) => r.status === "active").length;
+    const activeCount = reservations.filter((r) => r.status === 'active').length;
 
     // Expiring soon (<6 hours)
     const expiringSoonCount = reservations.filter((r) => {
-      if (r.status !== "active" || !r.expires_at) return false;
+      if (r.status !== 'active' || !r.expires_at) return false;
       const hoursUntilExpiry = differenceInHours(new Date(r.expires_at), new Date());
       return hoursUntilExpiry >= 0 && hoursUntilExpiry < 6;
     }).length;
@@ -149,14 +149,14 @@ export default function ReservationsPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const expiredTodayCount = reservations.filter((r) => {
-      if (r.status !== "expired" || !r.expires_at) return false;
+      if (r.status !== 'expired' || !r.expires_at) return false;
       const expiredDate = new Date(r.expires_at);
       expiredDate.setHours(0, 0, 0, 0);
       return expiredDate.getTime() === today.getTime();
     }).length;
 
     const totalReserved = reservations.reduce((sum, r) => {
-      return r.status === "active" ? sum + r.quantity : sum;
+      return r.status === 'active' ? sum + r.quantity : sum;
     }, 0);
 
     return { activeCount, expiringSoonCount, expiredTodayCount, totalReserved };
@@ -172,17 +172,17 @@ export default function ReservationsPage() {
     const hoursUntil = differenceInHours(expiresAt, now);
 
     if (hoursUntil < 0) {
-      return { type: "expired" as const, color: "text-destructive", text: "Expired" };
+      return { type: 'expired' as const, color: 'text-destructive', text: 'Expired' };
     } else if (hoursUntil < 6) {
       return {
-        type: "expiring" as const,
-        color: "text-orange-600",
+        type: 'expiring' as const,
+        color: 'text-orange-600',
         text: `Expires ${formatDistanceToNow(expiresAt, { addSuffix: true })}`,
       };
     } else {
       return {
-        type: "active" as const,
-        color: "text-green-600",
+        type: 'active' as const,
+        color: 'text-green-600',
         text: `Expires ${formatDistanceToNow(expiresAt, { addSuffix: true })}`,
       };
     }
@@ -198,7 +198,7 @@ export default function ReservationsPage() {
   const handleViewOrder = (reservation: StockReservation) => {
     // TODO: Navigate to order detail page once it exists
     toast({
-      title: "View Order",
+      title: 'View Order',
       description: `Order ID: ${reservation.order_number || reservation.order_id}`,
     });
   };
@@ -210,8 +210,8 @@ export default function ReservationsPage() {
   // Table columns
   const columns = [
     {
-      key: "order",
-      label: "Order #",
+      key: 'order',
+      label: 'Order #',
       render: (reservation: StockReservation) => (
         <span className="font-mono text-sm font-semibold">
           {reservation.order_number || reservation.order_id.slice(0, 8)}
@@ -219,47 +219,49 @@ export default function ReservationsPage() {
       ),
     },
     {
-      key: "product",
-      label: "Product",
+      key: 'product',
+      label: 'Product',
       render: (reservation: StockReservation) => (
         <div>
-          <div className="font-medium">{reservation.product_name || "—"}</div>
-          <div className="text-sm text-muted-foreground font-mono">{reservation.product_sku || "—"}</div>
+          <div className="font-medium">{reservation.product_name || '—'}</div>
+          <div className="text-muted-foreground font-mono text-sm">
+            {reservation.product_sku || '—'}
+          </div>
         </div>
       ),
     },
     {
-      key: "location",
-      label: "Location",
+      key: 'location',
+      label: 'Location',
       render: (reservation: StockReservation) => (
         <span className="font-medium">{formatLocation(reservation.location)}</span>
       ),
     },
     {
-      key: "quantity",
-      label: "Quantity",
-      align: "center" as const,
+      key: 'quantity',
+      label: 'Quantity',
+      align: 'center' as const,
       render: (reservation: StockReservation) => (
         <span className="font-semibold">{reservation.quantity}</span>
       ),
     },
     {
-      key: "status",
-      label: "Status",
+      key: 'status',
+      label: 'Status',
       render: (reservation: StockReservation) => {
         const statusConfig = {
-          active: { variant: "default" as const, label: "Active" },
-          fulfilled: { variant: "default" as const, label: "Fulfilled" },
-          cancelled: { variant: "secondary" as const, label: "Cancelled" },
-          expired: { variant: "destructive" as const, label: "Expired" },
+          active: { variant: 'default' as const, label: 'Active' },
+          fulfilled: { variant: 'default' as const, label: 'Fulfilled' },
+          cancelled: { variant: 'secondary' as const, label: 'Cancelled' },
+          expired: { variant: 'destructive' as const, label: 'Expired' },
         };
         const config = statusConfig[reservation.status] || statusConfig.active;
         return <Badge variant={config.variant}>{config.label}</Badge>;
       },
     },
     {
-      key: "expires",
-      label: "Expires",
+      key: 'expires',
+      label: 'Expires',
       render: (reservation: StockReservation) => {
         const status = getExpirationStatus(reservation);
         if (!status) return <span className="text-muted-foreground">—</span>;
@@ -267,36 +269,28 @@ export default function ReservationsPage() {
       },
     },
     {
-      key: "reserved_by",
-      label: "Reserved By",
+      key: 'reserved_by',
+      label: 'Reserved By',
       render: (reservation: StockReservation) => (
         <div className="text-sm">
           <div>{reservation.reserved_by}</div>
           <div className="text-muted-foreground">
-            {format(new Date(reservation.reserved_at), "MMM d")}
+            {format(new Date(reservation.reserved_at), 'MMM d')}
           </div>
         </div>
       ),
     },
     {
-      key: "actions",
-      label: "Actions",
-      align: "right" as const,
+      key: 'actions',
+      label: 'Actions',
+      align: 'right' as const,
       render: (reservation: StockReservation) => (
         <div className="flex justify-end gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => handleViewOrder(reservation)}
-          >
+          <Button size="sm" variant="ghost" onClick={() => handleViewOrder(reservation)}>
             View Order
           </Button>
-          {reservation.status === "active" && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleRelease(reservation)}
-            >
+          {reservation.status === 'active' && (
+            <Button size="sm" variant="outline" onClick={() => handleRelease(reservation)}>
               Release
             </Button>
           )}
@@ -308,15 +302,13 @@ export default function ReservationsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Stock Reservations</h1>
-          <p className="text-muted-foreground">
-            View and manage order-linked stock holds
-          </p>
+          <p className="text-muted-foreground">View and manage order-linked stock holds</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
-          <Package className="h-4 w-4 mr-2" />
+          <Package className="mr-2 h-4 w-4" />
           New Reservation
         </Button>
       </div>
@@ -326,11 +318,11 @@ export default function ReservationsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Reservations</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeCount}</div>
-            <p className="text-xs text-muted-foreground">Currently reserved</p>
+            <p className="text-muted-foreground text-xs">Currently reserved</p>
           </CardContent>
         </Card>
 
@@ -341,29 +333,29 @@ export default function ReservationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{stats.expiringSoonCount}</div>
-            <p className="text-xs text-muted-foreground">Within 6 hours</p>
+            <p className="text-muted-foreground text-xs">Within 6 hours</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Expired Today</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <AlertTriangle className="text-destructive h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{stats.expiredTodayCount}</div>
-            <p className="text-xs text-muted-foreground">Auto-released</p>
+            <div className="text-destructive text-2xl font-bold">{stats.expiredTodayCount}</div>
+            <p className="text-muted-foreground text-xs">Auto-released</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Reserved</CardTitle>
-            <Box className="h-4 w-4 text-muted-foreground" />
+            <Box className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalReserved}</div>
-            <p className="text-xs text-muted-foreground">Units on hold</p>
+            <p className="text-muted-foreground text-xs">Units on hold</p>
           </CardContent>
         </Card>
       </div>
@@ -375,11 +367,11 @@ export default function ReservationsPage() {
           <CardDescription>Search and filter reservations by status and location</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-4 md:flex-row">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
                 <Input
                   placeholder="Search by product, order, or SKU..."
                   value={searchQuery}
@@ -422,12 +414,12 @@ export default function ReservationsPage() {
       {/* Reservations Table */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <div>
               <CardTitle>Reservation List</CardTitle>
               {lastUpdated && (
                 <CardDescription>
-                  Last updated: {format(lastUpdated, "h:mm:ss a")} • Auto-refreshing
+                  Last updated: {format(lastUpdated, 'h:mm:ss a')} • Auto-refreshing
                 </CardDescription>
               )}
             </div>
@@ -441,13 +433,13 @@ export default function ReservationsPage() {
               ))}
             </div>
           ) : reservations.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="mx-auto h-12 w-12 text-muted-foreground" />
+            <div className="py-12 text-center">
+              <Package className="text-muted-foreground mx-auto h-12 w-12" />
               <h3 className="mt-4 text-lg font-semibold">No reservations found</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {searchQuery || statusFilter !== "all" || locationFilter !== "all"
-                  ? "Try adjusting your filters to see more results"
-                  : "No stock reservations have been created yet"}
+              <p className="text-muted-foreground mt-2 text-sm">
+                {searchQuery || statusFilter !== 'all' || locationFilter !== 'all'
+                  ? 'Try adjusting your filters to see more results'
+                  : 'No stock reservations have been created yet'}
               </p>
             </div>
           ) : (

@@ -14,13 +14,13 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from src.api.deps import get_optional_user
+from src.api.deps import get_current_user, get_optional_user
 from src.db.models import User
 from src.integrations.google import generate_text_with_google, get_google_ai_client
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/api/google-ai", tags=["Google AI"])
+router = APIRouter(prefix="/api/google-ai", tags=["Google AI"], dependencies=[Depends(get_current_user)])
 
 
 # Request/Response Models

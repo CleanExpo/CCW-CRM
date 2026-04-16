@@ -21,7 +21,27 @@
       "Bash(PYTHONPATH=\"D:/CCW-ERP-CRM/apps/backend\" python:*)",
       "mcp__Desktop_Commander__read_file",
       "Bash(chmod:*)",
-      "Bash([ -d \".claude/skills/$d\" ])"
+      "Bash([ -d \".claude/skills/$d\" ])",
+      "mcp__2f101dc2-2ac2-4d93-9846-ffe27a392a3e__save_comment",
+      "mcp__2f101dc2-2ac2-4d93-9846-ffe27a392a3e__save_issue",
+      "WebSearch",
+      "Bash(claude -p \"/team-onboarding\")",
+      "Bash(claude --version)",
+      "Bash(claude -p \"run /team-onboarding\")",
+      "Bash(xargs wc:*)",
+      "Bash(gh pr:*)",
+      "mcp__8777c965-460d-4500-92f4-872faed47b19__list_projects",
+      "mcp__plugin_supabase_supabase__list_projects",
+      "mcp__plugin_supabase_supabase__list_extensions",
+      "mcp__plugin_supabase_supabase__list_tables",
+      "mcp__plugin_supabase_supabase__apply_migration",
+      "mcp__plugin_supabase_supabase__get_advisors",
+      "Bash(gh api:*)",
+      "Bash(wc -l apps/web/app/api/*/route.ts)",
+      "mcp__plugin_supabase_supabase__execute_sql",
+      "mcp__plugin_supabase_supabase__get_project_url",
+      "Skill(blog-brief)",
+      "Skill(blog-brief:*)"
     ]
   },
   "hooks": {
