@@ -9,11 +9,11 @@
 
 ### Business Owner
 
-- **Name**: ********\_\_\_********
+- **Name**: **\*\*\*\***\_\_\_**\*\*\*\***
 - **Role**: Final Approval Authority
-- **Email**: ********\_\_\_********
-- **Availability**: ********\_\_\_********
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Availability**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: \***\*\_\_\*\***
 - **Focus Areas**:
   - Overall system usability
   - Strategic business features
@@ -25,11 +25,11 @@
 
 ### Sales Manager
 
-- **Name**: ********\_\_\_********
+- **Name**: **\*\*\*\***\_\_\_**\*\*\*\***
 - **Role**: Quote and Order Workflows
-- **Email**: ********\_\_\_********
-- **Availability**: ********\_\_\_********
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Availability**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: \***\*\_\_\*\***
 - **Focus Areas**:
   - Quotes Module (all 10 test cases)
   - Orders Module (all 10 test cases)
@@ -42,11 +42,11 @@
 
 ### Warehouse Manager
 
-- **Name**: ********\_\_\_********
+- **Name**: **\*\*\*\***\_\_\_**\*\*\*\***
 - **Role**: Inventory and Order Fulfillment
-- **Email**: ********\_\_\_********
-- **Availability**: ********\_\_\_********
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Availability**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: \***\*\_\_\*\***
 - **Focus Areas**:
   - Products Module (all 8 test cases)
   - Orders Module (fulfillment workflow)
@@ -59,11 +59,11 @@
 
 ### Customer Service Lead
 
-- **Name**: ********\_\_\_********
+- **Name**: **\*\*\*\***\_\_\_**\*\*\*\***
 - **Role**: Customer Support and Portal
-- **Email**: ********\_\_\_********
-- **Availability**: ********\_\_\_********
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Availability**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: \***\*\_\_\*\***
 - **Focus Areas**:
   - Customers Module (all 7 test cases)
   - Orders Module (order tracking)
@@ -78,11 +78,11 @@
 
 ### Finance/Accounting
 
-- **Name**: ********\_\_\_********
+- **Name**: **\*\*\*\***\_\_\_**\*\*\*\***
 - **Role**: Financial Data Accuracy
-- **Email**: ********\_\_\_********
-- **Availability**: ********\_\_\_********
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Availability**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: \***\*\_\_\*\***
 - **Focus Areas**:
   - Order totals accuracy
   - Quote totals accuracy
@@ -93,11 +93,11 @@
 
 ### IT/Technical Lead
 
-- **Name**: ********\_\_\_********
+- **Name**: **\*\*\*\***\_\_\_**\*\*\*\***
 - **Role**: System Stability and Performance
-- **Email**: ********\_\_\_********
-- **Availability**: ********\_\_\_********
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Availability**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: \***\*\_\_\*\***
 - **Focus Areas**:
   - System performance observations
   - Error handling
@@ -108,11 +108,11 @@
 
 ### End Users (Representatives)
 
-- **Names**: ********\_\_\_********
+- **Names**: **\*\*\*\***\_\_\_**\*\*\*\***
 - **Roles**: Daily Operations
-- **Email**: ********\_\_\_********
-- **Availability**: ********\_\_\_********
-- **Session Scheduled**: [ ] Not Scheduled | Date/Time: ****\_\_****
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Availability**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Session Scheduled**: [ ] Not Scheduled | Date/Time: \***\*\_\_\*\***
 - **Focus Areas**:
   - Day-to-day usability
   - Workflow efficiency
@@ -181,9 +181,9 @@
 
 ### During UAT Sessions
 
-- **Session Facilitator**: ********\_\_\_********
-- **Technical Support**: ********\_\_\_********
-- **Note Taker**: ********\_\_\_********
+- **Session Facilitator**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Technical Support**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Note Taker**: **\*\*\*\***\_\_\_**\*\*\*\***
 
 ### After UAT Sessions
 
@@ -251,21 +251,21 @@
 
 ### UAT Coordination
 
-- **UAT Lead**: ********\_\_\_********
-- **Email**: ********\_\_\_********
-- **Phone**: ********\_\_\_********
+- **UAT Lead**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Phone**: **\*\*\*\***\_\_\_**\*\*\*\***
 
 ### Technical Support
 
-- **Development Lead**: ********\_\_\_********
-- **Email**: ********\_\_\_********
-- **Phone**: ********\_\_\_********
+- **Development Lead**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Phone**: **\*\*\*\***\_\_\_**\*\*\*\***
 
 ### Business Owner
 
-- **Name**: ********\_\_\_********
-- **Email**: ********\_\_\_********
-- **Phone**: ********\_\_\_********
+- **Name**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Email**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Phone**: **\*\*\*\***\_\_\_**\*\*\*\***
 
 ---
 

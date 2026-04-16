@@ -63,8 +63,8 @@ CCW-ERP-CRM/
 ### Video Pipeline (`video/remotion/`)
 
 - **Owns**: Remotion compositions for training/marketing videos
-- **Depends on**: Static assets in `public/`, ElevenLabs audio, HeyGen avatars
-- **Public API**: Rendered MP4 files uploaded to YouTube via `scripts/youtube_upload.py`
+- **Depends on**: Static assets in `public/`, ElevenLabs audio
+- **Public API**: Rendered MP4 files uploaded to YouTube
 
 ## Data Model (Core Entities)
 
@@ -94,7 +94,12 @@ Enums: `OrderStatus` (7 states), `QuoteStatus` (6 states), `ProductCategory` (8 
 | Shopify    | E-commerce orders         | API key in Railway env                          |
 | YouTube    | Video hosting             | OAuth2 via `scripts/youtube_upload.py`          |
 | ElevenLabs | Narration audio           | API key (not yet configured)                    |
-| HeyGen     | Avatar videos             | API key in Railway env                          |
+
+# <<<<<<< HEAD
+
+| HeyGen | Avatar videos | API key in Railway env |
+
+> > > > > > > origin/ai-updates
 
 ## AI Tooling
 

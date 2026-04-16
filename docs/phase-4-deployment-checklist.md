@@ -438,19 +438,19 @@ sudo systemctl restart ccw-backend
 
 ### Pre-Deployment Approval
 
-- ☐ Technical Lead: ********\_******** Date: **\_\_\_**
-- ☐ QA Lead: ********\_******** Date: **\_\_\_**
-- ☐ Product Owner: ********\_******** Date: **\_\_\_**
+- ☐ Technical Lead: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- ☐ QA Lead: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- ☐ Product Owner: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
 
 ### Post-Deployment Verification
 
-- ☐ Smoke tests passed: ********\_******** Date: **\_\_\_**
-- ☐ 24h monitoring reviewed: ********\_******** Date: **\_\_\_**
-- ☐ No critical issues: ********\_******** Date: **\_\_\_**
+- ☐ Smoke tests passed: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- ☐ 24h monitoring reviewed: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- ☐ No critical issues: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
 
 ### Final Sign-Off
 
-- ☐ Deployment SUCCESSFUL: ********\_******** Date: **\_\_\_**
+- ☐ Deployment SUCCESSFUL: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
 
 ---
 

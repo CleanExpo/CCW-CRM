@@ -216,9 +216,9 @@ These test cases specifically validate fixes for previously identified issues:
 
 ### UAT Support
 
-- **UAT Coordinator**: ********\_\_\_********
-- **Technical Support**: ********\_\_\_********
-- **Business Owner**: ********\_\_\_********
+- **UAT Coordinator**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Technical Support**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Business Owner**: **\*\*\*\***\_\_\_**\*\*\*\***
 
 ### Questions?
 

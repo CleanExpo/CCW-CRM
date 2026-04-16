@@ -11,7 +11,6 @@
 - [x] Narration scripts: FirstLook synced to scene durations, Connections updated for 2-connection flow
 - [x] Boardroom scenes (3): BuildStatusScene, CTAScene, MoonShotScene — emoji-free
 - [x] Onboarding scenes (3): GoLiveScene, ConnectionSetupScene, RequirementsScene — emoji-free with SVG icons
-- [x] Videos rendered: `firstlook.mp4` + `connections-guide.mp4` in `data/heygen/downloads/`
 
 #### YouTube Channel ID — FIXED (UNI-1747 — Done)
 
@@ -43,7 +42,6 @@
 
 - `9c7a6d5` — feat(video): redesign Remotion scenes (12 files)
 - `b3d4f20` — feat(video): complete emoji removal, fix YouTube channel ID (10 files)
-- `735573c` — chore(git): exclude heygen downloads, remotion artifacts (latest)
 - All pushed to `origin/fix/railway-cache-auth-500`
 
 #### Linear Issues

@@ -67,8 +67,8 @@ Status: Active
 4. Confirm all fields match test data
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -99,8 +99,8 @@ Status: Active
 3. Test pagination if more than one page of results
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -131,8 +131,8 @@ Status: Active
 4. Confirm SKU matches search term exactly
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -163,8 +163,8 @@ Status: Active
 3. Test filter clear functionality
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -202,8 +202,8 @@ Status: Active
 4. Confirm stock shows 150
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -236,8 +236,8 @@ Status: Active
 4. Refresh page and confirm persistence
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -269,8 +269,8 @@ Status: Active
 3. Check if product appears in inactive filter
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -307,8 +307,8 @@ Status: Active
 3. Confirm data matches product list
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -355,8 +355,8 @@ Country: USA
 4. Confirm all fields match test data
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -386,8 +386,8 @@ Country: USA
 3. Check pagination if applicable
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -418,8 +418,8 @@ Country: USA
 4. Check email in results matches search
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -455,8 +455,8 @@ Country: USA
 3. Confirm phone and email updated
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -495,8 +495,8 @@ New Postal Code: 10001
 3. Check address displays correctly in customer details
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -524,8 +524,8 @@ New Postal Code: 10001
 3. Confirm sorting is correct
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -556,8 +556,8 @@ New Postal Code: 10001
 3. Check if referential integrity maintained (orders still accessible if any)
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -598,8 +598,8 @@ New Postal Code: 10001
 4. Confirm total = 2 × unit price
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -639,8 +639,8 @@ New Postal Code: 10001
 5. Refresh page and verify total persists
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -671,8 +671,8 @@ New Postal Code: 10001
 4. Confirm order appears in filtered results
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -702,8 +702,8 @@ New Postal Code: 10001
 4. Confirm order in results
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -743,8 +743,8 @@ New Postal Code: 10001
 6. **Check browser console for no 500 errors**
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -784,8 +784,8 @@ New Postal Code: 10001
 6. **Check for no 500 errors in console**
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -821,8 +821,8 @@ New Postal Code: 10001
 5. Refresh and confirm persistence
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -854,8 +854,8 @@ New Postal Code: 10001
 5. Refresh and confirm persistence
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -885,8 +885,8 @@ New Postal Code: 10001
 3. Test clear filter functionality
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -919,8 +919,8 @@ New Postal Code: 10001
 3. Confirm totals calculated correctly
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -965,8 +965,8 @@ New Postal Code: 10001
 5. Refresh page and verify total persists
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1008,8 +1008,8 @@ New Postal Code: 10001
 6. **This confirms ISS-001 (quote total calculation) is FIXED**
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1039,8 +1039,8 @@ New Postal Code: 10001
 4. Confirm quote in results
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1069,8 +1069,8 @@ New Postal Code: 10001
 3. Confirm quote in results
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1106,8 +1106,8 @@ New Postal Code: 10001
 5. **They must match exactly**
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1144,8 +1144,8 @@ New Postal Code: 10001
 8. Go back to quote and verify status is "accepted"
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1181,8 +1181,8 @@ New Postal Code: 10001
 5. Refresh and confirm persistence
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1212,8 +1212,8 @@ New Postal Code: 10001
 4. Verify quote not in active list
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1249,8 +1249,8 @@ New Postal Code: 10001
 6. **This confirms ISS-003 and ISS-004 fixes working**
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1283,8 +1283,8 @@ New Postal Code: 10001
 5. **This confirms ISS-004 (422 validation) working correctly**
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1327,8 +1327,8 @@ New Postal Code: 10001
 5. Verify order status = "confirmed"
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1369,8 +1369,8 @@ New Postal Code: 10001
 5. Confirm final status = "delivered"
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1411,8 +1411,8 @@ New Postal Code: 10001
 5. Verify no errors during workflow
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1453,8 +1453,8 @@ New Postal Code: 10001
 5. Order confirmed successfully
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---
@@ -1498,8 +1498,8 @@ New Postal Code: 10001
 5. All stock levels persist correctly
 
 **Status**: ☐ Not Started
-**Tested By**: ********\_********
-**Date Tested**: ****\_\_****
+**Tested By**: **\*\*\*\***\_**\*\*\*\***
+**Date Tested**: \***\*\_\_\*\***
 **Notes**:
 
 ---

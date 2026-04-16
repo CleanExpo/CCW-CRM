@@ -431,9 +431,9 @@ Phase 4 has successfully transformed the CCW Online ERP system with **dramatic p
 
 ### Deployment Sign-Off
 
-- ☐ **Technical Lead**: ********\_******** Date: **\_\_\_**
-- ☐ **QA Lead**: ********\_******** Date: **\_\_\_**
-- ☐ **Product Owner**: ********\_******** Date: **\_\_\_**
+- ☐ **Technical Lead**: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- ☐ **QA Lead**: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- ☐ **Product Owner**: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
 
 ---
 
