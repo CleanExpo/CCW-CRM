@@ -2,9 +2,8 @@
 import html
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
-from uuid import UUID
-
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_serializer, field_validator, model_validator
 

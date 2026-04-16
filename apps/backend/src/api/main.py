@@ -41,6 +41,7 @@ from .routes import (
     contacts,  # CRM contacts
     containers,
     contractors,  # Contractor availability management
+    credit_notes,  # Credit notes for UNI-1810/1814
     crm_health,  # CRM client health scoring (UNI-1114)
     crm_onboarding,  # CRM onboarding sequences Day-1/7/30 (UNI-1113)
     crm_personas,  # CRM persona tagging (UNI-1112)
@@ -55,7 +56,6 @@ from .routes import (
     google_ai,
     health,
     inventory,
-    credit_notes,  # Credit notes for UNI-1810/1814
     invoice_payments,  # Invoice payments for UNI-173
     invoices,  # Invoices for UNI-173
     jobs,

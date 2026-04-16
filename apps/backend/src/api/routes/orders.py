@@ -24,8 +24,8 @@ from src.db.demo_models import OrderActivity as OrderActivityModel
 from src.db.demo_models import OrderItem as OrderItemModel
 from src.db.demo_models import Product as ProductModel
 from src.db.inventory_models import ProductStockByLocation, StockAdjustment, StockReservation
-from src.db.models.invoicing import Invoice
 from src.db.models import User
+from src.db.models.invoicing import Invoice
 from src.db.schemas import (
     Order,
     OrderActivity,
