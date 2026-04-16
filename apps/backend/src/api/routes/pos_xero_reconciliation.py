@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
 from src.config.xero_settings import XeroSettings, get_xero_settings
@@ -20,7 +21,7 @@ from src.integrations.xero.pos_reconciliation import POSXeroReconciliation
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/api/pos", tags=["POS Xero Reconciliation"])
+router = APIRouter(prefix="/api/pos", tags=["POS Xero Reconciliation"], dependencies=[Depends(get_current_user)])
 
 
 def get_xero_auth(settings: Annotated[XeroSettings, Depends(get_xero_settings)]) -> XeroAuth:

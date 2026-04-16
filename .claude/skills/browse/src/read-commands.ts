@@ -22,7 +22,8 @@ function hasAwait(code: string): boolean {
 function needsBlockWrapper(code: string): boolean {
   const trimmed = code.trim();
   if (trimmed.split('\n').length > 1) return true;
-  if (/\b(const|let|var|function|class|return|throw|if|for|while|switch|try)\b/.test(trimmed)) return true;
+  if (/\b(const|let|var|function|class|return|throw|if|for|while|switch|try)\b/.test(trimmed))
+    return true;
   if (trimmed.includes(';')) return true;
   return false;
 }
@@ -31,15 +32,17 @@ function needsBlockWrapper(code: string): boolean {
 function wrapForEvaluate(code: string): string {
   if (!hasAwait(code)) return code;
   const trimmed = code.trim();
-  return needsBlockWrapper(trimmed)
-    ? `(async()=>{\n${code}\n})()`
-    : `(async()=>(${trimmed}))()`;
+  return needsBlockWrapper(trimmed) ? `(async()=>{\n${code}\n})()` : `(async()=>(${trimmed}))()`;
 }
 
 // Security: Path validation to prevent path traversal attacks
 // Resolve safe directories through realpathSync to handle symlinks (e.g., macOS /tmp → /private/tmp)
-const SAFE_DIRECTORIES = [TEMP_DIR, process.cwd()].map(d => {
-  try { return fs.realpathSync(d); } catch { return d; }
+const SAFE_DIRECTORIES = [TEMP_DIR, process.cwd()].map((d) => {
+  try {
+    return fs.realpathSync(d);
+  } catch {
+    return d;
+  }
 });
 
 export function validateReadPath(filePath: string): void {
@@ -62,7 +65,7 @@ export function validateReadPath(filePath: string): void {
       throw new Error(`Cannot resolve real path: ${filePath} (${err.code})`);
     }
   }
-  const isSafe = SAFE_DIRECTORIES.some(dir => isPathWithin(realPath, dir));
+  const isSafe = SAFE_DIRECTORIES.some((dir) => isPathWithin(realPath, dir));
   if (!isSafe) {
     throw new Error(`Path must be within: ${SAFE_DIRECTORIES.join(', ')}`);
   }
@@ -77,11 +80,11 @@ export async function getCleanText(page: Page | Frame): Promise<string> {
     const body = document.body;
     if (!body) return '';
     const clone = body.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('script, style, noscript, svg').forEach(el => el.remove());
+    clone.querySelectorAll('script, style, noscript, svg').forEach((el) => el.remove());
     return clone.innerText
       .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
       .join('\n');
   });
 }
@@ -120,18 +123,20 @@ export async function handleReadCommand(
 
     case 'links': {
       const links = await target.evaluate(() =>
-        [...document.querySelectorAll('a[href]')].map(a => ({
-          text: a.textContent?.trim().slice(0, 120) || '',
-          href: (a as HTMLAnchorElement).href,
-        })).filter(l => l.text && l.href)
+        [...document.querySelectorAll('a[href]')]
+          .map((a) => ({
+            text: a.textContent?.trim().slice(0, 120) || '',
+            href: (a as HTMLAnchorElement).href,
+          }))
+          .filter((l) => l.text && l.href)
       );
-      return links.map(l => `${l.text} → ${l.href}`).join('\n');
+      return links.map((l) => `${l.text} → ${l.href}`).join('\n');
     }
 
     case 'forms': {
       const forms = await target.evaluate(() => {
         return [...document.querySelectorAll('form')].map((form, i) => {
-          const fields = [...form.querySelectorAll('input, select, textarea')].map(el => {
+          const fields = [...form.querySelectorAll('input, select, textarea')].map((el) => {
             const input = el as HTMLInputElement;
             return {
               tag: el.tagName.toLowerCase(),
@@ -140,10 +145,14 @@ export async function handleReadCommand(
               id: input.id || undefined,
               placeholder: input.placeholder || undefined,
               required: input.required || undefined,
-              value: input.type === 'password' ? '[redacted]' : (input.value || undefined),
-              options: el.tagName === 'SELECT'
-                ? [...(el as HTMLSelectElement).options].map(o => ({ value: o.value, text: o.text }))
-                : undefined,
+              value: input.type === 'password' ? '[redacted]' : input.value || undefined,
+              options:
+                el.tagName === 'SELECT'
+                  ? [...(el as HTMLSelectElement).options].map((o) => ({
+                      value: o.value,
+                      text: o.text,
+                    }))
+                  : undefined,
             };
           });
           return {
@@ -159,7 +168,7 @@ export async function handleReadCommand(
     }
 
     case 'accessibility': {
-      const snapshot = await target.locator("body").ariaSnapshot();
+      const snapshot = await target.locator('body').ariaSnapshot();
       return snapshot;
     }
 
@@ -235,13 +244,15 @@ export async function handleReadCommand(
         consoleBuffer.clear();
         return 'Console buffer cleared.';
       }
-      const entries = args[0] === '--errors'
-        ? consoleBuffer.toArray().filter(e => e.level === 'error' || e.level === 'warning')
-        : consoleBuffer.toArray();
-      if (entries.length === 0) return args[0] === '--errors' ? '(no console errors)' : '(no console messages)';
-      return entries.map(e =>
-        `[${new Date(e.timestamp).toISOString()}] [${e.level}] ${e.text}`
-      ).join('\n');
+      const entries =
+        args[0] === '--errors'
+          ? consoleBuffer.toArray().filter((e) => e.level === 'error' || e.level === 'warning')
+          : consoleBuffer.toArray();
+      if (entries.length === 0)
+        return args[0] === '--errors' ? '(no console errors)' : '(no console messages)';
+      return entries
+        .map((e) => `[${new Date(e.timestamp).toISOString()}] [${e.level}] ${e.text}`)
+        .join('\n');
     }
 
     case 'network': {
@@ -250,9 +261,13 @@ export async function handleReadCommand(
         return 'Network buffer cleared.';
       }
       if (networkBuffer.length === 0) return '(no network requests)';
-      return networkBuffer.toArray().map(e =>
-        `${e.method} ${e.url} → ${e.status || 'pending'} (${e.duration || '?'}ms, ${e.size || '?'}B)`
-      ).join('\n');
+      return networkBuffer
+        .toArray()
+        .map(
+          (e) =>
+            `${e.method} ${e.url} → ${e.status || 'pending'} (${e.duration || '?'}ms, ${e.size || '?'}B)`
+        )
+        .join('\n');
     }
 
     case 'dialog': {
@@ -261,15 +276,22 @@ export async function handleReadCommand(
         return 'Dialog buffer cleared.';
       }
       if (dialogBuffer.length === 0) return '(no dialogs captured)';
-      return dialogBuffer.toArray().map(e =>
-        `[${new Date(e.timestamp).toISOString()}] [${e.type}] "${e.message}" → ${e.action}${e.response ? ` "${e.response}"` : ''}`
-      ).join('\n');
+      return dialogBuffer
+        .toArray()
+        .map(
+          (e) =>
+            `[${new Date(e.timestamp).toISOString()}] [${e.type}] "${e.message}" → ${e.action}${e.response ? ` "${e.response}"` : ''}`
+        )
+        .join('\n');
     }
 
     case 'is': {
       const property = args[0];
       const selector = args[1];
-      if (!property || !selector) throw new Error('Usage: browse is <property> <selector>\nProperties: visible, hidden, enabled, disabled, checked, editable, focused');
+      if (!property || !selector)
+        throw new Error(
+          'Usage: browse is <property> <selector>\nProperties: visible, hidden, enabled, disabled, checked, editable, focused'
+        );
 
       const resolved = await bm.resolveRef(selector);
       let locator;
@@ -280,20 +302,26 @@ export async function handleReadCommand(
       }
 
       switch (property) {
-        case 'visible':  return String(await locator.isVisible());
-        case 'hidden':   return String(await locator.isHidden());
-        case 'enabled':  return String(await locator.isEnabled());
-        case 'disabled': return String(await locator.isDisabled());
-        case 'checked':  return String(await locator.isChecked());
-        case 'editable': return String(await locator.isEditable());
+        case 'visible':
+          return String(await locator.isVisible());
+        case 'hidden':
+          return String(await locator.isHidden());
+        case 'enabled':
+          return String(await locator.isEnabled());
+        case 'disabled':
+          return String(await locator.isDisabled());
+        case 'checked':
+          return String(await locator.isChecked());
+        case 'editable':
+          return String(await locator.isEditable());
         case 'focused': {
-          const isFocused = await locator.evaluate(
-            (el) => el === document.activeElement
-          );
+          const isFocused = await locator.evaluate((el) => el === document.activeElement);
           return String(isFocused);
         }
         default:
-          throw new Error(`Unknown property: ${property}. Use: visible, hidden, enabled, disabled, checked, editable, focused`);
+          throw new Error(
+            `Unknown property: ${property}. Use: visible, hidden, enabled, disabled, checked, editable, focused`
+          );
       }
     }
 
@@ -314,8 +342,10 @@ export async function handleReadCommand(
         sessionStorage: { ...sessionStorage },
       }));
       // Redact values that look like secrets (tokens, keys, passwords, JWTs)
-      const SENSITIVE_KEY = /(^|[_.-])(token|secret|key|password|credential|auth|jwt|session|csrf)($|[_.-])|api.?key/i;
-      const SENSITIVE_VALUE = /^(eyJ|sk-|sk_live_|sk_test_|pk_live_|pk_test_|rk_live_|sk-ant-|ghp_|gho_|github_pat_|xox[bpsa]-|AKIA[A-Z0-9]{16}|AIza|SG\.|Bearer\s|sbp_)/;
+      const SENSITIVE_KEY =
+        /(^|[_.-])(token|secret|key|password|credential|auth|jwt|session|csrf)($|[_.-])|api.?key/i;
+      const SENSITIVE_VALUE =
+        /^(eyJ|sk-|sk_live_|sk_test_|pk_live_|pk_test_|rk_live_|sk-ant-|ghp_|gho_|github_pat_|xox[bpsa]-|AKIA[A-Z0-9]{16}|AIza|SG\.|Bearer\s|sbp_)/;
       const redacted = JSON.parse(JSON.stringify(storage));
       for (const storeType of ['localStorage', 'sessionStorage'] as const) {
         const store = redacted[storeType];
@@ -337,7 +367,9 @@ export async function handleReadCommand(
         return {
           dns: Math.round(nav.domainLookupEnd - nav.domainLookupStart),
           tcp: Math.round(nav.connectEnd - nav.connectStart),
-          ssl: Math.round(nav.secureConnectionStart > 0 ? nav.connectEnd - nav.secureConnectionStart : 0),
+          ssl: Math.round(
+            nav.secureConnectionStart > 0 ? nav.connectEnd - nav.secureConnectionStart : 0
+          ),
           ttfb: Math.round(nav.responseStart - nav.requestStart),
           download: Math.round(nav.responseEnd - nav.responseStart),
           domParse: Math.round(nav.domInteractive - nav.responseEnd),

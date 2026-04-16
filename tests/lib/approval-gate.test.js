@@ -7,8 +7,12 @@
 
 const assert = require('assert');
 const {
-  checkApproval, approveRequest, denyRequest, listPendingRequests,
-  ALWAYS_REQUIRE, AUTO_APPROVE,
+  checkApproval,
+  approveRequest,
+  denyRequest,
+  listPendingRequests,
+  ALWAYS_REQUIRE,
+  AUTO_APPROVE,
 } = require('../../scripts/lib/approval-gate');
 
 let passed = 0;

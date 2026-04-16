@@ -26,7 +26,7 @@ description: Specialist security reviewer — checks for RLS bypass, hardcoded s
 
 ## SKILLS
 
-1. Scan diff for hardcoded credential patterns (sk_live_, AKIA, password=)
+1. Scan diff for hardcoded credential patterns (sk*live*, AKIA, password=)
 2. Verify all new tables have RLS enabled
 3. Check views use security_invoker = true
 4. Detect SQL injection via string interpolation in ORM calls

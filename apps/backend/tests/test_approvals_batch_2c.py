@@ -11,9 +11,24 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from src.api.deps import get_current_user
 from src.api.main import app
 
-client = TestClient(app)
+
+async def _mock_user():
+    """Bypass auth so tests reach Pydantic validation (422) not auth (401)."""
+    return {"id": "00000000-0000-0000-0000-000000000001", "email": "test@test.com"}
+
+
+@pytest.fixture(autouse=True)
+def _override_auth():
+    """Set auth override before each test, restore after."""
+    app.dependency_overrides[get_current_user] = _mock_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+client = TestClient(app, raise_server_exceptions=False)
 
 
 # ---------------------------------------------------------------------------

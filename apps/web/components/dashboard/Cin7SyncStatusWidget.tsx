@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import { useState, useEffect, memo } from "react";
-import { Activity, Package, Users, ShoppingCart, Boxes, RefreshCw } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { apiClient } from "@/lib/api/client";
-import { useCin7Stream, type Cin7SyncEvent } from "@/lib/hooks/use-cin7-stream";
-import { getCin7SyncHealth, type Cin7SyncHealth } from "@/lib/api/cin7";
-import Link from "next/link";
+import { useState, useEffect, memo } from 'react';
+import { Activity, Package, Users, ShoppingCart, Boxes, RefreshCw } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { apiClient } from '@/lib/api/client';
+import { useCin7Stream, type Cin7SyncEvent } from '@/lib/hooks/use-cin7-stream';
+import { getCin7SyncHealth, type Cin7SyncHealth } from '@/lib/api/cin7';
+import Link from 'next/link';
 
 const ENTITY_CONFIG: Record<string, { icon: typeof Package; color: string }> = {
-  product: { icon: Package, color: "text-blue-600" },
-  customer: { icon: Users, color: "text-green-600" },
-  sales: { icon: ShoppingCart, color: "text-purple-600" },
-  inventory: { icon: Boxes, color: "text-orange-600" },
+  product: { icon: Package, color: 'text-blue-600' },
+  customer: { icon: Users, color: 'text-green-600' },
+  sales: { icon: ShoppingCart, color: 'text-purple-600' },
+  inventory: { icon: Boxes, color: 'text-orange-600' },
 };
 
 const GRADE_COLORS: Record<string, string> = {
-  A: "bg-green-100 text-green-800 border-green-300",
-  B: "bg-blue-100 text-blue-800 border-blue-300",
-  C: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  D: "bg-orange-100 text-orange-800 border-orange-300",
-  F: "bg-red-100 text-red-800 border-red-300",
+  A: 'bg-green-100 text-green-800 border-green-300',
+  B: 'bg-blue-100 text-blue-800 border-blue-300',
+  C: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  D: 'bg-orange-100 text-orange-800 border-orange-300',
+  F: 'bg-red-100 text-red-800 border-red-300',
 };
 
 export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
@@ -41,7 +41,7 @@ export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
         const healthData = await getCin7SyncHealth();
         setHealth(healthData);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to load sync health");
+        setError(err instanceof Error ? err.message : 'Failed to load sync health');
       } finally {
         setLoading(false);
       }
@@ -94,21 +94,19 @@ export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
               <Activity className="h-5 w-5" />
               Cin7 Sync Status
             </CardTitle>
-            <CardDescription>
-              Real-time sync activity and health
-            </CardDescription>
+            <CardDescription>Real-time sync activity and health</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            {sseStatus === "connected" && (
+            {sseStatus === 'connected' && (
               <Badge variant="outline" className="text-xs">
-                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse mr-1" />
+                <div className="mr-1 h-2 w-2 animate-pulse rounded-full bg-green-500" />
                 Live
               </Badge>
             )}
             {health && (
               <Badge
                 variant="outline"
-                className={`text-sm font-bold ${GRADE_COLORS[health.grade] ?? ""}`}
+                className={`text-sm font-bold ${GRADE_COLORS[health.grade] ?? ''}`}
               >
                 {health.grade} ({health.score})
               </Badge>
@@ -123,15 +121,15 @@ export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
         {health && (
           <div className="mb-4 grid grid-cols-3 gap-3 text-center">
             <div className="rounded-lg border p-2">
-              <p className="text-xs text-muted-foreground">Success Rate</p>
+              <p className="text-muted-foreground text-xs">Success Rate</p>
               <p className="text-lg font-bold">{health.details.success_rate}%</p>
             </div>
             <div className="rounded-lg border p-2">
-              <p className="text-xs text-muted-foreground">Avg Duration</p>
+              <p className="text-muted-foreground text-xs">Avg Duration</p>
               <p className="text-lg font-bold">{Math.round(health.details.avg_duration_ms)}ms</p>
             </div>
             <div className="rounded-lg border p-2">
-              <p className="text-xs text-muted-foreground">Total Syncs</p>
+              <p className="text-muted-foreground text-xs">Total Syncs</p>
               <p className="text-lg font-bold">{health.details.total_syncs}</p>
             </div>
           </div>
@@ -139,20 +137,23 @@ export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
 
         {recentEvents.length > 0 ? (
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
               Recent Events
             </p>
             {recentEvents.slice(0, 5).map((event, idx) => {
-              const config = ENTITY_CONFIG[event.entity_type] ?? { icon: Activity, color: "text-muted-foreground" };
+              const config = ENTITY_CONFIG[event.entity_type] ?? {
+                icon: Activity,
+                color: 'text-muted-foreground',
+              };
               const Icon = config.icon;
               return (
                 <div key={`${event.timestamp}-${idx}`} className="flex items-center gap-2 text-sm">
                   <Icon className={`h-4 w-4 ${config.color}`} />
                   <span className="flex-1 truncate">
                     {event.entity_type} {event.action}
-                    {event.records_affected ? ` (${event.records_affected} records)` : ""}
+                    {event.records_affected ? ` (${event.records_affected} records)` : ''}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     {new Date(event.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
@@ -160,10 +161,10 @@ export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
             })}
           </div>
         ) : (
-          <div className="text-center py-4 text-muted-foreground">
-            <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <div className="text-muted-foreground py-4 text-center">
+            <Activity className="mx-auto mb-2 h-8 w-8 opacity-50" />
             <p className="text-sm">No recent sync events</p>
-            <p className="text-xs mt-1">Events will appear here when Cin7 syncs occur</p>
+            <p className="mt-1 text-xs">Events will appear here when Cin7 syncs occur</p>
           </div>
         )}
       </CardContent>

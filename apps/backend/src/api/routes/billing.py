@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Customer
 from src.db.models.invoicing import Invoice
@@ -31,7 +32,7 @@ from src.services.dunning import (
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/api/billing", tags=["billing"])
+router = APIRouter(prefix="/api/billing", tags=["billing"], dependencies=[Depends(get_current_user)])
 
 
 # ---------------------------------------------------------------------------

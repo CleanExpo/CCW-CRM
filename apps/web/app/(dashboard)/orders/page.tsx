@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 // PHASE 4: Search state persistence
 import { useSearchState } from '@/lib/hooks/use-search-state';
@@ -50,6 +50,12 @@ export default function OrdersPage() {
   const pageSize = searchState.pageSize || 50;
   const setPage = (value: number) => updateField('page', value);
   const setPageSize = (value: number) => updateField('pageSize', value);
+
+  // UNI-1781: Client-side search and filter state
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
@@ -166,6 +172,21 @@ export default function OrdersPage() {
     }
   };
 
+  // UNI-1781: Client-side filtered view of fetched orders
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o) => {
+      const matchSearch =
+        !search ||
+        o.order_number?.toLowerCase().includes(search.toLowerCase()) ||
+        o.customer_name?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = statusFilter === 'all' || o.status === statusFilter;
+      const orderDate = o.order_date ? new Date(o.order_date) : null;
+      const matchDateFrom = !dateFrom || (orderDate && orderDate >= new Date(dateFrom));
+      const matchDateTo = !dateTo || (orderDate && orderDate <= new Date(dateTo + 'T23:59:59'));
+      return matchSearch && matchStatus && matchDateFrom && matchDateTo;
+    });
+  }, [orders, search, statusFilter, dateFrom, dateTo]);
+
   const handleExport = () => {
     exportOrdersToCSV(orders as unknown as Record<string, unknown>[]);
     toast({
@@ -186,10 +207,10 @@ export default function OrdersPage() {
   };
 
   const handleToggleSelectAll = () => {
-    if (selectedOrderIds.length === orders.length) {
+    if (selectedOrderIds.length === filteredOrders.length) {
       setSelectedOrderIds([]);
     } else {
-      setSelectedOrderIds(orders.map((o) => o.id));
+      setSelectedOrderIds(filteredOrders.map((o) => o.id));
     }
   };
 
@@ -270,6 +291,61 @@ export default function OrdersPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* UNI-1781: Search and filter bar */}
+            <div className="mb-4 flex flex-wrap gap-3">
+              <input
+                type="text"
+                placeholder="Search by order # or customer…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring h-9 min-w-48 flex-1 rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+              />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <div className="flex items-center gap-2">
+                <label className="text-muted-foreground text-sm whitespace-nowrap">From</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-muted-foreground text-sm whitespace-nowrap">To</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+                />
+              </div>
+              {(search || statusFilter !== 'all' || dateFrom || dateTo) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearch('');
+                    setStatusFilter('all');
+                    setDateFrom('');
+                    setDateTo('');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </div>
+
             {loading ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
@@ -286,16 +362,23 @@ export default function OrdersPage() {
                   onClick: handleAddOrder,
                 }}
               />
+            ) : filteredOrders.length === 0 ? (
+              <div className="text-muted-foreground py-10 text-center text-sm">
+                No orders match the current filters.
+              </div>
             ) : (
               <ResponsiveTable
-                data={orders}
+                data={filteredOrders}
                 keyExtractor={(order) => order.id}
                 columns={[
                   {
                     key: 'select',
                     label: (
                       <Checkbox
-                        checked={orders.length > 0 && selectedOrderIds.length === orders.length}
+                        checked={
+                          filteredOrders.length > 0 &&
+                          selectedOrderIds.length === filteredOrders.length
+                        }
                         onCheckedChange={handleToggleSelectAll}
                         aria-label="Select all orders"
                       />
