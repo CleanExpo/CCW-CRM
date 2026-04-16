@@ -17,6 +17,10 @@ import structlog
 from src.config.cin7_settings import Cin7Settings, get_cin7_settings
 from src.integrations.cin7.demo_client import Cin7CoreDemoClient, Cin7OmniDemoClient
 
+
+class ConfigurationError(Exception):
+    """Raised when a required integration credential is missing or invalid."""
+
 logger = structlog.get_logger(__name__)
 
 
@@ -187,6 +191,56 @@ class Cin7CoreLiveClient:
         """Get product brands."""
         return await self._request("GET", "/ref/brand")
 
+    async def post_sales_order(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Create a sales order in Cin7 Core (DEAR).
+
+        Endpoint: POST /sale
+        Required payload keys: ``SaleOrderNumber``, ``Status``, ``Customer``
+        (object with ``Name``), ``Lines`` (list of line items with
+        ``SKU``, ``Quantity``, ``Price``).
+
+        Returns the created sale record including the Cin7 ``SaleID``.
+
+        Raises:
+            ConfigurationError: if Core credentials are demo placeholders.
+            Cin7APIError: on HTTP errors from the Cin7 API.
+        """
+        if (
+            self.settings.core_account_id == "demo_account_id"
+            or self.settings.core_application_key == "demo_application_key"
+        ):
+            raise ConfigurationError(
+                "Cin7 Core credentials are not configured. "
+                "Set CIN7_CORE_ACCOUNT_ID and CIN7_CORE_APPLICATION_KEY "
+                "environment variables."
+            )
+        return await self._request("POST", "/sale", json=payload)
+
+    async def post_purchase_order(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Create a purchase order in Cin7 Core (DEAR).
+
+        Endpoint: POST /purchase
+        Required payload keys: ``SupplierName`` (str), ``OrderDate`` (YYYY-MM-DD
+        str), ``Lines`` (list of line items with ``SKU``, ``Quantity``,
+        ``Price``).
+
+        Returns the created purchase record including the Cin7 ``PurchaseID``.
+
+        Raises:
+            ConfigurationError: if Core credentials are demo placeholders.
+            Cin7APIError: on HTTP errors from the Cin7 API.
+        """
+        if (
+            self.settings.core_account_id == "demo_account_id"
+            or self.settings.core_application_key == "demo_application_key"
+        ):
+            raise ConfigurationError(
+                "Cin7 Core credentials are not configured. "
+                "Set CIN7_CORE_ACCOUNT_ID and CIN7_CORE_APPLICATION_KEY "
+                "environment variables."
+            )
+        return await self._request("POST", "/purchase", json=payload)
+
 
 # ---------------------------------------------------------------------------
 # Cin7 Omni Live Client
@@ -328,6 +382,54 @@ class Cin7OmniLiveClient:
     async def get_product_categories(self) -> list[dict[str, Any]]:
         """Get product categories."""
         return await self._request("GET", "/ProductCategories")
+
+    async def post_sales_order(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Create a sales order in Cin7 Omni.
+
+        Endpoint: POST /v1/SalesOrders
+        Required payload keys: ``LineItems`` (list), ``Contact`` (object with
+        ``Name``), ``OrderDate`` (ISO 8601 string), ``Status`` (e.g. ``"DRAFT"``).
+
+        Returns the created sales order object including the Cin7 order ``id``.
+
+        Raises:
+            ConfigurationError: if Omni credentials are demo placeholders.
+            Cin7APIError: on HTTP errors from the Cin7 API.
+        """
+        if (
+            self.settings.omni_username == "demo_omni_username"
+            or self.settings.omni_api_key == "demo_omni_api_key"
+        ):
+            raise ConfigurationError(
+                "Cin7 Omni credentials are not configured. "
+                "Set CIN7_OMNI_USERNAME and CIN7_OMNI_API_KEY "
+                "environment variables."
+            )
+        return await self._request("POST", "/SalesOrders", json=payload)
+
+    async def post_purchase_order(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Create a purchase order in Cin7 Omni.
+
+        Endpoint: POST /v1/PurchaseOrders
+        Required payload keys: ``LineItems`` (list), ``Supplier`` (object with
+        ``Name``), ``OrderDate`` (ISO 8601 string).
+
+        Returns the created purchase order object including the Cin7 PO ``id``.
+
+        Raises:
+            ConfigurationError: if Omni credentials are demo placeholders.
+            Cin7APIError: on HTTP errors from the Cin7 API.
+        """
+        if (
+            self.settings.omni_username == "demo_omni_username"
+            or self.settings.omni_api_key == "demo_omni_api_key"
+        ):
+            raise ConfigurationError(
+                "Cin7 Omni credentials are not configured. "
+                "Set CIN7_OMNI_USERNAME and CIN7_OMNI_API_KEY "
+                "environment variables."
+            )
+        return await self._request("POST", "/PurchaseOrders", json=payload)
 
 
 # ---------------------------------------------------------------------------

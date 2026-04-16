@@ -853,3 +853,44 @@ class Cin7StockTakeLine(Base):
 
     def __repr__(self) -> str:
         return f"<Cin7StockTakeLine(sku={self.sku}, counted={self.counted_qty}, variance={self.variance})>"
+
+
+class IntegrationSyncState(Base):
+    """Persistent watermark store for Cin7 (and other integration) pollers.
+
+    Each row records the last successful poll timestamp for a given
+    ``integration`` + ``entity_type`` pair, e.g.
+    ``("cin7", "products")``.  On restart the ChangeDetector seeds its
+    in-memory ``_last_polled`` dict from these rows, preventing re-
+    processing of already-seen records.
+    """
+
+    __tablename__ = "integration_sync_state"
+
+    # Natural composite key: integration name + entity type
+    integration: Mapped[str] = mapped_column(
+        String(100), primary_key=True, index=True
+    )
+    entity_type: Mapped[str] = mapped_column(
+        String(100), primary_key=True
+    )
+
+    # The watermark timestamp — last successful poll completion
+    last_synced: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # Audit columns
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<IntegrationSyncState("
+            f"integration={self.integration!r}, "
+            f"entity={self.entity_type!r}, "
+            f"last_synced={self.last_synced!r})>"
+        )

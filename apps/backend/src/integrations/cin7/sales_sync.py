@@ -23,7 +23,7 @@ from src.db.cin7_models import (
     SyncStatus,
 )
 from src.db.demo_models import Order, OrderStatus, Quote, QuoteStatus
-from src.integrations.cin7.client import Cin7Client
+from src.integrations.cin7.client import Cin7Client, ConfigurationError
 
 logger = structlog.get_logger(__name__)
 
@@ -457,14 +457,74 @@ class Cin7SalesSyncer:
 
             if target == "core":
                 payload = map_erp_order_to_core(order)
+                cin7_response = await self.client.core.post_sales_order(payload)
+                cin7_order_id = cin7_response.get("SaleID") or cin7_response.get("ID")
             else:
                 payload = map_erp_order_to_omni(order)
+                cin7_response = await self.client.omni.post_sales_order(payload)
+                cin7_order_id = cin7_response.get("id")
 
-            log.details = {"payload": payload, "target": target}
+            logger.info(
+                "cin7_sales_order_pushed",
+                erp_order_id=order_id,
+                cin7_order_id=cin7_order_id,
+                target=target,
+            )
+
+            # Update or create the mapping so we can reconcile on future polls
+            mapping_result = await self.db.execute(
+                select(Cin7OrderMapping).where(
+                    Cin7OrderMapping.order_id == order_id
+                )
+            )
+            mapping = mapping_result.scalar_one_or_none()
+            if mapping is None:
+                mapping_kwargs: dict[str, Any] = {}
+                if target == "core" and cin7_order_id:
+                    mapping_kwargs["cin7_core_sale_id"] = str(cin7_order_id)
+                elif target == "omni" and cin7_order_id:
+                    try:
+                        mapping_kwargs["cin7_omni_order_id"] = int(cin7_order_id)
+                    except (ValueError, TypeError):
+                        pass
+                mapping = Cin7OrderMapping(
+                    id=str(uuid4()),
+                    order_id=order_id,
+                    cin7_order_number=order.order_number,
+                    sync_status="synced",
+                    last_synced_at=datetime.now(UTC),
+                    **mapping_kwargs,
+                )
+                self.db.add(mapping)
+            else:
+                if target == "core" and cin7_order_id:
+                    mapping.cin7_core_sale_id = str(cin7_order_id)
+                elif target == "omni" and cin7_order_id:
+                    try:
+                        mapping.cin7_omni_order_id = int(cin7_order_id)
+                    except (ValueError, TypeError):
+                        pass
+                mapping.sync_status = "synced"
+                mapping.last_synced_at = datetime.now(UTC)
+
+            log.details = {
+                "payload": payload,
+                "target": target,
+                "cin7_order_id": str(cin7_order_id) if cin7_order_id else None,
+            }
             log.records_processed = 1
             log.records_updated = 1
             log.status = SyncStatus.COMPLETED.value
 
+        except ConfigurationError as exc:
+            log.status = SyncStatus.FAILED.value
+            log.error_message = f"ConfigurationError: {exc}"
+            log.records_failed = 1
+            logger.error(
+                "cin7_sales_order_push_config_error",
+                order_id=order_id,
+                error=str(exc),
+            )
         except Exception as exc:
             log.status = SyncStatus.FAILED.value
             log.error_message = str(exc)[:500]

@@ -4,17 +4,27 @@ Cin7 Core has NO native webhook support. This module polls Cin7 APIs
 using ``modified_since`` parameters to detect changes and emit events.
 The ChangeDetector tracks last-polled timestamps per entity type and
 returns lists of change events for downstream dispatch.
+
+Watermarks (last-polled timestamps) are persisted to the
+``integration_sync_state`` Supabase table so that a server restart does
+not cause re-processing of already-seen records (UNI-1838).
 """
 
 from datetime import UTC, datetime
 from typing import Any, Literal
 
 import structlog
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.cin7_settings import Cin7Settings
+from src.db.cin7_models import IntegrationSyncState
 from src.integrations.cin7.client import Cin7Client
 
 logger = structlog.get_logger(__name__)
+
+INTEGRATION_NAME = "cin7"
 
 
 # ---------------------------------------------------------------------------
@@ -161,16 +171,91 @@ def detect_inventory_changes(
 class Cin7ChangeDetector:
     """Polls Cin7 APIs for changes using ``modified_since`` parameter.
 
-    Tracks last-polled timestamps per entity type in memory.
-    In production, these would be seeded from ``Cin7Connection.last_*_sync_at``.
+    Watermarks (last-polled timestamps) are stored both in memory (for
+    fast access within a process) and in the ``integration_sync_state``
+    Supabase table (for durability across restarts).
+
+    Pass an ``AsyncSession`` via ``db`` to enable Supabase-backed
+    watermarks.  When omitted the detector falls back to pure in-memory
+    behaviour (useful in tests).
     """
 
     ENTITY_TYPES = ("products", "customers", "sales", "inventory")
 
-    def __init__(self, client: Cin7Client, settings: Cin7Settings) -> None:
+    def __init__(
+        self,
+        client: Cin7Client,
+        settings: Cin7Settings,
+        db: AsyncSession | None = None,
+    ) -> None:
         self.client = client
         self.settings = settings
+        self.db = db
         self._last_polled: dict[str, datetime] = {}
+
+    # ------------------------------------------------------------------
+    # Watermark persistence (UNI-1838)
+    # ------------------------------------------------------------------
+
+    async def load_watermarks(self) -> None:
+        """Seed in-memory watermarks from the Supabase ``integration_sync_state`` table.
+
+        Call this once at startup (or before the first poll cycle) so that
+        the detector resumes from where it left off rather than re-fetching
+        all records since the beginning of time.
+        """
+        if self.db is None:
+            return
+
+        try:
+            result = await self.db.execute(
+                select(IntegrationSyncState).where(
+                    IntegrationSyncState.integration == INTEGRATION_NAME
+                )
+            )
+            rows = result.scalars().all()
+            for row in rows:
+                if row.last_synced is not None:
+                    self._last_polled[row.entity_type] = row.last_synced
+
+            logger.info(
+                "cin7_watermarks_loaded",
+                count=len(rows),
+                entity_types=list(self._last_polled.keys()),
+            )
+        except Exception as exc:
+            logger.warning("cin7_watermarks_load_failed", error=str(exc))
+
+    async def _persist_watermark(self, entity_type: str, ts: datetime) -> None:
+        """Upsert the watermark for *entity_type* to Supabase."""
+        if self.db is None:
+            return
+
+        try:
+            stmt = (
+                pg_insert(IntegrationSyncState)
+                .values(
+                    integration=INTEGRATION_NAME,
+                    entity_type=entity_type,
+                    last_synced=ts,
+                    updated_at=datetime.now(UTC),
+                )
+                .on_conflict_do_update(
+                    index_elements=["integration", "entity_type"],
+                    set_={
+                        "last_synced": ts,
+                        "updated_at": datetime.now(UTC),
+                    },
+                )
+            )
+            await self.db.execute(stmt)
+            await self.db.flush()
+        except Exception as exc:
+            logger.warning(
+                "cin7_watermark_persist_failed",
+                entity_type=entity_type,
+                error=str(exc),
+            )
 
     # ------------------------------------------------------------------
     # Public interface
@@ -239,7 +324,7 @@ class Cin7ChangeDetector:
                 if not isinstance(products, list):
                     products = []
 
-            self._update_last_polled("products")
+            await self._update_last_polled("products")
             return detect_product_changes(products, source)
         except Exception as exc:
             logger.error("cin7_poll_products_failed", source=source, error=str(exc))
@@ -266,7 +351,7 @@ class Cin7ChangeDetector:
                 if not isinstance(customers, list):
                     customers = []
 
-            self._update_last_polled("customers")
+            await self._update_last_polled("customers")
             return detect_customer_changes(customers, source)
         except Exception as exc:
             logger.error("cin7_poll_customers_failed", source=source, error=str(exc))
@@ -293,7 +378,7 @@ class Cin7ChangeDetector:
                 if not isinstance(sales, list):
                     sales = []
 
-            self._update_last_polled("sales")
+            await self._update_last_polled("sales")
             return detect_sales_changes(sales, source)
         except Exception as exc:
             logger.error("cin7_poll_sales_failed", source=source, error=str(exc))
@@ -314,7 +399,7 @@ class Cin7ChangeDetector:
                 if not isinstance(items, list):
                     items = []
 
-            self._update_last_polled("inventory")
+            await self._update_last_polled("inventory")
             return detect_inventory_changes(items, source)
         except Exception as exc:
             logger.error("cin7_poll_inventory_failed", source=source, error=str(exc))
@@ -335,6 +420,8 @@ class Cin7ChangeDetector:
     # Internal
     # ------------------------------------------------------------------
 
-    def _update_last_polled(self, entity_type: str) -> None:
-        """Update the last-polled timestamp for an entity type."""
-        self._last_polled[entity_type] = datetime.now(UTC)
+    async def _update_last_polled(self, entity_type: str) -> None:
+        """Update the last-polled timestamp in memory and in Supabase."""
+        ts = datetime.now(UTC)
+        self._last_polled[entity_type] = ts
+        await self._persist_watermark(entity_type, ts)
