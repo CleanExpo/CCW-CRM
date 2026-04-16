@@ -35,8 +35,9 @@ interface Customer {
   state: string | null;
   postcode: string | null;
   abn: string | null;
-// UNI-1821: Per-customer payment terms
-  payment_terms_days: number;  is_active: boolean;
+  // UNI-1821: Per-customer payment terms
+  payment_terms_days: number;
+  is_active: boolean;
 }
 
 interface PaginatedResponse {

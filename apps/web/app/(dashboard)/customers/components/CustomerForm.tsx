@@ -51,8 +51,9 @@ const formSchema = z.object({
     .regex(/^\d{11}$/, 'ABN must be exactly 11 digits')
     .optional()
     .or(z.literal('')),
-// UNI-1821: Per-customer payment terms (days)
-  payment_terms_days: z.coerce.number().int().min(0).max(365).default(30),  is_active: z.boolean().default(true),
+  // UNI-1821: Per-customer payment terms (days)
+  payment_terms_days: z.coerce.number().int().min(0).max(365).default(30),
+  is_active: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -69,8 +70,9 @@ interface Customer {
   state: string | null;
   postcode: string | null;
   abn: string | null;
-// UNI-1821: Per-customer payment terms
-  payment_terms_days: number;  is_active: boolean;
+  // UNI-1821: Per-customer payment terms
+  payment_terms_days: number;
+  is_active: boolean;
 }
 
 interface CustomerFormProps {
@@ -98,7 +100,8 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       state: '',
       postcode: '',
       abn: '',
-payment_terms_days: 30,      is_active: true,
+      payment_terms_days: 30,
+      is_active: true,
     },
   });
 
@@ -131,7 +134,8 @@ payment_terms_days: 30,      is_active: true,
           state: customer.state || '',
           postcode: customer.postcode || '',
           abn: customer.abn || '',
-payment_terms_days: customer.payment_terms_days ?? 30,          is_active: customer.is_active,
+          payment_terms_days: customer.payment_terms_days ?? 30,
+          is_active: customer.is_active,
         });
       } else {
         form.reset({
@@ -145,7 +149,8 @@ payment_terms_days: customer.payment_terms_days ?? 30,          is_active: custo
           state: '',
           postcode: '',
           abn: '',
-payment_terms_days: 30,          is_active: true,
+          payment_terms_days: 30,
+          is_active: true,
         });
       }
     }
