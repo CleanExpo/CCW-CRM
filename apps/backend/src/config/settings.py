@@ -110,6 +110,17 @@ class Settings(BaseSettings):
         default=False,
         description="Skip authentication enforcement (ONLY for local testing, NEVER in production)",
     )
+    # UNI-1869: Customer portal demo mode.
+    # When True the portal returns hardcoded fixture data (no DB queries, no auth scoping).
+    # MUST be False in production.  Defaults to False so production is always safe.
+    portal_demo_mode: bool = Field(
+        default=False,
+        description=(
+            "Run customer portal in demo mode with fixture data. "
+            "Set PORTAL_DEMO_MODE=true ONLY in local/dev environments. "
+            "Production deployments must leave this unset (defaults to False)."
+        ),
+    )
     cors_origins: list[str] = Field(
         default=[
             "http://localhost:3000",

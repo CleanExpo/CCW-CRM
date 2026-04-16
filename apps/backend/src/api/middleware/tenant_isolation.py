@@ -60,6 +60,13 @@ def get_current_organization_id(request: Request) -> UUID:
             query = select(Product).where(Product.organization_id == org_id)
             ...
     """
+    # UNI-1869: Demo mode bypasses org validation — portal routes return fixture data.
+    # Must be checked BEFORE reading request.state so FastAPI dependency resolves
+    # successfully even when auth middleware didn't inject organization_id.
+    from src.config.settings import get_settings
+    if get_settings().portal_demo_mode:
+        return UUID("00000000-0000-0000-0000-000000000001")
+
     # Get organization_id from request state (injected by auth middleware from JWT)
     user_id = getattr(request.state, "user_id", None)
     organization_id = getattr(request.state, "organization_id", None)
@@ -102,6 +109,38 @@ def get_current_organization_id(request: Request) -> UUID:
     )
 
     return org_uuid
+
+
+def assert_org_access(session_org_id: UUID, resource_org_id: UUID | None, resource_name: str = "Resource") -> None:
+    """
+    UNI-1855: Enforce that a requested resource's org matches the session org.
+
+    Call this whenever a route receives an org-scoped resource to prevent
+    cross-tenant data leakage even if the caller supplies a crafted ID.
+
+    Args:
+        session_org_id:   The org UUID from the authenticated session.
+        resource_org_id:  The org UUID stored on the resource being accessed.
+        resource_name:    Label for log/error messages (e.g. "Order", "Customer").
+
+    Raises:
+        HTTPException 403 if org mismatch is detected.
+        HTTPException 404 if resource_org_id is None (treat as not found).
+    """
+    if resource_org_id is None:
+        raise HTTPException(status_code=404, detail=f"{resource_name} not found")
+
+    if resource_org_id != session_org_id:
+        logger.warning(
+            "Cross-org access attempt blocked by tenant isolation",
+            session_org_id=str(session_org_id),
+            resource_org_id=str(resource_org_id),
+            resource=resource_name,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: resource belongs to a different organisation.",
+        )
 
 
 # Type alias for dependency injection

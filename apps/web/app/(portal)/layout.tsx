@@ -43,7 +43,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
               );
             })}
           </nav>
-          <div className="text-xs text-slate-500">Brisbane Carpet Care Pty Ltd</div>
+          <div className="text-xs text-slate-500">My Account</div>
         </div>
       </header>
 

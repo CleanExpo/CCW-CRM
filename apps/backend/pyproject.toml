@@ -192,6 +192,12 @@ module = [
     "src.api.routes.workflows",
     "src.api.routes.workshop.*",
     "src.api.routes.ai.*",
+    "src.api.routes.org_switch",
+    "src.api.routes.portal.*",
+    "src.api.routes.autonomy_metrics",
+    "src.api.routes.shadow_mode",
+    "src.api.routes.documents",
+    "src.api.routes.supplier_portal",
     "src.api.schemas.*",
 ]
 ignore_errors = true

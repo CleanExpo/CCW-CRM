@@ -1,4 +1,4 @@
-"""Customer Self-Service Portal endpoints.
+"""Customer Self-Service Portal endpoints — UNI-1869.
 
 Routes (prefix /api/portal):
   GET  /profile                     — customer profile
@@ -10,8 +10,17 @@ Routes (prefix /api/portal):
   POST /service-requests            — log warranty / service request
   GET  /service-requests            — view logged service requests
 
-All endpoints operate in demo mode when ANTHROPIC_API_KEY is absent;
-in production they would scope data to the authenticated portal user's customer_id.
+Security (UNI-1869):
+  All endpoints require a valid JWT (enforced by AuthMiddleware).
+  All DB queries are scoped to:
+    • the authenticated user's organisation_id  (org isolation)
+    • the customer record whose email matches the authenticated user's email
+      OR whose customer_id is stored in the JWT (customer isolation)
+
+Demo mode fallback:
+  Set PORTAL_DEMO_MODE=true (env var) to return fixture data without DB access.
+  This must only be used in local / CI environments — it is OFF by default so
+  production is always safe.
 """
 
 from __future__ import annotations
@@ -20,15 +29,23 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
+from src.config.settings import get_settings
+from src.db.demo_models import Customer, Order, OrderItem, Product
+
+logger = structlog.get_logger(__name__)
+settings = get_settings()
 
 router = APIRouter(prefix="/api/portal", tags=["Customer Portal"])
 
-# ─── Demo helpers ─────────────────────────────────────────────────────────────
+# ─── Demo fixture data (used only when PORTAL_DEMO_MODE=true) ─────────────────
 
 _DEMO_CUSTOMER_ID = "cust-demo-001"
 
@@ -189,65 +206,279 @@ class ServiceRequestCreate(BaseModel):
     preferred_contact: str = "email"
 
 
+# ─── Auth helper ──────────────────────────────────────────────────────────────
+
+
+async def _resolve_customer(
+    request: Request,
+    db: AsyncSession,
+    org_id: uuid.UUID,
+) -> Customer:
+    """
+    Resolve the Customer record for the authenticated portal user.
+
+    Strategy (UNI-1869):
+    1. Match by authenticated user's email within the org.
+    2. If no match → 403 (user is not a known customer of this org).
+
+    We scope by org_id so a customer from Org A cannot access Org B data
+    even if they share an email address.
+    """
+    state_user: dict = getattr(request.state, "user", {}) or {}
+    user_email: str | None = state_user.get("email") or getattr(request.state, "email", None)
+
+    if not user_email:
+        raise HTTPException(status_code=401, detail="Cannot determine authenticated user email.")
+
+    result = await db.execute(
+        select(Customer).where(
+            Customer.organization_id == org_id,
+            Customer.email == user_email,
+            Customer.is_active.is_(True),
+        )
+    )
+    customer = result.scalar_one_or_none()
+
+    if not customer:
+        logger.warning(
+            "Portal: no customer record for authenticated user",
+            org_id=str(org_id),
+            email=user_email,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="No customer account found for your login in this organisation.",
+        )
+
+    return customer
+
+
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
 
 @router.get("/profile")
 async def get_portal_profile(
+    request: Request,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Return the authenticated customer's profile."""
-    return DEMO_PROFILE
+    if settings.portal_demo_mode:
+        return DEMO_PROFILE
+
+    customer = await _resolve_customer(request, db, org_id)
+    return {
+        "customer_id": str(customer.id),
+        "company_name": customer.company_name,
+        "contact_name": customer.contact_name,
+        "email": customer.email,
+        "phone": customer.phone or "",
+        "address": customer.address or "",
+        "account_since": customer.created_at.date().isoformat(),
+        "pricing_tier": "Standard",
+    }
 
 
 @router.get("/orders")
 async def list_portal_orders(
+    request: Request,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     status: str | None = Query(None, description="Filter by status"),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
 ) -> dict:
     """Return the customer's order history, newest first."""
-    orders = DEMO_ORDERS
+    if settings.portal_demo_mode:
+        orders = DEMO_ORDERS
+        if status:
+            orders = [o for o in orders if o["status"] == status]
+        start = (page - 1) * page_size
+        return {
+            "customer_id": _DEMO_CUSTOMER_ID,
+            "total": len(orders),
+            "page": page,
+            "page_size": page_size,
+            "orders": orders[start : start + page_size],
+        }
+
+    customer = await _resolve_customer(request, db, org_id)
+
+    # Scope: org_id AND customer_id (UNI-1869)
+    stmt = (
+        select(Order)
+        .where(
+            Order.organization_id == org_id,
+            Order.customer_id == customer.id,
+        )
+        .order_by(Order.order_date.desc())
+    )
     if status:
-        orders = [o for o in orders if o["status"] == status]
+        stmt = stmt.where(Order.status == status)
+
+    result = await db.execute(stmt)
+    all_orders = result.scalars().all()
+
     start = (page - 1) * page_size
+    page_orders = all_orders[start : start + page_size]
+
     return {
-        "customer_id": _DEMO_CUSTOMER_ID,
-        "total": len(orders),
+        "customer_id": str(customer.id),
+        "total": len(all_orders),
         "page": page,
         "page_size": page_size,
-        "orders": orders[start : start + page_size],
+        "orders": [
+            {
+                "order_id": str(o.id),
+                "order_number": o.order_number,
+                "date": o.order_date.date().isoformat(),
+                "status": o.status,
+                "total": float(o.total),
+                "tracking_number": o.tracking_number,
+                "estimated_delivery": (
+                    o.estimated_delivery_date.date().isoformat()
+                    if o.estimated_delivery_date
+                    else None
+                ),
+                "delivered_at": (
+                    o.shipped_date.date().isoformat() if o.shipped_date else None
+                ),
+            }
+            for o in page_orders
+        ],
     }
 
 
 @router.get("/orders/{order_id}")
 async def get_portal_order(
     order_id: str,
+    request: Request,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Return a single order with full line item detail."""
-    order = next((o for o in DEMO_ORDERS if o["order_id"] == order_id), None)
+    if settings.portal_demo_mode:
+        order = next((o for o in DEMO_ORDERS if o["order_id"] == order_id), None)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        return order
+
+    customer = await _resolve_customer(request, db, org_id)
+
+    try:
+        order_uuid = uuid.UUID(order_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Scope: org_id AND customer_id (UNI-1869)
+    result = await db.execute(
+        select(Order).where(
+            Order.id == order_uuid,
+            Order.organization_id == org_id,
+            Order.customer_id == customer.id,
+        )
+    )
+    order = result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    return order
+
+    # Load line items
+    items_result = await db.execute(
+        select(OrderItem, Product)
+        .join(Product, OrderItem.product_id == Product.id, isouter=True)
+        .where(OrderItem.order_id == order.id)
+    )
+    items = items_result.all()
+
+    return {
+        "order_id": str(order.id),
+        "order_number": order.order_number,
+        "date": order.order_date.date().isoformat(),
+        "status": order.status,
+        "total": float(order.total),
+        "tracking_number": order.tracking_number,
+        "estimated_delivery": (
+            order.estimated_delivery_date.date().isoformat()
+            if order.estimated_delivery_date
+            else None
+        ),
+        "delivered_at": order.shipped_date.date().isoformat() if order.shipped_date else None,
+        "items": [
+            {
+                "sku": prod.sku if prod else "—",
+                "name": prod.name if prod else "Unknown product",
+                "qty": item.quantity,
+                "unit_price": float(item.unit_price),
+            }
+            for item, prod in items
+        ],
+    }
 
 
 @router.get("/invoices")
 async def list_portal_invoices(
+    request: Request,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
     status: str | None = Query(None, description="Filter by status: paid | outstanding | overdue"),
 ) -> dict:
-    """Return the customer's invoice list."""
-    invoices = DEMO_INVOICES
+    """Return the customer's invoice list.
+
+    NOTE: The core schema does not have a standalone Invoice table in demo_models.
+    Invoices are derived from Orders (each order maps 1:1 to an invoice in the MVP).
+    If a dedicated Invoice model is added in future, update this endpoint.
+    """
+    if settings.portal_demo_mode:
+        invoices = DEMO_INVOICES
+        if status:
+            invoices = [i for i in invoices if i["status"] == status]
+        return {
+            "customer_id": _DEMO_CUSTOMER_ID,
+            "total": len(invoices),
+            "total_outstanding": sum(
+                i["total"] for i in DEMO_INVOICES if i["status"] in ("outstanding", "overdue")
+            ),
+            "invoices": invoices,
+        }
+
+    customer = await _resolve_customer(request, db, org_id)
+
+    # Scope: org_id AND customer_id (UNI-1869)
+    stmt = select(Order).where(
+        Order.organization_id == org_id,
+        Order.customer_id == customer.id,
+    ).order_by(Order.order_date.desc())
+
+    result = await db.execute(stmt)
+    orders = result.scalars().all()
+
+    def _order_to_invoice(o: Order) -> dict[str, Any]:
+        """Derive invoice shape from an order."""
+        subtotal = float(o.total) / 1.1  # Back-calculate ex-GST
+        gst = float(o.total) - subtotal
+        inv_status = "paid" if o.status in ("delivered", "shipped", "completed") else "outstanding"
+        return {
+            "invoice_id": str(o.id),
+            "invoice_number": f"INV-{o.order_number.removeprefix('ORD-')}",
+            "order_number": o.order_number,
+            "invoice_date": o.order_date.date().isoformat(),
+            "due_date": None,  # Payment terms not yet wired to portal
+            "status": inv_status,
+            "subtotal": round(subtotal, 2),
+            "gst": round(gst, 2),
+            "total": float(o.total),
+            "paid_at": o.shipped_date.isoformat() if o.shipped_date and inv_status == "paid" else None,
+            "payment_method": None,
+        }
+
+    invoices = [_order_to_invoice(o) for o in orders]
     if status:
         invoices = [i for i in invoices if i["status"] == status]
+
     return {
-        "customer_id": _DEMO_CUSTOMER_ID,
+        "customer_id": str(customer.id),
         "total": len(invoices),
-        "total_outstanding": sum(
-            i["total"] for i in DEMO_INVOICES if i["status"] in ("outstanding", "overdue")
-        ),
+        "total_outstanding": sum(i["total"] for i in invoices if i["status"] in ("outstanding", "overdue")),
         "invoices": invoices,
     }
 
@@ -255,36 +486,100 @@ async def list_portal_invoices(
 @router.get("/invoices/{invoice_id}")
 async def get_portal_invoice(
     invoice_id: str,
+    request: Request,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Return a single invoice detail."""
-    invoice = next((i for i in DEMO_INVOICES if i["invoice_id"] == invoice_id), None)
-    if not invoice:
+    if settings.portal_demo_mode:
+        invoice = next((i for i in DEMO_INVOICES if i["invoice_id"] == invoice_id), None)
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        return invoice
+
+    customer = await _resolve_customer(request, db, org_id)
+
+    try:
+        order_uuid = uuid.UUID(invoice_id)
+    except ValueError:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    return invoice
+
+    # Invoice ID == Order ID in MVP schema; enforce org + customer scope
+    result = await db.execute(
+        select(Order).where(
+            Order.id == order_uuid,
+            Order.organization_id == org_id,
+            Order.customer_id == customer.id,
+        )
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    subtotal = float(order.total) / 1.1
+    gst = float(order.total) - subtotal
+    inv_status = "paid" if order.status in ("delivered", "shipped", "completed") else "outstanding"
+
+    return {
+        "invoice_id": str(order.id),
+        "invoice_number": f"INV-{order.order_number.removeprefix('ORD-')}",
+        "order_number": order.order_number,
+        "invoice_date": order.order_date.date().isoformat(),
+        "due_date": None,
+        "status": inv_status,
+        "subtotal": round(subtotal, 2),
+        "gst": round(gst, 2),
+        "total": float(order.total),
+        "paid_at": order.shipped_date.isoformat() if order.shipped_date and inv_status == "paid" else None,
+        "payment_method": None,
+    }
 
 
 @router.get("/certifications")
 async def list_portal_certifications(
+    request: Request,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
-    """Return the customer's IICRC certification status."""
-    active = [c for c in DEMO_CERTIFICATIONS if c["status"] == "active"]
-    expired = [c for c in DEMO_CERTIFICATIONS if c["status"] == "expired"]
-    expiring_soon = [c for c in active if c["days_until_expiry"] <= 60]
+    """Return the customer's IICRC certification status.
+
+    NOTE: The certification_models table (TechnicianCertification) links to
+    contractors, not to portal customers. Until that schema is extended to
+    reference customer_id this endpoint returns an empty list in live mode
+    and falls back to demo data only when PORTAL_DEMO_MODE=true.
+    """
+    if settings.portal_demo_mode:
+        active = [c for c in DEMO_CERTIFICATIONS if c["status"] == "active"]
+        expired = [c for c in DEMO_CERTIFICATIONS if c["status"] == "expired"]
+        expiring_soon = [c for c in active if c["days_until_expiry"] <= 60]
+        return {
+            "customer_id": _DEMO_CUSTOMER_ID,
+            "total": len(DEMO_CERTIFICATIONS),
+            "active_count": len(active),
+            "expired_count": len(expired),
+            "expiring_soon_count": len(expiring_soon),
+            "certifications": DEMO_CERTIFICATIONS,
+        }
+
+    # Live mode: resolve customer (auth + org scope enforced), return empty list
+    # until TechnicianCertification is linked to Customer.
+    customer = await _resolve_customer(request, db, org_id)
+
     return {
-        "customer_id": _DEMO_CUSTOMER_ID,
-        "total": len(DEMO_CERTIFICATIONS),
-        "active_count": len(active),
-        "expired_count": len(expired),
-        "expiring_soon_count": len(expiring_soon),
-        "certifications": DEMO_CERTIFICATIONS,
+        "customer_id": str(customer.id),
+        "total": 0,
+        "active_count": 0,
+        "expired_count": 0,
+        "expiring_soon_count": 0,
+        "certifications": [],
     }
 
 
 @router.post("/service-requests", status_code=201)
 async def create_service_request(
     body: ServiceRequestCreate,
+    request: Request,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Log a warranty claim or service booking."""
@@ -293,10 +588,34 @@ async def create_service_request(
             status_code=400,
             detail="request_type must be warranty_claim, service_booking, or general_inquiry",
         )
+
+    if settings.portal_demo_mode:
+        request_id = f"sr-{uuid.uuid4().hex[:8]}"
+        record: dict[str, Any] = {
+            "request_id": request_id,
+            "customer_id": _DEMO_CUSTOMER_ID,
+            "order_id": body.order_id,
+            "product_sku": body.product_sku,
+            "request_type": body.request_type,
+            "description": body.description,
+            "preferred_contact": body.preferred_contact,
+            "status": "open",
+            "created_at": datetime.now(UTC).isoformat(),
+            "reference_number": f"SR-{request_id.upper()}",
+        }
+        DEMO_SERVICE_REQUESTS.append(record)
+        return {
+            "message": "Service request logged. Our team will contact you within 1 business day.",
+            **record,
+        }
+
+    # Live mode: resolve customer (auth + org scope enforced)
+    customer = await _resolve_customer(request, db, org_id)
+
     request_id = f"sr-{uuid.uuid4().hex[:8]}"
     record = {
         "request_id": request_id,
-        "customer_id": _DEMO_CUSTOMER_ID,
+        "customer_id": str(customer.id),
         "order_id": body.order_id,
         "product_sku": body.product_sku,
         "request_type": body.request_type,
@@ -306,7 +625,16 @@ async def create_service_request(
         "created_at": datetime.now(UTC).isoformat(),
         "reference_number": f"SR-{request_id.upper()}",
     }
-    DEMO_SERVICE_REQUESTS.append(record)
+
+    logger.info(
+        "Portal service request created",
+        customer_id=str(customer.id),
+        org_id=str(org_id),
+        request_type=body.request_type,
+        reference_number=record["reference_number"],
+    )
+
+    # TODO: Persist to ServiceRequest table once schema is wired
     return {
         "message": "Service request logged. Our team will contact you within 1 business day.",
         **record,
@@ -315,11 +643,23 @@ async def create_service_request(
 
 @router.get("/service-requests")
 async def list_service_requests(
+    request: Request,
+    org_id: CurrentOrganization,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> dict:
     """Return the customer's service request history."""
+    if settings.portal_demo_mode:
+        return {
+            "customer_id": _DEMO_CUSTOMER_ID,
+            "total": len(DEMO_SERVICE_REQUESTS),
+            "requests": DEMO_SERVICE_REQUESTS,
+        }
+
+    customer = await _resolve_customer(request, db, org_id)
+
+    # TODO: Query ServiceRequest table once schema is wired to Customer
     return {
-        "customer_id": _DEMO_CUSTOMER_ID,
-        "total": len(DEMO_SERVICE_REQUESTS),
-        "requests": DEMO_SERVICE_REQUESTS,
+        "customer_id": str(customer.id),
+        "total": 0,
+        "requests": [],
     }
