@@ -7,13 +7,16 @@ Provides tracking and management for:
 - Carrier webhook integration for tracking updates
 """
 
+import hashlib
+import hmac
+import json
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -668,3 +671,65 @@ async def outbound_tracking_webhook(
     await db.commit()
 
     return {"status": "success", "message": "Tracking event recorded"}
+
+
+# Generic shipping webhook router (no auth dependency — carrier-signed)
+_webhook_router = APIRouter(prefix="/api/webhooks", tags=["Shipping Webhooks"])
+
+
+@_webhook_router.post("/shipping")
+async def shipping_webhook(
+    body: bytes = Body(...),
+    x_shipment_signature: str | None = Header(None),
+    x_shipment_provider: str | None = Header(None, alias="x-shipment-provider"),
+    db: AsyncSession = Depends(get_async_db),
+) -> dict:
+    """
+    Generic shipping webhook with HMAC-SHA256 signature verification.
+
+    Carriers POST delivery/return events here. The endpoint verifies the
+    signature against SHIPPING_WEBHOOK_SECRET before processing.
+    """
+    secret = os.getenv("SHIPPING_WEBHOOK_SECRET", "")
+    if not secret or not x_shipment_signature:
+        logger.warning("Shipping webhook rejected: missing secret or signature")
+        raise HTTPException(status_code=401, detail="Missing webhook signature")
+
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, x_shipment_signature):
+        logger.warning("Shipping webhook rejected: invalid signature", provider=x_shipment_provider)
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    event_type: str = payload.get("event_type", "")
+    tracking_number: str = payload.get("tracking_number", "")
+
+    logger.info("Shipping webhook received", event_type=event_type, tracking_number=tracking_number, provider=x_shipment_provider)
+
+    if event_type in ("delivered", "returned"):
+        # Try outbound first, then inbound
+        result = await db.execute(select(OutboundShipment).where(OutboundShipment.tracking_number == tracking_number))
+        shipment = result.scalar_one_or_none()
+
+        if shipment is None:
+            inbound_result = await db.execute(select(InboundShipment).where(InboundShipment.tracking_number == tracking_number))
+            shipment = inbound_result.scalar_one_or_none()
+
+        if shipment is not None:
+            shipment.status = event_type
+            if event_type == "delivered":
+                shipment.actual_delivery_date = datetime.now(UTC)
+            await db.commit()
+            logger.info("Shipment updated via webhook", tracking_number=tracking_number, status=event_type)
+        else:
+            logger.warning("Shipping webhook: tracking number not found", tracking_number=tracking_number)
+
+    return {"received": True, "event_type": event_type}
+
+
+# Export the sub-router so the app can mount it alongside the main router
+webhook_router = _webhook_router

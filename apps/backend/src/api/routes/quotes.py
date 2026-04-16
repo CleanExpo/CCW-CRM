@@ -2,12 +2,13 @@
 
 Performance optimized with cache invalidation on writes.
 """
-from datetime import UTC, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -89,16 +90,32 @@ async def list_quotes(
     search: str | None = None,
     status: str | None = None,
     customer_id: UUID | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    min_amount: Decimal | None = None,
+    max_amount: Decimal | None = None,
+    sort_by: str = Query("created_at", pattern="^(created_at|total|valid_until)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     db: AsyncSession = Depends(get_async_db),
 ):
     """List quotes with pagination and filters."""
-    # Build query
-    query = select(QuoteModel).options(selectinload(QuoteModel.quote_items))
+    # Build query with customer join for name search
+    query = (
+        select(QuoteModel)
+        .options(selectinload(QuoteModel.quote_items))
+        .join(CustomerModel, QuoteModel.customer_id == CustomerModel.id, isouter=True)
+    )
 
     # Apply filters
     if search:
         search_filter = f"%{search}%"
-        query = query.where(QuoteModel.quote_number.ilike(search_filter))
+        query = query.where(
+            or_(
+                QuoteModel.quote_number.ilike(search_filter),
+                CustomerModel.company_name.ilike(search_filter),
+                CustomerModel.contact_name.ilike(search_filter),
+            )
+        )
 
     if status:
         query = query.where(QuoteModel.status == status)
@@ -106,14 +123,29 @@ async def list_quotes(
     if customer_id:
         query = query.where(QuoteModel.customer_id == customer_id)
 
+    if date_from:
+        query = query.where(func.date(QuoteModel.created_at) >= date_from)
+
+    if date_to:
+        query = query.where(func.date(QuoteModel.created_at) <= date_to)
+
+    if min_amount is not None:
+        query = query.where(QuoteModel.total >= min_amount)
+
+    if max_amount is not None:
+        query = query.where(QuoteModel.total <= max_amount)
+
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
     result = await db.execute(count_query)
     total = result.scalar_one()
 
+    # Apply sort
+    sort_col = getattr(QuoteModel, sort_by, QuoteModel.created_at)
+    query = query.order_by(sort_col.desc() if sort_order == "desc" else sort_col.asc())
+
     # Apply pagination
     query = query.offset((page - 1) * page_size).limit(page_size)
-    query = query.order_by(QuoteModel.created_at.desc())
 
     # Execute query
     result = await db.execute(query)
@@ -497,6 +529,53 @@ async def update_quote_status(
         for item in quote.quote_items
     ]
     return quote_dict
+
+
+@router.post("/expire-overdue", dependencies=[], status_code=200)
+async def expire_overdue_quotes(db: AsyncSession = Depends(get_async_db)):
+    """Expire all sent quotes whose valid_until date is in the past.
+
+    No auth required — intended for scheduler/cron calls.
+    """
+    today = datetime.now(UTC).date()
+    stmt = (
+        update(QuoteModel)
+        .where(QuoteModel.status == "sent")
+        .where(func.date(QuoteModel.valid_until) < today)
+        .values(status="expired")
+    )
+    result = await db.execute(stmt)
+    await db.commit()
+    expired_count = result.rowcount
+    if expired_count:
+        await invalidate_quote_caches()
+    return {"expired": expired_count}
+
+
+@router.get("/expiring-soon")
+async def get_expiring_soon_quotes(
+    days: int = Query(7, ge=1, le=365),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Return sent quotes expiring within the next N days (default 7)."""
+    today = datetime.now(UTC).date()
+    cutoff = today + timedelta(days=days)
+    query = (
+        select(QuoteModel)
+        .options(selectinload(QuoteModel.quote_items))
+        .where(QuoteModel.status == "sent")
+        .where(func.date(QuoteModel.valid_until) >= today)
+        .where(func.date(QuoteModel.valid_until) <= cutoff)
+        .order_by(QuoteModel.valid_until.asc())
+    )
+    result = await db.execute(query)
+    quotes = result.scalars().all()
+    items = []
+    for q in quotes:
+        quote_dict = Quote.model_validate(q).model_dump()
+        quote_dict["items"] = [QuoteItem.model_validate(i).model_dump() for i in q.quote_items]
+        items.append(quote_dict)
+    return {"items": items, "count": len(items), "days": days}
 
 
 @router.post("/generate", response_model=Quote, status_code=201)

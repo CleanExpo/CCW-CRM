@@ -2,16 +2,52 @@
 
 Provides read-only visibility into agent execution stats, task history,
 performance trends, and learning insights for the Agents Dashboard.
+Also exposes POST /execute for ad-hoc agent dispatch via ProtocolMixin.
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import structlog
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+
+from src.api.deps import get_current_user
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/agents", tags=["Agent Monitoring"])
+
+# ---------------------------------------------------------------------------
+# Agent class registry — maps lowercase agent name → importable class path.
+# Agents are imported lazily inside the execute endpoint to avoid circular
+# imports at module load time.
+# ---------------------------------------------------------------------------
+_AGENT_REGISTRY: dict[str, tuple[str, str]] = {
+    # key: lowercased class name  →  (module_path, ClassName)
+    "chatassistant":             ("src.ai.agents.chat_assistant", "ChatAssistant"),
+    "contentgenerator":          ("src.ai.agents.content_generator", "ContentGenerator"),
+    "insightsagent":             ("src.ai.agents.insights_agent", "InsightsAgent"),
+    "anomalydetectionagent":     ("src.ai.agents.specialized.anomaly_detection_agent", "AnomalyDetectionAgent"),
+    "autonomousopsagent":        ("src.ai.agents.specialized.autonomous_ops_agent", "AutonomousOpsAgent"),
+    "cin7anomalyagent":          ("src.ai.agents.specialized.cin7_anomaly_agent", "Cin7AnomalyAgent"),
+    "cin7forecastingagent":      ("src.ai.agents.specialized.cin7_forecasting_agent", "Cin7ForecastingAgent"),
+    "cin7shadowagent":           ("src.ai.agents.specialized.cin7_shadow_agent", "Cin7ShadowAgent"),
+    "developmentagent":          ("src.ai.agents.specialized.development_agent", "DevelopmentAgent"),
+    "documentparseragent":       ("src.ai.agents.specialized.document_parser_agent", "DocumentParserAgent"),
+    "formautofillagent":         ("src.ai.agents.specialized.form_autofill_agent", "FormAutoFillAgent"),
+    "inventoryforecastingagent": ("src.ai.agents.specialized.inventory_forecasting_agent", "InventoryForecastingAgent"),
+    "marketingagent":            ("src.ai.agents.specialized.marketing_agent", "MarketingAgent"),
+    "pricingagent":              ("src.ai.agents.specialized.pricing_agent", "PricingAgent"),
+    "procurementagent":          ("src.ai.agents.specialized.procurement_agent", "ProcurementAgent"),
+    "projectintelligenceagent":  ("src.ai.agents.specialized.project_intelligence_agent", "ProjectIntelligenceAgent"),
+    "queryagent":                ("src.ai.agents.specialized.query_agent", "QueryAgent"),
+    "recommendationagent":       ("src.ai.agents.specialized.recommendation_agent", "RecommendationAgent"),
+    "searchagent":               ("src.ai.agents.specialized.search_agent", "SearchAgent"),
+    "staffcopilotagent":         ("src.ai.agents.specialized.staff_copilot_agent", "StaffCopilotAgent"),
+    "taskexecutoragent":         ("src.ai.agents.specialized.task_executor_agent", "TaskExecutorAgent"),
+    "testingagent":              ("src.ai.agents.specialized.testing_agent", "TestingAgent"),
+}
 
 
 def _get_collector():
@@ -216,3 +252,52 @@ async def get_agent_insights() -> dict:
             })
 
     return {"insights": insights}
+
+
+# ─── Protocol execute ─────────────────────────────────────────────────────────
+
+class AgentExecuteRequest(BaseModel):
+    agent_name: str
+    task: dict[str, Any]
+
+
+@router.post("/execute", dependencies=[Depends(get_current_user)])
+async def execute_agent(body: AgentExecuteRequest) -> dict:
+    """Dispatch a task to any registered agent via ProtocolMixin.
+
+    Body: {"agent_name": "AnomalyDetectionAgent", "task": {"action": "execute", "params": {...}}}
+    The agent_name lookup is case-insensitive.
+    """
+    import importlib
+
+    from src.ai.agents.protocol_mixin import ProtocolMixin
+
+    key = body.agent_name.lower().replace(" ", "").replace("_", "")
+    entry = _AGENT_REGISTRY.get(key)
+    if entry is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Agent '{body.agent_name}' not found. "
+                   f"Available: {sorted(_AGENT_REGISTRY.keys())}",
+        )
+
+    module_path, class_name = entry
+    try:
+        module = importlib.import_module(module_path)
+        agent_cls = getattr(module, class_name)
+    except (ImportError, AttributeError) as exc:
+        logger.error("Failed to import agent", agent=body.agent_name, error=str(exc))
+        raise HTTPException(status_code=500, detail=f"Could not load agent: {exc}") from exc
+
+    # Dynamically mix in ProtocolMixin if the class doesn't already have it
+    if not issubclass(agent_cls, ProtocolMixin):
+        agent_cls = type(class_name, (ProtocolMixin, agent_cls), {})
+
+    try:
+        instance = agent_cls()
+    except Exception as exc:
+        logger.error("Failed to instantiate agent", agent=body.agent_name, error=str(exc))
+        raise HTTPException(status_code=500, detail=f"Could not instantiate agent: {exc}") from exc
+
+    result = await instance.protocol_execute(body.task)
+    return result

@@ -13,6 +13,7 @@ from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
@@ -29,6 +30,7 @@ from src.db.pos_models import (
 )
 from src.services.sse_service import sse_service
 
+logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/pos", tags=["POS"])
 
 
@@ -919,3 +921,129 @@ async def bulk_create_xero_invoices(
             failed=0,
             errors=[{"error": f"Failed to create Xero invoices: {str(e)}"}],
         )
+
+
+# ============================================================
+# REFUND ENDPOINT
+# ============================================================
+
+
+class POSRefundRequest(BaseModel):
+    """Request body for issuing a POS refund."""
+
+    amount: Decimal = Field(..., gt=0)
+    reason: str = Field(..., min_length=3, max_length=500)
+    push_to_xero: bool = True
+
+
+@router.post(
+    "/transactions/{transaction_id}/refund",
+    response_model=POSTransactionResponse,
+    status_code=201,
+)
+async def refund_pos_transaction(
+    transaction_id: UUID,
+    data: POSRefundRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> POSTransactionResponse:
+    """Issue a refund for a captured POS sale and optionally push a Xero credit note."""
+    # 1. Fetch original transaction
+    result = await db.execute(select(POSTransaction).where(POSTransaction.id == transaction_id))
+    original = result.scalar_one_or_none()
+    if not original:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # 2. Validate transaction type and status
+    if original.transaction_type != "sale":
+        raise HTTPException(status_code=422, detail="Only 'sale' transactions can be refunded")
+    if original.payment_status not in ("captured", "completed"):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Transaction payment_status must be 'captured' or 'completed', got '{original.payment_status}'",
+        )
+
+    # 3. Validate refund amount
+    if data.amount > original.amount:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Refund amount {data.amount} exceeds original transaction amount {original.amount}",
+        )
+
+    # 4. Create refund transaction
+    refund_txn = POSTransaction(
+        transaction_number=f"REF-{original.transaction_number}",
+        transaction_type="refund",
+        amount=data.amount,
+        payment_method=original.payment_method,
+        payment_status="refunded",
+        location_code=original.location_code,
+        terminal_id=original.terminal_id,
+        order_id=original.order_id,
+        currency=original.currency,
+        reconciliation_status="pending",
+    )
+    db.add(refund_txn)
+
+    # 5. Update original transaction status
+    original.payment_status = "refunded"
+
+    # 6. Commit
+    await db.commit()
+    await db.refresh(refund_txn)
+
+    # 7. Optionally push Xero credit note (non-blocking)
+    if data.push_to_xero and original.xero_invoice_id is not None:
+        try:
+            from src.integrations.xero.auth import XeroAuth
+            from src.integrations.xero.client import XeroClient
+            from src.integrations.xero.credit_notes import push_credit_note
+
+            organization_id = getattr(current_user, "organization_id", None)
+            if organization_id:
+                xero_auth = XeroAuth()
+                connection = await xero_auth.get_active_connection(db, organization_id)
+                if connection:
+                    xero_client = XeroClient(
+                        access_token=connection.access_token,
+                        tenant_id=connection.tenant_id,
+                    )
+                    try:
+                        await push_credit_note(
+                            xero_client=xero_client,
+                            contact_id=original.xero_invoice_id,
+                            amount=data.amount,
+                            description=data.reason,
+                            reference=refund_txn.transaction_number,
+                        )
+                    finally:
+                        await xero_client.close()
+        except Exception as exc:
+            logger.warning(
+                "Failed to push credit note to Xero (refund still created)",
+                transaction_id=str(original.id),
+                refund_transaction_number=refund_txn.transaction_number,
+                error=str(exc),
+            )
+
+    # 8. Return refund transaction
+    return POSTransactionResponse(
+        id=refund_txn.id,
+        transaction_number=refund_txn.transaction_number,
+        order_id=refund_txn.order_id,
+        terminal_id=refund_txn.terminal_id,
+        sales_staff_id=refund_txn.sales_staff_id,
+        location_code=refund_txn.location_code,
+        resolved_location_code=refund_txn.resolved_location_code,
+        transaction_type=refund_txn.transaction_type,
+        payment_method=refund_txn.payment_method,
+        amount=refund_txn.amount,
+        currency=refund_txn.currency,
+        payment_status=refund_txn.payment_status,
+        payment_gateway_ref=refund_txn.payment_gateway_ref,
+        reconciliation_status=refund_txn.reconciliation_status,
+        bank_statement_ref=refund_txn.bank_statement_ref,
+        xero_invoice_id=refund_txn.xero_invoice_id,
+        created_at=refund_txn.created_at,
+        updated_at=refund_txn.updated_at,
+    )
