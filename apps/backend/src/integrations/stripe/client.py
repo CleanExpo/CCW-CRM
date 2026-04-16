@@ -141,6 +141,7 @@ class StripeClient:
         price_id: str,
         trial_period_days: int | None = None,
         metadata: dict[str, Any] | None = None,
+        apply_au_gst: bool = False,
     ) -> Subscription:
         """Create a new subscription for a customer.
 
@@ -149,14 +150,27 @@ class StripeClient:
             price_id: Stripe price ID (identifies plan + interval)
             trial_period_days: Optional trial period in days
             metadata: Custom metadata (e.g., organization_id, tier)
+            apply_au_gst: If True, attach AU GST (10%) tax rate to line items
+                          via STRIPE_AU_GST_RATE_ID env var (UNI-1809).
 
         Returns:
             Stripe Subscription object
         """
+        # TODO UNI-1809: AU GST — add tax_rates=[AU_GST_RATE_ID] from env STRIPE_AU_GST_RATE_ID
+        # When apply_au_gst is True (Australian customers), Stripe will collect 10% GST
+        # on top of the subscription price and remit to the ATO.
+        # Requires STRIPE_AU_GST_RATE_ID to be set to a pre-created Stripe Tax Rate ID
+        # (Type: GST, Percentage: 10%, Country: AU, Inclusive: false).
+        gst_rate_id = os.getenv("STRIPE_AU_GST_RATE_ID") if apply_au_gst else None
+
         try:
-            subscription_data = {
+            item_params: dict[str, Any] = {"price": price_id}
+            if gst_rate_id:
+                item_params["tax_rates"] = [gst_rate_id]
+
+            subscription_data: dict[str, Any] = {
                 "customer": customer_id,
-                "items": [{"price": price_id}],
+                "items": [item_params],
                 "metadata": metadata or {},
             }
 
@@ -235,6 +249,11 @@ class StripeClient:
             raise Exception(f"Failed to cancel subscription: {str(e)}")
 
     # Invoice Management
+    # UNI-1809: not yet implemented — Stripe Tax automatic collection pending.
+    # When Stripe Invoices / InvoiceItems are created for AU customers, set
+    # automatic_tax={"enabled": True} (requires Stripe Tax to be activated in the
+    # dashboard) OR pass tax_rates=[os.getenv("STRIPE_AU_GST_RATE_ID")] on each
+    # InvoiceItem. Both approaches require STRIPE_AU_GST_RATE_ID in Railway env.
 
     async def get_upcoming_invoice(self, customer_id: str) -> Invoice:
         """Retrieve the upcoming invoice for a customer."""

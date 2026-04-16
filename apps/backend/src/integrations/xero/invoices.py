@@ -224,17 +224,29 @@ class XeroInvoiceSync:
         Raises:
             XeroAPIError: If invoice creation fails
         """
+        # UNI-1831: Determine whether this customer receives GST on their invoice.
+        # B2C customers are consumers — they do not claim GST credits, so TaxType
+        # is omitted from their line items. B2B customers (default) get "OUTPUT2"
+        # (or "EXEMPTOUTPUT" for GST-exempt products per UNI-1808).
+        is_b2c = getattr(order.customer, "customer_type", "B2B") == "B2C"
+
         # Map order items to Xero line items
         line_items = []
         for item in order.order_items:
-            line_items.append(
-                {
-                    "description": f"{item.product.name} (SKU: {item.product.sku})",
-                    "quantity": float(item.quantity),
-                    "unit_amount": float(item.unit_price),
-                    "TaxType": "OUTPUT2",  # Australian GST on income (10%)
-                }
-            )
+            line_item: dict = {
+                "description": f"{item.product.name} (SKU: {item.product.sku})",
+                "quantity": float(item.quantity),
+                "unit_amount": float(item.unit_price),
+            }
+
+            if not is_b2c:
+                # UNI-1808: Use product-level GST flag to select Xero TaxType.
+                # is_gst_applicable=True  → "OUTPUT2"       (10% AU GST)
+                # is_gst_applicable=False → "EXEMPTOUTPUT"  (GST-exempt supply)
+                product_gst = getattr(item.product, "is_gst_applicable", True)
+                line_item["tax_type"] = "OUTPUT2" if product_gst else "EXEMPTOUTPUT"
+
+            line_items.append(line_item)
 
         # Set due date (default: 30 days from order date)
         due_date = order.order_date.date() + timedelta(days=30)

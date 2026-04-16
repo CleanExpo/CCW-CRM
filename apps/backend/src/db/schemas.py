@@ -2,6 +2,7 @@
 import html
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_serializer, field_validator, model_validator
@@ -62,6 +63,9 @@ class ProductBase(BaseModel):
     cost: Decimal | None = None
     stock: int = 0
     warehouse_location: str | None = None
+    # UNI-1808: GST applicability flag — True means 10% AU GST applies (Xero OUTPUT2).
+    # Set to False for GST-exempt items (e.g. certain medical equipment → EXEMPTOUTPUT).
+    is_gst_applicable: bool = True
     is_active: bool = True
 
 
@@ -77,6 +81,8 @@ class ProductUpdate(BaseModel):
     cost: Decimal | None = None
     stock: int | None = None
     warehouse_location: str | None = None
+    # UNI-1808: Allow updating GST applicability per product.
+    is_gst_applicable: bool | None = None
     is_active: bool | None = None
 
 
@@ -125,6 +131,10 @@ class CustomerBase(BaseModel):
     abn: str | None = None  # Australian Business Number (11 digits, no spaces)
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
+    # UNI-1831: B2B / B2C customer type.
+    # "B2B" (default) — business; receives tax invoices and can claim GST credits.
+    # "B2C" — consumer; TaxType omitted from Xero line items (no GST credit claims).
+    customer_type: Literal["B2B", "B2C"] = "B2B"
     is_active: bool = True
 
 
@@ -160,6 +170,8 @@ class CustomerUpdate(BaseModel):
     abn: str | None = None  # Australian Business Number (11 digits, no spaces)
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
+    # UNI-1831: Allow updating customer type (B2B / B2C).
+    customer_type: Literal["B2B", "B2C"] | None = None
     is_active: bool | None = None
 
     @field_validator(
