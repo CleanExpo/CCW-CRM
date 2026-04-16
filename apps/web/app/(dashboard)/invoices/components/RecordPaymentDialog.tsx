@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,27 +20,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { invoicesApi } from "@/lib/api/invoices";
-import { useToast } from "@/hooks/use-toast";
-import type { Invoice, InvoiceSummary, PaymentMethod } from "@/lib/types/invoices";
+} from '@/components/ui/select';
+import { invoicesApi } from '@/lib/api/invoices';
+import { useToast } from '@/hooks/use-toast';
+import type { Invoice, InvoiceSummary, PaymentMethod } from '@/lib/types/invoices';
 
 const paymentSchema = z.object({
-  amount: z.string().refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
-    "Amount must be greater than 0"
-  ),
-  payment_method: z.enum(["cash", "check", "bank_transfer", "credit_card", "other"] as const),
+  amount: z
+    .string()
+    .refine(
+      (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+      'Amount must be greater than 0'
+    ),
+  payment_method: z.enum(['cash', 'check', 'bank_transfer', 'credit_card', 'other'] as const),
   payment_date: z.string().optional(),
   reference_number: z.string().optional(),
   notes: z.string().optional(),
@@ -64,18 +66,17 @@ export function RecordPaymentDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const maxAmount = typeof invoice.amount_due === "string"
-    ? parseFloat(invoice.amount_due)
-    : invoice.amount_due;
+  const maxAmount =
+    typeof invoice.amount_due === 'string' ? parseFloat(invoice.amount_due) : invoice.amount_due;
 
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       amount: maxAmount.toString(),
-      payment_method: "credit_card",
-      payment_date: new Date().toISOString().split("T")[0],
-      reference_number: "",
-      notes: "",
+      payment_method: 'credit_card',
+      payment_date: new Date().toISOString().split('T')[0],
+      reference_number: '',
+      notes: '',
     },
   });
 
@@ -85,23 +86,23 @@ export function RecordPaymentDialog({
       await invoicesApi.recordPayment(invoice.id, {
         amount: parseFloat(data.amount),
         payment_method: data.payment_method as PaymentMethod,
-        payment_date: data.payment_date || new Date().toISOString().split("T")[0],
+        payment_date: data.payment_date || new Date().toISOString().split('T')[0],
         reference_number: data.reference_number || undefined,
         notes: data.notes || undefined,
       });
 
       toast({
-        title: "Payment recorded",
+        title: 'Payment recorded',
         description: `Payment of $${data.amount} has been recorded successfully`,
       });
 
       form.reset();
       onPaymentRecorded();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to record payment";
+      const message = error instanceof Error ? error.message : 'Failed to record payment';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -136,9 +137,7 @@ export function RecordPaymentDialog({
                       disabled={isLoading}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Maximum: ${maxAmount.toFixed(2)}
-                  </FormDescription>
+                  <FormDescription>Maximum: ${maxAmount.toFixed(2)}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -180,11 +179,7 @@ export function RecordPaymentDialog({
                 <FormItem>
                   <FormLabel>Payment Date</FormLabel>
                   <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      disabled={isLoading}
-                    />
+                    <Input type="date" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -238,7 +233,7 @@ export function RecordPaymentDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Recording..." : "Record Payment"}
+                {isLoading ? 'Recording...' : 'Record Payment'}
               </Button>
             </DialogFooter>
           </form>

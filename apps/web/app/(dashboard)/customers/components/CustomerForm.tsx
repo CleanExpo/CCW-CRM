@@ -191,7 +191,21 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           <DraftRecoveryAlert
             savedAt={draftMetadata.savedAt}
             onRestore={loadDraft}
-            onDiscard={clearDraft}
+            onDiscard={() => {
+              clearDraft();
+              form.reset({
+                customer_number: '',
+                company_name: '',
+                contact_name: '',
+                email: '',
+                phone: '',
+                address: '',
+                city: '',
+                state: '',
+                postcode: '',
+                is_active: true,
+              });
+            }}
           />
         )}
 

@@ -2,14 +2,15 @@
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from src.ai.agents.specialized import InventoryForecastingAgent
+from src.api.deps import get_current_user
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/inventory-forecast", tags=["AI Inventory Forecasting"])
+router = APIRouter(prefix="/inventory-forecast", tags=["AI Inventory Forecasting"], dependencies=[Depends(get_current_user)])
 
 
 # Request Models

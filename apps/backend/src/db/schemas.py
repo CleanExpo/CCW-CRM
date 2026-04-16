@@ -1,4 +1,5 @@
 """Pydantic schemas for ERP API."""
+import html
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from uuid import UUID
@@ -126,8 +127,40 @@ class CustomerBase(BaseModel):
     is_active: bool = True
 
 
+AU_STATES = {"NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"}
+
+
 class CustomerCreate(CustomerBase):
-    pass
+    @field_validator(
+        "customer_number",
+        "company_name",
+        "contact_name",
+        "phone",
+        "address",
+        "city",
+        "state",
+        "postcode",
+        mode="before",
+    )
+    @classmethod
+    def sanitise_string_fields(cls, v: str | None) -> str | None:
+        """Escape HTML/XSS payloads and strip whitespace on input."""
+        if v is None or not isinstance(v, str):
+            return v
+        return html.escape(v.strip())
+
+    @field_validator("state", mode="after")
+    @classmethod
+    def validate_au_state(cls, v: str | None) -> str | None:
+        """Uppercase and validate AU state/territory code."""
+        if v is None:
+            return v
+        upper = v.upper()
+        if upper not in AU_STATES:
+            raise ValueError(
+                f"Invalid AU state: {v}. Must be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT"
+            )
+        return upper
 
 
 class CustomerUpdate(BaseModel):
@@ -142,6 +175,36 @@ class CustomerUpdate(BaseModel):
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     is_active: bool | None = None
+
+    @field_validator(
+        "company_name",
+        "contact_name",
+        "phone",
+        "address",
+        "city",
+        "state",
+        "postcode",
+        mode="before",
+    )
+    @classmethod
+    def sanitise_string_fields(cls, v: str | None) -> str | None:
+        """Escape HTML/XSS payloads and strip whitespace."""
+        if v is None or not isinstance(v, str):
+            return v
+        return html.escape(v.strip())
+
+    @field_validator("state", mode="after")
+    @classmethod
+    def validate_au_state(cls, v: str | None) -> str | None:
+        """Uppercase and validate AU state/territory code."""
+        if v is None:
+            return v
+        upper = v.upper()
+        if upper not in AU_STATES:
+            raise ValueError(
+                f"Invalid AU state: {v}. Must be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT"
+            )
+        return upper
 
 
 class Customer(CustomerBase):

@@ -21,32 +21,40 @@ allowed-tools:
 
 Use these exact values — no Tailwind classes in Remotion scenes (inline styles only).
 
-| Role | Value | Use For |
-|------|-------|---------|
-| Dark navy (primary bg) | `#0f172a` | Main scene backgrounds |
-| Deep blue | `#1e3a5f` | Gradient end, card backs |
-| Brand blue | `#3b82f6` | CTA buttons, active states, highlights |
-| Purple accent | `#8b5cf6` | Decorative accents, gradient midpoint |
-| Cyan accent | `#06b6d4` | Gradient tail, data visualisation |
-| White text | `#ffffff` | H1/H2 headings on dark bg |
-| Muted text | `#94a3b8` | Subtitles, dates, metadata |
-| Dim text | `#475569` | Session IDs, captions, fine print |
-| Light blue highlight | `#60a5fa` | Branded eyebrow labels (e.g. "CCW ERP") |
-| Success green | `#22c55e` | Tick icons, positive status |
-| Warning amber | `#f59e0b` | In-progress indicators |
-| Error red | `#ef4444` | Failure states (use sparingly) |
+| Role                   | Value     | Use For                                 |
+| ---------------------- | --------- | --------------------------------------- |
+| Dark navy (primary bg) | `#0f172a` | Main scene backgrounds                  |
+| Deep blue              | `#1e3a5f` | Gradient end, card backs                |
+| Brand blue             | `#3b82f6` | CTA buttons, active states, highlights  |
+| Purple accent          | `#8b5cf6` | Decorative accents, gradient midpoint   |
+| Cyan accent            | `#06b6d4` | Gradient tail, data visualisation       |
+| White text             | `#ffffff` | H1/H2 headings on dark bg               |
+| Muted text             | `#94a3b8` | Subtitles, dates, metadata              |
+| Dim text               | `#475569` | Session IDs, captions, fine print       |
+| Light blue highlight   | `#60a5fa` | Branded eyebrow labels (e.g. "CCW ERP") |
+| Success green          | `#22c55e` | Tick icons, positive status             |
+| Warning amber          | `#f59e0b` | In-progress indicators                  |
+| Error red              | `#ef4444` | Failure states (use sparingly)          |
 
 **Standard background gradient:**
+
 ```tsx
-background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)'
+background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)';
 ```
 
 **Brand accent bar** (always pin to bottom of scene):
+
 ```tsx
-<div style={{
-  position: 'absolute', bottom: 0, left: 0, right: 0, height: 4,
-  background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4)',
-}} />
+<div
+  style={{
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4)',
+  }}
+/>
 ```
 
 ---
@@ -91,12 +99,10 @@ const itemOpacity = (index: number) =>
 ```tsx
 // Start fadeout 1 second before scene ends — pass durationInFrames as prop or via useVideoConfig
 const { durationInFrames, fps } = useVideoConfig();
-const fadeOut = interpolate(
-  frame,
-  [durationInFrames - fps, durationInFrames],
-  [1, 0],
-  { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
-);
+const fadeOut = interpolate(frame, [durationInFrames - fps, durationInFrames], [1, 0], {
+  extrapolateLeft: 'clamp',
+  extrapolateRight: 'clamp',
+});
 ```
 
 ### Progress Bar (timed fill)
@@ -112,7 +118,7 @@ const progressWidth = interpolate(frame, [0, durationInFrames], [0, 100], {
 
 ```tsx
 const scale = interpolate(
-  frame % (fps * 2),          // repeat every 2 seconds
+  frame % (fps * 2), // repeat every 2 seconds
   [0, fps * 0.1, fps * 0.2],
   [1, 1.05, 1],
   { extrapolateRight: 'clamp' }
@@ -200,18 +206,18 @@ export const [SceneName]: React.FC<[SceneName]Props> = ({ /* props */ }) => {
 
 All CCW videos run at **30fps**. Use these frame counts for scene durations.
 
-| Duration | Frames | Use for |
-|----------|--------|---------|
-| 1s | 30 | Quick transition, label pop |
-| 2s | 60 | Short callout card |
-| 3s | 90 | Title card, section intro |
-| 4s | 120 | Feature highlight |
-| 5s | 150 | Standard scene (default) |
-| 7s | 210 | Complex scene with multiple steps |
-| 10s | 300 | Deep walkthrough, multi-panel |
-| 15s | 450 | Full UI demo segment |
-| 20s | 600 | Extended demo with narration |
-| 30s | 900 | Long sequence (use sparingly) |
+| Duration | Frames | Use for                           |
+| -------- | ------ | --------------------------------- |
+| 1s       | 30     | Quick transition, label pop       |
+| 2s       | 60     | Short callout card                |
+| 3s       | 90     | Title card, section intro         |
+| 4s       | 120    | Feature highlight                 |
+| 5s       | 150    | Standard scene (default)          |
+| 7s       | 210    | Complex scene with multiple steps |
+| 10s      | 300    | Deep walkthrough, multi-panel     |
+| 15s      | 450    | Full UI demo segment              |
+| 20s      | 600    | Extended demo with narration      |
+| 30s      | 900    | Long sequence (use sparingly)     |
 
 **Fade-in ramp:** `fps * 0.5` (15 frames = 0.5s) — standard for most scenes.
 **Stagger delay per item:** `fps * 0.15` (4-5 frames) — feels snappy, not laggy.
@@ -223,19 +229,20 @@ All CCW videos run at **30fps**. Use these frame counts for scene durations.
 
 All type is set with `fontFamily: 'Inter, sans-serif'`.
 
-| Element | fontSize | fontWeight | color |
-|---------|----------|------------|-------|
-| Display H1 (hero title) | 72–80 | 800 | `#ffffff` |
-| Section H1 | 56–64 | 800 | `#ffffff` |
-| H2 subheading | 36–44 | 700 | `#ffffff` |
-| H3 card title | 24–28 | 600 | `#ffffff` |
-| Eyebrow / label | 16–20 | 600 | `#60a5fa` |
-| Body / subtitle | 20–24 | 400 | `#94a3b8` |
-| Caption / meta | 14–16 | 400 | `#475569` |
-| Monospace (IDs) | 14 | 400 | `#475569`, fontFamily: `monospace` |
-| Stat number (large) | 64–96 | 800 | `#3b82f6` or `#ffffff` |
+| Element                 | fontSize | fontWeight | color                              |
+| ----------------------- | -------- | ---------- | ---------------------------------- |
+| Display H1 (hero title) | 72–80    | 800        | `#ffffff`                          |
+| Section H1              | 56–64    | 800        | `#ffffff`                          |
+| H2 subheading           | 36–44    | 700        | `#ffffff`                          |
+| H3 card title           | 24–28    | 600        | `#ffffff`                          |
+| Eyebrow / label         | 16–20    | 600        | `#60a5fa`                          |
+| Body / subtitle         | 20–24    | 400        | `#94a3b8`                          |
+| Caption / meta          | 14–16    | 400        | `#475569`                          |
+| Monospace (IDs)         | 14       | 400        | `#475569`, fontFamily: `monospace` |
+| Stat number (large)     | 64–96    | 800        | `#3b82f6` or `#ffffff`             |
 
 **Letter spacing:**
+
 - Eyebrow labels: `letterSpacing: 6–8`
 - Normal body text: `letterSpacing: 0`
 - ALL CAPS labels: `letterSpacing: 4`
@@ -247,11 +254,10 @@ All type is set with `fontFamily: 'Inter, sans-serif'`.
 ### Full-bleed centre card (most common)
 
 ```tsx
-<AbsoluteFill style={{ ...bgGradient, display: 'flex', alignItems: 'center',
-  justifyContent: 'center' }}>
-  <div style={{ maxWidth: 900, textAlign: 'center', padding: '0 80px' }}>
-    {/* content */}
-  </div>
+<AbsoluteFill
+  style={{ ...bgGradient, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+>
+  <div style={{ maxWidth: 900, textAlign: 'center', padding: '0 80px' }}>{/* content */}</div>
 </AbsoluteFill>
 ```
 
@@ -260,13 +266,27 @@ All type is set with `fontFamily: 'Inter, sans-serif'`.
 ```tsx
 <AbsoluteFill style={{ ...bgGradient, display: 'flex', flexDirection: 'row' }}>
   {/* Left: text */}
-  <div style={{ flex: 1, display: 'flex', flexDirection: 'column',
-    justifyContent: 'center', padding: '80px 60px 80px 120px' }}>
+  <div
+    style={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      padding: '80px 60px 80px 120px',
+    }}
+  >
     {/* headings, bullets */}
   </div>
   {/* Right: screenshot / diagram / icon */}
-  <div style={{ flex: 1, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', padding: '80px 120px 80px 60px' }}>
+  <div
+    style={{
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '80px 120px 80px 60px',
+    }}
+  >
     {/* visual */}
   </div>
 </AbsoluteFill>
@@ -275,16 +295,27 @@ All type is set with `fontFamily: 'Inter, sans-serif'`.
 ### 2-column card grid
 
 ```tsx
-<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40,
-  padding: '0 120px', width: '100%', maxWidth: 1400 }}>
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 40,
+    padding: '0 120px',
+    width: '100%',
+    maxWidth: 1400,
+  }}
+>
   {items.map((item, i) => (
-    <div key={i} style={{
-      background: 'rgba(255,255,255,0.05)',
-      borderRadius: 16,
-      padding: '40px',
-      border: '1px solid rgba(255,255,255,0.08)',
-      opacity: itemOpacity(i),
-    }}>
+    <div
+      key={i}
+      style={{
+        background: 'rgba(255,255,255,0.05)',
+        borderRadius: 16,
+        padding: '40px',
+        border: '1px solid rgba(255,255,255,0.08)',
+        opacity: itemOpacity(i),
+      }}
+    >
       {/* card content */}
     </div>
   ))}
@@ -309,11 +340,13 @@ All type is set with `fontFamily: 'Inter, sans-serif'`.
 ## How to Add a New Scene to an Existing Composition
 
 **Step 1:** Create the scene file.
+
 ```
 video/remotion/src/scenes/[video-name]/[SceneName]Scene.tsx
 ```
 
 **Step 2:** Calculate frame offset in the parent composition file (e.g. `OnboardingVideo.tsx`):
+
 ```tsx
 import { Sequence } from 'remotion';
 import { MyNewScene } from './scenes/[video-name]/MyNewScene';
@@ -321,12 +354,13 @@ import { MyNewScene } from './scenes/[video-name]/MyNewScene';
 // Example: scene starts at frame 600, runs for 150 frames (5s)
 <Sequence from={600} durationInFrames={150}>
   <MyNewScene someProp="value" />
-</Sequence>
+</Sequence>;
 ```
 
 **Step 3:** Update the composition's `durationInFrames` total in `Root.tsx` if the video got longer.
 
 **Step 4:** Preview in Remotion Studio:
+
 ```bash
 cd "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM\video\remotion"
 npm start   # opens localhost:3000 — scrub timeline to verify
@@ -347,6 +381,7 @@ npm start
 - Check frame 0 (should show first frame of scene) and last frame
 
 **TypeScript check (run before every render):**
+
 ```bash
 cd "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM\video\remotion"
 npx tsc --noEmit
@@ -356,18 +391,18 @@ npx tsc --noEmit
 
 ## Common Mistakes to Avoid
 
-| Mistake | Fix |
-|---------|-----|
-| Missing `extrapolateRight: 'clamp'` on interpolate | Always add `{ extrapolateRight: 'clamp' }` — without it values blow past the target |
-| Also missing `extrapolateLeft: 'clamp'` for stagger items | When `from` value > 0, add both clamp options |
-| Importing from `@remotion/player` instead of `remotion` | Use `remotion` for all core hooks and `AbsoluteFill` |
-| Using Tailwind class strings | Remotion uses inline styles only — no className with Tailwind |
-| Hard-coding `fps` as `30` | Always derive from `useVideoConfig()` — never assume |
-| Forgetting to export the component | Every scene file must have a named export |
-| Using `px` units for large layout values | Use unitless numbers inside `style` objects — React converts them to `px` |
-| Scene frame offset wrong in Sequence | Double-check `from` value sums match total duration |
-| Font not rendering | `Inter` requires the font to be available; in Remotion bundle you may need `@remotion/google-fonts` |
-| Modifying `Root.tsx` without updating total frame count | When adding a scene that extends duration, update `durationInFrames` in `Root.tsx` |
+| Mistake                                                   | Fix                                                                                                 |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Missing `extrapolateRight: 'clamp'` on interpolate        | Always add `{ extrapolateRight: 'clamp' }` — without it values blow past the target                 |
+| Also missing `extrapolateLeft: 'clamp'` for stagger items | When `from` value > 0, add both clamp options                                                       |
+| Importing from `@remotion/player` instead of `remotion`   | Use `remotion` for all core hooks and `AbsoluteFill`                                                |
+| Using Tailwind class strings                              | Remotion uses inline styles only — no className with Tailwind                                       |
+| Hard-coding `fps` as `30`                                 | Always derive from `useVideoConfig()` — never assume                                                |
+| Forgetting to export the component                        | Every scene file must have a named export                                                           |
+| Using `px` units for large layout values                  | Use unitless numbers inside `style` objects — React converts them to `px`                           |
+| Scene frame offset wrong in Sequence                      | Double-check `from` value sums match total duration                                                 |
+| Font not rendering                                        | `Inter` requires the font to be available; in Remotion bundle you may need `@remotion/google-fonts` |
+| Modifying `Root.tsx` without updating total frame count   | When adding a scene that extends duration, update `durationInFrames` in `Root.tsx`                  |
 
 ---
 

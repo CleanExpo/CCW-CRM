@@ -9,6 +9,7 @@ This guide explains how to use the Shopify API mock framework for testing autono
 ## Overview
 
 The Shopify mock framework provides:
+
 - **Configurable failure modes** - Simulate rate limits, timeouts, errors
 - **Call tracking** - Verify API calls in tests
 - **Custom responses** - Control mock data for specific tests
@@ -82,6 +83,7 @@ except Exception as e:
 ```
 
 **Use Cases:**
+
 - Test circuit breaker with rate limits
 - Test retry logic
 - Test backoff strategies
@@ -103,6 +105,7 @@ except TimeoutError:
 ```
 
 **Use Cases:**
+
 - Test timeout handling
 - Test circuit breaker on timeouts
 - Test rollback on deployment timeouts
@@ -124,6 +127,7 @@ except Exception as e:
 ```
 
 **Use Cases:**
+
 - Test error handling
 - Test rollback mechanisms
 - Test circuit breaker activation
@@ -150,6 +154,7 @@ for i in range(10):
 ```
 
 **Use Cases:**
+
 - Test flaky API behavior
 - Test retry logic with eventual success
 - Test circuit breaker recovery
@@ -277,6 +282,7 @@ print(f"Request took {elapsed:.3f}s")  # ~0.200s
 ```
 
 **Use Cases:**
+
 - Test slow network performance
 - Test timeout configurations
 - Test loading states in UI
@@ -289,15 +295,15 @@ Pre-configured fixtures for common scenarios.
 
 ### Available Fixtures
 
-| Fixture | Description |
-|---------|-------------|
-| `shopify_mock` | Basic SUCCESS mode client |
-| `shopify_mock_rate_limit` | Simulates rate limiting |
-| `shopify_mock_timeout` | Simulates timeouts |
-| `shopify_mock_server_error` | Simulates server errors |
-| `shopify_mock_intermittent` | 50% failure rate |
-| `shopify_mock_slow` | 100ms network delay |
-| `shopify_mock_with_tracking` | Call tracking enabled |
+| Fixture                      | Description               |
+| ---------------------------- | ------------------------- |
+| `shopify_mock`               | Basic SUCCESS mode client |
+| `shopify_mock_rate_limit`    | Simulates rate limiting   |
+| `shopify_mock_timeout`       | Simulates timeouts        |
+| `shopify_mock_server_error`  | Simulates server errors   |
+| `shopify_mock_intermittent`  | 50% failure rate          |
+| `shopify_mock_slow`          | 100ms network delay       |
+| `shopify_mock_with_tracking` | Call tracking enabled     |
 
 ### Usage Example
 
@@ -634,6 +640,7 @@ async def test_recovers_from_shopify_failure():
 ### Mock Not Behaving as Expected
 
 **Check mode configuration:**
+
 ```python
 print(f"Current mode: {client.config.mode}")
 print(f"Failure rate: {client.config.failure_rate}")
@@ -642,6 +649,7 @@ print(f"Failure rate: {client.config.failure_rate}")
 ### Calls Not Being Tracked
 
 **Ensure tracking is enabled:**
+
 ```python
 client = create_shopify_mock(call_tracking=True)
 assert client.config.call_tracking is True
@@ -650,6 +658,7 @@ assert client.config.call_tracking is True
 ### Custom Response Not Used
 
 **Verify method name matches:**
+
 ```python
 # Correct
 client.set_custom_response("get_orders", custom_func)
@@ -663,6 +672,7 @@ client.set_custom_response("get_order", custom_func)  # Wrong!
 ## Support
 
 For issues or questions:
+
 1. Check mock mode configuration
 2. Verify call tracking is enabled
 3. Review custom response setup

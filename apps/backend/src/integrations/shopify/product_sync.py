@@ -611,3 +611,30 @@ class BidirectionalProductSyncer:
                     for m in mappings
                 ],
             }
+
+
+# ---------------------------------------------------------------------------
+# UNI-1866: standalone helper — push local variants to an existing Shopify product
+# ---------------------------------------------------------------------------
+
+async def sync_variants_to_shopify(
+    shopify_client: ShopifyClient,
+    shopify_product_id: str,
+    variants: list[dict],
+) -> dict:
+    """Push a variants list to an existing Shopify product.
+
+    Args:
+        shopify_client: Authenticated Shopify API client.
+        shopify_product_id: Shopify product ID (string).
+        variants: List of variant dicts with keys:
+            sku, title, price, inventory_quantity, option1, option2, option3.
+
+    Returns:
+        {"synced": <count>, "shopify_product_id": <id>}
+    """
+    await shopify_client.update_product(
+        product_id=int(shopify_product_id),
+        product_data={"variants": variants},
+    )
+    return {"synced": len(variants), "shopify_product_id": shopify_product_id}

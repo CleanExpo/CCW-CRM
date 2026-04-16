@@ -74,12 +74,9 @@ export const contractorAPI = {
    */
   async addAvailability(
     contractorId: string,
-    data: AvailabilitySlotCreate,
+    data: AvailabilitySlotCreate
   ): Promise<AvailabilitySlot> {
-    return apiClient.post<AvailabilitySlot>(
-      `/api/contractors/${contractorId}/availability`,
-      data,
-    );
+    return apiClient.post<AvailabilitySlot>(`/api/contractors/${contractorId}/availability`, data);
   },
 
   /**
@@ -87,11 +84,11 @@ export const contractorAPI = {
    */
   async getAvailability(
     contractorId: string,
-    status?: AvailabilityStatus,
+    status?: AvailabilityStatus
   ): Promise<AvailabilitySlot[]> {
     const queryParams = status ? `?status=${status}` : '';
     return apiClient.get<AvailabilitySlot[]>(
-      `/api/contractors/${contractorId}/availability${queryParams}`,
+      `/api/contractors/${contractorId}/availability${queryParams}`
     );
   },
 
@@ -111,7 +108,7 @@ export const contractorAPI = {
     if (params.pageSize) queryParams.set('page_size', params.pageSize.toString());
 
     return apiClient.get<ContractorListResponse>(
-      `/api/contractors/search/by-location?${queryParams.toString()}`,
+      `/api/contractors/search/by-location?${queryParams.toString()}`
     );
   },
 };

@@ -45,14 +45,14 @@ User sees: "You have 4 products below reorder threshold:
 
 ## Latency Budget
 
-| Step | Time | Model |
-|---|---|---|
-| Request receipt + auth | 50ms | — |
-| Lead agent planning | 800ms | Sonnet |
-| 3 teammates in parallel | 1,200ms | Haiku |
-| Lead synthesis | 600ms | Sonnet |
-| SSE stream first token | ~2,650ms total | — |
-| Full response complete | ~4,500ms | — |
+| Step                    | Time           | Model  |
+| ----------------------- | -------------- | ------ |
+| Request receipt + auth  | 50ms           | —      |
+| Lead agent planning     | 800ms          | Sonnet |
+| 3 teammates in parallel | 1,200ms        | Haiku  |
+| Lead synthesis          | 600ms          | Sonnet |
+| SSE stream first token  | ~2,650ms total | —      |
+| Full response complete  | ~4,500ms       | —      |
 
 **Target**: First token in <3s, complete response in <6s.
 
@@ -88,6 +88,7 @@ Lead Agent detects teammate failure
 ```
 
 Error states:
+
 - `TEAMMATE_TIMEOUT` (>10s): Lead continues with partial data
 - `TEAMS_UNAVAILABLE`: Fallback to single-agent mode
 - `RATE_LIMIT_EXCEEDED`: 429 with retry-after header
@@ -99,11 +100,13 @@ Error states:
 The first deployment targets CCW ERP dashboard with Warehouse Assistant:
 
 **Frontend** (`apps/web/components/layout/AgentBrowserSidebar.tsx`):
+
 - Collapsible panel, `Cmd+Shift+A` toggle
 - SSE stream handler, markdown rendering
 - Page context injection (current URL, active filters, visible data)
 
 **Backend** (`apps/backend/src/api/routes/ai/assistant.py`):
+
 - SSE response with chunked streaming
 - Lead agent dispatches 2 teammates (keeps it simple for Phase 1):
   - Teammate 1: Data fetcher (calls existing API endpoints)
@@ -112,6 +115,7 @@ The first deployment targets CCW ERP dashboard with Warehouse Assistant:
 **Auth**: Reuse existing JWT middleware — no new auth required.
 
 **Rate limiting**: Add to existing rate limiter in `main.py`:
+
 ```python
 @limiter.limit("20/hour")
 @router.post("/api/ai/assistant")

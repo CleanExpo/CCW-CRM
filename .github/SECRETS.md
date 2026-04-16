@@ -6,20 +6,20 @@
 
 ## 🎯 Quick Summary
 
-| Secret | Status | Enables | When to Add |
-|--------|--------|---------|-------------|
-| *None required* | ✅ | Local development, CI | **Never** - works without secrets |
-| `STAGING_SSH_KEY` | 🔴 Required for deploy | Staging deployment | Before deploying to staging |
-| `STAGING_SSH_HOST` | 🔴 Required for deploy | Staging deployment | Before deploying to staging |
-| `STAGING_SSH_USER` | 🔴 Required for deploy | Staging deployment | Before deploying to staging |
-| `PRODUCTION_SSH_KEY` | 🔴 Required for deploy | Production deployment | Before deploying to production |
-| `PRODUCTION_SSH_HOST` | 🔴 Required for deploy | Production deployment | Before deploying to production |
-| `PRODUCTION_SSH_USER` | 🔴 Required for deploy | Production deployment | Before deploying to production |
-| `SLACK_WEBHOOK_URL` | 🟡 Optional | Deployment notifications | When you want Slack alerts |
-| `SNYK_TOKEN` | 🟡 Optional | Advanced security scanning | When you want Snyk reports |
-| `CODECOV_TOKEN` | 🟡 Optional | Coverage trend tracking | When you want historical coverage |
-| `DIGITALOCEAN_ACCESS_TOKEN` | 🟡 Optional | Alternative backend deployment | When using DigitalOcean |
-| `VERCEL_TOKEN` | 🟡 Optional | Alternative frontend deployment | When using Vercel |
+| Secret                      | Status                 | Enables                         | When to Add                       |
+| --------------------------- | ---------------------- | ------------------------------- | --------------------------------- |
+| _None required_             | ✅                     | Local development, CI           | **Never** - works without secrets |
+| `STAGING_SSH_KEY`           | 🔴 Required for deploy | Staging deployment              | Before deploying to staging       |
+| `STAGING_SSH_HOST`          | 🔴 Required for deploy | Staging deployment              | Before deploying to staging       |
+| `STAGING_SSH_USER`          | 🔴 Required for deploy | Staging deployment              | Before deploying to staging       |
+| `PRODUCTION_SSH_KEY`        | 🔴 Required for deploy | Production deployment           | Before deploying to production    |
+| `PRODUCTION_SSH_HOST`       | 🔴 Required for deploy | Production deployment           | Before deploying to production    |
+| `PRODUCTION_SSH_USER`       | 🔴 Required for deploy | Production deployment           | Before deploying to production    |
+| `SLACK_WEBHOOK_URL`         | 🟡 Optional            | Deployment notifications        | When you want Slack alerts        |
+| `SNYK_TOKEN`                | 🟡 Optional            | Advanced security scanning      | When you want Snyk reports        |
+| `CODECOV_TOKEN`             | 🟡 Optional            | Coverage trend tracking         | When you want historical coverage |
+| `DIGITALOCEAN_ACCESS_TOKEN` | 🟡 Optional            | Alternative backend deployment  | When using DigitalOcean           |
+| `VERCEL_TOKEN`              | 🟡 Optional            | Alternative frontend deployment | When using Vercel                 |
 
 **Default behavior**: CI workflows run successfully without any secrets. Deployment workflows require SSH credentials.
 
@@ -32,18 +32,21 @@
 The template is designed to be **self-contained**:
 
 ✅ **Local Development**
+
 - PostgreSQL + Redis in Docker
 - Ollama for local AI
 - JWT authentication
 - Full development workflow
 
 ✅ **CI/CD (GitHub Actions)**
+
 - All tests (unit, integration, E2E)
 - Linting and type checking
 - Coverage reports (stored as GitHub artifacts)
 - Security scanning (NPM audit, Trivy)
 
 ✅ **Quality Checks**
+
 - ESLint + Ruff linting
 - TypeScript + mypy type checking
 - Vitest + pytest testing
@@ -62,22 +65,26 @@ The template is designed to be **self-contained**:
 **Enables**: Vulnerability scanning with Snyk
 
 **What You Get:**
+
 - Dependency vulnerability scanning
 - License compliance checks
 - Fix recommendations
 - Security reports in Snyk dashboard
 
 **What Works Without It:**
+
 - ✅ NPM audit (no token required)
 - ✅ Trivy scanning (no token required)
 - ✅ Dependency Review on PRs (GitHub built-in)
 
 **When to Add:**
+
 - You want detailed security reports
 - You need license compliance checking
 - Your organization uses Snyk
 
 **How to Get:**
+
 1. Sign up at https://snyk.io (free tier: 200 tests/month)
 2. Go to Account Settings → General → Auth Token
 3. Copy the API token
@@ -98,22 +105,26 @@ The template is designed to be **self-contained**:
 **Enables**: Historical coverage tracking and trends
 
 **What You Get:**
+
 - Coverage trend graphs
 - PR coverage diffs
 - Coverage badges
 - Team collaboration features
 
 **What Works Without It:**
+
 - ✅ Coverage reports (stored as GitHub artifacts)
 - ✅ Local HTML coverage reports (htmlcov/)
 - ✅ Coverage XML reports (coverage.xml)
 
 **When to Add:**
+
 - You want to track coverage trends over time
 - You want coverage badges on README
 - Your team needs coverage collaboration tools
 
 **How to Get:**
+
 1. Sign up at https://codecov.io (free for open source)
 2. Add your GitHub repository
 3. Copy the upload token from Settings
@@ -123,6 +134,7 @@ The template is designed to be **self-contained**:
 
 **How to Use:**
 Uncomment in `.github/workflows/ci.yml`:
+
 ```yaml
 # Backend coverage
 - name: Upload coverage to Codecov
@@ -152,22 +164,26 @@ Uncomment in `.github/workflows/ci.yml`:
 **Enables**: Automated backend deployment to DigitalOcean
 
 **What You Get:**
+
 - Automated deployment on push to main
 - Managed PostgreSQL hosting
 - Auto-scaling capabilities
 - Production-ready backend hosting
 
 **What Works Without It:**
+
 - ✅ Local development (Docker)
 - ✅ Self-hosting (Docker Compose)
 - ✅ Manual deployments
 
 **When to Add:**
+
 - You want to deploy backend to DigitalOcean
 - You need managed database hosting
 - You want automated deployments
 
 **How to Get:**
+
 1. Login to DigitalOcean
 2. Go to API → Tokens/Keys
 3. Generate New Token with "Write" scope
@@ -178,6 +194,7 @@ Uncomment in `.github/workflows/ci.yml`:
 
 **How to Use:**
 Copy example workflow:
+
 ```bash
 cp .github/workflows/examples/deploy-backend.yml.example .github/workflows/deploy-backend.yml
 ```
@@ -195,17 +212,20 @@ cp .github/workflows/examples/deploy-backend.yml.example .github/workflows/deplo
 **Enables**: Automated frontend deployment to Vercel (if not using GitHub integration)
 
 **What You Get:**
+
 - Automated deployment on push to main
 - Preview deployments for PRs
 - Edge CDN hosting
 - Serverless functions
 
 **What Works Without It:**
+
 - ✅ Local development (localhost:3000)
 - ✅ Static export (for any host)
 - ✅ Vercel GitHub integration (no token needed!)
 
 **When to Add:**
+
 - You want programmatic deployments
 - You're NOT using Vercel GitHub integration
 - You need API-based deployment control
@@ -213,6 +233,7 @@ cp .github/workflows/examples/deploy-backend.yml.example .github/workflows/deplo
 **Note:** Most users should use Vercel's GitHub integration instead, which handles deployment automatically without any tokens.
 
 **How to Get (if needed):**
+
 1. Login to Vercel
 2. Go to Settings → Tokens
 3. Create new token
@@ -223,6 +244,7 @@ cp .github/workflows/examples/deploy-backend.yml.example .github/workflows/deplo
 
 **How to Use:**
 Copy example workflow:
+
 ```bash
 cp .github/workflows/examples/deploy-frontend.yml.example .github/workflows/deploy-frontend.yml
 ```
@@ -235,15 +257,15 @@ cp .github/workflows/examples/deploy-frontend.yml.example .github/workflows/depl
 
 ## 📊 Secrets Decision Matrix
 
-| I want to... | Do I need secrets? | What to add |
-|--------------|-------------------|-------------|
-| Develop locally | ❌ No | Nothing - works out of box |
-| Run tests in CI | ❌ No | Nothing - all tests work |
-| Get code coverage | ❌ No | Nothing - coverage reports in artifacts |
-| Scan for vulnerabilities | ❌ No | Nothing - NPM audit + Trivy work |
-| Track coverage trends | ✅ Yes | `CODECOV_TOKEN` |
-| Use Snyk scanning | ✅ Yes | `SNYK_TOKEN` |
-| Deploy to cloud | ✅ Yes | Deployment tokens (see above) |
+| I want to...             | Do I need secrets? | What to add                             |
+| ------------------------ | ------------------ | --------------------------------------- |
+| Develop locally          | ❌ No              | Nothing - works out of box              |
+| Run tests in CI          | ❌ No              | Nothing - all tests work                |
+| Get code coverage        | ❌ No              | Nothing - coverage reports in artifacts |
+| Scan for vulnerabilities | ❌ No              | Nothing - NPM audit + Trivy work        |
+| Track coverage trends    | ✅ Yes             | `CODECOV_TOKEN`                         |
+| Use Snyk scanning        | ✅ Yes             | `SNYK_TOKEN`                            |
+| Deploy to cloud          | ✅ Yes             | Deployment tokens (see above)           |
 
 ---
 
@@ -252,6 +274,7 @@ cp .github/workflows/examples/deploy-frontend.yml.example .github/workflows/depl
 ### Method 1: GitHub Web Interface (Recommended)
 
 1. **Navigate to Repository Settings**:
+
    ```
    https://github.com/<your-username>/<your-repo>/settings/secrets/actions
    ```
@@ -326,6 +349,7 @@ After adding optional secrets, test by:
    - Confirm no "missing secret" errors
 
 3. **Example Test Commands**:
+
    ```bash
    # Trigger Security workflow (Snyk runs if token exists)
    gh workflow run security.yml
@@ -344,6 +368,7 @@ After adding optional secrets, test by:
 ### Issue: "Secret not found" error
 
 **Solution**:
+
 - Verify secret name matches exactly (case-sensitive)
 - Check secret is added to repository (not organization)
 - Ensure secret is in "Repository secrets" not "Environment secrets"
@@ -351,6 +376,7 @@ After adding optional secrets, test by:
 ### Issue: "Invalid token" error
 
 **Solution**:
+
 - Verify token is copied correctly (no extra spaces)
 - Check token hasn't expired
 - Ensure token has correct permissions
@@ -359,6 +385,7 @@ After adding optional secrets, test by:
 ### Issue: Workflows still failing after adding secrets
 
 **Solution**:
+
 - Re-run workflow (secrets available immediately but may need retry)
 - Check workflow logs for specific error
 - Verify service is accessible from GitHub Actions
@@ -379,6 +406,7 @@ After adding optional secrets, test by:
 ### Deployment Alternatives
 
 See `docs/OPTIONAL_SERVICES.md` for comprehensive deployment guides:
+
 - Railway, Fly.io, Render (backend)
 - Netlify, Cloudflare Pages, AWS Amplify (frontend)
 - Supabase, Neon, PlanetScale (database)
@@ -410,12 +438,12 @@ Only add these if you need the specific features:
 
 Track when you add/rotate optional secrets:
 
-| Secret | Added Date | Last Rotated | Next Rotation |
-|--------|-----------|--------------|---------------|
-| SNYK_TOKEN | - | - | - |
-| CODECOV_TOKEN | - | - | - |
-| DIGITALOCEAN_ACCESS_TOKEN | - | - | - |
-| VERCEL_TOKEN | - | - | - |
+| Secret                    | Added Date | Last Rotated | Next Rotation |
+| ------------------------- | ---------- | ------------ | ------------- |
+| SNYK_TOKEN                | -          | -            | -             |
+| CODECOV_TOKEN             | -          | -            | -             |
+| DIGITALOCEAN_ACCESS_TOKEN | -          | -            | -             |
+| VERCEL_TOKEN              | -          | -            | -             |
 
 **Recommendation**: Rotate tokens every 90 days for security.
 

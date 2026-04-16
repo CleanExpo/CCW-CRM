@@ -140,14 +140,14 @@ class SecretsManager:
         """Get JWT secret key (convenience method)."""
         return self.get_secret(
             "ccw-erp/jwt-secret",
-            default=os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production"),
+            default=os.getenv("JWT_SECRET_KEY", ""),
         )
 
     def get_webhook_secret(self) -> str:
         """Get webhook signature verification secret (convenience method)."""
         return self.get_secret(
             "ccw-erp/webhook-secret",
-            default=os.getenv("WEBHOOK_SECRET", "change-this-webhook-secret-in-production"),
+            default=os.getenv("WEBHOOK_SECRET", ""),
         )
 
     def get_encryption_key(self) -> str:

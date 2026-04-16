@@ -19,7 +19,7 @@ const path = require('path');
 async function verifySchema(sessionData) {
   const phase = 'Phase 1: Schema Validation';
   const required = ['session_id', 'timestamp'];
-  const missing = required.filter(k => !sessionData[k]);
+  const missing = required.filter((k) => !sessionData[k]);
 
   if (missing.length > 0) {
     return {
@@ -50,8 +50,8 @@ async function verifyNoContradictions(decisions = []) {
   ];
 
   for (const [a, b] of contradictionPairs) {
-    const hasA = decisions.some(d => typeof d === 'string' && d.toLowerCase().includes(a));
-    const hasB = decisions.some(d => typeof d === 'string' && d.toLowerCase().includes(b));
+    const hasA = decisions.some((d) => typeof d === 'string' && d.toLowerCase().includes(a));
+    const hasB = decisions.some((d) => typeof d === 'string' && d.toLowerCase().includes(b));
     if (hasA && hasB) {
       return {
         phase,
@@ -61,7 +61,11 @@ async function verifyNoContradictions(decisions = []) {
     }
   }
 
-  return { phase, status: 'PASS', message: `${decisions.length} decision(s) checked, no contradictions` };
+  return {
+    phase,
+    status: 'PASS',
+    message: `${decisions.length} decision(s) checked, no contradictions`,
+  };
 }
 
 /**
@@ -84,7 +88,7 @@ async function verifyNoSecrets(content = '') {
     return {
       phase,
       status: 'FAIL',
-      message: `Secrets detected: ${found.map(f => f.name).join(', ')} — CRITICAL`,
+      message: `Secrets detected: ${found.map((f) => f.name).join(', ')} — CRITICAL`,
     };
   }
 
@@ -107,7 +111,10 @@ async function verifyAllContentSanitised(intelHighlights = []) {
   const injectionPattern = /ignore\s+(all\s+)?(previous|prior|above)/i;
 
   for (let i = 0; i < intelHighlights.length; i++) {
-    const item = typeof intelHighlights[i] === 'string' ? intelHighlights[i] : JSON.stringify(intelHighlights[i]);
+    const item =
+      typeof intelHighlights[i] === 'string'
+        ? intelHighlights[i]
+        : JSON.stringify(intelHighlights[i]);
     if (zeroWidthPattern.test(item)) {
       return {
         phase,
@@ -124,7 +131,11 @@ async function verifyAllContentSanitised(intelHighlights = []) {
     }
   }
 
-  return { phase, status: 'PASS', message: `${intelHighlights.length} intel item(s) sanitisation check passed` };
+  return {
+    phase,
+    status: 'PASS',
+    message: `${intelHighlights.length} intel item(s) sanitisation check passed`,
+  };
 }
 
 /**
@@ -134,7 +145,7 @@ async function verifyVideoReady(videoBrief = {}) {
   const phase = 'Phase 5: Video Pipeline Readiness';
 
   const required = ['title', 'script'];
-  const missing = required.filter(k => !videoBrief[k]);
+  const missing = required.filter((k) => !videoBrief[k]);
 
   if (missing.length > 0) {
     return {
@@ -205,12 +216,13 @@ async function runVerificationLoop(sessionData = {}) {
 
   // Report results
   for (const result of results) {
-    const icon = result.status === 'PASS' ? '[PASS]' : result.status === 'WARN' ? '[WARN]' : '[FAIL]';
+    const icon =
+      result.status === 'PASS' ? '[PASS]' : result.status === 'WARN' ? '[WARN]' : '[FAIL]';
     console.log(`${icon} ${result.phase}: ${result.message}`);
   }
 
-  const failures = results.filter(r => r.status === 'FAIL');
-  const warnings = results.filter(r => r.status === 'WARN');
+  const failures = results.filter((r) => r.status === 'FAIL');
+  const warnings = results.filter((r) => r.status === 'WARN');
 
   if (failures.length > 0) {
     console.error(`\n[VERIFY] BLOCKED: ${failures.length} CRITICAL gate(s) failed`);
@@ -250,7 +262,7 @@ if (require.main === module) {
     }
   }
 
-  runVerificationLoop(sessionData).then(result => {
+  runVerificationLoop(sessionData).then((result) => {
     process.exit(result.passed ? 0 : 1);
   });
 }

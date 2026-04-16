@@ -5,7 +5,7 @@
  * Activities track customer interactions (calls, emails, meetings, notes, tasks).
  */
 
-import { apiClient } from "./client";
+import { apiClient } from './client';
 import type {
   Activity,
   ActivityWithRelations,
@@ -14,7 +14,7 @@ import type {
   PaginatedActivities,
   ActivityStats,
   ActivityType,
-} from "@/lib/types/activities";
+} from '@/lib/types/activities';
 
 /**
  * Parameters for listing activities
@@ -69,18 +69,18 @@ export const activitiesApi = {
   async list(params: ActivityListParams = {}): Promise<PaginatedActivities> {
     const queryParams = new URLSearchParams();
 
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
-    if (params.activity_type) queryParams.append("activity_type", params.activity_type);
-    if (params.customer_id) queryParams.append("customer_id", params.customer_id);
-    if (params.contact_id) queryParams.append("contact_id", params.contact_id);
-    if (params.order_id) queryParams.append("order_id", params.order_id);
-    if (params.quote_id) queryParams.append("quote_id", params.quote_id);
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params.activity_type) queryParams.append('activity_type', params.activity_type);
+    if (params.customer_id) queryParams.append('customer_id', params.customer_id);
+    if (params.contact_id) queryParams.append('contact_id', params.contact_id);
+    if (params.order_id) queryParams.append('order_id', params.order_id);
+    if (params.quote_id) queryParams.append('quote_id', params.quote_id);
     if (params.include_completed !== undefined) {
-      queryParams.append("include_completed", params.include_completed.toString());
+      queryParams.append('include_completed', params.include_completed.toString());
     }
 
-    const url = `/api/activities${queryParams.toString() ? `?${queryParams}` : ""}`;
+    const url = `/api/activities${queryParams.toString() ? `?${queryParams}` : ''}`;
     return apiClient.get<PaginatedActivities>(url);
   },
 
@@ -127,7 +127,7 @@ export const activitiesApi = {
    * ```
    */
   async create(data: CreateActivityRequest): Promise<Activity> {
-    return apiClient.post<Activity>("/api/activities", data);
+    return apiClient.post<Activity>('/api/activities', data);
   },
 
   /**
@@ -204,10 +204,7 @@ export const activitiesApi = {
    * const extended = await activitiesApi.getCustomerTimeline('customer-uuid', 50);
    * ```
    */
-  async getCustomerTimeline(
-    customerId: string,
-    limit = 20
-  ): Promise<ActivityWithRelations[]> {
+  async getCustomerTimeline(customerId: string, limit = 20): Promise<ActivityWithRelations[]> {
     return apiClient.get<ActivityWithRelations[]>(
       `/api/activities/customer/${customerId}?limit=${limit}`
     );
@@ -227,10 +224,7 @@ export const activitiesApi = {
    * const timeline = await activitiesApi.getContactTimeline('contact-uuid');
    * ```
    */
-  async getContactTimeline(
-    contactId: string,
-    limit = 20
-  ): Promise<ActivityWithRelations[]> {
+  async getContactTimeline(contactId: string, limit = 20): Promise<ActivityWithRelations[]> {
     return apiClient.get<ActivityWithRelations[]>(
       `/api/activities/contact/${contactId}?limit=${limit}`
     );
@@ -255,7 +249,7 @@ export const activitiesApi = {
    * ```
    */
   async getPendingTasks(): Promise<ActivityWithRelations[]> {
-    return apiClient.get<ActivityWithRelations[]>("/api/activities/pending-tasks");
+    return apiClient.get<ActivityWithRelations[]>('/api/activities/pending-tasks');
   },
 
   /**
@@ -277,6 +271,6 @@ export const activitiesApi = {
    * ```
    */
   async getStats(): Promise<ActivityStats> {
-    return apiClient.get<ActivityStats>("/api/activities/stats");
+    return apiClient.get<ActivityStats>('/api/activities/stats');
   },
 };

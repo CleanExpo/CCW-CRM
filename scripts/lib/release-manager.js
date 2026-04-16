@@ -61,13 +61,13 @@ function getChangesSinceLastRelease(baseBranch = 'main', headBranch = 'develop')
 
   const commits = rawLog.trim().split('\n').filter(Boolean);
 
-  const features = commits.filter(c => c.match(/\bfeat[\s(]/i));
-  const fixes = commits.filter(c => c.match(/\bfix[\s(]/i));
-  const security = commits.filter(c =>
-    c.match(/\bsecur/i) || c.match(/\brls\b/i) || c.match(/\bcve\b/i)
+  const features = commits.filter((c) => c.match(/\bfeat[\s(]/i));
+  const fixes = commits.filter((c) => c.match(/\bfix[\s(]/i));
+  const security = commits.filter(
+    (c) => c.match(/\bsecur/i) || c.match(/\brls\b/i) || c.match(/\bcve\b/i)
   );
   const other = commits.filter(
-    c => !features.includes(c) && !fixes.includes(c) && !security.includes(c)
+    (c) => !features.includes(c) && !fixes.includes(c) && !security.includes(c)
   );
 
   return { features, fixes, security, other, total: commits.length, lastTag };
@@ -90,16 +90,16 @@ function generateReleaseNotes(version, changes) {
   ];
 
   if (changes.security.length) {
-    lines.push('## Security', ...changes.security.map(c => `- ${c}`), '');
+    lines.push('## Security', ...changes.security.map((c) => `- ${c}`), '');
   }
   if (changes.features.length) {
-    lines.push('## Features', ...changes.features.map(c => `- ${c}`), '');
+    lines.push('## Features', ...changes.features.map((c) => `- ${c}`), '');
   }
   if (changes.fixes.length) {
-    lines.push('## Bug Fixes', ...changes.fixes.map(c => `- ${c}`), '');
+    lines.push('## Bug Fixes', ...changes.fixes.map((c) => `- ${c}`), '');
   }
   if (changes.other.length) {
-    lines.push('## Other Changes', ...changes.other.map(c => `- ${c}`), '');
+    lines.push('## Other Changes', ...changes.other.map((c) => `- ${c}`), '');
   }
 
   return lines.join('\n');
@@ -129,7 +129,18 @@ function createReleasePR(version, notes) {
 
   const result = execFileSync(
     'gh',
-    ['pr', 'create', '--base', 'main', '--head', 'develop', '--title', `Release ${version}`, '--body', body],
+    [
+      'pr',
+      'create',
+      '--base',
+      'main',
+      '--head',
+      'develop',
+      '--title',
+      `Release ${version}`,
+      '--body',
+      body,
+    ],
     { encoding: 'utf8' }
   );
 
@@ -199,14 +210,17 @@ async function notifySlack(version, notes) {
   const body = JSON.stringify(message);
 
   return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: url.hostname,
-      path: url.pathname + url.search,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    }, (res) => {
-      resolve(res.statusCode);
-    });
+    const req = https.request(
+      {
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      },
+      (res) => {
+        resolve(res.statusCode);
+      }
+    );
     req.on('error', reject);
     req.write(body);
     req.end();
