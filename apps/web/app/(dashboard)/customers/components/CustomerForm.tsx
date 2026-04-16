@@ -53,6 +53,13 @@ const formSchema = z.object({
     .or(z.literal('')),
   // UNI-1821: Per-customer payment terms (days)
   payment_terms_days: z.coerce.number().int().min(0).max(365).default(30),
+  // UNI-1829: Credit management fields
+  credit_limit: z.coerce
+    .number()
+    .min(0, 'Credit limit must be a positive number')
+    .optional()
+    .nullable(),
+  credit_hold: z.boolean().default(false),
   is_active: z.boolean().default(true),
 });
 
@@ -72,6 +79,8 @@ interface Customer {
   abn: string | null;
   // UNI-1821: Per-customer payment terms
   payment_terms_days: number;
+  credit_limit: number | null;
+  credit_hold: boolean;
   is_active: boolean;
 }
 
@@ -101,6 +110,8 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       postcode: '',
       abn: '',
       payment_terms_days: 30,
+      credit_limit: null,
+      credit_hold: false,
       is_active: true,
     },
   });
@@ -135,6 +146,8 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           postcode: customer.postcode || '',
           abn: customer.abn || '',
           payment_terms_days: customer.payment_terms_days ?? 30,
+          credit_limit: customer.credit_limit ?? null,
+          credit_hold: customer.credit_hold ?? false,
           is_active: customer.is_active,
         });
       } else {
@@ -150,6 +163,8 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           postcode: '',
           abn: '',
           payment_terms_days: 30,
+          credit_limit: null,
+          credit_hold: false,
           is_active: true,
         });
       }
@@ -220,6 +235,8 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 state: '',
                 postcode: '',
                 payment_terms_days: 30,
+                credit_limit: null,
+                credit_hold: false,
                 is_active: true,
               });
             }}
@@ -397,6 +414,50 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 </FormItem>
               )}
             />
+
+            {/* UNI-1829: Credit management */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="credit_limit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Credit Limit ($)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        placeholder="No limit"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(e.target.value === '' ? null : Number(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>Leave blank for no credit limit</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="credit_hold"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Credit Hold</FormLabel>
+                      <FormDescription>Block all new orders for this customer</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

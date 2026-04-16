@@ -1,7 +1,7 @@
 """add_payment_terms_days
 
 Revision ID: c2d3e4f5a6b7
-Revises: a1b2c3d4e5f6
+Revises: b1c2d3e4f5a6
 Create Date: 2026-04-16 00:00:00.000000
 
 UNI-1821: Per-customer payment terms (days) for invoice due_date and Xero sync
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "c2d3e4f5a6b7"
-down_revision: Union[str, Sequence[str], None] = "a1b2c3d4e5f6"
+down_revision: Union[str, Sequence[str], None] = "b1c2d3e4f5a6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

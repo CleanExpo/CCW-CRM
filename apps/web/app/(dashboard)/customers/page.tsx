@@ -37,6 +37,9 @@ interface Customer {
   abn: string | null;
   // UNI-1821: Per-customer payment terms
   payment_terms_days: number;
+  /** UNI-1829: Credit management fields */
+  credit_limit: number | null;
+  credit_hold: boolean;
   is_active: boolean;
 }
 

@@ -6,7 +6,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -75,9 +75,29 @@ class BookingResponse(BaseModel):
     hours_on_completion: float | None
     technician_notes: str | None
     customer_notes: str | None
+    # UNI-1836: Customer sign-off fields
+    customer_signed_off: bool = False
+    sign_off_at: datetime | None = None
+    sign_off_method: str | None = None
     created_at: datetime
     updated_at: datetime
     model_config = {"from_attributes": True}
+
+
+_SIGN_OFF_METHODS = {"digital", "phone", "in-person"}
+
+
+class SignOffRequest(BaseModel):
+    """Request body for customer sign-off on job completion (UNI-1836)."""
+
+    method: str = Field(description="Sign-off method: 'digital', 'phone', or 'in-person'")
+
+    @field_validator("method")
+    @classmethod
+    def validate_method(cls, v: str) -> str:
+        if v not in _SIGN_OFF_METHODS:
+            raise ValueError(f"method must be one of: {', '.join(sorted(_SIGN_OFF_METHODS))}")
+        return v
 
 
 class PaginatedBookingsResponse(BaseModel):
@@ -312,3 +332,44 @@ async def order_parts(
         raise
 
     return {"message": "Parts order triggered (draft PO would be created)", "booking_id": str(booking_id)}
+
+@router.post("/{booking_id}/sign-off", status_code=status.HTTP_200_OK)
+async def sign_off_booking(
+    booking_id: UUID,
+    payload: SignOffRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Record customer sign-off on a completed workshop job.
+
+    UNI-1836 — ACL requires documented customer acceptance of completed service.
+    Only allowed when booking status is 'completed'. Returns 409 if not completed.
+    """
+    booking = await db.get(WorkshopBooking, booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    if booking.status != BookingStatus.completed:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Sign-off only allowed on completed jobs. Current status: {booking.status.value}",
+        )
+
+    booking.customer_signed_off = True
+    booking.sign_off_at = datetime.now(UTC)
+    booking.sign_off_method = payload.method
+    booking.updated_at = datetime.now(UTC)
+
+    try:
+        await db.commit()
+        await db.refresh(booking)
+    except Exception:
+        await db.rollback()
+        raise
+
+    return {
+        "message": "Sign-off recorded",
+        "booking_id": str(booking_id),
+        "sign_off_method": payload.method,
+        "sign_off_at": booking.sign_off_at.isoformat(),
+    }
+

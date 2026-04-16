@@ -95,9 +95,15 @@ export interface WorkshopBooking {
   hours_on_completion: number | null;
   technician_notes: string | null;
   customer_notes: string | null;
+  /** UNI-1836: Customer sign-off fields */
+  customer_signed_off: boolean;
+  sign_off_at: string | null;
+  sign_off_method: 'digital' | 'phone' | 'in-person' | null;
   created_at: string;
   updated_at: string;
 }
+
+export type SignOffMethod = 'digital' | 'phone' | 'in-person';
 
 export interface ServiceReminder {
   id: string;
@@ -239,6 +245,14 @@ export const workshopApi = {
     id: string,
     data: { actual_hours?: number; hours_on_completion?: number; technician_notes?: string }
   ) => apiClient.post(`/api/workshop/bookings/${id}/complete`, data),
+  /** UNI-1836: Record customer sign-off on a completed workshop job. */
+  signOffBooking: (id: string, method: SignOffMethod) =>
+    apiClient.post<{
+      message: string;
+      booking_id: string;
+      sign_off_method: string;
+      sign_off_at: string;
+    }>(`/api/workshop/bookings/${id}/sign-off`, { method }),
 
   // Reminders
   listReminders: (params?: { page?: number; page_size?: number; status?: string }) => {
