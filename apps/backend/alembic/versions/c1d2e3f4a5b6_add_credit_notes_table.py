@@ -1,7 +1,7 @@
 """add_credit_notes_table
 
 Revision ID: c1d2e3f4a5b6
-Revises: b8c4e2f9a1d3
+Revises: bb5f3d8c8a16
 Create Date: 2026-04-16 00:00:00.000000
 
 UNI-1810: Credit note workflow
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c1d2e3f4a5b6"
-down_revision: Union[str, Sequence[str], None] = "b8c4e2f9a1d3"
+down_revision: Union[str, Sequence[str], None] = "bb5f3d8c8a16"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
