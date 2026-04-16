@@ -71,6 +71,10 @@ class Invoice(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     payment_terms: Mapped[str] = mapped_column(Text, default="Net 30", nullable=False)
 
+    # Stripe integration (UNI-1813, UNI-1818)
+    stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    stripe_payment_link: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     # Metadata
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
