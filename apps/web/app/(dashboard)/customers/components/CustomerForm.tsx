@@ -46,6 +46,11 @@ const formSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   postcode: z.string().optional(),
+  abn: z
+    .string()
+    .regex(/^\d{11}$/, 'ABN must be exactly 11 digits')
+    .optional()
+    .or(z.literal('')),
   is_active: z.boolean().default(true),
 });
 
@@ -62,6 +67,7 @@ interface Customer {
   city: string | null;
   state: string | null;
   postcode: string | null;
+  abn: string | null;
   is_active: boolean;
 }
 
@@ -89,6 +95,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       city: '',
       state: '',
       postcode: '',
+      abn: '',
       is_active: true,
     },
   });
@@ -121,6 +128,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           city: customer.city || '',
           state: customer.state || '',
           postcode: customer.postcode || '',
+          abn: customer.abn || '',
           is_active: customer.is_active,
         });
       } else {
@@ -134,6 +142,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           city: '',
           state: '',
           postcode: '',
+          abn: '',
           is_active: true,
         });
       }
@@ -272,19 +281,38 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone</FormLabel>
-                  <FormControl>
-                    <Input type="tel" placeholder="(555) 123-4567" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="abn"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ABN</FormLabel>
+                    <FormControl>
+                      <Input placeholder="12345678901" maxLength={11} {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      11-digit Australian Business Number (no spaces)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
