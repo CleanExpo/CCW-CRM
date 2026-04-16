@@ -20,9 +20,9 @@ from src.api.deps import get_current_admin_user
 from src.config.database import get_async_db
 from src.db.audit_models import AuditLog
 from src.db.demo_models import Customer, Order
+from src.db.models import User
 from src.db.models.invoicing import Invoice
 from src.db.pos_models import POSTransaction
-from src.db.models import User
 from src.services.email_notifications import email_service
 
 logger = structlog.get_logger(__name__)

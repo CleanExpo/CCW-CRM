@@ -31,7 +31,6 @@ from .middleware.security_headers import SecurityHeadersMiddleware
 from .routes import (
     activities,  # CRM activities
     agents_monitor,  # Agent monitoring dashboard (UNI-1246)
-    tpar,  # TPAR data collection (UNI-1863)
     approvals,
     audit_trail,  # Entity-level audit trail
     backorders,
@@ -77,6 +76,7 @@ from .routes import (
     stripe_webhooks,  # Stripe webhook receiver
     suppliers,
     team,
+    tpar,  # TPAR data collection (UNI-1863)
     translations,
     warehouse,  # Warehouse operations feed (UNI-1251)
     webhooks,
