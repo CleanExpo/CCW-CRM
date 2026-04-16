@@ -393,6 +393,61 @@ class XeroClient:
 
         return result.get("BankTransactions", [])
 
+    async def create_credit_note(
+        self,
+        contact_id: str,
+        description: str,
+        amount: float,
+        reference: str | None = None,
+    ) -> dict:
+        """Create a credit note in Xero (UNI-1814).
+
+        Args:
+            contact_id: Xero contact ID
+            description: Credit note line item description
+            amount: Credit note amount (positive, Xero handles sign)
+            reference: Internal reference (e.g. credit note number)
+
+        Returns:
+            Created credit note data including CreditNoteID
+
+        Raises:
+            XeroAPIError: If creation fails
+        """
+        payload = {
+            "CreditNotes": [
+                {
+                    "Type": "ACCREC",
+                    "Contact": {"ContactID": contact_id},
+                    "LineItems": [
+                        {
+                            "Description": description,
+                            "Quantity": 1,
+                            "UnitAmount": amount,
+                            "TaxType": "OUTPUT2",  # GST on Income (Australia)
+                        }
+                    ],
+                    "Status": "SUBMITTED",
+                    **({"Reference": reference} if reference else {}),
+                }
+            ]
+        }
+
+        logger.info("Creating Xero credit note", contact_id=contact_id, amount=amount)
+
+        result = await self._make_request("POST", "/CreditNotes", data=payload)
+
+        credit_notes = result.get("CreditNotes", [])
+        if credit_notes:
+            cn = credit_notes[0]
+            logger.info(
+                "Successfully created credit note",
+                credit_note_id=cn.get("CreditNoteID"),
+            )
+            return cn
+
+        raise XeroAPIError("No credit note returned from Xero")
+
     async def close(self) -> None:
         """Close HTTP client."""
         await self._http_client.aclose()

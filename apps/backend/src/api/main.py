@@ -55,6 +55,7 @@ from .routes import (
     google_ai,
     health,
     inventory,
+    credit_notes,  # Credit notes for UNI-1810/1814
     invoice_payments,  # Invoice payments for UNI-173
     invoices,  # Invoices for UNI-173
     jobs,
@@ -451,6 +452,8 @@ app.include_router(quotes.router, tags=["Quotes"])
 # Invoicing & Payments (UNI-173)
 app.include_router(invoices.router, tags=["Invoices"])
 app.include_router(invoice_payments.router, tags=["Invoice Payments"])
+# Credit notes (UNI-1810/1814)
+app.include_router(credit_notes.router, tags=["Credit Notes"])
 # Billing & Payment Methods (Phase 2 Batch 2A)
 app.include_router(billing.router, tags=["Billing"])
 # Background jobs router
