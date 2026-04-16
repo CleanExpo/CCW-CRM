@@ -170,6 +170,9 @@ class Customer(Base):
     state: str | None = Column(String(50), nullable=True)
     postcode: str | None = Column(String(10), nullable=True)
 
+    # Australian Business Number (added by add_abn_to_customers migration)
+    abn: str | None = Column(String(20), nullable=True, index=True)
+
     # Xero integration fields
     xero_contact_id: str | None = Column(String(255), nullable=True)
     xero_synced_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
