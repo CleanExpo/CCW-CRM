@@ -133,6 +133,11 @@ class Product(Base):
         Vector(1536), nullable=True, comment="Vector embedding for semantic search"
     )
 
+    # UNI-1808: GST applicability flag.
+    # True (default) — product attracts 10% AU GST (TaxType "OUTPUT2" in Xero).
+    # False — product is GST-exempt (e.g. certain medical equipment) → "EXEMPTOUTPUT".
+    is_gst_applicable: bool = Column(Boolean, default=True, nullable=False)
+
     is_active: bool = Column(Boolean, default=True, nullable=False)
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
@@ -172,6 +177,12 @@ class Customer(Base):
 
     # UNI-1821: Per-customer payment terms (days); used for invoice due_date and Xero sync
     payment_terms_days: int = Column(Integer, default=30, nullable=False)
+    # UNI-1831: B2B / B2C customer type.
+    # "B2B" (default) — business customer; receives GST-inclusive pricing and
+    #   a full tax invoice so they can claim GST credits.
+    # "B2C" — consumer customer; TaxType is omitted from Xero line items
+    #   because consumers do not claim GST input credits.
+    customer_type: str = Column(String(3), default="B2B", nullable=False)
     # Australian Business Number (added by add_abn_to_customers migration)
     abn: str | None = Column(String(20), nullable=True, index=True)
 

@@ -99,7 +99,7 @@ class TestCustomerCreate:
             "city": "Brisbane",
             "state": "QLD",
             "postcode": "4000",
-            "abn": "12 345 678 901",
+            "abn": "12345678901",
         }
 
         response = await client.post(

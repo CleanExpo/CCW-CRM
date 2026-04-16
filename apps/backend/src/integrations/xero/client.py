@@ -242,6 +242,10 @@ class XeroClient:
                     "Quantity": item["quantity"],
                     "UnitAmount": item["unit_amount"],
                     "AccountCode": "200",  # Sales account (can be customized)
+                    # UNI-1808 / UNI-1831: TaxType is optional.
+                    # Present → "OUTPUT2" (10% AU GST) or "EXEMPTOUTPUT" (GST-exempt).
+                    # Absent  → Xero inherits account default (used for B2C consumers).
+                    **( {"TaxType": item["tax_type"]} if "tax_type" in item else {} ),
                 }
                 for item in line_items
             ],
