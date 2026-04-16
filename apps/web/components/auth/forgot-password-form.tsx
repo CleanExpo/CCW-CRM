@@ -44,7 +44,7 @@ export function ForgotPasswordForm() {
           process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
         );
         const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-          redirectTo: `${window.location.origin}/auth/reset-password`,
+          redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) throw new Error(error.message);
       }
