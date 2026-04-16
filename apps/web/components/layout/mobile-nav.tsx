@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu,
@@ -28,9 +28,20 @@ const navItems = [
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
 
+async function logout(router: ReturnType<typeof useRouter>) {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch {
+    // ignore — clear client state regardless
+  }
+  localStorage.removeItem('onboarding_completed');
+  router.push('/login');
+}
+
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -130,7 +141,7 @@ export function MobileNav() {
               className="hover:bg-destructive/10 text-destructive group relative flex w-full items-center gap-3 overflow-hidden rounded-lg px-4 py-3 text-left transition-all duration-200"
               onClick={() => {
                 setOpen(false);
-                // Handle logout
+                void logout(router);
               }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

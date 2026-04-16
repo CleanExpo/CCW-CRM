@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,27 +20,27 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { activitiesApi } from "@/lib/api/activities";
-import { ActivityType } from "@/lib/types/activities";
-import type { ActivityWithRelations } from "@/lib/types/activities";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { activitiesApi } from '@/lib/api/activities';
+import { ActivityType } from '@/lib/types/activities';
+import type { ActivityWithRelations } from '@/lib/types/activities';
 
 const activitySchema = z.object({
-  activity_type: z.enum(["call", "email", "meeting", "note", "task"], {
-    required_error: "Activity type is required",
+  activity_type: z.enum(['call', 'email', 'meeting', 'note', 'task'], {
+    required_error: 'Activity type is required',
   }),
-  subject: z.string().min(1, "Subject is required").max(255, "Subject too long"),
+  subject: z.string().min(1, 'Subject is required').max(255, 'Subject too long'),
   description: z.string().optional(),
   customer_id: z.string().optional(),
   contact_id: z.string().optional(),
@@ -73,16 +73,14 @@ export function ActivityForm({
   const form = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
-      activity_type: activity?.activity_type || quickType || "note",
-      subject: activity?.subject || "",
-      description: activity?.description || "",
-      customer_id: activity?.customer_id || "",
-      contact_id: activity?.contact_id || "",
-      order_id: activity?.order_id || "",
-      quote_id: activity?.quote_id || "",
-      due_date: activity?.due_date
-        ? new Date(activity.due_date).toISOString().slice(0, 16)
-        : "",
+      activity_type: activity?.activity_type || quickType || 'note',
+      subject: activity?.subject || '',
+      description: activity?.description || '',
+      customer_id: activity?.customer_id || '',
+      contact_id: activity?.contact_id || '',
+      order_id: activity?.order_id || '',
+      quote_id: activity?.quote_id || '',
+      due_date: activity?.due_date ? new Date(activity.due_date).toISOString().slice(0, 16) : '',
     },
   });
 
@@ -103,14 +101,14 @@ export function ActivityForm({
       if (isEdit && activity) {
         await activitiesApi.update(activity.id, payload);
         toast({
-          title: "Success",
-          description: "Activity updated successfully",
+          title: 'Success',
+          description: 'Activity updated successfully',
         });
       } else {
         await activitiesApi.create(payload);
         toast({
-          title: "Success",
-          description: "Activity created successfully",
+          title: 'Success',
+          description: 'Activity created successfully',
         });
       }
 
@@ -118,10 +116,10 @@ export function ActivityForm({
       onSuccess();
       onOpenChange(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Operation failed";
+      const message = error instanceof Error ? error.message : 'Operation failed';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -130,17 +128,17 @@ export function ActivityForm({
   }
 
   // Watch activity type to show/hide due date field
-  const activityType = form.watch("activity_type");
+  const activityType = form.watch('activity_type');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Activity" : "Log Activity"}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Activity' : 'Log Activity'}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the activity details below."
-              : "Track a customer interaction or create a task."}
+              ? 'Update the activity details below.'
+              : 'Track a customer interaction or create a task.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -224,9 +222,7 @@ export function ActivityForm({
                     <FormControl>
                       <Input placeholder="Optional" {...field} disabled={isLoading} />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      Link to customer
-                    </FormDescription>
+                    <FormDescription className="text-xs">Link to customer</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -242,9 +238,7 @@ export function ActivityForm({
                     <FormControl>
                       <Input placeholder="Optional" {...field} disabled={isLoading} />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      Link to contact
-                    </FormDescription>
+                    <FormDescription className="text-xs">Link to contact</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -262,9 +256,7 @@ export function ActivityForm({
                     <FormControl>
                       <Input placeholder="Optional" {...field} disabled={isLoading} />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      Link to order
-                    </FormDescription>
+                    <FormDescription className="text-xs">Link to order</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -280,9 +272,7 @@ export function ActivityForm({
                     <FormControl>
                       <Input placeholder="Optional" {...field} disabled={isLoading} />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      Link to quote
-                    </FormDescription>
+                    <FormDescription className="text-xs">Link to quote</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -290,7 +280,7 @@ export function ActivityForm({
             </div>
 
             {/* Due Date (for tasks only) */}
-            {activityType === "task" && (
+            {activityType === 'task' && (
               <FormField
                 control={form.control}
                 name="due_date"
@@ -319,7 +309,7 @@ export function ActivityForm({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : isEdit ? "Update" : "Create"}
+                {isLoading ? 'Saving...' : isEdit ? 'Update' : 'Create'}
               </Button>
             </DialogFooter>
           </form>

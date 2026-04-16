@@ -12,9 +12,16 @@ const path = require('path');
 // Use a temp directory for session state during tests
 process.env.CCW_SESSION_ID = 'test-session';
 const {
-  createSession, heartbeat, checkpoint, loadSession,
-  findStaleSessions, recoverSession, completeSession, failSession,
-  listSessions, STATE_DIR,
+  createSession,
+  heartbeat,
+  checkpoint,
+  loadSession,
+  findStaleSessions,
+  recoverSession,
+  completeSession,
+  failSession,
+  listSessions,
+  STATE_DIR,
 } = require('../../scripts/lib/session-manager');
 
 let passed = 0;
@@ -152,7 +159,10 @@ test('listSessions: filters by status', () => {
   const s1 = createSession('filter-test-1');
   completeSession(s1.id);
   const completed = listSessions('completed');
-  assert.ok(completed.every(s => s.status === 'completed'), 'all should be completed');
+  assert.ok(
+    completed.every((s) => s.status === 'completed'),
+    'all should be completed'
+  );
 });
 
 console.log(`\n[SESSION-MANAGER] ${passed} passed, ${failed} failed`);

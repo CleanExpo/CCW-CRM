@@ -30,20 +30,24 @@ Comprehensive load testing suite for the CCW-ERP/CRM backend API. This test suit
 ### 1. Install k6
 
 **Windows** (Chocolatey):
+
 ```powershell
 choco install k6
 ```
 
 **Windows** (Manual):
+
 1. Download from https://k6.io/docs/getting-started/installation/
 2. Extract and add to PATH
 
 **macOS** (Homebrew):
+
 ```bash
 brew install k6
 ```
 
 **Linux**:
+
 ```bash
 sudo gpg -k
 sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
@@ -121,6 +125,7 @@ k6 run --vus 1 --duration 1m scenarios/quick-test.js
 ```
 
 **Thresholds**:
+
 - 95% of requests < 500ms
 - Error rate < 1%
 
@@ -135,6 +140,7 @@ k6 run --vus 5 --duration 2m scenarios/quick-test.js
 ```
 
 **Thresholds**:
+
 - 95% of requests < 500ms
 - 99% of requests < 1000ms
 - Error rate < 1%
@@ -150,6 +156,7 @@ k6 run scenarios/comprehensive-test.js
 ```
 
 **Thresholds**:
+
 - 95% of requests < 500ms
 - 99% of requests < 1000ms
 - Error rate < 1%
@@ -166,6 +173,7 @@ k6 run --vus 100 --duration 20m scenarios/comprehensive-test.js
 ```
 
 **Thresholds**:
+
 - Identify breaking point
 - Document degradation patterns
 - Error rate < 5%
@@ -181,6 +189,7 @@ k6 run scenarios/comprehensive-test.js
 ```
 
 **Thresholds**:
+
 - System recovers from spike
 - No crashes or hangs
 - Error rate < 5% during spike
@@ -196,6 +205,7 @@ k6 run --vus 15 --duration 30m scenarios/comprehensive-test.js
 ```
 
 **Thresholds**:
+
 - Performance doesn't degrade over time
 - Memory doesn't grow continuously
 - Error rate < 1%
@@ -218,6 +228,7 @@ export TEST_USER_PASSWORD=demo123
 ### Test Config
 
 Edit `config/test-config.js` to modify:
+
 - Performance thresholds
 - Test scenarios
 - Load patterns
@@ -230,15 +241,18 @@ Edit `config/test-config.js` to modify:
 ### Key Metrics
 
 #### HTTP Request Duration
+
 - **p(95)**: 95th percentile response time (should be < 500ms)
 - **p(99)**: 99th percentile response time (should be < 1000ms)
 - **max**: Maximum response time (identify outliers)
 
 #### Request Rate
+
 - **http_reqs**: Total requests per second
 - **http_req_failed**: Percentage of failed requests (should be < 1%)
 
 #### Virtual Users
+
 - **vus**: Number of concurrent virtual users
 - **vus_max**: Maximum VUs reached during test
 
@@ -253,6 +267,7 @@ Edit `config/test-config.js` to modify:
 ```
 
 **Interpretation**:
+
 - ✅ 95% of requests completed in < 456ms (Good)
 - ✅ Error rate is 0.23% (Excellent)
 - ✅ Throughput: 85.6 requests/second (Good for 20 users)
@@ -263,24 +278,24 @@ Edit `config/test-config.js` to modify:
 
 ### Expected Performance
 
-| Metric | Target | Good | Warning | Critical |
-|--------|--------|------|---------|----------|
-| **Response Time (p95)** | < 300ms | < 500ms | < 1000ms | > 1000ms |
-| **Response Time (p99)** | < 500ms | < 1000ms | < 2000ms | > 2000ms |
-| **Error Rate** | < 0.1% | < 1% | < 5% | > 5% |
-| **Throughput** | > 50 req/s | > 20 req/s | > 10 req/s | < 10 req/s |
-| **Max Response Time** | < 2s | < 5s | < 10s | > 10s |
+| Metric                  | Target     | Good       | Warning    | Critical   |
+| ----------------------- | ---------- | ---------- | ---------- | ---------- |
+| **Response Time (p95)** | < 300ms    | < 500ms    | < 1000ms   | > 1000ms   |
+| **Response Time (p99)** | < 500ms    | < 1000ms   | < 2000ms   | > 2000ms   |
+| **Error Rate**          | < 0.1%     | < 1%       | < 5%       | > 5%       |
+| **Throughput**          | > 50 req/s | > 20 req/s | > 10 req/s | < 10 req/s |
+| **Max Response Time**   | < 2s       | < 5s       | < 10s      | > 10s      |
 
 ### Endpoint-Specific Thresholds
 
-| Endpoint Type | p(95) Target | p(99) Target |
-|---------------|--------------|--------------|
-| **Authentication** | < 300ms | < 500ms |
-| **Read Operations** | < 200ms | < 400ms |
-| **Write Operations** | < 500ms | < 1000ms |
-| **Search** | < 300ms | < 600ms |
-| **Reports** | < 1000ms | < 2000ms |
-| **AI Operations** | < 2000ms | < 5000ms |
+| Endpoint Type        | p(95) Target | p(99) Target |
+| -------------------- | ------------ | ------------ |
+| **Authentication**   | < 300ms      | < 500ms      |
+| **Read Operations**  | < 200ms      | < 400ms      |
+| **Write Operations** | < 500ms      | < 1000ms     |
+| **Search**           | < 300ms      | < 600ms      |
+| **Reports**          | < 1000ms     | < 2000ms     |
+| **AI Operations**    | < 2000ms     | < 5000ms     |
 
 ---
 
@@ -289,6 +304,7 @@ Edit `config/test-config.js` to modify:
 ### 1. View Results
 
 Results are saved in `results/` directory:
+
 - JSON format: `results/test-name-timestamp.json`
 - HTML report: `results/test-name-timestamp.html`
 
@@ -305,6 +321,7 @@ k6-reporter results/comprehensive-test-20260211.json
 ### 3. Analyze Bottlenecks
 
 Look for:
+
 - **High p(99) times**: Outliers that need investigation
 - **Increasing response times**: Potential memory leaks
 - **High error rates**: Bugs or capacity issues
@@ -312,13 +329,13 @@ Look for:
 
 ### 4. Common Issues
 
-| Issue | Symptom | Solution |
-|-------|---------|----------|
-| **Database Connection Pool** | Timeouts at high load | Increase pool size |
-| **Memory Leak** | Response time increases over time | Profile memory usage |
-| **N+1 Queries** | Slow list endpoints | Add eager loading |
-| **Missing Indexes** | Slow search/filter | Add database indexes |
-| **API Rate Limiting** | 429 errors | Adjust rate limits |
+| Issue                        | Symptom                           | Solution             |
+| ---------------------------- | --------------------------------- | -------------------- |
+| **Database Connection Pool** | Timeouts at high load             | Increase pool size   |
+| **Memory Leak**              | Response time increases over time | Profile memory usage |
+| **N+1 Queries**              | Slow list endpoints               | Add eager loading    |
+| **Missing Indexes**          | Slow search/filter                | Add database indexes |
+| **API Rate Limiting**        | 429 errors                        | Adjust rate limits   |
 
 ---
 
@@ -385,7 +402,7 @@ name: Load Testing
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2am
+    - cron: '0 2 * * *' # Daily at 2am
   workflow_dispatch:
 
 jobs:
@@ -465,6 +482,7 @@ jobs:
 ## Support
 
 For issues or questions:
+
 1. Check troubleshooting section above
 2. Review k6 documentation
 3. Check Linear issue UNI-481

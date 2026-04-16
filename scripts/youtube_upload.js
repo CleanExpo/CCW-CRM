@@ -19,7 +19,7 @@ import { createReadStream } from 'fs';
  * @returns {string}
  */
 function buildDescription(videoBrief) {
-  const chapters = (videoBrief.chapters || videoBrief.youtube?.chapters || []);
+  const chapters = videoBrief.chapters || videoBrief.youtube?.chapters || [];
   const chapterLines = chapters.map((c) => `${c.timestamp} ${c.title}`).join('\n');
   const chapterBlock = chapterLines ? `\n\n📖 Chapters:\n${chapterLines}` : '';
 
@@ -51,10 +51,7 @@ export async function uploadToYouTube(videoPath, videoBrief, sessionId) {
 
     const credentials = JSON.parse(credsRaw);
 
-    const oauth2Client = new google.auth.OAuth2(
-      credentials.client_id,
-      credentials.client_secret
-    );
+    const oauth2Client = new google.auth.OAuth2(credentials.client_id, credentials.client_secret);
 
     oauth2Client.setCredentials({
       access_token: credentials.access_token,

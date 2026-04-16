@@ -17,6 +17,8 @@ from src.config.cin7_settings import Cin7Settings, get_cin7_settings
 from src.config.database import get_async_db
 from src.db.cin7_models import Cin7Connection
 from src.integrations.cin7.client import get_cin7_client
+from src.integrations.cin7.inventory_sync import Cin7InventorySyncer
+from src.integrations.cin7.product_sync import sync_price_tiers
 
 logger = structlog.get_logger(__name__)
 
@@ -376,6 +378,57 @@ async def preview_cin7_customers(
                 "message": str(e),
             },
         ) from e
+
+
+class MultiLocationStockRequest(BaseModel):
+    """Optional body for sync-multi-location-stock."""
+
+    location_codes: list[str] | None = Field(
+        default=None,
+        description="Filter to specific location names or IDs. Null syncs all locations.",
+    )
+
+
+@router.post("/sync-price-tiers")
+async def sync_cin7_price_tiers(
+    settings: Annotated[Cin7Settings, Depends(get_cin7_settings)],
+) -> dict[str, Any]:
+    """Sync price tiers from Cin7 Core products.
+
+    Reads PriceTier1/2/3 fields and maps them to retail/wholesale/special tiers.
+    Returns a list of {product_id, sku, tiers_synced} for every product processed.
+    """
+    logger.info("cin7_sync_price_tiers_triggered", mode=settings.mode)
+    try:
+        async with get_cin7_client(settings) as client:
+            result = await sync_price_tiers(client)
+        return {"status": "ok", "synced": len(result), "results": result}
+    except Exception as e:
+        logger.error("cin7_sync_price_tiers_failed", error=str(e))
+        raise HTTPException(status_code=502, detail={"error": str(e)}) from e
+
+
+@router.post("/sync-multi-location-stock")
+async def sync_cin7_multi_location_stock(
+    settings: Annotated[Cin7Settings, Depends(get_cin7_settings)],
+    body: MultiLocationStockRequest | None = None,
+) -> dict[str, Any]:
+    """Sync per-location stock levels from Cin7 Core.
+
+    Fetches all warehouse locations (optionally filtered by location_codes),
+    then pulls availability data per location.
+    Returns {locations_synced, total_products, errors}.
+    """
+    location_codes = body.location_codes if body else None
+    logger.info("cin7_sync_multi_location_stock_triggered", location_codes=location_codes)
+    try:
+        async with get_cin7_client(settings) as client:
+            syncer = Cin7InventorySyncer(client)
+            result = await syncer.sync_multi_location_stock(location_codes=location_codes)
+        return {"status": "ok", **result}
+    except Exception as e:
+        logger.error("cin7_sync_multi_location_stock_failed", error=str(e))
+        raise HTTPException(status_code=502, detail={"error": str(e)}) from e
 
 
 @router.get("/inventory/preview")

@@ -28,6 +28,7 @@
 The CCW ERP/CRM sits **alongside** your existing Cin7, Xero, and Shopify stack. It does not replace them — it connects to them and gives you a single operational dashboard.
 
 **What it gives you:**
+
 - One screen to see all products, customers, orders, and stock levels
 - Automatic nightly pull from Cin7 (inventory/products) and Xero (invoices/payments)
 - Walk-in customer billing through the built-in POS
@@ -37,6 +38,7 @@ The CCW ERP/CRM sits **alongside** your existing Cin7, Xero, and Shopify stack. 
 - KPI reports, CSV export, and invoice management
 
 **What it does NOT do:**
+
 - Replace Cin7 as your inventory of record (Cin7 remains master)
 - Replace Xero as your accounting system (Xero remains master)
 - Replace Shopify as your online store (Shopify data syncs in nightly)
@@ -54,6 +56,7 @@ Log into [railway.app](https://railway.app) → open your CCW backend service �
 Set the following:
 
 **Cin7 (required for nightly product/inventory sync)**
+
 ```
 CIN7_MODE=live
 CIN7_CORE_ACCOUNT_ID=<your Cin7 Core account ID>
@@ -63,15 +66,18 @@ CIN7_OMNI_API_KEY=<your Cin7 Omni API key>
 ```
 
 **Xero (required for nightly invoice/payment sync)**
+
 ```
 XERO_MODE=live
 XERO_CLIENT_ID=<from developer.xero.com>
 XERO_CLIENT_SECRET=<from developer.xero.com>
 XERO_REDIRECT_URI=https://<railway-backend-url>/api/integrations/xero/callback
 ```
+
 → See `docs/xero-setup-guide.md` for the full Xero OAuth walkthrough.
 
 **Shopify (required for product/order sync)**
+
 ```
 SHOPIFY_MODE=live
 SHOPIFY_SHOP_DOMAIN=<your-store>.myshopify.com
@@ -79,12 +85,14 @@ SHOPIFY_ACCESS_TOKEN=<your Shopify Admin API token>
 ```
 
 **Stripe (for invoice payment webhooks)**
+
 ```
 STRIPE_SECRET_KEY=<your Stripe secret key>
 STRIPE_WEBHOOK_SECRET=<from Stripe Dashboard → Webhooks>
 ```
 
 **Core (already set — verify these)**
+
 ```
 DATABASE_URL=<Supabase connection string>
 SUPABASE_URL=<your Supabase project URL>
@@ -98,6 +106,7 @@ ENVIRONMENT=production
 Log into [vercel.com](https://vercel.com) → open your CCW project → **Settings → Environment Variables**.
 
 Verify these are set:
+
 ```
 NEXT_PUBLIC_BACKEND_URL=https://<your-railway-backend-url>
 NEXT_PUBLIC_SUPABASE_URL=https://vwfgksqkajnpfjospbpe.supabase.co
@@ -131,11 +140,13 @@ GET https://<backend-url>/api/cron/shadow-sync-cin7
 ### 3.1 Cin7
 
 **Where to find your credentials:**
+
 1. Log into Cin7 → **Account → API**
 2. Copy the **Account ID** and **Application Key** (Core API)
 3. For Omni API: go to **Account → Integrations → API** → copy username + API key
 
 **What syncs:**
+
 - Products + SKUs + pricing + stock levels
 - Customers
 - Sales orders + line items
@@ -149,6 +160,7 @@ GET https://<backend-url>/api/cron/shadow-sync-cin7
 → See `docs/xero-setup-guide.md` for the full step-by-step.
 
 **What syncs:**
+
 - Invoices (paid, outstanding, overdue)
 - Payments received
 - Customer contacts
@@ -160,17 +172,20 @@ GET https://<backend-url>/api/cron/shadow-sync-cin7
 ### 3.3 Shopify
 
 **Where to find your credentials:**
+
 1. Shopify Admin → **Settings → Apps and sales channels → Develop apps**
 2. Create a private app → **Admin API access token**
 3. Give it scopes: `read_products`, `read_orders`, `read_customers`
 
 **What syncs:**
+
 - Products (name, SKU, price, images)
 - Orders placed online
 
 ### 3.4 Stripe
 
 **Setting up the webhook:**
+
 1. Go to [dashboard.stripe.com](https://dashboard.stripe.com) → **Developers → Webhooks**
 2. Click **Add endpoint**
 3. Endpoint URL: `https://<backend-url>/api/webhooks/stripe`
@@ -189,19 +204,19 @@ The system runs a fully automated sync every night. You don't need to do anythin
 
 ### Cron Schedule (all times AEST)
 
-| Time | Job | What it does |
-|---|---|---|
-| 5am | Health check | Confirms backend is alive |
-| 9am | Daily report | Updates KPI dashboard |
-| 9am | Check expiring quotes | Flags quotes due to expire |
-| 9am | Customer onboarding emails | Sends Day-1/7/30 sequences |
-| 7pm | **Cin7 sync** | Pulls all products, inventory, customers, orders from Cin7 |
-| 8pm | **Xero sync** | Pulls invoices and payments from Xero *(after Cin7)* |
-| 9pm | **Auto-reorder** | Creates purchase orders for items below reorder threshold |
-| Every 5min | Webhook retry | Retries any failed webhook deliveries |
-| Every 15min | SLA check | Flags orders/tasks breaching SLA |
-| Hourly | Autonomous ops | AI agent maintenance tasks |
-| 2am | Cleanup | Removes old background job records |
+| Time        | Job                        | What it does                                               |
+| ----------- | -------------------------- | ---------------------------------------------------------- |
+| 5am         | Health check               | Confirms backend is alive                                  |
+| 9am         | Daily report               | Updates KPI dashboard                                      |
+| 9am         | Check expiring quotes      | Flags quotes due to expire                                 |
+| 9am         | Customer onboarding emails | Sends Day-1/7/30 sequences                                 |
+| 7pm         | **Cin7 sync**              | Pulls all products, inventory, customers, orders from Cin7 |
+| 8pm         | **Xero sync**              | Pulls invoices and payments from Xero _(after Cin7)_       |
+| 9pm         | **Auto-reorder**           | Creates purchase orders for items below reorder threshold  |
+| Every 5min  | Webhook retry              | Retries any failed webhook deliveries                      |
+| Every 15min | SLA check                  | Flags orders/tasks breaching SLA                           |
+| Hourly      | Autonomous ops             | AI agent maintenance tasks                                 |
+| 2am         | Cleanup                    | Removes old background job records                         |
 
 ### How to Know the Sync Ran Successfully
 
@@ -211,6 +226,7 @@ The system runs a fully automated sync every night. You don't need to do anythin
 4. Check **Inventory** → product stock levels match Cin7
 
 If the sync failed, check:
+
 - Railway logs: your-service → **Deployments → Logs**
 - Vercel logs: your-project → **Functions → Logs** → filter by `/api/cron`
 
@@ -223,6 +239,7 @@ If the sync failed, check:
 **Path**: `/products`
 
 **What to do here:**
+
 - View all products synced from Cin7
 - Edit product names, descriptions, and categories in this system (syncs back to Cin7 on next run)
 - Set reorder thresholds (triggers auto-PO when stock drops below level)
@@ -236,6 +253,7 @@ If the sync failed, check:
 **Path**: `/customers`
 
 **What to do here:**
+
 - View all customers imported from Cin7
 - Add notes, tags, and internal flags
 - View customer order history, quotes, and invoice balances
@@ -250,6 +268,7 @@ If the sync failed, check:
 **Path**: `/orders`
 
 **What to do here:**
+
 - View all sales orders (synced from Cin7 + created locally)
 - Create new orders manually for phone/email customers
 - Convert quotes to orders (one click)
@@ -263,6 +282,7 @@ If the sync failed, check:
 **Path**: `/quotes`
 
 **What to do here:**
+
 - Create quotes for customers
 - Add line items from your product catalog
 - Apply customer-specific pricing tiers
@@ -277,6 +297,7 @@ If the sync failed, check:
 **Path**: `/invoices`
 
 **What to do here:**
+
 - View all invoices (synced from Xero + generated locally)
 - Create invoices from orders
 - Record payments (cash, card, bank transfer, Stripe)
@@ -291,6 +312,7 @@ If the sync failed, check:
 **Path**: `/purchase-orders`
 
 **What to do here:**
+
 - View purchase orders sent to suppliers
 - Create manual POs for special orders
 - Record goods received (GRN workflow at `/purchase-orders/receiving`)
@@ -301,6 +323,7 @@ If the sync failed, check:
 **Path**: `/suppliers`
 
 **What to do here:**
+
 - View all suppliers (synced from Cin7)
 - Add supplier contacts and notes
 - View purchase order history per supplier
@@ -311,14 +334,14 @@ If the sync failed, check:
 
 **Sub-sections:**
 
-| Page | Purpose |
-|---|---|
-| `/inventory` | Stock levels across all locations |
-| `/inventory/stock` | Stock take — count and reconcile |
-| `/inventory/transfers` | Transfer stock between locations |
-| `/inventory/forecast` | AI demand forecasting (next 30/90 days) |
-| `/inventory/bom` | Bill of Materials for assembled products |
-| `/inventory/reservations` | Reserved stock for confirmed orders |
+| Page                      | Purpose                                  |
+| ------------------------- | ---------------------------------------- |
+| `/inventory`              | Stock levels across all locations        |
+| `/inventory/stock`        | Stock take — count and reconcile         |
+| `/inventory/transfers`    | Transfer stock between locations         |
+| `/inventory/forecast`     | AI demand forecasting (next 30/90 days)  |
+| `/inventory/bom`          | Bill of Materials for assembled products |
+| `/inventory/reservations` | Reserved stock for confirmed orders      |
 
 **Barcode scanning**: On the stock take page, click the barcode icon to activate the camera scanner.
 
@@ -327,6 +350,7 @@ If the sync failed, check:
 **Path**: `/reports`
 
 **Available reports:**
+
 - Revenue by month/quarter/year
 - Top products by revenue
 - Customer acquisition and churn
@@ -341,6 +365,7 @@ If the sync failed, check:
 **Path**: `/workshop`
 
 **What to do here:**
+
 - Schedule service jobs for equipment
 - Track equipment serial numbers and warranty
 - Set maintenance intervals (by date or hours)
@@ -368,12 +393,14 @@ The POS handles all walk-in customer transactions.
 ### POS Locations
 
 **Path**: `/pos/locations`
+
 - Set up multiple terminals (counter, warehouse, mobile)
 - Each location tracks its own float and end-of-day reconciliation
 
 ### End of Day Reconciliation
 
 **Path**: `/pos/reconciliation`
+
 1. Count your cash drawer
 2. Enter the actual amount
 3. System calculates any discrepancy vs recorded cash sales
@@ -413,6 +440,7 @@ Enter a customer name and what they're looking to buy. The AI drafts a quote wit
 **Path**: `/ai-assistant`
 
 Ask plain-English questions about your business:
+
 - "Which customers haven't ordered in 90 days?"
 - "What's my stock level for SKU CCW-1234?"
 - "Generate a quote for Acme Corp for 10 angle grinders"
@@ -421,6 +449,7 @@ Ask plain-English questions about your business:
 ### 7.5 Anomaly Detection
 
 The system automatically flags:
+
 - Unusual order volumes (sudden spike or drop)
 - Pricing anomalies (order at the wrong price)
 - Stock discrepancies between Cin7 and local records
@@ -443,13 +472,13 @@ Alerts appear in the **Alerts** section (`/alerts`) and in the notification bell
 
 ### Roles & Access
 
-| Role | Access |
-|---|---|
-| Admin | Full access — all modules, settings, user management |
-| Manager | All modules except user management and settings |
-| Sales | Customers, Quotes, Orders, Invoices, POS |
-| Warehouse | Inventory, Purchase Orders, Receiving, Suppliers |
-| Workshop | Workshop module only |
+| Role      | Access                                               |
+| --------- | ---------------------------------------------------- |
+| Admin     | Full access — all modules, settings, user management |
+| Manager   | All modules except user management and settings      |
+| Sales     | Customers, Quotes, Orders, Invoices, POS             |
+| Warehouse | Inventory, Purchase Orders, Receiving, Suppliers     |
+| Workshop  | Workshop module only                                 |
 
 ### Removing Staff
 
@@ -571,16 +600,16 @@ This is expected if you're not running Prometheus. The monitoring page (`/monito
 
 ## 12. Emergency Contacts & Escalation
 
-| Issue | First contact | Escalate to |
-|---|---|---|
-| App not loading (Vercel down) | [vercel.com/status](https://vercel.com/status) | Phill |
-| Backend errors (Railway down) | [railway.app/status](https://railway.app/status) | Phill |
-| Database issues (Supabase) | [status.supabase.com](https://status.supabase.com) | Phill |
-| Cin7 API errors | Cin7 support | Phill |
-| Xero API errors | Xero support | Phill |
-| Shopify API errors | Shopify support | Phill |
-| Feature requests or bugs | Log in Linear (Unite-Group / CCW-ERP) | Phill |
+| Issue                         | First contact                                      | Escalate to |
+| ----------------------------- | -------------------------------------------------- | ----------- |
+| App not loading (Vercel down) | [vercel.com/status](https://vercel.com/status)     | Phill       |
+| Backend errors (Railway down) | [railway.app/status](https://railway.app/status)   | Phill       |
+| Database issues (Supabase)    | [status.supabase.com](https://status.supabase.com) | Phill       |
+| Cin7 API errors               | Cin7 support                                       | Phill       |
+| Xero API errors               | Xero support                                       | Phill       |
+| Shopify API errors            | Shopify support                                    | Phill       |
+| Feature requests or bugs      | Log in Linear (Unite-Group / CCW-ERP)              | Phill       |
 
 ---
 
-*This document is maintained by the development team. For the latest version, see `docs/ccw-handoff-runbook.md` in the CCW-CRM repository.*
+_This document is maintained by the development team. For the latest version, see `docs/ccw-handoff-runbook.md` in the CCW-CRM repository._

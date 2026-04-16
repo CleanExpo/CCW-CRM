@@ -38,7 +38,7 @@ describe('watch mode — state machine', () => {
     bm.startWatch();
 
     // Wait ~50ms to get a measurable duration
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     const result = bm.stopWatch();
     // Duration should be at least 40ms (allowing for timer imprecision)

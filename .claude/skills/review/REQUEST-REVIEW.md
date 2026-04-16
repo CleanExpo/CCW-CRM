@@ -5,6 +5,7 @@
 ## Steps
 
 1. **Run pre-review checks**
+
    ```bash
    npx tsc --noEmit        # TypeScript must pass
    pnpm turbo run lint      # Lint must pass
@@ -12,18 +13,22 @@
    ```
 
 2. **Analyse diff size**
+
    ```bash
    node -e "const {analyzeDiff,checkPRSize}=require('./scripts/lib/review-pipeline'); const d=analyzeDiff('develop'); console.log(checkPRSize(d));"
    ```
+
    - WARN if > 500 lines — consider splitting
    - BLOCK if > 1000 lines — must split before review
 
 3. **Identify required reviewers**
+
    ```bash
    node -e "const {analyzeDiff,routeReviewers}=require('./scripts/lib/review-pipeline'); const d=analyzeDiff('develop'); console.log(routeReviewers(d).map(r=>r.name));"
    ```
 
 4. **Dispatch to Review Orchestrator**
+
    ```
    @review-orchestrator Please review this PR:
    - Branch: [current branch]
@@ -43,6 +48,7 @@
    ```
 
 ## Notes
+
 - Never create a PR without a SHIP verdict from Review Orchestrator
 - Security findings are never negotiable — fix all CRITICAL/HIGH before proceeding
 - If review takes > 5 minutes, something is wrong — check agent logs

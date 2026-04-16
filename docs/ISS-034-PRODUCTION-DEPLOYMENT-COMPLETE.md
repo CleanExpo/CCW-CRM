@@ -11,6 +11,7 @@
 All **production deployment documentation and procedures** are complete and ready for execution. CCW-Online ERP has been thoroughly tested (integration tests 85%, load tests 93.5%, UAT framework complete) and all preparatory work is finished. The system is **code-ready for production deployment**.
 
 **Status**:
+
 - ✅ **Production Deployment Documentation**: Complete
 - ✅ **Production Runbook**: Complete
 - ✅ **Security Hardening**: Complete
@@ -27,6 +28,7 @@ All **production deployment documentation and procedures** are complete and read
 **Purpose**: Step-by-step operational guide for production deployment and maintenance
 
 **Contents** (200+ lines):
+
 - Pre-deployment checklist
 - Server setup (Ubuntu 20.04+)
 - Firewall configuration
@@ -51,6 +53,7 @@ All **production deployment documentation and procedures** are complete and read
 **Purpose**: Comprehensive deployment guide with detailed procedures
 
 **Contents** (200+ lines):
+
 - Pre-deployment checklist
   - Database (Supabase/PostgreSQL)
   - Environment variables
@@ -80,6 +83,7 @@ All **production deployment documentation and procedures** are complete and read
 **Purpose**: Secure secrets management for production
 
 **Key Contents**:
+
 - AWS Secrets Manager configuration
 - Secret generation procedures
 - JWT secret (256-bit)
@@ -98,6 +102,7 @@ All **production deployment documentation and procedures** are complete and read
 **Purpose**: Staging deployment procedures (applicable to production with modifications)
 
 **Contents** (1,427 lines):
+
 - Comprehensive verification procedures (85 checks)
 - Infrastructure validation
 - Services validation
@@ -116,20 +121,21 @@ All **production deployment documentation and procedures** are complete and read
 
 ### Code Quality ✅
 
-| Metric | Status | Result |
-|--------|--------|--------|
-| **Type Check** | ✅ PASS | No TypeScript errors |
-| **Linting** | ✅ PASS | No ESLint errors |
-| **Unit Tests** | ✅ PASS | Core functionality verified |
-| **Integration Tests** | ✅ PASS | 85% pass rate (101/142 core tests) |
-| **Load Tests** | ✅ PASS | 93.5% pass rate (1,869/2,000 scenarios) |
-| **Security Audit** | ✅ COMPLETE | ISS-017 complete, zero critical vulnerabilities |
+| Metric                | Status      | Result                                          |
+| --------------------- | ----------- | ----------------------------------------------- |
+| **Type Check**        | ✅ PASS     | No TypeScript errors                            |
+| **Linting**           | ✅ PASS     | No ESLint errors                                |
+| **Unit Tests**        | ✅ PASS     | Core functionality verified                     |
+| **Integration Tests** | ✅ PASS     | 85% pass rate (101/142 core tests)              |
+| **Load Tests**        | ✅ PASS     | 93.5% pass rate (1,869/2,000 scenarios)         |
+| **Security Audit**    | ✅ COMPLETE | ISS-017 complete, zero critical vulnerabilities |
 
 ---
 
 ### Testing Validation ✅
 
 **ISS-029: Integration Testing**
+
 - ✅ Complete: 85% pass rate (core modules 100%)
 - ✅ Products: 100% (100/100 tests)
 - ✅ Customers: 100% (42/42 tests)
@@ -138,6 +144,7 @@ All **production deployment documentation and procedures** are complete and read
 - ✅ Authentication: Verified
 
 **ISS-030: Load Testing**
+
 - ✅ Complete: 93.5% pass rate
 - ✅ Products: 100% (500/500)
 - ✅ Customers: 100% (500/500)
@@ -147,11 +154,13 @@ All **production deployment documentation and procedures** are complete and read
 - ✅ Regression tests: ISS-001 through ISS-005 all passing
 
 **ISS-031: User Acceptance Testing**
+
 - ✅ Framework Complete: 35 test cases + 5 business workflows
 - ⏳ Stakeholder Testing: Awaiting stakeholder participation
 - ✅ Test environment: Ready
 
 **ISS-032: User Documentation**
+
 - ✅ Complete: User Guide, Admin Guide, API Documentation
 - ✅ Coverage: 95% of all features documented
 - ✅ UAT Documentation: Complete with 7 comprehensive docs
@@ -161,6 +170,7 @@ All **production deployment documentation and procedures** are complete and read
 ### Security Hardening ✅
 
 **ISS-017: Security Hardening** (Complete)
+
 - ✅ JWT authentication with secure token generation
 - ✅ Password hashing (bcrypt with proper salting)
 - ✅ CORS configuration
@@ -178,21 +188,25 @@ All **production deployment documentation and procedures** are complete and read
 ### Performance Optimization ✅
 
 **ISS-008: Add PostgreSQL Trigram Indexes**
+
 - ✅ Complete: Search performance optimized
 - ✅ Trigram indexes on product names, SKUs
 - ✅ Customer search optimization
 
 **ISS-009: Optimize Foreign Key Indexes**
+
 - ✅ Complete: JOIN query performance improved
 - ✅ Indexes on all foreign keys
 - ✅ Query optimization verified
 
 **ISS-010: Database Query Performance Tuning**
+
 - ✅ Complete: Complex queries optimized
 - ✅ Query plan analysis
 - ✅ Index usage optimization
 
 **Load Test Performance**:
+
 - ✅ Average response time: 2,825ms (under heavy load)
 - ✅ P95 response time: 10,339ms (20 concurrent requests)
 - ✅ Throughput: 2.23 scenarios/second
@@ -207,6 +221,7 @@ All **production deployment documentation and procedures** are complete and read
 #### 1. Server Provisioning ⏳
 
 **Required Servers**:
+
 - **Frontend Server**:
   - OS: Ubuntu 22.04 LTS
   - Specs: 4GB RAM, 2 vCPU, 50GB SSD
@@ -236,11 +251,13 @@ All **production deployment documentation and procedures** are complete and read
 #### 2. Domain Configuration ⏳
 
 **Required Domains**:
+
 - **Primary**: `ccw-online.com` or `app.ccw-online.com`
 - **API Subdomain**: `api.ccw-online.com`
 - **Admin Panel** (optional): `admin.ccw-online.com`
 
 **DNS Records**:
+
 - A record: `ccw-online.com` → Frontend server IP
 - A record: `api.ccw-online.com` → Backend server IP
 - CNAME: `www.ccw-online.com` → `ccw-online.com`
@@ -254,6 +271,7 @@ All **production deployment documentation and procedures** are complete and read
 #### 3. SSL Certificates ⏳
 
 **Options**:
+
 1. **Let's Encrypt** (Recommended - Free)
    - Automatic renewal via Certbot
    - Wildcard certificates available
@@ -274,12 +292,14 @@ All **production deployment documentation and procedures** are complete and read
 **Options**:
 
 **Option A: Self-Hosted PostgreSQL** (Lower cost)
+
 - Install on dedicated server
 - Configure replication (optional)
 - Set up automated backups
 - Manual scaling and maintenance
 
 **Option B: Managed Database** (Recommended)
+
 - **AWS RDS PostgreSQL**: $50-300/month
 - **Google Cloud SQL**: $50-300/month
 - **DigitalOcean Managed Database**: $15-200/month
@@ -385,6 +405,7 @@ LOG_LEVEL=info
 ### Phase 1: Infrastructure Setup (4-8 hours)
 
 **1.1 Provision Servers**
+
 - [ ] Create frontend server
 - [ ] Create backend server
 - [ ] Create database server (or provision managed database)
@@ -392,11 +413,13 @@ LOG_LEVEL=info
 - [ ] Verify SSH access to all servers
 
 **1.2 Configure Domains**
+
 - [ ] Register domain (if not already registered)
 - [ ] Configure DNS A records
 - [ ] Verify DNS propagation (use `nslookup` or `dig`)
 
 **1.3 Install SSL Certificates**
+
 - [ ] Install Certbot on web server
 - [ ] Generate Let's Encrypt certificates
 - [ ] Configure Nginx with SSL
@@ -404,6 +427,7 @@ LOG_LEVEL=info
 - [ ] Set up auto-renewal
 
 **1.4 Server Hardening**
+
 - [ ] Configure firewall (UFW)
 - [ ] Restrict SSH access (key-based only, specific IPs)
 - [ ] Disable root login
@@ -415,6 +439,7 @@ LOG_LEVEL=info
 ### Phase 2: Application Deployment (2-4 hours)
 
 **2.1 Install Dependencies**
+
 ```bash
 # On each server
 sudo apt-get update && sudo apt-get upgrade -y
@@ -425,6 +450,7 @@ sudo systemctl enable docker && sudo systemctl start docker
 ```
 
 **2.2 Clone Repository**
+
 ```bash
 # On application servers
 cd /var/www
@@ -434,6 +460,7 @@ sudo git checkout main  # or specific release tag
 ```
 
 **2.3 Configure Environment**
+
 ```bash
 # Create production environment file
 sudo cp .env.production.example .env.production
@@ -447,6 +474,7 @@ export AWS_SECRET_NAME=ccw-erp/production
 ```
 
 **2.4 Database Setup**
+
 ```bash
 # Start PostgreSQL (if self-hosted)
 docker-compose -f docker-compose.prod.yml up -d postgres
@@ -467,6 +495,7 @@ python -m src.db.seed_demo
 ```
 
 **2.5 Build and Start Application**
+
 ```bash
 # Build containers
 docker-compose -f docker-compose.prod.yml build
@@ -480,6 +509,7 @@ docker-compose ps
 ```
 
 **2.6 Configure Nginx Reverse Proxy**
+
 ```bash
 # Copy Nginx configuration
 sudo cp deployment/nginx/ccw-erp.conf /etc/nginx/sites-available/ccw-erp
@@ -502,6 +532,7 @@ sudo systemctl reload nginx
 ### Phase 3: Validation & Testing (1-2 hours)
 
 **3.1 Health Check Validation**
+
 ```bash
 # Test backend health endpoint
 curl https://api.ccw-online.com/health
@@ -521,6 +552,7 @@ curl -I https://ccw-online.com
 ```
 
 **3.2 Smoke Tests**
+
 ```bash
 # Test 1: Authentication
 curl -X POST https://api.ccw-online.com/api/auth/login \
@@ -541,6 +573,7 @@ curl https://ccw-online.com | grep "CCW-Online"
 ```
 
 **3.3 End-to-End Test**
+
 1. Open browser: `https://ccw-online.com`
 2. Log in with admin credentials
 3. Navigate to Products page
@@ -550,6 +583,7 @@ curl https://ccw-online.com | grep "CCW-Online"
 7. Verify order appears in list
 
 **3.4 Performance Validation**
+
 ```bash
 # Homepage load time
 curl -o /dev/null -s -w "Time: %{time_total}s\n" https://ccw-online.com
@@ -569,12 +603,14 @@ curl -o /dev/null -s -w "Time: %{time_total}s\n" https://api.ccw-online.com/api/
 ### Phase 4: Monitoring Setup (1-2 hours)
 
 **4.1 Configure Uptime Monitoring**
+
 - [ ] Create UptimeRobot account (or use Pingdom)
 - [ ] Add monitor: `https://api.ccw-online.com/health`
 - [ ] Set check interval: 1 minute
 - [ ] Configure alerts: Email + SMS
 
 **4.2 Configure Error Tracking (Optional)**
+
 ```bash
 # Add Sentry DSN to .env.production
 SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
@@ -587,11 +623,13 @@ docker-compose -f docker-compose.prod.yml restart backend web
 ```
 
 **4.3 Configure Log Aggregation (Optional)**
+
 - Set up CloudWatch Logs, Datadog, or similar
 - Configure log forwarding from Docker containers
 - Set up log retention policies
 
 **4.4 Set Up Dashboards (Optional)**
+
 - Prometheus + Grafana for metrics
 - Database performance dashboard
 - Application performance dashboard
@@ -603,11 +641,13 @@ docker-compose -f docker-compose.prod.yml restart backend web
 **5.1 Configure Automated Backups**
 
 **For Managed Database**:
+
 - Enable automatic daily backups
 - Set retention period (7-30 days)
 - Enable point-in-time recovery (PITR) if available
 
 **For Self-Hosted Database**:
+
 ```bash
 # Create backup script
 sudo cp scripts/backup-database.sh /usr/local/bin/
@@ -626,6 +666,7 @@ sudo crontab -e
 ```
 
 **5.2 Test Backup Restore**
+
 ```bash
 # Create test backup
 ./scripts/backup-database.sh
@@ -644,6 +685,7 @@ sudo crontab -e
 ### 24-Hour Monitoring ✅
 
 **Day 1 Checklist**:
+
 - [ ] Monitor health endpoint (every hour)
 - [ ] Check error logs (every 2 hours)
 - [ ] Review performance metrics
@@ -654,6 +696,7 @@ sudo crontab -e
 - [ ] Review security logs
 
 **Expected Metrics** (Day 1):
+
 - Uptime: >99%
 - Error rate: <1%
 - Average response time: <500ms (API), <3s (frontend)
@@ -669,6 +712,7 @@ sudo crontab -e
 # Production Stability Monitoring - 7 Days
 
 ## Day 1: Feb 5, 2026
+
 - **Uptime**: 100%
 - **Total Requests**: ~1,000
 - **Errors**: 2 (both handled gracefully)
@@ -677,6 +721,7 @@ sudo crontab -e
 - **Notes**: Deployment successful, monitoring active
 
 ## Day 2: Feb 6, 2026
+
 - **Uptime**: 100%
 - **Total Requests**: ~2,500
 - **Errors**: 0
@@ -687,6 +732,7 @@ sudo crontab -e
 [Continue for Days 3-7]
 
 ## Summary (Feb 5-12, 2026)
+
 - **Overall Uptime**: 99.9%
 - **Total Requests**: ~20,000
 - **Total Errors**: 8 (all handled, 0 critical)
@@ -702,6 +748,7 @@ sudo crontab -e
 ### When to Rollback
 
 Trigger immediate rollback if:
+
 - **Critical Error**: Application crashes or won't start
 - **Data Corruption**: User data lost or corrupted
 - **Security Breach**: Unauthorized access detected
@@ -711,6 +758,7 @@ Trigger immediate rollback if:
 ### Quick Rollback (5-10 minutes)
 
 **For Application Code**:
+
 ```bash
 # SSH to production server
 ssh admin@production-server
@@ -739,6 +787,7 @@ echo "Rollback executed at $(date) - deployed v1.9.0" | mail -s "ROLLBACK ALERT"
 ### Full Rollback with Database (15-30 minutes)
 
 **If database migration caused issues**:
+
 ```bash
 # 1. Stop application
 docker-compose -f docker-compose.prod.yml down
@@ -767,6 +816,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 ### ISS-034 Completion Checklist
 
 **Pre-Deployment** (All Must Be Complete):
+
 - [x] ✅ Integration tests passing (85%)
 - [x] ✅ Load tests passing (93.5%)
 - [x] ✅ UAT framework complete
@@ -778,6 +828,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - [x] ✅ Backup procedures documented
 
 **Infrastructure** (Requires Provisioning):
+
 - [ ] ⏳ Production servers provisioned
 - [ ] ⏳ Domain configured with DNS
 - [ ] ⏳ SSL certificates obtained
@@ -785,6 +836,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - [ ] ⏳ Load balancer configured (if applicable)
 
 **Deployment** (Requires Execution):
+
 - [ ] ⏳ Database migrations applied
 - [ ] ⏳ Application deployed and running
 - [ ] ⏳ Nginx reverse proxy configured
@@ -792,6 +844,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - [ ] ⏳ Backups configured and tested
 
 **Validation** (Post-Deployment):
+
 - [ ] ⏳ Health checks passing
 - [ ] ⏳ Smoke tests passing
 - [ ] ⏳ Performance targets met
@@ -806,6 +859,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 ### ✅ What's Complete
 
 **Documentation**:
+
 - ✅ Production Runbook (200+ lines)
 - ✅ Production Deployment Guide (200+ lines)
 - ✅ Production Secrets Setup
@@ -814,6 +868,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - ✅ UAT Framework (35 test cases, 5 workflows)
 
 **Testing**:
+
 - ✅ Integration Tests: 85% pass rate
 - ✅ Load Tests: 93.5% pass rate
 - ✅ Security Audit: Complete (zero critical vulnerabilities)
@@ -821,12 +876,14 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - ✅ Regression Tests: ISS-001 through ISS-005 passing
 
 **Code Quality**:
+
 - ✅ TypeScript: No errors
 - ✅ Linting: No errors
 - ✅ Test Coverage: Core modules 100%
 - ✅ Code Review: All PRs merged
 
 **Security**:
+
 - ✅ JWT Authentication: Implemented
 - ✅ Password Hashing: Bcrypt with salting
 - ✅ CORS: Configured
@@ -838,6 +895,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 ### ⏳ What's Required
 
 **Infrastructure**:
+
 - ⏳ Production servers (estimate: $150-400/month)
 - ⏳ Domain registration (estimate: $12-50/year)
 - ⏳ SSL certificates (free with Let's Encrypt)
@@ -845,6 +903,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - ⏳ Monitoring services (optional, $0-100/month)
 
 **Deployment Execution**:
+
 - ⏳ 4-8 hours infrastructure setup
 - ⏳ 2-4 hours application deployment
 - ⏳ 1-2 hours validation and testing
@@ -853,6 +912,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - ⏳ 7-day stability observation
 
 **Business Approvals**:
+
 - ⏳ Infrastructure budget approval
 - ⏳ Go-live date selection
 - ⏳ Stakeholder notification
@@ -865,6 +925,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 ### With Infrastructure Ready
 
 **Week 1: Deployment Execution**
+
 - Day 1: Infrastructure setup (4-8 hours)
 - Day 2: Application deployment (2-4 hours)
 - Day 2-3: Validation & testing (2-4 hours)
@@ -872,12 +933,14 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - Day 3-4: 24-hour monitoring
 
 **Week 2: Stability Observation**
+
 - Days 5-11: 7-day stability period
 - Daily monitoring and logging
 - Issue resolution (if any)
 - Performance tuning (if needed)
 
 **Week 2: Go-Live**
+
 - Day 12: Final stakeholder sign-off
 - Day 12: Announce production launch
 - Day 13-19: Extended monitoring (7 days post-launch)
@@ -889,11 +952,13 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 ## Cost Estimate
 
 ### One-Time Costs
+
 - Domain registration: $12-50/year
 - SSL certificate: $0 (Let's Encrypt) or $50-200/year
 - Initial setup labor: Included in ISS-034
 
 ### Monthly Recurring Costs
+
 - **Basic Setup** (Recommended for MVP):
   - Frontend server: $20-40/month
   - Backend server: $40-80/month
@@ -962,6 +1027,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 **ISS-034 Status**: ✅ **DOCUMENTATION COMPLETE** / ⏳ **Infrastructure Pending**
 
 **What's Accomplished**:
+
 1. ✅ Comprehensive production deployment documentation (400+ lines)
 2. ✅ Production runbook with operational procedures
 3. ✅ Security hardening complete
@@ -972,11 +1038,13 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 8. ✅ Monitoring procedures documented
 
 **What's Blocking**:
+
 1. ⏳ Production infrastructure not provisioned (requires business approval + budget)
 2. ⏳ Domain configuration pending
 3. ⏳ Actual deployment execution pending
 
 **Estimated Effort** (when infrastructure available):
+
 - Infrastructure setup: 4-8 hours
 - Deployment execution: 2-4 hours
 - Initial monitoring: 24 hours
@@ -984,6 +1052,7 @@ echo "$(date): Full rollback executed due to [reason]" >> docs/ROLLBACK_LOG.md
 - **Total**: 2-3 weeks from approval to stable production
 
 **Current Recommendation**:
+
 - Mark ISS-034 as "Documentation Complete"
 - Proceed with infrastructure provisioning when business approves
 - Execute production deployment following documented procedures

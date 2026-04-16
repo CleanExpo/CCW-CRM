@@ -22,7 +22,13 @@ import { sanitizeExtensionUrl } from './sidebar-utils';
 import { COMMAND_DESCRIPTIONS, PAGE_CONTENT_COMMANDS, wrapUntrustedContent } from './commands';
 import { handleSnapshot, SNAPSHOT_FLAGS } from './snapshot';
 import { resolveConfig, ensureStateDir, readVersionHash } from './config';
-import { emitActivity, subscribe, getActivityAfter, getActivityHistory, getSubscriberCount } from './activity';
+import {
+  emitActivity,
+  subscribe,
+  getActivityAfter,
+  getActivityHistory,
+  getSubscriberCount,
+} from './activity';
 // Bun.spawn used instead of child_process.spawn (compiled bun binaries
 // fail posix_spawn on all executables including /bin/bash)
 import * as fs from 'fs';
@@ -57,8 +63,15 @@ function generateHelpText(): string {
   }
 
   const categoryOrder = [
-    'Navigation', 'Reading', 'Interaction', 'Inspection',
-    'Visual', 'Snapshot', 'Meta', 'Tabs', 'Server',
+    'Navigation',
+    'Reading',
+    'Interaction',
+    'Inspection',
+    'Visual',
+    'Snapshot',
+    'Meta',
+    'Tabs',
+    'Server',
   ];
 
   const lines = ['gstack browse — headless browser for AI agents', '', 'Commands:'];
@@ -87,8 +100,28 @@ function generateHelpText(): string {
 }
 
 // ─── Buffer (from buffers.ts) ────────────────────────────────────
-import { consoleBuffer, networkBuffer, dialogBuffer, addConsoleEntry, addNetworkEntry, addDialogEntry, type LogEntry, type NetworkEntry, type DialogEntry } from './buffers';
-export { consoleBuffer, networkBuffer, dialogBuffer, addConsoleEntry, addNetworkEntry, addDialogEntry, type LogEntry, type NetworkEntry, type DialogEntry };
+import {
+  consoleBuffer,
+  networkBuffer,
+  dialogBuffer,
+  addConsoleEntry,
+  addNetworkEntry,
+  addDialogEntry,
+  type LogEntry,
+  type NetworkEntry,
+  type DialogEntry,
+} from './buffers';
+export {
+  consoleBuffer,
+  networkBuffer,
+  dialogBuffer,
+  addConsoleEntry,
+  addNetworkEntry,
+  addDialogEntry,
+  type LogEntry,
+  type NetworkEntry,
+  type DialogEntry,
+};
 
 const CONSOLE_LOG_PATH = config.consoleLog;
 const NETWORK_LOG_PATH = config.networkLog;
@@ -125,7 +158,7 @@ let sidebarSession: SidebarSession | null = null;
 let agentProcess: ChildProcess | null = null;
 let agentStatus: 'idle' | 'processing' | 'hung' = 'idle';
 let agentStartTime: number | null = null;
-let messageQueue: Array<{message: string, ts: string, extensionUrl?: string | null}> = [];
+let messageQueue: Array<{ message: string; ts: string; extensionUrl?: string | null }> = [];
 let currentMessage: string | null = null;
 let chatBuffer: ChatEntry[] = [];
 let chatNextId = 0;
@@ -138,7 +171,9 @@ function findBrowseBin(): string {
     path.join(process.env.HOME || '', '.claude', 'skills', 'gstack', 'browse', 'dist', 'browse'),
   ];
   for (const c of candidates) {
-    try { if (fs.existsSync(c)) return c; } catch {}
+    try {
+      if (fs.existsSync(c)) return c;
+    } catch {}
   }
   return 'browse'; // fallback to PATH
 }
@@ -154,9 +189,15 @@ function findClaudeBin(): string | null {
     ...(() => {
       try {
         const versionsDir = path.join(home, '.local', 'share', 'claude', 'versions');
-        const entries = fs.readdirSync(versionsDir).filter(e => /^\d/.test(e)).sort().reverse();
-        return entries.map(e => path.join(versionsDir, e));
-      } catch { return []; }
+        const entries = fs
+          .readdirSync(versionsDir)
+          .filter((e) => /^\d/.test(e))
+          .sort()
+          .reverse();
+        return entries.map((e) => path.join(versionsDir, e));
+      } catch {
+        return [];
+      }
     })(),
     // Standard install (symlink — resolve it)
     path.join(home, '.local', 'bin', 'claude'),
@@ -165,7 +206,11 @@ function findClaudeBin(): string | null {
   ];
   // Also check if 'claude' is in current PATH
   try {
-    const proc = Bun.spawnSync(['which', 'claude'], { stdout: 'pipe', stderr: 'pipe', timeout: 2000 });
+    const proc = Bun.spawnSync(['which', 'claude'], {
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 2000,
+    });
     if (proc.exitCode === 0) {
       const p = proc.stdout.toString().trim();
       if (p) candidates.unshift(p);
@@ -201,7 +246,11 @@ function summarizeToolInput(tool: string, input: any): string {
   if (tool === 'Write' && input.file_path) return shortenPath(input.file_path);
   if (tool === 'Grep' && input.pattern) return `/${input.pattern}/`;
   if (tool === 'Glob' && input.pattern) return input.pattern;
-  try { return shortenPath(JSON.stringify(input)).slice(0, 60); } catch { return ''; }
+  try {
+    return shortenPath(JSON.stringify(input)).slice(0, 60);
+  } catch {
+    return '';
+  }
 }
 
 function addChatEntry(entry: Omit<ChatEntry, 'id'>): ChatEntry {
@@ -210,7 +259,9 @@ function addChatEntry(entry: Omit<ChatEntry, 'id'>): ChatEntry {
   // Persist to disk (best-effort)
   if (sidebarSession) {
     const chatFile = path.join(SESSIONS_DIR, sidebarSession.id, 'chat.jsonl');
-    try { fs.appendFileSync(chatFile, JSON.stringify(full) + '\n'); } catch {}
+    try {
+      fs.appendFileSync(chatFile, JSON.stringify(full) + '\n');
+    } catch {}
   }
   return full;
 }
@@ -235,8 +286,16 @@ function loadSession(): SidebarSession | null {
     const chatFile = path.join(SESSIONS_DIR, session.id, 'chat.jsonl');
     try {
       const lines = fs.readFileSync(chatFile, 'utf-8').split('\n').filter(Boolean);
-      chatBuffer = lines.map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
-      chatNextId = chatBuffer.length > 0 ? Math.max(...chatBuffer.map(e => e.id)) + 1 : 0;
+      chatBuffer = lines
+        .map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+      chatNextId = chatBuffer.length > 0 ? Math.max(...chatBuffer.map((e) => e.id)) + 1 : 0;
     } catch {}
     return session;
   } catch {
@@ -255,31 +314,49 @@ function createWorktree(sessionId: string): string | null {
   try {
     // Check if we're in a git repo
     const gitCheck = Bun.spawnSync(['git', 'rev-parse', '--show-toplevel'], {
-      stdout: 'pipe', stderr: 'pipe', timeout: 3000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 3000,
     });
     if (gitCheck.exitCode !== 0) return null;
     const repoRoot = gitCheck.stdout.toString().trim();
 
-    const worktreeDir = path.join(process.env.HOME || '/tmp', '.gstack', 'worktrees', sessionId.slice(0, 8));
+    const worktreeDir = path.join(
+      process.env.HOME || '/tmp',
+      '.gstack',
+      'worktrees',
+      sessionId.slice(0, 8)
+    );
 
     // Clean up if dir exists from prior crash
     if (fs.existsSync(worktreeDir)) {
       Bun.spawnSync(['git', 'worktree', 'remove', '--force', worktreeDir], {
-        cwd: repoRoot, stdout: 'pipe', stderr: 'pipe', timeout: 5000,
+        cwd: repoRoot,
+        stdout: 'pipe',
+        stderr: 'pipe',
+        timeout: 5000,
       });
-      try { fs.rmSync(worktreeDir, { recursive: true, force: true }); } catch {}
+      try {
+        fs.rmSync(worktreeDir, { recursive: true, force: true });
+      } catch {}
     }
 
     // Get current branch/commit
     const headCheck = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], {
-      cwd: repoRoot, stdout: 'pipe', stderr: 'pipe', timeout: 3000,
+      cwd: repoRoot,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 3000,
     });
     if (headCheck.exitCode !== 0) return null;
     const head = headCheck.stdout.toString().trim();
 
     // Create worktree (detached HEAD — no branch conflicts)
     const result = Bun.spawnSync(['git', 'worktree', 'add', '--detach', worktreeDir, head], {
-      cwd: repoRoot, stdout: 'pipe', stderr: 'pipe', timeout: 10000,
+      cwd: repoRoot,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 10000,
     });
 
     if (result.exitCode !== 0) {
@@ -299,15 +376,22 @@ function removeWorktree(worktreePath: string | null): void {
   if (!worktreePath) return;
   try {
     const gitCheck = Bun.spawnSync(['git', 'rev-parse', '--show-toplevel'], {
-      stdout: 'pipe', stderr: 'pipe', timeout: 3000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 3000,
     });
     if (gitCheck.exitCode === 0) {
       Bun.spawnSync(['git', 'worktree', 'remove', '--force', worktreePath], {
-        cwd: gitCheck.stdout.toString().trim(), stdout: 'pipe', stderr: 'pipe', timeout: 5000,
+        cwd: gitCheck.stdout.toString().trim(),
+        stdout: 'pipe',
+        stderr: 'pipe',
+        timeout: 5000,
       });
     }
     // Cleanup dir if git worktree remove didn't
-    try { fs.rmSync(worktreePath, { recursive: true, force: true }); } catch {}
+    try {
+      fs.rmSync(worktreePath, { recursive: true, force: true });
+    } catch {}
   } catch {}
 }
 
@@ -336,25 +420,45 @@ function saveSession(): void {
   if (!sidebarSession) return;
   sidebarSession.lastActiveAt = new Date().toISOString();
   const sessionFile = path.join(SESSIONS_DIR, sidebarSession.id, 'session.json');
-  try { fs.writeFileSync(sessionFile, JSON.stringify(sidebarSession, null, 2)); } catch {}
+  try {
+    fs.writeFileSync(sessionFile, JSON.stringify(sidebarSession, null, 2));
+  } catch {}
 }
 
 function listSessions(): Array<SidebarSession & { chatLines: number }> {
   try {
-    const dirs = fs.readdirSync(SESSIONS_DIR).filter(d => d !== 'active.json');
-    return dirs.map(d => {
-      try {
-        const session = JSON.parse(fs.readFileSync(path.join(SESSIONS_DIR, d, 'session.json'), 'utf-8'));
-        let chatLines = 0;
-        try { chatLines = fs.readFileSync(path.join(SESSIONS_DIR, d, 'chat.jsonl'), 'utf-8').split('\n').filter(Boolean).length; } catch {}
-        return { ...session, chatLines };
-      } catch { return null; }
-    }).filter(Boolean);
-  } catch { return []; }
+    const dirs = fs.readdirSync(SESSIONS_DIR).filter((d) => d !== 'active.json');
+    return dirs
+      .map((d) => {
+        try {
+          const session = JSON.parse(
+            fs.readFileSync(path.join(SESSIONS_DIR, d, 'session.json'), 'utf-8')
+          );
+          let chatLines = 0;
+          try {
+            chatLines = fs
+              .readFileSync(path.join(SESSIONS_DIR, d, 'chat.jsonl'), 'utf-8')
+              .split('\n')
+              .filter(Boolean).length;
+          } catch {}
+          return { ...session, chatLines };
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 function processAgentEvent(event: any): void {
-  if (event.type === 'system' && event.session_id && sidebarSession && !sidebarSession.claudeSessionId) {
+  if (
+    event.type === 'system' &&
+    event.session_id &&
+    sidebarSession &&
+    !sidebarSession.claudeSessionId
+  ) {
     // Capture session_id from first claude init event for --resume
     sidebarSession.claudeSessionId = event.session_id;
     saveSession();
@@ -363,23 +467,54 @@ function processAgentEvent(event: any): void {
   if (event.type === 'assistant' && event.message?.content) {
     for (const block of event.message.content) {
       if (block.type === 'tool_use') {
-        addChatEntry({ ts: new Date().toISOString(), role: 'agent', type: 'tool_use', tool: block.name, input: summarizeToolInput(block.name, block.input) });
+        addChatEntry({
+          ts: new Date().toISOString(),
+          role: 'agent',
+          type: 'tool_use',
+          tool: block.name,
+          input: summarizeToolInput(block.name, block.input),
+        });
       } else if (block.type === 'text' && block.text) {
-        addChatEntry({ ts: new Date().toISOString(), role: 'agent', type: 'text', text: block.text });
+        addChatEntry({
+          ts: new Date().toISOString(),
+          role: 'agent',
+          type: 'text',
+          text: block.text,
+        });
       }
     }
   }
 
   if (event.type === 'content_block_start' && event.content_block?.type === 'tool_use') {
-    addChatEntry({ ts: new Date().toISOString(), role: 'agent', type: 'tool_use', tool: event.content_block.name, input: summarizeToolInput(event.content_block.name, event.content_block.input) });
+    addChatEntry({
+      ts: new Date().toISOString(),
+      role: 'agent',
+      type: 'tool_use',
+      tool: event.content_block.name,
+      input: summarizeToolInput(event.content_block.name, event.content_block.input),
+    });
   }
 
-  if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta' && event.delta.text) {
-    addChatEntry({ ts: new Date().toISOString(), role: 'agent', type: 'text_delta', text: event.delta.text });
+  if (
+    event.type === 'content_block_delta' &&
+    event.delta?.type === 'text_delta' &&
+    event.delta.text
+  ) {
+    addChatEntry({
+      ts: new Date().toISOString(),
+      role: 'agent',
+      type: 'text_delta',
+      text: event.delta.text,
+    });
   }
 
   if (event.type === 'result') {
-    addChatEntry({ ts: new Date().toISOString(), role: 'agent', type: 'result', text: event.text || event.result || '' });
+    addChatEntry({
+      ts: new Date().toISOString(),
+      role: 'agent',
+      type: 'result',
+      text: event.text || event.result || '',
+    });
   }
 }
 
@@ -396,7 +531,8 @@ function spawnClaude(userMessage: string, extensionUrl?: string | null): void {
   const B = BROWSE_BIN;
 
   // Escape XML special chars to prevent prompt injection via tag closing
-  const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const escapeXml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const escapedMessage = escapeXml(userMessage);
 
   const systemPrompt = [
@@ -408,7 +544,7 @@ function spawnClaude(userMessage: string, extensionUrl?: string | null): void {
     'IMPORTANT: You are controlling a SHARED browser. The user may have navigated',
     'manually. Always run `' + B + ' url` first to check the actual current URL.',
     'If it differs from above, the user navigated — work with the ACTUAL page.',
-    'Do NOT navigate away from the user\'s current page unless they ask you to.',
+    "Do NOT navigate away from the user's current page unless they ask you to.",
     '',
     'Commands (run via bash):',
     `  ${B} goto <url>    ${B} click <@ref>    ${B} fill <@ref> <text>`,
@@ -429,8 +565,17 @@ function spawnClaude(userMessage: string, extensionUrl?: string | null): void {
   ].join('\n');
 
   const prompt = `${systemPrompt}\n\n<user-message>\n${escapedMessage}\n</user-message>`;
-  const args = ['-p', prompt, '--model', 'opus', '--output-format', 'stream-json', '--verbose',
-    '--allowedTools', 'Bash,Read,Glob,Grep,Write'];
+  const args = [
+    '-p',
+    prompt,
+    '--model',
+    'opus',
+    '--output-format',
+    'stream-json',
+    '--verbose',
+    '--allowedTools',
+    'Bash,Read,Glob,Grep,Write',
+  ];
   if (sidebarSession?.claudeSessionId) {
     args.push('--resume', sidebarSession.claudeSessionId);
   }
@@ -441,7 +586,9 @@ function spawnClaude(userMessage: string, extensionUrl?: string | null): void {
   // fails with ENOENT on everything, including /bin/bash). Instead,
   // write the command to a queue file that the sidebar-agent process
   // (running as non-compiled bun) picks up and spawns claude.
-  const agentQueue = process.env.SIDEBAR_QUEUE_PATH || path.join(process.env.HOME || '/tmp', '.gstack', 'sidebar-agent-queue.jsonl');
+  const agentQueue =
+    process.env.SIDEBAR_QUEUE_PATH ||
+    path.join(process.env.HOME || '/tmp', '.gstack', 'sidebar-agent-queue.jsonl');
   const gstackDir = path.dirname(agentQueue);
   const entry = JSON.stringify({
     ts: new Date().toISOString(),
@@ -457,7 +604,12 @@ function spawnClaude(userMessage: string, extensionUrl?: string | null): void {
     fs.mkdirSync(gstackDir, { recursive: true });
     fs.appendFileSync(agentQueue, entry + '\n');
   } catch (err: any) {
-    addChatEntry({ ts: new Date().toISOString(), role: 'agent', type: 'agent_error', error: `Failed to queue: ${err.message}` });
+    addChatEntry({
+      ts: new Date().toISOString(),
+      role: 'agent',
+      type: 'agent_error',
+      error: `Failed to queue: ${err.message}`,
+    });
     agentStatus = 'idle';
     agentStartTime = null;
     currentMessage = null;
@@ -470,8 +622,14 @@ function spawnClaude(userMessage: string, extensionUrl?: string | null): void {
 
 function killAgent(): void {
   if (agentProcess) {
-    try { agentProcess.kill('SIGTERM'); } catch {}
-    setTimeout(() => { try { agentProcess?.kill('SIGKILL'); } catch {} }, 3000);
+    try {
+      agentProcess.kill('SIGTERM');
+    } catch {}
+    setTimeout(() => {
+      try {
+        agentProcess?.kill('SIGKILL');
+      } catch {}
+    }, 3000);
   }
   agentProcess = null;
   agentStartTime = null;
@@ -483,7 +641,11 @@ function killAgent(): void {
 let agentHealthInterval: ReturnType<typeof setInterval> | null = null;
 function startAgentHealthCheck(): void {
   agentHealthInterval = setInterval(() => {
-    if (agentStatus === 'processing' && agentStartTime && Date.now() - agentStartTime > AGENT_TIMEOUT_MS) {
+    if (
+      agentStatus === 'processing' &&
+      agentStartTime &&
+      Date.now() - agentStartTime > AGENT_TIMEOUT_MS
+    ) {
       agentStatus = 'hung';
       console.log(`[browse] Sidebar agent hung (>${AGENT_TIMEOUT_MS / 1000}s)`);
     }
@@ -497,7 +659,9 @@ function initSidebarSession(): void {
   if (!sidebarSession) {
     sidebarSession = createSession();
   }
-  console.log(`[browse] Sidebar session: ${sidebarSession.id} (${chatBuffer.length} chat entries loaded)`);
+  console.log(
+    `[browse] Sidebar session: ${sidebarSession.id} (${chatBuffer.length} chat entries loaded)`
+  );
   startAgentHealthCheck();
 }
 let lastConsoleFlushed = 0;
@@ -514,9 +678,10 @@ async function flushBuffers() {
     const newConsoleCount = consoleBuffer.totalAdded - lastConsoleFlushed;
     if (newConsoleCount > 0) {
       const entries = consoleBuffer.last(Math.min(newConsoleCount, consoleBuffer.length));
-      const lines = entries.map(e =>
-        `[${new Date(e.timestamp).toISOString()}] [${e.level}] ${e.text}`
-      ).join('\n') + '\n';
+      const lines =
+        entries
+          .map((e) => `[${new Date(e.timestamp).toISOString()}] [${e.level}] ${e.text}`)
+          .join('\n') + '\n';
       fs.appendFileSync(CONSOLE_LOG_PATH, lines);
       lastConsoleFlushed = consoleBuffer.totalAdded;
     }
@@ -525,9 +690,13 @@ async function flushBuffers() {
     const newNetworkCount = networkBuffer.totalAdded - lastNetworkFlushed;
     if (newNetworkCount > 0) {
       const entries = networkBuffer.last(Math.min(newNetworkCount, networkBuffer.length));
-      const lines = entries.map(e =>
-        `[${new Date(e.timestamp).toISOString()}] ${e.method} ${e.url} → ${e.status || 'pending'} (${e.duration || '?'}ms, ${e.size || '?'}B)`
-      ).join('\n') + '\n';
+      const lines =
+        entries
+          .map(
+            (e) =>
+              `[${new Date(e.timestamp).toISOString()}] ${e.method} ${e.url} → ${e.status || 'pending'} (${e.duration || '?'}ms, ${e.size || '?'}B)`
+          )
+          .join('\n') + '\n';
       fs.appendFileSync(NETWORK_LOG_PATH, lines);
       lastNetworkFlushed = networkBuffer.totalAdded;
     }
@@ -536,9 +705,13 @@ async function flushBuffers() {
     const newDialogCount = dialogBuffer.totalAdded - lastDialogFlushed;
     if (newDialogCount > 0) {
       const entries = dialogBuffer.last(Math.min(newDialogCount, dialogBuffer.length));
-      const lines = entries.map(e =>
-        `[${new Date(e.timestamp).toISOString()}] [${e.type}] "${e.message}" → ${e.action}${e.response ? ` "${e.response}"` : ''}`
-      ).join('\n') + '\n';
+      const lines =
+        entries
+          .map(
+            (e) =>
+              `[${new Date(e.timestamp).toISOString()}] [${e.type}] "${e.message}" → ${e.action}${e.response ? ` "${e.response}"` : ''}`
+          )
+          .join('\n') + '\n';
       fs.appendFileSync(DIALOG_LOG_PATH, lines);
       lastDialogFlushed = dialogBuffer.totalAdded;
     }
@@ -608,7 +781,9 @@ async function findPort(): Promise<number> {
       return port;
     }
   }
-  throw new Error(`[browse] No available port after ${MAX_RETRIES} attempts in range ${MIN_PORT}-${MAX_PORT}`);
+  throw new Error(
+    `[browse] No available port after ${MAX_RETRIES} attempts in range ${MIN_PORT}-${MAX_PORT}`
+  );
 }
 
 /**
@@ -618,7 +793,11 @@ function wrapError(err: any): string {
   const msg = err.message || String(err);
   // Timeout errors
   if (err.name === 'TimeoutError' || msg.includes('Timeout') || msg.includes('timeout')) {
-    if (msg.includes('locator.click') || msg.includes('locator.fill') || msg.includes('locator.hover')) {
+    if (
+      msg.includes('locator.click') ||
+      msg.includes('locator.fill') ||
+      msg.includes('locator.hover')
+    ) {
       return `Element not found or not interactable within timeout. Check your selector or run 'snapshot' for fresh refs.`;
     }
     if (msg.includes('page.goto') || msg.includes('Navigation')) {
@@ -646,12 +825,15 @@ async function handleCommand(body: any): Promise<Response> {
 
   // Block mutation commands while watching (read-only observation mode)
   if (browserManager.isWatching() && WRITE_COMMANDS.has(command)) {
-    return new Response(JSON.stringify({
-      error: 'Cannot run mutation commands while watching. Run `$B watch stop` first.',
-    }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Cannot run mutation commands while watching. Run `$B watch stop` first.',
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   // Activity: emit command_start
@@ -700,13 +882,16 @@ async function handleCommand(body: any): Promise<Response> {
         headers: { 'Content-Type': 'text/plain' },
       });
     } else {
-      return new Response(JSON.stringify({
-        error: `Unknown command: ${command}`,
-        hint: `Available commands: ${[...READ_COMMANDS, ...WRITE_COMMANDS, ...META_COMMANDS].sort().join(', ')}`,
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({
+          error: `Unknown command: ${command}`,
+          hint: `Available commands: ${[...READ_COMMANDS, ...WRITE_COMMANDS, ...META_COMMANDS].sort().join(', ')}`,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Activity: emit command_end (success)
@@ -773,11 +958,15 @@ async function shutdown() {
   // Clean up Chromium profile locks (prevent SingletonLock on next launch)
   const profileDir = path.join(process.env.HOME || '/tmp', '.gstack', 'chromium-profile');
   for (const lockFile of ['SingletonLock', 'SingletonSocket', 'SingletonCookie']) {
-    try { fs.unlinkSync(path.join(profileDir, lockFile)); } catch {}
+    try {
+      fs.unlinkSync(path.join(profileDir, lockFile));
+    } catch {}
   }
 
   // Clean up state file
-  try { fs.unlinkSync(config.stateFile); } catch {}
+  try {
+    fs.unlinkSync(config.stateFile);
+  } catch {}
 
   process.exit(0);
 }
@@ -789,7 +978,9 @@ process.on('SIGINT', shutdown);
 // Defense-in-depth — primary cleanup is the CLI's stale-state detection via health check.
 if (process.platform === 'win32') {
   process.on('exit', () => {
-    try { fs.unlinkSync(config.stateFile); } catch {}
+    try {
+      fs.unlinkSync(config.stateFile);
+    } catch {}
   });
 }
 
@@ -798,15 +989,23 @@ function emergencyCleanup() {
   if (isShuttingDown) return;
   isShuttingDown = true;
   // Kill agent subprocess if running
-  try { killAgent(); } catch {}
+  try {
+    killAgent();
+  } catch {}
   // Save session state so chat history persists across crashes
-  try { saveSession(); } catch {}
+  try {
+    saveSession();
+  } catch {}
   // Clean Chromium profile locks
   const profileDir = path.join(process.env.HOME || '/tmp', '.gstack', 'chromium-profile');
   for (const lockFile of ['SingletonLock', 'SingletonSocket', 'SingletonCookie']) {
-    try { fs.unlinkSync(path.join(profileDir, lockFile)); } catch {}
+    try {
+      fs.unlinkSync(path.join(profileDir, lockFile));
+    } catch {}
   }
-  try { fs.unlinkSync(config.stateFile); } catch {}
+  try {
+    fs.unlinkSync(config.stateFile);
+  } catch {}
 }
 process.on('uncaughtException', (err) => {
   console.error('[browse] FATAL uncaught exception:', err.message);
@@ -822,9 +1021,15 @@ process.on('unhandledRejection', (err: any) => {
 // ─── Start ─────────────────────────────────────────────────────
 async function start() {
   // Clear old log files
-  try { fs.unlinkSync(CONSOLE_LOG_PATH); } catch {}
-  try { fs.unlinkSync(NETWORK_LOG_PATH); } catch {}
-  try { fs.unlinkSync(DIALOG_LOG_PATH); } catch {}
+  try {
+    fs.unlinkSync(CONSOLE_LOG_PATH);
+  } catch {}
+  try {
+    fs.unlinkSync(NETWORK_LOG_PATH);
+  } catch {}
+  try {
+    fs.unlinkSync(DIALOG_LOG_PATH);
+  } catch {}
 
   const port = await findPort();
 
@@ -856,25 +1061,28 @@ async function start() {
       // Health check — no auth required, does NOT reset idle timer
       if (url.pathname === '/health') {
         const healthy = await browserManager.isHealthy();
-        return new Response(JSON.stringify({
-          status: healthy ? 'healthy' : 'unhealthy',
-          mode: browserManager.getConnectionMode(),
-          uptime: Math.floor((Date.now() - startTime) / 1000),
-          tabs: browserManager.getTabCount(),
-          currentUrl: browserManager.getCurrentUrl(),
-          // token removed — see .auth.json for extension bootstrap
-          chatEnabled: true,
-          agent: {
-            status: agentStatus,
-            runningFor: agentStartTime ? Date.now() - agentStartTime : null,
-            currentMessage,
-            queueLength: messageQueue.length,
-          },
-          session: sidebarSession ? { id: sidebarSession.id, name: sidebarSession.name } : null,
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({
+            status: healthy ? 'healthy' : 'unhealthy',
+            mode: browserManager.getConnectionMode(),
+            uptime: Math.floor((Date.now() - startTime) / 1000),
+            tabs: browserManager.getTabCount(),
+            currentUrl: browserManager.getCurrentUrl(),
+            // token removed — see .auth.json for extension bootstrap
+            chatEnabled: true,
+            agent: {
+              status: agentStatus,
+              runningFor: agentStartTime ? Date.now() - agentStartTime : null,
+              currentMessage,
+              queueLength: messageQueue.length,
+            },
+            session: sidebarSession ? { id: sidebarSession.id, name: sidebarSession.name } : null,
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
 
       // Refs endpoint — auth required, does NOT reset idle timer
@@ -886,14 +1094,17 @@ async function start() {
           });
         }
         const refs = browserManager.getRefMap();
-        return new Response(JSON.stringify({
-          refs,
-          url: browserManager.getCurrentUrl(),
-          mode: browserManager.getConnectionMode(),
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({
+            refs,
+            url: browserManager.getCurrentUrl(),
+            mode: browserManager.getConnectionMode(),
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
 
       // Activity stream — SSE, auth required, does NOT reset idle timer
@@ -914,16 +1125,24 @@ async function start() {
             // 1. Gap detection + replay
             const { entries, gap, gapFrom, availableFrom } = getActivityAfter(afterId);
             if (gap) {
-              controller.enqueue(encoder.encode(`event: gap\ndata: ${JSON.stringify({ gapFrom, availableFrom })}\n\n`));
+              controller.enqueue(
+                encoder.encode(
+                  `event: gap\ndata: ${JSON.stringify({ gapFrom, availableFrom })}\n\n`
+                )
+              );
             }
             for (const entry of entries) {
-              controller.enqueue(encoder.encode(`event: activity\ndata: ${JSON.stringify(entry)}\n\n`));
+              controller.enqueue(
+                encoder.encode(`event: activity\ndata: ${JSON.stringify(entry)}\n\n`)
+              );
             }
 
             // 2. Subscribe for live events
             const unsubscribe = subscribe((entry) => {
               try {
-                controller.enqueue(encoder.encode(`event: activity\ndata: ${JSON.stringify(entry)}\n\n`));
+                controller.enqueue(
+                  encoder.encode(`event: activity\ndata: ${JSON.stringify(entry)}\n\n`)
+                );
               } catch {
                 unsubscribe();
               }
@@ -943,7 +1162,9 @@ async function start() {
             req.signal.addEventListener('abort', () => {
               clearInterval(heartbeat);
               unsubscribe();
-              try { controller.close(); } catch {}
+              try {
+                controller.close();
+              } catch {}
             });
           },
         });
@@ -952,7 +1173,7 @@ async function start() {
           headers: {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
+            Connection: 'keep-alive',
           },
         });
       }
@@ -967,10 +1188,13 @@ async function start() {
         }
         const limit = parseInt(url.searchParams.get('limit') || '50', 10);
         const { entries, totalAdded } = getActivityHistory(limit);
-        return new Response(JSON.stringify({ entries, totalAdded, subscribers: getSubscriberCount() }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ entries, totalAdded, subscribers: getSubscriberCount() }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
 
       // ─── Sidebar endpoints (auth required — token from /health) ────
@@ -980,10 +1204,13 @@ async function start() {
       // Sidebar chat history — read from in-memory buffer
       if (url.pathname === '/sidebar-chat') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         const afterId = parseInt(url.searchParams.get('after') || '0', 10);
-        const entries = chatBuffer.filter(e => e.id >= afterId);
+        const entries = chatBuffer.filter((e) => e.id >= afterId);
         return new Response(JSON.stringify({ entries, total: chatNextId }), {
           status: 200,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -993,12 +1220,18 @@ async function start() {
       // Sidebar → server: user message → queue or process immediately
       if (url.pathname === '/sidebar-command' && req.method === 'POST') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         const body = await req.json();
         const msg = body.message?.trim();
         if (!msg) {
-          return new Response(JSON.stringify({ error: 'Empty message' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Empty message' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         // The Chrome extension sends the active tab's URL — prefer it over
         // Playwright's page.url() which can be stale in headed mode when
@@ -1006,21 +1239,30 @@ async function start() {
         const extensionUrl = body.activeTabUrl || null;
         const ts = new Date().toISOString();
         addChatEntry({ ts, role: 'user', message: msg });
-        if (sidebarSession) { sidebarSession.lastActiveAt = ts; saveSession(); }
+        if (sidebarSession) {
+          sidebarSession.lastActiveAt = ts;
+          saveSession();
+        }
 
         if (agentStatus === 'idle') {
           spawnClaude(msg, extensionUrl);
           return new Response(JSON.stringify({ ok: true, processing: true }), {
-            status: 200, headers: { 'Content-Type': 'application/json' },
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
           });
         } else if (messageQueue.length < MAX_QUEUE) {
           messageQueue.push({ message: msg, ts, extensionUrl });
-          return new Response(JSON.stringify({ ok: true, queued: true, position: messageQueue.length }), {
-            status: 200, headers: { 'Content-Type': 'application/json' },
-          });
+          return new Response(
+            JSON.stringify({ ok: true, queued: true, position: messageQueue.length }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          );
         } else {
           return new Response(JSON.stringify({ error: 'Queue full (max 5)' }), {
-            status: 429, headers: { 'Content-Type': 'application/json' },
+            status: 429,
+            headers: { 'Content-Type': 'application/json' },
           });
         }
       }
@@ -1028,47 +1270,78 @@ async function start() {
       // Clear sidebar chat
       if (url.pathname === '/sidebar-chat/clear' && req.method === 'POST') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         chatBuffer = [];
         chatNextId = 0;
         if (sidebarSession) {
-          try { fs.writeFileSync(path.join(SESSIONS_DIR, sidebarSession.id, 'chat.jsonl'), ''); } catch {}
+          try {
+            fs.writeFileSync(path.join(SESSIONS_DIR, sidebarSession.id, 'chat.jsonl'), '');
+          } catch {}
         }
-        return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       // Kill hung agent
       if (url.pathname === '/sidebar-agent/kill' && req.method === 'POST') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         killAgent();
-        addChatEntry({ ts: new Date().toISOString(), role: 'agent', type: 'agent_error', error: 'Killed by user' });
+        addChatEntry({
+          ts: new Date().toISOString(),
+          role: 'agent',
+          type: 'agent_error',
+          error: 'Killed by user',
+        });
         // Process next in queue
         if (messageQueue.length > 0) {
           const next = messageQueue.shift()!;
           spawnClaude(next.message, next.extensionUrl);
         }
-        return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       // Stop agent (user-initiated) — queued messages remain for dismissal
       if (url.pathname === '/sidebar-agent/stop' && req.method === 'POST') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         killAgent();
-        addChatEntry({ ts: new Date().toISOString(), role: 'agent', type: 'agent_error', error: 'Stopped by user' });
+        addChatEntry({
+          ts: new Date().toISOString(),
+          role: 'agent',
+          type: 'agent_error',
+          error: 'Stopped by user',
+        });
         return new Response(JSON.stringify({ ok: true, queuedMessages: messageQueue.length }), {
-          status: 200, headers: { 'Content-Type': 'application/json' },
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
         });
       }
 
       // Dismiss a queued message by index
       if (url.pathname === '/sidebar-queue/dismiss' && req.method === 'POST') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         const body = await req.json();
         const idx = body.index;
@@ -1076,25 +1349,41 @@ async function start() {
           messageQueue.splice(idx, 1);
         }
         return new Response(JSON.stringify({ ok: true, queueLength: messageQueue.length }), {
-          status: 200, headers: { 'Content-Type': 'application/json' },
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
         });
       }
 
       // Session info
       if (url.pathname === '/sidebar-session') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
-        return new Response(JSON.stringify({
-          session: sidebarSession,
-          agent: { status: agentStatus, runningFor: agentStartTime ? Date.now() - agentStartTime : null, currentMessage, queueLength: messageQueue.length, queue: messageQueue },
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(
+          JSON.stringify({
+            session: sidebarSession,
+            agent: {
+              status: agentStatus,
+              runningFor: agentStartTime ? Date.now() - agentStartTime : null,
+              currentMessage,
+              queueLength: messageQueue.length,
+              queue: messageQueue,
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
       }
 
       // Create new session
       if (url.pathname === '/sidebar-session/new' && req.method === 'POST') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         killAgent();
         messageQueue = [];
@@ -1102,24 +1391,35 @@ async function start() {
         if (sidebarSession?.worktreePath) removeWorktree(sidebarSession.worktreePath);
         sidebarSession = createSession();
         return new Response(JSON.stringify({ ok: true, session: sidebarSession }), {
-          status: 200, headers: { 'Content-Type': 'application/json' },
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
         });
       }
 
       // List all sessions
       if (url.pathname === '/sidebar-session/list') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
-        return new Response(JSON.stringify({ sessions: listSessions(), activeId: sidebarSession?.id }), {
-          status: 200, headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ sessions: listSessions(), activeId: sidebarSession?.id }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
 
       // Agent event relay — sidebar-agent.ts POSTs events here
       if (url.pathname === '/sidebar-agent/event' && req.method === 'POST') {
         if (!validateAuth(req)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
         const body = await req.json();
         processAgentEvent(body);
@@ -1144,7 +1444,10 @@ async function start() {
           sidebarSession.claudeSessionId = body.claudeSessionId;
           saveSession();
         }
-        return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       // ─── Auth-required endpoints ──────────────────────────────────
@@ -1157,7 +1460,7 @@ async function start() {
       }
 
       if (url.pathname === '/command' && req.method === 'POST') {
-        resetIdleTimer();  // Only commands reset idle timer
+        resetIdleTimer(); // Only commands reset idle timer
         const body = await req.json();
         return handleCommand(body);
       }
@@ -1213,7 +1516,10 @@ start().catch((err) => {
   try {
     const errorLogPath = path.join(config.stateDir, 'browse-startup-error.log');
     fs.mkdirSync(config.stateDir, { recursive: true });
-    fs.writeFileSync(errorLogPath, `${new Date().toISOString()} ${err.message}\n${err.stack || ''}\n`);
+    fs.writeFileSync(
+      errorLogPath,
+      `${new Date().toISOString()} ${err.message}\n${err.stack || ''}\n`
+    );
   } catch {
     // stateDir may not exist — nothing more we can do
   }

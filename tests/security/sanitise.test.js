@@ -63,7 +63,10 @@ test('removes base64 data URIs', () => {
   const input = 'Click data:text/html;base64,PHNjcmlwdD5ldmlsKCk8L3NjcmlwdD4= here';
   const { content } = sanitiseExternalContent(input, 'test');
   assert.ok(!content.includes('PHNjcmlwdD5'), 'should remove base64 content');
-  assert.ok(content.includes('[BASE64_REMOVED]') || !content.includes('base64'), 'should mark removed');
+  assert.ok(
+    content.includes('[BASE64_REMOVED]') || !content.includes('base64'),
+    'should mark removed'
+  );
 });
 
 // --- Injection pattern detection ---

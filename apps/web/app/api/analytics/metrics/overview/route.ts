@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/api/backend-url';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const timeRange = searchParams.get("time_range") || "7d";
+    const timeRange = searchParams.get('time_range') || '7d';
 
     const response = await fetch(
       `${BACKEND_URL}/api/analytics/metrics/overview?time_range=${timeRange}`
@@ -18,10 +18,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching analytics metrics:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch metrics" },
-      { status: 500 }
-    );
+    console.error('Error fetching analytics metrics:', error);
+    return NextResponse.json({ error: 'Failed to fetch metrics' }, { status: 500 });
   }
 }

@@ -15,6 +15,7 @@ The baseline load test successfully established initial performance metrics but 
 ### Key Findings
 
 ✅ **Response Times: EXCELLENT**
+
 - Average: 13.32ms
 - Median (p50): 3.67ms
 - p(95): 53.37ms (Target: <500ms) ✅ **PASSED**
@@ -22,11 +23,13 @@ The baseline load test successfully established initial performance metrics but 
 - Max: 294.57ms (auth endpoint)
 
 ❌ **Error Rate: CRITICAL ISSUE**
+
 - 70.17% failure rate (40 out of 57 requests failed)
 - Target: <1% error rate ❌ **FAILED**
 - All failures: HTTP 401 Unauthorized
 
 ⚠️ **Throughput: LOW**
+
 - 0.92 requests/second (very low for 1 VU)
 - 11 iterations completed in 61 seconds
 - Average iteration: 5.61 seconds
@@ -37,37 +40,37 @@ The baseline load test successfully established initial performance metrics but 
 
 ### HTTP Request Performance
 
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| Average Duration | 13.32ms | - | ✅ Good |
-| Median (p50) | 3.67ms | - | ✅ Excellent |
-| p(90) | 14.13ms | <500ms | ✅ Excellent |
-| p(95) | 53.37ms | <500ms | ✅ **PASSED** |
-| Max Duration | 294.57ms | <5000ms | ✅ Good |
-| Error Rate | 70.17% | <1% | ❌ **CRITICAL** |
-| Requests/sec | 0.92 | >10 | ❌ Low |
+| Metric           | Value    | Target  | Status          |
+| ---------------- | -------- | ------- | --------------- |
+| Average Duration | 13.32ms  | -       | ✅ Good         |
+| Median (p50)     | 3.67ms   | -       | ✅ Excellent    |
+| p(90)            | 14.13ms  | <500ms  | ✅ Excellent    |
+| p(95)            | 53.37ms  | <500ms  | ✅ **PASSED**   |
+| Max Duration     | 294.57ms | <5000ms | ✅ Good         |
+| Error Rate       | 70.17%   | <1%     | ❌ **CRITICAL** |
+| Requests/sec     | 0.92     | >10     | ❌ Low          |
 
 ### Endpoint-Specific Performance
 
 #### Successful Requests (First Iteration)
 
-| Endpoint | Method | Duration | Status | Notes |
-|----------|--------|----------|--------|-------|
-| `/health` | GET | 9.55ms | 200 ✅ | Excellent |
-| `/api/auth/login` | POST | 294.57ms | 200 ✅ | Acceptable for auth |
-| `/api/products` | GET | 61.33ms | 200 ✅ | Good |
-| `/api/customers` | GET | 64.26ms | 200 ✅ | Good |
-| `/api/orders` | GET | 51.39ms | 200 ✅ | Good |
-| `/api/quotes` | GET | Not recorded | 200 ✅ | - |
+| Endpoint          | Method | Duration     | Status | Notes               |
+| ----------------- | ------ | ------------ | ------ | ------------------- |
+| `/health`         | GET    | 9.55ms       | 200 ✅ | Excellent           |
+| `/api/auth/login` | POST   | 294.57ms     | 200 ✅ | Acceptable for auth |
+| `/api/products`   | GET    | 61.33ms      | 200 ✅ | Good                |
+| `/api/customers`  | GET    | 64.26ms      | 200 ✅ | Good                |
+| `/api/orders`     | GET    | 51.39ms      | 200 ✅ | Good                |
+| `/api/quotes`     | GET    | Not recorded | 200 ✅ | -                   |
 
 #### Failed Requests (Iterations 2-11)
 
-| Endpoint | Method | Status | Error | Count |
-|----------|--------|--------|-------|-------|
-| `/api/products` | GET | 401 | Unauthorized | 10 |
-| `/api/customers` | GET | 401 | Unauthorized | 10 |
-| `/api/orders` | GET | 401 | Unauthorized | 10 |
-| `/api/quotes` | GET | 401 | Unauthorized | 10 |
+| Endpoint         | Method | Status | Error        | Count |
+| ---------------- | ------ | ------ | ------------ | ----- |
+| `/api/products`  | GET    | 401    | Unauthorized | 10    |
+| `/api/customers` | GET    | 401    | Unauthorized | 10    |
+| `/api/orders`    | GET    | 401    | Unauthorized | 10    |
+| `/api/quotes`    | GET    | 401    | Unauthorized | 10    |
 
 **Pattern**: All API endpoints failed with 401 after the first successful iteration.
 
@@ -80,6 +83,7 @@ The baseline load test successfully established initial performance metrics but 
 **Problem**: The authentication token obtained in the first iteration is not being preserved or properly passed to subsequent iterations.
 
 **Evidence**:
+
 1. First iteration (16:23:05): Authentication successful ✅
 2. All subsequent requests succeed in first iteration ✅
 3. Second iteration (~16:23:12): All API requests return 401 ❌
@@ -123,6 +127,7 @@ export default function () {
 ### Priority 1: Fix Authentication Token Persistence
 
 **Option A: Store Token in k6 VU Context** (Recommended)
+
 ```javascript
 import { SharedArray } from 'k6/data';
 
@@ -139,6 +144,7 @@ export default function () {
 ```
 
 **Option B: Authenticate in Setup Phase**
+
 ```javascript
 export function setup() {
   const token = authenticate(baseUrl, email, password);
@@ -152,6 +158,7 @@ export default function (data) {
 ```
 
 **Option C: Check JWT Expiration Time**
+
 ```bash
 # Verify backend JWT configuration
 # Check: apps/backend/src/api/routes/demo_auth.py
@@ -161,12 +168,14 @@ export default function (data) {
 ### Priority 2: Re-run Baseline Test
 
 After fixing authentication:
+
 ```powershell
 cd tests/load-testing
 .\run-tests.ps1 -Test baseline
 ```
 
 Expected results:
+
 - Error rate < 1%
 - All iterations complete successfully
 - Consistent response times across iterations
@@ -174,6 +183,7 @@ Expected results:
 ### Priority 3: Run Full Test Suite
 
 Once baseline passes:
+
 1. Smoke test (5 VUs, 2 minutes)
 2. Quick test (10 VUs, 5 minutes)
 3. Comprehensive test (100+ scenarios)

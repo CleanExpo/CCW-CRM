@@ -68,7 +68,10 @@ export async function runScoutSwarm() {
   const failed = results.filter((r) => r.status === 'rejected');
 
   if (failed.length > 0) {
-    console.warn(`[Scout Swarm] ${failed.length} queries failed:`, failed.map((f) => f.reason?.message));
+    console.warn(
+      `[Scout Swarm] ${failed.length} queries failed:`,
+      failed.map((f) => f.reason?.message)
+    );
   }
 
   console.log(`[Scout Swarm] ${successful.length}/5 queries completed ✅`);
