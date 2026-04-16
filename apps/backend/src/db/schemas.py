@@ -129,6 +129,8 @@ class CustomerBase(BaseModel):
     state: str | None = None
     postcode: str | None = None
     abn: str | None = None  # Australian Business Number (11 digits, no spaces)
+    # UNI-1821: Per-customer payment terms used for invoice due_date and Xero sync
+    payment_terms_days: int = 30
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     # UNI-1831: B2B / B2C customer type.
@@ -171,6 +173,8 @@ class CustomerUpdate(BaseModel):
     state: str | None = None
     postcode: str | None = None
     abn: str | None = None  # Australian Business Number (11 digits, no spaces)
+    # UNI-1821: Per-customer payment terms
+    payment_terms_days: int | None = None
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     # UNI-1831: Allow updating customer type (B2B / B2C).

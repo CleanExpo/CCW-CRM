@@ -51,6 +51,8 @@ const formSchema = z.object({
     .regex(/^\d{11}$/, 'ABN must be exactly 11 digits')
     .optional()
     .or(z.literal('')),
+  // UNI-1821: Per-customer payment terms (days)
+  payment_terms_days: z.coerce.number().int().min(0).max(365).default(30),
   // UNI-1829: Credit management fields
   credit_limit: z.coerce
     .number()
@@ -75,6 +77,8 @@ interface Customer {
   state: string | null;
   postcode: string | null;
   abn: string | null;
+  // UNI-1821: Per-customer payment terms
+  payment_terms_days: number;
   credit_limit: number | null;
   credit_hold: boolean;
   is_active: boolean;
@@ -105,6 +109,9 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
       state: '',
       postcode: '',
       abn: '',
+      payment_terms_days: 30,
+      credit_limit: null,
+      credit_hold: false,
       is_active: true,
     },
   });
@@ -138,6 +145,7 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           state: customer.state || '',
           postcode: customer.postcode || '',
           abn: customer.abn || '',
+          payment_terms_days: customer.payment_terms_days ?? 30,
           credit_limit: customer.credit_limit ?? null,
           credit_hold: customer.credit_hold ?? false,
           is_active: customer.is_active,
@@ -154,6 +162,9 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
           state: '',
           postcode: '',
           abn: '',
+          payment_terms_days: 30,
+          credit_limit: null,
+          credit_hold: false,
           is_active: true,
         });
       }
@@ -223,6 +234,9 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 city: '',
                 state: '',
                 postcode: '',
+                payment_terms_days: 30,
+                credit_limit: null,
+                credit_hold: false,
                 is_active: true,
               });
             }}
@@ -382,6 +396,24 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
                 )}
               />
             </div>
+
+            {/* UNI-1821: Per-customer payment terms */}
+            <FormField
+              control={form.control}
+              name="payment_terms_days"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Terms (days)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} max={365} placeholder="30" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Number of days after invoice date when payment is due (e.g. 30, 60)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* UNI-1829: Credit management */}
             <div className="grid grid-cols-2 gap-4">

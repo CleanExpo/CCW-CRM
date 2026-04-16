@@ -123,12 +123,15 @@ class XeroCustomerSync:
                 "country": "Australia",  # Default
             }
 
+            # UNI-1821: Pass per-customer payment terms to Xero
+            payment_terms_days = getattr(customer, "payment_terms_days", 30)
             contact = await xero_client.create_contact(
                 name=customer.company_name,
                 email=customer.email,
                 phone=customer.phone,
                 address=address,
                 tax_number=getattr(customer, "abn", None),  # ABN for Australian B2B invoices
+                payment_terms_days=payment_terms_days,
             )
 
             # Store Xero contact ID

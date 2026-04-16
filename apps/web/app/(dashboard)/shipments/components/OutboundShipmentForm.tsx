@@ -73,14 +73,13 @@ interface OutboundShipmentFormProps {
   onCancel?: () => void;
 }
 
-// Common carriers for dropdown
+// UNI-1876: AU/NZ carriers only — no US carriers
 const CARRIERS = [
-  { value: 'australia-post', label: 'Australia Post' },
-  { value: 'fedex', label: 'FedEx' },
-  { value: 'dhl', label: 'DHL' },
-  { value: 'tnt', label: 'TNT' },
-  { value: 'ups', label: 'UPS' },
+  { value: 'auspost-eparcel', label: 'AusPost eParcel' },
   { value: 'startrack', label: 'StarTrack' },
+  { value: 'tnt', label: 'TNT' },
+  { value: 'fedex-au', label: 'FedEx AU' },
+  { value: 'dhl-express', label: 'DHL Express' },
   { value: 'toll', label: 'Toll' },
   { value: 'other', label: 'Other' },
 ];

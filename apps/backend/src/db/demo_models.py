@@ -175,6 +175,8 @@ class Customer(Base):
     state: str | None = Column(String(50), nullable=True)
     postcode: str | None = Column(String(10), nullable=True)
 
+    # UNI-1821: Per-customer payment terms (days); used for invoice due_date and Xero sync
+    payment_terms_days: int = Column(Integer, default=30, nullable=False)
     # UNI-1831: B2B / B2C customer type.
     # "B2B" (default) — business customer; receives GST-inclusive pricing and
     #   a full tax invoice so they can claim GST credits.

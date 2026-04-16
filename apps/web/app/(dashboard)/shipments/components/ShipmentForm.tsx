@@ -305,7 +305,7 @@ export function ShipmentForm({ shipment, open, onOpenChange, onSuccess }: Shipme
                   <FormItem>
                     <FormLabel>Carrier Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., FedEx, UPS, DHL" {...field} />
+                      <Input placeholder="e.g., AusPost eParcel, TNT, DHL Express" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

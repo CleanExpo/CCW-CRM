@@ -128,6 +128,7 @@ class XeroClient:
         phone: str | None = None,
         address: dict | None = None,
         tax_number: str | None = None,
+        payment_terms_days: int | None = None,
     ) -> dict:
         """Create or update a contact (customer) in Xero.
 
@@ -137,6 +138,7 @@ class XeroClient:
             phone: Contact phone number
             address: Contact address dict with street, city, state, postal_code, country
             tax_number: Australian Business Number (ABN) — stored as TaxNumber in Xero
+            payment_terms_days: UNI-1821 — per-customer payment terms (days after bill date)
 
         Returns:
             Created/updated contact data
@@ -168,6 +170,12 @@ class XeroClient:
 
         if tax_number:
             contact_data["TaxNumber"] = tax_number  # ABN for Australian contacts
+
+        # UNI-1821: Sync per-customer payment terms to Xero contact
+        if payment_terms_days is not None:
+            contact_data["PaymentTerms"] = {
+                "Sales": {"Day": payment_terms_days, "Type": "DAYSAFTERBILLDATE"}
+            }
 
         payload = {"Contacts": [contact_data]}
 

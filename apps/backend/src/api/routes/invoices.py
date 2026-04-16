@@ -408,9 +408,15 @@ async def generate_invoice_from_order(
     # 4. Generate invoice number
     invoice_number = await generate_invoice_number(db)
 
-    # 5. Build invoice dates
+    # 5. Build invoice dates — UNI-1821: use per-customer payment terms
+    from src.db.demo_models import Customer as CustomerModel  # noqa: PLC0415
+    customer_result = await db.execute(
+        select(CustomerModel).where(CustomerModel.id == order.customer_id)
+    )
+    customer = customer_result.scalar_one_or_none()
+    payment_terms_days = customer.payment_terms_days if customer else 30
     today = date.today()
-    due_date = today + timedelta(days=30)
+    due_date = today + timedelta(days=payment_terms_days)
 
     # 6. Pre-calculate item totals
     gst_rate = Decimal("10.00")
@@ -457,7 +463,7 @@ async def generate_invoice_from_order(
         amount_paid=Decimal("0.00"),
         amount_due=invoice_total,
         notes=f"Generated from order {order.order_number}",
-        payment_terms="Net 30",
+        payment_terms=f"Net {payment_terms_days}",
     )
     db.add(invoice)
     await db.flush()
