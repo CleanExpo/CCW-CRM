@@ -451,7 +451,7 @@ jobs:
 
       - name: Send Slack notification
         if: secrets.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
           payload: |
             {
