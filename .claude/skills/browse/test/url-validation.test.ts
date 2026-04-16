@@ -23,31 +23,45 @@ describe('validateNavigationUrl', () => {
   });
 
   it('blocks file:// scheme', async () => {
-    await expect(validateNavigationUrl('file:///etc/passwd')).rejects.toThrow(/scheme.*not allowed/i);
+    await expect(validateNavigationUrl('file:///etc/passwd')).rejects.toThrow(
+      /scheme.*not allowed/i
+    );
   });
 
   it('blocks javascript: scheme', async () => {
-    await expect(validateNavigationUrl('javascript:alert(1)')).rejects.toThrow(/scheme.*not allowed/i);
+    await expect(validateNavigationUrl('javascript:alert(1)')).rejects.toThrow(
+      /scheme.*not allowed/i
+    );
   });
 
   it('blocks data: scheme', async () => {
-    await expect(validateNavigationUrl('data:text/html,<h1>hi</h1>')).rejects.toThrow(/scheme.*not allowed/i);
+    await expect(validateNavigationUrl('data:text/html,<h1>hi</h1>')).rejects.toThrow(
+      /scheme.*not allowed/i
+    );
   });
 
   it('blocks AWS/GCP metadata endpoint', async () => {
-    await expect(validateNavigationUrl('http://169.254.169.254/latest/meta-data/')).rejects.toThrow(/cloud metadata/i);
+    await expect(validateNavigationUrl('http://169.254.169.254/latest/meta-data/')).rejects.toThrow(
+      /cloud metadata/i
+    );
   });
 
   it('blocks GCP metadata hostname', async () => {
-    await expect(validateNavigationUrl('http://metadata.google.internal/computeMetadata/v1/')).rejects.toThrow(/cloud metadata/i);
+    await expect(
+      validateNavigationUrl('http://metadata.google.internal/computeMetadata/v1/')
+    ).rejects.toThrow(/cloud metadata/i);
   });
 
   it('blocks Azure metadata hostname', async () => {
-    await expect(validateNavigationUrl('http://metadata.azure.internal/metadata/instance')).rejects.toThrow(/cloud metadata/i);
+    await expect(
+      validateNavigationUrl('http://metadata.azure.internal/metadata/instance')
+    ).rejects.toThrow(/cloud metadata/i);
   });
 
   it('blocks metadata hostname with trailing dot', async () => {
-    await expect(validateNavigationUrl('http://metadata.google.internal./computeMetadata/v1/')).rejects.toThrow(/cloud metadata/i);
+    await expect(
+      validateNavigationUrl('http://metadata.google.internal./computeMetadata/v1/')
+    ).rejects.toThrow(/cloud metadata/i);
   });
 
   it('blocks metadata IP in hex form', async () => {
@@ -59,7 +73,9 @@ describe('validateNavigationUrl', () => {
   });
 
   it('blocks metadata IP in octal form', async () => {
-    await expect(validateNavigationUrl('http://0251.0376.0251.0376/')).rejects.toThrow(/cloud metadata/i);
+    await expect(validateNavigationUrl('http://0251.0376.0251.0376/')).rejects.toThrow(
+      /cloud metadata/i
+    );
   });
 
   it('blocks IPv6 metadata with brackets', async () => {

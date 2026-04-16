@@ -12,9 +12,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.agents.specialized import RecommendationAgent
-from src.api.deps import get_async_db
+from src.api.deps import get_async_db, get_current_user
 
-router = APIRouter(prefix="/api/recommendations", tags=["AI Recommendations"])
+router = APIRouter(prefix="/api/recommendations", tags=["AI Recommendations"], dependencies=[Depends(get_current_user)])
 
 # Initialize recommendation agent
 recommendation_agent = RecommendationAgent()

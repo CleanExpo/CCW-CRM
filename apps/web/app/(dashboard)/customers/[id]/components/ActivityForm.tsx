@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,35 +20,38 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import type { Activity } from "./ActivityTimeline";
+} from '@/components/ui/select';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import type { Activity } from './ActivityTimeline';
 
 const activityTypes = [
-  { value: "call", label: "Phone Call" },
-  { value: "email", label: "Email" },
-  { value: "meeting", label: "Meeting" },
-  { value: "note", label: "Note" },
-  { value: "task", label: "Task" },
+  { value: 'call', label: 'Phone Call' },
+  { value: 'email', label: 'Email' },
+  { value: 'meeting', label: 'Meeting' },
+  { value: 'note', label: 'Note' },
+  { value: 'task', label: 'Task' },
 ] as const;
 
 const formSchema = z.object({
-  activity_type: z.enum(["call", "email", "meeting", "note", "task"]),
-  subject: z.string().min(1, "Subject is required").max(255, "Subject must be 255 characters or less"),
-  description: z.string().optional().or(z.literal("")),
+  activity_type: z.enum(['call', 'email', 'meeting', 'note', 'task']),
+  subject: z
+    .string()
+    .min(1, 'Subject is required')
+    .max(255, 'Subject must be 255 characters or less'),
+  description: z.string().optional().or(z.literal('')),
   contact_id: z.string().uuid().optional().nullable(),
-  due_date: z.string().optional().or(z.literal("")),
+  due_date: z.string().optional().or(z.literal('')),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -83,11 +86,11 @@ export function ActivityForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      activity_type: "note",
-      subject: "",
-      description: "",
+      activity_type: 'note',
+      subject: '',
+      description: '',
       contact_id: null,
-      due_date: "",
+      due_date: '',
     },
   });
 
@@ -98,17 +101,17 @@ export function ActivityForm({
         form.reset({
           activity_type: activity.activity_type,
           subject: activity.subject,
-          description: activity.description || "",
+          description: activity.description || '',
           contact_id: activity.contact_id || null,
-          due_date: activity.due_date ? activity.due_date.split("T")[0] : "",
+          due_date: activity.due_date ? activity.due_date.split('T')[0] : '',
         });
       } else {
         form.reset({
-          activity_type: "note",
-          subject: "",
-          description: "",
+          activity_type: 'note',
+          subject: '',
+          description: '',
           contact_id: null,
-          due_date: "",
+          due_date: '',
         });
       }
     }
@@ -129,22 +132,22 @@ export function ActivityForm({
       if (isEdit) {
         await apiClient.put(`/api/activities/${activity.id}`, payload);
         toast({
-          title: "Success",
-          description: "Activity updated successfully",
+          title: 'Success',
+          description: 'Activity updated successfully',
         });
       } else {
-        await apiClient.post("/api/activities", payload);
+        await apiClient.post('/api/activities', payload);
         toast({
-          title: "Success",
-          description: "Activity logged successfully",
+          title: 'Success',
+          description: 'Activity logged successfully',
         });
       }
       onSuccess();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Something went wrong";
+      const message = error instanceof Error ? error.message : 'Something went wrong';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -156,11 +159,11 @@ export function ActivityForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Activity" : "Log Activity"}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Activity' : 'Log Activity'}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the activity details below."
-              : "Record an interaction or task for this customer."}
+              ? 'Update the activity details below.'
+              : 'Record an interaction or task for this customer.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -231,10 +234,7 @@ export function ActivityForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Related Contact</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ""}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select contact (optional)" />
@@ -258,7 +258,7 @@ export function ActivityForm({
               />
             )}
 
-            {form.watch("activity_type") === "task" && (
+            {form.watch('activity_type') === 'task' && (
               <FormField
                 control={form.control}
                 name="due_date"
@@ -288,7 +288,7 @@ export function ActivityForm({
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEdit ? "Update Activity" : "Log Activity"}
+                {isEdit ? 'Update Activity' : 'Log Activity'}
               </Button>
             </div>
           </form>

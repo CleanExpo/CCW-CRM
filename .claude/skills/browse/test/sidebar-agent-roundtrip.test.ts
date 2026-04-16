@@ -23,7 +23,7 @@ let mockBinDir: string = '';
 async function api(pathname: string, opts: RequestInit = {}): Promise<Response> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(opts.headers as Record<string, string> || {}),
+    ...((opts.headers as Record<string, string>) || {}),
   };
   if (!headers['Authorization'] && authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
@@ -38,14 +38,14 @@ async function resetState() {
 
 async function pollChatUntil(
   predicate: (entries: any[]) => boolean,
-  timeoutMs = 10000,
+  timeoutMs = 10000
 ): Promise<any[]> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const resp = await api('/sidebar-chat?after=0');
     const data = await resp.json();
     if (predicate(data.entries)) return data.entries;
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 300));
   }
   // Return whatever we have on timeout
   const resp = await api('/sidebar-chat?after=0');
@@ -99,7 +99,7 @@ echo '{"type":"result","result":"Done."}'
         }
       } catch {}
     }
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
   }
   if (!serverPort) throw new Error('Server did not start in time');
 
@@ -113,19 +113,29 @@ echo '{"type":"result","result":"Done."}'
       BROWSE_STATE_FILE: stateFile,
       SIDEBAR_QUEUE_PATH: queueFile,
       SIDEBAR_AGENT_TIMEOUT: '10000',
-      BROWSE_BIN: 'browse',  // doesn't matter, mock claude doesn't use it
+      BROWSE_BIN: 'browse', // doesn't matter, mock claude doesn't use it
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
   // Give sidebar-agent time to start polling
-  await new Promise(r => setTimeout(r, 1000));
+  await new Promise((r) => setTimeout(r, 1000));
 }, 20000);
 
 afterAll(() => {
-  if (agentProc) { try { agentProc.kill(); } catch {} }
-  if (serverProc) { try { serverProc.kill(); } catch {} }
-  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+  if (agentProc) {
+    try {
+      agentProc.kill();
+    } catch {}
+  }
+  if (serverProc) {
+    try {
+      serverProc.kill();
+    } catch {}
+  }
+  try {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  } catch {}
 });
 
 describe('sidebar-agent round-trip', () => {
@@ -145,7 +155,7 @@ describe('sidebar-agent round-trip', () => {
     // Wait for mock claude to process and events to arrive
     const entries = await pollChatUntil(
       (entries) => entries.some((e: any) => e.type === 'agent_done'),
-      15000,
+      15000
     );
 
     // Verify the flow: user message → agent_start → text → agent_done
@@ -154,7 +164,9 @@ describe('sidebar-agent round-trip', () => {
     expect(userEntry.message).toBe('what is on this page?');
 
     // The mock claude outputs text — check for any agent text entry
-    const textEntries = entries.filter((e: any) => e.role === 'agent' && (e.type === 'text' || e.type === 'result'));
+    const textEntries = entries.filter(
+      (e: any) => e.role === 'agent' && (e.type === 'text' || e.type === 'result')
+    );
     expect(textEntries.length).toBeGreaterThan(0);
 
     const doneEntry = entries.find((e: any) => e.type === 'agent_done');
@@ -182,7 +194,7 @@ exit 1
     // Wait for agent_done (sidebar-agent sends agent_done even on crash via proc.on('close'))
     const entries = await pollChatUntil(
       (entries) => entries.some((e: any) => e.type === 'agent_done' || e.type === 'agent_error'),
-      15000,
+      15000
     );
 
     // Agent should recover to idle
@@ -216,7 +228,7 @@ echo '{"type":"assistant","message":{"content":[{"type":"text","text":"response 
     // Wait for both to complete (two agent_done events)
     const entries = await pollChatUntil(
       (entries) => entries.filter((e: any) => e.type === 'agent_done').length >= 2,
-      20000,
+      20000
     );
 
     // Both user messages should be in chat

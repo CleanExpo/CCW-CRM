@@ -50,14 +50,14 @@ function makeRequest(query, variables) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': apiKey,
-        'Content-Length': data.length
-      }
+        Authorization: apiKey,
+        'Content-Length': data.length,
+      },
     };
 
     const req = https.request(options, (res) => {
       let body = '';
-      res.on('data', (chunk) => body += chunk);
+      res.on('data', (chunk) => (body += chunk));
       res.on('end', () => {
         try {
           resolve(JSON.parse(body));
@@ -116,12 +116,7 @@ async function updateLinear() {
       }
 
       // Identify which tasks should be marked Done
-      const completedTasks = [
-        'Risk Assessor',
-        'Risk Assessment',
-        'E2E Test',
-        'Security Test'
-      ];
+      const completedTasks = ['Risk Assessor', 'Risk Assessment', 'E2E Test', 'Security Test'];
 
       // Get Done state ID
       const statesQuery = `
@@ -149,7 +144,7 @@ async function updateLinear() {
 
         // Update completed tasks
         for (const issue of searchResult.data.issues.nodes) {
-          const shouldComplete = completedTasks.some(task =>
+          const shouldComplete = completedTasks.some((task) =>
             issue.title.toLowerCase().includes(task.toLowerCase())
           );
 
@@ -171,11 +166,14 @@ async function updateLinear() {
 
             const updateResult = await makeRequest(updateQuery, {
               issueId: issue.id,
-              stateId: doneState.id
+              stateId: doneState.id,
             });
 
             if (updateResult.errors) {
-              console.log(`❌ Failed to update ${issue.identifier}:`, JSON.stringify(updateResult.errors, null, 2));
+              console.log(
+                `❌ Failed to update ${issue.identifier}:`,
+                JSON.stringify(updateResult.errors, null, 2)
+              );
             } else if (updateResult.data?.issueUpdate?.success) {
               console.log(`✅ Updated ${issue.identifier} to Done`);
             }

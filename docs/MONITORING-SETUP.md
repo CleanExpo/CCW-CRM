@@ -9,6 +9,7 @@ This guide explains how to set up and use the Prometheus + Grafana monitoring st
 ## Overview
 
 The monitoring stack consists of:
+
 - **Prometheus**: Metrics collection and storage
 - **Grafana**: Visualization and dashboards
 - **Node Exporter**: System-level metrics
@@ -41,6 +42,7 @@ docker ps | grep ccw
 ### 3. Import Dashboards
 
 Dashboards are automatically provisioned on Grafana startup from:
+
 - `grafana/dashboards/autonomous-execution-overview.json`
 - `grafana/dashboards/risk-assessment-analytics.json`
 - `grafana/dashboards/system-health.json`
@@ -56,6 +58,7 @@ Navigate to **Dashboards** → **Browse** → **Phase 5 - Autonomous Development
 **Purpose**: Monitor auto-merge activity, deployments, and rollbacks
 
 **Key Panels**:
+
 - Auto-Merge Success Rate (24h gauge)
 - Deployments (24h stat)
 - Rollbacks (24h stat)
@@ -69,6 +72,7 @@ Navigate to **Dashboards** → **Browse** → **Phase 5 - Autonomous Development
 **Recommended Refresh**: 30 seconds
 
 **Use Cases**:
+
 - Daily standup review
 - Incident response
 - Performance optimization
@@ -81,6 +85,7 @@ Navigate to **Dashboards** → **Browse** → **Phase 5 - Autonomous Development
 **Purpose**: Understand risk assessment decisions and code change patterns
 
 **Key Panels**:
+
 - Risk Level Distribution (donut chart)
 - Approval Policy Distribution (pie chart)
 - Risk Assessments Over Time (stacked area)
@@ -93,6 +98,7 @@ Navigate to **Dashboards** → **Browse** → **Phase 5 - Autonomous Development
 **Recommended Refresh**: 30 seconds
 
 **Use Cases**:
+
 - Risk profile analysis
 - Protected file monitoring
 - Approval policy tuning
@@ -105,6 +111,7 @@ Navigate to **Dashboards** → **Browse** → **Phase 5 - Autonomous Development
 **Purpose**: Monitor test execution, agent performance, and system errors
 
 **Key Panels**:
+
 - Overall Test Coverage (gauge)
 - Test Failures (24h stat)
 - Agent Success Rate (24h gauge)
@@ -120,6 +127,7 @@ Navigate to **Dashboards** → **Browse** → **Phase 5 - Autonomous Development
 **Recommended Refresh**: 30 seconds
 
 **Use Cases**:
+
 - Test performance monitoring
 - Agent reliability tracking
 - Error investigation
@@ -131,76 +139,76 @@ Navigate to **Dashboards** → **Browse** → **Phase 5 - Autonomous Development
 
 ### Risk Assessment Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `risk_assessments_total` | Counter | `risk_level` | Total risk assessments performed |
-| `risk_assessment_duration_seconds` | Histogram | - | Time spent performing risk assessment |
-| `approval_decisions_total` | Counter | `policy` | Approval policy decisions |
+| Metric                             | Type      | Labels       | Description                           |
+| ---------------------------------- | --------- | ------------ | ------------------------------------- |
+| `risk_assessments_total`           | Counter   | `risk_level` | Total risk assessments performed      |
+| `risk_assessment_duration_seconds` | Histogram | -            | Time spent performing risk assessment |
+| `approval_decisions_total`         | Counter   | `policy`     | Approval policy decisions             |
 
 ### Auto-Merge Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `auto_merges_attempted_total` | Counter | `risk_level` | Auto-merge attempts |
-| `auto_merges_successful_total` | Counter | `risk_level` | Successful auto-merges |
-| `auto_merges_failed_total` | Counter | `risk_level`, `failure_reason` | Failed auto-merges |
-| `auto_merge_duration_seconds` | Histogram | - | Time from commit to merge |
+| Metric                         | Type      | Labels                         | Description               |
+| ------------------------------ | --------- | ------------------------------ | ------------------------- |
+| `auto_merges_attempted_total`  | Counter   | `risk_level`                   | Auto-merge attempts       |
+| `auto_merges_successful_total` | Counter   | `risk_level`                   | Successful auto-merges    |
+| `auto_merges_failed_total`     | Counter   | `risk_level`, `failure_reason` | Failed auto-merges        |
+| `auto_merge_duration_seconds`  | Histogram | -                              | Time from commit to merge |
 
 ### Rollback Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `rollbacks_triggered_total` | Counter | `trigger_reason` | Rollbacks triggered |
-| `rollback_duration_seconds` | Histogram | - | Time to complete rollback |
-| `rollbacks_successful_total` | Counter | - | Successful rollbacks |
-| `rollbacks_failed_total` | Counter | - | Failed rollbacks |
+| Metric                       | Type      | Labels           | Description               |
+| ---------------------------- | --------- | ---------------- | ------------------------- |
+| `rollbacks_triggered_total`  | Counter   | `trigger_reason` | Rollbacks triggered       |
+| `rollback_duration_seconds`  | Histogram | -                | Time to complete rollback |
+| `rollbacks_successful_total` | Counter   | -                | Successful rollbacks      |
+| `rollbacks_failed_total`     | Counter   | -                | Failed rollbacks          |
 
 ### Circuit Breaker Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `circuit_breaker_state` | Gauge | `component` | Circuit breaker state (0=CLOSED, 1=OPEN, 2=HALF_OPEN) |
-| `circuit_breaker_opens_total` | Counter | `component` | Circuit breaker open events |
-| `circuit_breaker_closes_total` | Counter | `component` | Circuit breaker close events |
+| Metric                         | Type    | Labels      | Description                                           |
+| ------------------------------ | ------- | ----------- | ----------------------------------------------------- |
+| `circuit_breaker_state`        | Gauge   | `component` | Circuit breaker state (0=CLOSED, 1=OPEN, 2=HALF_OPEN) |
+| `circuit_breaker_opens_total`  | Counter | `component` | Circuit breaker open events                           |
+| `circuit_breaker_closes_total` | Counter | `component` | Circuit breaker close events                          |
 
 ### Test Execution Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `test_executions_total` | Counter | `suite` | Test suite executions |
-| `test_failures_total` | Counter | `suite`, `test_name` | Test failures |
-| `test_execution_duration_seconds` | Histogram | `suite` | Test suite execution time |
-| `test_coverage_percentage` | Gauge | `module` | Code coverage percentage |
+| Metric                            | Type      | Labels               | Description               |
+| --------------------------------- | --------- | -------------------- | ------------------------- |
+| `test_executions_total`           | Counter   | `suite`              | Test suite executions     |
+| `test_failures_total`             | Counter   | `suite`, `test_name` | Test failures             |
+| `test_execution_duration_seconds` | Histogram | `suite`              | Test suite execution time |
+| `test_coverage_percentage`        | Gauge     | `module`             | Code coverage percentage  |
 
 ### Deployment Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `deployments_total` | Counter | `environment` | Total deployments |
-| `deployment_duration_seconds` | Histogram | `environment` | Time to complete deployment |
-| `deployment_failures_total` | Counter | `environment`, `stage` | Deployment failures |
+| Metric                        | Type      | Labels                 | Description                 |
+| ----------------------------- | --------- | ---------------------- | --------------------------- |
+| `deployments_total`           | Counter   | `environment`          | Total deployments           |
+| `deployment_duration_seconds` | Histogram | `environment`          | Time to complete deployment |
+| `deployment_failures_total`   | Counter   | `environment`, `stage` | Deployment failures         |
 
 ### Agent Performance Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `agent_task_execution_seconds` | Histogram | `agent_id`, `task_type` | Agent task execution time |
-| `agent_task_success_total` | Counter | `agent_id`, `task_type` | Successful agent tasks |
-| `agent_task_failure_total` | Counter | `agent_id`, `task_type`, `error_type` | Failed agent tasks |
-| `agent_verification_required_total` | Counter | `agent_id`, `verification_reason` | Tasks requiring manual verification |
+| Metric                              | Type      | Labels                                | Description                         |
+| ----------------------------------- | --------- | ------------------------------------- | ----------------------------------- |
+| `agent_task_execution_seconds`      | Histogram | `agent_id`, `task_type`               | Agent task execution time           |
+| `agent_task_success_total`          | Counter   | `agent_id`, `task_type`               | Successful agent tasks              |
+| `agent_task_failure_total`          | Counter   | `agent_id`, `task_type`, `error_type` | Failed agent tasks                  |
+| `agent_verification_required_total` | Counter   | `agent_id`, `verification_reason`     | Tasks requiring manual verification |
 
 ### Code Quality Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `code_lines_changed` | Histogram | - | Lines of code changed per commit |
-| `code_files_changed` | Histogram | - | Files changed per commit |
-| `protected_files_modified_total` | Counter | `file_pattern` | Protected files modified |
+| Metric                           | Type      | Labels         | Description                      |
+| -------------------------------- | --------- | -------------- | -------------------------------- |
+| `code_lines_changed`             | Histogram | -              | Lines of code changed per commit |
+| `code_files_changed`             | Histogram | -              | Files changed per commit         |
+| `protected_files_modified_total` | Counter   | `file_pattern` | Protected files modified         |
 
 ### System Health Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
+| Metric                           | Type    | Labels                    | Description                 |
+| -------------------------------- | ------- | ------------------------- | --------------------------- |
 | `autonomous_system_errors_total` | Counter | `component`, `error_type` | Errors in autonomous system |
 
 ---
@@ -210,12 +218,14 @@ Navigate to **Dashboards** → **Browse** → **Phase 5 - Autonomous Development
 Recommended alert thresholds:
 
 ### Critical Alerts
+
 - **Auto-Merge Success Rate < 85%** (24h window)
 - **Circuit Breaker Opens** (immediate)
 - **Rollback Failures > 0** (immediate)
 - **Test Coverage < 40%** (any module)
 
 ### Warning Alerts
+
 - **Auto-Merge Success Rate < 95%** (24h window)
 - **Rollbacks > 3** (1h window)
 - **Test Failures > 5** (1h window)
@@ -223,6 +233,7 @@ Recommended alert thresholds:
 - **Protected Files Modified** (immediate notification)
 
 ### Info Alerts
+
 - **Deployments to Production** (notification)
 - **Risk Assessment Duration > 3s** (p95)
 
@@ -261,6 +272,7 @@ Recommended alert thresholds:
 ### Security Considerations
 
 1. **Change default passwords**:
+
    ```yaml
    - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
    ```
@@ -283,11 +295,13 @@ Recommended alert thresholds:
 ### Scaling Considerations
 
 1. **Prometheus retention**: Default 15 days
+
    ```yaml
    - '--storage.tsdb.retention.time=30d'
    ```
 
 2. **Prometheus storage**: Monitor disk usage
+
    ```bash
    docker exec ccw-prometheus du -sh /prometheus
    ```
@@ -332,11 +346,11 @@ docker-compose -f docker-compose.monitoring.yml up -d
 The monitoring stack integrates with Phase 5 autonomous development components:
 
 1. **Risk Assessor** → Records risk_assessments_total
-2. **Auto-Merge System** → Records auto_merges_* metrics
-3. **Rollback Agent** → Records rollbacks_* metrics
+2. **Auto-Merge System** → Records auto*merges*\* metrics
+3. **Rollback Agent** → Records rollbacks\_\* metrics
 4. **Circuit Breaker** → Records circuit_breaker_state
-5. **Test Runner** → Records test_* metrics
-6. **Deployment Service** → Records deployments_* metrics
+5. **Test Runner** → Records test\_\* metrics
+6. **Deployment Service** → Records deployments\_\* metrics
 
 All metrics are automatically exposed via the `/metrics` endpoint and scraped by Prometheus every 15 seconds.
 
@@ -345,6 +359,7 @@ All metrics are automatically exposed via the `/metrics` endpoint and scraped by
 ## Support
 
 For issues or questions:
+
 1. Check Grafana logs: `docker logs ccw-grafana`
 2. Check Prometheus logs: `docker logs ccw-prometheus`
 3. Verify metrics endpoint: `curl http://localhost:8000/metrics`

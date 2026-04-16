@@ -1,20 +1,14 @@
-"use client";
+'use client';
 
-import { PlayCircle, ExternalLink, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { PlayCircle, ExternalLink, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * Unite Group AU YouTube channel — all CCW training videos live here.
  * https://studio.youtube.com/channel/UChN8nQFig73BoefyMBIsN-w
  */
-const DEFAULT_CHANNEL_URL =
-  "https://www.youtube.com/channel/UCLqS3mSp4DflzZd9IILXLdQ";
+const DEFAULT_CHANNEL_URL = 'https://www.youtube.com/channel/UCLqS3mSp4DflzZd9IILXLdQ';
 
 interface DemoVideoLinkProps {
   /** Module key (e.g. "products", "orders") */
@@ -30,13 +24,13 @@ interface DemoVideoLinkProps {
   /** Duration in seconds */
   duration?: number;
   /** Render style */
-  variant?: "icon" | "button" | "banner";
+  variant?: 'icon' | 'button' | 'banner';
 }
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return s > 0 ? `${m}:${String(s).padStart(2, "0")}` : `${m} min`;
+  return s > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${m} min`;
 }
 
 /**
@@ -54,7 +48,7 @@ export function DemoVideoLink({
   youtubeUrl,
   title,
   duration,
-  variant = "button",
+  variant = 'button',
 }: DemoVideoLinkProps) {
   // Specific video URL takes priority; fall back to channel
   const channelUrl = channelId
@@ -69,10 +63,10 @@ export function DemoVideoLink({
   const displayTitle = title ?? `${module} training video`;
   const durationLabel = duration && hasSpecificVideo ? formatDuration(duration) : null;
 
-  const linkLabel = hasSpecificVideo ? "Watch training video" : "Browse training videos";
-  const channelLabel = hasSpecificVideo ? displayTitle : "CCW Training Videos";
+  const linkLabel = hasSpecificVideo ? 'Watch training video' : 'Browse training videos';
+  const channelLabel = hasSpecificVideo ? displayTitle : 'CCW Training Videos';
 
-  if (variant === "icon") {
+  if (variant === 'icon') {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -81,7 +75,7 @@ export function DemoVideoLink({
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+              className="inline-flex items-center text-blue-600 transition-colors hover:text-blue-800"
             >
               <PlayCircle className="h-5 w-5" />
             </a>
@@ -95,28 +89,24 @@ export function DemoVideoLink({
     );
   }
 
-  if (variant === "banner") {
+  if (variant === 'banner') {
     return (
       <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
-        <PlayCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
-        <div className="flex flex-col min-w-0">
-          <span className="text-blue-900 font-medium truncate">
-            {hasSpecificVideo ? displayTitle : "CCW Training Library"}
+        <PlayCircle className="h-5 w-5 flex-shrink-0 text-blue-600" />
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate font-medium text-blue-900">
+            {hasSpecificVideo ? displayTitle : 'CCW Training Library'}
           </span>
           {!hasSpecificVideo && (
-            <span className="text-blue-600 text-xs">
-              Watch walkthroughs for every module
-            </span>
+            <span className="text-xs text-blue-600">Watch walkthroughs for every module</span>
           )}
         </div>
-        {durationLabel && (
-          <span className="text-blue-600 text-xs shrink-0">({durationLabel})</span>
-        )}
+        {durationLabel && <span className="shrink-0 text-xs text-blue-600">({durationLabel})</span>}
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-auto inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-xs shrink-0"
+          className="ml-auto inline-flex shrink-0 items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
         >
           {linkLabel} <ExternalLink className="h-3 w-3" />
         </a>
@@ -129,10 +119,8 @@ export function DemoVideoLink({
     <Button variant="outline" size="sm" asChild>
       <a href={url} target="_blank" rel="noopener noreferrer" className="gap-2">
         <PlayCircle className="h-4 w-4" />
-        {hasSpecificVideo ? displayTitle : "CCW Training Videos"}
-        {durationLabel && (
-          <span className="text-muted-foreground text-xs">({durationLabel})</span>
-        )}
+        {hasSpecificVideo ? displayTitle : 'CCW Training Videos'}
+        {durationLabel && <span className="text-muted-foreground text-xs">({durationLabel})</span>}
         <ExternalLink className="h-3 w-3" />
       </a>
     </Button>

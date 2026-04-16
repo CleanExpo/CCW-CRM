@@ -86,11 +86,7 @@ function buildDefaultProps(type, options) {
         featureName: options.feature || 'Feature Spotlight',
         title: `Feature Spotlight: ${options.feature || 'New Feature'}`,
         description: 'See how this feature saves you time and money.',
-        steps: [
-          'Open the feature',
-          'Configure your settings',
-          'Watch the magic happen',
-        ],
+        steps: ['Open the feature', 'Configure your settings', 'Watch the magic happen'],
         screenshots: [],
         duration: 60,
       };
@@ -100,11 +96,7 @@ function buildDefaultProps(type, options) {
         ...base,
         title: 'Behind the Scenes at CCW',
         sessionReference: options.session || null,
-        topics: [
-          'What we built this sprint',
-          'Challenges we solved',
-          'What is coming next',
-        ],
+        topics: ['What we built this sprint', 'Challenges we solved', 'What is coming next'],
         debriefData: options.debriefData || null,
         duration: 180,
       };
@@ -146,7 +138,11 @@ export async function runVideoPipeline(options) {
   // Step 2: Generate sessionId
   const sessionId =
     options.session ||
-    'CCW-VIDEO-' + new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+    'CCW-VIDEO-' +
+      new Date()
+        .toISOString()
+        .replace(/[^0-9]/g, '')
+        .slice(0, 14);
 
   options.sessionId = sessionId;
 
@@ -168,7 +164,9 @@ export async function runVideoPipeline(options) {
       console.log(`[VideoPipeline] Loaded debrief.json from ${debriefPath}`);
       console.log(`[VideoPipeline] Debrief topics: ${Object.keys(options.debriefData).join(', ')}`);
     } catch {
-      console.log(`[VideoPipeline] No debrief.json found at ${debriefPath} — continuing without it`);
+      console.log(
+        `[VideoPipeline] No debrief.json found at ${debriefPath} — continuing without it`
+      );
     }
   }
 

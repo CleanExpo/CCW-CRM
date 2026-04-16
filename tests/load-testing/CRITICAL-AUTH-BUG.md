@@ -23,7 +23,7 @@
 
 ---
 
-##  Root Cause Analysis
+## Root Cause Analysis
 
 ### The Bug (apps/backend/src/api/middleware/auth.py:64-69)
 
@@ -87,10 +87,12 @@ The middleware currently supports:
 ### Test Results
 
 **Baseline Test 1** (Before Fix):
+
 - Error Rate: 70.17% (40/57 requests failed with 401)
 - Pattern: First iteration succeeds (module-level auth), subsequent fail
 
 **Baseline Test 2** (After k6 Fix):
+
 - Error Rate: 76.92% (40/52 requests failed with 401)
 - Pattern: Authentication successful in setup, ALL API requests fail with 401
 
@@ -121,6 +123,7 @@ $ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
 ### Code Analysis
 
 **Authentication Flow**:
+
 1. `demo_auth.py:login()` → Generates JWT with `create_access_token()` ✅
 2. JWT includes: `sub`, `user_id`, `is_admin`, `exp` ✅
 3. JWT returned to client with `token_type: "bearer"` ✅
@@ -128,6 +131,7 @@ $ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
 5. `auth.py:AuthMiddleware` → Fails to validate JWT ❌
 
 **File Locations**:
+
 - Middleware: `apps/backend/src/api/middleware/auth.py:15-92`
 - JWT utils: `apps/backend/src/auth/jwt.py` (has `decode_access_token`)
 - Auth routes: `apps/backend/src/api/routes/demo_auth.py`
@@ -258,6 +262,7 @@ cd tests/load-testing
 ```
 
 **Expected Results After Fix**:
+
 - ✅ Error rate < 1% (target: 0%)
 - ✅ All authenticated requests succeed
 - ✅ p(95) response time < 500ms
@@ -334,6 +339,7 @@ cd tests/load-testing
 ---
 
 **Files Analyzed**:
+
 - `apps/backend/src/api/middleware/auth.py` (bug location)
 - `apps/backend/src/auth/jwt.py` (JWT utilities)
 - `apps/backend/src/api/routes/demo_auth.py` (login endpoint)
@@ -343,6 +349,7 @@ cd tests/load-testing
 - `tests/load-testing/scenarios/utils.js` (k6 utilities)
 
 **Test Results**:
+
 - `tests/load-testing/results/baseline-test-20260211-162305.json` (70% error rate)
 - `tests/load-testing/results/baseline-test-20260211-162819.json` (77% error rate)
 

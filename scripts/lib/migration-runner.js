@@ -34,8 +34,9 @@ function getDb() {
  */
 function listMigrations() {
   if (!fs.existsSync(MIGRATIONS_DIR)) return [];
-  return fs.readdirSync(MIGRATIONS_DIR)
-    .filter(f => f.endsWith('.sql') && !f.startsWith('_'))
+  return fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith('.sql') && !f.startsWith('_'))
     .sort();
 }
 
@@ -60,8 +61,8 @@ async function getAppliedMigrations() {
 async function getPendingMigrations() {
   const all = listMigrations();
   const applied = await getAppliedMigrations();
-  const appliedIds = new Set(applied.map(m => m.migration_id));
-  return all.filter(f => {
+  const appliedIds = new Set(applied.map((m) => m.migration_id));
+  return all.filter((f) => {
     const id = path.basename(f, '.sql');
     return !appliedIds.has(id);
   });
@@ -90,7 +91,7 @@ async function applyMigration(filename, opts = {}) {
     action: 'apply_migration',
     decision: 'executing',
     reasoning: `Applying migration: ${migrationId}`,
-    riskLevel: 'HIGH'
+    riskLevel: 'HIGH',
   });
 
   const db = getDb();
@@ -104,7 +105,7 @@ async function applyMigration(filename, opts = {}) {
       event: 'migration_failed',
       severity: 'HIGH',
       details: { migrationId, error: error.message },
-      remediation: 'Check migration SQL for errors and re-run'
+      remediation: 'Check migration SQL for errors and re-run',
     });
     throw new Error(`Migration failed: ${error.message}`);
   }
@@ -114,7 +115,7 @@ async function applyMigration(filename, opts = {}) {
     migration_id: migrationId,
     filename,
     applied_by: appliedBy,
-    applied_at: new Date().toISOString()
+    applied_at: new Date().toISOString(),
   });
 
   if (histError) {
@@ -126,7 +127,7 @@ async function applyMigration(filename, opts = {}) {
     action: 'apply_migration',
     decision: 'completed',
     reasoning: `Migration applied successfully: ${migrationId}`,
-    riskLevel: 'MEDIUM'
+    riskLevel: 'MEDIUM',
   });
 
   return { success: true, migrationId };
@@ -151,7 +152,7 @@ async function rollbackMigration(migrationId, opts = {}) {
   const approval = await checkApproval('rollback_migration', {
     migrationId,
     rolledBackBy,
-    rollbackFile
+    rollbackFile,
   });
 
   if (!approval.approved) {
@@ -165,7 +166,7 @@ async function rollbackMigration(migrationId, opts = {}) {
     action: 'rollback_migration',
     decision: 'executing',
     reasoning: `Rolling back migration: ${migrationId}`,
-    riskLevel: 'CRITICAL'
+    riskLevel: 'CRITICAL',
   });
 
   const db = getDb();
@@ -188,7 +189,7 @@ async function rollbackMigration(migrationId, opts = {}) {
     action: 'rollback_migration',
     decision: 'completed',
     reasoning: `Rollback completed: ${migrationId}`,
-    riskLevel: 'HIGH'
+    riskLevel: 'HIGH',
   });
 
   return { success: true, migrationId };
@@ -236,12 +237,12 @@ module.exports = {
   applyMigration,
   rollbackMigration,
   applyAllPending,
-  status
+  status,
 };
 
 // CLI usage: node scripts/lib/migration-runner.js [status|apply|rollback <id>|apply-all]
 if (require.main === module) {
-  const [,, cmd, arg] = process.argv;
+  const [, , cmd, arg] = process.argv;
 
   (async () => {
     try {
@@ -249,9 +250,9 @@ if (require.main === module) {
         case 'status': {
           const s = await status();
           console.log('\nApplied migrations:');
-          s.applied.forEach(m => console.log(`  ✓ ${m.migration_id} (${m.applied_at})`));
+          s.applied.forEach((m) => console.log(`  ✓ ${m.migration_id} (${m.applied_at})`));
           console.log('\nPending migrations:');
-          s.pending.forEach(m => console.log(`  ○ ${m}`));
+          s.pending.forEach((m) => console.log(`  ○ ${m}`));
           if (s.pending.length === 0) console.log('  (none)');
           break;
         }

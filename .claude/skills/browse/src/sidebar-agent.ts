@@ -13,11 +13,15 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const QUEUE = process.env.SIDEBAR_QUEUE_PATH || path.join(process.env.HOME || '/tmp', '.gstack', 'sidebar-agent-queue.jsonl');
+const QUEUE =
+  process.env.SIDEBAR_QUEUE_PATH ||
+  path.join(process.env.HOME || '/tmp', '.gstack', 'sidebar-agent-queue.jsonl');
 const SERVER_PORT = parseInt(process.env.BROWSE_SERVER_PORT || '34567', 10);
 const SERVER_URL = `http://127.0.0.1:${SERVER_PORT}`;
-const POLL_MS = 500;  // Fast polling — server already did the user-facing response
-const B = process.env.BROWSE_BIN || path.resolve(__dirname, '../../.claude/skills/gstack/browse/dist/browse');
+const POLL_MS = 500; // Fast polling — server already did the user-facing response
+const B =
+  process.env.BROWSE_BIN ||
+  path.resolve(__dirname, '../../.claude/skills/gstack/browse/dist/browse');
 
 let lastLine = 0;
 let authToken: string | null = null;
@@ -28,7 +32,10 @@ let isProcessing = false;
 function getGitRoot(): string | null {
   try {
     const { execSync } = require('child_process');
-    return execSync('git rev-parse --show-toplevel', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    return execSync('git rev-parse --show-toplevel', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
   } catch {
     return null;
   }
@@ -68,7 +75,8 @@ function writeToInbox(message: string, pageUrl?: string, sessionId?: string): vo
 async function refreshToken(): Promise<string | null> {
   // Read token from state file (same-user, mode 0o600) instead of /health
   try {
-    const stateFile = process.env.BROWSE_STATE_FILE ||
+    const stateFile =
+      process.env.BROWSE_STATE_FILE ||
       path.join(process.env.HOME || '/tmp', '.gstack', 'browse.json');
     const data = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
     authToken = data.token || null;
@@ -89,7 +97,7 @@ async function sendEvent(event: Record<string, any>): Promise<void> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify(event),
     });
@@ -120,7 +128,11 @@ function summarizeToolInput(tool: string, input: any): string {
   if (tool === 'Write' && input.file_path) return shorten(input.file_path);
   if (tool === 'Grep' && input.pattern) return `/${input.pattern}/`;
   if (tool === 'Glob' && input.pattern) return input.pattern;
-  try { return shorten(JSON.stringify(input)).slice(0, 60); } catch { return ''; }
+  try {
+    return shorten(JSON.stringify(input)).slice(0, 60);
+  } catch {
+    return '';
+  }
 }
 
 async function handleStreamEvent(event: any): Promise<void> {
@@ -132,7 +144,11 @@ async function handleStreamEvent(event: any): Promise<void> {
   if (event.type === 'assistant' && event.message?.content) {
     for (const block of event.message.content) {
       if (block.type === 'tool_use') {
-        await sendEvent({ type: 'tool_use', tool: block.name, input: summarizeToolInput(block.name, block.input) });
+        await sendEvent({
+          type: 'tool_use',
+          tool: block.name,
+          input: summarizeToolInput(block.name, block.input),
+        });
       } else if (block.type === 'text' && block.text) {
         await sendEvent({ type: 'text', text: block.text });
       }
@@ -140,10 +156,18 @@ async function handleStreamEvent(event: any): Promise<void> {
   }
 
   if (event.type === 'content_block_start' && event.content_block?.type === 'tool_use') {
-    await sendEvent({ type: 'tool_use', tool: event.content_block.name, input: summarizeToolInput(event.content_block.name, event.content_block.input) });
+    await sendEvent({
+      type: 'tool_use',
+      tool: event.content_block.name,
+      input: summarizeToolInput(event.content_block.name, event.content_block.input),
+    });
   }
 
-  if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta' && event.delta.text) {
+  if (
+    event.type === 'content_block_delta' &&
+    event.delta?.type === 'text_delta' &&
+    event.delta.text
+  ) {
     await sendEvent({ type: 'text_delta', text: event.delta.text });
   }
 
@@ -163,12 +187,23 @@ async function askClaude(queueEntry: any): Promise<void> {
     // Fall back to defaults only if queue entry has no args (backward compat).
     // Write doesn't expand attack surface beyond what Bash already provides.
     // The security boundary is the localhost-only message path, not the tool allowlist.
-    let claudeArgs = args || ['-p', prompt, '--output-format', 'stream-json', '--verbose',
-      '--allowedTools', 'Bash,Read,Glob,Grep,Write'];
+    let claudeArgs = args || [
+      '-p',
+      prompt,
+      '--output-format',
+      'stream-json',
+      '--verbose',
+      '--allowedTools',
+      'Bash,Read,Glob,Grep,Write',
+    ];
 
     // Validate cwd exists — queue may reference a stale worktree
     let effectiveCwd = cwd || process.cwd();
-    try { fs.accessSync(effectiveCwd); } catch { effectiveCwd = process.cwd(); }
+    try {
+      fs.accessSync(effectiveCwd);
+    } catch {
+      effectiveCwd = process.cwd();
+    }
 
     const proc = spawn('claude', claudeArgs, {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -186,7 +221,9 @@ async function askClaude(queueEntry: any): Promise<void> {
       buffer = lines.pop() || '';
       for (const line of lines) {
         if (!line.trim()) continue;
-        try { handleStreamEvent(JSON.parse(line)); } catch {}
+        try {
+          handleStreamEvent(JSON.parse(line));
+        } catch {}
       }
     });
 
@@ -197,7 +234,9 @@ async function askClaude(queueEntry: any): Promise<void> {
 
     proc.on('close', (code) => {
       if (buffer.trim()) {
-        try { handleStreamEvent(JSON.parse(buffer)); } catch {}
+        try {
+          handleStreamEvent(JSON.parse(buffer));
+        } catch {}
       }
       const doneEvent: Record<string, any> = { type: 'agent_done' };
       if (code !== 0 && stderrBuffer.trim()) {
@@ -222,7 +261,9 @@ async function askClaude(queueEntry: any): Promise<void> {
     // Timeout (default 300s / 5 min — multi-page tasks need time)
     const timeoutMs = parseInt(process.env.SIDEBAR_AGENT_TIMEOUT || '300000', 10);
     setTimeout(() => {
-      try { proc.kill(); } catch {}
+      try {
+        proc.kill();
+      } catch {}
       const timeoutMsg = stderrBuffer.trim()
         ? `Timed out after ${timeoutMs / 1000}s\nstderr: ${stderrBuffer.trim().slice(-500)}`
         : `Timed out after ${timeoutMs / 1000}s`;
@@ -239,14 +280,18 @@ async function askClaude(queueEntry: any): Promise<void> {
 function countLines(): number {
   try {
     return fs.readFileSync(QUEUE, 'utf-8').split('\n').filter(Boolean).length;
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
 function readLine(n: number): string | null {
   try {
     const lines = fs.readFileSync(QUEUE, 'utf-8').split('\n').filter(Boolean);
     return lines[n - 1] || null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function poll() {
@@ -261,7 +306,11 @@ async function poll() {
     if (!line) continue;
 
     let entry: any;
-    try { entry = JSON.parse(line); } catch { continue; }
+    try {
+      entry = JSON.parse(line);
+    } catch {
+      continue;
+    }
     if (!entry.message && !entry.prompt) continue;
 
     console.log(`[sidebar-agent] Processing: "${entry.message}"`);

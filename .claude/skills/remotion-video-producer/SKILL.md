@@ -22,13 +22,13 @@ allowed-tools:
 
 All CCW Remotion videos — check this before starting any new production.
 
-| ID | Composition ID | Duration | Purpose | Status |
-|----|---------------|----------|---------|--------|
-| 1 | `BoardroomVideo` | 150s | AI boardroom deliberation | Built |
-| 2 | `OnboardingVideo` | 240s | New user onboarding overview | Built |
-| 3 | `FirstLookVideo` | 180s | System first look / sales | Built |
-| 4 | `ConnectionsGuideVideo` | 300s | API setup walkthrough | Built |
-| 5 | *(future)* | TBD | Module deep-dives | Planned |
+| ID  | Composition ID          | Duration | Purpose                      | Status  |
+| --- | ----------------------- | -------- | ---------------------------- | ------- |
+| 1   | `BoardroomVideo`        | 150s     | AI boardroom deliberation    | Built   |
+| 2   | `OnboardingVideo`       | 240s     | New user onboarding overview | Built   |
+| 3   | `FirstLookVideo`        | 180s     | System first look / sales    | Built   |
+| 4   | `ConnectionsGuideVideo` | 300s     | API setup walkthrough        | Built   |
+| 5   | _(future)_              | TBD      | Module deep-dives            | Planned |
 
 ---
 
@@ -36,7 +36,7 @@ All CCW Remotion videos — check this before starting any new production.
 
 ### Step 1 — Script
 
-Write the narration script for each scene. Follow `heygen-script-optimizer` pacing rules:
+Write the narration script for each scene. Follow `video script pacing rules` pacing rules:
 
 - ~140 words per minute
 - Each scene = one narration segment
@@ -44,13 +44,13 @@ Write the narration script for each scene. Follow `heygen-script-optimizer` paci
 - Target word counts by scene duration:
 
 | Scene length | Target words |
-|-------------|-------------|
-| 3s | ~7 |
-| 5s | ~12 |
-| 10s | ~23 |
-| 15s | ~35 |
-| 20s | ~47 |
-| 30s | ~70 |
+| ------------ | ------------ |
+| 3s           | ~7           |
+| 5s           | ~12          |
+| 10s          | ~23          |
+| 15s          | ~35          |
+| 20s          | ~47          |
+| 30s          | ~70          |
 
 Save scripts as comments inside each scene file or in a companion `script.md` in the scenes folder.
 
@@ -62,15 +62,15 @@ Map the script to a scene timeline. Convert seconds to frames (× 30):
 
 **Example plan for a 180s / 5400-frame video:**
 
-| Scene | Start (s) | Duration (s) | Start (frame) | Duration (frames) | Purpose |
-|-------|-----------|-------------|--------------|-------------------|---------|
-| Intro | 0 | 5 | 0 | 150 | Title card |
-| Overview | 5 | 20 | 150 | 600 | What is CCW ERP |
-| Feature 1 | 25 | 15 | 750 | 450 | Key feature #1 |
-| Feature 2 | 40 | 15 | 1200 | 450 | Key feature #2 |
-| Feature 3 | 55 | 15 | 1650 | 450 | Key feature #3 |
-| CTA | 70 | 10 | 2100 | 300 | Call to action |
-| Outro | 80 | 5 | 2400 | 150 | Sign-off |
+| Scene     | Start (s) | Duration (s) | Start (frame) | Duration (frames) | Purpose         |
+| --------- | --------- | ------------ | ------------- | ----------------- | --------------- |
+| Intro     | 0         | 5            | 0             | 150               | Title card      |
+| Overview  | 5         | 20           | 150           | 600               | What is CCW ERP |
+| Feature 1 | 25        | 15           | 750           | 450               | Key feature #1  |
+| Feature 2 | 40        | 15           | 1200          | 450               | Key feature #2  |
+| Feature 3 | 55        | 15           | 1650          | 450               | Key feature #3  |
+| CTA       | 70        | 10           | 2100          | 300               | Call to action  |
+| Outro     | 80        | 5            | 2400          | 150               | Sign-off        |
 
 Verify: sum of all durations (frames) must equal total `durationInFrames` in `Root.tsx`.
 
@@ -198,7 +198,7 @@ Expected render time per video: ~2–5 minutes on a modern Windows machine.
 cd "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM"
 
 # Step 1: Copy rendered file to YouTube upload queue
-copy video\remotion\out\firstlook.mp4 data\heygen\downloads\firstlook.mp4
+copy video\remotion\out\firstlook.mp4 data\videos\downloads\firstlook.mp4
 
 # Step 2: Upload (appends to the existing 10-video upload log)
 python scripts/youtube_upload.py --upload
@@ -213,13 +213,13 @@ See `remotion-render-pipeline` for the full validated pipeline including DemoVid
 
 ## Scene File Locations
 
-| Video | Scene Directory |
-|-------|----------------|
-| Boardroom | `video/remotion/src/scenes/` |
-| Onboarding | `video/remotion/src/scenes/onboarding/` |
-| First Look | `video/remotion/src/scenes/firstlook/` |
-| Connections Guide | `video/remotion/src/scenes/connections/` |
-| New video | `video/remotion/src/scenes/[video-name]/` |
+| Video             | Scene Directory                           |
+| ----------------- | ----------------------------------------- |
+| Boardroom         | `video/remotion/src/scenes/`              |
+| Onboarding        | `video/remotion/src/scenes/onboarding/`   |
+| First Look        | `video/remotion/src/scenes/firstlook/`    |
+| Connections Guide | `video/remotion/src/scenes/connections/`  |
+| New video         | `video/remotion/src/scenes/[video-name]/` |
 
 ---
 

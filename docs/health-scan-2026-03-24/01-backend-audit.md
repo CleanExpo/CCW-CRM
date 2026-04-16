@@ -11,6 +11,7 @@
 The backend codebase demonstrates **GOOD** overall architecture with **MEDIUM** technical debt. The FastAPI route structure is well-organized with 121 route files handling ~640 endpoints. However, systematic issues exist around type safety, error handling, and async/await consistency.
 
 **Key Metrics**:
+
 - **Routes**: 121 files, ~640 endpoints
 - **Type Safety**: 100+ mypy strict mode violations
 - **Error Handling**: 211 broad exception handlers (potential silent failures)
@@ -24,6 +25,7 @@ The backend codebase demonstrates **GOOD** overall architecture with **MEDIUM** 
 ## 1. Route Registration Completeness
 
 ### Analysis Method
+
 ```bash
 # Count route files
 find apps/backend/src/api/routes -name "*.py" -type f | wc -l
@@ -37,6 +39,7 @@ grep "include_router" apps/backend/src/api/main.py
 ✅ **PASS**: All 121 route files are registered in `main.py`
 
 **Route Organization**:
+
 ```
 apps/backend/src/api/routes/
 ├── Core CRUD (9 files): products, customers, orders, quotes, invoices, etc.
@@ -48,6 +51,7 @@ apps/backend/src/api/routes/
 ```
 
 **Registration Pattern**:
+
 ```python
 # main.py uses try/except for optional dependencies
 try:
@@ -59,11 +63,13 @@ except ImportError:
 ```
 
 ⚠️ **CONCERN**: Silent failures with broad `except ImportError` blocks
+
 - If AI dependencies missing, routes silently become unavailable
 - No startup warning or logging
 - Users hit 404 without clear error message
 
 **Recommendation**:
+
 ```python
 try:
     from .routes.ai import chat
@@ -78,6 +84,7 @@ except ImportError as e:
 ## 2. Async/Await Consistency
 
 ### Analysis Method
+
 ```bash
 # Find sync functions in route files (should be async)
 grep -r "^def (get_|post_|put_|delete_|patch_)" apps/backend/src/api/routes/
@@ -97,6 +104,7 @@ grep -r "^def (get_|post_|put_|delete_|patch_)" apps/backend/src/api/routes/
 | integrations/xero.py | 5 sync functions | httpx.Client instead of AsyncClient |
 
 **Example Issue**:
+
 ```python
 # INCORRECT (Blocking I/O in async context)
 @router.post("/chat")
@@ -112,11 +120,13 @@ async def chat_endpoint(request: ChatRequest):
 ```
 
 **Impact**:
+
 - Blocks event loop during I/O operations
 - Reduces concurrency (can't handle other requests)
 - Performance degradation under load
 
 **Recommendation**:
+
 1. Convert all route handlers to `async def`
 2. Use `await` for database queries (AsyncSession)
 3. Use `httpx.AsyncClient` for external API calls
@@ -127,6 +137,7 @@ async def chat_endpoint(request: ChatRequest):
 ## 3. Error Handling Patterns
 
 ### Analysis Method
+
 ```bash
 # Count broad exception handlers
 grep -r "except Exception" apps/backend/src/api/routes/ | wc -l
@@ -137,11 +148,13 @@ grep -r "except Exception" apps/backend/src/api/routes/ | wc -l
 ❌ **FAIL**: 211 broad `except Exception` handlers
 
 **Categories**:
+
 1. **Untyped exceptions** (127 instances): `except Exception:` catches everything
 2. **Missing error context** (68 instances): Exception caught but not logged
 3. **Silent failures** (16 instances): Pass or return generic error without details
 
 **Example Violations**:
+
 ```python
 # INCORRECT (Too broad, loses error context)
 try:
@@ -167,6 +180,7 @@ except SQLAlchemyError as e:
 ```
 
 **Recommendation**:
+
 1. Replace `except Exception` with specific exceptions:
    - `IntegrityError` for unique constraint violations
    - `NoResultFound` for missing records
@@ -180,6 +194,7 @@ except SQLAlchemyError as e:
 ## 4. Pydantic Model Validation
 
 ### Analysis Method
+
 ```bash
 # Check for inline request/response types
 grep -r "@router.post\|@router.put" apps/backend/src/api/routes/ | \
@@ -191,6 +206,7 @@ grep -r "@router.post\|@router.put" apps/backend/src/api/routes/ | \
 ✅ **PASS**: 95%+ routes use Pydantic models for validation
 
 **Good Example**:
+
 ```python
 from pydantic import BaseModel, Field
 
@@ -209,10 +225,12 @@ async def create_order(request: CreateOrderRequest, db: AsyncSession):
 ⚠️ **MINOR ISSUE**: 5% of routes use inline dicts or missing validation
 
 **Files with inline validation**:
+
 - `demo_lists.py` (uses inline Pydantic models, should be in schemas.py)
 - `public_stats.py` (no request validation for POST endpoints)
 
 **Recommendation**:
+
 1. Move all Pydantic models to `schemas.py` or domain-specific schema files
 2. Add request validation to all POST/PUT endpoints
 3. Use `Field()` for validation rules (min_length, gt, regex)
@@ -222,6 +240,7 @@ async def create_order(request: CreateOrderRequest, db: AsyncSession):
 ## 5. Database Session Management
 
 ### Analysis Method
+
 ```bash
 # Check Depends(get_async_db) usage
 grep -r "Depends(get_async_db)" apps/backend/src/api/routes/ | wc -l
@@ -232,6 +251,7 @@ grep -r "Depends(get_async_db)" apps/backend/src/api/routes/ | wc -l
 ✅ **PASS**: Proper AsyncSession dependency injection
 
 **Pattern**:
+
 ```python
 from src.config.database import get_async_db
 
@@ -245,15 +265,18 @@ async def list_products(
 ```
 
 **Strengths**:
+
 - Consistent use of `AsyncSession` type hints
 - Proper dependency injection (no manual session management)
 - Automatic session cleanup (yields in `get_async_db`)
 
 ⚠️ **INCONSISTENCY**: Some routes use `Depends(get_db)` (sync) vs `Depends(get_async_db)`
+
 - `get_db` is deprecated but still exists
 - 12 routes still reference it
 
 **Recommendation**:
+
 1. Remove `get_db` function entirely
 2. Migrate remaining 12 routes to `get_async_db`
 3. Add deprecation warning if `get_db` is called
@@ -263,6 +286,7 @@ async def list_products(
 ## 6. Type Hints Coverage (mypy --strict)
 
 ### Analysis Method
+
 ```bash
 cd apps/backend
 uv run mypy src/api/routes/ --strict --show-error-codes
@@ -282,11 +306,13 @@ uv run mypy src/api/routes/ --strict --show-error-codes
 | `no-untyped-call` | 4 | Calling untyped functions in typed context |
 
 **Critical Files**:
+
 1. `src/integrations/marketplace/base.py` - 9 violations (all missing `dict` types)
 2. `src/integrations/secrets_manager.py` - 6 violations (untyped functions)
 3. `src/db/models_base.py` - 24 violations (SQLAlchemy Mapped[] incompatibilities)
 
 **Example Violations**:
+
 ```python
 # INCORRECT
 def get_config() -> dict:  # Missing type parameters
@@ -306,6 +332,7 @@ def process_data(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 ```
 
 **Recommendation**:
+
 1. Enable mypy in CI pipeline (fail on errors)
 2. Fix high-priority violations:
    - Add type parameters to all `dict`, `list`, `Callable`
@@ -322,6 +349,7 @@ def process_data(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 ✅ **EXCELLENT**: Consistent use of FastAPI Depends()
 
 **Patterns in use**:
+
 ```python
 # Database session
 db: Annotated[AsyncSession, Depends(get_async_db)]
@@ -340,6 +368,7 @@ agent: Annotated[ForecastingAgent, Depends(get_forecasting_agent)]
 ```
 
 **Strengths**:
+
 - Clear separation of concerns
 - Testable (easy to mock dependencies)
 - Type-safe (Annotated hints for IDE support)
@@ -349,6 +378,7 @@ agent: Annotated[ForecastingAgent, Depends(get_forecasting_agent)]
 ## 8. Import Organization
 
 ### Analysis Method
+
 ```bash
 cd apps/backend
 uv run ruff check src/api/routes/ --select I
@@ -359,10 +389,12 @@ uv run ruff check src/api/routes/ --select I
 ✅ **PASS**: Clean import organization
 
 **Violations**: 2 files with unused imports
+
 - `ai/build_command.py`: `import json` (unused)
 - `ai/gap_sync.py`: `from datetime import datetime` (unused)
 
 **Recommendation**:
+
 ```bash
 # Auto-fix with ruff
 ruff check --fix src/api/routes/ --select F401
@@ -373,15 +405,18 @@ ruff check --fix src/api/routes/ --select F401
 ## Summary of Issues by Priority
 
 ### CRITICAL (Fix in Sprint 1)
+
 1. **Silent AI route failures** - Add logging + 503 fallback routes
 2. **Broad exception handlers** - Replace 211 `except Exception` with specific types
 3. **Sync functions in async routes** - Convert 23 functions to async
 
 ### HIGH (Fix in Sprint 2)
+
 4. **Type safety violations** - Fix 100+ mypy errors, enable in CI
 5. **Missing request validation** - Add Pydantic models to remaining 5% of endpoints
 
 ### MEDIUM (Fix in Sprint 3)
+
 6. **Deprecated `get_db` usage** - Migrate 12 routes to `get_async_db`
 7. **Unused imports** - Auto-fix with ruff
 
@@ -390,6 +425,7 @@ ruff check --fix src/api/routes/ --select F401
 ## Recommended Actions
 
 ### Immediate (Week 1)
+
 ```bash
 # 1. Add exception logging to main.py
 # 2. Run ruff auto-fix
@@ -403,11 +439,13 @@ uv run ruff check --fix src/api/routes/ --select F401
 ```
 
 ### Sprint 1 (2 weeks)
+
 - Fix top 20 files with most violations
 - Add specific exception handlers to critical routes (orders, payments, auth)
 - Convert 23 sync functions to async
 
 ### Sprint 2 (2 weeks)
+
 - Fix remaining mypy violations (aim for < 10 remaining)
 - Add Pydantic validation to all POST/PUT endpoints
 - Remove deprecated `get_db` function
@@ -416,15 +454,15 @@ uv run ruff check --fix src/api/routes/ --select F401
 
 ## Metrics Dashboard
 
-| Metric | Current | Target | Status |
-|--------|---------|--------|--------|
-| Route Files | 121 | - | ✅ |
-| Endpoints | ~640 | - | ✅ |
-| Type Safety (mypy strict) | FAIL (100+ errors) | PASS (< 10 errors) | ❌ |
-| Async Consistency | 95% | 100% | ⚠️ |
-| Error Handling | POOR (211 broad) | GOOD (< 20 broad) | ❌ |
-| Request Validation | 95% | 100% | ⚠️ |
-| Import Cleanliness | 99% | 100% | ✅ |
+| Metric                    | Current            | Target             | Status |
+| ------------------------- | ------------------ | ------------------ | ------ |
+| Route Files               | 121                | -                  | ✅     |
+| Endpoints                 | ~640               | -                  | ✅     |
+| Type Safety (mypy strict) | FAIL (100+ errors) | PASS (< 10 errors) | ❌     |
+| Async Consistency         | 95%                | 100%               | ⚠️     |
+| Error Handling            | POOR (211 broad)   | GOOD (< 20 broad)  | ❌     |
+| Request Validation        | 95%                | 100%               | ⚠️     |
+| Import Cleanliness        | 99%                | 100%               | ✅     |
 
 ---
 
