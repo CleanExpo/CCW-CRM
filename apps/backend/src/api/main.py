@@ -35,6 +35,7 @@ from .routes import (
     audit_trail,  # Entity-level audit trail
     backorders,
     bank_feeds,
+    bas_report,  # BAS report generation (UNI-1816)
     billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
     boardroom,  # Boardroom AI session endpoint (4x daily CRON)
     certifications,  # IICRC/ISSA/ARCR certification tracking (Sprint 2)
@@ -449,6 +450,8 @@ app.include_router(activities.router, tags=["Activities"])  # CRM Activities
 app.include_router(customer_orders.router, tags=["Customer Orders"])
 app.include_router(orders.router, tags=["Orders"])
 app.include_router(quotes.router, tags=["Quotes"])
+# BAS Report (UNI-1816)
+app.include_router(bas_report.router, tags=["BAS Report"])
 # Invoicing & Payments (UNI-173)
 app.include_router(invoices.router, tags=["Invoices"])
 app.include_router(invoice_payments.router, tags=["Invoice Payments"])
