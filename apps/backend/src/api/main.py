@@ -52,6 +52,7 @@ from .routes import (
     demo_dashboard,
     demo_lists,
     email_audit,  # Email audit trail for GDPR compliance (ISS-037)
+    eod_reconciliation,  # EOD cash reconciliation (UNI-1849)
     equipment_lifecycle,  # Equipment serial numbers + warranty tracking (Sprint 2)
     google_ai,
     health,
@@ -60,7 +61,6 @@ from .routes import (
     invoices,  # Invoices for UNI-173
     jobs,
     orders,
-    eod_reconciliation,  # EOD cash reconciliation (UNI-1849)
     pos_transactions,
     prd,
     pricing,  # Customer trade pricing tiers (Sprint 2)
@@ -70,7 +70,6 @@ from .routes import (
     public_stats,  # Public landing page stats (no auth required)
     purchase_orders,
     quotes,
-    xero_tracking,
     reconciliation,
     reconciliation_dashboard,
     service_requests,
@@ -81,6 +80,7 @@ from .routes import (
     translations,
     warehouse,  # Warehouse operations feed (UNI-1251)
     webhooks,
+    xero_tracking,
 )
 from .routes import (
     settings as settings_routes,  # Account and company settings
