@@ -13,23 +13,24 @@ allowed-tools:
   - AskUserQuestion
 hooks:
   PreToolUse:
-    - matcher: "Bash"
+    - matcher: 'Bash'
       hooks:
         - type: command
-          command: "bash ${CLAUDE_SKILL_DIR}/../careful/bin/check-careful.sh"
-          statusMessage: "Checking for destructive commands..."
-    - matcher: "Edit"
+          command: 'bash ${CLAUDE_SKILL_DIR}/../careful/bin/check-careful.sh'
+          statusMessage: 'Checking for destructive commands...'
+    - matcher: 'Edit'
       hooks:
         - type: command
-          command: "bash ${CLAUDE_SKILL_DIR}/../freeze/bin/check-freeze.sh"
-          statusMessage: "Checking freeze boundary..."
-    - matcher: "Write"
+          command: 'bash ${CLAUDE_SKILL_DIR}/../freeze/bin/check-freeze.sh'
+          statusMessage: 'Checking freeze boundary...'
+    - matcher: 'Write'
       hooks:
         - type: command
-          command: "bash ${CLAUDE_SKILL_DIR}/../freeze/bin/check-freeze.sh"
-          statusMessage: "Checking freeze boundary..."
+          command: 'bash ${CLAUDE_SKILL_DIR}/../freeze/bin/check-freeze.sh'
+          statusMessage: 'Checking freeze boundary...'
 sensitive: true
 ---
+
 <!-- AUTO-GENERATED from SKILL.md.tmpl — do not edit directly -->
 <!-- Regenerate: bun run gen:skill-docs -->
 
@@ -57,12 +58,14 @@ Ask the user which directory to restrict edits to. Use AskUserQuestion:
 Once the user provides a directory path:
 
 1. Resolve it to an absolute path:
+
 ```bash
 FREEZE_DIR=$(cd "<user-provided-path>" 2>/dev/null && pwd)
 echo "$FREEZE_DIR"
 ```
 
 2. Ensure trailing slash and save to the freeze state file:
+
 ```bash
 FREEZE_DIR="${FREEZE_DIR%/}/"
 STATE_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.gstack}"
@@ -72,6 +75,7 @@ echo "Freeze boundary set: $FREEZE_DIR"
 ```
 
 Tell the user:
+
 - "**Guard mode active.** Two protections are now running:"
 - "1. **Destructive command warnings** — rm -rf, DROP TABLE, force-push, etc. will warn before executing (you can override)"
 - "2. **Edit boundary** — file edits restricted to `<path>/`. Edits outside this directory are blocked."

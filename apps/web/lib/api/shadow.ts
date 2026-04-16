@@ -78,8 +78,7 @@ export interface SyncGap {
 export const shadowApi = {
   getStatus: () => apiClient.get<ShadowStatusResponse>('/api/shadow/status'),
 
-  getActiveSession: () =>
-    apiClient.get<ShadowSessionResponse | null>('/api/shadow/session'),
+  getActiveSession: () => apiClient.get<ShadowSessionResponse | null>('/api/shadow/session'),
 
   startSession: (body: StartShadowSessionRequest) =>
     apiClient.post<ShadowSessionResponse>('/api/shadow/session', body),
@@ -87,8 +86,7 @@ export const shadowApi = {
   endSession: (sessionId: string) =>
     apiClient.patch<ShadowSessionResponse>(`/api/shadow/session/${sessionId}/end`, {}),
 
-  getReadinessScore: () =>
-    apiClient.get<ReadinessScoreResponse>('/api/shadow/readiness-score'),
+  getReadinessScore: () => apiClient.get<ReadinessScoreResponse>('/api/shadow/readiness-score'),
 
   getDailyStats: (days = 30) =>
     apiClient.get<{ session_id: string; day_count: number; stats: unknown[] }>(
@@ -105,18 +103,14 @@ export const shadowApi = {
     }>('/api/shadow/transition-report'),
 
   getPatterns: (limit = 20) =>
-    apiClient.get<{ count: number; patterns: unknown[] }>(
-      `/api/shadow/patterns?limit=${limit}`
-    ),
+    apiClient.get<{ count: number; patterns: unknown[] }>(`/api/shadow/patterns?limit=${limit}`),
 
   getGaps: (params?: { severity?: string; gap_type?: string; page?: number }) => {
     const qs = new URLSearchParams();
     if (params?.severity) qs.set('severity', params.severity);
     if (params?.gap_type) qs.set('gap_type', params.gap_type);
     if (params?.page) qs.set('page', String(params.page));
-    return apiClient.get<{ total: number; items: SyncGap[] }>(
-      `/api/shadow/gaps?${qs.toString()}`
-    );
+    return apiClient.get<{ total: number; items: SyncGap[] }>(`/api/shadow/gaps?${qs.toString()}`);
   },
 
   getAiOpportunities: () =>

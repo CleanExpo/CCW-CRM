@@ -283,10 +283,17 @@ export function QuoteCopilotChat({
                         'text-sm whitespace-pre-wrap',
                         message.role === 'user' ? 'text-primary-foreground' : 'text-foreground'
                       )}
-                      dangerouslySetInnerHTML={{
-                        __html: message.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
-                      }}
-                    />
+                    >
+                      {message.content
+                        .split(/(\*\*.*?\*\*)/g)
+                        .map((part, i) =>
+                          part.startsWith('**') && part.endsWith('**') ? (
+                            <strong key={i}>{part.slice(2, -2)}</strong>
+                          ) : (
+                            part
+                          )
+                        )}
+                    </div>
 
                     {/* Quote Preview */}
                     {message.quoteData && (

@@ -24,7 +24,7 @@ from src.integrations.shopify.inventory import ShopifyInventorySyncer
 from src.integrations.shopify.inventory_sync import InventorySyncService
 from src.integrations.shopify.orders import ShopifyOrderImporter
 from src.integrations.shopify.product_sync import BidirectionalProductSyncer
-from src.integrations.shopify.webhooks import ShopifyWebhookHandler
+from src.integrations.shopify.webhooks import ShopifyWebhookHandler, register_required_webhooks
 
 logger = structlog.get_logger(__name__)
 
@@ -1328,6 +1328,48 @@ async def reconcile_inventory(
             status_code=400,
             detail=f"Failed to reconcile inventory: {str(e)}",
         ) from e
+
+
+# UNI-1873: Webhook Registration Endpoint
+
+
+@router.post("/register-webhooks")
+async def register_webhooks(
+    settings: Annotated[ShopifySettings, Depends(get_shopify_settings)],
+) -> dict:
+    """Register required Shopify webhooks for this integration.
+
+    Idempotent — topics that already exist are skipped, not duplicated.
+    Reads SHOPIFY_WEBHOOK_URL from environment for the callback address.
+    """
+    logger.info("registering_shopify_webhooks", shop_domain=settings.shop_domain)
+
+    if settings.is_demo_mode:
+        raise HTTPException(
+            status_code=503,
+            detail="Webhook registration is not available in demo mode.",
+        )
+
+    client = get_shopify_client(settings)
+    try:
+        results = await register_required_webhooks(client, settings.shop_domain)
+        created = [r for r in results if r.get("created")]
+        skipped = [r for r in results if not r.get("created") and not r.get("error")]
+        failed = [r for r in results if r.get("error")]
+
+        return {
+            "success": True,
+            "shop_domain": settings.shop_domain,
+            "results": results,
+            "summary": {
+                "created": len(created),
+                "already_existed": len(skipped),
+                "failed": len(failed),
+            },
+        }
+    except Exception as exc:
+        logger.error("register_webhooks_failed", shop_domain=settings.shop_domain, error=str(exc))
+        raise HTTPException(status_code=500, detail=f"Webhook registration failed: {exc}") from exc
 
 
 # Webhook Endpoint

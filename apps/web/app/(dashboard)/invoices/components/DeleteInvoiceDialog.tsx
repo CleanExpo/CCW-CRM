@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,10 +9,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { invoicesApi } from "@/lib/api/invoices";
-import { useToast } from "@/hooks/use-toast";
-import type { Invoice, InvoiceSummary } from "@/lib/types/invoices";
+} from '@/components/ui/dialog';
+import { invoicesApi } from '@/lib/api/invoices';
+import { useToast } from '@/hooks/use-toast';
+import type { Invoice, InvoiceSummary } from '@/lib/types/invoices';
 
 interface DeleteInvoiceDialogProps {
   invoice: Invoice | InvoiceSummary | null;
@@ -31,7 +31,7 @@ export function DeleteInvoiceDialog({
   const { toast } = useToast();
 
   // Only allow deletion of draft or cancelled invoices
-  const canDelete = invoice?.status === "draft" || invoice?.status === "cancelled";
+  const canDelete = invoice?.status === 'draft' || invoice?.status === 'cancelled';
 
   async function handleDelete() {
     if (!invoice || !canDelete) return;
@@ -41,16 +41,16 @@ export function DeleteInvoiceDialog({
     try {
       await invoicesApi.delete(invoice.id);
       toast({
-        title: "Success",
-        description: "Invoice deleted successfully",
+        title: 'Success',
+        description: 'Invoice deleted successfully',
       });
       onOpenChange(false);
       onSuccess();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to delete invoice";
+      const message = error instanceof Error ? error.message : 'Failed to delete invoice';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -71,7 +71,7 @@ export function DeleteInvoiceDialog({
               </>
             ) : (
               <>
-                Cannot delete invoice <strong>{invoice?.invoice_number}</strong> because it is in{" "}
+                Cannot delete invoice <strong>{invoice?.invoice_number}</strong> because it is in{' '}
                 <strong>{invoice?.status}</strong> status. Only draft or cancelled invoices can be
                 deleted.
               </>
@@ -85,16 +85,11 @@ export function DeleteInvoiceDialog({
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
-            {canDelete ? "Cancel" : "Close"}
+            {canDelete ? 'Cancel' : 'Close'}
           </Button>
           {canDelete && (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isLoading}
-            >
-              {isLoading ? "Deleting..." : "Delete"}
+            <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading}>
+              {isLoading ? 'Deleting...' : 'Delete'}
             </Button>
           )}
         </DialogFooter>

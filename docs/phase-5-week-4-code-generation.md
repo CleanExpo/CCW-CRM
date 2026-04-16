@@ -158,6 +158,7 @@ Output:
 **Purpose**: Analyze the codebase to understand patterns, styles, and conventions.
 
 **Key Methods**:
+
 - `build_context()`: Main entry point, returns `CodeContext`
 - `_analyze_project_structure()`: Maps directory structure
 - `_detect_patterns()`: Finds code patterns (routes, services, models)
@@ -165,6 +166,7 @@ Output:
 - `_extract_style_guide()`: Determines naming, imports, frameworks
 
 **Output**: `CodeContext` object containing:
+
 - `project_structure`: Directory mapping
 - `patterns`: List of detected patterns (e.g., "FastAPI routes", "React components")
 - `similar_files`: Files with similar functionality
@@ -172,6 +174,7 @@ Output:
 - `frontend_style`: TypeScript style guide (UI library, form library)
 
 **Example**:
+
 ```python
 from src.services.code_generation import ContextBuilder
 
@@ -191,6 +194,7 @@ print(context.patterns[0].pattern_type)  # "api_route"
 **Purpose**: Generate production-ready code using Claude Sonnet 4.5.
 
 **Key Methods**:
+
 - `generate()`: Main entry point, returns `CodeGenerationResult`
 - `_build_prompt()`: Constructs prompt with context injection
 - `_call_llm()`: Calls Anthropic API with retry logic
@@ -198,12 +202,14 @@ print(context.patterns[0].pattern_type)  # "api_route"
 - `_infer_file_path()`: Determines appropriate file path
 
 **Models**:
+
 - `CodeGenerationRequest`: Input model
 - `CodeGenerationResult`: Output model
 - `GeneratedFile`: Individual file model
 - `QualityReport`: Quality validation results
 
 **Example**:
+
 ```python
 from src.services.code_generation import CodeGenerator, CodeGenerationRequest
 
@@ -230,17 +236,20 @@ print(result.pr_ready)
 **Purpose**: Automatically generate unit tests for generated code.
 
 **Key Methods**:
+
 - `generate_tests()`: Main entry point, returns list of test files
 - `_analyze_code()`: Identifies testable elements
 - `_build_test_prompt()`: Constructs test generation prompt
 - `_validate_test_syntax()`: Validates test syntax
 
 **Test Types**:
+
 - **Unit tests**: Function/method testing
 - **Component tests**: React component testing (TypeScript)
 - **Endpoint tests**: API endpoint testing (Python)
 
 **Example**:
+
 ```python
 from src.services.code_generation import TestGenerator
 
@@ -264,16 +273,19 @@ for test_file in tests:
 **Purpose**: Add comprehensive documentation to generated code.
 
 **Key Methods**:
+
 - `generate_documentation()`: Main entry point, returns documented code
 - `_analyze_documentation_needs()`: Identifies undocumented elements
 - `_build_documentation_prompt()`: Constructs documentation prompt
 - `_validate_documented_code()`: Ensures syntax is still valid
 
 **Documentation Styles**:
+
 - **Python**: Google-style docstrings
 - **TypeScript**: JSDoc comments
 
 **Example**:
+
 ```python
 from src.services.code_generation import DocGenerator
 
@@ -295,6 +307,7 @@ print(documented_code)
 **Purpose**: Validate code quality across multiple dimensions.
 
 **Key Methods**:
+
 - `check_quality()`: Main entry point, returns `QualityReport`
 - Python checks:
   - `_run_ruff_check()`: Linting with Ruff
@@ -309,6 +322,7 @@ print(documented_code)
   - `_check_typescript_best_practices()`: Best practices
 
 **Quality Checks**:
+
 - ✅ Linting (Ruff for Python)
 - ✅ Type annotations (missing return types, parameter types)
 - ✅ Formatting (Black for Python)
@@ -316,6 +330,7 @@ print(documented_code)
 - ✅ Best practices (unused imports, complexity, error handling)
 
 **Example**:
+
 ```python
 from src.services.code_generation import QualityChecker
 
@@ -548,6 +563,7 @@ result = await generator.generate(request)
 ```
 
 **Generated Code Sample**:
+
 ```python
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
@@ -631,6 +647,7 @@ result = await generator.generate(request)
 ```
 
 **Generated Code Sample**:
+
 ```typescript
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -729,6 +746,7 @@ result = await generator.generate(request)
 ```
 
 **Generated Code Sample**:
+
 ```python
 from dataclasses import dataclass
 from typing import Optional
@@ -789,6 +807,7 @@ class OrderService:
 The quality checker scans for:
 
 **Python**:
+
 - ❌ Hardcoded API keys: `api_key = "sk-..."`
 - ❌ Hardcoded passwords: `password = "secret"`
 - ❌ SQL injection: `f"SELECT * FROM users WHERE id = {user_id}"`
@@ -798,6 +817,7 @@ The quality checker scans for:
 - ❌ Shell injection: `os.system(command)`, `subprocess.run(..., shell=True)`
 
 **TypeScript**:
+
 - ❌ Hardcoded API keys: `const API_KEY = "sk-..."`
 - ❌ Eval usage: `eval(userInput)`
 - ❌ XSS risks: `dangerouslySetInnerHTML`, `innerHTML = userContent`
@@ -805,11 +825,13 @@ The quality checker scans for:
 ### Type Checking
 
 **Python**:
+
 - ✅ All functions have return type annotations
 - ✅ All parameters have type annotations (except `self`, `cls`)
 - ✅ No missing type hints on public methods
 
 **TypeScript**:
+
 - ✅ Functions have return type annotations
 - ✅ Props have proper TypeScript types
 - ✅ No `any` types
@@ -817,12 +839,14 @@ The quality checker scans for:
 ### Best Practices
 
 **Python**:
+
 - ✅ No unused imports
 - ✅ Functions have reasonable complexity (< 10)
 - ✅ Async functions have error handling
 - ✅ Code formatted with Black (auto-fix enabled)
 
 **TypeScript**:
+
 - ✅ No `console.log` in production code
 - ✅ No `var` declarations (use `const`/`let`)
 - ✅ `useState` has type parameter
@@ -930,11 +954,13 @@ tests/services/code_generation/
 ### Configuration
 
 **Environment Variables**:
+
 ```bash
 ANTHROPIC_API_KEY=sk-ant-...    # Required for LLM calls
 ```
 
 **Optional Settings** (in generator initialization):
+
 ```python
 generator = CodeGenerator(
     project_root=Path.cwd(),
@@ -948,6 +974,7 @@ generator = CodeGenerator(
 ### File Paths
 
 **Implementation**:
+
 ```
 apps/backend/src/services/code_generation/
 ├── __init__.py              # Public API exports
@@ -964,6 +991,7 @@ apps/backend/src/services/code_generation/
 ```
 
 **Tests**:
+
 ```
 apps/backend/tests/services/code_generation/
 ├── test_context_builder.py

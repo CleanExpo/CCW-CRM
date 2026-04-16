@@ -96,7 +96,8 @@ echo ""
 if [ "$USE_POSTGRES" = true ]; then
     echo -e "${YELLOW}Using PostgreSQL database${NC}"
     export USE_IN_MEMORY_DB=false
-    export TEST_DATABASE_URL="postgresql://starter_user:local_dev_password@localhost:5432/starter_db_test"
+    # Local test database. Override TEST_DATABASE_URL to target a different local db.
+    export TEST_DATABASE_URL="${TEST_DATABASE_URL:-postgresql://starter_user:local_dev_password@localhost:5432/starter_db_test}"
 
     # Check if PostgreSQL is running
     if ! pg_isready -h localhost -p 5432 > /dev/null 2>&1; then

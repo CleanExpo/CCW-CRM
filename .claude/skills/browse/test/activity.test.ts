@@ -1,10 +1,19 @@
 import { describe, it, expect } from 'bun:test';
-import { filterArgs, emitActivity, getActivityAfter, getActivityHistory, subscribe } from '../src/activity';
+import {
+  filterArgs,
+  emitActivity,
+  getActivityAfter,
+  getActivityHistory,
+  subscribe,
+} from '../src/activity';
 
 describe('filterArgs — privacy filtering', () => {
   it('redacts fill value for password fields', () => {
     expect(filterArgs('fill', ['#password', 'mysecret123'])).toEqual(['#password', '[REDACTED]']);
-    expect(filterArgs('fill', ['input[type=passwd]', 'abc'])).toEqual(['input[type=passwd]', '[REDACTED]']);
+    expect(filterArgs('fill', ['input[type=passwd]', 'abc'])).toEqual([
+      'input[type=passwd]',
+      '[REDACTED]',
+    ]);
   });
 
   it('preserves fill value for non-password fields', () => {
@@ -16,11 +25,15 @@ describe('filterArgs — privacy filtering', () => {
   });
 
   it('redacts Authorization header', () => {
-    expect(filterArgs('header', ['Authorization:Bearer abc123'])).toEqual(['Authorization:[REDACTED]']);
+    expect(filterArgs('header', ['Authorization:Bearer abc123'])).toEqual([
+      'Authorization:[REDACTED]',
+    ]);
   });
 
   it('preserves non-sensitive headers', () => {
-    expect(filterArgs('header', ['Content-Type:application/json'])).toEqual(['Content-Type:application/json']);
+    expect(filterArgs('header', ['Content-Type:application/json'])).toEqual([
+      'Content-Type:application/json',
+    ]);
   });
 
   it('redacts cookie values', () => {
@@ -49,7 +62,11 @@ describe('filterArgs — privacy filtering', () => {
 
 describe('emitActivity', () => {
   it('emits with auto-incremented id', () => {
-    const e1 = emitActivity({ type: 'command_start', command: 'goto', args: ['https://example.com'] });
+    const e1 = emitActivity({
+      type: 'command_start',
+      command: 'goto',
+      args: ['https://example.com'],
+    });
     const e2 = emitActivity({ type: 'command_end', command: 'goto', status: 'ok', duration: 100 });
     expect(e2.id).toBe(e1.id + 1);
   });
@@ -61,7 +78,11 @@ describe('emitActivity', () => {
   });
 
   it('applies privacy filtering', () => {
-    const entry = emitActivity({ type: 'command_start', command: 'type', args: ['my secret password'] });
+    const entry = emitActivity({
+      type: 'command_start',
+      command: 'type',
+      args: ['my secret password'],
+    });
     expect(entry.args).toEqual(['[REDACTED]']);
   });
 });
@@ -71,7 +92,7 @@ describe('getActivityAfter', () => {
     const e1 = emitActivity({ type: 'command_start', command: 'test1' });
     const e2 = emitActivity({ type: 'command_start', command: 'test2' });
     const result = getActivityAfter(e1.id);
-    expect(result.entries.some(e => e.id === e2.id)).toBe(true);
+    expect(result.entries.some((e) => e.id === e2.id)).toBe(true);
     expect(result.gap).toBe(false);
   });
 
@@ -100,7 +121,7 @@ describe('subscribe', () => {
     emitActivity({ type: 'command_start', command: 'sub-test' });
 
     // queueMicrotask is async — wait a tick
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(received.length).toBeGreaterThanOrEqual(1);
     expect(received[received.length - 1].command).toBe('sub-test');
@@ -113,8 +134,8 @@ describe('subscribe', () => {
     unsub();
 
     emitActivity({ type: 'command_start', command: 'should-not-see' });
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(received.filter(e => e.command === 'should-not-see').length).toBe(0);
+    expect(received.filter((e) => e.command === 'should-not-see').length).toBe(0);
   });
 });

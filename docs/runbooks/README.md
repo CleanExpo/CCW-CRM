@@ -4,14 +4,14 @@ Runbooks for CCW-ERP/CRM operational incidents. Each runbook follows a standard 
 
 ## Index
 
-| Runbook | Trigger | Severity |
-|---------|---------|----------|
-| [CRON Failure](cron-failure.md) | CRON session does not complete | HIGH |
-| [Security Incident](incident-response.md) | Credential exposure, RLS bypass | CRITICAL/HIGH |
+| Runbook                                     | Trigger                                | Severity      |
+| ------------------------------------------- | -------------------------------------- | ------------- |
+| [CRON Failure](cron-failure.md)             | CRON session does not complete         | HIGH          |
+| [Security Incident](incident-response.md)   | Credential exposure, RLS bypass        | CRITICAL/HIGH |
 | [Rollback Procedure](rollback-procedure.md) | Production regression after deployment | CRITICAL/HIGH |
-| [RLS Emergency](rls-emergency.md) | Cross-tenant data access detected | CRITICAL |
-| [API Outage](api-outage.md) | External service circuit breaker OPEN | HIGH/CRITICAL |
-| [Session Recovery](session-recovery.md) | CRON session stuck or stale | HIGH |
+| [RLS Emergency](rls-emergency.md)           | Cross-tenant data access detected      | CRITICAL      |
+| [API Outage](api-outage.md)                 | External service circuit breaker OPEN  | HIGH/CRITICAL |
+| [Session Recovery](session-recovery.md)     | CRON session stuck or stale            | HIGH          |
 
 ## Related Docs
 
@@ -24,10 +24,10 @@ Runbooks for CCW-ERP/CRM operational incidents. Each runbook follows a standard 
 
 ## Escalation
 
-| Severity | Response Time | Who to Alert |
-|----------|---------------|--------------|
-| CRITICAL | < 2 minutes | CTO + CEO immediately |
-| HIGH | < 5 minutes | CTO |
-| MEDIUM | < 30 minutes | CTO (async) |
+| Severity | Response Time | Who to Alert          |
+| -------- | ------------- | --------------------- |
+| CRITICAL | < 2 minutes   | CTO + CEO immediately |
+| HIGH     | < 5 minutes   | CTO                   |
+| MEDIUM   | < 30 minutes  | CTO (async)           |
 
 Post to `#ccw-security` for security incidents. Post to `#ccw-ops` for operational incidents.

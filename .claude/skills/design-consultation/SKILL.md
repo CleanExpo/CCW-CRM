@@ -20,6 +20,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 ---
+
 <!-- AUTO-GENERATED from SKILL.md.tmpl — do not edit directly -->
 <!-- Regenerate: bun run gen:skill-docs -->
 
@@ -119,6 +120,7 @@ ask the user about telemetry. Use AskUserQuestion:
 > Change anytime with `gstack-config set telemetry off`.
 
 Options:
+
 - A) Help gstack get better! (recommended)
 - B) No thanks
 
@@ -126,10 +128,11 @@ If A: run `~/.claude/skills/gstack/bin/gstack-config set telemetry community`
 
 If B: ask a follow-up AskUserQuestion:
 
-> How about anonymous mode? We just learn that *someone* used gstack — no unique ID,
+> How about anonymous mode? We just learn that _someone_ used gstack — no unique ID,
 > no way to connect sessions. Just a counter that helps us know if anyone's out there.
 
 Options:
+
 - A) Sure, anonymous is fine
 - B) No thanks, fully off
 
@@ -137,6 +140,7 @@ If B→A: run `~/.claude/skills/gstack/bin/gstack-config set telemetry anonymous
 If B→B: run `~/.claude/skills/gstack/bin/gstack-config set telemetry off`
 
 Always run:
+
 ```bash
 touch ~/.gstack/.telemetry-prompted
 ```
@@ -151,6 +155,7 @@ ask the user about proactive behavior. Use AskUserQuestion:
 > a bug. We recommend keeping this on — it speeds up every part of your workflow.
 
 Options:
+
 - A) Keep it on (recommended)
 - B) Turn it off — I'll type /commands myself
 
@@ -158,6 +163,7 @@ If A: run `~/.claude/skills/gstack/bin/gstack-config set proactive true`
 If B: run `~/.claude/skills/gstack/bin/gstack-config set proactive false`
 
 Always run:
+
 ```bash
 touch ~/.gstack/.proactive-prompted
 ```
@@ -174,13 +180,13 @@ Use AskUserQuestion:
 > instead of answering directly. It's a one-time addition, about 15 lines.
 
 Options:
+
 - A) Add routing rules to CLAUDE.md (recommended)
 - B) No thanks, I'll invoke skills manually
 
 If A: Append this section to the end of CLAUDE.md:
 
 ```markdown
-
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill
@@ -188,6 +194,7 @@ tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
 The skill has specialized workflows that produce better results than ad-hoc answers.
 
 Key routing rules:
+
 - Product ideas, "is this worth building", brainstorming → invoke office-hours
 - Bugs, errors, "why is this broken", 500 errors → invoke investigate
 - Ship, deploy, push, create PR → invoke ship
@@ -240,6 +247,7 @@ Use concrete tools, workflows, commands, files, outputs, evals, and tradeoffs wh
 Avoid filler, throat-clearing, generic optimism, founder cosplay, and unsupported claims.
 
 **Writing rules:**
+
 - No em dashes. Use commas, periods, or "..." instead.
 - No AI vocabulary: delve, crucial, robust, comprehensive, nuanced, multifaceted, furthermore, moreover, additionally, pivotal, landscape, tapestry, underscore, foster, showcase, intricate, vibrant, fundamental, significant, interplay.
 - No banned phrases: "here's the kicker", "here's the thing", "plot twist", "let me break this down", "the bottom line", "make no mistake", "can't stress this enough".
@@ -256,6 +264,7 @@ Avoid filler, throat-clearing, generic optimism, founder cosplay, and unsupporte
 ## AskUserQuestion Format
 
 **ALWAYS follow this structure for every AskUserQuestion call:**
+
 1. **Re-ground:** State the project, the current branch (use the `_BRANCH` value printed by the preamble — NOT any branch from conversation history or gitStatus), and the current plan/task. (1-2 sentences)
 2. **Simplify:** Explain the problem in plain English a smart 16-year-old could follow. No raw function names, no internal jargon, no implementation details. Use concrete examples and analogies. Say what it DOES, not what it's called.
 3. **Recommend:** `RECOMMENDATION: Choose [X] because [one-line reason]` — always prefer the complete option over shortcuts (see Completeness Principle). Include `Completeness: X/10` for each option. Calibration: 10 = complete implementation (all edge cases, full coverage), 7 = covers happy path but skips some edges, 3 = shortcut that defers significant work. If both options are 8+, pick the higher; if one is ≤5, flag it.
@@ -271,18 +280,19 @@ AI makes completeness near-free. Always recommend the complete option over short
 
 **Effort reference** — always show both scales:
 
-| Task type | Human team | CC+gstack | Compression |
-|-----------|-----------|-----------|-------------|
-| Boilerplate | 2 days | 15 min | ~100x |
-| Tests | 1 day | 15 min | ~50x |
-| Feature | 1 week | 30 min | ~30x |
-| Bug fix | 4 hours | 15 min | ~20x |
+| Task type   | Human team | CC+gstack | Compression |
+| ----------- | ---------- | --------- | ----------- |
+| Boilerplate | 2 days     | 15 min    | ~100x       |
+| Tests       | 1 day      | 15 min    | ~50x        |
+| Feature     | 1 week     | 30 min    | ~30x        |
+| Bug fix     | 4 hours    | 15 min    | ~20x        |
 
 Include `Completeness: X/10` for each option (10=all edge cases, 7=happy path, 3=shortcut).
 
 ## Repo Ownership — See Something, Say Something
 
 `REPO_MODE` controls how to handle issues outside your branch:
+
 - **`solo`** — You own everything. Investigate and offer to fix proactively.
 - **`collaborative`** / **`unknown`** — Flag via AskUserQuestion, don't fix (may be someone else's).
 
@@ -291,9 +301,11 @@ Always flag anything that looks wrong — one sentence, what you noticed and its
 ## Search Before Building
 
 Before building anything unfamiliar, **search first.** See `~/.claude/skills/gstack/ETHOS.md`.
+
 - **Layer 1** (tried and true) — don't reinvent. **Layer 2** (new and popular) — scrutinize. **Layer 3** (first principles) — prize above all.
 
 **Eureka:** When first-principles reasoning contradicts conventional wisdom, name it and log:
+
 ```bash
 jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.gstack/analytics/eureka.jsonl 2>/dev/null || true
 ```
@@ -305,6 +317,7 @@ If `_CONTRIB` is `true`: you are in **contributor mode**. At the end of each maj
 **File only:** gstack tooling bugs where the input was reasonable but gstack failed. **Skip:** user app bugs, network errors, auth failures on user's site.
 
 **To file:** write `~/.gstack/contributor-logs/{slug}.md`:
+
 ```
 # {Title}
 **What I tried:** {action} | **What happened:** {result} | **Rating:** {0-10}
@@ -314,11 +327,13 @@ If `_CONTRIB` is `true`: you are in **contributor mode**. At the end of each maj
 {one sentence}
 **Date:** {YYYY-MM-DD} | **Version:** {version} | **Skill:** /{skill}
 ```
+
 Slug: lowercase hyphens, max 60 chars. Skip if exists. Max 3/session. File inline, don't stop.
 
 ## Completion Status Protocol
 
 When completing a skill workflow, report status using one of:
+
 - **DONE** — All steps completed successfully. Evidence provided for each claim.
 - **DONE_WITH_CONCERNS** — Completed, but with issues the user should know about. List each concern.
 - **BLOCKED** — Cannot proceed. State what is blocking and what was tried.
@@ -329,11 +344,13 @@ When completing a skill workflow, report status using one of:
 It is always OK to stop and say "this is too hard for me" or "I'm not confident in this result."
 
 Bad work is worse than no work. You will not be penalized for escalating.
+
 - If you have attempted a task 3 times without success, STOP and escalate.
 - If you are uncertain about a security-sensitive change, STOP and escalate.
 - If the scope of work exceeds what you can verify, STOP and escalate.
 
 Escalation format:
+
 ```
 STATUS: BLOCKED | NEEDS_CONTEXT
 REASON: [1-2 sentences]
@@ -396,14 +413,15 @@ Then write a `## GSTACK REVIEW REPORT` section to the end of the plan file:
 - If the output is `NO_REVIEWS` or empty: write this placeholder table:
 
 \`\`\`markdown
+
 ## GSTACK REVIEW REPORT
 
-| Review | Trigger | Why | Runs | Status | Findings |
-|--------|---------|-----|------|--------|----------|
-| CEO Review | \`/plan-ceo-review\` | Scope & strategy | 0 | — | — |
-| Codex Review | \`/codex review\` | Independent 2nd opinion | 0 | — | — |
-| Eng Review | \`/plan-eng-review\` | Architecture & tests (required) | 0 | — | — |
-| Design Review | \`/plan-design-review\` | UI/UX gaps | 0 | — | — |
+| Review        | Trigger                 | Why                             | Runs | Status | Findings |
+| ------------- | ----------------------- | ------------------------------- | ---- | ------ | -------- |
+| CEO Review    | \`/plan-ceo-review\`    | Scope & strategy                | 0    | —      | —        |
+| Codex Review  | \`/codex review\`       | Independent 2nd opinion         | 0    | —      | —        |
+| Eng Review    | \`/plan-eng-review\`    | Architecture & tests (required) | 0    | —      | —        |
+| Design Review | \`/plan-design-review\` | UI/UX gaps                      | 0    | —      | —        |
 
 **VERDICT:** NO REVIEWS YET — run \`/autoplan\` for full review pipeline, or individual reviews above.
 \`\`\`
@@ -450,7 +468,7 @@ ls .context/*office-hours* .context/attachments/*office-hours* 2>/dev/null | hea
 
 If office-hours output exists, read it — the product context is pre-filled.
 
-If the codebase is empty and purpose is unclear, say: *"I don't have a clear picture of what you're building yet. Want to explore first with `/office-hours`? Once we know the product direction, we can set up the design system."*
+If the codebase is empty and purpose is unclear, say: _"I don't have a clear picture of what you're building yet. Want to explore first with `/office-hours`? Once we know the product direction, we can set up the design system."_
 
 **Find the browse binary (optional — enables visual competitive research):**
 
@@ -469,6 +487,7 @@ fi
 ```
 
 If `NEEDS_SETUP`:
+
 1. Tell the user: "gstack browse needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
 2. Run: `cd <SKILL_DIR> && ./setup`
 3. If `bun` is not installed:
@@ -525,6 +544,7 @@ comparison boards. The user just needs to see the HTML file in any browser.
 
 If `DESIGN_READY`: the design binary is available for visual mockup generation.
 Commands:
+
 - `$D generate --brief "..." --output /path.png` — generate a single mockup
 - `$D variants --brief "..." --count 3 --output-dir /path/` — generate N style variants
 - `$D compare --images "a.png,b.png,c.png" --output /path/board.html --serve` — comparison board + HTTP server
@@ -548,12 +568,13 @@ If `DESIGN_NOT_AVAILABLE`: Phase 5 falls back to the HTML preview page (still go
 Ask the user a single question that covers everything you need to know. Pre-fill what you can infer from the codebase.
 
 **AskUserQuestion Q1 — include ALL of these:**
+
 1. Confirm what the product is, who it's for, what space/industry
 2. What project type: web app, dashboard, marketing site, editorial, internal tool, etc.
 3. "Want me to research what top products in your space are doing for design, or should I work from my design knowledge?"
 4. **Explicitly say:** "At any point you can just drop into chat and we'll talk through anything — this isn't a rigid form, it's a conversation."
 
-If the README or office-hours output gives you enough context, pre-fill and confirm: *"From what I can see, this is [X] for [Y] in the [Z] space. Sound right? And would you like me to research what's out there in this space, or should I work from what I know?"*
+If the README or office-hours output gives you enough context, pre-fill and confirm: _"From what I can see, this is [X] for [Y] in the [Z] space. Sound right? And would you like me to research what's out there in this space, or should I work from what I know?"_
 
 ---
 
@@ -564,6 +585,7 @@ If the user wants competitive research:
 **Step 1: Identify what's out there via WebSearch**
 
 Use WebSearch to find 5-10 products in their space. Search for:
+
 - "[product category] website design"
 - "[product category] best websites 2025"
 - "best [industry] web apps"
@@ -587,6 +609,7 @@ If browse is not available, rely on WebSearch results and your built-in design k
 **Step 3: Synthesize findings**
 
 **Three-layer synthesis:**
+
 - **Layer 1 (tried and true):** What design patterns does every product in this category share? These are table stakes — users expect them.
 - **Layer 2 (new and popular):** What are the search results and current design discourse saying? What's trending? What new patterns are emerging?
 - **Layer 3 (first principles):** Given what we know about THIS product's users and positioning — is there a reason the conventional design approach is wrong? Where should we deliberately break from the category norms?
@@ -594,9 +617,11 @@ If browse is not available, rely on WebSearch results and your built-in design k
 **Eureka check:** If Layer 3 reasoning reveals a genuine design insight — a reason the category's visual language fails THIS product — name it: "EUREKA: Every [category] product does X because they assume [assumption]. But this product's users [evidence] — so we should do Y instead." Log the eureka moment (see preamble).
 
 Summarize conversationally:
+
 > "I looked at what's out there. Here's the landscape: they converge on [patterns]. Most of them feel [observation — e.g., interchangeable, polished but generic, etc.]. The opportunity to stand out is [gap]. Here's where I'd play it safe and where I'd take a risk..."
 
 **Graceful degradation:**
+
 - Browse available → screenshots + snapshots + WebSearch (richest research)
 - Browse unavailable → WebSearch only (still good)
 - WebSearch also unavailable → agent's built-in design knowledge (always works)
@@ -608,6 +633,7 @@ If the user said no research, skip entirely and proceed to Phase 3 using your bu
 ## Design Outside Voices (parallel)
 
 Use AskUserQuestion:
+
 > "Want outside design voices? Codex evaluates against OpenAI's design hard rules + litmus checks; Claude subagent does an independent design direction proposal."
 >
 > A) Yes — run outside design voices
@@ -616,6 +642,7 @@ Use AskUserQuestion:
 If user chooses B, skip this step and continue.
 
 **Check Codex availability:**
+
 ```bash
 which codex 2>/dev/null && echo "CODEX_AVAILABLE" || echo "CODEX_NOT_AVAILABLE"
 ```
@@ -623,6 +650,7 @@ which codex 2>/dev/null && echo "CODEX_AVAILABLE" || echo "CODEX_NOT_AVAILABLE"
 **If Codex is available**, launch both voices simultaneously:
 
 1. **Codex design voice** (via Bash):
+
 ```bash
 TMPERR_DESIGN=$(mktemp /tmp/codex-design-XXXXXXXX)
 _REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "ERROR: not in a git repo" >&2; exit 1; }
@@ -636,14 +664,17 @@ codex exec "Given this product context, propose a complete design direction:
 
 Be opinionated. Be specific. Do not hedge. This is YOUR design direction — own it." -C "$_REPO_ROOT" -s read-only -c 'model_reasoning_effort="medium"' --enable web_search_cached 2>"$TMPERR_DESIGN"
 ```
+
 Use a 5-minute timeout (`timeout: 300000`). After the command completes, read stderr:
+
 ```bash
 cat "$TMPERR_DESIGN" && rm -f "$TMPERR_DESIGN"
 ```
 
 2. **Claude design subagent** (via Agent tool):
-Dispatch a subagent with this prompt:
-"Given this product context, propose a design direction that would SURPRISE. What would the cool indie studio do that the enterprise UI team wouldn't?
+   Dispatch a subagent with this prompt:
+   "Given this product context, propose a design direction that would SURPRISE. What would the cool indie studio do that the enterprise UI team wouldn't?
+
 - Propose an aesthetic direction, typography stack (specific font names), color palette (hex values)
 - 2 deliberate departures from category norms
 - What emotional reaction should the user have in the first 3 seconds?
@@ -651,6 +682,7 @@ Dispatch a subagent with this prompt:
 Be bold. Be specific. No hedging."
 
 **Error handling (all non-blocking):**
+
 - **Auth failure:** If stderr contains "auth", "login", "unauthorized", or "API key": "Codex authentication failed. Run `codex login` to authenticate."
 - **Timeout:** "Codex timed out after 5 minutes."
 - **Empty response:** "Codex returned no response."
@@ -661,14 +693,17 @@ Present Codex output under a `CODEX SAYS (design direction):` header.
 Present subagent output under a `CLAUDE SUBAGENT (design direction):` header.
 
 **Synthesis:** Claude main references both Codex and subagent proposals in the Phase 3 proposal. Present:
+
 - Areas of agreement between all three voices (Claude main + Codex + subagent)
 - Genuine divergences as creative alternatives for the user to choose from
 - "Codex and I agree on X. Codex suggested Y where I'm proposing Z — here's why..."
 
 **Log the result:**
+
 ```bash
 ~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"design-outside-voices","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","commit":"'"$(git rev-parse --short HEAD)"'"}'
 ```
+
 Replace STATUS with "clean" or "issues_found", SOURCE with "codex+subagent", "codex-only", "subagent-only", or "unavailable".
 
 ## Phase 3: The Complete Proposal
@@ -709,6 +744,7 @@ The SAFE/RISK breakdown is critical. Design coherence is table stakes — every 
 ### Your Design Knowledge (use to inform proposals — do NOT display as tables)
 
 **Aesthetic directions** (pick the one that fits the product):
+
 - Brutally Minimal — Type and whitespace only. No decoration. Modernist.
 - Maximalist Chaos — Dense, layered, pattern-heavy. Y2K meets contemporary.
 - Retro-Futuristic — Vintage tech nostalgia. CRT glow, pixel grids, warm monospace.
@@ -729,6 +765,7 @@ The SAFE/RISK breakdown is critical. Design coherence is table stakes — every 
 **Motion approaches:** minimal-functional (only transitions that aid comprehension) / intentional (subtle entrance animations, meaningful state transitions) / expressive (full choreography, scroll-driven, playful)
 
 **Font recommendations by purpose:**
+
 - Display/Hero: Satoshi, General Sans, Instrument Serif, Fraunces, Clash Grotesk, Cabinet Grotesk
 - Body: Instrument Sans, DM Sans, Source Sans 3, Geist, Plus Jakarta Sans, Outfit
 - Data/Tables: Geist (tabular-nums), DM Sans (tabular-nums), JetBrains Mono, IBM Plex Mono
@@ -741,6 +778,7 @@ Papyrus, Comic Sans, Lobster, Impact, Jokerman, Bleeding Cowboys, Permanent Mark
 Inter, Roboto, Arial, Helvetica, Open Sans, Lato, Montserrat, Poppins
 
 **AI slop anti-patterns** (never include in your recommendations):
+
 - Purple/violet gradients as default accent
 - 3-column feature grid with icons in colored circles
 - Centered everything with uniform spacing
@@ -819,6 +857,7 @@ because the agent needs to keep running while the user interacts with the board.
 **IMPORTANT: Reading feedback via file polling (not stdout):**
 
 The server writes feedback to files next to the board HTML. The agent polls for these:
+
 - `$_DESIGN_DIR/feedback.json` — written when user clicks Submit (final choice)
 - `$_DESIGN_DIR/feedback-pending.json` — written when user clicks Regenerate/Remix/More Like This
 
@@ -842,6 +881,7 @@ done
 ```
 
 The feedback JSON has this shape:
+
 ```json
 {
   "preferred": "A",
@@ -853,6 +893,7 @@ The feedback JSON has this shape:
 ```
 
 **If `feedback-pending.json` found (`"regenerated": true`):**
+
 1. Read `regenerateAction` from the JSON (`"different"`, `"match"`, `"more_like_B"`,
    `"remix"`, or custom text)
 2. If `regenerateAction` is `"remix"`, read `remixSpec` (e.g. `{"layout":"A","colors":"B"}`)
@@ -865,6 +906,7 @@ The feedback JSON has this shape:
 7. Repeat until `feedback.json` appears (user clicked Submit).
 
 **If `feedback.json` found (`"regenerated": false`):**
+
 1. Read `preferred`, `ratings`, `comments`, `overall` from the JSON
 2. Proceed with the approved variant
 
@@ -885,6 +927,7 @@ Is this right?"
 Use AskUserQuestion to verify before proceeding.
 
 **Save the approved choice:**
+
 ```bash
 echo '{"approved_variant":"<V>","feedback":"<FB>","date":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","screen":"<SCREEN>","branch":"'$(git branch --show-current 2>/dev/null)'"}' > "$_DESIGN_DIR/approved.json"
 ```
@@ -895,6 +938,7 @@ After the user picks a direction:
 - If the user wants to iterate further: `$D iterate --feedback "<user's feedback>" --output "$_DESIGN_DIR/refined.png"`
 
 **Plan mode vs. implementation mode:**
+
 - **If in plan mode:** Add the approved mockup path (the full `$_DESIGN_DIR` path) and extracted tokens to the plan file under an "## Approved Design Direction" section. The design system gets written to DESIGN.md when the plan is implemented.
 - **If NOT in plan mode:** Proceed directly to Phase 6 and write DESIGN.md with the extracted tokens.
 
@@ -939,7 +983,7 @@ The agent writes a **single, self-contained HTML file** (no framework dependenci
 
 The page should make the user think "oh nice, they thought of this." It's selling the design system by showing what the product could feel like, not just listing hex codes and font names.
 
-If `open` fails (headless environment), tell the user: *"I wrote the preview to [path] — open it in your browser to see the fonts and colors rendered."*
+If `open` fails (headless environment), tell the user: _"I wrote the preview to [path] — open it in your browser to see the fonts and colors rendered."_
 
 If the user says skip the preview, go directly to Phase 6.
 
@@ -957,18 +1001,21 @@ If `$D extract` was used in Phase 5 (Path A), use the extracted tokens as the pr
 # Design System — [Project Name]
 
 ## Product Context
+
 - **What this is:** [1-2 sentence description]
 - **Who it's for:** [target users]
 - **Space/industry:** [category, peers]
 - **Project type:** [web app / dashboard / marketing site / editorial / internal tool]
 
 ## Aesthetic Direction
+
 - **Direction:** [name]
 - **Decoration level:** [minimal / intentional / expressive]
 - **Mood:** [1-2 sentence description of how the product should feel]
 - **Reference sites:** [URLs, if research was done]
 
 ## Typography
+
 - **Display/Hero:** [font name] — [rationale]
 - **Body:** [font name] — [rationale]
 - **UI/Labels:** [font name or "same as body"]
@@ -978,6 +1025,7 @@ If `$D extract` was used in Phase 5 (Path A), use the extracted tokens as the pr
 - **Scale:** [modular scale with specific px/rem values for each level]
 
 ## Color
+
 - **Approach:** [restrained / balanced / expressive]
 - **Primary:** [hex] — [what it represents, usage]
 - **Secondary:** [hex] — [usage]
@@ -986,24 +1034,28 @@ If `$D extract` was used in Phase 5 (Path A), use the extracted tokens as the pr
 - **Dark mode:** [strategy — redesign surfaces, reduce saturation 10-20%]
 
 ## Spacing
+
 - **Base unit:** [4px or 8px]
 - **Density:** [compact / comfortable / spacious]
 - **Scale:** 2xs(2) xs(4) sm(8) md(16) lg(24) xl(32) 2xl(48) 3xl(64)
 
 ## Layout
+
 - **Approach:** [grid-disciplined / creative-editorial / hybrid]
 - **Grid:** [columns per breakpoint]
 - **Max content width:** [value]
 - **Border radius:** [hierarchical scale — e.g., sm:4px, md:8px, lg:12px, full:9999px]
 
 ## Motion
+
 - **Approach:** [minimal-functional / intentional / expressive]
 - **Easing:** enter(ease-out) exit(ease-in) move(ease-in-out)
 - **Duration:** micro(50-100ms) short(150-250ms) medium(250-400ms) long(400-700ms)
 
 ## Decisions Log
-| Date | Decision | Rationale |
-|------|----------|-----------|
+
+| Date    | Decision                      | Rationale                                                             |
+| ------- | ----------------------------- | --------------------------------------------------------------------- |
 | [today] | Initial design system created | Created by /design-consultation based on [product context / research] |
 ```
 
@@ -1011,6 +1063,7 @@ If `$D extract` was used in Phase 5 (Path A), use the extracted tokens as the pr
 
 ```markdown
 ## Design System
+
 Always read DESIGN.md before making any visual or UI decisions.
 All font choices, colors, spacing, and aesthetic direction are defined there.
 Do not deviate without explicit user approval.
@@ -1020,6 +1073,7 @@ In QA mode, flag any code that doesn't match DESIGN.md.
 **AskUserQuestion Q-final — show summary and confirm:**
 
 List all decisions. Flag any that used agent defaults without explicit user confirmation (the user should know what they're shipping). Options:
+
 - A) Ship it — write DESIGN.md and CLAUDE.md
 - B) I want to change something (specify what)
 - C) Start over

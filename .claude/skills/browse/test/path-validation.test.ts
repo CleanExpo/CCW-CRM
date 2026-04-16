@@ -70,7 +70,9 @@ describe('validateReadPath', () => {
       symlinkSync('/etc/passwd', linkPath);
       expect(() => validateReadPath(linkPath)).toThrow(/Path must be within/);
     } finally {
-      try { unlinkSync(linkPath); } catch {}
+      try {
+        unlinkSync(linkPath);
+      } catch {}
     }
   });
 
@@ -83,9 +85,13 @@ describe('validateReadPath', () => {
       writeFileSync(filePath, 'not a directory');
       // filePath is a file, so filePath + '/subpath' triggers ENOTDIR
       const invalidPath = join(filePath, 'subpath');
-      expect(() => validateReadPath(invalidPath)).toThrow(/Cannot resolve real path|Path must be within/);
+      expect(() => validateReadPath(invalidPath)).toThrow(
+        /Cannot resolve real path|Path must be within/
+      );
     } finally {
-      try { unlinkSync(filePath); } catch {}
+      try {
+        unlinkSync(filePath);
+      } catch {}
     }
   });
 });

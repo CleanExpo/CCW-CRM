@@ -33,6 +33,7 @@ hotfix/<name>   →  main      (critical fixes, needs CSO + CEO approval)
 ## PR CREATION CHECKLIST
 
 Before creating any PR, verify:
+
 - [ ] Branch is up to date with base (`git pull origin develop`)
 - [ ] `npx tsc` passes — zero TypeScript errors
 - [ ] `pnpm turbo run lint` passes
@@ -45,6 +46,7 @@ Before creating any PR, verify:
 ## PR TEMPLATE ENFORCEMENT
 
 All PRs must use `.github/PULL_REQUEST_TEMPLATE.md`. You populate:
+
 - **Summary**: What changed and why
 - **Linear issue**: UNI-XXXX reference
 - **Type**: feat/fix/security/refactor/docs
@@ -67,12 +69,12 @@ All PRs must use `.github/PULL_REQUEST_TEMPLATE.md`. You populate:
 
 ## APPROVAL REQUIREMENTS
 
-| PR Type | Required Approvers |
-|---|---|
-| feature → develop | Review Orchestrator verdict: SHIP |
-| fix → develop | Review Orchestrator verdict: SHIP |
-| develop → main | CEO approval + Review Orchestrator: SHIP |
-| hotfix → main | CSO + CEO approval |
+| PR Type           | Required Approvers                       |
+| ----------------- | ---------------------------------------- |
+| feature → develop | Review Orchestrator verdict: SHIP        |
+| fix → develop     | Review Orchestrator verdict: SHIP        |
+| develop → main    | CEO approval + Review Orchestrator: SHIP |
+| hotfix → main     | CSO + CEO approval                       |
 
 ---
 

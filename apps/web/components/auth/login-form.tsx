@@ -56,9 +56,9 @@ export function LoginForm() {
         description: `Welcome back, ${response.user.email}!`,
       });
 
-      // Force full page reload to trigger middleware authentication check
-      // This ensures the auth cookie is properly validated server-side
-      window.location.href = '/dashboard';
+      // First-time users see the setup wizard; returning users go straight to dashboard
+      const onboardingDone = localStorage.getItem('onboarding_completed');
+      window.location.href = onboardingDone ? '/dashboard' : '/onboarding';
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Invalid email or password';
       toast({
@@ -126,10 +126,18 @@ export function LoginForm() {
           {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
 
-        <div className="mt-4 text-center text-xs text-slate-400">
-          <a href="/forgot-password" className="hover:text-slate-600 hover:underline">
-            Forgot your password?
-          </a>
+        <div className="mt-4 space-y-2 text-center text-xs text-slate-600">
+          <div>
+            <a href="/forgot-password" className="hover:text-slate-600 hover:underline">
+              Forgot your password?
+            </a>
+          </div>
+          <div>
+            Don&apos;t have an account?{' '}
+            <a href="/register" className="text-primary font-medium hover:underline">
+              Create one
+            </a>
+          </div>
         </div>
       </form>
     </Form>

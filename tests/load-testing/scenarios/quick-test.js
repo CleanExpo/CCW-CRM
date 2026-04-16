@@ -9,12 +9,7 @@
 
 import { sleep } from 'k6';
 import { testConfig } from '../config/test-config.js';
-import {
-  authenticate,
-  authenticatedGet,
-  checkHealth,
-  thinkTime,
-} from './utils.js';
+import { authenticate, authenticatedGet, checkHealth, thinkTime } from './utils.js';
 
 export const options = {
   vus: 5,
@@ -29,11 +24,7 @@ export function setup() {
   checkHealth(baseUrl);
 
   // Authenticate once in setup phase and return token to all VUs
-  const token = authenticate(
-    baseUrl,
-    testConfig.auth.email,
-    testConfig.auth.password
-  );
+  const token = authenticate(baseUrl, testConfig.auth.email, testConfig.auth.password);
 
   if (!token) {
     console.error('[ERROR] Authentication failed in setup phase');
@@ -43,7 +34,7 @@ export function setup() {
   console.log('[OK] Authentication successful');
   return {
     startTime: new Date().toISOString(),
-    authToken: token
+    authToken: token,
   };
 }
 

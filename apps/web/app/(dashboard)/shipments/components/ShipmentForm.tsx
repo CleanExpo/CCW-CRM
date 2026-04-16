@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useState, useEffect, useCallback } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -21,25 +21,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import {
   shipmentsApi,
   type Shipment,
   type ShipmentCreate,
   type ShipmentUpdate,
   type ShipmentStatus,
-} from "@/lib/api/shipments";
-import { apiClient } from "@/lib/api/client";
+} from '@/lib/api/shipments';
+import { apiClient } from '@/lib/api/client';
 
 interface Order {
   id: string;
@@ -50,14 +50,14 @@ interface Order {
 
 // Validation schema
 const formSchema = z.object({
-  order_id: z.string().min(1, "Order is required"),
-  carrier_name: z.string().min(1, "Carrier name is required"),
-  tracking_number: z.string().min(1, "Tracking number is required"),
+  order_id: z.string().min(1, 'Order is required'),
+  carrier_name: z.string().min(1, 'Carrier name is required'),
+  tracking_number: z.string().min(1, 'Tracking number is required'),
   shipping_method: z.string().optional(),
   shipped_date: z.string().optional(),
   estimated_delivery_date: z.string().optional(),
   actual_delivery_date: z.string().optional(),
-  status: z.enum(["pending", "in_transit", "delivered", "cancelled", "returned"]).optional(),
+  status: z.enum(['pending', 'in_transit', 'delivered', 'cancelled', 'returned']).optional(),
   shipping_address: z.string().optional(),
   shipping_city: z.string().optional(),
   shipping_state: z.string().optional(),
@@ -84,20 +84,20 @@ export function ShipmentForm({ shipment, open, onOpenChange, onSuccess }: Shipme
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      order_id: "",
-      carrier_name: "",
-      tracking_number: "",
-      shipping_method: "",
-      shipped_date: "",
-      estimated_delivery_date: "",
-      actual_delivery_date: "",
-      status: "pending",
-      shipping_address: "",
-      shipping_city: "",
-      shipping_state: "",
-      shipping_postcode: "",
-      shipping_country: "",
-      notes: "",
+      order_id: '',
+      carrier_name: '',
+      tracking_number: '',
+      shipping_method: '',
+      shipped_date: '',
+      estimated_delivery_date: '',
+      actual_delivery_date: '',
+      status: 'pending',
+      shipping_address: '',
+      shipping_city: '',
+      shipping_state: '',
+      shipping_postcode: '',
+      shipping_country: '',
+      notes: '',
     },
   });
 
@@ -105,11 +105,11 @@ export function ShipmentForm({ shipment, open, onOpenChange, onSuccess }: Shipme
   const loadOrders = useCallback(async () => {
     try {
       const response = await apiClient.get<{ items: Order[] }>(
-        "/api/orders?page=1&page_size=100&status=confirmed"
+        '/api/orders?page=1&page_size=100&status=confirmed'
       );
       setOrders(response.items || []);
     } catch (error) {
-      console.error("Failed to load orders:", error);
+      console.error('Failed to load orders:', error);
     }
   }, []);
 
@@ -127,35 +127,35 @@ export function ShipmentForm({ shipment, open, onOpenChange, onSuccess }: Shipme
         order_id: shipment.order_id,
         carrier_name: shipment.carrier_name,
         tracking_number: shipment.tracking_number,
-        shipping_method: shipment.shipping_method || "",
-        shipped_date: shipment.shipped_date?.split("T")[0] || "",
-        estimated_delivery_date: shipment.estimated_delivery_date?.split("T")[0] || "",
-        actual_delivery_date: shipment.actual_delivery_date?.split("T")[0] || "",
+        shipping_method: shipment.shipping_method || '',
+        shipped_date: shipment.shipped_date?.split('T')[0] || '',
+        estimated_delivery_date: shipment.estimated_delivery_date?.split('T')[0] || '',
+        actual_delivery_date: shipment.actual_delivery_date?.split('T')[0] || '',
         status: shipment.status,
-        shipping_address: shipment.shipping_address || "",
-        shipping_city: shipment.shipping_city || "",
-        shipping_state: shipment.shipping_state || "",
-        shipping_postcode: shipment.shipping_postcode || "",
-        shipping_country: shipment.shipping_country || "",
-        notes: shipment.notes || "",
+        shipping_address: shipment.shipping_address || '',
+        shipping_city: shipment.shipping_city || '',
+        shipping_state: shipment.shipping_state || '',
+        shipping_postcode: shipment.shipping_postcode || '',
+        shipping_country: shipment.shipping_country || '',
+        notes: shipment.notes || '',
       });
     } else if (open && !shipment) {
       // Create mode - reset to defaults
       form.reset({
-        order_id: "",
-        carrier_name: "",
-        tracking_number: "",
-        shipping_method: "",
-        shipped_date: new Date().toISOString().split("T")[0], // Default to today
-        estimated_delivery_date: "",
-        actual_delivery_date: "",
-        status: "pending",
-        shipping_address: "",
-        shipping_city: "",
-        shipping_state: "",
-        shipping_postcode: "",
-        shipping_country: "",
-        notes: "",
+        order_id: '',
+        carrier_name: '',
+        tracking_number: '',
+        shipping_method: '',
+        shipped_date: new Date().toISOString().split('T')[0], // Default to today
+        estimated_delivery_date: '',
+        actual_delivery_date: '',
+        status: 'pending',
+        shipping_address: '',
+        shipping_city: '',
+        shipping_state: '',
+        shipping_postcode: '',
+        shipping_country: '',
+        notes: '',
       });
     }
   }, [open, shipment, form]);
@@ -184,8 +184,8 @@ export function ShipmentForm({ shipment, open, onOpenChange, onSuccess }: Shipme
 
         await shipmentsApi.update(shipment.id, updateData);
         toast({
-          title: "Success",
-          description: "Shipment updated successfully",
+          title: 'Success',
+          description: 'Shipment updated successfully',
         });
       } else {
         // Create new shipment
@@ -206,18 +206,18 @@ export function ShipmentForm({ shipment, open, onOpenChange, onSuccess }: Shipme
 
         await shipmentsApi.create(createData);
         toast({
-          title: "Success",
-          description: "Shipment created successfully",
+          title: 'Success',
+          description: 'Shipment created successfully',
         });
       }
 
       onSuccess();
       onOpenChange(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Operation failed";
+      const message = error instanceof Error ? error.message : 'Operation failed';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -227,13 +227,13 @@ export function ShipmentForm({ shipment, open, onOpenChange, onSuccess }: Shipme
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Update Shipment" : "Create New Shipment"}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Update Shipment' : 'Create New Shipment'}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update shipment tracking and delivery information"
-              : "Create a new shipment for an order"}
+              ? 'Update shipment tracking and delivery information'
+              : 'Create a new shipment for an order'}
           </DialogDescription>
         </DialogHeader>
 
@@ -504,7 +504,7 @@ export function ShipmentForm({ shipment, open, onOpenChange, onSuccess }: Shipme
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : isEdit ? "Update Shipment" : "Create Shipment"}
+                {isLoading ? 'Saving...' : isEdit ? 'Update Shipment' : 'Create Shipment'}
               </Button>
             </DialogFooter>
           </form>

@@ -21,6 +21,7 @@ Investigation into reported HTTP 405 "Method Not Allowed" errors on quote endpoi
 **File**: `apps/backend/src/api/routes/quotes.py`
 
 **All Quote Endpoints**:
+
 ```python
 @router.get("", response_model=PaginatedResponse)              # Line 83
 async def list_quotes(...)
@@ -51,6 +52,7 @@ async def convert_quote_to_order_short(...)
 ```
 
 **Analysis**:
+
 - ✅ All routes use correct HTTP methods
 - ✅ `/convert-to-order` endpoint: POST (line 604)
 - ✅ `/convert` endpoint: POST (line 710) - short alias
@@ -67,6 +69,7 @@ async def convert_quote_to_order_short(...)
 **File**: `apps/web/app/(dashboard)/quotes/components/ConvertToOrderDialog.tsx`
 
 **Convert Quote Endpoint Call** (Line 45-48):
+
 ```typescript
 const response = await apiClient.post<ConvertToOrderResponse>(
   `/api/quotes/${quote.id}/convert-to-order`,
@@ -75,6 +78,7 @@ const response = await apiClient.post<ConvertToOrderResponse>(
 ```
 
 **Analysis**:
+
 - ✅ Uses `POST` method (correct)
 - ✅ Endpoint path matches backend route
 - ✅ Uses `apiClient.post()` correctly
@@ -87,25 +91,30 @@ const response = await apiClient.post<ConvertToOrderResponse>(
 ### 3. Endpoint Testing ✅
 
 **Manual Test** (curl):
+
 ```bash
 curl -X POST http://localhost:8000/api/quotes/test-405/convert-to-order
 ```
 
 **Response**:
+
 ```json
 {
   "error": "Validation error",
   "detail": "Request validation failed...",
   "status_code": 422,
-  "errors": [{
-    "field": "path.quote_id",
-    "message": "Input should be a valid UUID...",
-    "type": "uuid_parsing"
-  }]
+  "errors": [
+    {
+      "field": "path.quote_id",
+      "message": "Input should be a valid UUID...",
+      "type": "uuid_parsing"
+    }
+  ]
 }
 ```
 
 **Analysis**:
+
 - ✅ Returned **422 Validation Error** (expected - invalid UUID)
 - ✅ Did NOT return **405 Method Not Allowed**
 - ✅ Endpoint accepts POST requests correctly
@@ -120,17 +129,20 @@ curl -X POST http://localhost:8000/api/quotes/test-405/convert-to-order
 **Source**: `docs/ISS-030-LOAD-TEST-RESULTS.md`
 
 **Quote Module Results**:
+
 - Total scenarios: 500
 - Passed: 400 (80%)
 - Failed: 100 (20%)
 
 **Failure Breakdown**:
+
 - **422 Validation Errors**: 100 failures (100% of failures)
   - Root cause: Intentional validation test scenarios
   - Examples: duplicate quote numbers, missing fields, invalid status transitions
 - **405 Method Not Allowed**: **0 failures** ❌ None found
 
 **Analysis**:
+
 - ✅ No 405 errors during load testing
 - ✅ All failures were expected 422 validation errors
 - ✅ Quote endpoints handle POST/PUT/DELETE correctly
@@ -143,6 +155,7 @@ curl -X POST http://localhost:8000/api/quotes/test-405/convert-to-order
 ### 5. Integration Test Status ⚠️
 
 **Attempted Test**:
+
 ```bash
 cd apps/backend && python -m pytest tests/integration/test_api_endpoints.py -v
 ```
@@ -152,6 +165,7 @@ cd apps/backend && python -m pytest tests/integration/test_api_endpoints.py -v
 **Error**: `SQLiteTypeCompiler' object has no attribute 'visit_JSONB'`
 
 **Analysis**:
+
 - ❌ Integration tests failing due to **database setup issue** (JSONB not compatible with SQLite)
 - ⚠️ This is a **separate issue** unrelated to 405 errors
 - ✅ No 405 errors visible in test output
@@ -166,9 +180,11 @@ cd apps/backend && python -m pytest tests/integration/test_api_endpoints.py -v
 ### Hypothesis: Duplicate Route Confusion
 
 The task description mentioned:
+
 > "Review duplicate route definitions (convert-to-order vs convert)"
 
 **Finding**:
+
 ```python
 # Line 604: Main route
 @router.post("/{quote_id}/convert-to-order", response_model=Order, status_code=201)
@@ -183,6 +199,7 @@ async def convert_quote_to_order_short(...):
 ```
 
 **Analysis**:
+
 - Both routes use **POST** method (correct)
 - Short alias `/convert` properly delegates to main function
 - No routing conflicts in FastAPI
@@ -197,6 +214,7 @@ async def convert_quote_to_order_short(...):
 **Task Mentioned**: "Verify CORS preflight handling"
 
 **CORS Configuration** (`apps/backend/src/api/main.py`):
+
 ```python
 app.add_middleware(
     CORSMiddleware,
@@ -208,6 +226,7 @@ app.add_middleware(
 ```
 
 **Analysis**:
+
 - ✅ `allow_methods=["*"]` permits all HTTP methods
 - ✅ Includes OPTIONS for CORS preflight requests
 - ✅ CORS properly configured for cross-origin requests
@@ -222,11 +241,13 @@ app.add_middleware(
 **Task Mentioned**: "Add request logging to identify which endpoints are failing"
 
 **Current Logging**:
+
 - FastAPI default logging active
 - Uvicorn access logs enabled
 - No 405 errors in recent logs
 
 **Recommendation**:
+
 - ✅ Current logging sufficient
 - ✅ No additional logging needed (no 405 errors occurring)
 
@@ -236,18 +257,19 @@ app.add_middleware(
 
 ### Summary of Findings
 
-| Investigation Area | Status | Result |
-|-------------------|--------|--------|
-| Backend Route Configuration | ✅ PASS | All routes correctly configured with POST/GET/PUT/DELETE |
-| Frontend API Calls | ✅ PASS | All calls use correct HTTP methods |
-| Manual Endpoint Testing | ✅ PASS | Endpoint accepts POST, returns 422 (not 405) |
-| Load Test Results | ✅ PASS | Zero 405 errors in 2,000 scenarios |
-| Integration Tests | ⚠️ BLOCKED | Database setup issue (unrelated to 405) |
-| CORS Configuration | ✅ PASS | Properly configured for all methods |
+| Investigation Area          | Status     | Result                                                   |
+| --------------------------- | ---------- | -------------------------------------------------------- |
+| Backend Route Configuration | ✅ PASS    | All routes correctly configured with POST/GET/PUT/DELETE |
+| Frontend API Calls          | ✅ PASS    | All calls use correct HTTP methods                       |
+| Manual Endpoint Testing     | ✅ PASS    | Endpoint accepts POST, returns 422 (not 405)             |
+| Load Test Results           | ✅ PASS    | Zero 405 errors in 2,000 scenarios                       |
+| Integration Tests           | ⚠️ BLOCKED | Database setup issue (unrelated to 405)                  |
+| CORS Configuration          | ✅ PASS    | Properly configured for all methods                      |
 
 ### Final Assessment
 
 **No HTTP 405 "Method Not Allowed" errors found in:**
+
 - ✅ Backend route configuration
 - ✅ Frontend API calls
 - ✅ Manual testing
@@ -255,6 +277,7 @@ app.add_middleware(
 - ✅ Recent application logs
 
 **Possible Explanations**:
+
 1. **Already Fixed**: Issue may have been resolved in earlier work (ISS-019, ISS-020)
 2. **False Alarm**: Issue reported based on theoretical concern, never actually manifested
 3. **Environment-Specific**: Issue occurred in a specific environment no longer in use
@@ -267,6 +290,7 @@ app.add_middleware(
 ### ISS-021 Status: ✅ RESOLVED (No Action Required)
 
 **Rationale**:
+
 1. Comprehensive investigation found **zero 405 errors**
 2. All endpoints properly configured and tested
 3. Load testing with 2,000 scenarios confirms no 405 errors
@@ -292,6 +316,7 @@ These related issues have been resolved and may have addressed the original 405 
 **If 405 errors occur in the future**:
 
 1. **Enable Detailed Logging**:
+
    ```python
    import logging
    logging.basicConfig(level=logging.DEBUG)
@@ -334,9 +359,11 @@ Before marking ISS-021 complete:
 ## Documentation Updates
 
 **Files Updated**:
+
 - Created: `docs/ISS-021-405-ERROR-INVESTIGATION.md` (this document)
 
 **Recommendation**:
+
 - Mark ISS-021 task as complete
 - Note: "No 405 errors found after comprehensive investigation"
 - Status: "Resolved - No Issue Found"
