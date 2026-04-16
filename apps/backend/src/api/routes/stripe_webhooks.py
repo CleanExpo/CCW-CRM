@@ -103,6 +103,8 @@ def _verify_signature(payload: bytes, signature: str) -> dict[Any, Any] | None:
     """Verify Stripe webhook signature and return parsed event.
 
     Returns None if verification fails (missing secret, bad signature, etc.).
+    Never accepts unverified payloads — if STRIPE_WEBHOOK_SECRET is absent the
+    caller receives HTTP 503 before this function is reached.
     """
     if not STRIPE_WEBHOOK_SECRET:
         # Secret is not configured; reject unconditionally.
