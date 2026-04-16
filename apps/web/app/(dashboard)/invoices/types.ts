@@ -24,7 +24,7 @@ export interface Invoice {
   order_id?: string | null;
   issue_date: string;
   due_date: string;
-  status: "draft" | "sent" | "partial" | "paid" | "overdue" | "cancelled";
+  status: 'draft' | 'sent' | 'partial' | 'paid' | 'overdue' | 'cancelled';
   subtotal: string | number;
   tax_rate: string | number;
   tax_amount: string | number;
@@ -43,7 +43,7 @@ export interface InvoicePayment {
   id: string;
   invoice_id: string;
   amount: string | number;
-  payment_method: "cash" | "card" | "account" | "bank_transfer";
+  payment_method: 'cash' | 'card' | 'account' | 'bank_transfer';
   payment_date: string;
   reference_number?: string | null;
   notes?: string | null;
@@ -72,7 +72,7 @@ export interface CreateInvoiceItem {
 
 export interface CreatePaymentData {
   amount: number;
-  payment_method: "cash" | "card" | "account" | "bank_transfer";
+  payment_method: 'cash' | 'card' | 'account' | 'bank_transfer';
   payment_date?: string;
   reference_number?: string;
   notes?: string;

@@ -59,6 +59,7 @@ Read: .claude/.execution/phase-handoffs/phase-1-discovery.json
 ```
 
 Extract key information:
+
 - Patterns found (what to follow)
 - Constraints (what to avoid)
 - Related files (reference materials)
@@ -72,31 +73,37 @@ Create high-level design:
 **Design Checklist:**
 
 ☐ **Component Identification**
+
 - What components are needed? (React components, API endpoints, utilities, tests)
 - What's the relationship between components?
 - What's the data flow?
 
 ☐ **Pattern Matching**
+
 - Which existing patterns should be followed?
 - Are there any deviations needed?
 - If deviations, why and are they justified?
 
 ☐ **Constraint Compliance**
+
 - Does this design avoid forbidden changes?
 - Does this require any approvals?
 - Are there any workarounds needed for constraints?
 
 ☐ **Integration Points**
+
 - How does this integrate with existing code?
 - What imports are needed?
 - What exports will be provided?
 
 ☐ **Data Flow**
+
 - How does data flow through the system?
 - What API calls are made?
 - What state management is used?
 
 ☐ **Error Handling**
+
 - How are errors caught and displayed?
 - What loading states are needed?
 - What validation is required?
@@ -107,11 +114,13 @@ Create high-level design:
 ## Solution Architecture
 
 ### Overview
+
 [1-2 paragraph summary of the solution]
 
 ### Components
 
 #### Frontend Components
+
 1. **[ComponentName]**
    - Location: `apps/web/components/[path]/[ComponentName].tsx`
    - Purpose: [What it does]
@@ -121,6 +130,7 @@ Create high-level design:
    - Props: [What props it accepts]
 
 #### Backend Endpoints
+
 1. **[EndpointName]**
    - Location: `apps/backend/src/api/routes/[filename].py`
    - Route: `[HTTP_METHOD] /api/[path]`
@@ -131,23 +141,27 @@ Create high-level design:
    - Database: [What queries it runs]
 
 #### Utilities
+
 1. **[UtilityName]**
    - Location: `apps/web/lib/[path]/[utility].ts`
    - Purpose: [What it does]
    - Exports: [What functions it exports]
 
 #### Tests
+
 1. **[TestName]**
    - Location: `apps/web/__tests__/[path]/[TestName].test.tsx`
    - Tests: [What scenarios it covers]
 
 ### Data Flow
 ```
+
 User Action → Component → API Call → Backend → Database
-                ↓
-            Loading State
-                ↓
-         Response/Error → Toast → UI Update
+↓
+Loading State
+↓
+Response/Error → Toast → UI Update
+
 ```
 
 ### Integration Points
@@ -160,7 +174,7 @@ For EACH component, create detailed specification:
 
 **Component Specification Template:**
 
-```markdown
+````markdown
 #### Component: [ComponentName]
 
 **File:** `[full path]`
@@ -170,22 +184,26 @@ For EACH component, create detailed specification:
 [What this component does]
 
 **Pattern to Follow:**
+
 - Reference: `[path to similar component]`
 - Key characteristics: [list key patterns to follow]
 
 **Implementation Details:**
 
 ##### Imports
+
 ```typescript
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { apiClient } from "@/lib/api/client";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 // ... other imports
 ```
+````
 
 ##### Props Interface
+
 ```typescript
 interface [ComponentName]Props {
   prop1: Type;
@@ -195,40 +213,44 @@ interface [ComponentName]Props {
 ```
 
 ##### State Management
+
 - `isLoading` - Boolean for loading state
 - `data` - Data type for component data
 - `error` - Error | null for error handling
 
 ##### Key Functions
+
 1. `fetchData()` - Async function to load data
 2. `handleAction()` - Handler for user action
 3. `handleError()` - Error handler
 
 ##### Render Structure
+
 ```tsx
 return (
   <Card>
     <CardHeader>
       <CardTitle>[Title]</CardTitle>
     </CardHeader>
-    <CardContent>
-      {isLoading ? <LoadingSpinner /> : <DataDisplay />}
-    </CardContent>
+    <CardContent>{isLoading ? <LoadingSpinner /> : <DataDisplay />}</CardContent>
   </Card>
 );
 ```
 
 ##### Error Handling
+
 - Try-catch around async operations
 - Toast notification on error
 - User-friendly error messages
 
 ##### Testing Requirements
+
 - Test: Component renders correctly
 - Test: Loading state displayed
 - Test: Data fetched and displayed
 - Test: Error state handled
-```
+
+````
 
 **Endpoint Specification Template:**
 
@@ -256,9 +278,10 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.config.database import get_async_db
 from src.db.demo_models import [Model]
-```
+````
 
 ##### Request Model
+
 ```python
 class [RequestName](BaseModel):
     field1: str
@@ -267,6 +290,7 @@ class [RequestName](BaseModel):
 ```
 
 ##### Response Model
+
 ```python
 class [ResponseName](BaseModel):
     id: str
@@ -276,6 +300,7 @@ class [ResponseName](BaseModel):
 ```
 
 ##### Function Signature
+
 ```python
 @router.[method]("[path]", response_model=[ResponseName])
 async def [function_name](
@@ -285,19 +310,23 @@ async def [function_name](
 ```
 
 ##### Database Operations
+
 - Query: [SQL/SQLAlchemy query description]
 - Transaction: [commit/rollback strategy]
 - Error handling: [what errors to catch]
 
 ##### Validation
+
 - [Validation rule 1]
 - [Validation rule 2]
 
 ##### Testing Requirements
+
 - Test: Valid request succeeds
 - Test: Invalid request returns 400
 - Test: Database error returns 500
-```
+
+````
 
 ### Step 4: Create Implementation Plan
 
@@ -321,12 +350,13 @@ Order the components by implementation priority:
 8. Integration testing
 9. Error handling verification
 10. Documentation updates
-```
+````
 
 **File-by-File Plan:**
 
 ```markdown
 ### File 1: [filename]
+
 **Action:** CREATE
 **Estimated Time:** [X] minutes
 **Dependencies:** None
@@ -335,6 +365,7 @@ Order the components by implementation priority:
 [Step-by-step implementation details]
 
 **Definition of Done:**
+
 - [ ] File created with correct structure
 - [ ] All imports correct
 - [ ] TypeScript/Python types correct
@@ -344,6 +375,7 @@ Order the components by implementation priority:
 ---
 
 ### File 2: [filename]
+
 **Action:** MODIFY
 **Estimated Time:** [X] minutes
 **Dependencies:** File 1 complete
@@ -353,6 +385,7 @@ Line [X]: [Change description]
 Section [Y]: [Change description]
 
 **Definition of Done:**
+
 - [ ] Changes made as specified
 - [ ] No breaking changes introduced
 - [ ] Tests updated
@@ -370,32 +403,37 @@ Check if any approvals are needed:
 **Approval Checklist:**
 
 ☐ **Breaking Changes**
+
 - Modifying existing API response structures?
 - Removing existing functionality?
 - Changing existing behavior?
-→ If YES: Document and flag for approval
+  → If YES: Document and flag for approval
 
 ☐ **Database Schema**
+
 - Adding/modifying tables?
 - Adding/modifying columns?
 - Adding/modifying constraints?
-→ If YES: **BLOCKED** - Schema changes forbidden
+  → If YES: **BLOCKED** - Schema changes forbidden
 
 ☐ **Auth Code**
+
 - Modifying authentication logic?
 - Changing token handling?
 - Modifying middleware?
-→ If YES: **BLOCKED** - Auth changes forbidden
+  → If YES: **BLOCKED** - Auth changes forbidden
 
 ☐ **New Folders**
+
 - Creating new directories?
 - New folder structure?
-→ If YES: Document and flag for approval
+  → If YES: Document and flag for approval
 
 ☐ **New Packages**
+
 - Installing new dependencies?
 - Upgrading existing dependencies?
-→ If YES: Document and flag for approval
+  → If YES: Document and flag for approval
 
 **Approval Format:**
 
@@ -405,13 +443,16 @@ Check if any approvals are needed:
 The following items require user approval before proceeding:
 
 ### Breaking Changes
+
 - [Change 1]: [Why it's breaking] [Impact]
 - [Change 2]: [Why it's breaking] [Impact]
 
 ### New Folders
+
 - [Folder path]: [Purpose]
 
 ### New Packages
+
 - [Package name] ([size]): [Why needed] [Alternative?]
 
 **Recommendation:**
@@ -428,16 +469,19 @@ Provide realistic estimates:
 **Total Estimated Time:** [X] minutes
 
 **Breakdown:**
+
 - Backend: [X] minutes ([Y] files)
 - Frontend: [X] minutes ([Y] files)
 - Testing: [X] minutes ([Y] tests)
 - Integration: [X] minutes
 
 **Complexity Factors:**
+
 - [Factor 1]: [Impact on time]
 - [Factor 2]: [Impact on time]
 
 **Risk Factors:**
+
 - [Risk 1]: [Potential delay]
 - [Risk 2]: [Potential delay]
 
@@ -528,6 +572,7 @@ Produce this human-readable format FIRST (for user review), then convert to JSON
 [High-level approach description]
 
 **Key Components:**
+
 - [Component 1]: [Purpose]
 - [Component 2]: [Purpose]
 - [Component 3]: [Purpose]
@@ -546,36 +591,39 @@ Produce this human-readable format FIRST (for user review), then convert to JSON
 ### 3. Implementation Plan
 
 #### Order of Implementation
+
 1. [Step 1] ([X] min)
 2. [Step 2] ([X] min)
 3. [Step 3] ([X] min)
-...
+   ...
 
 **Total Time:** [X] minutes
 
 #### File-by-File Breakdown
+
 [Detailed file-by-file implementation instructions]
 
 ---
 
 ### 4. Data Flow Diagram
-
 ```
+
 [User Action]
-    ↓
+↓
 [Component State Change]
-    ↓
+↓
 [API Call via apiClient]
-    ↓
+↓
 [Backend Endpoint]
-    ↓
+↓
 [Database Query]
-    ↓
+↓
 [Response]
-    ↓
+↓
 [Component Update]
-    ↓
+↓
 [UI Render]
+
 ```
 
 ---
@@ -668,6 +716,7 @@ Handoff document created at:
 After producing your architecture document, it goes to the Validator agent.
 
 **Validator will check:**
+
 - ✅ Architecture is complete and detailed
 - ✅ All components properly specified
 - ✅ Patterns correctly followed
@@ -678,6 +727,7 @@ After producing your architecture document, it goes to the Validator agent.
 - ✅ All constraints respected
 
 If validation fails, you'll need to:
+
 1. Address the issues
 2. Revise the architecture document
 3. Submit for validation again
@@ -697,6 +747,7 @@ If validation fails, you'll need to:
 0 backend changes
 
 **Approach:**
+
 - Add Button component from shadcn/ui
 - Use existing products data from page
 - Client-side CSV generation
@@ -714,14 +765,17 @@ If validation fails, you'll need to:
 
 **Architecture:**
 2 components to create:
+
 - RecentQuotesWidget (frontend)
 - recent_quotes endpoint (backend)
 
 2 files to modify:
+
 - Dashboard page (add widget)
 - demo_dashboard.py (add endpoint)
 
 **Approach:**
+
 - Follow existing widget pattern (StockHealthWidget)
 - Add endpoint following demo_dashboard.py pattern
 - Fetch last 5 quotes ordered by date

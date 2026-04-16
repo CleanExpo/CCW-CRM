@@ -22,6 +22,7 @@ This skill enables fully autonomous software development through a coordinated 5
 ## WHEN TO USE THIS SKILL
 
 User wants to:
+
 - Build a complete feature from description to deployment
 - Automate the entire development workflow
 - Get production-ready code with minimal intervention
@@ -29,6 +30,7 @@ User wants to:
 - Have comprehensive testing and validation
 
 **Keywords to watch for:**
+
 - "build this autonomously"
 - "can you implement this completely"
 - "auto-build this feature"
@@ -42,6 +44,7 @@ User wants to:
 ### Trigger Recognition
 
 When user says:
+
 ```
 "Add a Recent Quotes widget autonomously"
 "Can you auto-build an export feature?"
@@ -58,6 +61,7 @@ When user says:
 ### Step 1: Validate Prerequisites
 
 Check:
+
 - ☐ Execution directory exists (`.claude/.execution/`)
   - If not: Initialize with `scripts/autonomous/init-execution.ps1`
 - ☐ No active task in progress
@@ -70,12 +74,14 @@ Check:
 ### Step 2: Parse User Request
 
 Extract:
+
 - **Task description**: What to build
 - **Approval mode**: Manual (default) or Auto
 - **Max phases**: Stop after phase N (optional)
 - **Resume**: Task ID to resume (optional)
 
 Examples:
+
 ```
 "/autonomous Add widget"
 → Task: "Add widget", Mode: manual, Phases: 5
@@ -90,6 +96,7 @@ Examples:
 ### Step 3: Invoke Lead Agent
 
 Handoff to Lead Agent with:
+
 ```markdown
 @lead
 
@@ -106,6 +113,7 @@ Begin Phase 1 (Discovery).
 ### Step 4: Monitor Progress
 
 While execution runs:
+
 - Display phase transitions
 - Show validation results
 - Report progress updates
@@ -114,6 +122,7 @@ While execution runs:
 ### Step 5: Handle Completion
 
 When finalized:
+
 - Present completion report to user
 - Show files changed
 - Display quality metrics
@@ -128,6 +137,7 @@ When finalized:
 **User:** "Add a Recent Quotes widget to the dashboard"
 
 **Assistant Response:**
+
 ```markdown
 ## 🚀 Autonomous Execution Starting
 
@@ -136,6 +146,7 @@ When finalized:
 **Estimated Time:** 50-70 minutes
 
 I'll coordinate 5 specialized agents:
+
 - Phase 1: Discovery (analyze codebase)
 - Phase 2: Architecture (design solution)
 - Phase 3: Build (implement code)
@@ -151,6 +162,7 @@ Reply "proceed" to start.
 ### Phase Transitions
 
 **After each phase:**
+
 ```markdown
 ## ✅ Phase [N] Complete
 
@@ -169,12 +181,14 @@ Reply "proceed" to start.
 ### Approval Requests
 
 **When approval needed:**
+
 ```markdown
 ## ⚠️ Approval Required
 
 [What needs approval]
 
 **Options:**
+
 - Say "approved" to proceed
 - Say "cancel" to abort
 - Ask questions for clarification
@@ -187,16 +201,19 @@ Reply "proceed" to start.
 ### Error Handling
 
 **When validation fails:**
+
 ```markdown
 ## ❌ Phase [N] Validation Failed
 
 **Issue:** [Description]
 
 **What I'll do:**
+
 - Retry Phase [N] with corrections
 - Attempt [X]/3
 
 **You can:**
+
 - Let me retry automatically
 - Say "cancel" to abort
 - Provide guidance
@@ -207,6 +224,7 @@ Reply "proceed" to start.
 ### Completion
 
 **When finalized:**
+
 ```markdown
 ## 🎉 Autonomous Execution Complete!
 
@@ -220,6 +238,7 @@ Reply "proceed" to start.
 **Status:** Ready for deployment
 
 **Next Steps:**
+
 1. Review changes
 2. Test manually
 3. Deploy when ready
@@ -283,14 +302,16 @@ Complete → Present report
 **User says:** "cancel" / "stop" / "abort"
 
 **Response:**
+
 ```markdown
 ## ⏸️ Execution Paused
 
-**Task ID:** task_...
+**Task ID:** task\_...
 **Current Phase:** [N]
 **Status:** Paused at user request
 
 Task state saved. You can:
+
 - Resume later: `/autonomous --resume task_...`
 - Discard: `.\scripts\autonomous\cleanup-execution.ps1`
 
@@ -299,13 +320,14 @@ Task state saved. You can:
 
 ### User Resumes
 
-**User says:** "/autonomous --resume task_..."
+**User says:** "/autonomous --resume task\_..."
 
 **Response:**
+
 ```markdown
 ## 🔄 Resuming Autonomous Task
 
-**Task ID:** task_...
+**Task ID:** task\_...
 **Original Request:** [request]
 **Last Phase:** Phase [N]
 **Completed:** Phases [list]
@@ -321,6 +343,7 @@ Task state saved. You can:
 ### Blocker Encountered
 
 **System Response:**
+
 ```markdown
 ## ⚠️ Blocker Encountered
 
@@ -328,6 +351,7 @@ Task state saved. You can:
 **Issue:** [Description]
 
 **Tried:**
+
 1. [Attempt 1]
 2. [Attempt 2]
 
@@ -342,6 +366,7 @@ C. Cancel and fix manually
 ### Validation Retry Exhausted
 
 **After 3 failed retries:**
+
 ```markdown
 ## 🚫 Cannot Proceed
 
@@ -349,12 +374,14 @@ C. Cancel and fix manually
 **Issue:** Validation failed 3 times
 
 **Persistent Problems:**
+
 - [Issue 1]
 - [Issue 2]
 
 I cannot resolve these automatically.
 
 **Your options:**
+
 1. Manual intervention (I'll pause)
 2. Adjust requirements
 3. Cancel execution
@@ -365,6 +392,7 @@ I cannot resolve these automatically.
 ### Forbidden Change Detected
 
 **If detects forbidden change:**
+
 ```markdown
 ## 🚫 BLOCKED: Forbidden Change
 
@@ -376,6 +404,7 @@ I cannot resolve these automatically.
 **Cannot proceed with this approach.**
 
 **Alternative options:**
+
 1. [Alternative 1]
 2. [Alternative 2]
 
@@ -406,6 +435,7 @@ This skill manages state in:
 ```
 
 **User can inspect:**
+
 ```powershell
 # View current state
 .\scripts\autonomous\validate-state.ps1
@@ -443,6 +473,7 @@ Completion Report → User
 ```
 
 **Key difference:**
+
 - Orchestrator: Single-phase gating
 - Lead Agent: Multi-phase coordination
 - This skill: Bridges user request → Lead Agent
@@ -461,6 +492,7 @@ This skill succeeds when:
 ☐ User receives actionable next steps
 
 This skill fails when:
+
 - Prerequisites not met (execution dir missing)
 - Task description too vague
 - Forbidden changes required
@@ -476,6 +508,7 @@ This skill fails when:
 **User:** "Add a Recent Orders widget to the dashboard"
 
 **Flow:**
+
 1. Discovery: Finds existing widget patterns
 2. Architecture: Designs widget + endpoint
 3. Build: Creates component + endpoint + tests
@@ -491,6 +524,7 @@ This skill fails when:
 **User:** "Fix the bug where order totals don't include tax"
 
 **Flow:**
+
 1. Discovery: Locates order calculation code
 2. Architecture: Designs fix (add tax calculation)
 3. Build: Fixes calculation + adds tests
@@ -506,6 +540,7 @@ This skill fails when:
 **User:** "Refactor the customer form to use React Hook Form"
 
 **Flow:**
+
 1. Discovery: Analyzes current form implementation
 2. Architecture: Designs refactor (component-by-component)
 3. Build: Refactors form + migrates validation + updates tests
@@ -521,18 +556,21 @@ This skill fails when:
 Upon completion, this skill produces:
 
 **To User:**
+
 - Completion report (markdown)
 - Files changed (list)
 - Quality metrics
 - Next steps
 
 **To Filesystem:**
+
 - Task state (JSON)
 - Execution log (JSONL)
 - Phase handoffs (JSON)
 - Validation reports (JSON)
 
 **To Git:**
+
 - Commits are NOT made automatically
 - User commits when ready
 - Rollback plan provided in completion report

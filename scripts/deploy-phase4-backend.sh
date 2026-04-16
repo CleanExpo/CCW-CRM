@@ -41,8 +41,8 @@ log "======================================"
 log "Step 1: Verifying environment..."
 
 if [ -z "$DATABASE_URL" ]; then
-    warn "DATABASE_URL not set. Using default: postgresql://starter_user:local_dev_password@localhost:5433/starter_db"
-    export DATABASE_URL="postgresql://starter_user:local_dev_password@localhost:5433/starter_db"
+    error "DATABASE_URL is not set. Set it in your environment or .env file before deploying."
+    exit 1
 fi
 
 if [ -z "$REDIS_URL" ]; then

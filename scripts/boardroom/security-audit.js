@@ -25,20 +25,38 @@ const execFileAsync = promisify(execFile);
 const SECRET_PATTERNS = [
   { name: 'AWS Key', pattern: /AKIA[0-9A-Z]{16}/ },
   { name: 'Generic Secret', pattern: /(?:secret|password|passwd|pwd)\s*=\s*["'][^"']{8,}["']/i },
-  { name: 'Hardcoded API Key', pattern: /(?:api_key|apikey|api-key)\s*=\s*["'][a-zA-Z0-9_\-]{20,}["']/i },
+  {
+    name: 'Hardcoded API Key',
+    pattern: /(?:api_key|apikey|api-key)\s*=\s*["'][a-zA-Z0-9_\-]{20,}["']/i,
+  },
   { name: 'JWT Secret Hardcoded', pattern: /jwt.*secret.*=.*["'][^"']{10,}["']/i },
-  { name: 'Supabase Service Key', pattern: /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/ },
+  {
+    name: 'Supabase Service Key',
+    pattern: /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/,
+  },
   { name: 'Stripe Live Key', pattern: /sk_live_[a-zA-Z0-9]{24,}/ },
   { name: 'Stripe Test Key', pattern: /sk_test_[a-zA-Z0-9]{24,}/ },
 ];
 
 // OWASP Top 10 code patterns to flag
 const OWASP_PATTERNS = [
-  { id: 'A01', name: 'Broken Access Control', patterns: ['eval(', 'innerHTML =', 'dangerouslySetInnerHTML'] },
+  {
+    id: 'A01',
+    name: 'Broken Access Control',
+    patterns: ['eval(', 'innerHTML =', 'dangerouslySetInnerHTML'],
+  },
   { id: 'A02', name: 'Cryptographic Failures', patterns: ['md5(', 'sha1(', 'Math.random()'] },
   { id: 'A03', name: 'Injection', patterns: ['exec(', 'execSync(', 'child_process.exec'] },
-  { id: 'A05', name: 'Security Misconfiguration', patterns: ['DEBUG = True', 'debug=True', 'cors(origins=["*"])'] },
-  { id: 'A09', name: 'Logging Failures', patterns: ['console.log(req.body', 'print(password', 'logger.info(token'] },
+  {
+    id: 'A05',
+    name: 'Security Misconfiguration',
+    patterns: ['DEBUG = True', 'debug=True', 'cors(origins=["*"])'],
+  },
+  {
+    id: 'A09',
+    name: 'Logging Failures',
+    patterns: ['console.log(req.body', 'print(password', 'logger.info(token'],
+  },
 ];
 
 // Files to EXCLUDE from scanning
@@ -75,7 +93,11 @@ async function secretsArchaeology(rootDir) {
           const files = stdout.trim().split('\n').filter(Boolean);
           // Filter out example/template files
           const realFiles = files.filter(
-            (f) => !f.includes('.example') && !f.includes('.template') && !f.includes('test') && !f.includes('spec')
+            (f) =>
+              !f.includes('.example') &&
+              !f.includes('.template') &&
+              !f.includes('test') &&
+              !f.includes('spec')
           );
 
           if (realFiles.length > 0) {
@@ -92,7 +114,11 @@ async function secretsArchaeology(rootDir) {
       }
     }
   } catch (err) {
-    findings.push({ severity: 'INFO', type: 'SCAN_ERROR', message: `Secrets scan error: ${err.message}` });
+    findings.push({
+      severity: 'INFO',
+      type: 'SCAN_ERROR',
+      message: `Secrets scan error: ${err.message}`,
+    });
   }
 
   return findings;
@@ -157,9 +183,13 @@ async function envFileCheck(rootDir) {
   const findings = [];
 
   try {
-    const { stdout } = await execFileAsync('git', ['-C', rootDir, 'ls-files', '--error-unmatch', '.env']).catch(
-      () => ({ stdout: '' })
-    );
+    const { stdout } = await execFileAsync('git', [
+      '-C',
+      rootDir,
+      'ls-files',
+      '--error-unmatch',
+      '.env',
+    ]).catch(() => ({ stdout: '' }));
 
     if (stdout.trim()) {
       findings.push({
@@ -285,9 +315,13 @@ async function privacyActCheck(rootDir) {
       id: 'rls_enabled',
       description: 'RLS migration files exist',
       test: async () => {
-        const { stdout } = await execFileAsync('find', [rootDir, '-name', '*rls*', '-name', '*.sql']).catch(
-          () => ({ stdout: '' })
-        );
+        const { stdout } = await execFileAsync('find', [
+          rootDir,
+          '-name',
+          '*rls*',
+          '-name',
+          '*.sql',
+        ]).catch(() => ({ stdout: '' }));
         return stdout.trim().length > 0;
       },
     },
@@ -325,13 +359,20 @@ async function privacyActCheck(rootDir) {
  * @param {Object} options - { mode: 'daily' | 'weekly', weeklyOnly: boolean }
  * @returns {Promise<Object>} Security audit report
  */
-export async function runSecurityAudit(sessionId, dataDir = './data/sessions', rootDir = '.', options = {}) {
+export async function runSecurityAudit(
+  sessionId,
+  dataDir = './data/sessions',
+  rootDir = '.',
+  options = {}
+) {
   const { mode = 'daily' } = options;
 
   // Weekly-only checks: run only if mode is 'weekly' (Monday sessions)
   const isWeekly = mode === 'weekly' || new Date().getDay() === 1; // Monday
 
-  console.log(`\n[CSO] Step 10 — Security Audit (${isWeekly ? 'weekly comprehensive' : 'daily quick'})...`);
+  console.log(
+    `\n[CSO] Step 10 — Security Audit (${isWeekly ? 'weekly comprehensive' : 'daily quick'})...`
+  );
 
   const sessionDir = path.join(dataDir, sessionId);
   await fs.mkdir(sessionDir, { recursive: true });
@@ -339,7 +380,10 @@ export async function runSecurityAudit(sessionId, dataDir = './data/sessions', r
   const auditStart = Date.now();
 
   // Always run
-  const [envFindings, owaspFindings] = await Promise.all([envFileCheck(rootDir), owaspPatternCheck(rootDir)]);
+  const [envFindings, owaspFindings] = await Promise.all([
+    envFileCheck(rootDir),
+    owaspPatternCheck(rootDir),
+  ]);
 
   let secretFindings = [];
   let depVulns = {};

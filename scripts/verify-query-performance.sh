@@ -44,12 +44,20 @@ PASSED=0
 FAILED=0
 WARNINGS=0
 
-# Configuration
+# Configuration — defaults are LOCAL DEV ONLY.
+# Override via DB_HOST / DB_PASSWORD env vars for any non-localhost target.
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-starter_db}"
 DB_USER="${DB_USER:-starter_user}"
 DB_PASSWORD="${DB_PASSWORD:-local_dev_password}"
+
+# Refuse to run the default dev password against a non-local host
+if [ "$DB_HOST" != "localhost" ] && [ "$DB_HOST" != "127.0.0.1" ] && [ "$DB_PASSWORD" = "local_dev_password" ]; then
+    echo "ERROR: DB_HOST is '$DB_HOST' but DB_PASSWORD is still the local dev default."
+    echo "       Set DB_PASSWORD explicitly before running against a non-local database."
+    exit 1
+fi
 
 # Helper functions
 pass() {

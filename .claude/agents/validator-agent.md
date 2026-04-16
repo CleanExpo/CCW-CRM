@@ -39,18 +39,23 @@ At each phase, you will:
 You operate at 5 validation levels:
 
 ### Level 1: Phase 1 (Discovery) Validation
+
 **Validates:** Discovery report completeness and accuracy
 
 ### Level 2: Phase 2 (Architecture) Validation
+
 **Validates:** Design quality and constraint compliance
 
 ### Level 3: Phase 3 (Build) Validation
+
 **Validates:** Code quality during implementation (continuous)
 
 ### Level 4: Phase 4 (Build Final) Validation
+
 **Validates:** Deployment readiness (final gate)
 
 ### Level 5: Phase 5 (Finalize) Validation
+
 **Validates:** Completion criteria and documentation
 
 ---
@@ -87,6 +92,7 @@ Based on phase number, run appropriate validation checklist.
 ### Step 3: Document Findings
 
 For each check:
+
 - **Status**: pass | fail | warning
 - **Message**: What was found
 - **Details**: Supporting evidence
@@ -95,6 +101,7 @@ For each check:
 ### Step 4: Make Recommendation
 
 Based on findings:
+
 - **proceed**: All checks passed, continue to next phase
 - **retry**: Issues found, agent should retry current phase
 - **escalate**: Cannot resolve, needs user intervention
@@ -112,6 +119,7 @@ Create report at `.claude/.execution/validation-reports/phase-[N]-validation.jso
 **Checklist:**
 
 ☐ **Completeness**
+
 - [ ] Task analysis is clear
 - [ ] Codebase structure documented
 - [ ] Patterns identified and described
@@ -120,18 +128,21 @@ Create report at `.claude/.execution/validation-reports/phase-[N]-validation.jso
 - [ ] Recommendations provided
 
 ☐ **Accuracy**
+
 - [ ] Patterns match actual code (spot check 2-3 examples)
 - [ ] Constraints match CLAUDE.md
 - [ ] File paths are valid
 - [ ] Complexity assessment is reasonable
 
 ☐ **Thoroughness**
+
 - [ ] All relevant code areas explored
 - [ ] No obvious patterns missed
 - [ ] Risk factors identified
 - [ ] Approval requirements flagged
 
 ☐ **Format**
+
 - [ ] Discovery report follows schema
 - [ ] JSON is valid
 - [ ] All required fields present
@@ -148,6 +159,7 @@ Create report at `.claude/.execution/validation-reports/phase-[N]-validation.jso
 ### Running Checks...
 
 #### Check 1: Completeness
+
 - ✅ Task analysis: Present
 - ✅ Patterns found: 3 documented
 - ✅ Constraints: 5 documented
@@ -157,7 +169,9 @@ Create report at `.claude/.execution/validation-reports/phase-[N]-validation.jso
 **Status:** PASS
 
 #### Check 2: Pattern Accuracy
+
 Spot checking patterns...
+
 - Pattern "dashboard_widget" → Reference: StockHealthWidget.tsx
   - ✅ File exists
   - ✅ Pattern description matches code
@@ -168,6 +182,7 @@ Spot checking patterns...
 **Status:** PASS
 
 #### Check 3: Constraint Compliance
+
 - ✅ Database constraints documented
 - ✅ Auth constraints documented
 - ✅ API constraints documented
@@ -176,6 +191,7 @@ Spot checking patterns...
 **Status:** PASS
 
 #### Check 4: Thoroughness
+
 - ✅ Frontend patterns explored
 - ✅ Backend patterns explored
 - ✅ Risk assessment provided
@@ -221,6 +237,7 @@ All discovery checks passed. Report is complete and accurate.
 **Checklist:**
 
 ☐ **Design Quality**
+
 - [ ] Solution addresses user request
 - [ ] All components clearly specified
 - [ ] Component interactions defined
@@ -228,12 +245,14 @@ All discovery checks passed. Report is complete and accurate.
 - [ ] Error handling specified
 
 ☐ **Pattern Compliance**
+
 - [ ] Follows existing patterns
 - [ ] Deviations are justified
 - [ ] Reference files are valid
 - [ ] Implementation plan is mechanical
 
 ☐ **Constraint Compliance** (CRITICAL)
+
 - [ ] No database schema changes
 - [ ] No auth code modifications
 - [ ] No breaking API changes
@@ -241,6 +260,7 @@ All discovery checks passed. Report is complete and accurate.
 - [ ] No unauthorized packages
 
 ☐ **Completeness**
+
 - [ ] All files specified (create/modify)
 - [ ] Implementation order defined
 - [ ] Test strategy documented
@@ -249,6 +269,7 @@ All discovery checks passed. Report is complete and accurate.
 - [ ] Approvals identified
 
 ☐ **Implementability**
+
 - [ ] Specifications are detailed enough
 - [ ] Builder can follow mechanically
 - [ ] No ambiguous instructions
@@ -266,6 +287,7 @@ All discovery checks passed. Report is complete and accurate.
 ### Running Checks...
 
 #### Check 1: Design Quality
+
 - ✅ Solution addresses user request
 - ✅ Components clearly specified (3 components)
 - ✅ Data flow documented
@@ -274,6 +296,7 @@ All discovery checks passed. Report is complete and accurate.
 **Status:** PASS
 
 #### Check 2: Pattern Compliance
+
 - ✅ Follows existing dashboard widget pattern
 - ✅ Follows existing API endpoint pattern
 - ✅ Reference files valid:
@@ -284,6 +307,7 @@ All discovery checks passed. Report is complete and accurate.
 **Status:** PASS
 
 #### Check 3: Constraint Compliance (CRITICAL)
+
 - ✅ No database schema changes
 - ✅ No auth code modifications
 - ✅ No breaking API changes
@@ -293,6 +317,7 @@ All discovery checks passed. Report is complete and accurate.
 **Status:** PASS ✅
 
 #### Check 4: Completeness
+
 - ✅ Files to create: 2 specified
 - ✅ Files to modify: 2 specified
 - ✅ Implementation order: Defined
@@ -304,7 +329,9 @@ All discovery checks passed. Report is complete and accurate.
 **Status:** PASS
 
 #### Check 5: Implementability
+
 Testing if Builder can follow mechanically...
+
 - ✅ Component specs are detailed
 - ✅ Import lists provided
 - ✅ Function signatures specified
@@ -327,12 +354,14 @@ Architecture is complete, compliant, and implementable.
 **CRITICAL ISSUE DETECTED**
 
 #### Check 3: Constraint Compliance
+
 - ❌ **DATABASE SCHEMA CHANGE DETECTED**
   - File: apps/backend/src/db/demo_models.py
   - Change: Adding 'priority' column to Order model
   - **FORBIDDEN** per CLAUDE.md
 
 **Blocking Issues:**
+
 1. Database schema modification is FORBIDDEN
    - File: demo_models.py
    - Severity: CRITICAL
@@ -345,6 +374,7 @@ Architecture is complete, compliant, and implementable.
 Cannot proceed. This architecture violates forbidden constraint.
 
 **Alternative Approaches:**
+
 1. Use metadata JSON field if available
 2. Create separate table (requires approval)
 3. Handle in application layer only
@@ -361,6 +391,7 @@ During build phase, validate CONTINUOUSLY after each file:
 **Per-File Checklist:**
 
 ☐ **Code Quality**
+
 - [ ] TypeScript/Python types correct
 - [ ] No `any` types (unless justified)
 - [ ] Imports organized
@@ -368,18 +399,21 @@ During build phase, validate CONTINUOUSLY after each file:
 - [ ] Loading states present (if UI)
 
 ☐ **Pattern Matching**
+
 - [ ] Matches specified pattern
 - [ ] Structure consistent with reference
 - [ ] Naming conventions followed
 - [ ] Comments appropriate
 
 ☐ **Functionality**
+
 - [ ] Code compiles/runs
 - [ ] No syntax errors
 - [ ] Logic appears correct
 - [ ] Edge cases handled
 
 ☐ **Compliance**
+
 - [ ] No unauthorized changes
 - [ ] Follows architecture spec
 - [ ] No extra features added
@@ -387,7 +421,7 @@ During build phase, validate CONTINUOUSLY after each file:
 
 **Validation Process:**
 
-```markdown
+````markdown
 ## 🔨 Validating Build Progress (File)
 
 **File:** apps/web/components/dashboard/RecentQuotesWidget.tsx
@@ -397,6 +431,7 @@ During build phase, validate CONTINUOUSLY after each file:
 ### Running Checks...
 
 #### Check 1: Code Quality
+
 - ✅ TypeScript types present and correct
 - ✅ No `any` types
 - ✅ Imports organized (React → UI → Internal)
@@ -406,7 +441,9 @@ During build phase, validate CONTINUOUSLY after each file:
 **Status:** PASS
 
 #### Check 2: Pattern Matching
+
 Comparing to reference: StockHealthWidget.tsx
+
 - ✅ Component structure matches
 - ✅ useEffect + async fetch pattern matches
 - ✅ Error handling pattern matches
@@ -416,14 +453,18 @@ Comparing to reference: StockHealthWidget.tsx
 **Status:** PASS
 
 #### Check 3: TypeScript Compilation
+
 ```bash
 pnpm type-check --filter=web
 ```
+````
+
 - ✅ No type errors
 
 **Status:** PASS
 
 #### Check 4: Compliance
+
 - ✅ Matches architecture specification
 - ✅ No extra features added
 - ✅ No features omitted
@@ -436,7 +477,8 @@ pnpm type-check --filter=web
 File implementation is correct and complete.
 
 **Recommendation:** PROCEED to next file
-```
+
+````
 
 **Build Quality Gates (Every 2 Files):**
 
@@ -451,19 +493,24 @@ File implementation is correct and complete.
 #### TypeScript Compilation
 ```bash
 pnpm turbo run type-check
-```
+````
+
 - ✅ PASS (0 errors)
 
 #### Linting
+
 ```bash
 pnpm turbo run lint
 ```
+
 - ✅ PASS (0 warnings)
 
 #### Tests
+
 ```bash
 pnpm turbo run test
 ```
+
 - ⚠️ WARNING: 1/2 tests written (50% complete)
 - ✅ Tests passing: 1/1 (100%)
 
@@ -472,9 +519,11 @@ pnpm turbo run test
 **Recommendation:** PROCEED (write remaining test before Phase 4)
 
 **Reminders:**
+
 - 1 test still needed for API endpoint
 - All tests must pass before Phase 4
-```
+
+````
 
 ---
 
@@ -551,7 +600,8 @@ This is the **deployment readiness gate**. ALL criteria must pass:
 #### Check 3: Quality Checks
 ```bash
 pnpm turbo run type-check lint test
-```
+````
+
 - ✅ TypeScript: PASS (0 errors)
 - ✅ Lint: PASS (0 warnings)
 - ✅ Tests: PASS (4/4 = 100%)
@@ -559,6 +609,7 @@ pnpm turbo run type-check lint test
 **Status:** PASS
 
 #### Check 4: Functionality Verification
+
 - ✅ RecentQuotesWidget renders correctly
 - ✅ Data fetches and displays
 - ✅ Loading state works
@@ -568,6 +619,7 @@ pnpm turbo run type-check lint test
 **Status:** PASS
 
 #### Check 5: Compliance (CRITICAL)
+
 - ✅ No database schema changes
 - ✅ No auth code changes
 - ✅ No breaking API changes
@@ -576,6 +628,7 @@ pnpm turbo run type-check lint test
 **Status:** PASS ✅
 
 #### Check 6: Manual Verification
+
 - ✅ Manual testing performed
 - ✅ Widget displays on dashboard
 - ✅ Data loads correctly
@@ -590,7 +643,8 @@ pnpm turbo run type-check lint test
 Build is COMPLETE, TESTED, and READY FOR DEPLOYMENT.
 
 **Recommendation:** PROCEED to Phase 5 (Finalize)
-```
+
+````
 
 **Strict Failure Example:**
 
@@ -620,7 +674,7 @@ Build is COMPLETE, TESTED, and READY FOR DEPLOYMENT.
 - All tests must pass before deployment
 
 Cannot proceed to Phase 5 until 100% test pass rate achieved.
-```
+````
 
 ---
 
@@ -631,23 +685,27 @@ Cannot proceed to Phase 5 until 100% test pass rate achieved.
 **Checklist:**
 
 ☐ **Completion**
+
 - [ ] Completion report produced
 - [ ] All files documented
 - [ ] All changes summarized
 - [ ] Quality metrics reported
 
 ☐ **Deployment Readiness**
+
 - [ ] Deployment checklist complete
 - [ ] Rollback plan documented
 - [ ] No security issues
 - [ ] Performance acceptable
 
 ☐ **Documentation**
+
 - [ ] User-facing docs updated (if needed)
 - [ ] Code comments adequate
 - [ ] README updated (if needed)
 
 ☐ **Final Verification**
+
 - [ ] Feature matches original request
 - [ ] No regressions introduced
 - [ ] All acceptance criteria met
@@ -664,6 +722,7 @@ Cannot proceed to Phase 5 until 100% test pass rate achieved.
 ### Running Final Checks...
 
 #### Check 1: Completion Report
+
 - ✅ Report produced
 - ✅ Files documented (4 files)
 - ✅ Changes summarized
@@ -672,6 +731,7 @@ Cannot proceed to Phase 5 until 100% test pass rate achieved.
 **Status:** PASS
 
 #### Check 2: Deployment Readiness
+
 - ✅ Checklist complete
 - ✅ Rollback plan documented
 - ✅ No security vulnerabilities
@@ -680,6 +740,7 @@ Cannot proceed to Phase 5 until 100% test pass rate achieved.
 **Status:** PASS
 
 #### Check 3: Feature Verification
+
 - ✅ Matches original request: "Add Recent Quotes widget"
 - ✅ Widget displays correctly
 - ✅ Data is accurate
@@ -744,12 +805,12 @@ All validation reports follow this JSON structure:
 
 ## DECISION MATRIX
 
-| Overall Status | Recommendation | Next Action |
-|---------------|----------------|-------------|
-| **pass** | proceed | Continue to next phase |
-| **pass_with_warnings** | proceed | Continue but note warnings |
-| **fail** (minor issues) | retry | Agent retries current phase |
-| **fail** (critical issues) | escalate | User intervention required |
+| Overall Status             | Recommendation | Next Action                 |
+| -------------------------- | -------------- | --------------------------- |
+| **pass**                   | proceed        | Continue to next phase      |
+| **pass_with_warnings**     | proceed        | Continue but note warnings  |
+| **fail** (minor issues)    | retry          | Agent retries current phase |
+| **fail** (critical issues) | escalate       | User intervention required  |
 
 ---
 

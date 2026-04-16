@@ -15,6 +15,7 @@ CCW currently uses custom JWT auth (`JWT_SECRET_KEY` + bcrypt against `public.us
 **Reject multi-tenancy. Maintain single-tenant architecture.**
 
 CCW is an internal business tool for one company (CCW). It does not serve multiple organisations. A full multi-tenant migration would require:
+
 - 6+ weeks of risky schema changes
 - Auth system replacement (currently locked per CLAUDE.md)
 - Data migration of all existing records

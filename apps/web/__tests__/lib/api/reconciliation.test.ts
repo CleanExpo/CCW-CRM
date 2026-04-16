@@ -39,14 +39,16 @@ beforeEach(() => vi.clearAllMocks());
 describe('reconciliationApi.getMatchSuggestions', () => {
   it('calls GET /api/reconciliation/match-suggestions with transaction_id', async () => {
     const mockSuggestions = [
-      { id: 'match-1', invoice_id: 'inv-1', confidence: 0.95, amount: 100.00 },
-      { id: 'match-2', invoice_id: 'inv-2', confidence: 0.85, amount: 100.50 },
+      { id: 'match-1', invoice_id: 'inv-1', confidence: 0.95, amount: 100.0 },
+      { id: 'match-2', invoice_id: 'inv-2', confidence: 0.85, amount: 100.5 },
     ];
     mockGet.mockResolvedValue(mockSuggestions);
 
     const result = await reconciliationApi.getMatchSuggestions('txn-123');
 
-    expect(mockGet).toHaveBeenCalledWith('/api/reconciliation/match-suggestions?transaction_id=txn-123');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/api/reconciliation/match-suggestions?transaction_id=txn-123'
+    );
     expect(result as any).toEqual(mockSuggestions);
     expect(result as any[]).toHaveLength(2);
   });
@@ -76,6 +78,8 @@ describe('reconciliationApi.autoMatch', () => {
 
   it('propagates errors on failed match', async () => {
     mockPost.mockRejectedValue(new Error('Match already exists'));
-    await expect(reconciliationApi.autoMatch('txn-123', 'match-1')).rejects.toThrow('Match already exists');
+    await expect(reconciliationApi.autoMatch('txn-123', 'match-1')).rejects.toThrow(
+      'Match already exists'
+    );
   });
 });

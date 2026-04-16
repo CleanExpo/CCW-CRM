@@ -44,13 +44,14 @@ ls -la "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM\video\remotion\out\[video-name].
 
 **Validation criteria — ALL must pass before continuing:**
 
-| Check | Pass condition |
-|-------|---------------|
-| File exists | `ls` returns the file without error |
-| File size | Must be > 1 MB (small file = failed/empty render) |
+| Check             | Pass condition                                          |
+| ----------------- | ------------------------------------------------------- |
+| File exists       | `ls` returns the file without error                     |
+| File size         | Must be > 1 MB (small file = failed/empty render)       |
 | File name matches | Matches the expected output name from the render script |
 
 If validation fails:
+
 - Re-run the render command
 - Check for TypeScript errors first: `npx tsc --noEmit`
 - Check Remotion Studio preview: `npm start`
@@ -78,6 +79,7 @@ python scripts/youtube_upload.py --upload
 ```
 
 This script:
+
 - Reads all files from `data/heygen/downloads/`
 - Matches filenames to `VIDEO_METADATA` dict for title + description
 - Uploads each to the CCW YouTube channel
@@ -154,14 +156,15 @@ Only the updated `package.json` (new render scripts), `Root.tsx`, and scene file
 
 YouTube Data API v3 limits apply to all uploads.
 
-| Metric | Value |
-|--------|-------|
-| Daily quota | 10,000 units |
-| Cost per upload | ~1,600 units |
-| Max uploads per day | ~6 videos |
-| Quota reset time | Midnight Pacific (approx. 5–6pm AEST) |
+| Metric              | Value                                 |
+| ------------------- | ------------------------------------- |
+| Daily quota         | 10,000 units                          |
+| Cost per upload     | ~1,600 units                          |
+| Max uploads per day | ~6 videos                             |
+| Quota reset time    | Midnight Pacific (approx. 5–6pm AEST) |
 
 **If quota is exceeded:**
+
 - The upload script will exit with a `quotaExceeded` error
 - Do NOT retry in a loop — wait for quota reset
 - The automated daily cron runs at **7:07pm AEST** (youtube-upload-ccw-training scheduled task)
@@ -169,6 +172,7 @@ YouTube Data API v3 limits apply to all uploads.
 - Check cron status in Windows Task Scheduler or run manually after reset
 
 **To check quota remaining:**
+
 ```bash
 python scripts/youtube_upload.py --status
 ```
@@ -250,14 +254,14 @@ python scripts/youtube_upload.py --status
 
 ## Quick-Reference: File Paths
 
-| File | Path |
-|------|------|
-| Render scripts | `video/remotion/package.json` |
-| Root composition | `video/remotion/src/Root.tsx` |
-| Output MP4s | `video/remotion/out/` (gitignored) |
-| Upload queue | `data/heygen/downloads/` |
-| Upload script | `scripts/youtube_upload.py` |
-| Upload log | `data/heygen/youtube-upload-log.json` |
+| File                   | Path                                                |
+| ---------------------- | --------------------------------------------------- |
+| Render scripts         | `video/remotion/package.json`                       |
+| Root composition       | `video/remotion/src/Root.tsx`                       |
+| Output MP4s            | `video/remotion/out/` (gitignored)                  |
+| Upload queue           | `data/heygen/downloads/`                            |
+| Upload script          | `scripts/youtube_upload.py`                         |
+| Upload log             | `data/heygen/youtube-upload-log.json`               |
 | Video banner component | `apps/web/components/dashboard/DemoVideoBanner.tsx` |
 
 ---

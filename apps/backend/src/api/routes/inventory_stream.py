@@ -15,14 +15,15 @@ Usage:
 
 
 import structlog
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sse_starlette.sse import EventSourceResponse
 
+from src.api.deps import get_current_user
 from src.services.sse_service import sse_service
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/api", tags=["Real-Time Inventory"])
+router = APIRouter(prefix="/api", tags=["Real-Time Inventory"], dependencies=[Depends(get_current_user)])
 
 
 @router.on_event("startup")

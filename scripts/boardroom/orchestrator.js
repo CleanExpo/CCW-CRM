@@ -46,7 +46,12 @@ const BOARD_MEMBERS = [
     name: 'The Architect',
     model: OPUS,
     effort: 'max',
-    superpowers: ['brainstorming', 'writing-plans', 'subagent-driven-development', 'requesting-code-review'],
+    superpowers: [
+      'brainstorming',
+      'writing-plans',
+      'subagent-driven-development',
+      'requesting-code-review',
+    ],
     system: `You are The Architect — 20+ years at AWS, Google Cloud, Meta, Netflix.
 You open every boardroom session with a BUILD_STATUS (GREEN/AMBER/RED) based on current system state.
 You have final say on system design decisions. Be direct, technical, decisive.
@@ -82,7 +87,11 @@ If it doesn't grow, protect, or accelerate revenue — challenge it.`,
     name: 'The Security Sentinel',
     model: SONNET,
     effort: 'high',
-    superpowers: ['systematic-debugging', 'test-driven-development', 'verification-before-completion'],
+    superpowers: [
+      'systematic-debugging',
+      'test-driven-development',
+      'verification-before-completion',
+    ],
     system: `You are The Security Sentinel — 20+ years CISO at ANZ Bank, Australian Defence, CBA.
 Security review every session. Block insecure patterns immediately.
 Reference AU/NZ data sovereignty requirements and OWASP standards.
@@ -108,7 +117,11 @@ Before declaring any insight final, apply verification-before-completion to conf
     name: 'The Agent Whisperer',
     model: SONNET,
     effort: 'high',
-    superpowers: ['dispatching-parallel-agents', 'subagent-driven-development', 'using-git-worktrees'],
+    superpowers: [
+      'dispatching-parallel-agents',
+      'subagent-driven-development',
+      'using-git-worktrees',
+    ],
     system: `You are The Agent Whisperer — 20+ years at OpenAI, DeepMind, Anthropic, Google Brain.
 You own the AI architecture. Enforce Anthropic best practices and multi-agent patterns.
 Flag any use of deprecated APIs (e.g. budget_tokens) immediately.
@@ -352,7 +365,10 @@ export async function runBoardroomSession() {
   await fs.mkdir(sessionDir, { recursive: true });
 
   const intelligenceSummary = scoutResults
-    .map((r, i) => `Query ${i + 1}: ${r.query}\n${JSON.stringify(r.result?.choices?.[0]?.message?.content || r.result, null, 2)}`)
+    .map(
+      (r, i) =>
+        `Query ${i + 1}: ${r.query}\n${JSON.stringify(r.result?.choices?.[0]?.message?.content || r.result, null, 2)}`
+    )
     .join('\n\n---\n\n');
 
   console.log('\n[Boardroom] Step 05 — Data Sovereign synthesising intelligence...');
@@ -373,7 +389,12 @@ COMPETITIVE INTELLIGENCE (Live Scrape — ${new Date().toLocaleDateString('en-AU
 CCW Site Status: ${competitiveIntelligence.ccwSiteStatus}
 CCW Site Title: ${competitiveIntelligence.ccwTitle || 'N/A'}
 Price Range (scraped): ${competitiveIntelligence.priceRange ? `$${competitiveIntelligence.priceRange.min}–$${competitiveIntelligence.priceRange.max} (${competitiveIntelligence.priceRange.count} products)` : 'N/A'}
-Competitor Presence: ${(competitiveIntelligence.competitorResults || []).map((r) => r.text).slice(0, 3).join('; ') || 'None scraped'}
+Competitor Presence: ${
+        (competitiveIntelligence.competitorResults || [])
+          .map((r) => r.text)
+          .slice(0, 3)
+          .join('; ') || 'None scraped'
+      }
 Industry News: ${(competitiveIntelligence.industryNews || []).slice(0, 3).join(' | ') || 'None scraped'}
 `
     : '';
@@ -392,8 +413,8 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
   console.log('\n[Boardroom] Steps 07–10 — Board deliberation...');
 
   const deliberationOrder = [
-    'architect',       // 07: Opens with BUILD_STATUS
-    'product_oracle',  // 08: Board members 2–11 deliberate
+    'architect', // 07: Opens with BUILD_STATUS
+    'product_oracle', // 08: Board members 2–11 deliberate
     'revenue_guardian',
     'security_sentinel',
     'agent_whisperer',
@@ -401,8 +422,8 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
     'integration_maestro',
     'ux_visionary',
     'fullstack_forge',
-    'video_director',  // 09: Produces VIDEO_BRIEF JSON
-    'moon_shooter',    // 10: ALWAYS SPEAKS LAST
+    'video_director', // 09: Produces VIDEO_BRIEF JSON
+    'moon_shooter', // 10: ALWAYS SPEAKS LAST
   ];
 
   const boardOutputs = {};
@@ -414,9 +435,10 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
     const messages = [
       {
         role: 'user',
-        content: conversationHistory.length === 0
-          ? boardroomContext
-          : `${boardroomContext}\n\n${conversationHistory.map((c) => `${c.speaker}:\n${c.output}`).join('\n\n---\n\n')}\n\nYour turn, ${member.name}.`,
+        content:
+          conversationHistory.length === 0
+            ? boardroomContext
+            : `${boardroomContext}\n\n${conversationHistory.map((c) => `${c.speaker}:\n${c.output}`).join('\n\n---\n\n')}\n\nYour turn, ${member.name}.`,
       },
     ];
 
@@ -549,7 +571,8 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
   }
 
   // ── Step 18b+: CLAUDE.md Audit — fortnightly (UNI-1140) ──
-  if (new Date().getDay() === 1) { // Monday only
+  if (new Date().getDay() === 1) {
+    // Monday only
     console.log('\n[Boardroom] Step 18b+ — Fortnightly CLAUDE.md audit...');
     try {
       const rootDir = path.join(DATA_DIR, '../..');
@@ -574,12 +597,17 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
       youtubeVideoId,
       nextSessionScheduled: true,
     };
-    await fs.writeFile(path.join(sessionDir, 'cycle_complete.json'), JSON.stringify(cycleComplete, null, 2));
+    await fs.writeFile(
+      path.join(sessionDir, 'cycle_complete.json'),
+      JSON.stringify(cycleComplete, null, 2)
+    );
   }
 
   console.log(`\n✅ [Boardroom] Session ${sessionId} complete — BUILD_STATUS: ${buildStatus}`);
   if (qaReport) {
-    console.log(`🧪 [Boardroom] QA: ${qaReport.qaStatus} — ${qaReport.summary?.passRate}% pass rate`);
+    console.log(
+      `🧪 [Boardroom] QA: ${qaReport.qaStatus} — ${qaReport.summary?.passRate}% pass rate`
+    );
   }
   if (securityAudit) {
     console.log(`🔒 [Boardroom] Security: ${securityAudit.securityStatus}`);
@@ -613,10 +641,7 @@ async function renderVideo(sessionId, videoBrief, narrationPath) {
   const outputPath = path.join(DATA_DIR, sessionId, 'boardroom.mp4');
   const propsPath = path.join(DATA_DIR, sessionId, 'render-props.json');
 
-  await fs.writeFile(
-    propsPath,
-    JSON.stringify({ sessionId, videoBrief, narrationPath }, null, 2)
-  );
+  await fs.writeFile(propsPath, JSON.stringify({ sessionId, videoBrief, narrationPath }, null, 2));
 
   console.log(`[Remotion] Rendering ${outputPath}...`);
 

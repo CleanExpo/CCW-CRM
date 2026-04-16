@@ -1,6 +1,0 @@
-# Linear API Configuration
-# Copy this file to .linear-api-key and add your actual API key
-# This file is gitignored and will not be committed
-
-LINEAR_API_KEY=your_linear_api_key_here
-LINEAR_PROJECT_ID=your_project_id_here

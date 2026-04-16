@@ -10,8 +10,10 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.api.deps import get_current_user
 from src.api.routes.workflows import router as workflows_router
 from src.api.routes.approvals import router as approvals_router
+from src.config.database import get_async_db
 
 
 # Create minimal test app with just the routers we're testing
@@ -19,7 +21,17 @@ test_app = FastAPI()
 test_app.include_router(workflows_router)
 test_app.include_router(approvals_router)
 
-client = TestClient(test_app)
+# Override auth + DB so structural tests reach Pydantic validation (422)
+async def _mock_user():
+    return {"id": "00000000-0000-0000-0000-000000000001", "email": "test@test.com"}
+
+async def _mock_db():
+    yield None
+
+test_app.dependency_overrides[get_current_user] = _mock_user
+test_app.dependency_overrides[get_async_db] = _mock_db
+
+client = TestClient(test_app, raise_server_exceptions=False)
 
 
 # ---------------------------------------------------------------------------

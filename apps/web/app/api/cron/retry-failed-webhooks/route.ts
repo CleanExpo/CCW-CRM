@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
+import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { BACKEND_URL } from '@/lib/api/backend-url';
 
 // Retry Failed Webhooks Cron Job
@@ -10,25 +10,22 @@ import { BACKEND_URL } from '@/lib/api/backend-url';
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get("authorization");
+    const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/cron/retry-failed-webhooks`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.CRON_SECRET}`,
-        },
-      }
-    );
+    const response = await fetch(`${BACKEND_URL}/api/cron/retry-failed-webhooks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.CRON_SECRET}`,
+      },
+    });
 
     const data = await response.json();
 
-    logger.info("Retry failed webhooks cron", {
+    logger.info('Retry failed webhooks cron', {
       status: data.status,
       retried: data.retried,
       succeeded: data.succeeded,
@@ -37,7 +34,7 @@ export async function GET(request: Request) {
     });
 
     if (data.failed > 0) {
-      logger.error("Webhook retries had failures", {
+      logger.error('Webhook retries had failures', {
         failed: data.failed,
         errors: data.errors,
       });
@@ -49,11 +46,11 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error("Retry failed webhooks cron error", error);
+    logger.error('Retry failed webhooks cron error', error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

@@ -5,6 +5,7 @@ This document provides step-by-step instructions for configuring Sentry DSN to e
 ## Overview
 
 Sentry is integrated into both the backend (FastAPI) and frontend (Next.js) for:
+
 - Real-time error tracking and alerting
 - Performance monitoring (traces)
 - Release tracking
@@ -160,7 +161,7 @@ async def test_sentry():
 Open browser console and run:
 
 ```javascript
-throw new Error("Test Sentry frontend error");
+throw new Error('Test Sentry frontend error');
 ```
 
 Check Sentry dashboard for the error within 1-2 minutes.
@@ -247,26 +248,28 @@ Sentry can forward alerts to Prometheus AlertManager via webhook:
 ## Cost Management
 
 Sentry pricing tiers (as of 2026):
+
 - **Developer**: Free, 5,000 errors/month
 - **Team**: $26/month, 50,000 errors/month
 - **Business**: $80/month, 100,000 errors/month
 
 Tips to reduce costs:
+
 - Use appropriate sample rates (0.1 for production)
 - Filter out known errors (browser extensions, etc.)
 - Use error grouping to reduce noise
 
 ## Files Reference
 
-| File | Purpose |
-|------|---------|
-| `apps/backend/src/integrations/sentry_client.py` | Backend Sentry initialization |
-| `apps/backend/src/config/settings.py` | Backend settings (includes Sentry) |
-| `apps/web/sentry.client.config.ts` | Frontend client-side config |
-| `apps/web/sentry.server.config.ts` | Frontend server-side config |
-| `apps/web/sentry.edge.config.ts` | Frontend edge runtime config |
-| `apps/web/instrumentation.ts` | Next.js instrumentation hook |
-| `apps/web/next.config.ts` | Next.js config with Sentry wrapper |
+| File                                             | Purpose                            |
+| ------------------------------------------------ | ---------------------------------- |
+| `apps/backend/src/integrations/sentry_client.py` | Backend Sentry initialization      |
+| `apps/backend/src/config/settings.py`            | Backend settings (includes Sentry) |
+| `apps/web/sentry.client.config.ts`               | Frontend client-side config        |
+| `apps/web/sentry.server.config.ts`               | Frontend server-side config        |
+| `apps/web/sentry.edge.config.ts`                 | Frontend edge runtime config       |
+| `apps/web/instrumentation.ts`                    | Next.js instrumentation hook       |
+| `apps/web/next.config.ts`                        | Next.js config with Sentry wrapper |
 
 ## Related Issues
 
@@ -277,5 +280,5 @@ Tips to reduce costs:
 
 ---
 
-*Last updated: February 12, 2026*
-*Status: Ready for configuration*
+_Last updated: February 12, 2026_
+_Status: Ready for configuration_

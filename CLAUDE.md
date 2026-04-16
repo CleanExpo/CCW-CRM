@@ -51,6 +51,7 @@ Update it when completing tasks or making significant decisions.
 ## Memory
 
 Living state is in `.claude/memory/`:
+
 - `current-state.md` — active sprint, in-progress work
 - `CONSTITUTION.md` — immutable prohibitions
 - `decisions-log.md` — append-only architecture decisions
@@ -62,6 +63,7 @@ context concerns. When compacting, preserve: modified file list, test
 commands, active task state from PROGRESS.md, and uncommitted decisions.
 
 When starting a fresh context window:
+
 1. Read `.claude/PROGRESS.md` for current state
 2. Read `git log --oneline -10` for recent changes
 3. Run `pnpm turbo run type-check` to verify environment
@@ -77,14 +79,14 @@ Skills live in `.claude/skills/[name]/SKILL.md`. Read `.claude/skills/CHROME-SKI
 
 ### Chrome browser skills (use `mcp__Claude_in_Chrome__*` tools)
 
-| Skill directory       | Use for                                          |
-|-----------------------|--------------------------------------------------|
-| `chrome-linear`       | View/triage Linear board, update issue statuses  |
-| `chrome-vercel`       | Deployment status, build logs, env vars          |
-| `chrome-supabase`     | RLS audit, SQL editor, JWT hook activation       |
-| `chrome-youtube`      | Upload/schedule videos, channel status           |
-| `chrome-github`       | PRs, CI status, diffs, merges                    |
-| `chrome-prod`         | Full smoke test of ccw-crm-web.vercel.app        |
+| Skill directory   | Use for                                         |
+| ----------------- | ----------------------------------------------- |
+| `chrome-linear`   | View/triage Linear board, update issue statuses |
+| `chrome-vercel`   | Deployment status, build logs, env vars         |
+| `chrome-supabase` | RLS audit, SQL editor, JWT hook activation      |
+| `chrome-youtube`  | Upload/schedule videos, channel status          |
+| `chrome-github`   | PRs, CI status, diffs, merges                   |
+| `chrome-prod`     | Full smoke test of ccw-crm-web.vercel.app       |
 
 ## Investigation Rule
 

@@ -91,7 +91,7 @@ export function filterArgs(command: string, args: string[]): string[] {
   }
 
   // URL args: redact sensitive query params
-  return args.map(arg => {
+  return args.map((arg) => {
     if (arg.startsWith('http://') || arg.startsWith('https://')) {
       try {
         const url = new URL(arg);
@@ -138,7 +138,11 @@ export function emitActivity(entry: Omit<ActivityEntry, 'id' | 'timestamp'>): Ac
   // Notify subscribers asynchronously — never block the command path
   for (const notify of subscribers) {
     queueMicrotask(() => {
-      try { notify(full); } catch { /* subscriber error — don't crash */ }
+      try {
+        notify(full);
+      } catch {
+        /* subscriber error — don't crash */
+      }
     });
   }
 
@@ -184,7 +188,7 @@ export function getActivityAfter(afterId: number): {
   }
 
   // Filter to entries after the cursor
-  const filtered = allEntries.filter(e => e.id > afterId);
+  const filtered = allEntries.filter((e) => e.id > afterId);
   return { entries: filtered, gap: false, totalAdded: total };
 }
 

@@ -368,3 +368,44 @@ class Cin7ProductSyncer:
             )
         )
         return result.scalar_one_or_none()
+
+
+# ---------------------------------------------------------------------------
+# UNI-1850: Price Tier Sync
+# ---------------------------------------------------------------------------
+
+PRICE_TIER_MAP = {
+    "PriceTier1": 1,  # Core retail
+    "PriceTier2": 2,  # Core wholesale
+    "PriceTier3": 3,  # Core special
+}
+
+_OMNI_PRICE_KEYS = [
+    ("retailPrice", 1),
+    ("wholesalePrice", 2),
+    ("specialPrice", 3),
+]
+
+
+async def sync_price_tiers(cin7_client: Cin7Client) -> list[dict]:
+    """Fetch products from Cin7 Core and build per-product price tiers.
+
+    Maps PriceTier1→tier 1 (retail), PriceTier2→tier 2 (wholesale),
+    PriceTier3→tier 3 (special). Returns list of {product_id, sku, tiers_synced}.
+    """
+    data = await cin7_client.core.get_products(page=1, limit=100)
+    products = data.get("Products", [])
+
+    results: list[dict] = []
+    for p in products:
+        sku = p.get("SKU") or ""
+        product_id = p.get("ID") or ""
+        tiers: list[dict] = []
+        for field, tier_num in PRICE_TIER_MAP.items():
+            raw = p.get(field)
+            if raw is not None:
+                tiers.append({"tier": tier_num, "price": float(raw)})
+        results.append({"product_id": product_id, "sku": sku, "tiers_synced": tiers})
+
+    logger.info("cin7_price_tiers_synced", count=len(results))
+    return results

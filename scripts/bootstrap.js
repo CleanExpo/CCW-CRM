@@ -22,11 +22,7 @@ const TEMPLATE_PATH = path.join(__dirname, 'claude_md_template.md');
  * Required env vars — missing any halts the session.
  * DEMO_MODE_SKIPPED vars are validated separately and trigger graceful skip.
  */
-const REQUIRED_ENV_VARS = [
-  'ANTHROPIC_API_KEY',
-  'PERPLEXITY_API_KEY',
-  'CRON_SECRET',
-];
+const REQUIRED_ENV_VARS = ['ANTHROPIC_API_KEY', 'PERPLEXITY_API_KEY', 'CRON_SECRET'];
 
 const DEMO_MODE_SKIPPED_VARS = [
   'ELEVENLABS_API_KEY',
@@ -43,16 +39,8 @@ const DEMO_MODE_SKIPPED_VARS = [
 function generateSessionId() {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
-  const datePart = [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-  ].join('');
-  const timePart = [
-    pad(now.getHours()),
-    pad(now.getMinutes()),
-    pad(now.getSeconds()),
-  ].join('');
+  const datePart = [now.getFullYear(), pad(now.getMonth() + 1), pad(now.getDate())].join('');
+  const timePart = [pad(now.getHours()), pad(now.getMinutes()), pad(now.getSeconds())].join('');
   return `CCW-BOARD-${datePart}${timePart}`;
 }
 

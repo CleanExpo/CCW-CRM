@@ -47,14 +47,17 @@ pnpm turbo run type-check lint test
 ## Test Data
 
 ### Frontend
+
 Tests use Vitest with React Testing Library. Mock API calls via `vi.mock('@/lib/api/client')`.
 Test files go next to source: `ComponentName.test.tsx` or in `__tests__/`.
 
 ### Backend
+
 Tests use Pytest with async support. Database tests use a test database (Docker-based).
 Test files: `apps/backend/tests/` mirroring `src/` structure.
 
 Login credentials (local dev only):
+
 - `admin@demo.com` / `demo123`
 - `sales@demo.com` / `demo123`
 - `warehouse@demo.com` / `demo123`
@@ -62,6 +65,7 @@ Login credentials (local dev only):
 ## Mocking Conventions
 
 ### Frontend
+
 ```typescript
 vi.mock('@/lib/api/client', () => ({
   apiClient: {
@@ -69,11 +73,12 @@ vi.mock('@/lib/api/client', () => ({
     post: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
-  }
+  },
 }));
 ```
 
 ### Backend
+
 ```python
 # Use pytest fixtures for DB sessions
 @pytest.fixture
@@ -89,18 +94,20 @@ from pytest_httpx import HTTPXMock
 
 After changes to these areas, run the corresponding tests:
 
-| Area | Test Command |
-|------|-------------|
-| Auth/Login | `cd apps/backend && uv run pytest tests/ -k "auth"` |
-| Products CRUD | `cd apps/web && npx vitest run --reporter=verbose` |
-| Cin7 Integration | `cd apps/backend && uv run pytest tests/integration/ -v` |
-| Order workflow | `cd apps/backend && uv run pytest tests/ -k "order"` |
-| Remotion scenes | `cd video/remotion && npx tsc --noEmit` (type-check only) |
+| Area             | Test Command                                              |
+| ---------------- | --------------------------------------------------------- |
+| Auth/Login       | `cd apps/backend && uv run pytest tests/ -k "auth"`       |
+| Products CRUD    | `cd apps/web && npx vitest run --reporter=verbose`        |
+| Cin7 Integration | `cd apps/backend && uv run pytest tests/integration/ -v`  |
+| Order workflow   | `cd apps/backend && uv run pytest tests/ -k "order"`      |
+| Remotion scenes  | `cd video/remotion && npx tsc --noEmit` (type-check only) |
 
 ## E2E Tests
 
 4 Playwright specs exist in `apps/web/e2e/`. Run with:
+
 ```bash
 cd apps/web && npx playwright test
 ```
+
 Requires the dev server running (`pnpm dev`).
