@@ -49,7 +49,6 @@ from .routes import (
     customer_orders,
     customers,
     demo_auth,
-    org_switch,  # UNI-1855: org context switch (issues fresh tokens, scoped to new org)
     demo_dashboard,
     demo_lists,
     email_audit,  # Email audit trail for GDPR compliance (ISS-037)
@@ -61,6 +60,7 @@ from .routes import (
     invoices,  # Invoices for UNI-173
     jobs,
     orders,
+    org_switch,  # UNI-1855: org context switch (issues fresh tokens, scoped to new org)
     pos_transactions,
     prd,
     pricing,  # Customer trade pricing tiers (Sprint 2)
