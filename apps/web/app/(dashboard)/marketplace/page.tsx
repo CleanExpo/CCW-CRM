@@ -92,7 +92,7 @@ function StatusBadge({ status }: { status: ChannelInfo['status'] }) {
 function DiscrepancyBadge({ product }: { product: UnifiedProduct }) {
   if (!product.has_discrepancy) return null;
   return (
-    <Badge variant="outline" className="border-orange-400 text-orange-600 gap-1">
+    <Badge variant="outline" className="gap-1 border-orange-400 text-orange-600">
       <AlertTriangle className="h-3 w-3" />
       Stock mismatch ({product.min_stock}–{product.max_stock})
     </Badge>
@@ -115,7 +115,7 @@ function ChannelStockCell({
       <div className="text-muted-foreground text-xs">${data.price.toFixed(2)} AUD</div>
       <Badge
         variant={data.status === 'active' ? 'default' : 'secondary'}
-        className="text-[10px] h-4"
+        className="h-4 text-[10px]"
       >
         {data.status}
       </Badge>
@@ -159,7 +159,11 @@ export default function MarketplacePage() {
       setChannels(channelsRes.channels);
       setSyncStatus(statusRes);
     } catch {
-      toast({ variant: 'destructive', title: 'Load Failed', description: 'Could not load channel data.' });
+      toast({
+        variant: 'destructive',
+        title: 'Load Failed',
+        description: 'Could not load channel data.',
+      });
     } finally {
       setLoading(false);
     }
@@ -171,7 +175,11 @@ export default function MarketplacePage() {
       const res = await marketplaceApi.getOrders();
       setOrders(res.orders);
     } catch {
-      toast({ variant: 'destructive', title: 'Load Failed', description: 'Could not load orders.' });
+      toast({
+        variant: 'destructive',
+        title: 'Load Failed',
+        description: 'Could not load orders.',
+      });
     } finally {
       setOrdersLoading(false);
     }
@@ -185,7 +193,11 @@ export default function MarketplacePage() {
       setProducts(res.products);
       setProductChannels(res.channels);
     } catch {
-      toast({ variant: 'destructive', title: 'Load Failed', description: 'Could not load products.' });
+      toast({
+        variant: 'destructive',
+        title: 'Load Failed',
+        description: 'Could not load products.',
+      });
     } finally {
       setProductsLoading(false);
     }
@@ -239,7 +251,11 @@ export default function MarketplacePage() {
       toast({ title: 'Sync Complete', description: `${total} products pushed to channels.` });
       await loadProducts();
     } catch (err: unknown) {
-      toast({ variant: 'destructive', title: 'Sync Failed', description: err instanceof Error ? err.message : 'Product sync failed.' });
+      toast({
+        variant: 'destructive',
+        title: 'Sync Failed',
+        description: err instanceof Error ? err.message : 'Product sync failed.',
+      });
     } finally {
       setSyncing(null);
     }
@@ -253,7 +269,11 @@ export default function MarketplacePage() {
       toast({ title: 'Inventory Synced', description: `${total} items synced across channels.` });
       await loadProducts();
     } catch (err: unknown) {
-      toast({ variant: 'destructive', title: 'Sync Failed', description: err instanceof Error ? err.message : 'Inventory sync failed.' });
+      toast({
+        variant: 'destructive',
+        title: 'Sync Failed',
+        description: err instanceof Error ? err.message : 'Inventory sync failed.',
+      });
     } finally {
       setSyncing(null);
     }
@@ -267,11 +287,17 @@ export default function MarketplacePage() {
       for (const sku of selectedProducts) {
         const product = products.find((p) => (p.sku ?? p.title) === sku);
         if (product && product.channels[channelType]) {
-          items.push({ external_id: product.channels[channelType].external_id, channel_type: channelType });
+          items.push({
+            external_id: product.channels[channelType].external_id,
+            channel_type: channelType,
+          });
         }
       }
       if (items.length === 0) {
-        toast({ title: 'Nothing to unlist', description: `Selected products are not listed on ${channelType}.` });
+        toast({
+          title: 'Nothing to unlist',
+          description: `Selected products are not listed on ${channelType}.`,
+        });
         return;
       }
       const result = await marketplaceApi.bulkUnlistProducts(items);
@@ -283,7 +309,11 @@ export default function MarketplacePage() {
       setSelectedProducts(new Set());
       await loadProducts();
     } catch (err: unknown) {
-      toast({ variant: 'destructive', title: 'Unlist Failed', description: err instanceof Error ? err.message : 'Bulk unlist failed.' });
+      toast({
+        variant: 'destructive',
+        title: 'Unlist Failed',
+        description: err instanceof Error ? err.message : 'Bulk unlist failed.',
+      });
     } finally {
       setBulkUnlisting(false);
     }
@@ -311,7 +341,8 @@ export default function MarketplacePage() {
   // ── Derived state ──────────────────────────────────────────────────
 
   const connectedCount = channels.filter((c) => c.connected).length;
-  const filteredOrders = orderFilter === 'all' ? orders : orders.filter((o) => o.channel_type === orderFilter);
+  const filteredOrders =
+    orderFilter === 'all' ? orders : orders.filter((o) => o.channel_type === orderFilter);
   const discrepancyCount = products.filter((p) => p.has_discrepancy).length;
 
   // ── Render ────────────────────────────────────────────────────────
@@ -332,7 +363,9 @@ export default function MarketplacePage() {
             onClick={handleSyncInventory}
             disabled={syncing !== null || connectedCount === 0}
           >
-            <ArrowUpDown className={`mr-2 h-4 w-4 ${syncing === 'inventory' ? 'animate-spin' : ''}`} />
+            <ArrowUpDown
+              className={`mr-2 h-4 w-4 ${syncing === 'inventory' ? 'animate-spin' : ''}`}
+            />
             Sync Inventory
           </Button>
           <Button onClick={handleSyncProducts} disabled={syncing !== null || connectedCount === 0}>
@@ -371,10 +404,13 @@ export default function MarketplacePage() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" onValueChange={(v) => {
-        if (v === 'orders' && orders.length === 0) loadOrders();
-        if (v === 'products' && products.length === 0) loadProducts();
-      }}>
+      <Tabs
+        defaultValue="overview"
+        onValueChange={(v) => {
+          if (v === 'orders' && orders.length === 0) loadOrders();
+          if (v === 'products' && products.length === 0) loadProducts();
+        }}
+      >
         <TabsList>
           <TabsTrigger value="overview">
             <LayoutGrid className="mr-2 h-4 w-4" />
@@ -401,7 +437,9 @@ export default function MarketplacePage() {
             <div className="grid gap-4 md:grid-cols-3">
               {[1, 2, 3].map((i) => (
                 <Card key={i}>
-                  <CardHeader><Skeleton className="h-5 w-32" /></CardHeader>
+                  <CardHeader>
+                    <Skeleton className="h-5 w-32" />
+                  </CardHeader>
                   <CardContent className="space-y-2">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-8 w-24" />
@@ -416,7 +454,9 @@ export default function MarketplacePage() {
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center justify-between text-base">
                       <span className="flex items-center gap-2">
-                        <span className="text-xl">{CHANNEL_ICONS[channel.channel_type] ?? '🏪'}</span>
+                        <span className="text-xl">
+                          {CHANNEL_ICONS[channel.channel_type] ?? '🏪'}
+                        </span>
                         <span className={CHANNEL_COLORS[channel.channel_type]}>
                           {channel.display_name}
                         </span>
@@ -428,17 +468,23 @@ export default function MarketplacePage() {
                   <CardContent className="space-y-3">
                     <div className="text-muted-foreground space-y-1 text-xs">
                       {channel.last_product_sync && (
-                        <div>Products: {new Date(channel.last_product_sync).toLocaleString('en-AU')}</div>
+                        <div>
+                          Products: {new Date(channel.last_product_sync).toLocaleString('en-AU')}
+                        </div>
                       )}
                       {channel.last_inventory_sync && (
-                        <div>Inventory: {new Date(channel.last_inventory_sync).toLocaleString('en-AU')}</div>
+                        <div>
+                          Inventory: {new Date(channel.last_inventory_sync).toLocaleString('en-AU')}
+                        </div>
                       )}
                       {channel.last_order_sync && (
-                        <div>Orders: {new Date(channel.last_order_sync).toLocaleString('en-AU')}</div>
+                        <div>
+                          Orders: {new Date(channel.last_order_sync).toLocaleString('en-AU')}
+                        </div>
                       )}
-                      {!channel.last_product_sync && !channel.last_inventory_sync && !channel.last_order_sync && (
-                        <div className="italic">Not yet synced</div>
-                      )}
+                      {!channel.last_product_sync &&
+                        !channel.last_inventory_sync &&
+                        !channel.last_order_sync && <div className="italic">Not yet synced</div>}
                     </div>
                     {channel.connected ? (
                       <Button
@@ -483,11 +529,22 @@ export default function MarketplacePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground text-sm">
-              <p>Channels currently run in <strong>demo mode</strong>. To connect live:</p>
+              <p>
+                Channels currently run in <strong>demo mode</strong>. To connect live:
+              </p>
               <ul className="mt-2 list-disc space-y-1 pl-5">
-                <li><strong>Shopify</strong>: Add <code>SHOPIFY_STORE_DOMAIN</code> and <code>SHOPIFY_ACCESS_TOKEN</code>.</li>
-                <li><strong>eBay</strong>: Add <code>EBAY_APP_ID</code>, <code>EBAY_CERT_ID</code>, and <code>EBAY_AUTH_TOKEN</code>.</li>
-                <li><strong>Facebook</strong>: Add <code>FB_PAGE_ACCESS_TOKEN</code> and <code>FB_CATALOG_ID</code>.</li>
+                <li>
+                  <strong>Shopify</strong>: Add <code>SHOPIFY_STORE_DOMAIN</code> and{' '}
+                  <code>SHOPIFY_ACCESS_TOKEN</code>.
+                </li>
+                <li>
+                  <strong>eBay</strong>: Add <code>EBAY_APP_ID</code>, <code>EBAY_CERT_ID</code>,
+                  and <code>EBAY_AUTH_TOKEN</code>.
+                </li>
+                <li>
+                  <strong>Facebook</strong>: Add <code>FB_PAGE_ACCESS_TOKEN</code> and{' '}
+                  <code>FB_CATALOG_ID</code>.
+                </li>
               </ul>
             </CardContent>
           </Card>
@@ -529,10 +586,7 @@ export default function MarketplacePage() {
                           <DropdownMenuLabel>Remove from channel</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           {productChannels.map((ch) => (
-                            <DropdownMenuItem
-                              key={ch}
-                              onClick={() => handleBulkUnlist(ch)}
-                            >
+                            <DropdownMenuItem key={ch} onClick={() => handleBulkUnlist(ch)}>
                               <span className="mr-2">{CHANNEL_ICONS[ch] ?? '🏪'}</span>
                               Unlist from {ch.charAt(0).toUpperCase() + ch.slice(1)}
                             </DropdownMenuItem>
@@ -541,8 +595,15 @@ export default function MarketplacePage() {
                       </DropdownMenu>
                     </>
                   )}
-                  <Button variant="outline" size="sm" onClick={loadProducts} disabled={productsLoading}>
-                    <RefreshCw className={`mr-2 h-3.5 w-3.5 ${productsLoading ? 'animate-spin' : ''}`} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={loadProducts}
+                    disabled={productsLoading}
+                  >
+                    <RefreshCw
+                      className={`mr-2 h-3.5 w-3.5 ${productsLoading ? 'animate-spin' : ''}`}
+                    />
                     Refresh
                   </Button>
                 </div>
@@ -551,7 +612,9 @@ export default function MarketplacePage() {
             <CardContent>
               {productsLoading ? (
                 <div className="space-y-2">
-                  {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-14 w-full" />)}
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Skeleton key={i} className="h-14 w-full" />
+                  ))}
                 </div>
               ) : (
                 <Table>
@@ -596,15 +659,14 @@ export default function MarketplacePage() {
                           <TableCell>
                             <div className="font-medium">{product.title}</div>
                             {product.sku && (
-                              <div className="text-muted-foreground font-mono text-xs">{product.sku}</div>
+                              <div className="text-muted-foreground font-mono text-xs">
+                                {product.sku}
+                              </div>
                             )}
                           </TableCell>
                           {productChannels.map((ch) => (
                             <TableCell key={ch}>
-                              <ChannelStockCell
-                                data={product.channels[ch]}
-                                channelType={ch}
-                              />
+                              <ChannelStockCell data={product.channels[ch]} channelType={ch} />
                             </TableCell>
                           ))}
                           <TableCell>
@@ -621,7 +683,10 @@ export default function MarketplacePage() {
                     })}
                     {products.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={productChannels.length + 3} className="py-10 text-center">
+                        <TableCell
+                          colSpan={productChannels.length + 3}
+                          className="py-10 text-center"
+                        >
                           <Package className="text-muted-foreground mx-auto mb-2 h-10 w-10" />
                           <p className="text-muted-foreground text-sm">
                             No products found. Connect channels and sync to see listings here.
@@ -673,7 +738,9 @@ export default function MarketplacePage() {
                     </SelectContent>
                   </Select>
                   <Button variant="outline" size="sm" onClick={loadOrders} disabled={ordersLoading}>
-                    <RefreshCw className={`mr-2 h-3.5 w-3.5 ${ordersLoading ? 'animate-spin' : ''}`} />
+                    <RefreshCw
+                      className={`mr-2 h-3.5 w-3.5 ${ordersLoading ? 'animate-spin' : ''}`}
+                    />
                     Refresh
                   </Button>
                 </div>
@@ -682,7 +749,9 @@ export default function MarketplacePage() {
             <CardContent>
               {ordersLoading ? (
                 <div className="space-y-2">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
                 </div>
               ) : (
                 <Table>
@@ -710,16 +779,22 @@ export default function MarketplacePage() {
                         </TableCell>
                         <TableCell>
                           <div className="font-medium">{order.customer_name || '—'}</div>
-                          <div className="text-muted-foreground text-xs">{order.customer_email || ''}</div>
+                          <div className="text-muted-foreground text-xs">
+                            {order.customer_email || ''}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           ${order.total_amount.toFixed(2)} {order.currency}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="capitalize">{order.status}</Badge>
+                          <Badge variant="outline" className="capitalize">
+                            {order.status}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
-                          {order.ordered_at ? new Date(order.ordered_at).toLocaleDateString('en-AU') : '—'}
+                          {order.ordered_at
+                            ? new Date(order.ordered_at).toLocaleDateString('en-AU')
+                            : '—'}
                         </TableCell>
                       </TableRow>
                     ))}

@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import BackgroundJob, JobStatus
 from src.db.schemas import Job, JobCreate
 
-router = APIRouter(prefix="/api/jobs", tags=["jobs"])
+router = APIRouter(prefix="/api/jobs", tags=["jobs"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("/", status_code=201, response_model=Job)

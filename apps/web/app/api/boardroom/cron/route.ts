@@ -8,14 +8,14 @@
  * on the backend (or directly via the SDK if running serverless).
  */
 
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/api/backend-url';
 
 export async function GET(request: Request) {
   // ── Auth: Vercel sends Authorization: Bearer <CRON_SECRET> ──
-  const authHeader = request.headers.get("authorization");
+  const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse("Unauthorized", { status: 401 });
+    return new NextResponse('Unauthorized', { status: 401 });
   }
 
   const sessionStart = Date.now();
@@ -27,12 +27,12 @@ export async function GET(request: Request) {
     // Kick off the boardroom session on the backend.
     // Backend runs the full 18-step orchestrator and returns the debrief JSON.
     const response = await fetch(`${BACKEND_URL}/api/boardroom/session`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.CRON_SECRET}`,
-        "X-CCW-Session-Source": "vercel-cron",
-        "X-CCW-Timestamp": timestamp,
+        'X-CCW-Session-Source': 'vercel-cron',
+        'X-CCW-Timestamp': timestamp,
       },
       // Vercel function timeout is 300s max — boardroom sessions typically 60–120s
       signal: AbortSignal.timeout(280_000),
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     const duration = Date.now() - sessionStart;
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : 'Unknown error';
 
     console.error(`[Boardroom CRON] Session failed after ${duration}ms:`, message);
 
@@ -98,8 +98,8 @@ async function notifyCEO(errorMessage: string, timestamp: string): Promise<void>
 
   try {
     await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `🚨 *CCW Boardroom CRON Failed*\n*Time:* ${timestamp}\n*Error:* ${errorMessage}`,
       }),

@@ -54,6 +54,7 @@ node scripts/update-linear.js
 ## Troubleshooting
 
 **Error: "LINEAR_API_KEY not configured!"**
+
 - Make sure `.linear-api-key` exists in project root
 - Check the file contains `LINEAR_API_KEY=your_key_here`
 - Or set environment variable: `export LINEAR_API_KEY=your_key_here`

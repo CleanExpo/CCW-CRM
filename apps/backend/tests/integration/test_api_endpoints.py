@@ -31,8 +31,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from src.api.main import app
 from src.db.models.subscription import Subscription, SubscriptionStatus, SubscriptionTier
-from src.db.demo_models import Customer, Organization, Product, Quote
-from src.db.models_base import User
+from src.db.erp_models import Customer, Organization, Product, Quote, User
 
 
 # Test database URL (use in-memory SQLite for fast tests)
@@ -46,7 +45,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="function")
 def db_session():
     """Create a fresh database session for each test."""
-    from src.db.models_base import Base
+    from src.db.erp_models import Base
 
     # Create all tables
     Base.metadata.create_all(bind=engine)

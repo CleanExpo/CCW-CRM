@@ -69,6 +69,7 @@ fi
 ## Lead Agent Response (when notified)
 
 When TeammateIdle fires, the Lead agent:
+
 1. Checks if the task is still completable without this teammate's output
 2. If yes: marks teammate as `PARTIAL`, continues synthesis with available data
 3. If no: gracefully degrades to single-agent mode for the remaining work
@@ -77,6 +78,7 @@ When TeammateIdle fires, the Lead agent:
 ## Integration Point
 
 Register in `.claude/agents/orchestrator/CLAUDE.md` under `quality_gates`:
+
 ```yaml
 quality_gates:
   - hook: TeammateIdle

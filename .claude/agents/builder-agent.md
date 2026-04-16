@@ -59,6 +59,7 @@ Read: .claude/.execution/phase-handoffs/phase-2-architecture.json
 ```
 
 Parse the architecture:
+
 - Components to create
 - Files to modify
 - Implementation order
@@ -76,8 +77,8 @@ Create progress tracker at `.claude/.execution/phase-handoffs/phase-3-build.json
   "status": "in_progress",
   "files_completed": [],
   "files_remaining": [
-    {"path": "...", "action": "create", "priority": 1},
-    {"path": "...", "action": "modify", "priority": 2}
+    { "path": "...", "action": "create", "priority": 1 },
+    { "path": "...", "action": "modify", "priority": 2 }
   ],
   "tests_written": [],
   "quality_checks": {
@@ -120,6 +121,7 @@ Read: [reference file path]
 ```
 
 Study the pattern:
+
 - Import structure
 - Component structure
 - Function signatures
@@ -154,30 +156,35 @@ Use Edit tool with precise changes:
 **Quality Standards (MANDATORY):**
 
 ☐ **TypeScript/Python:**
+
 - All variables typed
 - All functions have return types
 - No `any` types (unless absolutely necessary)
 - Imports organized alphabetically
 
 ☐ **Error Handling:**
+
 - Try-catch around async operations
 - User-friendly error messages
 - Toast notifications for user-facing errors
 - Proper error logging
 
 ☐ **Loading States:**
+
 - `isLoading` state for async operations
 - Disable buttons during loading
 - Loading indicators in UI
 - Handle edge cases (empty states)
 
 ☐ **Code Quality:**
+
 - Follow existing code style
 - Proper indentation
 - Clear variable names
 - Comments only where logic is complex
 
 ☐ **Imports:**
+
 - Use `@/` prefix for internal imports
 - Group imports: React → UI → Internal → Types
 - No unused imports
@@ -196,6 +203,7 @@ Validate file implementation.
 **Expected Pattern:** [pattern from architecture]
 
 **Checks:**
+
 - Code matches specification
 - Pattern correctly followed
 - Error handling present
@@ -206,6 +214,7 @@ Validate file implementation.
 ```
 
 If validation fails:
+
 - Fix issues immediately
 - Re-validate
 - Do NOT proceed to next file until current file passes
@@ -220,6 +229,7 @@ If validation fails:
 **Duration:** [Z] minutes
 
 **Key Implementations:**
+
 - [Feature 1]
 - [Feature 2]
 
@@ -233,6 +243,7 @@ If validation fails:
 ```
 
 Update build progress JSON:
+
 - Move file from `files_remaining` to `files_completed`
 - Update `elapsed_time_minutes`
 - Update quality checks (if applicable)
@@ -317,6 +328,7 @@ cd apps/backend && pytest tests/api/test_[module].py -v
 ```
 
 If tests fail:
+
 - Fix implementation
 - Re-run tests
 - Ensure 100% pass rate before continuing
@@ -339,6 +351,7 @@ pnpm turbo run test
 ```
 
 Update build progress:
+
 ```json
 {
   "quality_checks": {
@@ -352,6 +365,7 @@ Update build progress:
 ```
 
 If quality checks fail:
+
 - **STOP** immediately
 - Fix issues
 - Re-run checks
@@ -368,17 +382,21 @@ If quality checks fail:
 **Estimated Remaining:** [Y] minutes
 
 **Completed ([A]/[B] files):**
+
 - ✅ [File 1]
 - ✅ [File 2]
 
 **In Progress:**
+
 - 🔨 [Current file]
 
 **Remaining:**
+
 - ⏳ [File 3]
 - ⏳ [File 4]
 
 **Quality Status:**
+
 - TypeScript: ✅ Passing
 - Lint: ✅ Passing
 - Tests: ✅ [X]/[Y] passing
@@ -399,6 +417,7 @@ If you encounter a blocker:
 **Issue:** [Description of blocker]
 
 **What I tried:**
+
 1. [Attempt 1]
 2. [Attempt 2]
 
@@ -417,12 +436,14 @@ D. [Request user input]
 ```
 
 **DO NOT:**
+
 - Skip the problematic code
 - Move on and "come back later"
 - Implement a workaround without approval
 - Guess and hope it works
 
 **DO:**
+
 - Stop immediately
 - Analyze the issue thoroughly
 - Present clear options
@@ -441,12 +462,14 @@ When all files are created/modified and tests are written:
 **Tests Written:** [C]
 
 **Quality Report:**
+
 - ✅ TypeScript: Compiles successfully
 - ✅ Python: Type checks pass
 - ✅ Lint: No errors
 - ⚠️ Tests: [X]/[Y] passing ([Z]% coverage)
 
 **Remaining Work:**
+
 - Fix failing tests: [list]
 - Complete integration testing
 - Final validation
@@ -469,29 +492,34 @@ Phase 4 is the **deployment readiness gate**. This is where you:
 **Deployment Readiness Criteria:**
 
 ☐ **All Files Complete**
+
 - All planned files created
 - All planned modifications made
 - No placeholder code or TODOs
 
 ☐ **All Tests Passing**
+
 - Frontend tests: 100% pass
 - Backend tests: 100% pass
 - No skipped tests
 - No flaky tests
 
 ☐ **Quality Checks Pass**
+
 - TypeScript: ✅ No errors
 - Python types: ✅ No errors
 - Lint: ✅ No warnings
 - Code review: ✅ Follows patterns
 
 ☐ **No Breaking Changes**
+
 - Existing functionality preserved
 - No unauthorized modifications
 - API contracts maintained
 - Database schema unchanged
 
 ☐ **Manual Verification**
+
 - Feature works as intended
 - Error handling works
 - Loading states work
@@ -545,15 +573,18 @@ pnpm turbo run type-check lint test
 **Total Tests:** [Z]
 
 ### Files Created ([A]):
+
 - apps/web/components/[...].tsx
 - apps/backend/src/api/routes/[...].py
 - [... all created files]
 
 ### Files Modified ([B]):
+
 - apps/web/app/(dashboard)/[...]/page.tsx
 - [... all modified files]
 
 ### Quality Report:
+
 - ✅ TypeScript: Compiles (0 errors)
 - ✅ Python: Type checks pass (0 errors)
 - ✅ Lint: Pass (0 warnings)
@@ -561,15 +592,18 @@ pnpm turbo run type-check lint test
 - ✅ Test Coverage: [N]%
 
 ### Manual Testing:
+
 - ✅ Feature works as expected
 - ✅ Error states handled correctly
 - ✅ Loading states work
 - ✅ UI is polished
 
 ### Breaking Changes:
+
 - None detected
 
 ### Deployment Readiness:
+
 ✅ **READY FOR DEPLOYMENT**
 
 All code is complete, tested, and production-ready.
@@ -585,27 +619,31 @@ All code is complete, tested, and production-ready.
 
 If code doesn't compile or run:
 
-```markdown
+````markdown
 ## ❌ Build Error
 
 **File:** [filename]
 **Error:** [error message]
 
 **Code Context:**
+
 ```[language]
 [code snippet causing error]
 ```
+````
 
 **Analysis:**
 [Why this error occurred]
 
 **Fix Applied:**
+
 ```[language]
 [corrected code]
 ```
 
 **Status:** [Retrying | Fixed | Needs guidance]
-```
+
+````
 
 ### Test Failure
 
@@ -627,7 +665,7 @@ If tests fail:
 [What was changed to fix]
 
 **Retest Result:** [Pass | Still failing]
-```
+````
 
 ### Pattern Mismatch
 
@@ -735,6 +773,7 @@ export function RecentQuotesWidget() {
 ```
 
 **Why this is good:**
+
 - ✅ Follows existing widget pattern exactly
 - ✅ Proper TypeScript types
 - ✅ Error handling with toast
@@ -765,6 +804,7 @@ export function RecentQuotesWidget() {
 ```
 
 **Why this is bad:**
+
 - ❌ No TypeScript types
 - ❌ No error handling
 - ❌ No loading state

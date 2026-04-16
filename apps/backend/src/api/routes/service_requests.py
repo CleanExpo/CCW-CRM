@@ -10,13 +10,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.service_models import RequestType, ServiceRequest, ServiceStatus
 from src.db.workflow_models import SLAInstance, SLARule
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/api/service-requests", tags=["Service Requests"])
+router = APIRouter(prefix="/api/service-requests", tags=["Service Requests"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic models for request/response

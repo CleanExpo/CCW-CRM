@@ -37,13 +37,13 @@ Browser (Portal UI)
 
 ## Per-Portal Assistants
 
-| Portal | Assistant Name | Personality | Capabilities |
-|---|---|---|---|
-| CCW ERP Dashboard | Warehouse Assistant | Practical, metric-focused | Stock queries, order status, invoice lookup, reorder alerts |
-| CARSI LMS | Study Buddy | Encouraging, educational | Course questions, progress tracking, IICRC compliance lookup |
-| RestoreAssist | Field Guide | Technical, safety-first | IICRC S500 procedures, moisture readings, job documentation |
-| G-Pilot Hub | Navigator | Cross-business, strategic | Cross-business queries, project status, unified search |
-| Bron Clone | Bron | Conversational, autonomous | Workflow decisions, task management, agent status |
+| Portal            | Assistant Name      | Personality                | Capabilities                                                 |
+| ----------------- | ------------------- | -------------------------- | ------------------------------------------------------------ |
+| CCW ERP Dashboard | Warehouse Assistant | Practical, metric-focused  | Stock queries, order status, invoice lookup, reorder alerts  |
+| CARSI LMS         | Study Buddy         | Encouraging, educational   | Course questions, progress tracking, IICRC compliance lookup |
+| RestoreAssist     | Field Guide         | Technical, safety-first    | IICRC S500 procedures, moisture readings, job documentation  |
+| G-Pilot Hub       | Navigator           | Cross-business, strategic  | Cross-business queries, project status, unified search       |
+| Bron Clone        | Bron                | Conversational, autonomous | Workflow decisions, task management, agent status            |
 
 ---
 
@@ -59,6 +59,7 @@ interface AgentBrowserProps {
 ```
 
 Features:
+
 - Collapsible with keyboard shortcut: `Cmd/Ctrl + Shift + A`
 - Chat history persisted in localStorage (per session)
 - "Clear conversation" button
@@ -106,17 +107,20 @@ data: {"type": "done", "usage": {"tokens": 450}}
 ## Implementation Phases
 
 ### Phase 1 — CCW ERP Only (April 2026)
+
 - [ ] `AgentBrowserSidebar` component (CCW ERP only)
 - [ ] `POST /api/ai/assistant` endpoint
 - [ ] Warehouse Assistant persona (stock + orders context)
 - [ ] Integration with existing `/api/products?low_stock=true` endpoint
 
 ### Phase 2 — CARSI + RestoreAssist (May 2026)
+
 - [ ] CARSI Study Buddy persona (course + progress context)
 - [ ] RestoreAssist Field Guide persona (IICRC S500 lookup)
 - [ ] SSE streaming responses
 
 ### Phase 3 — All Portals (June 2026)
+
 - [ ] G-Pilot Hub Navigator
 - [ ] Bron Clone integration
 - [ ] Agent Teams backend (parallel context + query + response)

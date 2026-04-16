@@ -67,7 +67,8 @@ export async function preFlightCheck(sessionId) {
   const failed = [];
 
   for (const result of results) {
-    const r = result.status === 'fulfilled' ? result.value : { name: 'Unknown', ok: false, required: true };
+    const r =
+      result.status === 'fulfilled' ? result.value : { name: 'Unknown', ok: false, required: true };
     if (r.ok) {
       passed.push(r.name);
       console.log(`[Pre-flight] ✅ ${r.name} (${r.status})`);
@@ -88,6 +89,8 @@ export async function preFlightCheck(sessionId) {
     throw new Error(msg);
   }
 
-  console.log(`[Pre-flight] PASSED ✅ — ${passed.length} endpoints healthy, ${warned.length} optional skipped`);
+  console.log(
+    `[Pre-flight] PASSED ✅ — ${passed.length} endpoints healthy, ${warned.length} optional skipped`
+  );
   return { passed, warned };
 }

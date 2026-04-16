@@ -1,12 +1,13 @@
 ## Summary
 
-<!-- What changed and why? 2-3 bullet points max -->
--
+## <!-- What changed and why? 2-3 bullet points max -->
+
 -
 
 ## Linear Issue
 
 <!-- Required: UNI-XXXX -->
+
 Closes UNI-
 
 ## Type of Change
@@ -22,10 +23,12 @@ Closes UNI-
 ## Test Plan
 
 <!-- How was this tested? -->
+
 - [ ] Unit tests added/updated
 - [ ] Manual testing performed (describe steps below)
 
 Steps to verify:
+
 1.
 2.
 

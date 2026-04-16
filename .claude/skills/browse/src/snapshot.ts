@@ -24,20 +24,33 @@ import { TEMP_DIR, isPathWithin } from './platform';
 
 // Roles considered "interactive" for the -i flag
 const INTERACTIVE_ROLES = new Set([
-  'button', 'link', 'textbox', 'checkbox', 'radio', 'combobox',
-  'listbox', 'menuitem', 'menuitemcheckbox', 'menuitemradio',
-  'option', 'searchbox', 'slider', 'spinbutton', 'switch', 'tab',
+  'button',
+  'link',
+  'textbox',
+  'checkbox',
+  'radio',
+  'combobox',
+  'listbox',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'option',
+  'searchbox',
+  'slider',
+  'spinbutton',
+  'switch',
+  'tab',
   'treeitem',
 ]);
 
 interface SnapshotOptions {
-  interactive?: boolean;       // -i: only interactive elements
-  compact?: boolean;           // -c: remove empty structural elements
-  depth?: number;              // -d N: limit tree depth
-  selector?: string;           // -s SEL: scope to CSS selector
-  diff?: boolean;              // -D / --diff: diff against last snapshot
-  annotate?: boolean;          // -a / --annotate: annotated screenshot
-  outputPath?: string;         // -o / --output: path for annotated screenshot
+  interactive?: boolean; // -i: only interactive elements
+  compact?: boolean; // -c: remove empty structural elements
+  depth?: number; // -d N: limit tree depth
+  selector?: string; // -s SEL: scope to CSS selector
+  diff?: boolean; // -D / --diff: diff against last snapshot
+  annotate?: boolean; // -a / --annotate: annotated screenshot
+  outputPath?: string; // -o / --output: path for annotated screenshot
   cursorInteractive?: boolean; // -C / --cursor-interactive: scan cursor:pointer etc.
 }
 
@@ -56,22 +69,68 @@ export const SNAPSHOT_FLAGS: Array<{
   valueHint?: string;
   optionKey: keyof SnapshotOptions;
 }> = [
-  { short: '-i', long: '--interactive', description: 'Interactive elements only (buttons, links, inputs) with @e refs', optionKey: 'interactive' },
-  { short: '-c', long: '--compact', description: 'Compact (no empty structural nodes)', optionKey: 'compact' },
-  { short: '-d', long: '--depth', description: 'Limit tree depth (0 = root only, default: unlimited)', takesValue: true, valueHint: '<N>', optionKey: 'depth' },
-  { short: '-s', long: '--selector', description: 'Scope to CSS selector', takesValue: true, valueHint: '<sel>', optionKey: 'selector' },
-  { short: '-D', long: '--diff', description: 'Unified diff against previous snapshot (first call stores baseline)', optionKey: 'diff' },
-  { short: '-a', long: '--annotate', description: 'Annotated screenshot with red overlay boxes and ref labels', optionKey: 'annotate' },
-  { short: '-o', long: '--output', description: 'Output path for annotated screenshot (default: <temp>/browse-annotated.png)', takesValue: true, valueHint: '<path>', optionKey: 'outputPath' },
-  { short: '-C', long: '--cursor-interactive', description: 'Cursor-interactive elements (@c refs — divs with pointer, onclick)', optionKey: 'cursorInteractive' },
+  {
+    short: '-i',
+    long: '--interactive',
+    description: 'Interactive elements only (buttons, links, inputs) with @e refs',
+    optionKey: 'interactive',
+  },
+  {
+    short: '-c',
+    long: '--compact',
+    description: 'Compact (no empty structural nodes)',
+    optionKey: 'compact',
+  },
+  {
+    short: '-d',
+    long: '--depth',
+    description: 'Limit tree depth (0 = root only, default: unlimited)',
+    takesValue: true,
+    valueHint: '<N>',
+    optionKey: 'depth',
+  },
+  {
+    short: '-s',
+    long: '--selector',
+    description: 'Scope to CSS selector',
+    takesValue: true,
+    valueHint: '<sel>',
+    optionKey: 'selector',
+  },
+  {
+    short: '-D',
+    long: '--diff',
+    description: 'Unified diff against previous snapshot (first call stores baseline)',
+    optionKey: 'diff',
+  },
+  {
+    short: '-a',
+    long: '--annotate',
+    description: 'Annotated screenshot with red overlay boxes and ref labels',
+    optionKey: 'annotate',
+  },
+  {
+    short: '-o',
+    long: '--output',
+    description: 'Output path for annotated screenshot (default: <temp>/browse-annotated.png)',
+    takesValue: true,
+    valueHint: '<path>',
+    optionKey: 'outputPath',
+  },
+  {
+    short: '-C',
+    long: '--cursor-interactive',
+    description: 'Cursor-interactive elements (@c refs — divs with pointer, onclick)',
+    optionKey: 'cursorInteractive',
+  },
 ];
 
 interface ParsedNode {
   indent: number;
   role: string;
   name: string | null;
-  props: string;      // e.g., "[level=1]"
-  children: string;   // inline text content after ":"
+  props: string; // e.g., "[level=1]"
+  children: string; // inline text content after ":"
   rawLine: string;
 }
 
@@ -81,7 +140,7 @@ interface ParsedNode {
 export function parseSnapshotArgs(args: string[]): SnapshotOptions {
   const opts: SnapshotOptions = {};
   for (let i = 0; i < args.length; i++) {
-    const flag = SNAPSHOT_FLAGS.find(f => f.short === args[i] || f.long === args[i]);
+    const flag = SNAPSHOT_FLAGS.find((f) => f.short === args[i] || f.long === args[i]);
     if (!flag) throw new Error(`Unknown snapshot flag: ${args[i]}`);
     if (flag.takesValue) {
       const value = args[++i];
@@ -130,10 +189,7 @@ function parseLine(line: string): ParsedNode | null {
 /**
  * Take an accessibility snapshot and build the ref map.
  */
-export async function handleSnapshot(
-  args: string[],
-  bm: BrowserManager
-): Promise<string> {
+export async function handleSnapshot(args: string[], bm: BrowserManager): Promise<string> {
   const opts = parseSnapshotArgs(args);
   const page = bm.getPage();
   // Frame-aware target for accessibility tree
@@ -238,7 +294,13 @@ export async function handleSnapshot(
     try {
       const cursorElements = await target.evaluate(() => {
         const STANDARD_INTERACTIVE = new Set([
-          'A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'SUMMARY', 'DETAILS',
+          'A',
+          'BUTTON',
+          'INPUT',
+          'SELECT',
+          'TEXTAREA',
+          'SUMMARY',
+          'DETAILS',
         ]);
 
         const results: Array<{ selector: string; text: string; reason: string }> = [];
@@ -253,7 +315,8 @@ export async function handleSnapshot(
           const style = getComputedStyle(el);
           const hasCursorPointer = style.cursor === 'pointer';
           const hasOnclick = el.hasAttribute('onclick');
-          const hasTabindex = el.hasAttribute('tabindex') && parseInt(el.getAttribute('tabindex')!, 10) >= 0;
+          const hasTabindex =
+            el.hasAttribute('tabindex') && parseInt(el.getAttribute('tabindex')!, 10) >= 0;
           const hasRole = el.hasAttribute('role');
 
           if (!hasCursorPointer && !hasOnclick && !hasTabindex) continue;
@@ -273,7 +336,8 @@ export async function handleSnapshot(
           }
           const selector = parts.join(' > ');
 
-          const text = (el as HTMLElement).innerText?.trim().slice(0, 80) || el.tagName.toLowerCase();
+          const text =
+            (el as HTMLElement).innerText?.trim().slice(0, 80) || el.tagName.toLowerCase();
           const reasons: string[] = [];
           if (hasCursorPointer) reasons.push('cursor:pointer');
           if (hasOnclick) reasons.push('onclick');
@@ -321,7 +385,10 @@ export async function handleSnapshot(
     }
     try {
       // Inject overlay divs at each ref's bounding box
-      const boxes: Array<{ ref: string; box: { x: number; y: number; width: number; height: number } }> = [];
+      const boxes: Array<{
+        ref: string;
+        box: { x: number; y: number; width: number; height: number };
+      }> = [];
       for (const [ref, entry] of refMap) {
         try {
           const box = await entry.locator.boundingBox({ timeout: 1000 });
@@ -346,7 +413,8 @@ export async function handleSnapshot(
           `;
           const label = document.createElement('span');
           label.textContent = ref;
-          label.style.cssText = 'position: absolute; top: -14px; left: 0; background: red; color: white; padding: 0 3px; font-size: 10px;';
+          label.style.cssText =
+            'position: absolute; top: -14px; left: 0; background: red; color: white; padding: 0 3px; font-size: 10px;';
           overlay.appendChild(label);
           document.body.appendChild(overlay);
         }
@@ -356,7 +424,7 @@ export async function handleSnapshot(
 
       // Always remove overlays
       await page.evaluate(() => {
-        document.querySelectorAll('.__browse_annotation__').forEach(el => el.remove());
+        document.querySelectorAll('.__browse_annotation__').forEach((el) => el.remove());
       });
 
       output.push('');
@@ -365,7 +433,7 @@ export async function handleSnapshot(
       // Remove overlays even on screenshot failure
       try {
         await page.evaluate(() => {
-          document.querySelectorAll('.__browse_annotation__').forEach(el => el.remove());
+          document.querySelectorAll('.__browse_annotation__').forEach((el) => el.remove());
         });
       } catch {}
     }
@@ -376,7 +444,10 @@ export async function handleSnapshot(
     const lastSnapshot = bm.getLastSnapshot();
     if (!lastSnapshot) {
       bm.setLastSnapshot(snapshotText);
-      return snapshotText + '\n\n(no previous snapshot to diff against — this snapshot stored as baseline)';
+      return (
+        snapshotText +
+        '\n\n(no previous snapshot to diff against — this snapshot stored as baseline)'
+      );
     }
 
     const changes = Diff.diffLines(lastSnapshot, snapshotText);
@@ -384,7 +455,7 @@ export async function handleSnapshot(
 
     for (const part of changes) {
       const prefix = part.added ? '+' : part.removed ? '-' : ' ';
-      const diffLines = part.value.split('\n').filter(l => l.length > 0);
+      const diffLines = part.value.split('\n').filter((l) => l.length > 0);
       for (const line of diffLines) {
         diffOutput.push(`${prefix} ${line}`);
       }

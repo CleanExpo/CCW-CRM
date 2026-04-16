@@ -12,6 +12,7 @@
 The Autonomous Development Framework is a self-sustaining, AI-driven software development system that coordinates specialized agents through a 5-phase pipeline to deliver production-ready code from a simple task description.
 
 **Key Capabilities:**
+
 - **Autonomous Execution**: Complete features from analysis to deployment
 - **Quality Assurance**: Continuous validation at every step
 - **Pattern Following**: Automatically matches existing code patterns
@@ -58,6 +59,7 @@ Completion Report → User
 **Role**: Coordinates all subagents and manages execution flow
 
 **Responsibilities:**
+
 - Parse user task
 - Initialize execution state
 - Route to appropriate subagents
@@ -75,6 +77,7 @@ Completion Report → User
 **Role**: Codebase explorer and pattern analyzer
 
 **Responsibilities:**
+
 - Analyze relevant code areas
 - Identify existing patterns
 - Document constraints
@@ -83,10 +86,12 @@ Completion Report → User
 - Produce discovery report
 
 **Inputs:**
+
 - User task description
 - Access to codebase (Glob, Read, Grep tools)
 
 **Outputs:**
+
 - Discovery report (JSON)
 - Pattern documentation
 - Constraint list
@@ -101,6 +106,7 @@ Completion Report → User
 **Role**: Solution designer and specification writer
 
 **Responsibilities:**
+
 - Design complete solution
 - Specify each component in detail
 - Create implementation plan
@@ -109,10 +115,12 @@ Completion Report → User
 - Estimate time and complexity
 
 **Inputs:**
+
 - Discovery report from Phase 1
 - User task description
 
 **Outputs:**
+
 - Architecture document (JSON)
 - Component specifications
 - File-by-file implementation plan
@@ -127,6 +135,7 @@ Completion Report → User
 **Role**: Code implementer
 
 **Responsibilities:**
+
 - Implement code exactly as specified
 - Follow patterns precisely
 - Write tests continuously
@@ -135,10 +144,12 @@ Completion Report → User
 - Achieve 100% test pass rate
 
 **Inputs:**
+
 - Architecture document from Phase 2
 - Pattern reference files
 
 **Outputs:**
+
 - Implemented code files
 - Test files
 - Build progress reports
@@ -153,6 +164,7 @@ Completion Report → User
 **Role**: Quality assurance guardian
 
 **Responsibilities:**
+
 - Validate outputs at each phase
 - Check constraint compliance
 - Verify code quality
@@ -161,10 +173,12 @@ Completion Report → User
 - Recommend proceed/retry/escalate
 
 **Inputs:**
+
 - Phase outputs (handoffs)
 - Validation criteria (phase-specific)
 
 **Outputs:**
+
 - Validation reports (JSON)
 - Pass/fail/warning status
 - Recommendations
@@ -179,6 +193,7 @@ Completion Report → User
 **Role**: Completion verifier and documenter
 
 **Responsibilities:**
+
 - Verify completion criteria
 - Assess deployment readiness
 - Create rollback plan
@@ -187,10 +202,12 @@ Completion Report → User
 - Produce completion report
 
 **Inputs:**
+
 - Build final handoff from Phase 4
 - User task description
 
 **Outputs:**
+
 - Completion report (JSON)
 - File change manifest
 - Deployment assessment
@@ -235,6 +252,7 @@ Completion Report → User
 ```
 
 **State Persistence:**
+
 - All state is filesystem-based (JSON files)
 - No database required
 - Git-ignored (local machine only)
@@ -247,6 +265,7 @@ Completion Report → User
 Each phase produces a **handoff document** for the next phase:
 
 **Handoff Schema:**
+
 ```json
 {
   "from_phase": 1,
@@ -255,7 +274,9 @@ Each phase produces a **handoff document** for the next phase:
   "to_agent": "architect",
   "timestamp": "ISO 8601",
   "data": {
-    "phase_N_output": { /* phase-specific data */ }
+    "phase_N_output": {
+      /* phase-specific data */
+    }
   },
   "validation_passed": false,
   "validator_notes": []
@@ -263,6 +284,7 @@ Each phase produces a **handoff document** for the next phase:
 ```
 
 **Flow:**
+
 ```
 Phase 1 (Discovery)
     ↓ handoff
@@ -284,6 +306,7 @@ Completion Report → User
 After each phase output, Validator produces a **validation report**:
 
 **Report Schema:**
+
 ```json
 {
   "phase": 2,
@@ -306,6 +329,7 @@ After each phase output, Validator produces a **validation report**:
 ```
 
 **Validation Flow:**
+
 ```
 Agent produces output
     ↓
@@ -391,22 +415,26 @@ For each phase (1-5):
 ### Built-in Safety Mechanisms
 
 **Constraint Enforcement:**
+
 - ✅ **Discovery Phase**: Identifies forbidden changes
 - ✅ **Architecture Phase**: Blocks designs with forbidden changes
 - ✅ **Build Phase**: Continuous validation prevents unauthorized code
 - ✅ **Build Final Phase**: Strict deployment gate (100% tests)
 
 **Forbidden Actions** (BLOCKED):
+
 - ❌ Modify database schema (`demo_models.py`)
 - ❌ Modify auth code (`middleware.ts`, `demo_auth.py`)
 - ❌ Break existing API contracts
 
 **Approval Required**:
+
 - ⚠️ Create new folders
 - ⚠️ Install new packages
 - ⚠️ Make breaking API changes
 
 **Validation Gates:**
+
 - Phase 1: Completeness, accuracy
 - Phase 2: Design quality, constraint compliance (CRITICAL)
 - Phase 3: Code quality (continuous)
@@ -418,6 +446,7 @@ For each phase (1-5):
 ### Error Recovery
 
 **Validation Failure:**
+
 ```
 Attempt 1: Retry with corrections
 Attempt 2: Retry with different approach
@@ -426,6 +455,7 @@ Failure: Escalate to user
 ```
 
 **Blocker Encountered:**
+
 ```
 1. Agent reports blocker with context
 2. Presents options
@@ -434,6 +464,7 @@ Failure: Escalate to user
 ```
 
 **State Corruption:**
+
 ```
 1. Detect corrupted state
 2. Attempt reconstruction from logs
@@ -448,6 +479,7 @@ Failure: Escalate to user
 ### State Preservation
 
 **When task pauses/cancels:**
+
 ```
 1. Complete current step (safe checkpoint)
 2. Save task state to current-task.json
@@ -457,6 +489,7 @@ Failure: Escalate to user
 ```
 
 **Resume protocol:**
+
 ```
 1. User: /autonomous --resume task_...
 2. Load task state from current-task.json
@@ -467,6 +500,7 @@ Failure: Escalate to user
 ```
 
 **Resumption Requirements:**
+
 - `current-task.json` exists and valid
 - Last handoff document exists
 - Execution log is intact
@@ -479,12 +513,14 @@ Failure: Escalate to user
 ### Manual Approval (Default)
 
 **Behavior:**
+
 - Pause after each phase
 - Wait for user "proceed"
 - User can inspect outputs
 - User can cancel anytime
 
 **Use Cases:**
+
 - First-time users
 - Complex/risky changes
 - Learning the system
@@ -495,6 +531,7 @@ Failure: Escalate to user
 ### Auto Approval
 
 **Behavior:**
+
 - Proceed automatically
 - Pause ONLY for:
   - Breaking changes
@@ -503,6 +540,7 @@ Failure: Escalate to user
   - Validation failures
 
 **Use Cases:**
+
 - Simple changes
 - Trusted patterns
 - Speed priority
@@ -517,6 +555,7 @@ Failure: Escalate to user
 **Format**: JSON Lines (append-only)
 
 **Events Logged:**
+
 - `task_started`
 - `phase_started`
 - `phase_completed`
@@ -529,6 +568,7 @@ Failure: Escalate to user
 - `task_completed`
 
 **Usage:**
+
 ```powershell
 # View all events
 Get-Content .claude\.execution\execution-log.jsonl | ConvertFrom-Json
@@ -545,12 +585,14 @@ Get-Content .claude\.execution\execution-log.jsonl -Tail 10 | ConvertFrom-Json
 ### Progress Tracking
 
 **Real-time Progress:**
+
 - Phase transitions announced
 - Validation results displayed
 - File completions reported (Phase 3)
 - Quality checks shown every 2 files
 
 **State Inspection:**
+
 ```powershell
 # Current task status
 .\scripts\autonomous\validate-state.ps1
@@ -568,16 +610,17 @@ Get-Content .claude\.execution\phase-handoffs\phase-2-architecture.json
 
 ### Time Estimates (Typical)
 
-| Phase | Simple | Medium | Complex |
-|-------|--------|--------|---------|
-| Phase 1: Discovery | 5 min | 8 min | 15 min |
-| Phase 2: Architecture | 10 min | 15 min | 25 min |
-| Phase 3: Build | 15 min | 30 min | 60 min |
-| Phase 4: Build Final | 5 min | 10 min | 15 min |
-| Phase 5: Finalize | 5 min | 7 min | 10 min |
-| **Total** | **40 min** | **70 min** | **125 min** |
+| Phase                 | Simple     | Medium     | Complex     |
+| --------------------- | ---------- | ---------- | ----------- |
+| Phase 1: Discovery    | 5 min      | 8 min      | 15 min      |
+| Phase 2: Architecture | 10 min     | 15 min     | 25 min      |
+| Phase 3: Build        | 15 min     | 30 min     | 60 min      |
+| Phase 4: Build Final  | 5 min      | 10 min     | 15 min      |
+| Phase 5: Finalize     | 5 min      | 7 min      | 10 min      |
+| **Total**             | **40 min** | **70 min** | **125 min** |
 
 **Variables:**
+
 - Task complexity
 - Number of files
 - Test coverage required
@@ -589,12 +632,14 @@ Get-Content .claude\.execution\phase-handoffs\phase-2-architecture.json
 ### Resource Usage
 
 **Disk Space:**
+
 - Execution state: ~1-5 MB per task
 - Logs: ~100 KB - 1 MB per task
 - Handoffs: ~10-100 KB each
 - Total per task: ~2-10 MB
 
 **Cleanup:**
+
 ```powershell
 # Archive tasks older than 7 days
 .\scripts\autonomous\cleanup-execution.ps1 -ArchiveOlderThanDays 7
@@ -618,6 +663,7 @@ Subagents (specialized) - Level 3
 ```
 
 **Responsibilities:**
+
 - **Orchestrator**: Safety gates before execution
 - **Lead Agent**: Phase coordination during execution
 - **Subagents**: Specialized work within phases
@@ -629,17 +675,20 @@ Subagents (specialized) - Level 3
 ### With Development Tools
 
 **Code Tools:**
+
 - Glob, Read, Grep (Discovery)
 - Read, Edit, Write (Build)
 - Bash (Testing, validation)
 
 **Test Tools:**
+
 - `pnpm test` (Frontend tests)
 - `pytest` (Backend tests)
 - `pnpm type-check` (TypeScript)
 - `pnpm lint` (Code quality)
 
 **Git Integration:**
+
 - No automatic commits
 - User commits when ready
 - Rollback plans provided
@@ -688,16 +737,19 @@ Subagents (specialized) - Level 3
 ### Requirements
 
 **System:**
+
 - Windows (PowerShell scripts)
 - Or: Cross-platform (bash equivalents)
 
 **Development Environment:**
+
 - Git repository
 - Node.js + pnpm (frontend)
 - Python 3.12+ + uv (backend)
 - PostgreSQL 15 (database)
 
 **Disk Space:**
+
 - ~10 MB per active task
 - ~100 MB for 10 archived tasks
 
@@ -741,6 +793,7 @@ Subagents (specialized) - Level 3
 ### File Inventory
 
 **Agent Definitions** (6 files):
+
 - `.claude/agents/lead-agent.md`
 - `.claude/agents/discovery-agent.md`
 - `.claude/agents/architect-agent.md`
@@ -749,6 +802,7 @@ Subagents (specialized) - Level 3
 - `.claude/agents/finalizer-agent.md`
 
 **Scripts** (5 files):
+
 - `scripts/autonomous/init-execution.ps1`
 - `scripts/autonomous/validate-state.ps1`
 - `scripts/autonomous/resume-task.ps1`
@@ -756,6 +810,7 @@ Subagents (specialized) - Level 3
 - `scripts/autonomous/transition-phase.ps1`
 
 **Schemas** (7 files):
+
 - `.claude/.execution/schemas/task-state.schema.json`
 - `.claude/.execution/schemas/handoff.schema.json`
 - `.claude/.execution/schemas/validation-report.schema.json`
@@ -765,10 +820,12 @@ Subagents (specialized) - Level 3
 - `.claude/.execution/schemas/completion-report.schema.json`
 
 **Commands & Skills**:
+
 - `.claude/commands/autonomous.md`
 - `.claude/skills/AUTONOMOUS-BUILD.md`
 
 **Documentation** (3 files):
+
 - `docs/specs/AUTONOMOUS-FRAMEWORK-ARCHITECTURE.md` (this file)
 - `docs/guides/USING-AUTONOMOUS-MODE.md`
 - `.claude/.execution/README.md`
@@ -776,6 +833,7 @@ Subagents (specialized) - Level 3
 ---
 
 **Total Implementation:**
+
 - **18 new files**
 - **~8,000 lines of documentation and code**
 - **5-phase execution pipeline**
