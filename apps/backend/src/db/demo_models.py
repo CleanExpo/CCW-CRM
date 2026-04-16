@@ -172,6 +172,8 @@ class Customer(Base):
 
     # UNI-1821: Per-customer payment terms (days); used for invoice due_date and Xero sync
     payment_terms_days: int = Column(Integer, default=30, nullable=False)
+    # Australian Business Number (added by add_abn_to_customers migration)
+    abn: str | None = Column(String(20), nullable=True, index=True)
 
     # Xero integration fields
     xero_contact_id: str | None = Column(String(255), nullable=True)
