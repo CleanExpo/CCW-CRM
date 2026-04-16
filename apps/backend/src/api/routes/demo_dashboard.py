@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.cache.decorators import cached
 from src.config.database import get_async_db
 from src.db.demo_models import (
@@ -26,7 +27,7 @@ from src.db.demo_models import (
 )
 from src.services.sse_service import sse_service
 
-router = APIRouter(prefix="/api/dashboard", tags=["Demo Dashboard"])
+router = APIRouter(prefix="/api/dashboard", tags=["Demo Dashboard"], dependencies=[Depends(get_current_user)])
 
 
 # ====== PHASE 4 OPTIMIZATION: AGGREGATED ENDPOINT ======

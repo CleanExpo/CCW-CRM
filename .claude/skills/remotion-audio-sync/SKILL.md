@@ -20,10 +20,10 @@ allowed-tools:
 
 **Narration files** (stored in `video/remotion/public/audio/`):
 
-| File | Video | Duration | Words |
-|---|---|---|---|
-| firstlook-narration.mp3 | FirstLookVideo | ~180s | ~420 words |
-| connections-narration.mp3 | ConnectionsGuideVideo | ~300s | ~700 words |
+| File                      | Video                 | Duration | Words      |
+| ------------------------- | --------------------- | -------- | ---------- |
+| firstlook-narration.mp3   | FirstLookVideo        | ~180s    | ~420 words |
+| connections-narration.mp3 | ConnectionsGuideVideo | ~300s    | ~700 words |
 
 ## Audio Generation Steps
 
@@ -48,7 +48,9 @@ npm run generate:audio:all
 import { Audio, staticFile } from 'remotion';
 
 // In your composition component:
-{narrationPath && <Audio src={staticFile(narrationPath)} />}
+{
+  narrationPath && <Audio src={staticFile(narrationPath)} />;
+}
 ```
 
 - `staticFile()` resolves paths relative to `video/remotion/public/`
@@ -60,24 +62,24 @@ import { Audio, staticFile } from 'remotion';
 
 Match scene durations to narration segments:
 
-| FirstLookVideo Scene | Start | Duration | Words |
-|---|---|---|---|
-| HeroScene | 0s | 30s | ~70 words |
-| ProblemScene | 30s | 30s | ~70 words |
-| ModuleShowcaseScene | 60s | 45s | ~105 words |
-| WorkflowScene | 105s | 30s | ~70 words |
-| WhoItsForScene | 135s | 20s | ~47 words |
-| GetStartedScene | 155s | 25s | ~58 words |
+| FirstLookVideo Scene | Start | Duration | Words      |
+| -------------------- | ----- | -------- | ---------- |
+| HeroScene            | 0s    | 30s      | ~70 words  |
+| ProblemScene         | 30s   | 30s      | ~70 words  |
+| ModuleShowcaseScene  | 60s   | 45s      | ~105 words |
+| WorkflowScene        | 105s  | 30s      | ~70 words  |
+| WhoItsForScene       | 135s  | 20s      | ~47 words  |
+| GetStartedScene      | 155s  | 25s      | ~58 words  |
 
-| ConnectionsGuideVideo Scene | Start | Duration | Words |
-|---|---|---|---|
-| ConnectionsIntroScene | 0s | 20s | ~47 words |
-| Cin7 Step | 20s | 50s | ~117 words |
-| Xero Step | 70s | 50s | ~117 words |
-| Supabase Step | 120s | 50s | ~117 words |
-| Vercel+Railway Step | 170s | 60s | ~140 words |
-| VerificationScene | 230s | 40s | ~93 words |
-| AllConnectedScene | 270s | 30s | ~70 words |
+| ConnectionsGuideVideo Scene | Start | Duration | Words      |
+| --------------------------- | ----- | -------- | ---------- |
+| ConnectionsIntroScene       | 0s    | 20s      | ~47 words  |
+| Cin7 Step                   | 20s   | 50s      | ~117 words |
+| Xero Step                   | 70s   | 50s      | ~117 words |
+| Supabase Step               | 120s  | 50s      | ~117 words |
+| Vercel+Railway Step         | 170s  | 60s      | ~140 words |
+| VerificationScene           | 230s  | 40s      | ~93 words  |
+| AllConnectedScene           | 270s  | 30s      | ~70 words  |
 
 ## If Audio and Visuals Fall Out of Sync
 

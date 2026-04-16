@@ -210,10 +210,12 @@ export default async function Home() {
                   Revenue, stock health, order status and performance dashboards tracking{' '}
                   <span className="text-foreground font-semibold">
                     $
-                    {stats ? Number(stats.total_revenue_this_month).toLocaleString('en-AU', {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }) : '—'}
+                    {stats
+                      ? Number(stats.total_revenue_this_month).toLocaleString('en-AU', {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        })
+                      : '—'}
                   </span>{' '}
                   this month with live data.
                 </p>

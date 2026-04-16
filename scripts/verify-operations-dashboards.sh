@@ -31,11 +31,24 @@ PASSED=0
 FAILED=0
 WARNINGS=0
 
-# Configuration
+# Configuration — defaults target a LOCAL DEV Grafana only.
+# Override all four vars when verifying against a staging/prod Grafana.
 GRAFANA_URL="${GRAFANA_URL:-http://localhost:3001}"
 GRAFANA_USER="${GRAFANA_USER:-admin}"
 GRAFANA_PASSWORD="${GRAFANA_PASSWORD:-admin}"
 PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9090}"
+
+# Refuse to use the default admin/admin credentials against a non-local Grafana
+case "$GRAFANA_URL" in
+    http://localhost:*|http://127.0.0.1:*) ;;
+    *)
+        if [ "$GRAFANA_PASSWORD" = "admin" ]; then
+            echo "ERROR: GRAFANA_URL is '$GRAFANA_URL' but GRAFANA_PASSWORD is still the default 'admin'."
+            echo "       Set GRAFANA_PASSWORD explicitly before running against a non-local Grafana."
+            exit 1
+        fi
+        ;;
+esac
 
 # Helper functions
 pass() {

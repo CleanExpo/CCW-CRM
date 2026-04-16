@@ -8,18 +8,25 @@ ISS-036: Enhanced with proper transaction boundaries to prevent data loss on cra
 - Failed webhooks queued for automatic retry with exponential backoff
 """
 
+import os
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 
+import httpx
 import structlog
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.db.shopify_models import ShopifyProductMapping, ShopifyWebhookLog
+from src.db.demo_models import Order
+from src.db.shopify_models import ShopifyOrderMapping, ShopifyProductMapping, ShopifyWebhookLog
 from src.integrations.shopify.client import ShopifyClient
 from src.integrations.shopify.inventory_sync import InventorySyncService
 from src.integrations.shopify.orders import ShopifyOrderImporter
 from src.integrations.shopify.product_sync import BidirectionalProductSyncer
+from src.integrations.xero import get_xero_client
+from src.integrations.xero.credit_notes import push_credit_note
 from src.services.webhook_service import (
     WebhookProcessingError,
     WebhookService,
@@ -117,6 +124,8 @@ class ShopifyWebhookHandler:
                 return await self._handle_product_update(webhook_payload)
             elif topic == "inventory_levels/update":
                 return await self._handle_inventory_update(webhook_payload)
+            elif topic == "refunds/create":
+                return await self._handle_refund_create(webhook_payload)
             else:
                 logger.warning("unhandled_webhook_topic", topic=topic)
                 return {"handled": False, "reason": f"Unknown topic: {topic}"}
@@ -247,6 +256,99 @@ class ShopifyWebhookHandler:
             "action": "order_cancelled",
             "order_id": str(order.id),
         }
+
+    async def _handle_refund_create(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Handle refunds/create webhook (UNI-1817: Shopify Refunds + Xero Credit Note Sync).
+
+        Args:
+            payload: Refund data from Shopify
+
+        Returns:
+            Processing result (always succeeds — Xero failures are logged, not raised)
+        """
+        refund_id = payload.get("id")
+        shopify_order_id = payload.get("order_id")
+        transactions = payload.get("transactions", [])
+        amount = transactions[0].get("amount") if transactions else None
+
+        logger.info(
+            "handling_refund_create",
+            refund_id=refund_id,
+            shopify_order_id=shopify_order_id,
+            amount=amount,
+        )
+
+        if not shopify_order_id or amount is None:
+            logger.warning(
+                "refund_missing_fields",
+                refund_id=refund_id,
+                shopify_order_id=shopify_order_id,
+            )
+            return {"handled": False, "reason": "missing order_id or transaction amount"}
+
+        # Look up the ShopifyOrderMapping to get the internal Order
+        stmt = (
+            select(ShopifyOrderMapping)
+            .where(ShopifyOrderMapping.shopify_order_id == shopify_order_id)
+        )
+        result = await self.db.execute(stmt)
+        mapping = result.scalar_one_or_none()
+
+        if not mapping:
+            logger.warning("refund_no_order_mapping", shopify_order_id=shopify_order_id)
+            return {"handled": False, "reason": "no order mapping found"}
+
+        # Load Order with customer eagerly
+        order_stmt = (
+            select(Order)
+            .options(selectinload(Order.customer))
+            .where(Order.id == mapping.order_id)
+        )
+        order_result = await self.db.execute(order_stmt)
+        order = order_result.scalar_one_or_none()
+
+        if not order or not order.xero_invoice_id:
+            logger.info(
+                "refund_skipping_xero",
+                order_id=str(mapping.order_id),
+                reason="no xero_invoice_id",
+            )
+            return {"handled": True, "xero_synced": False, "reason": "order not in Xero"}
+
+        contact_id = order.customer.xero_contact_id if order.customer else None
+        if not contact_id:
+            logger.info(
+                "refund_skipping_xero",
+                order_id=str(order.id),
+                reason="customer has no xero_contact_id",
+            )
+            return {"handled": True, "xero_synced": False, "reason": "customer not in Xero"}
+
+        try:
+            xero_client = get_xero_client(
+                access_token=os.environ.get("XERO_ACCESS_TOKEN", ""),
+                tenant_id=os.environ.get("XERO_TENANT_ID", ""),
+            )
+            credit_note = await push_credit_note(
+                xero_client=xero_client,
+                contact_id=contact_id,
+                amount=amount,
+                description=f"Shopify refund for order {order.order_number}",
+                reference=f"SHOPIFY-REFUND-{refund_id}",
+            )
+            return {
+                "handled": True,
+                "xero_synced": True,
+                "credit_note_id": credit_note.get("CreditNoteID"),
+            }
+        except Exception as e:
+            logger.warning(
+                "refund_xero_credit_note_failed",
+                refund_id=refund_id,
+                order_id=str(order.id),
+                error=str(e),
+            )
+            return {"handled": True, "xero_synced": False, "reason": f"Xero error: {e}"}
 
     async def _handle_product_create(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Handle products/create webhook (ISS-009: Shopify → ERP sync).
@@ -422,3 +524,89 @@ class ShopifyWebhookHandler:
                     "action": "inventory_update",
                 },
             ) from e
+
+
+# UNI-1873: Auto-register required webhooks on connection
+
+REQUIRED_WEBHOOK_TOPICS = [
+    "orders/create",
+    "orders/updated",
+    "orders/cancelled",
+    "products/update",
+    "inventory_levels/update",
+    "refunds/create",
+]
+
+
+async def register_required_webhooks(
+    shopify_client: Any,
+    shop_domain: str,
+) -> list[dict]:
+    """Register required Shopify webhooks if not already present.
+
+    For each required topic, checks existing webhooks first to avoid duplicates,
+    then registers any missing ones against the configured SHOPIFY_WEBHOOK_URL.
+
+    Args:
+        shopify_client: ShopifyClient instance (used for auth via settings.access_token)
+        shop_domain: Shopify shop domain (e.g. my-store.myshopify.com)
+
+    Returns:
+        List of dicts with keys: topic, webhook_id, created (and optional error)
+    """
+    webhook_base_url = os.environ.get("SHOPIFY_WEBHOOK_URL", "").rstrip("/")
+    if not webhook_base_url:
+        logger.warning("shopify_webhook_url_not_set", shop_domain=shop_domain)
+
+    api_version = "2024-01"
+    base = f"https://{shop_domain}/admin/api/{api_version}"
+    access_token = shopify_client.settings.access_token
+    headers = {
+        "X-Shopify-Access-Token": access_token,
+        "Content-Type": "application/json",
+    }
+
+    results: list[dict] = []
+
+    async with httpx.AsyncClient(timeout=30.0) as http:
+        # Fetch existing webhooks once to avoid duplicates
+        resp = await http.get(f"{base}/webhooks.json", headers=headers)
+        resp.raise_for_status()
+        existing_topics = {
+            wh["topic"]: wh["id"]
+            for wh in resp.json().get("webhooks", [])
+        }
+
+        for topic in REQUIRED_WEBHOOK_TOPICS:
+            if topic in existing_topics:
+                results.append({"topic": topic, "webhook_id": existing_topics[topic], "created": False})
+                logger.info("shopify_webhook_already_exists", topic=topic, shop_domain=shop_domain)
+                continue
+
+            address = f"{webhook_base_url}/{topic.replace('/', '-')}"
+            payload = {"webhook": {"topic": topic, "address": address, "format": "json"}}
+
+            try:
+                resp = await http.post(f"{base}/webhooks.json", headers=headers, json=payload)
+                resp.raise_for_status()
+                webhook_id = resp.json()["webhook"]["id"]
+                results.append({"topic": topic, "webhook_id": webhook_id, "created": True})
+                logger.info(
+                    "shopify_webhook_registered",
+                    topic=topic,
+                    webhook_id=webhook_id,
+                    shop_domain=shop_domain,
+                )
+            except httpx.HTTPStatusError as exc:
+                logger.error(
+                    "shopify_webhook_registration_failed",
+                    topic=topic,
+                    shop_domain=shop_domain,
+                    status_code=exc.response.status_code,
+                    detail=exc.response.text,
+                )
+                results.append(
+                    {"topic": topic, "webhook_id": None, "created": False, "error": exc.response.text}
+                )
+
+    return results

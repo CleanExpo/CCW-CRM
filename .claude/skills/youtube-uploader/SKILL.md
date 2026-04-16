@@ -38,35 +38,40 @@ then automatically update `DemoVideoBanner.tsx` and `video-registry.json` with t
 
 ### Files Required
 
-| File | Description |
-|------|-------------|
-| `data/heygen/downloads/*.mp4` | 24 downloaded HeyGen videos |
-| `scripts/youtube_oauth_client.json` | Google OAuth credentials |
-| `data/heygen/video-registry.json` | Registry to patch with YouTube IDs |
-| `apps/web/components/dashboard/DemoVideoBanner.tsx` | Banner component to patch |
+| File                                                | Description                        |
+| --------------------------------------------------- | ---------------------------------- |
+| `data/heygen/downloads/*.mp4`                       | 24 downloaded HeyGen videos        |
+| `scripts/youtube_oauth_client.json`                 | Google OAuth credentials           |
+| `data/heygen/video-registry.json`                   | Registry to patch with YouTube IDs |
+| `apps/web/components/dashboard/DemoVideoBanner.tsx` | Banner component to patch          |
 
 ## Usage
 
 ### Check status (no uploads, just report)
+
 ```bash
 python scripts/youtube_upload.py --status
 ```
 
 ### Upload all pending videos
+
 ```bash
 python scripts/youtube_upload.py --upload
 ```
+
 - Uploads each MP4 as **Unlisted** with CCW-branded title + description + tags
 - Resume-safe: saves `data/heygen/youtube-upload-log.json` after each video
 - Re-running skips already-uploaded videos
 - After all uploads: auto-patches `video-registry.json` + `DemoVideoBanner.tsx`
 
 ### Patch files only (if uploads done, just need to update code)
+
 ```bash
 python scripts/youtube_upload.py --patch-only
 ```
 
 ### Commit after upload
+
 ```bash
 cd "C:\Users\PhillMcGurk\CCW COWORK\CCW-CRM"
 git add data/heygen/youtube-upload-log.json data/heygen/video-registry.json apps/web/components/dashboard/DemoVideoBanner.tsx
@@ -77,7 +82,9 @@ git push origin fix/railway-cache-auth-500
 ## What Gets Updated
 
 ### `data/heygen/video-registry.json`
+
 Each video entry gets:
+
 ```json
 {
   "youtubeId": "dQw4w9WgXcQ",
@@ -87,13 +94,17 @@ Each video entry gets:
 ```
 
 ### `apps/web/components/dashboard/DemoVideoBanner.tsx`
+
 Each `youtubeId: null` entry gets patched to:
+
 ```typescript
 youtubeId: "dQw4w9WgXcQ",
 ```
 
 ### `data/heygen/youtube-upload-log.json`
+
 Full upload audit log with timestamps:
+
 ```json
 {
   "dashboard": {
@@ -135,6 +146,7 @@ git push origin fix/railway-cache-auth-500
 ## Video Settings
 
 All videos uploaded with:
+
 - **Privacy**: Unlisted (internal training — not searchable)
 - **Category**: Science & Technology (ID 28)
 - **Language**: en-AU
@@ -150,10 +162,10 @@ All videos uploaded with:
 
 ## Troubleshooting
 
-| Error | Fix |
-|-------|-----|
-| `File not found: youtube_oauth_client.json` | Download OAuth creds from Google Cloud Console |
-| `Token expired` | Re-run `--auth` to refresh |
-| `quotaExceeded` | YouTube API quota = 10,000 units/day. Each upload = ~1,600 units. 6 uploads/day max. Resume next day with `--upload`. |
-| `Upload failed at X%` | Re-run `--upload` — resumes from where it left off |
-| `youtubeId: null` still in banner | Run `--patch-only` after log is populated |
+| Error                                       | Fix                                                                                                                   |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `File not found: youtube_oauth_client.json` | Download OAuth creds from Google Cloud Console                                                                        |
+| `Token expired`                             | Re-run `--auth` to refresh                                                                                            |
+| `quotaExceeded`                             | YouTube API quota = 10,000 units/day. Each upload = ~1,600 units. 6 uploads/day max. Resume next day with `--upload`. |
+| `Upload failed at X%`                       | Re-run `--upload` — resumes from where it left off                                                                    |
+| `youtubeId: null` still in banner           | Run `--patch-only` after log is populated                                                                             |

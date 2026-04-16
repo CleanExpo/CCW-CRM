@@ -36,6 +36,8 @@ function IntegrationsContent() {
     default_model?: string;
   } | null>(null);
   const [claudeStatus, setClaudeStatus] = useState<{ mode: string; status: string } | null>(null);
+  const [anthropicKey, setAnthropicKey] = useState('');
+  const [anthropicSaving, setAnthropicSaving] = useState(false);
 
   const loadXeroStatus = async () => {
     try {
@@ -79,16 +81,42 @@ function IntegrationsContent() {
 
   const loadAiStatuses = async () => {
     try {
-      const [g, c] = await Promise.allSettled([
+      const [g, c, anthropic] = await Promise.allSettled([
         apiClient.get<{ configured: boolean; status: string; default_model?: string }>(
           '/api/google-ai/health'
         ),
         apiClient.get<{ mode: string; status: string }>('/api/ai/autonomous/health'),
+        apiClient.get<{ connected: boolean; mode: string }>('/api/integrations/anthropic/status'),
       ]);
       if (g.status === 'fulfilled') setGeminiStatus(g.value);
       if (c.status === 'fulfilled') setClaudeStatus(c.value);
+      if (anthropic.status === 'fulfilled' && anthropic.value.mode === 'production') {
+        setClaudeStatus({ mode: 'production', status: 'healthy' });
+      }
     } catch {
       // AI services are optional — don't error
+    }
+  };
+
+  const saveAnthropicKey = async () => {
+    if (!anthropicKey.trim()) return;
+    setAnthropicSaving(true);
+    try {
+      const result = await apiClient.post<{ connected: boolean; mode: string; message: string }>(
+        '/api/integrations/anthropic/configure',
+        { api_key: anthropicKey }
+      );
+      setClaudeStatus({ mode: result.mode, status: 'healthy' });
+      setAnthropicKey('');
+      toast({ title: 'Anthropic Connected', description: result.message });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Configuration Failed',
+        description: error instanceof Error ? error.message : 'Invalid API key',
+      });
+    } finally {
+      setAnthropicSaving(false);
     }
   };
 
@@ -368,8 +396,8 @@ function IntegrationsContent() {
                       <CheckCircle2 className="h-3.5 w-3.5" /> Production
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-xs text-blue-600">
-                      <Bot className="h-3.5 w-3.5" /> Demo mode
+                    <span className="flex items-center gap-1 text-xs text-orange-600">
+                      <XCircle className="h-3.5 w-3.5" /> Not configured
                     </span>
                   )}
                 </div>
@@ -378,10 +406,39 @@ function IntegrationsContent() {
                 </p>
                 <p className="mt-1 font-mono text-xs text-purple-600">claude-sonnet-4-6</p>
                 {claudeStatus?.mode !== 'production' && (
-                  <p className="mt-2 text-xs text-blue-700">
-                    Set <code className="bg-muted rounded px-1">ANTHROPIC_API_KEY</code> for live AI
-                    decisions.
-                  </p>
+                  <div className="mt-3 space-y-2">
+                    <label className="text-xs font-medium">API Key</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        value={anthropicKey}
+                        onChange={(e) => setAnthropicKey(e.target.value)}
+                        placeholder="sk-ant-..."
+                        className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-8 w-full rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                      />
+                      <button
+                        onClick={saveAnthropicKey}
+                        disabled={anthropicSaving || !anthropicKey.startsWith('sk-ant-')}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-8 items-center rounded-md px-3 text-xs font-medium disabled:opacity-50"
+                      >
+                        {anthropicSaving ? 'Saving...' : 'Connect'}
+                      </button>
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      Get your key from{' '}
+                      <a
+                        href="https://console.anthropic.com/settings/keys"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline"
+                      >
+                        console.anthropic.com
+                      </a>
+                    </p>
+                  </div>
+                )}
+                {claudeStatus?.mode === 'production' && (
+                  <p className="mt-2 text-xs text-green-700">Claude AI features are active.</p>
                 )}
               </div>
             </div>

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,10 +10,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { inventoryApi } from "@/lib/api/inventory";
-import type { StockReservation } from "@/lib/types/inventory";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { inventoryApi } from '@/lib/api/inventory';
+import type { StockReservation } from '@/lib/types/inventory';
 
 interface ReleaseReservationDialogProps {
   reservation: StockReservation | null;
@@ -39,17 +39,17 @@ export function ReleaseReservationDialog({
       await inventoryApi.releaseReservation(reservation.id);
 
       toast({
-        title: "Success",
-        description: "Reservation released successfully",
+        title: 'Success',
+        description: 'Reservation released successfully',
       });
 
       onSuccess();
       onOpenChange(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to release reservation";
+      const message = error instanceof Error ? error.message : 'Failed to release reservation';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -69,18 +69,17 @@ export function ReleaseReservationDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Release Reservation?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will release{" "}
-            <span className="font-semibold">{reservation.quantity} units</span> of{" "}
-            <span className="font-semibold">
-              {reservation.product_name || "this product"}
-            </span>
+            This will release <span className="font-semibold">{reservation.quantity} units</span> of{' '}
+            <span className="font-semibold">{reservation.product_name || 'this product'}</span>
             {reservation.product_sku && (
               <span className="font-mono"> ({reservation.product_sku})</span>
-            )}{" "}
-            at{" "}
-            <span className="font-semibold">{formatLocation(reservation.location)}</span>{" "}
-            reserved for order{" "}
-            <span className="font-semibold">{reservation.order_number || reservation.order_id}</span>.
+            )}{' '}
+            at <span className="font-semibold">{formatLocation(reservation.location)}</span>{' '}
+            reserved for order{' '}
+            <span className="font-semibold">
+              {reservation.order_number || reservation.order_id}
+            </span>
+            .
             <br />
             <br />
             This action cannot be undone.
@@ -89,7 +88,7 @@ export function ReleaseReservationDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleRelease} disabled={isLoading}>
-            {isLoading ? "Releasing..." : "Release"}
+            {isLoading ? 'Releasing...' : 'Release'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

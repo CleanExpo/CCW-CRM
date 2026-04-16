@@ -15,44 +15,53 @@ This directory contains all User Acceptance Testing (UAT) documentation for CCW-
 ## UAT Documents
 
 ### 1. 📋 UAT_TEST_CASES.md (COMPLETE)
+
 **Purpose**: Complete test cases for all modules
 **Status**: ✅ Ready for execution
 **Contents**:
+
 - 35 test cases (Products: 8, Customers: 7, Orders: 10, Quotes: 10)
 - 5 end-to-end business workflows
 - Regression tests for ISS-001 through ISS-005
 - Step-by-step instructions for testers
 
 ### 2. 👥 UAT_STAKEHOLDERS.md (COMPLETE)
+
 **Purpose**: Stakeholder identification and session scheduling
 **Status**: ✅ Ready - needs stakeholder details filled in
 **Contents**:
+
 - Primary stakeholders (Business Owner, Sales, Warehouse, Customer Service)
 - Session schedule template
 - Test credentials
 - Communication plan
 
 ### 3. 📝 UAT_SESSION_LOG.md (TEMPLATE READY)
+
 **Purpose**: Record session notes and observations
 **Status**: ⏳ To be completed during UAT sessions
 **Usage**: Facilitator records notes during each stakeholder session
 
 ### 4. 📊 UAT_RESULTS.md (TEMPLATE READY)
+
 **Purpose**: Compile pass/fail results by module
 **Status**: ⏳ To be completed after UAT execution
 **Usage**: Summary of test case results and overall pass rate
 
 ### 5. 💬 UAT_FEEDBACK.md (TEMPLATE READY)
+
 **Purpose**: Collect stakeholder feedback and enhancement requests
 **Status**: ⏳ To be completed during/after UAT sessions
 **Usage**: Document positive feedback, issues, and enhancement requests
 
 ### 6. 🐛 UAT_ISSUES.md (TEMPLATE READY)
+
 **Purpose**: Track issues identified during UAT
 **Status**: ⏳ To be updated as issues arise
 **Usage**: Issue tracking with priority, status, and resolution
 
 ### 7. ✅ UAT_SIGN_OFF.md (TEMPLATE READY)
+
 **Purpose**: Obtain formal business owner approval
 **Status**: ⏳ To be completed after all issues resolved
 **Usage**: Final sign-off document for production deployment authorization
@@ -181,11 +190,11 @@ curl http://localhost:8000/health  # Backend
 
 **Important**: Use credentials matching your role for realistic testing.
 
-| Role | Email | Password | Access |
-|------|-------|----------|--------|
-| Admin/Business Owner | admin@demo.com | demo123 | Full access |
-| Sales Manager | sales@demo.com | demo123 | Quotes, Orders, Customers |
-| Warehouse Manager | warehouse@demo.com | demo123 | Products, Inventory, Orders |
+| Role                 | Email              | Password | Access                      |
+| -------------------- | ------------------ | -------- | --------------------------- |
+| Admin/Business Owner | admin@demo.com     | demo123  | Full access                 |
+| Sales Manager        | sales@demo.com     | demo123  | Quotes, Orders, Customers   |
+| Warehouse Manager    | warehouse@demo.com | demo123  | Products, Inventory, Orders |
 
 ---
 
@@ -193,24 +202,26 @@ curl http://localhost:8000/health  # Backend
 
 These test cases specifically validate fixes for previously identified issues:
 
-| Issue | Test Cases | What to Verify |
-|-------|------------|----------------|
-| **ISS-001**: Quote/Order Total Calculation | TC-O002, TC-Q001, TC-Q002, TC-Q005 | Totals = sum of all subtotals |
-| **ISS-002**: Order Item Update Errors | TC-O005, TC-O006 | Updates work, no 500 errors |
-| **ISS-003**: Quote 404 Errors | TC-Q009 | Duplicate quote numbers rejected |
-| **ISS-004**: 422 Validation Errors | TC-Q009, TC-Q010 | User-friendly error messages |
-| **ISS-005**: 500 Server Errors | TC-O005, TC-O006 | No 500 errors on updates |
+| Issue                                      | Test Cases                         | What to Verify                   |
+| ------------------------------------------ | ---------------------------------- | -------------------------------- |
+| **ISS-001**: Quote/Order Total Calculation | TC-O002, TC-Q001, TC-Q002, TC-Q005 | Totals = sum of all subtotals    |
+| **ISS-002**: Order Item Update Errors      | TC-O005, TC-O006                   | Updates work, no 500 errors      |
+| **ISS-003**: Quote 404 Errors              | TC-Q009                            | Duplicate quote numbers rejected |
+| **ISS-004**: 422 Validation Errors         | TC-Q009, TC-Q010                   | User-friendly error messages     |
+| **ISS-005**: 500 Server Errors             | TC-O005, TC-O006                   | No 500 errors on updates         |
 
 ---
 
 ## Contact Information
 
 ### UAT Support
-- **UAT Coordinator**: ___________________
-- **Technical Support**: ___________________
-- **Business Owner**: ___________________
+
+- **UAT Coordinator**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Technical Support**: **\*\*\*\***\_\_\_**\*\*\*\***
+- **Business Owner**: **\*\*\*\***\_\_\_**\*\*\*\***
 
 ### Questions?
+
 - Review **UAT_TEST_CASES.md** for detailed test instructions
 - Check **UAT_STAKEHOLDERS.md** for session schedule
 - Contact UAT coordinator for technical issues

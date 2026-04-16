@@ -288,6 +288,66 @@ class ShopifyOrderImporter:
 
         return order
 
+    async def _resolve_product_by_sku(
+        self,
+        sku: str,
+        title: str,
+        price: float,
+        shopify_order_id: int,
+    ) -> Product:
+        """Resolve a product by SKU with fuzzy fallback and placeholder creation.
+
+        UNI-1842: Handles unmatched Shopify SKUs gracefully:
+        1. Exact SKU match
+        2. Fuzzy match: strip trailing -DEFAULT suffix from variant SKUs
+        3. Create placeholder product tagged shopify_unmatched=True
+
+        Args:
+            sku: Shopify line item SKU
+            title: Shopify line item title
+            price: Shopify line item unit price
+            shopify_order_id: Shopify order ID (for warning log context)
+
+        Returns:
+            Matched or newly created Product instance
+        """
+        # 1. Exact SKU match
+        stmt = select(Product).where(Product.sku == sku)
+        result = await self.db.execute(stmt)
+        product = result.scalars().first()
+        if product:
+            return product
+
+        # 2. Fuzzy match: strip trailing -DEFAULT suffix
+        fuzzy_sku = sku.removesuffix("-DEFAULT")
+        if fuzzy_sku != sku:
+            stmt = select(Product).where(Product.sku == fuzzy_sku)
+            result = await self.db.execute(stmt)
+            product = result.scalars().first()
+            if product:
+                return product
+
+        # 3. No match — create placeholder and log warning
+        logger.warning(
+            "shopify_sku_unmatched",
+            sku=sku,
+            shopify_order_id=shopify_order_id,
+        )
+        placeholder = Product(
+            id=uuid.uuid4(),
+            sku=sku,
+            name=title or f"Shopify Product ({sku})",
+            price=price,
+            cost=0,
+            stock=0,
+            category="accessories",
+            description=f"shopify_unmatched=True; auto-created for order {shopify_order_id}",
+            is_active=True,
+        )
+        self.db.add(placeholder)
+        await self.db.flush()
+        return placeholder
+
     async def _create_order_items(
         self,
         shopify_order: dict[str, Any],
@@ -307,27 +367,28 @@ class ShopifyOrderImporter:
 
         for line_item in line_items:
             sku = line_item.get("sku")
+            unit_price = float(line_item.get("price", 0))
 
-            # Try to find product by SKU
+            # UNI-1842: Resolve product with fuzzy SKU matching and placeholder fallback
             product = None
             if sku:
-                stmt = select(Product).where(Product.sku == sku)
-                result = await self.db.execute(stmt)
-                product = result.scalars().first()
+                product = await self._resolve_product_by_sku(
+                    sku=sku,
+                    title=line_item.get("title", ""),
+                    price=unit_price,
+                    shopify_order_id=shopify_order.get("id"),
+                )
 
-            # If product not found, log warning and skip or create placeholder
+            # If no SKU at all, log warning and skip
             if not product:
                 logger.warning(
                     "product_not_found_for_line_item",
                     sku=sku,
                     title=line_item.get("title"),
                 )
-                # For demo, we'll skip items without matching products
-                # In production, you might want to create placeholder products
                 continue
 
             quantity = line_item.get("quantity", 1)
-            unit_price = float(line_item.get("price", 0))
 
             order_item = OrderItem(
                 id=uuid.uuid4(),

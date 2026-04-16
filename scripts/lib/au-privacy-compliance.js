@@ -12,7 +12,10 @@
  */
 async function recordConsent(client, userId, purpose, consentGiven, version = '1.0') {
   const { error } = await client.from('consent_records').insert({
-    user_id: userId, purpose, consent_given: consentGiven, consent_version: version
+    user_id: userId,
+    purpose,
+    consent_given: consentGiven,
+    consent_version: version,
   });
   if (error) throw new Error(`Consent record failed: ${error.message}`);
 }
@@ -20,10 +23,17 @@ async function recordConsent(client, userId, purpose, consentGiven, version = '1
 /**
  * Log an AI decision for transparency compliance.
  */
-async function logAiDecision(client, { sessionId, decisionType, decisionMade, confidenceScore, reasoning, affectedUserIds = [] }) {
+async function logAiDecision(
+  client,
+  { sessionId, decisionType, decisionMade, confidenceScore, reasoning, affectedUserIds = [] }
+) {
   const { error } = await client.from('ai_decision_log').insert({
-    session_id: sessionId, decision_type: decisionType, decision_made: decisionMade,
-    confidence_score: confidenceScore, reasoning, affected_user_ids: affectedUserIds
+    session_id: sessionId,
+    decision_type: decisionType,
+    decision_made: decisionMade,
+    confidence_score: confidenceScore,
+    reasoning,
+    affected_user_ids: affectedUserIds,
   });
   if (error) throw new Error(`AI decision log failed: ${error.message}`);
 }
@@ -32,9 +42,15 @@ async function logAiDecision(client, { sessionId, decisionType, decisionMade, co
  * Submit a data deletion request on behalf of a user.
  */
 async function requestDeletion(client, userId, reason = '') {
-  const { data, error } = await client.from('deletion_requests').insert({
-    user_id: userId, reason, status: 'pending'
-  }).select().single();
+  const { data, error } = await client
+    .from('deletion_requests')
+    .insert({
+      user_id: userId,
+      reason,
+      status: 'pending',
+    })
+    .select()
+    .single();
   if (error) throw new Error(`Deletion request failed: ${error.message}`);
   return data;
 }
@@ -47,23 +63,35 @@ async function runComplianceAudit(client) {
   const issues = [];
 
   // 1. Check consent records exist for all users
-  const { count: userCount } = await client.from('users').select('*', { count: 'exact', head: true });
-  const { count: consentCount } = await client.from('consent_records').select('*', { count: 'exact', head: true });
-  if (consentCount === 0 && userCount > 0) issues.push('No consent records — users have no recorded consent');
+  const { count: userCount } = await client
+    .from('users')
+    .select('*', { count: 'exact', head: true });
+  const { count: consentCount } = await client
+    .from('consent_records')
+    .select('*', { count: 'exact', head: true });
+  if (consentCount === 0 && userCount > 0)
+    issues.push('No consent records — users have no recorded consent');
 
   // 2. Check pending deletion requests older than 30 days
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: overdueDeletions } = await client.from('deletion_requests')
-    .select('id').eq('status', 'pending').lt('requested_at', thirtyDaysAgo);
+  const { data: overdueDeletions } = await client
+    .from('deletion_requests')
+    .select('id')
+    .eq('status', 'pending')
+    .lt('requested_at', thirtyDaysAgo);
   if (overdueDeletions?.length > 0) {
     issues.push(`${overdueDeletions.length} deletion request(s) overdue (>30 days pending)`);
   }
 
   // 3. Check retention schedule is current
-  const { data: overdueRetention } = await client.from('retention_schedule')
-    .select('table_name').lt('next_purge_at', new Date().toISOString());
+  const { data: overdueRetention } = await client
+    .from('retention_schedule')
+    .select('table_name')
+    .lt('next_purge_at', new Date().toISOString());
   if (overdueRetention?.length > 0) {
-    issues.push(`Overdue retention purge for: ${overdueRetention.map(r=>r.table_name).join(', ')}`);
+    issues.push(
+      `Overdue retention purge for: ${overdueRetention.map((r) => r.table_name).join(', ')}`
+    );
   }
 
   // 4. Verify AI decision logging is active (at least 1 entry in last 24h if system active)

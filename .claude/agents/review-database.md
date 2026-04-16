@@ -27,6 +27,6 @@ description: Specialist database reviewer — checks migration safety, index cov
 5. Flag any modifications to demo_models.py (requires explicit approval)
 6. Check for missing ON DELETE CASCADE on child tables
 7. Verify migration timestamp ordering is correct
-8. Check SELECT * usage (prefer explicit column lists)
+8. Check SELECT \* usage (prefer explicit column lists)
 9. Flag raw SQL string interpolation as injection risk
 10. Report findings with migration file/line references

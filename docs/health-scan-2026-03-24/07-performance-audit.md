@@ -42,6 +42,7 @@ Three list endpoints in `approvals.py` exhibit a classic N+1 pattern:
 **Affected functions**: `list_approvals` (line 213), `get_pending_approvals` (line 268), `pending_my_approval` (line 569)
 
 **Pattern observed**:
+
 ```python
 # Step 1: fetch page of approvals (1 query)
 result = await db.execute(query)
@@ -65,12 +66,12 @@ With `page_size=50` (the default), this produces **up to 51 database round-trips
 
 **N+1 Risk Summary**:
 
-| Route | Pattern | Queries per page (worst case) |
-|---|---|---|
-| `demo_lists.py` orders/quotes | Subquery JOIN | 2 (count + data) |
-| `approvals.py` list/pending | Loop `await db.execute()` | 51 |
-| `backorders.py` list | `selectinload` | 2 |
-| `activities.py` list | `.limit()` + single query | 2 |
+| Route                         | Pattern                   | Queries per page (worst case) |
+| ----------------------------- | ------------------------- | ----------------------------- |
+| `demo_lists.py` orders/quotes | Subquery JOIN             | 2 (count + data)              |
+| `approvals.py` list/pending   | Loop `await db.execute()` | 51                            |
+| `backorders.py` list          | `selectinload`            | 2                             |
+| `activities.py` list          | `.limit()` + single query | 2                             |
 
 ---
 
@@ -118,16 +119,16 @@ The caching stack is well-designed:
 
 ### 3.2 Active Cache Coverage
 
-| Endpoint | TTL | Status |
-|---|---|---|
-| `GET /api/demo/products` | 300s | Active |
-| `GET /api/demo/customers` | 300s | Active |
-| `GET /api/demo/orders` | 300s | Active |
-| `GET /api/demo/quotes` | 300s | Active |
-| `GET /api/products` (products.py) | 300s | Active |
+| Endpoint                            | TTL  | Status |
+| ----------------------------------- | ---- | ------ |
+| `GET /api/demo/products`            | 300s | Active |
+| `GET /api/demo/customers`           | 300s | Active |
+| `GET /api/demo/orders`              | 300s | Active |
+| `GET /api/demo/quotes`              | 300s | Active |
+| `GET /api/products` (products.py)   | 300s | Active |
 | `GET /api/customers` (customers.py) | 300s | Active |
-| `GET /api/contacts` | 300s | Active |
-| `GET /api/activities` | 60s | Active |
+| `GET /api/contacts`                 | 300s | Active |
+| `GET /api/activities`               | 60s  | Active |
 
 ### 3.3 Dashboard Cache — DISABLED (HIGH IMPACT)
 
@@ -162,11 +163,11 @@ Cache invalidation is only triggered manually via `invalidate_cache()`. There is
 
 Three composite indexes are defined:
 
-| Index Name | Columns | Use Case |
-|---|---|---|
-| `ix_order_items_order_product` | `order_id, product_id` | Line item JOIN queries |
-| `ix_orders_customer_status` | `customer_id, status` | Customer order history filter |
-| `ix_products_category_active` | `category, is_active` | Category browse of active items |
+| Index Name                     | Columns                | Use Case                        |
+| ------------------------------ | ---------------------- | ------------------------------- |
+| `ix_order_items_order_product` | `order_id, product_id` | Line item JOIN queries          |
+| `ix_orders_customer_status`    | `customer_id, status`  | Customer order history filter   |
+| `ix_products_category_active`  | `category, is_active`  | Category browse of active items |
 
 These address the three most common filter patterns on the core tables. The indexes are defined in a separate file from `demo_models.py` (which is locked), imported in `main.py`.
 
@@ -180,6 +181,7 @@ These address the three most common filter patterns on the core tables. The inde
 Without a `pg_trgm` GIN index, all search queries do full table scans. At current data volumes (demo scale) this is imperceptible, but at 10k+ products or customers it will degrade significantly.
 
 **Recommended additions** (cannot be added without schema migration approval):
+
 ```sql
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE INDEX CONCURRENTLY ix_products_name_trgm ON products USING GIN (name gin_trgm_ops);
@@ -200,6 +202,7 @@ Core indexes: adequate for current scale. Missing trigram indexes for LIKE searc
 ### 5.1 Next.js Configuration Analysis (`next.config.ts`)
 
 **Positive findings**:
+
 - App Router in use — automatic per-route code splitting is enabled by default.
 - `reactStrictMode: true` — helps catch rendering inefficiencies in development.
 - Sentry configured with `disableLogger: true` (tree-shakes logger), `hideSourceMaps: true` (reduces client bundle).
@@ -234,15 +237,16 @@ The architecture matches a pre-App-Router SPA pattern, not the Next.js 15 stream
 
 **Critical (public-facing or high-volume tables)**:
 
-| File | Line | Table | Notes |
-|---|---|---|---|
-| `bank_feeds.py` | 599 | `BankFeed` | CSV export — no limit, full table if date range not provided |
-| `approvals.py` | 154, 310 | `ApprovalStep` | Per-approval step fetch in loops |
-| `contacts.py` | 274 | `Contact` | Integrity check — low risk |
-| `bank_feeds.py` | 226 | `BankAccount` | Dictionary-style lookup — low risk if table is small |
-| `cron_jobs.py` | 274 | `XeroConnection` | Health check only — low risk |
+| File            | Line     | Table            | Notes                                                        |
+| --------------- | -------- | ---------------- | ------------------------------------------------------------ |
+| `bank_feeds.py` | 599      | `BankFeed`       | CSV export — no limit, full table if date range not provided |
+| `approvals.py`  | 154, 310 | `ApprovalStep`   | Per-approval step fetch in loops                             |
+| `contacts.py`   | 274      | `Contact`        | Integrity check — low risk                                   |
+| `bank_feeds.py` | 226      | `BankAccount`    | Dictionary-style lookup — low risk if table is small         |
+| `cron_jobs.py`  | 274      | `XeroConnection` | Health check only — low risk                                 |
 
 **Lower risk (lookup / config tables)**:
+
 - `analytics.py:71` — `meta_rows` from a metadata table
 - `bank_feeds.py:101` — account sync, bounded by external API response
 - `ai/chat.py:247, 320` — chat history, filtered by session ID
@@ -268,24 +272,26 @@ This fetches the entire `bank_feeds` table matching the filter criteria into mem
 
 Background work is handled via Vercel Cron HTTP endpoints (`/api/cron/*`) rather than a task queue. Findings:
 
-| Job | Schedule | Pattern | Assessment |
-|---|---|---|---|
-| `check-expiring-quotes` | Daily 9am | Delegates to `notification_service` | GOOD — service encapsulation |
-| `refresh-xero-tokens` | Every 15 min | Loop over expiring connections, `await token_manager._refresh_access_token()` | ACCEPTABLE — small N |
-| `retry-failed-webhooks` | Every 5 min | `batch_size=50` cap, delegates to `webhook_service` | GOOD — bounded batch |
-| `check-sla-breaches` | Every 15 min | Delegates to `sla_service` | GOOD — service layer |
-| `process-onboarding-emails` | Daily 9am | `scalars().all()` on scheduled touchpoints, then loops | RISK — unbounded if many touchpoints accumulate |
-| `refresh-health-scores` | Daily midnight | `classify_all_customers` — scans all customers | RISK — full table scan |
+| Job                         | Schedule       | Pattern                                                                       | Assessment                                      |
+| --------------------------- | -------------- | ----------------------------------------------------------------------------- | ----------------------------------------------- |
+| `check-expiring-quotes`     | Daily 9am      | Delegates to `notification_service`                                           | GOOD — service encapsulation                    |
+| `refresh-xero-tokens`       | Every 15 min   | Loop over expiring connections, `await token_manager._refresh_access_token()` | ACCEPTABLE — small N                            |
+| `retry-failed-webhooks`     | Every 5 min    | `batch_size=50` cap, delegates to `webhook_service`                           | GOOD — bounded batch                            |
+| `check-sla-breaches`        | Every 15 min   | Delegates to `sla_service`                                                    | GOOD — service layer                            |
+| `process-onboarding-emails` | Daily 9am      | `scalars().all()` on scheduled touchpoints, then loops                        | RISK — unbounded if many touchpoints accumulate |
+| `refresh-health-scores`     | Daily midnight | `classify_all_customers` — scans all customers                                | RISK — full table scan                          |
 
 ### 7.2 Notable Patterns
 
 **Positive**:
+
 - `retry-failed-webhooks` uses `batch_size=50` — prevents runaway processing.
 - Dead letter queue access is limited via the `limit` parameter.
 - Cron secret auth (`CRON_SECRET`) gates all endpoints.
 - FastAPI `BackgroundTasks` is used in `prd.py` for non-blocking PRD generation — correct pattern.
 
 **Negative**:
+
 - `process-onboarding-emails`: loads **all** due touchpoints with `scalars().all()` and no batch limit. If onboarding emails accumulate (system offline for a day), one cron run could process thousands of records sequentially.
 - `refresh-health-scores` → `classify_all_customers`: likely full-table customer scan. No batch size or cursor pagination.
 - No distributed task queue (Celery, ARQ, Dramatiq). All background work is synchronous within the HTTP request lifecycle. A slow Xero token refresh or large email batch will hold the cron HTTP connection open for its full duration, with a risk of Vercel 60-second serverless timeout.
@@ -308,57 +314,57 @@ This is conservative and appropriate for Supabase's PgBouncer transaction-mode p
 
 ### CRITICAL
 
-| ID | Issue | Location | Impact |
-|---|---|---|---|
+| ID   | Issue                                           | Location            | Impact                                                |
+| ---- | ----------------------------------------------- | ------------------- | ----------------------------------------------------- |
 | P0-1 | Dashboard cache entirely disabled (9 endpoints) | `demo_dashboard.py` | Every dashboard load hits DB with aggregation queries |
 
 ### HIGH
 
-| ID | Issue | Location | Impact |
-|---|---|---|---|
-| P1-1 | N+1 query in approvals list/pending (up to 51 queries/request) | `approvals.py:213, 268, 569` | Latency scales linearly with page size |
-| P1-2 | No ILIKE trigram indexes — full table scans on search | `indexes.py` (missing) | O(n) search cost at production scale |
-| P1-3 | `productionBrowserSourceMaps: true` increases user-facing JS payload | `next.config.ts:13` | Larger downloads for end users |
+| ID   | Issue                                                                | Location                     | Impact                                 |
+| ---- | -------------------------------------------------------------------- | ---------------------------- | -------------------------------------- |
+| P1-1 | N+1 query in approvals list/pending (up to 51 queries/request)       | `approvals.py:213, 268, 569` | Latency scales linearly with page size |
+| P1-2 | No ILIKE trigram indexes — full table scans on search                | `indexes.py` (missing)       | O(n) search cost at production scale   |
+| P1-3 | `productionBrowserSourceMaps: true` increases user-facing JS payload | `next.config.ts:13`          | Larger downloads for end users         |
 
 ### MEDIUM
 
-| ID | Issue | Location | Impact |
-|---|---|---|---|
-| P2-1 | Bank feeds CSV export — no row limit | `bank_feeds.py:596-599` | OOM risk on large date ranges |
-| P2-2 | `process-onboarding-emails` — unbounded batch | `cron_jobs.py:650` | Timeout risk on large backlog |
-| P2-3 | No dynamic imports on heavy dashboard pages | `apps/web/app/(dashboard)/` | Full bundle shipped synchronously |
-| P2-4 | No bundle analyser | `next.config.ts` | Bundle composition opaque |
-| P2-5 | No cache invalidation on mutations | All write routes | Stale data served for up to 5 min |
+| ID   | Issue                                         | Location                    | Impact                            |
+| ---- | --------------------------------------------- | --------------------------- | --------------------------------- |
+| P2-1 | Bank feeds CSV export — no row limit          | `bank_feeds.py:596-599`     | OOM risk on large date ranges     |
+| P2-2 | `process-onboarding-emails` — unbounded batch | `cron_jobs.py:650`          | Timeout risk on large backlog     |
+| P2-3 | No dynamic imports on heavy dashboard pages   | `apps/web/app/(dashboard)/` | Full bundle shipped synchronously |
+| P2-4 | No bundle analyser                            | `next.config.ts`            | Bundle composition opaque         |
+| P2-5 | No cache invalidation on mutations            | All write routes            | Stale data served for up to 5 min |
 
 ### LOW
 
-| ID | Issue | Location | Impact |
-|---|---|---|---|
-| P3-1 | 58/76 dashboard pages are full client components | `apps/web/app/(dashboard)/` | No streaming; heavier JS bundles |
-| P3-2 | Only 28 Suspense/loading boundaries across 76 pages | `apps/web/app/` | Poor perceived load performance |
-| P3-3 | `quote_items.quote_id` FK not covered by composite index | `indexes.py` | Mild for quote list joins |
-| P3-4 | No task queue for background jobs | `cron_jobs.py` | Timeout risk on long-running jobs |
-| P3-5 | `cron_jobs.py:274` fetches all `XeroConnection` rows | `cron_jobs.py` | Negligible now, risk at scale |
+| ID   | Issue                                                    | Location                    | Impact                            |
+| ---- | -------------------------------------------------------- | --------------------------- | --------------------------------- |
+| P3-1 | 58/76 dashboard pages are full client components         | `apps/web/app/(dashboard)/` | No streaming; heavier JS bundles  |
+| P3-2 | Only 28 Suspense/loading boundaries across 76 pages      | `apps/web/app/`             | Poor perceived load performance   |
+| P3-3 | `quote_items.quote_id` FK not covered by composite index | `indexes.py`                | Mild for quote list joins         |
+| P3-4 | No task queue for background jobs                        | `cron_jobs.py`              | Timeout risk on long-running jobs |
+| P3-5 | `cron_jobs.py:274` fetches all `XeroConnection` rows     | `cron_jobs.py`              | Negligible now, risk at scale     |
 
 ---
 
 ## Metrics Dashboard
 
-| Metric | Value | Target | Status |
-|---|---|---|---|
-| Core list endpoints with pagination | 4 / 4 | 4 / 4 | PASS |
-| Core list endpoints N+1 free | 4 / 4 | 4 / 4 | PASS |
-| Active Redis cache decorators | 8 endpoints | All hot paths | PARTIAL |
-| Dashboard cache active | 0 / 9 endpoints | 9 / 9 | FAIL |
-| Composite indexes defined | 3 | 3 core + trgm | PARTIAL |
-| ILIKE search indexes (trigram) | 0 | ≥4 | FAIL |
-| Unbounded `.scalars().all()` in routes | ~13 genuine | 0 critical | PARTIAL |
-| Dynamic imports on heavy pages | 0 | ≥5 | FAIL |
-| Bundle analyser configured | No | Yes | FAIL |
-| `productionBrowserSourceMaps` | `true` | `false` | FAIL |
-| Cron batch limits | 2 / 6 jobs | 6 / 6 | PARTIAL |
-| DB pool size (async, serverless) | 5 + 10 overflow | Appropriate | PASS |
-| Prepared statement cache disabled | Yes (pgbouncer) | Required | PASS |
+| Metric                                 | Value           | Target        | Status  |
+| -------------------------------------- | --------------- | ------------- | ------- |
+| Core list endpoints with pagination    | 4 / 4           | 4 / 4         | PASS    |
+| Core list endpoints N+1 free           | 4 / 4           | 4 / 4         | PASS    |
+| Active Redis cache decorators          | 8 endpoints     | All hot paths | PARTIAL |
+| Dashboard cache active                 | 0 / 9 endpoints | 9 / 9         | FAIL    |
+| Composite indexes defined              | 3               | 3 core + trgm | PARTIAL |
+| ILIKE search indexes (trigram)         | 0               | ≥4            | FAIL    |
+| Unbounded `.scalars().all()` in routes | ~13 genuine     | 0 critical    | PARTIAL |
+| Dynamic imports on heavy pages         | 0               | ≥5            | FAIL    |
+| Bundle analyser configured             | No              | Yes           | FAIL    |
+| `productionBrowserSourceMaps`          | `true`          | `false`       | FAIL    |
+| Cron batch limits                      | 2 / 6 jobs      | 6 / 6         | PARTIAL |
+| DB pool size (async, serverless)       | 5 + 10 overflow | Appropriate   | PASS    |
+| Prepared statement cache disabled      | Yes (pgbouncer) | Required      | PASS    |
 
 ---
 

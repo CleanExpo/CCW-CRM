@@ -5,13 +5,14 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from src.ai.monitoring import get_metrics_collector
+from src.api.deps import get_current_user
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/api/test-data", tags=["Test Data"])
+router = APIRouter(prefix="/api/test-data", tags=["Test Data"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("/generate")

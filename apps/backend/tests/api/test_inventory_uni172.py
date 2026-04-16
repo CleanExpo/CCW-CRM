@@ -14,11 +14,24 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.api.deps import get_current_user
 from src.api.routes.inventory import router as inventory_router
+from src.config.database import get_async_db
 
 # Create minimal test app with only the inventory router
 test_app = FastAPI()
 test_app.include_router(inventory_router)
+
+# Override auth + DB dependencies so validation tests reach Pydantic layer
+# (returns 422) instead of being blocked by auth (returns 401).
+async def _mock_user():
+    return {"id": "00000000-0000-0000-0000-000000000001", "email": "test@test.com"}
+
+async def _mock_db():
+    yield None
+
+test_app.dependency_overrides[get_current_user] = _mock_user
+test_app.dependency_overrides[get_async_db] = _mock_db
 
 client = TestClient(test_app, raise_server_exceptions=False)
 

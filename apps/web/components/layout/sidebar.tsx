@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/layout/NotificationBell';
@@ -55,6 +55,7 @@ import {
   Cpu,
   MessageCircle,
   Store,
+  LogOut,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -208,8 +209,19 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   );
 }
 
+async function logout(router: ReturnType<typeof useRouter>) {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch {
+    // ignore — clear client state regardless
+  }
+  localStorage.removeItem('onboarding_completed');
+  router.push('/login');
+}
+
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN));
 
   // Persist collapsed state in localStorage
@@ -274,7 +286,7 @@ export function Sidebar() {
         <NotificationBell />
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3" id="sidebar-nav">
         {/* Dashboard — always visible, no group */}
         <NavLink
           item={{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }}
@@ -319,6 +331,24 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Logout */}
+      <div className="border-t p-3">
+        <motion.button
+          onClick={() => void logout(router)}
+          className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <motion.div
+            whileHover={{ scale: 1.2, rotate: -15 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+          >
+            <LogOut className="h-4 w-4" />
+          </motion.div>
+          <span>Log out</span>
+        </motion.button>
+      </div>
     </aside>
   );
 }

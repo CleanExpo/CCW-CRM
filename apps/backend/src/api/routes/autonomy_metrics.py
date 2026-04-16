@@ -11,8 +11,9 @@ Part of Phase 5 (Autonomous Development Framework) - Week 3 monitoring.
 from datetime import UTC
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from src.api.deps import get_current_user
 from src.services.autonomy_audit import (
     AuditAction,
     AuditResult,
@@ -20,7 +21,7 @@ from src.services.autonomy_audit import (
     get_audit_service,
 )
 
-router = APIRouter(prefix="/api/autonomy", tags=["Autonomy Metrics"])
+router = APIRouter(prefix="/api/autonomy", tags=["Autonomy Metrics"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("/metrics")
