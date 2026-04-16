@@ -35,6 +35,7 @@ from .routes import (
     audit_trail,  # Entity-level audit trail
     backorders,
     bank_feeds,
+    bas_report,  # BAS report generation (UNI-1816)
     billing,  # Billing and payment endpoints (Phase 2 Batch 2A)
     boardroom,  # Boardroom AI session endpoint (4x daily CRON)
     certifications,  # IICRC/ISSA/ARCR certification tracking (Sprint 2)
@@ -56,7 +57,6 @@ from .routes import (
     google_ai,
     health,
     inventory,
-    bas_report,  # BAS report generation (UNI-1816)
     invoice_payments,  # Invoice payments for UNI-173
     invoices,  # Invoices for UNI-173
     jobs,
