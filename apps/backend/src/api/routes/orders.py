@@ -18,7 +18,6 @@ from src.cache.decorators import invalidate_cache
 from src.config.database import get_async_db
 from src.config.settings import Settings, get_settings
 from src.db.customer_credit_models import CustomerCreditProfile
-from src.db.demo_models import Customer as CustomerModel
 from src.db.demo_models import Order as OrderModel
 from src.db.demo_models import OrderActivity as OrderActivityModel
 from src.db.demo_models import OrderItem as OrderItemModel
