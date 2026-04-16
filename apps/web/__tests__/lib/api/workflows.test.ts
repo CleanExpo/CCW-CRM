@@ -63,7 +63,9 @@ describe('workflowsApi.updateTemplate', () => {
   it('puts update to templates/:id endpoint', async () => {
     mockPut.mockResolvedValue({ ...mockTemplate, name: 'Updated Name' });
     await workflowsApi.updateTemplate('tmpl-1', { name: 'Updated Name' });
-    expect(mockPut).toHaveBeenCalledWith('/api/workflows/templates/tmpl-1', { name: 'Updated Name' });
+    expect(mockPut).toHaveBeenCalledWith('/api/workflows/templates/tmpl-1', {
+      name: 'Updated Name',
+    });
   });
 });
 
@@ -97,6 +99,8 @@ describe('workflowsApi.listInstances', () => {
   it('appends both filters', async () => {
     mockGet.mockResolvedValue([]);
     await workflowsApi.listInstances({ template_id: 'tmpl-1', status: 'running' });
-    expect(mockGet).toHaveBeenCalledWith('/api/workflows/instances?template_id=tmpl-1&status=running');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/api/workflows/instances?template_id=tmpl-1&status=running'
+    );
   });
 });

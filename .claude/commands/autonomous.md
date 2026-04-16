@@ -12,6 +12,7 @@
 The `/autonomous` command initiates a fully autonomous development workflow where a Lead Agent coordinates specialized subagents through 5 phases to complete a development task from analysis to deployment-ready code.
 
 **What it does:**
+
 1. Analyzes your task request
 2. Explores the codebase
 3. Designs a solution
@@ -50,6 +51,7 @@ The `/autonomous` command initiates a fully autonomous development workflow wher
 ### Required
 
 **`<task-description>`**
+
 - The development task to execute autonomously
 - Should be clear and specific
 - Examples:
@@ -60,6 +62,7 @@ The `/autonomous` command initiates a fully autonomous development workflow wher
 ### Optional Flags
 
 **`--auto`** or **`--approval-mode auto`**
+
 - Enable automatic approval mode
 - Phases proceed automatically without waiting for user
 - Still pauses for:
@@ -70,11 +73,13 @@ The `/autonomous` command initiates a fully autonomous development workflow wher
 - Default: manual (require approval each phase)
 
 **`--resume <task-id>`**
+
 - Resume an interrupted task
 - Task ID format: `task_YYYYMMDD_HHMMSS`
 - Example: `--resume task_20260205_150000`
 
 **`--max-phases <1-5>`**
+
 - Stop after specified phase
 - Useful for review before implementation
 - Examples:
@@ -82,6 +87,7 @@ The `/autonomous` command initiates a fully autonomous development workflow wher
   - `--max-phases 4` - Stop before finalization
 
 **`--verbose`**
+
 - Enable detailed progress logging
 - Shows more information during execution
 - Useful for debugging or learning
@@ -91,6 +97,7 @@ The `/autonomous` command initiates a fully autonomous development workflow wher
 ## EXECUTION FLOW
 
 ### Phase 1: Discovery (5-10 min)
+
 **Agent:** Discovery
 **Output:** Codebase analysis, patterns, constraints
 
@@ -101,12 +108,14 @@ Discovery agent explores the codebase, identifies existing patterns, documents c
 ---
 
 ### Phase 2: Architecture (10-15 min)
+
 **Agent:** Architect
 **Output:** Solution design, component specs, implementation plan
 
 Architect designs the solution, specifies each component in detail, creates file-by-file implementation plan.
 
 **Approval:** Required for:
+
 - Breaking changes
 - New folders
 - New packages
@@ -114,6 +123,7 @@ Architect designs the solution, specifies each component in detail, creates file
 ---
 
 ### Phase 3: Build (20-40 min)
+
 **Agent:** Builder + Validator (continuous)
 **Output:** Implemented code, tests
 
@@ -124,6 +134,7 @@ Builder implements code exactly as specified. Validator checks each file continu
 ---
 
 ### Phase 4: Build Final (10-15 min)
+
 **Agent:** Builder + Validator (final gate)
 **Output:** Deployment-ready code
 
@@ -134,6 +145,7 @@ Final quality gate. All tests must pass (100%). No exceptions.
 ---
 
 ### Phase 5: Finalize (5-10 min)
+
 **Agent:** Finalizer + Validator
 **Output:** Completion report, rollback plan
 
@@ -156,6 +168,7 @@ Final verification, deployment readiness assessment, comprehensive documentation
 ```
 
 **What happens:**
+
 1. Discovery analyzes sidebar patterns
 2. Architecture designs logout button component
 3. You review and approve design
@@ -175,6 +188,7 @@ Final verification, deployment readiness assessment, comprehensive documentation
 ```
 
 **What happens:**
+
 1. All phases proceed automatically
 2. Pauses only for:
    - New package needed (pgvector, etc.)
@@ -194,6 +208,7 @@ Final verification, deployment readiness assessment, comprehensive documentation
 ```
 
 **What happens:**
+
 1. Discovery analyzes current dashboard
 2. Architecture designs new layout
 3. **STOPS** - You review design before implementation
@@ -211,12 +226,14 @@ Final verification, deployment readiness assessment, comprehensive documentation
 ```
 
 **What happens:**
+
 1. Loads task state from execution directory
 2. Shows progress (phases completed/remaining)
 3. Resumes from current phase
 4. Continues to completion
 
 **Use cases:**
+
 - Session timeout
 - Accidental cancellation
 - Network interruption
@@ -229,18 +246,21 @@ Final verification, deployment readiness assessment, comprehensive documentation
 ### Manual Approval (Default)
 
 **Behavior:**
+
 - Pauses after each phase for user review
 - User must say "proceed" / "continue" / "approved" to continue
 - User can inspect handoffs and validation reports
 - User can cancel at any time
 
 **When to use:**
+
 - First time using autonomous mode
 - Complex or risky changes
 - Learning how the system works
 - Want full control
 
 **Commands:**
+
 - "proceed" - Continue to next phase
 - "cancel" - Stop execution
 - "pause" - Pause for later resumption
@@ -251,6 +271,7 @@ Final verification, deployment readiness assessment, comprehensive documentation
 ### Auto Approval
 
 **Behavior:**
+
 - Proceeds automatically through phases
 - Only pauses for:
   - Breaking changes detected
@@ -261,12 +282,14 @@ Final verification, deployment readiness assessment, comprehensive documentation
 - User can still cancel with "stop"
 
 **When to use:**
+
 - Simple, safe changes
 - Trusted system
 - Non-breaking features
 - Want speed
 
 **Enable with:**
+
 ```
 /autonomous "task" --auto
 ```
@@ -278,11 +301,13 @@ Final verification, deployment readiness assessment, comprehensive documentation
 ### Cancel Execution
 
 At any time, say:
+
 - "cancel"
 - "stop"
 - "abort"
 
 **What happens:**
+
 - Current phase completes (safe checkpoint)
 - Task state saved
 - You can resume later or discard
@@ -292,11 +317,13 @@ At any time, say:
 ### Pause Execution
 
 Say:
+
 - "pause"
 - "hold"
 - "wait"
 
 **What happens:**
+
 - Same as cancel, but implies intent to resume
 - Task state preserved for resumption
 
@@ -307,6 +334,7 @@ Say:
 ### Execution State Directory
 
 All autonomous execution state is stored in:
+
 ```
 .claude/.execution/
 ├── current-task.json           # Active task state
@@ -321,16 +349,19 @@ All autonomous execution state is stored in:
 ```
 
 **View state:**
+
 ```powershell
 .\scripts\autonomous\validate-state.ps1
 ```
 
 **Resume task:**
+
 ```powershell
 .\scripts\autonomous\resume-task.ps1
 ```
 
 **Clean up old tasks:**
+
 ```powershell
 .\scripts\autonomous\cleanup-execution.ps1
 ```
@@ -344,10 +375,12 @@ All autonomous execution state is stored in:
 If validation fails (code quality, tests, constraints):
 
 **System action:**
+
 - Agent retries current phase (max 3 attempts)
 - After 3 failures: Escalates to user
 
 **Your options:**
+
 - Review validation report
 - Provide guidance
 - Adjust requirements
@@ -360,11 +393,13 @@ If validation fails (code quality, tests, constraints):
 If agent encounters a blocker (can't proceed):
 
 **System action:**
+
 - Reports blocker with context
 - Presents options
 - Waits for your guidance
 
 **Your options:**
+
 - Choose suggested workaround
 - Provide alternative approach
 - Cancel and fix manually
@@ -376,11 +411,13 @@ If agent encounters a blocker (can't proceed):
 If architecture detects breaking changes:
 
 **System action:**
+
 - Pauses automatically (even in auto mode)
 - Shows what would break
 - Asks for explicit approval
 
 **Your options:**
+
 - Approve (understanding the risks)
 - Cancel (avoid breaking changes)
 - Revise requirements
@@ -392,6 +429,7 @@ If architecture detects breaking changes:
 Before using `/autonomous`:
 
 ☐ **Execution directory initialized**
+
 ```powershell
 .\scripts\autonomous\init-execution.ps1
 ```
@@ -401,6 +439,7 @@ Before using `/autonomous`:
 ☐ **Clear task description**
 
 ☐ **Development environment running**
+
 - Backend: Port 8000
 - Frontend: Port 3000
 - Database: PostgreSQL running
@@ -412,12 +451,14 @@ Before using `/autonomous`:
 ### Task Descriptions
 
 **✅ Good:**
+
 - "Add a Recent Quotes widget to the dashboard"
 - "Fix bug where order totals calculate incorrectly"
 - "Refactor customer form to use React Hook Form"
 - "Add export to CSV button on products page"
 
 **❌ Bad:**
+
 - "Improve dashboard" (too vague)
 - "Fix bugs" (which bugs?)
 - "Make it better" (what specifically?)
@@ -453,6 +494,7 @@ Before using `/autonomous`:
 ### "Execution directory not found"
 
 **Solution:**
+
 ```powershell
 .\scripts\autonomous\init-execution.ps1
 ```
@@ -462,6 +504,7 @@ Before using `/autonomous`:
 ### "Task already in progress"
 
 **Options:**
+
 1. Resume current task: `/autonomous --resume task_...`
 2. Cancel current task: Check state, then cleanup
 3. Wait for completion
@@ -471,6 +514,7 @@ Before using `/autonomous`:
 ### "Validation keeps failing"
 
 **Check:**
+
 1. Review validation report in `.claude/.execution/validation-reports/`
 2. Identify root cause
 3. May need manual intervention
@@ -480,6 +524,7 @@ Before using `/autonomous`:
 ### "Agent is stuck/no progress"
 
 **Check:**
+
 1. View execution log: `.claude/.execution/execution-log.jsonl`
 2. Last event may show issue
 3. Can cancel and resume if needed
@@ -491,6 +536,7 @@ Before using `/autonomous`:
 Upon completion, you receive:
 
 ### Completion Report
+
 - Summary of changes
 - Files created/modified
 - Test results
@@ -500,12 +546,14 @@ Upon completion, you receive:
 - Next steps
 
 ### Execution Artifacts
+
 - All phase handoffs preserved
 - All validation reports saved
 - Complete audit trail in logs
 - State saved for reference
 
 ### Ready for Deployment
+
 - Code is complete
 - Tests are passing (100%)
 - Quality verified
@@ -594,11 +642,13 @@ Enable verbose mode for detailed logging:
 ## SEE ALSO
 
 **Documentation:**
+
 - `docs/specs/AUTONOMOUS-FRAMEWORK-ARCHITECTURE.md` - System architecture
 - `docs/guides/USING-AUTONOMOUS-MODE.md` - User guide
 - `.claude/agents/lead-agent.md` - Lead agent documentation
 
 **Scripts:**
+
 - `scripts/autonomous/init-execution.ps1` - Initialize system
 - `scripts/autonomous/validate-state.ps1` - Check state
 - `scripts/autonomous/resume-task.ps1` - Resume tasks

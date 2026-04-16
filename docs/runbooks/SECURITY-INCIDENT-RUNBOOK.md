@@ -5,12 +5,12 @@
 
 ## Severity Levels
 
-| Level | Description | Response time |
-|---|---|---|
-| P0 | Credential exposure, data breach | Immediate |
-| P1 | RLS bypass, auth weakness | < 1 hour |
-| P2 | Suspicious access pattern | < 4 hours |
-| P3 | Audit finding, non-critical | Next business day |
+| Level | Description                      | Response time     |
+| ----- | -------------------------------- | ----------------- |
+| P0    | Credential exposure, data breach | Immediate         |
+| P1    | RLS bypass, auth weakness        | < 1 hour          |
+| P2    | Suspicious access pattern        | < 4 hours         |
+| P3    | Audit finding, non-critical      | Next business day |
 
 ---
 
@@ -24,6 +24,7 @@ If an API key, password, or secret has been committed or exposed:
    - Other: Follow vendor's key rotation process
 
 2. **Remove from git history** (if committed)
+
    ```bash
    git filter-branch --force --index-filter \
      'git rm --cached --ignore-unmatch path/to/file' HEAD
@@ -43,6 +44,7 @@ If an API key, password, or secret has been committed or exposed:
 If a row-level security policy can be bypassed:
 
 1. **Immediately apply** a restrictive migration:
+
    ```sql
    ALTER TABLE public.affected_table ENABLE ROW LEVEL SECURITY;
    REVOKE ALL ON public.affected_table FROM anon, authenticated;

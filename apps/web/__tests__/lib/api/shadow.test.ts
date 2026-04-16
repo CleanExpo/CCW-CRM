@@ -21,7 +21,13 @@ beforeEach(() => {
 
 describe('shadowApi.getStatus', () => {
   it('calls /api/shadow/status', async () => {
-    mockGet.mockResolvedValue({ active: false, session: null, day_number: 0, days_remaining: 0, readiness_score: null });
+    mockGet.mockResolvedValue({
+      active: false,
+      session: null,
+      day_number: 0,
+      days_remaining: 0,
+      readiness_score: null,
+    });
     await shadowApi.getStatus();
     expect(mockGet).toHaveBeenCalledWith('/api/shadow/status');
   });
@@ -56,7 +62,12 @@ describe('shadowApi.endSession', () => {
 
 describe('shadowApi.getReadinessScore', () => {
   it('calls /api/shadow/readiness-score', async () => {
-    mockGet.mockResolvedValue({ score: 75, breakdown: {}, recommendation: 'Almost ready', ready_for_transition: false });
+    mockGet.mockResolvedValue({
+      score: 75,
+      breakdown: {},
+      recommendation: 'Almost ready',
+      ready_for_transition: false,
+    });
     await shadowApi.getReadinessScore();
     expect(mockGet).toHaveBeenCalledWith('/api/shadow/readiness-score');
   });
@@ -78,7 +89,13 @@ describe('shadowApi.getDailyStats', () => {
 
 describe('shadowApi.getTransitionReport', () => {
   it('calls /api/shadow/transition-report', async () => {
-    mockGet.mockResolvedValue({ session_id: 's-1', score: 80, ready_for_transition: true, report_markdown: '# Report', generated_at: '2026-01-01' });
+    mockGet.mockResolvedValue({
+      session_id: 's-1',
+      score: 80,
+      ready_for_transition: true,
+      report_markdown: '# Report',
+      generated_at: '2026-01-01',
+    });
     await shadowApi.getTransitionReport();
     expect(mockGet).toHaveBeenCalledWith('/api/shadow/transition-report');
   });
@@ -122,7 +139,13 @@ describe('shadowApi.getAiOpportunities', () => {
 
 describe('shadowApi.getComparison', () => {
   it('defaults entity_type to order', async () => {
-    mockGet.mockResolvedValue({ entity_type: 'order', total_observed: 0, match_rate: 0, distribution: {}, interpretation: '' });
+    mockGet.mockResolvedValue({
+      entity_type: 'order',
+      total_observed: 0,
+      match_rate: 0,
+      distribution: {},
+      interpretation: '',
+    });
     await shadowApi.getComparison();
     expect(mockGet).toHaveBeenCalledWith('/api/shadow/comparison?entity_type=order');
   });

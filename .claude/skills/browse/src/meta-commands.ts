@@ -5,7 +5,13 @@
 import type { BrowserManager } from './browser-manager';
 import { handleSnapshot } from './snapshot';
 import { getCleanText } from './read-commands';
-import { READ_COMMANDS, WRITE_COMMANDS, META_COMMANDS, PAGE_CONTENT_COMMANDS, wrapUntrustedContent } from './commands';
+import {
+  READ_COMMANDS,
+  WRITE_COMMANDS,
+  META_COMMANDS,
+  PAGE_CONTENT_COMMANDS,
+  wrapUntrustedContent,
+} from './commands';
 import { validateNavigationUrl } from './url-validation';
 import * as Diff from 'diff';
 import * as fs from 'fs';
@@ -19,7 +25,7 @@ const SAFE_DIRECTORIES = [TEMP_DIR, process.cwd()];
 
 export function validateOutputPath(filePath: string): void {
   const resolved = path.resolve(filePath);
-  const isSafe = SAFE_DIRECTORIES.some(dir => isPathWithin(resolved, dir));
+  const isSafe = SAFE_DIRECTORIES.some((dir) => isPathWithin(resolved, dir));
   if (!isSafe) {
     throw new Error(`Path must be within: ${SAFE_DIRECTORIES.join(', ')}`);
   }
@@ -35,7 +41,10 @@ function tokenizePipeSegment(segment: string): string[] {
     if (ch === '"') {
       inQuote = !inQuote;
     } else if (ch === ' ' && !inQuote) {
-      if (current) { tokens.push(current); current = ''; }
+      if (current) {
+        tokens.push(current);
+        current = '';
+      }
     } else {
       current += ch;
     }
@@ -54,9 +63,9 @@ export async function handleMetaCommand(
     // ─── Tabs ──────────────────────────────────────────
     case 'tabs': {
       const tabs = await bm.getTabListWithTitles();
-      return tabs.map(t =>
-        `${t.active ? '→ ' : '  '}[${t.id}] ${t.title || '(untitled)'} — ${t.url}`
-      ).join('\n');
+      return tabs
+        .map((t) => `${t.active ? '→ ' : '  '}[${t.id}] ${t.title || '(untitled)'} — ${t.url}`)
+        .join('\n');
     }
 
     case 'tab': {
@@ -141,7 +150,13 @@ export async function handleMetaCommand(
         const isFilePath = arg.includes('/') && /\.(png|jpe?g|webp|pdf)$/i.test(arg);
         if (isFilePath) {
           outputPath = arg;
-        } else if (arg.startsWith('@e') || arg.startsWith('@c') || arg.startsWith('.') || arg.startsWith('#') || arg.includes('[')) {
+        } else if (
+          arg.startsWith('@e') ||
+          arg.startsWith('@c') ||
+          arg.startsWith('.') ||
+          arg.startsWith('#') ||
+          arg.includes('[')
+        ) {
           targetSelector = arg;
         } else {
           outputPath = arg;
@@ -212,10 +227,11 @@ export async function handleMetaCommand(
     case 'chain': {
       // Read JSON array from args[0] (if provided) or expect it was passed as body
       const jsonStr = args[0];
-      if (!jsonStr) throw new Error(
-        'Usage: echo \'[["goto","url"],["text"]]\' | browse chain\n' +
-        '   or: browse chain \'goto url | click @e5 | snapshot -ic\''
-      );
+      if (!jsonStr)
+        throw new Error(
+          'Usage: echo \'[["goto","url"],["text"]]\' | browse chain\n' +
+            "   or: browse chain 'goto url | click @e5 | snapshot -ic'"
+        );
 
       let commands: string[][];
       try {
@@ -223,9 +239,10 @@ export async function handleMetaCommand(
         if (!Array.isArray(commands)) throw new Error('not array');
       } catch {
         // Fallback: pipe-delimited format "goto url | click @e5 | snapshot -ic"
-        commands = jsonStr.split(' | ')
-          .filter(seg => seg.trim().length > 0)
-          .map(seg => tokenizePipeSegment(seg.trim()));
+        commands = jsonStr
+          .split(' | ')
+          .filter((seg) => seg.trim().length > 0)
+          .map((seg) => tokenizePipeSegment(seg.trim()));
       }
 
       const results: string[] = [];
@@ -260,7 +277,10 @@ export async function handleMetaCommand(
 
       // Wait for network to settle after write commands before returning
       if (lastWasWrite) {
-        await bm.getPage().waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
+        await bm
+          .getPage()
+          .waitForLoadState('networkidle', { timeout: 2000 })
+          .catch(() => {});
       }
 
       return results.join('\n\n');
@@ -285,7 +305,7 @@ export async function handleMetaCommand(
 
       for (const part of changes) {
         const prefix = part.added ? '+' : part.removed ? '-' : ' ';
-        const lines = part.value.split('\n').filter(l => l.length > 0);
+        const lines = part.value.split('\n').filter((l) => l.length > 0);
         for (const line of lines) {
           output.push(`${prefix} ${line}`);
         }
@@ -344,7 +364,10 @@ export async function handleMetaCommand(
         let activated = false;
         for (const appName of appNames) {
           try {
-            execSync(`osascript -e 'tell application "${appName}" to activate'`, { stdio: 'pipe', timeout: 3000 });
+            execSync(`osascript -e 'tell application "${appName}" to activate'`, {
+              stdio: 'pipe',
+              timeout: 3000,
+            });
             activated = true;
             break;
           } catch {
@@ -381,9 +404,13 @@ export async function handleMetaCommand(
         if (!bm.isWatching()) return 'Not currently watching.';
         const result = bm.stopWatch();
         const durationSec = Math.round(result.duration / 1000);
-        const lastSnapshot = result.snapshots.length > 0
-          ? wrapUntrustedContent(result.snapshots[result.snapshots.length - 1], bm.getCurrentUrl())
-          : '(none)';
+        const lastSnapshot =
+          result.snapshots.length > 0
+            ? wrapUntrustedContent(
+                result.snapshots[result.snapshots.length - 1],
+                bm.getCurrentUrl()
+              )
+            : '(none)';
         return [
           `WATCH STOPPED (${durationSec}s, ${result.snapshots.length} snapshots)`,
           '',
@@ -406,7 +433,10 @@ export async function handleMetaCommand(
       const { execSync } = await import('child_process');
       let gitRoot: string;
       try {
-        gitRoot = execSync('git rev-parse --show-toplevel', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+        gitRoot = execSync('git rev-parse --show-toplevel', {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        }).trim();
       } catch {
         return 'Not in a git repository — cannot locate inbox.';
       }
@@ -414,8 +444,9 @@ export async function handleMetaCommand(
       const inboxDir = path.join(gitRoot, '.context', 'sidebar-inbox');
       if (!fs.existsSync(inboxDir)) return 'Inbox empty.';
 
-      const files = fs.readdirSync(inboxDir)
-        .filter(f => f.endsWith('.json') && !f.startsWith('.'))
+      const files = fs
+        .readdirSync(inboxDir)
+        .filter((f) => f.endsWith('.json') && !f.startsWith('.'))
         .sort()
         .reverse(); // newest first
 
@@ -453,7 +484,9 @@ export async function handleMetaCommand(
       // Handle --clear flag
       if (args.includes('--clear')) {
         for (const file of files) {
-          try { fs.unlinkSync(path.join(inboxDir, file)); } catch {}
+          try {
+            fs.unlinkSync(path.join(inboxDir, file));
+          } catch {}
         }
         lines.push(`Cleared ${files.length} message${files.length === 1 ? '' : 's'}.`);
       }
@@ -483,7 +516,7 @@ export async function handleMetaCommand(
           version: 1,
           savedAt: new Date().toISOString(),
           cookies: state.cookies,
-          pages: state.pages.map(p => ({ url: p.url, isActive: p.isActive })),
+          pages: state.pages.map((p) => ({ url: p.url, isActive: p.isActive })),
         };
         fs.writeFileSync(statePath, JSON.stringify(saveData, null, 2), { mode: 0o600 });
         return `State saved: ${statePath} (${state.cookies.length} cookies, ${state.pages.length} pages)\n⚠️  Cookies stored in plaintext. Delete when no longer needed.`;
@@ -500,7 +533,9 @@ export async function handleMetaCommand(
           const ageMs = Date.now() - new Date(data.savedAt).getTime();
           const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
           if (ageMs > SEVEN_DAYS) {
-            console.warn(`[browse] Warning: State file is ${Math.round(ageMs / 86400000)} days old. Consider re-saving.`);
+            console.warn(
+              `[browse] Warning: State file is ${Math.round(ageMs / 86400000)} days old. Consider re-saving.`
+            );
           }
         }
         // Close existing pages, then restore (replace, not merge)
@@ -541,7 +576,7 @@ export async function handleMetaCommand(
         const resolved = await bm.resolveRef(target);
         const locator = 'locator' in resolved ? resolved.locator : page.locator(resolved.selector);
         const elementHandle = await locator.elementHandle({ timeout: 5000 });
-        frame = await elementHandle?.contentFrame() ?? null;
+        frame = (await elementHandle?.contentFrame()) ?? null;
         await elementHandle?.dispose();
       }
 

@@ -1,1 +1,0 @@
-"""SendGrid email integration package."""

@@ -22,6 +22,7 @@ Provide browser-based GitHub workflow automation for the CCW-CRM repository — 
 - Investigating a failing workflow step
 
 **Trigger phrases:**
+
 - "open the PR on github"
 - "check if CI passed"
 - "create a github PR in browser"
@@ -38,6 +39,7 @@ mcp__Claude_in_Chrome__navigate: https://github.com/[owner]/CCW-CRM
 ```
 
 Screenshot to confirm repo and login:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ```
@@ -47,12 +49,14 @@ If not logged in or wrong repo → stop and correct.
 ### Step 2: Check PR Status
 
 Navigate to Pull Requests tab:
+
 ```
 mcp__Claude_in_Chrome__navigate: https://github.com/[owner]/CCW-CRM/pulls
 mcp__Claude_in_Chrome__get_page_text
 ```
 
 List open PRs:
+
 ```
 | PR #  | Title                        | Author  | CI Status | Reviews |
 |-------|------------------------------|---------|-----------|---------|
@@ -62,12 +66,14 @@ List open PRs:
 ### Step 3: Check Actions CI
 
 Navigate to a specific workflow run:
+
 ```
 mcp__Claude_in_Chrome__navigate: https://github.com/[owner]/CCW-CRM/actions
 mcp__Claude_in_Chrome__get_page_text
 ```
 
 Find the latest run for the current branch. Extract:
+
 - Status (queued / in progress / success / failure)
 - Failing step name and error message
 - Duration
@@ -79,17 +85,20 @@ If failing, click through to the specific job → step → copy error lines.
 **Requires user confirmation before submission.**
 
 Navigate to compare page:
+
 ```
 mcp__Claude_in_Chrome__navigate: https://github.com/[owner]/CCW-CRM/compare/[branch]
 ```
 
 Fill in PR details:
+
 ```
 mcp__Claude_in_Chrome__form_input: { selector: "#pull_request_title", text: "[title]" }
 mcp__Claude_in_Chrome__form_input: { selector: "#pull_request_body", text: "[description]" }
 ```
 
 PR description template:
+
 ```
 ## Summary
 - [bullet point changes]
@@ -106,6 +115,7 @@ Pause before clicking "Create pull request":
 "Ready to create the PR. Review the title and description above, then confirm."
 
 After user confirms:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "click", coordinate: [submit-button] }
 mcp__Claude_in_Chrome__computer: { action: "screenshot" }
@@ -116,12 +126,14 @@ Report: PR number and URL.
 ### Step 5: Review Diff
 
 Navigate to Files Changed tab:
+
 ```
 mcp__Claude_in_Chrome__computer: { action: "click", coordinate: [files-changed-tab] }
 mcp__Claude_in_Chrome__get_page_text
 ```
 
 Summarise:
+
 - Files changed (count)
 - Lines added / removed
 - Any files that look risky (migrations, middleware, auth routes)
@@ -133,6 +145,7 @@ Summarise:
 "Ready to merge PR #[N] via [merge strategy]. This cannot be undone. Confirm?"
 
 After confirmation:
+
 1. Click "Merge pull request"
 2. Confirm merge dialog
 3. Screenshot merged state
@@ -146,11 +159,13 @@ mcp__Claude_in_Chrome__computer: { action: "screenshot" }
 ## VERIFICATION
 
 After PR creation:
+
 - PR URL is valid and accessible
 - CI checks appear (may take 30–60 seconds to start)
 - Assignees/reviewers set if required
 
 After merge:
+
 - Branch deleted (if auto-delete enabled)
 - Deployment triggered on Vercel (check with CHROME-VERCEL-MONITOR skill)
 

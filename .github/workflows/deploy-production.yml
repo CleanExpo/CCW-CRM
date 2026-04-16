@@ -18,9 +18,9 @@ on:
         default: false
 
 env:
-  NODE_VERSION: "20"
-  PNPM_VERSION: "9.15.0"
-  PYTHON_VERSION: "3.12"
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.15.0'
+  PYTHON_VERSION: '3.12'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   PRODUCTION_URL: https://api.ccw-erp.com
@@ -128,7 +128,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          version: 'latest'
 
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
@@ -142,7 +142,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Install backend dependencies
         working-directory: apps/backend

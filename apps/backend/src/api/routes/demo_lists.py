@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.cache.decorators import cached
 from src.config.database import get_async_db
 from src.db.demo_models import (
@@ -23,7 +24,7 @@ from src.db.demo_models import (
     QuoteItem,
 )
 
-router = APIRouter(prefix="/api/demo", tags=["Demo Lists"])
+router = APIRouter(prefix="/api/demo", tags=["Demo Lists"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic models for responses

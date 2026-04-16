@@ -98,10 +98,13 @@ function buildFallbackRetro(debrief, qaReport, securityAudit) {
   return {
     whatWentWell: [
       `Session ${debrief.sessionId} completed successfully`,
-      debrief.buildStatus === 'GREEN' ? 'Build status GREEN — system healthy' : `Build status: ${debrief.buildStatus}`,
+      debrief.buildStatus === 'GREEN'
+        ? 'Build status GREEN — system healthy'
+        : `Build status: ${debrief.buildStatus}`,
       `${decisions.length} decisions logged by the Witness`,
     ],
-    whatToImprove: redFlags.length > 0 ? redFlags.slice(0, 3) : ['No red flags detected this session'],
+    whatToImprove:
+      redFlags.length > 0 ? redFlags.slice(0, 3) : ['No red flags detected this session'],
     nextSessionPriorities: decisions.slice(0, 3).map((d, i) => ({
       priority: i + 1,
       action: d,
@@ -109,9 +112,14 @@ function buildFallbackRetro(debrief, qaReport, securityAudit) {
       deadline: 'next session',
     })),
     feedbackForNextSession: `Previous session (${debrief.sessionId}): BUILD_STATUS=${debrief.buildStatus}. Moon Shot: ${debrief.moonShot || 'not captured'}. ${decisions[0] ? `Top decision: ${decisions[0]}` : ''}`,
-    overallHealthScore: debrief.buildStatus === 'GREEN' ? 85 : debrief.buildStatus === 'AMBER' ? 65 : 40,
+    overallHealthScore:
+      debrief.buildStatus === 'GREEN' ? 85 : debrief.buildStatus === 'AMBER' ? 65 : 40,
     retroSentiment:
-      debrief.buildStatus === 'GREEN' ? 'POSITIVE' : debrief.buildStatus === 'AMBER' ? 'NEUTRAL' : 'NEEDS_ATTENTION',
+      debrief.buildStatus === 'GREEN'
+        ? 'POSITIVE'
+        : debrief.buildStatus === 'AMBER'
+          ? 'NEUTRAL'
+          : 'NEEDS_ATTENTION',
   };
 }
 
@@ -145,7 +153,9 @@ export async function runRetro(sessionId, dataDir = './data/sessions') {
   }
 
   try {
-    securityAudit = JSON.parse(await fs.readFile(path.join(sessionDir, 'security-audit.json'), 'utf-8'));
+    securityAudit = JSON.parse(
+      await fs.readFile(path.join(sessionDir, 'security-audit.json'), 'utf-8')
+    );
   } catch {
     // Security audit optional
   }
@@ -195,9 +205,14 @@ export async function runRetro(sessionId, dataDir = './data/sessions') {
 
   // Also write to root data dir as "latest" for next session to pick up
   await fs.mkdir(dataDir, { recursive: true });
-  await fs.writeFile(path.join(dataDir, 'last_session.json'), JSON.stringify(cycleComplete, null, 2));
+  await fs.writeFile(
+    path.join(dataDir, 'last_session.json'),
+    JSON.stringify(cycleComplete, null, 2)
+  );
 
-  console.log(`[Retro] Retrospective complete — ${retroData?.retroSentiment || 'UNKNOWN'} sentiment`);
+  console.log(
+    `[Retro] Retrospective complete — ${retroData?.retroSentiment || 'UNKNOWN'} sentiment`
+  );
   console.log(`[Retro] Health score: ${retroData?.overallHealthScore || 'N/A'}/100`);
   console.log(`[Retro] Cycle complete → ${cycleCompletePath} ✅`);
 

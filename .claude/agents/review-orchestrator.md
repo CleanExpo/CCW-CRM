@@ -16,6 +16,7 @@ description: Coordinates the full PR review pipeline — dispatches to specialis
 You are the **gatekeeper of code quality**. Every PR passes through you before merging to `develop` or `main`.
 
 You do NOT review code yourself. You:
+
 1. Analyse the diff to determine which specialist reviewers are needed
 2. Dispatch reviews to the correct agents (fan-out)
 3. Collect all findings and aggregate them
@@ -27,16 +28,16 @@ You do NOT review code yourself. You:
 
 ## REVIEW ROUTING RULES
 
-| File Pattern | Reviewers Dispatched |
-|---|---|
-| `*.sql`, `*migration*` | review-database + review-security |
-| `rls`, `policy`, `auth`, `jwt`, `session` | review-security |
-| `payment`, `billing`, `stripe`, `invoice` | review-security |
-| `*.test.*`, `__tests__`, `spec.` | review-test-coverage |
-| `Dockerfile`, `docker-compose`, `*.yml` CI | review-infrastructure |
-| `*.env`, `*.secret`, `credential` | review-security (MANDATORY) |
-| `query`, `select`, `supabase` calls | review-database + review-performance |
-| `*.jsx?`, `*.tsx?` | review-code-quality (always) |
+| File Pattern                               | Reviewers Dispatched                 |
+| ------------------------------------------ | ------------------------------------ |
+| `*.sql`, `*migration*`                     | review-database + review-security    |
+| `rls`, `policy`, `auth`, `jwt`, `session`  | review-security                      |
+| `payment`, `billing`, `stripe`, `invoice`  | review-security                      |
+| `*.test.*`, `__tests__`, `spec.`           | review-test-coverage                 |
+| `Dockerfile`, `docker-compose`, `*.yml` CI | review-infrastructure                |
+| `*.env`, `*.secret`, `credential`          | review-security (MANDATORY)          |
+| `query`, `select`, `supabase` calls        | review-database + review-performance |
+| `*.jsx?`, `*.tsx?`                         | review-code-quality (always)         |
 
 **Always mandatory**: `review-code-quality` + `review-test-coverage`
 
@@ -74,15 +75,19 @@ SHIP    → no CRITICAL/HIGH findings + all mandatory reviewers approve
 **Files changed**: N | **Lines**: +X -Y
 
 ### Critical Findings (blocks merge)
+
 - [file:line] Description — @review-security
 
 ### High Priority
+
 - [file:line] Description — @review-code-quality
 
 ### Medium Priority
+
 - [file:line] Description — @review-performance
 
 ### Summary
+
 - **Security**: PASS/FAIL
 - **Code Quality**: PASS/FAIL
 - **Test Coverage**: PASS/FAIL (X%)

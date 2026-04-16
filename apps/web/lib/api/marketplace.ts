@@ -148,7 +148,10 @@ export interface BulkUnlistItem {
 }
 
 export interface BulkUnlistResponse {
-  results: Record<string, { success: boolean; error?: string; channel_type: string; external_id: string }>;
+  results: Record<
+    string,
+    { success: boolean; error?: string; channel_type: string; external_id: string }
+  >;
   success_count: number;
   failed_count: number;
 }

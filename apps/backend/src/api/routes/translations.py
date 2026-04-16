@@ -14,12 +14,13 @@ from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Product
 from src.db.i18n_models import Language, ProductTranslation
 from src.services.i18n_service import I18nService
 
-router = APIRouter(prefix="/api/translations", tags=["Translations"])
+router = APIRouter(prefix="/api/translations", tags=["Translations"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic models for responses

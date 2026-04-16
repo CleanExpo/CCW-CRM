@@ -1,18 +1,21 @@
 # SQL Schema Audit - Remaining Fixes (Week 3-4)
 
 **Related Documents**:
+
 - [SQL Schema Audit Report](../SQL-SCHEMA-AUDIT-2026-02-11.md)
 - [Base Class Fixes (Week 1)](../BASE-CLASS-FIXES-2026-02-11.md)
 
 ## Status Summary
 
 ✅ **Week 1 Complete** - Base Class Fixes
+
 - Eliminated duplicate Base classes
 - Removed 8 duplicate table definitions
 - Fixed 11 inconsistent imports
 - **Impact**: Schema health 85/100 → 92/100 (+7 points)
 
 ✅ **Week 2 Complete** - Timestamps + FK Indexes
+
 - Added `updated_at` columns to 3 tables
 - Added 23 missing foreign key indexes
 - **Impact**: +7-8 points, 20-50% faster queries
@@ -25,11 +28,13 @@
 **Issue**: Some models still use deprecated `datetime.utcnow` instead of `datetime.now(UTC)`
 
 **Files to Update**:
+
 1. `apps/backend/src/db/inventory_models.py`
 2. `apps/backend/src/db/pos_models.py`
 3. Any other files found during implementation
 
 **Changes Required**:
+
 ```python
 # BEFORE (deprecated):
 created_at = Column(DateTime, default=datetime.utcnow)
@@ -51,12 +56,14 @@ created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 **Files Affected**: 8+ model files with enum definitions
 
 **Action Required**:
+
 1. Audit all enum definitions in model files
 2. Decide on standard: native enums vs string enums
 3. Document the decision in coding standards
 4. Update all enums to match standard
 
 **Examples**:
+
 ```python
 # Option 1: String-based (current in demo_models.py)
 class OrderStatus(str, enum.Enum):
@@ -82,6 +89,7 @@ class OrderStatus(enum.Enum):
 **Purpose**: Optimize common multi-column query patterns
 
 **Recommended Indexes**:
+
 - `orders(customer_id, status, order_date)`
 - `order_items(order_id, product_id)`
 - `quote_items(quote_id, product_id)`
@@ -101,10 +109,12 @@ class OrderStatus(enum.Enum):
 **Purpose**: Faster semantic search with pgvector
 
 **Tables**:
+
 - `products.embedding` - HNSW index for product search
 - `product_embeddings.embedding` - HNSW index
 
 **SQL**:
+
 ```sql
 CREATE INDEX idx_products_embedding_hnsw
   ON products USING hnsw (embedding vector_cosine_ops);
@@ -121,6 +131,7 @@ CREATE INDEX idx_products_embedding_hnsw
 **Purpose**: Reduced index size, faster queries on filtered data
 
 **Recommended**:
+
 ```sql
 -- Only index active products
 CREATE INDEX idx_products_active
@@ -148,13 +159,13 @@ CREATE INDEX idx_background_jobs_recent
 
 ## 📊 Overall Progress
 
-| Phase | Status | Health Impact | Performance Impact | Time |
-|-------|--------|---------------|-------------------|------|
-| Week 1: Base Class Fixes | ✅ Complete | +7 points | N/A | 30 min |
-| Week 2: Timestamps + FK Indexes | ✅ Complete | +7-8 points | +20-50% | 2 hours |
-| Week 3: Timezone + Enum Standardization | 🔄 Pending | +3-4 points | N/A | 5-7 hours |
-| Week 4: Performance Indexes | 🔄 Pending | +2-3 points | +30-100% | 6-8 hours |
-| **TOTAL** | **50% Complete** | **+19-22 points** | **+50-150%** | **13-17 hours** |
+| Phase                                   | Status           | Health Impact     | Performance Impact | Time            |
+| --------------------------------------- | ---------------- | ----------------- | ------------------ | --------------- |
+| Week 1: Base Class Fixes                | ✅ Complete      | +7 points         | N/A                | 30 min          |
+| Week 2: Timestamps + FK Indexes         | ✅ Complete      | +7-8 points       | +20-50%            | 2 hours         |
+| Week 3: Timezone + Enum Standardization | 🔄 Pending       | +3-4 points       | N/A                | 5-7 hours       |
+| Week 4: Performance Indexes             | 🔄 Pending       | +2-3 points       | +30-100%           | 6-8 hours       |
+| **TOTAL**                               | **50% Complete** | **+19-22 points** | **+50-150%**       | **13-17 hours** |
 
 **Target**: Schema health 92/100 → 111/100+ (exceeds target)
 

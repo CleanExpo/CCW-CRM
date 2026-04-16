@@ -46,6 +46,7 @@ allowed-tools:
 ### forecast
 
 Calculate estimated cost for a production run:
+
 ```
 cost = modules × (avg_duration / 60) × $0.07 × 1.1
 ```
@@ -65,6 +66,7 @@ Append an entry to the cost ledger after each video completion.
 ### report
 
 Aggregate cost data:
+
 - Total spend (month/all-time)
 - Average cost per video
 - Cost by module
@@ -74,6 +76,7 @@ Aggregate cost data:
 ### check-budget
 
 Compare cumulative month-to-date spend against cap:
+
 - `UNDER_BUDGET` — proceed normally
 - `APPROACHING` — >80% of cap used, warn before continuing
 - `OVER_BUDGET` — halt all production, require manual override

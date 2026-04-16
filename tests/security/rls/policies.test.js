@@ -28,11 +28,7 @@ const RLS_REQUIRED_TABLES = [
 ];
 
 // Tables that should be accessible via service_role but not anon
-const SERVICE_ONLY_TABLES = [
-  'users',
-  'carrier_configurations',
-  'ai_agents',
-];
+const SERVICE_ONLY_TABLES = ['users', 'carrier_configurations', 'ai_agents'];
 
 describe('RLS Policy Configuration', () => {
   describe('Table RLS status', () => {
@@ -62,8 +58,8 @@ describe('RLS Policy Configuration', () => {
       const migrationsDir = path.join(process.cwd(), 'supabase', 'migrations');
 
       const migrations = fs.readdirSync(migrationsDir);
-      const rlsMigrations = migrations.filter(m =>
-        m.includes('rls') || m.includes('security') || m.includes('privacy')
+      const rlsMigrations = migrations.filter(
+        (m) => m.includes('rls') || m.includes('security') || m.includes('privacy')
       );
       expect(rlsMigrations.length).toBeGreaterThanOrEqual(4);
     });
@@ -74,10 +70,10 @@ describe('RLS Policy Configuration', () => {
       const fs = require('fs');
       const path = require('path');
       const migrationsDir = path.join(process.cwd(), 'supabase', 'migrations');
-      const migrations = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql'));
+      const migrations = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql'));
 
       expect(migrations.length).toBeGreaterThan(0);
-      migrations.forEach(m => {
+      migrations.forEach((m) => {
         const content = fs.readFileSync(path.join(migrationsDir, m), 'utf8');
         expect(content.trim().length).toBeGreaterThan(0);
       });
@@ -99,7 +95,10 @@ describe('RLS Policy Configuration', () => {
       const fs = require('fs');
       const path = require('path');
       const migrationsDir = path.join(process.cwd(), 'supabase', 'migrations');
-      const viewMigration = path.join(migrationsDir, '20260331180001_fix_agent_run_summaries_security_invoker.sql');
+      const viewMigration = path.join(
+        migrationsDir,
+        '20260331180001_fix_agent_run_summaries_security_invoker.sql'
+      );
 
       if (fs.existsSync(viewMigration)) {
         const content = fs.readFileSync(viewMigration, 'utf8');
@@ -111,7 +110,10 @@ describe('RLS Policy Configuration', () => {
       const fs = require('fs');
       const path = require('path');
       const migrationsDir = path.join(process.cwd(), 'supabase', 'migrations');
-      const perfMigration = path.join(migrationsDir, '20260331200001_perf_index_order_activity_order_items_fk.sql');
+      const perfMigration = path.join(
+        migrationsDir,
+        '20260331200001_perf_index_order_activity_order_items_fk.sql'
+      );
 
       if (fs.existsSync(perfMigration)) {
         const content = fs.readFileSync(perfMigration, 'utf8');
@@ -127,7 +129,10 @@ describe('RLS Policy Configuration', () => {
       const fs = require('fs');
       const path = require('path');
       const migrationsDir = path.join(process.cwd(), 'supabase', 'migrations');
-      const privacyMigration = path.join(migrationsDir, '20260331200002_au_privacy_act_compliance_tables.sql');
+      const privacyMigration = path.join(
+        migrationsDir,
+        '20260331200002_au_privacy_act_compliance_tables.sql'
+      );
 
       if (fs.existsSync(privacyMigration)) {
         const content = fs.readFileSync(privacyMigration, 'utf8');
@@ -142,7 +147,10 @@ describe('RLS Policy Configuration', () => {
       const fs = require('fs');
       const path = require('path');
       const migrationsDir = path.join(process.cwd(), 'supabase', 'migrations');
-      const privacyMigration = path.join(migrationsDir, '20260331200002_au_privacy_act_compliance_tables.sql');
+      const privacyMigration = path.join(
+        migrationsDir,
+        '20260331200002_au_privacy_act_compliance_tables.sql'
+      );
 
       if (fs.existsSync(privacyMigration)) {
         const content = fs.readFileSync(privacyMigration, 'utf8');

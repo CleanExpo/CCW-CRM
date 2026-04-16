@@ -17,11 +17,14 @@ let tmpDir: string = '';
 let stateFile: string = '';
 let queueFile: string = '';
 
-async function api(pathname: string, opts: RequestInit & { noAuth?: boolean } = {}): Promise<Response> {
+async function api(
+  pathname: string,
+  opts: RequestInit & { noAuth?: boolean } = {}
+): Promise<Response> {
   const { noAuth, ...fetchOpts } = opts;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(fetchOpts.headers as Record<string, string> || {}),
+    ...((fetchOpts.headers as Record<string, string>) || {}),
   };
   if (!noAuth && !headers['Authorization'] && authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
@@ -63,14 +66,20 @@ beforeAll(async () => {
         }
       } catch {}
     }
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
   }
   if (!serverPort) throw new Error('Server did not start in time');
 }, 20000);
 
 afterAll(() => {
-  if (serverProc) { try { serverProc.kill(); } catch {} }
-  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+  if (serverProc) {
+    try {
+      serverProc.kill();
+    } catch {}
+  }
+  try {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  } catch {}
 });
 
 // Reset state between tests — creates a fresh session, clears all queues
@@ -92,7 +101,7 @@ describe('sidebar auth', () => {
   test('rejects request with wrong token', async () => {
     const resp = await api('/sidebar-command', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer wrong-token' },
+      headers: { Authorization: 'Bearer wrong-token' },
       body: JSON.stringify({ message: 'test' }),
     });
     expect(resp.status).toBe(401);
@@ -125,7 +134,7 @@ describe('sidebar-command → queue', () => {
     expect(data.ok).toBe(true);
 
     // Give server a moment to write queue
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
 
     const content = fs.readFileSync(queueFile, 'utf-8').trim();
     const lines = content.split('\n').filter(Boolean);
@@ -144,7 +153,7 @@ describe('sidebar-command → queue', () => {
       method: 'POST',
       body: JSON.stringify({ message: 'test', activeTabUrl: null }),
     });
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
 
     const lines = fs.readFileSync(queueFile, 'utf-8').trim().split('\n').filter(Boolean);
     expect(lines.length).toBeGreaterThan(0);
@@ -162,7 +171,7 @@ describe('sidebar-command → queue', () => {
       method: 'POST',
       body: JSON.stringify({ message: 'test', activeTabUrl: 'chrome://extensions' }),
     });
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
 
     const lines = fs.readFileSync(queueFile, 'utf-8').trim().split('\n').filter(Boolean);
     expect(lines.length).toBeGreaterThan(0);

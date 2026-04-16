@@ -40,14 +40,19 @@ for (const file of testFiles) {
     console.log(`  [PASS] ${relPath}`);
   } catch (e) {
     failed++;
-    const errMsg = e.stdout ? e.stdout.toString().slice(0, 200) :
-                   e.stderr ? e.stderr.toString().slice(0, 200) : e.message;
+    const errMsg = e.stdout
+      ? e.stdout.toString().slice(0, 200)
+      : e.stderr
+        ? e.stderr.toString().slice(0, 200)
+        : e.message;
     console.error(`  [FAIL] ${relPath}: ${errMsg}`);
     failures.push({ file: relPath, error: errMsg });
   }
 }
 
-console.log(`\n[TEST-RUNNER] ${passed} passed, ${failed} failed out of ${testFiles.length} test files\n`);
+console.log(
+  `\n[TEST-RUNNER] ${passed} passed, ${failed} failed out of ${testFiles.length} test files\n`
+);
 
 if (failures.length > 0) {
   console.error('[TEST-RUNNER] Failures:');
