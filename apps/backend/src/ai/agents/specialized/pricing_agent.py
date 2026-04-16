@@ -1,5 +1,33 @@
 """Pricing agent for cost analysis and price optimization."""
 
+AGENT_CARD = {
+    "name": "pricing_agent",
+    "display_name": "Pricing Agent",
+    "description": "Analyzes product costs and recommends optimal pricing strategies using margin calculation, competitive analysis, and cost-plus modeling",
+    "version": "1.0.0",
+    "capabilities": ["pricing", "cost_analysis", "price_optimization", "margin_calculation"],
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "product_id": {"type": "string", "description": "Product UUID to analyze"},
+            "action": {
+                "type": "string",
+                "enum": ["analyze_margin", "recommend_price", "bulk_audit"],
+                "description": "Pricing action to perform",
+            },
+            "target_margin_percent": {"type": "number", "description": "Target profit margin percentage"},
+        },
+        "required": ["product_id", "action"],
+    },
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string"},
+            "metadata": {"type": "object"},
+        },
+    },
+}
+
 from collections.abc import AsyncGenerator
 from decimal import Decimal
 from typing import Any
