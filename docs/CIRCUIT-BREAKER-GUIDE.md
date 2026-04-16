@@ -60,16 +60,19 @@ result = await breaker.call(my_function)
 ### CLOSED (Normal Operation)
 
 **Behavior:**
+
 - All requests pass through to the protected function
 - Failures are counted
 - When failure threshold reached → transition to OPEN
 
 **Example:**
+
 ```
 Request → Circuit Breaker (CLOSED) → Function → Success/Failure
 ```
 
 **Metrics:**
+
 - `consecutive_failures`: Increments on each failure
 - `consecutive_successes`: Resets to 0 on failure
 
@@ -78,20 +81,24 @@ Request → Circuit Breaker (CLOSED) → Function → Success/Failure
 ### OPEN (Failing)
 
 **Behavior:**
+
 - All requests fail immediately (fast-fail)
 - Protected function is NOT called
 - After timeout period → transition to HALF_OPEN
 
 **Example:**
+
 ```
 Request → Circuit Breaker (OPEN) → CircuitBreakerException (no function call)
 ```
 
 **Metrics:**
+
 - `rejected_calls`: Increments for each rejected request
 - Opens after `failure_threshold` consecutive failures
 
 **Prometheus Alert:**
+
 ```promql
 circuit_breaker_state{component="deployment"} == 1
 ```
@@ -101,17 +108,20 @@ circuit_breaker_state{component="deployment"} == 1
 ### HALF_OPEN (Testing Recovery)
 
 **Behavior:**
+
 - Limited number of requests allowed through
 - If all succeed → transition to CLOSED
 - If any fail → transition to OPEN
 
 **Example:**
+
 ```
 Request 1 → Circuit Breaker (HALF_OPEN) → Function → Success (1/2)
 Request 2 → Circuit Breaker (HALF_OPEN) → Function → Success (2/2) → CLOSED
 ```
 
 **Metrics:**
+
 - `half_open_calls`: Tracks calls in half-open state
 - Max calls controlled by `half_open_max_calls` config
 
@@ -121,17 +131,18 @@ Request 2 → Circuit Breaker (HALF_OPEN) → Function → Success (2/2) → CLO
 
 ### CircuitBreakerConfig Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `failure_threshold` | 5 | Consecutive failures before opening circuit |
-| `success_threshold` | 2 | Consecutive successes to close from half-open |
-| `timeout_seconds` | 60 | Seconds to wait before trying half-open |
-| `half_open_max_calls` | 3 | Max calls allowed in half-open state |
-| `rolling_window_seconds` | 300 | Window for counting failures (future use) |
+| Parameter                | Default | Description                                   |
+| ------------------------ | ------- | --------------------------------------------- |
+| `failure_threshold`      | 5       | Consecutive failures before opening circuit   |
+| `success_threshold`      | 2       | Consecutive successes to close from half-open |
+| `timeout_seconds`        | 60      | Seconds to wait before trying half-open       |
+| `half_open_max_calls`    | 3       | Max calls allowed in half-open state          |
+| `rolling_window_seconds` | 300     | Window for counting failures (future use)     |
 
 ### Recommended Configurations
 
 **Autonomous Deployment:**
+
 ```python
 CircuitBreakerConfig(
     failure_threshold=3,      # Open after 3 failed deployments
@@ -141,6 +152,7 @@ CircuitBreakerConfig(
 ```
 
 **AI Agent Calls:**
+
 ```python
 CircuitBreakerConfig(
     failure_threshold=10,     # More tolerance for AI failures
@@ -150,6 +162,7 @@ CircuitBreakerConfig(
 ```
 
 **External API Calls:**
+
 ```python
 CircuitBreakerConfig(
     failure_threshold=5,      # Standard threshold
@@ -159,6 +172,7 @@ CircuitBreakerConfig(
 ```
 
 **Database Operations:**
+
 ```python
 CircuitBreakerConfig(
     failure_threshold=2,      # Low tolerance for DB failures
@@ -272,6 +286,7 @@ if breaker.is_available():
 Navigate to: **System Health** → **Circuit Breakers**
 
 **Key Panels:**
+
 1. **Circuit Breaker Status** - Real-time state of all breakers
 2. **Circuit Opens/Closes** - Frequency of state changes
 3. **Rejected Calls** - Calls rejected while open
@@ -299,10 +314,12 @@ rate(circuit_breaker_opens_total[1h]) + rate(circuit_breaker_closes_total[1h])
 ### Alerts
 
 **Critical Alerts:**
+
 - `circuit_breaker_state{component="deployment"} == 1` → Deployment circuit open
 - `circuit_breaker_state{component="ai-agent"} == 1` → AI agent circuit open
 
 **Warning Alerts:**
+
 - `circuit_breaker_opens_total` > 5 in 1 hour → Unstable component
 - Circuit open for > 10 minutes → Investigate root cause
 
@@ -313,11 +330,13 @@ rate(circuit_breaker_opens_total[1h]) + rate(circuit_breaker_closes_total[1h])
 ### Circuit Breaker Stuck Open
 
 **Symptoms:**
+
 - Circuit state = OPEN
 - Timeout has passed but circuit not transitioning to HALF_OPEN
 - Calls continue to be rejected
 
 **Diagnosis:**
+
 ```python
 breaker = manager.get_breaker("component-name")
 print(f"State: {breaker.state}")
@@ -331,6 +350,7 @@ if breaker.opened_at:
 ```
 
 **Solution:**
+
 ```python
 # Option 1: Wait for timeout
 await asyncio.sleep(timeout_remaining)
@@ -344,10 +364,12 @@ await manager.force_close("component-name")
 ### Circuit Flapping (Opening/Closing Repeatedly)
 
 **Symptoms:**
+
 - Circuit alternates between OPEN and CLOSED frequently
 - High rate of `circuit_breaker_opens_total` and `circuit_breaker_closes_total`
 
 **Diagnosis:**
+
 ```python
 metrics = breaker.get_metrics()
 print(f"State transitions: {len(metrics.state_transitions)}")
@@ -356,12 +378,15 @@ for state, timestamp in metrics.state_transitions[-10:]:
 ```
 
 **Solution:**
+
 1. **Increase failure threshold:**
+
    ```python
    config = CircuitBreakerConfig(failure_threshold=10)  # More tolerance
    ```
 
 2. **Increase timeout:**
+
    ```python
    config = CircuitBreakerConfig(timeout_seconds=300)  # 5 minutes
    ```
@@ -376,11 +401,13 @@ for state, timestamp in metrics.state_transitions[-10:]:
 ### Too Many Rejected Calls
 
 **Symptoms:**
+
 - High `rejected_calls` metric
 - Users experiencing failures
 - Circuit open for extended period
 
 **Diagnosis:**
+
 ```python
 metrics = breaker.get_metrics()
 print(f"Rejected calls: {metrics.rejected_calls}")
@@ -389,12 +416,14 @@ print(f"Consecutive failures: {metrics.consecutive_failures}")
 ```
 
 **Solution:**
+
 1. **Investigate root cause:**
    - Check logs for failure reasons
    - Review recent deployments
    - Check external dependencies
 
 2. **Implement fallback:**
+
    ```python
    try:
        result = await manager.protect("component", operation)
@@ -413,11 +442,13 @@ print(f"Consecutive failures: {metrics.consecutive_failures}")
 ### Circuit Not Opening When Expected
 
 **Symptoms:**
+
 - Component failing repeatedly
 - Circuit remains CLOSED
 - No automatic protection
 
 **Diagnosis:**
+
 ```python
 metrics = breaker.get_metrics()
 print(f"Consecutive failures: {metrics.consecutive_failures}")
@@ -426,8 +457,9 @@ print(f"Failed calls: {metrics.failed_calls}")
 ```
 
 **Possible Causes:**
+
 1. **Successes between failures reset counter:**
-   - Circuit requires *consecutive* failures
+   - Circuit requires _consecutive_ failures
    - Intermittent successes reset the counter
 
 2. **Threshold not reached:**
@@ -438,6 +470,7 @@ print(f"Failed calls: {metrics.failed_calls}")
    - Circuit doesn't count as failure
 
 **Solution:**
+
 ```python
 # Lower threshold
 config = CircuitBreakerConfig(failure_threshold=2)
@@ -469,6 +502,7 @@ CircuitBreakerConfig(failure_threshold=2, timeout_seconds=600)
 ### 2. Implement Fallbacks
 
 Always provide fallback behavior when circuit opens:
+
 ```python
 try:
     result = await manager.protect("component", operation)
@@ -638,6 +672,7 @@ class CircuitBreakerConfig:
 ## Support
 
 For issues or questions:
+
 1. Check Grafana circuit breaker dashboard
 2. Review Prometheus circuit breaker metrics
 3. Check circuit breaker logs with structlog

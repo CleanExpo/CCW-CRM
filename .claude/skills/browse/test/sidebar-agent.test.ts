@@ -41,7 +41,7 @@ function writeToInbox(
   gitRoot: string,
   message: string,
   pageUrl?: string,
-  sessionId?: string,
+  sessionId?: string
 ): string | null {
   if (!gitRoot) return null;
 
@@ -83,7 +83,11 @@ afterEach(() => {
 
 describe('queue file parsing', () => {
   test('valid JSONL line parsed correctly', () => {
-    const line = JSON.stringify({ message: 'hello', prompt: 'check this', pageUrl: 'https://example.com' });
+    const line = JSON.stringify({
+      message: 'hello',
+      prompt: 'check this',
+      pageUrl: 'https://example.com',
+    });
     const entry = parseQueueLine(line);
     expect(entry).not.toBeNull();
     expect(entry.message).toBe('hello');
@@ -158,11 +162,11 @@ describe('writeToInbox', () => {
     // Check no .tmp files remain in the inbox directory
     const inboxDir = path.join(tmpDir, '.context', 'sidebar-inbox');
     const files = fs.readdirSync(inboxDir);
-    const tmpFiles = files.filter(f => f.endsWith('.tmp'));
+    const tmpFiles = files.filter((f) => f.endsWith('.tmp'));
     expect(tmpFiles.length).toBe(0);
 
     // Final file should end with -observation.json
-    const jsonFiles = files.filter(f => f.endsWith('-observation.json') && !f.startsWith('.'));
+    const jsonFiles = files.filter((f) => f.endsWith('-observation.json') && !f.startsWith('.'));
     expect(jsonFiles.length).toBe(1);
   });
 
@@ -193,7 +197,7 @@ describe('writeToInbox', () => {
     writeToInbox(tmpDir, 'message 2');
 
     const inboxDir = path.join(tmpDir, '.context', 'sidebar-inbox');
-    const files = fs.readdirSync(inboxDir).filter(f => f.endsWith('.json') && !f.startsWith('.'));
+    const files = fs.readdirSync(inboxDir).filter((f) => f.endsWith('.json') && !f.startsWith('.'));
     expect(files.length).toBe(2);
   });
 });

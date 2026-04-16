@@ -40,46 +40,16 @@
           "ConnectError": 500
         },
         "slowest_scenarios": [
-          [
-            "product_create_63",
-            13162.076473236084
-          ],
-          [
-            "product_create_80",
-            13099.96485710144
-          ],
-          [
-            "product_create_0",
-            12699.880123138428
-          ],
-          [
-            "product_create_67",
-            12048.6900806427
-          ],
-          [
-            "product_create_100",
-            11975.293159484863
-          ],
-          [
-            "product_create_81",
-            11946.68436050415
-          ],
-          [
-            "product_list_20",
-            11815.991640090942
-          ],
-          [
-            "product_create_2",
-            11722.078561782837
-          ],
-          [
-            "product_create_68",
-            11676.205158233643
-          ],
-          [
-            "product_list_21",
-            11650.505065917969
-          ]
+          ["product_create_63", 13162.076473236084],
+          ["product_create_80", 13099.96485710144],
+          ["product_create_0", 12699.880123138428],
+          ["product_create_67", 12048.6900806427],
+          ["product_create_100", 11975.293159484863],
+          ["product_create_81", 11946.68436050415],
+          ["product_list_20", 11815.991640090942],
+          ["product_create_2", 11722.078561782837],
+          ["product_create_68", 11676.205158233643],
+          ["product_list_21", 11650.505065917969]
         ],
         "phase_name": "Products",
         "phase_duration_seconds": 260.419516,
@@ -100,46 +70,16 @@
           "ConnectError": 500
         },
         "slowest_scenarios": [
-          [
-            "customer_create_60",
-            14795.418739318848
-          ],
-          [
-            "customer_create_63",
-            13218.326807022095
-          ],
-          [
-            "customer_create_19",
-            12931.82373046875
-          ],
-          [
-            "customer_create_64",
-            12799.040079116821
-          ],
-          [
-            "customer_create_20",
-            12774.862051010132
-          ],
-          [
-            "customer_read_20",
-            12773.324489593506
-          ],
-          [
-            "customer_read_21",
-            12625.7905960083
-          ],
-          [
-            "customer_create_0",
-            12598.740100860596
-          ],
-          [
-            "customer_create_162",
-            12451.791763305664
-          ],
-          [
-            "customer_list_21",
-            12419.706583023071
-          ]
+          ["customer_create_60", 14795.418739318848],
+          ["customer_create_63", 13218.326807022095],
+          ["customer_create_19", 12931.82373046875],
+          ["customer_create_64", 12799.040079116821],
+          ["customer_create_20", 12774.862051010132],
+          ["customer_read_20", 12773.324489593506],
+          ["customer_read_21", 12625.7905960083],
+          ["customer_create_0", 12598.740100860596],
+          ["customer_create_162", 12451.791763305664],
+          ["customer_list_21", 12419.706583023071]
         ],
         "phase_name": "Customers",
         "phase_duration_seconds": 294.584289,
@@ -160,46 +100,16 @@
           "ConnectError": 500
         },
         "slowest_scenarios": [
-          [
-            "order_create_valid_361",
-            18187.24298477173
-          ],
-          [
-            "order_create_valid_362",
-            17673.58946800232
-          ],
-          [
-            "order_create_valid_25",
-            17654.196739196777
-          ],
-          [
-            "order_create_valid_360",
-            17189.468383789062
-          ],
-          [
-            "order_create_valid_28",
-            17188.75479698181
-          ],
-          [
-            "order_create_valid_363",
-            17168.355226516724
-          ],
-          [
-            "order_create_valid_364",
-            16797.763109207153
-          ],
-          [
-            "order_create_valid_365",
-            16327.760457992554
-          ],
-          [
-            "order_create_valid_2",
-            15963.818550109863
-          ],
-          [
-            "order_create_valid_366",
-            15754.553318023682
-          ]
+          ["order_create_valid_361", 18187.24298477173],
+          ["order_create_valid_362", 17673.58946800232],
+          ["order_create_valid_25", 17654.196739196777],
+          ["order_create_valid_360", 17189.468383789062],
+          ["order_create_valid_28", 17188.75479698181],
+          ["order_create_valid_363", 17168.355226516724],
+          ["order_create_valid_364", 16797.763109207153],
+          ["order_create_valid_365", 16327.760457992554],
+          ["order_create_valid_2", 15963.818550109863],
+          ["order_create_valid_366", 15754.553318023682]
         ],
         "phase_name": "Orders",
         "phase_duration_seconds": 289.647886,
@@ -222,46 +132,16 @@
           "Unknown": 100
         },
         "slowest_scenarios": [
-          [
-            "quote_create_valid_221",
-            57791.481018066406
-          ],
-          [
-            "quote_create_valid_222",
-            57102.43630409241
-          ],
-          [
-            "quote_create_valid_224",
-            55841.782331466675
-          ],
-          [
-            "quote_create_valid_226",
-            53727.519512176514
-          ],
-          [
-            "quote_create_valid_228",
-            52779.76942062378
-          ],
-          [
-            "quote_create_valid_227",
-            52112.61987686157
-          ],
-          [
-            "quote_create_valid_229",
-            51988.160848617554
-          ],
-          [
-            "quote_create_valid_223",
-            51208.348512649536
-          ],
-          [
-            "quote_create_valid_231",
-            50986.69695854187
-          ],
-          [
-            "quote_create_valid_232",
-            50452.02922821045
-          ]
+          ["quote_create_valid_221", 57791.481018066406],
+          ["quote_create_valid_222", 57102.43630409241],
+          ["quote_create_valid_224", 55841.782331466675],
+          ["quote_create_valid_226", 53727.519512176514],
+          ["quote_create_valid_228", 52779.76942062378],
+          ["quote_create_valid_227", 52112.61987686157],
+          ["quote_create_valid_229", 51988.160848617554],
+          ["quote_create_valid_223", 51208.348512649536],
+          ["quote_create_valid_231", 50986.69695854187],
+          ["quote_create_valid_232", 50452.02922821045]
         ],
         "phase_name": "Quotes",
         "phase_duration_seconds": 396.137072,

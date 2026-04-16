@@ -13,6 +13,7 @@
 ### Current State Analysis
 
 **✅ ALREADY OPTIMIZED** (from Phase 4 audit implementation):
+
 1. ✅ Dashboard aggregated endpoint exists (`/api/dashboard/aggregated`)
 2. ✅ Products N+1 fixed with `include_stock=true` parameter
 3. ✅ Dashboard metrics combined into 3 queries (down from 6)
@@ -21,6 +22,7 @@
 6. ✅ Real-time SSE implemented for inventory
 
 **❌ REMAINING GAPS** (Critical Issues):
+
 1. ❌ Pagination `getPageNumbers()` NOT memoized - O(n) on every render
 2. ❌ Order item updates use delete-all + insert-all pattern
 3. ❌ Stock reservation has sequential queries (not batched)
@@ -30,6 +32,7 @@
 ### Objective
 
 **Fix the 5 remaining critical performance bottlenecks** to achieve:
+
 - Dashboard load time: 5-8s → **<2s** (70% faster)
 - Order updates: 20 queries → **5-8 queries** (60% faster)
 - Pagination rendering: No lag → **instant** (5% UI boost)
@@ -40,6 +43,7 @@
 ## 📋 FILES TO CREATE/MODIFY
 
 ### Frontend (6 files)
+
 - [ ] `apps/web/components/ui/pagination-controls.tsx` — Add useMemo to getPageNumbers()
 - [ ] `apps/web/components/charts/RevenueChart.tsx` — Wrap in React.memo
 - [ ] `apps/web/components/charts/CategorySalesChart.tsx` — Wrap in React.memo
@@ -48,10 +52,12 @@
 - [ ] `apps/web/components/dashboard/RevenueByLocationWidget.tsx` — Verify React.memo
 
 ### Backend (2 files)
+
 - [ ] `apps/backend/src/api/routes/orders.py` — Optimize order item updates (diff-based)
 - [ ] `apps/backend/src/api/routes/orders.py` — Batch stock reservation queries
 
 ### Tests (2 files)
+
 - [ ] `apps/web/__tests__/components/ui/pagination-controls.test.tsx` — Test memoization
 - [ ] `apps/backend/tests/api/test_orders_performance.py` — Test order update performance
 
@@ -64,11 +70,13 @@
 ### **STEP 1: Frontend Memoization Quick Wins** (3 hours)
 
 #### 1.1 Add useMemo to Pagination (30 minutes)
+
 **File**: `apps/web/components/ui/pagination-controls.tsx`
 
 **Current Issue**: `getPageNumbers()` runs on every render (O(n) calculation)
 
 **Fix**:
+
 ```typescript
 // Before (line 36-75):
 const getPageNumbers = () => {
@@ -102,12 +110,14 @@ const pageNumbers = useMemo(() => {
 #### 1.2 Memoize Chart Components (2 hours)
 
 **Files**:
+
 - `apps/web/components/charts/RevenueChart.tsx`
 - `apps/web/components/charts/CategorySalesChart.tsx`
 
 **Current Issue**: Charts re-render on every parent state change
 
 **Fix Pattern**:
+
 ```typescript
 // Before:
 export function RevenueChart({ data }: { data: RevenueDataPoint[] }) {
@@ -115,25 +125,23 @@ export function RevenueChart({ data }: { data: RevenueDataPoint[] }) {
 }
 
 // After:
-import { memo } from "react";
+import { memo } from 'react';
 
-export const RevenueChart = memo(function RevenueChart({
-  data
-}: {
-  data: RevenueDataPoint[]
-}) {
+export const RevenueChart = memo(function RevenueChart({ data }: { data: RevenueDataPoint[] }) {
   // ... chart logic
 });
 
 // Add display name for DevTools
-RevenueChart.displayName = "RevenueChart";
+RevenueChart.displayName = 'RevenueChart';
 ```
 
 **Apply to**:
+
 1. `RevenueChart.tsx` (line 1-100)
 2. `CategorySalesChart.tsx` (line 1-80)
 
 **Verification**: Check existing dashboard widgets are already memoized:
+
 - ✅ `StockHealthWidget.tsx` (line 28: `export const StockHealthWidget = memo(...)`)
 - ✅ Check `OrderStatusBreakdownWidget.tsx`
 - ✅ Check `QuoteConversionWidget.tsx`
@@ -148,6 +156,7 @@ RevenueChart.displayName = "RevenueChart";
 **File**: `apps/web/__tests__/components/ui/pagination-controls.test.tsx` (NEW)
 
 **Test Cases**:
+
 ```typescript
 import { render, screen } from "@testing-library/react";
 import { PaginationControls } from "@/components/ui/pagination-controls";
@@ -212,10 +221,12 @@ describe("PaginationControls", () => {
 **File**: `apps/backend/src/api/routes/orders.py` (lines 674-721)
 
 **Current Issue**: When updating order, deletes ALL items then inserts new ones
+
 - 10 items = 10 DELETE + 10 INSERT = 20 queries
 - Should only update changed items
 
 **Current Code**:
+
 ```python
 # Delete all existing items
 await db.execute(delete(OrderItem).where(OrderItem.order_id == order_id))
@@ -233,6 +244,7 @@ for item_data in order_data.items:
 ```
 
 **New Implementation**:
+
 ```python
 # PHASE 4 OPTIMIZATION: Diff-based update (60% faster)
 
@@ -296,14 +308,15 @@ logger.info(
 **File**: `apps/web/app/(dashboard)/orders/components/OrderForm.tsx`
 
 **Add item IDs**:
+
 ```typescript
 // When editing order, preserve item IDs
-items: order?.items?.map(item => ({
-  id: item.id,  // ADD THIS
+items: order?.items?.map((item) => ({
+  id: item.id, // ADD THIS
   product_id: item.product_id,
   quantity: item.quantity,
   unit_price: item.unit_price,
-})) || []
+})) || [];
 ```
 
 **Impact**: 60% faster order updates (20 queries → 5-8 queries)
@@ -315,9 +328,11 @@ items: order?.items?.map(item => ({
 **File**: `apps/backend/src/api/routes/orders.py` (lines 146-180)
 
 **Current Issue**: Stock checks and reservations happen one-by-one
+
 - 10 items = 10 SELECT + 10 UPDATE = 20 queries
 
 **Current Code**:
+
 ```python
 for item in order.items:
     # Individual query per item
@@ -332,6 +347,7 @@ for item in order.items:
 ```
 
 **New Implementation**:
+
 ```python
 # PHASE 4 OPTIMIZATION: Batch stock reservation (80% faster)
 
@@ -458,18 +474,21 @@ async def test_batch_stock_reservation(db_session, test_order, test_products):
 #### 3.1 Manual Performance Testing (3 hours)
 
 **Dashboard Load Time** (Target: <2s):
+
 1. Open Chrome DevTools → Network tab
 2. Navigate to `/dashboard`
 3. Measure time from navigation → "Load" event
 4. **Success Criteria**: <2 seconds (down from 5-8s)
 
 **Order Update Performance** (Target: 60% faster):
+
 1. Create order with 10 items
 2. Edit order: remove 2 items, modify 3, add 1
 3. Monitor backend logs for query count
 4. **Success Criteria**: <10 queries total (down from 20)
 
 **Pagination Responsiveness**:
+
 1. Navigate to `/products` with 1000+ products
 2. Click through pages 1 → 50 → 500 → 1000
 3. Observe UI lag
@@ -480,6 +499,7 @@ async def test_batch_stock_reservation(db_session, test_order, test_products):
 #### 3.2 Automated Test Suite (2 hours)
 
 **Run All Tests**:
+
 ```bash
 # Frontend tests
 pnpm turbo run test --filter=web
@@ -495,6 +515,7 @@ pnpm turbo run lint
 ```
 
 **Success Criteria**:
+
 - ✅ All tests pass
 - ✅ No TypeScript errors
 - ✅ No ESLint warnings
@@ -505,15 +526,16 @@ pnpm turbo run lint
 
 **Collect Before/After Metrics**:
 
-| Metric | Before | After | Target | Status |
-|--------|--------|-------|--------|--------|
-| Dashboard load time | 5-8s | ? | <2s | ⏳ |
-| Products API calls | 51 calls | 1 call | 1 call | ✅ Already done |
-| Order update queries | 20 queries | ? | <10 queries | ⏳ |
-| Stock reservation queries | 20 queries | ? | <5 queries | ⏳ |
-| Chart re-renders | High | ? | Low | ⏳ |
+| Metric                    | Before     | After  | Target      | Status          |
+| ------------------------- | ---------- | ------ | ----------- | --------------- |
+| Dashboard load time       | 5-8s       | ?      | <2s         | ⏳              |
+| Products API calls        | 51 calls   | 1 call | 1 call      | ✅ Already done |
+| Order update queries      | 20 queries | ?      | <10 queries | ⏳              |
+| Stock reservation queries | 20 queries | ?      | <5 queries  | ⏳              |
+| Chart re-renders          | High       | ?      | Low         | ⏳              |
 
 **Tools**:
+
 - Chrome DevTools → Network tab
 - Chrome DevTools → Performance tab
 - React DevTools → Profiler
@@ -524,6 +546,7 @@ pnpm turbo run lint
 ## ✅ SUCCESS CRITERIA
 
 ### Must Have (P0)
+
 - [ ] Dashboard loads in <2 seconds
 - [ ] Order item updates use diff-based approach (<10 queries)
 - [ ] Stock reservation batches queries (<5 queries)
@@ -533,11 +556,13 @@ pnpm turbo run lint
 - [ ] No breaking changes
 
 ### Should Have (P1)
+
 - [ ] Chart components memoized
 - [ ] Performance metrics documented
 - [ ] Before/after comparison screenshots
 
 ### Nice to Have (P2)
+
 - [ ] Lighthouse score improvement
 - [ ] Sentry performance monitoring enabled
 - [ ] Grafana dashboard for query performance
@@ -547,9 +572,11 @@ pnpm turbo run lint
 ## ⚠️ RISKS & MITIGATION
 
 ### Risk 1: Diff-Based Update Complexity
+
 **Impact**: May introduce bugs in order item updates
 **Probability**: Medium
 **Mitigation**:
+
 - Comprehensive unit tests for diff logic
 - Manual testing with edge cases (remove all items, add 50 items, etc.)
 - Feature flag if needed: `ENABLE_DIFF_ORDER_UPDATES=true`
@@ -559,9 +586,11 @@ pnpm turbo run lint
 ---
 
 ### Risk 2: Stock Batch Lock Timeout
+
 **Impact**: Pessimistic locks on multiple rows could timeout
 **Probability**: Low
 **Mitigation**:
+
 - Lock only necessary rows (filter by `product_ids`)
 - Set reasonable timeout (5 seconds max)
 - Add retry logic with exponential backoff
@@ -571,9 +600,11 @@ pnpm turbo run lint
 ---
 
 ### Risk 3: Frontend Memoization Breaking Changes
+
 **Impact**: useMemo dependencies could break pagination
 **Probability**: Low
 **Mitigation**:
+
 - Comprehensive unit tests
 - Visual regression testing (Playwright screenshots)
 - Thorough manual testing before deploy
@@ -585,15 +616,18 @@ pnpm turbo run lint
 ## 🚫 BREAKING CHANGES
 
 **None Expected** - All changes are backward compatible:
+
 - ✅ API contracts unchanged
 - ✅ Database schema unchanged
 - ✅ Frontend component props unchanged
 - ✅ Existing functionality preserved
 
 **Frontend Changes**:
+
 - OrderForm now sends `item.id` in payload (optional field, backward compatible)
 
 **Backend Changes**:
+
 - Order update endpoint accepts optional `item.id` field
 - If `item.id` not provided, falls back to delete-all + insert-all (legacy behavior)
 
@@ -601,15 +635,15 @@ pnpm turbo run lint
 
 ## 📊 EXPECTED PERFORMANCE IMPROVEMENTS
 
-| Area | Current | Target | Improvement |
-|------|---------|--------|-------------|
-| **Dashboard load time** | 5-8s | <2s | **70% faster** |
-| **Products API calls** | 51 calls | 1 call | **98% reduction** (✅ already done) |
-| **Dashboard metrics queries** | 6 queries | 3 queries | **50% reduction** (✅ already done) |
-| **Order update queries** | 20 queries | 5-8 queries | **60% faster** |
-| **Stock reservation queries** | 20 queries | 2-4 queries | **80% faster** |
-| **Pagination re-renders** | Every render | Memoized | **5% UI boost** |
-| **Chart re-renders** | Every parent change | Memoized | **30% reduction** |
+| Area                          | Current             | Target      | Improvement                         |
+| ----------------------------- | ------------------- | ----------- | ----------------------------------- |
+| **Dashboard load time**       | 5-8s                | <2s         | **70% faster**                      |
+| **Products API calls**        | 51 calls            | 1 call      | **98% reduction** (✅ already done) |
+| **Dashboard metrics queries** | 6 queries           | 3 queries   | **50% reduction** (✅ already done) |
+| **Order update queries**      | 20 queries          | 5-8 queries | **60% faster**                      |
+| **Stock reservation queries** | 20 queries          | 2-4 queries | **80% faster**                      |
+| **Pagination re-renders**     | Every render        | Memoized    | **5% UI boost**                     |
+| **Chart re-renders**          | Every parent change | Memoized    | **30% reduction**                   |
 
 **Overall Impact**: **2-3x faster** user-facing performance
 
@@ -618,6 +652,7 @@ pnpm turbo run lint
 ## 📝 IMPLEMENTATION CHECKLIST
 
 ### Phase 1: Frontend Memoization (3 hours)
+
 - [ ] Add useMemo to pagination getPageNumbers()
 - [ ] Wrap RevenueChart in React.memo
 - [ ] Wrap CategorySalesChart in React.memo
@@ -626,6 +661,7 @@ pnpm turbo run lint
 - [ ] Test manually (no UI lag)
 
 ### Phase 2: Backend Optimization (10 hours)
+
 - [ ] Implement diff-based order item updates
 - [ ] Update OrderForm to send item IDs
 - [ ] Implement batch stock reservation
@@ -634,6 +670,7 @@ pnpm turbo run lint
 - [ ] Verify query counts in logs
 
 ### Phase 3: Testing & Verification (6 hours)
+
 - [ ] Run full test suite (frontend + backend)
 - [ ] Manual performance testing
 - [ ] Collect before/after metrics
@@ -641,6 +678,7 @@ pnpm turbo run lint
 - [ ] Update `.claude/docs/PERFORMANCE_IMPROVEMENTS.md`
 
 ### Phase 4: Deployment
+
 - [ ] Commit changes with descriptive message
 - [ ] Push to GitHub
 - [ ] Deploy to staging environment
@@ -662,6 +700,7 @@ pnpm turbo run lint
 ## 📅 TIMELINE
 
 **Week 1** (19 hours total):
+
 - **Day 1** (3h): Frontend memoization + tests
 - **Day 2-3** (10h): Backend order optimization + tests
 - **Day 4** (6h): Testing, verification, metrics

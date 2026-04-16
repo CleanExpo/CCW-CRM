@@ -131,6 +131,7 @@ export default function CustomerDetailPage() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [pricingTier, setPricingTier] = useState<PricingTier | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Contact dialog states
   const [contactFormOpen, setContactFormOpen] = useState(false);
@@ -145,6 +146,7 @@ export default function CustomerDetailPage() {
 
   const loadCustomerData = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       // Load customer details
       const customerData = await apiClient.get<Customer>(`/api/customers/${customerId}`);
@@ -187,6 +189,7 @@ export default function CustomerDetailPage() {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to load customer data';
+      setFetchError(message);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -217,12 +220,22 @@ export default function CustomerDetailPage() {
 
   if (!customer) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-muted-foreground text-lg font-medium">Customer not found</p>
-        <Button onClick={() => router.push('/customers')} className="mt-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Customers
-        </Button>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <p className="text-lg font-medium">
+          {fetchError ? 'Failed to load customer' : 'Customer not found'}
+        </p>
+        {fetchError && <p className="text-muted-foreground mt-1 text-sm">{fetchError}</p>}
+        <div className="mt-4 flex gap-2">
+          {fetchError && (
+            <Button variant="outline" onClick={() => loadCustomerData()}>
+              Retry
+            </Button>
+          )}
+          <Button onClick={() => router.push('/customers')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Customers
+          </Button>
+        </div>
       </div>
     );
   }
@@ -290,7 +303,7 @@ export default function CustomerDetailPage() {
         items={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Customers', href: '/customers' },
-          { label: customer.company_name },
+          { label: customer?.company_name ?? 'Customer Detail' },
         ]}
       />
 
@@ -301,9 +314,11 @@ export default function CustomerDetailPage() {
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{customer.company_name}</h1>
-            <Badge variant={customer.is_active ? 'default' : 'secondary'}>
-              {customer.is_active ? 'Active' : 'Inactive'}
+            <h1 className="text-3xl font-bold tracking-tight">
+              {customer?.company_name ?? 'Unnamed Customer'}
+            </h1>
+            <Badge variant={customer?.is_active ? 'default' : 'secondary'}>
+              {customer?.is_active ? 'Active' : 'Inactive'}
             </Badge>
             {pricingTier && (
               <Badge variant="outline" className="gap-1">
@@ -312,7 +327,7 @@ export default function CustomerDetailPage() {
               </Badge>
             )}
           </div>
-          <p className="text-muted-foreground">{customer.customer_number}</p>
+          <p className="text-muted-foreground">{customer?.customer_number ?? ''}</p>
         </div>
       </div>
 
@@ -384,25 +399,34 @@ export default function CustomerDetailPage() {
               <div className="flex items-center gap-2">
                 <Building2 className="text-muted-foreground h-4 w-4" />
                 <span className="text-sm font-medium">Contact:</span>
-                <span className="text-muted-foreground text-sm">{customer.contact_name}</span>
+                <span className="text-muted-foreground text-sm">
+                  {customer?.contact_name ?? '—'}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="text-muted-foreground h-4 w-4" />
-                <span className="text-sm font-medium">Email:</span>
-                <a
-                  href={`mailto:${customer.email}`}
-                  className="text-primary text-sm hover:underline"
-                >
-                  {customer.email}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="text-muted-foreground h-4 w-4" />
-                <span className="text-sm font-medium">Phone:</span>
-                <a href={`tel:${customer.phone}`} className="text-primary text-sm hover:underline">
-                  {customer.phone}
-                </a>
-              </div>
+              {customer?.email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="text-muted-foreground h-4 w-4" />
+                  <span className="text-sm font-medium">Email:</span>
+                  <a
+                    href={`mailto:${customer.email}`}
+                    className="text-primary text-sm hover:underline"
+                  >
+                    {customer.email}
+                  </a>
+                </div>
+              )}
+              {customer?.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="text-muted-foreground h-4 w-4" />
+                  <span className="text-sm font-medium">Phone:</span>
+                  <a
+                    href={`tel:${customer.phone}`}
+                    className="text-primary text-sm hover:underline"
+                  >
+                    {customer.phone}
+                  </a>
+                </div>
+              )}
             </div>
             <div className="space-y-3">
               <div className="flex items-start gap-2">
@@ -410,11 +434,21 @@ export default function CustomerDetailPage() {
                 <div>
                   <span className="text-sm font-medium">Address:</span>
                   <p className="text-muted-foreground text-sm">
-                    {customer.address}
-                    <br />
-                    {customer.city}, {customer.state} {customer.postal_code}
-                    <br />
-                    {customer.country}
+                    {customer?.address ?? '—'}
+                    {(customer?.city || customer?.state || customer?.postal_code) && (
+                      <>
+                        <br />
+                        {[customer.city, customer.state, customer.postal_code]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </>
+                    )}
+                    {customer?.country && (
+                      <>
+                        <br />
+                        {customer.country}
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -466,9 +500,13 @@ export default function CustomerDetailPage() {
                           className="hover:bg-muted/50 cursor-pointer border-b"
                           onClick={() => router.push(`/orders?id=${order.id}`)}
                         >
-                          <td className="px-4 py-3 font-mono text-sm">{order.order_number}</td>
+                          <td className="px-4 py-3 font-mono text-sm">
+                            {order.order_number ?? '—'}
+                          </td>
                           <td className="px-4 py-3 text-sm">
-                            {format(new Date(order.order_date), 'MMM dd, yyyy')}
+                            {order.order_date
+                              ? format(new Date(order.order_date), 'MMM dd, yyyy')
+                              : '—'}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <Badge
@@ -522,12 +560,18 @@ export default function CustomerDetailPage() {
                           className="hover:bg-muted/50 cursor-pointer border-b"
                           onClick={() => router.push(`/quotes?id=${quote.id}`)}
                         >
-                          <td className="px-4 py-3 font-mono text-sm">{quote.quote_number}</td>
-                          <td className="px-4 py-3 text-sm">
-                            {format(new Date(quote.quote_date), 'MMM dd, yyyy')}
+                          <td className="px-4 py-3 font-mono text-sm">
+                            {quote.quote_number ?? '—'}
                           </td>
                           <td className="px-4 py-3 text-sm">
-                            {format(new Date(quote.valid_until), 'MMM dd, yyyy')}
+                            {quote.quote_date
+                              ? format(new Date(quote.quote_date), 'MMM dd, yyyy')
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {quote.valid_until
+                              ? format(new Date(quote.valid_until), 'MMM dd, yyyy')
+                              : '—'}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <Badge

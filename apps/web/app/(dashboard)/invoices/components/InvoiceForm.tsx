@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
-import * as z from "zod";
+import { useState, useEffect, useCallback } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, useFieldArray } from 'react-hook-form';
+import * as z from 'zod';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -21,21 +21,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { invoicesApi } from "@/lib/api/invoices";
-import type { Invoice, CreateInvoiceItemRequest } from "@/lib/types/invoices";
-import { Plus, X } from "lucide-react";
-import { apiClient } from "@/lib/api/client";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { invoicesApi } from '@/lib/api/invoices';
+import type { Invoice, CreateInvoiceItemRequest } from '@/lib/types/invoices';
+import { Plus, X } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 interface Customer {
   id: string;
@@ -53,20 +53,22 @@ interface Product {
 
 // Validation schema
 const formSchema = z.object({
-  customer_id: z.string().min(1, "Customer is required"),
-  invoice_date: z.string().min(1, "Invoice date is required"),
-  due_date: z.string().min(1, "Due date is required"),
+  customer_id: z.string().min(1, 'Customer is required'),
+  invoice_date: z.string().min(1, 'Invoice date is required'),
+  due_date: z.string().min(1, 'Due date is required'),
   notes: z.string().optional(),
-  items: z.array(
-    z.object({
-      product_id: z.string().optional(),
-      description: z.string().min(1, "Description is required"),
-      quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
-      unit_price: z.coerce.number().min(0, "Price must be positive"),
-      tax_rate: z.coerce.number().min(0).max(100).optional(),
-      tax_amount: z.coerce.number().min(0).optional(),
-    })
-  ).min(1, "At least one line item is required"),
+  items: z
+    .array(
+      z.object({
+        product_id: z.string().optional(),
+        description: z.string().min(1, 'Description is required'),
+        quantity: z.coerce.number().min(1, 'Quantity must be at least 1'),
+        unit_price: z.coerce.number().min(0, 'Price must be positive'),
+        tax_rate: z.coerce.number().min(0).max(100).optional(),
+        tax_amount: z.coerce.number().min(0).optional(),
+      })
+    )
+    .min(1, 'At least one line item is required'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -88,14 +90,14 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customer_id: "",
-      invoice_date: new Date().toISOString().split("T")[0],
-      due_date: "",
-      notes: "",
+      customer_id: '',
+      invoice_date: new Date().toISOString().split('T')[0],
+      due_date: '',
+      notes: '',
       items: [
         {
-          product_id: "",
-          description: "",
+          product_id: '',
+          description: '',
           quantity: 1,
           unit_price: 0,
           tax_rate: 10,
@@ -106,18 +108,18 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "items",
+    name: 'items',
   });
 
   // Load customers
   const loadCustomers = useCallback(async () => {
     try {
       const response = await apiClient.get<{ items: Customer[] }>(
-        "/api/customers?page=1&page_size=100"
+        '/api/customers?page=1&page_size=100'
       );
       setCustomers(response.items || []);
     } catch (error) {
-      console.error("Failed to load customers:", error);
+      console.error('Failed to load customers:', error);
     }
   }, []);
 
@@ -125,11 +127,11 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
   const loadProducts = useCallback(async () => {
     try {
       const response = await apiClient.get<{ items: Product[] }>(
-        "/api/products?page=1&page_size=100"
+        '/api/products?page=1&page_size=100'
       );
       setProducts(response.items || []);
     } catch (error) {
-      console.error("Failed to load products:", error);
+      console.error('Failed to load products:', error);
     }
   }, []);
 
@@ -146,40 +148,44 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
       // Edit mode - populate form with invoice data
       form.reset({
         customer_id: invoice.customer_id,
-        invoice_date: invoice.invoice_date.split("T")[0], // Format for date input
-        due_date: invoice.due_date.split("T")[0], // Format for date input
-        notes: invoice.notes || "",
-        items: invoice.items && invoice.items.length > 0
-          ? invoice.items.map((item) => ({
-              product_id: item.product_id || "",
-              description: item.description,
-              quantity: item.quantity,
-              unit_price: typeof item.unit_price === "string" ? parseFloat(item.unit_price) : item.unit_price,
-              tax_rate: item.tax_rate || 0,
-              tax_amount: item.tax_amount || 0,
-            }))
-          : [
-              {
-                product_id: "",
-                description: "",
-                quantity: 1,
-                unit_price: 0,
-                tax_rate: 0,
-                tax_amount: 0,
-              },
-            ],
+        invoice_date: invoice.invoice_date.split('T')[0], // Format for date input
+        due_date: invoice.due_date.split('T')[0], // Format for date input
+        notes: invoice.notes || '',
+        items:
+          invoice.items && invoice.items.length > 0
+            ? invoice.items.map((item) => ({
+                product_id: item.product_id || '',
+                description: item.description,
+                quantity: item.quantity,
+                unit_price:
+                  typeof item.unit_price === 'string'
+                    ? parseFloat(item.unit_price)
+                    : item.unit_price,
+                tax_rate: item.tax_rate || 0,
+                tax_amount: item.tax_amount || 0,
+              }))
+            : [
+                {
+                  product_id: '',
+                  description: '',
+                  quantity: 1,
+                  unit_price: 0,
+                  tax_rate: 0,
+                  tax_amount: 0,
+                },
+              ],
       });
     } else if (open && !invoice) {
       // Create mode - reset to defaults
       form.reset({
-        customer_id: "",
-        invoice_date: new Date().toISOString().split("T")[0],
-        due_date: "",
-        notes: "",
+        customer_id: '',
+        invoice_date: new Date().toISOString().split('T')[0],
+        due_date: '',
+        notes: '',
         items: [
           {
-            product_id: "",
-            description: "",
+            product_id: '',
+            description: '',
             quantity: 1,
             unit_price: 0,
             tax_rate: 10,
@@ -196,7 +202,7 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
       form.setValue(`items.${index}.description`, product.name);
       form.setValue(
         `items.${index}.unit_price`,
-        typeof product.price === "string" ? parseFloat(product.price) : product.price
+        typeof product.price === 'string' ? parseFloat(product.price) : product.price
       );
     }
   };
@@ -206,7 +212,7 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
     setIsLoading(true);
     try {
       const items: CreateInvoiceItemRequest[] = values.items.map((item) => ({
-        product_id: item.product_id || "",
+        product_id: item.product_id || '',
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
@@ -223,8 +229,8 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
           items,
         });
         toast({
-          title: "Success",
-          description: "Invoice updated successfully",
+          title: 'Success',
+          description: 'Invoice updated successfully',
         });
       } else {
         await invoicesApi.create({
@@ -235,18 +241,18 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
           items,
         });
         toast({
-          title: "Success",
-          description: "Invoice created successfully",
+          title: 'Success',
+          description: 'Invoice created successfully',
         });
       }
 
       onSuccess();
       onOpenChange(false);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Operation failed";
+      const message = error instanceof Error ? error.message : 'Operation failed';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -256,15 +262,15 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
 
   // Calculate totals
   const calculateTotals = () => {
-    const items = form.watch("items");
+    const items = form.watch('items');
     const subtotal = items.reduce((sum, item) => {
-      return sum + (item.quantity * item.unit_price);
+      return sum + item.quantity * item.unit_price;
     }, 0);
 
     const tax = items.reduce((sum, item) => {
       const itemSubtotal = item.quantity * item.unit_price;
       const taxRate = item.tax_rate || 0;
-      return sum + (itemSubtotal * (taxRate / 100));
+      return sum + itemSubtotal * (taxRate / 100);
     }, 0);
 
     const total = subtotal + tax;
@@ -276,13 +282,13 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Invoice" : "Create Invoice"}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Invoice' : 'Create Invoice'}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update invoice details and line items"
-              : "Create a new invoice for a customer"}
+              ? 'Update invoice details and line items'
+              : 'Create a new invoice for a customer'}
           </DialogDescription>
         </DialogHeader>
 
@@ -367,7 +373,7 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
 
             {/* Line Items */}
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Line Items</h3>
                 <Button
                   type="button"
@@ -375,8 +381,8 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                   size="sm"
                   onClick={() =>
                     append({
-                      product_id: "",
-                      description: "",
+                      product_id: '',
+                      description: '',
                       quantity: 1,
                       unit_price: 0,
                       tax_rate: 0,
@@ -384,19 +390,22 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                     })
                   }
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Add Item
                 </Button>
               </div>
 
               {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-12 gap-2 items-start p-4 border rounded-lg">
+                <div
+                  key={field.id}
+                  className="grid grid-cols-12 items-start gap-2 rounded-lg border p-4"
+                >
                   {/* Product Select (Optional) */}
                   <div className="col-span-3">
                     <label className="text-sm font-medium">Product</label>
                     <Select
                       onValueChange={(value) => handleProductSelect(index, value)}
-                      value={form.watch(`items.${index}.product_id`) || ""}
+                      value={form.watch(`items.${index}.product_id`) || ''}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select..." />
@@ -481,14 +490,14 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
 
               {/* Validation Error for Items */}
               {form.formState.errors.items?.root && (
-                <p className="text-sm font-medium text-destructive">
+                <p className="text-destructive text-sm font-medium">
                   {form.formState.errors.items.root.message}
                 </p>
               )}
             </div>
 
             {/* Totals */}
-            <div className="border-t pt-4 space-y-2">
+            <div className="space-y-2 border-t pt-4">
               <div className="flex justify-between text-sm">
                 <span className="font-medium">Subtotal:</span>
                 <span>${totals.subtotal.toFixed(2)}</span>
@@ -513,7 +522,7 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : isEdit ? "Update Invoice" : "Create Invoice"}
+                {isLoading ? 'Saving...' : isEdit ? 'Update Invoice' : 'Create Invoice'}
               </Button>
             </DialogFooter>
           </form>

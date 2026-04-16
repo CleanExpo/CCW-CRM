@@ -1,0 +1,32 @@
+# docker-compose.prod.yml
+# CCW ERP — Production backend deployment
+#
+# Usage:
+#   1. Copy apps/backend/.env.production.example → apps/backend/.env
+#   2. Fill in real values in .env
+#   3. docker-compose -f docker-compose.prod.yml up -d --build
+#
+# Requires: Docker + Docker Compose v2
+
+version: '3.8'
+
+services:
+  backend:
+    image: ccw-erp-backend:latest
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - '8000:8000'
+    env_file:
+      - ./apps/backend/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - 'com.ccw.service=backend'
+      - 'com.ccw.version=${DEPLOY_VERSION:-latest}'

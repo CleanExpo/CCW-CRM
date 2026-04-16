@@ -16,7 +16,7 @@ describe('State file TTL', () => {
     // Verify the save code writes savedAt to the state file
     const saveBlock = META_SRC.slice(
       META_SRC.indexOf("if (action === 'save')"),
-      META_SRC.indexOf("if (action === 'load')"),
+      META_SRC.indexOf("if (action === 'load')")
     );
     expect(saveBlock).toContain('savedAt: new Date().toISOString()');
   });
@@ -25,7 +25,7 @@ describe('State file TTL', () => {
     // Verify the load code checks savedAt age and warns
     const loadStart = META_SRC.indexOf("if (action === 'load')");
     // Find the second occurrence of "Usage: state save|load" (appears after the load block)
-    const loadEnd = META_SRC.indexOf("Usage: state save|load", loadStart);
+    const loadEnd = META_SRC.indexOf('Usage: state save|load', loadStart);
     const loadBlock = META_SRC.slice(loadStart, loadEnd);
     expect(loadBlock).toContain('data.savedAt');
     expect(loadBlock).toContain('SEVEN_DAYS');

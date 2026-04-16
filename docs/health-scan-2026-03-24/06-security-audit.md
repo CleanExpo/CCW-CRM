@@ -32,6 +32,7 @@ No CRITICAL (exploitable remote code execution or authentication bypass leading 
 **Secret Key Enforcement**: The `validate_production_secrets()` method in `settings.py` (line 450) enforces `len(jwt_secret_key) >= 32` for production and staging environments. The `get_jwt_secret_secure()` method (line 370) falls back to the string `"dev-jwt-secret-not-for-production"` for development. The enforcement is correct but relies on the caller invoking `validate_production_secrets()` at startup — this is not automatically called in `main.py`, meaning a misconfigured production deployment could silently use a weak key.
 
 **Token Expiry**:
+
 - Access tokens: 480 minutes (8 hours) — acceptable for an internal ERP
 - Refresh tokens: 30 days — long but common for enterprise internal tools
 - Refresh token type-claim check (`payload.get("type") != "refresh"`) is correctly implemented
@@ -39,6 +40,7 @@ No CRITICAL (exploitable remote code execution or authentication bypass leading 
 **Token Revocation**: No token blacklist or JTI (JWT ID) revocation mechanism exists. A stolen access token remains valid for up to 8 hours even after a user logs out or changes their password. Logout simply deletes the client-side cookie; the server-side token is not invalidated. For an internal ERP this is an acceptable risk.
 
 **Cookie Security**:
+
 - `httponly=True` on both `auth_token` and `refresh_token` cookies — correct, prevents XSS token theft
 - `samesite="lax"` — adequate CSRF protection for standard navigation flows
 - `secure` flag: conditionally set via `settings.should_use_secure_cookies`, which evaluates `True` in production/staging. Correct.
@@ -106,15 +108,15 @@ No SQL injection vulnerabilities were found. All database queries use SQLAlchemy
 
 **SQLAlchemy text() usage** — all usages were audited:
 
-| File | Usage |
-|------|-------|
-| `health.py` | `text("SELECT 1")` — static literal, no user input |
-| `orders.py` | `text("SELECT generate_order_number()")` — static stored proc call |
-| `pos_transactions.py` | `text("SELECT generate_pos_transaction_number()")` — static stored proc call |
-| `quotes.py` | `text("SELECT generate_quote_number()")` — static stored proc call |
-| `translations.py` | `text(...)` import — no user input interpolated into raw SQL found |
-| `recommendation_service.py` | `text(...)` import — vector similarity queries |
-| `semantic_search_service.py` | `text(...)` import — semantic search queries |
+| File                         | Usage                                                                        |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `health.py`                  | `text("SELECT 1")` — static literal, no user input                           |
+| `orders.py`                  | `text("SELECT generate_order_number()")` — static stored proc call           |
+| `pos_transactions.py`        | `text("SELECT generate_pos_transaction_number()")` — static stored proc call |
+| `quotes.py`                  | `text("SELECT generate_quote_number()")` — static stored proc call           |
+| `translations.py`            | `text(...)` import — no user input interpolated into raw SQL found           |
+| `recommendation_service.py`  | `text(...)` import — vector similarity queries                               |
+| `semantic_search_service.py` | `text(...)` import — semantic search queries                                 |
 
 No f-string interpolation into `text()` calls was found. Zero occurrences of `text(f"SELECT...{user_input}")` patterns.
 
@@ -157,11 +159,13 @@ No f-string interpolation into `text()` calls was found. Zero occurrences of `te
 **No hardcoded production credentials found** in `apps/backend/src/**/*.py`.
 
 **Development credentials found** (expected and acceptable):
+
 - `"local_dev_password"` as default `database_url` in `settings.py` (line 126) — development default only
 - `"demo123"` in `seed_demo.py`, `demo_auth.py`, and utility scripts — intentional demo/local credentials
 - `"dev-jwt-secret-not-for-production"` as fallback in `get_jwt_secret_secure()` (line 395) — only returned in non-production environments
 
 **Secrets loading chain** (well-designed):
+
 1. Docker secret file (via `_FILE` env var suffix)
 2. Direct environment variable
 3. AWS Secrets Manager (production path)
@@ -170,6 +174,7 @@ No f-string interpolation into `text()` calls was found. Zero occurrences of `te
 **`validate_production_secrets()`** correctly checks JWT key length ≥ 32, database password presence, and Fernet key length for production/staging.
 
 **Utility scripts contain hardcoded dev credentials** in the repository root:
+
 - `apps/backend/apply_indexes.py` (line 13): `postgresql+asyncpg://starter_user:local_dev_password@localhost:5432/starter_db`
 - `apps/backend/create_admin.py` (line 13): same pattern, and line 39 contains `pwd_context.hash("demo123")`
 - `apps/backend/check_orders.py`, `create_demo_orders_simple.py`, `scripts/seed_ccw_products.py`: same dev DB URL
@@ -192,17 +197,17 @@ These files are development utility scripts and do not run in production, but th
 
 All version constraints use `>=` (minimum version, no upper bound). Current stated minimums:
 
-| Package | Minimum Version | Known CVEs at minimums | Notes |
-|---------|----------------|------------------------|-------|
-| `fastapi` | `>=0.115.0` | None at 0.115.x | Current stable is 0.115.x — up to date |
-| `sqlalchemy` | `>=2.0.0` | None in 2.0.x+ | SQLAlchemy 2.x is actively maintained |
-| `pydantic` | `>=2.9.0` | None at 2.9.x | Current stable is 2.9.x — up to date |
-| `python-jose[cryptography]` | `>=3.3.0` | **CVE-2024-33664, CVE-2024-33663** | python-jose has known JWT algorithm confusion vulnerabilities. Migrating to `joserfc` or `python-jwt` is recommended |
-| `passlib[bcrypt]` | `>=1.7.0` | passlib is unmaintained since 2023. The `bcrypt` backend functions correctly but the package has no active maintainer. |
-| `cryptography` | Transitive dep | Ensure `>=42.0.0` to avoid `CVE-2023-49083` and related issues |
-| `stripe` | `>=7.0.0` | None in 7.x+ | Up to date |
-| `httpx` | `>=0.27.0` | None at 0.27.x | Up to date |
-| `uvicorn[standard]` | `>=0.32.0` | None at 0.32.x | Up to date |
+| Package                     | Minimum Version | Known CVEs at minimums                                                                                                 | Notes                                                                                                                |
+| --------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `fastapi`                   | `>=0.115.0`     | None at 0.115.x                                                                                                        | Current stable is 0.115.x — up to date                                                                               |
+| `sqlalchemy`                | `>=2.0.0`       | None in 2.0.x+                                                                                                         | SQLAlchemy 2.x is actively maintained                                                                                |
+| `pydantic`                  | `>=2.9.0`       | None at 2.9.x                                                                                                          | Current stable is 2.9.x — up to date                                                                                 |
+| `python-jose[cryptography]` | `>=3.3.0`       | **CVE-2024-33664, CVE-2024-33663**                                                                                     | python-jose has known JWT algorithm confusion vulnerabilities. Migrating to `joserfc` or `python-jwt` is recommended |
+| `passlib[bcrypt]`           | `>=1.7.0`       | passlib is unmaintained since 2023. The `bcrypt` backend functions correctly but the package has no active maintainer. |
+| `cryptography`              | Transitive dep  | Ensure `>=42.0.0` to avoid `CVE-2023-49083` and related issues                                                         |
+| `stripe`                    | `>=7.0.0`       | None in 7.x+                                                                                                           | Up to date                                                                                                           |
+| `httpx`                     | `>=0.27.0`      | None at 0.27.x                                                                                                         | Up to date                                                                                                           |
+| `uvicorn[standard]`         | `>=0.32.0`      | None at 0.32.x                                                                                                         | Up to date                                                                                                           |
 
 **`python-jose` vulnerability note**: CVE-2024-33664 and CVE-2024-33663 involve algorithm confusion attacks where an attacker can force the library to accept `None` as the algorithm. The codebase correctly specifies `algorithms=["HS256"]` in every `jwt.decode()` call (reviewed in `auth/jwt.py` lines 73 and 134), which mitigates the algorithm confusion attack even on vulnerable versions of python-jose. The risk is **reduced but not eliminated** — migration to an actively maintained library is still recommended.
 
@@ -260,34 +265,35 @@ PUBLIC:          20/minute
 
 **Backend (`security_headers.py`)**: Applies on all API responses:
 
-| Header | Value | Assessment |
-|--------|-------|------------|
-| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'...` | `unsafe-inline` and `unsafe-eval` in `script-src` significantly weaken XSS protection. Acceptable for a backend API that returns JSON (no HTML rendering), but should not be present on frontend. |
-| `X-Frame-Options` | `DENY` | Correct — prevents clickjacking |
-| `X-Content-Type-Options` | `nosniff` | Correct |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | Correct |
-| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | Correct |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains; preload` | Correct — production only, includes preload |
+| Header                      | Value                                                                    | Assessment                                                                                                                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Content-Security-Policy`   | `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'...` | `unsafe-inline` and `unsafe-eval` in `script-src` significantly weaken XSS protection. Acceptable for a backend API that returns JSON (no HTML rendering), but should not be present on frontend. |
+| `X-Frame-Options`           | `DENY`                                                                   | Correct — prevents clickjacking                                                                                                                                                                   |
+| `X-Content-Type-Options`    | `nosniff`                                                                | Correct                                                                                                                                                                                           |
+| `Referrer-Policy`           | `strict-origin-when-cross-origin`                                        | Correct                                                                                                                                                                                           |
+| `Permissions-Policy`        | `camera=(), microphone=(), geolocation=()`                               | Correct                                                                                                                                                                                           |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains; preload`                           | Correct — production only, includes preload                                                                                                                                                       |
 
 **Frontend (`next.config.ts`)**: Applies via `async headers()`:
 
-| Header | Value | Assessment |
-|--------|-------|------------|
-| `Content-Security-Policy` | `script-src 'self' 'unsafe-inline' 'unsafe-eval'...` | **MEDIUM**: `unsafe-inline` and `unsafe-eval` in the frontend CSP negate most XSS protection. A nonce-based or hash-based approach should be adopted. |
-| `X-Frame-Options` | `DENY` | Correct |
-| `X-Content-Type-Options` | `nosniff` | Correct |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | Correct |
-| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | Correct |
-| `Strict-Transport-Security` | **Missing** | **MEDIUM**: HSTS is absent from `next.config.ts`. The backend adds it for production, but the Next.js frontend does not. |
+| Header                      | Value                                                | Assessment                                                                                                                                            |
+| --------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Content-Security-Policy`   | `script-src 'self' 'unsafe-inline' 'unsafe-eval'...` | **MEDIUM**: `unsafe-inline` and `unsafe-eval` in the frontend CSP negate most XSS protection. A nonce-based or hash-based approach should be adopted. |
+| `X-Frame-Options`           | `DENY`                                               | Correct                                                                                                                                               |
+| `X-Content-Type-Options`    | `nosniff`                                            | Correct                                                                                                                                               |
+| `Referrer-Policy`           | `strict-origin-when-cross-origin`                    | Correct                                                                                                                                               |
+| `Permissions-Policy`        | `camera=(), microphone=(), geolocation=()`           | Correct                                                                                                                                               |
+| `Strict-Transport-Security` | **Missing**                                          | **MEDIUM**: HSTS is absent from `next.config.ts`. The backend adds it for production, but the Next.js frontend does not.                              |
 
 **`productionBrowserSourceMaps: true` (HIGH for production)**:
 
 `next.config.ts` line 13 enables production browser source maps. This exposes the full TypeScript source code to anyone opening browser developer tools on the production site. This reveals:
+
 - Internal component structure and logic
 - API endpoint paths and request/response shapes
 - Potentially sensitive business logic (pricing calculations, discount rules, workflow conditions)
 
-The comment says "Sentry needs these" — Sentry can use *server-side* source maps without exposing them to browsers. The `hideSourceMaps: true` option in the Sentry config (line 108) is intended to hide maps from client bundles, but `productionBrowserSourceMaps: true` overrides this for the browser bundle.
+The comment says "Sentry needs these" — Sentry can use _server-side_ source maps without exposing them to browsers. The `hideSourceMaps: true` option in the Sentry config (line 108) is intended to hide maps from client bundles, but `productionBrowserSourceMaps: true` overrides this for the browser bundle.
 
 **Swagger UI publicly accessible**:
 
@@ -311,70 +317,70 @@ The `/metrics` endpoint is in `PUBLIC_PATHS` (line 23 of `auth.py`) and has no a
 
 ### HIGH
 
-| ID | Issue | Location | Impact |
-|----|-------|----------|--------|
-| H1 | `X-User-Id` header accepted without JWT verification — authentication bypass | `apps/backend/src/api/middleware/auth.py:96–100` | Any unauthenticated client can impersonate any known user ID |
-| H2 | `productionBrowserSourceMaps: true` exposes full TypeScript source to browser | `apps/web/next.config.ts:13` | Application logic, API paths, and business rules are visible in devtools |
+| ID  | Issue                                                                         | Location                                         | Impact                                                                   |
+| --- | ----------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------ |
+| H1  | `X-User-Id` header accepted without JWT verification — authentication bypass  | `apps/backend/src/api/middleware/auth.py:96–100` | Any unauthenticated client can impersonate any known user ID             |
+| H2  | `productionBrowserSourceMaps: true` exposes full TypeScript source to browser | `apps/web/next.config.ts:13`                     | Application logic, API paths, and business rules are visible in devtools |
 
 ### MEDIUM
 
-| ID | Issue | Location | Impact |
-|----|-------|----------|--------|
-| M1 | Swagger UI (`/docs`, `/openapi.json`) unauthenticated in production | `apps/backend/src/api/main.py:288` + `auth.py:26–27` | Full API schema exposed to unauthenticated actors |
-| M2 | Prometheus `/metrics` endpoint unauthenticated | `apps/backend/src/api/routes/prometheus_metrics.py` | Business metrics (revenue, orders, AI performance) publicly readable |
-| M3 | Frontend CSP uses `unsafe-inline` and `unsafe-eval` | `apps/web/next.config.ts:63–64` | XSS mitigation significantly weakened |
-| M4 | HSTS missing from Next.js frontend headers | `apps/web/next.config.ts` | Browser can be downgraded to HTTP on first visit |
-| M5 | `python-jose` has CVE-2024-33664/33663 (algorithm confusion) | `apps/backend/pyproject.toml` | Mitigated by explicit `algorithms=["HS256"]` but library should be replaced |
-| M6 | `passlib` is unmaintained since 2023 | `apps/backend/pyproject.toml` | No active security patches for the password hashing wrapper |
-| M7 | `validate_production_secrets()` not called at startup | `apps/backend/src/api/main.py` | Misconfigured production secrets fail silently |
+| ID  | Issue                                                               | Location                                             | Impact                                                                      |
+| --- | ------------------------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| M1  | Swagger UI (`/docs`, `/openapi.json`) unauthenticated in production | `apps/backend/src/api/main.py:288` + `auth.py:26–27` | Full API schema exposed to unauthenticated actors                           |
+| M2  | Prometheus `/metrics` endpoint unauthenticated                      | `apps/backend/src/api/routes/prometheus_metrics.py`  | Business metrics (revenue, orders, AI performance) publicly readable        |
+| M3  | Frontend CSP uses `unsafe-inline` and `unsafe-eval`                 | `apps/web/next.config.ts:63–64`                      | XSS mitigation significantly weakened                                       |
+| M4  | HSTS missing from Next.js frontend headers                          | `apps/web/next.config.ts`                            | Browser can be downgraded to HTTP on first visit                            |
+| M5  | `python-jose` has CVE-2024-33664/33663 (algorithm confusion)        | `apps/backend/pyproject.toml`                        | Mitigated by explicit `algorithms=["HS256"]` but library should be replaced |
+| M6  | `passlib` is unmaintained since 2023                                | `apps/backend/pyproject.toml`                        | No active security patches for the password hashing wrapper                 |
+| M7  | `validate_production_secrets()` not called at startup               | `apps/backend/src/api/main.py`                       | Misconfigured production secrets fail silently                              |
 
 ### LOW
 
-| ID | Issue | Location | Impact |
-|----|-------|----------|--------|
-| L1 | No JWT token revocation mechanism | `apps/backend/src/auth/jwt.py` | Stolen tokens valid for up to 8 hours after logout |
-| L2 | `domain="localhost"` hardcoded in cookie `set_cookie()` calls | `apps/backend/src/api/routes/demo_auth.py:141,153` | Must be overridden in production or cookies will not be scoped to production domain |
-| L3 | Dev utility scripts have hardcoded DB credentials | Multiple files in `apps/backend/` root | Dev credentials in codebase; not a production risk but sets a poor pattern |
-| L4 | Rate limits not applied to individual high-value destructive routes | Various route files | Only global 60/min limit protects bulk-delete and order-cancel operations |
-| L5 | No `pip-audit` / `safety` in CI pipeline | `.github/workflows/ci.yml` | Dependency CVEs not automatically detected |
-| L6 | `rate_limit_enabled` can be disabled via env var with no production guard | `apps/backend/src/config/settings.py:196` | Rate limiting can be disabled in production accidentally |
+| ID  | Issue                                                                     | Location                                           | Impact                                                                              |
+| --- | ------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| L1  | No JWT token revocation mechanism                                         | `apps/backend/src/auth/jwt.py`                     | Stolen tokens valid for up to 8 hours after logout                                  |
+| L2  | `domain="localhost"` hardcoded in cookie `set_cookie()` calls             | `apps/backend/src/api/routes/demo_auth.py:141,153` | Must be overridden in production or cookies will not be scoped to production domain |
+| L3  | Dev utility scripts have hardcoded DB credentials                         | Multiple files in `apps/backend/` root             | Dev credentials in codebase; not a production risk but sets a poor pattern          |
+| L4  | Rate limits not applied to individual high-value destructive routes       | Various route files                                | Only global 60/min limit protects bulk-delete and order-cancel operations           |
+| L5  | No `pip-audit` / `safety` in CI pipeline                                  | `.github/workflows/ci.yml`                         | Dependency CVEs not automatically detected                                          |
+| L6  | `rate_limit_enabled` can be disabled via env var with no production guard | `apps/backend/src/config/settings.py:196`          | Rate limiting can be disabled in production accidentally                            |
 
 ### INFORMATIONAL
 
-| ID | Issue | Notes |
-|----|-------|-------|
-| I1 | HS256 used instead of RS256 | Acceptable for internal system; RS256 preferred for external/federated identity |
-| I2 | `allow_methods=["*"]` and `allow_headers=["*"]` in CORS | Permissive but safe when `allow_origins` is a specific list |
-| I3 | Refresh tokens are 30 days with no rotation mechanism | Long-lived but stored HttpOnly; acceptable for internal ERP |
+| ID  | Issue                                                   | Notes                                                                           |
+| --- | ------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| I1  | HS256 used instead of RS256                             | Acceptable for internal system; RS256 preferred for external/federated identity |
+| I2  | `allow_methods=["*"]` and `allow_headers=["*"]` in CORS | Permissive but safe when `allow_origins` is a specific list                     |
+| I3  | Refresh tokens are 30 days with no rotation mechanism   | Long-lived but stored HttpOnly; acceptable for internal ERP                     |
 
 ---
 
 ## Metrics Dashboard
 
-| Category | Score | Issues Found | Critical | High | Medium | Low |
-|----------|-------|-------------|----------|------|--------|-----|
-| Authentication & JWT | B | 4 | 0 | 1 | 0 | 3 |
-| CORS Configuration | A- | 1 | 0 | 0 | 1 | 0 |
-| SQL Injection | A+ | 0 | 0 | 0 | 0 | 0 |
-| Input Validation | A | 0 | 0 | 0 | 0 | 0 |
-| Secrets Management | A- | 1 | 0 | 0 | 1 | 1 |
-| Dependency Security | B+ | 2 | 0 | 0 | 2 | 1 |
-| Rate Limiting | B+ | 2 | 0 | 0 | 0 | 2 |
-| Security Headers | B | 5 | 0 | 1 | 4 | 0 |
-| **TOTAL** | **B+** | **15** | **0** | **2** | **8** | **7** |
+| Category             | Score  | Issues Found | Critical | High  | Medium | Low   |
+| -------------------- | ------ | ------------ | -------- | ----- | ------ | ----- |
+| Authentication & JWT | B      | 4            | 0        | 1     | 0      | 3     |
+| CORS Configuration   | A-     | 1            | 0        | 0     | 1      | 0     |
+| SQL Injection        | A+     | 0            | 0        | 0     | 0      | 0     |
+| Input Validation     | A      | 0            | 0        | 0     | 0      | 0     |
+| Secrets Management   | A-     | 1            | 0        | 0     | 1      | 1     |
+| Dependency Security  | B+     | 2            | 0        | 0     | 2      | 1     |
+| Rate Limiting        | B+     | 2            | 0        | 0     | 0      | 2     |
+| Security Headers     | B      | 5            | 0        | 1     | 4      | 0     |
+| **TOTAL**            | **B+** | **15**       | **0**    | **2** | **8**  | **7** |
 
-| Metric | Value |
-|--------|-------|
-| HMAC timing-safe comparisons | 11 of 11 usages correct (`hmac.compare_digest`) |
-| Hardcoded production credentials | 0 found |
-| SQL injection vectors | 0 found |
-| Pydantic validation coverage | All POST/PUT endpoints covered |
-| Auth endpoints rate-limited | Yes (5/min login, 3/hr reset) |
-| HttpOnly on auth cookies | Yes |
-| Secure flag on auth cookies | Yes (production/staging) |
-| HSTS (backend) | Yes (production) |
-| HSTS (frontend) | No — missing |
-| Swagger UI auth-gated | No — publicly accessible |
+| Metric                           | Value                                           |
+| -------------------------------- | ----------------------------------------------- |
+| HMAC timing-safe comparisons     | 11 of 11 usages correct (`hmac.compare_digest`) |
+| Hardcoded production credentials | 0 found                                         |
+| SQL injection vectors            | 0 found                                         |
+| Pydantic validation coverage     | All POST/PUT endpoints covered                  |
+| Auth endpoints rate-limited      | Yes (5/min login, 3/hr reset)                   |
+| HttpOnly on auth cookies         | Yes                                             |
+| Secure flag on auth cookies      | Yes (production/staging)                        |
+| HSTS (backend)                   | Yes (production)                                |
+| HSTS (frontend)                  | No — missing                                    |
+| Swagger UI auth-gated            | No — publicly accessible                        |
 
 ---
 

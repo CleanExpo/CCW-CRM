@@ -1,12 +1,15 @@
 # ADR-0007: AU Privacy Act 2024 Compliance Strategy
 
 ## Status
+
 Accepted
 
 ## Context
+
 The AU Privacy Act 2024 amendments remove the small business exemption in July 2026. CCW Cowork handles personal information of customers and contacts. Non-compliance carries penalties of $66K per violation.
 
 ## Decision
+
 Implement a comprehensive compliance framework (`lib/au-privacy-compliance.js`) with:
 
 1. **Consent Records** table: Track explicit consent per user per purpose, with version control and revocation support.
@@ -24,11 +27,13 @@ All tables have RLS enabled. Non-compliance triggers URGENT Linear issue automat
 ## Consequences
 
 **Easier**:
+
 - Documented compliance posture for July 2026 deadline
 - Automated daily audit reduces manual compliance overhead
 - Consent tracking enables trust-based customer relationships
 
 **Harder**:
+
 - Every AI decision affecting users must be logged (performance overhead)
 - Deletion workflows must handle cascading data across multiple tables
 - Retention purge jobs must be tested carefully to avoid data loss

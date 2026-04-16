@@ -58,22 +58,24 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 ### 1. CI Workflow (`.github/workflows/ci.yml`)
 
 **Triggers:**
+
 - Push to `main` or `ai-updates` branches
 - Pull requests to `main` or `ai-updates` branches
 
 **Jobs:**
 
-| Job | Description | Duration |
-|-----|-------------|----------|
-| `backend-tests` | Run pytest with PostgreSQL & Redis | ~3 min |
-| `frontend-tests` | Run Vitest unit tests | ~2 min |
-| `build` | Build Next.js application | ~3 min |
-| `docker-build` | Build Docker images (push only) | ~5 min |
-| `e2e-tests` | Run Playwright E2E tests | ~5 min |
-| `accessibility-tests` | Run accessibility tests | ~3 min |
-| `ci-summary` | Generate summary report | ~1 min |
+| Job                   | Description                        | Duration |
+| --------------------- | ---------------------------------- | -------- |
+| `backend-tests`       | Run pytest with PostgreSQL & Redis | ~3 min   |
+| `frontend-tests`      | Run Vitest unit tests              | ~2 min   |
+| `build`               | Build Next.js application          | ~3 min   |
+| `docker-build`        | Build Docker images (push only)    | ~5 min   |
+| `e2e-tests`           | Run Playwright E2E tests           | ~5 min   |
+| `accessibility-tests` | Run accessibility tests            | ~3 min   |
+| `ci-summary`          | Generate summary report            | ~1 min   |
 
 **Success Criteria:**
+
 - All tests pass
 - Type checking passes
 - Linting passes
@@ -82,6 +84,7 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 ### 2. Deploy to Staging (`.github/workflows/deploy-staging.yml`)
 
 **Triggers:**
+
 - Push to `main` branch
 - Manual workflow dispatch
 
@@ -95,6 +98,7 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 6. **notify** - Send Slack notification
 
 **Deployment Process:**
+
 ```bash
 1. Create database backup
 2. Pull latest code from Git
@@ -109,14 +113,17 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 ### 3. Deploy to Production (`.github/workflows/deploy-production.yml`)
 
 **Triggers:**
+
 - Manual workflow dispatch only
 
 **Required Inputs:**
+
 - `version` - Git tag or commit SHA
 - `confirm_staging_tested` - Must be checked
 - `confirm_rollback_plan` - Must be checked
 
 **Safety Features:**
+
 - GitHub Environment approval required
 - Must confirm staging was tested
 - Must confirm rollback plan exists
@@ -126,9 +133,11 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 ### 4. Emergency Rollback (`.github/workflows/rollback.yml`)
 
 **Triggers:**
+
 - Manual workflow dispatch only
 
 **Inputs:**
+
 - `environment` - staging or production
 - `rollback_type` - code_only, code_and_database, or database_only
 - `version` - Target version (optional, defaults to previous)
@@ -139,22 +148,22 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 
 ### Authentication Secrets
 
-| Secret | Description | Required For |
-|--------|-------------|--------------|
-| `STAGING_SSH_KEY` | Private SSH key for staging | Staging deploy |
-| `STAGING_SSH_HOST` | Staging server hostname | Staging deploy |
-| `STAGING_SSH_USER` | SSH username | Staging deploy |
-| `PRODUCTION_SSH_KEY` | Private SSH key for production | Production deploy |
-| `PRODUCTION_SSH_HOST` | Production server hostname | Production deploy |
-| `PRODUCTION_SSH_USER` | SSH username | Production deploy |
+| Secret                | Description                    | Required For      |
+| --------------------- | ------------------------------ | ----------------- |
+| `STAGING_SSH_KEY`     | Private SSH key for staging    | Staging deploy    |
+| `STAGING_SSH_HOST`    | Staging server hostname        | Staging deploy    |
+| `STAGING_SSH_USER`    | SSH username                   | Staging deploy    |
+| `PRODUCTION_SSH_KEY`  | Private SSH key for production | Production deploy |
+| `PRODUCTION_SSH_HOST` | Production server hostname     | Production deploy |
+| `PRODUCTION_SSH_USER` | SSH username                   | Production deploy |
 
 ### Application Secrets
 
-| Secret | Description | Required For |
-|--------|-------------|--------------|
-| `STAGING_API_URL` | Staging API URL | Docker build |
-| `PRODUCTION_API_URL` | Production API URL | Docker build |
-| `SLACK_WEBHOOK_URL` | Slack notifications | Notifications |
+| Secret               | Description         | Required For  |
+| -------------------- | ------------------- | ------------- |
+| `STAGING_API_URL`    | Staging API URL     | Docker build  |
+| `PRODUCTION_API_URL` | Production API URL  | Docker build  |
+| `SLACK_WEBHOOK_URL`  | Slack notifications | Notifications |
 
 ### Environment Variables (Set on Server)
 
@@ -312,6 +321,7 @@ curl https://api.staging.ccw-erp.com/api/health
 ### Automatic Rollback
 
 Production deployments automatically rollback if:
+
 - Health checks fail after 15 attempts
 - Services don't become healthy within 5 minutes
 
@@ -354,6 +364,7 @@ Use the Emergency Rollback workflow with `rollback_type=code_and_database`.
 ### Slack Notifications
 
 Deployments send notifications to configured Slack channel:
+
 - Deployment started
 - Deployment succeeded/failed
 - Rollback initiated
@@ -361,6 +372,7 @@ Deployments send notifications to configured Slack channel:
 ### Grafana Dashboards
 
 Access deployment metrics:
+
 - Staging: `http://staging.ccw-erp.com:3001`
 - Production: `http://ccw-erp.com:3001`
 
@@ -375,6 +387,7 @@ Error: Cannot connect to staging server via SSH
 ```
 
 **Solution:**
+
 1. Verify SSH key is correct in GitHub Secrets
 2. Check server firewall allows GitHub Actions IPs
 3. Verify SSH user has correct permissions
@@ -386,6 +399,7 @@ Error: failed to build image
 ```
 
 **Solution:**
+
 1. Check Dockerfile syntax
 2. Verify all dependencies are available
 3. Check disk space on runner
@@ -397,6 +411,7 @@ Error: Health check failed after 15 attempts
 ```
 
 **Solution:**
+
 1. Check container logs: `docker compose logs backend`
 2. Verify environment variables are set
 3. Check database connection
@@ -408,6 +423,7 @@ Error: Database migration failed
 ```
 
 **Solution:**
+
 1. Check migration files
 2. Verify database is healthy
 3. Review migration logs

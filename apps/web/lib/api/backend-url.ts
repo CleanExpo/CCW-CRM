@@ -13,7 +13,7 @@ export function getBackendUrl(): string {
   return (
     process.env.NEXT_PUBLIC_BACKEND_URL ??
     process.env.NEXT_PUBLIC_API_URL ??
-    "http://localhost:8000"
+    'http://localhost:8000'
   );
 }
 

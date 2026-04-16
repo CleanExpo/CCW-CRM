@@ -1,29 +1,23 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { RefreshCw, Package, Users, ShoppingCart, Boxes } from "lucide-react";
+import { useState } from 'react';
+import { RefreshCw, Package, Users, ShoppingCart, Boxes } from 'lucide-react';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { triggerCin7Sync, triggerCin7Poll } from "@/lib/api/cin7";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { triggerCin7Sync, triggerCin7Poll } from '@/lib/api/cin7';
 
 interface Cin7SyncControlsProps {
   isConnected: boolean;
 }
 
 const SYNC_ENTITIES = [
-  { key: "products" as const, label: "Products", icon: Package, color: "text-blue-600" },
-  { key: "customers" as const, label: "Customers", icon: Users, color: "text-green-600" },
-  { key: "orders" as const, label: "Orders", icon: ShoppingCart, color: "text-purple-600" },
-  { key: "inventory" as const, label: "Inventory", icon: Boxes, color: "text-orange-600" },
+  { key: 'products' as const, label: 'Products', icon: Package, color: 'text-blue-600' },
+  { key: 'customers' as const, label: 'Customers', icon: Users, color: 'text-green-600' },
+  { key: 'orders' as const, label: 'Orders', icon: ShoppingCart, color: 'text-purple-600' },
+  { key: 'inventory' as const, label: 'Inventory', icon: Boxes, color: 'text-orange-600' },
 ];
 
 export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
@@ -31,18 +25,18 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [polling, setPolling] = useState(false);
 
-  const handleSync = async (entityType: "products" | "customers" | "orders" | "inventory") => {
+  const handleSync = async (entityType: 'products' | 'customers' | 'orders' | 'inventory') => {
     setSyncing((prev) => ({ ...prev, [entityType]: true }));
     try {
       const result = await triggerCin7Sync(entityType);
       toast({
-        title: "Sync Complete",
+        title: 'Sync Complete',
         description: `${entityType} sync completed. ${result.records_processed ?? 0} records processed.`,
       });
     } catch (error: unknown) {
       toast({
-        variant: "destructive",
-        title: "Sync Failed",
+        variant: 'destructive',
+        title: 'Sync Failed',
         description: error instanceof Error ? error.message : `Failed to sync ${entityType}`,
       });
     } finally {
@@ -53,16 +47,16 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
   const handlePoll = async () => {
     setPolling(true);
     try {
-      const result = await triggerCin7Poll("core");
+      const result = await triggerCin7Poll('core');
       toast({
-        title: "Poll Complete",
+        title: 'Poll Complete',
         description: `Found ${result.total_changes} changes in ${result.duration_ms}ms`,
       });
     } catch (error: unknown) {
       toast({
-        variant: "destructive",
-        title: "Poll Failed",
-        description: error instanceof Error ? error.message : "Failed to poll for changes",
+        variant: 'destructive',
+        title: 'Poll Failed',
+        description: error instanceof Error ? error.message : 'Failed to poll for changes',
       });
     } finally {
       setPolling(false);
@@ -94,14 +88,9 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
             </CardTitle>
             <CardDescription>Manually trigger sync for each entity type</CardDescription>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePoll}
-            disabled={polling}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${polling ? "animate-spin" : ""}`} />
-            {polling ? "Polling..." : "Poll Changes"}
+          <Button variant="outline" size="sm" onClick={handlePoll} disabled={polling}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${polling ? 'animate-spin' : ''}`} />
+            {polling ? 'Polling...' : 'Poll Changes'}
           </Button>
         </div>
       </CardHeader>
@@ -117,7 +106,7 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
                 onClick={() => handleSync(key)}
                 disabled={isSyncing}
               >
-                <Icon className={`h-5 w-5 ${isSyncing ? "animate-spin" : color}`} />
+                <Icon className={`h-5 w-5 ${isSyncing ? 'animate-spin' : color}`} />
                 <span className="text-xs font-medium">
                   {isSyncing ? `Syncing ${label}...` : `Sync ${label}`}
                 </span>

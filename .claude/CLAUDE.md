@@ -2,13 +2,13 @@
 
 The primary instructions are in the root `CLAUDE.md` (73 lines). This directory holds detailed companion files:
 
-| File | Purpose |
-|------|---------|
+| File              | Purpose                                                                |
+| ----------------- | ---------------------------------------------------------------------- |
 | `ARCHITECTURE.md` | System overview, component map, locked files, data model, integrations |
-| `STANDARDS.md` | Code patterns (error handling, naming, frontend/backend conventions) |
-| `TESTING.md` | Test commands, verification checklist, mocking, regression areas |
-| `WORKFLOWS.md` | Branch naming, commits, PR checklist, deployment, AI tooling |
-| `PROGRESS.md` | Living state — active tasks, decisions, blockers, session notes |
+| `STANDARDS.md`    | Code patterns (error handling, naming, frontend/backend conventions)   |
+| `TESTING.md`      | Test commands, verification checklist, mocking, regression areas       |
+| `WORKFLOWS.md`    | Branch naming, commits, PR checklist, deployment, AI tooling           |
+| `PROGRESS.md`     | Living state — active tasks, decisions, blockers, session notes        |
 
 ## Locked Files (quick reference)
 
@@ -19,6 +19,7 @@ The primary instructions are in the root `CLAUDE.md` (73 lines). This directory 
 ## Memory Files
 
 Living state in `.claude/memory/`:
+
 - `current-state.md` — active sprint details
 - `CONSTITUTION.md` — immutable prohibitions
 - `decisions-log.md` — append-only architecture decisions

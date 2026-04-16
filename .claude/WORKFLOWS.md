@@ -51,37 +51,43 @@ Scopes: `web`, `backend`, `api`, `db`, `video`, `git`, `skills`, `cin7`, `billin
 ## Deployment
 
 ### Frontend (Vercel)
+
 Push to `main` triggers auto-deploy. Preview deployments on PRs.
 Production URL: `ccw-crm-web.vercel.app`
 
 ### Backend (Railway)
+
 Push to `main` triggers auto-deploy.
 Environment variables managed in Railway dashboard.
 
 ### Database (Supabase)
+
 Migrations via Supabase MCP `apply_migration` tool.
 Project ID: `vwfgksqkajnpfjospbpe` (ap-southeast-2)
 
 ## Rollback
 
 ### Frontend
+
 Vercel dashboard → Deployments → select previous → "Promote to Production"
 
 ### Backend
+
 Railway dashboard → Deployments → select previous → "Rollback"
 
 ### Database
+
 Migrations are forward-only. For emergencies, apply a corrective migration.
 Supabase has point-in-time recovery if needed (Pro plan feature).
 
 ## AI Tooling Workflow
 
-| When | Tool |
-|------|------|
-| Architecture decisions | gstack `/cto` |
-| Security changes | gstack `/cso` |
-| Post-sprint review | gstack `/retro` |
-| Browser QA | gstack `/qa` |
-| New feature ideation | Superpowers `brainstorming` |
-| Parallel tasks | Superpowers `dispatching-parallel-agents` |
-| Pre-PR verification | Superpowers `verification-before-completion` |
+| When                   | Tool                                         |
+| ---------------------- | -------------------------------------------- |
+| Architecture decisions | gstack `/cto`                                |
+| Security changes       | gstack `/cso`                                |
+| Post-sprint review     | gstack `/retro`                              |
+| Browser QA             | gstack `/qa`                                 |
+| New feature ideation   | Superpowers `brainstorming`                  |
+| Parallel tasks         | Superpowers `dispatching-parallel-agents`    |
+| Pre-PR verification    | Superpowers `verification-before-completion` |

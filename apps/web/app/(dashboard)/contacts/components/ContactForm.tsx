@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,23 +20,37 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { apiClient } from "@/lib/api/client";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { apiClient } from '@/lib/api/client';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
-  first_name: z.string().min(1, "First name is required").max(100, "First name must be 100 characters or less"),
-  last_name: z.string().min(1, "Last name is required").max(100, "Last name must be 100 characters or less"),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string().max(30, "Phone must be 30 characters or less").optional().or(z.literal("")),
-  mobile: z.string().max(30, "Mobile must be 30 characters or less").optional().or(z.literal("")),
-  job_title: z.string().max(100, "Job title must be 100 characters or less").optional().or(z.literal("")),
-  department: z.string().max(100, "Department must be 100 characters or less").optional().or(z.literal("")),
-  notes: z.string().optional().or(z.literal("")),
+  first_name: z
+    .string()
+    .min(1, 'First name is required')
+    .max(100, 'First name must be 100 characters or less'),
+  last_name: z
+    .string()
+    .min(1, 'Last name is required')
+    .max(100, 'Last name must be 100 characters or less'),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  phone: z.string().max(30, 'Phone must be 30 characters or less').optional().or(z.literal('')),
+  mobile: z.string().max(30, 'Mobile must be 30 characters or less').optional().or(z.literal('')),
+  job_title: z
+    .string()
+    .max(100, 'Job title must be 100 characters or less')
+    .optional()
+    .or(z.literal('')),
+  department: z
+    .string()
+    .max(100, 'Department must be 100 characters or less')
+    .optional()
+    .or(z.literal('')),
+  notes: z.string().optional().or(z.literal('')),
   is_primary: z.boolean().default(false),
   is_active: z.boolean().default(true),
   customer_id: z.string().uuid().optional().nullable(),
@@ -67,7 +81,13 @@ interface ContactFormProps {
   customerId?: string;
 }
 
-export function ContactForm({ contact, open, onOpenChange, onSuccess, customerId }: ContactFormProps) {
+export function ContactForm({
+  contact,
+  open,
+  onOpenChange,
+  onSuccess,
+  customerId,
+}: ContactFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const isEdit = !!contact;
@@ -75,14 +95,14 @@ export function ContactForm({ contact, open, onOpenChange, onSuccess, customerId
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone: "",
-      mobile: "",
-      job_title: "",
-      department: "",
-      notes: "",
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      mobile: '',
+      job_title: '',
+      department: '',
+      notes: '',
       is_primary: false,
       is_active: true,
       customer_id: customerId || null,
@@ -96,26 +116,26 @@ export function ContactForm({ contact, open, onOpenChange, onSuccess, customerId
         form.reset({
           first_name: contact.first_name,
           last_name: contact.last_name,
-          email: contact.email || "",
-          phone: contact.phone || "",
-          mobile: contact.mobile || "",
-          job_title: contact.job_title || "",
-          department: contact.department || "",
-          notes: contact.notes || "",
+          email: contact.email || '',
+          phone: contact.phone || '',
+          mobile: contact.mobile || '',
+          job_title: contact.job_title || '',
+          department: contact.department || '',
+          notes: contact.notes || '',
           is_primary: contact.is_primary,
           is_active: contact.is_active,
           customer_id: contact.customer_id || customerId || null,
         });
       } else {
         form.reset({
-          first_name: "",
-          last_name: "",
-          email: "",
-          phone: "",
-          mobile: "",
-          job_title: "",
-          department: "",
-          notes: "",
+          first_name: '',
+          last_name: '',
+          email: '',
+          phone: '',
+          mobile: '',
+          job_title: '',
+          department: '',
+          notes: '',
           is_primary: false,
           is_active: true,
           customer_id: customerId || null,
@@ -142,22 +162,22 @@ export function ContactForm({ contact, open, onOpenChange, onSuccess, customerId
       if (isEdit) {
         await apiClient.put(`/api/contacts/${contact.id}`, cleanedValues);
         toast({
-          title: "Success",
-          description: "Contact updated successfully",
+          title: 'Success',
+          description: 'Contact updated successfully',
         });
       } else {
-        await apiClient.post("/api/contacts", cleanedValues);
+        await apiClient.post('/api/contacts', cleanedValues);
         toast({
-          title: "Success",
-          description: "Contact created successfully",
+          title: 'Success',
+          description: 'Contact created successfully',
         });
       }
       onSuccess();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Something went wrong";
+      const message = error instanceof Error ? error.message : 'Something went wrong';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -167,13 +187,11 @@ export function ContactForm({ contact, open, onOpenChange, onSuccess, customerId
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Contact" : "New Contact"}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Contact' : 'New Contact'}</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Update the contact's information below."
-              : "Add a new contact to your CRM."}
+            {isEdit ? "Update the contact's information below." : 'Add a new contact to your CRM.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -304,17 +322,14 @@ export function ContactForm({ contact, open, onOpenChange, onSuccess, customerId
             />
 
             {/* Toggles */}
-            <div className="flex items-center justify-between border rounded-lg p-4">
+            <div className="flex items-center justify-between rounded-lg border p-4">
               <FormField
                 control={form.control}
                 name="is_primary"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-3 space-y-0">
+                  <FormItem className="flex items-center space-y-0 space-x-3">
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div>
                       <FormLabel className="cursor-pointer">Primary Contact</FormLabel>
@@ -330,12 +345,9 @@ export function ContactForm({ contact, open, onOpenChange, onSuccess, customerId
                 control={form.control}
                 name="is_active"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-3 space-y-0">
+                  <FormItem className="flex items-center space-y-0 space-x-3">
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div>
                       <FormLabel className="cursor-pointer">Active</FormLabel>
@@ -360,7 +372,7 @@ export function ContactForm({ contact, open, onOpenChange, onSuccess, customerId
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEdit ? "Update Contact" : "Create Contact"}
+                {isEdit ? 'Update Contact' : 'Create Contact'}
               </Button>
             </div>
           </form>

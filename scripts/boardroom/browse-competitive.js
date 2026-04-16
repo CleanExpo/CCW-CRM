@@ -68,7 +68,12 @@ async function extractPageData(page, extractors) {
           break;
 
         case 'h1s':
-          result.h1s = await page.$$eval('h1', (els) => els.map((e) => e.textContent?.trim()).filter(Boolean).slice(0, 3));
+          result.h1s = await page.$$eval('h1', (els) =>
+            els
+              .map((e) => e.textContent?.trim())
+              .filter(Boolean)
+              .slice(0, 3)
+          );
           break;
 
         case 'pricePoints':
@@ -94,7 +99,11 @@ async function extractPageData(page, extractors) {
             )
             .catch(() => []);
           if (prices.length > 0) {
-            result.priceRange = { min: Math.min(...prices), max: Math.max(...prices), count: prices.length };
+            result.priceRange = {
+              min: Math.min(...prices),
+              max: Math.max(...prices),
+              count: prices.length,
+            };
           }
           break;
 
@@ -205,7 +214,9 @@ export async function runCompetitiveIntelligence(sessionId, dataDir = './data/se
 
     await context.close();
   } catch (err) {
-    console.warn(`[Browse] Browser launch failed: ${err.message} — skipping competitive intelligence`);
+    console.warn(
+      `[Browse] Browser launch failed: ${err.message} — skipping competitive intelligence`
+    );
   } finally {
     if (browser) await browser.close().catch(() => {});
   }

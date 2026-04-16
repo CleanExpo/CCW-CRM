@@ -107,11 +107,11 @@ export interface NetworkEntry {
 
 export interface DialogEntry {
   timestamp: number;
-  type: string;        // 'alert' | 'confirm' | 'prompt' | 'beforeunload'
+  type: string; // 'alert' | 'confirm' | 'prompt' | 'beforeunload'
   message: string;
   defaultValue?: string;
-  action: string;      // 'accepted' | 'dismissed'
-  response?: string;   // text provided for prompt
+  action: string; // 'accepted' | 'dismissed'
+  response?: string; // text provided for prompt
 }
 
 // ─── Buffer Instances ───────────────────────────────────────

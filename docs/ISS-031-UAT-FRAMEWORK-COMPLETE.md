@@ -11,6 +11,7 @@
 The complete User Acceptance Testing (UAT) framework has been created for CCW-Online ERP. All infrastructure, documentation, and test cases are ready for stakeholder participation. The UAT process requires **4 stakeholder sessions** (1 hour each) to validate the system is production-ready.
 
 **What's Complete**:
+
 - ✅ 35 test cases across 4 modules (Products, Customers, Orders, Quotes)
 - ✅ 5 end-to-end business workflows
 - ✅ Regression tests for ISS-001 through ISS-005
@@ -19,6 +20,7 @@ The complete User Acceptance Testing (UAT) framework has been created for CCW-On
 - ✅ Stakeholder templates and guides
 
 **What's Required**:
+
 - ⏳ Identify and schedule 4 stakeholders
 - ⏳ Conduct UAT sessions
 - ⏳ Document results and obtain sign-off
@@ -29,22 +31,23 @@ The complete User Acceptance Testing (UAT) framework has been created for CCW-On
 
 ### Documentation Created (`docs/uat/`)
 
-| Document | Status | Purpose |
-|----------|--------|---------|
-| **README.md** | ✅ Complete | Overview and quick start guide |
-| **UAT_TEST_CASES.md** | ✅ Complete | 35 test cases + 5 workflows with detailed instructions |
-| **UAT_STAKEHOLDERS.md** | ✅ Template Ready | Stakeholder identification and scheduling |
-| **UAT_SESSION_LOG.md** | 📝 Template (fill during sessions) | Session notes and observations |
-| **UAT_RESULTS.md** | 📝 Template (fill after execution) | Pass/fail results by module |
-| **UAT_FEEDBACK.md** | 📝 Template (fill during sessions) | Stakeholder feedback collection |
-| **UAT_ISSUES.md** | 📝 Template (fill as issues arise) | Issue tracking and resolution |
-| **UAT_SIGN_OFF.md** | 📝 Template (fill for approval) | Business owner sign-off |
+| Document                | Status                             | Purpose                                                |
+| ----------------------- | ---------------------------------- | ------------------------------------------------------ |
+| **README.md**           | ✅ Complete                        | Overview and quick start guide                         |
+| **UAT_TEST_CASES.md**   | ✅ Complete                        | 35 test cases + 5 workflows with detailed instructions |
+| **UAT_STAKEHOLDERS.md** | ✅ Template Ready                  | Stakeholder identification and scheduling              |
+| **UAT_SESSION_LOG.md**  | 📝 Template (fill during sessions) | Session notes and observations                         |
+| **UAT_RESULTS.md**      | 📝 Template (fill after execution) | Pass/fail results by module                            |
+| **UAT_FEEDBACK.md**     | 📝 Template (fill during sessions) | Stakeholder feedback collection                        |
+| **UAT_ISSUES.md**       | 📝 Template (fill as issues arise) | Issue tracking and resolution                          |
+| **UAT_SIGN_OFF.md**     | 📝 Template (fill for approval)    | Business owner sign-off                                |
 
 ---
 
 ## Test Coverage Summary
 
 ### Products Module: 8 Test Cases
+
 - TC-P001: Create New Product
 - TC-P002: Search Products by Name
 - TC-P003: Search Products by SKU
@@ -55,6 +58,7 @@ The complete User Acceptance Testing (UAT) framework has been created for CCW-On
 - TC-P008: View Product Details
 
 ### Customers Module: 7 Test Cases
+
 - TC-C001: Create New Customer
 - TC-C002: Search Customers by Company Name
 - TC-C003: Search Customers by Email
@@ -64,6 +68,7 @@ The complete User Acceptance Testing (UAT) framework has been created for CCW-On
 - TC-C007: Delete Customer
 
 ### Orders Module: 10 Test Cases
+
 - TC-O001: Create Order with Single Line Item
 - TC-O002: Create Order with Multiple Line Items (ISS-001 Regression)
 - TC-O003: Update Order Status (Draft → Pending)
@@ -76,6 +81,7 @@ The complete User Acceptance Testing (UAT) framework has been created for CCW-On
 - TC-O010: View Order Details
 
 ### Quotes Module: 10 Test Cases
+
 - TC-Q001: Create Quote with Single Line Item (ISS-001 Regression)
 - TC-Q002: Create Quote with Multiple Line Items (ISS-001 Primary Regression)
 - TC-Q003: Update Quote Status (Draft → Pending)
@@ -88,6 +94,7 @@ The complete User Acceptance Testing (UAT) framework has been created for CCW-On
 - TC-Q010: Invalid Customer Validation (ISS-004 Regression)
 
 ### Business Workflows: 5 End-to-End Tests
+
 - Workflow 1: Quote to Order Conversion (Sales process)
 - Workflow 2: Order Fulfillment (Warehouse process)
 - Workflow 3: Customer Registration and First Order (Onboarding)
@@ -100,13 +107,13 @@ The complete User Acceptance Testing (UAT) framework has been created for CCW-On
 
 These test cases specifically validate that previously fixed critical issues remain resolved:
 
-| Issue | Test Cases | Validation |
-|-------|------------|------------|
-| **ISS-001**: Quote/Order Total Calculation Errors | TC-O002, TC-Q001, TC-Q002, TC-Q005, Workflow 1 | Totals = sum of all subtotals |
-| **ISS-002**: Order Item Update Errors | TC-O005, TC-O006 | Updates work, totals recalculate, no 500 errors |
-| **ISS-003**: Quote 404 Errors (Race Conditions) | TC-Q009 | Duplicate quote numbers properly rejected |
-| **ISS-004**: Quote 422 Validation Errors | TC-Q009, TC-Q010 | User-friendly validation error messages |
-| **ISS-005**: Order Item Update 500 Errors | TC-O005, TC-O006 | No 500 server errors on item updates |
+| Issue                                             | Test Cases                                     | Validation                                      |
+| ------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------- |
+| **ISS-001**: Quote/Order Total Calculation Errors | TC-O002, TC-Q001, TC-Q002, TC-Q005, Workflow 1 | Totals = sum of all subtotals                   |
+| **ISS-002**: Order Item Update Errors             | TC-O005, TC-O006                               | Updates work, totals recalculate, no 500 errors |
+| **ISS-003**: Quote 404 Errors (Race Conditions)   | TC-Q009                                        | Duplicate quote numbers properly rejected       |
+| **ISS-004**: Quote 422 Validation Errors          | TC-Q009, TC-Q010                               | User-friendly validation error messages         |
+| **ISS-005**: Order Item Update 500 Errors         | TC-O005, TC-O006                               | No 500 server errors on item updates            |
 
 ---
 
@@ -145,24 +152,28 @@ These test cases specifically validate that previously fixed critical issues rem
 ## UAT Process Timeline
 
 ### Week 1: Preparation (Day 1)
+
 - ⏳ **Action**: Identify stakeholders
 - ⏳ **Action**: Fill in UAT_STAKEHOLDERS.md with contact information
 - ⏳ **Action**: Schedule 4 sessions
 - ⏳ **Action**: Send calendar invites
 
 ### Week 1: Execution (Days 2-5)
+
 - ⏳ **Session 1**: Sales Manager (1 hour)
 - ⏳ **Session 2**: Warehouse Manager (1 hour)
 - ⏳ **Session 3**: Customer Service Lead (1 hour)
 - ⏳ **Session 4**: Business Owner (1 hour)
 
 ### Week 1: Issue Resolution (Day 5-6)
+
 - ⏳ **Action**: Triage all issues identified
 - ⏳ **Action**: Fix critical/blocker issues (target: <2 hours)
 - ⏳ **Action**: Re-test fixes with stakeholders
 - ⏳ **Action**: Update UAT_RESULTS.md
 
 ### Week 2: Sign-Off (Day 7)
+
 - ⏳ **Action**: Present UAT summary to business owner
 - ⏳ **Action**: Review pass/fail status and feedback
 - ⏳ **Action**: Obtain formal sign-off (UAT_SIGN_OFF.md)
@@ -225,15 +236,16 @@ curl http://localhost:3000  # Should load frontend
 
 ### Test Credentials
 
-| Role | Email | Password | Access Level |
-|------|-------|----------|--------------|
-| Admin/Business Owner | admin@demo.com | demo123 | Full system access |
-| Sales Manager | sales@demo.com | demo123 | Quotes, Orders, Customers |
-| Warehouse Manager | warehouse@demo.com | demo123 | Products, Inventory, Orders |
+| Role                 | Email              | Password | Access Level                |
+| -------------------- | ------------------ | -------- | --------------------------- |
+| Admin/Business Owner | admin@demo.com     | demo123  | Full system access          |
+| Sales Manager        | sales@demo.com     | demo123  | Quotes, Orders, Customers   |
+| Warehouse Manager    | warehouse@demo.com | demo123  | Products, Inventory, Orders |
 
 ### Environment Validation
 
 Before each UAT session, verify:
+
 - [ ] Frontend accessible at http://localhost:3000
 - [ ] Backend API responding at http://localhost:8000
 - [ ] Health endpoint returns 200 OK
@@ -247,6 +259,7 @@ Before each UAT session, verify:
 ## How to Conduct UAT (Quick Guide for Coordinators)
 
 ### Before First Session:
+
 1. Edit `docs/uat/UAT_STAKEHOLDERS.md` - fill in stakeholder names, emails, and schedule
 2. Send calendar invites with:
    - Date/Time
@@ -256,6 +269,7 @@ Before each UAT session, verify:
 3. Start UAT environment (docker + backend + frontend)
 
 ### During Each Session:
+
 1. **Welcome** (5 min): Explain UAT objectives
 2. **Test Execution** (45 min): Guide stakeholder through test cases
 3. **Document** (real-time):
@@ -265,6 +279,7 @@ Before each UAT session, verify:
 4. **Wrap-Up** (10 min): Review findings, thank stakeholder
 
 ### After All Sessions:
+
 1. Complete UAT_RESULTS.md with pass/fail counts
 2. Calculate overall pass rate
 3. Triage issues by priority (Critical/High/Medium/Low)
@@ -281,12 +296,14 @@ Before each UAT session, verify:
 UAT builds on the foundation of completed integration and load testing:
 
 ### ISS-029: Integration Test Results
+
 - **Status**: ✅ COMPLETE
 - **Pass Rate**: 71% (101/142 tests passing)
 - **Core Modules**: 85% pass rate (Products, Customers, Orders, Quotes)
 - **Outcome**: Core ERP features production-ready
 
 ### ISS-030: Load Test Results
+
 - **Status**: ✅ COMPLETE
 - **Pass Rate**: 93.5% (1,869/2,000 scenarios)
 - **Performance**: P95 response time 10,339ms under heavy concurrent load
@@ -304,11 +321,13 @@ UAT builds on the foundation of completed integration and load testing:
 ## Risk Assessment
 
 ### Low Risks:
+
 - **Test Case Execution**: All test cases clearly documented with step-by-step instructions
 - **Environment Setup**: Environment stable, all services operational
 - **Documentation**: Comprehensive UAT framework complete
 
 ### Medium Risks:
+
 - **Stakeholder Availability**: May be difficult to schedule all 4 stakeholders
   - **Mitigation**: Schedule 1 week in advance, offer flexible times
 
@@ -316,6 +335,7 @@ UAT builds on the foundation of completed integration and load testing:
   - **Mitigation**: Target <2 hour fix time for critical issues, re-test same day
 
 ### High Risks:
+
 - **Low Pass Rate**: If pass rate <90%, cannot obtain sign-off
   - **Mitigation**: Integration tests at 85% core module pass rate, load tests at 93.5%, strong foundation
 
@@ -326,20 +346,20 @@ UAT builds on the foundation of completed integration and load testing:
 
 ## Estimated Effort
 
-| Activity | Duration | Owner |
-|----------|----------|-------|
-| Stakeholder Identification | 1 hour | Project Manager |
-| Schedule Coordination | 1 hour | Project Manager |
-| UAT Session 1 (Sales) | 1 hour | Facilitator + Sales Manager |
-| UAT Session 2 (Warehouse) | 1 hour | Facilitator + Warehouse Manager |
-| UAT Session 3 (Customer Service) | 1 hour | Facilitator + Customer Service Lead |
-| UAT Session 4 (Business Owner) | 1 hour | Facilitator + Business Owner |
-| Issue Triage | 30 min | Development Team |
-| Critical Issue Fixes | 2 hours | Development Team |
-| Issue Re-testing | 1 hour | Facilitator + Stakeholders |
-| Results Compilation | 1 hour | Facilitator |
-| Sign-Off Meeting | 1 hour | Business Owner + Project Manager |
-| **Total** | **11 hours** | - |
+| Activity                         | Duration     | Owner                               |
+| -------------------------------- | ------------ | ----------------------------------- |
+| Stakeholder Identification       | 1 hour       | Project Manager                     |
+| Schedule Coordination            | 1 hour       | Project Manager                     |
+| UAT Session 1 (Sales)            | 1 hour       | Facilitator + Sales Manager         |
+| UAT Session 2 (Warehouse)        | 1 hour       | Facilitator + Warehouse Manager     |
+| UAT Session 3 (Customer Service) | 1 hour       | Facilitator + Customer Service Lead |
+| UAT Session 4 (Business Owner)   | 1 hour       | Facilitator + Business Owner        |
+| Issue Triage                     | 30 min       | Development Team                    |
+| Critical Issue Fixes             | 2 hours      | Development Team                    |
+| Issue Re-testing                 | 1 hour       | Facilitator + Stakeholders          |
+| Results Compilation              | 1 hour       | Facilitator                         |
+| Sign-Off Meeting                 | 1 hour       | Business Owner + Project Manager    |
+| **Total**                        | **11 hours** | -                                   |
 
 ---
 
@@ -415,6 +435,7 @@ Before marking ISS-031 as complete, verify:
 **ISS-031 Framework Status**: ✅ **COMPLETE AND READY FOR EXECUTION**
 
 **What's Been Accomplished**:
+
 - Complete UAT framework created (35 test cases + 5 workflows)
 - All regression tests included for ISS-001 through ISS-005
 - Comprehensive documentation for stakeholders and facilitators
@@ -422,6 +443,7 @@ Before marking ISS-031 as complete, verify:
 - Templates ready for session logging and results tracking
 
 **What's Required Next**:
+
 - Identify and schedule 4 stakeholders (Business Owner, Sales, Warehouse, Customer Service)
 - Conduct 4 UAT sessions (1 hour each)
 - Fix any critical issues identified

@@ -137,7 +137,9 @@ async function generateAudio(script, outputPath, label) {
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
-    console.log('[ElevenLabs] ELEVENLABS_API_KEY not set — skipping (set env var to generate audio)');
+    console.log(
+      '[ElevenLabs] ELEVENLABS_API_KEY not set — skipping (set env var to generate audio)'
+    );
     return null;
   }
 
@@ -145,8 +147,10 @@ async function generateAudio(script, outputPath, label) {
   const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_monolingual_v1';
 
   const wordCount = script.split(' ').length;
-  const estimatedSeconds = Math.round(wordCount / 140 * 60);
-  console.log(`[ElevenLabs] Voice ID: ${voiceId} | Script length: ${script.length} chars | ~${estimatedSeconds}s estimated`);
+  const estimatedSeconds = Math.round((wordCount / 140) * 60);
+  console.log(
+    `[ElevenLabs] Voice ID: ${voiceId} | Script length: ${script.length} chars | ~${estimatedSeconds}s estimated`
+  );
 
   try {
     const chunks = splitIntoChunks(script);
@@ -154,7 +158,9 @@ async function generateAudio(script, outputPath, label) {
 
     const buffers = [];
     for (let i = 0; i < chunks.length; i++) {
-      console.log(`[ElevenLabs] Rendering chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+      console.log(
+        `[ElevenLabs] Rendering chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
+      );
       const audioBuffer = await callElevenLabsAPI(chunks[i], voiceId, modelId, apiKey);
       buffers.push(Buffer.from(audioBuffer));
       if (i < chunks.length - 1) {

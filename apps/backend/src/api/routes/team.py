@@ -20,12 +20,13 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.deps import get_current_user
 from src.api.middleware.rbac import require_permission
 from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
 from src.db.models_base import User
 
-router = APIRouter(prefix="/api/team", tags=["Team Management"])
+router = APIRouter(prefix="/api/team", tags=["Team Management"], dependencies=[Depends(get_current_user)])
 
 
 # Pydantic models
