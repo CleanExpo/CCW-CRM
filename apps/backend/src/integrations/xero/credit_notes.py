@@ -45,8 +45,8 @@ async def push_credit_note(
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
 
-    from src.db.models.invoicing import CreditNote, Invoice
     from src.db.demo_models import Customer
+    from src.db.models.invoicing import CreditNote, Invoice
 
     # Resolve Xero connection (non-blocking if absent)
     connection = await xero_auth.get_active_connection(db, organization_id)
