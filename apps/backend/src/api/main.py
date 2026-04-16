@@ -53,6 +53,7 @@ from .routes import (
     demo_dashboard,
     demo_lists,
     email_audit,  # Email audit trail for GDPR compliance (ISS-037)
+    eod_reconciliation,  # EOD cash reconciliation (UNI-1849)
     equipment_lifecycle,  # Equipment serial numbers + warranty tracking (Sprint 2)
     google_ai,
     health,
@@ -80,6 +81,7 @@ from .routes import (
     translations,
     warehouse,  # Warehouse operations feed (UNI-1251)
     webhooks,
+    xero_tracking,
 )
 from .routes import (
     settings as settings_routes,  # Account and company settings
@@ -496,6 +498,7 @@ app.include_router(purchase_orders.router, tags=["Purchase Orders"])
 app.include_router(procurement.router, tags=["Procurement"])
 # Shipment tracking router
 app.include_router(shipments.router, tags=["Shipment Tracking"])
+app.include_router(shipments.webhook_router, tags=["Shipping Webhooks"])
 # Container tracking and backorder management
 app.include_router(containers.router, tags=["Container Tracking"])
 app.include_router(backorders.router, tags=["Backorder Management"])
@@ -577,6 +580,7 @@ app.include_router(translations.router, tags=["Translation Management"])
 
 # Integration routers (✅ ALL IMPLEMENTED)
 app.include_router(xero.router, prefix="/api", tags=["Xero Integration"])
+app.include_router(xero_tracking.router, tags=["Xero Tracking"])
 app.include_router(shopify.router, tags=["Shopify Integration"])
 app.include_router(shopify_theme.router, tags=["Shopify Theme APIs"])
 app.include_router(sendgrid.router, tags=["SendGrid Integration"])
@@ -768,6 +772,7 @@ app.include_router(pos_transactions.router, tags=["POS System"])
 app.include_router(bank_feeds.router, tags=["Bank Feeds"])
 app.include_router(reconciliation.router, tags=["Reconciliation"])
 app.include_router(reconciliation_dashboard.router, tags=["Reconciliation Dashboard"])
+app.include_router(eod_reconciliation.router, tags=["POS EOD Reconciliation"])  # UNI-1849
 
 # Monitoring routers (system alerts, business metrics, performance)
 try:
