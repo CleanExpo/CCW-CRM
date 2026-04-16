@@ -15,20 +15,20 @@ allowed-tools:
 
 ## Avatar Roster
 
-| Role | Avatar ID | Name | Gender | Assignment |
-|------|-----------|------|--------|------------|
-| Primary Presenter | `Daisy-inskirt-20220818` | Daisy | Female | Module demos, executive overviews, CRM modules |
-| Technical Presenter | `josh_lite3_20230714` | Josh | Male | Feature walkthroughs, technical integrations, warehouse/inventory |
-| Alternate | `Anna_public_3_20240108` | Anna | Female | Batch rotation variety, POS, settings, comparison videos |
+| Role                | Avatar ID                | Name  | Gender | Assignment                                                        |
+| ------------------- | ------------------------ | ----- | ------ | ----------------------------------------------------------------- |
+| Primary Presenter   | `Daisy-inskirt-20220818` | Daisy | Female | Module demos, executive overviews, CRM modules                    |
+| Technical Presenter | `josh_lite3_20230714`    | Josh  | Male   | Feature walkthroughs, technical integrations, warehouse/inventory |
+| Alternate           | `Anna_public_3_20240108` | Anna  | Female | Batch rotation variety, POS, settings, comparison videos          |
 
 **Rotation rule:** Maximum 2 consecutive videos with the same avatar before switching.
 
 ## Voice Roster
 
-| Voice ID | Name | Gender | Assignment |
-|----------|------|--------|------------|
+| Voice ID                           | Name  | Gender | Assignment                       |
+| ---------------------------------- | ----- | ------ | -------------------------------- |
 | `1bd001e7e50f421d891986aad5158bc8` | Sarah | Female | All Daisy and Anna presentations |
-| `2d5b0e6cf36f460aa7fc47e3eee4ba54` | James | Male | All Josh presentations |
+| `2d5b0e6cf36f460aa7fc47e3eee4ba54` | James | Male   | All Josh presentations           |
 
 ## Voice Persona
 
@@ -44,20 +44,20 @@ Australian equipment supplier CEO. Direct, practical, numbers-driven.
 
 ## Dimensions
 
-| Platform | Width | Height | Aspect |
-|----------|-------|--------|--------|
-| YouTube / LinkedIn / Website | 1920 | 1080 | 16:9 |
-| Instagram Reels / TikTok | 1080 | 1920 | 9:16 |
-| Default (API) | 1280 | 720 | 16:9 |
+| Platform                     | Width | Height | Aspect |
+| ---------------------------- | ----- | ------ | ------ |
+| YouTube / LinkedIn / Website | 1920  | 1080   | 16:9   |
+| Instagram Reels / TikTok     | 1080  | 1920   | 9:16   |
+| Default (API)                | 1280  | 720    | 16:9   |
 
 ## Backgrounds
 
-| Video Type | Background | Hex |
-|------------|------------|-----|
-| Module demo | White | `#FFFFFF` |
-| Executive overview | Dark navy | `#1a1a2e` |
+| Video Type          | Background | Hex       |
+| ------------------- | ---------- | --------- |
+| Module demo         | White      | `#FFFFFF` |
+| Executive overview  | Dark navy  | `#1a1a2e` |
 | Feature walkthrough | Light grey | `#f8fafc` |
-| Comparison / Sales | White | `#FFFFFF` |
+| Comparison / Sales  | White      | `#FFFFFF` |
 
 ## YouTube Channel
 

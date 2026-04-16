@@ -15,7 +15,7 @@ import { resolveConfig, ensureStateDir, readVersionHash } from './config';
 
 const config = resolveConfig();
 const IS_WINDOWS = process.platform === 'win32';
-const MAX_START_WAIT = IS_WINDOWS ? 15000 : (process.env.CI ? 30000 : 8000); // Node+Chromium takes longer on Windows
+const MAX_START_WAIT = IS_WINDOWS ? 15000 : process.env.CI ? 30000 : 8000; // Node+Chromium takes longer on Windows
 
 export function resolveServerScript(
   env: Record<string, string | undefined> = process.env,
@@ -108,10 +108,11 @@ function isProcessAlive(pid: number): boolean {
     // Bun's compiled binary can't signal Windows PIDs (always throws ESRCH).
     // Use tasklist as a fallback. Only for one-shot calls — too slow for polling loops.
     try {
-      const result = Bun.spawnSync(
-        ['tasklist', '/FI', `PID eq ${pid}`, '/NH', '/FO', 'CSV'],
-        { stdout: 'pipe', stderr: 'pipe', timeout: 3000 }
-      );
+      const result = Bun.spawnSync(['tasklist', '/FI', `PID eq ${pid}`, '/NH', '/FO', 'CSV'], {
+        stdout: 'pipe',
+        stderr: 'pipe',
+        timeout: 3000,
+      });
       return result.stdout.toString().includes(`"${pid}"`);
     } catch {
       return false;
@@ -135,7 +136,7 @@ export async function isServerHealthy(port: number): Promise<boolean> {
       signal: AbortSignal.timeout(2000),
     });
     if (!resp.ok) return false;
-    const health = await resp.json() as any;
+    const health = (await resp.json()) as any;
     return health.status === 'healthy';
   } catch {
     return false;
@@ -149,10 +150,11 @@ async function killServer(pid: number): Promise<void> {
   if (IS_WINDOWS) {
     // taskkill /T /F kills the process tree (Node + Chromium)
     try {
-      Bun.spawnSync(
-        ['taskkill', '/PID', String(pid), '/T', '/F'],
-        { stdout: 'pipe', stderr: 'pipe', timeout: 5000 }
-      );
+      Bun.spawnSync(['taskkill', '/PID', String(pid), '/T', '/F'], {
+        stdout: 'pipe',
+        stderr: 'pipe',
+        timeout: 5000,
+      });
     } catch {}
     const deadline = Date.now() + 2000;
     while (Date.now() < deadline && isProcessAlive(pid)) {
@@ -161,7 +163,11 @@ async function killServer(pid: number): Promise<void> {
     return;
   }
 
-  try { process.kill(pid, 'SIGTERM'); } catch { return; }
+  try {
+    process.kill(pid, 'SIGTERM');
+  } catch {
+    return;
+  }
 
   // Wait up to 2s for graceful shutdown
   const deadline = Date.now() + 2000;
@@ -171,7 +177,9 @@ async function killServer(pid: number): Promise<void> {
 
   // Force kill if still alive
   if (isProcessAlive(pid)) {
-    try { process.kill(pid, 'SIGKILL'); } catch {}
+    try {
+      process.kill(pid, 'SIGKILL');
+    } catch {}
   }
 }
 
@@ -185,7 +193,9 @@ function cleanupLegacyState(): void {
   if (IS_WINDOWS) return;
 
   try {
-    const files = fs.readdirSync('/tmp').filter(f => f.startsWith('browse-server') && f.endsWith('.json'));
+    const files = fs
+      .readdirSync('/tmp')
+      .filter((f) => f.startsWith('browse-server') && f.endsWith('.json'));
     for (const file of files) {
       const fullPath = `/tmp/${file}`;
       try {
@@ -193,11 +203,15 @@ function cleanupLegacyState(): void {
         if (data.pid && isProcessAlive(data.pid)) {
           // Verify this is actually a browse server before killing
           const check = Bun.spawnSync(['ps', '-p', String(data.pid), '-o', 'command='], {
-            stdout: 'pipe', stderr: 'pipe', timeout: 2000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+            timeout: 2000,
           });
           const cmd = check.stdout.toString().trim();
           if (cmd.includes('bun') || cmd.includes('server.ts')) {
-            try { process.kill(data.pid, 'SIGTERM'); } catch {}
+            try {
+              process.kill(data.pid, 'SIGTERM');
+            } catch {}
           }
         }
         fs.unlinkSync(fullPath);
@@ -206,11 +220,18 @@ function cleanupLegacyState(): void {
       }
     }
     // Clean up legacy log files too
-    const logFiles = fs.readdirSync('/tmp').filter(f =>
-      f.startsWith('browse-console') || f.startsWith('browse-network') || f.startsWith('browse-dialog')
-    );
+    const logFiles = fs
+      .readdirSync('/tmp')
+      .filter(
+        (f) =>
+          f.startsWith('browse-console') ||
+          f.startsWith('browse-network') ||
+          f.startsWith('browse-dialog')
+      );
     for (const file of logFiles) {
-      try { fs.unlinkSync(`/tmp/${file}`); } catch {}
+      try {
+        fs.unlinkSync(`/tmp/${file}`);
+      } catch {}
     }
   } catch {
     // /tmp read failed — skip legacy cleanup
@@ -222,8 +243,12 @@ async function startServer(extraEnv?: Record<string, string>): Promise<ServerSta
   ensureStateDir(config);
 
   // Clean up stale state file and error log
-  try { fs.unlinkSync(config.stateFile); } catch {}
-  try { fs.unlinkSync(path.join(config.stateDir, 'browse-startup-error.log')); } catch {}
+  try {
+    fs.unlinkSync(config.stateFile);
+  } catch {}
+  try {
+    fs.unlinkSync(path.join(config.stateDir, 'browse-startup-error.log'));
+  } catch {}
 
   let proc: any = null;
 
@@ -253,7 +278,7 @@ async function startServer(extraEnv?: Record<string, string>): Promise<ServerSta
   const start = Date.now();
   while (Date.now() - start < MAX_START_WAIT) {
     const state = readState();
-    if (state && await isServerHealthy(state.port)) {
+    if (state && (await isServerHealthy(state.port))) {
       return state;
     }
     await Bun.sleep(100);
@@ -296,7 +321,11 @@ function acquireServerLock(): (() => void) | null {
     const fd = fs.openSync(lockPath, 'wx');
     fs.writeSync(fd, `${process.pid}\n`);
     fs.closeSync(fd);
-    return () => { try { fs.unlinkSync(lockPath); } catch {} };
+    return () => {
+      try {
+        fs.unlinkSync(lockPath);
+      } catch {}
+    };
   } catch {
     // Lock already held — check if the holder is still alive
     try {
@@ -319,7 +348,7 @@ async function ensureServer(): Promise<ServerState> {
   // Health-check-first: HTTP is definitive proof the server is alive and responsive.
   // This replaces the PID-gated approach which breaks on Windows (Bun's process.kill
   // always throws ESRCH for Windows PIDs in compiled binaries).
-  if (state && await isServerHealthy(state.port)) {
+  if (state && (await isServerHealthy(state.port))) {
     // Check for binary version mismatch (auto-restart on update)
     const currentVersion = readVersionHash();
     if (currentVersion && state.binaryVersion && currentVersion !== state.binaryVersion) {
@@ -350,7 +379,7 @@ async function ensureServer(): Promise<ServerState> {
     const start = Date.now();
     while (Date.now() - start < MAX_START_WAIT) {
       const freshState = readState();
-      if (freshState && await isServerHealthy(freshState.port)) return freshState;
+      if (freshState && (await isServerHealthy(freshState.port))) return freshState;
       await Bun.sleep(200);
     }
     throw new Error('Timed out waiting for another instance to start the server');
@@ -359,7 +388,7 @@ async function ensureServer(): Promise<ServerState> {
   try {
     // Re-read state under lock in case another process just started the server
     const freshState = readState();
-    if (freshState && await isServerHealthy(freshState.port)) {
+    if (freshState && (await isServerHealthy(freshState.port))) {
       return freshState;
     }
 
@@ -375,7 +404,12 @@ async function ensureServer(): Promise<ServerState> {
 }
 
 // ─── Command Dispatch ──────────────────────────────────────────
-async function sendCommand(state: ServerState, command: string, args: string[], retries = 0): Promise<void> {
+async function sendCommand(
+  state: ServerState,
+  command: string,
+  args: string[],
+  retries = 0
+): Promise<void> {
   const body = JSON.stringify({ command, args });
 
   try {
@@ -383,7 +417,7 @@ async function sendCommand(state: ServerState, command: string, args: string[], 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${state.token}`,
+        Authorization: `Bearer ${state.token}`,
       },
       body,
       signal: AbortSignal.timeout(30000),
@@ -421,7 +455,11 @@ async function sendCommand(state: ServerState, command: string, args: string[], 
       process.exit(1);
     }
     // Connection error — server may have crashed
-    if (err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET' || err.message?.includes('fetch failed')) {
+    if (
+      err.code === 'ECONNREFUSED' ||
+      err.code === 'ECONNRESET' ||
+      err.message?.includes('fetch failed')
+    ) {
       if (retries >= 1) throw new Error('[browse] Server crashed twice in a row — aborting');
       console.error('[browse] Server connection lost. Restarting...');
       // Kill the old server to avoid orphaned chromium processes
@@ -504,11 +542,15 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
 
     // Kill ANY existing server (SIGTERM → wait 2s → SIGKILL)
     if (existingState && isProcessAlive(existingState.pid)) {
-      try { process.kill(existingState.pid, 'SIGTERM'); } catch {}
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      try {
+        process.kill(existingState.pid, 'SIGTERM');
+      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       if (isProcessAlive(existingState.pid)) {
-        try { process.kill(existingState.pid, 'SIGKILL'); } catch {}
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+          process.kill(existingState.pid, 'SIGKILL');
+        } catch {}
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
@@ -521,11 +563,15 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
       const lockTarget = fs.readlinkSync(singletonLock); // e.g. "hostname-12345"
       const orphanPid = parseInt(lockTarget.split('-').pop() || '', 10);
       if (orphanPid && isProcessAlive(orphanPid)) {
-        try { process.kill(orphanPid, 'SIGTERM'); } catch {}
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+          process.kill(orphanPid, 'SIGTERM');
+        } catch {}
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         if (isProcessAlive(orphanPid)) {
-          try { process.kill(orphanPid, 'SIGKILL'); } catch {}
-          await new Promise(resolve => setTimeout(resolve, 500));
+          try {
+            process.kill(orphanPid, 'SIGKILL');
+          } catch {}
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
     } catch {
@@ -534,11 +580,15 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
 
     // Clean up Chromium profile locks (can persist after crashes)
     for (const lockFile of ['SingletonLock', 'SingletonSocket', 'SingletonCookie']) {
-      try { fs.unlinkSync(path.join(profileDir, lockFile)); } catch {}
+      try {
+        fs.unlinkSync(path.join(profileDir, lockFile));
+      } catch {}
     }
 
     // Delete stale state file
-    try { fs.unlinkSync(config.stateFile); } catch {}
+    try {
+      fs.unlinkSync(config.stateFile);
+    } catch {}
 
     console.log('Launching headed Chromium with extension + sidebar agent...');
     try {
@@ -556,7 +606,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${newState.token}`,
+          Authorization: `Bearer ${newState.token}`,
         },
         body: JSON.stringify({ command: 'status', args: [] }),
         signal: AbortSignal.timeout(5000),
@@ -575,8 +625,14 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
           throw new Error(`sidebar-agent.ts not found at ${agentScript}`);
         }
         // Clear old agent queue
-        const agentQueue = path.join(process.env.HOME || '/tmp', '.gstack', 'sidebar-agent-queue.jsonl');
-        try { fs.writeFileSync(agentQueue, ''); } catch {}
+        const agentQueue = path.join(
+          process.env.HOME || '/tmp',
+          '.gstack',
+          'sidebar-agent-queue.jsonl'
+        );
+        try {
+          fs.writeFileSync(agentQueue, '');
+        } catch {}
 
         // Resolve browse binary path the same way — execPath-relative
         let browseBin = path.resolve(__dirname, '..', 'dist', 'browse');
@@ -630,7 +686,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${existingState.token}`,
+          Authorization: `Bearer ${existingState.token}`,
         },
         body: JSON.stringify({ command: 'disconnect', args: [] }),
         signal: AbortSignal.timeout(3000),
@@ -644,18 +700,26 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
     }
     // Force kill + cleanup
     if (isProcessAlive(existingState.pid)) {
-      try { process.kill(existingState.pid, 'SIGTERM'); } catch {}
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      try {
+        process.kill(existingState.pid, 'SIGTERM');
+      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       if (isProcessAlive(existingState.pid)) {
-        try { process.kill(existingState.pid, 'SIGKILL'); } catch {}
+        try {
+          process.kill(existingState.pid, 'SIGKILL');
+        } catch {}
       }
     }
     // Clean profile locks and state file
     const profileDir = path.join(process.env.HOME || '/tmp', '.gstack', 'chromium-profile');
     for (const lockFile of ['SingletonLock', 'SingletonSocket', 'SingletonCookie']) {
-      try { fs.unlinkSync(path.join(profileDir, lockFile)); } catch {}
+      try {
+        fs.unlinkSync(path.join(profileDir, lockFile));
+      } catch {}
     }
-    try { fs.unlinkSync(config.stateFile); } catch {}
+    try {
+      fs.unlinkSync(config.stateFile);
+    } catch {}
     console.log('Disconnected (server was unresponsive — force cleaned).');
     process.exit(0);
   }

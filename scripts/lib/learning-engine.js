@@ -53,7 +53,7 @@ function calculateCost(model = 'sonnet', tokens = {}) {
   const rate = rates[model] ?? 0.015;
   const inputTokens = tokens.input ?? 0;
   const outputTokens = tokens.output ?? 0;
-  return ((inputTokens * rate) + (outputTokens * rate * 3)) / 1000;
+  return (inputTokens * rate + outputTokens * rate * 3) / 1000;
 }
 
 /**
@@ -78,7 +78,7 @@ function extractPatterns(sessionLog = {}) {
     for (const e of sessionLog.errors) {
       patterns.push({
         type: 'error',
-        pattern: typeof e === 'string' ? e : (e.message || JSON.stringify(e)),
+        pattern: typeof e === 'string' ? e : e.message || JSON.stringify(e),
         service: sessionLog.service || e.service || 'unknown',
         frequency: 1,
         timestamp: new Date().toISOString(),
@@ -117,7 +117,7 @@ function extractPatterns(sessionLog = {}) {
  */
 function registerInstinct(name, condition, action, confidence = 0.5) {
   const registry = loadRegistry();
-  const existing = registry.instincts.find(i => i.name === name);
+  const existing = registry.instincts.find((i) => i.name === name);
 
   if (existing) {
     existing.confidence = Math.min(1.0, existing.confidence + 0.1);
@@ -137,7 +137,7 @@ function registerInstinct(name, condition, action, confidence = 0.5) {
   }
 
   saveRegistry(registry);
-  return registry.instincts.find(i => i.name === name);
+  return registry.instincts.find((i) => i.name === name);
 }
 
 /**
@@ -164,7 +164,7 @@ function matchesContext(condition, context) {
 function getRelevantInstincts(context, minConfidence = 0.6) {
   const registry = loadRegistry();
   return registry.instincts.filter(
-    i => i.confidence >= minConfidence && matchesContext(i.condition, context)
+    (i) => i.confidence >= minConfidence && matchesContext(i.condition, context)
   );
 }
 
@@ -183,7 +183,7 @@ function decayConfidence() {
     }
   }
 
-  registry.instincts = registry.instincts.filter(i => i.confidence > 0.1);
+  registry.instincts = registry.instincts.filter((i) => i.confidence > 0.1);
   saveRegistry(registry);
   return registry;
 }

@@ -12,7 +12,9 @@ describe('sanitizeExtensionUrl', () => {
   });
 
   test('passes valid https URL', () => {
-    expect(sanitizeExtensionUrl('https://example.com/page?q=1')).toBe('https://example.com/page?q=1');
+    expect(sanitizeExtensionUrl('https://example.com/page?q=1')).toBe(
+      'https://example.com/page?q=1'
+    );
   });
 
   test('rejects chrome:// URLs', () => {

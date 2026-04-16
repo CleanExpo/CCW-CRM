@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
+import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { BACKEND_URL } from '@/lib/api/backend-url';
 
 /**
@@ -11,25 +11,22 @@ import { BACKEND_URL } from '@/lib/api/backend-url';
  */
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get("authorization");
+    const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/cron/check-expiring-quotes`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.CRON_SECRET}`,
-        },
-      }
-    );
+    const response = await fetch(`${BACKEND_URL}/api/cron/check-expiring-quotes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.CRON_SECRET}`,
+      },
+    });
 
     const data = await response.json();
 
-    logger.info("Check expiring quotes cron", {
+    logger.info('Check expiring quotes cron', {
       notificationsSent: data.notifications_sent,
       timestamp: new Date().toISOString(),
     });
@@ -40,11 +37,11 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error("Check expiring quotes cron error", error);
+    logger.error('Check expiring quotes cron error', error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

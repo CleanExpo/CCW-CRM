@@ -36,8 +36,17 @@ function checkPRReadiness(prNumber) {
   const issues = [];
 
   try {
-    const raw = execFileSync('gh', ['pr', 'view', String(prNumber), '--json',
-      'statusCheckRollup,mergeable,isDraft,additions,deletions,title'], { encoding: 'utf8' });
+    const raw = execFileSync(
+      'gh',
+      [
+        'pr',
+        'view',
+        String(prNumber),
+        '--json',
+        'statusCheckRollup,mergeable,isDraft,additions,deletions,title',
+      ],
+      { encoding: 'utf8' }
+    );
     const pr = JSON.parse(raw);
 
     if (pr.isDraft) issues.push('PR is still in draft state');
@@ -48,9 +57,13 @@ function checkPRReadiness(prNumber) {
     if (sizeCheck.status === 'BLOCK') issues.push(sizeCheck.reason);
 
     if (Array.isArray(pr.statusCheckRollup)) {
-      const failed = pr.statusCheckRollup.filter(c => c.state === 'FAILURE' || c.conclusion === 'failure');
+      const failed = pr.statusCheckRollup.filter(
+        (c) => c.state === 'FAILURE' || c.conclusion === 'failure'
+      );
       if (failed.length > 0) {
-        issues.push(`${failed.length} CI check(s) failing: ${failed.map(c => c.name || c.context).join(', ')}`);
+        issues.push(
+          `${failed.length} CI check(s) failing: ${failed.map((c) => c.name || c.context).join(', ')}`
+        );
       }
     }
   } catch (e) {
@@ -94,7 +107,7 @@ function checkPRSize({ linesAdded = 0, linesRemoved = 0 } = {}) {
 function assignReviewers(prNumber, diffAnalysis = {}) {
   const reviewers = new Set();
 
-  for (const file of (diffAnalysis.files || [])) {
+  for (const file of diffAnalysis.files || []) {
     if (/\.(sql|migration)/i.test(file)) {
       reviewers.add('ccw-database-reviewer');
       reviewers.add('ccw-security-reviewer');
@@ -117,8 +130,11 @@ function assignReviewers(prNumber, diffAnalysis = {}) {
 
   if (reviewerList.length > 0) {
     try {
-      execFileSync('gh', ['pr', 'edit', String(prNumber),
-        '--add-reviewer', reviewerList.join(',')], { encoding: 'utf8' });
+      execFileSync(
+        'gh',
+        ['pr', 'edit', String(prNumber), '--add-reviewer', reviewerList.join(',')],
+        { encoding: 'utf8' }
+      );
     } catch (e) {
       console.warn(`[PR-MANAGER] Could not assign reviewers: ${e.message}`);
     }
@@ -134,8 +150,9 @@ function assignReviewers(prNumber, diffAnalysis = {}) {
  * @returns {string} Result
  */
 function mergePR(prNumber, strategy = 'squash') {
-  return execFileSync('gh', ['pr', 'merge', String(prNumber), `--${strategy}`, '--delete-branch'],
-    { encoding: 'utf8' }).trim();
+  return execFileSync('gh', ['pr', 'merge', String(prNumber), `--${strategy}`, '--delete-branch'], {
+    encoding: 'utf8',
+  }).trim();
 }
 
 /**

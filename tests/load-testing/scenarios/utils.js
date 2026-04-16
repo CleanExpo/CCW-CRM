@@ -53,7 +53,7 @@ export function authenticate(baseUrl, email, password) {
 export function createAuthHeaders(token) {
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
   };
 }
 
@@ -239,16 +239,7 @@ export const testData = {
 
   countries: ['Australia', 'New Zealand', 'United States', 'United Kingdom'],
 
-  states: [
-    'NSW',
-    'VIC',
-    'QLD',
-    'SA',
-    'WA',
-    'TAS',
-    'NT',
-    'ACT',
-  ],
+  states: ['NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'],
 };
 
 /**

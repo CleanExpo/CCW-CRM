@@ -25,7 +25,10 @@ describe('locateBinary', () => {
   test('priority chain checks .codex, .agents, .claude markers', () => {
     // Verify the source code implements the correct priority order.
     // We read the function source to confirm the markers array order.
-    const src = require('fs').readFileSync(require('path').join(__dirname, '../src/find-browse.ts'), 'utf-8');
+    const src = require('fs').readFileSync(
+      require('path').join(__dirname, '../src/find-browse.ts'),
+      'utf-8'
+    );
     // The markers array should list .codex first, then .agents, then .claude
     const markersMatch = src.match(/const markers = \[([^\]]+)\]/);
     expect(markersMatch).not.toBeNull();

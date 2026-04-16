@@ -502,6 +502,9 @@ class BankFeedService:
         - Date exact match: +0.30
         - Date within ±1 day: +0.20
         - Reference match: +0.20
+        - Time proximity ±2 hours: +0.10  (UNI-1841)
+        - Location code in bank description: +0.10  (UNI-1841)
+        - Payment method mismatch (EFTPOS vs AMEX): -0.40  (UNI-1841)
         """
         confidence = Decimal("0.00")
 
@@ -532,7 +535,48 @@ class BankFeedService:
         ):
             confidence += Decimal("0.20")
 
-        return min(confidence, Decimal("1.00"))  # Cap at 1.00
+        # UNI-1841: Enhanced scoring to prevent same-amount/same-day collisions
+        # across multiple terminals.
+
+        # Time proximity bonus: bank feed timestamp vs POS created_at ±2 hours.
+        # feed.transaction_date is date-only; fall back to raw_data if a full
+        # timestamp is present (some providers include it in raw_data["datetime"]).
+        feed_dt = None
+        if feed.raw_data and isinstance(feed.raw_data, dict):
+            raw_ts = feed.raw_data.get("datetime") or feed.raw_data.get("timestamp")
+            if raw_ts:
+                from datetime import datetime as _dt
+                try:
+                    feed_dt = _dt.fromisoformat(str(raw_ts))
+                except (ValueError, TypeError):
+                    pass
+        if feed_dt is not None:
+            from datetime import timezone
+            pos_dt = pos_transaction.created_at
+            if pos_dt.tzinfo is None:
+                pos_dt = pos_dt.replace(tzinfo=timezone.utc)
+            if feed_dt.tzinfo is None:
+                feed_dt = feed_dt.replace(tzinfo=timezone.utc)
+            hours_diff = abs((feed_dt - pos_dt).total_seconds()) / 3600
+            if hours_diff <= 2:
+                confidence += Decimal("0.10")
+
+        # Location bonus: bank feed description contains terminal location code.
+        if feed.description and pos_transaction.resolved_location_code:
+            if pos_transaction.resolved_location_code.upper() in feed.description.upper():
+                confidence += Decimal("0.10")
+
+        # Payment method penalty: EFTPOS transactions shouldn't match AMEX entries.
+        # Detect AMEX bank entries by checking description/reference keywords.
+        is_amex_feed = feed.description and any(
+            kw in feed.description.upper() for kw in ("AMEX", "AMERICAN EXPRESS")
+        )
+        if is_amex_feed and pos_transaction.payment_method == "eftpos":
+            confidence -= Decimal("0.40")
+        if not is_amex_feed and pos_transaction.payment_method == "amex":
+            confidence -= Decimal("0.40")
+
+        return min(max(confidence, Decimal("0.00")), Decimal("1.00"))  # Clamp 0–1
 
     async def _generate_suggestions_for_feed(self, feed: BankFeed) -> None:
         """

@@ -23,7 +23,8 @@ import path from 'path';
 const DEFAULT_TIMEOUT = 20_000;
 const CCW_ERP_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://ccw-erp.vercel.app';
 const CCW_SITE_URL = 'https://www.carpetcleanerswarehouse.com.au';
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
  * Individual QA check result.
@@ -54,7 +55,10 @@ async function checkBackendHealth() {
 async function checkCCWSite(context) {
   const page = await context.newPage();
   try {
-    const res = await page.goto(CCW_SITE_URL, { waitUntil: 'domcontentloaded', timeout: DEFAULT_TIMEOUT });
+    const res = await page.goto(CCW_SITE_URL, {
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUT,
+    });
     const title = await page.title();
     const h1 = await page.$eval('h1', (e) => e.textContent?.trim()).catch(() => null);
 
@@ -126,7 +130,10 @@ async function checkDashboardAPI() {
 async function checkMobileViewport(context) {
   const page = await context.newPage({ viewport: { width: 375, height: 812 } });
   try {
-    await page.goto(`${CCW_ERP_URL}/login`, { waitUntil: 'domcontentloaded', timeout: DEFAULT_TIMEOUT });
+    await page.goto(`${CCW_ERP_URL}/login`, {
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUT,
+    });
     const hasOverflow = await page.evaluate(() => {
       return document.body.scrollWidth > window.innerWidth;
     });
@@ -162,16 +169,18 @@ async function checkConsoleErrors(context) {
 
     const criticalErrors = errors.filter(
       (e) =>
-        !e.includes('favicon') &&
-        !e.includes('404') &&
-        !e.includes('net::ERR') &&
-        e.length > 10
+        !e.includes('favicon') && !e.includes('404') && !e.includes('net::ERR') && e.length > 10
     );
 
-    return makeResult('console_errors', 'No critical console errors on ERP', criticalErrors.length === 0, {
-      errorCount: criticalErrors.length,
-      errors: criticalErrors.slice(0, 5),
-    });
+    return makeResult(
+      'console_errors',
+      'No critical console errors on ERP',
+      criticalErrors.length === 0,
+      {
+        errorCount: criticalErrors.length,
+        errors: criticalErrors.slice(0, 5),
+      }
+    );
   } catch (err) {
     return makeResult('console_errors', 'Console error check', false, { error: err.message });
   } finally {
@@ -224,13 +233,18 @@ export async function runQACheck(sessionId, dataDir = './data/sessions') {
 
     for (const r of [siteResult, loginResult, mobileResult, consoleResult]) {
       if (r.status === 'fulfilled') allResults.push(r.value);
-      else allResults.push(makeResult('browser_check', 'Browser check', false, { error: r.reason?.message }));
+      else
+        allResults.push(
+          makeResult('browser_check', 'Browser check', false, { error: r.reason?.message })
+        );
     }
 
     await context.close();
   } catch (err) {
     console.warn(`[QA] Browser unavailable: ${err.message} — skipping browser checks`);
-    allResults.push(makeResult('browser_unavailable', 'Browser checks', false, { error: err.message }));
+    allResults.push(
+      makeResult('browser_unavailable', 'Browser checks', false, { error: err.message })
+    );
   } finally {
     if (browser) await browser.close().catch(() => {});
   }

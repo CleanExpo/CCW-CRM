@@ -70,10 +70,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ### 3.1 Core Operations
 
 ### Dashboard
+
 **URL**: `/dashboard`
 **Purpose**: Central command centre showing all key business metrics at a glance.
 
 **Key Features**:
+
 - 11 KPI widgets covering revenue, orders, products, customers, stock alerts, pending quotes, and AI-generated insights
 - Real-time SSE streams for POS failure alerts and live metric updates
 - Cin7 sync status widget showing the last successful sync timestamp
@@ -87,10 +89,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Orders
+
 **URL**: `/orders`
 **Purpose**: Manage the full lifecycle of customer orders from creation through to delivery.
 
 **Key Features**:
+
 - Full create, read, update, and delete (CRUD) operations
 - Status workflow: Draft > Pending > Confirmed > Processing > Shipped > Delivered > Cancelled
 - Line item management with product search
@@ -105,10 +109,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Quotes
+
 **URL**: `/quotes`
 **Purpose**: Create and manage customer quotations, then convert accepted quotes to orders.
 
 **Key Features**:
+
 - Full CRUD operations with status tracking
 - Line item management with product search and pricing
 - Convert accepted quotes to orders with one click
@@ -121,10 +127,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Purchase Orders
+
 **URL**: `/purchase-orders`
 **Purpose**: Create and track orders placed with your suppliers, and receive goods when they arrive.
 
 **Key Features**:
+
 - Full CRUD operations with supplier selection
 - Goods Receipt Note (GRN) receiving at `/purchase-orders/receiving` for recording what actually arrived
 - Auto-generated draft POs from the overnight reorder engine for products below their reorder threshold
@@ -136,10 +144,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### POS
+
 **URL**: `/pos`
 **Purpose**: Point-of-sale terminal for processing walk-in sales at any CCW location.
 
 **Key Features**:
+
 - Product search by name, SKU, or barcode scanner
 - Cart management with quantity adjustment
 - Payment method selection: Cash, Card, EFTPOS, or Account
@@ -156,10 +166,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ### 3.2 CRM
 
 ### Customers
+
 **URL**: `/customers`
 **Purpose**: Maintain a complete view of every customer, their history, and their health score.
 
 **Key Features**:
+
 - Full CRUD with company and contact information
 - Order history and activity timeline per customer
 - Notes for recording interactions and follow-ups
@@ -174,10 +186,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Contacts
+
 **URL**: `/contacts`
 **Purpose**: Manage multiple contacts per customer organisation.
 
 **Key Features**:
+
 - Multiple contacts per customer with role and department information
 - Full CRUD with search
 - CSV export
@@ -188,10 +202,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Contractors
+
 **URL**: `/contractors`
 **Purpose**: Manage labour and service contractors who perform work for CCW.
 
 **Key Features**:
+
 - Contractor profile management
 - Service history tracking
 
@@ -200,10 +216,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Service Requests
+
 **URL**: `/service-requests`
 **Purpose**: Track customer service and repair requests through their full lifecycle.
 
 **Key Features**:
+
 - Status workflow: Submitted > Under Review > Quote Sent > Approved > Scheduled > In Progress > Completed > Cancelled
 - Linked to customer records
 - Full request detail tracking
@@ -213,10 +231,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Activities
+
 **URL**: `/activities`
 **Purpose**: Log all customer interactions and internal tasks with SLA tracking.
 
 **Key Features**:
+
 - Activity types: Phone, Email, Meeting, Note, Task
 - SLA tracking to ensure follow-ups happen on time
 - Status tracking: Pending or Completed
@@ -229,10 +249,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ### 3.3 Inventory & Warehouse
 
 ### Inventory Overview
+
 **URL**: `/inventory`
 **Purpose**: View stock levels across all locations and make adjustments or transfers.
 
 **Key Features**:
+
 - Multi-location stock view (Brisbane, Sydney, Melbourne)
 - Barcode scanner support for quick product lookup
 - Stock transfer dialog for moving stock between locations
@@ -245,10 +267,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Products
+
 **URL**: `/products`
 **Purpose**: Browse and manage the full product catalogue with live Cin7 stock data.
 
 **Key Features**:
+
 - Full catalogue CRUD operations
 - 8 equipment categories for organisation
 - Real-time stock levels synced from Cin7
@@ -261,10 +285,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Stock List
+
 **URL**: `/inventory/stock`
 **Purpose**: Detailed inventory listing by product and location.
 
 **Key Features**:
+
 - Comprehensive stock view by product and location
 - Low stock highlighting for quick identification
 - Barcode scanner support
@@ -274,10 +300,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Stock Transfers
+
 **URL**: `/inventory/transfers`
 **Purpose**: Move stock between CCW locations.
 
 **Key Features**:
+
 - Inter-location transfer creation and tracking
 - Status tracking: Pending > In Transit > Received > Cancelled
 - Full audit trail of transfer history
@@ -287,10 +315,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Reservations
+
 **URL**: `/inventory/reservations`
 **Purpose**: Hold stock for confirmed orders so it cannot be sold to someone else.
 
 **Key Features**:
+
 - Order-based stock reservation management
 - Visibility into what stock is reserved versus available
 
@@ -299,10 +329,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Stock Forecast
+
 **URL**: `/inventory/forecast`
 **Purpose**: AI-powered demand forecasting to predict what you will need and when.
 
 **Key Features**:
+
 - 30-day, 60-day, and 90-day demand forecasting
 - AI-generated reorder recommendations
 - CSV export for sharing forecasts with suppliers
@@ -312,10 +344,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Bill of Materials
+
 **URL**: `/inventory/bom`
 **Purpose**: Manage assembled products and their component parts.
 
 **Key Features**:
+
 - Cin7 BOM management integration
 - Production run tracking to monitor assembly progress
 - Component stock level visibility
@@ -325,10 +359,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Warehouse
+
 **URL**: `/warehouse`
 **Purpose**: Centralised warehouse management with AI-assisted operations.
 
 **Key Features**:
+
 - Tabs for stock, transfers, and adjustments
 - AI-suggested stock adjustments based on patterns
 - Equipment management
@@ -338,10 +374,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Containers
+
 **URL**: `/containers`
 **Purpose**: Track inbound shipments and shipping containers.
 
 **Key Features**:
+
 - Shipment and container tracking with vessel information
 - Estimated versus actual arrival date comparison
 - Warehouse assignment for incoming goods
@@ -351,10 +389,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Backorders
+
 **URL**: `/backorders`
 **Purpose**: Track orders that cannot be fulfilled due to insufficient stock.
 
 **Key Features**:
+
 - Backorder tracking with fulfilment progress
 - Email alerts when backordered stock becomes available
 
@@ -365,10 +405,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ### 3.4 Finance
 
 ### Invoices
+
 **URL**: `/invoices`
 **Purpose**: Create, send, and track invoices through to payment, with BAS reporting for GST compliance.
 
 **Key Features**:
+
 - Full CRUD with status tracking: Draft > Sent > Partially Paid > Paid > Overdue > Written Off > Cancelled
 - Payment recording with method, reference, and date
 - Print view for professional invoice output
@@ -381,10 +423,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Bank Feeds
+
 **URL**: `/bank-feeds`
 **Purpose**: Import and reconcile bank transactions against invoices and payments.
 
 **Key Features**:
+
 - Bank transaction import from multiple accounts
 - Reconciliation matching against recorded invoices
 - Trending indicators showing cash flow patterns
@@ -394,10 +438,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Suppliers
+
 **URL**: `/suppliers`
 **Purpose**: Manage supplier contact information and payment terms.
 
 **Key Features**:
+
 - Full CRUD with contact details
 - Payment terms and ABN recording
 - CSV export for supplier directory
@@ -409,10 +455,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ### 3.5 AI & Analytics
 
 ### AI Assistant
+
 **URL**: `/ai-assistant`
 **Purpose**: Ask questions about your business data in plain English and get instant answers.
 
 **Key Features**:
+
 - Chat interface for natural language data queries
 - Multi-turn conversations for follow-up questions
 - Responses formatted in readable markdown with tables and charts
@@ -422,10 +470,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### AI Query
+
 **URL**: `/ai-query`
 **Purpose**: Ask data questions in plain English and get structured table results.
 
 **Key Features**:
+
 - Natural language to database query translation
 - Results displayed as data tables
 - No technical knowledge required
@@ -435,10 +485,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### AI Ops Centre
+
 **URL**: `/ai-ops`
 **Purpose**: Monitor and control autonomous AI agent actions across the system.
 
 **Key Features**:
+
 - View all AI-initiated actions with confidence scoring
 - Approve or reject AI recommendations before they take effect
 - Full audit trail of AI decisions
@@ -448,10 +500,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Insights
+
 **URL**: `/insights`
 **Purpose**: AI-generated business insights surfaced automatically from your data.
 
 **Key Features**:
+
 - AI-generated insights across sales, inventory, customers, and operations
 - Category filtering to focus on specific areas
 - Priority levels to highlight the most impactful findings
@@ -461,10 +515,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Reports
+
 **URL**: `/reports`
 **Purpose**: Pre-built dashboards for sales performance and inventory health.
 
 **Key Features**:
+
 - Sales KPI dashboard: revenue trends, order volume, average order value, top customers
 - Inventory Health dashboard: stock value, turnover rate, slow-moving items, stock coverage days
 
@@ -473,10 +529,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Marketing
+
 **URL**: `/marketing`
 **Purpose**: AI-powered marketing campaign tools.
 
 **Key Features**:
+
 - AI campaign generation from business objectives
 - Asset library for marketing materials
 - Landing page headline suggestions
@@ -486,10 +544,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### PRD Generator
+
 **URL**: `/prd/generate`
 **Purpose**: AI-powered Product Requirements Document creation for new product lines or features.
 
 **Key Features**:
+
 - Structured document generation from brief descriptions
 - Industry-standard PRD format output
 
@@ -500,10 +560,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ### 3.6 Workshop
 
 ### Workshop Dashboard
+
 **URL**: `/workshop`
 **Purpose**: Overview of all workshop service jobs across locations.
 
 **Key Features**:
+
 - Location filtering: Brisbane, Sydney, Melbourne
 - Job counts by status: Scheduled, Confirmed, In Progress, Completed
 
@@ -512,10 +574,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Equipment
+
 **URL**: `/workshop/equipment`
 **Purpose**: Track equipment brought in for service.
 
 **Key Features**:
+
 - Equipment listing with service status
 - Overdue service detection and highlighting
 - Detail page for full equipment history
@@ -525,10 +589,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Schedule
+
 **URL**: `/workshop/schedule`
 **Purpose**: Calendar view for planning and managing service appointments.
 
 **Key Features**:
+
 - Calendar interface for scheduling jobs
 - Drag and drop for rescheduling
 
@@ -537,10 +603,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Templates
+
 **URL**: `/workshop/templates`
 **Purpose**: Create reusable templates for common service jobs.
 
 **Key Features**:
+
 - Template creation for recurring job types
 - Standardised job descriptions and checklists
 
@@ -549,10 +617,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Reminders
+
 **URL**: `/workshop/reminders`
 **Purpose**: Automated service reminder notifications.
 
 **Key Features**:
+
 - Service reminder scheduling
 - Notification management
 
@@ -563,10 +633,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ### 3.7 Portals
 
 ### Customer Portal
+
 **URL**: `/portal`
 **Purpose**: Self-service portal for customers to view their orders, invoices, and service requests.
 
 **Key Features**:
+
 - Customer login with self-service access
 - Order list and order tracking
 - Invoice list and payment history
@@ -578,10 +650,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Supplier Portal
+
 **URL**: `/supplier`
 **Purpose**: Self-service portal for suppliers to manage purchase orders and deliveries.
 
 **Key Features**:
+
 - Purchase order viewing
 - Delivery tracking and updates
 - Invoice submission by suppliers
@@ -591,10 +665,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Guest Order View
+
 **URL**: `/order/[token]`
 **Purpose**: Public shareable link for customers to track a specific order without logging in.
 
 **Key Features**:
+
 - Token-based access (no login required)
 - Order status and tracking information
 
@@ -605,10 +681,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ### 3.8 Admin & Settings
 
 ### Workflows
+
 **URL**: `/workflows`
 **Purpose**: Automate business processes with trigger-based workflows.
 
 **Key Features**:
+
 - Business process automation with configurable triggers
 - Template creation for common workflows
 - Trigger activation and deactivation
@@ -618,10 +696,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Approvals
+
 **URL**: `/approvals`
 **Purpose**: Manage approval chains for purchases, discounts, or other business decisions.
 
 **Key Features**:
+
 - Approval chain management with multi-level sign-off
 - Approve or reject with notes
 - Full approval history
@@ -631,10 +711,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Alerts
+
 **URL**: `/alerts`
 **Purpose**: System and business alerts requiring attention.
 
 **Key Features**:
+
 - Alerts by type: Inventory, Order, Customer, System
 - Severity levels: Critical (red), Warning (yellow), Info (blue)
 - Dismiss or resolve alerts
@@ -644,10 +726,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Monitoring
+
 **URL**: `/monitoring`
 **Purpose**: System health and performance monitoring.
 
 **Key Features**:
+
 - System health tab showing uptime and response times
 - API performance metrics
 - Business metrics summary
@@ -657,10 +741,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Emails
+
 **URL**: `/emails`
 **Purpose**: Email management with intelligent classification.
 
 **Key Features**:
+
 - Email management and history
 - Intent classification (order enquiry, complaint, quote request, etc.)
 - SendGrid integration for delivery tracking
@@ -670,10 +756,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Settings — Account
+
 **URL**: `/settings/account`
 **Purpose**: Manage your personal profile and preferences.
 
 **Key Features**:
+
 - Profile information update
 - Password change
 - Notification preferences
@@ -683,10 +771,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Settings — Company
+
 **URL**: `/settings/company`
 **Purpose**: Organisation-wide configuration.
 
 **Key Features**:
+
 - Company name, ABN, and address
 - Default settings for invoices and orders
 
@@ -695,10 +785,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Settings — Team
+
 **URL**: `/settings/team`
 **Purpose**: Manage staff accounts and access levels.
 
 **Key Features**:
+
 - Create and manage staff user accounts
 - Assign roles (Owner, Admin, Member, Billing)
 - Deactivate accounts for departed staff
@@ -708,10 +800,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Settings — Integrations
+
 **URL**: `/settings/integrations`
 **Purpose**: Connect and manage external service integrations.
 
 **Key Features**:
+
 - Connection cards for Cin7, Xero, Shopify, SendGrid, and AP2
 - Sync controls and manual sync triggers
 - Connection status indicators
@@ -721,10 +815,12 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 ---
 
 ### Settings — Translations
+
 **URL**: `/settings/translations`
 **Purpose**: Multi-language support for the interface.
 
 **Key Features**:
+
 - Support for 10 languages
 - Translation management for labels and messages
 
@@ -734,13 +830,13 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 
 ## 4. Integration Status
 
-| Integration | Current Status | What It Syncs | Sync Frequency | CCW Action Required |
-|---|---|---|---|---|
-| Cin7 | Demo mode — ready for live | Products, inventory, customers, orders, suppliers, POs | Nightly @ 7pm AEST | Enter API credentials in Railway, set CIN7_MODE=live |
-| Xero | Pending — OAuth not yet configured | Invoices, payments, contacts | Nightly @ 8pm AEST | Create Xero Dev App, complete OAuth flow via dashboard |
-| Shopify | Pending — needs access token | Products, orders, inventory | Webhook-driven (real-time) | Create custom app in Shopify admin, enter access token |
-| Stripe | Webhook receiver ready | Payment events (invoice.paid, payment_failed) | Real-time webhooks | Set STRIPE_WEBHOOK_SECRET in Railway |
-| SendGrid | Pending — needs API key | Transactional email (orders, quotes, invoices) | Event-triggered | Enter SendGrid API key in Railway |
+| Integration | Current Status                     | What It Syncs                                          | Sync Frequency             | CCW Action Required                                    |
+| ----------- | ---------------------------------- | ------------------------------------------------------ | -------------------------- | ------------------------------------------------------ |
+| Cin7        | Demo mode — ready for live         | Products, inventory, customers, orders, suppliers, POs | Nightly @ 7pm AEST         | Enter API credentials in Railway, set CIN7_MODE=live   |
+| Xero        | Pending — OAuth not yet configured | Invoices, payments, contacts                           | Nightly @ 8pm AEST         | Create Xero Dev App, complete OAuth flow via dashboard |
+| Shopify     | Pending — needs access token       | Products, orders, inventory                            | Webhook-driven (real-time) | Create custom app in Shopify admin, enter access token |
+| Stripe      | Webhook receiver ready             | Payment events (invoice.paid, payment_failed)          | Real-time webhooks         | Set STRIPE_WEBHOOK_SECRET in Railway                   |
+| SendGrid    | Pending — needs API key            | Transactional email (orders, quotes, invoices)         | Event-triggered            | Enter SendGrid API key in Railway                      |
 
 ### Nightly Sync Pipeline
 
@@ -797,7 +893,7 @@ The system also provides real-time features through Server-Sent Events (SSE) —
 1. In the Stripe dashboard, go to Developers > Webhooks > Add endpoint.
 2. Set the URL to your Railway backend URL followed by `/api/webhooks/stripe`.
 3. Select these events to listen for: invoice.payment_succeeded, invoice.payment_failed, customer.subscription.updated, checkout.session.completed.
-4. Copy the signing secret (it starts with whsec_).
+4. Copy the signing secret (it starts with whsec\_).
 5. In the Railway dashboard, open the backend service, then Variables. Add `STRIPE_WEBHOOK_SECRET` = (paste your signing secret).
 6. To verify: In Stripe, click "Send test webhook". Check the Railway logs — you should see "Stripe webhook processed".
 
@@ -823,15 +919,15 @@ The system automatically syncs data from your existing tools every night via sch
 
 ### Schedule (all times AEST)
 
-| Time | What Happens | Duration |
-|---|---|---|
-| Every 5 min | Health check — confirms backend is running | < 1 sec |
-| Every 5 min | Webhook retry — resends any failed webhook deliveries | < 5 sec |
-| Every 15 min | SLA check — flags any overdue workflow items | < 2 sec |
-| 9:00am | Daily report — refreshes KPI dashboard + checks expiring quotes | ~10 sec |
-| 7:00pm | Cin7 sync — pulls products, inventory, customers, orders from Cin7 | ~15 sec |
-| 8:00pm | Xero sync — pulls invoices and payments from Xero (after OAuth) | ~10 sec |
-| 9:00pm | Auto-reorder — creates draft POs for products below reorder threshold | ~5 sec |
+| Time         | What Happens                                                          | Duration |
+| ------------ | --------------------------------------------------------------------- | -------- |
+| Every 5 min  | Health check — confirms backend is running                            | < 1 sec  |
+| Every 5 min  | Webhook retry — resends any failed webhook deliveries                 | < 5 sec  |
+| Every 15 min | SLA check — flags any overdue workflow items                          | < 2 sec  |
+| 9:00am       | Daily report — refreshes KPI dashboard + checks expiring quotes       | ~10 sec  |
+| 7:00pm       | Cin7 sync — pulls products, inventory, customers, orders from Cin7    | ~15 sec  |
+| 8:00pm       | Xero sync — pulls invoices and payments from Xero (after OAuth)       | ~10 sec  |
+| 9:00pm       | Auto-reorder — creates draft POs for products below reorder threshold | ~5 sec   |
 
 ### How to Verify the Sync Ran
 
@@ -874,12 +970,12 @@ The database enforces Row Level Security (RLS), a database-level control that en
 
 ### Access Roles
 
-| Role | Access Level |
-|---|---|
-| Owner | Full access to all modules including billing and team management |
-| Admin | Full operational access — products, customers, orders, inventory, reports, settings |
-| Member | Day-to-day operations — read/write on core modules, view reports |
-| Billing | Billing and payment management + read-only reports |
+| Role    | Access Level                                                                        |
+| ------- | ----------------------------------------------------------------------------------- |
+| Owner   | Full access to all modules including billing and team management                    |
+| Admin   | Full operational access — products, customers, orders, inventory, reports, settings |
+| Member  | Day-to-day operations — read/write on core modules, view reports                    |
+| Billing | Billing and payment management + read-only reports                                  |
 
 ---
 
@@ -887,12 +983,12 @@ The database enforces Row Level Security (RLS), a database-level control that en
 
 ### 8.1 Staff Roles
 
-| Role | Primary Modules | Core Responsibilities |
-|---|---|---|
-| Admin / Owner | All modules + Settings | System config, team management, KPI review, integration setup |
-| Sales Rep | Customers, Quotes, Orders, POS | Create quotes, process orders, manage customer relationships |
-| Warehouse / Inventory | Products, Inventory, POS, Purchase Orders, Workshop | Stock management, receiving goods, POS sales, reorder monitoring |
-| Accounts / Finance | Invoices, Reports, BAS, Bank Feeds | Invoice management, payment recording, BAS export, reconciliation |
+| Role                  | Primary Modules                                     | Core Responsibilities                                             |
+| --------------------- | --------------------------------------------------- | ----------------------------------------------------------------- |
+| Admin / Owner         | All modules + Settings                              | System config, team management, KPI review, integration setup     |
+| Sales Rep             | Customers, Quotes, Orders, POS                      | Create quotes, process orders, manage customer relationships      |
+| Warehouse / Inventory | Products, Inventory, POS, Purchase Orders, Workshop | Stock management, receiving goods, POS sales, reorder monitoring  |
+| Accounts / Finance    | Invoices, Reports, BAS, Bank Feeds                  | Invoice management, payment recording, BAS export, reconciliation |
 
 ### 8.2 Daily Routine
 
@@ -920,22 +1016,26 @@ The database enforces Row Level Security (RLS), a database-level control that en
 ### 8.3 Weekly Tasks
 
 **Admin/Owner — Monday morning**
+
 - Review Customer Health scores at `/customers/health`
 - Check weekly revenue trends in Reports
 - Verify all integrations show "Connected" in Settings > Integrations
 - Clear any resolved Alerts
 
 **Sales — Monday morning**
+
 - Follow up quotes expiring this week
 - Chase orders stuck in "Confirmed" status for 3+ days
 - Follow up invoices overdue by 7+ days
 
 **Warehouse — Monday morning**
+
 - Review the full stock health table in Inventory
 - Check AI Stock Forecast for 30-day stockout risks
 - Verify Purchase Orders in transit are on track for their expected delivery dates
 
 **Finance — Friday**
+
 - Export the overdue invoice list to CSV
 - Check total Outstanding amount versus last week
 - Verify cash payments are recorded in both CCW Online and Xero
@@ -943,17 +1043,20 @@ The database enforces Row Level Security (RLS), a database-level control that en
 ### 8.4 Monthly Tasks
 
 **Admin/Owner**
+
 - Run the BAS Report (Invoices > Reports tab) — send the export to your accountant
 - Export the Revenue Report from Reports
 - Review auto-reorder thresholds for seasonal changes (increase before busy periods)
 - Review staff access in Settings > Team — remove any accounts no longer needed
 
 **Warehouse**
+
 - Complete a stocktake for at least one product category
 - Review Bill of Materials for assembled products
 - Check component stock levels for upcoming production runs
 
 **Finance**
+
 - Run Gross Margin Analysis from Reports
 - Cross-check invoice totals against Xero for the month
 - Reconcile bank feeds to ensure nothing is missing
@@ -961,6 +1064,7 @@ The database enforces Row Level Security (RLS), a database-level control that en
 ### 8.5 Task Walkthroughs
 
 #### How to: Process a POS Walk-In Sale
+
 1. Click **POS** in the sidebar.
 2. Search for the product by name, SKU, or scan the barcode.
 3. Click the product to add it to the cart.
@@ -971,6 +1075,7 @@ The database enforces Row Level Security (RLS), a database-level control that en
 8. Print or email the receipt — stock levels update automatically.
 
 #### How to: Create and Send a Quote
+
 1. Click **Quotes** in the sidebar, then click **Create Quote**.
 2. Select the customer.
 3. Set an expiry date (typically 14 or 30 days).
@@ -981,6 +1086,7 @@ The database enforces Row Level Security (RLS), a database-level control that en
 8. Change status to **Sent** when ready to send to the customer.
 
 #### How to: Convert a Quote to an Order
+
 1. Open the accepted quote in **Quotes**.
 2. Change the status to **Accepted** if not already done.
 3. Click the **Convert** button.
@@ -990,6 +1096,7 @@ The database enforces Row Level Security (RLS), a database-level control that en
 7. Change status to **Confirmed** to notify the warehouse team.
 
 #### How to: Generate an Invoice from an Order
+
 1. Open the order in **Orders**.
 2. Click the invoice icon (document with folded corner) in the Actions column.
 3. The system creates an invoice with all line items copied from the order.
@@ -998,6 +1105,7 @@ The database enforces Row Level Security (RLS), a database-level control that en
 6. Print or email the invoice to the customer.
 
 #### How to: Record a Payment
+
 1. Open the invoice in **Invoices**.
 2. Click the **Payment** button (dollar sign icon).
 3. Enter: amount paid, payment method, date, and reference number.
@@ -1005,12 +1113,14 @@ The database enforces Row Level Security (RLS), a database-level control that en
 5. The status updates to "Paid" (full amount) or "Partial" (partial payment).
 
 #### How to: Check and Adjust Stock Levels
+
 1. Click **Inventory** in the sidebar.
 2. Products are colour-coded: Red = critical, Orange = low, Green = healthy.
 3. Use the search bar or barcode scanner to find a specific product.
 4. To adjust: click **Adjust**, enter the new count and a reason, then click **Save**.
 
 #### How to: Create a Purchase Order
+
 1. Click **Purchase Orders**, then click **Create Purchase Order**.
 2. Select the supplier.
 3. Select the delivery location (Brisbane, Sydney, or Melbourne).
@@ -1020,6 +1130,7 @@ The database enforces Row Level Security (RLS), a database-level control that en
 7. Change status to **Ordered** after sending the PO to the supplier.
 
 #### How to: Receive Goods (GRN)
+
 1. Find the Purchase Order in **Purchase Orders**.
 2. Click the three-dot menu, then click **Receive Goods**.
 3. For each line item, enter the quantity actually received.
@@ -1028,12 +1139,14 @@ The database enforces Row Level Security (RLS), a database-level control that en
 6. Stock levels update immediately.
 
 #### How to: Export Data as CSV
+
 1. Navigate to any list page (Products, Customers, Orders, etc.).
 2. Apply filters if you want a subset of data.
 3. Click the **Export CSV** button (top right of the page).
 4. The file downloads automatically — open it in Excel or Google Sheets.
 
 #### How to: Run the BAS Report
+
 1. Click **Invoices**, then click the **Reports** tab.
 2. Set the date range to the relevant quarter.
 3. Review: GST Collected, GST Paid, Net GST.
@@ -1047,20 +1160,21 @@ The database enforces Row Level Security (RLS), a database-level control that en
 
 ### Available Exports
 
-| Module | CSV | PDF/Print | What's Included |
-|---|---|---|---|
-| Products | Yes | No | SKU, name, category, price, cost, stock, location |
-| Customers | Yes | No | Customer number, company, contact, email, phone, address |
-| Orders | Yes | Yes | Order number, customer, date, status, total, items |
-| Quotes | Yes | Yes | Quote number, customer, date, valid until, status, total |
-| Invoices | Yes | Print view | Invoice number, customer, dates, status, amounts paid/due |
-| Contacts | Yes | No | Name, email, phone, job title, department |
-| Suppliers | Yes | No | Code, company, contact, email, ABN, payment terms |
-| Purchase Orders | Yes | No | PO number, supplier, location, status, total, delivery date |
+| Module          | CSV | PDF/Print  | What's Included                                             |
+| --------------- | --- | ---------- | ----------------------------------------------------------- |
+| Products        | Yes | No         | SKU, name, category, price, cost, stock, location           |
+| Customers       | Yes | No         | Customer number, company, contact, email, phone, address    |
+| Orders          | Yes | Yes        | Order number, customer, date, status, total, items          |
+| Quotes          | Yes | Yes        | Quote number, customer, date, valid until, status, total    |
+| Invoices        | Yes | Print view | Invoice number, customer, dates, status, amounts paid/due   |
+| Contacts        | Yes | No         | Name, email, phone, job title, department                   |
+| Suppliers       | Yes | No         | Code, company, contact, email, ABN, payment terms           |
+| Purchase Orders | Yes | No         | PO number, supplier, location, status, total, delivery date |
 
 ### Reports Dashboard
 
 The **Reports** page (`/reports`) provides two dashboards:
+
 - **Sales KPIs**: Revenue trends, order volume, average order value, and top customers by spend.
 - **Inventory Health**: Stock value, turnover rate, slow-moving items, and stock coverage days.
 
@@ -1072,17 +1186,17 @@ The **BAS Report** (`/invoices/bas`) provides Australian GST figures for your Bu
 
 ## 10. Troubleshooting
 
-| Issue | Where to Check | Resolution |
-|---|---|---|
-| Page won't load / white screen | Browser console (press F12) | Clear browser cache and cookies, try a different browser |
-| Dashboard shows stale data | Cin7 sync widget on Dashboard | Check last sync time. If more than 24 hours old, go to Settings > Integrations > Cin7 > Sync Now |
-| Login fails | Check credentials | Clear cookies, verify email and password. Contact admin for password reset. |
-| POS not working | Check internet connection | If offline, an orange banner appears. Sales queue locally and sync when reconnected. |
-| Stock levels wrong | Inventory — check the product | Use the Adjust button to correct. Check if Cin7 shows the same count. |
-| Invoice not syncing to Xero | Settings > Integrations > Xero | Check connection status. May need to re-authorise OAuth. |
-| CSV export empty | Check applied filters | Remove all filters first, then try the export again |
-| Cron job not running | Vercel dashboard > Cron Jobs | Check the job is listed and Active. Check logs for errors. |
-| 500 error on any page | Vercel logs (frontend) or Railway logs (backend) | Note the URL and time, send to Phill |
+| Issue                          | Where to Check                                   | Resolution                                                                                       |
+| ------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Page won't load / white screen | Browser console (press F12)                      | Clear browser cache and cookies, try a different browser                                         |
+| Dashboard shows stale data     | Cin7 sync widget on Dashboard                    | Check last sync time. If more than 24 hours old, go to Settings > Integrations > Cin7 > Sync Now |
+| Login fails                    | Check credentials                                | Clear cookies, verify email and password. Contact admin for password reset.                      |
+| POS not working                | Check internet connection                        | If offline, an orange banner appears. Sales queue locally and sync when reconnected.             |
+| Stock levels wrong             | Inventory — check the product                    | Use the Adjust button to correct. Check if Cin7 shows the same count.                            |
+| Invoice not syncing to Xero    | Settings > Integrations > Xero                   | Check connection status. May need to re-authorise OAuth.                                         |
+| CSV export empty               | Check applied filters                            | Remove all filters first, then try the export again                                              |
+| Cron job not running           | Vercel dashboard > Cron Jobs                     | Check the job is listed and Active. Check logs for errors.                                       |
+| 500 error on any page          | Vercel logs (frontend) or Railway logs (backend) | Note the URL and time, send to Phill                                                             |
 
 **Emergency Contact**: Phill (Unite Group Development) — for system issues, data problems, or configuration changes.
 
@@ -1094,69 +1208,69 @@ The **BAS Report** (`/invoices/bas`) provides Australian GST figures for your Bu
 
 All times AEST. These run automatically once configured.
 
-| Time | Endpoint | Purpose |
-|---|---|---|
-| Every 5 min | /api/cron/health-check | System health verification |
-| Every 5 min | /api/cron/retry-failed-webhooks | Retry failed webhook deliveries |
-| Every 15 min | /api/cron/check-sla-breaches | SLA monitoring for workflows |
-| Hourly | /api/cron/run-autonomous-ops | AI agent autonomous operations |
-| 9:00am daily | /api/cron/daily-report | KPI dashboard refresh |
-| 9:00am daily | /api/cron/check-expiring-quotes | Quote expiry alerts |
-| 9:00am daily | /api/cron/process-onboarding-emails | Onboarding email sequences |
-| 12:00am daily | /api/cron/refresh-health-scores | CRM health score recalculation |
-| 2:00am daily | /api/cron/cleanup-old-runs | Cleanup aged records |
-| 7:00pm daily | /api/cron/shadow-sync-cin7 | Cin7 nightly sync |
-| 9:00pm daily | /api/cron/auto-reorder-inventory | Auto-PO generation |
-| 4x daily | /api/boardroom/cron | AI Boardroom governance sessions |
-| *After Xero connected:* | | |
-| Every 15 min | /api/cron/refresh-xero-tokens | Xero token refresh |
-| 8:00pm daily | /api/cron/shadow-sync-xero | Xero nightly sync |
+| Time                    | Endpoint                            | Purpose                          |
+| ----------------------- | ----------------------------------- | -------------------------------- |
+| Every 5 min             | /api/cron/health-check              | System health verification       |
+| Every 5 min             | /api/cron/retry-failed-webhooks     | Retry failed webhook deliveries  |
+| Every 15 min            | /api/cron/check-sla-breaches        | SLA monitoring for workflows     |
+| Hourly                  | /api/cron/run-autonomous-ops        | AI agent autonomous operations   |
+| 9:00am daily            | /api/cron/daily-report              | KPI dashboard refresh            |
+| 9:00am daily            | /api/cron/check-expiring-quotes     | Quote expiry alerts              |
+| 9:00am daily            | /api/cron/process-onboarding-emails | Onboarding email sequences       |
+| 12:00am daily           | /api/cron/refresh-health-scores     | CRM health score recalculation   |
+| 2:00am daily            | /api/cron/cleanup-old-runs          | Cleanup aged records             |
+| 7:00pm daily            | /api/cron/shadow-sync-cin7          | Cin7 nightly sync                |
+| 9:00pm daily            | /api/cron/auto-reorder-inventory    | Auto-PO generation               |
+| 4x daily                | /api/boardroom/cron                 | AI Boardroom governance sessions |
+| _After Xero connected:_ |                                     |                                  |
+| Every 15 min            | /api/cron/refresh-xero-tokens       | Xero token refresh               |
+| 8:00pm daily            | /api/cron/shadow-sync-xero          | Xero nightly sync                |
 
 ### B. Environment Variables Reference
 
 #### Backend (Railway) — CCW Must Configure
 
-| Variable | Required | Description |
-|---|---|---|
-| DATABASE_URL | Yes | Supabase PostgreSQL connection string |
-| SECRET_KEY | Yes | Application secret key |
-| CRON_SECRET | Yes | Authentication for scheduled jobs |
-| CIN7_MODE | For Cin7 | Set to "live" (currently "demo") |
-| CIN7_CORE_ACCOUNT_ID | For Cin7 | Cin7 API Account ID |
-| CIN7_CORE_APPLICATION_KEY | For Cin7 | Cin7 API Application Key |
-| XERO_CLIENT_ID | For Xero | Xero OAuth app client ID |
-| XERO_CLIENT_SECRET | For Xero | Xero OAuth app secret |
-| XERO_REDIRECT_URI | For Xero | OAuth callback URL |
-| SHOPIFY_ACCESS_TOKEN | For Shopify | Shopify Admin API token |
-| SHOPIFY_SHOP_DOMAIN | For Shopify | e.g. my-store.myshopify.com |
-| STRIPE_SECRET_KEY | For Stripe | Stripe API secret key |
-| STRIPE_WEBHOOK_SECRET | For Stripe | Stripe webhook signing secret |
-| SENDGRID_API_KEY | For email | SendGrid API key |
-| SENDGRID_FROM_EMAIL | For email | Verified sender address |
+| Variable                  | Required    | Description                           |
+| ------------------------- | ----------- | ------------------------------------- |
+| DATABASE_URL              | Yes         | Supabase PostgreSQL connection string |
+| SECRET_KEY                | Yes         | Application secret key                |
+| CRON_SECRET               | Yes         | Authentication for scheduled jobs     |
+| CIN7_MODE                 | For Cin7    | Set to "live" (currently "demo")      |
+| CIN7_CORE_ACCOUNT_ID      | For Cin7    | Cin7 API Account ID                   |
+| CIN7_CORE_APPLICATION_KEY | For Cin7    | Cin7 API Application Key              |
+| XERO_CLIENT_ID            | For Xero    | Xero OAuth app client ID              |
+| XERO_CLIENT_SECRET        | For Xero    | Xero OAuth app secret                 |
+| XERO_REDIRECT_URI         | For Xero    | OAuth callback URL                    |
+| SHOPIFY_ACCESS_TOKEN      | For Shopify | Shopify Admin API token               |
+| SHOPIFY_SHOP_DOMAIN       | For Shopify | e.g. my-store.myshopify.com           |
+| STRIPE_SECRET_KEY         | For Stripe  | Stripe API secret key                 |
+| STRIPE_WEBHOOK_SECRET     | For Stripe  | Stripe webhook signing secret         |
+| SENDGRID_API_KEY          | For email   | SendGrid API key                      |
+| SENDGRID_FROM_EMAIL       | For email   | Verified sender address               |
 
 #### Frontend (Vercel)
 
-| Variable | Required | Description |
-|---|---|---|
-| NEXT_PUBLIC_BACKEND_URL | Yes | Railway backend URL |
-| NEXT_PUBLIC_SUPABASE_URL | Yes | Supabase project URL |
-| NEXT_PUBLIC_SUPABASE_ANON_KEY | Yes | Supabase public key |
+| Variable                      | Required | Description          |
+| ----------------------------- | -------- | -------------------- |
+| NEXT_PUBLIC_BACKEND_URL       | Yes      | Railway backend URL  |
+| NEXT_PUBLIC_SUPABASE_URL      | Yes      | Supabase project URL |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | Yes      | Supabase public key  |
 
 ### C. Database Schema Summary
 
-| Table | Key Columns | Relationships |
-|---|---|---|
-| organizations | name, slug, is_active | Parent for all data |
-| users | email, full_name, role | Belongs to organization |
-| products | sku (unique), name, category, price, cost, stock | Belongs to organization |
-| customers | customer_number (unique), company_name, email | Belongs to organization |
-| orders | order_number (ORD-YYYY-NNN), status, total | Belongs to customer |
-| order_items | quantity, unit_price, line_total | Belongs to order + product |
-| quotes | quote_number (Q-YYYY-NNN), status, total | Belongs to customer |
-| quote_items | quantity, unit_price, line_total | Belongs to quote + product |
-| invoices | invoice_number, status, subtotal, tax, total | Belongs to order + customer |
-| suppliers | company_name, contact, email, payment_terms | Belongs to organization |
-| purchase_orders | po_number, supplier, status, total | Belongs to supplier |
+| Table           | Key Columns                                      | Relationships               |
+| --------------- | ------------------------------------------------ | --------------------------- |
+| organizations   | name, slug, is_active                            | Parent for all data         |
+| users           | email, full_name, role                           | Belongs to organization     |
+| products        | sku (unique), name, category, price, cost, stock | Belongs to organization     |
+| customers       | customer_number (unique), company_name, email    | Belongs to organization     |
+| orders          | order_number (ORD-YYYY-NNN), status, total       | Belongs to customer         |
+| order_items     | quantity, unit_price, line_total                 | Belongs to order + product  |
+| quotes          | quote_number (Q-YYYY-NNN), status, total         | Belongs to customer         |
+| quote_items     | quantity, unit_price, line_total                 | Belongs to quote + product  |
+| invoices        | invoice_number, status, subtotal, tax, total     | Belongs to order + customer |
+| suppliers       | company_name, contact, email, payment_terms      | Belongs to organization     |
+| purchase_orders | po_number, supplier, status, total               | Belongs to supplier         |
 
 ### D. System Requirements
 
@@ -1188,5 +1302,5 @@ Before marking the system as production-ready, all items must pass:
 
 ---
 
-*Document prepared by Unite Group Development. For technical support, contact Phill.*
-*Last updated: 30 March 2026*
+_Document prepared by Unite Group Development. For technical support, contact Phill._
+_Last updated: 30 March 2026_

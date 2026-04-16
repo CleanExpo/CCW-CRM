@@ -25,6 +25,7 @@ The codebase has an impressive raw test count — 142 backend Python test files,
 5. **Integration test suite (576 assertions across `tests/integration/`) is the strongest layer** — particularly Cin7 sync, CRM, and protocol tests — but covers only 10 of the 20+ integration routes.
 
 **Estimated actual coverage rates:**
+
 - Backend routes with any test: ~40% (48 / 121 route files)
 - Frontend pages with meaningful behavior tests: ~12% (10 / 76 pages)
 - E2E flows covered: ~7% (5 of ~70 distinct page routes)
@@ -37,22 +38,22 @@ The codebase has an impressive raw test count — 142 backend Python test files,
 
 **Total test files**: 142 Python files across the following subdirectories:
 
-| Directory | Files | Purpose |
-|---|---|---|
-| `tests/api/` | 25 | API endpoint HTTP tests |
-| `tests/integration/` | 19 | Cin7, AP2, Xero, Shopify, protocol |
-| `tests/services/` | 14 | Pure service-layer unit tests |
-| `tests/security/` | 4 | Auth, injection, XSS/CSRF, encryption |
-| `tests/load/` | 12 | Locust load test scenarios |
-| `tests/smoke/` | 1 | Broad endpoint smoke sweep |
-| `tests/e2e/` | 2 | Login flow, order flow |
-| `tests/unit/` | 2 | Number generation, reconciliation logic |
-| `tests/` (root) | 27 | Mixed gap-remediation, batch tests, agent tests |
-| `tests/fixtures/` | 4 | Shared data fixtures |
-| `tests/integrations/` | 1 | Xero token manager |
-| `tests/utils/` | 1 | Calculation utilities |
-| `tests/webhooks/` | 1 | Webhook transactions |
-| `tests/performance/` | 0 | Empty directory |
+| Directory             | Files | Purpose                                         |
+| --------------------- | ----- | ----------------------------------------------- |
+| `tests/api/`          | 25    | API endpoint HTTP tests                         |
+| `tests/integration/`  | 19    | Cin7, AP2, Xero, Shopify, protocol              |
+| `tests/services/`     | 14    | Pure service-layer unit tests                   |
+| `tests/security/`     | 4     | Auth, injection, XSS/CSRF, encryption           |
+| `tests/load/`         | 12    | Locust load test scenarios                      |
+| `tests/smoke/`        | 1     | Broad endpoint smoke sweep                      |
+| `tests/e2e/`          | 2     | Login flow, order flow                          |
+| `tests/unit/`         | 2     | Number generation, reconciliation logic         |
+| `tests/` (root)       | 27    | Mixed gap-remediation, batch tests, agent tests |
+| `tests/fixtures/`     | 4     | Shared data fixtures                            |
+| `tests/integrations/` | 1     | Xero token manager                              |
+| `tests/utils/`        | 1     | Calculation utilities                           |
+| `tests/webhooks/`     | 1     | Webhook transactions                            |
+| `tests/performance/`  | 0     | Empty directory                                 |
 
 **Total test functions (`def test_*`)**: 1,828
 **Total assert statements**: 4,539
@@ -60,9 +61,11 @@ The codebase has an impressive raw test count — 142 backend Python test files,
 ### Routes Tested vs. Untested
 
 **Tested at API level** (explicit `TestClient`/`AsyncClient` HTTP calls):
+
 - `approvals`, `bank_feeds`, `billing`, `customer_orders`, `orders`, `products`, `customers`, `quotes`, `translations`, `pos_transactions`, `reconciliation`, `workflows`, `invoices` (tax), `purchase_orders`, `inventory`, `health`, `approvals_integration`, `workflows_integration`
 
 **Untested at API level** (no HTTP-level test exists):
+
 - `activities`, `agents_monitor`, `analytics`, `autonomous_dev`, `autonomy_metrics`, `backorders`, `chat`, `config`, `contacts`, `containers`, `contractors`, `crm_health`, `crm_onboarding`, `crm_personas`, `cron_jobs`, `dashboard_stream`, `email_audit`, `google_ai`, `inventory_stream`, `invoice_payments`, `jobs`, `monitoring/*` (4 sub-routes), `notifications`, `prd`, `public_stats`, `reconciliation_dashboard`, `search`, `service_requests`, `settings`, `shipments`, `sla`, `suppliers`, `team`, `warehouse`, `webhooks`
 
 **Workshop routes**: All 5 route modules (`bookings.py`, `dashboard.py`, `equipment.py`, `reminders.py`, `templates.py`) have zero test files.
@@ -74,6 +77,7 @@ The codebase has an impressive raw test count — 142 backend Python test files,
 ### Test Quality Assessment (Backend)
 
 **Strengths:**
+
 - Integration test layer for Cin7 uses realistic mock data matching live API shapes
 - Tax calculator service tests (`test_tax_calculator.py`) are exemplary: pure function testing, decimal-accurate assertions, full jurisdiction matrix (AU, CA-BC, CA-ON, CA-NS, CA-QC)
 - Security tests cover password non-exposure, brute force patterns, and injection attacks
@@ -81,6 +85,7 @@ The codebase has an impressive raw test count — 142 backend Python test files,
 - Gap-remediation tests follow a clear pattern: endpoint → status code → response shape → field validation
 
 **Weaknesses:**
+
 - Many `tests/api/` files test only 200-path responses; error paths (422, 404, 403) are covered in only 3 dedicated files (`test_quote_404_errors.py`, `test_quote_422_errors.py`, `test_500_errors.py`)
 - Load tests (`locustfile.py`) require Locust and cannot run in standard pytest; they are effectively documentation, not CI gates
 - `tests/e2e/test_login_flow.py` and `test_order_flow.py` are backend Python files, not browser E2E tests — they test HTTP flows, not the actual UI
@@ -96,19 +101,20 @@ The codebase has an impressive raw test count — 142 backend Python test files,
 **Total test files**: 73 (in `apps/web/__tests__/`)
 **Total `it`/`test` blocks**: ~672
 
-| Directory | Files | Coverage Type |
-|---|---|---|
-| `__tests__/lib/api/` | 57 | API client method tests |
-| `__tests__/lib/types/` | 4 | Type/interface validation |
-| `__tests__/lib/` | 2 | Marketplace utils, CSV export |
-| `__tests__/app/` | 8 | Page-level render/integration |
-| `__tests__/components/` | 6 | Component render tests |
+| Directory               | Files | Coverage Type                 |
+| ----------------------- | ----- | ----------------------------- |
+| `__tests__/lib/api/`    | 57    | API client method tests       |
+| `__tests__/lib/types/`  | 4     | Type/interface validation     |
+| `__tests__/lib/`        | 2     | Marketplace utils, CSV export |
+| `__tests__/app/`        | 8     | Page-level render/integration |
+| `__tests__/components/` | 6     | Component render tests        |
 
 ### Coverage Distribution Problem
 
 The heavy concentration in `lib/api/` (57 of 73 files = 78%) means the test suite validates that API client methods call the right URLs with the right parameters — **but does not test what the UI renders, how it handles errors, or how users interact with it**.
 
 **Page-level tests** (render + assert visible UI): Only 8 files out of 76 pages:
+
 - `approvals-page.test.tsx`
 - `billing-page.test.tsx`
 - `orders-integration.test.tsx`
@@ -121,17 +127,20 @@ The heavy concentration in `lib/api/` (57 of 73 files = 78%) means the test suit
 Of these, `service.test.tsx` and `walk-in.test.tsx` have **pre-existing failures** (documented in project memory). The page-level tests that do pass test simplified stub components rather than the actual `page.tsx` implementations.
 
 **Pages with NO test of any kind** (not even an API client test):
+
 - `ai-assistant`, `alerts`, `autonomous`, `autonomous-dev`, `bank-feeds`, `containers`, `contractors`, `demo`, `demo-live`, `emails`, `faq`, `insights`, `inventory/bom`, `inventory/forecast`, `inventory/reservations`, `inventory/transfers`, `marketing`, `monitoring`, `prd`, `reports`, `settings/*` (most sub-pages), `submissions`
 
 ### Frontend Test Quality Assessment
 
 **Strengths:**
+
 - API client tests use `vi.mock` correctly and test query string construction precisely
 - `csv-export.test.ts` tests pure utility functions with edge cases
 - Type tests validate that TypeScript interfaces match expected shapes
 - `EmptyState.test.tsx` and `ErrorBoundary.test.tsx` test reusable UI components
 
 **Weaknesses:**
+
 - Page-level tests render simplified stub components, not the actual page file — they cannot catch regressions in the real `page.tsx` implementations
 - No tests for form validation behavior (invalid inputs, required field errors)
 - No tests for loading states, error toasts, or optimistic UI patterns
@@ -147,15 +156,15 @@ Of these, `service.test.tsx` and `walk-in.test.tsx` have **pre-existing failures
 
 **Total specs**: 7 files (5 business-flow + 1 accessibility + 1 visual)
 
-| File | Pages Covered | Test Count (approx) |
-|---|---|---|
-| `e2e/invoices.spec.ts` | `/invoices` | ~5 |
-| `e2e/reconciliation.spec.ts` | `/reconciliation`, `/pos/reconciliation` | ~4 |
-| `e2e/workflows.spec.ts` | `/workflows` | ~4 |
-| `e2e/approvals.spec.ts` | `/approvals` | ~3 |
-| `e2e/error-handling.spec.ts` | Multiple (error states) | ~6 |
-| `tests/accessibility/a11y.spec.ts` | `/`, `/prd`, auth pages | ~4 |
-| `tests/visual/components.visual.spec.ts` | Visual regression | ~varies |
+| File                                     | Pages Covered                            | Test Count (approx) |
+| ---------------------------------------- | ---------------------------------------- | ------------------- |
+| `e2e/invoices.spec.ts`                   | `/invoices`                              | ~5                  |
+| `e2e/reconciliation.spec.ts`             | `/reconciliation`, `/pos/reconciliation` | ~4                  |
+| `e2e/workflows.spec.ts`                  | `/workflows`                             | ~4                  |
+| `e2e/approvals.spec.ts`                  | `/approvals`                             | ~3                  |
+| `e2e/error-handling.spec.ts`             | Multiple (error states)                  | ~6                  |
+| `tests/accessibility/a11y.spec.ts`       | `/`, `/prd`, auth pages                  | ~4                  |
+| `tests/visual/components.visual.spec.ts` | Visual regression                        | ~varies             |
 
 **Total E2E test functions**: ~96 (across all 7 spec files)
 
@@ -178,6 +187,7 @@ These pages handle financial transactions or data mutations with no browser-leve
 ### E2E Test Quality Assessment
 
 The existing E2E tests show mature defensive patterns:
+
 - They use `if (await element.isVisible())` guards before interactions, preventing false failures in demo-mode environments where UI state may differ
 - `invoices.spec.ts` tests the full tax calculation flow end-to-end (login → navigate → create invoice → add line item → calculate tax → verify display)
 - `error-handling.spec.ts` tests network failure states and recovery
@@ -190,24 +200,24 @@ However, the defensive guards can mask actual regressions — if a button is mis
 
 ### What the Tests Are Doing Well
 
-| Area | Assessment |
-|---|---|
+| Area                      | Assessment                                                   |
+| ------------------------- | ------------------------------------------------------------ |
 | Tax calculation (service) | Excellent: decimal precision, multi-jurisdiction, edge cases |
-| Cin7 integration | Good: demo client, live routing, pagination, error handling |
-| Security tests | Good: auth bypass, injection, XSS patterns tested |
-| API contract tests | Adequate: status codes, response shape, pagination params |
-| Load tests | Structural: Locust files exist but never run in CI |
+| Cin7 integration          | Good: demo client, live routing, pagination, error handling  |
+| Security tests            | Good: auth bypass, injection, XSS patterns tested            |
+| API contract tests        | Adequate: status codes, response shape, pagination params    |
+| Load tests                | Structural: Locust files exist but never run in CI           |
 
 ### What the Tests Are NOT Doing
 
-| Gap | Risk |
-|---|---|
-| No tests for workshop, contractor, container routes | Silent breakage undetected |
-| No UI behavior tests (forms, validation, modals) | UX regressions undetected |
-| No auth flow E2E (login → protected page → logout) | Security regression undetected |
-| No concurrent write tests | Race condition bugs undetected |
-| Billing tests not using real DB seeding | Mock-only, not catching schema mismatches |
-| 7 untracked test files not in git | Lost on checkout, not in CI |
+| Gap                                                 | Risk                                      |
+| --------------------------------------------------- | ----------------------------------------- |
+| No tests for workshop, contractor, container routes | Silent breakage undetected                |
+| No UI behavior tests (forms, validation, modals)    | UX regressions undetected                 |
+| No auth flow E2E (login → protected page → logout)  | Security regression undetected            |
+| No concurrent write tests                           | Race condition bugs undetected            |
+| Billing tests not using real DB seeding             | Mock-only, not catching schema mismatches |
+| 7 untracked test files not in git                   | Lost on checkout, not in CI               |
 
 ### Mock Usage Assessment
 
@@ -221,25 +231,25 @@ Frontend: `vi.mock('@/lib/api/client')` is used correctly and consistently. The 
 
 ### CRITICAL — Financial/Payment Routes With No Tests
 
-| Route | Risk | Current Test Status |
-|---|---|---|
-| `POST /api/billing/payment-methods` | Payment data storage | Tested (billing.py) |
-| `POST /api/invoice-payments/*` | Payment recording | **NO TEST** |
-| `POST /api/pos-transactions/*` | POS cash handling | Partial (terminals only) |
+| Route                                 | Risk                     | Current Test Status                    |
+| ------------------------------------- | ------------------------ | -------------------------------------- |
+| `POST /api/billing/payment-methods`   | Payment data storage     | Tested (billing.py)                    |
+| `POST /api/invoice-payments/*`        | Payment recording        | **NO TEST**                            |
+| `POST /api/pos-transactions/*`        | POS cash handling        | Partial (terminals only)               |
 | `POST /api/reconciliation/auto-match` | Financial reconciliation | Reconciliation integration test exists |
-| `GET /api/bank-feeds/*` | Bank statement import | **NO TEST** |
+| `GET /api/bank-feeds/*`               | Bank statement import    | **NO TEST**                            |
 
 ### HIGH — Core CRUD Routes With No Tests
 
-| Route Module | HTTP Methods Untested |
-|---|---|
-| `contacts.py` | GET list, GET detail, POST, PUT, DELETE |
-| `contractors.py` | All |
-| `containers.py` | All |
-| `suppliers.py` | All |
-| `service_requests.py` | All |
-| `shipments.py` | All |
-| `warehouse.py` | GET /api/warehouse/ops only has a basic test |
+| Route Module          | HTTP Methods Untested                        |
+| --------------------- | -------------------------------------------- |
+| `contacts.py`         | GET list, GET detail, POST, PUT, DELETE      |
+| `contractors.py`      | All                                          |
+| `containers.py`       | All                                          |
+| `suppliers.py`        | All                                          |
+| `service_requests.py` | All                                          |
+| `shipments.py`        | All                                          |
+| `warehouse.py`        | GET /api/warehouse/ops only has a basic test |
 
 ### HIGH — Workshop System (Entirely Untested)
 
@@ -248,6 +258,7 @@ The entire workshop management system (6 models, 5 route modules, 6 frontend pag
 ### HIGH — Frontend Pages With No Tests
 
 Pages that perform mutations (create/edit/delete) with no test of any kind:
+
 - `/pos/terminal` — live transaction processing
 - `/orders/fulfilment` — order state transitions
 - `/purchase-orders/receiving` — GRN receiving workflow
@@ -277,20 +288,21 @@ backend-tests  →  frontend-tests  →  build
 
 ### Coverage Gate Analysis
 
-| Check | Configured | Blocks Merge? | Assessment |
-|---|---|---|---|
-| Backend linting (ruff) | Yes | Yes | Effective |
-| Backend type check (mypy) | Commented out | No | Gap |
-| Backend test coverage | `--cov-fail-under=15` | **No** (`continue-on-error: true`) | Critical gap |
-| Frontend linting (ESLint) | Yes | Yes | Effective |
-| Frontend type check | Yes | Yes | Effective |
-| Frontend test coverage | No threshold | No | Critical gap |
-| E2E tests | Run on every push | Yes (part of summary gate) | Good |
-| Accessibility tests | Run on frontend-tests success | No (excluded from fail gate in summary) | Gap |
+| Check                     | Configured                    | Blocks Merge?                           | Assessment   |
+| ------------------------- | ----------------------------- | --------------------------------------- | ------------ |
+| Backend linting (ruff)    | Yes                           | Yes                                     | Effective    |
+| Backend type check (mypy) | Commented out                 | No                                      | Gap          |
+| Backend test coverage     | `--cov-fail-under=15`         | **No** (`continue-on-error: true`)      | Critical gap |
+| Frontend linting (ESLint) | Yes                           | Yes                                     | Effective    |
+| Frontend type check       | Yes                           | Yes                                     | Effective    |
+| Frontend test coverage    | No threshold                  | No                                      | Critical gap |
+| E2E tests                 | Run on every push             | Yes (part of summary gate)              | Good         |
+| Accessibility tests       | Run on frontend-tests success | No (excluded from fail gate in summary) | Gap          |
 
 ### Critical Finding: Backend Test Gate is Non-Blocking
 
 Line 106 in `ci.yml`:
+
 ```yaml
 continue-on-error: true
 run: uv run pytest --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=15 -v
@@ -314,66 +326,66 @@ The `ci-summary` job at line 527 gates on `backend-tests.result == 'failure'`, b
 
 ### CRITICAL
 
-| ID | Issue | Impact |
-|---|---|---|
-| T-001 | Backend pytest step has `continue-on-error: true` — test failures do not block merges | Financial regressions can ship to production |
-| T-002 | 7 test files are untracked (not in git) — `test_gap_batch_2b.py`, `test_batch_2c_structure.py`, `test_billing.py`, `test_approvals_batch_2c.py`, `test_gap_batch_2b_smoke.py`, `test_workflows_batch_2c.py` | These assertions do not run in CI |
-| T-003 | No frontend coverage threshold in `vitest.config.ts` | Frontend coverage can drop to 0% with no CI signal |
+| ID    | Issue                                                                                                                                                                                                       | Impact                                             |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| T-001 | Backend pytest step has `continue-on-error: true` — test failures do not block merges                                                                                                                       | Financial regressions can ship to production       |
+| T-002 | 7 test files are untracked (not in git) — `test_gap_batch_2b.py`, `test_batch_2c_structure.py`, `test_billing.py`, `test_approvals_batch_2c.py`, `test_gap_batch_2b_smoke.py`, `test_workflows_batch_2c.py` | These assertions do not run in CI                  |
+| T-003 | No frontend coverage threshold in `vitest.config.ts`                                                                                                                                                        | Frontend coverage can drop to 0% with no CI signal |
 
 ### HIGH
 
-| ID | Issue | Impact |
-|---|---|---|
-| T-004 | Workshop system (5 backend routes, 6 frontend pages) has zero tests | Silent breakage after any refactor |
-| T-005 | `invoice_payments.py` route has no tests — handles payment recording | Financial data integrity risk |
-| T-006 | All monitoring sub-routes (`alerts.py`, `business_metrics.py`, `infrastructure.py`, `performance.py`) untested | Alerting failures go undetected |
-| T-007 | E2E coverage omits POS terminal, orders, customers, products — the 4 highest-traffic pages | Core CRUD regressions undetected until users report them |
-| T-008 | Backend mypy type checking is commented out in CI | Type errors ship silently |
-| T-009 | 40+ backend routes have zero API-level tests | ~60% of API surface area unverified |
+| ID    | Issue                                                                                                          | Impact                                                   |
+| ----- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| T-004 | Workshop system (5 backend routes, 6 frontend pages) has zero tests                                            | Silent breakage after any refactor                       |
+| T-005 | `invoice_payments.py` route has no tests — handles payment recording                                           | Financial data integrity risk                            |
+| T-006 | All monitoring sub-routes (`alerts.py`, `business_metrics.py`, `infrastructure.py`, `performance.py`) untested | Alerting failures go undetected                          |
+| T-007 | E2E coverage omits POS terminal, orders, customers, products — the 4 highest-traffic pages                     | Core CRUD regressions undetected until users report them |
+| T-008 | Backend mypy type checking is commented out in CI                                                              | Type errors ship silently                                |
+| T-009 | 40+ backend routes have zero API-level tests                                                                   | ~60% of API surface area unverified                      |
 
 ### MEDIUM
 
-| ID | Issue | Impact |
-|---|---|---|
-| T-010 | Frontend tests are 78% API client shim tests, not component behavior tests | UI regressions (form validation, loading states, modals) not caught |
-| T-011 | Backend coverage threshold (`--cov-fail-under=15`) is functionally meaningless | Does not detect degradation |
-| T-012 | `service_requests.py`, `contractors.py`, `contacts.py`, `suppliers.py` — all have zero tests | CRUD regressions undetected |
-| T-013 | AI route tests cover only 8 of 20 AI endpoints | AI agent failures not detected |
-| T-014 | E2E defensive guards (`if await element.isVisible()`) may silently skip broken UI flows | Regressions masked |
-| T-015 | No integration tests for Cin7 BOM, GL, fulfilment, GRN, inventory writeback routes | Wave 2 integration risk |
+| ID    | Issue                                                                                        | Impact                                                              |
+| ----- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| T-010 | Frontend tests are 78% API client shim tests, not component behavior tests                   | UI regressions (form validation, loading states, modals) not caught |
+| T-011 | Backend coverage threshold (`--cov-fail-under=15`) is functionally meaningless               | Does not detect degradation                                         |
+| T-012 | `service_requests.py`, `contractors.py`, `contacts.py`, `suppliers.py` — all have zero tests | CRUD regressions undetected                                         |
+| T-013 | AI route tests cover only 8 of 20 AI endpoints                                               | AI agent failures not detected                                      |
+| T-014 | E2E defensive guards (`if await element.isVisible()`) may silently skip broken UI flows      | Regressions masked                                                  |
+| T-015 | No integration tests for Cin7 BOM, GL, fulfilment, GRN, inventory writeback routes           | Wave 2 integration risk                                             |
 
 ### LOW
 
-| ID | Issue | Impact |
-|---|---|---|
-| T-016 | Load tests (`locustfile.py`) are not wired into CI — manual only | Performance regressions not caught in CI |
-| T-017 | Accessibility tests excluded from the merge gate | A11y regressions not blocked |
-| T-018 | Backend e2e tests (`test_login_flow.py`, `test_order_flow.py`) test HTTP flows, not browser UI — naming is misleading | Confusion about what is actually tested |
-| T-019 | No contract tests between frontend types and backend Pydantic models | API contract drift undetected |
+| ID    | Issue                                                                                                                 | Impact                                   |
+| ----- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| T-016 | Load tests (`locustfile.py`) are not wired into CI — manual only                                                      | Performance regressions not caught in CI |
+| T-017 | Accessibility tests excluded from the merge gate                                                                      | A11y regressions not blocked             |
+| T-018 | Backend e2e tests (`test_login_flow.py`, `test_order_flow.py`) test HTTP flows, not browser UI — naming is misleading | Confusion about what is actually tested  |
+| T-019 | No contract tests between frontend types and backend Pydantic models                                                  | API contract drift undetected            |
 
 ---
 
 ## Metrics Dashboard
 
-| Metric | Count | Notes |
-|---|---|---|
-| Backend test files | 142 | Including load, security, integration subdirs |
-| Backend test functions | 1,828 | `def test_*` across all files |
-| Backend total assertions | 4,539 | `assert` statements |
-| Integration test assertions | 576 | In `tests/integration/` only |
-| Backend routes | 121 | Includes `__init__.py` |
-| Backend routes with API tests | ~48 | ~40% coverage |
-| Frontend test files | 73 | All in `__tests__/` |
-| Frontend test blocks | ~672 | `it()`/`test()` blocks |
-| Frontend pages | ~76 | `page.tsx` files in `(dashboard)/` |
-| Frontend pages with behavior tests | ~8 | ~11% coverage |
-| E2E spec files | 5 | Excluding accessibility + visual |
-| E2E test functions | ~27 | Business-flow tests only |
-| Dashboard pages with E2E | 5 | invoices, reconciliation, workflows, approvals, errors |
-| Dashboard pages without E2E | ~71 | ~93% uncovered |
-| CI coverage threshold (backend) | 15% (non-blocking) | Effectively no gate |
-| CI coverage threshold (frontend) | None | No threshold defined |
-| Untracked test files (not in git) | 7 | Not in CI |
+| Metric                             | Count              | Notes                                                  |
+| ---------------------------------- | ------------------ | ------------------------------------------------------ |
+| Backend test files                 | 142                | Including load, security, integration subdirs          |
+| Backend test functions             | 1,828              | `def test_*` across all files                          |
+| Backend total assertions           | 4,539              | `assert` statements                                    |
+| Integration test assertions        | 576                | In `tests/integration/` only                           |
+| Backend routes                     | 121                | Includes `__init__.py`                                 |
+| Backend routes with API tests      | ~48                | ~40% coverage                                          |
+| Frontend test files                | 73                 | All in `__tests__/`                                    |
+| Frontend test blocks               | ~672               | `it()`/`test()` blocks                                 |
+| Frontend pages                     | ~76                | `page.tsx` files in `(dashboard)/`                     |
+| Frontend pages with behavior tests | ~8                 | ~11% coverage                                          |
+| E2E spec files                     | 5                  | Excluding accessibility + visual                       |
+| E2E test functions                 | ~27                | Business-flow tests only                               |
+| Dashboard pages with E2E           | 5                  | invoices, reconciliation, workflows, approvals, errors |
+| Dashboard pages without E2E        | ~71                | ~93% uncovered                                         |
+| CI coverage threshold (backend)    | 15% (non-blocking) | Effectively no gate                                    |
+| CI coverage threshold (frontend)   | None               | No threshold defined                                   |
+| Untracked test files (not in git)  | 7                  | Not in CI                                              |
 
 ---
 

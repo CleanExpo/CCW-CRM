@@ -17,7 +17,10 @@ interface TargetInfo {
  */
 export async function GET() {
   if (!PROMETHEUS_URL) {
-    return NextResponse.json({ error: 'Prometheus not configured in this environment', targets: [] }, { status: 503 });
+    return NextResponse.json(
+      { error: 'Prometheus not configured in this environment', targets: [] },
+      { status: 503 }
+    );
   }
   try {
     const res = await fetch(`${PROMETHEUS_URL}/api/v1/targets`, {
