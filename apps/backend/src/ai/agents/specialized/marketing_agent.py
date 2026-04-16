@@ -12,16 +12,16 @@ from src.ai.base_agent import BaseAgent
 logger = structlog.get_logger(__name__)
 
 # ---------------------------------------------------------------------------
-# OpenAI availability check
+# Anthropic availability check
 # ---------------------------------------------------------------------------
 
 try:
-    import openai as _openai_module
+    import anthropic as _anthropic_module
 
-    _OPENAI_AVAILABLE = bool(os.getenv("OPENAI_API_KEY"))
+    _ANTHROPIC_AVAILABLE = bool(os.getenv("ANTHROPIC_API_KEY"))
 except ImportError:
-    _openai_module = None  # type: ignore[assignment]
-    _OPENAI_AVAILABLE = False
+    _anthropic_module = None  # type: ignore[assignment]
+    _ANTHROPIC_AVAILABLE = False
 
 
 # ---------------------------------------------------------------------------
@@ -35,7 +35,7 @@ def _mock_campaign(
     campaign_type: str,
     tone: str,
 ) -> dict[str, Any]:
-    """Return realistic mock campaign copy when OpenAI is unavailable."""
+    """Return realistic mock campaign copy when Anthropic Claude is unavailable."""
     subjects = {
         "email": f"Introducing {product_name} — Built for {target_audience}",
         "social": f"Discover {product_name}",
@@ -227,8 +227,14 @@ class MarketingAgent(BaseAgent):
             else:
                 return {"error": f"Unknown action: {action}"}
         except Exception as exc:
-            logger.error("marketing_agent_execute_failed", action=action, error=str(exc))
-            return {"error": str(exc)}
+            err_msg = str(exc)
+            if "api_key" in err_msg.lower() or "authentication" in err_msg.lower():
+                err_msg = (
+                    "Anthropic API key is missing or invalid. "
+                    "Set the ANTHROPIC_API_KEY environment variable."
+                )
+            logger.error("marketing_agent_execute_failed", action=action, error=err_msg)
+            return {"error": err_msg}
 
     async def stream(
         self, task: str, context: dict[str, Any] | None = None
@@ -241,26 +247,26 @@ class MarketingAgent(BaseAgent):
     # ------------------------------------------------------------------
 
     async def _generate_campaign(self, ctx: dict[str, Any]) -> dict[str, Any]:
-        """Generate campaign copy, using OpenAI if available."""
+        """Generate campaign copy, using Anthropic Claude if available."""
         product_name = ctx.get("product_name", "Equipment")
         target_audience = ctx.get("target_audience", "professionals")
         campaign_type = ctx.get("campaign_type", "email")
         tone = ctx.get("tone", "professional")
 
-        if _OPENAI_AVAILABLE and _openai_module is not None:
-            return await self._openai_campaign(
+        if _ANTHROPIC_AVAILABLE and _anthropic_module is not None:
+            return await self._claude_campaign(
                 product_name, target_audience, campaign_type, tone
             )
         return _mock_campaign(product_name, target_audience, campaign_type, tone)
 
-    async def _openai_campaign(
+    async def _claude_campaign(
         self,
         product_name: str,
         target_audience: str,
         campaign_type: str,
         tone: str,
     ) -> dict[str, Any]:
-        """Generate campaign copy via OpenAI GPT-4."""
+        """Generate campaign copy via Anthropic Claude."""
         type_instructions = {
             "email": "Write a subject line and email body",
             "social": "Write a short social media post (under 280 characters for the subject/title, and a slightly longer body)",
@@ -288,21 +294,21 @@ class MarketingAgent(BaseAgent):
 
         import json
 
-        response = _openai_module.chat.completions.create(
-            model="gpt-4",
+        client = _anthropic_module.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            system=system_content,
             messages=[
-                {"role": "system", "content": system_content},
                 {"role": "user", "content": user_content},
             ],
-            max_tokens=600,
-            temperature=0.7,
         )
 
-        raw = response.choices[0].message.content.strip()
+        raw = response.content[0].text.strip()
         try:
             parsed = json.loads(raw)
         except Exception:
-            # GPT didn't return valid JSON — wrap it
+            # Claude didn't return valid JSON — wrap it
             parsed = {
                 "campaign_subject": f"Introducing {product_name}",
                 "campaign_body": raw,
