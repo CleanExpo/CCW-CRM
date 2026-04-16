@@ -60,6 +60,13 @@ def get_current_organization_id(request: Request) -> UUID:
             query = select(Product).where(Product.organization_id == org_id)
             ...
     """
+    # UNI-1869: Demo mode bypasses org validation — portal routes return fixture data.
+    # Must be checked BEFORE reading request.state so FastAPI dependency resolves
+    # successfully even when auth middleware didn't inject organization_id.
+    from src.config.settings import get_settings
+    if get_settings().portal_demo_mode:
+        return UUID("00000000-0000-0000-0000-000000000001")
+
     # Get organization_id from request state (injected by auth middleware from JWT)
     user_id = getattr(request.state, "user_id", None)
     organization_id = getattr(request.state, "organization_id", None)
