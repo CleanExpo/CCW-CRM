@@ -411,21 +411,38 @@ async def list_orders(
     search: str | None = None,
     status: str | None = None,
     customer_id: UUID | None = None,
+    date_from: str | None = Query(None, description="ISO date, inclusive (YYYY-MM-DD)"),
+    date_to: str | None = Query(None, description="ISO date, inclusive (YYYY-MM-DD)"),
     db: AsyncSession = Depends(get_async_db),
 ):
-    """List orders with pagination and filters."""
-    # Build query
+    """List orders with pagination and filters.
+
+    UNI-1781: search now covers both order_number AND customer company name.
+    Accepts date_from/date_to as inclusive YYYY-MM-DD bounds over order_date.
+    Treats status=\"all\" (or empty) as no filter to match UI default.
+    """
+    # Join Customer so we can filter by company name in search
+    from src.db.demo_models import Customer as CustomerModel
+
     query = select(OrderModel).options(
         selectinload(OrderModel.order_items),
-        joinedload(OrderModel.customer)
-    )
+        joinedload(OrderModel.customer),
+    ).join(CustomerModel, OrderModel.customer_id == CustomerModel.id, isouter=True)
 
     # Apply filters
     if search:
-        search_filter = f"%{search}%"
-        query = query.where(OrderModel.order_number.ilike(search_filter))
+        search_filter = f"%{search.strip()}%"
+        # Match order_number OR customer name (case-insensitive)
+        from sqlalchemy import or_
+        query = query.where(
+            or_(
+                OrderModel.order_number.ilike(search_filter),
+                CustomerModel.company_name.ilike(search_filter),
+            )
+        )
 
-    if status:
+    # UNI-1781: treat status="all" as no filter (frontend sends this as default)
+    if status and status != "all":
         try:
             # Convert string to OrderStatus enum
             from src.db.demo_models import OrderStatus
@@ -439,6 +456,30 @@ async def list_orders(
 
     if customer_id:
         query = query.where(OrderModel.customer_id == customer_id)
+
+    # UNI-1781: date range on order_date (inclusive)
+    if date_from:
+        try:
+            from_dt = datetime.fromisoformat(date_from)
+            query = query.where(OrderModel.order_date >= from_dt)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date_from: {date_from}. Expected YYYY-MM-DD.",
+            )
+
+    if date_to:
+        try:
+            # End of day for inclusive upper bound
+            to_dt = datetime.fromisoformat(date_to) + timedelta(
+                hours=23, minutes=59, seconds=59
+            )
+            query = query.where(OrderModel.order_date <= to_dt)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date_to: {date_to}. Expected YYYY-MM-DD.",
+            )
 
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
