@@ -8,6 +8,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +16,7 @@ from src.api.deps import get_current_user
 from src.cache.decorators import cached, invalidate_cache
 from src.config.database import get_async_db
 from src.db.demo_models import Product as ProductModel
-from src.db.inventory_models import ProductStockByLocation
+from src.db.inventory_models import ProductDangerousGoods, ProductStockByLocation
 from src.db.schemas import (
     PaginatedResponse,
     Product,
@@ -26,6 +27,32 @@ from src.db.schemas import (
 from src.services.sse_service import sse_service
 
 router = APIRouter(prefix="/api/products", tags=["products"], dependencies=[Depends(get_current_user)])
+
+
+# ── Dangerous Goods Schemas ────────────────────────────────────────────────────
+
+class DangerousGoodsUpsert(BaseModel):
+    """Request body for setting dangerous goods classification on a product."""
+
+    adg_class: str = Field(..., description="ADG Code class number, e.g. '8' for Corrosives")
+    un_number: str = Field(..., description="UN number, e.g. 'UN1760'")
+    proper_shipping_name: str = Field(..., description="ADG proper shipping name")
+    packing_group: str | None = Field(None, description="Packing group: I, II, or III")
+
+
+class DangerousGoodsResponse(BaseModel):
+    """Response schema for dangerous goods classification."""
+
+    product_id: UUID
+    adg_class: str
+    un_number: str
+    proper_shipping_name: str
+    packing_group: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 @router.get("", response_model=PaginatedResponse)
@@ -353,4 +380,95 @@ async def delete_product(
         "timestamp": datetime.utcnow().isoformat(),
     })
 
+    return None
+
+
+# ── Dangerous Goods Endpoints (ADG Code compliance) ───────────────────────────
+
+
+@router.get("/{product_id}/dangerous-goods", response_model=DangerousGoodsResponse)
+async def get_product_dangerous_goods(
+    product_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+) -> DangerousGoodsResponse:
+    """Get the dangerous goods classification for a product.
+
+    Returns 404 if the product does not exist or is not classified as dangerous goods.
+    """
+    # Verify product exists
+    product_result = await db.execute(select(ProductModel).where(ProductModel.id == product_id))
+    if not product_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    dg_result = await db.execute(
+        select(ProductDangerousGoods).where(ProductDangerousGoods.product_id == product_id)
+    )
+    dg = dg_result.scalar_one_or_none()
+    if not dg:
+        raise HTTPException(status_code=404, detail="Product is not classified as dangerous goods")
+
+    return DangerousGoodsResponse.model_validate(dg)
+
+
+@router.put("/{product_id}/dangerous-goods", response_model=DangerousGoodsResponse, status_code=200)
+async def upsert_product_dangerous_goods(
+    product_id: UUID,
+    dg_data: DangerousGoodsUpsert,
+    db: AsyncSession = Depends(get_async_db),
+) -> DangerousGoodsResponse:
+    """Set or update the dangerous goods classification for a product (ADG Code).
+
+    Creates the record if it does not exist; updates it if it does.
+    """
+    # Verify product exists
+    product_result = await db.execute(select(ProductModel).where(ProductModel.id == product_id))
+    if not product_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    dg_result = await db.execute(
+        select(ProductDangerousGoods).where(ProductDangerousGoods.product_id == product_id)
+    )
+    dg = dg_result.scalar_one_or_none()
+
+    if dg:
+        dg.adg_class = dg_data.adg_class
+        dg.un_number = dg_data.un_number
+        dg.proper_shipping_name = dg_data.proper_shipping_name
+        dg.packing_group = dg_data.packing_group
+    else:
+        dg = ProductDangerousGoods(
+            product_id=product_id,
+            adg_class=dg_data.adg_class,
+            un_number=dg_data.un_number,
+            proper_shipping_name=dg_data.proper_shipping_name,
+            packing_group=dg_data.packing_group,
+        )
+        db.add(dg)
+
+    await db.commit()
+    await db.refresh(dg)
+    return DangerousGoodsResponse.model_validate(dg)
+
+
+@router.delete("/{product_id}/dangerous-goods", status_code=204, response_model=None)
+async def delete_product_dangerous_goods(
+    product_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+) -> None:
+    """Remove dangerous goods classification from a product.
+
+    Returns 204 if removed (or if the product was never classified as DG).
+    """
+    # Verify product exists
+    product_result = await db.execute(select(ProductModel).where(ProductModel.id == product_id))
+    if not product_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    dg_result = await db.execute(
+        select(ProductDangerousGoods).where(ProductDangerousGoods.product_id == product_id)
+    )
+    dg = dg_result.scalar_one_or_none()
+    if dg:
+        await db.delete(dg)
+        await db.commit()
     return None

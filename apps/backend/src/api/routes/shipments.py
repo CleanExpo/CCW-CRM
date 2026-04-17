@@ -23,8 +23,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
-from src.db.demo_models import Order
-from src.db.inventory_models import InboundShipment, OutboundShipment, PurchaseOrder, Supplier
+from src.db.demo_models import Order, OrderItem
+from src.db.inventory_models import (
+    InboundShipment,
+    OutboundShipment,
+    ProductDangerousGoods,
+    PurchaseOrder,
+    Supplier,
+)
 from src.security.webhook_verification import (
     get_fedex_verifier,
     get_ups_verifier,
@@ -76,6 +82,11 @@ class OutboundShipmentCreate(BaseModel):
     shipped_date: datetime | None = None
     expected_delivery_date: datetime | None = None
     notes: str | None = None
+    # ADG Code compliance: required when order contains dangerous goods
+    adg_declaration_url: str | None = Field(
+        None,
+        description="URL to the ADG declaration PDF. Required when order contains dangerous goods.",
+    )
 
 
 class OutboundShipmentUpdate(BaseModel):
@@ -134,6 +145,7 @@ class OutboundShipmentResponse(BaseModel):
     tracking_events: dict | None
     last_tracking_update: datetime | None
     notes: str | None
+    adg_declaration_url: str | None
     created_at: datetime
 
     class Config:
@@ -376,6 +388,36 @@ async def create_outbound_shipment(
     order = order_result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=400, detail="Order not found")
+
+    # ADG Code compliance: reject dispatch if order contains dangerous goods without declaration
+    order_items_result = await db.execute(
+        select(OrderItem).where(OrderItem.order_id == order.id)
+    )
+    order_items = order_items_result.scalars().all()
+    if order_items:
+        product_ids = [item.product_id for item in order_items]
+        dg_result = await db.execute(
+            select(ProductDangerousGoods).where(
+                ProductDangerousGoods.product_id.in_(product_ids)
+            )
+        )
+        dg_records = dg_result.scalars().all()
+        if dg_records and not shipment_data.adg_declaration_url:
+            dg_classes = ", ".join(
+                f"Class {r.adg_class} ({r.un_number})" for r in dg_records
+            )
+            logger.warning(
+                "Outbound shipment blocked: dangerous goods without ADG declaration",
+                order_id=str(order.id),
+                dg_classes=dg_classes,
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Order contains dangerous goods ({dg_classes}). "
+                    "An ADG declaration PDF (adg_declaration_url) is required before dispatch."
+                ),
+            )
 
     # Create shipment
     shipment = OutboundShipment(

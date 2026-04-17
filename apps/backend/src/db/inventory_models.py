@@ -453,6 +453,9 @@ class OutboundShipment(Base):
     last_tracking_update: datetime | None = Column(DateTime(timezone=True), nullable=True)
 
     notes: str | None = Column(Text, nullable=True)
+    # ADG Code compliance: URL to the dangerous goods declaration PDF
+    adg_declaration_url: str | None = Column(String(1000), nullable=True)
+
     created_at: datetime = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -699,3 +702,46 @@ class ProductVariant(Base):
 
     def __repr__(self) -> str:
         return f"<ProductVariant(product_id={self.product_id}, sku={self.variant_sku}, name={self.name})>"
+
+
+class ProductDangerousGoods(Base):
+    """Dangerous goods classification for products (Australian Dangerous Goods Code).
+
+    Side-table approach — keeps demo_models.py (Product) locked while
+    allowing DG classification metadata on any product.
+
+    One record per product (unique on product_id).
+    Presence of this record means the product IS a dangerous good.
+    """
+
+    __tablename__ = "product_dangerous_goods"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # Foreign key to products table (defined in demo_models.py)
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,  # One DG record per product
+        index=True,
+    )
+
+    # ADG Code fields
+    adg_class: str = Column(String(50), nullable=False)  # e.g. "8" for Corrosives
+    un_number: str = Column(String(20), nullable=False)  # e.g. "UN1760"
+    proper_shipping_name: str = Column(String(255), nullable=False)
+    packing_group: str | None = Column(String(10), nullable=True)  # I, II, or III
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ProductDangerousGoods(product_id={self.product_id}, class={self.adg_class}, un={self.un_number})>"
