@@ -699,3 +699,136 @@ class ProductVariant(Base):
 
     def __repr__(self) -> str:
         return f"<ProductVariant(product_id={self.product_id}, sku={self.variant_sku}, name={self.name})>"
+
+
+# ============================================
+# Serial Number & Lot/Batch Tracking (UNI-1823 Phase 1)
+# ============================================
+
+
+class SerialStatus(str, enum.Enum):
+    """Status of an individual serialised unit."""
+
+    IN_STOCK = "in_stock"
+    SOLD = "sold"
+    RETURNED = "returned"
+    SCRAPPED = "scrapped"
+    LOST = "lost"
+
+
+class InventoryLot(Base):
+    """Lot/batch tracking for purchased inventory.
+
+    Records groups of identical items received together from a supplier,
+    enabling WHS lot traceability and recall capability.
+    """
+
+    __tablename__ = "inventory_lots"
+
+    __table_args__ = (
+        UniqueConstraint("product_id", "lot_number", name="uq_inventory_lot_product_lot"),
+    )
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    lot_number: str = Column(String(100), nullable=False, index=True)
+    batch_number: str | None = Column(String(100), nullable=True)
+
+    quantity_received: int = Column(Integer, nullable=False, default=0)
+    quantity_remaining: int = Column(Integer, nullable=False, default=0)
+
+    received_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    expiry_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
+
+    supplier_id: UUID | None = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("suppliers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    purchase_order_id: UUID | None = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("purchase_orders.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    notes: str | None = Column(Text, nullable=True)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    serials = relationship(
+        "InventorySerial", back_populates="lot", passive_deletes=True
+    )
+
+    def __repr__(self) -> str:
+        return f"<InventoryLot(product_id={self.product_id}, lot_number={self.lot_number})>"
+
+
+class InventorySerial(Base):
+    """Serial number tracking for individual inventory items.
+
+    Enables warranty lookups and unit-level traceability from
+    purchase receipt through to sale.
+    """
+
+    __tablename__ = "inventory_serials"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    serial_number: str = Column(String(255), unique=True, nullable=False, index=True)
+
+    status: str = Column(
+        String(20), nullable=False, default=SerialStatus.IN_STOCK, index=True
+    )
+
+    location: str | None = Column(String(50), nullable=True, index=True)
+
+    lot_id: UUID | None = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("inventory_lots.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    received_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    sold_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    notes: str | None = Column(Text, nullable=True)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    lot = relationship("InventoryLot", back_populates="serials")
+
+    def __repr__(self) -> str:
+        return f"<InventorySerial(product_id={self.product_id}, serial={self.serial_number}, status={self.status})>"

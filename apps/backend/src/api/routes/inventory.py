@@ -3,7 +3,7 @@
 Provides RESTful endpoints for managing stock across multiple locations.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
@@ -18,6 +18,8 @@ from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Product
 from src.db.inventory_models import (
+    InventoryLot,
+    InventorySerial,
     ProductAttribute,
     ProductBarcode,
     ProductStockByLocation,
@@ -2409,7 +2411,7 @@ async def get_active_stock_takes(
         counted_stmt = select(func.count()).select_from(StockTakeItem).where(
             and_(
                 StockTakeItem.stock_take_id == st.id,
-                StockTakeItem.actual_quantity.isnot(None)
+                StockTakeItem.counted_qty.isnot(None)
             )
         )
         counted_result = await db.execute(counted_stmt)
@@ -2419,8 +2421,8 @@ async def get_active_stock_takes(
 
         stock_takes.append(ActiveStockTake(
             id=st.id,
-            name=st.notes or f"Stock Take {st.id}",
-            started_at=st.scheduled_date or datetime.now(),
+            name=f"Stock Take {st.id}",
+            started_at=st.created_at,
             started_by="System",  # Would need user tracking
             location=None,
             items_counted=items_counted,
@@ -2505,3 +2507,79 @@ async def generate_cycle_count_schedule(
         b_count=b_count,
         c_count=c_count
     )
+
+
+# ============================================
+# Serial Number & Lot/Batch Tracking (UNI-1823 Phase 1)
+# ============================================
+
+
+@router.get("/serials")
+async def list_serials(
+    product_id: Annotated[str | None, Query(description="Filter by product UUID")] = None,
+    status: Annotated[str | None, Query(description="Filter by status")] = None,
+    db: AsyncSession = Depends(get_async_db),
+) -> list[dict]:
+    """List inventory serials, optionally filtered by product or status."""
+    stmt = select(InventorySerial)
+    if product_id is not None:
+        try:
+            pid = UUID(product_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid product_id")
+        stmt = stmt.where(InventorySerial.product_id == pid)
+    if status is not None:
+        stmt = stmt.where(InventorySerial.status == status)
+    stmt = stmt.order_by(InventorySerial.created_at.desc())
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+    return [
+        {
+            "id": str(s.id),
+            "product_id": str(s.product_id),
+            "serial_number": s.serial_number,
+            "status": s.status,
+            "location": s.location,
+            "lot_id": str(s.lot_id) if s.lot_id else None,
+            "received_at": s.received_at.isoformat() if s.received_at else None,
+            "sold_at": s.sold_at.isoformat() if s.sold_at else None,
+            "notes": s.notes,
+            "created_at": s.created_at.isoformat(),
+        }
+        for s in rows
+    ]
+
+
+@router.get("/lots")
+async def list_lots(
+    product_id: Annotated[str | None, Query(description="Filter by product UUID")] = None,
+    db: AsyncSession = Depends(get_async_db),
+) -> list[dict]:
+    """List inventory lots, optionally filtered by product."""
+    stmt = select(InventoryLot)
+    if product_id is not None:
+        try:
+            pid = UUID(product_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid product_id")
+        stmt = stmt.where(InventoryLot.product_id == pid)
+    stmt = stmt.order_by(InventoryLot.created_at.desc())
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+    return [
+        {
+            "id": str(lot.id),
+            "product_id": str(lot.product_id),
+            "lot_number": lot.lot_number,
+            "batch_number": lot.batch_number,
+            "quantity_received": lot.quantity_received,
+            "quantity_remaining": lot.quantity_remaining,
+            "received_at": lot.received_at.isoformat() if lot.received_at else None,
+            "expiry_date": lot.expiry_date.isoformat() if lot.expiry_date else None,
+            "supplier_id": str(lot.supplier_id) if lot.supplier_id else None,
+            "purchase_order_id": str(lot.purchase_order_id) if lot.purchase_order_id else None,
+            "notes": lot.notes,
+            "created_at": lot.created_at.isoformat(),
+        }
+        for lot in rows
+    ]
