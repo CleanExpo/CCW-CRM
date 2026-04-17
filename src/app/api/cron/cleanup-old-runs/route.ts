@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
 
 /**
@@ -16,38 +16,17 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      logger.error("Cleanup cron: Missing Supabase credentials");
-      return NextResponse.json(
-        { success: false, error: "Missing Supabase credentials" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const { data, error } = await supabase
-      .from("agent_runs")
-      .delete()
-      .in("status", ["completed", "failed"])
-      .lt("completed_at", thirtyDaysAgo.toISOString())
-      .select("id");
+    const result = await prisma.agentRun.deleteMany({
+      where: {
+        status: { in: ["completed", "failed"] },
+        completedAt: { lt: thirtyDaysAgo },
+      },
+    });
 
-    if (error) {
-      logger.error("Cleanup cron error", { error: error.message });
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
-    }
-
-    const deletedCount = data?.length ?? 0;
+    const deletedCount = result.count;
 
     logger.info("Cleanup old runs cron", {
       deletedCount,
