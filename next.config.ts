@@ -3,6 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  serverExternalPackages: ['pg'],
   typedRoutes: false,
   productionBrowserSourceMaps: false,
   images: {
