@@ -1,20 +1,10 @@
 import { LoginForm } from '@/components/auth/login-form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthPageShell } from '@/components/auth/auth-page-shell';
 
 export default function LoginPage() {
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-center text-2xl font-bold" as="h1">
-          CCW Online
-        </CardTitle>
-        <CardDescription className="text-center">
-          Sign in to your account to continue
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <LoginForm />
-      </CardContent>
-    </Card>
+    <AuthPageShell title="CCW Online" description="Sign in to your account to continue">
+      <LoginForm variant="marketing" />
+    </AuthPageShell>
   );
 }
