@@ -112,7 +112,7 @@ jiter==0.13.0
     # via anthropic
 jsonpatch==1.33
     # via langchain-core
-jsonpointer==3.0.0
+jsonpointer==3.1.1
     # via jsonpatch
 langchain==1.2.10
     # via ccw-erp-backend (pyproject.toml)
