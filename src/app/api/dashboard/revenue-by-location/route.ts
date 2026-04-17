@@ -1,25 +1,22 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/prisma';
 
 export async function GET() {
   try {
-    const supabase = createServerClient();
-    const { data: customers } = await supabase.from('customers').select('id, city');
-
-    const { data: orders } = await supabase
-      .from('orders')
-      .select('customer_id, total, status')
-      .eq('status', 'delivered');
+    const customers = await prisma.customer.findMany({ select: { id: true, city: true } });
+    const orders = await prisma.order.findMany({
+      where: { status: 'delivered' },
+      select: { customerId: true, total: true, status: true },
+    });
 
     const customerCityMap = new Map<string, string>();
-    for (const c of customers ?? []) {
+    for (const c of customers) {
       customerCityMap.set(c.id, c.city || 'Unknown');
     }
 
-    // Aggregate revenue and order count by city
     const revenueByCity: Record<string, { revenue: number; order_count: number }> = {};
-    for (const order of orders ?? []) {
-      const city = customerCityMap.get(order.customer_id) || 'Unknown';
+    for (const order of orders) {
+      const city = customerCityMap.get(order.customerId) || 'Unknown';
       if (!revenueByCity[city]) {
         revenueByCity[city] = { revenue: 0, order_count: 0 };
       }

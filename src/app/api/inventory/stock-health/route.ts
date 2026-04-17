@@ -1,31 +1,26 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/prisma';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const threshold = parseInt(searchParams.get('threshold') || '20', 10);
 
-    const supabase = createServerClient();
-    const { data: products } = await supabase
-      .from('products')
-      .select('id, sku, name, stock, warehouse_location')
-      .eq('is_active', true);
+    const products = await prisma.product.findMany({
+      where: { isActive: true },
+      select: { id: true, sku: true, name: true, stock: true, warehouseLocation: true },
+    });
 
-    const items = products ?? [];
-
-    // Build stock_by_location matching StockByLocation interface: { location, stock, reserved, available }
-    const buildStockByLocation = (p: { stock: number; warehouse_location: string | null }) => [
+    const buildStockByLocation = (p: { stock: number; warehouseLocation: string | null }) => [
       {
-        location: p.warehouse_location || 'brisbane',
+        location: p.warehouseLocation || 'brisbane',
         stock: p.stock,
         reserved: 0,
         available: p.stock,
       },
     ];
 
-    // Categorize products
-    const critical = items
+    const critical = products
       .filter((p) => p.stock === 0)
       .map((p) => ({
         product_id: p.id,
@@ -37,7 +32,7 @@ export async function GET(request: Request) {
         locations: buildStockByLocation(p),
       }));
 
-    const low = items
+    const low = products
       .filter((p) => p.stock > 0 && p.stock <= threshold)
       .map((p) => ({
         product_id: p.id,

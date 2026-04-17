@@ -1,23 +1,20 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/prisma';
 
 export async function GET() {
   try {
-    const supabase = createServerClient();
-    const { data: quotes } = await supabase.from('quotes').select('status, total');
+    const quotes = await prisma.quote.findMany({ select: { status: true, total: true } });
 
-    const total = quotes?.length ?? 0;
-    const accepted = quotes?.filter((q) => q.status === 'accepted').length ?? 0;
-    const rejected = quotes?.filter((q) => q.status === 'rejected').length ?? 0;
-    const pending =
-      quotes?.filter((q) => ['draft', 'pending', 'sent'].includes(q.status)).length ?? 0;
-    const expired = quotes?.filter((q) => q.status === 'expired').length ?? 0;
-    const convertedRevenue =
-      quotes
-        ?.filter((q) => q.status === 'accepted')
-        .reduce((sum, q) => sum + Number(q.total || 0), 0) ?? 0;
+    const total = quotes.length;
+    const accepted = quotes.filter((q) => q.status === 'accepted').length;
+    const rejected = quotes.filter((q) => q.status === 'rejected').length;
+    const pending = quotes.filter((q) => ['draft', 'pending', 'sent'].includes(q.status)).length;
+    const expired = quotes.filter((q) => q.status === 'expired').length;
+    const convertedRevenue = quotes
+      .filter((q) => q.status === 'accepted')
+      .reduce((sum, q) => sum + Number(q.total || 0), 0);
     const avgValue =
-      total > 0 ? quotes!.reduce((sum, q) => sum + Number(q.total || 0), 0) / total : 0;
+      total > 0 ? quotes.reduce((sum, q) => sum + Number(q.total || 0), 0) / total : 0;
 
     return NextResponse.json({
       total_quotes: total,

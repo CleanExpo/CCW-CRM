@@ -1,21 +1,20 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/prisma';
 
 export async function GET() {
   try {
-    const supabase = createServerClient();
-    const { data: orders } = await supabase.from('orders').select('status');
+    const orders = await prisma.order.findMany({ select: { status: true } });
 
     const breakdown: Record<string, number> = {};
     let totalActive = 0;
-    for (const order of orders ?? []) {
+    for (const order of orders) {
       breakdown[order.status] = (breakdown[order.status] || 0) + 1;
       if (!['delivered', 'cancelled'].includes(order.status)) {
         totalActive++;
       }
     }
 
-    const totalOrders = orders?.length ?? 0;
+    const totalOrders = orders.length;
     const byStatus = Object.entries(breakdown).map(([status, count]) => ({
       status,
       count,
