@@ -1,8 +1,9 @@
 /**
- * API Client for FastAPI Backend
+ * Browser API client
  *
- * Replaces Supabase client with direct fetch calls to FastAPI.
- * Handles JWT authentication via cookies.
+ * Domain APIs call the configured backend (`NEXT_PUBLIC_BACKEND_URL`).
+ * Auth under `/api/auth/*` resolves same-origin to Next.js Route Handlers.
+ * Sends JWT from storage as `Authorization` plus optional `X-User-Id` from claims.
  *
  * Enhancements (NODEJS-Updates):
  * - X-Request-ID header for distributed tracing
@@ -14,6 +15,21 @@
 import { getBackendUrl } from "@/lib/api/backend-url";
 
 const BACKEND_URL = getBackendUrl();
+
+function resolveRequestUrl(endpoint: string): string {
+  if (endpoint.startsWith('http')) return endpoint;
+  if (endpoint.startsWith('/api/auth/')) {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}${endpoint}`;
+    }
+    const base =
+      process.env.NEXT_PUBLIC_FRONTEND_URL?.replace(/\/$/, '') ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+      'http://localhost:3000';
+    return `${base}${endpoint}`;
+  }
+  return `${BACKEND_URL}${endpoint}`;
+}
 
 /** Default request timeout in milliseconds */
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -71,6 +87,7 @@ function getAuthToken(): string | null {
  * Decode JWT token to get payload (without verification)
  */
 interface JWTPayload {
+  sub?: string;
   user_id?: string;
   [key: string]: unknown;
 }
@@ -100,7 +117,7 @@ async function attemptTokenRefresh(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
   try {
-    const response = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
+    const response = await fetch(resolveRequestUrl('/api/auth/refresh'), {
       method: 'POST',
       credentials: 'include',
     });
@@ -178,15 +195,21 @@ async function fetchApi<T>(
       headers['Authorization'] = `Bearer ${token}`;
 
       const payload = decodeJWT(token);
-      if (payload && payload.user_id) {
-        headers['X-User-Id'] = payload.user_id;
+      const uid =
+        typeof payload?.sub === 'string'
+          ? payload.sub
+          : typeof payload?.user_id === 'string'
+            ? payload.user_id
+            : null;
+      if (uid) {
+        headers['X-User-Id'] = uid;
       }
     }
 
     return headers;
   };
 
-  const url = endpoint.startsWith('http') ? endpoint : `${BACKEND_URL}${endpoint}`;
+  const url = resolveRequestUrl(endpoint);
 
   let lastError: ApiClientError | null = null;
 

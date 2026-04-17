@@ -1,11 +1,8 @@
 /**
  * Authentication API
  *
- * Uses Supabase Auth for production, falls back to FastAPI backend for local dev.
+ * Same-origin Next.js Route Handlers under `/api/auth/*` (Postgres + JWT).
  */
-
-import { getSupabase } from '@/lib/supabase/client';
-import { apiClient } from './client';
 
 export interface User {
   id: string;
@@ -38,34 +35,23 @@ export interface RegisterRequest {
 export interface RegisterResponse {
   user: User;
   message: string;
+  access_token?: string;
+  token_type?: string;
 }
 
-/**
- * Check if we should use Supabase Auth (production) or FastAPI (local dev)
- */
-function isSupabaseAuthEnabled(): boolean {
-  // Use Supabase Auth when NEXT_PUBLIC_SUPABASE_URL is configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  return supabaseUrl.length > 0 && supabaseUrl.includes('supabase.co');
+async function readAuthError(res: Response): Promise<string> {
+  const err = await res.json().catch(() => ({}));
+  return (
+    (err as { detail?: string }).detail ||
+    (err as { error?: string }).error ||
+    `Request failed (${res.status})`
+  );
 }
 
-/**
- * Authentication API methods
- */
 export const authApi = {
-  /**
-   * Login with email and password
-   */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const { rememberMe = true } = credentials;
 
-    // Always use the same-origin proxy route for login.
-    // This solves two problems:
-    // 1. Supabase Auth intercepts when NEXT_PUBLIC_SUPABASE_URL is set,
-    //    but users are in public.users not auth.users
-    // 2. Cross-domain cookies: Railway backend sets Domain=localhost
-    //    which browsers on vercel.app ignore. The proxy sets the cookie
-    //    on the correct domain so Next.js middleware can read it.
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -76,14 +62,11 @@ export const authApi = {
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.detail || errorData.error || 'Login failed');
+      throw new Error(await readAuthError(res));
     }
 
     const response: LoginResponse = await res.json();
 
-    // Store token in client-side storage for subsequent API calls
-    // (the proxy also sets an httpOnly cookie for SSR middleware)
     if (response.access_token && typeof window !== 'undefined') {
       if (rememberMe) {
         localStorage.setItem('auth_token', response.access_token);
@@ -97,167 +80,126 @@ export const authApi = {
     return response;
   },
 
-  /**
-   * Register a new user
-   */
   async register(data: RegisterRequest): Promise<RegisterResponse> {
-    if (isSupabaseAuthEnabled()) {
-      const { data: authData, error } = await getSupabase().auth.signUp({
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         email: data.email,
         password: data.password,
-        options: {
-          data: { full_name: data.full_name },
-        },
-      });
+        full_name: data.full_name,
+      }),
+    });
 
-      if (error) throw new Error(error.message);
-
-      return {
-        user: {
-          id: authData.user?.id || '',
-          email: authData.user?.email || '',
-          full_name: data.full_name,
-          is_active: true,
-          is_admin: false,
-          created_at: authData.user?.created_at || new Date().toISOString(),
-        },
-        message: 'User registered successfully',
-      };
+    if (!res.ok) {
+      throw new Error(await readAuthError(res));
     }
 
-    return apiClient.post<RegisterResponse>('/api/auth/register', data);
+    const response: RegisterResponse = await res.json();
+
+    if (response.access_token && typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', response.access_token);
+      sessionStorage.removeItem('auth_token');
+    }
+
+    return response;
   },
 
-  /**
-   * Logout (clear auth token)
-   */
   async logout(): Promise<void> {
-    // Clear token from both storage locations
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
       sessionStorage.removeItem('auth_token');
     }
 
-    // Clear the httpOnly auth cookie via the proxy route
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
     } catch {
-      // Ignore errors - token is already cleared from client storage
-    }
-
-    if (isSupabaseAuthEnabled()) {
-      try {
-        await getSupabase().auth.signOut();
-      } catch {
-        // Ignore - Supabase session may not exist
-      }
+      // Ignore — client storage already cleared
     }
   },
 
-  /**
-   * Get current user
-   */
   async getCurrentUser(): Promise<User | null> {
-    if (isSupabaseAuthEnabled()) {
-      const {
-        data: { user },
-      } = await getSupabase().auth.getUser();
-      if (!user) return null;
-
-      return {
-        id: user.id,
-        email: user.email || '',
-        full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-        is_active: true,
-        is_admin: user.user_metadata?.is_admin ?? true,
-        created_at: user.created_at,
-      };
-    }
-
     try {
-      return await apiClient.get<User>('/api/auth/me');
+      const res = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'same-origin',
+      });
+      if (!res.ok) return null;
+      return res.json();
     } catch {
       return null;
     }
   },
 
-  /**
-   * Update current user profile
-   */
   async updateProfile(data: Partial<User>): Promise<User> {
-    if (isSupabaseAuthEnabled()) {
-      const { data: authData, error } = await getSupabase().auth.updateUser({
-        data: { full_name: data.full_name },
-      });
+    const body: { full_name?: string; email?: string } = {};
+    if (data.full_name !== undefined) body.full_name = data.full_name;
+    if (data.email !== undefined) body.email = data.email;
 
-      if (error) throw new Error(error.message);
-
-      return {
-        id: authData.user?.id || '',
-        email: authData.user?.email || '',
-        full_name: authData.user?.user_metadata?.full_name,
-        is_active: true,
-        is_admin: authData.user?.user_metadata?.is_admin ?? true,
-        created_at: authData.user?.created_at || new Date().toISOString(),
-      };
+    if (Object.keys(body).length === 0) {
+      throw new Error('No updatable fields provided (use full_name or email)');
     }
 
-    return apiClient.patch<User>('/api/auth/me', data);
+    const res = await fetch('/api/auth/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      throw new Error(await readAuthError(res));
+    }
+
+    return res.json();
   },
 
-  /**
-   * Change password
-   */
   async changePassword(
-    _currentPassword: string,
+    currentPassword: string,
     newPassword: string
   ): Promise<{ message: string }> {
-    if (isSupabaseAuthEnabled()) {
-      const { error } = await getSupabase().auth.updateUser({
-        password: newPassword,
-      });
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    });
 
-      if (error) throw new Error(error.message);
-      return { message: 'Password changed successfully' };
+    if (!res.ok) {
+      throw new Error(await readAuthError(res));
     }
 
-    return apiClient.post('/api/auth/change-password', {
-      current_password: _currentPassword,
-      new_password: newPassword,
-    });
+    return res.json();
   },
 
-  /**
-   * Request password reset
-   */
   async requestPasswordReset(email: string): Promise<{ message: string }> {
-    if (isSupabaseAuthEnabled()) {
-      const { error } = await getSupabase().auth.resetPasswordForEmail(email);
-      if (error) throw new Error(error.message);
-      return {
-        message: 'If an account exists with that email, a password reset link has been sent.',
-      };
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      throw new Error(await readAuthError(res));
     }
 
-    return apiClient.post('/api/auth/forgot-password', { email });
+    return res.json();
   },
 
-  /**
-   * Reset password with token
-   */
-  async resetPassword(_token: string, newPassword: string): Promise<{ message: string }> {
-    if (isSupabaseAuthEnabled()) {
-      const { error } = await getSupabase().auth.updateUser({
-        password: newPassword,
-      });
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, new_password: newPassword }),
+    });
 
-      if (error) throw new Error(error.message);
-      return { message: 'Password has been reset successfully' };
+    if (!res.ok) {
+      throw new Error(await readAuthError(res));
     }
 
-    return apiClient.post('/api/auth/reset-password', {
-      token: _token,
-      new_password: newPassword,
-    });
+    return res.json();
   },
 };
