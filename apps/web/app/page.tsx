@@ -249,7 +249,7 @@ export default async function Home() {
 
       {/* Footer */}
       <footer className="border-t">
-        <div className="container mx-auto px-6 py-8 text-center text-sm text-slate-600">
+        <div className="container mx-auto px-8 py-8 text-center text-sm text-slate-600">
           &copy; {new Date().getFullYear()} CCW Equipment Suppliers. Brisbane | Sydney | Melbourne
         </div>
       </footer>

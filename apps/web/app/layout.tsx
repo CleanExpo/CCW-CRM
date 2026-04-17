@@ -1,40 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { cookies } from 'next/headers';
 import './globals.css';
 import { Toaster } from '@/components/ui/toast';
 import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
 import { I18nProvider } from '@/components/providers/i18n-provider';
-import { defaultLocale, type Locale, isValidLocale } from '@/i18n/config';
+import { defaultLocale } from '@/i18n/config';
 import { JsonLd } from '@/components/seo/JsonLd';
+import enMessages from '@/i18n/messages/en.json';
 
 const inter = Inter({ subsets: ['latin'] });
-
-/**
- * Get the current locale from cookies or default to English
- */
-async function getLocale(): Promise<Locale> {
-  const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('NEXT_LOCALE');
-
-  if (localeCookie?.value && isValidLocale(localeCookie.value)) {
-    return localeCookie.value as Locale;
-  }
-
-  return defaultLocale;
-}
-
-/**
- * Load messages for the current locale
- */
-async function getMessages(locale: Locale) {
-  try {
-    return (await import(`@/i18n/messages/${locale}.json`)).default;
-  } catch (error) {
-    // Fallback to English if locale messages not found
-    return (await import(`@/i18n/messages/en.json`)).default;
-  }
-}
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -107,13 +81,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages(locale);
+  // UNI-1949: locale is hardcoded to defaultLocale ('en') because the app is
+  // Australia-English only. Removing the server-side cookies() lookup fixes
+  // a FUNCTION_INVOCATION_FAILED crash on Vercel's Lambda runtime that occurred
+  // when the Root Layout was async + awaited cookies() under Next.js 16.
+  // next-intl server components still resolve locale via i18n/request.ts (plugin).
+  const locale = defaultLocale;
+  const messages = enMessages;
 
   const orgSchema: Record<string, unknown> = {
     '@context': 'https://schema.org',
