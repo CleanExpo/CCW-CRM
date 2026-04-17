@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import './globals.css';
 import { Toaster } from '@/components/ui/toast';
+import { Toaster as HotToaster } from 'react-hot-toast';
 import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
 import { I18nProvider } from '@/components/providers/i18n-provider';
 import { defaultLocale, type Locale, isValidLocale } from '@/i18n/config';
@@ -188,6 +189,24 @@ export default async function RootLayout({
           <RouteProgressBar />
           {children}
           <Toaster />
+          <HotToaster
+            position="top-center"
+            toastOptions={{
+              duration: 4500,
+              style: {
+                background: 'hsl(240 6% 10%)',
+                color: 'hsl(0 0% 98%)',
+                border: '1px solid hsl(0 0% 100% / 0.1)',
+                boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.45)',
+              },
+              success: {
+                iconTheme: { primary: '#22c55e', secondary: '#18181b' },
+              },
+              error: {
+                iconTheme: { primary: '#f87171', secondary: '#18181b' },
+              },
+            }}
+          />
         </I18nProvider>
         <JsonLd id="org-schema" data={[orgSchema, websiteSchema]} />
       </body>
