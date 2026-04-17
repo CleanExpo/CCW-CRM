@@ -1,59 +1,47 @@
-/**
- * Auth Login Proxy Route
- *
- * Proxies login requests to the FastAPI backend and sets the auth_token
- * cookie on the response. This solves the cross-domain cookie problem:
- * Railway backend sets cookies with Domain=localhost which browsers on
- * vercel.app ignore. By proxying through this same-origin route, the
- * cookie is set on the vercel.app domain where the middleware can read it.
- */
-
-import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+import { NextRequest } from 'next/server';
+import { loginBodySchema } from '@/lib/auth/schemas';
+import { readJsonBody, jsonDetail, jsonValidationError, jsonOk } from '@/lib/auth/http';
+import {
+  findAppUserByEmail,
+  updateLastLogin,
+} from '@/lib/auth/app-user-repo';
+import { verifyPassword } from '@/lib/auth/password';
+import { signTokenPair } from '@/lib/auth/jwt-tokens';
+import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
+import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
 
 export async function POST(request: NextRequest) {
+  const parsedBody = await readJsonBody(request);
+  if (!parsedBody.ok) return parsedBody.response;
+
+  const parsed = loginBodySchema.safeParse(parsedBody.body);
+  if (!parsed.success) return jsonValidationError(parsed.error);
+
   try {
-    const body = await request.json();
+    const row = await findAppUserByEmail(parsed.data.email);
+    if (!row) {
+      return jsonDetail('Invalid email or password', 401);
+    }
+    if (!row.is_active) {
+      return jsonDetail('Account is disabled', 403);
+    }
 
-    // Forward login request to FastAPI backend
-    const backendResponse = await fetch(`${BACKEND_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: body.email,
-        password: body.password,
-      }),
+    const ok = await verifyPassword(parsed.data.password, row.password_hash);
+    if (!ok) {
+      return jsonDetail('Invalid email or password', 401);
+    }
+
+    await updateLastLogin(row.id);
+    const tokens = await signTokenPair(row.id, row.email, row.is_admin);
+    const response = jsonOk({
+      access_token: tokens.access_token,
+      token_type: 'bearer',
+      user: mapAppUserRowToPublic(row),
     });
-
-    const data = await backendResponse.json();
-
-    if (!backendResponse.ok) {
-      return NextResponse.json(data, { status: backendResponse.status });
-    }
-
-    // Build the response with the auth data
-    const response = NextResponse.json(data);
-
-    // Set auth_token cookie on the same-origin domain (vercel.app)
-    // This is what the Next.js middleware reads for route protection
-    if (data.access_token) {
-      response.cookies.set("auth_token", data.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 8, // 8 hours (matches backend JWT expiry)
-      });
-    }
-
+    setAuthSessionCookies(response, tokens);
     return response;
-  } catch (error) {
-    console.error("[auth/login proxy] Error:", error);
-    return NextResponse.json(
-      { error: "Authentication service unavailable" },
-      { status: 503 }
-    );
+  } catch (e) {
+    console.error('[auth/login]', e);
+    return jsonDetail('Authentication service unavailable', 503);
   }
 }
