@@ -50,6 +50,7 @@ import { Cin7SyncStatusWidget } from '@/components/dashboard/Cin7SyncStatusWidge
 // NODEJS-Updates: Agent performance metrics widget
 import { AgentMetricsWidget } from '@/components/dashboard/AgentMetricsWidget';
 import { DashboardSection } from '@/components/dashboard/DashboardSection';
+import { MiniRevenueSparkline } from '@/components/dashboard/MiniRevenueSparkline';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -137,9 +138,9 @@ interface CertStats {
 }
 
 const statShell =
-  'flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/10 p-4 transition-colors hover:bg-muted/20 sm:min-h-[7.5rem] sm:p-5';
+  'flex flex-col gap-2 rounded-xl border border-white/10 bg-zinc-950/50 p-4 text-zinc-50 ring-1 ring-white/5 transition-colors hover:bg-zinc-900/60 sm:min-h-[7.5rem] sm:p-5';
 const statShellDanger =
-  'flex flex-col gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.04] p-4 transition-colors hover:bg-destructive/[0.06] sm:min-h-[7.5rem] sm:p-5';
+  'flex flex-col gap-2 rounded-xl border border-destructive/35 bg-destructive/[0.08] p-4 text-zinc-50 ring-1 ring-destructive/20 transition-colors hover:bg-destructive/[0.12] sm:min-h-[7.5rem] sm:p-5';
 
 function activityTypeIcon(type: string) {
   const t = type.toLowerCase();
@@ -147,6 +148,41 @@ function activityTypeIcon(type: string) {
   if (t.includes('quote')) return FileText;
   if (t.includes('customer') || t.includes('contact')) return Users;
   return Package;
+}
+
+/** Relative volume bars for operational counts (same card as headline KPIs). */
+function OperationalMixBars({ metrics }: { metrics: DashboardMetrics | null }) {
+  if (!metrics) return null;
+  const rows = [
+    { label: 'Active orders', value: metrics.active_orders },
+    { label: 'Equipment SKUs', value: metrics.total_products },
+    { label: 'Customers', value: metrics.total_customers },
+    { label: 'Pending quotes', value: metrics.pending_quotes },
+  ];
+  const max = Math.max(1, ...rows.map((r) => r.value));
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+        Operational mix
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {rows.map((row) => (
+          <div key={row.label} className="space-y-2">
+            <div className="flex items-baseline justify-between gap-2 text-xs">
+              <span className="text-zinc-400">{row.label}</span>
+              <span className="font-semibold tabular-nums text-zinc-50">{row.value}</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-white/5">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary/90 to-indigo-400/80 transition-[width] duration-500"
+                style={{ width: `${Math.min(100, (row.value / max) * 100)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -284,22 +320,26 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-10 pb-12">
-        <div className="space-y-3">
-          <Skeleton className="h-10 w-[min(100%,24rem)] max-w-xl" />
-          <Skeleton className="h-5 w-full max-w-lg" />
-          <Skeleton className="h-4 w-48" />
+      <div className="relative space-y-10 pb-12">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-2xl">
+          <div className="absolute -left-32 top-0 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
+          <div className="absolute -right-24 bottom-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
         </div>
-        <Skeleton className="h-36 w-full rounded-xl" />
+        <div className="space-y-3">
+          <Skeleton className="h-10 w-[min(100%,24rem)] max-w-xl bg-white/10" />
+          <Skeleton className="h-5 w-full max-w-lg bg-white/10" />
+          <Skeleton className="h-4 w-48 bg-white/10" />
+        </div>
+        <Skeleton className="h-36 w-full rounded-xl bg-white/10" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-88 rounded-xl" />
-          <Skeleton className="h-88 rounded-xl md:col-span-1 lg:col-span-2" />
-          <Skeleton className="h-88 rounded-xl" />
+          <Skeleton className="h-88 rounded-xl bg-white/10" />
+          <Skeleton className="h-88 rounded-xl bg-white/10 md:col-span-1 lg:col-span-2" />
+          <Skeleton className="h-88 rounded-xl bg-white/10" />
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-64 rounded-xl" />
-          <Skeleton className="h-64 rounded-xl" />
-          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl bg-white/10" />
+          <Skeleton className="h-64 rounded-xl bg-white/10" />
+          <Skeleton className="h-64 rounded-xl bg-white/10" />
         </div>
       </div>
     );
@@ -308,7 +348,13 @@ export default function DashboardPage() {
   const todayLabel = format(new Date(), 'EEEE, d MMMM yyyy');
 
   return (
-    <div className="space-y-12 pb-12">
+    <div className="relative space-y-12 pb-12">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-2xl">
+        <div className="absolute -left-32 top-0 h-80 w-80 rounded-full bg-primary/12 blur-3xl" />
+        <div className="absolute -right-20 top-40 h-72 w-72 rounded-full bg-violet-600/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-cyan-500/5 blur-3xl" />
+      </div>
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -318,11 +364,11 @@ export default function DashboardPage() {
       >
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
               {todayLabel}
             </p>
             {metricsStreamStatus === 'connected' && (
-              <Badge variant="outline" className="text-xs font-normal">
+              <Badge variant="outline" className="border-white/15 text-xs font-normal text-zinc-200">
                 <span
                   className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-green-500"
                   aria-hidden
@@ -332,10 +378,10 @@ export default function DashboardPage() {
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl md:text-4xl">
               CCW Online — Cleaning Equipment Operations
             </h1>
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="mt-2 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">
               Real-time overview — truckmounts, restoration gear, hard floor care &amp; accessories
             </p>
           </div>
@@ -343,7 +389,7 @@ export default function DashboardPage() {
 
         {posFailureCount > 0 && (
           <Link href="/pos/reconciliation" className="shrink-0">
-            <Card className="border-destructive/40 bg-destructive/5 transition-colors hover:bg-destructive/10">
+            <Card className="border-destructive/50 bg-destructive/10 transition-colors hover:bg-destructive/15">
               <CardContent className="px-4 py-4 sm:px-5">
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" aria-hidden />
@@ -351,7 +397,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-destructive">
                       {posFailureCount} POS {posFailureCount === 1 ? 'failure' : 'failures'}
                     </p>
-                    <p className="text-muted-foreground text-xs">Last 24 hours · Review reconciliation</p>
+                    <p className="text-xs text-zinc-400">Last 24 hours · Review reconciliation</p>
                   </div>
                   {posAlertStatus === 'connected' && (
                     <Badge variant="outline" className="ml-auto shrink-0 text-xs">
@@ -372,15 +418,15 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <Card className="border-amber-200/80 bg-amber-50/50 shadow-sm dark:border-amber-800/60 dark:bg-amber-950/25">
+          <Card className="border-amber-500/25 bg-amber-500/5 shadow-sm ring-1 ring-amber-500/10">
             <CardHeader className="space-y-1 pb-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
-                <CardTitle className="text-base font-semibold text-amber-950 dark:text-amber-50">
+                <CardTitle className="text-base font-semibold text-amber-100">
                   Needs attention today
                 </CardTitle>
               </div>
-              <p className="text-sm text-amber-900/80 dark:text-amber-200/90">
+              <p className="text-sm text-amber-200/80">
                 {urgentItems.length} item{urgentItems.length !== 1 ? 's' : ''} · tap to open
               </p>
             </CardHeader>
@@ -388,26 +434,26 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {urgentItems.map((item, idx) => (
                   <Link key={idx} href={item.href}>
-                    <div className="flex items-start gap-3 rounded-lg border border-amber-200/90 bg-white/80 p-3.5 transition-colors hover:border-amber-300 hover:bg-white dark:border-amber-700/80 dark:bg-amber-950/40 dark:hover:bg-amber-950/55">
+                    <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-950/30 p-3.5 transition-colors hover:border-amber-400/35 hover:bg-amber-950/45">
                       <span className="mt-0.5 shrink-0">
-                        {item.type === 'warranty' && <Wrench className="h-4 w-4 text-amber-600" />}
+                        {item.type === 'warranty' && <Wrench className="h-4 w-4 text-amber-400" />}
                         {item.type === 'certification' && (
-                          <Award className="h-4 w-4 text-amber-600" />
+                          <Award className="h-4 w-4 text-amber-400" />
                         )}
-                        {item.type === 'stock' && <Package className="h-4 w-4 text-amber-600" />}
-                        {item.type === 'invoice' && <Clock className="h-4 w-4 text-amber-600" />}
+                        {item.type === 'stock' && <Package className="h-4 w-4 text-amber-400" />}
+                        {item.type === 'invoice' && <Clock className="h-4 w-4 text-amber-400" />}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-amber-900 dark:text-amber-100">
+                        <p className="truncate text-sm font-medium text-amber-50">
                           {item.label}
                         </p>
-                        <p className="truncate text-xs text-amber-700 dark:text-amber-300">
+                        <p className="truncate text-xs text-amber-200/80">
                           {item.detail}
                         </p>
                         {item.daysLeft !== undefined && (
                           <Badge
                             variant="outline"
-                            className="mt-1 border-amber-300 text-xs text-amber-700"
+                            className="mt-1 border-amber-500/40 text-xs text-amber-200"
                           >
                             {item.daysLeft <= 0 ? 'Expired' : `${item.daysLeft}d remaining`}
                           </Badge>
@@ -430,84 +476,89 @@ export default function DashboardPage() {
         <BentoGrid columns={3} gap="lg">
           <BentoCard variant="glass" span={3}>
             <BentoCardHeader className="space-y-1">
-              <BentoCardTitle className="text-xl sm:text-2xl">Business performance</BentoCardTitle>
-              <BentoCardDescription>
+              <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">Business performance</BentoCardTitle>
+              <BentoCardDescription className="text-zinc-400">
                 Real-time trading metrics across all locations
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                 <div className={statShell}>
-                  <div className="text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-zinc-300">
                     <DollarSign className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <span className="text-xs font-medium uppercase tracking-wide">Total revenue</span>
                   </div>
                   <div className="text-brand-primary text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                     {formatCurrency(parseFloat(metrics?.total_revenue_this_month || '0'))}
                   </div>
-                  <p className="text-muted-foreground mt-auto text-xs leading-snug">
+                  <p className="text-zinc-400 mt-auto text-xs leading-snug">
                     This month from delivered orders
                   </p>
                 </div>
 
                 <div className={statShell}>
-                  <div className="text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-zinc-300">
                     <ShoppingCart className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <span className="text-xs font-medium uppercase tracking-wide">Active orders</span>
                   </div>
                   <div className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                     {metrics?.active_orders || 0}
                   </div>
-                  <p className="text-muted-foreground mt-auto text-xs leading-snug">In progress</p>
+                  <p className="text-zinc-400 mt-auto text-xs leading-snug">In progress</p>
                 </div>
 
                 <div className={statShell}>
-                  <div className="text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-zinc-300">
                     <Package className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <span className="text-xs font-medium uppercase tracking-wide">Equipment SKUs</span>
                   </div>
                   <div className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                     {metrics?.total_products || 0}
                   </div>
-                  <p className="text-muted-foreground mt-auto text-xs leading-snug">
+                  <p className="text-zinc-400 mt-auto text-xs leading-snug">
                     Active cleaning equipment lines
                   </p>
                 </div>
 
                 <div className={statShell}>
-                  <div className="text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-zinc-300">
                     <Users className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <span className="text-xs font-medium uppercase tracking-wide">Customers</span>
                   </div>
                   <div className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                     {metrics?.total_customers || 0}
                   </div>
-                  <p className="text-muted-foreground mt-auto text-xs leading-snug">Active customers</p>
+                  <p className="text-zinc-400 mt-auto text-xs leading-snug">Active customers</p>
                 </div>
 
                 <div className={statShellDanger}>
-                  <div className="text-destructive flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                  <div className="flex items-center gap-2 text-red-300">
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" aria-hidden />
                     <span className="text-xs font-medium uppercase tracking-wide">Low stock</span>
                   </div>
                   <div className="text-destructive text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                     {metrics?.low_stock_alerts || 0}
                   </div>
-                  <p className="text-muted-foreground mt-auto text-xs leading-snug">
+                  <p className="text-zinc-400 mt-auto text-xs leading-snug">
                     Items with stock ≤ 10
                   </p>
                 </div>
 
                 <div className={statShell}>
-                  <div className="text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-zinc-300">
                     <FileText className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <span className="text-xs font-medium uppercase tracking-wide">Pending quotes</span>
                   </div>
                   <div className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                     {metrics?.pending_quotes || 0}
                   </div>
-                  <p className="text-muted-foreground mt-auto text-xs leading-snug">Awaiting response</p>
+                  <p className="text-zinc-400 mt-auto text-xs leading-snug">Awaiting response</p>
                 </div>
+              </div>
+
+              <div className="border-border/40 mt-8 space-y-8 border-t pt-6">
+                <OperationalMixBars metrics={metrics} />
+                <MiniRevenueSparkline data={revenueData} />
               </div>
             </BentoCardContent>
           </BentoCard>
@@ -558,8 +609,8 @@ export default function DashboardPage() {
                         <Sparkles className="text-brand-primary h-5 w-5" />
                       </div>
                       <div className="space-y-1">
-                        <BentoCardTitle className="text-xl sm:text-2xl">AI-powered insights</BentoCardTitle>
-                        <BentoCardDescription>
+                        <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">AI-powered insights</BentoCardTitle>
+                        <BentoCardDescription className="text-zinc-400">
                           Top priority recommendations from your business data
                         </BentoCardDescription>
                       </div>
@@ -625,8 +676,8 @@ export default function DashboardPage() {
         <BentoGrid columns={3} gap="lg">
           <BentoCard variant="elevated" span={1} className="min-h-[350px]">
             <BentoCardHeader>
-              <BentoCardTitle>Top 5 products</BentoCardTitle>
-              <BentoCardDescription>Ranked by revenue</BentoCardDescription>
+              <BentoCardTitle className="text-zinc-50">Top 5 products</BentoCardTitle>
+              <BentoCardDescription className="text-zinc-400">Ranked by revenue</BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
               <ul className="divide-y divide-border/60">
@@ -641,13 +692,13 @@ export default function DashboardPage() {
                           {index + 1}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium leading-snug">{product.name}</p>
-                          <p className="text-muted-foreground text-xs">
+                          <p className="text-sm font-medium leading-snug text-zinc-100">{product.name}</p>
+                          <p className="text-zinc-400 text-xs">
                             {product.quantity_sold} units sold
                           </p>
                         </div>
                       </div>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums">
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-zinc-100">
                         {formatCurrency(parseFloat(product.revenue))}
                       </span>
                     </li>
@@ -660,15 +711,15 @@ export default function DashboardPage() {
             <BentoCardHeader>
               <div className="flex items-center gap-2">
                 <Camera className="text-primary h-5 w-5 shrink-0" aria-hidden />
-                <BentoCardTitle>Photo to order</BentoCardTitle>
+                <BentoCardTitle className="text-zinc-50">Photo to order</BentoCardTitle>
               </div>
-              <BentoCardDescription>
+              <BentoCardDescription className="text-zinc-400">
                 Snap a photo, AI identifies products instantly
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
               <div className="space-y-4">
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <p className="text-zinc-400 text-sm leading-relaxed">
                   Tradespeople can photograph cleaning equipment on-site. Our AI recognises it and
                   creates a quote for customer approval — no catalogue browsing needed.
                 </p>
@@ -692,8 +743,8 @@ export default function DashboardPage() {
         <BentoGrid columns={3} gap="lg">
           <BentoCard variant="glass" span={3}>
             <BentoCardHeader className="space-y-1">
-              <BentoCardTitle className="text-xl sm:text-2xl">Activity feed</BentoCardTitle>
-              <BentoCardDescription>Equipment orders and quotes</BentoCardDescription>
+              <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">Activity feed</BentoCardTitle>
+              <BentoCardDescription className="text-zinc-400">Equipment orders and quotes</BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -703,25 +754,25 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={`${item.type}-${index}`}
-                        className="bg-card/40 hover:bg-card/70 flex gap-3 rounded-xl border border-border/50 p-4 transition-colors"
+                        className="flex gap-3 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-colors hover:bg-zinc-900/60"
                       >
-                        <div className="bg-muted/50 text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-zinc-800/90 text-zinc-300">
                           <Icon className="h-4 w-4" aria-hidden />
                         </div>
                         <div className="min-w-0 flex-1 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-medium leading-snug">{item.title}</span>
+                            <span className="text-sm font-medium leading-snug text-zinc-100">{item.title}</span>
                             {item.status ? (
                               <Badge variant="secondary" className="text-[10px] font-normal capitalize">
                                 {item.status}
                               </Badge>
                             ) : null}
                           </div>
-                          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
+                          <p className="text-zinc-400 line-clamp-2 text-sm leading-relaxed">
                             {item.description}
                           </p>
                           <time
-                            className="text-muted-foreground block text-xs tabular-nums"
+                            className="text-zinc-400 block text-xs tabular-nums"
                             dateTime={item.timestamp}
                           >
                             {format(new Date(item.timestamp), 'MMM d, yyyy')}
