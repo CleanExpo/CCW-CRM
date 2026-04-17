@@ -1,0 +1,21 @@
+-- AlterTable
+ALTER TABLE "agent_runs" ALTER COLUMN "id" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "app_users" ALTER COLUMN "id" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "customers" ALTER COLUMN "id" DROP DEFAULT,
+ALTER COLUMN "updated_at" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "orders" ALTER COLUMN "id" DROP DEFAULT,
+ALTER COLUMN "updated_at" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "products" ALTER COLUMN "id" DROP DEFAULT,
+ALTER COLUMN "updated_at" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "quotes" ALTER COLUMN "id" DROP DEFAULT,
+ALTER COLUMN "updated_at" DROP DEFAULT;
