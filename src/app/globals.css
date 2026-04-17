@@ -230,6 +230,17 @@
     --gradient-accent: linear-gradient(135deg, hsl(var(--brand-secondary)), hsl(var(--brand-primary)));
     --gradient-glass: linear-gradient(135deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.02));
   }
+
+  /**
+   * App shell (dashboard): nested `.dark` + explicit readable secondary text.
+   * Ensures shadcn `muted-foreground` and body copy stay legible on near-black.
+   */
+  .dark.dashboard-app {
+    --foreground: 0 0% 99%;
+    --card-foreground: 0 0% 99%;
+    --muted-foreground: 240 5% 76%;
+    --secondary-foreground: 0 0% 96%;
+  }
 }
 
 /* ============================================
