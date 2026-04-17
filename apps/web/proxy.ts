@@ -1,14 +1,18 @@
 /**
- * Middleware for CCW Online ERP
+ * Proxy middleware for CCW Online ERP (Next.js 16 convention)
  *
  * Handles JWT session management (auth).
  * i18n is handled via cookies at the layout level.
+ *
+ * Renamed from middleware.ts in UNI-1949 phase 2c — Next.js 16
+ * renamed the middleware convention to proxy.ts. Auth logic
+ * unchanged; only file name + exported function name differ.
  */
 
 import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/api/middleware";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
 
