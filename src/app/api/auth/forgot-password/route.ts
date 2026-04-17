@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const row = await findAppUserByEmail(parsed.data.email);
-    if (!row || !row.is_active) {
+    if (!row || !row.isActive) {
       return jsonOk(generic);
     }
 

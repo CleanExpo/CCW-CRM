@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const row = await findAppUserById(claims.sub);
-    if (!row || !row.is_active) {
+    if (!row || !row.isActive) {
       return jsonDetail('Not authenticated', 401);
     }
 
-    const ok = await verifyPassword(parsed.data.current_password, row.password_hash);
+    const ok = await verifyPassword(parsed.data.current_password, row.passwordHash);
     if (!ok) {
       return jsonDetail('Current password is incorrect', 400);
     }

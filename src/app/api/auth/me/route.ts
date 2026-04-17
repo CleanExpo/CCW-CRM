@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const row = await findAppUserById(claims.sub);
-    if (!row || !row.is_active) {
+    if (!row || !row.isActive) {
       return jsonDetail('Not authenticated', 401);
     }
 
@@ -42,7 +42,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const row = await findAppUserById(claims.sub);
-    if (!row || !row.is_active) {
+    if (!row || !row.isActive) {
       return jsonDetail('Not authenticated', 401);
     }
 

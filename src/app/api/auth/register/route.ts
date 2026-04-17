@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       is_admin: isFirst,
     });
 
-    const tokens = await signTokenPair(row.id, row.email, row.is_admin);
+    const tokens = await signTokenPair(row.id, row.email, row.isAdmin);
     const response = jsonOk({
       user: mapAppUserRowToPublic(row),
       message: 'User registered successfully',

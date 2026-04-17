@@ -22,17 +22,17 @@ export async function POST(request: NextRequest) {
     if (!row) {
       return jsonDetail('Invalid email or password', 401);
     }
-    if (!row.is_active) {
+    if (!row.isActive) {
       return jsonDetail('Account is disabled', 403);
     }
 
-    const ok = await verifyPassword(parsed.data.password, row.password_hash);
+    const ok = await verifyPassword(parsed.data.password, row.passwordHash);
     if (!ok) {
       return jsonDetail('Invalid email or password', 401);
     }
 
     await updateLastLogin(row.id);
-    const tokens = await signTokenPair(row.id, row.email, row.is_admin);
+    const tokens = await signTokenPair(row.id, row.email, row.isAdmin);
     const response = jsonOk({
       access_token: tokens.access_token,
       token_type: 'bearer',
