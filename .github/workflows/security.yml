@@ -88,7 +88,7 @@ jobs:
 
       - name: Setup uv
         if: steps.check-token.outputs.skip != 'true'
-        uses: astral-sh/setup-uv@02f6c237bd2518259fed6c71566509edfb3f2b74 # v4
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v4
         with:
           version: 'latest'
 

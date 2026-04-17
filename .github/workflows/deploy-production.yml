@@ -126,7 +126,7 @@ jobs:
           ref: ${{ needs.validate.outputs.version }}
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           version: 'latest'
 
