@@ -99,6 +99,12 @@ export function useSSE<T = unknown>({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isManuallyClosedRef = useRef(false);
   const lastConnectAttemptRef = useRef<number>(0);
+  // UNI-1782: suppress transient-error badge flapping - only surface
+  // status='error' if the connection can't be re-established within this
+  // grace window. Brief edge timeouts (every ~25s on Vercel/Render) no
+  // longer cycle the "Real-time" badge Error->Live->Error.
+  const errorGraceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const ERROR_GRACE_MS = 10000;
 
   // Close connection
   const close = useCallback(() => {
@@ -112,6 +118,11 @@ export function useSSE<T = unknown>({
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
+    }
+
+    if (errorGraceTimeoutRef.current) {
+      clearTimeout(errorGraceTimeoutRef.current);
+      errorGraceTimeoutRef.current = null;
     }
   }, []);
 
@@ -135,6 +146,12 @@ export function useSSE<T = unknown>({
       // Connection opened
       eventSource.addEventListener('connected', (event) => {
         setStatus('connected');
+        setError(null);
+        // UNI-1782: cancel any pending "show error" timer - we're back.
+        if (errorGraceTimeoutRef.current) {
+          clearTimeout(errorGraceTimeoutRef.current);
+          errorGraceTimeoutRef.current = null;
+        }
         setStats((prev) => ({
           ...prev,
           connectedAt: new Date(),
@@ -165,8 +182,17 @@ export function useSSE<T = unknown>({
       // Error occurred
       eventSource.onerror = (event) => {
         console.error('SSE error:', event);
-        setStatus('error');
-        setError('Connection error');
+        // UNI-1782: don't flip the badge to 'error' on every transient
+        // disconnect. Show 'connecting' while we try again, and only mark
+        // it as a real error if the grace window elapses.
+        setStatus('connecting');
+        if (!errorGraceTimeoutRef.current) {
+          errorGraceTimeoutRef.current = setTimeout(() => {
+            setStatus('error');
+            setError('Connection error');
+            errorGraceTimeoutRef.current = null;
+          }, ERROR_GRACE_MS);
+        }
 
         // Close current connection
         eventSource.close();
