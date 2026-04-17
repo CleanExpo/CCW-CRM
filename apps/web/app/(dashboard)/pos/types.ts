@@ -7,9 +7,15 @@ export interface Location {
   code: string;
   name: string;
   location_type: "physical" | "virtual";
+  address?: string | null;
   city: string | null;
   state: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  timezone?: string | null;
   is_active: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface SalesStaff {
@@ -17,8 +23,12 @@ export interface SalesStaff {
   staff_code: string;
   full_name: string;
   email: string | null;
+  phone?: string | null;
   primary_location_code: string;
+  can_sell_at_locations?: string[];
   is_active: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface POSTerminal {
@@ -26,7 +36,9 @@ export interface POSTerminal {
   terminal_id: string;
   location_code: string;
   terminal_type: string;
+  merchant_id?: string | null;
   is_active: boolean;
+  last_ping_at?: string | null;
 }
 
 export interface CartItem {

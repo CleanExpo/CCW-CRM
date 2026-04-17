@@ -544,19 +544,182 @@ async def list_locations(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> list[dict]:
-    """List all active locations."""
+    """List all active locations (UNI-1777: full field set for frontend)."""
     result = await db.execute(select(Location).where(Location.is_active == True))
     locations = result.scalars().all()
 
     return [
         {
+            "id": str(loc.id),
             "code": loc.code,
             "name": loc.name,
             "location_type": loc.location_type,
+            "address": loc.address,
             "city": loc.city,
             "state": loc.state,
+            "postal_code": loc.postal_code,
+            "country": loc.country,
+            "timezone": loc.timezone,
+            "is_active": loc.is_active,
+            "created_at": loc.created_at.isoformat() if loc.created_at else None,
+            "updated_at": loc.updated_at.isoformat() if loc.updated_at else None,
         }
         for loc in locations
+    ]
+
+
+class LocationCreate(BaseModel):
+    """Create a new location (UNI-1777)."""
+
+    code: str = Field(..., description="Unique location code")
+    name: str
+    location_type: str = Field(..., pattern="^(physical|virtual)$")
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    postal_code: str | None = None
+    country: str = "Australia"
+    timezone: str = "Australia/Brisbane"
+
+
+class LocationUpdate(BaseModel):
+    """Update a location (UNI-1777)."""
+
+    name: str | None = None
+    location_type: str | None = Field(None, pattern="^(physical|virtual)$")
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    postal_code: str | None = None
+    country: str | None = None
+    timezone: str | None = None
+    is_active: bool | None = None
+
+
+def _location_to_dict(loc: Location) -> dict:
+    return {
+        "id": str(loc.id),
+        "code": loc.code,
+        "name": loc.name,
+        "location_type": loc.location_type,
+        "address": loc.address,
+        "city": loc.city,
+        "state": loc.state,
+        "postal_code": loc.postal_code,
+        "country": loc.country,
+        "timezone": loc.timezone,
+        "is_active": loc.is_active,
+        "created_at": loc.created_at.isoformat() if loc.created_at else None,
+        "updated_at": loc.updated_at.isoformat() if loc.updated_at else None,
+    }
+
+
+@router.post("/locations", response_model=dict, status_code=201)
+async def create_location(
+    data: LocationCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Create a new location (UNI-1777)."""
+    existing = await db.execute(select(Location).where(Location.code == data.code))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Location code already exists")
+
+    location = Location(
+        code=data.code,
+        name=data.name,
+        location_type=data.location_type,
+        address=data.address,
+        city=data.city,
+        state=data.state,
+        postal_code=data.postal_code,
+        country=data.country,
+        timezone=data.timezone,
+        is_active=True,
+    )
+
+    db.add(location)
+    await db.commit()
+    await db.refresh(location)
+
+    return _location_to_dict(location)
+
+
+@router.put("/locations/{location_id}", response_model=dict)
+async def update_location(
+    location_id: UUID,
+    data: LocationUpdate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Update a location (UNI-1777)."""
+    result = await db.execute(select(Location).where(Location.id == location_id))
+    location = result.scalar_one_or_none()
+
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    if data.name is not None:
+        location.name = data.name
+    if data.location_type is not None:
+        location.location_type = data.location_type
+    if data.address is not None:
+        location.address = data.address
+    if data.city is not None:
+        location.city = data.city
+    if data.state is not None:
+        location.state = data.state
+    if data.postal_code is not None:
+        location.postal_code = data.postal_code
+    if data.country is not None:
+        location.country = data.country
+    if data.timezone is not None:
+        location.timezone = data.timezone
+    if data.is_active is not None:
+        location.is_active = data.is_active
+
+    await db.commit()
+    await db.refresh(location)
+
+    return _location_to_dict(location)
+
+
+@router.delete("/locations/{location_id}", status_code=204, response_model=None)
+async def delete_location(
+    location_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    """Delete a location (soft delete by setting is_active=False)."""
+    result = await db.execute(select(Location).where(Location.id == location_id))
+    location = result.scalar_one_or_none()
+
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    location.is_active = False
+    await db.commit()
+
+
+async def _list_sales_staff_impl(db: AsyncSession) -> list[dict]:
+    """Shared implementation for /sales-staff and /staff (UNI-1777)."""
+    result = await db.execute(select(SalesStaff).where(SalesStaff.is_active == True))
+    staff_list = result.scalars().all()
+
+    return [
+        {
+            "id": str(staff.id),
+            "staff_code": staff.staff_code,
+            "full_name": staff.full_name,
+            "email": staff.email,
+            "phone": staff.phone,
+            "primary_location_code": staff.primary_location_code,
+            "can_sell_at_locations": staff.can_sell_at_locations,
+            "is_active": staff.is_active,
+            "created_at": staff.created_at.isoformat() if staff.created_at else None,
+            "updated_at": staff.updated_at.isoformat() if staff.updated_at else None,
+        }
+        for staff in staff_list
     ]
 
 
@@ -565,20 +728,148 @@ async def list_sales_staff(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> list[dict]:
-    """List all active sales staff."""
-    result = await db.execute(select(SalesStaff).where(SalesStaff.is_active == True))
-    staff_list = result.scalars().all()
+    """List all active sales staff (legacy path)."""
+    return await _list_sales_staff_impl(db)
 
-    return [
-        {
-            "id": staff.id,
-            "staff_code": staff.staff_code,
-            "full_name": staff.full_name,
-            "primary_location_code": staff.primary_location_code,
-            "can_sell_at_locations": staff.can_sell_at_locations,
-        }
-        for staff in staff_list
-    ]
+
+@router.get("/staff", response_model=list[dict])
+async def list_staff(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> list[dict]:
+    """List all active sales staff (UNI-1777 alias for frontend compatibility)."""
+    return await _list_sales_staff_impl(db)
+
+
+class SalesStaffCreate(BaseModel):
+    """Create a new sales staff (UNI-1777)."""
+
+    staff_code: str = Field(..., description="Unique staff code")
+    full_name: str
+    email: str | None = None
+    phone: str | None = None
+    primary_location_code: str
+    can_sell_at_locations: list[str] = Field(default_factory=list)
+
+
+class SalesStaffUpdate(BaseModel):
+    """Update a sales staff (UNI-1777)."""
+
+    full_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    primary_location_code: str | None = None
+    can_sell_at_locations: list[str] | None = None
+    is_active: bool | None = None
+
+
+def _sales_staff_to_dict(staff: SalesStaff) -> dict:
+    return {
+        "id": str(staff.id),
+        "staff_code": staff.staff_code,
+        "full_name": staff.full_name,
+        "email": staff.email,
+        "phone": staff.phone,
+        "primary_location_code": staff.primary_location_code,
+        "can_sell_at_locations": staff.can_sell_at_locations,
+        "is_active": staff.is_active,
+        "created_at": staff.created_at.isoformat() if staff.created_at else None,
+        "updated_at": staff.updated_at.isoformat() if staff.updated_at else None,
+    }
+
+
+async def _ensure_location_exists(db: AsyncSession, code: str) -> None:
+    """Raise 404 if a location with the given code does not exist."""
+    result = await db.execute(select(Location).where(Location.code == code))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail=f"Location '{code}' not found")
+
+
+@router.post("/staff", response_model=dict, status_code=201)
+async def create_staff(
+    data: SalesStaffCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Create a new sales staff member (UNI-1777)."""
+    existing = await db.execute(
+        select(SalesStaff).where(SalesStaff.staff_code == data.staff_code)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Staff code already exists")
+
+    await _ensure_location_exists(db, data.primary_location_code)
+    for code in data.can_sell_at_locations:
+        await _ensure_location_exists(db, code)
+
+    staff = SalesStaff(
+        staff_code=data.staff_code,
+        full_name=data.full_name,
+        email=data.email,
+        phone=data.phone,
+        primary_location_code=data.primary_location_code,
+        can_sell_at_locations=data.can_sell_at_locations,
+        is_active=True,
+    )
+
+    db.add(staff)
+    await db.commit()
+    await db.refresh(staff)
+
+    return _sales_staff_to_dict(staff)
+
+
+@router.put("/staff/{staff_id}", response_model=dict)
+async def update_staff(
+    staff_id: UUID,
+    data: SalesStaffUpdate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Update a sales staff member (UNI-1777)."""
+    result = await db.execute(select(SalesStaff).where(SalesStaff.id == staff_id))
+    staff = result.scalar_one_or_none()
+
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+
+    if data.primary_location_code is not None:
+        await _ensure_location_exists(db, data.primary_location_code)
+        staff.primary_location_code = data.primary_location_code
+    if data.can_sell_at_locations is not None:
+        for code in data.can_sell_at_locations:
+            await _ensure_location_exists(db, code)
+        staff.can_sell_at_locations = data.can_sell_at_locations
+    if data.full_name is not None:
+        staff.full_name = data.full_name
+    if data.email is not None:
+        staff.email = data.email
+    if data.phone is not None:
+        staff.phone = data.phone
+    if data.is_active is not None:
+        staff.is_active = data.is_active
+
+    await db.commit()
+    await db.refresh(staff)
+
+    return _sales_staff_to_dict(staff)
+
+
+@router.delete("/staff/{staff_id}", status_code=204, response_model=None)
+async def delete_staff(
+    staff_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    """Delete a sales staff (soft delete by setting is_active=False)."""
+    result = await db.execute(select(SalesStaff).where(SalesStaff.id == staff_id))
+    staff = result.scalar_one_or_none()
+
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+
+    staff.is_active = False
+    await db.commit()
 
 
 @router.get("/terminals", response_model=list[dict])
@@ -598,11 +889,13 @@ async def list_terminals(
 
     return [
         {
-            "id": term.id,
+            "id": str(term.id),
             "terminal_id": term.terminal_id,
             "location_code": term.location_code,
             "terminal_type": term.terminal_type,
             "merchant_id": term.merchant_id,
+            "is_active": term.is_active,
+            "last_ping_at": term.last_ping_at.isoformat() if term.last_ping_at else None,
         }
         for term in terminals
     ]
