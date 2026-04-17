@@ -166,7 +166,7 @@ export default function DashboardPage() {
     async function loadDashboardData() {
       try {
         // PHASE 4 OPTIMIZATION: Use aggregated endpoint (1 API call instead of 6)
-        // Expected performance: 70% faster (5-8s → <2s)
+        // Expected performance: 70% faster (5-8s -> <2s)
         const [dashboardData, insightsData, posFailures, warrantyStats, certStats] =
           await Promise.all([
             apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated', {
@@ -275,9 +275,12 @@ export default function DashboardPage() {
   }, [posFailure, toast]);
 
   // PHASE 4: Handle real-time dashboard metrics updates
+  // UNI-1786: guard every setState with isMounted to prevent stale writes after
+  // rapid navigation away from the dashboard.
   useEffect(() => {
     if (metricsUpdate) {
       const controller = new AbortController();
+      const isMounted = { current: true };
 
       // Debounce refresh to avoid excessive API calls (wait 500ms before refreshing)
       const timeout = setTimeout(async () => {
@@ -286,16 +289,18 @@ export default function DashboardPage() {
             '/api/dashboard/aggregated',
             { signal: controller.signal }
           );
+          if (!isMounted.current) return;
           setMetrics(dashboardData.metrics);
           setActivity(dashboardData.recent_activity);
         } catch (error) {
-          if ((error as { name?: string }).name !== 'AbortError') {
+          if ((error as { name?: string }).name !== 'AbortError' && isMounted.current) {
             console.error('Failed to refresh metrics:', error);
           }
         }
       }, 500);
 
       return () => {
+        isMounted.current = false;
         controller.abort();
         clearTimeout(timeout);
       };
