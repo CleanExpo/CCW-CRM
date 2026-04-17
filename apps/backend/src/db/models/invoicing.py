@@ -19,7 +19,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..models_base import Base
 
 if TYPE_CHECKING:
-    from src.db.demo_models import Customer, Order, Product, User
+    from src.db.demo_models import Customer, Order, Product
+    from src.db.models_base import User
 
 
 class TaxRate(Base):
