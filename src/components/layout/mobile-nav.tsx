@@ -43,7 +43,7 @@ export function MobileNav() {
           <Button
             variant="ghost"
             size="icon"
-            className="bg-background/80 border shadow-md backdrop-blur-sm transition-shadow hover:shadow-lg"
+            className="border border-white/15 bg-zinc-950/90 text-foreground shadow-lg shadow-black/40 backdrop-blur-md transition-shadow hover:shadow-xl"
           >
             <AnimatePresence mode="wait">
               <motion.div

@@ -179,7 +179,7 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
         'group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2 text-sm transition-all',
         isActive
           ? 'bg-primary text-primary-foreground shadow-md'
-          : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-105'
+          : 'text-zinc-300 hover:scale-[1.01] hover:bg-white/[0.07] hover:text-white'
       )}
     >
       {isActive && (
@@ -256,8 +256,8 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="bg-muted/40 flex w-64 flex-col border-r">
-      <div className="flex h-14 shrink-0 items-center justify-between border-b px-4">
+    <aside className="flex w-64 flex-col border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 px-4">
         <Link href="/" className="group flex items-center gap-2 font-semibold">
           <motion.span
             className="text-xl"
@@ -267,7 +267,7 @@ export function Sidebar() {
           >
             ⚙️
           </motion.span>
-          <span className="from-primary to-primary/60 group-hover:from-primary/80 group-hover:to-primary/40 bg-gradient-to-r bg-clip-text text-transparent transition-all">
+          <span className="font-semibold text-zinc-100 transition-colors group-hover:text-white">
             CCW Online
           </span>
         </Link>
@@ -291,7 +291,9 @@ export function Sidebar() {
                 onClick={() => toggleGroup(group.id)}
                 className={cn(
                   'mt-2 flex w-full items-center justify-between rounded-md px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-colors',
-                  hasActiveItem ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                  hasActiveItem
+                    ? 'text-indigo-300'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 )}
               >
                 <span>{group.label}</span>
