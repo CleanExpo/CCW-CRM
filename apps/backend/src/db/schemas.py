@@ -528,6 +528,7 @@ class ErrorResponse(BaseModel):
     detail: str | None = None
     status_code: int
     errors: list[ErrorDetail] | None = None
+    request_id: str | None = None  # Correlation ID for cross-referencing logs
 
 
 # Background Job schemas
