@@ -170,6 +170,9 @@ class Customer(Base):
     state: str | None = Column(String(50), nullable=True)
     postcode: str | None = Column(String(10), nullable=True)
 
+    # Payment terms (number of days, e.g. 30 for Net 30)
+    payment_terms_days: int | None = Column(Integer, nullable=True)
+
     # Xero integration fields
     xero_contact_id: str | None = Column(String(255), nullable=True)
     xero_synced_at: datetime | None = Column(DateTime(timezone=True), nullable=True)

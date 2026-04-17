@@ -122,6 +122,7 @@ class CustomerBase(BaseModel):
     city: str | None = None
     state: str | None = None
     postcode: str | None = None
+    payment_terms_days: int | None = Field(None, ge=0, description="Payment terms in days (e.g. 30 for Net 30)")
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     is_active: bool = True
@@ -172,6 +173,7 @@ class CustomerUpdate(BaseModel):
     city: str | None = None
     state: str | None = None
     postcode: str | None = None
+    payment_terms_days: int | None = Field(None, ge=0, description="Payment terms in days (e.g. 30 for Net 30)")
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     is_active: bool | None = None

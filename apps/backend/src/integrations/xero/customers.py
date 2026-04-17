@@ -87,7 +87,46 @@ class XeroCustomerSync:
             demo_mode=demo_mode,
         )
 
+        # Build address dict (reused in both update and create paths)
+        address = {
+            "street": customer.address or "",
+            "city": customer.city or "",
+            "state": customer.state or "",
+            "postal_code": customer.postcode or "",
+            "country": "Australia",  # Default
+        }
+
         try:
+            # If customer already has a Xero contact ID and force_update is True,
+            # push the latest data (including payment_terms_days) to Xero directly.
+            if customer.xero_contact_id and force_update:
+                contact = await xero_client.create_contact(
+                    name=customer.company_name,
+                    email=customer.email,
+                    phone=customer.phone,
+                    address=address,
+                    payment_terms=customer.payment_terms_days,
+                    contact_id=customer.xero_contact_id,
+                )
+                customer.xero_synced_at = datetime.now()
+                await db.commit()
+
+                logger.info(
+                    "Customer updated in Xero",
+                    customer_id=str(customer_id),
+                    xero_contact_id=customer.xero_contact_id,
+                    payment_terms_days=customer.payment_terms_days,
+                )
+
+                return {
+                    "success": True,
+                    "action": "updated",
+                    "customer_id": str(customer_id),
+                    "customer_number": customer.customer_number,
+                    "xero_contact_id": customer.xero_contact_id,
+                    "message": "Updated existing Xero contact",
+                }
+
             # Check if contact exists in Xero by email
             existing_contact = await xero_client.get_contact_by_email(customer.email)
 
@@ -115,19 +154,12 @@ class XeroCustomerSync:
                 }
 
             # Create new contact in Xero
-            address = {
-                "street": customer.address or "",
-                "city": customer.city or "",
-                "state": customer.state or "",
-                "postal_code": customer.postcode or "",
-                "country": "Australia",  # Default
-            }
-
             contact = await xero_client.create_contact(
                 name=customer.company_name,
                 email=customer.email,
                 phone=customer.phone,
                 address=address,
+                payment_terms=customer.payment_terms_days,
             )
 
             # Store Xero contact ID
@@ -306,7 +338,7 @@ class XeroCustomerSync:
         stmt = (
             select(Customer)
             .where(Customer.is_active)
-            .where(Customer.xero_contact_id is None)
+            .where(Customer.xero_contact_id.is_(None))
             .limit(max_customers)
         )
         result = await db.execute(stmt)

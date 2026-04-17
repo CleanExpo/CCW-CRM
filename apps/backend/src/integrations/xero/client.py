@@ -127,6 +127,8 @@ class XeroClient:
         email: str | None = None,
         phone: str | None = None,
         address: dict | None = None,
+        payment_terms: int | None = None,
+        contact_id: str | None = None,
     ) -> dict:
         """Create or update a contact (customer) in Xero.
 
@@ -135,6 +137,10 @@ class XeroClient:
             email: Contact email address
             phone: Contact phone number
             address: Contact address dict with street, city, state, postal_code, country
+            payment_terms: Payment terms in days (e.g. 30 for Net 30). Maps to
+                PaymentTerms.Sales.Day with Type DAYSAFTERBILLDATE.
+            contact_id: Existing Xero ContactID — when provided, updates the
+                contact rather than creating a new one.
 
         Returns:
             Created/updated contact data
@@ -142,9 +148,12 @@ class XeroClient:
         Raises:
             XeroAPIError: If creation fails
         """
-        contact_data = {
+        contact_data: dict = {
             "Name": name,
         }
+
+        if contact_id:
+            contact_data["ContactID"] = contact_id
 
         if email:
             contact_data["EmailAddress"] = email
@@ -163,6 +172,14 @@ class XeroClient:
                     "Country": address.get("country", ""),
                 }
             ]
+
+        if payment_terms is not None:
+            contact_data["PaymentTerms"] = {
+                "Sales": {
+                    "Day": payment_terms,
+                    "Type": "DAYSAFTERBILLDATE",
+                }
+            }
 
         payload = {"Contacts": [contact_data]}
 
