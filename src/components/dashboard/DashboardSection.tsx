@@ -27,15 +27,15 @@ export function DashboardSection({
       aria-labelledby={headingId}
       className={cn('space-y-5', className)}
     >
-      <header className="space-y-1.5">
+      <header className="space-y-1.5 border-l-2 border-primary/50 pl-4">
         <h2
           id={headingId}
-          className="text-lg font-semibold tracking-tight text-foreground"
+          className="text-lg font-semibold tracking-tight text-zinc-50"
         >
           {title}
         </h2>
         {description ? (
-          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          <p className="max-w-3xl text-sm leading-relaxed text-zinc-400">
             {description}
           </p>
         ) : null}
