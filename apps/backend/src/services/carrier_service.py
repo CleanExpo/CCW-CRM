@@ -15,7 +15,10 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Protocol
 
+import structlog
 from pydantic import BaseModel
+
+logger = structlog.get_logger(__name__)
 
 # Shared data models
 
@@ -231,6 +234,127 @@ class StarTrackAdapter:
         ]
 
 
+class TNTAdapter:
+    """TNT Express Australia adapter."""
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://api.tnt.com/v1"
+
+    @property
+    def carrier_name(self) -> str:
+        return "TNT"
+
+    async def create_shipment(self, request: ShipmentRequest) -> ShipmentResponse:
+        """
+        Create shipment via TNT Express API.
+
+        Note: Sandbox implementation. In production:
+        1. POST /shipments with parcel + address payload
+        2. Parse consignment number from response
+        3. Fetch label PDF via /labels/{consignment_id}
+        """
+        tracking_number = f"TN{datetime.now().strftime('%Y%m%d')}{int(datetime.now().timestamp() % 100000):05d}"  # noqa: E501
+
+        return ShipmentResponse(
+            tracking_number=tracking_number,
+            carrier_name=self.carrier_name,
+            service_type=request.service_type,
+            label_url=f"https://tnt.com.au/labels/{tracking_number}.pdf",
+            cost=Decimal("35.00") if request.service_type == "express" else Decimal("22.00"),
+            estimated_delivery_date=datetime.now(),
+        )
+
+    async def track_shipment(self, tracking_number: str) -> TrackingStatus:
+        """Track via TNT consignment tracking API."""
+        return TrackingStatus(
+            status="in_transit",
+            status_detail="Parcel in transit",
+            location="Brisbane QLD",
+            timestamp=datetime.now(),
+            events=[
+                {
+                    "status": "picked_up",
+                    "location": "Brisbane QLD 4000",
+                    "timestamp": datetime.now().isoformat(),
+                    "description": "Picked up by TNT",
+                }
+            ],
+        )
+
+    async def cancel_shipment(self, tracking_number: str) -> bool:
+        """Cancel TNT consignment."""
+        return True
+
+    async def get_rates(self, request: ShipmentRequest) -> list[dict[str, Any]]:
+        """Get TNT rate quotes."""
+        return [
+            {"service": "TNT Express", "carrier": "TNT", "cost": 35.00, "delivery_days": 1},
+            {"service": "TNT Economy Express", "carrier": "TNT", "cost": 22.00, "delivery_days": 3},
+        ]
+
+
+class FedExAdapter:
+    """FedEx REST API adapter."""
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://apis.fedex.com"
+
+    @property
+    def carrier_name(self) -> str:
+        return "FedEx"
+
+    async def create_shipment(self, request: ShipmentRequest) -> ShipmentResponse:
+        """
+        Create shipment via FedEx REST API.
+
+        Note: Sandbox implementation. In production:
+        1. POST /ship/v1/shipments with OAuth bearer token
+        2. Parse trackingNumber from completedShipmentDetail
+        3. Decode label from base64 encodedLabel field
+        """
+        tracking_number = f"FX{datetime.now().strftime('%Y%m%d')}{int(datetime.now().timestamp() % 100000):05d}"  # noqa: E501
+
+        return ShipmentResponse(
+            tracking_number=tracking_number,
+            carrier_name=self.carrier_name,
+            service_type=request.service_type,
+            label_url=f"https://fedex.com/labels/{tracking_number}.pdf",
+            cost=Decimal("40.00") if request.service_type == "express" else Decimal("28.00"),
+            estimated_delivery_date=datetime.now(),
+        )
+
+    async def track_shipment(self, tracking_number: str) -> TrackingStatus:
+        """Track via FedEx Track API v1."""
+        return TrackingStatus(
+            status="in_transit",
+            status_detail="Package in transit",
+            location="Sydney NSW",
+            timestamp=datetime.now(),
+            events=[
+                {
+                    "status": "picked_up",
+                    "location": "Sydney NSW 2000",
+                    "timestamp": datetime.now().isoformat(),
+                    "description": "Picked up by FedEx",
+                }
+            ],
+        )
+
+    async def cancel_shipment(self, tracking_number: str) -> bool:
+        """Cancel via FedEx Ship API."""
+        return True
+
+    async def get_rates(self, request: ShipmentRequest) -> list[dict[str, Any]]:
+        """Get FedEx rate quotes via Rate API v1."""
+        return [
+            {"service": "FedEx International Priority", "carrier": "FedEx", "cost": 89.00, "delivery_days": 1},
+            {"service": "FedEx Express Saver", "carrier": "FedEx", "cost": 40.00, "delivery_days": 2},
+            {"service": "FedEx Economy", "carrier": "FedEx", "cost": 28.00, "delivery_days": 5},
+        ]
+
+
 class EasyPostAdapter:
     """
     EasyPost adapter (multi-carrier aggregator).
@@ -345,9 +469,19 @@ class CarrierService:
         if easypost_key:
             self.adapters["easypost"] = EasyPostAdapter(easypost_key)
 
-        # Default adapter for development (uses mock data)
+        tnt_key = os.getenv("TNT_API_KEY")
+        if tnt_key:
+            self.adapters["tnt"] = TNTAdapter(tnt_key)
+
+        fedex_key = os.getenv("FEDEX_API_KEY")
+        if fedex_key:
+            self.adapters["fedex"] = FedExAdapter(fedex_key)
+
+        # Default adapters for development/sandbox (uses mock data)
         if not self.adapters:
             self.adapters["australia_post"] = AustraliaPostAdapter("mock_key")
+            self.adapters["tnt"] = TNTAdapter("mock_key")
+            self.adapters["fedex"] = FedExAdapter("mock_key")
 
     def get_adapter(self, carrier_name: str | None = None) -> CarrierAdapter:
         """
@@ -431,6 +565,10 @@ class CarrierService:
                 carrier_name = "startrack"
             elif tracking_number.startswith("EP"):
                 carrier_name = "easypost"
+            elif tracking_number.startswith("TN"):
+                carrier_name = "tnt"
+            elif tracking_number.startswith("FX"):
+                carrier_name = "fedex"
 
         adapter = self.get_adapter(carrier_name)
         return await adapter.track_shipment(tracking_number)
@@ -491,8 +629,7 @@ class CarrierService:
                     rates = await adapter.get_rates(request)
                     all_rates.extend(rates)
                 except Exception as e:
-                    # Log error but continue with other carriers
-                    print(f"Error getting rates from {name}: {e}")
+                    logger.warning("Error getting rates from carrier", carrier=name, error=str(e))
 
             return all_rates
 
