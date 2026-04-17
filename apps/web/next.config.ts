@@ -1,4 +1,3 @@
-import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -9,7 +8,7 @@ const nextConfig: NextConfig = {
   experimental: {
     typedRoutes: false,
   },
-  // Disable browser source maps in production (Sentry uses server-side upload only)
+  // Disable browser source maps in production
   productionBrowserSourceMaps: false,
   images: {
     remotePatterns: [
@@ -42,7 +41,6 @@ const nextConfig: NextConfig = {
       'https://*.supabase.co',
       'wss://*.supabase.co',
       backendUrl,
-      'https://*.sentry.io',
       ...(process.env.NODE_ENV === 'development' ? ['http://localhost:8001'] : []),
     ];
     const hsts =
@@ -125,25 +123,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Sentry webpack plugin options
-const sentryOptions = {
-  // Upload source maps during production build
-  silent: true,
-
-  // Suppress logging
-  widenClientFileUpload: true,
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Transpile SDK to be compatible with IE11
-  transpileClientSDK: true,
-
-  // Hide source maps from generated client bundles
-  hideSourceMaps: true,
-
-  // Automatically annotate React components to show in breadcrumbs
-  autoInstrumentServerFunctions: true,
-};
-
-export default withSentryConfig(nextConfig, sentryOptions);
+export default nextConfig;

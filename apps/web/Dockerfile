@@ -33,14 +33,13 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 WORKDIR /app
 
 # Build arguments for environment variables
+# Sentry ARG/ENV removed in UNI-1949 — add replacement observability vars here if needed.
 ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
-ARG NEXT_PUBLIC_SENTRY_DSN=""
 ARG NEXT_PUBLIC_ENVIRONMENT=production
 ARG NEXT_PUBLIC_SUPABASE_URL=""
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=""
 
 ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
-ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -88,6 +87,4 @@ USER nextjs
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
-
-CMD ["node", "server.js"]
+    CMD wget --no-verbose --tries=1
