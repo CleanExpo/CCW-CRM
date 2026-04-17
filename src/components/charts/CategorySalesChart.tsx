@@ -56,17 +56,15 @@ export const CategorySalesChart = memo(function CategorySalesChart({
   }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-background rounded-lg border p-3 shadow-md">
+        <div className="rounded-lg border border-white/10 bg-zinc-950/95 p-3 text-zinc-50 shadow-lg backdrop-blur-sm">
           <p className="text-sm font-medium capitalize">{payload[0].payload.category}</p>
-          <p className="text-primary text-sm font-bold">
+          <p className="text-sm font-bold text-primary">
             {new Intl.NumberFormat('en-AU', {
               style: 'currency',
               currency: 'AUD',
             }).format(payload[0].value)}
           </p>
-          <p className="text-muted-foreground text-xs">
-            {payload[0].payload.percentage.toFixed(1)}% of total
-          </p>
+          <p className="text-xs text-zinc-400">{payload[0].payload.percentage.toFixed(1)}% of total</p>
         </div>
       );
     }
@@ -74,14 +72,14 @@ export const CategorySalesChart = memo(function CategorySalesChart({
   };
 
   return (
-    <Card>
+    <Card className="border-white/10 bg-zinc-950/40">
       <CardHeader>
-        <CardTitle>Sales by Category</CardTitle>
-        <CardDescription>Total sales distribution</CardDescription>
+        <CardTitle className="text-zinc-50">Sales by Category</CardTitle>
+        <CardDescription className="text-zinc-400">Total sales distribution</CardDescription>
       </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (
-          <div className="text-muted-foreground flex h-[300px] items-center justify-center text-sm">
+          <div className="flex h-[300px] items-center justify-center text-sm text-zinc-400">
             No category data available
           </div>
         ) : (
@@ -94,11 +92,11 @@ export const CategorySalesChart = memo(function CategorySalesChart({
                 textAnchor="end"
                 height={100}
                 className="text-xs capitalize"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fill: '#a1a1aa' }}
               />
               <YAxis
                 className="text-xs"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fill: '#a1a1aa' }}
                 tickFormatter={(value) =>
                   new Intl.NumberFormat('en-AU', {
                     style: 'currency',
