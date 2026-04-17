@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { authApi } from '@/lib/api/auth';
-import { useToast } from '@/hooks/use-toast';
+import toast from 'react-hot-toast';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -37,7 +37,6 @@ export interface LoginFormProps {
 export function LoginForm({ variant = 'default' }: LoginFormProps) {
   const isMarketing = variant === 'marketing';
   const router = useRouter();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FormData>({
@@ -59,21 +58,14 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
         rememberMe: values.rememberMe,
       });
 
-      toast({
-        title: 'Success',
-        description: `Welcome back, ${response.user.email}!`,
-      });
+      toast.success(`Signed in — welcome back, ${response.user.email}`);
 
       // Force full page reload to trigger middleware authentication check
       // This ensures the auth cookie is properly validated server-side
       window.location.replace('/dashboard');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Invalid email or password';
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: errorMessage,
-      });
+      toast.error(errorMessage, { id: 'login-error' });
     } finally {
       setIsLoading(false);
     }

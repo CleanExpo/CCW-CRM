@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
-import { useToast } from '@/hooks/use-toast';
+import toast from 'react-hot-toast';
 
 const formSchema = z
   .object({
@@ -34,7 +34,6 @@ const formSchema = z
 type FormData = z.infer<typeof formSchema>;
 
 export function RegisterForm() {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FormData>({
@@ -56,10 +55,7 @@ export function RegisterForm() {
         full_name: values.full_name,
       });
 
-      toast({
-        title: 'Account created',
-        description: response.message || `Welcome, ${response.user.email}`,
-      });
+      toast.success(response.message || `Account created — welcome, ${response.user.email}`);
 
       if (response.access_token) {
         window.location.href = '/dashboard';
@@ -68,11 +64,7 @@ export function RegisterForm() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Could not create account';
-      toast({
-        variant: 'destructive',
-        title: 'Sign up failed',
-        description: errorMessage,
-      });
+      toast.error(errorMessage, { id: 'register-error' });
     } finally {
       setIsLoading(false);
     }

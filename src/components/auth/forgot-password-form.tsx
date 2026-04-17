@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
-import { useToast } from '@/hooks/use-toast';
+import toast from 'react-hot-toast';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -25,7 +25,6 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export function ForgotPasswordForm() {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -38,18 +37,11 @@ export function ForgotPasswordForm() {
     setIsLoading(true);
     try {
       const res = await authApi.requestPasswordReset(values.email);
-      toast({
-        title: 'Check your email',
-        description: res.message,
-      });
+      toast.success(res.message || 'If an account exists, we sent reset instructions.');
       setSent(true);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Something went wrong';
-      toast({
-        variant: 'destructive',
-        title: 'Request failed',
-        description: errorMessage,
-      });
+      toast.error(errorMessage, { id: 'forgot-error' });
     } finally {
       setIsLoading(false);
     }
