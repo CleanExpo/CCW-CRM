@@ -1,33 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/prisma';
+import { customerToApi } from '@/lib/db/api-serialize';
+import type { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
 
-    let query = supabase.from('customers').select('*', { count: 'exact' }).eq('is_active', true);
-
+    const where: Prisma.CustomerWhereInput = { isActive: true };
     if (search) {
-      query = query.or(
-        `company_name.ilike.%${search}%,contact_name.ilike.%${search}%,email.ilike.%${search}%`
-      );
+      where.OR = [
+        { companyName: { contains: search, mode: 'insensitive' } },
+        { contactName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
     }
 
-    query = query.order('company_name').range((page - 1) * pageSize, page * pageSize - 1);
-
-    const { data, count, error } = await query;
-    if (error) throw error;
+    const [rows, total] = await Promise.all([
+      prisma.customer.findMany({
+        where,
+        orderBy: { companyName: 'asc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.customer.count({ where }),
+    ]);
 
     return NextResponse.json({
-      items: data ?? [],
-      total: count ?? 0,
+      items: rows.map(customerToApi),
+      total,
       page,
       page_size: pageSize,
-      total_pages: Math.ceil((count ?? 0) / pageSize),
+      total_pages: Math.ceil(total / pageSize),
     });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
@@ -36,11 +43,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient();
-    const body = await request.json();
-    const { data, error } = await supabase.from('customers').insert(body).select().single();
-    if (error) throw error;
-    return NextResponse.json(data, { status: 201 });
+    const body = (await request.json()) as Record<string, unknown>;
+    const row = await prisma.customer.create({
+      data: {
+        companyName: String(body.company_name ?? body.companyName ?? ''),
+        contactName: (body.contact_name ?? body.contactName) as string | null | undefined,
+        email: (body.email as string) ?? null,
+        phone: (body.phone as string) ?? null,
+        city: (body.city as string) ?? null,
+        isActive: (body.is_active as boolean) ?? (body.isActive as boolean) ?? true,
+      },
+    });
+    return NextResponse.json(customerToApi(row), { status: 201 });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }

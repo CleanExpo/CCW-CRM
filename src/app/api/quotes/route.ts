@@ -1,43 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/prisma';
+import { quoteToApi } from '@/lib/db/api-serialize';
+import type { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
     const status = searchParams.get('status');
 
-    let query = supabase.from('quotes').select('*, customers(company_name)', { count: 'exact' });
-
+    const where: Prisma.QuoteWhereInput = {};
     if (search) {
-      query = query.or(`quote_number.ilike.%${search}%`);
+      where.quoteNumber = { contains: search, mode: 'insensitive' };
     }
     if (status) {
-      query = query.eq('status', status);
+      where.status = status;
     }
 
-    query = query
-      .order('created_at', { ascending: false })
-      .range((page - 1) * pageSize, page * pageSize - 1);
+    const [rows, total] = await Promise.all([
+      prisma.quote.findMany({
+        where,
+        include: { customer: { select: { companyName: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.quote.count({ where }),
+    ]);
 
-    const { data, count, error } = await query;
-    if (error) throw error;
-
-    const quotes = (data ?? []).map((q) => ({
-      ...q,
-      customer_name: (q.customers as { company_name: string } | null)?.company_name ?? 'Unknown',
-      customers: undefined,
-    }));
+    const items = rows.map((q) => {
+      const { customer, ...rest } = q;
+      return quoteToApi(rest, customer?.companyName);
+    });
 
     return NextResponse.json({
-      items: quotes,
-      total: count ?? 0,
+      items,
+      total,
       page,
       page_size: pageSize,
-      total_pages: Math.ceil((count ?? 0) / pageSize),
+      total_pages: Math.ceil(total / pageSize),
     });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
@@ -46,11 +49,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient();
-    const body = await request.json();
-    const { data, error } = await supabase.from('quotes').insert(body).select().single();
-    if (error) throw error;
-    return NextResponse.json(data, { status: 201 });
+    const body = (await request.json()) as Record<string, unknown>;
+    const row = await prisma.quote.create({
+      data: {
+        customerId: String(body.customer_id ?? body.customerId ?? ''),
+        quoteNumber: String(body.quote_number ?? body.quoteNumber ?? ''),
+        status: String(body.status ?? 'draft'),
+        total: body.total != null ? Number(body.total) : null,
+      },
+    });
+    return NextResponse.json(quoteToApi(row), { status: 201 });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }

@@ -1,35 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/prisma';
+import { productToApi } from '@/lib/db/api-serialize';
+import type { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
     const category = searchParams.get('category');
 
-    let query = supabase.from('products').select('*', { count: 'exact' });
-
+    const where: Prisma.ProductWhereInput = {};
     if (search) {
-      query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%`);
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+      ];
     }
     if (category) {
-      query = query.eq('category', category);
+      where.category = category;
     }
 
-    query = query.order('name').range((page - 1) * pageSize, page * pageSize - 1);
-
-    const { data, count, error } = await query;
-    if (error) throw error;
+    const [rows, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.product.count({ where }),
+    ]);
 
     return NextResponse.json({
-      items: data ?? [],
-      total: count ?? 0,
+      items: rows.map(productToApi),
+      total,
       page,
       page_size: pageSize,
-      total_pages: Math.ceil((count ?? 0) / pageSize),
+      total_pages: Math.ceil(total / pageSize),
     });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
@@ -38,11 +46,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient();
-    const body = await request.json();
-    const { data, error } = await supabase.from('products').insert(body).select().single();
-    if (error) throw error;
-    return NextResponse.json(data, { status: 201 });
+    const body = (await request.json()) as Record<string, unknown>;
+    const row = await prisma.product.create({
+      data: {
+        name: String(body.name ?? ''),
+        sku: String(body.sku ?? ''),
+        category: (body.category as string) ?? null,
+        price: Number(body.price ?? 0),
+        stock: Number(body.stock ?? 0),
+        isActive: (body.is_active as boolean) ?? (body.isActive as boolean) ?? true,
+        warehouseLocation:
+          (body.warehouse_location as string) ?? (body.warehouseLocation as string) ?? null,
+      },
+    });
+    return NextResponse.json(productToApi(row), { status: 201 });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }
