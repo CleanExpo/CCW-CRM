@@ -3,23 +3,13 @@
  * Ensures all required environment variables are present at startup
  */
 
-// Required environment variables
-const REQUIRED_ENV_VARS = [
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  "NEXT_PUBLIC_BACKEND_URL",
-] as const;
+const REQUIRED_ENV_VARS = ["DATABASE_URL", "NEXT_PUBLIC_BACKEND_URL"] as const;
 
-// Optional environment variables with defaults
 const OPTIONAL_ENV_VARS = {
   NEXT_PUBLIC_FRONTEND_URL: "http://localhost:3000",
   LOG_LEVEL: "info",
 } as const;
 
-/**
- * Validates that all required environment variables are present
- * Throws an error if any are missing
- */
 function validateEnv(): void {
   const missing: string[] = [];
 
@@ -27,6 +17,10 @@ function validateEnv(): void {
     if (!process.env[key]) {
       missing.push(key);
     }
+  }
+
+  if (!process.env.JWT_SECRET && !process.env.JWT_SECRET_KEY) {
+    missing.push("JWT_SECRET (or JWT_SECRET_KEY)");
   }
 
   if (missing.length > 0) {
@@ -37,21 +31,11 @@ function validateEnv(): void {
   }
 }
 
-// Validate on module load (fail fast)
-if (typeof window === "undefined") {
-  // Only validate on server-side (Next.js edge runtime, API routes, etc.)
+if (typeof window === "undefined" && process.env.NODE_ENV !== "test") {
   validateEnv();
 }
 
-/**
- * Type-safe application configuration
- * All values are validated and guaranteed to exist
- */
 export const config = {
-  supabase: {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  },
   backend: {
     url: process.env.NEXT_PUBLIC_BACKEND_URL!,
   },
@@ -66,14 +50,7 @@ export const config = {
   isTest: process.env.NODE_ENV === "test",
 } as const;
 
-/**
- * Helper to check if we're running on the client
- */
 export const isClient = typeof window !== "undefined";
-
-/**
- * Helper to check if we're running on the server
- */
 export const isServer = typeof window === "undefined";
 
 export default config;
