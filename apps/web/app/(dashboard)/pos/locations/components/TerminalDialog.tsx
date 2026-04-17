@@ -83,7 +83,7 @@ export function TerminalDialog({
         terminal_code: terminal.terminal_id,
         location_id: terminal.location_code,
         terminal_type: terminal.terminal_type as 'physical' | 'virtual',
-        provider: '',
+        provider: terminal.merchant_id ?? '',
         serial_number: '',
         is_active: terminal.is_active,
       });

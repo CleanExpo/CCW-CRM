@@ -146,8 +146,8 @@ export default function LocationsPage() {
 
   async function loadLocations() {
     try {
-      const response = await apiClient.get<{ data: Location[] }>('/api/pos/locations');
-      setLocations(response.data || []);
+      const response = await apiClient.get<Location[]>('/api/pos/locations');
+      setLocations(response || []);
     } catch (error) {
       console.error('Failed to load locations:', error);
       toast({
@@ -160,8 +160,8 @@ export default function LocationsPage() {
 
   async function loadTerminals() {
     try {
-      const response = await apiClient.get<{ data: POSTerminal[] }>('/api/pos/terminals');
-      setTerminals(response.data || []);
+      const response = await apiClient.get<POSTerminal[]>('/api/pos/terminals');
+      setTerminals(response || []);
     } catch (error) {
       console.error('Failed to load terminals:', error);
     }
