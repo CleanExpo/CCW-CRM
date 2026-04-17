@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Email/password accounts for Next.js `/api/auth/*` (not Supabase Auth).
+model AppUser {
+  id                        String    @id @default(uuid()) @db.Uuid
+  email                     String    @unique
+  passwordHash              String    @map("password_hash")
+  fullName                  String?   @map("full_name")
+  isAdmin                   Boolean   @default(false) @map("is_admin")
+  isActive                  Boolean   @default(true) @map("is_active")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  lastLoginAt               DateTime? @map("last_login_at")
+  passwordResetTokenHash    String?   @map("password_reset_token_hash")
+  passwordResetExpiresAt    DateTime? @map("password_reset_expires_at")
+
+  @@map("app_users")
+}
+
+model Customer {
+  id           String   @id @default(uuid()) @db.Uuid
+  companyName  String   @map("company_name")
+  contactName  String?  @map("contact_name")
+  email        String?
+  phone        String?
+  city         String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+  quotes Quote[]
+
+  @@map("customers")
+}
+
+model Product {
+  id                 String   @id @default(uuid()) @db.Uuid
+  name               String
+  sku                String   @unique
+  category           String?
+  price              Float    @default(0)
+  stock              Int      @default(0)
+  isActive           Boolean  @default(true) @map("is_active")
+  warehouseLocation  String?  @map("warehouse_location")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+model Order {
+  id           String   @id @default(uuid()) @db.Uuid
+  customerId   String   @map("customer_id") @db.Uuid
+  orderNumber  String   @map("order_number")
+  status       String
+  total        Float    @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@map("orders")
+}
+
+model Quote {
+  id           String   @id @default(uuid()) @db.Uuid
+  customerId   String   @map("customer_id") @db.Uuid
+  quoteNumber  String   @map("quote_number")
+  status       String
+  total        Float?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@map("quotes")
+}
+
+model AgentRun {
+  id            String    @id @default(uuid()) @db.Uuid
+  agentType     String?   @map("agent_type")
+  status        String
+  errorMessage  String?   @map("error_message")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  completedAt   DateTime? @map("completed_at")
+
+  @@map("agent_runs")
+}
