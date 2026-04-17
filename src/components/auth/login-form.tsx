@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,7 +66,7 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
 
       // Force full page reload to trigger middleware authentication check
       // This ensures the auth cookie is properly validated server-side
-      window.location.href = '/dashboard';
+      window.location.replace('/dashboard');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Invalid email or password';
       toast({
@@ -189,20 +190,33 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
         <div
           className={
             isMarketing
-              ? 'mt-5 text-center text-xs text-zinc-500'
-              : 'mt-4 text-center text-xs text-slate-400'
+              ? 'mt-5 flex flex-col gap-3 text-center text-xs text-zinc-500'
+              : 'mt-4 flex flex-col gap-2 text-center text-xs text-slate-400'
           }
         >
-          <a
-            href="/forgot-password"
-            className={
-              isMarketing
-                ? 'font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-sky-300 hover:underline'
-                : 'hover:text-slate-600 hover:underline'
-            }
-          >
-            Forgot your password?
-          </a>
+          <p className={isMarketing ? 'text-zinc-400' : undefined}>
+            <Link
+              href="/register"
+              className={
+                isMarketing
+                  ? 'font-medium text-sky-300 underline-offset-4 transition-colors hover:text-sky-200 hover:underline'
+                  : 'font-medium text-primary hover:underline'
+              }
+            >
+              Create an account
+            </Link>
+            <span className={isMarketing ? 'text-zinc-600' : 'text-muted-foreground'}> · </span>
+            <Link
+              href="/forgot-password"
+              className={
+                isMarketing
+                  ? 'font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-sky-300 hover:underline'
+                  : 'hover:text-slate-600 hover:underline'
+              }
+            >
+              Forgot password?
+            </Link>
+          </p>
         </div>
       </form>
     </Form>
