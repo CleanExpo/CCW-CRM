@@ -60,6 +60,7 @@ class Cin7Settings(BaseSettings):
     sync_customers: bool = Field(default=True, alias="CIN7_SYNC_CUSTOMERS")
     sync_sales: bool = Field(default=True, alias="CIN7_SYNC_SALES")
     sync_inventory: bool = Field(default=True, alias="CIN7_SYNC_INVENTORY")
+    sync_purchase_orders: bool = Field(default=True, alias="CIN7_SYNC_PURCHASE_ORDERS")
 
     # Polling configuration (seconds) — Core has no webhooks, polling is primary
     polling_enabled: bool = Field(default=True, alias="CIN7_POLLING_ENABLED")
@@ -67,6 +68,7 @@ class Cin7Settings(BaseSettings):
     poll_interval_customers: int = Field(default=300, alias="CIN7_POLL_INTERVAL_CUSTOMERS")
     poll_interval_sales: int = Field(default=120, alias="CIN7_POLL_INTERVAL_SALES")
     poll_interval_inventory: int = Field(default=60, alias="CIN7_POLL_INTERVAL_INVENTORY")
+    poll_interval_purchase_orders: int = Field(default=300, alias="CIN7_POLL_INTERVAL_PURCHASE_ORDERS")
 
     @property
     def is_demo_mode(self) -> bool:

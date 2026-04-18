@@ -84,6 +84,9 @@ class Cin7Connection(Base):
     last_sales_sync_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    last_purchase_order_sync_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Flexible sync configuration
     sync_settings: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
@@ -171,9 +174,7 @@ class Cin7CustomerMapping(Base):
         PGUUID(as_uuid=True),
         primary_key=True,
         default=uuid4,
-    )
-
-    # ERP customer reference
+    )    # ERP customer reference
     customer_id: Mapped[str] = mapped_column(
         PGUUID(as_uuid=True),
         index=True,
