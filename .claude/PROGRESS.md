@@ -3,7 +3,7 @@
 **Phase**: CCW Demo Sprint — Day 1 of 2 (demo 2026-04-20)
 **Last Updated**: 2026-04-18
 **Branch**: `main` (direct short-lived fix branches off origin/main per ticket)
-**Last merged PR**: #132 `feat(cin7): add PO and invoice events to Cin7 polling handler (UNI-1830)` — squash-merged
+**Last merged PR**: #133 `feat(backend): per-customer payment terms + B2B/B2C type (UNI-1821 + UNI-1831)` — squash-merged, branch deleted
 
 ## ⛔ STANDING ORDER — READ FIRST, EVERY CONTEXT WINDOW ⛔
 
@@ -71,18 +71,7 @@ Phill has granted blanket standing permission for every action in this repo that
 | RLS scoping doc committed on main                 | DONE (defer B) | UNI-1749 | ~2h  |
 | Render OOM scoping doc committed on main          | DONE (env B)   | UNI-1758 | ~1h  |
 | Ruff hygiene (tpar.py / bank_feed / eftpos)       | PR-OPEN #114   | —        | ~15m |
-
-## In-Review Tickets (context 2, 2026-04-18)
-
-| Ticket   | Title                                           | Status | PR   |
-| -------- | ----------------------------------------------- | ------ | ---- |
-| UNI-1826 | Workshop equipment ACL s.54 warranty validator  | DONE   | #130 |
-| UNI-1861 | Activate API rate limiting (SlowAPIMiddleware)  | DONE   | #131 |
-| UNI-1830 | Cin7 PO + invoice events in polling handler     | DONE   | #132 |
-
-**NEW TICKET (Linear MCP 401 — file manually)**:
-- Mark UNI-1830 as Done in Linear
-- Run DB migration: `apps/backend/migrations/add_cin7_po_watermark.sql` in Supabase SQL Editor
+| Per-customer payment terms + B2B/B2C type         | DONE (PR #133) | UNI-1821 + UNI-1831 | ~3h |
 
 ## Previously Completed (kept for traceability)
 
@@ -151,6 +140,7 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
 | UNI-1826 | https://github.com/CleanExpo/CCW-CRM/pull/130         | `feat/uni-1826-workshop-acl-warranty`    | ACL s.54 min warranty validator — MERGED     |
 | UNI-1861 | https://github.com/CleanExpo/CCW-CRM/pull/131         | `feat/uni-1861-rate-limit-middleware`    | SlowAPIMiddleware + rate limit tests — MERGED|
 | UNI-1830 | https://github.com/CleanExpo/CCW-CRM/pull/132         | `feat/uni-1830-cin7-po-invoice-events`  | Cin7 PO+invoice polling events — MERGED      |
+| UNI-1821 + UNI-1831 | https://github.com/CleanExpo/CCW-CRM/pull/133 | `feat/uni-1821-1831-customer-profile` | Per-customer payment terms + B2B/B2C type — MERGED |
 
 - [x] feat(backend): ACL s.54 warranty validation on workshop equipment — UNI-1826 (PR #130, squash-merged)
   - `EquipmentCreate` + `EquipmentUpdate`: `model_validator(mode="after")` enforces ≥365 days warranty_expiry after purchase_date
@@ -165,74 +155,20 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
   - `Cin7Connection.last_purchase_order_sync_at` watermark column + SQL migration
   - 40+ test assertions in `test_cin7_po_invoice_events.py`
   - Linear MCP 401 — mark UNI-1830 Done manually in Linear UI
+- [x] feat(backend): per-customer payment terms + B2B/B2C customer type — UNI-1821 + UNI-1831 (PR #133, squash-merged)
+  - Extension table pattern: `customer_profile` (1:1 FK to `customers`) avoids touching locked `demo_models.py`
+  - `CustomerType` enum + `CustomerProfile` SQLAlchemy model in `crm_models.py`
+  - `CustomerBase`/`CustomerUpdate` schemas: `customer_type` (default `"B2B"`) + `payment_terms_days` (default 30)
+  - `_merge_profile()` / `_upsert_profile()` / `_get_profile()` helpers in `routes/customers.py`
+  - All 4 CRUD routes (list/get/create/update) read/write profile via outerjoin or upsert
+  - `XeroClient.create_contact()`: injects `PaymentTerms.Sales` block when `payment_terms_days` provided
+  - `XeroCustomerSync.sync_customer_to_xero()`: fetches profile, passes payment terms to Xero
+  - `calculate_invoice_tax()`: `customer_type` → `is_b2b` flag wired through (UNI-1831)
+  - 40+ test assertions in `test_customers_payment_terms.py` (7 test classes)
+  - Linear MCP 401 — mark UNI-1821 and UNI-1831 Done manually in Linear UI
 
 **DB MIGRATION REQUIRED (UNI-1830)**: Run `apps/backend/migrations/add_cin7_po_watermark.sql` in Supabase SQL Editor. Safe to re-run (IF NOT EXISTS guard).
 
+**DB MIGRATION REQUIRED (UNI-1821/1831)**: Run `apps/backend/migrations/add_customer_profile.sql` in Supabase SQL Editor. Safe to re-run (IF NOT EXISTS guard).
+
 ## Completed Previous Session (2026-04-14)
-
-- [x] BetterStack log drain: logtail-python SDK + structlog stdlib bridge
-- [x] fix(e2e): auth.setup.ts handles /onboarding redirect — CI unblocked
-- [x] fix(ai): SupervisorAgent now calls Anthropic claude-haiku-4-5, not Ollama
-- [x] fix(db): Alembic migration 006 — score column on product_recommendations
-- [x] fix(backend): async_engine pool_size 5→20, max_overflow 10→40
-- [x] fix(backend): webhook stubs replaced with structlog + httpx forwarding
-- [x] fix(lint): ruff I001 import sort in supervisor_agent.py
-
-## Completed Previous Session (2026-04-13)
-
-- [x] Dark smoke test run: injection, rapid nav, mobile, CSV, auth bypass
-- [x] Bugs logged to Linear: UNI-1783, UNI-1784, UNI-1787
-- [x] PR #67 merged to ai-updates (POS $NaN, logout redirect, connecting badge, settings redirect)
-- [x] fix(backend): html.escape() validator on CustomerBase + CustomerUpdate — UNI-1783
-- [x] feat(backend): GET/POST /api/integrations/anthropic/\* — UNI-1776
-- [x] feat(web): Anthropic API key input in Settings → Integrations — UNI-1776
-- [x] feat(onboarding): Claude AI step (step 4) in setup wizard — UNI-1776
-- [x] fix(web): Customer Discard button now calls form.reset() — UNI-1784
-- [x] fix(web): POS responsive tabbed layout for mobile (below lg) — UNI-1787
-- [x] fix(web): isMounted + cancelled flags on dashboard async fetches
-- [x] PR #69 raised: claude/festive-keller → ai-updates
-
-## Decisions Log
-
-| Decision                                            | Rationale                                                           | Date       |
-| --------------------------------------------------- | ------------------------------------------------------------------- | ---------- |
-| Route `User` via `models_base`, keep schema-locked  | `demo_models.py` is locked; `User` lives in `models_base.py:58`     | 2026-04-18 |
-| Merge PR #105 despite pre-existing red ruff         | Failures predate UNI-1944; blocking would mask fix; filed new ticket | 2026-04-18 |
-| Fresh short-lived fix branches off origin/main      | Sandbox is append-only on `.git`; Phill runs git locally in PS      | 2026-04-18 |
-| html.escape() not htmlspecialchars                  | stdlib, no deps, escapes all 5 HTML special chars                   | 2026-04-13 |
-| Anthropic key stored in IntegrationCredential table | Consistent with SendGrid pattern                                    | 2026-04-13 |
-| POS mobile = Tabs not scroll                        | Tabs give instant access without scroll; desktop grid unchanged     | 2026-04-13 |
-| isMounted plain object (not useRef)                 | useRef not imported; plain object works identically in this pattern | 2026-04-13 |
-| Cin7 invoices derived from PO Billed/PartlyBilled   | Core has no /invoice endpoint; billing state surfaced via /purchaseList | 2026-04-18 |
-| Cin7 Omni PO polling skipped (Core-only)            | Omni /PurchaseOrders has no modifiedSince; full-scan every cycle causes noise | 2026-04-18 |
-
-## Blockers (User Action Required)
-
-1. **File ruff follow-up ticket in Linear** — paste ticket body from 2026-04-18 session (Linear MCP returns 401; must be manual). See "Ruff hygiene" row in Active Tasks.
-2. **Anthropic API key** — CCW staff must enter their sk-ant- key via Settings → Integrations or onboarding wizard before AI features activate
-3. **UNI-1749 RLS scope decision** — Claude wrote `docs/UNI-1749-RLS-SCOPING.md` cataloguing 28 permissive `USING (true)` policies across 5 migration files. Per the 2026-03-31 architectural note, CCW is single-tenant and the backend bypasses RLS via the `postgres` role. Recommendation: do NOT ship Option B/C/D before the demo. Phill must decide: (a) accept scoping doc and defer to post-demo, (b) greenlight Option B (`auth.uid() IS NOT NULL`) with canary, or (c) greenlight Option C with JWT-claim wiring (high risk inside demo window).
-4. **Supabase MCP 401** — `get_advisors` + other Supabase MCP calls return 401 in this session. Scoping work had to be done statically against migration files. Phill can re-auth the MCP or run the security advisor manually in the Supabase console.
-5. **Linear MCP 401** — Mark UNI-1830 as Done manually in Linear UI.
-6. **DB migration (UNI-1830)** — Run `apps/backend/migrations/add_cin7_po_watermark.sql` in Supabase SQL Editor.
-
-## Notes for Next Context Window
-
-- **Demo date**: 2026-04-20. Today is Day 1 of 2. Day 1 shipping complete (see Path B table above).
-- **Next ticket**: **UNI-1758 scoping doc shipped on main (`5fffa3a`)**. Recommendation for demo week is an env-var flip Phill owns: set `WEB_CONCURRENCY=1` in Render → Environment for the backend service. No code change. See `docs/UNI-1758-OOM-SCOPING.md` for the full risk matrix, verification checklist, and post-demo plan (lazy-load AI routes, bound learning-engine patterns).
-- **Sprint order (Day 1 — COMPLETE)**: UNI-1777 (#106) → UNI-1785/1786/1782 (#107) → UNI-1781 (#108) → UNI-1778 (#109)
-- **Sprint order (Day 2 — COMPLETE ahead of schedule)**: UNI-1758 scoping doc on `main`. Remaining for Phill: (a) merge PRs #106–#109 in GitHub UI, (b) flip `WEB_CONCURRENCY=1` in Render env, (c) post-merge prod smoke via `chrome-prod` skill.
-- **In-Review merges (context 2)**: UNI-1826 (#130) + UNI-1861 (#131) + UNI-1830 (#132) all squash-merged.
-- **Sprint order (Day 3+ after demo)**: UNI-1758 Option D (lazy-load AI routes + bounded pattern cache) → full RLS tightening under UNI-1749 → backend ruff hygiene follow-up ticket → UNI-1821 (per-customer payment terms) → UNI-1831 (B2B/B2C customer type) → UNI-1834 (AP ageing report).
-- **Blocked tickets (Linear In-Review)**: UNI-1807 (ABN field — requires locked demo_models.py), UNI-1809 (Stripe GST — external Shopify pipeline), UNI-1824 (dangerous goods — blocked by UNI-1822).
-- **Workflow**: Phill runs git commands in `C:\CCW-Online ERP` via PowerShell; Claude edits files via file tools. Sandbox cannot `rm` in `.git/`.
-- **PowerShell gotcha**: `[System.IO.File]` APIs use .NET's CWD (launch dir), NOT `$PWD`. Always pass absolute paths.
-- **Edit-tool corruption risk**: When working on files on a Windows checkout with `core.autocrlf=true`, Edit can inject CRLF + null bytes → git classifies as binary. Verify after every edit with `git diff --text` + null-byte check before committing.
-- **Locked files (do not touch)**: `apps/backend/src/db/demo_models.py`, `apps/web/middleware.ts`, `apps/backend/src/api/routes/demo_auth.py`
-- **`User` class lives at**: `apps/backend/src/db/models_base.py:58` (not `demo_models.py`)
-- All customer string fields are sanitised at Pydantic layer — SQL injection protection is via Supabase parameterised queries (not html.escape)
-- Anthropic key is checked: DB first → ANTHROPIC_API_KEY env var fallback
-- POS desktop layout is unchanged (h-[600px] still applies at lg+)
-- Dashboard first useEffect uses a plain `{ current: true }` object as isMounted flag (not useRef — was not imported)
-- Supabase project: `vwfgksqkajnpfjospbpe`
-- Linear team: Unite-Group, project: CCW-ERP/CRM
-- Authenticated GitHub Chrome tab: `771389560` (as of 2026-04-18)
