@@ -12,22 +12,24 @@ from typing import Annotated
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Customer, Order, OrderItem, Product
+from src.db.inventory_models import RMA, RMARead, RMAStatus, RMAStatusUpdate, rma_status_can_advance
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/warehouse", tags=["Warehouse"])
 
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # In-process pick-list store (demo; no extra migration required)
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 _pick_lists: dict[str, dict] = {}
 
 
@@ -37,9 +39,9 @@ def _generate_pick_list_number() -> str:
     return f"PL-{date_str}-{seq:05d}"
 
 
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Pydantic models
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 
 class PickListCreate(BaseModel):
@@ -210,9 +212,9 @@ async def get_warehouse_ops() -> dict:
     }
 
 
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Pick List endpoints
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 
 @router.post(
@@ -338,3 +340,84 @@ async def get_pick_list(pick_list_id: str) -> PickListResponse:
     if not pick_list:
         raise HTTPException(status_code=404, detail="Pick list not found")
     return PickListResponse(**pick_list)
+
+
+# ------------------------------------------------------------------------------
+# RMA endpoints — UNI-1835
+# ------------------------------------------------------------------------------
+
+
+@router.get(
+    "/returns",
+    response_model=list[RMARead],
+    dependencies=[Depends(get_current_user)],
+)
+async def list_returns(
+    status: str | None = Query(None, description="Filter by RMA status"),
+    db: AsyncSession = Depends(get_async_db),
+) -> list[RMARead]:
+    """List all RMAs, optionally filtered by status."""
+    if status is not None:
+        valid_statuses = [s.value for s in RMAStatus]
+        if status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status '{status}'. Must be one of: {valid_statuses}",
+            )
+
+    stmt = select(RMA).options(selectinload(RMA.lines)).order_by(RMA.created_at.desc())
+    if status is not None:
+        stmt = stmt.where(RMA.status == status)
+
+    result = await db.execute(stmt)
+    rmas = result.scalars().all()
+
+    logger.info("list_returns", count=len(rmas), status_filter=status)
+    return [RMARead.model_validate(r) for r in rmas]
+
+
+@router.patch(
+    "/returns/{rma_id}/status",
+    response_model=RMARead,
+    dependencies=[Depends(get_current_user)],
+)
+async def advance_rma_status(
+    rma_id: UUID,
+    body: RMAStatusUpdate,
+    db: AsyncSession = Depends(get_async_db),
+) -> RMARead:
+    """Advance an RMA to the next status (forward-only transitions)."""
+    stmt = select(RMA).options(selectinload(RMA.lines)).where(RMA.id == rma_id)
+    result = await db.execute(stmt)
+    rma = result.scalar_one_or_none()
+
+    if rma is None:
+        raise HTTPException(status_code=404, detail="RMA not found")
+
+    valid_statuses = [s.value for s in RMAStatus]
+    if body.status not in valid_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status '{body.status}'. Must be one of: {valid_statuses}",
+        )
+
+    current = rma.status if isinstance(rma.status, str) else rma.status.value
+    if not rma_status_can_advance(current, body.status):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot transition RMA from '{current}' to '{body.status}'. "
+            f"Only forward transitions are allowed.",
+        )
+
+    rma.status = body.status
+    await db.commit()
+
+    # Re-query with lines eager-loaded — db.refresh() only reloads scalar columns,
+    # not relationships. Accessing rma.lines after a bare refresh raises
+    # MissingGreenlet in async SQLAlchemy.
+    reload_stmt = select(RMA).options(selectinload(RMA.lines)).where(RMA.id == rma_id)
+    reload_result = await db.execute(reload_stmt)
+    rma = reload_result.scalar_one()
+
+    logger.info("advance_rma_status", rma_id=str(rma_id), from_status=current, to_status=body.status)
+    return RMARead.model_validate(rma)
