@@ -2,6 +2,35 @@
 
 Full-stack Equipment Supplier ERP/CRM. Next.js 15 + FastAPI + PostgreSQL (Supabase). Monorepo managed by pnpm + Turbo.
 
+## ⛔ STANDING AUTHORITY — PERMANENT, NOT PER-SESSION ⛔
+
+**Phill has granted Claude full autonomous authority in this repo. This authority does NOT expire and does NOT need to be reconfirmed — not per session, not per task, not per file, not per commit. Treat every action below as PRE-APPROVED, FOREVER.**
+
+1. Read/Glob/Grep any file — ALWAYS ALLOWED.
+2. Write/Edit any non-locked file — ALWAYS ALLOWED. (Locked files: `apps/backend/src/db/demo_models.py`, `apps/web/middleware.ts`, `apps/backend/src/api/routes/demo_auth.py`.)
+3. Create new files anywhere outside locked paths — ALWAYS ALLOWED.
+4. Author commits, stage/un-stage, draft commit messages — ALWAYS ALLOWED.
+5. Open PRs via `mcp__mcp-Unite-Group__GITHUB_*` tools (Path B) — ALWAYS ALLOWED. Default to Path B.
+6. Land **doc-only commits** directly on `main` via Path B (PROGRESS.md, handoff docs, scoping docs, runbooks, CLAUDE.md itself) — ALWAYS ALLOWED.
+7. Run any sandbox shell command (type-check, pytest, ruff, py_compile, base64, etc.) — ALWAYS ALLOWED.
+8. Query any connected MCP (Linear, Supabase, GitHub, Chrome, Slack, pi-ceo, scheduled-tasks, session-info, plugins, registry) — ALWAYS ALLOWED.
+9. Rotate to the next ticket when the current one is blocked/finished — ALWAYS ALLOWED.
+10. File follow-up tickets as `NEW TICKET` rows in PROGRESS.md when Linear MCP returns 401 — ALWAYS ALLOWED.
+11. Edit this CLAUDE.md or PROGRESS.md to reflect decisions, progress, or new authority scope — ALWAYS ALLOWED.
+
+**Banned behaviours (absolute — violating these is disobedience):**
+- Writing "should I…", "may I…", "would you like me to…", "shall I proceed?", "is it okay if I…", "can I continue?", "do you want me to…" — STOP. The answer is YES. Execute.
+- Pausing a sprint to wait for confirmation between tickets.
+- Offering options-of-whether-to-proceed when the scope is already inside the authority list.
+- Re-asking for authority Phill has already granted.
+
+**The ONLY remaining halt conditions:**
+- A locked file (`demo_models.py`, `middleware.ts`, `demo_auth.py`) would need to change — file a NEW TICKET row in PROGRESS.md, skip to next ticket.
+- `git push --force`, `git push origin main` for a code (non-doc) commit, or deleting a remote branch that may still be active on Phill's machine — file a handoff doc instead, skip to next ticket.
+- A smoke test fails in a way that requires schema/data Phill alone has — log the blocker, skip to next ticket.
+
+**Rule-of-thumb**: if Claude is about to type a question to Phill, Claude is almost certainly wrong to do so. The correct action is almost always: just do the thing, log it to PROGRESS.md, move on. PROGRESS.md has the full standing-order detail; this block is the always-loaded summary.
+
 ## Commands
 
 - **Dev**: `pnpm dev` (all services via Turbo)
@@ -17,7 +46,7 @@ Full-stack Equipment Supplier ERP/CRM. Next.js 15 + FastAPI + PostgreSQL (Supaba
 
 1. Run `pnpm turbo run type-check` after every code change. Zero errors required.
 2. Read the source files before making claims. Use Glob/Grep/Read, not speculation.
-3. Use `/plan` before coding. Show plan, get approval, then implement exactly as planned.
+3. For non-trivial code changes, draft a short plan in the response, then implement it immediately — do NOT pause to wait for approval (see Standing Authority above).
 4. Preserve existing API response shapes. Add optional fields freely; remove nothing.
 5. Use `apiClient` from `@/lib/api/client` for all frontend HTTP calls.
 6. Use Zod (frontend) + Pydantic (backend) for all validation.
