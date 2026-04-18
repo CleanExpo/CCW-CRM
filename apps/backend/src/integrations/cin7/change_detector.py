@@ -161,16 +161,78 @@ def detect_inventory_changes(
 class Cin7ChangeDetector:
     """Polls Cin7 APIs for changes using ``modified_since`` parameter.
 
-    Tracks last-polled timestamps per entity type in memory.
-    In production, these would be seeded from ``Cin7Connection.last_*_sync_at``.
+    Tracks last-polled timestamps per entity type in memory.  Call
+    :meth:`seed_from_connection` before polling to restore watermarks from the
+    database, and :meth:`get_updated_watermarks` afterwards to obtain the new
+    timestamps ready to be written back to ``Cin7Connection``.
+
+    Typical caller pattern::
+
+        detector = Cin7ChangeDetector(client, settings)
+        detector.seed_from_connection(connection)
+        results = await detector.poll_all(source)
+        watermarks = detector.get_updated_watermarks()
+        connection.last_product_sync_at = watermarks.get("products")
+        connection.last_customer_sync_at = watermarks.get("customers")
+        connection.last_sales_sync_at = watermarks.get("sales")
+        connection.last_inventory_sync_at = watermarks.get("inventory")
+        await db.commit()
     """
 
     ENTITY_TYPES = ("products", "customers", "sales", "inventory")
+
+    # Mapping from detector entity key → Cin7Connection column name
+    _CONNECTION_ATTR: dict[str, str] = {
+        "products": "last_product_sync_at",
+        "customers": "last_customer_sync_at",
+        "sales": "last_sales_sync_at",
+        "inventory": "last_inventory_sync_at",
+    }
 
     def __init__(self, client: Cin7Client, settings: Cin7Settings) -> None:
         self.client = client
         self.settings = settings
         self._last_polled: dict[str, datetime] = {}
+
+    # ------------------------------------------------------------------
+    # Watermark persistence helpers
+    # ------------------------------------------------------------------
+
+    def seed_from_connection(self, connection: Any) -> None:
+        """Seed in-memory watermarks from a ``Cin7Connection`` DB row.
+
+        Call this *before* polling so that ``modified_since`` picks up from
+        where the last successful poll finished rather than from the epoch.
+
+        Args:
+            connection: A ``Cin7Connection`` SQLAlchemy model instance.
+        """
+        for entity, attr in self._CONNECTION_ATTR.items():
+            value: datetime | None = getattr(connection, attr, None)
+            if value is not None:
+                self._last_polled[entity] = value
+                logger.debug(
+                    "cin7_watermark_loaded",
+                    entity=entity,
+                    last_polled=value.isoformat(),
+                )
+
+    def get_updated_watermarks(self) -> dict[str, datetime]:
+        """Return current in-memory watermarks keyed by entity type.
+
+        The caller is responsible for writing these back to the
+        ``Cin7Connection`` row and committing the session::
+
+            watermarks = detector.get_updated_watermarks()
+            connection.last_product_sync_at = watermarks.get("products")
+            connection.last_sales_sync_at = watermarks.get("sales")
+            ...
+            await db.commit()
+
+        Returns:
+            Dict mapping entity type → last polled datetime.
+        """
+        return dict(self._last_polled)
 
     # ------------------------------------------------------------------
     # Public interface
