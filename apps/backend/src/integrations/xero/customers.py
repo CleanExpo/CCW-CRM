@@ -11,6 +11,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.crm_models import CustomerProfile
 from src.db.demo_models import Customer
 from src.integrations.xero import get_xero_client
 from src.integrations.xero.auth import XeroAuth
@@ -57,10 +58,14 @@ class XeroCustomerSync:
         if not connection:
             raise ValueError("No active Xero connection found for organization")
 
-        # Get customer
+        # Get customer + profile (payment terms / customer type)
         stmt = select(Customer).where(Customer.id == customer_id)
         result = await db.execute(stmt)
         customer = result.scalar_one_or_none()
+
+        profile_stmt = select(CustomerProfile).where(CustomerProfile.customer_id == customer_id)
+        profile_result = await db.execute(profile_stmt)
+        customer_profile = profile_result.scalar_one_or_none()
 
         if not customer:
             raise ValueError(f"Customer {customer_id} not found")
@@ -128,6 +133,9 @@ class XeroCustomerSync:
                 email=customer.email,
                 phone=customer.phone,
                 address=address,
+                payment_terms_days=(
+                    customer_profile.payment_terms_days if customer_profile else None
+                ),
             )
 
             # Store Xero contact ID
