@@ -147,57 +147,75 @@ export default function CustomerDetailPage() {
   const loadCustomerData = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
+
+    // UNI-1785: Load customer details FIRST. If this fails (404/403/org-isolated),
+    // set fetchError and bail out — but do NOT block the render if it succeeds.
     try {
-      // Load customer details
       const customerData = await apiClient.get<Customer>(`/api/customers/${customerId}`);
       setCustomer(customerData);
-
-      // Load customer orders
-      const ordersData = await apiClient.get<{ items: Order[] }>(
-        `/api/orders?customer_id=${customerId}&page_size=100`
-      );
-      setOrders(ordersData.items || []);
-
-      // Load customer quotes
-      const quotesData = await apiClient.get<{ items: Quote[] }>(
-        `/api/quotes?customer_id=${customerId}&page_size=100`
-      );
-      setQuotes(quotesData.items || []);
-
-      // Load customer contacts (endpoint returns plain array)
-      const contactsData = await apiClient.get<Contact[]>(`/api/contacts/customer/${customerId}`);
-      setContacts(contactsData || []);
-
-      // Load IICRC certifications
-      try {
-        const certData = await apiClient.get<Certification[]>(
-          `/api/certifications?customer_id=${customerId}&page_size=100`
-        );
-        setCertifications(certData || []);
-      } catch {
-        setCertifications([]);
-      }
-
-      // Load pricing tier
-      try {
-        const tierData = await apiClient.get<PricingTier | null>(
-          `/api/pricing/customers/${customerId}/tier`
-        );
-        setPricingTier(tierData);
-      } catch {
-        setPricingTier(null);
-      }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to load customer data';
+      const message = error instanceof Error ? error.message : 'Failed to load customer';
       setFetchError(message);
       toast({
         variant: 'destructive',
         title: 'Error',
         description: message,
       });
-    } finally {
       setLoading(false);
+      return;
     }
+
+    // UNI-1785: Each secondary fetch runs in its own try/catch so one broken
+    // endpoint (e.g. org-isolated orders/quotes) does NOT blank the whole page.
+    try {
+      const ordersData = await apiClient.get<{ items: Order[] }>(
+        `/api/orders?customer_id=${customerId}&page_size=100`
+      );
+      setOrders(ordersData.items || []);
+    } catch (error) {
+      console.warn('Failed to load orders for customer', customerId, error);
+      setOrders([]);
+    }
+
+    try {
+      const quotesData = await apiClient.get<{ items: Quote[] }>(
+        `/api/quotes?customer_id=${customerId}&page_size=100`
+      );
+      setQuotes(quotesData.items || []);
+    } catch (error) {
+      console.warn('Failed to load quotes for customer', customerId, error);
+      setQuotes([]);
+    }
+
+    try {
+      const contactsData = await apiClient.get<Contact[]>(
+        `/api/contacts/customer/${customerId}`
+      );
+      setContacts(contactsData || []);
+    } catch (error) {
+      console.warn('Failed to load contacts for customer', customerId, error);
+      setContacts([]);
+    }
+
+    try {
+      const certData = await apiClient.get<Certification[]>(
+        `/api/certifications?customer_id=${customerId}&page_size=100`
+      );
+      setCertifications(certData || []);
+    } catch {
+      setCertifications([]);
+    }
+
+    try {
+      const tierData = await apiClient.get<PricingTier | null>(
+        `/api/pricing/customers/${customerId}/tier`
+      );
+      setPricingTier(tierData);
+    } catch {
+      setPricingTier(null);
+    }
+
+    setLoading(false);
   }, [customerId, toast]);
 
   useEffect(() => {
@@ -219,12 +237,30 @@ export default function CustomerDetailPage() {
   }
 
   if (!customer) {
+    // UNI-1785: Differentiate between true "not found" and "not accessible to your org".
+    const looksOrgIsolated =
+      !!fetchError &&
+      (fetchError.toLowerCase().includes('not found') ||
+        fetchError.toLowerCase().includes('forbidden') ||
+        fetchError.includes('403') ||
+        fetchError.includes('404'));
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <p className="text-lg font-medium">
-          {fetchError ? 'Failed to load customer' : 'Customer not found'}
+          {looksOrgIsolated
+            ? 'Customer not available'
+            : fetchError
+              ? 'Failed to load customer'
+              : 'Customer not found'}
         </p>
-        {fetchError && <p className="text-muted-foreground mt-1 text-sm">{fetchError}</p>}
+        {looksOrgIsolated ? (
+          <p className="text-muted-foreground mt-1 max-w-md text-sm">
+            This customer either does not exist or is not visible to your organisation.
+            If you believe you should have access, contact your administrator.
+          </p>
+        ) : (
+          fetchError && <p className="text-muted-foreground mt-1 text-sm">{fetchError}</p>
+        )}
         <div className="mt-4 flex gap-2">
           {fetchError && (
             <Button variant="outline" onClick={() => loadCustomerData()}>
