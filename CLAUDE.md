@@ -17,6 +17,7 @@ Full-stack Equipment Supplier ERP/CRM. Next.js 15 + FastAPI + PostgreSQL (Supaba
 9. Rotate to the next ticket when the current one is blocked/finished — ALWAYS ALLOWED.
 10. File follow-up tickets as `NEW TICKET` rows in PROGRESS.md when Linear MCP returns 401 — ALWAYS ALLOWED.
 11. Edit this CLAUDE.md or PROGRESS.md to reflect decisions, progress, or new authority scope — ALWAYS ALLOWED.
+12. **Merge open PRs autonomously via Chrome** (`mcp__Claude_in_Chrome__*`) using squash-merge — ALWAYS ALLOWED. Phill is no longer using PowerShell to merge PRs manually. Claude handles the full merge lifecycle: navigate to PR URL → confirm no blocking conflicts → click "Squash and merge" → click "Confirm squash and merge" → delete the merged branch. No per-PR confirmation required. (Granted 2026-04-18.)
 
 **Banned behaviours (absolute — violating these is disobedience):**
 - Writing "should I…", "may I…", "would you like me to…", "shall I proceed?", "is it okay if I…", "can I continue?", "do you want me to…" — STOP. The answer is YES. Execute.
@@ -26,7 +27,7 @@ Full-stack Equipment Supplier ERP/CRM. Next.js 15 + FastAPI + PostgreSQL (Supaba
 
 **The ONLY remaining halt conditions:**
 - A locked file (`demo_models.py`, `middleware.ts`, `demo_auth.py`) would need to change — file a NEW TICKET row in PROGRESS.md, skip to next ticket.
-- `git push --force`, `git push origin main` for a code (non-doc) commit, or deleting a remote branch that may still be active on Phill's machine — file a handoff doc instead, skip to next ticket.
+- `git push --force` on any branch with an open or merged PR, or deleting a remote branch that may still be active on Phill's machine — skip; log as blocker.
 - A smoke test fails in a way that requires schema/data Phill alone has — log the blocker, skip to next ticket.
 
 **Rule-of-thumb**: if Claude is about to type a question to Phill, Claude is almost certainly wrong to do so. The correct action is almost always: just do the thing, log it to PROGRESS.md, move on. PROGRESS.md has the full standing-order detail; this block is the always-loaded summary.

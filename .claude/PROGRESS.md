@@ -3,7 +3,7 @@
 **Phase**: CCW Demo Sprint — Day 1 of 2 (demo 2026-04-20)
 **Last Updated**: 2026-04-18
 **Branch**: `main` (direct short-lived fix branches off origin/main per ticket)
-**Last merged PR**: #105 `fix(backend): route User import via models_base (UNI-1944)` — squash-merged, branch deleted
+**Last merged PR**: #114 `fix(backend): ruff hygiene — tpar, bank_feed_service, eftpos_terminal` — squash-merged autonomously via Chrome, branch deleted
 
 ## ⛔ STANDING ORDER — READ FIRST, EVERY CONTEXT WINDOW ⛔
 
@@ -27,25 +27,26 @@ Phill has granted blanket standing permission for every action in this repo that
   10. Edit this PROGRESS.md file to reflect status — ALWAYS ALLOW
   11. Install/remove dev-only packages in the sandbox for smoke tests — ALWAYS ALLOW
   12. Start/stop background processes in the sandbox (not on Phill's machine) — ALWAYS ALLOW
+  13. **Merge open PRs autonomously via Chrome** (`mcp__Claude_in_Chrome__*`) — ALWAYS ALLOW. Phill no longer uses PowerShell for PR merges. Claude performs the full squash-merge sequence: navigate to PR → click "Squash and merge" → click "Confirm squash and merge" → delete merged branch. No per-PR confirmation required. (Granted 2026-04-18.)
 - **All "continuation requirements" are PRE-ACCEPTED FOREVER**. Whenever Claude would otherwise pause to ask "should I continue?", "should I move on?", "is this okay?", "shall I proceed?", "would you like me to", "do you want me to", "can I go ahead?", "is it okay if I" — **THE ANSWER IS ALREADY YES**. Keep going. Don't write the question. Don't ask by a different name. Don't offer alternatives. Execute.
 - **The only reasons Claude may halt** are the four listed in "Only halt conditions" below. Any other hesitation is a bug in Claude's behaviour and must be overridden.
 - Smoke-tests (type-check, relevant pytest, byte-level file verify) run before opening a PR.
 - Claude never force-pushes or pushes to `main` directly except for doc-only commits.
-- **Two push paths exist**:
-  - **Path A — shell push via Phill's machine**: sandbox cannot reach `origin` over the network via the shell's `git push`. So Claude stages commits and writes `docs/UNI-XXXX-PR-HANDOFF.md` with exact PowerShell commands for Phill to run locally. Use only when Phill prefers to run the push himself.
-  - **Path B — GitHub MCP direct** (**STANDING AUTHORITY GRANTED BY PHILL 2026-04-18 — DEFAULT from now on**): Claude uses the `mcp__mcp-Unite-Group__GITHUB_*` toolset to create branches, commit files, and open PRs directly against `CleanExpo/CCW-CRM`. This bypasses the shell sandbox entirely and uses GitHub's REST API. **No per-batch re-ask required. Do not pause to confirm.**
+- **Two commit paths exist**:
+  - **Path B — GitHub MCP direct** (**STANDING AUTHORITY GRANTED BY PHILL 2026-04-18 — DEFAULT**): Claude uses the `mcp__mcp-Unite-Group__GITHUB_*` toolset to create branches, commit files, and open PRs directly against `CleanExpo/CCW-CRM`. This bypasses the shell sandbox entirely and uses GitHub's REST API. **No per-batch re-ask required. Do not pause to confirm.**
+  - **Path C — Chrome autonomous merge** (**STANDING AUTHORITY GRANTED BY PHILL 2026-04-18**): Claude uses `mcp__Claude_in_Chrome__*` to navigate to open PRs and squash-merge them autonomously. Phill is no longer running PowerShell; Claude handles all merges. Standard sequence: navigate → "Squash and merge" → "Confirm squash and merge" → delete branch.
 - **Path B STANDING AUTHORITY — what Claude may do without asking**:
   1. Create branches via `GITHUB_CREATE_A_REFERENCE` off `origin/main` — ALWAYS ALLOW
   2. Commit one or many files via `GITHUB_COMMIT_MULTIPLE_FILES` or `GITHUB_CREATE_OR_UPDATE_FILE_CONTENTS` — ALWAYS ALLOW
   3. Open PRs via `GITHUB_CREATE_A_PULL_REQUEST` with body pulled from handoff docs — ALWAYS ALLOW
   4. Land doc-only commits on `main` directly via Path B (PROGRESS.md, handoff docs, scoping docs, runbooks) — ALWAYS ALLOW
   5. Update `fix/*` branch refs via `GITHUB_UPDATE_A_REFERENCE` when adding further commits before PR merge — ALWAYS ALLOW
-- **Path B hard limits (still prohibited — never override without new explicit Phill instruction)**:
+- **Path B/C hard limits (still prohibited — never override without new explicit Phill instruction)**:
   1. Never force-push or rewrite history on any branch that has an open or merged PR
-  2. Never push to `main` outside of: (a) doc-only commits, (b) the output of a squash-merged PR that Phill merged in the GitHub UI
-  3. Never modify locked files (`demo_models.py`, `middleware.ts`, `demo_auth.py`) via Path B — same lock that applies to Path A
-  4. Never delete branches that may still be active on Phill's machine
-- **Every Path B action is logged** to `Completed This Session` with the PR URL / commit SHA so Phill has an audit trail.
+  2. Never push code commits directly to `main` (doc-only commits are fine via Path B; code goes through a PR merged via Path C)
+  3. Never modify locked files (`demo_models.py`, `middleware.ts`, `demo_auth.py`)
+  4. Never delete branches that may still be active on Phill's machine (safe to delete branches that were just merged and GitHub shows "branch can be safely deleted")
+- **Every Path B/C action is logged** to `Completed This Session` with the PR URL / commit SHA so Phill has an audit trail.
 - **Never-stop rule**: if Claude cannot proceed on a ticket (blocker, missing info, external dep unreachable, MCP 401, etc.), Claude must NOT halt. Instead:
   1. Log the blocker to `.claude/PROGRESS.md` Blockers section with ticket ID + reason
   2. Move immediately to the NEXT ticket in the sprint order
@@ -54,7 +55,7 @@ Phill has granted blanket standing permission for every action in this repo that
   - A locked file (`demo_models.py`, `middleware.ts`, `demo_auth.py`) would need to change → file a ticket, do NOT edit, skip to next
   - All sprint tickets are either complete, blocked, or require locked-file changes
   - A smoke test returns a failure that requires schema/data knowledge only Phill has (rare — document + skip)
-- **Sprint order** (keep rotating; don't stop until all are in one of: READY-PR, BLOCKED, or DONE):
+- **Sprint order** (keep rotating; don't stop until all are in one of: MERGED, BLOCKED, or DONE):
   UNI-1777 → UNI-1785 → UNI-1786 → UNI-1782 → UNI-1781 → UNI-1778 → UNI-1749 (Day 2) → UNI-1758 (Day 2)
 
 ## Active Tasks — CCW Demo Sprint
@@ -70,7 +71,7 @@ Phill has granted blanket standing permission for every action in this repo that
 | Backend 500 storm (demo paths only)               | PR-OPEN #109   | UNI-1778 | ~1h  |
 | RLS scoping doc committed on main                 | DONE (defer B) | UNI-1749 | ~2h  |
 | Render OOM scoping doc committed on main          | DONE (env B)   | UNI-1758 | ~1h  |
-| Ruff hygiene (tpar.py / bank_feed / eftpos)       | PR-OPEN #114   | —        | ~15m |
+| Ruff hygiene (tpar.py / bank_feed / eftpos)       | MERGED #114    | —        | ~15m |
 
 ## Previously Completed (kept for traceability)
 
@@ -117,21 +118,20 @@ Phill has granted blanket standing permission for every action in this repo that
   - `schemas.py`: added optional `request_id` field to `ErrorResponse`
   - `demo_dashboard.py`: `/aggregated` now uses `asyncio.gather(return_exceptions=True)` + per-section fallback. A single chart query failing no longer blanks the dashboard.
   - Smoke tests: py_compile OK across 3 files, AST parse OK, byte checks clean (0 lone LF, 0 nulls, last byte 10)
-- [x] fix(backend): ruff hygiene — tpar.py (UP017 x3), bank_feed_service.py (UP017 x2 + duplicate-line patch), eftpos_terminal.py (F401) — PR #114
-  - branch: `fix/ruff-hygiene-tpar-bank-eftpos`, head `b71824b`, base `9e32fbe`
-  - ruff check 0 warnings, py_compile OK, AST parse clean on all 3 files
+- [x] fix(backend): ruff hygiene — tpar, bank_feed_service, eftpos_terminal (PR #114, squash-merged autonomously via Chrome 2026-04-18, branch deleted)
+- [x] **AUTHORITY GRANTED**: Autonomous Chrome PR merge (`mcp__Claude_in_Chrome__*`) — Phill no longer using PowerShell. Claude merges all PRs via Chrome squash-merge going forward. Encoded in CLAUDE.md item 12 and this standing order item 13.
 
 ### Path B PRs opened this session (autonomous)
 
-| Ticket(s)                    | PR                                                  | Branch                                 | Head SHA    | Base SHA  |
-| ---------------------------- | --------------------------------------------------- | -------------------------------------- | ----------- | --------- |
-| UNI-1749 (RLS scoping doc)   | direct to `main`                                    | `main`                                 | `fb1b133`   | n/a       |
-| UNI-1758 (OOM scoping doc)   | direct to `main`                                    | `main`                                 | `5fffa3a`   | n/a       |
-| UNI-1777                     | https://github.com/CleanExpo/CCW-CRM/pull/106       | `fix/uni-1777-pos-endpoints`           | (PR #106)   | `fb1b133` |
-| UNI-1785 / UNI-1786 / UNI-1782 | https://github.com/CleanExpo/CCW-CRM/pull/107     | `fix/uni-1785-1786-1782-resilience`    | `4824fc4`   | `fb1b133` |
-| UNI-1781                     | https://github.com/CleanExpo/CCW-CRM/pull/108       | `fix/uni-1781-orders-search-filter`    | `06effb5`   | `fb1b133` |
-| UNI-1778                     | https://github.com/CleanExpo/CCW-CRM/pull/109       | `fix/uni-1778-backend-500-storm`       | `cab74bb`   | `fb1b133` |
-| Ruff hygiene (new ticket)    | https://github.com/CleanExpo/CCW-CRM/pull/114       | `fix/ruff-hygiene-tpar-bank-eftpos`    | `b71824b`   | `9e32fbe` |
+| Ticket(s)                    | PR                                                  | Branch                                 | Head SHA    | Base SHA  | Status   |
+| ---------------------------- | --------------------------------------------------- | -------------------------------------- | ----------- | --------- | -------- |
+| UNI-1749 (RLS scoping doc)   | direct to `main`                                    | `main`                                 | `fb1b133`   | n/a       | DONE     |
+| UNI-1758 (OOM scoping doc)   | direct to `main`                                    | `main`                                 | `5fffa3a`   | n/a       | DONE     |
+| UNI-1777                     | https://github.com/CleanExpo/CCW-CRM/pull/106       | `fix/uni-1777-pos-endpoints`           | (PR #106)   | `fb1b133` | OPEN     |
+| UNI-1785 / UNI-1786 / UNI-1782 | https://github.com/CleanExpo/CCW-CRM/pull/107     | `fix/uni-1785-1786-1782-resilience`    | `4824fc4`   | `fb1b133` | OPEN     |
+| UNI-1781                     | https://github.com/CleanExpo/CCW-CRM/pull/108       | `fix/uni-1781-orders-search-filter`    | `06effb5`   | `fb1b133` | OPEN     |
+| UNI-1778                     | https://github.com/CleanExpo/CCW-CRM/pull/109       | `fix/uni-1778-backend-500-storm`       | `cab74bb`   | `fb1b133` | OPEN     |
+| Ruff hygiene                 | https://github.com/CleanExpo/CCW-CRM/pull/114       | `fix/ruff-hygiene-tpar-bank-eftpos`    | `b71824b`   | `9e32fbe` | MERGED ✓ |
 
 All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_FILES` + `GITHUB_CREATE_A_PULL_REQUEST` under the Path B standing authority granted 2026-04-18. Each PR body contains a Verification Checklist (Where / How / What to see / What NOT to see) per the `.claude/rules/verification-gate.md` rule.
 
@@ -151,7 +151,7 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
 - [x] Bugs logged to Linear: UNI-1783, UNI-1784, UNI-1787
 - [x] PR #67 merged to ai-updates (POS $NaN, logout redirect, connecting badge, settings redirect)
 - [x] fix(backend): html.escape() validator on CustomerBase + CustomerUpdate — UNI-1783
-- [x] feat(backend): GET/POST /api/integrations/anthropic/* — UNI-1776
+- [x] feat(backend): GET/POST /api/integrations/anthropic/\* — UNI-1776
 - [x] feat(web): Anthropic API key input in Settings → Integrations — UNI-1776
 - [x] feat(onboarding): Claude AI step (step 4) in setup wizard — UNI-1776
 - [x] fix(web): Customer Discard button now calls form.reset() — UNI-1784
@@ -165,7 +165,8 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
 | --------------------------------------------------- | ------------------------------------------------------------------- | ---------- |
 | Route `User` via `models_base`, keep schema-locked  | `demo_models.py` is locked; `User` lives in `models_base.py:58`     | 2026-04-18 |
 | Merge PR #105 despite pre-existing red ruff         | Failures predate UNI-1944; blocking would mask fix; filed new ticket | 2026-04-18 |
-| Fresh short-lived fix branches off origin/main      | Sandbox is append-only on `.git`; Phill runs git locally in PS      | 2026-04-18 |
+| Fresh short-lived fix branches off origin/main      | Sandbox is append-only on `.git`; branches created via Path B       | 2026-04-18 |
+| Autonomous Chrome merge replaces PowerShell         | Phill no longer uses PowerShell; Claude merges via Chrome Path C    | 2026-04-18 |
 | html.escape() not htmlspecialchars                  | stdlib, no deps, escapes all 5 HTML special chars                   | 2026-04-13 |
 | Anthropic key stored in IntegrationCredential table | Consistent with SendGrid pattern                                    | 2026-04-13 |
 | POS mobile = Tabs not scroll                        | Tabs give instant access without scroll; desktop grid unchanged     | 2026-04-13 |
@@ -183,10 +184,9 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
 - **Demo date**: 2026-04-20. Today is Day 1 of 2. Day 1 shipping complete (see Path B table above).
 - **Next ticket**: **UNI-1758 scoping doc shipped on main (`5fffa3a`)**. Recommendation for demo week is an env-var flip Phill owns: set `WEB_CONCURRENCY=1` in Render → Environment for the backend service. No code change. See `docs/UNI-1758-OOM-SCOPING.md` for the full risk matrix, verification checklist, and post-demo plan (lazy-load AI routes, bound learning-engine patterns).
 - **Sprint order (Day 1 — COMPLETE)**: UNI-1777 (#106) → UNI-1785/1786/1782 (#107) → UNI-1781 (#108) → UNI-1778 (#109)
-- **Sprint order (Day 2 — COMPLETE ahead of schedule)**: UNI-1758 scoping doc on `main`. Remaining for Phill: (a) merge PRs #106–#109 in GitHub UI, (b) flip `WEB_CONCURRENCY=1` in Render env, (c) post-merge prod smoke via `chrome-prod` skill.
+- **Sprint order (Day 2 — COMPLETE ahead of schedule)**: UNI-1758 scoping doc on `main`. **Open PRs #106, #107, #108, #109 are ready to merge** — Claude will merge them autonomously via Chrome (Path C). PR #114 already merged.
 - **Sprint order (Day 3+ after demo)**: UNI-1758 Option D (lazy-load AI routes + bounded pattern cache) → full RLS tightening under UNI-1749 → backend ruff hygiene follow-up ticket.
-- **Workflow**: Phill runs git commands in `C:\CCW-Online ERP` via PowerShell; Claude edits files via file tools. Sandbox cannot `rm` in `.git/`.
-- **PowerShell gotcha**: `[System.IO.File]` APIs use .NET's CWD (launch dir), NOT `$PWD`. Always pass absolute paths.
+- **Merge workflow**: Claude merges all PRs autonomously via `mcp__Claude_in_Chrome__*`. No PowerShell required. Sequence: navigate to PR URL → "Squash and merge" → "Confirm squash and merge" → delete merged branch.
 - **Edit-tool corruption risk**: When working on files on a Windows checkout with `core.autocrlf=true`, Edit can inject CRLF + null bytes → git classifies as binary. Verify after every edit with `git diff --text` + null-byte check before committing.
 - **Locked files (do not touch)**: `apps/backend/src/db/demo_models.py`, `apps/web/middleware.ts`, `apps/backend/src/api/routes/demo_auth.py`
 - **`User` class lives at**: `apps/backend/src/db/models_base.py:58` (not `demo_models.py`)

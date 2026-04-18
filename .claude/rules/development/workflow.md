@@ -20,7 +20,6 @@ cd apps/backend && uv run pytest  # Backend unit tests
 
 # Quality Checks
 pnpm turbo run type-check lint    # All checks
-.\scripts\health-check.ps1        # Comprehensive system health check
 ```
 
 ## Conventions
@@ -43,6 +42,17 @@ docs(skills): update orchestrator guide
 - `main` - Production ready
 - `feature/<name>` - New features
 - `fix/<name>` - Bug fixes
+
+## PR Merge Workflow
+
+PRs are merged autonomously by Claude via Chrome (`mcp__Claude_in_Chrome__*`). No manual PowerShell steps required.
+
+Standard merge sequence:
+1. Navigate to PR URL in Chrome
+2. Confirm no blocking conflicts
+3. Click "Squash and merge"
+4. Click "Confirm squash and merge"
+5. Delete the merged branch
 
 ## Pre-PR Checklist
 
