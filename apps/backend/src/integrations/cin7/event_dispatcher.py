@@ -21,6 +21,8 @@ CIN7_EVENT_PRODUCT_CHANGED = "cin7.product.changed"
 CIN7_EVENT_CUSTOMER_CHANGED = "cin7.customer.changed"
 CIN7_EVENT_SALES_CHANGED = "cin7.sales.changed"
 CIN7_EVENT_INVENTORY_CHANGED = "cin7.inventory.changed"
+CIN7_EVENT_PURCHASE_ORDER_RECEIVED = "cin7.purchase_order.received"
+CIN7_EVENT_INVOICE_CREATED = "cin7.invoice.created"
 CIN7_EVENT_SYNC_COMPLETED = "cin7.sync.completed"
 CIN7_EVENT_SYNC_FAILED = "cin7.sync.failed"
 CIN7_EVENT_POLL_COMPLETED = "cin7.poll.completed"
@@ -30,6 +32,8 @@ ALL_CIN7_EVENTS = [
     CIN7_EVENT_CUSTOMER_CHANGED,
     CIN7_EVENT_SALES_CHANGED,
     CIN7_EVENT_INVENTORY_CHANGED,
+    CIN7_EVENT_PURCHASE_ORDER_RECEIVED,
+    CIN7_EVENT_INVOICE_CREATED,
     CIN7_EVENT_SYNC_COMPLETED,
     CIN7_EVENT_SYNC_FAILED,
     CIN7_EVENT_POLL_COMPLETED,
@@ -115,6 +119,58 @@ def build_inventory_event(
     }
 
 
+def build_purchase_order_event(
+    po_data: dict[str, Any], source: str, action: str = "received"
+) -> dict[str, Any]:
+    """Build a standardized purchase order received (GRN) event dict.
+
+    Args:
+        po_data: Raw purchase order / GRN data from change detection.
+        source: "core" or "omni".
+        action: "received" (goods received note) or "updated".
+
+    Returns:
+        Standardized event dict with ``event_type``, ``timestamp``, etc.
+    """
+    return {
+        "event_type": CIN7_EVENT_PURCHASE_ORDER_RECEIVED,
+        "entity_type": "purchase_order",
+        "entity_id": po_data.get("entity_id", "unknown"),
+        "po_number": po_data.get("po_number", ""),
+        "supplier": po_data.get("supplier", ""),
+        "stock_location": po_data.get("stock_location", ""),
+        "action": action,
+        "source": source,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+
+def build_invoice_event(
+    invoice_data: dict[str, Any], source: str, action: str = "created"
+) -> dict[str, Any]:
+    """Build a standardized supplier invoice event dict.
+
+    Args:
+        invoice_data: Raw invoice data from change detection.
+        source: "core" or "omni".
+        action: "created" or "updated".
+
+    Returns:
+        Standardized event dict with ``event_type``, ``timestamp``, etc.
+    """
+    return {
+        "event_type": CIN7_EVENT_INVOICE_CREATED,
+        "entity_type": "invoice",
+        "entity_id": invoice_data.get("entity_id", "unknown"),
+        "invoice_number": invoice_data.get("invoice_number", ""),
+        "supplier": invoice_data.get("supplier", ""),
+        "total": invoice_data.get("total", 0),
+        "action": action,
+        "source": source,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+
 def build_sync_result_event(
     sync_type: str,
     status: str,
@@ -191,17 +247,27 @@ class Cin7EventDispatcher:
         """
         for event in events:
             entity_type = event.get("entity_type", "unknown")
+            source = event.get("source", "core")
             # Map entity type to event builder
             if entity_type == "product":
-                sse_event = build_product_event(event, event.get("source", "core"))
+                sse_event = build_product_event(event, source)
             elif entity_type == "customer":
-                sse_event = build_customer_event(event, event.get("source", "core"))
+                sse_event = build_customer_event(event, source)
             elif entity_type == "sales":
-                sse_event = build_sales_event(event, event.get("source", "core"))
+                sse_event = build_sales_event(event, source)
             elif entity_type == "inventory":
-                sse_event = build_inventory_event(event, event.get("source", "core"))
+                sse_event = build_inventory_event(event, source)
+            elif entity_type == "purchase_order":
+                sse_event = build_purchase_order_event(event, source)
+            elif entity_type == "invoice":
+                sse_event = build_invoice_event(event, source)
             else:
-                sse_event = event
+                logger.warning(
+                    "cin7_unknown_event_type",
+                    entity_type=entity_type,
+                    event_keys=list(event.keys()),
+                )
+                continue
 
             await self.sse_service.publish(CIN7_SSE_CHANNEL, sse_event)
 
