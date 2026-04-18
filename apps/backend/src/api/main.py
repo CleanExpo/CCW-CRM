@@ -800,6 +800,7 @@ try:
     from src.api.routes.workshop import bookings as ws_bookings
     from src.api.routes.workshop import dashboard as ws_dashboard
     from src.api.routes.workshop import equipment as ws_equipment
+    from src.api.routes.workshop import job_cards as ws_job_cards
     from src.api.routes.workshop import reminders as ws_reminders
     from src.api.routes.workshop import templates as ws_templates
     app.include_router(ws_equipment.router, tags=["Workshop"])
@@ -807,6 +808,7 @@ try:
     app.include_router(ws_bookings.router, tags=["Workshop"])
     app.include_router(ws_reminders.router, tags=["Workshop"])
     app.include_router(ws_dashboard.router, tags=["Workshop"])
+    app.include_router(ws_job_cards.router, tags=["Workshop"])
 except (ImportError, AttributeError) as e:
     logger.warning("Workshop routes not available", error=str(e))
     pass
