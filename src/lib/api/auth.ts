@@ -203,3 +203,11 @@ export const authApi = {
     return res.json();
   },
 };
+
+/** Clear cookies/storage and hard-navigate to login so middleware picks up signed-out state. */
+export async function logoutAndRedirectToLogin(): Promise<void> {
+  await authApi.logout();
+  if (typeof window !== 'undefined') {
+    window.location.replace('/login');
+  }
+}
