@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 // PHASE 4: Search state persistence
 import { useSearchState } from '@/lib/hooks/use-search-state';
@@ -40,22 +40,58 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
 
-  // PHASE 4: Search state persistence - remembers pagination on navigation
-  const { state: searchState, updateField } = useSearchState({
+  // PHASE 4: Search state persistence - remembers pagination + filters on navigation
+  const { state: searchState, updateField, isHydrated } = useSearchState({
     key: 'orders-list',
-    defaultState: { page: 1, pageSize: 50 },
+    defaultState: {
+      page: 1,
+      pageSize: 50,
+      search: '',
+      statusFilter: 'all',
+      dateFrom: '',
+      dateTo: '',
+    },
   });
 
-  const page = searchState.page || 1;
-  const pageSize = searchState.pageSize || 50;
+  const page = (searchState.page as number | undefined) || 1;
+  const pageSize = (searchState.pageSize as number | undefined) || 50;
   const setPage = (value: number) => updateField('page', value);
   const setPageSize = (value: number) => updateField('pageSize', value);
 
-  // UNI-1781: Client-side search and filter state
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  // UNI-1781: server-side search and filter state (persisted via useSearchState)
+  const [search, setSearch] = useState<string>(
+    (searchState.search as string | undefined) ?? ''
+  );
+  const [statusFilter, setStatusFilter] = useState<string>(
+    (searchState.statusFilter as string | undefined) ?? 'all'
+  );
+  const [dateFrom, setDateFrom] = useState<string>(
+    (searchState.dateFrom as string | undefined) ?? ''
+  );
+  const [dateTo, setDateTo] = useState<string>(
+    (searchState.dateTo as string | undefined) ?? ''
+  );
+  // Debounced search value — keeps typing snappy without spamming the backend
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(search);
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  // UNI-1781: one-shot hydration from sessionStorage after the hook finishes loading.
+  // useState initializers only see the hook's defaultState, so without this the
+  // persisted filters from a previous visit would be ignored.
+  const [hasHydrated, setHasHydrated] = useState(false);
+  useEffect(() => {
+    if (isHydrated && !hasHydrated) {
+      setSearch((searchState.search as string | undefined) ?? '');
+      setStatusFilter((searchState.statusFilter as string | undefined) ?? 'all');
+      setDateFrom((searchState.dateFrom as string | undefined) ?? '');
+      setDateTo((searchState.dateTo as string | undefined) ?? '');
+      setDebouncedSearch((searchState.search as string | undefined) ?? '');
+      setHasHydrated(true);
+    }
+  }, [isHydrated, hasHydrated, searchState]);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
@@ -66,8 +102,18 @@ export default function OrdersPage() {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
+      // UNI-1781: build server-side query params from current filter state
+      const params = new URLSearchParams({
+        page: String(page),
+        page_size: String(pageSize),
+      });
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
+      if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
+
       const response = await apiClient.get<PaginatedResponse>(
-        `/api/orders?page=${page}&page_size=${pageSize}`
+        `/api/orders?${params.toString()}`
       );
 
       // Map API response to frontend format
@@ -94,11 +140,27 @@ export default function OrdersPage() {
       setLoading(false);
       setLastUpdated(new Date()); // PHASE 4: Track last update time
     }
-  }, [page, pageSize, toast]);
+  }, [page, pageSize, debouncedSearch, statusFilter, dateFrom, dateTo, toast]);
 
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  // UNI-1781: after hydration, when a filter changes snap back to page 1 and persist.
+  // Guarded on hasHydrated so we don't clobber the persisted page on first mount.
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (page !== 1) {
+      updateField('page', 1);
+    }
+    updateField('search', debouncedSearch);
+    updateField('statusFilter', statusFilter);
+    updateField('dateFrom', dateFrom);
+    updateField('dateTo', dateTo);
+    // intentionally excludes page / updateField from deps to avoid loops;
+    // updateField is stable and page snaps to 1 only when a filter flips post-hydration
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, statusFilter, dateFrom, dateTo, hasHydrated]);
 
   const handleAddOrder = () => {
     setSelectedOrder(null);
@@ -172,20 +234,10 @@ export default function OrdersPage() {
     }
   };
 
-  // UNI-1781: Client-side filtered view of fetched orders
-  const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
-      const matchSearch =
-        !search ||
-        o.order_number?.toLowerCase().includes(search.toLowerCase()) ||
-        o.customer_name?.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === 'all' || o.status === statusFilter;
-      const orderDate = o.order_date ? new Date(o.order_date) : null;
-      const matchDateFrom = !dateFrom || (orderDate && orderDate >= new Date(dateFrom));
-      const matchDateTo = !dateTo || (orderDate && orderDate <= new Date(dateTo + 'T23:59:59'));
-      return matchSearch && matchStatus && matchDateFrom && matchDateTo;
-    });
-  }, [orders, search, statusFilter, dateFrom, dateTo]);
+  // UNI-1781: filtering is now server-side — `orders` already reflects
+  // the active search/status/date filters. Previously there was a
+  // client-side `orders` memo that only filtered the current page,
+  // which gave wrong totals and hid matches on other pages.
 
   const handleExport = () => {
     exportOrdersToCSV(orders as unknown as Record<string, unknown>[]);
@@ -207,10 +259,10 @@ export default function OrdersPage() {
   };
 
   const handleToggleSelectAll = () => {
-    if (selectedOrderIds.length === filteredOrders.length) {
+    if (selectedOrderIds.length === orders.length) {
       setSelectedOrderIds([]);
     } else {
-      setSelectedOrderIds(filteredOrders.map((o) => o.id));
+      setSelectedOrderIds(orders.map((o) => o.id));
     }
   };
 
@@ -353,22 +405,26 @@ export default function OrdersPage() {
                 ))}
               </div>
             ) : orders.length === 0 ? (
-              <EmptyState
-                icon={ShoppingCart}
-                title="No equipment orders yet"
-                description="Create your first cleaning equipment order to get started."
-                action={{
-                  label: 'Create Order',
-                  onClick: handleAddOrder,
-                }}
-              />
-            ) : filteredOrders.length === 0 ? (
-              <div className="text-muted-foreground py-10 text-center text-sm">
-                No orders match the current filters.
-              </div>
+              // UNI-1781: when filters are active, show a filter-aware empty
+              // message instead of the "create your first order" onboarding.
+              search || statusFilter !== 'all' || dateFrom || dateTo ? (
+                <div className="text-muted-foreground py-10 text-center text-sm">
+                  No orders match the current filters.
+                </div>
+              ) : (
+                <EmptyState
+                  icon={ShoppingCart}
+                  title="No equipment orders yet"
+                  description="Create your first cleaning equipment order to get started."
+                  action={{
+                    label: 'Create Order',
+                    onClick: handleAddOrder,
+                  }}
+                />
+              )
             ) : (
               <ResponsiveTable
-                data={filteredOrders}
+                data={orders}
                 keyExtractor={(order) => order.id}
                 columns={[
                   {
@@ -376,8 +432,8 @@ export default function OrdersPage() {
                     label: (
                       <Checkbox
                         checked={
-                          filteredOrders.length > 0 &&
-                          selectedOrderIds.length === filteredOrders.length
+                          orders.length > 0 &&
+                          selectedOrderIds.length === orders.length
                         }
                         onCheckedChange={handleToggleSelectAll}
                         aria-label="Select all orders"
