@@ -84,8 +84,11 @@ class User(Base):
     # contractors = relationship("Contractor", back_populates="user")
     # documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
 
-    # PRD relationship - Re-enabled to fix mapper initialization
-    prds = relationship("PRD", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
+    # PRD relationship - back_populates required by PRD.user; lazy="select" (default) is
+    # compatible with cascade="all, delete-orphan".  The previous lazy="dynamic" caused
+    # SQLAlchemy 2.0 to raise InvalidRequestError on configure_mappers() (first DB query),
+    # which made every login request return HTTP 500.
+    prds = relationship("PRD", back_populates="user", cascade="all, delete-orphan", lazy="select")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email})>"
