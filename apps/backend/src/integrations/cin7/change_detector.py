@@ -153,6 +153,72 @@ def detect_inventory_changes(
     return events
 
 
+# Cin7 Core status values that indicate a PO has reached a billing milestone.
+_BILLED_STATUSES = frozenset({"Billed", "PartlyBilled"})
+
+
+def detect_purchase_order_changes(
+    purchase_orders: list[dict[str, Any]], source: Literal["core", "omni"]
+) -> list[dict[str, Any]]:
+    """Extract change events from a purchase-order poll result.
+
+    Emits two event types per PO:
+
+    - ``entity_type="purchase_order"`` — always emitted for every changed PO.
+    - ``entity_type="invoice"`` — emitted additionally when the PO status
+      indicates a supplier invoice has been raised (Cin7 Core surfaces invoices
+      as POs in "Billed" or "PartlyBilled" status because there is no dedicated
+      supplier-invoice endpoint).
+
+    Returns:
+        List of event dicts with ``entity_type``, ``entity_id``, ``action``,
+        ``source``, ``reference``, ``status``, and ``data``.
+    """
+    events: list[dict[str, Any]] = []
+    for po in purchase_orders:
+        if source == "core":
+            entity_id = po.get("PurchaseOrderID") or po.get("ID", "unknown")
+            ref = po.get("OrderNumber", "")
+            status = po.get("Status", "")
+        else:
+            entity_id = str(po.get("id", "unknown"))
+            ref = po.get("reference", "")
+            status = po.get("status", "")
+
+        # Determine action from status
+        if status in _BILLED_STATUSES:
+            po_action = "invoiced"
+        elif status == "Received":
+            po_action = "received"
+        else:
+            po_action = "updated"
+
+        base = {
+            "entity_id": str(entity_id),
+            "action": po_action,
+            "source": source,
+            "reference": ref,
+            "status": status,
+            "data": po,
+        }
+
+        # Always emit a purchase_order event
+        events.append({**base, "entity_type": "purchase_order"})
+
+        # Emit an invoice event when billing status is reached
+        if status in _BILLED_STATUSES:
+            invoice_action = (
+                "partly_invoiced" if status == "PartlyBilled" else "invoiced"
+            )
+            events.append({
+                **base,
+                "entity_type": "invoice",
+                "action": invoice_action,
+            })
+
+    return events
+
+
 # ---------------------------------------------------------------------------
 # Cin7ChangeDetector class
 # ---------------------------------------------------------------------------
@@ -179,7 +245,7 @@ class Cin7ChangeDetector:
         await db.commit()
     """
 
-    ENTITY_TYPES = ("products", "customers", "sales", "inventory")
+    ENTITY_TYPES = ("products", "customers", "sales", "inventory", "purchase_orders")
 
     # Mapping from detector entity key → Cin7Connection column name
     _CONNECTION_ATTR: dict[str, str] = {
@@ -187,6 +253,7 @@ class Cin7ChangeDetector:
         "customers": "last_customer_sync_at",
         "sales": "last_sales_sync_at",
         "inventory": "last_inventory_sync_at",
+        "purchase_orders": "last_purchase_order_sync_at",
     }
 
     def __init__(self, client: Cin7Client, settings: Cin7Settings) -> None:
@@ -267,6 +334,11 @@ class Cin7ChangeDetector:
         if self.settings.sync_inventory:
             changes = await self.poll_inventory(source)
             results["inventory"] = changes
+            total_changes += len(changes)
+
+        if self.settings.sync_purchase_orders:
+            changes = await self.poll_purchase_orders(source)
+            results["purchase_orders"] = changes
             total_changes += len(changes)
 
         results["total_changes"] = total_changes
@@ -380,6 +452,43 @@ class Cin7ChangeDetector:
             return detect_inventory_changes(items, source)
         except Exception as exc:
             logger.error("cin7_poll_inventory_failed", source=source, error=str(exc))
+            return []
+
+    async def poll_purchase_orders(
+        self, source: Literal["core", "omni"] = "core"
+    ) -> list[dict[str, Any]]:
+        """Poll purchase orders endpoint with modified_since.
+
+        Emits both ``purchase_order`` and ``invoice`` events (see
+        :func:`detect_purchase_order_changes` for the dual-event logic).
+        Only Cin7 Core is supported; Omni purchase order polling does not
+        support a ``modified_since`` filter so we return an empty list for
+        that source to avoid full-catalogue noise on every poll cycle.
+        """
+        if source != "core":
+            logger.debug(
+                "cin7_poll_purchase_orders_skipped",
+                reason="omni_no_modified_since",
+            )
+            return []
+
+        modified_since = self._last_polled.get("purchase_orders")
+        kwargs: dict[str, Any] = {"page": 1, "limit": 100}
+        if modified_since:
+            kwargs["modified_since"] = format_modified_since(modified_since)
+
+        try:
+            data = await self.client.core.get_purchase_list(**kwargs)
+            purchase_orders = data.get("PurchaseOrderList", [])
+            if not isinstance(purchase_orders, list):
+                purchase_orders = []
+
+            self._update_last_polled("purchase_orders")
+            return detect_purchase_order_changes(purchase_orders, source)
+        except Exception as exc:
+            logger.error(
+                "cin7_poll_purchase_orders_failed", source=source, error=str(exc)
+            )
             return []
 
     def get_last_polled(self, entity_type: str) -> datetime | None:
