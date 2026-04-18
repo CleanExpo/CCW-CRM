@@ -69,7 +69,7 @@ Phill has granted blanket standing permission for every action in this repo that
 | Orders page search/filter                         | PR-OPEN #108   | UNI-1781 | ~1h  |
 | Backend 500 storm (demo paths only)               | PR-OPEN #109   | UNI-1778 | ~1h  |
 | RLS scoping doc committed on main                 | DONE (defer B) | UNI-1749 | ~2h  |
-| Render OOM (Day 2 — resume next)                  | IN-PROGRESS    | UNI-1758 | ~1h  |
+| Render OOM scoping doc committed on main          | DONE (env B)   | UNI-1758 | ~1h  |
 | Ruff hygiene (tpar.py / bank_feed / eftpos)       | NEW TICKET     | —        | ~15m |
 
 ## Previously Completed (kept for traceability)
@@ -120,9 +120,10 @@ Phill has granted blanket standing permission for every action in this repo that
 
 ### Path B PRs opened this session (autonomous)
 
-| Ticket(s)                    | PR                                                  | Branch                                 | Head SHA    | Base SHA  |
-| ---------------------------- | --------------------------------------------------- | -------------------------------------- | ----------- | --------- |
-| UNI-1749 (RLS scoping doc)   | direct to `main`                                    | `main`                                 | `fb1b133`   | n/a       |
+| Ticket(s)                    | PR                                                  | Branch                                  | Head SHA    | Base SHA  |
+| ---------------------------- | --------------------------------------------------- | --------------------------------------- | ----------- | --------- |
+| UNI-1749 (RLS scoping doc)   | direct to `main`                                   | `main`                                  | `fb1b133`   | n/a       |
+| UNI-1758 (OOM scoping doc)   | direct to `main`                                    | `main`                                  | `5fffa3a`   | n/a       |
 | UNI-1777                     | https://github.com/CleanExpo/CCW-CRM/pull/106       | `fix/uni-1777-pos-endpoints`           | (PR #106)   | `fb1b133` |
 | UNI-1785 / UNI-1786 / UNI-1782 | https://github.com/CleanExpo/CCW-CRM/pull/107     | `fix/uni-1785-1786-1782-resilience`    | `4824fc4`   | `fb1b133` |
 | UNI-1781                     | https://github.com/CleanExpo/CCW-CRM/pull/108       | `fix/uni-1781-orders-search-filter`    | `06effb5`   | `fb1b133` |
@@ -176,9 +177,10 @@ All four PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULT
 ## Notes for Next Context Window
 
 - **Demo date**: 2026-04-20. Today is Day 1 of 2. Day 1 shipping complete (see Path B table above).
-- **Next ticket**: **UNI-1758 — Render OOM diagnosis** (in-progress row in active tasks). All five Day-1 fix PRs are open (#106–#109, plus UNI-1749 scoping doc on `main`). Phill needs to merge the PRs in the GitHub UI; Claude should NOT attempt merges.
+- **Next ticket**: **UNI-1758 scoping doc shipped on main (`5fffa3a`)**. Recommendation for demo week is an env-var flip Phill ownq: set `WEB_CONCURRENCY=1` in Render → Environment for the backend service. No code change. See `docs/UNI-1758-OOM-SCOPING.md` for the full risk matrix, verification checklist, and post-demo plan (lazy-load AI routes, bound learning-engine patterns).
 - **Sprint order (Day 1 — COMPLETE)**: UNI-1777 (#106) → UNI-1785/1786/1782 (#107) → UNI-1781 (#108) → UNI-1778 (#109)
-- **Sprint order (Day 2)**: UNI-1758 (Render OOM diagnosis) → PR merge train (Phill merges) → post-merge prod smoke via `chrome-prod` skill
+- **Sprint order (Day 2 — COMPLETE ahead of schedule)**: UNI-1758 scoping doc on `main`. Remaining for Phill: (a) merge PRs #106–#109 in GitHub UI, (b) flip `WEB_CONCURRENCY=1` in Render env, (c) post-merge prod smoke via `chrome-prod` skill.
+- **Sprint order (Day 3+ after demo)**: UNI-1758 Option D (lazy-load AI routes + bounded pattern cache) → full RLS tightening under UNI-1749 → backend ruff hygiene follow-up ticket.
 - **Workflow**: Phill runs git commands in `C:\CCW-Online ERP` via PowerShell; Claude edits files via file tools. Sandbox cannot `rm` in `.git/`.
 - **PowerShell gotcha**: `[System.IO.File]` APIs use .NET's CWD (launch dir), NOT `$PWD`. Always pass absolute paths.
 - **Edit-tool corruption risk**: When working on files on a Windows checkout with `core.autocrlf=true`, Edit can inject CRLF + null bytes → git classifies as binary. Verify after every edit with `git diff --text` + null-byte check before committing.
