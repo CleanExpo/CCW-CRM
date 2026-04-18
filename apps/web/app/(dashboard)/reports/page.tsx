@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SalesKpiDashboard } from './components/SalesKpiDashboard';
 import { InventoryHealthDashboard } from './components/InventoryHealthDashboard';
-import { BarChart3, Package } from 'lucide-react';
+import { ApAgeingDashboard } from './components/ApAgeingDashboard';
+import { BarChart3, Package, FileText } from 'lucide-react';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 export default function ReportsPage() {
@@ -32,6 +33,10 @@ export default function ReportsPage() {
               <Package className="h-4 w-4" />
               Inventory Health
             </TabsTrigger>
+            <TabsTrigger value="ap-ageing" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              AP Ageing
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="sales">
@@ -40,6 +45,10 @@ export default function ReportsPage() {
 
           <TabsContent value="inventory">
             <InventoryHealthDashboard />
+          </TabsContent>
+
+          <TabsContent value="ap-ageing">
+            <ApAgeingDashboard />
           </TabsContent>
         </Tabs>
       </div>
