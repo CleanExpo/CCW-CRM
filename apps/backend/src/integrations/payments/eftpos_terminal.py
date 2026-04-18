@@ -1,5 +1,4 @@
 """EFTPOS terminal integration via PC-EFTPOS / Linkly protocol."""
-import asyncio
 import os
 from decimal import Decimal
 
