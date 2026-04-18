@@ -176,3 +176,49 @@ class EquipmentServiceHistory(Base):
 
     equipment = relationship("Equipment", back_populates="service_history")
     booking = relationship("WorkshopBooking", back_populates="service_history")
+
+
+# ---------------------------------------------------------------------------
+# Digital Job Card — Phase 1 (UNI-1825)
+# ---------------------------------------------------------------------------
+
+
+class JobCardStatus(str, enum.Enum):
+    open = "open"
+    in_progress = "in_progress"
+    completed = "completed"
+    cancelled = "cancelled"
+
+
+class JobCard(Base):
+    __tablename__ = "job_cards"
+
+    id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    job_number = Column(String(20), nullable=False, unique=True, index=True)
+    booking_id = Column(PostgresUUID(as_uuid=True), ForeignKey("workshop_bookings.id", ondelete="SET NULL"), nullable=True, index=True)
+    service_request_id = Column(PostgresUUID(as_uuid=True), ForeignKey("service_requests.id", ondelete="SET NULL"), nullable=True, index=True)
+    equipment_id = Column(PostgresUUID(as_uuid=True), ForeignKey("equipment.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(Enum(JobCardStatus), nullable=False, default=JobCardStatus.open, index=True)
+    assigned_technician = Column(String(200), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+
+    time_logs = relationship("TimeLog", back_populates="job_card", cascade="all, delete-orphan", lazy="select")
+
+
+class TimeLog(Base):
+    __tablename__ = "time_logs"
+
+    id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    job_card_id = Column(PostgresUUID(as_uuid=True), ForeignKey("job_cards.id", ondelete="CASCADE"), nullable=False, index=True)
+    technician_name = Column(String(200), nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    stopped_at = Column(DateTime(timezone=True), nullable=True)
+    duration_minutes = Column(Float, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+
+    job_card = relationship("JobCard", back_populates="time_logs")
