@@ -32,6 +32,20 @@ export interface UpdateCompanyRequest {
   name: string;
 }
 
+export interface BankDetails {
+  bank_name: string | null;
+  account_name: string | null;
+  bsb: string | null;
+  account_number: string | null;
+}
+
+export interface UpdateBankDetailsRequest {
+  bank_name?: string | null;
+  account_name?: string | null;
+  bsb?: string | null;
+  account_number?: string | null;
+}
+
 export const settingsApi = {
   // Account profile (uses existing /api/auth/me endpoint)
   getAccount: (): Promise<AccountProfile> => apiClient.get<AccountProfile>('/api/auth/me'),
@@ -48,4 +62,11 @@ export const settingsApi = {
 
   updateCompany: (data: UpdateCompanyRequest): Promise<CompanySettings> =>
     apiClient.put<CompanySettings>('/api/settings/company', data),
+
+  // Bank / EFT payment details (UNI-1806)
+  getBankDetails: (): Promise<BankDetails> =>
+    apiClient.get<BankDetails>('/api/settings/bank-details'),
+
+  updateBankDetails: (data: UpdateBankDetailsRequest): Promise<BankDetails> =>
+    apiClient.put<BankDetails>('/api/settings/bank-details', data),
 };
