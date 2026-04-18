@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api/client';
+import { settingsApi } from '@/lib/api/settings';
+import type { BankDetails } from '@/lib/api/settings';
 import { convertToCSV, downloadCSV } from '@/lib/utils/csv-export';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Download, Printer } from 'lucide-react';
@@ -20,6 +22,7 @@ export default function InvoicePage() {
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
@@ -41,6 +44,8 @@ export default function InvoicePage() {
 
   useEffect(() => {
     loadOrder();
+    // Fetch bank details in parallel — non-fatal if it fails
+    settingsApi.getBankDetails().then(setBankDetails).catch(() => {});
   }, [loadOrder]);
 
   const handlePrint = () => {
@@ -243,21 +248,38 @@ export default function InvoicePage() {
         <div className="mb-8 border-l-4 border-blue-500 bg-blue-50 p-4">
           <h3 className="mb-2 text-sm font-semibold">PAYMENT INSTRUCTIONS</h3>
           <div className="space-y-1 text-xs">
-            <p>
-              <strong>Bank:</strong> Commonwealth Bank of Australia
-            </p>
-            <p>
-              <strong>Account Name:</strong> CCW Online Pty Ltd
-            </p>
-            <p>
-              <strong>BSB:</strong> 063-000
-            </p>
-            <p>
-              <strong>Account Number:</strong> 1234 5678
-            </p>
-            <p>
-              <strong>Reference:</strong> {invoiceNumber}
-            </p>
+            {bankDetails?.bank_name || bankDetails?.bsb || bankDetails?.account_number ? (
+              <>
+                {bankDetails.bank_name && (
+                  <p>
+                    <strong>Bank:</strong> {bankDetails.bank_name}
+                  </p>
+                )}
+                {bankDetails.account_name && (
+                  <p>
+                    <strong>Account Name:</strong> {bankDetails.account_name}
+                  </p>
+                )}
+                {bankDetails.bsb && (
+                  <p>
+                    <strong>BSB:</strong> {bankDetails.bsb}
+                  </p>
+                )}
+                {bankDetails.account_number && (
+                  <p>
+                    <strong>Account Number:</strong> {bankDetails.account_number}
+                  </p>
+                )}
+                <p>
+                  <strong>Reference:</strong> {invoiceNumber}
+                </p>
+              </>
+            ) : (
+              <p>
+                Please contact our accounts department for EFT payment details. Quote reference{' '}
+                <strong>{invoiceNumber}</strong>.
+              </p>
+            )}
           </div>
         </div>
 
@@ -271,7 +293,7 @@ export default function InvoicePage() {
 
         {/* Terms & Conditions */}
         <div className="mt-8 border-t-2 border-gray-200 pt-6">
-          <h3 className="mb-3 text-sm font-semibold">PAYMENT TERMP t CONDITIONS</h3>
+          <h3 className="mb-3 text-sm font-semibold">PAYMENT TERMS & CONDITIONS</h3>
           <div className="text-muted-foreground space-y-2 text-xs">
             <p>
               <strong>Payment Due:</strong> Payment is due within 30 days of the invoice date.
