@@ -6,7 +6,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +21,31 @@ from src.db.workshop_models import (
 from src.services.workshop_scheduler import compute_next_service, generate_reminders
 
 router = APIRouter(prefix="/api/workshop/equipment", tags=["Workshop"])
+
+
+_ACL_WARRANTY_DAYS = 365  # ACL s.54 — 12-month (365-day) minimum
+
+
+def _check_acl_warranty(purchase_date: datetime | None, warranty_expiry: datetime | None) -> None:
+    """Raise ValueError if warranty_expiry is less than 12 months after purchase_date.
+
+    ACL s.54 requires goods to carry a minimum 12-month statutory guarantee.
+    When both dates are provided, the warranty window must be >= 365 days.
+    When only warranty_expiry is provided (no purchase_date), we check that
+    the expiry is at least 12 months from today — preventing staff from
+    registering a warranty that is already sub-statutory on creation.
+    """
+    if warranty_expiry is None:
+        return
+    reference = purchase_date if purchase_date else datetime.now(UTC)
+    # Normalise both to UTC-naive for delta comparison
+    exp = warranty_expiry.replace(tzinfo=None) if warranty_expiry.tzinfo else warranty_expiry
+    ref = reference.replace(tzinfo=None) if reference.tzinfo else reference
+    if (exp - ref).days < _ACL_WARRANTY_DAYS:
+        raise ValueError(
+            "warranty_expiry must be at least 12 months after the purchase date "
+            "(ACL s.54 — minimum statutory guarantee period)."
+        )
 
 
 class EquipmentCreate(BaseModel):
@@ -41,6 +66,11 @@ class EquipmentCreate(BaseModel):
     reminder_lead_days: int = 90
     notes: str | None = None
 
+    @model_validator(mode="after")
+    def acl_minimum_warranty_expiry(self) -> "EquipmentCreate":
+        _check_acl_warranty(self.purchase_date, self.warranty_expiry)
+        return self
+
 
 class EquipmentUpdate(BaseModel):
     serial_number: str | None = None
@@ -57,6 +87,11 @@ class EquipmentUpdate(BaseModel):
     last_service_hours: float | None = None
     reminder_lead_days: int | None = None
     notes: str | None = None
+
+    @model_validator(mode="after")
+    def acl_minimum_warranty_expiry(self) -> "EquipmentUpdate":
+        _check_acl_warranty(self.purchase_date, self.warranty_expiry)
+        return self
 
 
 class EquipmentResponse(BaseModel):
