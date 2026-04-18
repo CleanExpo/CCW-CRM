@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy.exc import DatabaseError, IntegrityError, OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -425,6 +426,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate limiting middleware — activates default_limits on all routes (slowapi)
+app.add_middleware(SlowAPIMiddleware)
 
 # Custom middleware
 app.add_middleware(SecurityHeadersMiddleware)
