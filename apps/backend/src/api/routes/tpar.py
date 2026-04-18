@@ -8,7 +8,7 @@ All suppliers are returned; callers should filter by their own tagging
 convention until a `supplier_type` column is added to the suppliers table.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated
 
@@ -29,8 +29,8 @@ router = APIRouter(
 
 def _fy_bounds(financial_year: int) -> tuple[datetime, datetime]:
     """Return (start, end) for an Australian financial year (Jul 1 – Jun 30)."""
-    start = datetime(financial_year - 1, 7, 1, tzinfo=timezone.utc)
-    end = datetime(financial_year, 6, 30, 23, 59, 59, tzinfo=timezone.utc)
+    start = datetime(financial_year - 1, 7, 1, tzinfo=UTC)
+    end = datetime(financial_year, 6, 30, 23, 59, 59, tzinfo=UTC)
     return start, end
 
 
@@ -167,5 +167,5 @@ async def tpar_export(
             "grossPayments": report["grand_total_paid"],
             "taxWithheld": report["grand_total_gst"],
         },
-        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "generatedAt": datetime.now(UTC).isoformat(),
     }

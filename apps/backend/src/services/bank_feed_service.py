@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -551,12 +551,11 @@ class BankFeedService:
                 except (ValueError, TypeError):
                     pass
         if feed_dt is not None:
-            from datetime import timezone
             pos_dt = pos_transaction.created_at
             if pos_dt.tzinfo is None:
-                pos_dt = pos_dt.replace(tzinfo=timezone.utc)
+                pos_dt = pos_dt.replace(tzinfo=UTC)
             if feed_dt.tzinfo is None:
-                feed_dt = feed_dt.replace(tzinfo=timezone.utc)
+                feed_dt = feed_dt.replace(tzinfo=UTC)
             hours_diff = abs((feed_dt - pos_dt).total_seconds()) / 3600
             if hours_diff <= 2:
                 confidence += Decimal("0.10")
@@ -663,6 +662,9 @@ class BankFeedService:
         pos_transaction.reconciliation_status = "matched"
         pos_transaction.reconciled_at = datetime.now()
         pos_transaction.reconciled_by = user_id
+
+        # Link transactions
+        feed.matched_pos_transaction_id = pos_transaction_id
 
         await self.db.commit()
 
