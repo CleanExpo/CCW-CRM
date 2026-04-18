@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/layout/NotificationBell';
+import { logoutAndRedirectToLogin } from '@/lib/api/auth';
 import {
   LayoutDashboard,
   Package,
@@ -55,8 +56,9 @@ import {
   Cpu,
   MessageCircle,
   Store,
+  LogOut,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface NavItem {
   name: string;
@@ -176,16 +178,16 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
     <Link
       href={item.href}
       className={cn(
-        'group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2 text-sm transition-all',
+        'group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2 text-sm font-medium transition-all',
         isActive
-          ? 'bg-primary text-primary-foreground shadow-md'
+          ? 'bg-primary text-white shadow-md ring-1 ring-white/15'
           : 'text-zinc-300 hover:scale-[1.01] hover:bg-white/[0.07] hover:text-white'
       )}
     >
       {isActive && (
         <motion.div
           layoutId="sidebar-indicator"
-          className="bg-primary-foreground absolute top-0 bottom-0 left-0 w-1 rounded-r-full"
+          className="absolute top-0 bottom-0 left-0 w-1 rounded-r-full bg-white"
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
       )}
@@ -193,7 +195,7 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
         whileHover={{ scale: 1.2, rotate: isActive ? 0 : 15 }}
         transition={{ type: 'spring', stiffness: 400, damping: 10 }}
       >
-        <item.icon className="h-4 w-4" />
+        <item.icon className={cn('h-4 w-4', isActive ? 'text-white' : 'text-current')} />
       </motion.div>
       <span className="relative z-10">{item.name}</span>
       {!isActive && (
@@ -255,8 +257,19 @@ export function Sidebar() {
     });
   };
 
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
+  async function handleLogout() {
+    setLogoutLoading(true);
+    try {
+      await logoutAndRedirectToLogin();
+    } catch {
+      setLogoutLoading(false);
+    }
+  }
+
   return (
-    <aside className="flex w-64 flex-col border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl">
+    <aside className="flex h-full min-h-0 w-full flex-col bg-zinc-950/90 backdrop-blur-xl">
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 px-4">
         <Link href="/" className="group flex items-center gap-2 font-semibold">
           <motion.span
@@ -274,7 +287,7 @@ export function Sidebar() {
         <NotificationBell />
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden overscroll-y-contain p-3 [scrollbar-gutter:stable]">
         {/* Dashboard — always visible, no group */}
         <NavLink
           item={{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }}
@@ -321,6 +334,20 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="shrink-0 border-t border-white/10 p-3">
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={logoutLoading}
+          className="flex w-full items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span className="inline-flex items-center justify-center gap-2">
+            <LogOut className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
+            <span>{logoutLoading ? 'Signing out…' : 'Log out'}</span>
+          </span>
+        </button>
+      </div>
     </aside>
   );
 }
