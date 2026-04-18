@@ -12,6 +12,7 @@ import hmac
 import json
 import os
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
@@ -30,6 +31,8 @@ from src.security.webhook_verification import (
     get_ups_verifier,
     get_usps_verifier,
 )
+from src.services.carrier_service import Address as CarrierAddress
+from src.services.carrier_service import get_carrier_service
 
 router = APIRouter(prefix="/api/shipments", tags=["Shipments"], dependencies=[Depends(get_current_user)])
 logger = structlog.get_logger(__name__)
@@ -470,6 +473,42 @@ async def track_by_number(
         }
 
     raise HTTPException(status_code=404, detail="Tracking number not found")
+
+
+# Carrier Rate Endpoints
+
+
+class RateRequest(BaseModel):
+    """Request for shipping rate quotes."""
+
+    from_address: CarrierAddress
+    to_address: CarrierAddress
+    weight_kg: Decimal
+    carrier: str | None = None
+
+
+@router.get("/carriers")
+async def list_carriers() -> dict:
+    """List configured carrier adapters available for rate quoting and label generation."""
+    service = get_carrier_service()
+    return {"carriers": service.list_available_carriers()}
+
+
+@router.post("/rates")
+async def get_carrier_rates(rate_request: RateRequest) -> dict:
+    """
+    Get shipping rate quotes from one or all configured carriers.
+
+    If carrier is omitted, quotes are returned from all available carriers.
+    """
+    service = get_carrier_service()
+    rates = await service.get_rates(
+        from_address=rate_request.from_address,
+        to_address=rate_request.to_address,
+        weight_kg=rate_request.weight_kg,
+        carrier_name=rate_request.carrier,
+    )
+    return {"rates": rates, "count": len(rates)}
 
 
 # Carrier Webhook Endpoints
