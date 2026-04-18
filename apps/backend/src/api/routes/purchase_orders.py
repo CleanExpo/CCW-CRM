@@ -25,6 +25,8 @@ from src.config.database import get_async_db
 from src.config.xero_settings import XeroSettings, get_xero_settings
 from src.db.demo_models import Product
 from src.db.inventory_models import (
+    GoodsReceivedNote,
+    GoodsReceivedNoteLine,
     ProductStockByLocation,
     PurchaseOrder,
     PurchaseOrderItem,
@@ -688,6 +690,22 @@ async def sync_purchase_order_to_xero(
     if not supplier or not supplier.xero_contact_id:
         raise HTTPException(status_code=400, detail="Supplier has no linked Xero contact ID")
 
+    # Three-way match gate: require at least one GRN before posting invoice to Xero.
+    # Use .limit(1) + scalar() so MultipleResultsFound is never raised when a PO
+    # has several GRNs in received/approved state.
+    grn_exists = await db.scalar(
+        select(GoodsReceivedNote.id).where(
+            GoodsReceivedNote.po_id == po_id,
+            GoodsReceivedNote.status.in_(["received", "approved"]),
+        ).limit(1)
+    )
+    if not grn_exists:
+        raise HTTPException(
+            status_code=400,
+            detail="Invoice posting blocked: no Goods Received Note (GRN) exists for this PO. "
+                   "Create a GRN via POST /api/purchase-orders/{po_id}/grn before syncing to Xero.",
+        )
+
     connection = await xero_auth.get_active_connection(db, org_id)
     if not connection:
         raise HTTPException(status_code=400, detail="No active Xero connection for this organisation")
@@ -728,3 +746,182 @@ async def sync_purchase_order_to_xero(
         await xero_client.close()
 
     return {"xero_bill_id": bill_id}
+
+
+# ============================================
+# UNI-1833: GRN (Goods Received Note) — Phase 1
+# ============================================
+
+
+class GRNLineCreate(BaseModel):
+    """Schema for creating a GRN line item."""
+
+    po_item_id: UUID
+    product_id: UUID
+    quantity_expected: int = Field(..., ge=1)
+    quantity_received: int = Field(..., ge=0)
+    quantity_rejected: int = Field(0, ge=0)
+
+
+class GRNCreate(BaseModel):
+    """Schema for creating a Goods Received Note."""
+
+    delivery_location: str = Field(..., pattern="^(brisbane|sydney|melbourne)$")
+    notes: str | None = None
+    lines: list[GRNLineCreate] = Field(..., min_length=1, description="At least one line required")
+
+
+class GRNLineResponse(BaseModel):
+    """Schema for GRN line response."""
+
+    id: UUID
+    grn_id: UUID
+    po_item_id: UUID
+    product_id: UUID
+    quantity_expected: int
+    quantity_received: int
+    quantity_rejected: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GRNResponse(BaseModel):
+    """Schema for GRN response."""
+
+    id: UUID
+    grn_number: str
+    po_id: UUID
+    supplier_id: UUID
+    delivery_location: str
+    status: str
+    received_date: datetime | None
+    received_by: UUID | None
+    notes: str | None
+    lines: list[GRNLineResponse]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+def _generate_grn_number() -> str:
+    """Generate GRN number in format: GRN-YYYY-NNNNN."""
+    import time
+    return f"GRN-{datetime.now().year}-{int(time.time() % 100000):05d}"
+
+
+@router.post("/{po_id}/grn", response_model=GRNResponse, status_code=201)
+async def create_grn(
+    po_id: UUID,
+    grn_data: GRNCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> GRNResponse:
+    """
+    Create a Goods Received Note (GRN) for a purchase order.
+
+    - PO must be in status 'approved', 'ordered', or 'in_transit' to receive goods.
+    - Creates GRN header + line items.
+    - GRN starts in 'received' status (ready for AP approval).
+    """
+    # Validate PO exists and is in a receivable state
+    po_result = await db.execute(
+        select(PurchaseOrder)
+        .options(selectinload(PurchaseOrder.items))
+        .where(PurchaseOrder.id == po_id)
+    )
+    po = po_result.scalar_one_or_none()
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+
+    receivable_statuses = {"approved", "ordered", "in_transit"}
+    if po.status not in receivable_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot create GRN for PO with status '{po.status}'. "
+                   f"PO must be in one of: {sorted(receivable_statuses)}.",
+        )
+
+    # Validate all po_item_ids belong to this PO
+    po_item_ids = {item.id for item in po.items}
+    for line in grn_data.lines:
+        if line.po_item_id not in po_item_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"PO item {line.po_item_id} does not belong to PO {po_id}",
+            )
+
+    # Create GRN header
+    grn = GoodsReceivedNote(
+        grn_number=_generate_grn_number(),
+        po_id=po_id,
+        supplier_id=po.supplier_id,
+        delivery_location=grn_data.delivery_location,
+        status="received",
+        received_date=datetime.now(UTC),
+        notes=grn_data.notes,
+    )
+    db.add(grn)
+    await db.flush()  # Obtain GRN id
+
+    # Create GRN lines
+    for line_data in grn_data.lines:
+        line = GoodsReceivedNoteLine(
+            grn_id=grn.id,
+            po_item_id=line_data.po_item_id,
+            product_id=line_data.product_id,
+            quantity_expected=line_data.quantity_expected,
+            quantity_received=line_data.quantity_received,
+            quantity_rejected=line_data.quantity_rejected,
+        )
+        db.add(line)
+
+    await db.commit()
+
+    # Reload with lines for response
+    result = await db.execute(
+        select(GoodsReceivedNote)
+        .options(selectinload(GoodsReceivedNote.lines))
+        .where(GoodsReceivedNote.id == grn.id)
+    )
+    grn_with_lines = result.scalar_one()
+    return GRNResponse.model_validate(grn_with_lines)
+
+
+@router.get("/{po_id}/grn", response_model=list[GRNResponse])
+async def list_grns(
+    po_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> list[GRNResponse]:
+    """List all GRNs for a purchase order."""
+    po_result = await db.execute(select(PurchaseOrder).where(PurchaseOrder.id == po_id))
+    if not po_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+
+    result = await db.execute(
+        select(GoodsReceivedNote)
+        .options(selectinload(GoodsReceivedNote.lines))
+        .where(GoodsReceivedNote.po_id == po_id)
+        .order_by(GoodsReceivedNote.created_at.desc())
+    )
+    grns = result.scalars().all()
+    return [GRNResponse.model_validate(g) for g in grns]
+
+
+@router.get("/{po_id}/grn/{grn_id}", response_model=GRNResponse)
+async def get_grn(
+    po_id: UUID,
+    grn_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> GRNResponse:
+    """Get a specific GRN by ID."""
+    result = await db.execute(
+        select(GoodsReceivedNote)
+        .options(selectinload(GoodsReceivedNote.lines))
+        .where(GoodsReceivedNote.id == grn_id, GoodsReceivedNote.po_id == po_id)
+    )
+    grn = result.scalar_one_or_none()
+    if not grn:
+        raise HTTPException(status_code=404, detail="GRN not found")
+    return GRNResponse.model_validate(grn)
