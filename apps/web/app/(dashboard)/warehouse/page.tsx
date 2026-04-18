@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,9 +17,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertTriangle,
@@ -33,6 +36,7 @@ import {
   Sparkles,
   Truck,
 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 import { inventoryApi } from '@/lib/api/inventory';
 import { warehouseApi } from '@/lib/api/warehouse';
 import {
@@ -49,6 +53,24 @@ import {
   type WarehouseOpsPayload,
 } from '@/lib/types/inventory';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+
+interface OrderSummary {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  status: string;
+  total: number;
+  order_date: string;
+  item_count: number;
+}
+
+interface PaginatedOrdersResponse {
+  items: OrderSummary[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
 
 const LOCATIONS = ['brisbane', 'sydney', 'melbourne'] as const;
 type Location = (typeof LOCATIONS)[number];
@@ -73,6 +95,13 @@ const statusBadge = (status: string) => {
 
 export default function WarehouseOpsPage() {
   const { toast } = useToast();
+  const router = useRouter();
+
+  // Pick Lists tab state
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Operations tab state
   const [data, setData] = useState<WarehouseOpsPayload | null>(null);
@@ -145,6 +174,50 @@ export default function WarehouseOpsPage() {
   const [recentAdjustments, setRecentAdjustments] = useState<StockAdjustmentRecord[]>([]);
   const [recentWbTransfers, setRecentWbTransfers] = useState<StockTransferRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  // ── Pick Lists ───────────────────────────────────────────────────────────────
+
+  const loadOrders = useCallback(async () => {
+    setIsLoadingOrders(true);
+    try {
+      const data = await apiClient.get<PaginatedOrdersResponse>(
+        '/api/orders?page=1&page_size=50'
+      );
+      setOrders(data.items ?? []);
+    } catch {
+      toast({ title: 'Error', description: 'Failed to load orders', variant: 'destructive' });
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  }, [toast]);
+
+  const handleToggleOrder = (id: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleGeneratePickList = async () => {
+    if (selectedOrderIds.length === 0) {
+      toast({ title: 'No orders selected', description: 'Select at least one order', variant: 'destructive' });
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const pickList = await warehouseApi.createPickList(selectedOrderIds);
+      toast({ title: 'Pick list created', description: pickList.pick_list_number });
+      setSelectedOrderIds([]);
+      router.push(`/warehouse/pick-list/${pickList.id}`);
+    } catch (error: unknown) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to generate pick list',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // ── Operations ──────────────────────────────────────────────────────────────
 
@@ -498,8 +571,12 @@ export default function WarehouseOpsPage() {
           </Card>
         </div>
 
-        <Tabs defaultValue="operations">
+        <Tabs defaultValue="pick-lists">
           <TabsList>
+            <TabsTrigger value="pick-lists" onClick={() => void loadOrders()}>
+              <Package className="mr-2 h-4 w-4" />
+              Pick Lists
+            </TabsTrigger>
             <TabsTrigger value="operations">
               <ClipboardCheck className="mr-2 h-4 w-4" />
               Operations
@@ -521,6 +598,125 @@ export default function WarehouseOpsPage() {
               Stock Take
             </TabsTrigger>
           </TabsList>
+
+          {/* ── Pick Lists Tab ─────────────────────────────────────────────────── */}
+          <TabsContent value="pick-lists" className="mt-6 space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Generate Pick List</CardTitle>
+                    <CardDescription>
+                      Select orders below, then click &ldquo;Generate Pick List&rdquo; to create a
+                      printable pick list with SKUs, bin locations, and quantities.
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void loadOrders()}
+                      disabled={isLoadingOrders}
+                    >
+                      {isLoadingOrders ? 'Loading...' : 'Refresh Orders'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => void handleGeneratePickList()}
+                      disabled={isGenerating || selectedOrderIds.length === 0}
+                    >
+                      {isGenerating
+                        ? 'Generating...'
+                        : `Generate Pick List${selectedOrderIds.length > 0 ? ` (${selectedOrderIds.length})` : ''}`}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoadingOrders ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((n) => (
+                      <Skeleton key={n} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : orders.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center text-sm">
+                    No orders found. Click &ldquo;Refresh Orders&rdquo; to load.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="w-10 py-2 text-left font-medium">
+                            <Checkbox
+                              checked={
+                                selectedOrderIds.length === orders.length && orders.length > 0
+                              }
+                              onCheckedChange={(checked) => {
+                                setSelectedOrderIds(
+                                  checked ? orders.map((o) => o.id) : []
+                                );
+                              }}
+                              aria-label="Select all orders"
+                            />
+                          </th>
+                          <th className="py-2 text-left font-medium">Order #</th>
+                          <th className="py-2 text-left font-medium">Customer</th>
+                          <th className="py-2 text-left font-medium">Status</th>
+                          <th className="py-2 text-right font-medium">Total</th>
+                          <th className="py-2 text-right font-medium">Lines</th>
+                          <th className="py-2 text-left font-medium">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {orders.map((order) => (
+                          <tr
+                            key={order.id}
+                            className="hover:bg-muted/40 cursor-pointer"
+                            onClick={() => handleToggleOrder(order.id)}
+                          >
+                            <td className="py-2">
+                              <Checkbox
+                                checked={selectedOrderIds.includes(order.id)}
+                                onCheckedChange={() => handleToggleOrder(order.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                aria-label={`Select order ${order.order_number}`}
+                              />
+                            </td>
+                            <td className="py-2 font-mono text-xs font-semibold">
+                              {order.order_number}
+                            </td>
+                            <td className="py-2">{order.customer_name ?? '—'}</td>
+                            <td className="py-2">
+                              <Badge variant="outline" className="text-xs">
+                                {order.status}
+                              </Badge>
+                            </td>
+                            <td className="py-2 text-right">
+                              ${Number(order.total).toFixed(2)}
+                            </td>
+                            <td className="py-2 text-right">{order.item_count ?? 0}</td>
+                            <td className="text-muted-foreground py-2 text-xs">
+                              {order.order_date
+                                ? new Date(order.order_date).toLocaleDateString()
+                                : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {selectedOrderIds.length > 0 && (
+                      <p className="text-muted-foreground mt-3 text-xs">
+                        {selectedOrderIds.length} order
+                        {selectedOrderIds.length !== 1 ? 's' : ''} selected
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* ── Operations Tab ─────────────────────────────────────────────────── */}
           <TabsContent value="operations" className="mt-6">

@@ -62,7 +62,36 @@ export interface WarehouseOpsPayload {
   aiGuidance: WarehouseGuidance[];
 }
 
+export interface PickListLineItem {
+  order_id: string;
+  order_number: string;
+  product_id: string;
+  sku: string;
+  description: string;
+  bin_location: string | null;
+  qty_ordered: number;
+  qty_picked: number;
+}
+
+export interface PickListResponse {
+  id: string;
+  pick_list_number: string;
+  created_at: string;
+  order_ids: string[];
+  customer_names: string[];
+  line_items: PickListLineItem[];
+  total_lines: number;
+}
+
 export const warehouseApi = {
   /** Get live warehouse operations feed (receiving, pick/pack, returns, AI guidance) */
   getOps: (): Promise<WarehouseOpsPayload> => apiClient.get('/api/warehouse/ops'),
+
+  /** Create a pick list for the given order IDs */
+  createPickList: (order_ids: string[]): Promise<PickListResponse> =>
+    apiClient.post('/api/warehouse/pick-lists', { order_ids }),
+
+  /** Get a previously generated pick list by ID */
+  getPickList: (id: string): Promise<PickListResponse> =>
+    apiClient.get(`/api/warehouse/pick-lists/${id}`),
 };
