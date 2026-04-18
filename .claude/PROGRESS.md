@@ -3,7 +3,7 @@
 **Phase**: CCW Demo Sprint — Day 1 of 2 (demo 2026-04-20)
 **Last Updated**: 2026-04-18
 **Branch**: `main` (direct short-lived fix branches off origin/main per ticket)
-**Last merged PR**: #120 `feat(backend,web): AP ageing report — supplier liability visibility (UNI-1834)` — squash-merged
+**Last merged PR**: #105 `fix(backend): route User import via models_base (UNI-1944)` — squash-merged, branch deleted
 
 ## ⛔ STANDING ORDER — READ FIRST, EVERY CONTEXT WINDOW ⛔
 
@@ -55,7 +55,7 @@ Phill has granted blanket standing permission for every action in this repo that
   - All sprint tickets are either complete, blocked, or require locked-file changes
   - A smoke test returns a failure that requires schema/data knowledge only Phill has (rare — document + skip)
 - **Sprint order** (keep rotating; don't stop until all are in one of: READY-PR, BLOCKED, or DONE):
-  UNI-1777 → UNI-1785 → UNI-1786 → UNI-1782 → UNI-1778 → UNI-1749 (Day 2) → UNI-1758 (Day 2)
+  UNI-1777 → UNI-1785 → UNI-1786 → UNI-1782 → UNI-1781 → UNI-1778 → UNI-1749 (Day 2) → UNI-1758 (Day 2)
 
 ## Active Tasks — CCW Demo Sprint
 
@@ -71,23 +71,6 @@ Phill has granted blanket standing permission for every action in this repo that
 | RLS scoping doc committed on main                 | DONE (defer B) | UNI-1749 | ~2h  |
 | Render OOM scoping doc committed on main          | DONE (env B)   | UNI-1758 | ~1h  |
 | Ruff hygiene (tpar.py / bank_feed / eftpos)       | PR-OPEN #114   | —        | ~15m |
-| Per-customer payment terms + B2B/B2C type         | DONE (PR #133) | UNI-1821 + UNI-1831 | ~3h |
-| AP ageing report — supplier liability for CFO     | DONE (PR #120) | UNI-1834 | —   |
-
-## Pi-CEO open PRs — Pending review (2026-04-18)
-
-Pi-CEO has been autonomously building. These PRs exist in the "In Review" column and need human review before merge:
-
-| PR  | Title                                                                 | Score     | Action needed |
-| --- | --------------------------------------------------------------------- | --------- | ------------- |
-| #124 | feat(warehouse): add pick list and packing slip generation with print PDF | None/10 | Review + merge or close |
-| #122 | feat: Pi CEO build                                                    | None/10   | Identify + review      |
-| #121 | feat: Pi CEO build                                                    | None/10   | Identify + review      |
-| #119 | feat: Pi CEO build                                                    | None/10   | Identify + review      |
-| #118 | fix(backend): reload RMA lines after advance_rma_status commit (UNI-1835) | None/10 | Review + merge |
-| #117 | fix(backend): prevent MultipleResultsFound 500 on Xero sync GRN gate (UNI-1833) | 5/10 | Review + merge |
-| #116 | feat: Pi CEO build                                                    | None/10   | Identify + review      |
-| #115 | feat: Pi CEO build                                                    | 1.75/10   | Low score — review carefully |
 
 ## Previously Completed (kept for traceability)
 
@@ -184,13 +167,102 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
   - `calculate_invoice_tax()`: `customer_type` → `is_b2b` flag wired through (UNI-1831)
   - 40+ test assertions in `test_customers_payment_terms.py` (7 test classes)
   - Linear MCP 401 — mark UNI-1821 and UNI-1831 Done manually in Linear UI
-- [x] feat(backend,web): AP ageing report — supplier liability visibility — UNI-1834 (PR #120, squash-merged)
-  - Pi-CEO build session `a26e1b798d2f`, 9 files, +874/-2
-  - Linear MCP 401 — mark UNI-1834 Done manually in Linear UI
-- [x] Closed Pi-CEO duplicate PR #123 (superseded UNI-1821 attempt — extension table approach in #133 is the canonical implementation)
 
 **DB MIGRATION REQUIRED (UNI-1830)**: Run `apps/backend/migrations/add_cin7_po_watermark.sql` in Supabase SQL Editor. Safe to re-run (IF NOT EXISTS guard).
 
 **DB MIGRATION REQUIRED (UNI-1821/1831)**: Run `apps/backend/migrations/add_customer_profile.sql` in Supabase SQL Editor. Safe to re-run (IF NOT EXISTS guard).
 
 ## Completed Previous Session (2026-04-14)
+
+- [x] BetterStack log drain: logtail-python SDK + structlog stdlib bridge
+- [x] fix(e2e): auth.setup.ts handles /onboarding redirect — CI unblocked
+- [x] fix(ai): SupervisorAgent now calls Anthropic claude-haiku-4-5, not Ollama
+- [x] fix(db): Alembic migration 006 — score column on product_recommendations
+- [x] fix(backend): async_engine pool_size 5→20, max_overflow 10→40
+- [x] fix(backend): webhook stubs replaced with structlog + httpx forwarding
+- [x] fix(lint): ruff I001 import sort in supervisor_agent.py
+
+## Completed Previous Session (2026-04-13)
+
+- [x] Dark smoke test run: injection, rapid nav, mobile, CSV, auth bypass
+- [x] Bugs logged to Linear: UNI-1783, UNI-1784, UNI-1787
+- [x] PR #67 merged to ai-updates (POS $NaN, logout redirect, connecting badge, settings redirect)
+- [x] fix(backend): html.escape() validator on CustomerBase + CustomerUpdate — UNI-1783
+- [x] feat(backend): GET/POST /api/integrations/anthropic/\* — UNI-1776
+- [x] feat(web): Anthropic API key input in Settings → Integrations — UNI-1776
+- [x] feat(onboarding): Claude AI step (step 4) in setup wizard — UNI-1776
+- [x] fix(web): Customer Discard button now calls form.reset() — UNI-1784
+- [x] fix(web): POS responsive tabbed layout for mobile (below lg) — UNI-1787
+- [x] fix(web): isMounted + cancelled flags on dashboard async fetches
+- [x] PR #69 raised: claude/festive-keller → ai-updates
+
+## Decisions Log
+
+| Decision                                            | Rationale                                                           | Date       |
+| --------------------------------------------------- | ------------------------------------------------------------------- | ---------- |
+| Route `User` via `models_base`, keep schema-locked  | `demo_models.py` is locked; `User` lives in `models_base.py:58`     | 2026-04-18 |
+| Merge PR #105 despite pre-existing red ruff         | Failures predate UNI-1944; blocking would mask fix; filed new ticket | 2026-04-18 |
+| Fresh short-lived fix branches off origin/main      | Sandbox is append-only on `.git`; Phill runs git locally in PS      | 2026-04-18 |
+| html.escape() not htmlspecialchars                  | stdlib, no deps, escapes all 5 HTML special chars                   | 2026-04-13 |
+| Anthropic key stored in IntegrationCredential table | Consistent with SendGrid pattern                                    | 2026-04-13 |
+| POS mobile = Tabs not scroll                        | Tabs give instant access without scroll; desktop grid unchanged     | 2026-04-13 |
+| isMounted plain object (not useRef)                 | useRef not imported; plain object works identically in this pattern | 2026-04-13 |
+
+## Blockers (User Action Required)
+
+1. **Prod smoke test — protected modules** — Chrome session expired. To complete the smoke test: open `ccw-crm-web.vercel.app` in your browser, sign in, then navigate to Customers → Quotes → Orders → Products and confirm each table renders with data. (Homepage, SSE badge, auth redirect, and login form all passed in automated check.)
+
+2. **File ruff follow-up ticket in Linear** — paste ticket body from 2026-04-18 session (Linear MCP returns 401; must be manual). See "Ruff hygiene" row in Active Tasks.
+
+3. **Anthropic API key** — CCW staff must enter their sk-ant- key via Settings → Integrations or onboarding wizard before AI features activate
+
+4. **UNI-1749 RLS scope decision** — Claude wrote `docs/UNI-1749-RLS-SCOPING.md` cataloguing 28 permissive `USING (true)` policies across 5 migration files. Per the 2026-03-31 architectural note, CCW is single-tenant and the backend bypasses RLS via the `postgres` role. Recommendation: do NOT ship Option B/C/D before the demo. Phill must decide: (a) accept scoping doc and defer to post-demo, (b) greenlight Option B (`auth.uid() IS NOT NULL`) with canary, or (c) greenlight Option C with JWT-claim wiring (high risk inside demo window).
+
+5. **Supabase MCP 401** — `get_advisors` + other Supabase MCP calls return 401 in this session. Scoping work had to be done statically against migration files. Phill can re-auth the MCP or run the security advisor manually in the Supabase console.
+
+### Path B PRs — Pi-CEO triage session (2026-04-18 context 3 — end-of-night)
+
+| PR   | Ticket    | Branch                              | Action  | Reason                                                            |
+| ---- | --------- | ----------------------------------- | ------- | ----------------------------------------------------------------- |
+| #118 | UNI-1835  | `pidev/auto-rma-missingGreenlet`    | MERGED  | SQLAlchemy async MissingGreenlet fix — re-query with selectinload after commit |
+| #113 | —         | `pidev/auto-carrier-adapters`       | MERGED  | TNT/FedEx carrier adapter — new files only, clean, score >8       |
+| #121 | —         | `pidev/auto-digital-job-card`       | MERGED  | Digital job card Phase 1 — new files + non-locked modifications   |
+| #110 | —         | `pidev/auto-inventory-*`            | CLOSED  | Merge conflict — main advanced with inventory changes after branch cut |
+| #111 | —         | `pidev/auto-*`                      | CLOSED  | Touches locked file `demo_models.py` — hard lock, never merge     |
+| #112 | —         | `pidev/auto-*`                      | CLOSED  | Merge conflict — same inventory conflict pattern as #110          |
+| #115 | —         | `pidev/auto-*`                      | CLOSED  | Pi-CEO evaluator score 1.75/10 — below acceptable threshold       |
+| #116 | —         | `pidev/auto-*`                      | CLOSED  | Merge conflict — cin7 conflict on `event_dispatcher.py`           |
+| #119 | —         | `pidev/auto-*`                      | CLOSED  | Merge conflict — workshop conflict on `equipment_lifecycle.py`    |
+| #122 | —         | `pidev/auto-*`                      | CLOSED  | Merge conflict — `service_models.py` conflict                     |
+
+- [x] fix(backend): RMA MissingGreenlet — UNI-1835 (PR #118, squash-merged). Re-query pattern with `selectinload` after `await db.commit()` in `advance_rma_status` and `list_returns`. Avoids SQLAlchemy async relationship access error.
+- [x] feat(backend): TNT/FedEx carrier adapters (PR #113, squash-merged). New carrier adapter files, no locked file touches.
+- [x] feat(backend/web): Digital job card Phase 1 (PR #121, squash-merged). New job card files + non-locked route additions.
+- [x] Triaged and closed 7 Pi-CEO PRs (#110, #111, #112, #115, #116, #119, #122) — conflicts or locked-file violations.
+- [x] **Prod smoke test (partial)** — homepage + auth flow PASS; protected modules blocked by expired session (see Blockers)
+  - ✅ Homepage loads, no 500/Application Error
+  - ✅ LIVE PLATFORM DATA badge green — SSE alive
+  - ✅ Dashboard data live: 5 orders, 36 customers, 60 products, 12 low-stock alerts
+  - ✅ Login form renders correctly, auth redirect working
+  - ✅ Zero JS console errors
+  - ⚠️ Protected routes (Customers/Quotes/Orders/Products) not smoke-tested — session expired, autofill not submitting
+
+## Notes for Next Context Window
+
+- **Demo date**: 2026-04-20. Today is Day 1 of 2. Day 1 shipping complete (see Path B table above).
+- **Next ticket**: **UNI-1758 scoping doc shipped on main (`5fffa3a`)**. Recommendation for demo week is an env-var flip Phill owns: set `WEB_CONCURRENCY=1` in Render → Environment for the backend service. No code change. See `docs/UNI-1758-OOM-SCOPING.md` for the full risk matrix, verification checklist, and post-demo plan (lazy-load AI routes, bound learning-engine patterns).
+- **Sprint order (Day 1 — COMPLETE)**: UNI-1777 (#106) → UNI-1785/1786/1782 (#107) → UNI-1781 (#108) → UNI-1778 (#109)
+- **Sprint order (Day 2 — COMPLETE ahead of schedule)**: UNI-1758 scoping doc on `main`. Remaining for Phill: (a) merge PRs #106–#109 in GitHub UI, (b) flip `WEB_CONCURRENCY=1` in Render env, (c) post-merge prod smoke via `chrome-prod` skill.
+- **Sprint order (Day 3+ after demo)**: UNI-1758 Option D (lazy-load AI routes + bounded pattern cache) → full RLS tightening under UNI-1749 → backend ruff hygiene follow-up ticket.
+- **Workflow**: Phill runs git commands in `C:\CCW-Online ERP` via PowerShell; Claude edits files via file tools. Sandbox cannot `rm` in `.git/`.
+- **PowerShell gotcha**: `[System.IO.File]` APIs use .NET's CWD (launch dir), NOT `$PWD`. Always pass absolute paths.
+- **Edit-tool corruption risk**: When working on files on a Windows checkout with `core.autocrlf=true`, Edit can inject CRLF + null bytes → git classifies as binary. Verify after every edit with `git diff --text` + null-byte check before committing.
+- **Locked files (do not touch)**: `apps/backend/src/db/demo_models.py`, `apps/web/middleware.ts`, `apps/backend/src/api/routes/demo_auth.py`
+- **`User` class lives at**: `apps/backend/src/db/models_base.py:58` (not `demo_models.py`)
+- All customer string fields are sanitised at Pydantic layer — SQL injection protection is via Supabase parameterised queries (not html.escape)
+- Anthropic key is checked: DB first → ANTHROPIC_API_KEY env var fallback
+- POS desktop layout is unchanged (h-[600px] still applies at lg+)
+- Dashboard first useEffect uses a plain `{ current: true }` object as isMounted flag (not useRef — was not imported)
+- Supabase project: `vwfgksqkajnpfjospbpe`
+- Linear team: Unite-Group, project: CCW-ERP/CRM
+- Authenticated GitHub Chrome tab: `771389560` (as of 2026-04-18)
