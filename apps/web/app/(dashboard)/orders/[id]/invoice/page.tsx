@@ -165,7 +165,7 @@ export default function InvoicePage() {
               </div>
             </div>
             <div className="text-right">
-              <h2 className="text-2xl font-bold text-red-600">INVOICE</h2>
+              <h2 className="text-2xl font-bold text-red-600">Tax Invoice</h2>
               <div className="mt-4 space-y-1 text-sm">
                 <p>
                   <span className="font-semibold">Invoice #:</span> {invoiceNumber}
@@ -271,7 +271,7 @@ export default function InvoicePage() {
 
         {/* Terms & Conditions */}
         <div className="mt-8 border-t-2 border-gray-200 pt-6">
-          <h3 className="mb-3 text-sm font-semibold">PAYMENT TERMS & CONDITIONS</h3>
+          <h3 className="mb-3 text-sm font-semibold">PAYMENT TERMP t CONDITIONS</h3>
           <div className="text-muted-foreground space-y-2 text-xs">
             <p>
               <strong>Payment Due:</strong> Payment is due within 30 days of the invoice date.
