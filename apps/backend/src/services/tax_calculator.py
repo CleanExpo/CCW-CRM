@@ -364,6 +364,7 @@ def get_tax_rate_info(jurisdiction: str) -> dict[str, Any]:
 async def calculate_invoice_tax(
     db: AsyncSession,
     invoice_id: UUID,
+    customer_type: str | None = None,
 ) -> TaxResult:
     """
     Calculate tax for an invoice (async DB wrapper).
@@ -373,6 +374,9 @@ async def calculate_invoice_tax(
     Args:
         db: Database session
         invoice_id: Invoice ID
+        customer_type: Optional customer type string ("B2B" or "B2C"). When
+            "B2B", sets ``is_b2b=True`` which may trigger reverse-charge logic
+            for applicable jurisdictions (UNI-1831).
 
     Returns:
         TaxResult with calculated taxes
@@ -396,12 +400,15 @@ async def calculate_invoice_tax(
     # For now, default to Australia
     jurisdiction = "AU"
 
+    # B2B customers use ex-GST pricing; wire through from customer_type (UNI-1831)
+    is_b2b = customer_type == "B2B" if customer_type else False
+
     # Call pure function
     tax_result = calculate_tax(
         subtotal=invoice.subtotal,
         jurisdiction=jurisdiction,
         product_category="general",
-        is_b2b=False,
+        is_b2b=is_b2b,
     )
 
     logger.info(
@@ -410,6 +417,8 @@ async def calculate_invoice_tax(
         subtotal=str(invoice.subtotal),
         total_tax=str(tax_result.total_tax),
         jurisdiction=jurisdiction,
+        customer_type=customer_type,
+        is_b2b=is_b2b,
     )
 
     return tax_result
