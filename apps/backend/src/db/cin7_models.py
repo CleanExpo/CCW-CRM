@@ -81,6 +81,9 @@ class Cin7Connection(Base):
     last_inventory_sync_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    last_sales_sync_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Flexible sync configuration
     sync_settings: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
