@@ -336,6 +336,7 @@ class PurchaseOrder(Base):
     supplier = relationship("Supplier", back_populates="purchase_orders")
     items = relationship("PurchaseOrderItem", back_populates="purchase_order", cascade="all, delete-orphan")  # noqa: E501
     inbound_shipments = relationship("InboundShipment", back_populates="purchase_order")
+    goods_received_notes = relationship("GoodsReceivedNote", back_populates="purchase_order")
 
     def __repr__(self) -> str:
         return f"<PurchaseOrder(po_number={self.po_number}, supplier_id={self.supplier_id}, total={self.total})>"  # noqa: E501
@@ -372,6 +373,7 @@ class PurchaseOrderItem(Base):
     # Relationships
     purchase_order = relationship("PurchaseOrder", back_populates="items")
     product = relationship("Product")
+    grn_lines = relationship("GoodsReceivedNoteLine", back_populates="po_item")
 
     def __repr__(self) -> str:
         return f"<PurchaseOrderItem(po_id={self.purchase_order_id}, product_id={self.product_id}, qty={self.quantity})>"  # noqa: E501
@@ -699,3 +701,103 @@ class ProductVariant(Base):
 
     def __repr__(self) -> str:
         return f"<ProductVariant(product_id={self.product_id}, sku={self.variant_sku}, name={self.name})>"
+
+
+class GoodsReceivedNote(Base):
+    """Goods Received Note (GRN) — records physical receipt of goods against a PO.
+
+    Sits between PO-approved and PO-invoiced. AP must have at least one GRN
+    before an invoice can be posted. Phase 1 of three-way match (UNI-1833).
+
+    Status workflow: draft → received → approved | rejected
+    """
+
+    __tablename__ = "grn"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    grn_number: str = Column(String(50), unique=True, nullable=False, index=True)
+    po_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("purchase_orders.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    supplier_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("suppliers.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    delivery_location: str = Column(String(50), nullable=False, index=True)
+    status: str = Column(
+        String(50), default="draft", nullable=False, index=True
+    )  # draft | received | approved | rejected
+
+    received_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    received_by: UUID | None = Column(PostgresUUID(as_uuid=True), nullable=True)
+    notes: str | None = Column(Text, nullable=True)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True), onupdate=func.now(), nullable=True
+    )
+
+    # Relationships
+    purchase_order = relationship("PurchaseOrder", back_populates="goods_received_notes")
+    lines = relationship(
+        "GoodsReceivedNoteLine", back_populates="grn", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        return f"<GoodsReceivedNote(grn_number={self.grn_number}, po_id={self.po_id}, status={self.status})>"
+
+
+class GoodsReceivedNoteLine(Base):
+    """Line item in a Goods Received Note.
+
+    Records expected vs received vs rejected quantity per PO item.
+    Variance (quantity_expected - quantity_received - quantity_rejected) feeds
+    Phase 2 three-way match logic.
+    """
+
+    __tablename__ = "grn_line"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    grn_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("grn.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    po_item_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("purchase_order_items.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+
+    quantity_expected: int = Column(Integer, nullable=False)
+    quantity_received: int = Column(Integer, default=0, nullable=False)
+    quantity_rejected: int = Column(Integer, default=0, nullable=False)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True), onupdate=func.now(), nullable=True
+    )
+
+    # Relationships
+    grn = relationship("GoodsReceivedNote", back_populates="lines")
+    po_item = relationship("PurchaseOrderItem", back_populates="grn_lines")
+
+    def __repr__(self) -> str:
+        return f"<GoodsReceivedNoteLine(grn_id={self.grn_id}, product_id={self.product_id}, received={self.quantity_received}/{self.quantity_expected})>"  # noqa: E501
