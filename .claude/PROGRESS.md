@@ -118,6 +118,12 @@ Phill has granted blanket standing permission for every action in this repo that
   - `demo_dashboard.py`: `/aggregated` now uses `asyncio.gather(return_exceptions=True)` + per-section fallback. A single chart query failing no longer blanks the dashboard.
   - Smoke tests: py_compile OK across 3 files, AST parse OK, byte checks clean (0 lone LF, 0 nulls, last byte 10)
 
+- [x] feat(cin7): purchase_order.received + invoice.created event dispatcher — UNI-1830 (committed `6638621` on main)
+  - Added `CIN7_EVENT_PURCHASE_ORDER_RECEIVED` and `CIN7_EVENT_INVOICE_CREATED` constants + `ALL_CIN7_EVENTS` entries
+  - Added `build_purchase_order_event` (GRN fields: po_number, supplier, stock_location) and `build_invoice_event` (AP fields: invoice_number, supplier, total) builder functions
+  - `dispatch_change_events` now routes `purchase_order` and `invoice` entity types; unknown types emit a `cin7_unknown_event_type` structlog warning and are skipped (no exception raised)
+  - Created `tests/integrations/test_cin7.py` — 18/18 tests passing (builder shape, dispatcher routing, unknown-type logging+skip, mixed-batch behaviour)
+
 ### Path B PRs opened this session (autonomous)
 
 | Ticket(s)                    | PR                                                  | Branch                                  | Head SHA    | Base SHA  |
