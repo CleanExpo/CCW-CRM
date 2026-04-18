@@ -85,7 +85,7 @@ class POSXeroReconciliation:
         if not connection:
             raise ValueError("No active Xero connection found for organization")
 
-        # Get POS transaction with related data
+        # Get POS@transaction with related data
         stmt = (
             select(POSTransaction)
             .where(POSTransaction.id == pos_transaction_id)
@@ -305,6 +305,7 @@ class POSXeroReconciliation:
                     "description": f"{item.product.name} (SKU: {item.product.sku})",
                     "quantity": float(item.quantity),
                     "unit_amount": float(item.unit_price),
+                    "tax_type": "OUTPUT2",
                 })
             return line_items
         else:
@@ -313,6 +314,7 @@ class POSXeroReconciliation:
                 "description": description,
                 "quantity": 1.0,
                 "unit_amount": float(pos_txn.amount),
+                "tax_type": "OUTPUT2",
             }]
 
     def _build_reference(self, pos_txn: POSTransaction) -> str:
