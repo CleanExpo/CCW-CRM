@@ -21,6 +21,8 @@ CIN7_EVENT_PRODUCT_CHANGED = "cin7.product.changed"
 CIN7_EVENT_CUSTOMER_CHANGED = "cin7.customer.changed"
 CIN7_EVENT_SALES_CHANGED = "cin7.sales.changed"
 CIN7_EVENT_INVENTORY_CHANGED = "cin7.inventory.changed"
+CIN7_EVENT_PURCHASE_ORDER_CHANGED = "cin7.purchase_order.changed"
+CIN7_EVENT_INVOICE_CHANGED = "cin7.invoice.changed"
 CIN7_EVENT_SYNC_COMPLETED = "cin7.sync.completed"
 CIN7_EVENT_SYNC_FAILED = "cin7.sync.failed"
 CIN7_EVENT_POLL_COMPLETED = "cin7.poll.completed"
@@ -30,6 +32,8 @@ ALL_CIN7_EVENTS = [
     CIN7_EVENT_CUSTOMER_CHANGED,
     CIN7_EVENT_SALES_CHANGED,
     CIN7_EVENT_INVENTORY_CHANGED,
+    CIN7_EVENT_PURCHASE_ORDER_CHANGED,
+    CIN7_EVENT_INVOICE_CHANGED,
     CIN7_EVENT_SYNC_COMPLETED,
     CIN7_EVENT_SYNC_FAILED,
     CIN7_EVENT_POLL_COMPLETED,
@@ -144,6 +148,58 @@ def build_sync_result_event(
     return result
 
 
+def build_purchase_order_event(
+    po_data: dict[str, Any], source: str, action: str = "updated"
+) -> dict[str, Any]:
+    """Build a standardized purchase order change event dict.
+
+    Args:
+        po_data: Raw purchase order data from change detection or webhook.
+        source: "core" or "omni".
+        action: "created", "updated", or "received".
+
+    Returns:
+        Standardized event dict with ``event_type``, ``timestamp``, etc.
+    """
+    return {
+        "event_type": CIN7_EVENT_PURCHASE_ORDER_CHANGED,
+        "entity_type": "purchase_order",
+        "entity_id": po_data.get("entity_id", "unknown"),
+        "reference": po_data.get("reference", ""),
+        "status": po_data.get("status", ""),
+        "supplier": po_data.get("supplier", ""),
+        "action": action,
+        "source": source,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+
+def build_invoice_event(
+    invoice_data: dict[str, Any], source: str, action: str = "updated"
+) -> dict[str, Any]:
+    """Build a standardized invoice change event dict.
+
+    Args:
+        invoice_data: Raw invoice data from change detection or webhook.
+        source: "core" or "omni".
+        action: "created", "updated", or "paid".
+
+    Returns:
+        Standardized event dict with ``event_type``, ``timestamp``, etc.
+    """
+    return {
+        "event_type": CIN7_EVENT_INVOICE_CHANGED,
+        "entity_type": "invoice",
+        "entity_id": invoice_data.get("entity_id", "unknown"),
+        "reference": invoice_data.get("reference", ""),
+        "status": invoice_data.get("status", ""),
+        "total": invoice_data.get("total", 0),
+        "action": action,
+        "source": source,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+
 def build_poll_summary_event(
     entity_types: list[str],
     changes_detected: int,
@@ -200,6 +256,10 @@ class Cin7EventDispatcher:
                 sse_event = build_sales_event(event, event.get("source", "core"))
             elif entity_type == "inventory":
                 sse_event = build_inventory_event(event, event.get("source", "core"))
+            elif entity_type == "purchase_order":
+                sse_event = build_purchase_order_event(event, event.get("source", "core"))
+            elif entity_type == "invoice":
+                sse_event = build_invoice_event(event, event.get("source", "core"))
             else:
                 sse_event = event
 

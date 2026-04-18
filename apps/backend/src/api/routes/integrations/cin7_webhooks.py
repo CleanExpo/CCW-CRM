@@ -19,7 +19,9 @@ from src.events.event_bus import get_event_bus
 from src.integrations.cin7.event_dispatcher import (
     CIN7_EVENT_CUSTOMER_CHANGED,
     CIN7_EVENT_INVENTORY_CHANGED,
+    CIN7_EVENT_INVOICE_CHANGED,
     CIN7_EVENT_PRODUCT_CHANGED,
+    CIN7_EVENT_PURCHASE_ORDER_CHANGED,
     CIN7_EVENT_SALES_CHANGED,
 )
 
@@ -68,6 +70,14 @@ CIN7_WEBHOOK_EVENT_MAP: dict[str, str] = {
     "order.updated": CIN7_EVENT_SALES_CHANGED,
     "inventory.updated": CIN7_EVENT_INVENTORY_CHANGED,
     "stock.adjusted": CIN7_EVENT_INVENTORY_CHANGED,
+    # Purchase order events
+    "purchase_order.created": CIN7_EVENT_PURCHASE_ORDER_CHANGED,
+    "purchase_order.updated": CIN7_EVENT_PURCHASE_ORDER_CHANGED,
+    "purchase_order.received": CIN7_EVENT_PURCHASE_ORDER_CHANGED,
+    # Invoice events
+    "invoice.created": CIN7_EVENT_INVOICE_CHANGED,
+    "invoice.updated": CIN7_EVENT_INVOICE_CHANGED,
+    "invoice.paid": CIN7_EVENT_INVOICE_CHANGED,
 }
 
 
