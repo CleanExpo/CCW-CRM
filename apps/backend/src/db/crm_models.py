@@ -16,6 +16,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    Integer,
     String,
     Text,
 )
@@ -195,3 +196,51 @@ class Activity(Base):
 
     def __repr__(self) -> str:
         return f"<Activity(type={self.activity_type}, subject={self.subject[:30]})>"
+
+
+# ---------------------------------------------------------------------------
+# CustomerProfile — 1:1 extension of Customer (UNI-1821 / UNI-1831)
+# ---------------------------------------------------------------------------
+
+
+class CustomerType(str, enum.Enum):
+    """Customer type for GST and pricing treatment (UNI-1831)."""
+
+    B2B = "B2B"
+    B2C = "B2C"
+
+
+class CustomerProfile(Base):
+    """Per-customer payment terms and B2B/B2C type extension.
+
+    1:1 relationship with the locked ``Customer`` model in ``demo_models.py``.
+    Avoids modifying the locked file while adding billing-relevant columns.
+
+    - ``customer_type``: drives ex-GST (B2B) vs inc-GST (B2C) pricing
+    - ``payment_terms_days``: synced to Xero contact PaymentTerms.Sales
+    """
+
+    __tablename__ = "customer_profile"
+
+    customer_id: UUID = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("customers.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    customer_type: str = Column(String(3), nullable=False, default=CustomerType.B2B.value)
+    payment_terms_days: int = Column(Integer, nullable=False, default=30)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<CustomerProfile(customer_id={self.customer_id}, "
+            f"type={self.customer_type}, terms={self.payment_terms_days}d)>"
+        )

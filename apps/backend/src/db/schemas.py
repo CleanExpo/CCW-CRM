@@ -125,6 +125,9 @@ class CustomerBase(BaseModel):
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     is_active: bool = True
+    # UNI-1821 / UNI-1831 — customer profile extension fields
+    customer_type: str = "B2B"
+    payment_terms_days: int = 30
 
 
 AU_STATES = {"NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"}
@@ -175,6 +178,9 @@ class CustomerUpdate(BaseModel):
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
     is_active: bool | None = None
+    # UNI-1821 / UNI-1831 — customer profile extension fields
+    customer_type: str | None = None
+    payment_terms_days: int | None = None
 
     @field_validator(
         "company_name",
