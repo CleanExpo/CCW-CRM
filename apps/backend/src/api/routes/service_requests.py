@@ -12,7 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
-from src.db.service_models import RequestType, ServiceRequest, ServiceStatus
+from src.db.inventory_models import ProductStockByLocation, StockAdjustment
+from src.db.service_models import RequestType, ServiceRequest, ServiceRequestPart, ServiceStatus
 from src.db.workflow_models import SLAInstance, SLARule
 
 logger = structlog.get_logger(__name__)
@@ -20,7 +21,10 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/service-requests", tags=["Service Requests"], dependencies=[Depends(get_current_user)])
 
 
-# Pydantic models for request/response
+# ---------------------------------------------------------------------------
+# Pydantic models
+# ---------------------------------------------------------------------------
+
 class ServiceRequestCreate(BaseModel):
     """Create service request schema."""
 
@@ -72,6 +76,149 @@ class PaginatedServiceRequestsResponse(BaseModel):
     page_size: int
     total_pages: int
 
+
+class ServiceRequestPartCreate(BaseModel):
+    """Add a part to a service request."""
+
+    product_id: UUID
+    quantity: int = Field(ge=1)
+    location: str = Field(default="brisbane", description="Warehouse location the part is taken from")
+
+
+class ServiceRequestPartResponse(BaseModel):
+    """Service request part response."""
+
+    id: UUID
+    service_request_id: UUID
+    product_id: UUID
+    location: str
+    quantity: int
+    is_finalized: bool
+    created_at: str
+    updated_at: str
+
+    model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
+# Internal stock helpers
+# ---------------------------------------------------------------------------
+
+async def _deduct_stock(
+    db: AsyncSession,
+    product_id: UUID,
+    location: str,
+    qty: int,
+    service_request_id: UUID,
+) -> ProductStockByLocation:
+    """Deduct qty from ProductStockByLocation and log a StockAdjustment.
+
+    Raises HTTPException(409) if available stock is insufficient.
+    """
+    stock_result = await db.execute(
+        select(ProductStockByLocation).where(
+            ProductStockByLocation.product_id == product_id,
+            ProductStockByLocation.location == location,
+        )
+    )
+    stock_row = stock_result.scalar_one_or_none()
+
+    if not stock_row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No stock record for product {product_id} at location {location}",
+        )
+
+    available = stock_row.stock - stock_row.reserved
+    if available < qty:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Insufficient stock at {location}: "
+                f"requested {qty}, available {available}"
+            ),
+        )
+
+    prev_qty = stock_row.stock
+    stock_row.stock -= qty
+
+    adjustment = StockAdjustment(
+        product_id=product_id,
+        location=location,
+        quantity_change=-qty,
+        previous_quantity=prev_qty,
+        new_quantity=stock_row.stock,
+        adjustment_type="workshop_part",
+        reason=f"Parts used in service request {service_request_id}",
+        reference_id=service_request_id,
+    )
+    db.add(adjustment)
+
+    logger.info(
+        "workshop_part_stock_deducted",
+        product_id=str(product_id),
+        location=location,
+        qty=qty,
+        prev_stock=prev_qty,
+        new_stock=stock_row.stock,
+        service_request_id=str(service_request_id),
+    )
+    return stock_row
+
+
+async def _restore_stock(
+    db: AsyncSession,
+    product_id: UUID,
+    location: str,
+    qty: int,
+    service_request_id: UUID,
+) -> None:
+    """Restore qty to ProductStockByLocation and log a reversal StockAdjustment."""
+    stock_result = await db.execute(
+        select(ProductStockByLocation).where(
+            ProductStockByLocation.product_id == product_id,
+            ProductStockByLocation.location == location,
+        )
+    )
+    stock_row = stock_result.scalar_one_or_none()
+
+    if not stock_row:
+        logger.warning(
+            "workshop_part_restore_stock_not_found",
+            product_id=str(product_id),
+            location=location,
+        )
+        return
+
+    prev_qty = stock_row.stock
+    stock_row.stock += qty
+
+    adjustment = StockAdjustment(
+        product_id=product_id,
+        location=location,
+        quantity_change=qty,
+        previous_quantity=prev_qty,
+        new_quantity=stock_row.stock,
+        adjustment_type="workshop_part_reversal",
+        reason=f"Parts restored from service request {service_request_id}",
+        reference_id=service_request_id,
+    )
+    db.add(adjustment)
+
+    logger.info(
+        "workshop_part_stock_restored",
+        product_id=str(product_id),
+        location=location,
+        qty=qty,
+        prev_stock=prev_qty,
+        new_stock=stock_row.stock,
+        service_request_id=str(service_request_id),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Service request CRUD
+# ---------------------------------------------------------------------------
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_service_request(
@@ -205,7 +352,15 @@ async def update_service_request(
     updates: ServiceRequestUpdate,
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ServiceRequestResponse:
-    """Update a service request."""
+    """Update a service request.
+
+    Status transitions that affect inventory:
+    - → completed: finalises all parts (locked, cannot be removed).
+    - completed → any other status (reopen): restores stock for all
+      finalised parts and un-finalises them.
+    - → cancelled: restores stock for non-finalised parts and deletes
+      them (job abandoned, parts return to shelf).
+    """
 
     query = select(ServiceRequest).where(ServiceRequest.id == request_id)
     result = await db.execute(query)
@@ -217,7 +372,63 @@ async def update_service_request(
             detail=f"Service request {request_id} not found",
         )
 
-    # Update fields
+    # Handle status transitions that affect inventory
+    if updates.status is not None and updates.status != service_request.status:
+        old_status = service_request.status
+        new_status = updates.status
+
+        if new_status == ServiceStatus.completed:
+            # Finalise all active parts — deduction is now permanent
+            parts_result = await db.execute(
+                select(ServiceRequestPart).where(
+                    ServiceRequestPart.service_request_id == request_id,
+                    ServiceRequestPart.is_finalized == False,  # noqa: E712
+                )
+            )
+            for part in parts_result.scalars().all():
+                part.is_finalized = True
+            logger.info("service_request_parts_finalised", request_id=str(request_id))
+
+        elif old_status == ServiceStatus.completed and new_status not in (
+            ServiceStatus.completed,
+            ServiceStatus.cancelled,
+        ):
+            # Reopen from completed → restore stock for all finalised parts
+            parts_result = await db.execute(
+                select(ServiceRequestPart).where(
+                    ServiceRequestPart.service_request_id == request_id,
+                    ServiceRequestPart.is_finalized == True,  # noqa: E712
+                )
+            )
+            for part in parts_result.scalars().all():
+                await _restore_stock(
+                    db, part.product_id, part.location, part.quantity, request_id
+                )
+                part.is_finalized = False
+            logger.info(
+                "service_request_parts_unfinalized_on_reopen",
+                request_id=str(request_id),
+            )
+
+        elif new_status == ServiceStatus.cancelled:
+            # Cancellation: restore stock for non-finalised parts and delete them
+            parts_result = await db.execute(
+                select(ServiceRequestPart).where(
+                    ServiceRequestPart.service_request_id == request_id,
+                    ServiceRequestPart.is_finalized == False,  # noqa: E712
+                )
+            )
+            for part in parts_result.scalars().all():
+                await _restore_stock(
+                    db, part.product_id, part.location, part.quantity, request_id
+                )
+                await db.delete(part)
+            logger.info(
+                "service_request_parts_restored_on_cancel",
+                request_id=str(request_id),
+            )
+
+    # Apply scalar field updates
     if updates.status is not None:
         service_request.status = updates.status
 
@@ -225,11 +436,7 @@ async def update_service_request(
         service_request.assigned_technician = updates.assigned_technician
 
     if updates.scheduled_date is not None:
-        from datetime import datetime
-
-        service_request.scheduled_date = datetime.fromisoformat(
-            updates.scheduled_date
-        )
+        service_request.scheduled_date = datetime.fromisoformat(updates.scheduled_date)
 
     if updates.quote_amount is not None:
         service_request.quote_amount = updates.quote_amount
@@ -322,3 +529,151 @@ async def get_service_request_sla(
         "has_breach": any(s["breached"] for s in sla_items),
         "slas": sla_items,
     }
+
+
+# ---------------------------------------------------------------------------
+# Parts endpoints — inventory integration
+# ---------------------------------------------------------------------------
+
+@router.post("/{request_id}/parts", status_code=status.HTTP_201_CREATED)
+async def add_part_to_service_request(
+    request_id: UUID,
+    part_in: ServiceRequestPartCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> ServiceRequestPartResponse:
+    """Add a part to a workshop service request.
+
+    Immediately decrements ProductStockByLocation.stock by qty.
+    Logs a StockAdjustment audit record.
+    Triggers auto-reorder check (non-critical, best-effort).
+    """
+    # Verify service request exists and is not completed/cancelled
+    sr_result = await db.execute(
+        select(ServiceRequest).where(ServiceRequest.id == request_id)
+    )
+    service_request = sr_result.scalar_one_or_none()
+    if not service_request:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Service request {request_id} not found",
+        )
+    if service_request.status in (ServiceStatus.completed, ServiceStatus.cancelled):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot add parts to a {service_request.status} service request",
+        )
+
+    # Deduct stock — raises 404/409 on failure
+    await _deduct_stock(
+        db, part_in.product_id, part_in.location, part_in.quantity, request_id
+    )
+
+    # Create the part record
+    part = ServiceRequestPart(
+        service_request_id=request_id,
+        product_id=part_in.product_id,
+        location=part_in.location,
+        quantity=part_in.quantity,
+        is_finalized=False,
+    )
+    db.add(part)
+    await db.commit()
+    await db.refresh(part)
+
+    # Trigger auto-reorder check (best-effort, non-critical)
+    try:
+        from src.services.auto_reorder import process_auto_reorder
+        await process_auto_reorder(db, part_in.product_id, part_in.location)
+    except Exception as exc:
+        logger.warning(
+            "auto_reorder_check_failed",
+            product_id=str(part_in.product_id),
+            location=part_in.location,
+            error=str(exc),
+        )
+
+    return ServiceRequestPartResponse(
+        id=part.id,
+        service_request_id=part.service_request_id,
+        product_id=part.product_id,
+        location=part.location,
+        quantity=part.quantity,
+        is_finalized=part.is_finalized,
+        created_at=part.created_at.isoformat(),
+        updated_at=part.updated_at.isoformat(),
+    )
+
+
+@router.get("/{request_id}/parts")
+async def list_parts_for_service_request(
+    request_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> list[ServiceRequestPartResponse]:
+    """List all parts assigned to a service request."""
+    sr_result = await db.execute(
+        select(ServiceRequest).where(ServiceRequest.id == request_id)
+    )
+    if not sr_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Service request {request_id} not found",
+        )
+
+    parts_result = await db.execute(
+        select(ServiceRequestPart)
+        .where(ServiceRequestPart.service_request_id == request_id)
+        .order_by(ServiceRequestPart.created_at.asc())
+    )
+    parts = parts_result.scalars().all()
+
+    return [
+        ServiceRequestPartResponse(
+            id=p.id,
+            service_request_id=p.service_request_id,
+            product_id=p.product_id,
+            location=p.location,
+            quantity=p.quantity,
+            is_finalized=p.is_finalized,
+            created_at=p.created_at.isoformat(),
+            updated_at=p.updated_at.isoformat(),
+        )
+        for p in parts
+    ]
+
+
+@router.delete(
+    "/{request_id}/parts/{part_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+)
+async def remove_part_from_service_request(
+    request_id: UUID,
+    part_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+):
+    """Remove a part from a service request and restore its stock.
+
+    Blocked if the part has been finalised (job is completed).
+    """
+    part_result = await db.execute(
+        select(ServiceRequestPart).where(
+            ServiceRequestPart.id == part_id,
+            ServiceRequestPart.service_request_id == request_id,
+        )
+    )
+    part = part_result.scalar_one_or_none()
+    if not part:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Part {part_id} not found on service request {request_id}",
+        )
+    if part.is_finalized:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot remove a finalised part (job is completed). Reopen the job first.",
+        )
+
+    # Restore stock
+    await _restore_stock(db, part.product_id, part.location, part.quantity, request_id)
+    await db.delete(part)
+    await db.commit()

@@ -6,11 +6,13 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     Column,
     DateTime,
     Enum,
     ForeignKey,
+    Integer,
     Numeric,
     String,
     Text,
@@ -115,6 +117,62 @@ class ServiceRequest(Base):
 
     def __repr__(self) -> str:
         return f"<ServiceRequest(id={self.id}, type={self.request_type}, status={self.status})>"
+
+
+class ServiceRequestPart(Base):
+    """Parts consumed during a workshop service request.
+
+    Adding a part immediately decrements ProductStockByLocation.stock.
+    Completing the job finalises the deduction (is_finalized=True, locked).
+    Reopening from completed restores stock and un-finalises.
+    """
+
+    __tablename__ = "service_request_parts"
+
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_service_request_part_qty_positive"),
+    )
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    service_request_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("service_requests.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+
+    # Which store location the part was taken from
+    location: str = Column(String(50), nullable=False)
+    quantity: int = Column(Integer, nullable=False)
+
+    # True once the job is marked completed — prevents further removal
+    is_finalized: bool = Column(Boolean, default=False, nullable=False)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    service_request = relationship("ServiceRequest")
+
+    def __repr__(self) -> str:
+        return (
+            f"<ServiceRequestPart(sr_id={self.service_request_id}, "
+            f"product_id={self.product_id}, qty={self.quantity}, "
+            f"finalized={self.is_finalized})>"
+        )
 
 
 # Update relationships in existing models
