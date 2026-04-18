@@ -30,11 +30,19 @@ class RequestType(str, enum.Enum):
 
 
 class ServiceStatus(str, enum.Enum):
-    """Service request status."""
+    """Service request status.
+
+    Values are kept in sync with the frontend ServiceStatus type in
+    apps/web/lib/api/service-requests.ts. Any addition here requires a
+    corresponding ALTER TYPE migration (see migrations/fix_service_status_enum.sql).
+    """
 
     submitted = "submitted"
-    quoted = "quoted"
+    under_review = "under_review"
+    quoted = "quoted"       # legacy alias — prefer quote_sent for new records
+    quote_sent = "quote_sent"
     approved = "approved"
+    scheduled = "scheduled"
     in_progress = "in_progress"
     completed = "completed"
     cancelled = "cancelled"
