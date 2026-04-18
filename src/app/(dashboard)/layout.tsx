@@ -13,26 +13,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <WebSocketProvider>
       {/* Match marketing home: dark zinc/black shell */}
-      <div className="dark dashboard-app min-h-screen bg-gradient-to-br from-black via-zinc-950 to-black text-foreground antialiased">
-        <div className="flex min-h-screen">
-          {/* Desktop Sidebar - hidden on mobile */}
-          <div className="hidden md:block">
+      <div className="dark dashboard-app flex h-dvh min-h-0 flex-col overflow-hidden bg-gradient-to-br from-black via-zinc-950 to-black text-foreground antialiased">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row">
+          {/* Desktop: fixed-height rail — sidebar stays put while main scrolls */}
+          <div className="relative hidden min-h-0 w-64 shrink-0 overflow-hidden border-r border-white/10 md:flex">
             <Sidebar />
           </div>
 
-          {/* Mobile Navigation */}
           <MobileNav />
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            {/* Shadow Mode Banner — shown when shadow observation is active */}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-y-contain">
             <ShadowModeBanner />
 
-            {/* Desktop top bar with notification bell */}
-            <header className="hidden h-12 shrink-0 items-center justify-end border-b border-white/10 bg-zinc-950/80 px-6 backdrop-blur-sm md:flex">
+            <header className="sticky top-0 z-20 hidden h-12 shrink-0 items-center justify-end border-b border-white/10 bg-zinc-950/90 px-6 backdrop-blur-md md:flex">
               <NotificationBell />
             </header>
 
-            <main className="flex-1 p-4 pt-16 md:p-6 md:pt-6">
+            <main className="min-h-0 flex-1 p-4 pt-16 md:p-6 md:pt-6">
               <DemoVideoBanner />
               <PageTransition>{children}</PageTransition>
             </main>
