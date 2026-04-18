@@ -8,11 +8,13 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
+from pydantic import BaseModel
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Column,
     DateTime,
+    Enum,
     ForeignKey,
     Integer,
     Numeric,
@@ -580,7 +582,7 @@ class StockTakeItem(Base):
 
     system_qty: int = Column(Integer, nullable=False)   # qty at time of count
     counted_qty: int = Column(Integer, nullable=False)  # physically counted
-    variance: int = Column(Integer, nullable=False)     # counted - system
+    variance: int = Column(Integer, nullable=False)      # counted - system
 
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
@@ -801,3 +803,156 @@ class GoodsReceivedNoteLine(Base):
 
     def __repr__(self) -> str:
         return f"<GoodsReceivedNoteLine(grn_id={self.grn_id}, product_id={self.product_id}, received={self.quantity_received}/{self.quantity_expected})>"  # noqa: E501
+
+
+# ----------------------------------------------------------------------------
+# RMA (Return Merchandise Authorisation) — UNI-1835
+# ----------------------------------------------------------------------------
+
+
+class RMAStatus(str, enum.Enum):
+    """RMA lifecycle status."""
+
+    REQUESTED = "REQUESTED"
+    APPROVED = "APPROVED"
+    RECEIVED = "RECEIVED"
+    CREDITED = "CREDITED"
+    CLOSED = "CLOSED"
+
+
+# Valid forward-only transitions
+_RMA_TRANSITIONS: dict[str, set[str]] = {
+    "REQUESTED": {"APPROVED"},
+    "APPROVED": {"RECEIVED"},
+    "RECEIVED": {"CREDITED"},
+    "CREDITED": {"CLOSED"},
+    "CLOSED": set(),
+}
+
+
+def rma_status_can_advance(current: str, next_status: str) -> bool:
+    """Return True when *next_status* is a valid forward transition from *current*."""
+    return next_status in _RMA_TRANSITIONS.get(current, set())
+
+
+class RMA(Base):
+    """Return Merchandise Authorisation — top-level return record."""
+
+    __tablename__ = "rma"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    order_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("orders.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    status: str = Column(
+        Enum(RMAStatus, name="rma_status", create_constraint=False),
+        default=RMAStatus.REQUESTED.value,
+        nullable=False,
+        index=True,
+    )
+    reason: str = Column(Text, nullable=False)
+    notes: str | None = Column(Text, nullable=True)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    lines = relationship("RMALine", back_populates="rma", cascade="all, delete-orphan")
+
+    def __repr__(self) -> str:
+        return f"<RMA(id={self.id}, order_id={self.order_id}, status={self.status})>"
+
+
+class RMALine(Base):
+    """Single line item within an RMA."""
+
+    __tablename__ = "rma_line"
+
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_rma_line_qty_positive"),
+    )
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    rma_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("rma.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    order_item_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("order_items.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    quantity: int = Column(Integer, nullable=False)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+
+    rma = relationship("RMA", back_populates="lines")
+
+    def __repr__(self) -> str:
+        return f"<RMALine(rma_id={self.rma_id}, order_item_id={self.order_item_id}, qty={self.quantity})>"
+
+
+# ----------------------------------------------------------------------------
+# Pydantic schemas for RMA API layer
+# ----------------------------------------------------------------------------
+
+
+class RMALineCreate(BaseModel):
+    """Request body for a single line when creating an RMA."""
+
+    order_item_id: UUID
+    quantity: int
+
+
+class RMALineRead(BaseModel):
+    """Response schema for an RMA line."""
+
+    id: UUID
+    rma_id: UUID
+    order_item_id: UUID
+    quantity: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class RMACreate(BaseModel):
+    """Request body for creating a new RMA."""
+
+    reason: str
+    notes: str | None = None
+    lines: list[RMALineCreate]
+
+
+class RMARead(BaseModel):
+    """Response schema for an RMA record."""
+
+    id: UUID
+    order_id: UUID
+    status: str
+    reason: str
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+    lines: list[RMALineRead] = []
+
+    model_config = {"from_attributes": True}
+
+
+class RMAStatusUpdate(BaseModel):
+    """Request body for advancing RMA status."""
+
+    status: str
