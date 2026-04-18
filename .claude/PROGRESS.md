@@ -70,7 +70,7 @@ Phill has granted blanket standing permission for every action in this repo that
 | Backend 500 storm (demo paths only)               | PR-OPEN #109   | UNI-1778 | ~1h  |
 | RLS scoping doc committed on main                 | DONE (defer B) | UNI-1749 | ~2h  |
 | Render OOM scoping doc committed on main          | DONE (env B)   | UNI-1758 | ~1h  |
-| Ruff hygiene (tpar.py / bank_feed / eftpos)       | NEW TICKET     | —        | ~15m |
+| Ruff hygiene (tpar.py / bank_feed / eftpos)       | PR-OPEN #114   | —        | ~15m |
 
 ## Previously Completed (kept for traceability)
 
@@ -117,19 +117,23 @@ Phill has granted blanket standing permission for every action in this repo that
   - `schemas.py`: added optional `request_id` field to `ErrorResponse`
   - `demo_dashboard.py`: `/aggregated` now uses `asyncio.gather(return_exceptions=True)` + per-section fallback. A single chart query failing no longer blanks the dashboard.
   - Smoke tests: py_compile OK across 3 files, AST parse OK, byte checks clean (0 lone LF, 0 nulls, last byte 10)
+- [x] fix(backend): ruff hygiene — tpar.py (UP017 x3), bank_feed_service.py (UP017 x2 + duplicate-line patch), eftpos_terminal.py (F401) — PR #114
+  - branch: `fix/ruff-hygiene-tpar-bank-eftpos`, head `b71824b`, base `9e32fbe`
+  - ruff check 0 warnings, py_compile OK, AST parse clean on all 3 files
 
 ### Path B PRs opened this session (autonomous)
 
-| Ticket(s)                    | PR                                                  | Branch                                  | Head SHA    | Base SHA  |
-| ---------------------------- | --------------------------------------------------- | --------------------------------------- | ----------- | --------- |
-| UNI-1749 (RLS scoping doc)   | direct to `main`                                   | `main`                                  | `fb1b133`   | n/a       |
-| UNI-1758 (OOM scoping doc)   | direct to `main`                                    | `main`                                  | `5fffa3a`   | n/a       |
+| Ticket(s)                    | PR                                                  | Branch                                 | Head SHA    | Base SHA  |
+| ---------------------------- | --------------------------------------------------- | -------------------------------------- | ----------- | --------- |
+| UNI-1749 (RLS scoping doc)   | direct to `main`                                    | `main`                                 | `fb1b133`   | n/a       |
+| UNI-1758 (OOM scoping doc)   | direct to `main`                                    | `main`                                 | `5fffa3a`   | n/a       |
 | UNI-1777                     | https://github.com/CleanExpo/CCW-CRM/pull/106       | `fix/uni-1777-pos-endpoints`           | (PR #106)   | `fb1b133` |
 | UNI-1785 / UNI-1786 / UNI-1782 | https://github.com/CleanExpo/CCW-CRM/pull/107     | `fix/uni-1785-1786-1782-resilience`    | `4824fc4`   | `fb1b133` |
 | UNI-1781                     | https://github.com/CleanExpo/CCW-CRM/pull/108       | `fix/uni-1781-orders-search-filter`    | `06effb5`   | `fb1b133` |
 | UNI-1778                     | https://github.com/CleanExpo/CCW-CRM/pull/109       | `fix/uni-1778-backend-500-storm`       | `cab74bb`   | `fb1b133` |
+| Ruff hygiene (new ticket)    | https://github.com/CleanExpo/CCW-CRM/pull/114       | `fix/ruff-hygiene-tpar-bank-eftpos`    | `b71824b`   | `9e32fbe` |
 
-All four PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_FILES` + `GITHUB_CREATE_A_PULL_REQUEST` under the Path B standing authority granted 2026-04-18. Each PR body contains a Verification Checklist (Where / How / What to see / What NOT to see) per the `.claude/rules/verification-gate.md` rule.
+All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_FILES` + `GITHUB_CREATE_A_PULL_REQUEST` under the Path B standing authority granted 2026-04-18. Each PR body contains a Verification Checklist (Where / How / What to see / What NOT to see) per the `.claude/rules/verification-gate.md` rule.
 
 ## Completed Previous Session (2026-04-14)
 
@@ -147,7 +151,7 @@ All four PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULT
 - [x] Bugs logged to Linear: UNI-1783, UNI-1784, UNI-1787
 - [x] PR #67 merged to ai-updates (POS $NaN, logout redirect, connecting badge, settings redirect)
 - [x] fix(backend): html.escape() validator on CustomerBase + CustomerUpdate — UNI-1783
-- [x] feat(backend): GET/POST /api/integrations/anthropic/\* — UNI-1776
+- [x] feat(backend): GET/POST /api/integrations/anthropic/* — UNI-1776
 - [x] feat(web): Anthropic API key input in Settings → Integrations — UNI-1776
 - [x] feat(onboarding): Claude AI step (step 4) in setup wizard — UNI-1776
 - [x] fix(web): Customer Discard button now calls form.reset() — UNI-1784
@@ -158,7 +162,7 @@ All four PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULT
 ## Decisions Log
 
 | Decision                                            | Rationale                                                           | Date       |
-| --------------------------------------------------- | -------------------------------------------------------------------- | ---------- |
+| --------------------------------------------------- | ------------------------------------------------------------------- | ---------- |
 | Route `User` via `models_base`, keep schema-locked  | `demo_models.py` is locked; `User` lives in `models_base.py:58`     | 2026-04-18 |
 | Merge PR #105 despite pre-existing red ruff         | Failures predate UNI-1944; blocking would mask fix; filed new ticket | 2026-04-18 |
 | Fresh short-lived fix branches off origin/main      | Sandbox is append-only on `.git`; Phill runs git locally in PS      | 2026-04-18 |
@@ -177,7 +181,7 @@ All four PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULT
 ## Notes for Next Context Window
 
 - **Demo date**: 2026-04-20. Today is Day 1 of 2. Day 1 shipping complete (see Path B table above).
-- **Next ticket**: **UNI-1758 scoping doc shipped on main (`5fffa3a`)**. Recommendation for demo week is an env-var flip Phill ownq: set `WEB_CONCURRENCY=1` in Render → Environment for the backend service. No code change. See `docs/UNI-1758-OOM-SCOPING.md` for the full risk matrix, verification checklist, and post-demo plan (lazy-load AI routes, bound learning-engine patterns).
+- **Next ticket**: **UNI-1758 scoping doc shipped on main (`5fffa3a`)**. Recommendation for demo week is an env-var flip Phill owns: set `WEB_CONCURRENCY=1` in Render → Environment for the backend service. No code change. See `docs/UNI-1758-OOM-SCOPING.md` for the full risk matrix, verification checklist, and post-demo plan (lazy-load AI routes, bound learning-engine patterns).
 - **Sprint order (Day 1 — COMPLETE)**: UNI-1777 (#106) → UNI-1785/1786/1782 (#107) → UNI-1781 (#108) → UNI-1778 (#109)
 - **Sprint order (Day 2 — COMPLETE ahead of schedule)**: UNI-1758 scoping doc on `main`. Remaining for Phill: (a) merge PRs #106–#109 in GitHub UI, (b) flip `WEB_CONCURRENCY=1` in Render env, (c) post-merge prod smoke via `chrome-prod` skill.
 - **Sprint order (Day 3+ after demo)**: UNI-1758 Option D (lazy-load AI routes + bounded pattern cache) → full RLS tightening under UNI-1749 → backend ruff hygiene follow-up ticket.
