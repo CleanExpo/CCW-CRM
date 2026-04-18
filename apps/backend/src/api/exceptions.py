@@ -3,7 +3,9 @@
 Ensures all errors return JSON responses, preventing HTML error pages.
 """
 import traceback
+import uuid
 
+import structlog
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -14,6 +16,18 @@ from src.config.settings import get_settings
 from src.db.schemas import ErrorDetail, ErrorResponse
 
 settings = get_settings()
+logger = structlog.get_logger(__name__)
+
+
+def _request_id(request: Request) -> str:
+    """Return a correlation ID for this request.
+
+    Prefers `request.state.request_id` (set by an upstream middleware, if any);
+    falls back to a fresh uuid4 so every 500 still has a tag Phill can grep
+    in BetterStack.
+    """
+    rid = getattr(request.state, "request_id", None) if hasattr(request, "state") else None
+    return rid or uuid.uuid4().hex[:12]
 
 
 async def http_exception_handler(
@@ -62,6 +76,7 @@ async def integrity_error_handler(
 ) -> JSONResponse:
     """Handle database integrity errors (unique constraints, foreign keys, etc.)."""
     error_message = str(exc.orig) if hasattr(exc, "orig") else str(exc)
+    request_id = _request_id(request)
 
     # Extract user-friendly messages for common integrity violations
     if "unique constraint" in error_message.lower():
@@ -73,12 +88,22 @@ async def integrity_error_handler(
     else:
         user_message = "Database integrity constraint violation"
 
+    logger.warning(
+        "integrity_error",
+        request_id=request_id,
+        method=request.method,
+        path=request.url.path,
+        error=error_message,
+        user_message=user_message,
+    )
+
     return JSONResponse(
         status_code=409,
         content=ErrorResponse(
             error=user_message,
             detail=error_message if settings.debug else None,
             status_code=409,
+            request_id=request_id,
         ).model_dump(),
     )
 
@@ -88,6 +113,15 @@ async def operational_error_handler(
 ) -> JSONResponse:
     """Handle database operational errors (connection issues, timeouts, etc.)."""
     error_message = str(exc.orig) if hasattr(exc, "orig") else str(exc)
+    request_id = _request_id(request)
+
+    logger.error(
+        "db_operational_error",
+        request_id=request_id,
+        method=request.method,
+        path=request.url.path,
+        error=error_message,
+    )
 
     return JSONResponse(
         status_code=503,
@@ -95,6 +129,7 @@ async def operational_error_handler(
             error="Database connection error",
             detail=error_message if settings.debug else "Service temporarily unavailable",
             status_code=503,
+            request_id=request_id,
         ).model_dump(),
     )
 
@@ -104,6 +139,16 @@ async def database_error_handler(
 ) -> JSONResponse:
     """Handle generic database errors."""
     error_message = str(exc.orig) if hasattr(exc, "orig") else str(exc)
+    request_id = _request_id(request)
+
+    logger.error(
+        "db_error",
+        request_id=request_id,
+        method=request.method,
+        path=request.url.path,
+        error=error_message,
+        exc_type=type(exc).__name__,
+    )
 
     return JSONResponse(
         status_code=500,
@@ -111,6 +156,7 @@ async def database_error_handler(
             error="Database error",
             detail=error_message if settings.debug else "An error occurred while processing your request",
             status_code=500,
+            request_id=request_id,
         ).model_dump(),
     )
 
@@ -123,12 +169,20 @@ async def generic_exception_handler(
     This is the last line of defense - every unhandled exception goes through here.
     CRITICAL: This prevents the JSONDecodeError issue where HTML error pages
     were being returned instead of JSON.
+
+    Logs through structlog so BetterStack can correlate a 500 with a request_id.
     """
-    # Log the full exception for debugging
-    print(f"[UNHANDLED EXCEPTION] {type(exc).__name__}: {str(exc)}")
-    print(f"[REQUEST] {request.method} {request.url.path}")
-    if settings.debug:
-        print(f"[TRACEBACK]\n{traceback.format_exc()}")
+    request_id = _request_id(request)
+
+    logger.error(
+        "unhandled_exception",
+        request_id=request_id,
+        method=request.method,
+        path=request.url.path,
+        exc_type=type(exc).__name__,
+        error=str(exc),
+        traceback=traceback.format_exc() if settings.debug else None,
+    )
 
     return JSONResponse(
         status_code=500,
@@ -136,5 +190,6 @@ async def generic_exception_handler(
             error="Internal server error",
             detail=str(exc) if settings.debug else "An unexpected error occurred",
             status_code=500,
+            request_id=request_id,
         ).model_dump(),
     )

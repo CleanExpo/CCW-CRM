@@ -5,10 +5,12 @@ Provides metrics, charts, and activity feed for the overnight demo.
 Performance optimized with Redis caching and query optimization.
 """
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated
 
+import structlog
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy import String, func, select
@@ -27,13 +29,31 @@ from src.db.demo_models import (
 )
 from src.services.sse_service import sse_service
 
+logger = structlog.get_logger(__name__)
+
 router = APIRouter(prefix="/api/dashboard", tags=["Demo Dashboard"], dependencies=[Depends(get_current_user)])
 
 
 # ====== PHASE 4 OPTIMIZATION: AGGREGATED ENDPOINT ======
 # This endpoint combines all dashboard data into a single API call
 # Replaces 6+ separate API calls with 1 call
-# Expected Performance: 70% faster dashboard load (5-8s → <2s)
+# Expected Performance: 70% faster dashboard load (5-8s -> <2s)
+
+
+def _empty_dashboard_metrics() -> "DashboardMetrics":
+    """Safe-zero fallback when a metrics query fails during aggregation.
+
+    Ensures the dashboard always renders even when one query blows up, instead
+    of the whole page 500'ing. Errors are logged via structlog for BetterStack.
+    """
+    return DashboardMetrics(
+        total_revenue_this_month="0.00",
+        active_orders=0,
+        total_products=0,
+        total_customers=0,
+        low_stock_alerts=0,
+        pending_quotes=0,
+    )
 
 
 @router.get("/aggregated")
@@ -48,14 +68,75 @@ async def get_aggregated_dashboard(
     - Reduces 6 API calls to 1 call
     - Impact: 70% faster dashboard load
     - Cache: 60 seconds (balance between freshness and performance)
+
+    RELIABILITY (UNI-1778):
+    - Each of the 6 child fetches runs concurrently via asyncio.gather
+      (return_exceptions=True) so a single query failure no longer 500's
+      the entire dashboard. Failures are logged with structlog and fall
+      back to empty/zero values, keeping the demo alive.
     """
-    # Execute all data fetches in parallel
-    metrics_data = await get_dashboard_metrics(db)
-    revenue_data = await get_revenue_chart(db)
-    category_data = await get_category_distribution(db)
-    top_products_data = await get_top_products(db)
-    inventory_data = await get_inventory_status(db)
-    activity_data = await get_recent_activity(db, limit=20)
+    # Execute all data fetches concurrently. If one raises, the rest still return.
+    results = await asyncio.gather(
+        get_dashboard_metrics(db),
+        get_revenue_chart(db),
+        get_category_distribution(db),
+        get_top_products(db),
+        get_inventory_status(db),
+        get_recent_activity(db, limit=20),
+        return_exceptions=True,
+    )
+
+    metrics_data, revenue_data, category_data, top_products_data, inventory_data, activity_data = results
+
+    # Per-section fallback + structured error logging
+    if isinstance(metrics_data, Exception):
+        logger.error(
+            "dashboard_aggregated_section_failed",
+            section="metrics",
+            error=str(metrics_data),
+            exc_type=type(metrics_data).__name__,
+        )
+        metrics_data = _empty_dashboard_metrics()
+    if isinstance(revenue_data, Exception):
+        logger.error(
+            "dashboard_aggregated_section_failed",
+            section="revenue_chart",
+            error=str(revenue_data),
+            exc_type=type(revenue_data).__name__,
+        )
+        revenue_data = []
+    if isinstance(category_data, Exception):
+        logger.error(
+            "dashboard_aggregated_section_failed",
+            section="category_sales",
+            error=str(category_data),
+            exc_type=type(category_data).__name__,
+        )
+        category_data = []
+    if isinstance(top_products_data, Exception):
+        logger.error(
+            "dashboard_aggregated_section_failed",
+            section="top_products",
+            error=str(top_products_data),
+            exc_type=type(top_products_data).__name__,
+        )
+        top_products_data = []
+    if isinstance(inventory_data, Exception):
+        logger.error(
+            "dashboard_aggregated_section_failed",
+            section="inventory_status",
+            error=str(inventory_data),
+            exc_type=type(inventory_data).__name__,
+        )
+        inventory_data = []
+    if isinstance(activity_data, Exception):
+        logger.error(
+            "dashboard_aggregated_section_failed",
+            section="recent_activity",
+            error=str(activity_data),
+            exc_type=type(activity_data).__name__,
+        )
+        activity_data = []
 
     return AggregatedDashboardData(
         metrics=metrics_data,
@@ -79,7 +160,7 @@ async def dashboard_metrics_stream(request: Request):
     - Stock changes (affects low_stock_alerts)
     - Quotes created/updated (affects pending_quotes)
 
-    Channel: "dashboard-metrics"
+    Channel: \"dashboard-metrics\"
     Events: metrics_updated
     """
     return await sse_service.subscribe(request, "dashboard-metrics", heartbeat_interval=20)
@@ -131,7 +212,7 @@ class InventoryDataPoint(BaseModel):
 class ActivityItem(BaseModel):
     """Activity feed item."""
 
-    type: str  # "order", "quote", "customer", "stock"
+    type: str  # \"order\", \"quote\", \"customer\", \"stock\"
     title: str
     description: str
     timestamp: datetime
