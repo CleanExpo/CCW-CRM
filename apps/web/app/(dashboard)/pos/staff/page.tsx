@@ -123,8 +123,8 @@ export default function SalesStaffPage() {
 
   async function loadStaff() {
     try {
-      const response = await apiClient.get<{ data: SalesStaff[] }>('/api/pos/staff');
-      setStaff(response.data || []);
+      const response = await apiClient.get<SalesStaff[]>('/api/pos/staff');
+      setStaff(response || []);
     } catch (error) {
       console.error('Failed to load sales staff:', error);
       toast({
@@ -137,8 +137,8 @@ export default function SalesStaffPage() {
 
   async function loadLocations() {
     try {
-      const response = await apiClient.get<{ data: Location[] }>('/api/pos/locations');
-      setLocations(response.data || []);
+      const response = await apiClient.get<Location[]>('/api/pos/locations');
+      setLocations(response || []);
     } catch (error) {
       console.error('Failed to load locations:', error);
     }

@@ -115,8 +115,8 @@ export default function POSTerminalPage() {
 
   async function loadSalesStaff() {
     try {
-      const response = await apiClient.get<{ data: SalesStaff[] }>('/api/pos/staff');
-      setSalesStaff(response.data || []);
+      const response = await apiClient.get<SalesStaff[]>('/api/pos/staff');
+      setSalesStaff(response || []);
     } catch (error) {
       console.error('Failed to load sales staff:', error);
     }
@@ -124,8 +124,8 @@ export default function POSTerminalPage() {
 
   async function loadTerminals() {
     try {
-      const response = await apiClient.get<{ data: POSTerminal[] }>('/api/pos/terminals');
-      const activeTerminals = (response.data || []).filter((t) => t.is_active);
+      const response = await apiClient.get<POSTerminal[]>('/api/pos/terminals');
+      const activeTerminals = (response || []).filter((t) => t.is_active);
       setTerminals(activeTerminals);
 
       // Auto-select first terminal
