@@ -112,6 +112,10 @@ class ProductWithStock(Product):
 
 
 # Customer schemas
+
+PAYMENT_TERMS_VALUES = {"COD", "NET7", "NET14", "NET30", "NET60", "EOM", "EOM30"}
+
+
 class CustomerBase(BaseModel):
     customer_number: str
     company_name: str
@@ -124,6 +128,7 @@ class CustomerBase(BaseModel):
     postcode: str | None = None
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
+    payment_terms: str | None = None
     is_active: bool = True
 
 
@@ -162,6 +167,20 @@ class CustomerCreate(CustomerBase):
             )
         return upper
 
+    @field_validator("payment_terms", mode="after")
+    @classmethod
+    def validate_payment_terms(cls, v: str | None) -> str | None:
+        """Uppercase and validate payment terms value."""
+        if v is None:
+            return v
+        upper = v.upper()
+        if upper not in PAYMENT_TERMS_VALUES:
+            raise ValueError(
+                f"Invalid payment_terms: {v!r}. "
+                f"Must be one of: {', '.join(sorted(PAYMENT_TERMS_VALUES))}"
+            )
+        return upper
+
 
 class CustomerUpdate(BaseModel):
     company_name: str | None = None
@@ -174,6 +193,7 @@ class CustomerUpdate(BaseModel):
     postcode: str | None = None
     xero_contact_id: str | None = None
     xero_synced_at: datetime | None = None
+    payment_terms: str | None = None
     is_active: bool | None = None
 
     @field_validator(
@@ -203,6 +223,20 @@ class CustomerUpdate(BaseModel):
         if upper not in AU_STATES:
             raise ValueError(
                 f"Invalid AU state: {v}. Must be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT"
+            )
+        return upper
+
+    @field_validator("payment_terms", mode="after")
+    @classmethod
+    def validate_payment_terms(cls, v: str | None) -> str | None:
+        """Uppercase and validate payment terms value."""
+        if v is None:
+            return v
+        upper = v.upper()
+        if upper not in PAYMENT_TERMS_VALUES:
+            raise ValueError(
+                f"Invalid payment_terms: {v!r}. "
+                f"Must be one of: {', '.join(sorted(PAYMENT_TERMS_VALUES))}"
             )
         return upper
 

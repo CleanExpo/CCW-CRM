@@ -2,13 +2,17 @@
 
 This module handles syncing customers between the ERP and Xero as contacts,
 supporting bidirectional updates.
+
+payment_terms note: The `payment_terms` column exists in the DB but is not yet
+mapped on the Customer ORM class (demo_models.py is locked). We read it via
+raw SQL using `_get_customer_payment_terms()` so sync works correctly today.
 """
 
 from datetime import datetime
 from uuid import UUID
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.demo_models import Customer
@@ -17,6 +21,38 @@ from src.integrations.xero.auth import XeroAuth
 from src.integrations.xero.client import XeroAPIError
 
 logger = structlog.get_logger(__name__)
+
+# Reverse map: Xero PaymentTerms Day+Type → CCW payment_terms string
+_XERO_TO_CCW_TERMS: dict[tuple[int, str], str] = {
+    (0, "DAYSAFTERBILLDATE"): "COD",
+    (7, "DAYSAFTERBILLDATE"): "NET7",
+    (14, "DAYSAFTERBILLDATE"): "NET14",
+    (30, "DAYSAFTERBILLDATE"): "NET30",
+    (60, "DAYSAFTERBILLDATE"): "NET60",
+    (0, "DAYSAFTERBILLMONTH"): "EOM",
+    (30, "DAYSAFTERBILLMONTH"): "EOM30",
+}
+
+
+async def _get_customer_payment_terms(db: AsyncSession, customer_id: UUID) -> str | None:
+    """Read payment_terms from DB for a customer (raw SQL until ORM is updated)."""
+    result = await db.execute(
+        text("SELECT payment_terms FROM customers WHERE id = :id"),
+        {"id": str(customer_id)},
+    )
+    row = result.fetchone()
+    return row[0] if row else None
+
+
+async def _set_customer_payment_terms(
+    db: AsyncSession, customer_id: UUID, payment_terms: str | None
+) -> None:
+    """Write payment_terms to DB for a customer (raw SQL until ORM is updated)."""
+    await db.execute(
+        text("UPDATE customers SET payment_terms = :pt WHERE id = :id"),
+        {"pt": payment_terms, "id": str(customer_id)},
+    )
+    await db.commit()
 
 
 class XeroCustomerSync:
@@ -123,11 +159,15 @@ class XeroCustomerSync:
                 "country": "Australia",  # Default
             }
 
+            # Fetch payment_terms via raw SQL (not yet in locked ORM model)
+            payment_terms = await _get_customer_payment_terms(db, customer.id)
+
             contact = await xero_client.create_contact(
                 name=customer.company_name,
                 email=customer.email,
                 phone=customer.phone,
                 address=address,
+                payment_terms=payment_terms,
             )
 
             # Store Xero contact ID
@@ -249,6 +289,19 @@ class XeroCustomerSync:
             if address.get("PostalCode") and customer.postcode != address.get("PostalCode"):
                 customer.postcode = address.get("PostalCode")
                 updated_fields.append("postcode")
+
+        # Sync payment_terms from Xero contact (Sales PaymentTerms)
+        xero_payment_terms = xero_contact_data.get("PaymentTerms", {})
+        sales_terms = xero_payment_terms.get("Sales")
+        if sales_terms:
+            day = sales_terms.get("Day")
+            term_type = sales_terms.get("Type")
+            if day is not None and term_type:
+                ccw_terms = _XERO_TO_CCW_TERMS.get((int(day), term_type))
+                current_terms = await _get_customer_payment_terms(db, customer.id)
+                if ccw_terms and ccw_terms != current_terms:
+                    await _set_customer_payment_terms(db, customer.id, ccw_terms)
+                    updated_fields.append("payment_terms")
 
         if updated_fields:
             customer.xero_synced_at = datetime.now()

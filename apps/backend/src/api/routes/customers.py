@@ -1,12 +1,20 @@
 """Customers API routes.
 
 Performance optimized with Redis caching.
+
+Note: `payment_terms` is stored in the DB but is not yet mapped in the locked
+`demo_models.py` ORM class. Until that model is updated (see NEW TICKET below),
+all payment_terms reads/writes use SQLAlchemy Core text() statements alongside
+the standard ORM operations. All other behaviour is unchanged.
+
+NEW TICKET: Add `payment_terms` column to Customer ORM model in demo_models.py
+  so the raw-SQL workaround here can be removed.
 """
 from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_current_user
@@ -15,6 +23,38 @@ from src.config.database import get_async_db
 from src.db.demo_models import Customer as CustomerModel
 from src.db.schemas import Customer, CustomerCreate, CustomerUpdate, PaginatedResponse
 from src.services.sse_service import sse_service
+
+
+# ---------------------------------------------------------------------------
+# Helpers for payment_terms — persisted via raw SQL until ORM model is updated
+# ---------------------------------------------------------------------------
+
+async def _get_payment_terms(db: AsyncSession, customer_id: UUID) -> str | None:
+    """Fetch payment_terms for a single customer via raw SQL."""
+    result = await db.execute(
+        text("SELECT payment_terms FROM customers WHERE id = :id"),
+        {"id": str(customer_id)},
+    )
+    row = result.fetchone()
+    return row[0] if row else None
+
+
+async def _set_payment_terms(
+    db: AsyncSession, customer_id: UUID, payment_terms: str | None
+) -> None:
+    """Persist payment_terms for a customer via raw SQL."""
+    await db.execute(
+        text("UPDATE customers SET payment_terms = :pt WHERE id = :id"),
+        {"pt": payment_terms, "id": str(customer_id)},
+    )
+    await db.commit()
+
+
+def _customer_response(customer: CustomerModel, payment_terms: str | None) -> dict:
+    """Build a Customer schema dict with the payment_terms field merged in."""
+    data = Customer.model_validate(customer).model_dump()
+    data["payment_terms"] = payment_terms
+    return data
 
 router = APIRouter(prefix="/api/customers", tags=["customers"], dependencies=[Depends(get_current_user)])
 
@@ -29,8 +69,8 @@ async def list_customers(
     db: AsyncSession = Depends(get_async_db),
 ):
     """List customers with pagination and filters. Cached for 5 minutes."""
-    # Build query
-    query = select(CustomerModel)
+    # Build query — include payment_terms alongside ORM columns (raw SQL column)
+    query = select(CustomerModel, text("customers.payment_terms"))
 
     # Apply filters
     if search:
@@ -45,8 +85,19 @@ async def list_customers(
     if is_active is not None:
         query = query.where(CustomerModel.is_active == is_active)
 
-    # Get total count
-    count_query = select(func.count()).select_from(query.subquery())
+    # Get total count (exclude the extra payment_terms column from count)
+    orm_only_query = select(CustomerModel)
+    if search:
+        search_filter = f"%{search}%"
+        orm_only_query = orm_only_query.where(
+            (CustomerModel.company_name.ilike(search_filter)) |
+            (CustomerModel.customer_number.ilike(search_filter)) |
+            (CustomerModel.contact_name.ilike(search_filter)) |
+            (CustomerModel.email.ilike(search_filter))
+        )
+    if is_active is not None:
+        orm_only_query = orm_only_query.where(CustomerModel.is_active == is_active)
+    count_query = select(func.count()).select_from(orm_only_query.subquery())
     result = await db.execute(count_query)
     total = result.scalar_one()
 
@@ -54,12 +105,12 @@ async def list_customers(
     query = query.offset((page - 1) * page_size).limit(page_size)
     query = query.order_by(CustomerModel.created_at.desc())
 
-    # Execute query
+    # Execute query — rows are (CustomerModel, payment_terms_str) tuples
     result = await db.execute(query)
-    customers = result.scalars().all()
+    rows = result.all()
 
     return {
-        "items": [Customer.model_validate(c).model_dump() for c in customers],
+        "items": [_customer_response(row[0], row[1]) for row in rows],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -73,14 +124,17 @@ async def get_customer(
     db: AsyncSession = Depends(get_async_db),
 ):
     """Get a single customer by ID."""
-    query = select(CustomerModel).where(CustomerModel.id == customer_id)
-    result = await db.execute(query)
-    customer = result.scalar_one_or_none()
+    result = await db.execute(
+        select(CustomerModel, text("customers.payment_terms"))
+        .where(CustomerModel.id == customer_id)
+    )
+    row = result.one_or_none()
 
-    if not customer:
+    if not row:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    return Customer.model_validate(customer)
+    customer, payment_terms = row
+    return _customer_response(customer, payment_terms)
 
 
 @router.post("", response_model=Customer, status_code=201)
@@ -97,11 +151,19 @@ async def create_customer(
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Customer number already exists")
 
-    # Create customer
-    customer = CustomerModel(**customer_data.model_dump())
+    # Extract payment_terms before building ORM object (not yet in locked model)
+    payment_terms = customer_data.payment_terms
+    orm_data = customer_data.model_dump(exclude={"payment_terms"})
+
+    # Create customer via ORM (excludes payment_terms)
+    customer = CustomerModel(**orm_data)
     db.add(customer)
     await db.commit()
     await db.refresh(customer)
+
+    # Persist payment_terms via raw SQL if supplied
+    if payment_terms is not None:
+        await _set_payment_terms(db, customer.id, payment_terms)
 
     # Invalidate customer caches (list and dashboard metrics)
     await invalidate_cache("customers")
@@ -125,7 +187,7 @@ async def create_customer(
         "timestamp": datetime.now(UTC).isoformat(),
     })
 
-    return Customer.model_validate(customer)
+    return _customer_response(customer, payment_terms)
 
 
 @router.put("/{customer_id}", response_model=Customer)
@@ -143,13 +205,24 @@ async def update_customer(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    # Update fields
+    # Split payment_terms from the rest (not in locked ORM model)
     update_data = customer_data.model_dump(exclude_unset=True)
+    payment_terms_updated = "payment_terms" in update_data
+    payment_terms = update_data.pop("payment_terms", None)
+
+    # Update ORM-mapped fields
     for field, value in update_data.items():
         setattr(customer, field, value)
 
     await db.commit()
     await db.refresh(customer)
+
+    # Persist payment_terms via raw SQL if it was explicitly included in the request
+    if payment_terms_updated:
+        await _set_payment_terms(db, customer.id, payment_terms)
+    else:
+        # Read current value to include in response
+        payment_terms = await _get_payment_terms(db, customer.id)
 
     # Invalidate customer caches (list and dashboard)
     await invalidate_cache("customers")
@@ -165,7 +238,7 @@ async def update_customer(
         "timestamp": datetime.now(UTC).isoformat(),
     })
 
-    return Customer.model_validate(customer)
+    return _customer_response(customer, payment_terms)
 
 
 @router.delete("/{customer_id}", status_code=204, response_model=None)

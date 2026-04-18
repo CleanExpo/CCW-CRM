@@ -35,13 +35,20 @@ class DemoXeroClient:
         email: str | None = None,
         phone: str | None = None,
         address: dict | None = None,
+        payment_terms: str | None = None,
     ) -> dict:
         """Return mock contact data."""
         contact_id = str(uuid.uuid4())
 
-        logger.info("Demo: Created contact", name=name, email=email, contact_id=contact_id)
+        logger.info(
+            "Demo: Created contact",
+            name=name,
+            email=email,
+            contact_id=contact_id,
+            payment_terms=payment_terms,
+        )
 
-        return {
+        response: dict = {
             "ContactID": contact_id,
             "Name": name,
             "EmailAddress": email or "demo@example.com",
@@ -61,6 +68,23 @@ class DemoXeroClient:
             else [],
             "UpdatedDateUTC": datetime.utcnow().isoformat() + "Z",
         }
+
+        # Reflect payment_terms back in mock response so callers can verify it was received
+        if payment_terms:
+            _TERMS_MAP = {
+                "COD":   {"Day": 0,  "Type": "DAYSAFTERBILLDATE"},
+                "NET7":  {"Day": 7,  "Type": "DAYSAFTERBILLDATE"},
+                "NET14": {"Day": 14, "Type": "DAYSAFTERBILLDATE"},
+                "NET30": {"Day": 30, "Type": "DAYSAFTERBILLDATE"},
+                "NET60": {"Day": 60, "Type": "DAYSAFTERBILLDATE"},
+                "EOM":   {"Day": 0,  "Type": "DAYSAFTERBILLMONTH"},
+                "EOM30": {"Day": 30, "Type": "DAYSAFTERBILLMONTH"},
+            }
+            xero_terms = _TERMS_MAP.get(payment_terms.upper())
+            if xero_terms:
+                response["PaymentTerms"] = {"Sales": xero_terms}
+
+        return response
 
     async def get_contact_by_email(self, email: str) -> dict | None:
         """Return None (always create new contacts in demo mode)."""

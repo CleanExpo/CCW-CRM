@@ -121,12 +121,25 @@ class XeroClient:
             )
             raise XeroAPIError(f"Unexpected error: {str(e)}") from e
 
+    # Mapping from CCW payment_terms strings to Xero PaymentTerms structure.
+    # Xero uses "Sales" terms for outgoing invoices (accounts receivable).
+    _PAYMENT_TERMS_MAP: dict[str, dict] = {
+        "COD":   {"Day": 0, "Type": "DAYSAFTERBILLDATE"},   # Cash on delivery
+        "NET7":  {"Day": 7, "Type": "DAYSAFTERBILLDATE"},
+        "NET14": {"Day": 14, "Type": "DAYSAFTERBILLDATE"},
+        "NET30": {"Day": 30, "Type": "DAYSAFTERBILLDATE"},
+        "NET60": {"Day": 60, "Type": "DAYSAFTERBILLDATE"},
+        "EOM":   {"Day": 0, "Type": "DAYSAFTERBILLMONTH"},   # End of current month
+        "EOM30": {"Day": 30, "Type": "DAYSAFTERBILLMONTH"},  # 30 days after month end
+    }
+
     async def create_contact(
         self,
         name: str,
         email: str | None = None,
         phone: str | None = None,
         address: dict | None = None,
+        payment_terms: str | None = None,
     ) -> dict:
         """Create or update a contact (customer) in Xero.
 
@@ -135,6 +148,8 @@ class XeroClient:
             email: Contact email address
             phone: Contact phone number
             address: Contact address dict with street, city, state, postal_code, country
+            payment_terms: CCW payment terms code (e.g. "NET30", "COD", "EOM").
+                Translated to Xero PaymentTerms.Sales on the contact.
 
         Returns:
             Created/updated contact data
@@ -142,7 +157,7 @@ class XeroClient:
         Raises:
             XeroAPIError: If creation fails
         """
-        contact_data = {
+        contact_data: dict = {
             "Name": name,
         }
 
@@ -164,9 +179,14 @@ class XeroClient:
                 }
             ]
 
+        if payment_terms:
+            xero_terms = self._PAYMENT_TERMS_MAP.get(payment_terms.upper())
+            if xero_terms:
+                contact_data["PaymentTerms"] = {"Sales": xero_terms}
+
         payload = {"Contacts": [contact_data]}
 
-        logger.info("Creating/updating Xero contact", name=name)
+        logger.info("Creating/updating Xero contact", name=name, payment_terms=payment_terms)
 
         result = await self._make_request("POST", "/Contacts", data=payload)
 
