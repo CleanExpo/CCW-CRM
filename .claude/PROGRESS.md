@@ -3,7 +3,7 @@
 **Phase**: CCW Demo Sprint — Day 1 of 2 (demo 2026-04-20)
 **Last Updated**: 2026-04-18
 **Branch**: `main` (direct short-lived fix branches off origin/main per ticket)
-**Last merged PR**: #133 `feat(backend): per-customer payment terms + B2B/B2C type (UNI-1821 + UNI-1831)` — squash-merged, branch deleted
+**Last merged PR**: #120 `feat(backend,web): AP ageing report — supplier liability visibility (UNI-1834)` — squash-merged
 
 ## ⛔ STANDING ORDER — READ FIRST, EVERY CONTEXT WINDOW ⛔
 
@@ -72,6 +72,22 @@ Phill has granted blanket standing permission for every action in this repo that
 | Render OOM scoping doc committed on main          | DONE (env B)   | UNI-1758 | ~1h  |
 | Ruff hygiene (tpar.py / bank_feed / eftpos)       | PR-OPEN #114   | —        | ~15m |
 | Per-customer payment terms + B2B/B2C type         | DONE (PR #133) | UNI-1821 + UNI-1831 | ~3h |
+| AP ageing report — supplier liability for CFO     | DONE (PR #120) | UNI-1834 | —   |
+
+## Pi-CEO open PRs — Pending review (2026-04-18)
+
+Pi-CEO has been autonomously building. These PRs exist in the "In Review" column and need human review before merge:
+
+| PR  | Title                                                                 | Score     | Action needed |
+| --- | --------------------------------------------------------------------- | --------- | ------------- |
+| #124 | feat(warehouse): add pick list and packing slip generation with print PDF | None/10 | Review + merge or close |
+| #122 | feat: Pi CEO build                                                    | None/10   | Identify + review      |
+| #121 | feat: Pi CEO build                                                    | None/10   | Identify + review      |
+| #119 | feat: Pi CEO build                                                    | None/10   | Identify + review      |
+| #118 | fix(backend): reload RMA lines after advance_rma_status commit (UNI-1835) | None/10 | Review + merge |
+| #117 | fix(backend): prevent MultipleResultsFound 500 on Xero sync GRN gate (UNI-1833) | 5/10 | Review + merge |
+| #116 | feat: Pi CEO build                                                    | None/10   | Identify + review      |
+| #115 | feat: Pi CEO build                                                    | 1.75/10   | Low score — review carefully |
 
 ## Previously Completed (kept for traceability)
 
@@ -141,6 +157,8 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
 | UNI-1861 | https://github.com/CleanExpo/CCW-CRM/pull/131         | `feat/uni-1861-rate-limit-middleware`    | SlowAPIMiddleware + rate limit tests — MERGED|
 | UNI-1830 | https://github.com/CleanExpo/CCW-CRM/pull/132         | `feat/uni-1830-cin7-po-invoice-events`  | Cin7 PO+invoice polling events — MERGED      |
 | UNI-1821 + UNI-1831 | https://github.com/CleanExpo/CCW-CRM/pull/133 | `feat/uni-1821-1831-customer-profile` | Per-customer payment terms + B2B/B2C type — MERGED |
+| UNI-1834 | https://github.com/CleanExpo/CCW-CRM/pull/120 | `pidev/auto-a26e1b79` | AP ageing report (Pi-CEO build) — MERGED |
+| — | https://github.com/CleanExpo/CCW-CRM/pull/123 | `pidev/auto-5eeb9f3b` | Pi-CEO UNI-1821 duplicate — CLOSED (superseded by #133) |
 
 - [x] feat(backend): ACL s.54 warranty validation on workshop equipment — UNI-1826 (PR #130, squash-merged)
   - `EquipmentCreate` + `EquipmentUpdate`: `model_validator(mode="after")` enforces ≥365 days warranty_expiry after purchase_date
@@ -166,6 +184,10 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
   - `calculate_invoice_tax()`: `customer_type` → `is_b2b` flag wired through (UNI-1831)
   - 40+ test assertions in `test_customers_payment_terms.py` (7 test classes)
   - Linear MCP 401 — mark UNI-1821 and UNI-1831 Done manually in Linear UI
+- [x] feat(backend,web): AP ageing report — supplier liability visibility — UNI-1834 (PR #120, squash-merged)
+  - Pi-CEO build session `a26e1b798d2f`, 9 files, +874/-2
+  - Linear MCP 401 — mark UNI-1834 Done manually in Linear UI
+- [x] Closed Pi-CEO duplicate PR #123 (superseded UNI-1821 attempt — extension table approach in #133 is the canonical implementation)
 
 **DB MIGRATION REQUIRED (UNI-1830)**: Run `apps/backend/migrations/add_cin7_po_watermark.sql` in Supabase SQL Editor. Safe to re-run (IF NOT EXISTS guard).
 
