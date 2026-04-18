@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { logoutAndRedirectToLogin } from '@/lib/api/auth';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -127,10 +128,11 @@ export function MobileNav() {
             transition={{ delay: navItems.length * 0.05 + 0.1 }}
           >
             <motion.button
+              type="button"
               className="hover:bg-destructive/10 text-destructive group relative flex w-full items-center gap-3 overflow-hidden rounded-lg px-4 py-3 text-left transition-all duration-200"
-              onClick={() => {
+              onClick={async () => {
                 setOpen(false);
-                // Handle logout
+                await logoutAndRedirectToLogin();
               }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
