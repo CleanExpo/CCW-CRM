@@ -1,7 +1,7 @@
 """Workshop equipment registry API routes."""
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -33,6 +33,9 @@ class EquipmentCreate(BaseModel):
     location: str = Field(min_length=1, max_length=50)
     purchase_date: datetime | None = None
     warranty_expiry: datetime | None = None
+    warranty_period_months: int | None = Field(
+        None, ge=12, description="Warranty duration in months (ACL statutory minimum: 12); computes warranty_expiry"
+    )
     interval_months: int | None = None
     interval_hours: float | None = None
     current_hours: float = 0.0
@@ -50,6 +53,9 @@ class EquipmentUpdate(BaseModel):
     location: str | None = None
     purchase_date: datetime | None = None
     warranty_expiry: datetime | None = None
+    warranty_period_months: int | None = Field(
+        None, ge=12, description="Warranty duration in months (ACL statutory minimum: 12); computes warranty_expiry"
+    )
     status: EquipmentStatus | None = None
     interval_months: int | None = None
     interval_hours: float | None = None
@@ -233,7 +239,11 @@ async def create_equipment(
     db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> EquipmentResponse:
     """Create new equipment."""
-    equipment = Equipment(**payload.model_dump())
+    data = payload.model_dump(exclude={"warranty_period_months"})
+    if payload.warranty_period_months is not None:
+        base_date = payload.purchase_date or datetime.now(UTC)
+        data["warranty_expiry"] = base_date + timedelta(days=payload.warranty_period_months * 30)
+    equipment = Equipment(**data)
     # Compute initial next service
     next_date, next_hours = compute_next_service(equipment)
     equipment.next_service_date = next_date
@@ -259,8 +269,14 @@ async def update_equipment(
     if not equipment:
         raise HTTPException(status_code=404, detail="Equipment not found")
 
-    for field, value in payload.model_dump(exclude_none=True).items():
+    for field, value in payload.model_dump(exclude_none=True, exclude={"warranty_period_months"}).items():
         setattr(equipment, field, value)
+
+    if payload.warranty_period_months is not None:
+        base_date = equipment.purchase_date or datetime.now(UTC)
+        if base_date.tzinfo is None:
+            base_date = base_date.replace(tzinfo=UTC)
+        equipment.warranty_expiry = base_date + timedelta(days=payload.warranty_period_months * 30)
 
     next_date, next_hours = compute_next_service(equipment)
     equipment.next_service_date = next_date

@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +24,9 @@ class EquipmentUnitCreate(BaseModel):
     order_id: UUID | None = None
     purchase_date: datetime | None = None
     warranty_expiry: datetime | None = None
-    warranty_months: int | None = None
+    warranty_months: int | None = Field(
+        None, ge=12, description="Warranty duration in months (ACL statutory minimum: 12)"
+    )
     notes: str | None = None
 
 
