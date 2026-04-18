@@ -159,11 +159,13 @@ class Cin7CoreLiveClient:
         self,
         page: int = 1,
         limit: int = 100,
+        modified_since: str | None = None,
     ) -> dict[str, Any]:
-        """Get purchase orders list with pagination."""
-        return await self._request(
-            "GET", "/purchaseList", params={"Page": page, "Limit": limit}
-        )
+        """Get purchase orders list with pagination and optional modified_since filter."""
+        params: dict[str, Any] = {"Page": page, "Limit": limit}
+        if modified_since:
+            params["ModifiedSince"] = modified_since
+        return await self._request("GET", "/purchaseList", params=params)
 
     async def get_product_availability(
         self,
