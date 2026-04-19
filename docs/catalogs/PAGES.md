@@ -532,10 +532,19 @@
 
 - **Route**: /ai-assistant
 - **File**: `apps/web/app/(dashboard)/ai-assistant/page.tsx`
-- **In Sidebar**: No (hidden)
+- **In Sidebar**: Yes (group "AI & Reports")
 - **Domain**: AI
-- **Status**: Hidden
-- **Last Verified**: 2026-03-17
+- **Status**: Active
+- **Last Verified**: 2026-04-19 (UNI-1795)
+
+### PAGE-055b: AI Query
+
+- **Route**: /ai-query
+- **File**: `apps/web/app/(dashboard)/ai-query/page.tsx`
+- **In Sidebar**: Yes (group "AI & Reports")
+- **Domain**: AI
+- **Status**: Active
+- **Last Verified**: 2026-04-19 (UNI-1795)
 
 ### PAGE-056: Agents
 
