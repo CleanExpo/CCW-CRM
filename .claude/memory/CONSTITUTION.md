@@ -9,17 +9,10 @@
 1. Modify demo_models.py — production schema risk
 2. Modify middleware.ts or demo_auth.py — security lockout risk
 3. Change existing API response shapes — breaks frontend
-4. Code without /plan + explicit approval
-5. Create folders not in plan
-6. Install packages not in plan
-7. Upgrade Next.js, React, FastAPI without approval
-8. Modify .claude/ files without permission
 
-## MANDATORY BEFORE EVERY CODE CHANGE
+## AUTONOMOUS MODE
 
-1. Run /plan → get approval → implement → /test → report
-2. Check .claude/memory/current-state.md (what's in progress?)
-3. Update .claude/memory/decisions-log.md after architectural choices
+Default operating mode is autonomous. Pull next Linear ticket, implement, run tests, commit, move on. No approval gates except the three locked files above. Update .claude/memory/decisions-log.md after architectural choices.
 
 ## TECH STACK (LOCKED)
 

@@ -49,14 +49,11 @@ If context snapshot exists (.claude/memory/context-snapshot.md has recent conten
 - Read it — context compaction occurred, memory was saved
 - Re-read CONSTITUTION.md + current-state.md immediately
 
-## STEP 4: Wait for Instructions
+## STEP 4: Pull Next Linear Ticket
 
-Do NOT start working until user gives you a task.
-Do NOT suggest things to do.
-Do NOT "help" by doing random cleanup.
+In autonomous mode, invoke `mcp__pi-ceo__linear_list_issues` to find the next open ticket and begin work immediately. No waiting for user instructions.
 
-Just say:
-"I've read the project instructions. What would you like to work on?"
+If running interactively (human explicitly present), await user direction instead.
 
 ---
 
@@ -97,9 +94,6 @@ Just say:
 - Modifying database schema (apps/backend/src/db/demo_models.py)
 - Changing auth code (middleware.ts, demo_auth.py)
 - Breaking API contracts (existing endpoints)
-- Installing packages without approval
-- Coding without approved plan
-- Assuming what user wants
 
 **Encouraged:**
 
@@ -111,6 +105,6 @@ Just say:
 
 ---
 
-**REMEMBER: When in doubt, ASK. Don't assume.**
+**AUTONOMOUS MODE: Proceed without asking. Only halt on locked files or empty Linear queue.**
 
 After reading this, proceed to `.claude/CLAUDE.md` for full system instructions.

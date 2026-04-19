@@ -12,7 +12,7 @@ Run the Ralph Wiggum technique for autonomous task completion.
 
 - `init` — Initialise the `plans/` directory with PRD template and progress file
 - `run` — Run the autonomous loop (default if no argument)
-- `max_iterations` — Maximum loop iterations (default: 50)
+- `max_iterations` — Maximum loop iterations (default: 1000)
 
 ## What This Does
 
@@ -152,14 +152,16 @@ Continue until:
 - Max iterations reached
 - Manual stop
 
+**Autonomous self-resume:** If iteration completes but open tickets remain in the Linear queue, invoke `ScheduleWakeup` with the same `/ralph run` prompt so the loop continues after any natural pause. The session stays alive until the queue is empty.
+
 ## Escalation
 
 If `attempt_count >= 3` on any task:
 
 - Stop working on that task
 - Record blocker in progress.txt
-- Move to next available task
-- Flag for human review
+- Move to next available task automatically
+- Log for later human review (do not halt the loop)
 
 ## Best Practices
 
@@ -175,6 +177,7 @@ If `attempt_count >= 3` on any task:
 The loop stops when:
 
 - All tasks have `passes: true`
-- Max iterations reached
+- Max iterations reached (default 1000)
 - Ctrl+C / manual interruption
-- Task blocked by failed dependencies (escalate to human)
+
+Blocked dependencies no longer halt the loop — blockers are logged and the next available task is picked.

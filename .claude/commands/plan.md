@@ -1,5 +1,7 @@
 # /plan Command
 
+> **Interactive-only command.** Autonomous runs skip `/plan` per CONSTITUTION.md. Use this command only when a human explicitly requests a plan.
+
 **Purpose:** Create detailed implementation plan before coding
 
 **Triggers:** `/plan`, `/plan [feature name]`
@@ -57,6 +59,7 @@ See `.claude/agents/planner.md` for full template.
 Plan must be **explicitly approved** by user before implementation begins.
 
 Approval phrases:
+
 - "approved"
 - "yes"
 - "go ahead"
@@ -68,6 +71,7 @@ Approval phrases:
 ## Plan Modifications
 
 If user wants changes:
+
 1. Update the plan
 2. Show updated version
 3. Wait for re-approval

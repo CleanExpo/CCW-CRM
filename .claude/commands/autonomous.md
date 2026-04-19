@@ -20,7 +20,7 @@ The `/autonomous` command initiates a fully autonomous development workflow wher
 5. Tests and validates
 6. Produces deployment-ready output
 
-**All automatically, with human approval gates.**
+**All automatically. No human approval gates. Halts only on locked-file violations or an empty Linear queue.**
 
 ---
 
@@ -63,14 +63,10 @@ The `/autonomous` command initiates a fully autonomous development workflow wher
 
 **`--auto`** or **`--approval-mode auto`**
 
-- Enable automatic approval mode
-- Phases proceed automatically without waiting for user
-- Still pauses for:
-  - Breaking changes
-  - New folder creation
-  - New package installation
-  - Validation failures
-- Default: manual (require approval each phase)
+- Legacy flag — autonomous mode is now the DEFAULT behaviour
+- Phases always proceed automatically without waiting for user
+- Never pauses for breaking changes, new folders, new packages, or validation failures
+- The only halt triggers are: locked-file violations and an empty Linear queue
 
 **`--resume <task-id>`**
 
@@ -103,7 +99,7 @@ The `/autonomous` command initiates a fully autonomous development workflow wher
 
 Discovery agent explores the codebase, identifies existing patterns, documents constraints, and recommends files to modify.
 
-**Approval:** Required (unless --auto mode)
+**Approval:** None — proceed automatically
 
 ---
 
@@ -114,11 +110,7 @@ Discovery agent explores the codebase, identifies existing patterns, documents c
 
 Architect designs the solution, specifies each component in detail, creates file-by-file implementation plan.
 
-**Approval:** Required for:
-
-- Breaking changes
-- New folders
-- New packages
+**Approval:** None — proceed automatically. Breaking changes, new folders, and new packages do not require approval.
 
 ---
 
@@ -129,7 +121,7 @@ Architect designs the solution, specifies each component in detail, creates file
 
 Builder implements code exactly as specified. Validator checks each file continuously. Progress reported every 5 minutes.
 
-**Approval:** Required if blockers encountered
+**Approval:** None — proceed automatically. Blockers are logged and the next ticket is pulled.
 
 ---
 
@@ -151,7 +143,9 @@ Final quality gate. All tests must pass (100%). No exceptions.
 
 Final verification, deployment readiness assessment, comprehensive documentation.
 
-**Approval:** None (informational)
+**Approval:** None — proceed automatically.
+
+**Loop back:** After Phase 5, invoke `mcp__pi-ceo__linear_list_issues`. If open tickets remain, restart Phase 1 on the next ticket. If the queue is empty, exit gracefully.
 
 ---
 
@@ -241,58 +235,16 @@ Final verification, deployment readiness assessment, comprehensive documentation
 
 ---
 
-## APPROVAL MODES
+## APPROVAL MODE
 
-### Manual Approval (Default)
+Autonomous mode is now the single mode. Phases proceed automatically from Discovery through Finalize, then loop back to the next Linear ticket. The `--auto` flag is accepted for legacy compatibility but has no effect (behaviour is always auto).
 
-**Behavior:**
+**Halt triggers (the only things that stop the loop):**
 
-- Pauses after each phase for user review
-- User must say "proceed" / "continue" / "approved" to continue
-- User can inspect handoffs and validation reports
-- User can cancel at any time
+- Locked file would be modified (demo_models.py, middleware.ts, demo_auth.py) → log and skip ticket
+- Linear queue is empty → exit gracefully
 
-**When to use:**
-
-- First time using autonomous mode
-- Complex or risky changes
-- Learning how the system works
-- Want full control
-
-**Commands:**
-
-- "proceed" - Continue to next phase
-- "cancel" - Stop execution
-- "pause" - Pause for later resumption
-- "show handoff" - View phase output
-
----
-
-### Auto Approval
-
-**Behavior:**
-
-- Proceeds automatically through phases
-- Only pauses for:
-  - Breaking changes detected
-  - New folders needed
-  - New packages needed
-  - Validation failures
-  - Blockers encountered
-- User can still cancel with "stop"
-
-**When to use:**
-
-- Simple, safe changes
-- Trusted system
-- Non-breaking features
-- Want speed
-
-**Enable with:**
-
-```
-/autonomous "task" --auto
-```
+Human interruption via "stop" / "cancel" still works at any time.
 
 ---
 
@@ -565,12 +517,9 @@ Upon completion, you receive:
 
 What autonomous mode **CANNOT** do:
 
-❌ Modify database schema (forbidden per CLAUDE.md)
-❌ Modify auth code (forbidden per CLAUDE.md)
-❌ Make breaking API changes (requires approval)
-❌ Install unauthorized packages (requires approval)
-❌ Create unauthorized folders (requires approval)
-❌ Skip testing (mandatory 100% pass rate)
+❌ Modify database schema (demo_models.py — hard locked)
+❌ Modify auth code (middleware.ts, demo_auth.py — hard locked)
+❌ Skip testing (mandatory 100% pass rate — but failures log and move on, not halt)
 ❌ Deploy to production (your responsibility)
 
 What autonomous mode **CAN** do:

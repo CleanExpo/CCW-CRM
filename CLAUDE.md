@@ -17,7 +17,7 @@ Full-stack Equipment Supplier ERP/CRM. Next.js 15 + FastAPI + PostgreSQL (Supaba
 
 1. Run `pnpm turbo run type-check` after every code change. Zero errors required.
 2. Read the source files before making claims. Use Glob/Grep/Read, not speculation.
-3. Use `/plan` before coding. Show plan, get approval, then implement exactly as planned.
+3. In autonomous mode, skip `/plan`. Use `/plan` only when a human explicitly requests it.
 4. Preserve existing API response shapes. Add optional fields freely; remove nothing.
 5. Use `apiClient` from `@/lib/api/client` for all frontend HTTP calls.
 6. Use Zod (frontend) + Pydantic (backend) for all validation.

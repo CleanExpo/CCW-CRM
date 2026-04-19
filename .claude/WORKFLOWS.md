@@ -26,16 +26,16 @@ Format: `<type>(<scope>): <description>`
 Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `style`
 Scopes: `web`, `backend`, `api`, `db`, `video`, `git`, `skills`, `cin7`, `billing`
 
-## Task Execution Protocol
+## Task Execution Protocol (Autonomous)
 
 ```
 1. Read PROGRESS.md — understand current state
 2. Read relevant source files — understand what exists
-3. Plan: identify files to change, steps, risks
-4. Get approval if non-trivial (use EnterPlanMode)
-5. Implement exactly as planned
-6. Run type-check + tests
-7. Report changes (update PROGRESS.md)
+3. Identify files to change, steps, risks (internal — no EnterPlanMode)
+4. Implement
+5. Run type-check + tests
+6. Report changes (update PROGRESS.md)
+7. Pull next Linear ticket
 ```
 
 ## PR Checklist
