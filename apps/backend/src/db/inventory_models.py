@@ -318,6 +318,14 @@ class PurchaseOrder(Base):
     shipping_cost: Decimal | None = Column(Numeric(10, 2), nullable=True)
     total: Decimal = Column(Numeric(10, 2), default=0, nullable=False)
 
+    # Landed-cost components (UNI-1832) — captured at goods-received-note time
+    # and apportioned across line items. freight_cost is kept separate from
+    # the legacy `shipping_cost` so the CFO can distinguish inbound freight
+    # from outbound shipping on the same PO.
+    freight_cost: Decimal = Column(Numeric(10, 2), default=0, nullable=False)
+    duty_cost: Decimal = Column(Numeric(10, 2), default=0, nullable=False)
+    handling_cost: Decimal = Column(Numeric(10, 2), default=0, nullable=False)
+
     notes: str | None = Column(Text, nullable=True)
     xero_purchase_order_id: str | None = Column(String(255), nullable=True)
     xero_synced_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
@@ -361,6 +369,12 @@ class PurchaseOrderItem(Base):
     quantity_received: int = Column(Integer, default=0, nullable=False)
     unit_cost: Decimal = Column(Numeric(10, 2), nullable=False)
     subtotal: Decimal = Column(Numeric(10, 2), nullable=False)  # quantity × unit_cost
+
+    # Apportioned landed-cost per unit (UNI-1832). Populated by
+    # POST /api/purchase-orders/{po_id}/apply-landed-cost. The true landed
+    # unit cost is (unit_cost + landed_cost_per_unit). Null until a GRN
+    # apportionment runs.
+    landed_cost_per_unit: Decimal | None = Column(Numeric(12, 4), nullable=True)
 
     created_at: datetime = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

@@ -9,7 +9,7 @@ Provides full CRUD operations for purchase orders including:
 """
 
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Decimal
 from typing import Annotated
 from uuid import UUID
 
@@ -52,6 +52,53 @@ async def _resolve_po_status_for_total(
         return "draft"
 
     return "approved" if total < threshold.amount_aud else "pending_approval"
+
+
+def apportion_landed_cost(
+    line_subtotals: list[Decimal], total_landed: Decimal
+) -> list[Decimal]:
+    """Apportion a landed-cost total across line items by subtotal weight (UNI-1832).
+
+    Returns one Decimal per input line — the landed-cost share for that
+    line. The sum of the returned list equals ``total_landed`` within
+    floating-point precision (we don't lose or mint cents). Zero-subtotal
+    lines get zero. If every line is zero-subtotal the landed total is
+    distributed equally.
+
+    Example::
+
+        apportion_landed_cost([Decimal("400"), Decimal("600")], Decimal("100"))
+        # → [Decimal("40.00"), Decimal("60.00")]
+    """
+    if not line_subtotals:
+        return []
+    if total_landed <= 0:
+        return [Decimal("0") for _ in line_subtotals]
+
+    total_subtotal = sum(line_subtotals)
+    if total_subtotal == 0:
+        # Even split fallback
+        even = total_landed / len(line_subtotals)
+        shares = [even for _ in line_subtotals]
+    else:
+        shares = [
+            (total_landed * subtotal / total_subtotal) for subtotal in line_subtotals
+        ]
+
+    # Quantise to 2dp using banker's rounding — matches AU accounting norms.
+    shares = [s.quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN) for s in shares]
+
+    # Reconcile rounding drift: the last non-zero line absorbs any remainder
+    # so the sum matches the input total exactly.
+    drift = total_landed.quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN) - sum(shares)
+    if drift != 0:
+        for idx in range(len(shares) - 1, -1, -1):
+            if line_subtotals[idx] > 0 or total_subtotal == 0:
+                shares[idx] += drift
+                break
+
+    return shares
+
 
 router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"], dependencies=[Depends(get_current_user)])
 
@@ -424,6 +471,107 @@ async def receive_goods(
     await db.refresh(item)
 
     return PurchaseOrderItemResponse.model_validate(item)
+
+
+class ApplyLandedCostRequest(BaseModel):
+    """Request to record landed-cost components against a PO and apportion
+    the total across its line items (UNI-1832)."""
+
+    freight_cost: Decimal = Field(Decimal("0"), ge=0, description="Inbound freight")
+    duty_cost: Decimal = Field(Decimal("0"), ge=0, description="Customs duty")
+    handling_cost: Decimal = Field(Decimal("0"), ge=0, description="Warehouse handling / customs broker fees")
+
+
+class LandedCostLineResponse(BaseModel):
+    """Per-line result of a landed-cost apportionment run."""
+
+    item_id: UUID
+    product_id: UUID
+    quantity: int
+    unit_cost: Decimal
+    landed_share: Decimal
+    landed_cost_per_unit: Decimal
+    total_unit_cost: Decimal
+
+
+class ApplyLandedCostResponse(BaseModel):
+    """Response after applying landed costs — totals + per-line breakdown."""
+
+    po_id: UUID
+    freight_cost: Decimal
+    duty_cost: Decimal
+    handling_cost: Decimal
+    total_landed: Decimal
+    lines: list[LandedCostLineResponse]
+
+
+@router.post("/{po_id}/apply-landed-cost", response_model=ApplyLandedCostResponse)
+async def apply_landed_cost(
+    po_id: UUID,
+    payload: ApplyLandedCostRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> ApplyLandedCostResponse:
+    """Record landed-cost components on a PO and apportion across its items (UNI-1832).
+
+    Called from the goods-received-note (GRN) wizard once the freight,
+    duty and handling totals are known. Writes ``freight_cost``,
+    ``duty_cost``, ``handling_cost`` on the PO and
+    ``landed_cost_per_unit`` on each line item. The line-level
+    ``unit_cost`` stays as the original PO price so finance can see
+    purchase-price vs landed-cost separately.
+    """
+    result = await db.execute(
+        select(PurchaseOrder)
+        .options(selectinload(PurchaseOrder.items))
+        .where(PurchaseOrder.id == po_id)
+    )
+    po = result.scalar_one_or_none()
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+
+    total_landed = (
+        Decimal(payload.freight_cost) + Decimal(payload.duty_cost) + Decimal(payload.handling_cost)
+    )
+
+    line_subtotals = [Decimal(item.subtotal) for item in po.items]
+    shares = apportion_landed_cost(line_subtotals, total_landed)
+
+    lines: list[LandedCostLineResponse] = []
+    for item, share in zip(po.items, shares, strict=True):
+        per_unit = (
+            (share / Decimal(item.quantity)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_EVEN)
+            if item.quantity > 0
+            else Decimal("0")
+        )
+        item.landed_cost_per_unit = per_unit
+        lines.append(
+            LandedCostLineResponse(
+                item_id=item.id,
+                product_id=item.product_id,
+                quantity=item.quantity,
+                unit_cost=Decimal(item.unit_cost),
+                landed_share=share,
+                landed_cost_per_unit=per_unit,
+                total_unit_cost=(Decimal(item.unit_cost) + per_unit).quantize(
+                    Decimal("0.0001"), rounding=ROUND_HALF_EVEN
+                ),
+            )
+        )
+
+    po.freight_cost = Decimal(payload.freight_cost)
+    po.duty_cost = Decimal(payload.duty_cost)
+    po.handling_cost = Decimal(payload.handling_cost)
+
+    await db.commit()
+
+    return ApplyLandedCostResponse(
+        po_id=po.id,
+        freight_cost=po.freight_cost,
+        duty_cost=po.duty_cost,
+        handling_cost=po.handling_cost,
+        total_landed=total_landed,
+        lines=lines,
+    )
 
 
 @router.delete("/{po_id}", status_code=204, response_model=None)
