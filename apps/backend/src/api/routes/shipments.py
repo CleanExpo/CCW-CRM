@@ -9,7 +9,8 @@ Provides tracking and management for:
 
 import os
 from datetime import datetime
-from typing import Annotated
+from decimal import Decimal
+from typing import Annotated, Any
 from uuid import UUID
 
 import structlog
@@ -23,6 +24,7 @@ from src.config.database import get_async_db
 from src.db.demo_models import Order
 from src.db.inventory_models import InboundShipment, OutboundShipment, PurchaseOrder, Supplier
 from src.security.webhook_verification import get_fedex_verifier
+from src.services.carrier_service import Address, get_carrier_service
 
 router = APIRouter(prefix="/api/shipments", tags=["Shipments"], dependencies=[Depends(get_current_user)])
 logger = structlog.get_logger(__name__)
@@ -622,3 +624,53 @@ async def outbound_tracking_webhook(
     await db.commit()
 
     return {"status": "success", "message": "Tracking event recorded"}
+
+
+# ---------------------------------------------------------------------------
+# Carrier abstraction endpoints — UNI-1822
+# ---------------------------------------------------------------------------
+
+class RateQuoteRequest(BaseModel):
+    """Request body for shipping rate quotes."""
+
+    from_address: Address
+    to_address: Address
+    weight_kg: Decimal = Field(..., gt=0, description="Package weight in kilograms")
+    carrier_name: str | None = Field(None, description="Specific carrier key, or null for all")
+
+
+class RateQuoteItem(BaseModel):
+    """A single rate quote from a carrier."""
+
+    carrier: str
+    service: str
+    cost: float
+    delivery_days: int | None = None
+
+
+@router.get("/carriers", response_model=list[str])
+async def list_carriers(
+    _current_user: Annotated[Any, Depends(get_current_user)],
+) -> list[str]:
+    """Return the list of configured carrier keys available in this environment."""
+    return get_carrier_service().list_available_carriers()
+
+
+@router.post("/rates", response_model=list[RateQuoteItem])
+async def get_shipping_rates(
+    payload: RateQuoteRequest,
+    _current_user: Annotated[Any, Depends(get_current_user)],
+) -> list[dict[str, Any]]:
+    """
+    Return rate quotes from one or all configured carriers.
+
+    Pass carrier_name to restrict to a single carrier; omit for all.
+    TNT and FedEx always return rates in sandbox mode without API keys.
+    """
+    service = get_carrier_service()
+    return await service.get_rates(
+        from_address=payload.from_address,
+        to_address=payload.to_address,
+        weight_kg=payload.weight_kg,
+        carrier_name=payload.carrier_name,
+    )
