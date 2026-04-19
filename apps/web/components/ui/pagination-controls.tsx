@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -30,6 +30,29 @@ export function PaginationControls({
   onPageSizeChange,
   pageSizeOptions = [25, 50, 100],
 }: PaginationControlsProps) {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      switch (e.key) {
+        case 'ArrowLeft':
+          if (currentPage > 1) onPageChange(currentPage - 1);
+          break;
+        case 'ArrowRight':
+          if (currentPage < totalPages) onPageChange(currentPage + 1);
+          break;
+        case 'Home':
+          onPageChange(1);
+          break;
+        case 'End':
+          onPageChange(totalPages);
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    },
+    [currentPage, totalPages, onPageChange]
+  );
+
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
@@ -76,7 +99,12 @@ export function PaginationControls({
   }, [currentPage, totalPages]);
 
   return (
-    <div className="flex flex-col items-center justify-between gap-4 px-2 py-4 sm:flex-row">
+    <div
+      className="flex flex-col items-center justify-between gap-4 px-2 py-4 sm:flex-row"
+      onKeyDown={handleKeyDown}
+      role="navigation"
+      aria-label="Pagination"
+    >
       {/* Items count */}
       <div className="text-muted-foreground text-sm">
         Showing {startItem}-{endItem} of {totalItems} items

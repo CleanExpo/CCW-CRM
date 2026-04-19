@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CustomerForm } from './components/CustomerForm';
 import { DeleteCustomerDialog } from './components/DeleteCustomerDialog';
 import { BulkDeleteCustomersDialog } from './components/BulkDeleteCustomersDialog';
-import { Pencil, Trash2, Plus, Eye, Download } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, Download, Users, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { PaginationControls } from '@/components/ui/pagination-controls';
@@ -22,6 +22,7 @@ import { exportCustomersToCSV } from '@/lib/utils/csv-export';
 // PHASE 4: Last updated timestamps
 import { formatDistanceToNow } from 'date-fns';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface Customer {
   id: string;
@@ -223,20 +224,16 @@ export default function CustomersPage() {
                 ))}
               </div>
             ) : !customers || customers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-muted-foreground text-lg font-medium">No customers found</p>
-                <p className="text-muted-foreground mt-2 text-sm">
-                  {search
+              <EmptyState
+                icon={search ? Search : Users}
+                title="No customers found"
+                description={
+                  search
                     ? 'Try adjusting your search criteria.'
-                    : 'Register your first cleaning business or contractor to get started.'}
-                </p>
-                {!search && (
-                  <Button onClick={handleAddCustomer} className="mt-4">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Customer
-                  </Button>
-                )}
-              </div>
+                    : 'Register your first cleaning business or contractor to get started.'
+                }
+                action={!search ? { label: 'Add Customer', onClick: handleAddCustomer } : undefined}
+              />
             ) : (
               <ResponsiveTable
                 data={customers}
@@ -266,7 +263,7 @@ export default function CustomersPage() {
                   {
                     key: 'customer_number',
                     label: 'Customer #',
-                    className: 'font-mono text-sm',
+                    className: 'font-mono text-sm tabular-nums',
                     render: (customer) => customer.customer_number,
                   },
                   {
@@ -289,7 +286,7 @@ export default function CustomersPage() {
                   {
                     key: 'phone',
                     label: 'Phone',
-                    className: 'text-sm',
+                    className: 'text-sm tabular-nums',
                     hideOnMobile: true,
                     render: (customer) => customer.phone || 'N/A',
                   },
