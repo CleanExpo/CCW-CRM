@@ -341,14 +341,10 @@ async def trigger_shadow_poll(
             "gaps_detected": len(demo_gaps),
         }
 
-    # ---- Live mode (stub — real implementation would call Cin7 APIs) ----
-    logger.warning("cin7_shadow_poll_live_mode_stub", mode=settings.mode)
-    return {
-        "status": "not_implemented",
-        "mode": "live",
-        "polled_at": now.isoformat(),
-        "message": "Live shadow poll is not yet implemented. Switch CIN7_MODE=demo for testing.",
-    }
+    # ---- Live mode: full Cin7 ghost sync ----
+    logger.info("cin7_shadow_poll_live_started")
+    from src.services.shadow_poller import run_shadow_poll
+    return await run_shadow_poll(db)
 
 
 # ---------------------------------------------------------------------------

@@ -756,3 +756,28 @@ async def retry_dead_letter_webhook(
         "message": f"Webhook retry {retry_result['status']}",
         "result": retry_result,
     }
+
+
+@router.post("/cin7-shadow-poll")
+async def cron_cin7_shadow_poll(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    authorization: str | None = Header(None),
+) -> dict:
+    """Nightly Cin7 ghost sync — called by Vercel Cron at 02:00 AEST.
+
+    Pulls real data from Cin7 Core API, detects gaps vs ERP state,
+    persists Cin7ShadowSync + Cin7SyncGap rows, and feeds AI learning.
+    """
+    if not verify_cron_secret(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    from src.config.cin7_settings import get_cin7_settings
+    settings = get_cin7_settings()
+
+    if settings.mode == "demo":
+        # In demo mode: trigger demo poll via existing endpoint logic
+        from src.api.routes.integrations.cin7_shadow_sync import trigger_shadow_poll
+        return await trigger_shadow_poll(db, settings)
+
+    from src.services.shadow_poller import run_shadow_poll
+    return await run_shadow_poll(db)

@@ -54,11 +54,19 @@ export interface Cin7ShadowPollResult {
   status: string;
   mode: string;
   polled_at: string;
+  // demo mode fields
   records_checked?: number;
   records_synced?: number;
   records_gap?: number;
   records_conflict?: number;
   gaps_detected?: number;
+  // live mode fields
+  total_checked?: number;
+  total_synced?: number;
+  total_gap?: number;
+  total_conflict?: number;
+  elapsed_ms?: number;
+  errors?: string[];
   message?: string;
 }
 

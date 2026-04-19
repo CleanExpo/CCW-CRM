@@ -178,6 +178,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Don't fail startup, but log the error
         pass
 
+    # Initialize Shadow Sync Scheduler (nightly Cin7 ghost sync)
+    _shadow_scheduler = None
+    try:
+        from src.config.database import AsyncSessionLocal
+        from src.scheduler.shadow_sync_scheduler import ShadowSyncScheduler
+
+        _shadow_scheduler = ShadowSyncScheduler(AsyncSessionLocal)
+        _shadow_scheduler.start()
+        app.state.shadow_scheduler = _shadow_scheduler
+    except Exception as sched_err:
+        logger.warning("shadow_sync_scheduler_init_failed", error=str(sched_err))
+
     # Initialize Redis cache connection
     if settings.cache_enabled:
         from src.cache.redis_client import get_cache
@@ -196,8 +208,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
-    # Shutdown: Stop health monitor
+    # Shutdown: Stop shadow sync scheduler
     logger.info("Shutting down application")
+    try:
+        if hasattr(app.state, "shadow_scheduler") and app.state.shadow_scheduler:
+            app.state.shadow_scheduler.stop()
+            logger.info("Shadow sync scheduler stopped")
+    except Exception as e:
+        logger.error("Error stopping shadow scheduler", error=str(e))
+
+    # Shutdown: Stop health monitor
     try:
         from src.ai.monitoring import get_health_monitor
 

@@ -38,6 +38,7 @@ import {
   Settings2,
   Shield,
   Ship,
+  Ghost,
   ShoppingCart,
   Sparkles,
   Tag,
@@ -98,6 +99,7 @@ const navigation = [
   { name: 'Alerts', href: '/alerts', icon: Bell },
   { name: 'Workflows', href: '/workflows', icon: GitMerge },
   { name: 'Approvals', href: '/approvals', icon: CheckCircle },
+  { name: 'Ghost Sync', href: '/shadow', icon: Ghost },
   { name: 'Monitoring', href: '/monitoring', icon: Activity },
   { name: 'Billing', href: '/settings/billing', icon: CreditCard },
   { name: 'Settings', href: '/settings/integrations', icon: Settings },
@@ -108,7 +110,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="bg-muted/40 w-64 border-r flex flex-col">
+    <aside className="bg-muted/40 flex w-64 flex-col border-r">
       <div className="flex h-14 items-center justify-between border-b px-4">
         <Link href="/" className="group flex items-center gap-2 font-semibold">
           <motion.span
@@ -125,7 +127,7 @@ export function Sidebar() {
         </Link>
         <NotificationBell />
       </div>
-      <nav className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
         {navigation.map((item, index) => {
           const isActive = pathname === item.href;
           return (
@@ -180,16 +182,16 @@ export function Sidebar() {
       </nav>
 
       {/* Command Palette Hint */}
-      <div className="border-t p-4 mt-auto">
+      <div className="mt-auto border-t p-4">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-2 rounded-lg hover:bg-muted group"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted group flex cursor-pointer items-center gap-2 rounded-lg p-2 text-xs transition-colors"
         >
           <Search className="h-3.5 w-3.5" />
           <span className="flex-1">Quick search</span>
-          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 group-hover:bg-muted-foreground/10">
+          <kbd className="bg-muted group-hover:bg-muted-foreground/10 pointer-events-none inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
             <span className="text-xs">⌘K</span>
           </kbd>
         </motion.div>
