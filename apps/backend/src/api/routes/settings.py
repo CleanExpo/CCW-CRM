@@ -14,8 +14,10 @@ from src.api.middleware.tenant_isolation import CurrentOrganization
 from src.config.database import get_async_db
 from src.db.approvals_models import ApprovalThreshold
 from src.db.demo_models import Organization
+from src.db.security_models import SecuritySettings
 
 DEFAULT_THRESHOLD_SCOPE = "default"
+DEFAULT_SESSION_TIMEOUT_MINUTES = 60
 
 logger = structlog.get_logger(__name__)
 
@@ -118,6 +120,62 @@ async def upsert_approval_threshold(
     )
 
     return ApprovalThresholdResponse(scope=row.scope, amount_aud=row.amount_aud)
+
+
+class SecuritySettingsResponse(BaseModel):
+    """Current security policy for the organisation."""
+
+    session_timeout_minutes: int = Field(..., ge=1, le=1440)
+
+
+class UpdateSecuritySettingsRequest(BaseModel):
+    """Request to update the security policy."""
+
+    session_timeout_minutes: int = Field(
+        ..., ge=1, le=1440, description="Idle timeout in minutes (1 min to 24 h)"
+    )
+
+
+@router.get("/security")
+async def get_security_settings(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> SecuritySettingsResponse:
+    """Return the current security settings (singleton row, defaults if absent)."""
+    result = await db.execute(select(SecuritySettings))
+    row = result.scalars().first()
+    return SecuritySettingsResponse(
+        session_timeout_minutes=row.session_timeout_minutes
+        if row is not None
+        else DEFAULT_SESSION_TIMEOUT_MINUTES,
+    )
+
+
+@router.put("/security")
+async def update_security_settings(
+    data: UpdateSecuritySettingsRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> SecuritySettingsResponse:
+    """Upsert the singleton security settings row."""
+    result = await db.execute(select(SecuritySettings))
+    row = result.scalars().first()
+
+    if row is None:
+        row = SecuritySettings(session_timeout_minutes=data.session_timeout_minutes)
+        db.add(row)
+    else:
+        row.session_timeout_minutes = data.session_timeout_minutes
+
+    await db.commit()
+    await db.refresh(row)
+
+    logger.info(
+        "Security settings updated",
+        session_timeout_minutes=row.session_timeout_minutes,
+    )
+
+    return SecuritySettingsResponse(
+        session_timeout_minutes=row.session_timeout_minutes,
+    )
 
 
 @router.put("/company")

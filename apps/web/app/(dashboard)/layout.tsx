@@ -8,6 +8,7 @@ import { NotificationBell } from '@/components/layout/NotificationBell';
 import { StaffCopilotWidget } from '@/components/ai/StaffCopilotWidget';
 import { ShadowModeBanner } from '@/components/layout/ShadowModeBanner';
 import { DemoVideoBanner } from '@/components/dashboard/DemoVideoBanner';
+import { SessionTimeoutWatcher } from './SessionTimeoutWatcher';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <ChatWidget />
         <CommandPalette />
         <StaffCopilotWidget moduleContext="general" />
+        <SessionTimeoutWatcher />
       </div>
     </WebSocketProvider>
   );
