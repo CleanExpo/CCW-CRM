@@ -144,6 +144,21 @@ Phill has granted blanket standing permission for every action in this repo that
 
 All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_FILES` + `GITHUB_CREATE_A_PULL_REQUEST` under the Path B standing authority granted 2026-04-18. Each PR body contains a Verification Checklist (Where / How / What to see / What NOT to see) per the `.claude/rules/verification-gate.md` rule.
 
+### Path B PRs — session 2026-04-19 (Pi-CEO autonomous)
+
+| Ticket   | PR                                                    | Branch                                              | Notes              |
+| -------- | ----------------------------------------------------- | --------------------------------------------------- | ------------------ |
+| UNI-1823 | https://github.com/CleanExpo/CCW-CRM/pull/138         | `feat/UNI-1823-serial-lot-tracking-phase1`          | Phase 1 schema + migration + read API + empty-state UI tab |
+
+- [x] feat(inventory): serial number and lot/batch tracking schema — Phase 1 (UNI-1823) (PR #138)
+  - `InventorySerial` model: `inventory_serials` table — serial_number UNIQUE, status CHECK, FK to products/grn_line/order_items
+  - `InventoryLot` model: `inventory_lots` table — lot_number per product UNIQUE, qty_received/remaining CHECK, FK to products/grn_line
+  - Pydantic schemas: `InventorySerialRead`, `InventoryLotRead`
+  - Migration `20260419000001_serial_lot_tracking.sql`: both tables, RLS (service_role), 8 covering indexes
+  - Read endpoints: `GET /api/inventory/products/{id}/serials?status=&location=` and `/lots?location=`
+  - 6 pytest tests (`-k serial_lot`): 200 status, list response, filter params
+  - Minimal `/inventory/[sku]/page.tsx`: Serials + Lots tabs with empty state
+
 ### Path B PRs — continued session (2026-04-18 context 2)
 
 | Ticket   | PR                                                    | Branch                                   | Notes                                        |

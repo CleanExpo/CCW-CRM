@@ -956,3 +956,152 @@ class RMAStatusUpdate(BaseModel):
     """Request body for advancing RMA status."""
 
     status: str
+
+
+# ----------------------------------------------------------------------------
+# Serial number and lot/batch tracking — Phase 1 (UNI-1823)
+# ----------------------------------------------------------------------------
+
+
+class InventorySerial(Base):
+    """Serial number tracking for individual serialised units.
+
+    Enables unit-level traceability from receipt (GRN) through sale
+    (order_item) and into service history. Required for warranty lookups
+    and WHS traceability recalls.
+    """
+
+    __tablename__ = "inventory_serials"
+
+    __table_args__ = (
+        UniqueConstraint("serial_number", name="uq_inventory_serial_number"),
+    )
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    serial_number: str = Column(String(200), nullable=False, index=True)
+    # available | reserved | sold | servicing | retired
+    status: str = Column(String(50), default="available", nullable=False, index=True)
+    location: str | None = Column(String(50), nullable=True, index=True)
+    grn_line_id: UUID | None = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("grn_line.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    order_item_id: UUID | None = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("order_items.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    notes: str | None = Column(Text, nullable=True)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<InventorySerial(product_id={self.product_id}, sn={self.serial_number}, status={self.status})>"
+
+
+class InventoryLot(Base):
+    """Lot/batch tracking for bulk consumables and chemicals.
+
+    Enables batch-level traceability for WHS recall capability. Tracks
+    received quantity vs remaining quantity for depletion accounting.
+    """
+
+    __tablename__ = "inventory_lots"
+
+    __table_args__ = (
+        UniqueConstraint("product_id", "lot_number", name="uq_inventory_lot_product_lot"),
+        CheckConstraint("quantity_received >= 0", name="ck_lot_received_non_negative"),
+        CheckConstraint("quantity_remaining >= 0", name="ck_lot_remaining_non_negative"),
+    )
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    lot_number: str = Column(String(200), nullable=False, index=True)
+    batch_number: str | None = Column(String(200), nullable=True)  # vendor batch alias
+    quantity_received: int = Column(Integer, nullable=False, default=0)
+    quantity_remaining: int = Column(Integer, nullable=False, default=0)
+    expiry_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    received_date: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    location: str | None = Column(String(50), nullable=True, index=True)
+    grn_line_id: UUID | None = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("grn_line.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    notes: str | None = Column(Text, nullable=True)
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<InventoryLot(product_id={self.product_id}, lot={self.lot_number}, remaining={self.quantity_remaining})>"
+
+
+# ---------------------------------------------------------------------------
+# Pydantic read schemas for serial/lot API (UNI-1823)
+# ---------------------------------------------------------------------------
+
+
+class InventorySerialRead(BaseModel):
+    """Response schema for an inventory serial record."""
+
+    id: UUID
+    product_id: UUID
+    serial_number: str
+    status: str
+    location: str | None
+    grn_line_id: UUID | None
+    order_item_id: UUID | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class InventoryLotRead(BaseModel):
+    """Response schema for an inventory lot/batch record."""
+
+    id: UUID
+    product_id: UUID
+    lot_number: str
+    batch_number: str | None
+    quantity_received: int
+    quantity_remaining: int
+    expiry_date: datetime | None
+    received_date: datetime | None
+    location: str | None
+    grn_line_id: UUID | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
