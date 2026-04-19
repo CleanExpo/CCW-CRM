@@ -121,6 +121,43 @@ export interface Paginated<T> {
   total_pages: number;
 }
 
+// Job Card types (UNI-1825 Phase 1)
+export type JobCardStatus = 'open' | 'in_progress' | 'completed' | 'cancelled';
+
+export interface JobCard {
+  id: string;
+  job_number: string;
+  booking_id: string | null;
+  service_request_id: string | null;
+  equipment_id: string | null;
+  title: string;
+  description: string | null;
+  status: JobCardStatus;
+  assigned_technician: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimeLog {
+  id: string;
+  job_card_id: string;
+  technician_name: string;
+  started_at: string;
+  stopped_at: string | null;
+  duration_minutes: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedJobCards {
+  items: JobCard[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
 export interface DashboardData {
   location: string;
   today: { bookings: WorkshopBooking[]; count: number };
@@ -269,4 +306,34 @@ export const workshopApi = {
     const qs = location ? `?location=${location}` : '';
     return apiClient.get<DashboardData>(`/api/workshop/dashboard${qs}`);
   },
+
+  // Job Cards (UNI-1825 Phase 1)
+  listJobs: (params?: {
+    page?: number;
+    page_size?: number;
+    status?: string;
+    equipment_id?: string;
+    booking_id?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.page_size) query.set('page_size', String(params.page_size));
+    if (params?.status) query.set('status', params.status);
+    if (params?.equipment_id) query.set('equipment_id', params.equipment_id);
+    if (params?.booking_id) query.set('booking_id', params.booking_id);
+    const qs = query.toString();
+    return apiClient.get<PaginatedJobCards>(`/api/workshop/jobs${qs ? '?' + qs : ''}`);
+  },
+  createJob: (data: { title: string; description?: string; assigned_technician?: string; equipment_id?: string; booking_id?: string }) =>
+    apiClient.post<JobCard>('/api/workshop/jobs', data),
+  getJob: (id: string) =>
+    apiClient.get<{ job_card: JobCard; time_logs: TimeLog[] }>(`/api/workshop/jobs/${id}`),
+  updateJob: (id: string, data: { title?: string; description?: string; status?: JobCardStatus; assigned_technician?: string }) =>
+    apiClient.patch<JobCard>(`/api/workshop/jobs/${id}`, data),
+  listTimeLogs: (jobId: string) =>
+    apiClient.get<TimeLog[]>(`/api/workshop/jobs/${jobId}/time-logs`),
+  createTimeLog: (jobId: string, data: { technician_name: string; started_at: string; stopped_at?: string; notes?: string }) =>
+    apiClient.post<TimeLog>(`/api/workshop/jobs/${jobId}/time-logs`, data),
+  stopTimeLog: (jobId: string, logId: string, stopped_at: string) =>
+    apiClient.patch<TimeLog>(`/api/workshop/jobs/${jobId}/time-logs/${logId}`, { stopped_at }),
 };
