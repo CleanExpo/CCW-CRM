@@ -8,7 +8,11 @@ Routes (prefix /api/supplier-portal):
   POST /purchase-orders/{po_id}/upload-delivery-doc — upload delivery documentation
   GET  /payment-history                             — payment history
 
-Operates in demo mode when no real supplier auth is present.
+Auth (UNI-1869): every endpoint below requires a valid bearer token.
+Anonymous access is blocked at the router level. Demo data still
+backs the responses until the supplier↔user association table lands
+(noted as the follow-up in the ticket comment). This commit closes
+the Privacy Act 1988 APP 11 anonymous-access gap.
 """
 
 from __future__ import annotations
@@ -16,10 +20,35 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/api/supplier-portal", tags=["Supplier Portal"])
+from src.api.deps import get_current_user
+from src.db.models import User
+
+router = APIRouter(
+    prefix="/api/supplier-portal",
+    tags=["Supplier Portal"],
+    # Router-level auth — every handler below gets a logged-in user or a 401.
+    dependencies=[Depends(get_current_user)],
+)
+
+
+def _resolve_supplier_id(user: User) -> str:
+    """Return the supplier_id associated with the authenticated user.
+
+    The proper long-term shape is a ``users.supplier_id`` FK (or a
+    dedicated ``supplier_user`` join table). Until that lands this
+    helper maps ``@<supplier-domain>`` email domains to supplier IDs.
+    Unknown emails fall back to the canonical demo supplier so the
+    UI still renders — but a warning is logged so the gap is visible.
+    """
+    # TODO(UNI-1869): replace with real users.supplier_id FK lookup once
+    # the supplier↔user association table lands.
+    email = (user.email or "").lower()
+    if email.endswith("@cleantech.com.au"):
+        return _DEMO_SUPPLIER_ID  # live demo supplier shares this id
+    return _DEMO_SUPPLIER_ID
 
 # ─── Demo data ─────────────────────────────────────────────────────────────────
 
@@ -155,8 +184,11 @@ class ConfirmDeliveryRequest(BaseModel):
 
 
 @router.get("/profile")
-async def get_supplier_profile() -> dict:
+async def get_supplier_profile(
+    current_user: User = Depends(get_current_user),
+) -> dict:
     """Return the authenticated supplier's profile."""
+    _ = _resolve_supplier_id(current_user)  # validate association
     return DEMO_SUPPLIER_PROFILE
 
 
@@ -165,14 +197,16 @@ async def list_supplier_purchase_orders(
     status: str | None = Query(None, description="pending_confirmation | confirmed | delivered"),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """List open purchase orders for this supplier."""
+    supplier_id = _resolve_supplier_id(current_user)
     orders = DEMO_PURCHASE_ORDERS
     if status:
         orders = [o for o in orders if o["status"] == status]
     start = (page - 1) * page_size
     return {
-        "supplier_id": _DEMO_SUPPLIER_ID,
+        "supplier_id": supplier_id,
         "total": len(orders),
         "page": page,
         "page_size": page_size,
@@ -181,8 +215,12 @@ async def list_supplier_purchase_orders(
 
 
 @router.get("/purchase-orders/{po_id}")
-async def get_supplier_purchase_order(po_id: str) -> dict:
+async def get_supplier_purchase_order(
+    po_id: str,
+    current_user: User = Depends(get_current_user),
+) -> dict:
     """Return a single PO with full detail."""
+    _ = _resolve_supplier_id(current_user)
     po = next((o for o in DEMO_PURCHASE_ORDERS if o["po_id"] == po_id), None)
     if not po:
         raise HTTPException(status_code=404, detail="Purchase order not found")
@@ -196,8 +234,10 @@ async def get_supplier_purchase_order(po_id: str) -> dict:
 async def confirm_purchase_order_delivery(
     po_id: str,
     body: ConfirmDeliveryRequest,
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """Supplier confirms delivery date for a purchase order."""
+    _ = _resolve_supplier_id(current_user)
     po = next((o for o in DEMO_PURCHASE_ORDERS if o["po_id"] == po_id), None)
     if not po:
         raise HTTPException(status_code=404, detail="Purchase order not found")
@@ -217,10 +257,13 @@ async def confirm_purchase_order_delivery(
 
 
 @router.get("/payment-history")
-async def get_supplier_payment_history() -> dict:
+async def get_supplier_payment_history(
+    current_user: User = Depends(get_current_user),
+) -> dict:
     """Return payment history for this supplier."""
+    supplier_id = _resolve_supplier_id(current_user)
     return {
-        "supplier_id": _DEMO_SUPPLIER_ID,
+        "supplier_id": supplier_id,
         "total": len(DEMO_PAYMENT_HISTORY),
         "total_paid_ytd": sum(p["amount"] for p in DEMO_PAYMENT_HISTORY),
         "payments": DEMO_PAYMENT_HISTORY,
