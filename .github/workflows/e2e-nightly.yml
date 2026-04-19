@@ -1,0 +1,65 @@
+name: E2E Nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # 02:00 UTC nightly
+  workflow_dispatch: # allow manual trigger for debugging
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.15.0'
+
+jobs:
+  e2e:
+    name: Playwright E2E against staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Set in repo Settings → Secrets and variables → Actions.
+      # Example: https://ccw-crm-staging.vercel.app
+      PLAYWRIGHT_BASE_URL: ${{ secrets.E2E_STAGING_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter=web exec playwright install --with-deps chromium
+
+      - name: Run E2E specs (onboarding + portal)
+        working-directory: apps/web
+        run: npx playwright test e2e/onboarding.spec.ts e2e/portal.spec.ts --reporter=list
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 14
+
+      - name: Upload test-results (screenshots + traces)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: apps/web/test-results/
+          retention-days: 14
