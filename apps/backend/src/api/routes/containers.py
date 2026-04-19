@@ -404,7 +404,7 @@ async def create_container(
     event_bus = get_event_bus()
     await event_bus.publish(
         "container.created",
-        payload={
+        data={
             "container_id": str(container.id),
             "container_number": container.container_number,
             "estimated_arrival_date": (
@@ -414,7 +414,6 @@ async def create_container(
             ),
             "status": container.status.value,
         },
-        source="api",
     )
 
     # Load relationships for response
@@ -479,13 +478,12 @@ async def update_container(
     event_bus = get_event_bus()
     await event_bus.publish(
         "container.updated",
-        payload={
+        data={
             "container_id": str(container.id),
             "container_number": container.container_number,
             "status": container.status.value,
             "eta_changed": eta_changed,
         },
-        source="api",
     )
 
     container_dict = container.to_dict()
@@ -571,7 +569,7 @@ async def receive_container(
     event_bus = get_event_bus()
     await event_bus.publish(
         "container.received",
-        payload={
+        data={
             "container_id": str(container.id),
             "container_number": container.container_number,
             "warehouse": container.destination_warehouse,
@@ -584,7 +582,6 @@ async def receive_container(
                 for item in container.items
             ],
         },
-        source="api",
     )
 
     # Create alert for successful receipt
@@ -653,9 +650,8 @@ async def delete_container(
     event_bus = get_event_bus()
     await event_bus.publish(
         "container.deleted",
-        payload={
+        data={
             "container_id": str(container_id),
             "container_number": container.container_number,
         },
-        source="api",
     )

@@ -219,12 +219,13 @@ class WebhookService:
             # Handler raised a retriable error
             await self.db.rollback()
 
-            # Update webhook status (in a new transaction)
+            # Re-add the webhook event (it was expunged by rollback) and mark failed
             webhook_event.mark_failed(
                 str(e),
                 error_details=e.details,
                 retry=e.retriable,
             )
+            self.db.add(webhook_event)
             await self.db.commit()
 
             logger.warning(
@@ -257,12 +258,13 @@ class WebhookService:
             # Unexpected error - roll back and schedule retry
             await self.db.rollback()
 
-            # Update webhook status (in a new transaction)
+            # Re-add the webhook event (it was expunged by rollback) and mark failed
             webhook_event.mark_failed(
                 str(e),
                 error_details={"exception_type": type(e).__name__},
                 retry=True,
             )
+            self.db.add(webhook_event)
             await self.db.commit()
 
             logger.error(

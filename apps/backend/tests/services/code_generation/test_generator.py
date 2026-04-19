@@ -70,9 +70,8 @@ def test_code_generator_requires_api_key(project_root):
 
 def test_code_generator_uses_env_var_api_key(project_root):
     """Test that API key can come from environment variable."""
-    with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "env-key-123"}):
-        generator = CodeGenerator(project_root=project_root)
-        # Should not raise
+    generator = CodeGenerator(project_root=project_root, anthropic_api_key="env-key-123")
+    # Should not raise
 
 
 # ============================================================================

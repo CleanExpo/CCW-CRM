@@ -427,8 +427,8 @@ class TestWebhookStatistics:
         webhook.next_retry_at = datetime.now(UTC) - timedelta(minutes=5)
         await db_session.commit()
 
-        # Fetch webhooks for retry
-        webhooks = await webhook_service.get_webhooks_for_retry(limit=10)
+        # Fetch webhooks for retry (high limit to handle accumulated test data)
+        webhooks = await webhook_service.get_webhooks_for_retry(limit=1000)
 
         assert len(webhooks) >= 1
         assert any(w.event_id == event_id for w in webhooks)

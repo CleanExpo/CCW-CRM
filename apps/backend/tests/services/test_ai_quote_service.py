@@ -66,14 +66,24 @@ def sample_customers():
     ]
 
 
+@pytest.fixture(autouse=True)
+def mock_api_key_configured():
+    """Ensure ANTHROPIC_API_KEY is seen as configured in all tests."""
+    with patch("src.services.ai_quote_service.settings") as mock_settings:
+        mock_settings.anthropic_api_key = "test-api-key"
+        mock_settings.quote_validity_days = 30
+        yield mock_settings
+
+
 @pytest.mark.asyncio
 async def test_generate_quote_success(mock_db, mock_anthropic, sample_products, sample_customers):
     """Test successful quote generation."""
     # Mock database queries
     mock_db.execute = AsyncMock(
         side_effect=[
-            MagicMock(scalars=lambda: MagicMock(all=lambda: sample_products)),  # products
-            MagicMock(scalars=lambda: MagicMock(all=lambda: sample_customers)),  # customers
+            MagicMock(scalars=lambda: MagicMock(all=lambda: sample_products)),  # products catalog
+            MagicMock(scalars=lambda: MagicMock(all=lambda: sample_customers)),  # customers list
+            MagicMock(scalar_one_or_none=lambda: sample_customers[0]),  # customer validation
             MagicMock(scalar_one_or_none=lambda: sample_products[0]),  # product validation
         ]
     )
@@ -88,13 +98,14 @@ async def test_generate_quote_success(mock_db, mock_anthropic, sample_products, 
     "company_name": "ABC Corp",
     "contact_name": "John Smith",
     "email": "john@abc.com",
-    "customer_id": "customer-1",
+    "customer_id": "00000000-0000-0000-0000-000000000001",
+    "customer_number": "CUST-001",
     "confidence": 0.95,
     "is_new_customer": false
   },
   "line_items": [
     {
-      "product_id": "product-1",
+      "product_id": "00000000-0000-0000-0000-000000000002",
       "sku": "DRILL-001",
       "name": "Power Drill Pro",
       "category": "POWER_TOOLS",
@@ -186,9 +197,10 @@ async def test_suggest_customers(mock_db, sample_customers):
 @pytest.mark.asyncio
 async def test_validate_and_enrich_stock_warning(mock_db, sample_products):
     """Test stock availability warnings."""
+    product_uuid = "00000000-0000-0000-0000-000000000001"
     # Mock product query with low stock
     low_stock_product = Product(
-        id="product-1",
+        id=product_uuid,
         sku="DRILL-001",
         name="Power Drill Pro",
         category="POWER_TOOLS",
@@ -209,12 +221,13 @@ async def test_validate_and_enrich_stock_warning(mock_db, sample_products):
             "contact_name": "John",
             "email": "john@abc.com",
             "customer_id": None,
+            "customer_number": None,
             "confidence": 0.8,
             "is_new_customer": False,
         },
         "line_items": [
             {
-                "product_id": "product-1",
+                "product_id": product_uuid,
                 "sku": "DRILL-001",
                 "name": "Power Drill Pro",
                 "category": "POWER_TOOLS",

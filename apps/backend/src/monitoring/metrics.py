@@ -22,6 +22,12 @@ orders_revenue = Counter(
     ["location"],
 )
 
+orders_confirmed = Counter(
+    "orders_confirmed_total",
+    "Total number of orders confirmed",
+    ["location"],
+)
+
 orders_processing_time = Histogram(
     "orders_processing_seconds",
     "Time spent processing orders (creation to confirmation)",
