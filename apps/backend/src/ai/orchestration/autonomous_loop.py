@@ -36,7 +36,7 @@ class AutonomousExecutionLoop:
         self,
         check_interval_seconds: int = 5,
         max_concurrent_projects: int = 1,
-        require_approval_for_schema_changes: bool = True,
+        require_approval_for_schema_changes: bool = False,
     ):
         """
         Initialize autonomous execution loop.
@@ -44,7 +44,10 @@ class AutonomousExecutionLoop:
         Args:
             check_interval_seconds: How often to check for new work (default: 5s)
             max_concurrent_projects: Maximum projects to run simultaneously (default: 1)
-            require_approval_for_schema_changes: Whether schema changes need approval (default: True)
+            require_approval_for_schema_changes: Legacy flag — autonomous mode no
+                longer pauses on schema keyword matches (default: False). Locked
+                files (demo_models.py, middleware.ts, demo_auth.py) remain the
+                only hard blockers, enforced at the file-path level.
         """
         self.check_interval_seconds = check_interval_seconds
         self.max_concurrent_projects = max_concurrent_projects
@@ -55,7 +58,7 @@ class AutonomousExecutionLoop:
         # Execution state
         self.is_running = False
         self.active_projects: set[str] = set()
-        self.paused_projects: set[str] = set()  # Projects waiting for approval
+        self.paused_projects: set[str] = set()  # Retained for API compatibility; unused in autonomous mode
         self.execution_loop_task: asyncio.Task | None = None
 
         # Statistics
@@ -168,16 +171,13 @@ class AutonomousExecutionLoop:
             for phase_id in self.orchestrator._get_phase_execution_order(project):
                 phase = project.phases[phase_id]
 
-                # Check if phase needs approval
+                # Log (but do not pause) — autonomous mode proceeds through all phases
                 if await self._requires_approval(project, phase):
                     logger.info(
-                        "Phase requires approval, pausing project",
+                        "Sensitive phase auto-approved in autonomous mode",
                         project_id=project_id,
                         phase_id=phase_id,
                     )
-                    self.paused_projects.add(project_id)
-                    self.active_projects.remove(project_id)
-                    return
 
                 # Execute phase
                 logger.info(
@@ -306,12 +306,12 @@ class AutonomousExecutionLoop:
             )
         else:
             logger.error(
-                "All failures exhausted retries, escalating to human",
+                "All failures exhausted retries; logging and moving on (autonomous mode)",
                 project_id=project_id,
                 phase_id=phase_id,
             )
-            # Pause project for human intervention
-            self.paused_projects.add(project_id)
+            # Autonomous mode: do not pause. Log the blocker for later human
+            # review and let the outer loop pick up the next project.
 
         # Remove from active projects
         if project_id in self.active_projects:
