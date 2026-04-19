@@ -4,17 +4,15 @@ Tests for UNI-1749 — Fleet-wide RLS policy hardening migration.
 Validates the migration file structure without requiring a live DB connection.
 Covers:
 - Migration file exists at expected path
-- All 17 previously-unprotected tables have ENABLE ROW LEVEL SECURITY
-- All 17 previously-unprotected tables have a CREATE POLICY entry
-- The critical `users` table gap is explicitly fixed
-- Policy naming convention is consistent (service_role_all_*)
+- All 17 previously-unprotected tables appear in the migration table list
+- The dynamic DO-block pattern is present (pg_tables existence check)
+- Key safety invariants: no auth.uid(), uses service_role, uses IF EXISTS guard
 """
 
 import re
 from pathlib import Path
 
 
-# Path to the migration file relative to the repo root
 _MIGRATION_PATH = (
     Path(__file__).parents[4]
     / "supabase"
@@ -22,18 +20,17 @@ _MIGRATION_PATH = (
     / "20260419000001_ccw_rls_policies.sql"
 )
 
-# The 17 tables that the Supabase advisor flagged as "RLS on, no policy"
-# These are the minimum required to clear the advisor alert count to 0.
+# The 17 tables the Supabase advisor flagged as "RLS on, no policy"
 _REQUIRED_TABLES = [
     # Core ERP — users had no policy at all
     "users",
-    # demo_models.py extras not covered by erp_permissions.sql
+    # demo_models.py extras not in erp_permissions.sql
     "order_activity",
     "conversation_history",
     "agent_executions",
     "ai_generated_content",
     "background_jobs",
-    # Workshop module
+    # Workshop
     "equipment",
     "service_templates",
     "service_template_items",
@@ -50,112 +47,91 @@ _REQUIRED_TABLES = [
 ]
 
 
-def _load_migration() -> str:
+def _sql() -> str:
     return _MIGRATION_PATH.read_text(encoding="utf-8")
 
 
-class TestRlsMigrationFile:
-    def test_migration_file_exists(self):
-        assert _MIGRATION_PATH.exists(), (
-            f"Migration file not found at {_MIGRATION_PATH}"
+def _declared_tables() -> set[str]:
+    """Extract table names from the ARRAY[...] declaration in the DO block."""
+    sql = _sql()
+    # Match quoted strings inside the ARRAY declaration
+    array_match = re.search(
+        r"tables\s+TEXT\[\]\s*:=\s*ARRAY\[(.*?)\];",
+        sql,
+        re.DOTALL | re.IGNORECASE,
+    )
+    if not array_match:
+        return set()
+    array_body = array_match.group(1)
+    return {m.group(1).lower() for m in re.finditer(r"'(\w+)'", array_body)}
+
+
+# ---------------------------------------------------------------------------
+# File-level checks
+# ---------------------------------------------------------------------------
+
+class TestMigrationFile:
+    def test_exists(self):
+        assert _MIGRATION_PATH.exists(), f"Not found: {_MIGRATION_PATH}"
+
+    def test_not_empty(self):
+        assert len(_sql().strip()) > 200
+
+    def test_has_do_block(self):
+        assert "DO $$" in _sql() or "DO $" in _sql()
+
+    def test_has_pg_tables_existence_check(self):
+        assert "pg_tables" in _sql()
+
+    def test_targets_service_role(self):
+        assert "service_role" in _sql()
+
+    def test_no_auth_uid(self):
+        assert "auth.uid()" not in _sql(), (
+            "auth.uid() found — backend tables must use service_role bypass only"
         )
 
-    def test_migration_is_not_empty(self):
-        sql = _load_migration()
-        assert len(sql.strip()) > 100
 
-    def test_migration_targets_service_role(self):
-        sql = _load_migration()
-        assert "service_role" in sql
+# ---------------------------------------------------------------------------
+# Table list completeness
+# ---------------------------------------------------------------------------
 
-    def test_migration_uses_if_exists_guard(self):
-        sql = _load_migration()
-        assert "IF NOT EXISTS" in sql or "IF EXISTS" in sql
+class TestRequiredTablesInList:
+    def test_users_in_list(self):
+        assert "users" in _declared_tables()
 
+    def test_all_17_required_tables_in_list(self):
+        declared = _declared_tables()
+        missing = [t for t in _REQUIRED_TABLES if t not in declared]
+        assert not missing, f"Tables missing from migration list: {missing}"
 
-class TestRlsEnabledOnRequiredTables:
-    """Every required table must have ENABLE ROW LEVEL SECURITY in the migration."""
-
-    def _rls_tables(self) -> set[str]:
-        sql = _load_migration()
-        return {
-            m.group(1).lower()
-            for m in re.finditer(
-                r"ALTER TABLE IF EXISTS public\.(\w+)\s+ENABLE ROW LEVEL SECURITY",
-                sql,
-                re.IGNORECASE,
-            )
-        }
-
-    def test_users_rls_enabled(self):
-        assert "users" in self._rls_tables()
-
-    def test_all_17_tables_rls_enabled(self):
-        enabled = self._rls_tables()
-        missing = [t for t in _REQUIRED_TABLES if t not in enabled]
-        assert not missing, f"RLS not enabled for: {missing}"
+    def test_list_covers_at_least_17_tables(self):
+        assert len(_declared_tables()) >= 17
 
 
-class TestRlsPoliciesOnRequiredTables:
-    """Every required table must have a CREATE POLICY entry."""
+# ---------------------------------------------------------------------------
+# DO-block pattern checks
+# ---------------------------------------------------------------------------
 
-    def _policy_tables(self) -> set[str]:
-        sql = _load_migration()
-        return {
-            m.group(1).lower()
-            for m in re.finditer(
-                r"CREATE POLICY\s+\"service_role_all_(\w+)\"",
-                sql,
-                re.IGNORECASE,
-            )
-        }
+class TestDynamicPattern:
+    def test_uses_execute_format_for_enable_rls(self):
+        sql = _sql()
+        assert "ENABLE ROW LEVEL SECURITY" in sql.upper()
 
-    def test_users_has_policy(self):
-        assert "users" in self._policy_tables()
+    def test_uses_execute_format_for_drop_policy(self):
+        sql = _sql()
+        assert "DROP POLICY IF EXISTS" in sql.upper()
 
-    def test_all_17_tables_have_policy(self):
-        policies = self._policy_tables()
-        missing = [t for t in _REQUIRED_TABLES if t not in policies]
-        assert not missing, f"No service_role policy for: {missing}"
+    def test_uses_execute_format_for_create_policy(self):
+        sql = _sql()
+        assert "CREATE POLICY" in sql.upper()
 
-    def test_policy_count_at_least_17(self):
-        assert len(self._policy_tables()) >= 17
+    def test_foreach_loop_present(self):
+        sql = _sql()
+        assert "FOREACH" in sql.upper()
 
-
-class TestRlsPolicyStructure:
-    """Spot-check that policies use the correct FOR ALL / USING (true) pattern."""
-
-    def test_users_policy_is_for_all(self):
-        sql = _load_migration()
-        # Find the CREATE POLICY block for users
-        match = re.search(
-            r'CREATE POLICY\s+"service_role_all_users".*?;',
-            sql,
-            re.IGNORECASE | re.DOTALL,
-        )
-        assert match, "service_role_all_users policy not found"
-        policy_sql = match.group(0)
-        assert "FOR ALL" in policy_sql.upper()
-        assert "using (true)" in policy_sql.lower()
-        assert "with check (true)" in policy_sql.lower()
-
-    def test_workshop_booking_policy_exists(self):
-        sql = _load_migration()
-        assert "service_role_all_workshop_bookings" in sql
-
-    def test_no_hardcoded_uids(self):
-        sql = _load_migration()
-        assert "auth.uid()" not in sql, (
-            "auth.uid() found — backend tables should use service_role bypass, "
-            "not user-scoped policies"
-        )
-
-    def test_drop_policy_before_create(self):
-        sql = _load_migration()
-        drop_count = sql.upper().count("DROP POLICY IF EXISTS")
-        create_count = sql.upper().count("CREATE POLICY")
-        # Every CREATE POLICY should be preceded by a DROP POLICY IF EXISTS
-        assert drop_count >= create_count - 5, (
-            f"Expected ~{create_count} DROP POLICY IF EXISTS statements, "
-            f"found {drop_count}"
-        )
+    def test_policy_uses_for_all_with_check(self):
+        sql = _sql()
+        assert "FOR ALL TO service_role" in sql
+        assert "USING (true)" in sql
+        assert "WITH CHECK (true)" in sql
