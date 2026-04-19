@@ -22,6 +22,7 @@
     "docker:reset": "docker compose down -v && docker compose up -d",
     "docker:logs": "docker compose logs -f",
     "verify": "bash scripts/verify.sh",
+    "docs:verify": "python scripts/catalog_doctor.py",
     "prepare": "husky"
   },
   "devDependencies": {

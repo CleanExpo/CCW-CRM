@@ -24,6 +24,15 @@
     },
     "clean": {
       "cache": false
+    },
+    "docs:verify": {
+      "cache": false,
+      "inputs": [
+        "apps/backend/src/api/routes/**/*.py",
+        "apps/web/app/**/page.tsx",
+        "apps/backend/src/db/*.py"
+      ],
+      "outputs": ["docs/catalogs/**"]
     }
   }
 }
