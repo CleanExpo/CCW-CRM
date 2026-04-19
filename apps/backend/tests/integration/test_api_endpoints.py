@@ -35,11 +35,16 @@ from src.db.demo_models import Customer, Organization, Product, Quote
 from src.db.models_base import User
 
 
-# Test database URL (use in-memory SQLite for fast tests)
-TEST_DATABASE_URL = "sqlite:///:memory:"
+# Test database URL — local Docker PostgreSQL (JSONB requires real PG)
+import os as _os
+TEST_DATABASE_URL = _os.getenv(
+    "TEST_DATABASE_URL",
+    "postgresql://starter_user:local_dev_password@localhost:5433/starter_db",
+)
 
 # Create test engine and session
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+_connect_args = {"check_same_thread": False} if "sqlite" in TEST_DATABASE_URL else {}
+engine = create_engine(TEST_DATABASE_URL, connect_args=_connect_args)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -56,8 +61,14 @@ def db_session():
         yield session
     finally:
         session.close()
-        # Drop all tables after test
-        Base.metadata.drop_all(bind=engine)
+        if "postgresql" in str(engine.url):
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                conn.execute(text("DROP SCHEMA public CASCADE"))
+                conn.execute(text("CREATE SCHEMA public"))
+                conn.commit()
+        else:
+            Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")

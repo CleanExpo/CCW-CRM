@@ -17,14 +17,14 @@ from sqlalchemy.orm import sessionmaker
 backend_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_dir))
 
-# Test database configuration
+# Test database configuration — default to local Docker PostgreSQL (port 5433)
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
-    "postgresql://starter_user:local_dev_password@localhost:5432/starter_db_test",
+    "postgresql://starter_user:local_dev_password@localhost:5433/starter_db",
 )
 
-# Use SQLite in-memory for fast tests (can switch to PostgreSQL for full integration)
-USE_IN_MEMORY_DB = os.getenv("USE_IN_MEMORY_DB", "true").lower() == "true"
+# SQLite mode only when explicitly requested (JSONB/PostgreSQL types require real PG)
+USE_IN_MEMORY_DB = os.getenv("USE_IN_MEMORY_DB", "false").lower() == "true"
 
 if USE_IN_MEMORY_DB:
     TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -73,8 +73,15 @@ def db_session():
         session.rollback()  # Rollback any uncommitted changes
     finally:
         session.close()
-        # Drop all tables after test (for clean slate)
-        Base.metadata.drop_all(bind=engine)
+        # Drop all tables; use CASCADE for PostgreSQL views/FK dependencies
+        if "postgresql" in str(engine.url):
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                conn.execute(text("DROP SCHEMA public CASCADE"))
+                conn.execute(text("CREATE SCHEMA public"))
+                conn.commit()
+        else:
+            Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="session")
