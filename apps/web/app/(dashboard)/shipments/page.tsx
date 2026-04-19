@@ -32,8 +32,9 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, AlertTriangle, FileCheck } from 'lucide-react';
 import { ShipmentForm } from './components/ShipmentForm';
+import { ADGDeclarationDialog } from './components/ADGDeclarationDialog';
 
 const STATUS_COLORS: Record<ShipmentStatus, string> = {
   pending: 'bg-yellow-500',
@@ -52,6 +53,7 @@ export default function ShipmentsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingShipment, setEditingShipment] = useState<Shipment | null>(null);
+  const [adgDialogShipment, setAdgDialogShipment] = useState<Shipment | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -211,12 +213,40 @@ export default function ShipmentsPage() {
                   <TableCell>{formatDate(shipment.shipped_date)}</TableCell>
                   <TableCell>{formatDate(shipment.estimated_delivery_date)}</TableCell>
                   <TableCell>
-                    <Badge className={STATUS_COLORS[shipment.status]} variant="default">
-                      {shipment.status.replace('_', ' ').toUpperCase()}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={STATUS_COLORS[shipment.status]} variant="default">
+                        {shipment.status.replace('_', ' ').toUpperCase()}
+                      </Badge>
+                      {shipment.contains_dangerous_goods && !shipment.adg_declaration_attached && (
+                        <Badge variant="destructive" className="gap-1 text-xs">
+                          <AlertTriangle className="h-3 w-3" />
+                          ADG Required
+                        </Badge>
+                      )}
+                      {shipment.contains_dangerous_goods && shipment.adg_declaration_attached && (
+                        <Badge
+                          variant="outline"
+                          className="gap-1 border-green-600 text-xs text-green-600"
+                        >
+                          <FileCheck className="h-3 w-3" />
+                          ADG Attached
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {shipment.contains_dangerous_goods && !shipment.adg_declaration_attached && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1 border-orange-300 text-orange-600 hover:bg-orange-50"
+                          onClick={() => setAdgDialogShipment(shipment)}
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          Attach ADG
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -289,6 +319,21 @@ export default function ShipmentsPage() {
         onOpenChange={setFormDialogOpen}
         onSuccess={handleFormSuccess}
       />
+
+      {/* ADG Declaration dialog */}
+      {adgDialogShipment && (
+        <ADGDeclarationDialog
+          shipment={adgDialogShipment}
+          open={!!adgDialogShipment}
+          onOpenChange={(open) => {
+            if (!open) setAdgDialogShipment(null);
+          }}
+          onSuccess={(updated) => {
+            setShipments((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+            setAdgDialogShipment(null);
+          }}
+        />
+      )}
     </div>
   );
 }

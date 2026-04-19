@@ -1,14 +1,9 @@
-import { apiClient } from "./client";
+import { apiClient } from './client';
 
 /**
  * Shipment status enum
  */
-export type ShipmentStatus =
-  | "pending"
-  | "in_transit"
-  | "delivered"
-  | "cancelled"
-  | "returned";
+export type ShipmentStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled' | 'returned';
 
 /**
  * Shipment interface
@@ -33,8 +28,27 @@ export interface Shipment {
   shipping_postcode?: string;
   shipping_country?: string;
   notes?: string;
+  contains_dangerous_goods?: boolean;
+  adg_declaration_required?: boolean;
+  adg_declaration_attached?: boolean;
+  adg_declaration_number?: string;
+  adg_declaration_attachment_url?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ADGDeclarationAttach {
+  declaration_number: string;
+  attachment_url?: string;
+}
+
+export interface ADGCheckResponse {
+  shipment_id: string;
+  contains_dangerous_goods: boolean;
+  adg_declaration_required: boolean;
+  adg_declaration_attached: boolean;
+  can_dispatch: boolean;
+  blocking_reason?: string;
 }
 
 /**
@@ -85,7 +99,7 @@ export interface ShipmentListParams {
   carrier?: string;
   order_id?: string;
   sort_by?: string;
-  sort_order?: "asc" | "desc";
+  sort_order?: 'asc' | 'desc';
 }
 
 /**
@@ -118,14 +132,14 @@ export const shipmentsApi = {
    */
   async list(params: ShipmentListParams = {}): Promise<PaginatedShipments> {
     const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
-    if (params.search) queryParams.append("search", params.search);
-    if (params.status) queryParams.append("status", params.status);
-    if (params.carrier) queryParams.append("carrier", params.carrier);
-    if (params.order_id) queryParams.append("order_id", params.order_id);
-    if (params.sort_by) queryParams.append("sort_by", params.sort_by);
-    if (params.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.carrier) queryParams.append('carrier', params.carrier);
+    if (params.order_id) queryParams.append('order_id', params.order_id);
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params.sort_order) queryParams.append('sort_order', params.sort_order);
 
     return apiClient.get<PaginatedShipments>(`/api/shipments?${queryParams.toString()}`);
   },
@@ -141,7 +155,7 @@ export const shipmentsApi = {
    * Create a new shipment
    */
   async create(data: ShipmentCreate): Promise<Shipment> {
-    return apiClient.post<Shipment>("/api/shipments", data);
+    return apiClient.post<Shipment>('/api/shipments', data);
   },
 
   /**
@@ -163,5 +177,20 @@ export const shipmentsApi = {
    */
   async updateTracking(id: string, data: TrackingUpdate): Promise<Shipment> {
     return apiClient.post<Shipment>(`/api/shipments/${id}/track`, data);
+  },
+
+  async adgCheck(id: string): Promise<ADGCheckResponse> {
+    return apiClient.get<ADGCheckResponse>(`/api/shipments/outbound/${id}/adg-check`);
+  },
+
+  async attachAdgDeclaration(id: string, data: ADGDeclarationAttach): Promise<Shipment> {
+    return apiClient.post<Shipment>(`/api/shipments/outbound/${id}/adg-declaration`, data);
+  },
+
+  async markDangerousGoods(id: string, containsDg: boolean): Promise<Shipment> {
+    return apiClient.patch<Shipment>(
+      `/api/shipments/outbound/${id}/mark-dangerous-goods?contains_dg=${containsDg}`,
+      {}
+    );
   },
 };

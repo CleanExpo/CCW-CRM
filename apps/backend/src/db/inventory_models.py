@@ -474,6 +474,13 @@ class OutboundShipment(Base):
         DateTime(timezone=True), onupdate=func.now(), nullable=True
     )
 
+    # Dangerous Goods (ADG Code)
+    contains_dangerous_goods: bool = Column(Boolean, default=False, nullable=False)
+    adg_declaration_required: bool = Column(Boolean, default=False, nullable=False)
+    adg_declaration_attached: bool = Column(Boolean, default=False, nullable=False)
+    adg_declaration_number: str | None = Column(String(100), nullable=True)
+    adg_declaration_attachment_url: str | None = Column(Text, nullable=True)
+
     # Relationships
     order = relationship("Order", back_populates="shipments")
 
@@ -713,3 +720,44 @@ class ProductVariant(Base):
 
     def __repr__(self) -> str:
         return f"<ProductVariant(product_id={self.product_id}, sku={self.variant_sku}, name={self.name})>"
+
+
+class ProductDangerousGoodsProfile(Base):
+    """ADG Code dangerous goods profile for a product.
+
+    Stored separately so the locked demo_models.py Product table is unchanged.
+    One-to-one with products.id.
+    """
+
+    __tablename__ = "product_dangerous_goods_profiles"
+
+    id: UUID = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    product_id: UUID = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    is_dangerous_goods: bool = Column(Boolean, default=False, nullable=False)
+    adg_class: str | None = Column(String(20), nullable=True)         # e.g. "3", "8", "2.1"
+    adg_description: str | None = Column(String(255), nullable=True)  # human label
+    un_number: str | None = Column(String(10), nullable=True)         # e.g. "UN1203"
+    packing_group: str | None = Column(String(5), nullable=True)      # I / II / III
+    proper_shipping_name: str | None = Column(Text, nullable=True)
+    emergency_contact: str | None = Column(String(255), nullable=True)
+    special_provisions: str | None = Column(Text, nullable=True)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ProductDangerousGoodsProfile(product_id={self.product_id}, class={self.adg_class})>"

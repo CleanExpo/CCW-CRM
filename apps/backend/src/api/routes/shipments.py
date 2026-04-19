@@ -22,7 +22,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.demo_models import Order
-from src.db.inventory_models import InboundShipment, OutboundShipment, PurchaseOrder, Supplier
+from src.db.inventory_models import (
+    InboundShipment,
+    OutboundShipment,
+    ProductDangerousGoodsProfile,
+    PurchaseOrder,
+    Supplier,
+)
 from src.security.webhook_verification import get_fedex_verifier
 from src.services.carrier_service import Address, get_carrier_service
 
@@ -129,6 +135,11 @@ class OutboundShipmentResponse(BaseModel):
     tracking_events: dict | None
     last_tracking_update: datetime | None
     notes: str | None
+    contains_dangerous_goods: bool = False
+    adg_declaration_required: bool = False
+    adg_declaration_attached: bool = False
+    adg_declaration_number: str | None = None
+    adg_declaration_attachment_url: str | None = None
     created_at: datetime
 
     class Config:
@@ -674,3 +685,174 @@ async def get_shipping_rates(
         weight_kg=payload.weight_kg,
         carrier_name=payload.carrier_name,
     )
+
+
+# ---------------------------------------------------------------------------
+# Dangerous Goods (ADG Code) endpoints  — UNI-1824
+# ---------------------------------------------------------------------------
+
+
+class DangerousGoodsProfile(BaseModel):
+    """Dangerous goods classification for a product (ADG Code)."""
+
+    product_id: UUID
+    is_dangerous_goods: bool = False
+    adg_class: str | None = Field(None, max_length=20, description="ADG class e.g. '3', '8', '2.1'")
+    adg_description: str | None = Field(None, max_length=255)
+    un_number: str | None = Field(None, max_length=10, description="UN number e.g. 'UN1203'")
+    packing_group: str | None = Field(None, pattern="^(I|II|III)$")
+    proper_shipping_name: str | None = None
+    emergency_contact: str | None = Field(None, max_length=255)
+    special_provisions: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class DangerousGoodsUpsert(BaseModel):
+    """Request body for creating/updating a product DG profile."""
+
+    is_dangerous_goods: bool = False
+    adg_class: str | None = Field(None, max_length=20)
+    adg_description: str | None = Field(None, max_length=255)
+    un_number: str | None = Field(None, max_length=10)
+    packing_group: str | None = Field(None, pattern="^(I|II|III)$")
+    proper_shipping_name: str | None = None
+    emergency_contact: str | None = Field(None, max_length=255)
+    special_provisions: str | None = None
+
+
+class ADGDeclarationAttach(BaseModel):
+    """Attach an ADG declaration to a shipment."""
+
+    declaration_number: str = Field(..., max_length=100)
+    attachment_url: str | None = Field(None, description="URL to uploaded declaration PDF")
+
+
+class ADGCheckResponse(BaseModel):
+    """ADG compliance check result for a shipment."""
+
+    shipment_id: UUID
+    contains_dangerous_goods: bool
+    adg_declaration_required: bool
+    adg_declaration_attached: bool
+    can_dispatch: bool
+    blocking_reason: str | None = None
+
+
+@router.get("/products/{product_id}/dangerous-goods", response_model=DangerousGoodsProfile)
+async def get_product_dangerous_goods(
+    product_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> DangerousGoodsProfile:
+    """Return the ADG dangerous goods profile for a product."""
+    result = await db.execute(
+        select(ProductDangerousGoodsProfile).where(
+            ProductDangerousGoodsProfile.product_id == product_id
+        )
+    )
+    profile = result.scalar_one_or_none()
+    if not profile:
+        return DangerousGoodsProfile(product_id=product_id, is_dangerous_goods=False)
+    return DangerousGoodsProfile.model_validate(profile)
+
+
+@router.put("/products/{product_id}/dangerous-goods", response_model=DangerousGoodsProfile)
+async def upsert_product_dangerous_goods(
+    product_id: UUID,
+    payload: DangerousGoodsUpsert,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> DangerousGoodsProfile:
+    """Create or update the ADG dangerous goods profile for a product."""
+    result = await db.execute(
+        select(ProductDangerousGoodsProfile).where(
+            ProductDangerousGoodsProfile.product_id == product_id
+        )
+    )
+    profile = result.scalar_one_or_none()
+
+    if profile is None:
+        profile = ProductDangerousGoodsProfile(product_id=product_id)
+        db.add(profile)
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(profile, field, value)
+
+    await db.commit()
+    await db.refresh(profile)
+    return DangerousGoodsProfile.model_validate(profile)
+
+
+@router.get("/outbound/{shipment_id}/adg-check", response_model=ADGCheckResponse)
+async def adg_compliance_check(
+    shipment_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> ADGCheckResponse:
+    """Check whether a shipment meets ADG declaration requirements before dispatch."""
+    result = await db.execute(select(OutboundShipment).where(OutboundShipment.id == shipment_id))
+    shipment = result.scalar_one_or_none()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+
+    can_dispatch = True
+    blocking_reason = None
+    if shipment.contains_dangerous_goods and not shipment.adg_declaration_attached:
+        can_dispatch = False
+        blocking_reason = "Shipment contains dangerous goods — attach an ADG declaration before dispatch."
+
+    return ADGCheckResponse(
+        shipment_id=shipment_id,
+        contains_dangerous_goods=shipment.contains_dangerous_goods,
+        adg_declaration_required=shipment.adg_declaration_required,
+        adg_declaration_attached=shipment.adg_declaration_attached,
+        can_dispatch=can_dispatch,
+        blocking_reason=blocking_reason,
+    )
+
+
+@router.post("/outbound/{shipment_id}/adg-declaration", response_model=OutboundShipmentResponse)
+async def attach_adg_declaration(
+    shipment_id: UUID,
+    payload: ADGDeclarationAttach,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> OutboundShipmentResponse:
+    """Attach an ADG declaration to an outbound shipment, clearing the dispatch block."""
+    result = await db.execute(select(OutboundShipment).where(OutboundShipment.id == shipment_id))
+    shipment = result.scalar_one_or_none()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+
+    shipment.adg_declaration_number = payload.declaration_number
+    shipment.adg_declaration_attachment_url = payload.attachment_url
+    shipment.adg_declaration_attached = True
+    await db.commit()
+    await db.refresh(shipment)
+
+    logger.info(
+        "ADG declaration attached",
+        shipment_number=shipment.shipment_number,
+        declaration_number=payload.declaration_number,
+    )
+    return OutboundShipmentResponse.model_validate(shipment)
+
+
+@router.patch("/outbound/{shipment_id}/mark-dangerous-goods", response_model=OutboundShipmentResponse)
+async def mark_shipment_dangerous_goods(
+    shipment_id: UUID,
+    contains_dg: bool,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> OutboundShipmentResponse:
+    """Flag or un-flag a shipment as containing dangerous goods."""
+    result = await db.execute(select(OutboundShipment).where(OutboundShipment.id == shipment_id))
+    shipment = result.scalar_one_or_none()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+
+    shipment.contains_dangerous_goods = contains_dg
+    shipment.adg_declaration_required = contains_dg
+    if not contains_dg:
+        shipment.adg_declaration_attached = False
+        shipment.adg_declaration_number = None
+    await db.commit()
+    await db.refresh(shipment)
+    return OutboundShipmentResponse.model_validate(shipment)
