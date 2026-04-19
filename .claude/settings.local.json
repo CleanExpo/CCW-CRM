@@ -60,7 +60,8 @@
       "mcp__pi-ceo__linear_update_issue",
       "mcp__pi-ceo__linear_create_issue",
       "mcp__pi-ceo__linear_status",
-      "mcp__pi-ceo__linear_sync_board"
+      "mcp__pi-ceo__linear_sync_board",
+      "mcp__8eec34b8-ab6d-4f8e-9437-04ad5f8376fa__list_issues"
     ]
   },
   "hooks": {
@@ -69,7 +70,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if [ -f \".claude/.autonomous-mode\" ]; then echo \"{\\\"decision\\\": \\\"block\\\", \\\"reason\\\": \\\"Autonomous mode active — pull next Linear ticket via mcp__pi-ceo__linear_list_issues and continue. Only exit if queue is empty.\\\"}\"; fi'"
+            "command": "bash -c 'if [ -f \".claude/.autonomous-mode\" ]; then echo \"{\\\"decision\\\": \\\"block\\\", \\\"reason\\\": \\\"Autonomous mode active — pull next Todo Linear ticket (try mcp__pi-ceo__linear_list_issues first, fall back to mcp__8eec34b8-ab6d-4f8e-9437-04ad5f8376fa__list_issues with state=todo). Filter to project=CCW-ERP/CRM. If queue empty or both MCPs fail auth, report the blocker and stop — do not loop indefinitely.\\\"}\"; fi'"
           }
         ]
       }
