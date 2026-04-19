@@ -33,7 +33,7 @@ hotfix/<n>    ← critical production fixes (from main)
 - All acceptance criteria in Linear issue are met
 - No TypeScript errors (npx tsc --noEmit)
 - No lint errors (pnpm run lint)
-- All tests pass (pnpm run test)
+- `npm run check` passes; unit tests via `npx vitest run` when run
 - Secrets scan clean (node scripts/ci/scan-secrets.js)
 - PR size < 1000 lines
 

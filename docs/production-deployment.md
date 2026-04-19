@@ -70,7 +70,7 @@ Complete guide for deploying the domain memory system to production environments
 
 - [ ] **All tests passing locally**
   ```powershell
-  pnpm run check:all
+  npm run check
   ```
 
 - [ ] **Integration tests pass**

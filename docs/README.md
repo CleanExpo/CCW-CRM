@@ -110,24 +110,20 @@ alembic downgrade -1         # Rollback one migration
 ```
 
 ### Running Tests
+Root `package.json` does not define `npm run test`. Run tools directly:
+
 ```bash
-# All tests
-pnpm run test
+# Unit tests (Vitest)
+npx vitest run
 
-# Backend only
-cd apps/backend && pytest
-
-# Frontend only
-cd apps/web && pnpm test
+# E2E (Playwright)
+npx playwright test
 ```
 
 ### Code Quality
 ```bash
-# Type checking + linting
-pnpm run type-check && pnpm run lint
-
-# Health check (comprehensive)
-.\scripts\health-check.ps1
+# Typecheck + lint (same as `npm run check:all`)
+npm run check
 ```
 
 ---

@@ -52,7 +52,7 @@
 | 34  | tailwind-merge                | ^2.6.0   | Styling       | Tailwind class merge (cn() utility)                   |
 | 35  | zod                           | ^3.24.1  | Validation    | Schema validation — core library                      |
 
-### Dev Dependencies (25)
+### Dev Dependencies (29)
 
 | #   | Package                          | Version  | Category         | Purpose                                           |
 | --- | -------------------------------- | -------- | ---------------- | ------------------------------------------------- |
@@ -68,24 +68,23 @@
 | 10  | @percy/playwright                | ^1.0.10  | Testing/Visual   | Visual regression testing                         |
 | 11  | @axe-core/playwright             | ^4.11.0  | Testing/A11y     | Accessibility testing                             |
 | 12  | axe-core                         | ^4.11.0  | Testing/A11y     | Accessibility engine                              |
-| 13  | @lhci/cli                        | ^0.15.1  | Testing/Perf     | Lighthouse CI                                     |
-| 14  | eslint                           | ^9.17.0  | Linting          | Code quality enforcement                          |
-| 15  | eslint-config-next               | 15.1.0   | Linting          | Next.js ESLint config                             |
-| 16  | @eslint/eslintrc                 | ^3.2.0   | Linting          | ESLint config support                             |
-| 17  | @eslint/js                       | ^9.17.0  | Linting          | ESLint JS rules                                   |
-| 18  | @typescript-eslint/eslint-plugin | ^8.18.0  | Linting          | TS ESLint plugin                                  |
-| 19  | @typescript-eslint/parser        | ^8.18.0  | Linting          | TS ESLint parser                                  |
-| 20  | prettier                         | ^3.4.2   | Formatting       | Code formatter                                    |
-| 21  | prettier-plugin-tailwindcss      | ^0.7.2   | Formatting       | Tailwind class sorting                            |
-| 22  | @vitejs/plugin-react             | ^4.3.4   | Build            | Vite React plugin                                 |
-| 23  | @tailwindcss/postcss             | ^4.1.18  | Build            | Tailwind PostCSS plugin                           |
-| 24  | autoprefixer                     | ^10.4.20 | Build            | CSS autoprefixer                                  |
-| 25  | postcss                          | ^8.4.49  | Build            | CSS processor                                     |
-| 26  | jsdom                            | ^25.0.1  | Testing          | DOM environment for tests                         |
-| 27  | @types/node                      | ^22.10.0 | Types            | Node.js type definitions                          |
-| 28  | @types/react                     | ^19.0.1  | Types            | React type definitions                            |
-| 29  | @types/react-dom                 | ^19.0.1  | Types            | React DOM type definitions                        |
-| 30  | @types/uuid                      | ^10.0.0  | Types            | UUID type definitions                             |
+| 13  | eslint                           | ^9.17.0  | Linting          | Code quality enforcement                          |
+| 14  | eslint-config-next               | 15.1.0   | Linting          | Next.js ESLint config                             |
+| 15  | @eslint/eslintrc                 | ^3.2.0   | Linting          | ESLint config support                             |
+| 16  | @eslint/js                       | ^9.17.0  | Linting          | ESLint JS rules                                   |
+| 17  | @typescript-eslint/eslint-plugin | ^8.18.0  | Linting          | TS ESLint plugin                                  |
+| 18  | @typescript-eslint/parser        | ^8.18.0  | Linting          | TS ESLint parser                                  |
+| 19  | prettier                         | ^3.4.2   | Formatting       | Code formatter                                    |
+| 20  | prettier-plugin-tailwindcss      | ^0.7.2   | Formatting       | Tailwind class sorting                            |
+| 21  | @vitejs/plugin-react             | ^4.3.4   | Build            | Vite React plugin                                 |
+| 22  | @tailwindcss/postcss             | ^4.1.18  | Build            | Tailwind PostCSS plugin                           |
+| 23  | autoprefixer                     | ^10.4.20 | Build            | CSS autoprefixer                                  |
+| 24  | postcss                          | ^8.4.49  | Build            | CSS processor                                     |
+| 25  | jsdom                            | ^25.0.1  | Testing          | DOM environment for tests                         |
+| 26  | @types/node                      | ^22.10.0 | Types            | Node.js type definitions                          |
+| 27  | @types/react                     | ^19.0.1  | Types            | React type definitions                            |
+| 28  | @types/react-dom                 | ^19.0.1  | Types            | React DOM type definitions                        |
+| 29  | @types/uuid                      | ^10.0.0  | Types            | UUID type definitions                             |
 
 ---
 

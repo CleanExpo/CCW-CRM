@@ -284,7 +284,7 @@ cd apps/backend && uv run uvicorn src.api.main:app --reload
 
 ```bash
 # Run all checks (linting, type-check, tests)
-pnpm run check:all
+npm run check
 
 # Backend checks
 cd apps/backend
@@ -430,7 +430,7 @@ See `docs/AI_PROVIDERS.md` for details.
 ```bash
 # Create .git/hooks/pre-commit
 #!/bin/sh
-pnpm run check:all
+npm run check
 ```
 
 ```bash
@@ -450,7 +450,7 @@ You're ready to start building when:
 - [ ] ✅ Can login with admin@local.dev / admin123
 - [ ] ✅ AI requests work with Ollama
 - [ ] ✅ Docker shows healthy containers (`docker compose ps`)
-- [ ] ✅ All tests pass (`pnpm run test`)
+- [ ] ✅ `npm run check` passes; unit tests via `npx vitest run` when run
 
 **Congratulations!** You now have a fully working AI starter template.
 

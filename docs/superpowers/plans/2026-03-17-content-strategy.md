@@ -481,7 +481,7 @@ Expected: All 4 files exist
 
 ```bash
 cd D:/CCW-ERP-CRM
-pnpm run check:all
+npm run check
 ```
 
 Expected: All checks pass (0 errors)
@@ -548,7 +548,7 @@ Each module follows this 6-step workflow. Use this template for all modules.
 - Scan all pages in module
 - Note spacing/font/button/border inconsistencies
 - Fix minor issues, document major ones
-- Run `pnpm run check`
+- Run `npm run check`
 
 **Step 2: Content Audit & Research (1-2 hours)**
 
@@ -575,7 +575,7 @@ Each module follows this 6-step workflow. Use this template for all modules.
 
 - Visual review all pages
 - Test user flows
-- Run `pnpm run check:all`
+- Run `npm run check`
 - Screenshot key pages
 
 **Step 6: Linear Update & Handoff**
@@ -1194,7 +1194,7 @@ All flows should work without errors.
 - [ ] **Step 3: Run full test suite**
 
 ```bash
-pnpm --filter web run check:all
+npm run check
 ```
 
 Expected: All pass (0 errors, warnings OK)

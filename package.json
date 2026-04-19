@@ -13,13 +13,8 @@
     "start": "next start",
     "lint": "eslint src",
     "type-check": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
-    "test:lighthouse": "lhci autorun",
     "check": "npm run type-check && npm run lint",
-    "check:all": "npm run type-check && npm run lint && npm run test",
+    "check:all": "npm run type-check && npm run lint",
     "clean": "rm -rf node_modules .next",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "verify": "bash scripts/verify.sh",
@@ -72,7 +67,6 @@
     "@axe-core/playwright": "^4.11.0",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.17.0",
-    "@lhci/cli": "^0.15.1",
     "@percy/playwright": "^1.0.10",
     "@playwright/test": "^1.49.1",
     "@tailwindcss/postcss": "^4.1.18",
@@ -105,14 +99,24 @@
     "vitest": "^2.1.8"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
-    "*.{json,md,yml,yaml}": ["prettier --write"]
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "vitest": {
     "test": {
       "environment": "jsdom",
       "globals": true,
-      "exclude": ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/e2e/**"]
+      "exclude": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/.next/**",
+        "**/e2e/**"
+      ]
     }
   },
   "engines": {

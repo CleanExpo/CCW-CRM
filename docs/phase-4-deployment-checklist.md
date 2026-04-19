@@ -66,7 +66,7 @@ Run full test suite before deployment:
 # From project root
 pnpm run type-check    # TypeScript validation
 pnpm run lint          # Code quality
-pnpm run test          # Unit tests
+npx vitest run         # Unit tests (Vitest; no npm script)
 
 # Backend tests
 cd apps/backend
