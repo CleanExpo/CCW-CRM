@@ -19,6 +19,29 @@ env:
 
 jobs:
   # ============================================================================
+  # Secret Scanner — UNI-1910
+  # Blocks PRs that introduce high-confidence secrets (API keys, tokens, etc.)
+  # ============================================================================
+  secret-scan:
+    name: Secret Scan (trufflehog)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history required for diff scanning
+
+      - name: Run TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: ./
+          # On PRs: scan only the diff between base and head
+          # On push: scan commits introduced by this push
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          extra_args: --only-verified --fail
+
+  # ============================================================================
   # Backend Tests
   # ============================================================================
   backend-tests:
