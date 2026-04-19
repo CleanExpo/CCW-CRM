@@ -1,7 +1,7 @@
 """Cin7 incoming webhook endpoints.
 
 Receives webhook events from Cin7 Omni (and future Core support).
-Verifies HMAC-SHA256 signatures, processes via WebhookService for
+Verifies HMAC-SHA256 signatures, persists via WebhookService for
 idempotency and retry, then emits events to the EventBus.
 """
 
@@ -13,8 +13,10 @@ from uuid import uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, Header, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.cin7_settings import Cin7Settings, get_cin7_settings
+from src.config.database import get_async_db
 from src.events.event_bus import get_event_bus
 from src.integrations.cin7.event_dispatcher import (
     CIN7_EVENT_CUSTOMER_CHANGED,
@@ -22,6 +24,7 @@ from src.integrations.cin7.event_dispatcher import (
     CIN7_EVENT_PRODUCT_CHANGED,
     CIN7_EVENT_SALES_CHANGED,
 )
+from src.services.webhook_service import WebhookService
 
 logger = structlog.get_logger(__name__)
 
@@ -88,13 +91,16 @@ def route_webhook_event(event_type: str) -> str | None:
 async def receive_cin7_webhook(
     request: Request,
     settings: Annotated[Cin7Settings, Depends(get_cin7_settings)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     x_cin7_signature: Annotated[str | None, Header(alias="X-Cin7-Signature")] = None,
 ) -> dict[str, Any]:
     """Receive an incoming webhook from Cin7.
 
     1. Read raw body and verify HMAC-SHA256 signature.
-    2. Parse JSON payload and extract event type.
-    3. Emit to EventBus for downstream handling.
+    2. Parse JSON payload and extract event type + event_id.
+    3. Persist via WebhookService (idempotency + retry).
+    4. On first receipt: emit to EventBus for downstream handling.
+    5. On duplicate: return 200 with status=duplicate (safe for Cin7 retry).
 
     Returns processing result dict.
     """
@@ -126,28 +132,48 @@ async def receive_cin7_webhook(
             "event_type": event_type,
         }
 
-    # Publish to EventBus
-    event_bus = get_event_bus()
-    await event_bus.publish(
-        internal_event,
-        {
-            "source": "webhook",
-            "event_type": event_type,
-            "event_id": event_id,
-            "payload": payload.get("data", payload),
-            "received_at": datetime.now(UTC).isoformat(),
-        },
+    # Capture loop-vars for the closure
+    _internal_event = internal_event
+    _event_type = event_type
+    _event_id = event_id
+
+    async def _dispatch(evt_payload: dict[str, Any], _db: AsyncSession) -> dict[str, Any]:
+        """Publish parsed event to the internal EventBus."""
+        event_bus = get_event_bus()
+        await event_bus.publish(
+            _internal_event,
+            {
+                "source": "webhook",
+                "event_type": _event_type,
+                "event_id": _event_id,
+                "payload": evt_payload.get("data", evt_payload),
+                "received_at": datetime.now(UTC).isoformat(),
+            },
+        )
+        return {"published_to": _internal_event}
+
+    # Process via WebhookService: persists event, deduplicates, retries on failure
+    webhook_service = WebhookService(db)
+    result = await webhook_service.process_webhook(
+        source="cin7",
+        event_type=event_type,
+        event_id=event_id,
+        payload=payload,
+        handler=_dispatch,
+        headers={"X-Cin7-Signature": x_cin7_signature or ""},
     )
 
+    result_status = result.get("status", "accepted")
     logger.info(
-        "cin7_webhook_received",
+        "cin7_webhook_processed",
         event_type=event_type,
         event_id=event_id,
         internal_event=internal_event,
+        result_status=result_status,
     )
 
     return {
-        "status": "accepted",
+        "status": result_status,
         "event_type": event_type,
         "event_id": event_id,
         "internal_event": internal_event,
@@ -165,6 +191,7 @@ async def get_cin7_webhook_status() -> dict[str, Any]:
         "status": "active",
         "supported_events": list(CIN7_WEBHOOK_EVENT_MAP.keys()),
         "signature_verification": "hmac-sha256",
+        "idempotency": "webhook_events table (source+event_id unique)",
         "checked_at": datetime.now(UTC).isoformat(),
     }
 
