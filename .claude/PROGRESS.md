@@ -144,6 +144,19 @@ Phill has granted blanket standing permission for every action in this repo that
 
 All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_FILES` + `GITHUB_CREATE_A_PULL_REQUEST` under the Path B standing authority granted 2026-04-18. Each PR body contains a Verification Checklist (Where / How / What to see / What NOT to see) per the `.claude/rules/verification-gate.md` rule.
 
+### UNI-1832 — Landed Cost (2026-04-19, Pi-CEO autonomous build)
+
+- [x] feat(warehouse): landed cost calculation per SKU — UNI-1832 (commit bffbd9b, READY-PR)
+  - GoodsReceivedNote: added freight_cost, customs_duty, handling_cost columns + total_landed_cost property
+  - GoodsReceivedNoteLine: added landed_cost_per_unit, cost_per_unit columns (computed at GRN receipt)
+  - ProductStockByLocation: added average_cost column (updated on GRN receipt)
+  - create_grn endpoint: value-proportional apportionment (landed_per_unit = total_landed x unit_cost / sum(unit_cost x qty))
+  - Backward compatible: all new fields optional with default 0
+  - Migration: supabase/migrations/20260419000001_add_landed_cost.sql
+  - Tests: TestLandedCost (test_purchase_orders.py, -k landed), TestGRNLandedCost (test_warehouse.py, -k landed_cost)
+  - Push/PR handoff: docs/UNI-1832-PR-HANDOFF.md
+  - BLOCKER: sandbox cannot reach origin; Phill runs: git pull && gh pr create (commands in handoff doc)
+
 ### Path B PRs — continued session (2026-04-18 context 2)
 
 | Ticket   | PR                                                    | Branch                                   | Notes                                        |
