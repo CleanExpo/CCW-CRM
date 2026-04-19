@@ -176,3 +176,46 @@ class EquipmentServiceHistory(Base):
 
     equipment = relationship("Equipment", back_populates="service_history")
     booking = relationship("WorkshopBooking", back_populates="service_history")
+
+
+class JobPartStatus(str, enum.Enum):
+    reserved = "reserved"    # stock deducted, job not yet complete
+    consumed = "consumed"    # job completed — deduction finalised
+    returned = "returned"    # part removed before job complete — stock restored
+
+
+class WorkshopJobPart(Base):
+    """Parts consumed or reserved for a workshop booking.
+
+    Stock is decremented when a part is added (reserved).
+    Status moves to 'consumed' on job completion, or back to 'returned' if removed.
+    """
+
+    __tablename__ = "workshop_job_parts"
+
+    id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
+    booking_id = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("workshop_bookings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    product_id = Column(
+        PostgresUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    quantity = Column(Integer, nullable=False, default=1)
+    location = Column(String(50), nullable=False, default="brisbane")
+    status = Column(Enum(JobPartStatus), nullable=False, default=JobPartStatus.reserved)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    booking = relationship("WorkshopBooking")

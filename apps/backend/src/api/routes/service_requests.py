@@ -7,13 +7,16 @@ from uuid import UUID
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
 from src.db.service_models import RequestType, ServiceRequest, ServiceStatus
 from src.db.workflow_models import SLAInstance, SLARule
+from src.db.workshop_models import JobPartStatus, WorkshopJobPart
+from src.db.inventory_models import ProductStockByLocation
+from src.db.demo_models import Product
 
 logger = structlog.get_logger(__name__)
 
@@ -322,3 +325,214 @@ async def get_service_request_sla(
         "has_breach": any(s["breached"] for s in sla_items),
         "slas": sla_items,
     }
+
+
+# ---------------------------------------------------------------------------
+# Parts usage ↔ inventory  — UNI-1827
+# ---------------------------------------------------------------------------
+
+
+class JobPartCreate(BaseModel):
+    product_id: UUID
+    quantity: int = Field(..., ge=1)
+    location: str = Field("brisbane", pattern="^(brisbane|sydney|melbourne)$")
+    notes: str | None = None
+
+
+class JobPartResponse(BaseModel):
+    id: UUID
+    booking_id: UUID
+    product_id: UUID
+    product_name: str | None = None
+    product_sku: str | None = None
+    quantity: int
+    location: str
+    status: str
+    notes: str | None
+    created_at: datetime
+
+
+async def _adjust_location_stock(
+    db: AsyncSession,
+    product_id: UUID,
+    location: str,
+    delta: int,
+) -> None:
+    """Apply a stock delta (negative = deduct) to ProductStockByLocation."""
+    result = await db.execute(
+        select(ProductStockByLocation).where(
+            and_(
+                ProductStockByLocation.product_id == product_id,
+                ProductStockByLocation.location == location,
+            )
+        )
+    )
+    stock = result.scalar_one_or_none()
+    if stock is None:
+        if delta > 0:
+            stock = ProductStockByLocation(
+                product_id=product_id, location=location, stock=delta, reserved=0
+            )
+            db.add(stock)
+        # If delta is negative and no record exists, nothing to deduct
+        return
+    stock.stock = max(0, stock.stock + delta)
+
+
+@router.get("/bookings/{booking_id}/parts", response_model=list[JobPartResponse])
+async def list_booking_parts(
+    booking_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> list[JobPartResponse]:
+    """Return all parts for a workshop booking."""
+    result = await db.execute(
+        select(WorkshopJobPart, Product)
+        .join(Product, WorkshopJobPart.product_id == Product.id)
+        .where(WorkshopJobPart.booking_id == booking_id)
+        .order_by(WorkshopJobPart.created_at)
+    )
+    rows = result.all()
+    return [
+        JobPartResponse(
+            id=part.id,
+            booking_id=part.booking_id,
+            product_id=part.product_id,
+            product_name=product.name,
+            product_sku=product.sku,
+            quantity=part.quantity,
+            location=part.location,
+            status=part.status.value,
+            notes=part.notes,
+            created_at=part.created_at,
+        )
+        for part, product in rows
+    ]
+
+
+@router.post("/bookings/{booking_id}/parts", response_model=JobPartResponse, status_code=201)
+async def add_booking_part(
+    booking_id: UUID,
+    payload: JobPartCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> JobPartResponse:
+    """Add a part to a workshop booking and immediately deduct stock."""
+    product_result = await db.execute(select(Product).where(Product.id == payload.product_id))
+    product = product_result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=400, detail="Product not found")
+
+    part = WorkshopJobPart(
+        booking_id=booking_id,
+        product_id=payload.product_id,
+        quantity=payload.quantity,
+        location=payload.location,
+        status=JobPartStatus.reserved,
+        notes=payload.notes,
+    )
+    db.add(part)
+
+    # Immediately deduct from inventory
+    await _adjust_location_stock(db, payload.product_id, payload.location, -payload.quantity)
+
+    await db.commit()
+    await db.refresh(part)
+
+    logger.info(
+        "Workshop part added — stock deducted",
+        booking_id=str(booking_id),
+        product_sku=product.sku,
+        qty=payload.quantity,
+        location=payload.location,
+    )
+
+    return JobPartResponse(
+        id=part.id,
+        booking_id=part.booking_id,
+        product_id=part.product_id,
+        product_name=product.name,
+        product_sku=product.sku,
+        quantity=part.quantity,
+        location=part.location,
+        status=part.status.value,
+        notes=part.notes,
+        created_at=part.created_at,
+    )
+
+
+@router.delete("/bookings/{booking_id}/parts/{part_id}", status_code=204)
+async def remove_booking_part(
+    booking_id: UUID,
+    part_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> None:
+    """Remove a reserved part from a booking and restore its stock."""
+    result = await db.execute(
+        select(WorkshopJobPart).where(
+            and_(WorkshopJobPart.id == part_id, WorkshopJobPart.booking_id == booking_id)
+        )
+    )
+    part = result.scalar_one_or_none()
+    if not part:
+        raise HTTPException(status_code=404, detail="Part not found on this booking")
+
+    if part.status == JobPartStatus.reserved:
+        # Restore stock only if not yet consumed
+        await _adjust_location_stock(db, part.product_id, part.location, part.quantity)
+
+    part.status = JobPartStatus.returned
+    await db.commit()
+    logger.info(
+        "Workshop part removed — stock restored",
+        booking_id=str(booking_id),
+        part_id=str(part_id),
+    )
+
+
+@router.post("/bookings/{booking_id}/complete-parts", response_model=dict)
+async def complete_booking_parts(
+    booking_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Mark all reserved parts as consumed when a job is completed.
+
+    Stock has already been deducted on add; this just finalises status.
+    """
+    result = await db.execute(
+        select(WorkshopJobPart).where(
+            and_(
+                WorkshopJobPart.booking_id == booking_id,
+                WorkshopJobPart.status == JobPartStatus.reserved,
+            )
+        )
+    )
+    parts = result.scalars().all()
+    for part in parts:
+        part.status = JobPartStatus.consumed
+    await db.commit()
+
+    logger.info("Workshop parts finalised as consumed", booking_id=str(booking_id), count=len(parts))
+    return {"booking_id": str(booking_id), "parts_consumed": len(parts)}
+
+
+@router.post("/bookings/{booking_id}/reopen-parts", response_model=dict)
+async def reopen_booking_parts(
+    booking_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict:
+    """Restore stock for consumed parts when a completed job is re-opened."""
+    result = await db.execute(
+        select(WorkshopJobPart).where(
+            and_(
+                WorkshopJobPart.booking_id == booking_id,
+                WorkshopJobPart.status == JobPartStatus.consumed,
+            )
+        )
+    )
+    parts = result.scalars().all()
+    for part in parts:
+        await _adjust_location_stock(db, part.product_id, part.location, part.quantity)
+        part.status = JobPartStatus.reserved
+    await db.commit()
+
+    logger.info("Workshop parts restored on reopen", booking_id=str(booking_id), count=len(parts))
+    return {"booking_id": str(booking_id), "parts_restored": len(parts)}
