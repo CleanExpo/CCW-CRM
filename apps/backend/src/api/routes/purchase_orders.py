@@ -21,6 +21,7 @@ from sqlalchemy.orm import selectinload
 
 from src.api.deps import get_current_user
 from src.config.database import get_async_db
+from src.db.approvals_models import ApprovalThreshold
 from src.db.demo_models import Product
 from src.db.inventory_models import (
     ProductStockByLocation,
@@ -28,6 +29,29 @@ from src.db.inventory_models import (
     PurchaseOrderItem,
     Supplier,
 )
+
+DEFAULT_THRESHOLD_SCOPE = "default"
+
+
+async def _resolve_po_status_for_total(
+    db: AsyncSession, total: Decimal, scope: str = DEFAULT_THRESHOLD_SCOPE
+) -> str:
+    """Return the status a new PO should receive based on threshold.
+
+    POs with total strictly below the configured threshold auto-approve.
+    POs at or above the threshold go to the approvals queue.
+    If no threshold is configured, the status stays "draft" (no
+    automation — preserves the pre-UNI-1874 behaviour).
+    """
+    result = await db.execute(
+        select(ApprovalThreshold).where(ApprovalThreshold.scope == scope)
+    )
+    threshold = result.scalar_one_or_none()
+
+    if threshold is None:
+        return "draft"
+
+    return "approved" if total < threshold.amount_aud else "pending_approval"
 
 router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"], dependencies=[Depends(get_current_user)])
 
@@ -234,6 +258,10 @@ async def create_purchase_order(
     # Calculate totals
     subtotal, tax, total = calculate_po_totals(po_data.items)
 
+    # Threshold-based approval automation (UNI-1874):
+    # Below threshold → auto-approve; at/above → pending_approval queue.
+    po_status = await _resolve_po_status_for_total(db, total)
+
     # Create PO
     po = PurchaseOrder(
         po_number=generate_po_number(db),
@@ -241,7 +269,7 @@ async def create_purchase_order(
         delivery_location=po_data.delivery_location,
         expected_delivery_date=po_data.expected_delivery_date,
         notes=po_data.notes,
-        status="draft",
+        status=po_status,
         subtotal=subtotal,
         tax=tax,
         total=total,

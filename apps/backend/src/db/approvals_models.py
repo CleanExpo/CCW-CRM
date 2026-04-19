@@ -6,11 +6,14 @@ import enum
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from decimal import Decimal
+
 from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
 )
@@ -119,3 +122,32 @@ class ApprovalStep(Base):
 
     def __repr__(self) -> str:
         return f"<ApprovalStep(approval_id={self.approval_id}, step={self.step_number}, status={self.status})>"
+
+
+class ApprovalThreshold(Base):
+    """Approval threshold configuration (per scope).
+
+    When a PO is created, its total is compared to the threshold for the
+    matching scope (typically "default" for a single global rule, or
+    per-role for richer setups). Total below threshold → auto-approve;
+    total at or above → pending_approval.
+    """
+
+    __tablename__ = "approval_thresholds"
+
+    id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    scope: str = Column(String(100), unique=True, nullable=False, index=True)
+    amount_aud: Decimal = Column(Numeric(12, 2), nullable=False)
+
+    created_at: datetime = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ApprovalThreshold(scope={self.scope}, amount_aud={self.amount_aud})>"
