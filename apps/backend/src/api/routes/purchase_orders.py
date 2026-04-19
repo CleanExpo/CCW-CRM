@@ -380,16 +380,15 @@ async def receive_goods(
     stock = stock_result.scalar_one_or_none()
 
     if stock:
-        stock.quantity_on_hand += receive_data.quantity_received
-        stock.quantity_available = stock.quantity_on_hand - stock.quantity_reserved
+        stock.stock += receive_data.quantity_received
+        # available is a computed @property (stock - reserved) — no column to update
     else:
         # Create stock record if doesn't exist
         stock = ProductStockByLocation(
             product_id=item.product_id,
             location=po.delivery_location,
-            quantity_on_hand=receive_data.quantity_received,
-            quantity_reserved=0,
-            quantity_available=receive_data.quantity_received,
+            stock=receive_data.quantity_received,
+            reserved=0,
         )
         db.add(stock)
 

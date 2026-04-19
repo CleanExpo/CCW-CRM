@@ -799,21 +799,31 @@ async def auto_reorder_inventory(
     from decimal import Decimal
 
     from src.db.demo_models import Product
-    from src.db.inventory_models import PurchaseOrder, PurchaseOrderItem, ReorderRule
+    from src.db.inventory_models import (
+        ProductStockByLocation,
+        PurchaseOrder,
+        PurchaseOrderItem,
+        ReorderRule,
+    )
 
     now = datetime.now(UTC)
     po_sequence_base = int(now.strftime("%Y%m%d"))
 
-    # 1. Find products below their reorder point
-    stmt = select(Product).where(
-        Product.reorder_point.isnot(None),
-        Product.stock < Product.reorder_point,
-        Product.is_active == True,  # noqa: E712
+    # 1. Find stock entries below their reorder point.
+    #    reorder_point lives on ProductStockByLocation, not Product.
+    stmt = (
+        select(ProductStockByLocation, Product)
+        .join(Product, ProductStockByLocation.product_id == Product.id)
+        .where(
+            ProductStockByLocation.reorder_point.isnot(None),
+            ProductStockByLocation.stock < ProductStockByLocation.reorder_point,
+            Product.is_active == True,  # noqa: E712
+        )
     )
     result = await db.execute(stmt)
-    low_stock_products = result.scalars().all()
+    low_stock_entries = result.all()  # list of (ProductStockByLocation, Product) tuples
 
-    if not low_stock_products:
+    if not low_stock_entries:
         logger.info("auto_reorder_cron: no products below reorder point")
         return {
             "status": "success",
@@ -822,16 +832,17 @@ async def auto_reorder_inventory(
             "products_checked": 0,
         }
 
-    logger.info("auto_reorder_cron: found low-stock products", count=len(low_stock_products))
+    logger.info("auto_reorder_cron: found low-stock products", count=len(low_stock_entries))
 
     created_pos: list[dict] = []
     skipped: list[dict] = []
 
-    for i, product in enumerate(low_stock_products):
-        # 2. Look up enabled ReorderRule for this product
+    for i, (stock_entry, product) in enumerate(low_stock_entries):
+        # 2. Look up enabled ReorderRule for this product + location
         rule_result = await db.execute(
             select(ReorderRule).where(
                 ReorderRule.product_id == product.id,
+                ReorderRule.location == stock_entry.location,
                 ReorderRule.is_enabled == True,  # noqa: E712
             )
         )
@@ -842,8 +853,8 @@ async def auto_reorder_inventory(
             continue
 
         # 3. Determine order quantity — target: bring stock up to 2× reorder_point
-        reorder_point = product.reorder_point or 0
-        qty_to_order = max(1, (reorder_point * 2) - (product.stock or 0))
+        reorder_point = stock_entry.reorder_point or 0
+        qty_to_order = max(1, (reorder_point * 2) - (stock_entry.stock or 0))
 
         # 4. Create draft PO
         po_number = f"AUTO-PO-{po_sequence_base}-{i + 1:03d}"
@@ -872,7 +883,7 @@ async def auto_reorder_inventory(
             subtotal=line_subtotal,
             tax=gst,
             total=po_total,
-            notes=f"Auto-created by reorder cron — {product.sku} stock={product.stock} reorder_point={product.reorder_point}",
+            notes=f"Auto-created by reorder cron — {product.sku} stock={stock_entry.stock} reorder_point={stock_entry.reorder_point}",
         )
         db.add(po)
         await db.flush()
@@ -891,8 +902,8 @@ async def auto_reorder_inventory(
             "po_number": po_number,
             "sku": product.sku,
             "product_name": product.name,
-            "current_stock": product.stock,
-            "reorder_point": product.reorder_point,
+            "current_stock": stock_entry.stock,
+            "reorder_point": stock_entry.reorder_point,
             "qty_ordered": qty_to_order,
             "supplier_id": str(rule.supplier_id),
             "total": float(po_total),
@@ -915,8 +926,8 @@ async def auto_reorder_inventory(
 
     return {
         "status": "success",
-        "message": f"Created {len(created_pos)} draft POs for {len(low_stock_products)} low-stock products",
-        "products_checked": len(low_stock_products),
+        "message": f"Created {len(created_pos)} draft POs for {len(low_stock_entries)} low-stock products",
+        "products_checked": len(low_stock_entries),
         "pos_created": len(created_pos),
         "skipped": len(skipped),
         "purchase_orders": created_pos,
