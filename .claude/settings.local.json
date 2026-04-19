@@ -40,7 +40,39 @@
       "mcp__plugin_supabase_supabase__execute_sql",
       "mcp__plugin_supabase_supabase__get_project_url",
       "Skill(blog-brief)",
-      "Skill(blog-brief:*)"
+      "Skill(blog-brief:*)",
+      "Bash(sleep *)",
+      "Bash(mv *)",
+      "Bash(cp *)",
+      "Bash(nohup *)",
+      "Bash(bg)",
+      "Bash(bg *)",
+      "Bash(jobs)",
+      "Bash(jobs *)",
+      "Bash(time *)",
+      "Bash(wait)",
+      "Bash(wait *)",
+      "Bash(rm *)",
+      "Bash(touch *)",
+      "Bash(uv *)",
+      "mcp__pi-ceo__linear_list_issues",
+      "mcp__pi-ceo__linear_search_issues",
+      "mcp__pi-ceo__linear_update_issue",
+      "mcp__pi-ceo__linear_create_issue",
+      "mcp__pi-ceo__linear_status",
+      "mcp__pi-ceo__linear_sync_board"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f \".claude/.autonomous-mode\" ]; then echo \"{\\\"decision\\\": \\\"block\\\", \\\"reason\\\": \\\"Autonomous mode active — pull next Linear ticket via mcp__pi-ceo__linear_list_issues and continue. Only exit if queue is empty.\\\"}\"; fi'"
+          }
+        ]
+      }
     ]
   }
 }
