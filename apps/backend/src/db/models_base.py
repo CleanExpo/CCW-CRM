@@ -88,6 +88,7 @@ class User(Base):
     # compatible with cascade="all, delete-orphan".  The previous lazy="dynamic" caused
     # SQLAlchemy 2.0 to raise InvalidRequestError on configure_mappers() (first DB query),
     # which made every login request return HTTP 500.
+    # Deploy kick: 2026-04-19 — Railway was stuck on old image, forced rebuild via this commit.
     prds = relationship("PRD", back_populates="user", cascade="all, delete-orphan", lazy="select")
 
     def __repr__(self) -> str:
