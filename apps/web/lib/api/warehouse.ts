@@ -83,6 +83,44 @@ export interface PickListResponse {
   total_lines: number;
 }
 
+export interface PackingSlipLineItem {
+  product_id: string;
+  sku: string;
+  description: string;
+  qty: number;
+  unit_price: string;
+  line_total: string;
+}
+
+export interface PackingSlipCustomer {
+  company_name: string;
+  contact_name: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  postcode: string | null;
+}
+
+export interface PackingSlipOrder {
+  order_id: string;
+  order_number: string;
+  order_date: string;
+  order_total: string;
+  customer: PackingSlipCustomer;
+  line_items: PackingSlipLineItem[];
+}
+
+export interface PackingSlipResponse {
+  id: string;
+  slip_number: string;
+  created_at: string;
+  orders: PackingSlipOrder[];
+  total_orders: number;
+  total_items: number;
+}
+
 export const warehouseApi = {
   /** Get live warehouse operations feed (receiving, pick/pack, returns, AI guidance) */
   getOps: (): Promise<WarehouseOpsPayload> => apiClient.get('/api/warehouse/ops'),
@@ -94,4 +132,12 @@ export const warehouseApi = {
   /** Get a previously generated pick list by ID */
   getPickList: (id: string): Promise<PickListResponse> =>
     apiClient.get(`/api/warehouse/pick-lists/${id}`),
+
+  /** Create a packing slip for the given order IDs */
+  createPackingSlip: (order_ids: string[]): Promise<PackingSlipResponse> =>
+    apiClient.post('/api/warehouse/packing-slips', { order_ids }),
+
+  /** Get a previously generated packing slip by ID */
+  getPackingSlip: (id: string): Promise<PackingSlipResponse> =>
+    apiClient.get(`/api/warehouse/packing-slips/${id}`),
 };

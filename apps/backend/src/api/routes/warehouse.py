@@ -28,15 +28,22 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/warehouse", tags=["Warehouse"])
 
 # ------------------------------------------------------------------------------
-# In-process pick-list store (demo; no extra migration required)
+# In-process pick-list / packing-slip stores (demo; no extra migration required)
 # ------------------------------------------------------------------------------
 _pick_lists: dict[str, dict] = {}
+_packing_slips: dict[str, dict] = {}
 
 
 def _generate_pick_list_number() -> str:
     date_str = datetime.now(UTC).strftime("%Y%m%d")
     seq = int(time.time() % 100000)
     return f"PL-{date_str}-{seq:05d}"
+
+
+def _generate_packing_slip_number() -> str:
+    date_str = datetime.now(UTC).strftime("%Y%m%d")
+    seq = int(time.time() % 100000)
+    return f"PS-{date_str}-{seq:05d}"
 
 
 # ------------------------------------------------------------------------------
@@ -73,6 +80,63 @@ class PickListResponse(BaseModel):
     customer_names: list[str]
     line_items: list[PickListLineItem]
     total_lines: int
+
+
+# ------------------------------------------------------------------------------
+# Packing slip Pydantic models
+# ------------------------------------------------------------------------------
+
+
+class PackingSlipCreate(BaseModel):
+    """Request body for creating a packing slip."""
+
+    order_ids: list[UUID]
+
+
+class PackingSlipLineItem(BaseModel):
+    """A single line on a packing slip."""
+
+    product_id: str
+    sku: str
+    description: str
+    qty: int
+    unit_price: str
+    line_total: str
+
+
+class PackingSlipCustomer(BaseModel):
+    """Customer shipping details on a packing slip."""
+
+    company_name: str
+    contact_name: str
+    email: str
+    phone: str | None
+    address: str | None
+    city: str | None
+    state: str | None
+    postcode: str | None
+
+
+class PackingSlipOrder(BaseModel):
+    """One order section within a packing slip."""
+
+    order_id: str
+    order_number: str
+    order_date: str
+    order_total: str
+    customer: PackingSlipCustomer
+    line_items: list[PackingSlipLineItem]
+
+
+class PackingSlipResponse(BaseModel):
+    """Packing slip response shape."""
+
+    id: str
+    slip_number: str
+    created_at: str
+    orders: list[PackingSlipOrder]
+    total_orders: int
+    total_items: int
 
 
 @router.get("/ops")
@@ -340,6 +404,156 @@ async def get_pick_list(pick_list_id: str) -> PickListResponse:
     if not pick_list:
         raise HTTPException(status_code=404, detail="Pick list not found")
     return PickListResponse(**pick_list)
+
+
+# ------------------------------------------------------------------------------
+# Packing Slip endpoints
+# ------------------------------------------------------------------------------
+
+
+@router.post(
+    "/packing-slips",
+    response_model=PackingSlipResponse,
+    status_code=201,
+    dependencies=[Depends(get_current_user)],
+)
+async def create_packing_slip(
+    body: PackingSlipCreate,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> PackingSlipResponse:
+    """Generate a packing slip for the given order IDs.
+
+    Queries orders, their line items, product SKUs, and customer shipping
+    details to produce a structured packing slip for despatch verification.
+    """
+    if not body.order_ids:
+        raise HTTPException(status_code=400, detail="At least one order_id is required")
+
+    str_ids = [str(oid) for oid in body.order_ids]
+
+    # Load orders
+    orders_result = await db.execute(
+        select(Order).where(Order.id.in_(body.order_ids))
+    )
+    orders = {str(o.id): o for o in orders_result.scalars().all()}
+
+    missing = [oid for oid in str_ids if oid not in orders]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Orders not found: {missing}")
+
+    # Load customers
+    customer_ids = list({o.customer_id for o in orders.values()})
+    customers_result = await db.execute(
+        select(Customer).where(Customer.id.in_(customer_ids))
+    )
+    customers = {str(c.id): c for c in customers_result.scalars().all()}
+
+    # Load order items
+    items_result = await db.execute(
+        select(OrderItem).where(OrderItem.order_id.in_(body.order_ids))
+    )
+    all_items = items_result.scalars().all()
+
+    if not all_items:
+        raise HTTPException(
+            status_code=400,
+            detail="No line items found for the selected orders",
+        )
+
+    # Load products
+    product_ids = list({item.product_id for item in all_items})
+    products_result = await db.execute(
+        select(Product).where(Product.id.in_(product_ids))
+    )
+    products = {str(p.id): p for p in products_result.scalars().all()}
+
+    # Group items by order (preserve order of str_ids for deterministic output)
+    items_by_order: dict[str, list] = {oid: [] for oid in str_ids}
+    for item in all_items:
+        oid = str(item.order_id)
+        if oid in items_by_order:
+            items_by_order[oid].append(item)
+
+    # Build per-order sections
+    order_sections: list[PackingSlipOrder] = []
+    total_items = 0
+    for oid in str_ids:
+        order = orders[oid]
+        customer = customers.get(str(order.customer_id))
+
+        line_items: list[PackingSlipLineItem] = []
+        for item in items_by_order[oid]:
+            product = products.get(str(item.product_id))
+            if not product:
+                continue
+            line_items.append(
+                PackingSlipLineItem(
+                    product_id=str(item.product_id),
+                    sku=product.sku,
+                    description=product.name,
+                    qty=item.quantity,
+                    unit_price=str(item.unit_price),
+                    line_total=str(item.line_total),
+                )
+            )
+            total_items += item.quantity
+
+        order_sections.append(
+            PackingSlipOrder(
+                order_id=oid,
+                order_number=order.order_number,
+                order_date=order.order_date.isoformat(),
+                order_total=str(order.total),
+                customer=PackingSlipCustomer(
+                    company_name=customer.company_name if customer else "Unknown",
+                    contact_name=customer.contact_name if customer else "",
+                    email=customer.email if customer else "",
+                    phone=customer.phone if customer else None,
+                    address=customer.address if customer else None,
+                    city=customer.city if customer else None,
+                    state=customer.state if customer else None,
+                    postcode=customer.postcode if customer else None,
+                ),
+                line_items=line_items,
+            )
+        )
+
+    slip_id = str(_uuid.uuid4())
+    slip_number = _generate_packing_slip_number()
+    created_at = datetime.now(UTC).isoformat()
+
+    slip: dict = {
+        "id": slip_id,
+        "slip_number": slip_number,
+        "created_at": created_at,
+        "orders": [o.model_dump() for o in order_sections],
+        "total_orders": len(order_sections),
+        "total_items": total_items,
+    }
+    _packing_slips[slip_id] = slip
+
+    logger.info(
+        "Packing slip created",
+        slip_id=slip_id,
+        slip_number=slip_number,
+        order_count=len(order_sections),
+        total_items=total_items,
+    )
+
+    return PackingSlipResponse(**slip)
+
+
+@router.get(
+    "/packing-slips/{slip_id}",
+    response_model=PackingSlipResponse,
+    dependencies=[Depends(get_current_user)],
+)
+async def get_packing_slip(slip_id: str) -> PackingSlipResponse:
+    """Retrieve a previously generated packing slip by ID."""
+    slip = _packing_slips.get(slip_id)
+    if not slip:
+        raise HTTPException(status_code=404, detail="Packing slip not found")
+    return PackingSlipResponse(**slip)
 
 
 # ------------------------------------------------------------------------------
