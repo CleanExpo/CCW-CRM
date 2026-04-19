@@ -1,7 +1,7 @@
 # Progress
 
 **Phase**: CCW Demo Sprint — Day 1 of 2 (demo 2026-04-20)
-**Last Updated**: 2026-04-18
+**Last Updated**: 2026-04-19
 **Branch**: `main` (direct short-lived fix branches off origin/main per ticket)
 **Last merged PR**: #134 `fix(backend): resolve login HTTP 500 — drop lazy=dynamic on User.prds` — squash-merged
 
@@ -62,16 +62,17 @@ Phill has granted blanket standing permission for every action in this repo that
 | Task                                              | Status         | Linear   | Est  |
 | ------------------------------------------------- | -------------- | -------- | ---- |
 | Route User import via models_base                 | DONE           | UNI-1944 | —    |
-| POS location/terminal/staff 500s                  | PR-OPEN #106   | UNI-1777 | ~2h  |
-| Customer detail blank for org-isolated records    | PR-OPEN #107   | UNI-1785 | ~1h  |
-| Dashboard data stalls after rapid navigation     | PR-OPEN #107   | UNI-1786 | ~1h  |
-| SSE badge cycling Error↔Live every 25s            | PR-OPEN #107   | UNI-1782 | ~1h  |
-| Orders page search/filter                         | PR-OPEN #108   | UNI-1781 | ~1h  |
+| POS location/terminal/staff 500s                  | MERGED #106    | UNI-1777 | ~2h  |
+| Customer detail blank for org-isolated records    | MERGED #107    | UNI-1785 | ~1h  |
+| Dashboard data stalls after rapid navigation      | MERGED #107    | UNI-1786 | ~1h  |
+| SSE badge cycling Error↔Live every 25s            | MERGED #107    | UNI-1782 | ~1h  |
+| Orders page search/filter                         | MERGED #108    | UNI-1781 | ~1h  |
 | Backend 500 storm (demo paths only)               | MERGED #109    | UNI-1778 | ~1h  |
-| Login HTTP 500 (lazy=dynamic ORM bug)             | MERGED #134    | —        | —    |
+| Login HTTP 500 (lazy=dynamic mapper crash)        | MERGED #134    | —        | —    |
 | RLS scoping doc committed on main                 | DONE (defer B) | UNI-1749 | ~2h  |
 | Render OOM scoping doc committed on main          | DONE (env B)   | UNI-1758 | ~1h  |
 | Ruff hygiene (tpar.py / bank_feed / eftpos)       | MERGED #114    | —        | ~15m |
+| Prod smoke test (login + protected routes)        | BLOCKED        | —        | —    |
 
 ## Previously Completed (kept for traceability)
 
@@ -92,6 +93,16 @@ Phill has granted blanket standing permission for every action in this repo that
 | Webhook stubs → structlog + httpx      | DONE   | —        |
 | Ruff I001 import sort supervisor_agent | DONE   | —        |
 
+## Session 2026-04-19 (context window 3 — sprint close + Railway diagnosis)
+
+- [x] Confirmed PRs #106, #107, #108, #109, #114, #130, #131, #132, #133, #134 all MERGED — sprint Day 1 + Day 2 work fully landed on `main`
+- [x] Diagnosed Railway not deploying PR #134 fix despite 12+ hours elapsed — `/health` returns 200 (backend up) but `/api/auth/login` still returns 500 (old container with `lazy=dynamic` still running)
+- [x] Confirmed fix IS on GitHub `main`: `models_base.py` blob sha `2053749039` has `lazy="select"` — GitHub side correct
+- [x] Pushed deploy-kick commit `941ec1c` to `apps/backend/src/db/models_base.py` to re-trigger Railway GitHub webhook — comment-only change, no logic diff
+- [x] Verified Vercel prod deployment is current (`bb6c0ce` → `941ec1c`) and `NEXT_PUBLIC_BACKEND_URL=https://ccw-backend-production.up.railway.app` is set — frontend side correct
+- [x] Confirmed login proxy `apps/web/app/api/auth/login/route.ts` is correct — no middleware conflicts, no route collisions
+- [x] **BLOCKER**: Railway webhook appears disconnected; redeploy requires Phill to manually trigger from railway.com dashboard
+
 ## Completed This Session (2026-04-18)
 
 - [x] fix(backend): route User import via models_base — UNI-1944 (PR #105, squash-merged commit `24926577`)
@@ -104,12 +115,20 @@ Phill has granted blanket standing permission for every action in this repo that
 - [x] fix(web): dashboard stale-metric race on rapid nav — UNI-1786 (isMounted guard on SSE-triggered refetch)
 - [x] fix(web): SSE badge no longer cycles Error↔Live — UNI-1782 (10s grace timer before surfacing 'error'; resets on reconnect)
 - [x] fix(backend,web): restore POS location/terminal/staff endpoints — UNI-1777 (ready-to-PR, awaiting Phill's PowerShell push)
+  - Expanded GET /locations, GET /sales-staff, GET /terminals to return full field set (id, merchant_id, is_active, timestamps)
+  - Added GET /staff alias → _list_sales_staff_impl so frontend path resolves
+  - Added POST/PUT/DELETE /locations + POST/PUT/DELETE /staff (mirrors terminal CRUD pattern)
+  - Extracted `_ensure_location_exists` helper to validate FK refs
+  - Frontend .data unwrap fixed on pos/locations, pos/staff, pos/terminal pages (apiClient.get<T[]> not <{data: T[]}>)
+  - TerminalDialog edit mode now preserves merchant_id (was resetting to '')
+  - pos/types.ts expanded with merchant_id, last_ping_at, timestamps, address/postal_code/country/timezone, phone, can_sell_at_locations
+  - Smoke tests: AST parse OK, py_compile OK, tsc --noEmit OK on touched files (pre-existing layout.tsx/stream errors unrelated)
 - [x] Drafted follow-up ruff ticket body for Phill to file in Linear
-- [x] fix(backend): structlog + correlation ID on 500s, resilient dashboard aggregation — UNI-1778 (PR #109, squash-merged)
-- [x] fix(backend): login HTTP 500 — drop lazy=dynamic on User.prds — (PR #134, squash-merged 2026-04-19)
-  - Root cause: SQLAlchemy 2.0 raises `InvalidRequestError` from `configure_mappers()` when `cascade="all, delete-orphan"` + `lazy="dynamic"` co-exist on a relationship. `configure_mappers()` runs on the first `db.execute()` inside the login handler, so every login attempt (even non-existent email which should return 401) crashed with 500.
-  - Fix: `models_base.py` User.prds — changed `lazy="dynamic"` → `lazy="select"` (SQLAlchemy 2.0-compatible). `back_populates="prds"` preserved.
-  - Railway backend will redeploy automatically on merge to main.
+- [x] fix(backend): structlog + correlation ID on 500s, resilient dashboard aggregation — UNI-1778 (READY-PR, handoff at `docs/UNI-1778-PR-HANDOFF.md`)
+  - `exceptions.py`: swapped `print()` for `structlog.get_logger()` across all 4 handlers; every 4xx/5xx now includes a 12-char hex `request_id` correlation ID in both the log row and the JSON body
+  - `schemas.py`: added optional `request_id` field to `ErrorResponse`
+  - `demo_dashboard.py`: `/aggregated` now uses `asyncio.gather(return_exceptions=True)` + per-section fallback. A single chart query failing no longer blanks the dashboard.
+  - Smoke tests: py_compile OK across 3 files, AST parse OK, byte checks clean (0 lone LF, 0 nulls, last byte 10)
 
 ### Path B PRs opened this session (autonomous)
 
@@ -122,20 +141,49 @@ Phill has granted blanket standing permission for every action in this repo that
 | UNI-1781                     | https://github.com/CleanExpo/CCW-CRM/pull/108       | `fix/uni-1781-orders-search-filter`    | `06effb5`   | `fb1b133` |
 | UNI-1778                     | https://github.com/CleanExpo/CCW-CRM/pull/109       | `fix/uni-1778-backend-500-storm`       | `cab74bb`   | `fb1b133` |
 | Ruff hygiene (new ticket)    | https://github.com/CleanExpo/CCW-CRM/pull/114       | `fix/ruff-hygiene-tpar-bank-eftpos`    | `b71824b`   | `9e32fbe` |
-| LOGIN-500                    | https://github.com/CleanExpo/CCW-CRM/pull/134       | `fix/login-500-dynamic-relationship`   | `a590658`   | main      |
 
-All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_FILES` + `GITHUB_CREATE_A_PULL_REQUEST` under the Path B standing authority granted 2026-04-18.
+All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_FILES` + `GITHUB_CREATE_A_PULL_REQUEST` under the Path B standing authority granted 2026-04-18. Each PR body contains a Verification Checklist (Where / How / What to see / What NOT to see) per the `.claude/rules/verification-gate.md` rule.
 
 ### Path B PRs — continued session (2026-04-18 context 2)
 
 | Ticket   | PR                                                    | Branch                                   | Notes                                        |
 | -------- | ----------------------------------------------------- | ---------------------------------------- | -------------------------------------------- |
 | UNI-1826 | https://github.com/CleanExpo/CCW-CRM/pull/130         | `feat/uni-1826-workshop-acl-warranty`    | ACL s.54 min warranty validator — MERGED     |
+| UNI-LOGIN-500 | https://github.com/CleanExpo/CCW-CRM/pull/134    | `fix/login-500-dynamic-relationship`     | Login HTTP 500 fix — MERGED (2026-04-18)     |
 | UNI-1861 | https://github.com/CleanExpo/CCW-CRM/pull/131         | `feat/uni-1861-rate-limit-middleware`    | SlowAPIMiddleware + rate limit tests — MERGED|
 | UNI-1830 | https://github.com/CleanExpo/CCW-CRM/pull/132         | `feat/uni-1830-cin7-po-invoice-events`  | Cin7 PO+invoice polling events — MERGED      |
 | UNI-1821 + UNI-1831 | https://github.com/CleanExpo/CCW-CRM/pull/133 | `feat/uni-1821-1831-customer-profile` | Per-customer payment terms + B2B/B2C type — MERGED |
 | UNI-1834 | https://github.com/CleanExpo/CCW-CRM/pull/120 | `pidev/auto-a26e1b79` | AP ageing report (Pi-CEO build) — MERGED |
 | — | https://github.com/CleanExpo/CCW-CRM/pull/123 | `pidev/auto-5eeb9f3b` | Pi-CEO UNI-1821 duplicate — CLOSED (superseded by #133) |
+
+- [x] fix(backend): login HTTP 500 — drop lazy=dynamic on User.prds — UNI-LOGIN-500 (PR #134, squash-merged 2026-04-19)
+  - Root cause: SQLAlchemy 2.0 raises `InvalidRequestError` from `configure_mappers()` when `cascade="all, delete-orphan"` + `lazy="dynamic"` co-exist on a relationship. `configure_mappers()` runs on the first `db.execute()` inside the login handler, so every login attempt (even non-existent email which should return 401) crashed with 500.
+  - Fix: `models_base.py` User.prds — changed `lazy="dynamic"` → `lazy="select"` (SQLAlchemy 2.0-compatible). `back_populates="prds"` preserved.
+  - Railway backend will redeploy automatically; smoke test login once Railway shows green.
+- [x] feat(backend): ACL s.54 warranty validation on workshop equipment — UNI-1826 (PR #130, squash-merged)
+  - `EquipmentCreate` + `EquipmentUpdate`: `model_validator(mode="after")` enforces ≥365 days warranty_expiry after purchase_date
+- [x] feat(backend): activate API rate limiting via SlowAPIMiddleware — UNI-1861 (PR #131, squash-merged)
+  - SlowAPIMiddleware registered in `main.py` (was missing — silenced default_limits)
+  - `Limiter` now uses `settings.rate_limit_per_minute` for default_limits
+  - Tests: 3 classes covering config, 200/429 boundary + Retry-After, main app wiring
+- [x] feat(cin7): PO and invoice events in polling handler — UNI-1830 (PR #132, squash-merged)
+  - `detect_purchase_order_changes()`: dual-event logic (purchase_order + invoice on Billed/PartlyBilled)
+  - `poll_purchase_orders()`: Core-only, modified_since watermark, Omni skip
+  - `dispatch_change_events()`: routes purchase_order + invoice entity types
+  - `Cin7Connection.last_purchase_order_sync_at` watermark column + SQL migration
+  - 40+ test assertions in `test_cin7_po_invoice_events.py`
+  - Linear MCP 401 — mark UNI-1830 Done manually in Linear UI
+- [x] feat(backend): per-customer payment terms + B2B/B2C customer type — UNI-1821 + UNI-1831 (PR #133, squash-merged)
+  - Extension table pattern: `customer_profile` (1:1 FK to `customers`) avoids touching locked `demo_models.py`
+  - `CustomerType` enum + `CustomerProfile` SQLAlchemy model in `crm_models.py`
+  - `CustomerBase`/`CustomerUpdate` schemas: `customer_type` (default `"B2B"`) + `payment_terms_days` (default 30)
+  - `_merge_profile()` / `_upsert_profile()` / `_get_profile()` helpers in `routes/customers.py`
+  - All 4 CRUD routes (list/get/create/update) read/write profile via outerjoin or upsert
+  - `XeroClient.create_contact()`: injects `PaymentTerms.Sales` block when `payment_terms_days` provided
+  - `XeroCustomerSync.sync_customer_to_xero()`: fetches profile, passes payment terms to Xero
+  - `calculate_invoice_tax()`: `customer_type` → `is_b2b` flag wired through (UNI-1831)
+  - 40+ test assertions in `test_customers_payment_terms.py` (7 test classes)
+  - Linear MCP 401 — mark UNI-1821 and UNI-1831 Done manually in Linear UI
 
 **DB MIGRATION REQUIRED (UNI-1830)**: Run `apps/backend/migrations/add_cin7_po_watermark.sql` in Supabase SQL Editor. Safe to re-run (IF NOT EXISTS guard).
 
@@ -157,7 +205,7 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
 - [x] Bugs logged to Linear: UNI-1783, UNI-1784, UNI-1787
 - [x] PR #67 merged to ai-updates (POS $NaN, logout redirect, connecting badge, settings redirect)
 - [x] fix(backend): html.escape() validator on CustomerBase + CustomerUpdate — UNI-1783
-- [x] feat(backend): GET/POST /api/integrations/anthropic/* — UNI-1776
+- [x] feat(backend): GET/POST /api/integrations/anthropic/\* — UNI-1776
 - [x] feat(web): Anthropic API key input in Settings → Integrations — UNI-1776
 - [x] feat(onboarding): Claude AI step (step 4) in setup wizard — UNI-1776
 - [x] fix(web): Customer Discard button now calls form.reset() — UNI-1784
@@ -172,21 +220,26 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
 | Route `User` via `models_base`, keep schema-locked  | `demo_models.py` is locked; `User` lives in `models_base.py:58`     | 2026-04-18 |
 | Merge PR #105 despite pre-existing red ruff         | Failures predate UNI-1944; blocking would mask fix; filed new ticket | 2026-04-18 |
 | Fresh short-lived fix branches off origin/main      | Sandbox is append-only on `.git`; Phill runs git locally in PS      | 2026-04-18 |
-| lazy="dynamic" → lazy="select" on User.prds        | SA 2.0 incompatibility between dynamic + delete-orphan cascade      | 2026-04-19 |
 | html.escape() not htmlspecialchars                  | stdlib, no deps, escapes all 5 HTML special chars                   | 2026-04-13 |
 | Anthropic key stored in IntegrationCredential table | Consistent with SendGrid pattern                                    | 2026-04-13 |
 | POS mobile = Tabs not scroll                        | Tabs give instant access without scroll; desktop grid unchanged     | 2026-04-13 |
 | isMounted plain object (not useRef)                 | useRef not imported; plain object works identically in this pattern | 2026-04-13 |
+| lazy="dynamic" → lazy="select" on User.prds         | SA 2.0 incompatibility: dynamic+delete-orphan = InvalidRequestError  | 2026-04-19 |
 
 ## Blockers (User Action Required)
 
-1. **Prod smoke test — login + protected modules** — PR #134 (login 500 fix) merged and Railway will redeploy. Once Railway shows green (typically 2–3 min), sign in to `ccw-crm-web.vercel.app` and navigate Customers → Quotes → Orders → Products to confirm data renders.
+1. **⚠️ Railway not redeploying — manual trigger required** — The login HTTP 500 fix (PR #134, `lazy="dynamic"` → `lazy="select"`) is on GitHub `main` (commits `0c059a4` → `bb6c0ce` → `941ec1c`) but Railway is still serving the old container 12+ hours after merge. A deploy-kick commit was pushed (`941ec1c`, 2026-04-19) but Railway's GitHub webhook appears disconnected.
+   - **To fix**: Log into [railway.com](https://railway.com/dashboard) → CCW project → backend service → click **"Deploy"** (or **"Redeploy"**) to force rebuild from `main`.
+   - **Alternatively**: Reconnect the GitHub integration under Service Settings → Source → GitHub Repo → re-save.
+   - **After deploy lands** (~3 min): test login at `https://ccw-backend-production.up.railway.app/api/auth/login` with `{"email":"admin@demo.com","password":"demo123"}` — expect 200 JSON with `access_token`.
+   - **Then run smoke test**: sign in at `ccw-crm-web.vercel.app` and verify Customers → Quotes → Orders → Products each render with data.
 
-2. **PRs #106, #107, #108 still open** — these sprint PRs (POS endpoints, resilience fixes, orders search/filter) are ready to merge. No blockers remain on the code side.
-3. **File ruff follow-up ticket in Linear** — paste ticket body from 2026-04-18 session (Linear MCP returns 401; must be manual).
-4. **Anthropic API key** — CCW staff must enter their sk-ant- key via Settings → Integrations or onboarding wizard before AI features activate.
-5. **UNI-1749 RLS scope decision** — defer to post-demo.
-6. **Supabase MCP 401** — Phill can re-auth the MCP or run the security advisor manually in the Supabase console.
+2. **Prod smoke test — protected modules** — Blocked by Railway not deploying (see above). Once Railway is redeployed, open `ccw-crm-web.vercel.app`, sign in as `admin@demo.com / demo123`, navigate to Customers → Quotes → Orders → Products and confirm each table renders with data.
+
+3. **File ruff follow-up ticket in Linear** — paste ticket body from 2026-04-18 session (Linear MCP returns 401; must be manual). See "Ruff hygiene" row in Active Tasks.
+4. **Anthropic API key** — CCW staff must enter their sk-ant- key via Settings → Integrations or onboarding wizard before AI features activate
+5. **UNI-1749 RLS scope decision** — Claude wrote `docs/UNI-1749-RLS-SCOPING.md` cataloguing 28 permissive `USING (true)` policies across 5 migration files. Per the 2026-03-31 architectural note, CCW is single-tenant and the backend bypasses RLS via the `postgres` role. Recommendation: do NOT ship Option B/C/D before the demo. Phill must decide: (a) accept scoping doc and defer to post-demo, (b) greenlight Option B (`auth.uid() IS NOT NULL`) with canary, or (c) greenlight Option C with JWT-claim wiring (high risk inside demo window).
+6. **Supabase MCP 401** — `get_advisors` + other Supabase MCP calls return 401 in this session. Scoping work had to be done statically against migration files. Phill can re-auth the MCP or run the security advisor manually in the Supabase console.
 
 ### Path B PRs — Pi-CEO triage session (2026-04-18 context 3 — end-of-night)
 
@@ -203,12 +256,36 @@ All PRs target `main`, opened via `mcp__mcp-Unite-Group__GITHUB_COMMIT_MULTIPLE_
 | #119 | —         | `pidev/auto-*`                      | CLOSED  | Merge conflict — workshop conflict on `equipment_lifecycle.py`    |
 | #122 | —         | `pidev/auto-*`                      | CLOSED  | Merge conflict — `service_models.py` conflict                     |
 
+- [x] fix(backend): RMA MissingGreenlet — UNI-1835 (PR #118, squash-merged). Re-query pattern with `selectinload` after `await db.commit()` in `advance_rma_status` and `list_returns`. Avoids SQLAlchemy async relationship access error.
+- [x] feat(backend): TNT/FedEx carrier adapters (PR #113, squash-merged). New carrier adapter files, no locked file touches.
+- [x] feat(backend/web): Digital job card Phase 1 (PR #121, squash-merged). New job card files + non-locked route additions.
+- [x] Triaged and closed 7 Pi-CEO PRs (#110, #111, #112, #115, #116, #119, #122) — conflicts or locked-file violations.
+- [x] **Prod smoke test (partial)** — homepage + auth flow PASS; protected modules blocked by expired session (see Blockers)
+  - ✅ Homepage loads, no 500/Application Error
+  - ✅ LIVE PLATFORM DATA badge green — SSE alive
+  - ✅ Dashboard data live: 5 orders, 36 customers, 60 products, 12 low-stock alerts
+  - ✅ Login form renders correctly, auth redirect working
+  - ✅ Zero JS console errors
+  - ⚠️ Protected routes (Customers/Quotes/Orders/Products) not smoke-tested — session expired, autofill not submitting
+
 ## Notes for Next Context Window
 
-- **Demo date**: 2026-04-20. Railway login fix (PR #134) merged — backend will redeploy.
-- **Smoke test**: Once Railway redeploys (~2–3 min), sign in at `ccw-crm-web.vercel.app`. Login should now return 200.
-- **Open sprint PRs**: #106 (UNI-1777 POS), #107 (UNI-1785/1786/1782 resilience), #108 (UNI-1781 orders search) — all ready to merge, no code blockers.
+- **Demo date**: 2026-04-20. All code PRs are MERGED. One blocker remains: Railway not redeploying the `lazy=dynamic` fix.
+- **IMMEDIATE ACTION FOR PHILL**: Log into railway.com → CCW backend service → click Redeploy. This unblocks login and the smoke test. Should take ~3 min. See Blockers section for exact steps.
+- **Sprint status**: ALL Day 1 + Day 2 PRs shipped and merged (#106, #107, #108, #109, #114, #130, #131, #132, #133, #134). Frontend (Vercel) is fully deployed. Only Railway backend is stale.
+- **After Railway redeploys**: run prod smoke test — sign in at `ccw-crm-web.vercel.app` as `admin@demo.com / demo123`, verify Customers → Quotes → Orders → Products render with data.
+- **Sprint order (Day 1 — COMPLETE)**: UNI-1777 (#106) → UNI-1785/1786/1782 (#107) → UNI-1781 (#108) → UNI-1778 (#109)
+- **Sprint order (Day 2 — COMPLETE)**: UNI-1758 env flip (`WEB_CONCURRENCY=1` in Render), UNI-1826 warranty, UNI-1861 rate limiting, UNI-1830 Cin7 events, UNI-1821/1831 payment terms + B2B/B2C
+- **Sprint order (Day 3+ after demo)**: UNI-1758 Option D (lazy-load AI routes + bounded pattern cache) → full RLS tightening under UNI-1749 → backend ruff hygiene follow-up ticket.
+- **Workflow**: Phill runs git commands in `C:\CCW-Online ERP` via PowerShell; Claude edits files via file tools. Sandbox cannot `rm` in `.git/`.
+- **PowerShell gotcha**: `[System.IO.File]` APIs use .NET's CWD (launch dir), NOT `$PWD`. Always pass absolute paths.
+- **Edit-tool corruption risk**: When working on files on a Windows checkout with `core.autocrlf=true`, Edit can inject CRLF + null bytes → git classifies as binary. Verify after every edit with `git diff --text` + null-byte check before committing.
 - **Locked files (do not touch)**: `apps/backend/src/db/demo_models.py`, `apps/web/middleware.ts`, `apps/backend/src/api/routes/demo_auth.py`
 - **`User` class lives at**: `apps/backend/src/db/models_base.py:58` (not `demo_models.py`)
+- All customer string fields are sanitised at Pydantic layer — SQL injection protection is via Supabase parameterised queries (not html.escape)
+- Anthropic key is checked: DB first → ANTHROPIC_API_KEY env var fallback
+- POS desktop layout is unchanged (h-[600px] still applies at lg+)
+- Dashboard first useEffect uses a plain `{ current: true }` object as isMounted flag (not useRef — was not imported)
 - Supabase project: `vwfgksqkajnpfjospbpe`
 - Linear team: Unite-Group, project: CCW-ERP/CRM
+- Authenticated GitHub Chrome tab: `771389560` (as of 2026-04-18)
