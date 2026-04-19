@@ -35,6 +35,7 @@ from src.db.inventory_models import (
 from src.integrations.xero import get_xero_client
 from src.integrations.xero.auth import XeroAuth
 from src.integrations.xero.bills import push_purchase_order_as_bill
+from src.warehouse import LandedCostLine, apportion_landed_costs
 
 router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"], dependencies=[Depends(get_current_user)])
 
@@ -878,40 +879,28 @@ async def create_grn(
     db.add(grn)
     await db.flush()  # Obtain GRN id
 
-    # --- Landed cost apportionment ---
-    # Build lookup: po_item_id → PO unit cost
+    # --- Landed cost apportionment (delegated to warehouse service) ---
     po_item_map = {item.id: item for item in po.items}
 
-    total_landed: Decimal = grn_data.freight_cost + grn_data.customs_duty + grn_data.handling_cost
-
-    # Apportionment base: Σ(unit_cost × qty_received) for lines with qty > 0
-    # Value-proportional apportionment is the GAAP-standard approach.
-    total_po_value: Decimal = sum(
-        (po_item_map[ld.po_item_id].unit_cost * Decimal(ld.quantity_received)
-         for ld in grn_data.lines
-         if ld.quantity_received > 0),
-        Decimal("0"),
+    cost_lines = apportion_landed_costs(
+        lines=[
+            LandedCostLine(
+                po_item_id=ld.po_item_id,
+                product_id=ld.product_id,
+                quantity_received=ld.quantity_received,
+                quantity_rejected=ld.quantity_rejected,
+                quantity_expected=ld.quantity_expected,
+                po_unit_cost=po_item_map[ld.po_item_id].unit_cost,
+            )
+            for ld in grn_data.lines
+        ],
+        freight_cost=grn_data.freight_cost,
+        customs_duty=grn_data.customs_duty,
+        handling_cost=grn_data.handling_cost,
     )
 
-    # Count active lines for equal-apportionment fallback (all-zero costs edge case)
-    active_line_count: int = sum(1 for ld in grn_data.lines if ld.quantity_received > 0)
-
-    # Create GRN lines with computed per-unit landed costs
-    for line_data in grn_data.lines:
-        po_unit_cost: Decimal = po_item_map[line_data.po_item_id].unit_cost
-
-        if total_landed > 0 and total_po_value > 0 and line_data.quantity_received > 0:
-            # Value-proportional: landed_per_unit = total_landed × unit_cost / total_po_value
-            # (quantity cancels in value-weighted apportionment)
-            landed_cost_per_unit: Decimal = (total_landed * po_unit_cost) / total_po_value
-        elif total_landed > 0 and active_line_count > 0 and line_data.quantity_received > 0:
-            # Equal apportionment fallback (all unit costs are zero)
-            landed_cost_per_unit = total_landed / Decimal(active_line_count) / Decimal(line_data.quantity_received)
-        else:
-            landed_cost_per_unit = Decimal("0")
-
-        cost_per_unit: Decimal = po_unit_cost + landed_cost_per_unit
-
+    # Zip computed costs back to input lines and persist GRN line records
+    for line_data, cost_line in zip(grn_data.lines, cost_lines):
         line = GoodsReceivedNoteLine(
             grn_id=grn.id,
             po_item_id=line_data.po_item_id,
@@ -919,8 +908,8 @@ async def create_grn(
             quantity_expected=line_data.quantity_expected,
             quantity_received=line_data.quantity_received,
             quantity_rejected=line_data.quantity_rejected,
-            landed_cost_per_unit=landed_cost_per_unit,
-            cost_per_unit=cost_per_unit,
+            landed_cost_per_unit=cost_line.landed_cost_per_unit,
+            cost_per_unit=cost_line.cost_per_unit,
         )
         db.add(line)
 
@@ -934,7 +923,7 @@ async def create_grn(
             )
             stock = stock_result.scalar_one_or_none()
             if stock is not None:
-                stock.average_cost = cost_per_unit
+                stock.average_cost = cost_line.cost_per_unit
             else:
                 # Create cost record; physical qty managed by /items/{id}/receive
                 db.add(ProductStockByLocation(
@@ -942,7 +931,7 @@ async def create_grn(
                     location=grn_data.delivery_location,
                     stock=0,
                     reserved=0,
-                    average_cost=cost_per_unit,
+                    average_cost=cost_line.cost_per_unit,
                 ))
 
     await db.commit()
