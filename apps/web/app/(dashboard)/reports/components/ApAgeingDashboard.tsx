@@ -43,15 +43,6 @@ const formatCurrency = (value: string | number): string => {
   return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(num);
 };
 
-const bucketBadgeVariant = (
-  days: string
-): 'default' | 'secondary' | 'destructive' | 'outline' => {
-  const n = parseFloat(days);
-  if (n === 0) return 'secondary';
-  if (n <= 500) return 'default'; // low risk
-  return 'destructive'; // high value overdue
-};
-
 function BucketBar({ report }: { report: APAgeingReport }) {
   const total = parseFloat(report.total_outstanding) || 1;
   const segments = [
