@@ -1,6 +1,5 @@
 """AI Content Generation API endpoints."""
 
-import os
 from datetime import datetime
 from typing import Annotated, Any
 
@@ -8,18 +7,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from src.ai.agents.content_generator import ContentGenerator, get_content_generator
+from src.config.settings import get_settings
 from src.utils import get_logger
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/ai/generate")
 
-# Check if OpenAI is available
 try:
     import openai
-    OPENAI_AVAILABLE = bool(os.getenv("OPENAI_API_KEY"))
+    _openai_api_key = get_settings().openai_api_key
+    OPENAI_AVAILABLE = bool(_openai_api_key)
     if OPENAI_AVAILABLE:
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        openai.api_key = _openai_api_key
 except ImportError:
     OPENAI_AVAILABLE = False
     logger.warning("OpenAI package not installed. Image and copy generation will not be available.")

@@ -7,7 +7,6 @@ Provides tracking and management for:
 - Carrier webhook integration for tracking updates
 """
 
-import os
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
@@ -19,6 +18,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
+from src.config.settings import get_settings
 from src.db.demo_models import Order
 from src.db.inventory_models import InboundShipment, OutboundShipment, PurchaseOrder, Supplier
 from src.security.webhook_verification import (
@@ -490,7 +490,7 @@ async def inbound_tracking_webhook(
     Signature verification is enforced in production (USE_WEBHOOK_VERIFICATION=true).
     """
     # Verify webhook signature based on carrier
-    verify_webhooks = os.getenv("USE_WEBHOOK_VERIFICATION", "false").lower() == "true"
+    verify_webhooks = get_settings().use_webhook_verification
 
     if verify_webhooks:
         body = await request.body()
@@ -587,7 +587,7 @@ async def outbound_tracking_webhook(
     Signature verification is enforced in production (USE_WEBHOOK_VERIFICATION=true).
     """
     # Verify webhook signature based on carrier
-    verify_webhooks = os.getenv("USE_WEBHOOK_VERIFICATION", "false").lower() == "true"
+    verify_webhooks = get_settings().use_webhook_verification
 
     if verify_webhooks:
         body = await request.body()

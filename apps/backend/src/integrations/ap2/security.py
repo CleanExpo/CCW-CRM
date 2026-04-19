@@ -168,9 +168,9 @@ def get_ap2_signature_verifier() -> AP2SignatureVerifier:
     global _ap2_verifier
 
     if _ap2_verifier is None:
-        import os
+        from src.config.settings import get_settings
 
-        secret = os.getenv("AP2_WEBHOOK_SECRET")
+        secret = get_settings().ap2_webhook_secret
         if not secret:
             raise ValueError("AP2_WEBHOOK_SECRET environment variable not set")
 

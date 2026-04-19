@@ -49,9 +49,9 @@ def verify_cron_secret(authorization: str | None = Header(None)) -> bool:
     In production, Vercel cron jobs send an Authorization header.
     For development, we allow all requests.
     """
-    import os
+    from src.config.settings import get_settings
 
-    cron_secret = os.getenv("CRON_SECRET")
+    cron_secret = get_settings().cron_secret
     if not cron_secret:
         # Development mode - allow all
         return True

@@ -148,9 +148,9 @@ def get_xero_webhook_verifier() -> XeroWebhookVerifier:
     global _xero_verifier
 
     if _xero_verifier is None:
-        import os
+        from src.config.settings import get_settings
 
-        webhook_key = os.getenv("XERO_WEBHOOK_KEY")
+        webhook_key = get_settings().xero_webhook_key
         if not webhook_key:
             raise ValueError("XERO_WEBHOOK_KEY environment variable not set")
 

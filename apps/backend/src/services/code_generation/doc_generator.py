@@ -40,9 +40,9 @@ class DocGenerator:
 
     def __post_init__(self):
         """Initialize Anthropic client."""
-        import os
+        from src.config.settings import get_settings
 
-        api_key = self.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
+        api_key = self.anthropic_api_key or get_settings().anthropic_api_key
         if not api_key:
             raise ValueError(
                 "ANTHROPIC_API_KEY environment variable must be set or passed to constructor"

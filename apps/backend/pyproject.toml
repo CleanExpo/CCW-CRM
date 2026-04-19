@@ -68,7 +68,7 @@ line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP"]
+select = ["E", "F", "I", "N", "W", "UP", "TID251"]
 ignore = [
     "E501",   # Line too long — codebase predates this rule
     "E402",   # Module import not at top — intentional in some files
@@ -83,6 +83,15 @@ ignore = [
     "N818",   # Error suffix on exception name — pre-existing
     "W293",   # Blank line with whitespace — pre-existing
 ]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"os.getenv".msg = "Use `from src.config.settings import get_settings` instead of reading env vars directly."
+"os.environ.get".msg = "Use `from src.config.settings import get_settings` instead of reading env vars directly."
+
+[tool.ruff.lint.per-file-ignores]
+"src/config/*.py" = ["TID251"]
+"src/integrations/secrets_manager.py" = ["TID251"]
+"src/api/routes/billing.py" = ["TID251"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -1,6 +1,5 @@
 """Staff Copilot Agent — answers operational ERP/CRM queries for staff."""
 
-import os
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -9,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.base_agent import BaseAgent
+from src.config.settings import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -20,11 +20,8 @@ logger = structlog.get_logger(__name__)
 
 def _is_demo_mode() -> bool:
     """Return True when no LLM API key is configured."""
-    return not (
-        os.getenv("ANTHROPIC_API_KEY")
-        or os.getenv("OPENAI_API_KEY")
-        or os.getenv("GOOGLE_AI_API_KEY")
-    )
+    _s = get_settings()
+    return not (_s.anthropic_api_key or _s.openai_api_key or _s.google_ai_api_key)
 
 
 # ---------------------------------------------------------------------------
@@ -276,7 +273,7 @@ class StaffCopilotAgent(BaseAgent):
         import anthropic
 
         client = anthropic.AsyncAnthropic()
-        model = os.getenv("ANTHROPIC_MODEL", "claude-opus-4-6")
+        model = get_settings().anthropic_model
 
         system_prompt = build_system_prompt(module_context)
 

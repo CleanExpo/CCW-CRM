@@ -12,7 +12,6 @@ ISS-037: Email audit trail implementation
 
 import hashlib
 import hmac
-import os
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
@@ -23,6 +22,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_db
+from src.config.settings import get_settings
 from src.db.email_audit_models import EmailPurpose, EmailStatus
 from src.services.email_audit_service import EmailAuditService
 
@@ -173,11 +173,10 @@ async def handle_sendgrid_events(
     Webhook URL to configure in SendGrid:
     https://your-domain.com/api/emails/webhooks/sendgrid/events
     """
-    # Get verification secret
-    webhook_secret = os.getenv("SENDGRID_WEBHOOK_VERIFICATION_KEY", "")
+    _s = get_settings()
+    webhook_secret = _s.sendgrid_webhook_verification_key
 
-    # Verify signature in production
-    if webhook_secret and os.getenv("ENVIRONMENT", "development") != "development":
+    if webhook_secret and not _s.environment == "development":
         signature = request.headers.get("X-Twilio-Email-Event-Webhook-Signature", "")
         timestamp = request.headers.get("X-Twilio-Email-Event-Webhook-Timestamp", "")
 

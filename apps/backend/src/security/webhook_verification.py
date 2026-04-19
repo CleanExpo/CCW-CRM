@@ -15,6 +15,7 @@ import hmac
 import time
 
 import structlog
+from src.config.settings import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -210,9 +211,7 @@ def get_fedex_verifier() -> FedExWebhookVerifier:
     global _fedex_verifier
 
     if _fedex_verifier is None:
-        import os
-
-        secret = os.getenv("FEDEX_WEBHOOK_SECRET")
+        secret = get_settings().fedex_webhook_secret
         if not secret:
             raise ValueError("FEDEX_WEBHOOK_SECRET environment variable not set")
 
@@ -233,9 +232,7 @@ def get_ups_verifier() -> UPSWebhookVerifier:
     global _ups_verifier
 
     if _ups_verifier is None:
-        import os
-
-        secret = os.getenv("UPS_WEBHOOK_SECRET")
+        secret = get_settings().ups_webhook_secret
         if not secret:
             raise ValueError("UPS_WEBHOOK_SECRET environment variable not set")
 
@@ -256,9 +253,7 @@ def get_usps_verifier() -> USPSWebhookVerifier:
     global _usps_verifier
 
     if _usps_verifier is None:
-        import os
-
-        secret = os.getenv("USPS_WEBHOOK_SECRET")
+        secret = get_settings().usps_webhook_secret
         if not secret:
             raise ValueError("USPS_WEBHOOK_SECRET environment variable not set")
 

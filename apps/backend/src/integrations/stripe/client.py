@@ -7,10 +7,10 @@ Provides methods for:
 - Webhook verification
 """
 
-import os
 from typing import Any
 
 import stripe
+from src.config.settings import get_settings
 from stripe import (
     Customer,
     Invoice,
@@ -26,16 +26,16 @@ class StripeClient:
 
     def __init__(self, api_key: str | None = None):
         """Initialize Stripe client with API key from environment or parameter."""
-        self.api_key = api_key or os.getenv("STRIPE_SECRET_KEY")
+        _s = get_settings()
+        self.api_key = api_key or _s.stripe_secret_key
         if not self.api_key:
             raise ValueError("Stripe API key not provided")
 
         stripe.api_key = self.api_key
-        self.webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+        self.webhook_secret = _s.stripe_webhook_secret
 
         # ✅ SECURITY: Fail fast if webhook secret missing in production
-        is_production = os.getenv("ENVIRONMENT", "development") == "production"
-        if is_production and not self.webhook_secret:
+        if _s.is_production and not self.webhook_secret:
             raise ValueError(
                 "STRIPE_WEBHOOK_SECRET required in production for secure webhook verification"
             )

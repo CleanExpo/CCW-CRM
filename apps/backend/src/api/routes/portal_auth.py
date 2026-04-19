@@ -5,7 +5,6 @@ Customers receive a magic link via email to access the portal without passwords.
 Secure, time-limited tokens ensure safe authentication.
 """
 
-import os
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
@@ -17,16 +16,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database import get_async_db
+from src.config.settings import get_settings
 from src.db.demo_models import Customer
 
 router = APIRouter(prefix="/api/portal/auth", tags=["Portal Auth"])
 
-# Environment configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
+_settings = get_settings()
+SECRET_KEY = _settings.jwt_secret_key or "dev-secret-key-change-in-production"
 ALGORITHM = "HS256"
-MAGIC_LINK_EXPIRE_MINUTES = 60  # Magic links valid for 1 hour
-SESSION_EXPIRE_DAYS = 7  # Portal sessions valid for 7 days
-FRONTEND_URL = os.getenv("NEXT_PUBLIC_FRONTEND_URL", "http://localhost:3000")
+MAGIC_LINK_EXPIRE_MINUTES = 60
+SESSION_EXPIRE_DAYS = 7
+FRONTEND_URL = _settings.frontend_url
 
 
 class MagicLinkRequest(BaseModel):
@@ -183,7 +183,7 @@ async def verify_magic_link(
         key="portal_session",
         value=session_token,
         httponly=True,
-        secure=os.getenv("ENVIRONMENT") == "production",  # HTTPS only in production
+        secure=_settings.is_production,
         samesite="lax",
         max_age=SESSION_EXPIRE_DAYS * 24 * 60 * 60,  # 7 days in seconds
         path="/portal",  # Cookie only sent to /portal routes

@@ -10,7 +10,6 @@ Provides unified interface for:
 Supports multiple carriers through adapter pattern.
 """
 
-import os
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Protocol
@@ -330,20 +329,18 @@ class CarrierService:
 
     def __init__(self):
         """Initialize carrier service with available adapters."""
+        from src.config.settings import get_settings
+        _s = get_settings()
         self.adapters: dict[str, CarrierAdapter] = {}
 
-        # Initialize adapters based on environment configuration
-        auspost_key = os.getenv("AUSPOST_API_KEY")
-        if auspost_key:
-            self.adapters["australia_post"] = AustraliaPostAdapter(auspost_key)
+        if _s.auspost_api_key:
+            self.adapters["australia_post"] = AustraliaPostAdapter(_s.auspost_api_key)
 
-        startrack_key = os.getenv("STARTRACK_API_KEY")
-        if startrack_key:
-            self.adapters["startrack"] = StarTrackAdapter(startrack_key)
+        if _s.startrack_api_key:
+            self.adapters["startrack"] = StarTrackAdapter(_s.startrack_api_key)
 
-        easypost_key = os.getenv("EASYPOST_API_KEY")
-        if easypost_key:
-            self.adapters["easypost"] = EasyPostAdapter(easypost_key)
+        if _s.easypost_api_key:
+            self.adapters["easypost"] = EasyPostAdapter(_s.easypost_api_key)
 
         # Default adapter for development (uses mock data)
         if not self.adapters:

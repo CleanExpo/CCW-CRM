@@ -1,6 +1,5 @@
 """Marketing Agent for AI-powered campaign generation and audience analysis."""
 
-import os
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from typing import Any
@@ -8,6 +7,7 @@ from typing import Any
 import structlog
 
 from src.ai.base_agent import BaseAgent
+from src.config.settings import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -18,7 +18,7 @@ logger = structlog.get_logger(__name__)
 try:
     import openai as _openai_module
 
-    _OPENAI_AVAILABLE = bool(os.getenv("OPENAI_API_KEY"))
+    _OPENAI_AVAILABLE = bool(get_settings().openai_api_key)
 except ImportError:
     _openai_module = None  # type: ignore[assignment]
     _OPENAI_AVAILABLE = False

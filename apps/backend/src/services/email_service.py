@@ -9,7 +9,6 @@ This service provides:
 ISS-037: Updated to include email audit trail for GDPR compliance.
 """
 
-import os
 import uuid
 from typing import Any
 
@@ -18,6 +17,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Content, CustomArg, Email, Mail, To
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config.settings import get_settings
 from src.db.email_audit_models import EmailPurpose
 
 logger = structlog.get_logger(__name__)
@@ -43,13 +43,10 @@ class EmailService:
             from_email: Default sender email (defaults to SENDGRID_FROM_EMAIL env var)
             from_name: Default sender name (defaults to SENDGRID_FROM_NAME env var)
         """
-        self.api_key = api_key or os.getenv("SENDGRID_API_KEY")
-        self.from_email = from_email or os.getenv(
-            "SENDGRID_FROM_EMAIL", "noreply@ccw-erp.com"
-        )
-        self.from_name = from_name or os.getenv(
-            "SENDGRID_FROM_NAME", "CCW Equipment ERP"
-        )
+        _s = get_settings()
+        self.api_key = api_key or _s.sendgrid_api_key
+        self.from_email = from_email or _s.sendgrid_from_email
+        self.from_name = from_name or _s.sendgrid_from_name
 
         if not self.api_key:
             logger.warning("SendGrid API key not provided - emails will be logged only")

@@ -11,7 +11,6 @@ Handles:
 from __future__ import annotations
 
 import asyncio
-import os
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
@@ -267,9 +266,10 @@ class BankFeedService:
         from src.config.xero_settings import xero_settings
         from src.integrations.xero.client import XeroClient
 
-        # Get Xero credentials from environment
-        access_token = os.getenv("XERO_ACCESS_TOKEN", "")
-        tenant_id = os.getenv("XERO_TENANT_ID", "")
+        from src.config.settings import get_settings
+        _s = get_settings()
+        access_token = _s.xero_access_token
+        tenant_id = _s.xero_tenant_id
 
         # Check if we're in demo mode or missing credentials
         if xero_settings.is_demo_mode or not access_token or not tenant_id:

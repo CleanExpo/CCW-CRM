@@ -1,10 +1,10 @@
 """Email notification service for form submissions."""
 
-import os
 from datetime import datetime
 
 import structlog
 from sendgrid import SendGridAPIClient
+from src.config.settings import get_settings
 from sendgrid.helpers.mail import Content, Email, Mail, To
 
 logger = structlog.get_logger(__name__)
@@ -15,9 +15,10 @@ class EmailNotificationService:
 
     def __init__(self):
         """Initialize the email service with SendGrid."""
-        self.sendgrid_api_key = os.getenv("SENDGRID_API_KEY")
-        self.from_email = os.getenv("NOTIFICATION_FROM_EMAIL", "notifications@ccwequipment.com")
-        self.admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "admin@ccwequipment.com")
+        _s = get_settings()
+        self.sendgrid_api_key = _s.sendgrid_api_key
+        self.from_email = _s.notification_from_email
+        self.admin_email = _s.admin_notification_email
 
         if self.sendgrid_api_key:
             self.client = SendGridAPIClient(self.sendgrid_api_key)

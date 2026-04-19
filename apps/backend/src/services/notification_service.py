@@ -16,7 +16,6 @@ Triggers automatically on:
 - Service completed
 """
 
-import os
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
@@ -75,10 +74,10 @@ class NotificationService:
     def __init__(self):
         """Initialize notification service."""
         self.settings = get_settings()
-        self.sendgrid_api_key = os.getenv("SENDGRID_API_KEY")
-        self.from_email = os.getenv("SENDGRID_FROM_EMAIL", "noreply@ccw.com.au")
-        self.from_name = os.getenv("SENDGRID_FROM_NAME", "CCW Equipment")
-        self.portal_url = os.getenv("NEXT_PUBLIC_FRONTEND_URL", "http://localhost:3000")
+        self.sendgrid_api_key = self.settings.sendgrid_api_key
+        self.from_email = self.settings.sendgrid_from_email
+        self.from_name = self.settings.sendgrid_from_name
+        self.portal_url = self.settings.frontend_url
 
         # Initialize Jinja2 template environment
         template_dir = os.path.join(

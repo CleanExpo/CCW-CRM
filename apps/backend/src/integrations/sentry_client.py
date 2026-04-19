@@ -19,8 +19,6 @@ Usage:
     sentry_sdk.capture_exception(exception)
 """
 
-import os
-
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -43,8 +41,7 @@ def initialize_sentry():
     """
     settings = get_settings()
 
-    # Get DSN from settings (which reads SENTRY_DSN env var) or fallback to direct env var
-    sentry_dsn = settings.sentry_dsn or os.getenv("SENTRY_DSN", "")
+    sentry_dsn = settings.sentry_dsn
 
     # Only initialize Sentry if DSN is configured
     if not sentry_dsn:
@@ -60,8 +57,7 @@ def initialize_sentry():
     traces_sample_rate = settings.sentry_traces_sample_rate
     profiles_sample_rate = settings.sentry_profiles_sample_rate
 
-    # Determine release (from settings, env var, or default)
-    release = settings.sentry_release or os.getenv("SENTRY_RELEASE", "ccw-erp@1.0.0")
+    release = settings.sentry_release or "ccw-erp@1.0.0"
 
     # Initialize Sentry
     sentry_sdk.init(

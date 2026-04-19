@@ -304,6 +304,59 @@ class Settings(BaseSettings):
         default=None, description="External URL to POST demo request events"
     )
 
+    # Frontend URL
+    frontend_url: str = Field(
+        default="http://localhost:3000",
+        alias="NEXT_PUBLIC_FRONTEND_URL",
+        description="Public frontend URL (used for magic links, CORS checks, etc.)",
+    )
+
+    # Stripe
+    stripe_secret_key: str = Field(default="", description="Stripe secret API key")
+    stripe_webhook_secret: str = Field(default="", description="Stripe webhook signing secret")
+
+    # Xero
+    xero_webhook_key: str = Field(default="", description="Xero webhook delivery key")
+    xero_access_token: str = Field(default="", description="Xero OAuth2 access token (short-lived)")
+    xero_tenant_id: str = Field(default="", description="Xero tenant ID")
+
+    # Cron / scheduled jobs
+    cron_secret: str = Field(default="", description="Shared secret for cron job endpoints")
+
+    # Carrier integrations
+    auspost_api_key: str = Field(default="", description="Australia Post API key")
+    startrack_api_key: str = Field(default="", description="StarTrack API key")
+    easypost_api_key: str = Field(default="", description="EasyPost API key")
+
+    # Webhook verification flags
+    use_webhook_verification: bool = Field(
+        default=False, description="Enable HMAC verification on inbound webhook endpoints"
+    )
+
+    # Per-carrier webhook secrets
+    fedex_webhook_secret: str = Field(default="", description="FedEx webhook signing secret")
+    ups_webhook_secret: str = Field(default="", description="UPS webhook signing secret")
+    usps_webhook_secret: str = Field(default="", description="USPS webhook signing secret")
+    ap2_webhook_secret: str = Field(default="", description="AP2 webhook signing secret")
+
+    # SendGrid extended
+    sendgrid_webhook_verification_key: str = Field(
+        default="", description="SendGrid inbound parse / event webhook verification key"
+    )
+    notification_from_email: str = Field(
+        default="notifications@ccwequipment.com",
+        description="From address for system notification emails",
+    )
+    admin_notification_email: str = Field(
+        default="admin@ccwequipment.com",
+        description="Recipient address for admin notification emails",
+    )
+
+    # AI model selection
+    anthropic_model: str = Field(
+        default="claude-opus-4-6", description="Anthropic model name used by agents"
+    )
+
     # MCP Tools
     exa_api_key: str = Field(default="")
     ref_tools_api_key: str = Field(default="")

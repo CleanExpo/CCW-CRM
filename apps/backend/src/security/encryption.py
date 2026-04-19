@@ -5,11 +5,11 @@ Uses Fernet (symmetric encryption) with AES-256 for encrypting tokens,
 API keys, and other sensitive data at rest.
 """
 
-import os
 from typing import Any
 
 import structlog
 from cryptography.fernet import Fernet, InvalidToken
+from src.config.settings import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -27,7 +27,7 @@ class EncryptionService:
         Raises:
             ValueError: If no encryption key provided and ENCRYPTION_KEY env var not set.
         """
-        key = encryption_key or os.getenv("ENCRYPTION_KEY")
+        key = encryption_key or get_settings().encryption_key or None
 
         if not key:
             raise ValueError(
