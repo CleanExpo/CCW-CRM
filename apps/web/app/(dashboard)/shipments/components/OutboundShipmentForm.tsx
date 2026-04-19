@@ -79,7 +79,6 @@ const CARRIERS = [
   { value: 'fedex', label: 'FedEx' },
   { value: 'dhl', label: 'DHL' },
   { value: 'tnt', label: 'TNT' },
-  { value: 'ups', label: 'UPS' },
   { value: 'startrack', label: 'StarTrack' },
   { value: 'toll', label: 'Toll' },
   { value: 'other', label: 'Other' },

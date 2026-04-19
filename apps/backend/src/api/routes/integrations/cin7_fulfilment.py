@@ -182,7 +182,7 @@ def _demo_fulfilments() -> list[FulfilmentResponse]:
             status=FulfilmentStatus.SHIPPED.value,
             pick_location="Zone B - Shelf 7",
             tracking_number="1Z999AA10123456784",
-            carrier="UPS",
+            carrier="StarTrack",
             shipped_at=datetime(2024, 3, 1, 9, 0, 0, tzinfo=UTC).isoformat(),
             delivered_at=None,
             notes=None,

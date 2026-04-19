@@ -2,10 +2,11 @@
 Webhook signature verification utilities.
 
 Implements HMAC-SHA256 signature verification for incoming webhooks from:
-- FedEx
-- UPS
-- USPS
-- Other carriers
+- FedEx (AU)
+- AusPost
+- StarTrack
+- TNT
+- Other AU/NZ carriers
 
 This prevents webhook spoofing and replay attacks.
 """
@@ -128,74 +129,8 @@ class FedExWebhookVerifier(WebhookVerifier):
         return self.verify_signature(payload, signature_header, timestamp)
 
 
-class UPSWebhookVerifier(WebhookVerifier):
-    """UPS-specific webhook verifier.
-
-    UPS sends signature in 'X-UPS-Signature' header.
-    Format: HMAC-SHA256 hex string
-    """
-
-    def verify_request(
-        self,
-        payload: bytes,
-        signature_header: str | None,
-        timestamp_header: str | None = None,
-    ) -> bool:
-        """Verify UPS webhook request.
-
-        Args:
-            payload: Raw request body
-            signature_header: Value of 'X-UPS-Signature' header
-            timestamp_header: Value of 'X-UPS-Timestamp' header (optional)
-
-        Returns:
-            True if signature valid
-        """
-        if not signature_header:
-            logger.error("Missing UPS signature header")
-            return False
-
-        timestamp = int(timestamp_header) if timestamp_header else None
-
-        return self.verify_signature(payload, signature_header, timestamp)
-
-
-class USPSWebhookVerifier(WebhookVerifier):
-    """USPS-specific webhook verifier.
-
-    USPS sends signature in 'X-USPS-Signature' header.
-    Format: HMAC-SHA256 hex string
-    """
-
-    def verify_request(
-        self,
-        payload: bytes,
-        signature_header: str | None,
-        timestamp_header: str | None = None,
-    ) -> bool:
-        """Verify USPS webhook request.
-
-        Args:
-            payload: Raw request body
-            signature_header: Value of 'X-USPS-Signature' header
-            timestamp_header: Value of 'X-USPS-Timestamp' header (optional)
-
-        Returns:
-            True if signature valid
-        """
-        if not signature_header:
-            logger.error("Missing USPS signature header")
-            return False
-
-        timestamp = int(timestamp_header) if timestamp_header else None
-
-        return self.verify_signature(payload, signature_header, timestamp)
-
-
 # Global verifier instances (initialized from environment)
 _fedex_verifier: FedExWebhookVerifier | None = None
-_ups_verifier: UPSWebhookVerifier | None = None
-_usps_verifier: USPSWebhookVerifier | None = None
 
 
 def get_fedex_verifier() -> FedExWebhookVerifier:
@@ -221,47 +156,3 @@ def get_fedex_verifier() -> FedExWebhookVerifier:
     return _fedex_verifier
 
 
-def get_ups_verifier() -> UPSWebhookVerifier:
-    """Get UPS webhook verifier instance.
-
-    Returns:
-        UPSWebhookVerifier instance
-
-    Raises:
-        ValueError: If UPS_WEBHOOK_SECRET not set
-    """
-    global _ups_verifier
-
-    if _ups_verifier is None:
-        import os
-
-        secret = os.getenv("UPS_WEBHOOK_SECRET")
-        if not secret:
-            raise ValueError("UPS_WEBHOOK_SECRET environment variable not set")
-
-        _ups_verifier = UPSWebhookVerifier(secret)
-
-    return _ups_verifier
-
-
-def get_usps_verifier() -> USPSWebhookVerifier:
-    """Get USPS webhook verifier instance.
-
-    Returns:
-        USPSWebhookVerifier instance
-
-    Raises:
-        ValueError: If USPS_WEBHOOK_SECRET not set
-    """
-    global _usps_verifier
-
-    if _usps_verifier is None:
-        import os
-
-        secret = os.getenv("USPS_WEBHOOK_SECRET")
-        if not secret:
-            raise ValueError("USPS_WEBHOOK_SECRET environment variable not set")
-
-        _usps_verifier = USPSWebhookVerifier(secret)
-
-    return _usps_verifier
