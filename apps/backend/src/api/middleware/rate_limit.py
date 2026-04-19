@@ -47,7 +47,7 @@ storage_uri = (
 
 limiter = Limiter(
     key_func=get_rate_limit_key,
-    default_limits=["60/minute"] if settings.rate_limit_enabled else [],
+    default_limits=["100/minute"] if settings.rate_limit_enabled else [],
     storage_uri=storage_uri,
     enabled=settings.rate_limit_enabled,
 )
