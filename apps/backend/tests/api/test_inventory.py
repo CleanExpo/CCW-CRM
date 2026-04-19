@@ -391,3 +391,98 @@ class TestProductVariantEndpoints:
         body = resp.json()
         for field in ("id", "variant_sku", "name"):
             assert field in body, f"Missing field: {field}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Serial number and lot/batch endpoints (UNI-1823)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+class TestSerialLotEndpoints:
+    """Tests for serial number and lot/batch read endpoints (UNI-1823 Phase 1)."""
+
+    async def test_list_serials_serial_lot_returns_200(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        products_resp = await client.get("/api/products?page_size=1", headers=auth_headers)
+        products = products_resp.json().get("items", [])
+        if not products:
+            pytest.skip("No products in DB")
+
+        product_id = products[0]["id"]
+        resp = await client.get(
+            f"/api/inventory/products/{product_id}/serials", headers=auth_headers
+        )
+        assert resp.status_code == 200
+
+    async def test_list_serials_serial_lot_returns_list(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        products_resp = await client.get("/api/products?page_size=1", headers=auth_headers)
+        products = products_resp.json().get("items", [])
+        if not products:
+            pytest.skip("No products in DB")
+
+        product_id = products[0]["id"]
+        resp = await client.get(
+            f"/api/inventory/products/{product_id}/serials", headers=auth_headers
+        )
+        assert isinstance(resp.json(), list)
+
+    async def test_list_serials_serial_lot_status_filter(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        products_resp = await client.get("/api/products?page_size=1", headers=auth_headers)
+        products = products_resp.json().get("items", [])
+        if not products:
+            pytest.skip("No products in DB")
+
+        product_id = products[0]["id"]
+        resp = await client.get(
+            f"/api/inventory/products/{product_id}/serials?status=available",
+            headers=auth_headers,
+        )
+        assert resp.status_code == 200
+
+    async def test_list_lots_serial_lot_returns_200(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        products_resp = await client.get("/api/products?page_size=1", headers=auth_headers)
+        products = products_resp.json().get("items", [])
+        if not products:
+            pytest.skip("No products in DB")
+
+        product_id = products[0]["id"]
+        resp = await client.get(
+            f"/api/inventory/products/{product_id}/lots", headers=auth_headers
+        )
+        assert resp.status_code == 200
+
+    async def test_list_lots_serial_lot_returns_list(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        products_resp = await client.get("/api/products?page_size=1", headers=auth_headers)
+        products = products_resp.json().get("items", [])
+        if not products:
+            pytest.skip("No products in DB")
+
+        product_id = products[0]["id"]
+        resp = await client.get(
+            f"/api/inventory/products/{product_id}/lots", headers=auth_headers
+        )
+        assert isinstance(resp.json(), list)
+
+    async def test_list_lots_serial_lot_location_filter(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        products_resp = await client.get("/api/products?page_size=1", headers=auth_headers)
+        products = products_resp.json().get("items", [])
+        if not products:
+            pytest.skip("No products in DB")
+
+        product_id = products[0]["id"]
+        resp = await client.get(
+            f"/api/inventory/products/{product_id}/lots?location=brisbane",
+            headers=auth_headers,
+        )
+        assert resp.status_code == 200
