@@ -93,6 +93,25 @@ ignore = [
 "src/integrations/secrets_manager.py" = ["TID251"]
 "src/api/routes/billing.py" = ["TID251"]
 
+[tool.vulture]
+min_confidence = 90
+paths = ["src", "vulture_whitelist.py"]
+ignore_names = [
+    # Function parameters that are part of public API contracts (cannot be removed)
+    "diff",             # risk_assessor.py assess_change_risk()
+    "commit_message",   # risk_assessor.py assess_change_risk()
+    "customer_location", # inventory_intelligence.py execute()
+    "execution_options", # tenant_isolation.py before_execute() — SQLAlchemy event signature
+    "multiparams",      # tenant_isolation.py before_execute() — SQLAlchemy event signature
+    "notify_data",      # backorders.py notify_customer() — FastAPI request body
+    "cvv",              # amex.py tokenize_card()
+    "expiry",           # amex.py tokenize_card()
+    "author",           # pr_automation.py commit_changes()
+    # demo_models.py re-exports — locked file, cannot be modified
+    "i18n_models",
+    "inventory_models",
+]
+
 [tool.mypy]
 python_version = "3.12"
 strict = false
@@ -163,4 +182,5 @@ directory = "htmlcov"
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "vulture>=2.16",
 ]
