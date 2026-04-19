@@ -210,6 +210,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         except Exception as cache_error:
             logger.warning("Redis connection failed, caching disabled", error=str(cache_error))
 
+    # Start shipment auto-tracking scheduler
+    try:
+        from src.config.database import AsyncSessionLocal
+        from src.scheduler.shipment_tracker import get_shipment_tracker
+
+        tracker = get_shipment_tracker(AsyncSessionLocal)
+        tracker.start()
+    except Exception as tracker_err:
+        logger.warning("Shipment tracker failed to start", error=str(tracker_err))
+
     yield
 
     # Shutdown: Stop health monitor
@@ -222,6 +232,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("Health monitor stopped")
     except Exception as e:
         logger.error("Error stopping health monitor", error=str(e))
+
+    # Shutdown: Stop shipment tracker
+    try:
+        from src.scheduler.shipment_tracker import get_shipment_tracker
+
+        get_shipment_tracker().stop()
+    except Exception as e:
+        logger.warning("Error stopping shipment tracker", error=str(e))
 
     # Shutdown: Disconnect Redis cache
     if settings.cache_enabled:
