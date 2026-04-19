@@ -24,6 +24,8 @@ class MockUser:
     """Mock user with organization_id."""
 
     def __init__(self, user_id: str, org_id: UUID | str):
+        self.user_id = user_id
+        self.org_id = org_id
         self.data = {
             "id": user_id,
             "email": f"user-{user_id}@example.com",
@@ -40,7 +42,10 @@ class MockRequest:
     def __init__(self, user: MockUser | None = None):
         self.state = type("State", (), {})()
         if user:
+            # Set both the legacy dict and the new direct attributes
             self.state.user = user.data
+            self.state.user_id = user.user_id
+            self.state.organization_id = str(user.org_id) if user.org_id else None
 
 
 class MockEntity:
@@ -98,6 +103,8 @@ def test_get_current_organization_id_no_organization():
 
     request = MockRequest()
     request.state.user = {"id": "user-123", "email": "test@example.com"}
+    request.state.user_id = "user-123"
+    # No organization_id set on state
 
     with pytest.raises(HTTPException) as exc_info:
         get_current_organization_id(request)
@@ -108,13 +115,9 @@ def test_get_current_organization_id_no_organization():
 
 def test_get_current_organization_id_invalid_uuid():
     """Should raise 400 if organization_id is not a valid UUID."""
-    user_data = {
-        "id": "user-123",
-        "email": "test@example.com",
-        "organization_id": "invalid-uuid",
-    }
     request = MockRequest()
-    request.state.user = user_data
+    request.state.user_id = "user-123"
+    request.state.organization_id = "invalid-uuid"
 
     with pytest.raises(HTTPException) as exc_info:
         get_current_organization_id(request)
@@ -218,23 +221,24 @@ async def test_cross_tenant_access_prevention_products(db_session):
     from src.db.demo_models import Product, Organization
     from uuid import uuid4
 
-    # Create two test organizations
+    # Create two test organizations with unique slugs to avoid collision on repeated runs
     org_a_id = uuid4()
     org_b_id = uuid4()
+    suffix = uuid4().hex[:8]
 
-    org_a = Organization(id=org_a_id, name="Organization A", slug="org-a", is_active=True)
-    org_b = Organization(id=org_b_id, name="Organization B", slug="org-b", is_active=True)
+    org_a = Organization(id=org_a_id, name="Organization A", slug=f"org-a-{suffix}", is_active=True)
+    org_b = Organization(id=org_b_id, name="Organization B", slug=f"org-b-{suffix}", is_active=True)
 
     db = db_session
     db.add(org_a)
     db.add(org_b)
     await db.commit()
 
-    # Create products for Organization A
+    # Create products for Organization A (unique SKUs per run)
     product_a1 = Product(
         id=uuid4(),
         organization_id=org_a_id,
-        sku="A1-001",
+        sku=f"A1-{suffix}-001",
         name="Product A1",
         price=100.00,
         stock=10,
@@ -242,7 +246,7 @@ async def test_cross_tenant_access_prevention_products(db_session):
     product_a2 = Product(
         id=uuid4(),
         organization_id=org_a_id,
-        sku="A1-002",
+        sku=f"A1-{suffix}-002",
         name="Product A2",
         price=200.00,
         stock=20,
@@ -252,7 +256,7 @@ async def test_cross_tenant_access_prevention_products(db_session):
     product_b1 = Product(
         id=uuid4(),
         organization_id=org_b_id,
-        sku="B1-001",
+        sku=f"B1-{suffix}-001",
         name="Product B1",
         price=300.00,
         stock=30,
@@ -296,33 +300,34 @@ async def test_cross_tenant_access_prevention_customers(db_session):
     from src.db.demo_models import Customer, Organization
     from uuid import uuid4
 
-    # Create two test organizations
+    # Create two test organizations with unique slugs to avoid collision on repeated runs
     org_a_id = uuid4()
     org_b_id = uuid4()
+    suffix = uuid4().hex[:8]
 
-    org_a = Organization(id=org_a_id, name="Organization A", slug="org-a", is_active=True)
-    org_b = Organization(id=org_b_id, name="Organization B", slug="org-b", is_active=True)
+    org_a = Organization(id=org_a_id, name="Organization A", slug=f"org-a-{suffix}", is_active=True)
+    org_b = Organization(id=org_b_id, name="Organization B", slug=f"org-b-{suffix}", is_active=True)
 
     db = db_session
     db.add(org_a)
     db.add(org_b)
     await db.commit()
 
-    # Create customers for each organization
+    # Create customers for each organization (unique numbers per run)
     customer_a = Customer(
         id=uuid4(),
         organization_id=org_a_id,
-        customer_number="CUST-A-001",
+        customer_number=f"CUST-A-{suffix}",
         company_name="Customer A",
-        email="customer-a@example.com",
+        email=f"customer-a-{suffix}@example.com",
     )
 
     customer_b = Customer(
         id=uuid4(),
         organization_id=org_b_id,
-        customer_number="CUST-B-001",
+        customer_number=f"CUST-B-{suffix}",
         company_name="Customer B",
-        email="customer-b@example.com",
+        email=f"customer-b-{suffix}@example.com",
     )
 
     db.add_all([customer_a, customer_b])

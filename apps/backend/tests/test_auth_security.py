@@ -32,14 +32,17 @@ class TestLogin:
         assert data["user"]["email"] == "admin@demo.com"
         assert data["user"]["is_admin"] is True
 
-        # Verify cookies are set
-        cookies = response.cookies
-        assert "auth_token" in cookies, "auth_token cookie not found"
-        assert "refresh_token" in cookies, "refresh_token cookie not found"
+        # Verify cookies are set via Set-Cookie headers
+        # (domain="localhost" in set_cookie makes cookies invisible in response.cookies
+        # when using base_url="http://test" in ASGI test transport)
+        set_cookie_headers = [v for _, v in response.headers.multi_items() if _.lower() == "set-cookie"]
+        cookie_names = [h.split("=")[0].strip() for h in set_cookie_headers]
+        assert "auth_token" in cookie_names, "auth_token cookie not set"
+        assert "refresh_token" in cookie_names, "refresh_token cookie not set"
 
         # Verify cookie values are not empty
-        auth_token = cookies.get("auth_token")
-        refresh_token = cookies.get("refresh_token")
+        auth_token = next((h.split("=", 1)[1].split(";")[0] for h in set_cookie_headers if h.startswith("auth_token=")), None)
+        refresh_token = next((h.split("=", 1)[1].split(";")[0] for h in set_cookie_headers if h.startswith("refresh_token=")), None)
         assert auth_token, "auth_token is empty"
         assert refresh_token, "refresh_token is empty"
 
@@ -108,9 +111,13 @@ class TestRefreshToken:
         )
         assert login_response.status_code == 200
 
-        # Extract refresh token from cookies
-        refresh_token = login_response.cookies.get("refresh_token")
-        assert refresh_token is not None
+        # Extract refresh token from Set-Cookie headers (domain restriction hides from response.cookies)
+        set_cookie_headers = [v for _, v in login_response.headers.multi_items() if _.lower() == "set-cookie"]
+        refresh_token = next(
+            (h.split("=", 1)[1].split(";")[0] for h in set_cookie_headers if h.startswith("refresh_token=")),
+            None,
+        )
+        assert refresh_token is not None, "No refresh_token in login response Set-Cookie headers"
 
         # Use refresh token to get new access token
         response = await client.post(
@@ -126,8 +133,10 @@ class TestRefreshToken:
         assert "user" in data
         assert data["user"]["email"] == "admin@demo.com"
 
-        # Verify new auth_token cookie is set
-        assert "auth_token" in response.cookies
+        # Verify new auth_token cookie is set (check headers due to domain restriction)
+        refresh_set_cookie = [v for _, v in response.headers.multi_items() if _.lower() == "set-cookie"]
+        refresh_cookie_names = [h.split("=")[0].strip() for h in refresh_set_cookie]
+        assert "auth_token" in refresh_cookie_names, "auth_token cookie not set after refresh"
 
     async def test_refresh_token_missing(self, client: AsyncClient):
         """Test refresh without providing token."""
@@ -318,8 +327,13 @@ class TestGetCurrentUser:
         )
         assert login_response.status_code == 200
 
-        # Extract auth token
-        auth_token = login_response.cookies.get("auth_token")
+        # Extract auth token from Set-Cookie headers (domain restriction hides from response.cookies)
+        login_set_cookie = [v for _, v in login_response.headers.multi_items() if _.lower() == "set-cookie"]
+        auth_token = next(
+            (h.split("=", 1)[1].split(";")[0] for h in login_set_cookie if h.startswith("auth_token=")),
+            None,
+        )
+        assert auth_token is not None, "No auth_token in login response Set-Cookie headers"
 
         # Get current user
         response = await client.get(

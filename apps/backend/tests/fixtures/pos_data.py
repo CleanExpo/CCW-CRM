@@ -34,7 +34,7 @@ def sample_terminal_data() -> dict[str, Any]:
     """Sample terminal data for creating test terminals."""
     return {
         "terminal_id": f"TERM-{uuid4().hex[:8].upper()}",
-        "terminal_type": "eftpos",
+        "terminal_type": "physical",
         "merchant_id": f"MERCH-{uuid4().hex[:10].upper()}",
         "terminal_config": {},
         "is_active": True,
@@ -182,7 +182,7 @@ def create_terminal_payload(location_code: str, **overrides) -> dict[str, Any]:
     payload = {
         "terminal_id": f"TERM-{uuid4().hex[:8].upper()}",
         "location_code": location_code,
-        "terminal_type": "eftpos",
+        "terminal_type": "physical",
         "merchant_id": f"MERCH-{uuid4().hex[:10].upper()}",
     }
     payload.update(overrides)

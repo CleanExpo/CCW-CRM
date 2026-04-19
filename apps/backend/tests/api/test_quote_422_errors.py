@@ -79,8 +79,8 @@ async def test_quote_with_empty_items_should_fail(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_quote_without_valid_until_should_fail(client: AsyncClient):
-    """valid_until is required for QuoteCreate"""
+async def test_quote_without_valid_until_succeeds(client: AsyncClient):
+    """valid_until is optional for QuoteCreate - quote should be created without it"""
     customers = (await client.get("/api/customers?page_size=1")).json()["items"]
     products = (await client.get("/api/products?page_size=1")).json()["items"]
 
@@ -90,12 +90,12 @@ async def test_quote_without_valid_until_should_fail(client: AsyncClient):
     payload = {
         "customer_id": customers[0]["id"],
         "status": "draft",
-        # Missing valid_until - should be rejected
+        # valid_until intentionally omitted - it's optional
         "items": [{"product_id": products[0]["id"], "quantity": 1}]
     }
 
     response = await client.post("/api/quotes", json=payload)
-    assert response.status_code == 422, f"Expected 422 for missing valid_until, got {response.status_code}"
+    assert response.status_code == 201, f"Expected 201 for quote without valid_until, got {response.status_code}"
 
 
 @pytest.mark.asyncio

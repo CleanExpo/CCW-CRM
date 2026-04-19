@@ -211,7 +211,7 @@ async def suggest_customers(
 
 
 @router.get("/health")
-async def health_check() -> dict[str, str]:
+async def health_check() -> dict:
     """
     Health check endpoint for AI quote service.
 

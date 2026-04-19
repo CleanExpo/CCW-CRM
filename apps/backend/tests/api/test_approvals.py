@@ -9,14 +9,14 @@ from src.db.approvals_models import Approval, ApprovalStatus, ApprovalStep, Appr
 
 
 @pytest.mark.asyncio
-async def test_create_approval(async_client, test_db):
+async def test_create_approval(client, db_session):
     """Test creating an approval workflow."""
     # Create test user
     user_id = uuid4()
     entity_id = uuid4()
 
     # Create approval
-    response = await async_client.post(
+    response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "order",
@@ -42,12 +42,12 @@ async def test_create_approval(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_create_approval_invalid_type(async_client, test_db):
+async def test_create_approval_invalid_type(client, db_session):
     """Test creating approval with invalid type."""
     user_id = uuid4()
     entity_id = uuid4()
 
-    response = await async_client.post(
+    response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "invalid_type",
@@ -63,13 +63,13 @@ async def test_create_approval_invalid_type(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_list_approvals(async_client, test_db):
+async def test_list_approvals(client, db_session):
     """Test listing approvals with pagination."""
     # Create test approvals
     user_id = uuid4()
 
     for i in range(3):
-        await async_client.post(
+        await client.post(
             "/api/approvals",
             json={
                 "approval_type": "order",
@@ -82,7 +82,7 @@ async def test_list_approvals(async_client, test_db):
         )
 
     # List approvals
-    response = await async_client.get("/api/approvals?page=1&page_size=10")
+    response = await client.get("/api/approvals?page=1&page_size=10")
 
     assert response.status_code == 200
     data = response.json()
@@ -95,13 +95,13 @@ async def test_list_approvals(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_get_approval(async_client, test_db):
+async def test_get_approval(client, db_session):
     """Test getting approval by ID."""
     user_id = uuid4()
     entity_id = uuid4()
 
     # Create approval
-    create_response = await async_client.post(
+    create_response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "quote",
@@ -115,7 +115,7 @@ async def test_get_approval(async_client, test_db):
     approval_id = create_response.json()["id"]
 
     # Get approval
-    response = await async_client.get(f"/api/approvals/{approval_id}")
+    response = await client.get(f"/api/approvals/{approval_id}")
 
     assert response.status_code == 200
     data = response.json()
@@ -126,24 +126,24 @@ async def test_get_approval(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_get_approval_not_found(async_client, test_db):
+async def test_get_approval_not_found(client, db_session):
     """Test getting non-existent approval."""
     fake_id = uuid4()
 
-    response = await async_client.get(f"/api/approvals/{fake_id}")
+    response = await client.get(f"/api/approvals/{fake_id}")
 
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_add_approval_step(async_client, test_db):
+async def test_add_approval_step(client, db_session):
     """Test adding approval step."""
     user_id = uuid4()
     approver_id = uuid4()
     entity_id = uuid4()
 
     # Create approval
-    create_response = await async_client.post(
+    create_response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "order",
@@ -157,7 +157,7 @@ async def test_add_approval_step(async_client, test_db):
     approval_id = create_response.json()["id"]
 
     # Add step
-    response = await async_client.post(
+    response = await client.post(
         f"/api/approvals/{approval_id}/steps",
         json={
             "step_number": 1,
@@ -176,14 +176,14 @@ async def test_add_approval_step(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_add_approval_step_duplicate(async_client, test_db):
+async def test_add_approval_step_duplicate(client, db_session):
     """Test adding duplicate approval step."""
     user_id = uuid4()
     approver_id = uuid4()
     entity_id = uuid4()
 
     # Create approval
-    create_response = await async_client.post(
+    create_response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "order",
@@ -197,7 +197,7 @@ async def test_add_approval_step_duplicate(async_client, test_db):
     approval_id = create_response.json()["id"]
 
     # Add step
-    await async_client.post(
+    await client.post(
         f"/api/approvals/{approval_id}/steps",
         json={
             "step_number": 1,
@@ -206,7 +206,7 @@ async def test_add_approval_step_duplicate(async_client, test_db):
     )
 
     # Try to add same step again
-    response = await async_client.post(
+    response = await client.post(
         f"/api/approvals/{approval_id}/steps",
         json={
             "step_number": 1,
@@ -218,14 +218,14 @@ async def test_add_approval_step_duplicate(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_approve_step(async_client, test_db):
+async def test_approve_step(client, db_session):
     """Test approving a step."""
     user_id = uuid4()
     approver_id = uuid4()
     entity_id = uuid4()
 
     # Create approval with 2 steps
-    create_response = await async_client.post(
+    create_response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "order",
@@ -239,7 +239,7 @@ async def test_approve_step(async_client, test_db):
     approval_id = create_response.json()["id"]
 
     # Add step 1
-    step_response = await async_client.post(
+    step_response = await client.post(
         f"/api/approvals/{approval_id}/steps",
         json={
             "step_number": 1,
@@ -250,7 +250,7 @@ async def test_approve_step(async_client, test_db):
     step_id = step_response.json()["id"]
 
     # Approve step 1
-    response = await async_client.put(
+    response = await client.put(
         f"/api/approvals/{approval_id}/steps/{step_id}",
         json={
             "action": "approve",
@@ -266,7 +266,7 @@ async def test_approve_step(async_client, test_db):
     assert data["reviewed_at"] is not None
 
     # Check approval advanced to step 2
-    approval_response = await async_client.get(f"/api/approvals/{approval_id}")
+    approval_response = await client.get(f"/api/approvals/{approval_id}")
     approval_data = approval_response.json()
 
     assert approval_data["current_step"] == 2
@@ -274,14 +274,14 @@ async def test_approve_step(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_reject_step(async_client, test_db):
+async def test_reject_step(client, db_session):
     """Test rejecting a step."""
     user_id = uuid4()
     approver_id = uuid4()
     entity_id = uuid4()
 
     # Create approval
-    create_response = await async_client.post(
+    create_response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "order",
@@ -295,7 +295,7 @@ async def test_reject_step(async_client, test_db):
     approval_id = create_response.json()["id"]
 
     # Add step
-    step_response = await async_client.post(
+    step_response = await client.post(
         f"/api/approvals/{approval_id}/steps",
         json={
             "step_number": 1,
@@ -306,7 +306,7 @@ async def test_reject_step(async_client, test_db):
     step_id = step_response.json()["id"]
 
     # Reject step
-    response = await async_client.put(
+    response = await client.put(
         f"/api/approvals/{approval_id}/steps/{step_id}",
         json={
             "action": "reject",
@@ -321,7 +321,7 @@ async def test_reject_step(async_client, test_db):
     assert data["comments"] == "Needs revision"
 
     # Check approval is rejected
-    approval_response = await async_client.get(f"/api/approvals/{approval_id}")
+    approval_response = await client.get(f"/api/approvals/{approval_id}")
     approval_data = approval_response.json()
 
     assert approval_data["status"] == "rejected"
@@ -329,7 +329,7 @@ async def test_reject_step(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_complete_approval_workflow(async_client, test_db):
+async def test_complete_approval_workflow(client, db_session):
     """Test completing a full approval workflow."""
     user_id = uuid4()
     approver1_id = uuid4()
@@ -337,7 +337,7 @@ async def test_complete_approval_workflow(async_client, test_db):
     entity_id = uuid4()
 
     # Create approval with 2 steps
-    create_response = await async_client.post(
+    create_response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "purchase_order",
@@ -351,7 +351,7 @@ async def test_complete_approval_workflow(async_client, test_db):
     approval_id = create_response.json()["id"]
 
     # Add steps
-    step1_response = await async_client.post(
+    step1_response = await client.post(
         f"/api/approvals/{approval_id}/steps",
         json={
             "step_number": 1,
@@ -360,7 +360,7 @@ async def test_complete_approval_workflow(async_client, test_db):
         },
     )
 
-    step2_response = await async_client.post(
+    step2_response = await client.post(
         f"/api/approvals/{approval_id}/steps",
         json={
             "step_number": 2,
@@ -370,7 +370,7 @@ async def test_complete_approval_workflow(async_client, test_db):
     )
 
     # Approve step 1
-    await async_client.put(
+    await client.put(
         f"/api/approvals/{approval_id}/steps/{step1_response.json()['id']}",
         json={
             "action": "approve",
@@ -379,7 +379,7 @@ async def test_complete_approval_workflow(async_client, test_db):
     )
 
     # Approve step 2
-    await async_client.put(
+    await client.put(
         f"/api/approvals/{approval_id}/steps/{step2_response.json()['id']}",
         json={
             "action": "approve",
@@ -388,7 +388,7 @@ async def test_complete_approval_workflow(async_client, test_db):
     )
 
     # Check approval is completed
-    approval_response = await async_client.get(f"/api/approvals/{approval_id}")
+    approval_response = await client.get(f"/api/approvals/{approval_id}")
     approval_data = approval_response.json()
 
     assert approval_data["status"] == "approved"
@@ -398,13 +398,13 @@ async def test_complete_approval_workflow(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_cancel_approval(async_client, test_db):
+async def test_cancel_approval(client, db_session):
     """Test cancelling an approval."""
     user_id = uuid4()
     entity_id = uuid4()
 
     # Create approval
-    create_response = await async_client.post(
+    create_response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "order",
@@ -418,12 +418,12 @@ async def test_cancel_approval(async_client, test_db):
     approval_id = create_response.json()["id"]
 
     # Cancel approval
-    response = await async_client.delete(f"/api/approvals/{approval_id}")
+    response = await client.delete(f"/api/approvals/{approval_id}")
 
     assert response.status_code == 204
 
     # Check approval is cancelled
-    approval_response = await async_client.get(f"/api/approvals/{approval_id}")
+    approval_response = await client.get(f"/api/approvals/{approval_id}")
     approval_data = approval_response.json()
 
     assert approval_data["status"] == "cancelled"
@@ -431,14 +431,14 @@ async def test_cancel_approval(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_get_pending_approvals(async_client, test_db):
+async def test_get_pending_approvals(client, db_session):
     """Test getting pending approvals for an approver."""
     user_id = uuid4()
     approver_id = uuid4()
     entity_id = uuid4()
 
     # Create approval
-    create_response = await async_client.post(
+    create_response = await client.post(
         "/api/approvals",
         json={
             "approval_type": "order",
@@ -452,7 +452,7 @@ async def test_get_pending_approvals(async_client, test_db):
     approval_id = create_response.json()["id"]
 
     # Add step for approver
-    await async_client.post(
+    await client.post(
         f"/api/approvals/{approval_id}/steps",
         json={
             "step_number": 1,
@@ -461,7 +461,7 @@ async def test_get_pending_approvals(async_client, test_db):
     )
 
     # Get pending approvals for approver
-    response = await async_client.get(f"/api/approvals/pending?approver_id={approver_id}&page=1&page_size=10")
+    response = await client.get(f"/api/approvals/pending?approver_id={approver_id}&page=1&page_size=10")
 
     assert response.status_code == 200
     data = response.json()
@@ -472,12 +472,12 @@ async def test_get_pending_approvals(async_client, test_db):
 
 
 @pytest.mark.asyncio
-async def test_filter_approvals_by_type(async_client, test_db):
+async def test_filter_approvals_by_type(client, db_session):
     """Test filtering approvals by type."""
     user_id = uuid4()
 
     # Create different types of approvals
-    await async_client.post(
+    await client.post(
         "/api/approvals",
         json={
             "approval_type": "order",
@@ -488,7 +488,7 @@ async def test_filter_approvals_by_type(async_client, test_db):
         },
     )
 
-    await async_client.post(
+    await client.post(
         "/api/approvals",
         json={
             "approval_type": "quote",
@@ -500,7 +500,7 @@ async def test_filter_approvals_by_type(async_client, test_db):
     )
 
     # Filter by order type
-    response = await async_client.get("/api/approvals?approval_type=order")
+    response = await client.get("/api/approvals?approval_type=order")
 
     assert response.status_code == 200
     data = response.json()

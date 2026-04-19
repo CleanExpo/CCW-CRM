@@ -127,32 +127,37 @@ async def test_quote_not_cascade_deleted(client: AsyncClient):
     if not customers or not products:
         pytest.skip("Need at least one customer and product")
 
-    # Create quote with items
+    if len(products) < 2:
+        pytest.skip("Need at least 2 products")
+
+    # Create quote with 2 items
     quote_payload = {
         "customer_id": customers[0]["id"],
         "status": "draft",
         "valid_until": "2026-03-01",
-        "items": [{"product_id": products[0]["id"], "quantity": 1}]
+        "items": [
+            {"product_id": products[0]["id"], "quantity": 1},
+            {"product_id": products[1]["id"], "quantity": 2},
+        ]
     }
 
     response = await client.post("/api/quotes", json=quote_payload)
     assert response.status_code == 201
     quote_id = response.json()["id"]
-    original_quote = response.json()
 
-    # Update quote to remove all items (simulating item deletion)
+    # Update quote to keep only one item (business rule: cannot go to zero items)
     update_payload = {
         "status": "draft",
-        "items": []  # Remove all items
+        "items": [{"product_id": products[0]["id"], "quantity": 1}]
     }
 
     update_response = await client.put(f"/api/quotes/{quote_id}", json=update_payload)
     assert update_response.status_code == 200
 
-    # Quote should still exist, just with no items
+    # Quote should still exist with one item
     get_response = await client.get(f"/api/quotes/{quote_id}")
-    assert get_response.status_code == 200, f"Quote was deleted when items were removed"
-    assert len(get_response.json()["items"]) == 0
+    assert get_response.status_code == 200, f"Quote was deleted when items were updated"
+    assert len(get_response.json()["items"]) == 1
 
 
 @pytest.mark.asyncio

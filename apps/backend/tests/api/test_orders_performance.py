@@ -62,9 +62,11 @@ async def test_batch_stock_deduction_single_query(
         order_id=order.id,
     )
 
-    # Verify all stock was deducted
+    # Verify all stock was deducted (filter to this test's specific products)
+    test_product_ids = [p.id for p in test_products[:10]]
     stmt = select(ProductStockByLocation).where(
-        ProductStockByLocation.location == "brisbane"
+        ProductStockByLocation.location == "brisbane",
+        ProductStockByLocation.product_id.in_(test_product_ids),
     )
     result = await db_session.execute(stmt)
     stocks = result.scalars().all()
@@ -121,6 +123,9 @@ async def test_batch_stock_reservation_single_query(
 
     assert total_reserved == 30  # 10 items × 3 quantity
 
+    # Flush to make reservations visible to SELECT (autoflush=False in test session)
+    await db_session.flush()
+
     # Verify reservations were created
     stmt = select(func.count(StockReservation.id)).where(
         StockReservation.order_id == order.id
@@ -130,9 +135,11 @@ async def test_batch_stock_reservation_single_query(
 
     assert reservation_count == 10
 
-    # Verify stock reserved amounts updated
+    # Verify stock reserved amounts updated (filter to this test's specific products)
+    test_product_ids = [p.id for p in test_products[:10]]
     stmt = select(ProductStockByLocation).where(
-        ProductStockByLocation.location == "sydney"
+        ProductStockByLocation.location == "sydney",
+        ProductStockByLocation.product_id.in_(test_product_ids),
     )
     result = await db_session.execute(stmt)
     stocks = result.scalars().all()
@@ -187,15 +194,22 @@ async def test_batch_deduction_insufficient_stock_fails_all(
 
     assert "Insufficient stock" in str(exc_info.value)
 
-    # Verify NO stock was deducted (atomic failure)
-    stmt = select(ProductStockByLocation).where(
-        ProductStockByLocation.location == "melbourne"
+    # Verify NO stock was deducted (atomic failure) - filter to this test's products
+    test_product_ids = [p.id for p in test_products[:10]]
+    stmt = (
+        select(ProductStockByLocation)
+        .where(
+            ProductStockByLocation.location == "melbourne",
+            ProductStockByLocation.product_id.in_(test_product_ids),
+        )
+        .order_by(ProductStockByLocation.created_at)
     )
     result = await db_session.execute(stmt)
     stocks = result.scalars().all()
 
+    assert len(stocks) == 10
     # First 9 should still have 100 (not deducted)
-    for i, stock in enumerate(stocks[:9]):
+    for stock in stocks[:9]:
         assert stock.stock == 100
 
     # Last one should still have 2
@@ -239,9 +253,11 @@ async def test_batch_reservation_creates_missing_stock_records(
 
     assert total_reserved == 10  # 5 items × 2 quantity
 
-    # Verify stock records were created
+    # Verify stock records were created for this test's products
+    test_product_ids = [p.id for p in test_products[:5]]
     stmt = select(func.count(ProductStockByLocation.id)).where(
-        ProductStockByLocation.location == "brisbane"
+        ProductStockByLocation.location == "brisbane",
+        ProductStockByLocation.product_id.in_(test_product_ids),
     )
     result = await db_session.execute(stmt)
     stock_count = result.scalar()

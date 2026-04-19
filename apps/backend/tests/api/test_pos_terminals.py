@@ -45,7 +45,7 @@ async def test_create_terminal(client: AsyncClient, auth_headers: dict, create_t
     data = response.json()
     assert data["terminal_id"] == payload["terminal_id"]
     assert data["location_code"] == create_test_location.code
-    assert data["terminal_type"] == "eftpos"
+    assert data["terminal_type"] == "physical"
 
 
 @pytest.mark.asyncio
@@ -68,7 +68,7 @@ async def test_update_terminal(
 ):
     """Test updating an existing POS terminal."""
     update_payload = {
-        "terminal_type": "amex",
+        "terminal_type": "virtual",
         "merchant_id": "NEW-MERCHANT-123",
     }
 
@@ -79,7 +79,7 @@ async def test_update_terminal(
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["terminal_type"] == "amex"
+    assert data["terminal_type"] == "virtual"
     assert data["merchant_id"] == "NEW-MERCHANT-123"
 
 
@@ -87,7 +87,7 @@ async def test_update_terminal(
 async def test_update_terminal_not_found(client: AsyncClient, auth_headers: dict):
     """Test updating non-existent terminal returns 404."""
     non_existent_id = str(uuid4())
-    update_payload = {"terminal_type": "amex"}
+    update_payload = {"terminal_type": "virtual"}
 
     response = await client.put(
         f"/api/pos/terminals/{non_existent_id}", json=update_payload, headers=auth_headers

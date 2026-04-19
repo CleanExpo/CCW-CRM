@@ -203,7 +203,7 @@ async def list_products_with_translations(
                 id=str(product.id),
                 sku=product.sku,
                 name=product.name,
-                category=product.category.value,
+                category=product.category.value if hasattr(product.category, 'value') else str(product.category),
                 translations=translations_dict,
             ).model_dump()
         )
@@ -433,5 +433,7 @@ async def translate_single_product(
             "language_code": language_code,
             "translation": result,
         }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")

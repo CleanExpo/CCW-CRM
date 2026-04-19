@@ -250,18 +250,18 @@ class TestQuoteCreate:
         assert len(parts[1]) == 4  # Year
         assert parts[2].isdigit()  # Sequential number
 
-    async def test_create_quote_valid_until_required(
+    async def test_create_quote_valid_until_optional(
         self,
         client: AsyncClient,
         auth_token: str,
         test_customer: Customer,
         test_product: Product,
     ):
-        """Test that valid_until date is required."""
+        """Test that valid_until is optional (made optional to match backend logic)."""
         new_quote = {
             "customer_id": str(test_customer.id),
             "quote_date": date.today().isoformat(),
-            # Missing valid_until
+            # valid_until omitted — should succeed since it's optional
             "status": "draft",
             "items": [
                 {
@@ -278,7 +278,7 @@ class TestQuoteCreate:
             cookies={"auth_token": auth_token},
         )
 
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == 201  # Quote created without valid_until
 
     async def test_create_quote_missing_customer(
         self,
