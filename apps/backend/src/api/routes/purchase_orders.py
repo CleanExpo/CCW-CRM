@@ -768,6 +768,10 @@ class GRNCreate(BaseModel):
 
     delivery_location: str = Field(..., pattern="^(brisbane|sydney|melbourne)$")
     notes: str | None = None
+    # Landed cost components: apportioned across lines by PO-value proportion
+    freight_cost: Decimal = Field(Decimal("0"), ge=0, description="Freight/shipping cost to apportion across SKUs")
+    customs_duty: Decimal = Field(Decimal("0"), ge=0, description="Customs/import duty to apportion across SKUs")
+    handling_cost: Decimal = Field(Decimal("0"), ge=0, description="Handling/warehousing cost to apportion across SKUs")
     lines: list[GRNLineCreate] = Field(..., min_length=1, description="At least one line required")
 
 
@@ -781,6 +785,8 @@ class GRNLineResponse(BaseModel):
     quantity_expected: int
     quantity_received: int
     quantity_rejected: int
+    landed_cost_per_unit: Decimal
+    cost_per_unit: Decimal
     created_at: datetime
 
     class Config:
@@ -799,6 +805,10 @@ class GRNResponse(BaseModel):
     received_date: datetime | None
     received_by: UUID | None
     notes: str | None
+    freight_cost: Decimal
+    customs_duty: Decimal
+    handling_cost: Decimal
+    total_landed_cost: Decimal
     lines: list[GRNLineResponse]
     created_at: datetime
 
@@ -861,12 +871,47 @@ async def create_grn(
         status="received",
         received_date=datetime.now(UTC),
         notes=grn_data.notes,
+        freight_cost=grn_data.freight_cost,
+        customs_duty=grn_data.customs_duty,
+        handling_cost=grn_data.handling_cost,
     )
     db.add(grn)
     await db.flush()  # Obtain GRN id
 
-    # Create GRN lines
+    # --- Landed cost apportionment ---
+    # Build lookup: po_item_id → PO unit cost
+    po_item_map = {item.id: item for item in po.items}
+
+    total_landed: Decimal = grn_data.freight_cost + grn_data.customs_duty + grn_data.handling_cost
+
+    # Apportionment base: Σ(unit_cost × qty_received) for lines with qty > 0
+    # Value-proportional apportionment is the GAAP-standard approach.
+    total_po_value: Decimal = sum(
+        (po_item_map[ld.po_item_id].unit_cost * Decimal(ld.quantity_received)
+         for ld in grn_data.lines
+         if ld.quantity_received > 0),
+        Decimal("0"),
+    )
+
+    # Count active lines for equal-apportionment fallback (all-zero costs edge case)
+    active_line_count: int = sum(1 for ld in grn_data.lines if ld.quantity_received > 0)
+
+    # Create GRN lines with computed per-unit landed costs
     for line_data in grn_data.lines:
+        po_unit_cost: Decimal = po_item_map[line_data.po_item_id].unit_cost
+
+        if total_landed > 0 and total_po_value > 0 and line_data.quantity_received > 0:
+            # Value-proportional: landed_per_unit = total_landed × unit_cost / total_po_value
+            # (quantity cancels in value-weighted apportionment)
+            landed_cost_per_unit: Decimal = (total_landed * po_unit_cost) / total_po_value
+        elif total_landed > 0 and active_line_count > 0 and line_data.quantity_received > 0:
+            # Equal apportionment fallback (all unit costs are zero)
+            landed_cost_per_unit = total_landed / Decimal(active_line_count) / Decimal(line_data.quantity_received)
+        else:
+            landed_cost_per_unit = Decimal("0")
+
+        cost_per_unit: Decimal = po_unit_cost + landed_cost_per_unit
+
         line = GoodsReceivedNoteLine(
             grn_id=grn.id,
             po_item_id=line_data.po_item_id,
@@ -874,8 +919,31 @@ async def create_grn(
             quantity_expected=line_data.quantity_expected,
             quantity_received=line_data.quantity_received,
             quantity_rejected=line_data.quantity_rejected,
+            landed_cost_per_unit=landed_cost_per_unit,
+            cost_per_unit=cost_per_unit,
         )
         db.add(line)
+
+        # Update average_cost on ProductStockByLocation (upsert)
+        if line_data.quantity_received > 0:
+            stock_result = await db.execute(
+                select(ProductStockByLocation).where(
+                    ProductStockByLocation.product_id == line_data.product_id,
+                    ProductStockByLocation.location == grn_data.delivery_location,
+                )
+            )
+            stock = stock_result.scalar_one_or_none()
+            if stock is not None:
+                stock.average_cost = cost_per_unit
+            else:
+                # Create cost record; physical qty managed by /items/{id}/receive
+                db.add(ProductStockByLocation(
+                    product_id=line_data.product_id,
+                    location=grn_data.delivery_location,
+                    stock=0,
+                    reserved=0,
+                    average_cost=cost_per_unit,
+                ))
 
     await db.commit()
 

@@ -80,6 +80,9 @@ class ProductStockByLocation(Base):
     reorder_point: int | None = Column(Integer, nullable=True)
     reorder_quantity: int | None = Column(Integer, nullable=True)
 
+    # Weighted average landed cost per unit (updated on GRN receipt)
+    average_cost: Decimal | None = Column(Numeric(12, 4), nullable=True)
+
     # Timestamps
     created_at: datetime = Column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
@@ -739,12 +742,22 @@ class GoodsReceivedNote(Base):
     received_by: UUID | None = Column(PostgresUUID(as_uuid=True), nullable=True)
     notes: str | None = Column(Text, nullable=True)
 
+    # Landed cost components (allocated at receipt; apportioned to lines by PO-value proportion)
+    freight_cost: Decimal = Column(Numeric(12, 4), default=Decimal("0"), nullable=False)
+    customs_duty: Decimal = Column(Numeric(12, 4), default=Decimal("0"), nullable=False)
+    handling_cost: Decimal = Column(Numeric(12, 4), default=Decimal("0"), nullable=False)
+
     created_at: datetime = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at: datetime = Column(
         DateTime(timezone=True), onupdate=func.now(), nullable=True
     )
+
+    @property
+    def total_landed_cost(self) -> Decimal:
+        """Total landed cost = freight + customs duty + handling."""
+        return (self.freight_cost or Decimal("0")) + (self.customs_duty or Decimal("0")) + (self.handling_cost or Decimal("0"))
 
     # Relationships
     purchase_order = relationship("PurchaseOrder", back_populates="goods_received_notes")
@@ -789,6 +802,11 @@ class GoodsReceivedNoteLine(Base):
     quantity_expected: int = Column(Integer, nullable=False)
     quantity_received: int = Column(Integer, default=0, nullable=False)
     quantity_rejected: int = Column(Integer, default=0, nullable=False)
+
+    # Per-unit landed cost apportioned from GRN header (by PO-value proportion)
+    landed_cost_per_unit: Decimal = Column(Numeric(12, 4), default=Decimal("0"), nullable=False)
+    # Full cost per unit = po_unit_cost + landed_cost_per_unit (written at GRN receipt)
+    cost_per_unit: Decimal = Column(Numeric(12, 4), default=Decimal("0"), nullable=False)
 
     created_at: datetime = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

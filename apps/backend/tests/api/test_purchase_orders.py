@@ -273,3 +273,149 @@ class TestXeroSyncGRNGate:
         )
         # Expect 400 (GRN gate) or 400 (Xero config missing) — either way not 200
         assert resp.status_code in (400, 422)
+
+
+# ===========================================================================
+# Landed cost — UNI-1832
+# ===========================================================================
+
+
+@pytest.mark.asyncio
+class TestLandedCost:
+    """Landed cost apportionment via GRN (UNI-1832).
+
+    Tests cover:
+      - Schema validation (negative values rejected)
+      - Response shape includes landed cost fields
+      - Zero landed cost defaults (cost_per_unit == po_unit_cost)
+    """
+
+    async def test_create_grn_negative_freight_returns_422(
+        self, client: AsyncClient, auth_headers: dict
+    ) -> None:
+        """freight_cost must be >= 0; negative value should be rejected."""
+        resp = await client.post(
+            f"/api/purchase-orders/{FAKE_UUID}/grn",
+            json={
+                "delivery_location": "brisbane",
+                "freight_cost": -10.00,
+                "lines": [
+                    {
+                        "po_item_id": FAKE_UUID,
+                        "product_id": FAKE_UUID,
+                        "quantity_expected": 5,
+                        "quantity_received": 5,
+                    }
+                ],
+            },
+            headers=auth_headers,
+        )
+        assert resp.status_code == 422
+
+    async def test_create_grn_landed_cost_response_shape(
+        self, client: AsyncClient, auth_headers: dict
+    ) -> None:
+        """GRN response must include freight_cost, customs_duty, handling_cost,
+        total_landed_cost, and per-line landed_cost_per_unit / cost_per_unit."""
+        pos_resp = await client.get(
+            "/api/purchase-orders?page_size=50", headers=auth_headers
+        )
+        if pos_resp.status_code != 200:
+            pytest.skip("PO list endpoint unavailable")
+
+        pos = pos_resp.json().get("data", [])
+        eligible = [p for p in pos if p["status"] in ("approved", "ordered", "in_transit")]
+        if not eligible:
+            pytest.skip("No PO in approved/ordered/in_transit state — skipping")
+
+        po = eligible[0]
+        lines = [
+            {
+                "po_item_id": item["id"],
+                "product_id": item["product_id"],
+                "quantity_expected": item["quantity"],
+                "quantity_received": item["quantity"],
+                "quantity_rejected": 0,
+            }
+            for item in po["items"]
+        ]
+        if not lines:
+            pytest.skip("PO has no items")
+
+        resp = await client.post(
+            f"/api/purchase-orders/{po['id']}/grn",
+            json={
+                "delivery_location": po["delivery_location"],
+                "freight_cost": 200.00,
+                "customs_duty": 50.00,
+                "handling_cost": 25.00,
+                "lines": lines,
+            },
+            headers=auth_headers,
+        )
+        assert resp.status_code == 201
+        body = resp.json()
+
+        # Header-level landed cost fields
+        assert "freight_cost" in body
+        assert "customs_duty" in body
+        assert "handling_cost" in body
+        assert "total_landed_cost" in body
+        assert float(body["freight_cost"]) == pytest.approx(200.00)
+        assert float(body["customs_duty"]) == pytest.approx(50.00)
+        assert float(body["handling_cost"]) == pytest.approx(25.00)
+        assert float(body["total_landed_cost"]) == pytest.approx(275.00)
+
+        # Line-level landed cost fields
+        for line in body["lines"]:
+            assert "landed_cost_per_unit" in line
+            assert "cost_per_unit" in line
+            assert float(line["landed_cost_per_unit"]) >= 0
+            assert float(line["cost_per_unit"]) >= 0
+
+    async def test_create_grn_zero_landed_cost_cost_per_unit_equals_po_price(
+        self, client: AsyncClient, auth_headers: dict
+    ) -> None:
+        """When no landed costs are supplied, cost_per_unit must equal po unit_cost."""
+        pos_resp = await client.get(
+            "/api/purchase-orders?page_size=50", headers=auth_headers
+        )
+        if pos_resp.status_code != 200:
+            pytest.skip("PO list endpoint unavailable")
+
+        pos = pos_resp.json().get("data", [])
+        eligible = [p for p in pos if p["status"] in ("approved", "ordered", "in_transit")]
+        if not eligible:
+            pytest.skip("No PO in approved/ordered/in_transit state — skipping")
+
+        po = eligible[0]
+        if not po["items"]:
+            pytest.skip("PO has no items")
+
+        lines = [
+            {
+                "po_item_id": item["id"],
+                "product_id": item["product_id"],
+                "quantity_expected": item["quantity"],
+                "quantity_received": item["quantity"],
+                "quantity_rejected": 0,
+            }
+            for item in po["items"]
+        ]
+
+        resp = await client.post(
+            f"/api/purchase-orders/{po['id']}/grn",
+            json={
+                "delivery_location": po["delivery_location"],
+                # No freight/duty/handling → defaults to 0
+                "lines": lines,
+            },
+            headers=auth_headers,
+        )
+        assert resp.status_code == 201
+        body = resp.json()
+
+        assert float(body["total_landed_cost"]) == pytest.approx(0.0)
+        for line, po_item in zip(body["lines"], po["items"]):
+            assert float(line["landed_cost_per_unit"]) == pytest.approx(0.0)
+            assert float(line["cost_per_unit"]) == pytest.approx(float(po_item["unit_cost"]))
