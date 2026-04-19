@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   BentoGrid,
@@ -23,17 +22,6 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api/client';
-import { getDashboardInsights, type Insight } from '@/lib/api/ai-insights';
-// PHASE 4: Real-time POS failure alerts + Dashboard metrics
-import {
-  usePOSFailureAlerts,
-  useDashboardMetricsStream,
-  type POSFailureAlert,
-  type DashboardMetricsUpdate,
-} from '@/lib/hooks/use-sse';
-import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
 import { InsightCard } from '@/components/insights/insight-card';
 import { RevenueChart } from '@/components/charts/RevenueChart';
 import { CategorySalesChart } from '@/components/charts/CategorySalesChart';
@@ -42,164 +30,31 @@ import { TransferSuggestionsWidget } from '@/components/dashboard/TransferSugges
 import { OrderStatusBreakdownWidget } from '@/components/dashboard/OrderStatusBreakdownWidget';
 import { QuoteConversionWidget } from '@/components/dashboard/QuoteConversionWidget';
 import { RevenueByLocationWidget } from '@/components/dashboard/RevenueByLocationWidget';
-// PHASE C: AI Sales Insights Widget
 import { SalesInsightsWidget } from '@/components/dashboard/SalesInsightsWidget';
-// PHASE C: AI Order Patterns Widget
 import { OrderPatternsWidget } from '@/components/dashboard/OrderPatternsWidget';
-// PHASE 7: Cin7 Sync Status Widget
 import { Cin7SyncStatusWidget } from '@/components/dashboard/Cin7SyncStatusWidget';
-// NODEJS-Updates: Agent performance metrics widget
 import { AgentMetricsWidget } from '@/components/dashboard/AgentMetricsWidget';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { useDashboardData } from '@/lib/hooks/use-dashboard-data';
 
-interface DashboardMetrics {
-  total_revenue_this_month: string;
-  active_orders: number;
-  total_products: number;
-  total_customers: number;
-  low_stock_alerts: number;
-  pending_quotes: number;
-}
-
-interface RevenueDataPoint {
-  month: string;
-  revenue: string;
-}
-
-interface CategorySales {
-  category: string;
-  value: string;
-  percentage: number;
-}
-
-interface TopProduct {
-  name: string;
-  revenue: string;
-  quantity_sold: number;
-}
-
-interface ActivityItem {
-  type: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  status: string | null;
-}
-
-interface InventoryDataPoint {
-  warehouse: string;
-  in_stock: number;
-  low_stock: number;
-  out_of_stock: number;
-}
-
-interface AggregatedDashboardData {
-  metrics: DashboardMetrics;
-  revenue_chart: RevenueDataPoint[];
-  category_sales: CategorySales[];
-  top_products: TopProduct[];
-  inventory_status: InventoryDataPoint[];
-  recent_activity: ActivityItem[];
-}
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(value);
 
 export default function DashboardPage() {
-  const { toast } = useToast();
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
-  const [categorySales, setCategorySales] = useState<CategorySales[]>([]);
-  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
-  const [activity, setActivity] = useState<ActivityItem[]>([]);
-  const [insights, setInsights] = useState<Insight[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // PHASE 4: Real-time POS failure monitoring
-  const [posFailureCount, setPosFailureCount] = useState(0);
-  const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(true);
-
-  // PHASE 4: Real-time dashboard metrics
-  const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(true);
-
-  useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        // PHASE 4 OPTIMIZATION: Use aggregated endpoint (1 API call instead of 6)
-        // Expected performance: 70% faster (5-8s → <2s)
-        const [dashboardData, insightsData, posFailures] = await Promise.all([
-          apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
-          getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
-          apiClient
-            .get<{ alert_count: number }>('/api/monitoring/alerts/pos-failures?hours=24')
-            .catch(() => ({ alert_count: 0 })),
-        ]);
-
-        // Destructure aggregated data
-        setMetrics(dashboardData.metrics);
-        setRevenueData(dashboardData.revenue_chart);
-        setCategorySales(dashboardData.category_sales);
-        setTopProducts(dashboardData.top_products);
-        setActivity(dashboardData.recent_activity);
-        setInsights(insightsData.insights.filter((i) => i.priority === 'high').slice(0, 3));
-        setPosFailureCount(posFailures.alert_count);
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-        setMetrics(null);
-        setRevenueData([]);
-        setCategorySales([]);
-        setTopProducts([]);
-        setActivity([]);
-        setInsights([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadDashboardData();
-  }, []);
-
-  // PHASE 4: Handle real-time POS failure alerts
-  useEffect(() => {
-    if (posFailure) {
-      console.log('POS failure detected:', posFailure);
-      setPosFailureCount((prev) => prev + 1);
-      toast({
-        title: 'POS Payment Failed',
-        description: `Transaction ${posFailure.transaction_number} at ${posFailure.location_code} failed: ${posFailure.error}`,
-        variant: 'destructive',
-      });
-    }
-  }, [posFailure, toast]);
-
-  // PHASE 4: Handle real-time dashboard metrics updates
-  useEffect(() => {
-    if (metricsUpdate) {
-      console.log('Dashboard metric updated:', metricsUpdate);
-
-      // Refresh specific metrics based on the update
-      async function refreshMetrics() {
-        try {
-          const dashboardData = await apiClient.get<AggregatedDashboardData>(
-            '/api/dashboard/aggregated'
-          );
-          setMetrics(dashboardData.metrics);
-          setActivity(dashboardData.recent_activity);
-        } catch (error) {
-          console.error('Failed to refresh metrics:', error);
-        }
-      }
-
-      // Debounce refresh to avoid excessive API calls (wait 500ms before refreshing)
-      const timeout = setTimeout(refreshMetrics, 500);
-      return () => clearTimeout(timeout);
-    }
-  }, [metricsUpdate]);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-AU', {
-      style: 'currency',
-      currency: 'AUD',
-    }).format(value);
-  };
+  const {
+    metrics,
+    revenueData,
+    categorySales,
+    topProducts,
+    activity,
+    insights,
+    loading,
+    posFailureCount,
+    posAlertStatus,
+    metricsStreamStatus,
+  } = useDashboardData();
 
   if (loading) {
     return (
@@ -232,7 +87,6 @@ export default function DashboardPage() {
               CCW Equipment — Real-time business overview
             </p>
           </div>
-          {/* PHASE 4: Live metrics indicator */}
           {metricsStreamStatus === 'connected' && (
             <Badge variant="outline" className="text-xs">
               <div className="mr-2 h-2 w-2 animate-pulse rounded-full bg-green-500" />
@@ -241,7 +95,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* PHASE 4: POS Failure Alert Badge */}
         {posFailureCount > 0 && (
           <Link href="/pos/reconciliation">
             <Card className="border-destructive/50 bg-destructive/10">
@@ -268,7 +121,7 @@ export default function DashboardPage() {
 
       {/* Bento Grid Dashboard */}
       <BentoGrid columns={3} gap="lg">
-        {/* Metrics Overview - Spans 3 columns */}
+        {/* Metrics Overview */}
         <BentoCard variant="glass" span={3}>
           <BentoCardHeader>
             <BentoCardTitle className="text-2xl">Key Metrics</BentoCardTitle>
@@ -276,7 +129,6 @@ export default function DashboardPage() {
           </BentoCardHeader>
           <BentoCardContent>
             <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
-              {/* Revenue */}
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
@@ -287,8 +139,6 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-muted-foreground text-xs">This month from delivered orders</p>
               </div>
-
-              {/* Active Orders */}
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center gap-2">
                   <ShoppingCart className="h-4 w-4" />
@@ -297,8 +147,6 @@ export default function DashboardPage() {
                 <div className="text-3xl font-bold">{metrics?.active_orders || 0}</div>
                 <p className="text-muted-foreground text-xs">In progress</p>
               </div>
-
-              {/* Products */}
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center gap-2">
                   <Package className="h-4 w-4" />
@@ -307,8 +155,6 @@ export default function DashboardPage() {
                 <div className="text-3xl font-bold">{metrics?.total_products || 0}</div>
                 <p className="text-muted-foreground text-xs">Active catalog items</p>
               </div>
-
-              {/* Customers */}
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center gap-2">
                   <Users className="h-4 w-4" />
@@ -317,8 +163,6 @@ export default function DashboardPage() {
                 <div className="text-3xl font-bold">{metrics?.total_customers || 0}</div>
                 <p className="text-muted-foreground text-xs">Active customers</p>
               </div>
-
-              {/* Low Stock */}
               <div className="space-y-2">
                 <div className="text-destructive flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" />
@@ -329,8 +173,6 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-muted-foreground text-xs">Items with stock ≤ 10</p>
               </div>
-
-              {/* Pending Quotes */}
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center gap-2">
                   <FileText className="h-4 w-4" />
@@ -343,32 +185,26 @@ export default function DashboardPage() {
           </BentoCardContent>
         </BentoCard>
 
-        {/* Revenue Chart - Spans 2 columns */}
         <BentoCard variant="glass" span={2} className="min-h-[400px]">
           <RevenueChart data={revenueData} />
         </BentoCard>
 
-        {/* Stock Health Widget - 1 column */}
         <BentoCard variant="gradient" span={1} className="min-h-[400px]">
           <StockHealthWidget />
         </BentoCard>
 
-        {/* Category Sales Chart - 1 column */}
         <BentoCard variant="glass" span={1} className="min-h-[350px]">
           <CategorySalesChart data={categorySales} />
         </BentoCard>
 
-        {/* Order Status Breakdown - 1 column */}
         <BentoCard variant="elevated" span={1} className="min-h-[350px]">
           <OrderStatusBreakdownWidget />
         </BentoCard>
 
-        {/* Quote Conversion - 1 column */}
         <BentoCard variant="glass" span={1} className="min-h-[350px]">
           <QuoteConversionWidget />
         </BentoCard>
 
-        {/* AI Insights - Spans 2 columns with Border Beam */}
         {insights.length > 0 && (
           <BorderBeam>
             <BentoCard variant="glass" span={2} glowOnHover className="min-h-[350px]">
@@ -402,37 +238,31 @@ export default function DashboardPage() {
           </BorderBeam>
         )}
 
-        {/* PHASE C: AI Sales Insights Widget - Spans 2 columns */}
         <BentoCard variant="elevated" span={2} className="min-h-[400px]">
           <SalesInsightsWidget />
         </BentoCard>
 
-        {/* Transfer Suggestions - 1 column */}
         <BentoCard variant="glass" span={1} className="min-h-[350px]">
           <TransferSuggestionsWidget />
         </BentoCard>
 
-        {/* PHASE 7: Cin7 Sync Status - 1 column */}
         <BentoCard variant="elevated" span={1} className="min-h-[350px]">
           <Cin7SyncStatusWidget />
         </BentoCard>
 
-        {/* NODEJS-Updates: Agent Performance Metrics - 1 column */}
         <BentoCard variant="glass" span={1} className="min-h-[350px]">
           <AgentMetricsWidget />
         </BentoCard>
 
-        {/* PHASE C: AI Order Patterns Widget - Spans 2 columns */}
         <BentoCard variant="glass" span={2} className="min-h-[450px]">
           <OrderPatternsWidget />
         </BentoCard>
 
-        {/* Revenue by Location - Spans 3 columns */}
         <BentoCard variant="glass" span={3} className="min-h-[350px]">
           <RevenueByLocationWidget />
         </BentoCard>
 
-        {/* Top Products - 1 column */}
+        {/* Top Products */}
         <BentoCard variant="elevated" span={1} className="min-h-[350px]">
           <BentoCardHeader>
             <BentoCardTitle>Top 5 Products</BentoCardTitle>
@@ -463,7 +293,7 @@ export default function DashboardPage() {
           </BentoCardContent>
         </BentoCard>
 
-        {/* Recent Activity - Spans 3 columns */}
+        {/* Recent Activity */}
         <BentoCard variant="glass" span={3}>
           <BentoCardHeader>
             <BentoCardTitle className="text-2xl">Recent Activity</BentoCardTitle>

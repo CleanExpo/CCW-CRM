@@ -1,12 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-// PHASE 4: Search state persistence
-import { useSearchState } from '@/lib/hooks/use-search-state';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { apiClient } from '@/lib/api/client';
 import { OrderStatusBadge } from '@/components/ui/order-status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrderForm } from './components/OrderForm';
@@ -14,208 +10,45 @@ import { DeleteOrderDialog } from './components/DeleteOrderDialog';
 import { BulkDeleteOrdersDialog } from './components/BulkDeleteOrdersDialog';
 import { OrderDetailDialog } from './components/OrderDetailDialog';
 import { Pencil, Trash2, Plus, Eye, Download, Copy, FileText } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Order } from './types';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { PaginationControls } from '@/components/ui/pagination-controls';
-import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
-import { exportOrdersToCSV, exportOrdersToPDF } from '@/lib/utils/csv-export';
-import { invoicesApi } from '@/lib/api/invoices';
-
-interface PaginatedResponse {
-  items: Order[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
+import { format, formatDistanceToNow } from 'date-fns';
+import { useOrders } from '@/lib/hooks/use-orders';
 
 export default function OrdersPage() {
-  const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
-
-  // PHASE 4: Search state persistence - remembers pagination on navigation
-  const { state: searchState, updateField } = useSearchState({
-    key: 'orders-list',
-    defaultState: { page: 1, pageSize: 50 },
-  });
-
-  const page = searchState.page || 1;
-  const pageSize = searchState.pageSize || 50;
-  const setPage = (value: number) => updateField('page', value);
-  const setPageSize = (value: number) => updateField('pageSize', value);
-  const [formOpen, setFormOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
-
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await apiClient.get<PaginatedResponse>(
-        `/api/orders?page=${page}&page_size=${pageSize}`
-      );
-
-      // Map API response to frontend format
-      const mappedOrders = response.items.map((order) => ({
-        ...order,
-        customer_name: order.customer_name || 'Unknown Customer',
-        item_count: order.items?.length ?? order.item_count ?? 0,
-      }));
-
-      setOrders(mappedOrders);
-      setTotal(response.total);
-      setTotalPages(response.total_pages);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to load orders';
-      console.error('Failed to load orders:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: message,
-      });
-      setOrders([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-      setLastUpdated(new Date()); // PHASE 4: Track last update time
-    }
-  }, [page, pageSize, toast]);
-
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
-
-  const handleAddOrder = () => {
-    setSelectedOrder(null);
-    setFormOpen(true);
-  };
-
-  const handleEditOrder = async (order: Order) => {
-    // Fetch full order details including line items
-    try {
-      const fullOrder = await apiClient.get<Order>(`/api/orders/${order.id}`);
-      setSelectedOrder(fullOrder);
-      setFormOpen(true);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to load order details';
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: message,
-      });
-    }
-  };
-
-  // PHASE 4: Duplicate order - quickly create copy with same items
-  const handleDuplicateOrder = async (order: Order) => {
-    try {
-      const fullOrder = await apiClient.get<Order>(`/api/orders/${order.id}`);
-      // Create a copy without id (will be treated as new order)
-      const orderCopy = {
-        ...fullOrder,
-        id: undefined, // Remove id to create new order
-        order_number: undefined, // Will be auto-generated
-        status: 'draft', // Reset to draft
-        notes: fullOrder.notes
-          ? `Copy of ${fullOrder.order_number}\n\n${fullOrder.notes}`
-          : `Copy of ${fullOrder.order_number}`,
-      };
-      setSelectedOrder(orderCopy as unknown as Order);
-      setFormOpen(true);
-      toast({
-        title: 'Order Duplicated',
-        description: 'Review and modify the copy before saving',
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to duplicate order';
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: message,
-      });
-    }
-  };
-
-  const handleDeleteOrder = (order: Order) => {
-    setSelectedOrder(order);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleViewDetails = async (order: Order) => {
-    // Fetch full order details including line items
-    try {
-      const fullOrder = await apiClient.get<Order>(`/api/orders/${order.id}`);
-      setSelectedOrder(fullOrder);
-      setDetailDialogOpen(true);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to load order details';
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: message,
-      });
-    }
-  };
-
-  const handleExport = () => {
-    exportOrdersToCSV(orders);
-    toast({
-      title: 'Export Successful',
-      description: `Exported ${orders.length} orders to CSV`,
-    });
-  };
-
-  const handleExportPDF = () => {
-    exportOrdersToPDF(orders);
-    toast({ title: 'PDF Export', description: 'Print dialog opening…' });
-  };
-
-  const handleToggleSelectOrder = (orderId: string) => {
-    setSelectedOrderIds((prev) =>
-      prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
-    );
-  };
-
-  const handleToggleSelectAll = () => {
-    if (selectedOrderIds.length === orders.length) {
-      setSelectedOrderIds([]);
-    } else {
-      setSelectedOrderIds(orders.map((o) => o.id));
-    }
-  };
-
-  const handleBulkDelete = () => {
-    setBulkDeleteDialogOpen(true);
-  };
-
-  const handleGenerateInvoice = async (order: Order) => {
-    try {
-      const invoice = await invoicesApi.generateFromOrder(order.id);
-      toast({
-        title: 'Invoice Generated',
-        description: `Invoice created — redirecting to invoice.`,
-      });
-      window.location.href = `/invoices/${invoice.id}`;
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to generate invoice',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleSuccess = () => {
-    loadOrders();
-    setSelectedOrderIds([]);
-  };
+  const {
+    orders,
+    total,
+    totalPages,
+    loading,
+    lastUpdated,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    formOpen,
+    setFormOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    bulkDeleteDialogOpen,
+    setBulkDeleteDialogOpen,
+    detailDialogOpen,
+    setDetailDialogOpen,
+    selectedOrder,
+    selectedOrderIds,
+    handleAddOrder,
+    handleEditOrder,
+    handleDuplicateOrder,
+    handleDeleteOrder,
+    handleViewDetails,
+    handleExport,
+    handleExportPDF,
+    handleToggleSelectOrder,
+    handleToggleSelectAll,
+    handleBulkDelete,
+    handleGenerateInvoice,
+    handleSuccess,
+  } = useOrders();
 
   return (
     <div className="space-y-6">
