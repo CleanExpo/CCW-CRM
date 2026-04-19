@@ -46,6 +46,7 @@ class JournalSource(str, enum.Enum):
     ORDER = "order"
     INVOICE = "invoice"
     PAYMENT = "payment"
+    PURCHASE = "purchase"
     ADJUSTMENT = "adjustment"
 
 

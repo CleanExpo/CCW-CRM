@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,41 +20,41 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { apiClient } from "@/lib/api/client";
-import { toast } from "sonner";
-import { Mail } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { apiClient } from '@/lib/api/client';
+import { toast } from 'sonner';
+import { Mail } from 'lucide-react';
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
   subject: z.string().optional(),
-  message: z.string().min(10, "Message must be at least 10 characters"),
-  source: z.enum(["walk-in", "internet", "phone", "service"]).default("walk-in"),
+  message: z.string().min(10, 'Message must be at least 10 characters'),
+  source: z.enum(['walk-in', 'internet', 'phone', 'service']).default('walk-in'),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 interface ContactFormProps {
-  source?: "walk-in" | "internet" | "phone" | "service";
+  source?: 'walk-in' | 'internet' | 'phone' | 'service';
   triggerButton?: React.ReactNode;
 }
 
-export function ContactForm({ source = "walk-in", triggerButton }: ContactFormProps) {
+export function ContactForm({ source = 'walk-in', triggerButton }: ContactFormProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      subject: "",
-      message: "",
+      name: '',
+      email: '',
+      phone: '',
+      subject: '',
+      message: '',
       source,
     },
   });
@@ -62,15 +62,13 @@ export function ContactForm({ source = "walk-in", triggerButton }: ContactFormPr
   async function onSubmit(values: FormData) {
     setIsLoading(true);
     try {
-      await apiClient.post("/api/contact-submissions", values);
+      await apiClient.post('/api/contact-submissions', values);
       toast.success("Message sent! We'll get back to you soon.");
       form.reset();
       setOpen(false);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to send message. Please try again.";
+        error instanceof Error ? error.message : 'Failed to send message. Please try again.';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -82,7 +80,7 @@ export function ContactForm({ source = "walk-in", triggerButton }: ContactFormPr
       <DialogTrigger asChild>
         {triggerButton || (
           <Button variant="outline" size="sm">
-            <Mail className="h-4 w-4 mr-2" />
+            <Mail className="mr-2 h-4 w-4" />
             Contact Us
           </Button>
         )}
@@ -96,7 +94,7 @@ export function ContactForm({ source = "walk-in", triggerButton }: ContactFormPr
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <FormField
               control={form.control}
               name="name"
@@ -104,7 +102,7 @@ export function ContactForm({ source = "walk-in", triggerButton }: ContactFormPr
                 <FormItem>
                   <FormLabel>Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your name" {...field} />
+                    <Input placeholder="Your name" required {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -118,7 +116,7 @@ export function ContactForm({ source = "walk-in", triggerButton }: ContactFormPr
                 <FormItem>
                   <FormLabel>Email *</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="your@email.com" {...field} />
+                    <Input type="email" placeholder="your@email.com" required {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -163,6 +161,7 @@ export function ContactForm({ source = "walk-in", triggerButton }: ContactFormPr
                     <Textarea
                       placeholder="Tell us how we can help..."
                       className="min-h-[100px]"
+                      required
                       {...field}
                     />
                   </FormControl>
@@ -181,7 +180,7 @@ export function ContactForm({ source = "walk-in", triggerButton }: ContactFormPr
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Sending..." : "Send Message"}
+                {isLoading ? 'Sending...' : 'Send Message'}
               </Button>
             </div>
           </form>
