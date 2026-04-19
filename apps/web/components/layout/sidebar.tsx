@@ -59,19 +59,19 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-interface NavItem {
+export interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
-interface NavGroup {
+export interface NavGroup {
   id: string;
   label: string;
   items: NavItem[];
 }
 
-const navGroups: NavGroup[] = [
+export const navGroups: NavGroup[] = [
   {
     id: 'operations',
     label: 'Operations',
