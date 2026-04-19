@@ -1,13 +1,18 @@
 """ElevenLabs voice generation API routes."""
 
+import os
 from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config.database import get_async_db
 from src.config.elevenlabs_settings import ElevenLabsSettings, elevenlabs_settings
+from src.db.integration_credential_models import IntegrationCredential
 from src.integrations.elevenlabs.client import ElevenLabsClient
 
 router = APIRouter(prefix="/api/integrations/elevenlabs", tags=["ElevenLabs Integration"])
@@ -86,12 +91,34 @@ class ConnectionStatusResponse(BaseModel):
 
     connected: bool
     mode: str
+    source: str = Field(
+        default="environment",
+        description="Where the API key came from: 'database' | 'environment' | 'not_configured'",
+    )
     default_voice_id: str
     default_model_id: str
     voice_settings: dict
     output_format: str
     streaming_enabled: bool
     voice_cloning_enabled: bool
+
+
+class ElevenLabsConfigureRequest(BaseModel):
+    """Request body for configuring the ElevenLabs API key."""
+
+    api_key: str = Field(
+        ...,
+        min_length=1,
+        description="ElevenLabs API key (typically starts with 'sk_')",
+    )
+
+    @field_validator("api_key")
+    @classmethod
+    def validate_api_key_format(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 20:
+            raise ValueError("ElevenLabs API key looks too short")
+        return v
 
 
 # Helper functions
@@ -103,18 +130,58 @@ def get_elevenlabs_settings() -> ElevenLabsSettings:
 @router.get("/status")
 async def get_connection_status(
     settings: Annotated[ElevenLabsSettings, Depends(get_elevenlabs_settings)],
+    db: Annotated[AsyncSession, Depends(get_async_db)],
 ) -> ConnectionStatusResponse:
     """
     Get ElevenLabs connection status.
 
-    Returns:
-        Connection status and configuration details
+    Resolution order for the API key (DB-first → env-fallback):
+      1. `IntegrationCredential` row with `integration_name='elevenlabs'`
+      2. `ELEVENLABS_API_KEY` environment variable
+      3. Not configured — `connected=False`, `mode='demo'`
     """
     logger.info("checking_elevenlabs_status")
 
+    source = "not_configured"
+    connected = False
+    mode = "demo"
+
+    # DB-first
+    try:
+        result = await db.execute(
+            select(IntegrationCredential).where(
+                IntegrationCredential.integration_name == "elevenlabs"
+            )
+        )
+        cred = result.scalar_one_or_none()
+        if cred and cred.is_active:
+            stored = cred.get_credentials()
+            if stored.get("api_key"):
+                connected = True
+                mode = "live"
+                source = "database"
+    except Exception:
+        # DB not available — fall through to env check
+        pass
+
+    # Env-fallback
+    if not connected:
+        env_key = os.getenv("ELEVENLABS_API_KEY", "")
+        # The default placeholder in settings is "demo_elevenlabs_api_key" — treat as unset.
+        if env_key and env_key != "demo_elevenlabs_api_key":
+            connected = True
+            mode = settings.mode if settings.mode == "live" else "live"
+            source = "environment"
+        elif settings.mode == "demo":
+            # Demo mode is still a valid "connected" state (returns mock audio).
+            connected = True
+            mode = "demo"
+            source = "environment"
+
     return ConnectionStatusResponse(
-        connected=True,
-        mode=settings.mode,
+        connected=connected,
+        mode=mode,
+        source=source,
         default_voice_id=settings.default_voice_id,
         default_model_id=settings.default_model_id,
         voice_settings=settings.get_voice_settings(),
@@ -122,6 +189,47 @@ async def get_connection_status(
         streaming_enabled=settings.enable_streaming,
         voice_cloning_enabled=settings.enable_voice_cloning,
     )
+
+
+@router.post("/configure")
+async def configure_elevenlabs(
+    request: ElevenLabsConfigureRequest,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> dict[str, str | bool]:
+    """Save ElevenLabs API key to the database (UNI-1936).
+
+    Follows the DB-first → env-fallback pattern used by the Anthropic
+    integration: if a stored key exists, the `/status` endpoint and the
+    downstream client read it first; env var is the fallback only.
+    """
+    logger.info("configuring_elevenlabs_credentials")
+
+    result = await db.execute(
+        select(IntegrationCredential).where(
+            IntegrationCredential.integration_name == "elevenlabs"
+        )
+    )
+    cred = result.scalar_one_or_none()
+
+    if cred:
+        cred.set_credentials({"api_key": request.api_key})
+        cred.is_active = True
+    else:
+        cred = IntegrationCredential(
+            integration_name="elevenlabs", is_active=True
+        )
+        cred.set_credentials({"api_key": request.api_key})
+        db.add(cred)
+
+    await db.commit()
+
+    logger.info("elevenlabs_credentials_saved")
+    return {
+        "connected": True,
+        "mode": "live",
+        "source": "database",
+        "message": "ElevenLabs API key saved successfully",
+    }
 
 
 @router.post("/generate")

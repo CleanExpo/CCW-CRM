@@ -38,6 +38,13 @@ function IntegrationsContent() {
   const [claudeStatus, setClaudeStatus] = useState<{ mode: string; status: string } | null>(null);
   const [anthropicKey, setAnthropicKey] = useState('');
   const [anthropicSaving, setAnthropicSaving] = useState(false);
+  const [elevenLabsStatus, setElevenLabsStatus] = useState<{
+    connected: boolean;
+    mode: string;
+    source?: string;
+  } | null>(null);
+  const [elevenLabsKey, setElevenLabsKey] = useState('');
+  const [elevenLabsSaving, setElevenLabsSaving] = useState(false);
 
   const loadXeroStatus = async () => {
     try {
@@ -81,18 +88,22 @@ function IntegrationsContent() {
 
   const loadAiStatuses = async () => {
     try {
-      const [g, c, anthropic] = await Promise.allSettled([
+      const [g, c, anthropic, elevenLabs] = await Promise.allSettled([
         apiClient.get<{ configured: boolean; status: string; default_model?: string }>(
           '/api/google-ai/health'
         ),
         apiClient.get<{ mode: string; status: string }>('/api/ai/autonomous/health'),
         apiClient.get<{ connected: boolean; mode: string }>('/api/integrations/anthropic/status'),
+        apiClient.get<{ connected: boolean; mode: string; source?: string }>(
+          '/api/integrations/elevenlabs/status'
+        ),
       ]);
       if (g.status === 'fulfilled') setGeminiStatus(g.value);
       if (c.status === 'fulfilled') setClaudeStatus(c.value);
       if (anthropic.status === 'fulfilled' && anthropic.value.mode === 'production') {
         setClaudeStatus({ mode: 'production', status: 'healthy' });
       }
+      if (elevenLabs.status === 'fulfilled') setElevenLabsStatus(elevenLabs.value);
     } catch {
       // AI services are optional — don't error
     }
@@ -117,6 +128,34 @@ function IntegrationsContent() {
       });
     } finally {
       setAnthropicSaving(false);
+    }
+  };
+
+  const saveElevenLabsKey = async () => {
+    if (!elevenLabsKey.trim()) return;
+    setElevenLabsSaving(true);
+    try {
+      const result = await apiClient.post<{
+        connected: boolean;
+        mode: string;
+        source?: string;
+        message: string;
+      }>('/api/integrations/elevenlabs/configure', { api_key: elevenLabsKey });
+      setElevenLabsStatus({
+        connected: result.connected,
+        mode: result.mode,
+        source: result.source,
+      });
+      setElevenLabsKey('');
+      toast({ title: 'ElevenLabs Connected', description: result.message });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Configuration Failed',
+        description: error instanceof Error ? error.message : 'Invalid API key',
+      });
+    } finally {
+      setElevenLabsSaving(false);
     }
   };
 
@@ -439,6 +478,74 @@ function IntegrationsContent() {
                 )}
                 {claudeStatus?.mode === 'production' && (
                   <p className="mt-2 text-xs text-green-700">Claude AI features are active.</p>
+                )}
+              </div>
+              {/* ElevenLabs */}
+              <div className="rounded-lg border p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="text-xl">🎙️</span> ElevenLabs
+                  </div>
+                  {elevenLabsStatus?.mode === 'live' ? (
+                    <span className="flex items-center gap-1 text-xs text-green-600">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Live
+                    </span>
+                  ) : elevenLabsStatus?.mode === 'demo' ? (
+                    <span className="flex items-center gap-1 text-xs text-orange-600">
+                      <XCircle className="h-3.5 w-3.5" /> Demo mode
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-xs text-orange-600">
+                      <XCircle className="h-3.5 w-3.5" /> Not configured
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Voice narration for CCW demo videos and audio generation.
+                </p>
+                <p className="mt-1 font-mono text-xs text-purple-600">
+                  {elevenLabsStatus?.source === 'database'
+                    ? 'Key source: database'
+                    : elevenLabsStatus?.source === 'environment'
+                      ? 'Key source: ELEVENLABS_API_KEY env var'
+                      : ''}
+                </p>
+                {elevenLabsStatus?.mode !== 'live' && (
+                  <div className="mt-3 space-y-2">
+                    <label className="text-xs font-medium">API Key</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        value={elevenLabsKey}
+                        onChange={(e) => setElevenLabsKey(e.target.value)}
+                        placeholder="sk_..."
+                        className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-8 w-full rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                      />
+                      <button
+                        onClick={saveElevenLabsKey}
+                        disabled={elevenLabsSaving || elevenLabsKey.trim().length < 20}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-8 items-center rounded-md px-3 text-xs font-medium disabled:opacity-50"
+                      >
+                        {elevenLabsSaving ? 'Saving...' : 'Connect'}
+                      </button>
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      Get your key from{' '}
+                      <a
+                        href="https://elevenlabs.io/app/settings/api-keys"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline"
+                      >
+                        elevenlabs.io
+                      </a>
+                    </p>
+                  </div>
+                )}
+                {elevenLabsStatus?.mode === 'live' && (
+                  <p className="mt-2 text-xs text-green-700">
+                    Audio generation is live — scripts render real narration.
+                  </p>
                 )}
               </div>
             </div>
