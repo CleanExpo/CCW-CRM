@@ -16,24 +16,32 @@ interface User {
 }
 
 /**
- * Verify JWT token with backend
+ * Verify JWT token with backend.
+ *
+ * Uses a 3s AbortController timeout so a slow/OOM'd backend cannot hang
+ * the middleware and poison Next.js RSC prefetches with 503s (UNI-1789).
  */
 async function verifyToken(token: string): Promise<User | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
   try {
     const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
       cache: 'no-store',
+      signal: controller.signal,
     });
 
     if (!response.ok) {
       return null;
     }
 
-    return response.json();
+    return await response.json();
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -47,6 +55,16 @@ export async function updateSession(request: NextRequest) {
 
   // Get auth token from cookies
   const token = request.cookies.get('auth_token')?.value;
+
+  // RSC prefetch fast-path (UNI-1789): Next.js fires ?_rsc=* prefetches on
+  // link hover. Don't round-trip to the backend for those — if the user has
+  // a token cookie, let the prefetch through and let the client-rendered
+  // page do its own auth check on mount. Pages without a token still
+  // redirect to /login below.
+  const isRscPrefetch = request.nextUrl.searchParams.has('_rsc');
+  if (isRscPrefetch && token) {
+    return response;
+  }
 
   // Verify token if present
   let user: User | null = null;
