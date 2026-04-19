@@ -15,9 +15,11 @@ Monitors conversation context usage and prevents context overflow.
 ## Commands
 
 ### `/context`
+
 Shows current context status
 
 **Output:**
+
 ```
 📊 Context Status
 
@@ -33,9 +35,11 @@ Recommendations:
 ```
 
 ### `/context compact`
+
 Triggers context compaction (summarize and continue)
 
 ### `/context clear`
+
 Resets context (use sparingly)
 
 ---
@@ -52,11 +56,13 @@ Resets context (use sparingly)
 ## Auto-Actions
 
 Every 10 messages:
+
 - Check token count
 - Warn if approaching limit
 - Suggest compaction if needed
 
 Every 5 messages:
+
 - Remind to re-read CLAUDE.md
 
 ---
