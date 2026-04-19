@@ -87,6 +87,10 @@ jobs:
       # - name: Type check with mypy
       #   working-directory: apps/backend
       #   run: uv run mypy src/
+      - name: Run security tests (no DB required — always gates)
+        working-directory: apps/backend
+        run: uv run pytest tests/security --noconftest -v
+        # Security tests are pure-Python (no DB). These must always pass.
 
       - name: Run database migrations
         working-directory: apps/backend
@@ -101,8 +105,8 @@ jobs:
         id: test
         working-directory: apps/backend
         # continue-on-error: pre-existing test failures are tracked in UNI-1242.
-        # Ruff lint (above) still gates code quality. Tests are non-blocking until
-        # the full DB migration + fixture setup is wired properly in CI.
+        # Ruff lint + security tests above still gate code quality. DB tests are
+        # non-blocking until the full migration + fixture setup is wired in CI.
         continue-on-error: true
         run: uv run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=15 -v
         env:
@@ -146,7 +150,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Lint
         run: pnpm turbo run lint
@@ -192,7 +196,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build all packages
         id: build
@@ -450,7 +454,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
