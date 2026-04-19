@@ -102,6 +102,7 @@ export default function WarehouseOpsPage() {
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingSlip, setIsGeneratingSlip] = useState(false);
 
   // Operations tab state
   const [data, setData] = useState<WarehouseOpsPayload | null>(null);
@@ -216,6 +217,28 @@ export default function WarehouseOpsPage() {
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGeneratePackingSlip = async () => {
+    if (selectedOrderIds.length === 0) {
+      toast({ title: 'No orders selected', description: 'Select at least one order', variant: 'destructive' });
+      return;
+    }
+    setIsGeneratingSlip(true);
+    try {
+      const packingSlip = await warehouseApi.createPackingSlip(selectedOrderIds);
+      toast({ title: 'Packing slip created', description: packingSlip.slip_number });
+      setSelectedOrderIds([]);
+      router.push(`/warehouse/packing-slip/${packingSlip.id}`);
+    } catch (error: unknown) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to generate packing slip',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingSlip(false);
     }
   };
 
@@ -611,7 +634,7 @@ export default function WarehouseOpsPage() {
                       printable pick list with SKUs, bin locations, and quantities.
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -621,13 +644,23 @@ export default function WarehouseOpsPage() {
                       {isLoadingOrders ? 'Loading...' : 'Refresh Orders'}
                     </Button>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleGeneratePackingSlip()}
+                      disabled={isGeneratingSlip || selectedOrderIds.length === 0}
+                    >
+                      {isGeneratingSlip
+                        ? 'Generating...'
+                        : `Packing Slip${selectedOrderIds.length > 0 ? ` (${selectedOrderIds.length})` : ''}`}
+                    </Button>
+                    <Button
                       size="sm"
                       onClick={() => void handleGeneratePickList()}
                       disabled={isGenerating || selectedOrderIds.length === 0}
                     >
                       {isGenerating
                         ? 'Generating...'
-                        : `Generate Pick List${selectedOrderIds.length > 0 ? ` (${selectedOrderIds.length})` : ''}`}
+                        : `Pick List${selectedOrderIds.length > 0 ? ` (${selectedOrderIds.length})` : ''}`}
                     </Button>
                   </div>
                 </div>
