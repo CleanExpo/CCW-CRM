@@ -16,12 +16,14 @@ Implement a self-sustaining autonomous development system where a Lead Agent coo
 ## 2. Architecture Overview
 
 ### Current State
+
 - ✅ Basic agent framework (orchestrator, planner, coder, reviewer)
 - ✅ File-based agent definitions in `.claude/agents/`
 - ✅ Command framework in `.claude/commands/`
 - ✅ Gate system for safety
 
 ### Target State
+
 - ✅ Multi-agent coordination system
 - ✅ 5-phase execution pipeline
 - ✅ Builder→Validator pairs for quality
@@ -56,40 +58,40 @@ Implement a self-sustaining autonomous development system where a Lead Agent coo
 
 ### New Agent Definitions (6 files)
 
-| File | Purpose |
-|------|---------|
-| `.claude/agents/lead-agent.md` | Orchestrates 5-phase execution, coordinates subagents |
-| `.claude/agents/discovery-agent.md` | Phase 1: Analyzes codebase, identifies patterns |
-| `.claude/agents/architect-agent.md` | Phase 2: Designs solution architecture |
-| `.claude/agents/builder-agent.md` | Phase 3: Implements code following design |
-| `.claude/agents/validator-agent.md` | Phases 2-5: Validates all outputs for quality |
-| `.claude/agents/finalizer-agent.md` | Phase 5: Final verification and deployment |
+| File                                | Purpose                                               |
+| ----------------------------------- | ----------------------------------------------------- |
+| `.claude/agents/lead-agent.md`      | Orchestrates 5-phase execution, coordinates subagents |
+| `.claude/agents/discovery-agent.md` | Phase 1: Analyzes codebase, identifies patterns       |
+| `.claude/agents/architect-agent.md` | Phase 2: Designs solution architecture                |
+| `.claude/agents/builder-agent.md`   | Phase 3: Implements code following design             |
+| `.claude/agents/validator-agent.md` | Phases 2-5: Validates all outputs for quality         |
+| `.claude/agents/finalizer-agent.md` | Phase 5: Final verification and deployment            |
 
 ### Execution State System (5 files)
 
-| File | Purpose |
-|------|---------|
-| `.claude/.execution/README.md` | Documentation for execution system |
-| `.claude/.execution/.gitignore` | Ignore runtime state files |
-| `scripts/autonomous/init-execution.ps1` | Initialize execution directory |
-| `scripts/autonomous/resume-task.ps1` | Resume interrupted tasks |
-| `scripts/autonomous/cleanup-execution.ps1` | Clean old execution state |
+| File                                       | Purpose                            |
+| ------------------------------------------ | ---------------------------------- |
+| `.claude/.execution/README.md`             | Documentation for execution system |
+| `.claude/.execution/.gitignore`            | Ignore runtime state files         |
+| `scripts/autonomous/init-execution.ps1`    | Initialize execution directory     |
+| `scripts/autonomous/resume-task.ps1`       | Resume interrupted tasks           |
+| `scripts/autonomous/cleanup-execution.ps1` | Clean old execution state          |
 
 ### Command System (2 files)
 
-| File | Purpose |
-|------|---------|
-| `.claude/commands/autonomous.md` | `/autonomous` command definition |
-| `.claude/skills/AUTONOMOUS-BUILD.md` | Autonomous build skill |
+| File                                 | Purpose                          |
+| ------------------------------------ | -------------------------------- |
+| `.claude/commands/autonomous.md`     | `/autonomous` command definition |
+| `.claude/skills/AUTONOMOUS-BUILD.md` | Autonomous build skill           |
 
 ### Integration & Testing (4 files)
 
-| File | Purpose |
-|------|---------|
-| `scripts/test-autonomous-system.ps1` | System integration tests |
-| `docs/specs/AUTONOMOUS-FRAMEWORK-ARCHITECTURE.md` | Architecture documentation |
-| `docs/guides/USING-AUTONOMOUS-MODE.md` | User guide |
-| `.claude/CLAUDE.md` | Update with Phase 5 instructions |
+| File                                              | Purpose                          |
+| ------------------------------------------------- | -------------------------------- |
+| `scripts/test-autonomous-system.ps1`              | System integration tests         |
+| `docs/specs/AUTONOMOUS-FRAMEWORK-ARCHITECTURE.md` | Architecture documentation       |
+| `docs/guides/USING-AUTONOMOUS-MODE.md`            | User guide                       |
+| `.claude/CLAUDE.md`                               | Update with Phase 5 instructions |
 
 **Total**: 17 new files, 1 modified file
 
@@ -100,12 +102,14 @@ Implement a self-sustaining autonomous development system where a Lead Agent coo
 ### Phase 1: Foundation (8 hours)
 
 #### Step 1.1: Create Execution State System (3 hours)
+
 - [ ] Create `.claude/.execution/` directory structure
 - [ ] Write README documenting execution state schema
 - [ ] Create `.gitignore` to exclude runtime state
 - [ ] Implement JSON schemas for task state, handoffs, validation reports
 
 **Files**:
+
 - `.claude/.execution/README.md`
 - `.claude/.execution/.gitignore`
 - `.claude/.execution/schemas/task-state.schema.json`
@@ -113,24 +117,28 @@ Implement a self-sustaining autonomous development system where a Lead Agent coo
 - `.claude/.execution/schemas/validation-report.schema.json`
 
 #### Step 1.2: PowerShell Utility Scripts (3 hours)
+
 - [ ] `init-execution.ps1` - Initialize execution directory
 - [ ] `resume-task.ps1` - Load and resume interrupted tasks
 - [ ] `cleanup-execution.ps1` - Archive old execution state
 - [ ] `validate-state.ps1` - Verify execution state integrity
 
 **Files**:
+
 - `scripts/autonomous/init-execution.ps1`
 - `scripts/autonomous/resume-task.ps1`
 - `scripts/autonomous/cleanup-execution.ps1`
 - `scripts/autonomous/validate-state.ps1`
 
 #### Step 1.3: Lead Agent Definition (2 hours)
+
 - [ ] Define Lead Agent role and responsibilities
 - [ ] Document 5-phase execution model
 - [ ] Define handoff protocols between phases
 - [ ] Create decision tree for routing to subagents
 
 **Files**:
+
 - `.claude/agents/lead-agent.md`
 
 ---
@@ -138,34 +146,40 @@ Implement a self-sustaining autonomous development system where a Lead Agent coo
 ### Phase 2: Discovery & Architecture Agents (8 hours)
 
 #### Step 2.1: Discovery Agent (4 hours)
+
 - [ ] Define discovery agent role
 - [ ] Create codebase exploration protocols
 - [ ] Implement pattern recognition guidelines
 - [ ] Define discovery report schema
 
 **Capabilities**:
+
 - File system scanning with pattern matching
 - Existing code pattern analysis
 - Dependency graph generation
 - Architecture documentation extraction
 
 **Files**:
+
 - `.claude/agents/discovery-agent.md`
 - `.claude/.execution/schemas/discovery-report.schema.json`
 
 #### Step 2.2: Architect Agent (4 hours)
+
 - [ ] Define architect agent role
 - [ ] Create system design protocols
 - [ ] Implement design validation rules
 - [ ] Define architecture document schema
 
 **Capabilities**:
+
 - Component design from requirements
 - Database schema design (with approval gates)
 - API contract design
 - Integration point identification
 
 **Files**:
+
 - `.claude/agents/architect-agent.md`
 - `.claude/.execution/schemas/architecture-doc.schema.json`
 
@@ -174,28 +188,33 @@ Implement a self-sustaining autonomous development system where a Lead Agent coo
 ### Phase 3: Builder & Validator Agents (10 hours)
 
 #### Step 3.1: Builder Agent (5 hours)
+
 - [ ] Define builder agent role
 - [ ] Create implementation protocols
 - [ ] Define code quality standards
 - [ ] Implement progress reporting system
 
 **Capabilities**:
+
 - Code implementation from architecture
 - Test-driven development
 - Incremental commits
 - Real-time progress tracking
 
 **Files**:
+
 - `.claude/agents/builder-agent.md`
 - `.claude/.execution/schemas/build-progress.schema.json`
 
 #### Step 3.2: Validator Agent (5 hours)
+
 - [ ] Define validator agent role
 - [ ] Create validation checklist system
 - [ ] Implement automated quality gates
 - [ ] Define validation report schema
 
 **Validation Levels**:
+
 1. **Syntax**: TypeScript/Python compilation
 2. **Logic**: Unit tests, integration tests
 3. **Security**: OWASP checks, auth verification
@@ -203,6 +222,7 @@ Implement a self-sustaining autonomous development system where a Lead Agent coo
 5. **UX**: Accessibility, responsive design
 
 **Files**:
+
 - `.claude/agents/validator-agent.md`
 - `.claude/.execution/schemas/validation-report.schema.json`
 
@@ -211,28 +231,33 @@ Implement a self-sustaining autonomous development system where a Lead Agent coo
 ### Phase 4: Finalizer & Orchestration (8 hours)
 
 #### Step 4.1: Finalizer Agent (3 hours)
+
 - [ ] Define finalizer agent role
 - [ ] Create deployment verification protocols
 - [ ] Implement final quality gates
 - [ ] Define completion criteria
 
 **Capabilities**:
+
 - Pre-deployment checklist verification
 - Documentation completeness check
 - Rollback plan validation
 - Stakeholder notification
 
 **Files**:
+
 - `.claude/agents/finalizer-agent.md`
 - `.claude/.execution/schemas/completion-report.schema.json`
 
 #### Step 4.2: Orchestration Logic (5 hours)
+
 - [ ] Implement phase transition logic
 - [ ] Create handoff protocols between agents
 - [ ] Build state persistence system
 - [ ] Implement error recovery mechanisms
 
 **Key Logic**:
+
 ```
 Lead Agent receives task
     ↓
@@ -250,6 +275,7 @@ Completion Report → User
 ```
 
 **Files**:
+
 - `.claude/agents/lead-agent.md` (update with orchestration logic)
 - `scripts/autonomous/transition-phase.ps1`
 
@@ -258,12 +284,14 @@ Completion Report → User
 ### Phase 5: Command Interface & Documentation (6 hours)
 
 #### Step 5.1: /autonomous Command (3 hours)
+
 - [ ] Define command syntax
 - [ ] Implement task initialization
 - [ ] Create progress monitoring
 - [ ] Add pause/resume functionality
 
 **Usage**:
+
 ```
 /autonomous <task-description>
   --approval-mode [auto|manual]
@@ -272,16 +300,19 @@ Completion Report → User
 ```
 
 **Files**:
+
 - `.claude/commands/autonomous.md`
 - `.claude/skills/AUTONOMOUS-BUILD.md`
 
 #### Step 5.2: Documentation (3 hours)
+
 - [ ] Architecture documentation
 - [ ] User guide for autonomous mode
 - [ ] Troubleshooting guide
 - [ ] Update CLAUDE.md with Phase 5 instructions
 
 **Files**:
+
 - `docs/specs/AUTONOMOUS-FRAMEWORK-ARCHITECTURE.md`
 - `docs/guides/USING-AUTONOMOUS-MODE.md`
 - `docs/guides/AUTONOMOUS-TROUBLESHOOTING.md`
@@ -292,6 +323,7 @@ Completion Report → User
 ### Phase 6: Testing & Refinement (10 hours)
 
 #### Step 6.1: Integration Testing (6 hours)
+
 - [ ] Test discovery agent on CCW-Online ERP codebase
 - [ ] Test architect agent with sample feature requests
 - [ ] Test builder agent implementation
@@ -299,6 +331,7 @@ Completion Report → User
 - [ ] Test error recovery and resume functionality
 
 **Test Scenarios**:
+
 1. Simple feature: Add a new dashboard widget
 2. Medium feature: Add new CRUD module
 3. Complex feature: Add real-time notifications system
@@ -306,6 +339,7 @@ Completion Report → User
 5. Resume: Interrupt at Phase 2, resume from saved state
 
 **Files**:
+
 - `scripts/test-autonomous-system.ps1`
 - `scripts/autonomous/test-scenarios/`
   - `scenario-01-simple.json`
@@ -315,6 +349,7 @@ Completion Report → User
   - `scenario-05-resume.json`
 
 #### Step 6.2: Refinement (4 hours)
+
 - [ ] Fix issues discovered in testing
 - [ ] Optimize agent prompts for clarity
 - [ ] Improve validation criteria
@@ -370,6 +405,7 @@ docs/
 ```
 
 **Folder Creation Approval Needed**:
+
 - `.claude/.execution/` (system state, ignored by git)
 - `scripts/autonomous/` (PowerShell utilities)
 - `docs/guides/` (user documentation)
@@ -381,6 +417,7 @@ docs/
 **New packages needed**: **NONE** ✅
 
 All functionality uses:
+
 - Existing Claude Code infrastructure
 - PowerShell (already available on Windows)
 - JSON for state management (built-in)
@@ -397,6 +434,7 @@ All functionality uses:
 - [ ] Creates unauthorized folders: **YES** (requires approval) ⚠️
 
 **Folders requiring approval**:
+
 1. `.claude/.execution/` - Runtime state directory
 2. `scripts/autonomous/` - PowerShell utilities
 3. `docs/guides/` - User guides
@@ -406,6 +444,7 @@ All functionality uses:
 ## 8. Success Criteria
 
 ### Functional Criteria
+
 - [ ] Lead Agent can parse task and route to discovery agent
 - [ ] Discovery Agent can analyze CCW-Online ERP codebase
 - [ ] Architect Agent can design solution from discovery report
@@ -418,6 +457,7 @@ All functionality uses:
 - [ ] `/autonomous` command executes without errors
 
 ### Quality Criteria
+
 - [ ] All agent definitions follow existing pattern
 - [ ] PowerShell scripts work on Windows
 - [ ] JSON schemas validate correctly
@@ -427,6 +467,7 @@ All functionality uses:
 - [ ] Existing functionality not broken
 
 ### User Experience Criteria
+
 - [ ] Clear progress updates at each phase
 - [ ] User can pause/resume autonomous execution
 - [ ] Error messages are actionable
@@ -438,45 +479,55 @@ All functionality uses:
 ## 9. Risks & Mitigation
 
 ### Risk 1: Agent Coordination Complexity
+
 **Impact**: Agents may fail to coordinate, causing execution to stall
 
 **Mitigation**:
+
 - Use well-defined JSON schemas for handoffs
 - Implement timeout mechanisms
 - Add detailed logging at each transition
 - Test each agent independently before integration
 
 ### Risk 2: State Corruption
+
 **Impact**: Execution state becomes corrupted, cannot resume
 
 **Mitigation**:
+
 - Validate state on every read/write
 - Create backups before state changes
 - Implement state repair utilities
 - Add integrity checks
 
 ### Risk 3: Validator False Positives/Negatives
+
 **Impact**: Valid code rejected or invalid code approved
 
 **Mitigation**:
+
 - Start with conservative validation rules
 - Allow manual override with explicit approval
 - Log all validation decisions for audit
 - Iterate on validation criteria based on results
 
 ### Risk 4: User Trust
+
 **Impact**: Users don't trust autonomous system, prefer manual control
 
 **Mitigation**:
+
 - Start with manual approval mode by default
 - Provide detailed transparency at each step
 - Allow pause/inspect/resume at any phase
 - Collect user feedback and iterate
 
 ### Risk 5: Resource Consumption
+
 **Impact**: Autonomous execution consumes excessive time/resources
 
 **Mitigation**:
+
 - Implement phase timeouts
 - Add progress estimates
 - Allow early termination
@@ -489,6 +540,7 @@ All functionality uses:
 If Phase 5 implementation causes issues:
 
 1. **Disable autonomous mode**
+
    ```powershell
    # Rename command file to disable
    Rename-Item .claude/commands/autonomous.md autonomous.md.disabled
@@ -500,6 +552,7 @@ If Phase 5 implementation causes issues:
    - Simply stop using `/autonomous` command
 
 3. **Clean up execution state**
+
    ```powershell
    scripts/autonomous/cleanup-execution.ps1 -ArchiveAll
    ```
@@ -519,24 +572,28 @@ If Phase 5 implementation causes issues:
 ### Unit Testing (Per Agent)
 
 **Discovery Agent**:
+
 - Test: Can scan CCW-Online ERP directory structure
 - Test: Can identify existing patterns (React components, API endpoints)
 - Test: Generates valid discovery report JSON
 - Test: Handles missing directories gracefully
 
 **Architect Agent**:
+
 - Test: Can generate component design from requirements
 - Test: Identifies database constraints (read-only models)
 - Test: Respects existing API contracts
 - Test: Validates design against project rules
 
 **Builder Agent**:
+
 - Test: Can implement simple component from architecture
 - Test: Follows code quality standards
 - Test: Creates proper TypeScript types
 - Test: Adds error handling
 
 **Validator Agent**:
+
 - Test: Detects TypeScript errors
 - Test: Detects missing tests
 - Test: Checks for prohibited changes (auth, DB schema)
@@ -545,6 +602,7 @@ If Phase 5 implementation causes issues:
 ### Integration Testing (Full Pipeline)
 
 **Scenario 1: Simple Feature (Dashboard Widget)**
+
 ```json
 {
   "task": "Add a 'Recent Quotes' widget to the dashboard showing last 5 quotes",
@@ -560,6 +618,7 @@ If Phase 5 implementation causes issues:
 ```
 
 **Scenario 2: Medium Feature (CRUD Module)**
+
 ```json
 {
   "task": "Add a Purchase Orders module with full CRUD operations",
@@ -575,6 +634,7 @@ If Phase 5 implementation causes issues:
 ```
 
 **Scenario 3: Error Recovery**
+
 ```json
 {
   "task": "Simulate build failure at Phase 3, then resume",
@@ -603,14 +663,17 @@ If Phase 5 implementation causes issues:
 ## 12. Implementation Timeline
 
 ### Week 1: Foundation & Core Agents (Days 1-5)
+
 - Day 1-2: Phase 1 (Foundation - 8 hours)
 - Day 3-5: Phase 2 (Discovery & Architect - 8 hours)
 
 ### Week 2: Builder & Validation (Days 6-10)
+
 - Day 6-8: Phase 3 (Builder & Validator - 10 hours)
 - Day 9-10: Phase 4 (Finalizer & Orchestration - 8 hours)
 
 ### Week 3: Polish & Testing (Days 11-15)
+
 - Day 11-12: Phase 5 (Command & Documentation - 6 hours)
 - Day 13-15: Phase 6 (Testing & Refinement - 10 hours)
 

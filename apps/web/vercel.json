@@ -1,0 +1,107 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "framework": "nextjs",
+  "regions": ["syd1"],
+  "crons": [
+    {
+      "path": "/api/cron/health-check",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/retry-failed-webhooks",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/check-sla-breaches",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/run-autonomous-ops",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/refresh-health-scores",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-old-runs",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/daily-report",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/check-expiring-quotes",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/process-onboarding-emails",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/nightly-full-sync",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/shadow-sync-cin7",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/auto-reorder-inventory",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/boardroom/cron",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/search/embed",
+      "schedule": "0 17 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(), geolocation=(), interest-cohort=()"
+        }
+      ]
+    }
+  ]
+}

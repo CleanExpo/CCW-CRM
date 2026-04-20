@@ -50,9 +50,7 @@ class CircuitBreaker {
         this._logTransition('OPEN → HALF_OPEN');
       } else {
         const retryAfter = new Date(this.openedAt + this.resetTimeout).toISOString();
-        throw new Error(
-          `Circuit breaker [${this.name}] is OPEN. Retry after ${retryAfter}`
-        );
+        throw new Error(`Circuit breaker [${this.name}] is OPEN. Retry after ${retryAfter}`);
       }
     }
 
@@ -120,9 +118,7 @@ class CircuitBreaker {
       failureCount: this.failureCount,
       lastFailure: this.lastFailure ? new Date(this.lastFailure).toISOString() : null,
       openedAt: this.openedAt ? new Date(this.openedAt).toISOString() : null,
-      retryAfter: this.openedAt
-        ? new Date(this.openedAt + this.resetTimeout).toISOString()
-        : null,
+      retryAfter: this.openedAt ? new Date(this.openedAt + this.resetTimeout).toISOString() : null,
       recentErrors: this.errors.slice(-5),
     };
   }
@@ -179,7 +175,7 @@ function getBreaker(name, options = {}) {
  * @returns {Array}
  */
 function getAllStatus() {
-  return Array.from(breakers.values()).map(b => b.getStatus());
+  return Array.from(breakers.values()).map((b) => b.getStatus());
 }
 
 /**
@@ -188,8 +184,8 @@ function getAllStatus() {
  */
 function getOpenBreakers() {
   return Array.from(breakers.values())
-    .filter(b => b.state !== STATES.CLOSED)
-    .map(b => b.getStatus());
+    .filter((b) => b.state !== STATES.CLOSED)
+    .map((b) => b.getStatus());
 }
 
 module.exports = {

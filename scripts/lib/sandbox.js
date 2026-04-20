@@ -21,7 +21,7 @@ const SANDBOX_CONFIG = {
   image: 'ccw-cron-sandbox:latest',
   memoryLimit: '512m',
   cpuLimit: '1.0',
-  timeout: 600,        // 10 minutes max
+  timeout: 600, // 10 minutes max
   networkMode: 'none', // no egress by default
   readOnlyRootfs: true,
   noNewPrivileges: true,
@@ -55,13 +55,15 @@ function buildSandboxImage() {
  */
 function runInSandbox(script, env = {}) {
   const args = [
-    'run', '--rm',
+    'run',
+    '--rm',
     `--memory=${SANDBOX_CONFIG.memoryLimit}`,
     `--cpus=${SANDBOX_CONFIG.cpuLimit}`,
     `--network=${SANDBOX_CONFIG.networkMode}`,
     '--read-only',
     '--security-opt=no-new-privileges:true',
-    '--tmpfs', '/tmp:rw,noexec,nosuid,size=64m',
+    '--tmpfs',
+    '/tmp:rw,noexec,nosuid,size=64m',
   ];
 
   // Only pass whitelisted env vars
@@ -102,13 +104,15 @@ function runInSandbox(script, env = {}) {
 function runWithNetwork(script, env = {}, allowedHosts = []) {
   const networkMode = allowedHosts.length > 0 ? 'ccw-restricted' : 'none';
   const args = [
-    'run', '--rm',
+    'run',
+    '--rm',
     `--memory=${SANDBOX_CONFIG.memoryLimit}`,
     `--cpus=${SANDBOX_CONFIG.cpuLimit}`,
     `--network=${networkMode}`,
     '--read-only',
     '--security-opt=no-new-privileges:true',
-    '--tmpfs', '/tmp:rw,noexec,nosuid,size=64m',
+    '--tmpfs',
+    '/tmp:rw,noexec,nosuid,size=64m',
   ];
 
   const mergedEnv = { ...process.env, ...env };

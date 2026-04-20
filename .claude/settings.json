@@ -1,0 +1,81 @@
+{
+  "name": "CCW-Online ERP",
+  "version": "1.0.0",
+  "description": "Equipment Supplier ERP - Full-stack Python FastAPI + Next.js",
+
+  "model": "claude-sonnet-4-6",
+  "maxTokens": 64000,
+
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash(python *)",
+      "Bash(pytest *)",
+      "Bash(alembic *)",
+      "Bash(uvicorn *)",
+      "Bash(npm *)",
+      "Bash(pnpm *)",
+      "Bash(npx *)",
+      "Bash(git *)",
+      "Bash(docker *)",
+      "Bash(curl *)",
+      "Bash(mkdir *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(cd *)",
+      "Bash(ls *)",
+      "Bash(dir *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(tail *)",
+      "Bash(head *)",
+      "Bash(netstat *)",
+      "Bash(tasklist *)",
+      "Bash(taskkill *)"
+    ],
+    "deny": ["Bash(rm -rf /)", "Bash(sudo rm *)", "Bash(del /s /q C:\\*)"]
+  },
+
+  "commands": {
+    "verify": {
+      "description": "Verify Phase 1 and Phase 2 fixes",
+      "prompt": "Run verification:\n1. Check backend is running: curl http://127.0.0.1:8000/\n2. Verify database indexes: python verify_indexes.py\n3. Run error handling tests: pytest tests/test_error_handling.py -v\n4. Check connection pool config in src/config/database.py"
+    },
+    "audit": {
+      "description": "Audit API performance and test results",
+      "prompt": "Review:\n1. Check test results in tests/load/reports/\n2. Review uvicorn logs for errors\n3. Check database query performance\n4. Verify all endpoints return JSON"
+    },
+    "fix-types": {
+      "description": "Run type checking on backend",
+      "run": "cd apps/backend && python -m mypy src/"
+    },
+    "bootstrap": {
+      "description": "Not applicable - project already bootstrapped",
+      "prompt": "This CCW-Online ERP project is already set up. Phase 1 and Phase 2.1-2.2 complete."
+    },
+    "new-feature": {
+      "description": "Not applicable to this Python FastAPI project",
+      "prompt": "This command is for Node.js projects. For Python FastAPI features, follow the CLAUDE.md guide."
+    }
+  },
+
+  "rules": {
+    "architecture": {
+      "description": "Monorepo with FastAPI backend + Next.js frontend",
+      "prohibited": [
+        "DO NOT modify apps/backend/src/db/demo_models.py (database schema)",
+        "DO NOT modify apps/web/middleware.ts (JWT auth)",
+        "DO NOT modify apps/backend/src/api/routes/demo_auth.py (authentication)",
+        "DO NOT upgrade major framework versions without approval",
+        "DO NOT use --reload flag for uvicorn (causes crashes)"
+      ]
+    },
+    "testing": [
+      "Always run: pnpm turbo run type-check lint test before marking complete",
+      "Phase changes require smoke test verification",
+      "Backend restarts must be WITHOUT --reload for stability"
+    ]
+  }
+}

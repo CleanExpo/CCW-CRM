@@ -11,7 +11,7 @@ const crypto = require('crypto');
 
 const STATE_DIR = path.join(process.cwd(), '.session-state');
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
-const STALE_THRESHOLD = 120000;   // 2 minutes
+const STALE_THRESHOLD = 120000; // 2 minutes
 
 function ensureStateDir() {
   if (!fs.existsSync(STATE_DIR)) {
@@ -132,17 +132,20 @@ function findStaleSessions() {
   ensureStateDir();
   const now = Date.now();
   try {
-    return fs.readdirSync(STATE_DIR)
-      .filter(f => f.endsWith('.json') && !f.endsWith('.tmp'))
-      .map(f => {
+    return fs
+      .readdirSync(STATE_DIR)
+      .filter((f) => f.endsWith('.json') && !f.endsWith('.tmp'))
+      .map((f) => {
         try {
           return JSON.parse(fs.readFileSync(path.join(STATE_DIR, f), 'utf8'));
         } catch (_) {
           return null;
         }
       })
-      .filter(s => s && s.status === 'running' &&
-        (now - new Date(s.lastHeartbeat).getTime()) > STALE_THRESHOLD);
+      .filter(
+        (s) =>
+          s && s.status === 'running' && now - new Date(s.lastHeartbeat).getTime() > STALE_THRESHOLD
+      );
   } catch (_) {
     return [];
   }
@@ -236,16 +239,17 @@ function failSession(sessionId, error) {
 function listSessions(statusFilter = null) {
   ensureStateDir();
   try {
-    return fs.readdirSync(STATE_DIR)
-      .filter(f => f.endsWith('.json') && !f.endsWith('.tmp'))
-      .map(f => {
+    return fs
+      .readdirSync(STATE_DIR)
+      .filter((f) => f.endsWith('.json') && !f.endsWith('.tmp'))
+      .map((f) => {
         try {
           return JSON.parse(fs.readFileSync(path.join(STATE_DIR, f), 'utf8'));
         } catch (_) {
           return null;
         }
       })
-      .filter(s => s && (!statusFilter || s.status === statusFilter))
+      .filter((s) => s && (!statusFilter || s.status === statusFilter))
       .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt));
   } catch (_) {
     return [];

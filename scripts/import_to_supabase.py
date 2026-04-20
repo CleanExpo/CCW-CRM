@@ -3,16 +3,26 @@
 Import schema and data to Supabase using direct PostgreSQL connection.
 """
 
-import psycopg2
+import os
 import sys
 from pathlib import Path
 
-# Supabase connection details (using direct connection - more reliable)
-DB_HOST = "db.vwfgksqkajnpfjospbpe.supabase.co"
-DB_PORT = "5432"
-DB_NAME = "postgres"
-DB_USER = "postgres"
-DB_PASSWORD = "lIEI5gV4OkSV5WV3"
+import psycopg2
+
+# Supabase connection details — read from environment.
+# Set these before running:
+#   export SUPABASE_DB_HOST=db.<project-ref>.supabase.co
+#   export SUPABASE_DB_PASSWORD=<your-db-password>
+DB_HOST = os.environ.get("SUPABASE_DB_HOST", "")
+DB_PORT = os.environ.get("SUPABASE_DB_PORT", "5432")
+DB_NAME = os.environ.get("SUPABASE_DB_NAME", "postgres")
+DB_USER = os.environ.get("SUPABASE_DB_USER", "postgres")
+DB_PASSWORD = os.environ.get("SUPABASE_DB_PASSWORD", "")
+
+if not DB_HOST or not DB_PASSWORD:
+    print("[ERROR] SUPABASE_DB_HOST and SUPABASE_DB_PASSWORD must be set in the environment.")
+    print("        Copy the connection string from Supabase Dashboard → Project Settings → Database.")
+    sys.exit(1)
 
 def connect_to_db():
     """Connect to Supabase PostgreSQL database."""

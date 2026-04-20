@@ -17,7 +17,17 @@ const SECURITY_LOG = path.join(LOG_DIR, 'security.jsonl');
 const RISK_LEVELS = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 };
 
 // High-impact action keywords for blast radius scoring
-const HIGH_IMPACT_KEYWORDS = ['deploy', 'migrate', 'delete', 'rls', 'publish', 'payment', 'schema', 'truncate', 'drop'];
+const HIGH_IMPACT_KEYWORDS = [
+  'deploy',
+  'migrate',
+  'delete',
+  'rls',
+  'publish',
+  'payment',
+  'schema',
+  'truncate',
+  'drop',
+];
 
 function ensureLogDir() {
   if (!fs.existsSync(LOG_DIR)) {
@@ -26,14 +36,18 @@ function ensureLogDir() {
 }
 
 function createEntry(type, data) {
-  return JSON.stringify({
-    id: crypto.randomUUID ? crypto.randomUUID() : `log-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    timestamp: new Date().toISOString(),
-    type,
-    sessionId: process.env.CCW_SESSION_ID || 'unknown',
-    cronTrigger: process.env.CCW_CRON_TRIGGER || null,
-    ...data,
-  }) + '\n';
+  return (
+    JSON.stringify({
+      id: crypto.randomUUID
+        ? crypto.randomUUID()
+        : `log-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      timestamp: new Date().toISOString(),
+      type,
+      sessionId: process.env.CCW_SESSION_ID || 'unknown',
+      cronTrigger: process.env.CCW_CRON_TRIGGER || null,
+      ...data,
+    }) + '\n'
+  );
 }
 
 /**
@@ -43,7 +57,7 @@ function createEntry(type, data) {
  */
 function calculateBlastRadius(action = '') {
   const lower = action.toLowerCase();
-  const triggers = HIGH_IMPACT_KEYWORDS.filter(k => lower.includes(k));
+  const triggers = HIGH_IMPACT_KEYWORDS.filter((k) => lower.includes(k));
   return {
     score: Math.min(triggers.length * 25, 100),
     triggers,
@@ -92,7 +106,7 @@ function logCron({ trigger, phase, status, duration, errors = [] }) {
     phase,
     status,
     duration,
-    errors: errors.map(e => (typeof e === 'string' ? { message: e } : e)),
+    errors: errors.map((e) => (typeof e === 'string' ? { message: e } : e)),
     errorCount: errors.length,
   });
   fs.appendFileSync(CRON_LOG, entry);
@@ -130,24 +144,25 @@ function queryLogs(logFile, { since, type, riskLevel, limit = 100 } = {}) {
 
   let entries;
   try {
-    entries = fs.readFileSync(logFile, 'utf8')
+    entries = fs
+      .readFileSync(logFile, 'utf8')
       .trim()
       .split('\n')
       .filter(Boolean)
-      .map(line => JSON.parse(line));
+      .map((line) => JSON.parse(line));
   } catch (_) {
     return [];
   }
 
   if (since) {
     const sinceDate = new Date(since);
-    entries = entries.filter(e => new Date(e.timestamp) >= sinceDate);
+    entries = entries.filter((e) => new Date(e.timestamp) >= sinceDate);
   }
   if (type) {
-    entries = entries.filter(e => e.type === type);
+    entries = entries.filter((e) => e.type === type);
   }
   if (riskLevel) {
-    entries = entries.filter(e => e.riskLevel === riskLevel);
+    entries = entries.filter((e) => e.riskLevel === riskLevel);
   }
 
   return entries.slice(-limit);

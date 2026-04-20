@@ -29,6 +29,7 @@ hotfix/<n>    ← critical production fixes (from main)
 ## Stage 1: Feature/Fix → Develop
 
 ### Pre-conditions
+
 - Branch is current with develop
 - All acceptance criteria in Linear issue are met
 - No TypeScript errors (npx tsc --noEmit)
@@ -38,6 +39,7 @@ hotfix/<n>    ← critical production fixes (from main)
 - PR size < 1000 lines
 
 ### Steps
+
 1. Request code review: @review-orchestrator review [branch]
 2. Address all CRITICAL/HIGH findings
 3. Obtain SHIP verdict from Review Orchestrator
@@ -53,17 +55,20 @@ hotfix/<n>    ← critical production fixes (from main)
 Release frequency: **weekly** (Monday morning, AEDT)
 
 ### Release Preparation
+
 1. Ensure develop is stable (all tests green, no open CRITICAL issues)
 2. Generate release notes:
    node scripts/lib/release-manager.js getChangesSinceLastRelease
 3. Generate version: vYYYY.MM.DD.1
 
 ### Required Approvals (develop → main)
+
 1. CEO (@phillmcgurk) — mandatory sign-off
 2. Review Orchestrator — automated SHIP verdict
 3. CI gates — all passing
 
 ### Post-Merge
+
 - Tag release: node -e "require('./scripts/lib/release-manager').tagRelease('vX.X.X')"
 - Vercel auto-deploys main to production
 - Run production smoke test (docs/production-smoke-test.md)
@@ -78,6 +83,7 @@ Requires CSO + CEO approval. Back-port to develop immediately after.
 ---
 
 ## Related Docs
+
 - .github/PULL_REQUEST_TEMPLATE.md — PR template
 - docs/production-smoke-test.md — post-deploy verification
 - docs/PRODUCTION_RUNBOOK.md — incident response

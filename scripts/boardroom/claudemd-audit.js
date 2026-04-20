@@ -22,11 +22,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 // All CLAUDE.md files that should exist across the workspace
-const KNOWN_CLAUDEMD_PATHS = [
-  'CLAUDE.md',
-  '.claude/CLAUDE.md',
-  'scripts/claude_md_template.md',
-];
+const KNOWN_CLAUDEMD_PATHS = ['CLAUDE.md', '.claude/CLAUDE.md', 'scripts/claude_md_template.md'];
 
 // Secret patterns that must NOT appear in CLAUDE.md
 const SECRET_PATTERNS = [
@@ -41,9 +37,15 @@ const SECRET_PATTERNS = [
 // Required sections (at least one match per gate)
 const REQUIRED_SECTIONS = [
   { id: 'prime_directive', patterns: ['PRIME DIRECTIVE', 'Prime Directive'] },
-  { id: 'prohibitions', patterns: ['ABSOLUTE PROHIBITIONS', 'PROHIBITIONS', 'Forbidden', 'FORBIDDEN'] },
+  {
+    id: 'prohibitions',
+    patterns: ['ABSOLUTE PROHIBITIONS', 'PROHIBITIONS', 'Forbidden', 'FORBIDDEN'],
+  },
   { id: 'tech_stack', patterns: ['TECH STACK', 'Tech Stack', 'Technology Stack'] },
-  { id: 'session_sequence', patterns: ['SESSION SEQUENCE', 'MANDATORY BEHAVIORS', 'MANDATORY', 'session sequence'] },
+  {
+    id: 'session_sequence',
+    patterns: ['SESSION SEQUENCE', 'MANDATORY BEHAVIORS', 'MANDATORY', 'session sequence'],
+  },
 ];
 
 // Date patterns to detect "updated within 90 days"
@@ -106,7 +108,10 @@ async function auditFile(filePath, relPath) {
   const dateMatches = content.match(new RegExp(DATE_PATTERN.source, 'g')) || [];
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
   gates.updated_recently = dateMatches.some((d) => new Date(d) >= ninetyDaysAgo);
-  if (!gates.updated_recently) issues.push(`No recent date found (needs date within 90 days, e.g. ${new Date().toISOString().split('T')[0]})`);
+  if (!gates.updated_recently)
+    issues.push(
+      `No recent date found (needs date within 90 days, e.g. ${new Date().toISOString().split('T')[0]})`
+    );
 
   const score = Object.values(gates).filter(Boolean).length;
   const pass = score >= 7; // 7/8 gates minimum
@@ -189,7 +194,9 @@ export async function runClaudemdAudit(sessionId, dataDir = './data/sessions', r
   );
 
   if (failingFiles.length > 0) {
-    console.warn(`[AUDIT] Failing files:\n${failingFiles.map((r) => `  - ${r.path}: ${r.issues.join(', ')}`).join('\n')}`);
+    console.warn(
+      `[AUDIT] Failing files:\n${failingFiles.map((r) => `  - ${r.path}: ${r.issues.join(', ')}`).join('\n')}`
+    );
   }
   if (missingFiles.length > 0) {
     console.warn(`[AUDIT] Missing files:\n${missingFiles.map((r) => `  - ${r.path}`).join('\n')}`);
