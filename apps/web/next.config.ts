@@ -6,7 +6,8 @@ const nextConfig: NextConfig = {
   // Enable standalone output for Docker builds
   output: 'standalone',
   experimental: {
-    typedRoutes: true,
+    // typedRoutes disabled: marketing pages link to placeholder routes (/privacy, /contact)
+    // that don't exist yet; re-enable once those pages are created.
   },
   // Enable source maps for production (Sentry needs these)
   productionBrowserSourceMaps: true,

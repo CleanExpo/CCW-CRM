@@ -1,22 +1,18 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Sparkles, Loader2, AlertCircle, CheckCircle2, Info, Lightbulb } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import {
-  generateQuote,
-  type QuoteGenerationResult,
-  type ProductMatch,
-} from "@/lib/api/ai-quotes";
-import { apiClient } from "@/lib/api/client";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Sparkles, Loader2, AlertCircle, CheckCircle2, Info, Lightbulb } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { generateQuote, type QuoteGenerationResult, type ProductMatch } from '@/lib/api/ai-quotes';
+import { apiClient } from '@/lib/api/client';
 
 interface AIQuoteBuilderProps {
   onQuoteCreated?: (quoteId: string) => void;
@@ -24,31 +20,30 @@ interface AIQuoteBuilderProps {
 
 const PROMPT_EXAMPLES = [
   {
-    title: "Simple Quote",
-    prompt: "Create a quote for ABC Corp with 50 hard hats at $25 each",
-    icon: "📦",
+    title: 'Simple Quote',
+    prompt: 'Create a quote for ABC Corp with 50 hard hats at $25 each',
+    icon: '📦',
   },
   {
-    title: "Multiple Items",
-    prompt: "Quote for John Smith: 5 power drills, 10 safety vests, and 2 ladders",
-    icon: "🛠️",
+    title: 'Multiple Items',
+    prompt: 'Quote for John Smith: 5 power drills, 10 safety vests, and 2 ladders',
+    icon: '🛠️',
   },
   {
-    title: "Emergency Order",
-    prompt: "Emergency shipment of 100 steel beams to Sydney for Smith Construction",
-    icon: "🚨",
+    title: 'Emergency Order',
+    prompt: 'Emergency shipment of 100 steel beams to Sydney for Smith Construction',
+    icon: '🚨',
   },
   {
-    title: "Bulk Order",
-    prompt: "Bulk order: 200 safety helmets, 150 gloves, 100 goggles for site project",
-    icon: "🏗️",
+    title: 'Bulk Order',
+    prompt: 'Bulk order: 200 safety helmets, 150 gloves, 100 goggles for site project',
+    icon: '🏗️',
   },
 ];
 
 function ConfidenceBadge({ score }: { score: number }) {
   const percentage = Math.round(score * 100);
-  const variant =
-    percentage >= 80 ? "default" : percentage >= 60 ? "secondary" : "destructive";
+  const variant = percentage >= 80 ? 'default' : percentage >= 60 ? 'secondary' : 'destructive';
 
   return (
     <Badge variant={variant} className="font-mono">
@@ -61,7 +56,7 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<QuoteGenerationResult | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -74,9 +69,9 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
   const handleGenerate = async () => {
     if (!prompt || prompt.length < 10) {
       toast({
-        title: "Invalid Prompt",
-        description: "Please enter at least 10 characters describing your quote",
-        variant: "destructive",
+        title: 'Invalid Prompt',
+        description: 'Please enter at least 10 characters describing your quote',
+        variant: 'destructive',
       });
       return;
     }
@@ -88,14 +83,14 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
       setStep(2);
 
       toast({
-        title: "Quote Generated",
-        description: "Review the AI-parsed data and make any adjustments before saving",
+        title: 'Quote Generated',
+        description: 'Review the AI-parsed data and make any adjustments before saving',
       });
     } catch (error: any) {
       toast({
-        title: "Generation Failed",
-        description: error.message || "Failed to generate quote. Please try again.",
-        variant: "destructive",
+        title: 'Generation Failed',
+        description: error.message || 'Failed to generate quote. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsGenerating(false);
@@ -118,28 +113,33 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
           quantity: item.quantity,
           unit_price: parseFloat(item.unit_price),
         })),
-        notes: result.notes || `AI-generated quote (confidence: ${Math.round(result.confidence_score * 100)}%)`,
+        notes:
+          result.notes ||
+          `AI-generated quote (confidence: ${Math.round(result.confidence_score * 100)}%)`,
         discount_percentage: result.discount_percentage,
       };
 
-      const response = await apiClient.post<{ id: string; quote_number: string }>("/api/quotes", quoteData);
+      const response = await apiClient.post<{ id: string; quote_number: string }>(
+        '/api/quotes',
+        quoteData
+      );
 
       toast({
-        title: "Quote Created",
+        title: 'Quote Created',
         description: `Quote ${response.quote_number} created successfully`,
       });
 
       if (onQuoteCreated) {
         onQuoteCreated(response.id);
       } else {
-        router.push("/dashboard/quotes" as any);
+        router.push('/dashboard/quotes' as any);
         router.refresh();
       }
     } catch (error: any) {
       toast({
-        title: "Save Failed",
-        description: error.message || "Failed to save quote. Please try again.",
-        variant: "destructive",
+        title: 'Save Failed',
+        description: error.message || 'Failed to save quote. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
@@ -147,12 +147,12 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
   };
 
   const handleReset = () => {
-    setPrompt("");
+    setPrompt('');
     setResult(null);
     setStep(1);
   };
 
-  const useExample = (example: string) => {
+  const handleExampleSelect = (example: string) => {
     setPrompt(example);
   };
 
@@ -160,8 +160,8 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-          <Sparkles className="h-6 w-6 text-primary" />
+        <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
+          <Sparkles className="text-primary h-6 w-6" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">AI Quote Generator</h1>
@@ -187,13 +187,13 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
                     key={index}
                     variant="outline"
                     className="h-auto justify-start text-left"
-                    onClick={() => useExample(example.prompt)}
+                    onClick={() => handleExampleSelect(example.prompt)}
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-2xl">{example.icon}</span>
                       <div>
                         <div className="font-semibold">{example.title}</div>
-                        <div className="text-xs text-muted-foreground">{example.prompt}</div>
+                        <div className="text-muted-foreground text-xs">{example.prompt}</div>
                       </div>
                     </div>
                   </Button>
@@ -222,7 +222,7 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
                   rows={6}
                   className="resize-none"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {prompt.length}/500 characters (minimum 10)
                 </p>
               </div>
@@ -277,24 +277,22 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <span className="text-sm font-medium">Company:</span>{" "}
+                <span className="text-sm font-medium">Company:</span>{' '}
                 <span className="text-sm">{result.customer.company_name}</span>
               </div>
               {result.customer.contact_name && (
                 <div>
-                  <span className="text-sm font-medium">Contact:</span>{" "}
+                  <span className="text-sm font-medium">Contact:</span>{' '}
                   <span className="text-sm">{result.customer.contact_name}</span>
                 </div>
               )}
               {result.customer.email && (
                 <div>
-                  <span className="text-sm font-medium">Email:</span>{" "}
+                  <span className="text-sm font-medium">Email:</span>{' '}
                   <span className="text-sm">{result.customer.email}</span>
                 </div>
               )}
-              {result.customer.is_new_customer && (
-                <Badge variant="secondary">New Customer</Badge>
-              )}
+              {result.customer.is_new_customer && <Badge variant="secondary">New Customer</Badge>}
             </CardContent>
           </Card>
 
@@ -313,13 +311,13 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
                           <span className="font-medium">{item.name}</span>
                           <ConfidenceBadge score={item.confidence} />
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-muted-foreground text-xs">
                           SKU: {item.sku} | Category: {item.category}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-medium">${item.line_total}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-muted-foreground text-xs">
                           {item.quantity} × ${item.unit_price}
                         </div>
                       </div>
@@ -365,7 +363,7 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
                   <span>Total:</span>
                   <span>${result.total}</span>
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-muted-foreground text-xs">
                   Valid until: {new Date(result.valid_until).toLocaleDateString()}
                 </div>
               </div>
@@ -407,12 +405,7 @@ export function AIQuoteBuilder({ onQuoteCreated }: AIQuoteBuilderProps) {
             <Button onClick={handleReset} variant="outline" className="flex-1">
               Start Over
             </Button>
-            <Button
-              onClick={handleSaveQuote}
-              disabled={isSaving}
-              className="flex-1"
-              size="lg"
-            >
+            <Button onClick={handleSaveQuote} disabled={isSaving} className="flex-1" size="lg">
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
