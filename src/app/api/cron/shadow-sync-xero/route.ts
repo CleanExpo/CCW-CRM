@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * Shadow Sync Xero Cron Job
  *
  * Schedule: Daily at 8:00 AM AEST / 20:00 UTC (0 20 * * *)
- * Proxies to FastAPI backend to pull invoices, payments, and accounts
- * from Xero for financial flow observation and readiness scoring.
+ * Forwards to `API_UPSTREAM_URL` when configured.
  */
 export async function GET(request: Request) {
   try {
@@ -16,7 +15,10 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/cron/shadow-sync-xero`, {
+    const base = requireUpstreamBase('Shadow sync Xero');
+    if (base instanceof NextResponse) return base;
+
+    const response = await fetch(`${base}/api/cron/shadow-sync-xero`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

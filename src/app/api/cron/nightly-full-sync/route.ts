@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BACKEND_URL } from "@/lib/api/backend-url";
+import { getApiRequestBase } from "@/lib/api/backend-url";
 
 /**
  * Nightly Full Sync Cron Job
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
     }
 
     const results: Record<string, { success: boolean; error?: string; data?: unknown }> = {};
+    const base = getApiRequestBase();
     const headers = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${process.env.CRON_SECRET}`,
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
     for (const endpoint of cin7Endpoints) {
       const name = endpoint.split("/").pop() || endpoint;
       try {
-        const res = await fetch(`${BACKEND_URL}${endpoint}`, {
+        const res = await fetch(`${base}${endpoint}`, {
           method: "POST",
           headers,
         });
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
     for (const endpoint of xeroEndpoints) {
       const name = endpoint.split("/").pop() || endpoint;
       try {
-        const res = await fetch(`${BACKEND_URL}${endpoint}`, {
+        const res = await fetch(`${base}${endpoint}`, {
           method: "POST",
           headers,
         });
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
     for (const endpoint of shopifyEndpoints) {
       const name = endpoint.split("/").pop() || endpoint;
       try {
-        const res = await fetch(`${BACKEND_URL}${endpoint}`, {
+        const res = await fetch(`${base}${endpoint}`, {
           method: "POST",
           headers,
         });

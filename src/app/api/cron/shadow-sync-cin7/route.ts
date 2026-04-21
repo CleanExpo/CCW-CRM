@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * Shadow Sync Cin7 Cron Job
  *
  * Schedule: Daily at 7:00 AM AEST / 19:00 UTC (0 19 * * *)
- * Proxies to FastAPI backend to pull all products, orders, customers,
- * and inventory from Cin7 into shadow mode for flow analysis.
+ * Forwards to `API_UPSTREAM_URL` when configured.
  */
 export async function GET(request: Request) {
   try {
@@ -16,7 +15,10 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/cron/shadow-sync-cin7`, {
+    const base = requireUpstreamBase('Shadow sync Cin7');
+    if (base instanceof NextResponse) return base;
+
+    const response = await fetch(`${base}/api/cron/shadow-sync-cin7`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

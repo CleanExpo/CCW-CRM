@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * Process Onboarding Emails Cron Job
  *
  * Schedule: Daily at 9:00 AM UTC (0 9 * * *)
- * UNI-1113: Proxies to FastAPI backend to send due onboarding
- * touchpoint emails. Processes scheduled touchpoints that are
- * ready to be sent.
+ * Forwards to `API_UPSTREAM_URL` when configured.
  */
 export async function GET(request: Request) {
   try {
@@ -17,8 +15,11 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const base = requireUpstreamBase('Process onboarding emails');
+    if (base instanceof NextResponse) return base;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/cron/process-onboarding-emails`,
+      `${base}/api/cron/process-onboarding-emails`,
       {
         method: "POST",
         headers: {

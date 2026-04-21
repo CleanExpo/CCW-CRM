@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 // Refresh Xero Tokens Cron Job
 // Schedule: Every 15 minutes
-// Proactively refreshes Xero OAuth tokens before they expire
-// to prevent auth failures during business operations.
+// Forwards to `API_UPSTREAM_URL` when configured.
 
 export async function GET(request: Request) {
   try {
@@ -14,8 +13,11 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const base = requireUpstreamBase('Refresh Xero tokens');
+    if (base instanceof NextResponse) return base;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/cron/refresh-xero-tokens`,
+      `${base}/api/cron/refresh-xero-tokens`,
       {
         method: "POST",
         headers: {

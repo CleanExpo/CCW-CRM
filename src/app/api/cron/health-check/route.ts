@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { getAppOrigin } from '@/lib/api/backend-url';
 
 /**
  * Health Check Cron Job
  *
  * Runs every 5 minutes
- * Pings the backend to ensure it's responsive
- * Can be extended to check database, external services, etc.
+ * Pings this app's `/api/health` endpoint.
  */
 export async function GET(request: Request) {
   try {
@@ -17,9 +16,8 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Check backend health
     const backendStart = Date.now();
-    const backendResponse = await fetch(`${BACKEND_URL}/health`, {
+    const backendResponse = await fetch(`${getAppOrigin()}/api/health`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -40,7 +38,7 @@ export async function GET(request: Request) {
 
     // If unhealthy, you could send alerts here
     if (!allHealthy) {
-      logger.error("Health check failed! Backend is not responding.");
+      logger.error("Health check failed! App health endpoint is not responding.");
       // TODO: Send alert to monitoring service (e.g., PagerDuty, Slack)
     }
 
@@ -51,7 +49,7 @@ export async function GET(request: Request) {
         backend: {
           healthy: backendHealthy,
           latency: backendLatency,
-          url: BACKEND_URL,
+          url: `${getAppOrigin()}/api/health`,
         },
       },
       timestamp: new Date().toISOString(),

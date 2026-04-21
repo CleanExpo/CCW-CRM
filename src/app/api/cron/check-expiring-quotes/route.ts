@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * Check Expiring Quotes Cron Job
  *
  * Schedule: Daily at 9:00 AM UTC (0 9 * * *)
- * Proxies to FastAPI backend to check for quotes expiring
- * within 3 days and send notifications to relevant users.
+ * Forwards to `API_UPSTREAM_URL` when configured.
  */
 export async function GET(request: Request) {
   try {
@@ -16,8 +15,11 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const base = requireUpstreamBase('Check expiring quotes');
+    if (base instanceof NextResponse) return base;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/cron/check-expiring-quotes`,
+      `${base}/api/cron/check-expiring-quotes`,
       {
         method: "POST",
         headers: {

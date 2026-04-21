@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 // Check SLA Breaches Cron Job
 // Schedule: Every 15 minutes
-// UNI-174 ST-4: Proxies to FastAPI backend to scan for SLA breaches
-// and fire escalation notifications.
+// Forwards to `API_UPSTREAM_URL` when configured.
 
 export async function GET(request: Request) {
   try {
@@ -14,8 +13,11 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const base = requireUpstreamBase('Check SLA breaches');
+    if (base instanceof NextResponse) return base;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/cron/check-sla-breaches`,
+      `${base}/api/cron/check-sla-breaches`,
       {
         method: "POST",
         headers: {

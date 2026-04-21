@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 // Retry Failed Webhooks Cron Job
 // Schedule: Every 5 minutes
-// ISS-036: Proxies to FastAPI backend to process the webhook retry queue.
-// Retries failed webhooks with exponential backoff, moves to dead letter
-// queue after max retries. Supports Shopify, Xero, SendGrid, Stripe.
+// Forwards to `API_UPSTREAM_URL` when configured.
 
 export async function GET(request: Request) {
   try {
@@ -15,8 +13,11 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const base = requireUpstreamBase('Retry failed webhooks');
+    if (base instanceof NextResponse) return base;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/cron/retry-failed-webhooks`,
+      `${base}/api/cron/retry-failed-webhooks`,
       {
         method: "POST",
         headers: {

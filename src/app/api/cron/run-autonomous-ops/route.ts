@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * Autonomous Ops Cron Job
  *
  * Schedule: Every hour (0 * * * *)
- * Proxies to FastAPI backend where Claude Sonnet 4.6 reviews ERP state
- * and creates draft POs, sends payment reminders, flags unmatched
- * transactions, and escalates SLA breaches.
+ * Forwards to `API_UPSTREAM_URL` when configured.
  */
 export async function GET(request: Request) {
   try {
@@ -17,8 +15,11 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const base = requireUpstreamBase('Autonomous ops');
+    if (base instanceof NextResponse) return base;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/cron/run-autonomous-ops`,
+      `${base}/api/cron/run-autonomous-ops`,
       {
         method: "POST",
         headers: {

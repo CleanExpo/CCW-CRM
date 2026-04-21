@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * Auto Reorder Inventory Cron Job
  *
  * Schedule: Daily at 7:00 AM AEST / 21:00 UTC (0 21 * * *)
- * Sprint 4: Proxies to FastAPI backend to scan inventory for products
- * below their reorder point and create draft PurchaseOrders against
- * linked suppliers using reorder rules and lead time calculations.
+ * Forwards to `API_UPSTREAM_URL` when configured (legacy split deployment).
  */
 export async function GET(request: Request) {
   try {
@@ -17,8 +15,11 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const base = requireUpstreamBase('Auto reorder inventory');
+    if (base instanceof NextResponse) return base;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/cron/auto-reorder-inventory`,
+      `${base}/api/cron/auto-reorder-inventory`,
       {
         method: "POST",
         headers: {

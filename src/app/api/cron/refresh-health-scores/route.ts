@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * Refresh Health Scores Cron Job
  *
  * Schedule: Daily at midnight UTC (0 0 * * *)
- * UNI-1114/1112: Proxies to FastAPI backend to refresh CRM persona tags
- * for all customers. Classifies customers based on health metrics
- * (order frequency, revenue, engagement, etc.).
+ * Forwards to `API_UPSTREAM_URL` when configured.
  */
 export async function GET(request: Request) {
   try {
@@ -17,8 +15,11 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const base = requireUpstreamBase('Refresh health scores');
+    if (base instanceof NextResponse) return base;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/cron/refresh-health-scores`,
+      `${base}/api/cron/refresh-health-scores`,
       {
         method: "POST",
         headers: {
