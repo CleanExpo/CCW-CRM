@@ -1,10 +1,12 @@
 import { LoginForm } from '@/components/auth/login-form';
+import { MarketingAmbientCanvas } from '@/components/landing/marketing-ambient';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { MarketingFooter } from '@/components/landing/marketing-footer';
 import { MarketingHeader } from '@/components/landing/marketing-header';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
 import { LiveStatsBar, type PublicStats } from '@/components/landing/LiveStatsBar';
 import { HeroPremiumShowcase } from '@/components/landing/hero-premium-showcase';
+import { LandingOperationsPulsePlaceholder } from '@/components/landing/landing-operations-pulse';
 import { LandingFaq } from '@/components/landing/landing-faq';
 import { marketingShell as shell } from '@/components/landing/marketing-shell';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +22,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { cn } from '@/lib/utils';
 import {
   ArrowRight,
-  BarChart3,
   CheckCircle2,
   FileSpreadsheet,
   FileText,
@@ -39,8 +40,8 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-const sectionY = 'py-24 md:py-32';
-const sectionRule = 'border-t border-white/[0.07]';
+const sectionY = 'py-28 md:py-36';
+const sectionRule = 'border-t border-white/[0.08]';
 
 const TRUST_PILLS = [
   'Inventory-aware operations',
@@ -120,49 +121,50 @@ export function MarketingLanding({ stats }: MarketingLandingProps) {
     <div
       className={cn(
         marketingFont.className,
-        'dark text-foreground selection:bg-primary/30 min-h-screen scroll-smooth bg-black antialiased selection:text-white'
+        'dark text-foreground selection:bg-primary/30 relative min-h-screen scroll-smooth bg-[#030306] antialiased selection:text-white'
       )}
     >
-      <MarketingHeader />
+      <MarketingAmbientCanvas />
+      <div className="relative z-10">
+        <MarketingHeader />
 
-      <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden pt-16 pb-20 md:pt-20 md:pb-28 lg:flex lg:min-h-[min(92vh,900px)] lg:flex-col lg:justify-center lg:pt-24 lg:pb-32">
+        <main>
+        {/* Hero — single centered column + showcase below */}
+        <section className="relative overflow-hidden pt-20 pb-12 md:pt-28 md:pb-16 lg:pt-32 lg:pb-20">
           <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_-10%,hsl(var(--primary)/0.22),transparent_55%),radial-gradient(ellipse_60%_50%_at_100%_20%,hsl(var(--accent)/0.14),transparent_50%),radial-gradient(ellipse_50%_40%_at_0%_80%,hsl(var(--primary)/0.08),transparent_45%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_55%_at_50%_-15%,hsl(var(--primary)/0.14),transparent_58%),radial-gradient(ellipse_50%_40%_at_80%_30%,hsl(var(--accent)/0.08),transparent_50%)]"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[length:56px_56px] opacity-40"
+            className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[length:64px_64px] opacity-[0.35] [mask-image:radial-gradient(ellipse_90%_70%_at_50%_0%,black,transparent_75%)]"
             aria-hidden
           />
-          <div
-            className={cn(shell, 'relative grid gap-14 lg:grid-cols-12 lg:items-center lg:gap-12')}
-          >
-            <div className="lg:col-span-5">
-              <Badge
-                variant="secondary"
-                className="mb-6 border border-sky-400/35 bg-sky-500/15 px-4 py-1.5 text-xs font-semibold text-sky-100 shadow-sm shadow-sky-500/20"
-              >
-                <Sparkles className="mr-1.5 h-3.5 w-3.5 text-sky-300" />
-                ERP &amp; CRM for equipment suppliers
-              </Badge>
-              <h1 className="text-4xl leading-[1.05] font-extrabold tracking-tight text-balance text-white sm:text-5xl lg:text-6xl xl:text-[3.5rem] xl:leading-[1.02]">
+          <div className={cn(shell, 'relative flex flex-col items-center')}>
+            <div className="animate-marketing-reveal motion-reduce:animate-none mx-auto w-full max-w-3xl text-center">
+              <div className="flex justify-center">
+                <Badge
+                  variant="secondary"
+                  className="border border-sky-400/40 bg-gradient-to-r from-sky-500/20 to-indigo-500/15 px-5 py-2 text-xs font-semibold text-sky-50 shadow-lg shadow-sky-500/15 ring-1 ring-white/10"
+                >
+                  <Sparkles className="mr-2 h-3.5 w-3.5 text-sky-300" />
+                  ERP &amp; CRM for equipment suppliers
+                </Badge>
+              </div>
+              <h1 className="mx-auto mt-8 max-w-[22ch] text-4xl leading-[1.06] font-extrabold tracking-tight text-balance text-white sm:text-5xl md:text-6xl md:leading-[1.05] lg:text-[3.35rem] lg:leading-[1.02]">
                 Run quotes, stock, and fulfilment from{' '}
-                <span className="bg-gradient-to-r from-sky-200 via-cyan-200 to-indigo-200 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-sky-200 via-cyan-100 to-indigo-300 bg-clip-text text-transparent">
                   one calm spine
                 </span>
-                .
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-pretty text-zinc-300 md:text-xl">
+              <p className="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-pretty text-zinc-400 md:text-lg md:leading-relaxed">
                 Replace fragmented spreadsheets and disconnected tools with a single operations
                 platform built for Australian cleaning-equipment wholesalers and distributors who
                 move real SKUs.
               </p>
-              <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap">
                 <Button
                   size="lg"
-                  className="from-primary shadow-primary/30 h-14 rounded-xl bg-gradient-to-r to-indigo-500 px-10 text-base font-semibold text-white shadow-xl transition hover:brightness-110"
+                  className="from-primary shadow-primary/35 h-14 min-w-[200px] rounded-full bg-gradient-to-r to-indigo-500 px-10 text-base font-semibold text-white shadow-xl transition hover:brightness-110"
                   asChild
                 >
                   <Link href="/login">
@@ -173,25 +175,32 @@ export function MarketingLanding({ stats }: MarketingLandingProps) {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-14 rounded-xl border-white/15 bg-white/[0.04] px-8 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/[0.08]"
+                  className="h-14 min-w-[200px] rounded-full border-white/20 bg-white/[0.05] px-8 text-base font-semibold text-white backdrop-blur-md hover:border-white/30 hover:bg-white/[0.1]"
                   asChild
                 >
                   <Link href="/features">Explore capabilities</Link>
                 </Button>
               </div>
-              <div className="mt-12 flex flex-wrap gap-2.5">
+              <div className="mt-12 flex flex-wrap justify-center gap-2.5">
                 {TRUST_PILLS.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-zinc-900/60 px-3.5 py-1.5 text-xs font-medium text-zinc-300 backdrop-blur-sm"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-zinc-950/70 px-4 py-2 text-xs font-medium text-zinc-300 shadow-inner shadow-black/20 backdrop-blur-md"
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-sky-400" />
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400/90" />
                     {t}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="flex justify-center lg:col-span-7 lg:justify-end">
+
+            <div className="relative mt-16 w-full max-w-[min(100%,960px)] md:mt-20 lg:mt-28">
+              <div className="mb-8 flex flex-col items-center gap-2">
+                <span className="text-[11px] font-bold tracking-[0.32em] text-zinc-500 uppercase">
+                  Operations at a glance
+                </span>
+                <div className="h-px w-16 bg-gradient-to-r from-transparent via-sky-500/50 to-transparent" />
+              </div>
               <HeroPremiumShowcase />
             </div>
           </div>
@@ -200,43 +209,32 @@ export function MarketingLanding({ stats }: MarketingLandingProps) {
         {stats ? (
           <LiveStatsBar stats={stats} />
         ) : (
-          <section className={cn('border-white/10 bg-zinc-900/90', sectionRule)}>
-            <div className={cn(shell, 'py-16 text-center md:py-20')}>
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-sky-400/40 bg-sky-500/15 ring-2 ring-sky-400/25">
-                <BarChart3 className="h-9 w-9 text-sky-200" aria-hidden strokeWidth={2} />
-              </div>
-              <p className="text-xl font-bold tracking-tight text-white md:text-2xl">
-                Live KPI strip
-              </p>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-zinc-300 md:text-lg">
-                When your data layer is connected, public stats surface here so visitors see real
-                platform pulse—products, customers, orders, and monthly revenue at a glance.
-              </p>
-            </div>
-          </section>
+          <LandingOperationsPulsePlaceholder />
         )}
 
         {/* Problem */}
-        <section id="problems" className={cn(sectionY, sectionRule, 'bg-zinc-950/40')}>
-          <div className={shell}>
+        <section id="problems" className={cn(sectionY, sectionRule, 'relative bg-zinc-950/50')}>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_100%_60%_at_50%_100%,rgba(99,102,241,0.06),transparent_55%)]" />
+          <div className={cn(shell, 'relative')}>
             <MarketingSectionHeading
               kicker="The cost of fragmentation"
               title="Your team is not slow—your systems are noisy"
               description="Equipment suppliers win on trust, delivery dates, and margin. None of that survives when every department maintains its own shadow copy of the truth."
             />
-            <div className="mt-16 grid gap-6 md:grid-cols-3 md:gap-8">
+            <div className="mt-20 grid gap-6 md:grid-cols-3 md:gap-8">
               {PROBLEMS.map(({ icon: Icon, title, body }) => (
                 <div
                   key={title}
-                  className="group hover:border-primary/30 relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/90 to-black p-8 shadow-lg transition-all duration-300 hover:shadow-[0_0_48px_-12px_rgba(99,102,241,0.2)]"
+                  className="group relative overflow-hidden rounded-3xl border border-white/[0.09] bg-gradient-to-b from-zinc-900/95 via-zinc-950/90 to-black p-8 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.9)] ring-1 ring-white/[0.04] transition-all duration-500 hover:border-sky-500/25 hover:shadow-[0_0_60px_-20px_rgba(56,189,248,0.18)]"
                 >
-                  <div className="from-primary/[0.07] absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.04)_0%,transparent_42%)] opacity-40" />
+                  <div className="from-primary/[0.12] absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                   <div className="relative">
-                    <div className="mb-5 inline-flex rounded-xl border border-sky-400/50 bg-sky-500/20 p-3.5 shadow-[0_0_28px_-6px_rgba(56,189,248,0.45)] ring-2 ring-white/15 transition-transform duration-300 group-hover:scale-105">
-                      <Icon className="h-6 w-6 text-sky-100" strokeWidth={2} />
+                    <div className="mb-6 inline-flex rounded-2xl border border-sky-400/45 bg-gradient-to-br from-sky-500/25 to-sky-600/10 p-4 shadow-[0_0_32px_-8px_rgba(56,189,248,0.4)] ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-[1.04]">
+                      <Icon className="h-7 w-7 text-sky-50" strokeWidth={2} />
                     </div>
                     <h3 className="text-lg font-bold tracking-tight text-white">{title}</h3>
-                    <p className="mt-3 text-sm leading-relaxed text-zinc-300 md:text-[15px]">
+                    <p className="mt-4 text-sm leading-relaxed text-zinc-400 md:text-[15px]">
                       {body}
                     </p>
                   </div>
@@ -252,24 +250,28 @@ export function MarketingLanding({ stats }: MarketingLandingProps) {
           className={cn(
             sectionY,
             sectionRule,
-            'bg-gradient-to-b from-black via-zinc-950/80 to-black'
+            'relative bg-gradient-to-b from-black via-zinc-950/90 to-[#030306]'
           )}
         >
-          <div className={cn(shell, 'grid gap-16 lg:grid-cols-2 lg:items-center lg:gap-20')}>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_0%_50%,rgba(56,189,248,0.05),transparent_50%)]" />
+          <div className={cn(shell, 'relative grid gap-16 lg:grid-cols-2 lg:items-center lg:gap-20')}>
             <div>
-              <p className="text-xs font-bold tracking-[0.22em] text-sky-400 uppercase drop-shadow-[0_0_16px_rgba(56,189,248,0.3)]">
-                Platform story
-              </p>
-              <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-balance text-white sm:text-4xl md:text-[2.65rem] md:leading-tight">
+              <div className="flex items-center gap-3">
+                <span className="h-px w-8 bg-gradient-to-r from-sky-400/80 to-transparent" />
+                <p className="text-xs font-bold tracking-[0.22em] text-sky-300 uppercase">
+                  Platform story
+                </p>
+              </div>
+              <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-balance text-white sm:text-4xl md:text-[2.65rem] md:leading-tight">
                 One operations hub—not another silo
               </h2>
-              <p className="mt-5 text-lg leading-relaxed text-zinc-300 md:text-xl">
+              <p className="mt-6 text-lg leading-relaxed text-zinc-400 md:text-xl">
                 CCW Online ERP is designed to unify catalog, customers, quotes, orders, and
                 warehouse-heavy workflows while leaving room for the integrations you already depend
                 on—inventory bridges, accounting, and commerce—so leadership sees one coherent
                 picture.
               </p>
-              <ul className="mt-10 space-y-5">
+              <ul className="mt-12 space-y-6">
                 {[
                   'Dashboards, reporting, and alerts tuned for operational clarity—not vanity charts.',
                   'Deep integration roadmap: inventory systems, Xero-style accounting, Shopify-style commerce.',
@@ -278,16 +280,19 @@ export function MarketingLanding({ stats }: MarketingLandingProps) {
                 ].map((line) => (
                   <li
                     key={line}
-                    className="flex gap-4 text-sm leading-relaxed text-zinc-300 md:text-[15px]"
+                    className="flex gap-4 text-sm leading-relaxed text-zinc-400 md:text-[15px]"
                   >
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-sky-400" />
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500/15 ring-1 ring-sky-500/30">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-sky-300" />
+                    </span>
                     <span>{line}</span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="relative overflow-hidden rounded-3xl border border-white/[0.1] bg-gradient-to-br from-zinc-900/95 to-black p-8 shadow-2xl ring-1 ring-white/[0.06] md:p-10">
-              <div className="from-primary/20 to-accent/5 pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-gradient-to-br blur-3xl" />
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.12] bg-gradient-to-br from-zinc-900/98 via-zinc-950 to-black p-8 shadow-[0_32px_100px_-40px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.07] backdrop-blur-sm md:p-10">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              <div className="from-primary/25 to-accent/5 pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-gradient-to-br blur-3xl" />
               <div className="relative space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="rounded-xl border border-sky-400/45 bg-sky-500/20 p-3 shadow-[0_0_20px_-6px_rgba(56,189,248,0.35)] ring-1 ring-white/10">
@@ -330,9 +335,9 @@ export function MarketingLanding({ stats }: MarketingLandingProps) {
                   ].map(({ icon: Icon, label, sub, accent }) => (
                     <div
                       key={label}
-                      className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 transition-colors hover:border-white/[0.12]"
+                      className="group/tile rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition-all hover:border-white/[0.15] hover:bg-white/[0.05]"
                     >
-                      <Icon className={cn('mb-2 h-5 w-5', accent)} />
+                      <Icon className={cn('mb-2 h-5 w-5 transition-transform group-hover/tile:scale-110', accent)} />
                       <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
                         {label}
                       </p>
@@ -645,9 +650,10 @@ export function MarketingLanding({ stats }: MarketingLandingProps) {
             </Card>
           </div>
         </section>
-      </main>
+        </main>
 
-      <MarketingFooter />
+        <MarketingFooter />
+      </div>
     </div>
   );
 }
