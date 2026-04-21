@@ -59,11 +59,8 @@ export async function streamMessage(
   onComplete?: () => void,
   onError?: (error: string) => void
 ): Promise<void> {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-  const url = `${backendUrl}/api/ai/chat/stream`;
-
   try {
-    const response = await fetch(url, {
+    const response = await fetch("/api/ai/chat/stream", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

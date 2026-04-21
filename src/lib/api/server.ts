@@ -5,8 +5,7 @@
  */
 
 import { cookies } from 'next/headers';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+import { getApiRequestBase } from '@/lib/api/backend-url';
 
 export interface ApiError {
   detail: string;
@@ -48,7 +47,7 @@ async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = endpoint.startsWith('http') ? endpoint : `${BACKEND_URL}${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${getApiRequestBase()}${endpoint}`;
 
   const response = await fetch(url, {
     ...options,

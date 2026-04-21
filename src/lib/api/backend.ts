@@ -1,5 +1,3 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
 interface ChatRequest {
   message: string;
   conversationId?: string;
@@ -35,7 +33,7 @@ export async function sendChatMessage(
 
 export async function checkHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${BACKEND_URL}/health`);
+    const response = await fetch("/api/health");
     return response.ok;
   } catch {
     return false;

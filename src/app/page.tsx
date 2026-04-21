@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { MarketingLanding } from '@/components/landing/marketing-landing';
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { getAppOrigin } from '@/lib/api/backend-url';
 import type { PublicStats } from '@/components/landing/LiveStatsBar';
 
 export const metadata: Metadata = {
@@ -16,12 +16,12 @@ export const metadata: Metadata = {
 };
 
 /**
- * Fetch public stats from the backend (server-side, no auth required).
- * Returns null if the backend is unreachable or returns a non-ok response.
+ * Fetch public stats (server-side, no auth required).
+ * Returns null if unreachable or non-ok.
  */
 async function getPublicStats(): Promise<PublicStats | null> {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/public/stats`, {
+    const res = await fetch(`${getAppOrigin()}/api/public/stats`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) return null;

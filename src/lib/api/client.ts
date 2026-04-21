@@ -1,7 +1,7 @@
 /**
  * Browser API client
  *
- * Domain APIs call the configured backend (`NEXT_PUBLIC_BACKEND_URL`).
+ * Domain APIs call this Next.js app (`getAppOrigin()`). Optional `API_UPSTREAM_URL` is not used here.
  * Auth under `/api/auth/*` resolves same-origin to Next.js Route Handlers.
  * Sends JWT from storage as `Authorization` plus optional `X-User-Id` from claims.
  *
@@ -12,9 +12,7 @@
  * - Automatic token refresh on 401
  */
 
-import { getBackendUrl } from "@/lib/api/backend-url";
-
-const BACKEND_URL = getBackendUrl();
+import { getAppOrigin } from "@/lib/api/backend-url";
 
 function resolveRequestUrl(endpoint: string): string {
   if (endpoint.startsWith('http')) return endpoint;
@@ -28,7 +26,7 @@ function resolveRequestUrl(endpoint: string): string {
       'http://localhost:3000';
     return `${base}${endpoint}`;
   }
-  return `${BACKEND_URL}${endpoint}`;
+  return `${getAppOrigin()}${endpoint}`;
 }
 
 /** Default request timeout in milliseconds */

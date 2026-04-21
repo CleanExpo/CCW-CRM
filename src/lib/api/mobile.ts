@@ -4,6 +4,7 @@
  * Tradesperson-facing (authenticated) and customer-facing (token-based) endpoints.
  */
 import { apiClient } from './client';
+import { getAppOrigin } from '@/lib/api/backend-url';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -99,7 +100,7 @@ export async function uploadProductPhoto(
   }
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8000'}/api/mobile/photo-upload`,
+    `${getAppOrigin()}/api/mobile/photo-upload`,
     {
       method: 'POST',
       body: formData,
@@ -126,10 +127,8 @@ export const mobileApi = {
 // Guest (public) endpoints — no auth required
 // ---------------------------------------------------------------------------
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8000';
-
 export async function getGuestOrder(token: string): Promise<CustomerOrderResponse> {
-  const res = await fetch(`${BACKEND}/api/guest/order/${token}`, { cache: 'no-store' });
+  const res = await fetch(`${getAppOrigin()}/api/guest/order/${token}`, { cache: 'no-store' });
   if (res.status === 404) throw new Error('Order not found');
   if (!res.ok) throw new Error('Failed to load order');
   return res.json();
@@ -139,7 +138,7 @@ export async function approveGuestOrder(
   token: string,
   notes?: string
 ): Promise<{ status: string; message: string }> {
-  const res = await fetch(`${BACKEND}/api/guest/order/${token}/approve`, {
+  const res = await fetch(`${getAppOrigin()}/api/guest/order/${token}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ notes }),
@@ -157,7 +156,7 @@ export async function declineGuestOrder(
   token: string,
   reason: string
 ): Promise<{ status: string; message: string }> {
-  const res = await fetch(`${BACKEND}/api/guest/order/${token}/decline`, {
+  const res = await fetch(`${getAppOrigin()}/api/guest/order/${token}/decline`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reason }),

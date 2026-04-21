@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from './client';
+import { getAppOrigin } from '@/lib/api/backend-url';
 
 /**
  * Task state status
@@ -217,7 +218,7 @@ export const autonomousApi = {
    */
   subscribeToEvents(taskId: string, onEvent: (event: AutonomousEvent) => void): EventSource {
     const eventSource = new EventSource(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/ai/autonomous/stream/${taskId}`
+      `${getAppOrigin()}/api/ai/autonomous/stream/${taskId}`
     );
 
     eventSource.onmessage = (e) => {
