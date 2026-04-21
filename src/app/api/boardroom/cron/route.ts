@@ -4,12 +4,11 @@
  * Triggered 4× daily: AEST 6am / 12pm / 6pm / midnight
  * UTC schedule: 20:00 / 02:00 / 08:00 / 14:00
  *
- * Validates CRON_SECRET, then fires the boardroom orchestrator
- * on the backend (or directly via the SDK if running serverless).
+ * Validates CRON_SECRET, then POSTs to `/api/boardroom/session` on this app or an optional upstream (`API_UPSTREAM_URL`).
  */
 
 import { NextResponse } from "next/server";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { getApiRequestBase } from '@/lib/api/backend-url';
 
 export async function GET(request: Request) {
   // ── Auth: Vercel sends Authorization: Bearer <CRON_SECRET> ──
@@ -24,9 +23,7 @@ export async function GET(request: Request) {
   console.log(`[Boardroom CRON] Session triggered at ${timestamp}`);
 
   try {
-    // Kick off the boardroom session on the backend.
-    // Backend runs the full 18-step orchestrator and returns the debrief JSON.
-    const response = await fetch(`${BACKEND_URL}/api/boardroom/session`, {
+    const response = await fetch(`${getApiRequestBase()}/api/boardroom/session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -40,11 +37,11 @@ export async function GET(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[Boardroom CRON] Backend error ${response.status}: ${errorText}`);
+      console.error(`[Boardroom CRON] Session error ${response.status}: ${errorText}`);
       return NextResponse.json(
         {
           success: false,
-          error: `Backend responded with ${response.status}`,
+          error: `Session endpoint responded with ${response.status}`,
           timestamp,
         },
         { status: 502 }
