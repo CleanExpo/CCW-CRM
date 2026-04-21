@@ -21,7 +21,6 @@ on:
 
 env:
   NODE_VERSION: '20'
-  PYTHON_VERSION: '3.12'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   STAGING_URL: https://api.staging.ccw-erp.com
@@ -81,51 +80,18 @@ jobs:
           fi
 
   # ============================================================================
-  # Run Tests
+  # Run Tests (root Next.js app only; apps/ monorepo removed)
   # ============================================================================
   test:
     name: Run Tests
     runs-on: ubuntu-latest
     needs: validate
 
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: starter_db
-          POSTGRES_USER: starter_user
-          POSTGRES_PASSWORD: local_dev_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.validate.outputs.version }}
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: 'latest'
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -134,96 +100,31 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
-      - name: Install backend dependencies
-        working-directory: apps/backend
-        run: uv sync --all-extras
-
-      - name: Install frontend dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run backend tests
-        working-directory: apps/backend
-        run: uv run pytest -v --tb=short
-        env:
-          DATABASE_URL: postgresql://starter_user:local_dev_password@localhost:5432/starter_db
-          REDIS_URL: redis://localhost:6379/0
+      - name: Lint
+        run: npm run lint
 
-      - name: Run frontend tests
+      - name: Run unit tests
         run: npm run test
 
       - name: Type check
         run: npm run type-check
 
   # ============================================================================
-  # Build and Push Docker Images
+  # Container images (apps/ Dockerfiles removed — skip GHCR push)
   # ============================================================================
   build-images:
     name: Build Docker Images
     runs-on: ubuntu-latest
     needs: [validate, test]
-    permissions:
-      contents: read
-      packages: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.validate.outputs.version }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for backend
-        id: meta-backend
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/backend
-          tags: |
-            type=sha,prefix=
-            type=raw,value=staging
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
-
-      - name: Build and push backend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/backend
-          file: ./apps/backend/Dockerfile
-          push: true
-          tags: ${{ steps.meta-backend.outputs.tags }}
-          labels: ${{ steps.meta-backend.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for frontend
-        id: meta-frontend
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/web
-          tags: |
-            type=sha,prefix=
-            type=raw,value=staging
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./apps/web/Dockerfile
-          push: true
-          tags: ${{ steps.meta-frontend.outputs.tags }}
-          labels: ${{ steps.meta-frontend.outputs.labels }}
-          build-args: |
-            NEXT_PUBLIC_BACKEND_URL=${{ secrets.STAGING_API_URL || 'https://api.staging.ccw-erp.com' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Skip image build
+        run: |
+          echo "::notice::apps/ removed from this repo — no backend/web Dockerfiles to build or push."
+          echo "Update staging server compose/deploy to match your new layout (e.g. Vercel-only web)."
 
   # ============================================================================
   # Deploy to Staging Server

@@ -13,32 +13,6 @@
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3000"
-    },
-    {
-      "name": "Python: FastAPI",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "uvicorn",
-      "args": ["src.api.main:app", "--reload", "--port", "8000"],
-      "cwd": "${workspaceFolder}/apps/backend",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/apps/backend"
-      },
-      "jinja": true
-    },
-    {
-      "name": "Python: Debug Tests",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "pytest",
-      "args": ["-v"],
-      "cwd": "${workspaceFolder}/apps/backend"
-    }
-  ],
-  "compounds": [
-    {
-      "name": "Full Stack",
-      "configurations": ["Next.js: debug server-side", "Python: FastAPI"]
     }
   ]
 }

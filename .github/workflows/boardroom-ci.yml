@@ -19,8 +19,8 @@ jobs:
           cache-dependency-path: package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Run boardroom tests
-        run: node tests/run-all.js || echo "No boardroom tests yet"
+      - name: Run unit tests
+        run: npm run test
 
   validate:
     name: Validation Gates
