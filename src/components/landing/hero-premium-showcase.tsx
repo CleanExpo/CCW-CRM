@@ -21,7 +21,7 @@ export function HeroPremiumShowcase() {
   const uid = useId().replace(/:/g, '');
 
   return (
-    <div className="relative mx-auto flex min-h-[480px] w-full max-w-[720px] items-center justify-center lg:max-w-none lg:min-h-[560px]">
+    <div className="relative mx-auto flex min-h-[420px] w-full max-w-[min(100%,920px)] items-center justify-center md:min-h-[480px]">
       {/* Aurora + drift rings */}
       <div
         className="animate-landing-aurora pointer-events-none absolute -inset-[28%] rounded-full bg-[conic-gradient(from_210deg_at_50%_50%,hsl(var(--primary)/0.35)_0deg,transparent_120deg,hsl(var(--accent)/0.25)_220deg,transparent_320deg)] opacity-90 blur-3xl"

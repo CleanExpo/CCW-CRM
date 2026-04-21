@@ -1,15 +1,11 @@
 import { cn } from '@/lib/utils';
 
-/** Ambient hero backdrop — matches landing hero energy. */
+/** Section-local spotlight — stacks on global `MarketingAmbientCanvas` (lighter, no duplicate aurora). */
 export function MarketingHeroBackdrop({ className }: { className?: string }) {
   return (
     <div className={cn('pointer-events-none absolute inset-0 overflow-hidden', className)} aria-hidden>
-      <div className="animate-landing-aurora absolute -inset-[40%] opacity-80 blur-3xl bg-[conic-gradient(from_210deg_at_50%_50%,hsl(var(--primary)/0.28)_0deg,transparent_120deg,hsl(var(--accent)/0.2)_220deg,transparent_320deg)]" />
-      <div
-        className="animate-landing-drift absolute inset-[-25%] opacity-50 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.14),transparent_45%),radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.1),transparent_40%)]"
-        style={{ animationDuration: '28s' }}
-      />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_-10%,hsl(var(--primary)/0.18),transparent_55%)]" />
+      <div className="absolute inset-x-0 top-0 h-[min(420px,55vh)] bg-[radial-gradient(ellipse_100%_100%_at_50%_-15%,hsl(var(--primary)/0.12),transparent_62%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#030306]/90 to-transparent" />
     </div>
   );
 }
