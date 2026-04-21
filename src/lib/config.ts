@@ -3,7 +3,7 @@
  * Ensures all required environment variables are present at startup
  */
 
-const REQUIRED_ENV_VARS = ["DATABASE_URL", "NEXT_PUBLIC_BACKEND_URL"] as const;
+const REQUIRED_ENV_VARS = ["DATABASE_URL"] as const;
 
 const OPTIONAL_ENV_VARS = {
   NEXT_PUBLIC_FRONTEND_URL: "http://localhost:3000",
@@ -36,9 +36,6 @@ if (typeof window === "undefined" && process.env.NODE_ENV !== "test") {
 }
 
 export const config = {
-  backend: {
-    url: process.env.NEXT_PUBLIC_BACKEND_URL!,
-  },
   frontend: {
     url: process.env.NEXT_PUBLIC_FRONTEND_URL || OPTIONAL_ENV_VARS.NEXT_PUBLIC_FRONTEND_URL,
   },
