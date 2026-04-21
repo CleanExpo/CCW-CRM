@@ -1,11 +1,7 @@
 /**
  * Live Contractor Availability Demo Page
  *
- * Demonstrates full-stack integration:
- * - Next.js 15 frontend
- * - FastAPI backend
- * - Australian context throughout
- * - Real-time data fetching
+ * Demonstrates full-stack integration (Next.js app + API routes).
  */
 
 "use client";
@@ -53,7 +49,7 @@ export default function LiveDemoPage() {
             Live Contractor Availability
           </h1>
           <p className="text-gray-600 mb-4">
-            Real-time data from FastAPI backend with Australian context
+            Real-time data from the Next.js API with Australian context
           </p>
 
           {/* Architecture Badges */}
@@ -62,7 +58,7 @@ export default function LiveDemoPage() {
               Next.js 15
             </span>
             <span className="px-3 py-1 bg-success/10 text-success rounded-full text-sm font-medium">
-              FastAPI
+              API routes
             </span>
             <span className="px-3 py-1 bg-warning/10 text-warning rounded-full text-sm font-medium">
               Australian-first
@@ -86,7 +82,7 @@ export default function LiveDemoPage() {
             <p className="text-error font-medium">Failed to load contractors</p>
             <p className="text-sm text-gray-600 mt-1">{error}</p>
             <p className="text-xs text-gray-500 mt-3">
-              Make sure the FastAPI backend is running on http://localhost:8000
+              Run <code className="px-1">npm run dev</code> and ensure the contractors API is available.
             </p>
           </div>
         ) : contractors.length === 0 ? (
@@ -127,13 +123,13 @@ export default function LiveDemoPage() {
         {/* API Info */}
         <div className="bg-white/70 backdrop-blur-md rounded-lg p-6 border border-white/20 shadow-[0_10px_15px_rgba(13,148,136,0.1)]">
           <h2 className="font-heading text-xl font-semibold text-gray-900 mb-3">
-            API Configuration
+            API configuration
           </h2>
           <div className="space-y-2 text-sm">
             <p>
-              <span className="font-medium">Backend URL:</span>{" "}
+              <span className="font-medium">App URL:</span>{" "}
               <code className="px-2 py-1 bg-gray-100 rounded text-xs">
-                {process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}
+                {process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}
               </code>
             </p>
             <p>
@@ -143,7 +139,7 @@ export default function LiveDemoPage() {
               </code>
             </p>
             <p className="text-xs text-gray-500 mt-3">
-              Configure backend URL in{" "}
+              Optional: set <code className="px-1">NEXT_PUBLIC_APP_URL</code> in{" "}
               <code className="px-1 py-0.5 bg-gray-100 rounded">.env.local</code>
             </p>
           </div>

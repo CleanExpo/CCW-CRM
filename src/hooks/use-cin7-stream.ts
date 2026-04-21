@@ -26,9 +26,9 @@ export interface Cin7SyncEvent {
  * @param enabled - Enable/disable connection (default: true)
  */
 export function useCin7Stream(enabled = true) {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+  const apiBase = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || '';
   return useSSE<Cin7SyncEvent>({
-    url: `${backendUrl}/api/integrations/cin7/stream`,
+    url: `${apiBase}/api/integrations/cin7/stream`,
     enabled,
     autoReconnect: true,
     reconnectDelay: 5000,

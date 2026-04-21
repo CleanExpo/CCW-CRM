@@ -255,7 +255,7 @@ export default function ClientOnboardingPage() {
                   className="flex-1"
                   onClick={() => {
                     // Xero OAuth flow — redirect to backend initiation endpoint
-                    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/integrations/xero/auth`;
+                    window.location.href = `${window.location.origin}/api/integrations/xero/auth`;
                   }}
                 >
                   <Link2 className="mr-2 h-4 w-4" />

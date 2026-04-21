@@ -105,8 +105,7 @@ export function useWebSocket(
   const getWebSocketUrl = useCallback(() => {
     // Determine WebSocket protocol based on page protocol
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use backend API URL (typically localhost:8000 in dev)
-    const host = process.env.NEXT_PUBLIC_API_URL?.replace(/^https?:\/\//, '') || 'localhost:8000';
+    const host = process.env.NEXT_PUBLIC_API_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
     return `${protocol}//${host}/ws/${clientId}`;
   }, [clientId]);
 

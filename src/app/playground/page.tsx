@@ -254,7 +254,7 @@ function BackendStatus() {
   const [message, setMessage] = React.useState<string>("");
 
   React.useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")
+    fetch("/api/health")
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error(`Failed to connect: ${res.status} ${res.statusText}`);
