@@ -1,3 +1,4 @@
+import { MarketingAmbientCanvas } from '@/components/landing/marketing-ambient';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { cn } from '@/lib/utils';
 
@@ -10,10 +11,11 @@ export function AuthSiteShell({ children }: { children: React.ReactNode }) {
     <div
       className={cn(
         marketingFont.className,
-        'dark text-foreground selection:bg-primary/30 min-h-screen scroll-smooth bg-black antialiased selection:text-white'
+        'dark text-foreground selection:bg-primary/30 relative min-h-screen scroll-smooth bg-[#030306] antialiased selection:text-white'
       )}
     >
-      <main className="min-h-screen">{children}</main>
+      <MarketingAmbientCanvas intensity="soft" />
+      <main className="relative z-10 min-h-screen">{children}</main>
     </div>
   );
 }

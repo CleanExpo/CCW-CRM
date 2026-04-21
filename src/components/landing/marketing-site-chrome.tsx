@@ -1,3 +1,4 @@
+import { MarketingAmbientCanvas } from '@/components/landing/marketing-ambient';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { MarketingFooter } from '@/components/landing/marketing-footer';
 import { MarketingHeader } from '@/components/landing/marketing-header';
@@ -8,12 +9,15 @@ export function MarketingSiteChrome({ children }: { children: React.ReactNode })
     <div
       className={cn(
         marketingFont.className,
-        'dark text-foreground selection:bg-primary/30 min-h-screen scroll-smooth bg-black antialiased selection:text-white'
+        'dark text-foreground selection:bg-primary/30 relative min-h-screen scroll-smooth bg-[#030306] antialiased selection:text-white'
       )}
     >
-      <MarketingHeader />
-      <main>{children}</main>
-      <MarketingFooter />
+      <MarketingAmbientCanvas />
+      <div className="relative z-10">
+        <MarketingHeader />
+        <main>{children}</main>
+        <MarketingFooter />
+      </div>
     </div>
   );
 }
