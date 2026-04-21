@@ -10,54 +10,68 @@ import { marketingShell } from '@/components/landing/marketing-shell';
 const NAV = [
   { href: '/product', label: 'Product' },
   { href: '/how-it-works', label: 'How it works' },
-  { href: '/pricing', label: 'Pricing' },
   { href: '/features', label: 'Features' },
+  { href: '/pricing', label: 'Pricing' },
+  { href: '/contact', label: 'Contact' },
 ] as const;
 
 export function MarketingHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/15 bg-zinc-950/95 backdrop-blur-xl supports-backdrop-filter:bg-zinc-950/90">
+    <header className="sticky top-0 z-50 border-b border-white/[0.12] bg-zinc-950/80 backdrop-blur-2xl supports-backdrop-filter:bg-zinc-950/75">
+      {/* Gradient hairline */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/40 to-transparent"
+        aria-hidden
+      />
       <div
         className={cn(
           marketingShell,
-          'flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between md:gap-6 md:py-5'
+          'flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between md:gap-6 md:py-4'
         )}
       >
         <Link href="/" className="group flex min-w-0 shrink-0 items-center gap-3">
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg ring-2 shadow-sky-500/30 ring-white/25 transition-transform group-hover:scale-[1.02]">
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-sky-400 via-sky-500 to-indigo-600 text-white shadow-lg shadow-sky-500/25 ring-2 ring-white/20 transition duration-300 group-hover:scale-[1.03] group-hover:shadow-sky-400/35">
+            <span
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,transparent_45%)] opacity-80"
+              aria-hidden
+            />
             <Layers3 className="relative z-10 h-5 w-5" strokeWidth={2.25} aria-hidden />
           </span>
           <div className="min-w-0 leading-tight">
             <span className="block truncate text-base font-bold tracking-tight text-white sm:text-lg">
               CCW Online
             </span>
-            <span className="block truncate text-[11px] font-medium text-zinc-300 sm:text-xs">
+            <span className="block truncate text-[11px] font-medium text-zinc-400 sm:text-xs">
               Equipment supplier operations
             </span>
           </div>
         </Link>
 
         <nav
-          className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-semibold md:flex-1 md:justify-center"
+          className="flex flex-wrap items-center justify-center gap-1.5 text-sm font-semibold md:flex-1 md:justify-center"
           aria-label="Main"
         >
-          {NAV.map(({ href, label }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  'whitespace-nowrap underline-offset-4 transition-colors hover:text-white hover:underline',
-                  active ? 'text-white' : 'text-zinc-400'
-                )}
-              >
-                {label}
-              </Link>
-            );
-          })}
+          <div className="flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.04] p-1.5 shadow-inner shadow-black/20 backdrop-blur-sm">
+            {NAV.map(({ href, label }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    'rounded-full px-3.5 py-2 whitespace-nowrap transition-all duration-200',
+                    active
+                      ? 'bg-gradient-to-r from-sky-500/25 to-indigo-600/25 text-white shadow-sm ring-1 ring-sky-500/30'
+                      : 'text-zinc-400 hover:text-white'
+                  )}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 md:justify-end">
@@ -65,7 +79,7 @@ export function MarketingHeader() {
             href="/register"
             className={cn(
               buttonVariants({ variant: 'outline', size: 'sm' }),
-              'min-h-9 rounded-lg border-zinc-600 bg-transparent px-4 text-sm font-semibold text-zinc-200 hover:bg-zinc-900/80 hover:text-white'
+              'min-h-9 rounded-full border-white/15 bg-white/[0.03] px-4 text-sm font-semibold text-zinc-200 hover:border-white/25 hover:bg-white/[0.07] hover:text-white'
             )}
           >
             Sign up
@@ -74,7 +88,7 @@ export function MarketingHeader() {
             href="/login"
             className={cn(
               buttonVariants({ variant: 'gradient', size: 'sm' }),
-              'min-h-9 min-w-[7.5rem] rounded-lg px-5 text-sm font-semibold shadow-lg shadow-sky-500/30 ring-1 ring-white/20 hover:brightness-110'
+              'min-h-9 min-w-[7.5rem] rounded-full px-5 text-sm font-semibold shadow-lg shadow-sky-500/25 ring-1 ring-white/15 transition hover:brightness-110'
             )}
           >
             <LogIn className="h-4 w-4 shrink-0" aria-hidden />
