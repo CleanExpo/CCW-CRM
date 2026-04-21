@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const base = requireUpstreamBase('Workflow detail');
+    if (base instanceof NextResponse) return base;
+
     const { id } = await params;
-    const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`);
+    const response = await fetch(`${base}/api/workflows/${id}`);
     const data = await response.json();
 
     return NextResponse.json(data, { status: response.status });
@@ -25,10 +28,13 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const base = requireUpstreamBase('Workflow update');
+    if (base instanceof NextResponse) return base;
+
     const { id } = await params;
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`, {
+    const response = await fetch(`${base}/api/workflows/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -53,8 +59,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const base = requireUpstreamBase('Workflow delete');
+    if (base instanceof NextResponse) return base;
+
     const { id } = await params;
-    const response = await fetch(`${BACKEND_URL}/api/workflows/${id}`, {
+    const response = await fetch(`${base}/api/workflows/${id}`, {
       method: "DELETE",
     });
 

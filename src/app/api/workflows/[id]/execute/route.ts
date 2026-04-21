@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const base = requireUpstreamBase('Workflow execute');
+    if (base instanceof NextResponse) return base;
+
     const { id } = await params;
     const body = await request.json();
 
     const response = await fetch(
-      `${BACKEND_URL}/api/workflows/${id}/execute`,
+      `${base}/api/workflows/${id}/execute`,
       {
         method: "POST",
         headers: {

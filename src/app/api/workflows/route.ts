@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 export async function GET(request: NextRequest) {
   try {
+    const base = requireUpstreamBase('Workflows list');
+    if (base instanceof NextResponse) return base;
+
     const { searchParams } = new URL(request.url);
-    const url = new URL(`${BACKEND_URL}/api/workflows`);
+    const url = new URL(`${base}/api/workflows`);
 
     // Forward query parameters
     searchParams.forEach((value, key) => {
@@ -26,9 +29,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const base = requireUpstreamBase('Workflows create');
+    if (base instanceof NextResponse) return base;
+
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/workflows`, {
+    const response = await fetch(`${base}/api/workflows`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
