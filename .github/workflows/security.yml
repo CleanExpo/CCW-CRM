@@ -12,7 +12,6 @@ on:
 
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '9.15.0'
   PYTHON_VERSION: '3.12'
 
 jobs:
@@ -34,22 +33,17 @@ jobs:
         if: steps.check-token.outputs.skip != 'true'
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        if: steps.check-token.outputs.skip != 'true'
-        uses: pnpm/action-setup@6e7bdbda5fe05107efc88b23b7ed00aa05f84ca0 # v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         if: steps.check-token.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         if: steps.check-token.outputs.skip != 'true'
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Run Snyk to check for vulnerabilities
         if: steps.check-token.outputs.skip != 'true'
@@ -58,7 +52,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high --file=apps/web/package.json
+          args: --severity-threshold=high --file=package.json
 
       - name: Upload Snyk report
         if: steps.check-token.outputs.skip != 'true' && always()
@@ -139,27 +133,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@6e7bdbda5fe05107efc88b23b7ed00aa05f84ca0 # v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Run npm audit
-        run: pnpm audit --audit-level=high
+        run: npm audit --audit-level=high
         continue-on-error: true
 
       - name: Generate audit report
         if: always()
-        run: pnpm audit --json > npm-audit-report.json
+        run: npm audit --json > npm-audit-report.json
         continue-on-error: true
 
       - name: Upload audit report

@@ -6,24 +6,19 @@ on:
   pull_request:
     branches: [main, develop]
 
-env:
-  PNPM_VERSION: '9.15.0'
-
 jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v5
-        with:
-          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
       - name: Run boardroom tests
         run: node tests/run-all.js || echo "No boardroom tests yet"
 
@@ -32,15 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v5
-        with:
-          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
       - name: Validate hooks structure
         run: node scripts/ci/validate-hooks.js
       - name: Validate agent YAML frontmatter
@@ -53,17 +46,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v5
-        with:
-          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
       - name: Audit dependencies
-        run: pnpm audit --audit-level=high || true
+        run: npm audit --audit-level=high || true
       - name: Scan for hardcoded secrets
         run: node scripts/ci/scan-secrets.js
 

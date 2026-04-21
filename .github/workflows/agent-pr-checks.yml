@@ -69,37 +69,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: '9.15.0'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Type Check
         id: type-check
         run: |
-          pnpm turbo run type-check
+          npm run type-check
           echo "status=$?" >> $GITHUB_OUTPUT
 
       - name: Lint
         id: lint
         run: |
-          pnpm turbo run lint
+          npm run lint
           echo "status=$?" >> $GITHUB_OUTPUT
 
       - name: Unit Tests
         id: test
         run: |
-          pnpm turbo run test
+          npm run test
           echo "status=$?" >> $GITHUB_OUTPUT
 
       - name: Build
         id: build
         run: |
-          pnpm turbo run build
+          npm run build
           echo "status=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
 

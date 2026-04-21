@@ -29,7 +29,6 @@
     "**/.turbo": true,
     "**/.next": true,
     "**/dist": true,
-    "pnpm-lock.yaml": true,
     "uv.lock": true
   },
   "tailwindCSS.experimental.classRegex": [

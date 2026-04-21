@@ -12,7 +12,6 @@ permissions:
 
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '9.15.0'
   PYTHON_VERSION: '3.12'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -132,36 +131,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Lint
-        run: pnpm turbo run lint
+        run: npm run lint
 
       - name: Type check
-        run: pnpm turbo run type-check
+        run: npm run type-check
 
       - name: Run unit tests with coverage
         id: test
-        run: pnpm turbo run test:coverage
+        run: npm run test:coverage
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
-          path: apps/web/coverage/
+          path: coverage/
           retention-days: 30
 
   # ============================================================================
@@ -178,23 +173,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Build all packages
         id: build
-        run: pnpm turbo run build
+        run: npm run build
         env:
           NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
 
@@ -335,16 +326,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
@@ -355,7 +342,9 @@ jobs:
         run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install Node dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          npm ci
+          cd apps/web && npm install
 
       - name: Install backend dependencies
         working-directory: apps/backend
@@ -396,11 +385,12 @@ jobs:
           JWT_SECRET_KEY: ci-test-secret-key-minimum-32-chars
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
         working-directory: apps/web
-        run: pnpm test:e2e
+        run: npm run test:e2e
         env:
           CI: true
           NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
@@ -436,26 +426,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          npm ci
+          cd apps/web && npm install
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
 
       - name: Run accessibility tests
         working-directory: apps/web
-        run: pnpm exec playwright test --config=playwright.a11y.config.ts
+        run: npx playwright test --config=playwright.a11y.config.ts
         env:
           CI: true
 
