@@ -40,9 +40,9 @@ log "======================================"
 # Step 1: Verify environment
 log "Step 1: Verifying environment..."
 
-if [ -z "$NEXT_PUBLIC_BACKEND_URL" ]; then
-    warn "NEXT_PUBLIC_BACKEND_URL not set. Using default: http://localhost:8000"
-    export NEXT_PUBLIC_BACKEND_URL="http://localhost:8000"
+if [ -z "$NEXT_PUBLIC_APP_URL" ]; then
+    warn "NEXT_PUBLIC_APP_URL not set. Using default: http://localhost:3000"
+    export NEXT_PUBLIC_APP_URL="http://localhost:3000"
 fi
 
 log "Environment variables configured."
@@ -147,7 +147,7 @@ log "Logs: $PROJECT_ROOT/logs/frontend-$TIMESTAMP.log"
 log ""
 log "Next steps:"
 log "1. Open browser: http://localhost:$PORT"
-log "2. Run Phase 4 health checks: ./scripts/health-check-phase4.sh"
+log "2. Verify health: curl -fsS http://localhost:$PORT/api/health"
 log "3. Monitor logs for 24 hours"
 log ""
 log "To stop frontend: kill $FRONTEND_PID"

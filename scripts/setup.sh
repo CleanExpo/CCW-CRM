@@ -100,15 +100,6 @@ else
     MISSING_DEPS=1
 fi
 
-if check_command uv; then
-    UV_VERSION=$(uv --version | cut -d ' ' -f2)
-    print_success "uv installed (version $UV_VERSION)"
-else
-    print_error "uv is not installed"
-    echo "   Install: pip install uv"
-    MISSING_DEPS=1
-fi
-
 if [ $MISSING_DEPS -eq 1 ]; then
     print_error "Missing required dependencies. Please install them and run setup again."
     exit 1
@@ -123,13 +114,6 @@ print_info "Installing Node dependencies..."
 npm install
 
 print_success "Node dependencies installed"
-
-print_info "Installing backend dependencies with uv..."
-cd backend
-uv sync
-cd ../..
-
-print_success "Backend dependencies installed"
 
 # Step 3: Configure environment
 print_header "Step 3/7: Configuring Environment"
@@ -282,7 +266,7 @@ else
 fi
 
 # Check file structure
-if [ -f "backend/pyproject.toml" ] && [ -d "src/app" ]; then
+if [ -f "package.json" ] && [ -d "src/app" ]; then
     print_success "Project structure is valid"
 else
     print_error "Project structure appears incomplete"
@@ -307,8 +291,7 @@ echo "  1. Start all services:"
 echo "     npm run dev"
 echo ""
 echo "  2. Open in browser:"
-echo "     Frontend: http://localhost:3000"
-echo "     Backend:  http://localhost:8000"
+echo "     App: http://localhost:3000"
 echo ""
 echo "  3. Login with default credentials:"
 echo "     Email:    admin@local.dev"

@@ -6,8 +6,7 @@ Write-Host "  Phase 4 Real-Time Infrastructure Test Suite  " -ForegroundColor Cy
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 
-$BACKEND_URL = "http://localhost:8000"
-$FRONTEND_URL = "http://localhost:3000"
+$APP_URL = "http://localhost:3000"
 $PASS_COUNT = 0
 $FAIL_COUNT = 0
 
@@ -82,33 +81,33 @@ function Test-SSEEndpoint {
     }
 }
 
-Write-Host "Step 1: Backend Health Checks" -ForegroundColor Cyan
+Write-Host "Step 1: App health" -ForegroundColor Cyan
 Write-Host "------------------------------" -ForegroundColor Cyan
-Test-Endpoint -Name "Backend Health" -Url "$BACKEND_URL/api/health"
+Test-Endpoint -Name "App health" -Url "$APP_URL/api/health"
 Write-Host ""
 
 Write-Host "Step 2: SSE Endpoint Connectivity" -ForegroundColor Cyan
 Write-Host "----------------------------------" -ForegroundColor Cyan
 
-Test-SSEEndpoint -Name "Inventory Stream" -Url "$BACKEND_URL/api/inventory-stream"
-Test-SSEEndpoint -Name "Order Status Stream" -Url "$BACKEND_URL/api/orders/status-stream"
-Test-SSEEndpoint -Name "POS Failures Stream" -Url "$BACKEND_URL/api/monitoring/alerts/pos-failures/stream"
-Test-SSEEndpoint -Name "Dashboard Metrics Stream" -Url "$BACKEND_URL/api/dashboard/metrics-stream"
+Test-SSEEndpoint -Name "Inventory Stream" -Url "$APP_URL/api/inventory-stream"
+Test-SSEEndpoint -Name "Order Status Stream" -Url "$APP_URL/api/orders/status-stream"
+Test-SSEEndpoint -Name "POS Failures Stream" -Url "$APP_URL/api/monitoring/alerts/pos-failures/stream"
+Test-SSEEndpoint -Name "Dashboard Metrics Stream" -Url "$APP_URL/api/dashboard/metrics-stream"
 
 Write-Host ""
 
 Write-Host "Step 3: REST API Endpoints" -ForegroundColor Cyan
 Write-Host "--------------------------" -ForegroundColor Cyan
 
-Test-Endpoint -Name "Dashboard Aggregated" -Url "$BACKEND_URL/api/dashboard/aggregated"
-Test-Endpoint -Name "POS Failures REST" -Url "$BACKEND_URL/api/monitoring/alerts/pos-failures?hours=24"
+Test-Endpoint -Name "Dashboard Aggregated" -Url "$APP_URL/api/dashboard/aggregated"
+Test-Endpoint -Name "POS Failures REST" -Url "$APP_URL/api/monitoring/alerts/pos-failures?hours=24"
 
 Write-Host ""
 
 Write-Host "Step 4: Frontend Health" -ForegroundColor Cyan
 Write-Host "-----------------------" -ForegroundColor Cyan
 
-Test-Endpoint -Name "Frontend Health" -Url "$FRONTEND_URL/api/health"
+Test-Endpoint -Name "App health (duplicate check)" -Url "$APP_URL/api/health"
 
 Write-Host ""
 Write-Host "================================================" -ForegroundColor Cyan
@@ -124,8 +123,6 @@ if ($FAIL_COUNT -eq 0) {
     exit 0
 } else {
     Write-Host "⚠️  SOME TESTS FAILED. Check services are running:" -ForegroundColor Yellow
-    Write-Host "   - Backend: cd backend && uv run uvicorn src.api.main:app --reload" -ForegroundColor Gray
-    Write-Host "   - Frontend: cd app && pnpm dev" -ForegroundColor Gray
-    Write-Host "   - Database: docker compose up -d" -ForegroundColor Gray
+    Write-Host "   - App: npm run dev (http://localhost:3000)" -ForegroundColor Gray
     exit 1
 }

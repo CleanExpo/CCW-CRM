@@ -23,8 +23,10 @@ import path from 'path';
 const DEFAULT_TIMEOUT = 20_000;
 const CCW_ERP_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://ccw-erp.vercel.app';
 const CCW_SITE_URL = 'https://www.carpetcleanerswarehouse.com.au';
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.NEXT_PUBLIC_FRONTEND_URL ||
+  CCW_ERP_URL;
 
 /**
  * Individual QA check result.
@@ -34,18 +36,20 @@ function makeResult(id, name, pass, details = {}) {
 }
 
 /**
- * Check backend health endpoint.
+ * Check app health endpoint (Next.js Route Handler).
  */
 async function checkBackendHealth() {
   try {
-    const res = await fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(8_000) });
+    const res = await fetch(`${API_BASE.replace(/\/$/, '')}/api/health`, {
+      signal: AbortSignal.timeout(8_000),
+    });
     const data = await res.json().catch(() => ({}));
-    return makeResult('backend_health', 'Backend /health endpoint', res.ok, {
+    return makeResult('backend_health', 'App /api/health endpoint', res.ok, {
       status: res.status,
       body: data,
     });
   } catch (err) {
-    return makeResult('backend_health', 'Backend /health endpoint', false, { error: err.message });
+    return makeResult('backend_health', 'App /api/health endpoint', false, { error: err.message });
   }
 }
 
@@ -111,7 +115,7 @@ async function checkDashboardAPI() {
   const results = [];
   for (const ep of endpoints) {
     try {
-      const res = await fetch(`${BACKEND_URL}${ep.path}`, {
+      const res = await fetch(`${API_BASE.replace(/\/$/, '')}${ep.path}`, {
         signal: AbortSignal.timeout(8_000),
         headers: { Accept: 'application/json' },
       });
