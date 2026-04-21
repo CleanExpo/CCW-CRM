@@ -120,7 +120,7 @@ jobs:
       - name: Build check
         run: npm run build
         env:
-          NEXT_PUBLIC_BACKEND_URL: ${{ env.PRODUCTION_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ env.PRODUCTION_URL }}
 
   # ============================================================================
   # Container images (apps/ Dockerfiles removed — skip GHCR push)

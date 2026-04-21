@@ -16,12 +16,16 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const upstreamUrl =
+      process.env.API_UPSTREAM_URL?.trim() ||
+      process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
     const connectSrcParts = [
       "'self'",
       'https://*.supabase.co',
       'wss://*.supabase.co',
-      backendUrl,
+      appUrl,
+      ...(upstreamUrl ? [upstreamUrl] : []),
       ...(process.env.NODE_ENV === 'development' ? ['http://localhost:8001'] : []),
     ];
     const hsts =

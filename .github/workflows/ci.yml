@@ -77,7 +77,7 @@ jobs:
         id: build
         run: npm run build
         env:
-          NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
 
   post-preview-comment:
     name: Post Preview URL
