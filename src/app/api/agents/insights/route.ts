@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 export async function GET() {
+  const base = requireUpstreamBase('AI learning insights');
+  if (base instanceof NextResponse) return base;
+
   try {
-    // Fetch insights from backend API (now working after cache fix)
-    const response = await fetch(`${BACKEND_URL}/api/ai/learning/insights`, {
+    const response = await fetch(`${base}/api/ai/learning/insights`, {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });

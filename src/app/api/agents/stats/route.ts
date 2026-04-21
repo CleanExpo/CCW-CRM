@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * GET /api/agents/stats
@@ -8,9 +8,12 @@ import { BACKEND_URL } from '@/lib/api/backend-url';
  * This allows server components to work without modification.
  */
 export async function GET() {
+  const base = requireUpstreamBase('Agent monitoring system');
+  if (base instanceof NextResponse) return base;
+
   try {
     // Fetch system health from monitoring API
-    const healthRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/system`, {
+    const healthRes = await fetch(`${base}/api/ai/monitoring/system`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
@@ -24,7 +27,7 @@ export async function GET() {
     const health = await healthRes.json();
 
     // Fetch agent list to get total count
-    const agentsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/agents`, {
+    const agentsRes = await fetch(`${base}/api/ai/monitoring/agents`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",

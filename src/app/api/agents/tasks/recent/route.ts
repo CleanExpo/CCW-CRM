@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * GET /api/agents/tasks/recent?limit=10
@@ -7,12 +7,14 @@ import { BACKEND_URL } from '@/lib/api/backend-url';
  * Bridge endpoint that transforms monitoring executions into task history format.
  */
 export async function GET(request: NextRequest) {
+  const base = requireUpstreamBase('Agent monitoring executions');
+  if (base instanceof NextResponse) return base;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const limit = searchParams.get('limit') || '10';
 
-    // Fetch recent executions from monitoring API
-    const executionsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/executions?limit=${limit}`, {
+    const executionsRes = await fetch(`${base}/api/ai/monitoring/executions?limit=${limit}`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',

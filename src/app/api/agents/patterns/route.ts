@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 export async function GET() {
+  const base = requireUpstreamBase('AI learning patterns');
+  if (base instanceof NextResponse) return base;
+
   try {
-    // Fetch patterns from learning API
-    const response = await fetch(`${BACKEND_URL}/api/ai/learning/patterns`, {
+    const response = await fetch(`${base}/api/ai/learning/patterns`, {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });

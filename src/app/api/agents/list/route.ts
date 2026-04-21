@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BACKEND_URL } from '@/lib/api/backend-url';
+import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 /**
  * GET /api/agents/list
@@ -7,9 +7,12 @@ import { BACKEND_URL } from '@/lib/api/backend-url';
  * Bridge endpoint that transforms monitoring agents data into agent list format.
  */
 export async function GET() {
+  const base = requireUpstreamBase('Agent monitoring list');
+  if (base instanceof NextResponse) return base;
+
   try {
     // Fetch agents from monitoring API
-    const agentsRes = await fetch(`${BACKEND_URL}/api/ai/monitoring/agents`, {
+    const agentsRes = await fetch(`${base}/api/ai/monitoring/agents`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +30,7 @@ export async function GET() {
       agentsData.agents.map(async (agent: Record<string, unknown>) => {
         try {
           const statsRes = await fetch(
-            `${BACKEND_URL}/api/ai/monitoring/stats/${agent.agent_id}`,
+            `${base}/api/ai/monitoring/stats/${agent.agent_id}`,
             {
               cache: "no-store",
               headers: {
