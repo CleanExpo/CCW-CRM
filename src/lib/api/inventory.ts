@@ -82,7 +82,7 @@ export interface TransferListParams {
 
 /**
  * Inventory API client
- * Backend routes: apps/backend/src/api/routes/inventory.py
+ * Inventory API: `/api/inventory/*` Route Handlers.
  */
 export const inventoryApi = {
   /**

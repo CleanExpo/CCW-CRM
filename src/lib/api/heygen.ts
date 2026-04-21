@@ -1,6 +1,6 @@
 /**
  * HeyGen API client — CCW video generation integration.
- * Wraps the FastAPI backend at /api/integrations/heygen/*.
+ * Wraps `/api/integrations/heygen/*` Route Handlers.
  */
 
 import { apiClient } from "@/lib/api/client";

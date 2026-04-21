@@ -13,7 +13,7 @@ import type {
 
 /**
  * Invoices API client
- * Backend routes: apps/backend/src/api/routes/invoices.py, invoice_payments.py
+ * Invoices API: `/api/invoices/*` and related Route Handlers.
  */
 export const invoicesApi = {
   /**

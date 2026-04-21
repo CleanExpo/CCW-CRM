@@ -1,7 +1,7 @@
 /**
  * Contractor API Client
  *
- * Connects Next.js frontend to FastAPI backend.
+ * Calls Next.js Route Handlers under `/api/contractors/*`.
  * Handles Australian context (AEST timezone, DD/MM/YYYY dates).
  */
 

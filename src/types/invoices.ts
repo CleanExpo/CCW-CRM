@@ -1,6 +1,6 @@
 /**
  * Invoice TypeScript Types
- * Mirrors backend Pydantic schemas from apps/backend/src/api/schemas/invoicing.py
+ * DTO shapes for invoicing API responses.
  */
 
 export enum InvoiceStatus {

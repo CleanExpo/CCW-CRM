@@ -1,6 +1,6 @@
 /**
  * Workflow Automation TypeScript Types
- * Mirrors backend Pydantic schemas from apps/backend/src/db/workflow_models.py
+ * DTO shapes for workflow API responses.
  */
 
 export enum WorkflowStatus {

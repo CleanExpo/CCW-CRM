@@ -1,6 +1,6 @@
 /**
  * Reconciliation TypeScript Types
- * Mirrors backend Pydantic schemas from apps/backend/src/api/routes/pos_xero_reconciliation.py
+ * DTO shapes for POS / Xero reconciliation API responses.
  */
 
 export enum ReconciliationStatus {

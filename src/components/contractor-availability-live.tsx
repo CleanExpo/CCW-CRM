@@ -1,7 +1,7 @@
 /**
  * Live Contractor Availability Component (API-Connected)
  *
- * This component fetches real data from the FastAPI backend.
+ * This component fetches real data from the Next.js API.
  * Features:
  * - Real-time data from backend API
  * - Loading and error states

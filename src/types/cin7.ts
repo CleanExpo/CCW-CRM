@@ -1,6 +1,6 @@
 /**
  * Cin7 Fulfilment TypeScript Types
- * Mirrors backend Pydantic schemas from apps/backend/src/db/cin7_fulfilment_models.py
+ * DTO shapes for Cin7 fulfilment API responses.
  */
 
 export enum FulfilmentStatus {

@@ -2,7 +2,7 @@
  * Cin7 BOM (Bill of Materials) and Production Run API client.
  *
  * Covers BOM masters, BOM components, and production run lifecycle management.
- * Endpoints are served by the FastAPI backend under /api/cin7/bom.
+ * Endpoints are served under `/api/cin7/bom`.
  */
 
 import { apiClient } from './client';

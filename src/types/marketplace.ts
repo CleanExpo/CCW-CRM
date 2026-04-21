@@ -1,6 +1,6 @@
 /**
  * Marketplace Integration TypeScript Types
- * Mirrors backend Pydantic schemas from apps/backend/src/db/marketplace_models.py
+ * DTO shapes for marketplace API responses.
  */
 
 export enum ChannelType {

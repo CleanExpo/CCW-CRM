@@ -2,7 +2,7 @@ import { apiClient } from './client';
 
 /**
  * Approvals API client
- * Backend routes: apps/backend/src/api/routes/approvals.py
+ * Approvals API: `/api/approvals/*` Route Handlers.
  */
 
 export interface ApprovalStep {

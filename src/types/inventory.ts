@@ -1,6 +1,6 @@
 /**
  * Inventory TypeScript Types
- * Mirrors backend Pydantic schemas from apps/backend/src/api/routes/inventory.py
+ * DTO shapes for inventory API responses.
  */
 
 export enum StoreLocation {
