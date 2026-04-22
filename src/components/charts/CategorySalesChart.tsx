@@ -12,7 +12,15 @@ import {
   Legend,
   Cell,
 } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LayoutGrid } from 'lucide-react';
+import {
+  chartAxisLine,
+  chartGridStroke,
+  chartLegendStyle,
+  chartTickFill,
+  DashboardWidgetEmpty,
+  DashboardWidgetHeader,
+} from '@/components/dashboard/dashboard-widget-primitives';
 
 interface CategorySales {
   category: string;
@@ -24,29 +32,16 @@ interface CategorySalesChartProps {
   data: CategorySales[];
 }
 
-// Premium color palette for categories
-const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
+const BAR_COLORS = ['#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24', '#a78bfa'];
 
-// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
-export const CategorySalesChart = memo(function CategorySalesChart({
-  data,
-}: CategorySalesChartProps) {
-  // Transform data for recharts
+export const CategorySalesChart = memo(function CategorySalesChart({ data }: CategorySalesChartProps) {
   const chartData = (data || []).map((item, index) => ({
     category: item.category.replace(/_/g, ' '),
     value: parseFloat(item.value),
     percentage: item.percentage,
-    color: COLORS[index % COLORS.length],
+    fill: BAR_COLORS[index % BAR_COLORS.length],
   }));
 
-  // Custom tooltip to format currency and percentage
   const CustomTooltip = ({
     active,
     payload,
@@ -56,15 +51,15 @@ export const CategorySalesChart = memo(function CategorySalesChart({
   }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-lg border border-white/10 bg-zinc-950/95 p-3 text-zinc-50 shadow-lg backdrop-blur-sm">
-          <p className="text-sm font-medium capitalize">{payload[0].payload.category}</p>
-          <p className="text-sm font-bold text-primary">
+        <div className="rounded-lg border border-white/15 bg-zinc-950/98 p-3 shadow-xl ring-1 ring-white/10 backdrop-blur-md">
+          <p className="text-sm font-medium capitalize text-zinc-100">{payload[0].payload.category}</p>
+          <p className="mt-1 text-sm font-bold text-sky-300">
             {new Intl.NumberFormat('en-AU', {
               style: 'currency',
               currency: 'AUD',
             }).format(payload[0].value)}
           </p>
-          <p className="text-xs text-zinc-400">{payload[0].payload.percentage.toFixed(1)}% of total</p>
+          <p className="mt-1 text-xs text-zinc-400">{payload[0].payload.percentage.toFixed(1)}% of total</p>
         </div>
       );
     }
@@ -72,31 +67,36 @@ export const CategorySalesChart = memo(function CategorySalesChart({
   };
 
   return (
-    <Card className="border-white/10 bg-zinc-950/40">
-      <CardHeader>
-        <CardTitle className="text-zinc-50">Sales by Category</CardTitle>
-        <CardDescription className="text-zinc-400">Total sales distribution</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="flex h-full min-h-[360px] flex-col">
+      <DashboardWidgetHeader
+        title="Sales by category"
+        description="Distribution of sales value across product categories."
+      />
+      <div className="min-h-0 flex-1">
         {chartData.length === 0 ? (
-          <div className="flex h-[300px] items-center justify-center text-sm text-zinc-400">
-            No category data available
-          </div>
+          <DashboardWidgetEmpty
+            icon={LayoutGrid}
+            title="No category breakdown yet"
+            description="Category mix appears when products have sales attributed to categories. Enable Presentation mode to preview sample bars."
+          />
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <BarChart data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 56 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} vertical={false} />
               <XAxis
                 dataKey="category"
-                angle={-45}
+                angle={-40}
                 textAnchor="end"
-                height={100}
-                className="text-xs capitalize"
-                tick={{ fill: '#a1a1aa' }}
+                height={72}
+                interval={0}
+                tick={{ fill: chartTickFill, fontSize: 11 }}
+                axisLine={{ stroke: chartAxisLine }}
+                tickLine={{ stroke: chartAxisLine }}
               />
               <YAxis
-                className="text-xs"
-                tick={{ fill: '#a1a1aa' }}
+                tick={{ fill: chartTickFill, fontSize: 12 }}
+                axisLine={{ stroke: chartAxisLine }}
+                tickLine={{ stroke: chartAxisLine }}
                 tickFormatter={(value) =>
                   new Intl.NumberFormat('en-AU', {
                     style: 'currency',
@@ -112,16 +112,16 @@ export const CategorySalesChart = memo(function CategorySalesChart({
                   <CustomTooltip active={props.active} payload={props.payload} />
                 )}
               />
-              <Legend wrapperStyle={{ paddingTop: '10px' }} />
+              <Legend wrapperStyle={chartLegendStyle} />
               <Bar dataKey="value" name="Sales" radius={[8, 8, 0, 0]}>
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 });

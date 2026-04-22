@@ -11,7 +11,15 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BarChart3 } from 'lucide-react';
+import {
+  chartAxisLine,
+  chartGridStroke,
+  chartLegendStyle,
+  chartTickFill,
+  DashboardWidgetEmpty,
+  DashboardWidgetHeader,
+} from '@/components/dashboard/dashboard-widget-primitives';
 
 interface RevenueDataPoint {
   month: string;
@@ -22,15 +30,12 @@ interface RevenueChartProps {
   data: RevenueDataPoint[];
 }
 
-// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
 export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartProps) {
-  // Transform data for recharts (convert revenue string to number)
   const chartData = (data || []).map((point) => ({
     month: point.month,
     revenue: parseFloat(point.revenue),
   }));
 
-  // Custom tooltip to format currency
   const CustomTooltip = ({
     active,
     payload,
@@ -40,9 +45,9 @@ export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartPro
   }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-lg border border-white/10 bg-zinc-950/95 p-3 text-zinc-50 shadow-lg backdrop-blur-sm">
-          <p className="text-sm font-medium">{payload[0].payload.month}</p>
-          <p className="text-sm font-bold text-primary">
+        <div className="rounded-lg border border-white/15 bg-zinc-950/98 p-3 shadow-xl ring-1 ring-white/10 backdrop-blur-md">
+          <p className="text-sm font-medium text-zinc-100">{payload[0].payload.month}</p>
+          <p className="mt-1 text-sm font-bold text-sky-300">
             {new Intl.NumberFormat('en-AU', {
               style: 'currency',
               currency: 'AUD',
@@ -55,28 +60,32 @@ export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartPro
   };
 
   return (
-    <Card className="border-white/10 bg-zinc-950/40">
-      <CardHeader>
-        <CardTitle className="text-zinc-50">Revenue Trend</CardTitle>
-        <CardDescription className="text-zinc-400">Last 6 months performance</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="flex h-full min-h-[360px] flex-col">
+      <DashboardWidgetHeader
+        title="Revenue trend"
+        description="Last six months of delivered revenue (AUD)."
+      />
+      <div className="min-h-0 flex-1">
         {chartData.length === 0 ? (
-          <div className="flex h-[300px] items-center justify-center text-sm text-zinc-400">
-            No revenue data available
-          </div>
+          <DashboardWidgetEmpty
+            icon={BarChart3}
+            title="No revenue series yet"
+            description="Once orders are marked delivered this month, a trend line will appear here. Use Presentation mode on the dashboard for a sample chart."
+          />
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <LineChart data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} vertical={false} />
               <XAxis
                 dataKey="month"
-                className="text-xs"
-                tick={{ fill: '#a1a1aa' }}
+                tick={{ fill: chartTickFill, fontSize: 12 }}
+                axisLine={{ stroke: chartAxisLine }}
+                tickLine={{ stroke: chartAxisLine }}
               />
               <YAxis
-                className="text-xs"
-                tick={{ fill: '#a1a1aa' }}
+                tick={{ fill: chartTickFill, fontSize: 12 }}
+                axisLine={{ stroke: chartAxisLine }}
+                tickLine={{ stroke: chartAxisLine }}
                 tickFormatter={(value) =>
                   new Intl.NumberFormat('en-AU', {
                     style: 'currency',
@@ -92,20 +101,20 @@ export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartPro
                   <CustomTooltip active={props.active} payload={props.payload} />
                 )}
               />
-              <Legend wrapperStyle={{ paddingTop: '20px' }} />
+              <Legend wrapperStyle={chartLegendStyle} />
               <Line
                 type="monotone"
                 dataKey="revenue"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={{ fill: 'hsl(var(--primary))', r: 4 }}
-                activeDot={{ r: 6 }}
+                stroke="#38bdf8"
+                strokeWidth={2.5}
+                dot={{ fill: '#38bdf8', r: 4, stroke: '#0f172a', strokeWidth: 1 }}
+                activeDot={{ r: 6, stroke: '#bae6fd', strokeWidth: 2 }}
                 name="Revenue"
               />
             </LineChart>
           </ResponsiveContainer>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 });
