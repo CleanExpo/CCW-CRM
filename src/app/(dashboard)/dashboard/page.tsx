@@ -19,7 +19,6 @@ import {
   Award,
   Camera,
   Clock,
-  DollarSign,
   FileText,
   Package,
   ShoppingCart,
@@ -28,7 +27,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 // PHASE 4: Real-time POS failure alerts + Dashboard metrics
 import { CategorySalesChart } from '@/components/charts/CategorySalesChart';
 import { RevenueChart } from '@/components/charts/RevenueChart';
@@ -49,20 +48,29 @@ import { OrderPatternsWidget } from '@/components/dashboard/OrderPatternsWidget'
 import { Cin7SyncStatusWidget } from '@/components/dashboard/Cin7SyncStatusWidget';
 // NODEJS-Updates: Agent performance metrics widget
 import { AgentMetricsWidget } from '@/components/dashboard/AgentMetricsWidget';
+import { DashboardAmbient } from '@/components/dashboard/dashboard-ambient';
+import { DashboardHero } from '@/components/dashboard/dashboard-hero';
+import {
+  DashboardPresentationToggle,
+  DASHBOARD_PRESENTATION_LS_KEY,
+} from '@/components/dashboard/dashboard-presentation-toggle';
+import {
+  DashboardOperationalMix,
+  DashboardStatTiles,
+  type DashboardStatMetrics,
+} from '@/components/dashboard/dashboard-stat-tiles';
 import { DashboardSection } from '@/components/dashboard/DashboardSection';
 import { MiniRevenueSparkline } from '@/components/dashboard/MiniRevenueSparkline';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import {
+  DASHBOARD_DEMO_AGGREGATED,
+  DASHBOARD_DEMO_INSIGHTS,
+  DASHBOARD_DEMO_URGENT,
+} from '@/lib/dashboard/dashboard-demo-data';
 
-interface DashboardMetrics {
-  total_revenue_this_month: string;
-  active_orders: number;
-  total_products: number;
-  total_customers: number;
-  low_stock_alerts: number;
-  pending_quotes: number;
-}
+type DashboardMetrics = DashboardStatMetrics;
 
 interface RevenueDataPoint {
   month: string;
@@ -137,52 +145,12 @@ interface CertStats {
   expiring_alerts: CertAlert[];
 }
 
-const statShell =
-  'flex flex-col gap-2 rounded-xl border border-white/10 bg-zinc-950/50 p-4 text-zinc-50 ring-1 ring-white/5 transition-colors hover:bg-zinc-900/60 sm:min-h-[7.5rem] sm:p-5';
-const statShellDanger =
-  'flex flex-col gap-2 rounded-xl border border-destructive/35 bg-destructive/[0.08] p-4 text-zinc-50 ring-1 ring-destructive/20 transition-colors hover:bg-destructive/[0.12] sm:min-h-[7.5rem] sm:p-5';
-
 function activityTypeIcon(type: string) {
   const t = type.toLowerCase();
   if (t.includes('order')) return ShoppingCart;
   if (t.includes('quote')) return FileText;
   if (t.includes('customer') || t.includes('contact')) return Users;
   return Package;
-}
-
-/** Relative volume bars for operational counts (same card as headline KPIs). */
-function OperationalMixBars({ metrics }: { metrics: DashboardMetrics | null }) {
-  if (!metrics) return null;
-  const rows = [
-    { label: 'Active orders', value: metrics.active_orders },
-    { label: 'Equipment SKUs', value: metrics.total_products },
-    { label: 'Customers', value: metrics.total_customers },
-    { label: 'Pending quotes', value: metrics.pending_quotes },
-  ];
-  const max = Math.max(1, ...rows.map((r) => r.value));
-  return (
-    <div className="space-y-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-        Operational mix
-      </p>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {rows.map((row) => (
-          <div key={row.label} className="space-y-2">
-            <div className="flex items-baseline justify-between gap-2 text-xs">
-              <span className="text-zinc-400">{row.label}</span>
-              <span className="font-semibold tabular-nums text-zinc-50">{row.value}</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/5">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-primary/90 to-indigo-400/80 transition-[width] duration-500"
-                style={{ width: `${Math.min(100, (row.value / max) * 100)}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export default function DashboardPage() {
@@ -195,19 +163,61 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [urgentItems, setUrgentItems] = useState<UrgentItem[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // PHASE 4: Real-time POS failure monitoring
-  const [posFailureCount, setPosFailureCount] = useState(0);
-  const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(true);
-
-  // PHASE 4: Real-time dashboard metrics
-  const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(true);
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
+    try {
+      setPresentationMode(window.localStorage.getItem(DASHBOARD_PRESENTATION_LS_KEY) === '1');
+    } catch {
+      /* ignore */
+    }
+    setBootstrapped(true);
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(DASHBOARD_PRESENTATION_LS_KEY, presentationMode ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [presentationMode]);
+
+  // PHASE 4: Real-time POS failure monitoring (disabled in presentation mode)
+  const [posFailureCount, setPosFailureCount] = useState(0);
+  const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(!presentationMode);
+
+  // PHASE 4: Real-time dashboard metrics
+  const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(
+    !presentationMode
+  );
+
+  const applyPresentationDemo = useCallback(() => {
+    const d = DASHBOARD_DEMO_AGGREGATED;
+    setMetrics(d.metrics);
+    setRevenueData(d.revenue_chart);
+    setCategorySales(d.category_sales);
+    setTopProducts(d.top_products);
+    setActivity(d.recent_activity);
+    setInsights(DASHBOARD_DEMO_INSIGHTS);
+    setPosFailureCount(0);
+    setUrgentItems(DASHBOARD_DEMO_URGENT as UrgentItem[]);
+  }, []);
+
+  useEffect(() => {
+    if (!bootstrapped) return;
+
+    let cancelled = false;
+    setLoading(true);
+
     async function loadDashboardData() {
+      if (presentationMode) {
+        applyPresentationDemo();
+        if (!cancelled) setLoading(false);
+        return;
+      }
+
       try {
-        // PHASE 4 OPTIMIZATION: Use aggregated endpoint (1 API call instead of 6)
-        // Expected performance: 70% faster (5-8s → <2s)
         const [dashboardData, insightsData, posFailures, warrantyStats, certStats] =
           await Promise.all([
             apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
@@ -223,7 +233,8 @@ export default function DashboardPage() {
               .catch(() => ({ expiring_soon: 0, expiring_alerts: [] })),
           ]);
 
-        // Destructure aggregated data
+        if (cancelled) return;
+
         setMetrics(dashboardData.metrics);
         setRevenueData(dashboardData.revenue_chart);
         setCategorySales(dashboardData.category_sales);
@@ -232,7 +243,6 @@ export default function DashboardPage() {
         setInsights(insightsData.insights.filter((i) => i.priority === 'high').slice(0, 3));
         setPosFailureCount(posFailures.alert_count);
 
-        // Build urgent items list
         const urgent: UrgentItem[] = [];
         (warrantyStats.warranty_alerts || []).slice(0, 3).forEach((w) => {
           urgent.push({
@@ -269,16 +279,21 @@ export default function DashboardPage() {
         setTopProducts([]);
         setActivity([]);
         setInsights([]);
+        setUrgentItems([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
-    loadDashboardData();
-  }, []);
+    void loadDashboardData();
+    return () => {
+      cancelled = true;
+    };
+  }, [bootstrapped, presentationMode, applyPresentationDemo]);
 
   // PHASE 4: Handle real-time POS failure alerts
   useEffect(() => {
+    if (presentationMode) return;
     if (posFailure) {
       setPosFailureCount((prev) => prev + 1);
       toast({
@@ -287,10 +302,11 @@ export default function DashboardPage() {
         variant: 'destructive',
       });
     }
-  }, [posFailure, toast]);
+  }, [posFailure, presentationMode, toast]);
 
   // PHASE 4: Handle real-time dashboard metrics updates
   useEffect(() => {
+    if (presentationMode) return;
     if (metricsUpdate) {
       // Refresh specific metrics based on the update
       async function refreshMetrics() {
@@ -309,7 +325,7 @@ export default function DashboardPage() {
       const timeout = setTimeout(refreshMetrics, 500);
       return () => clearTimeout(timeout);
     }
-  }, [metricsUpdate]);
+  }, [metricsUpdate, presentationMode]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-AU', {
@@ -318,13 +334,10 @@ export default function DashboardPage() {
     }).format(value);
   };
 
-  if (loading) {
+  if (!bootstrapped || loading) {
     return (
       <div className="relative space-y-10 pb-12">
-        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-2xl">
-          <div className="absolute -left-32 top-0 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
-          <div className="absolute -right-24 bottom-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
-        </div>
+        <DashboardAmbient />
         <div className="space-y-3">
           <Skeleton className="h-10 w-[min(100%,24rem)] max-w-xl bg-white/10" />
           <Skeleton className="h-5 w-full max-w-lg bg-white/10" />
@@ -349,66 +362,75 @@ export default function DashboardPage() {
 
   return (
     <div className="relative space-y-12 pb-12">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-2xl">
-        <div className="absolute -left-32 top-0 h-80 w-80 rounded-full bg-primary/12 blur-3xl" />
-        <div className="absolute -right-20 top-40 h-72 w-72 rounded-full bg-violet-600/10 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-cyan-500/5 blur-3xl" />
-      </div>
+      <DashboardAmbient />
 
-      {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between"
+        transition={{ duration: 0.45 }}
       >
-        <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-              {todayLabel}
-            </p>
-            {metricsStreamStatus === 'connected' && (
-              <Badge variant="outline" className="border-white/15 text-xs font-normal text-zinc-200">
-                <span
-                  className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-green-500"
-                  aria-hidden
-                />
-                Live metrics
-              </Badge>
-            )}
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl md:text-4xl">
-              CCW Online — Cleaning Equipment Operations
-            </h1>
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">
-              Real-time overview — truckmounts, restoration gear, hard floor care &amp; accessories
-            </p>
-          </div>
-        </div>
+        <DashboardHero
+          eyebrow={todayLabel}
+          title={
+            <>
+              Operations hub for{' '}
+              <span className="text-transparent bg-gradient-to-r from-sky-200 via-white to-indigo-200 bg-clip-text">
+                equipment suppliers
+              </span>
+            </>
+          }
+          description="Real-time trading, inventory signals, and pipeline health — aligned with your CCW Online brand experience."
+          aside={
+            <div className="flex flex-col gap-4">
+              <DashboardPresentationToggle
+                checked={presentationMode}
+                onCheckedChange={setPresentationMode}
+              />
+              {!presentationMode && posFailureCount > 0 ? (
+                <Link href="/pos/reconciliation" className="block shrink-0">
+                  <Card className="overflow-hidden rounded-2xl border border-red-500/35 bg-gradient-to-br from-red-950/40 via-zinc-950/80 to-black shadow-lg shadow-red-900/20 ring-1 ring-red-500/15 transition-colors hover:border-red-400/40">
+                    <CardContent className="px-4 py-4 sm:px-5">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="text-destructive h-5 w-5 shrink-0" aria-hidden />
+                        <div className="min-w-0">
+                          <p className="text-destructive text-sm font-medium">
+                            {posFailureCount} POS {posFailureCount === 1 ? 'failure' : 'failures'}
+                          </p>
+                          <p className="text-xs text-zinc-400">Last 24 hours · Review reconciliation</p>
+                        </div>
+                        {posAlertStatus === 'connected' ? (
+                          <Badge variant="outline" className="ml-auto shrink-0 text-xs">
+                            Live
+                          </Badge>
+                        ) : null}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ) : null}
+            </div>
+          }
+        />
 
-        {posFailureCount > 0 && (
-          <Link href="/pos/reconciliation" className="shrink-0">
-            <Card className="border-destructive/50 bg-destructive/10 transition-colors hover:bg-destructive/15">
-              <CardContent className="px-4 py-4 sm:px-5">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" aria-hidden />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-destructive">
-                      {posFailureCount} POS {posFailureCount === 1 ? 'failure' : 'failures'}
-                    </p>
-                    <p className="text-xs text-zinc-400">Last 24 hours · Review reconciliation</p>
-                  </div>
-                  {posAlertStatus === 'connected' && (
-                    <Badge variant="outline" className="ml-auto shrink-0 text-xs">
-                      Live
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {presentationMode ? (
+            <Badge
+              variant="outline"
+              className="border-amber-400/35 bg-amber-500/10 text-xs font-medium text-amber-100"
+            >
+              Sample data
+            </Badge>
+          ) : null}
+          {!presentationMode && metricsStreamStatus === 'connected' ? (
+            <Badge variant="outline" className="border-white/15 text-xs font-normal text-zinc-200">
+              <span
+                className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500"
+                aria-hidden
+              />
+              Live metrics
+            </Badge>
+          ) : null}
+        </div>
       </motion.div>
 
       {/* Urgent Today Card */}
@@ -418,7 +440,7 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <Card className="border-amber-500/25 bg-amber-500/5 shadow-sm ring-1 ring-amber-500/10">
+          <Card className="overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-zinc-950/90 to-black shadow-xl shadow-amber-900/10 ring-1 ring-amber-500/15">
             <CardHeader className="space-y-1 pb-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
@@ -444,12 +466,8 @@ export default function DashboardPage() {
                         {item.type === 'invoice' && <Clock className="h-4 w-4 text-amber-400" />}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-amber-50">
-                          {item.label}
-                        </p>
-                        <p className="truncate text-xs text-amber-200/80">
-                          {item.detail}
-                        </p>
+                        <p className="truncate text-sm font-medium text-amber-50">{item.label}</p>
+                        <p className="truncate text-xs text-amber-200/80">{item.detail}</p>
                         {item.daysLeft !== undefined && (
                           <Badge
                             variant="outline"
@@ -474,90 +492,24 @@ export default function DashboardPage() {
         description="Headline trading numbers for the current month — use these before drilling into charts."
       >
         <BentoGrid columns={3} gap="lg">
-          <BentoCard variant="glass" span={3}>
+          <BentoCard
+            variant="glass"
+            span={3}
+            className="overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-900/85 via-zinc-950/90 to-black shadow-[0_28px_90px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/[0.06]"
+          >
             <BentoCardHeader className="space-y-1">
-              <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">Business performance</BentoCardTitle>
+              <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">
+                Business performance
+              </BentoCardTitle>
               <BentoCardDescription className="text-zinc-400">
                 Real-time trading metrics across all locations
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                <div className={statShell}>
-                  <div className="flex items-center gap-2 text-zinc-300">
-                    <DollarSign className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                    <span className="text-xs font-medium uppercase tracking-wide">Total revenue</span>
-                  </div>
-                  <div className="text-brand-primary text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-                    {formatCurrency(parseFloat(metrics?.total_revenue_this_month || '0'))}
-                  </div>
-                  <p className="text-zinc-400 mt-auto text-xs leading-snug">
-                    This month from delivered orders
-                  </p>
-                </div>
+              <DashboardStatTiles metrics={metrics} formatCurrency={formatCurrency} />
 
-                <div className={statShell}>
-                  <div className="flex items-center gap-2 text-zinc-300">
-                    <ShoppingCart className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                    <span className="text-xs font-medium uppercase tracking-wide">Active orders</span>
-                  </div>
-                  <div className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-                    {metrics?.active_orders || 0}
-                  </div>
-                  <p className="text-zinc-400 mt-auto text-xs leading-snug">In progress</p>
-                </div>
-
-                <div className={statShell}>
-                  <div className="flex items-center gap-2 text-zinc-300">
-                    <Package className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                    <span className="text-xs font-medium uppercase tracking-wide">Equipment SKUs</span>
-                  </div>
-                  <div className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-                    {metrics?.total_products || 0}
-                  </div>
-                  <p className="text-zinc-400 mt-auto text-xs leading-snug">
-                    Active cleaning equipment lines
-                  </p>
-                </div>
-
-                <div className={statShell}>
-                  <div className="flex items-center gap-2 text-zinc-300">
-                    <Users className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                    <span className="text-xs font-medium uppercase tracking-wide">Customers</span>
-                  </div>
-                  <div className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-                    {metrics?.total_customers || 0}
-                  </div>
-                  <p className="text-zinc-400 mt-auto text-xs leading-snug">Active customers</p>
-                </div>
-
-                <div className={statShellDanger}>
-                  <div className="flex items-center gap-2 text-red-300">
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" aria-hidden />
-                    <span className="text-xs font-medium uppercase tracking-wide">Low stock</span>
-                  </div>
-                  <div className="text-destructive text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-                    {metrics?.low_stock_alerts || 0}
-                  </div>
-                  <p className="text-zinc-400 mt-auto text-xs leading-snug">
-                    Items with stock ≤ 10
-                  </p>
-                </div>
-
-                <div className={statShell}>
-                  <div className="flex items-center gap-2 text-zinc-300">
-                    <FileText className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                    <span className="text-xs font-medium uppercase tracking-wide">Pending quotes</span>
-                  </div>
-                  <div className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-                    {metrics?.pending_quotes || 0}
-                  </div>
-                  <p className="text-zinc-400 mt-auto text-xs leading-snug">Awaiting response</p>
-                </div>
-              </div>
-
-              <div className="border-border/40 mt-8 space-y-8 border-t pt-6">
-                <OperationalMixBars metrics={metrics} />
+              <div className="border-border/40 mt-8 space-y-8 border-t border-white/[0.06] pt-6">
+                <DashboardOperationalMix metrics={metrics} />
                 <MiniRevenueSparkline data={revenueData} />
               </div>
             </BentoCardContent>
@@ -571,23 +523,39 @@ export default function DashboardPage() {
         description="Trends, categories, and funnel health — pair with stock alerts on the right."
       >
         <BentoGrid columns={3} gap="lg">
-          <BentoCard variant="glass" span={2} className="min-h-[400px]">
+          <BentoCard
+            variant="glass"
+            span={2}
+            className="min-h-[400px] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-900/80 to-black/90 ring-1 ring-white/[0.05]"
+          >
             <RevenueChart data={revenueData} />
           </BentoCard>
 
-          <BentoCard variant="gradient" span={1} className="min-h-[400px]">
+          <BentoCard variant="gradient" span={1} className="min-h-[400px] overflow-hidden rounded-2xl shadow-lg">
             <StockHealthWidget />
           </BentoCard>
 
-          <BentoCard variant="glass" span={1} className="min-h-[350px]">
+          <BentoCard
+            variant="glass"
+            span={1}
+            className="min-h-[350px] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-950/90 via-black/80 to-zinc-900/60 ring-1 ring-white/[0.05]"
+          >
             <CategorySalesChart data={categorySales} />
           </BentoCard>
 
-          <BentoCard variant="elevated" span={1} className="min-h-[350px]">
+          <BentoCard
+            variant="elevated"
+            span={1}
+            className="min-h-[350px] overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/70 shadow-xl ring-1 ring-white/[0.04]"
+          >
             <OrderStatusBreakdownWidget />
           </BentoCard>
 
-          <BentoCard variant="glass" span={1} className="min-h-[350px]">
+          <BentoCard
+            variant="glass"
+            span={1}
+            className="min-h-[350px] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-indigo-950/40 via-zinc-950/90 to-black ring-1 ring-indigo-500/10"
+          >
             <QuoteConversionWidget />
           </BentoCard>
         </BentoGrid>
@@ -609,7 +577,9 @@ export default function DashboardPage() {
                         <Sparkles className="text-brand-primary h-5 w-5" />
                       </div>
                       <div className="space-y-1">
-                        <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">AI-powered insights</BentoCardTitle>
+                        <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">
+                          AI-powered insights
+                        </BentoCardTitle>
                         <BentoCardDescription className="text-zinc-400">
                           Top priority recommendations from your business data
                         </BentoCardDescription>
@@ -662,7 +632,11 @@ export default function DashboardPage() {
         description="Revenue contribution by location for planning and stock placement."
       >
         <BentoGrid columns={3} gap="lg">
-          <BentoCard variant="glass" span={3} className="min-h-[350px]">
+          <BentoCard
+            variant="glass"
+            span={3}
+            className="min-h-[350px] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-r from-zinc-900/85 via-zinc-950/95 to-black ring-1 ring-white/[0.05]"
+          >
             <RevenueByLocationWidget />
           </BentoCard>
         </BentoGrid>
@@ -674,13 +648,19 @@ export default function DashboardPage() {
         description="Best sellers by revenue and the photo-to-order workflow for field teams."
       >
         <BentoGrid columns={3} gap="lg">
-          <BentoCard variant="elevated" span={1} className="min-h-[350px]">
+          <BentoCard
+            variant="elevated"
+            span={1}
+            className="min-h-[350px] overflow-hidden rounded-2xl border border-sky-500/15 bg-gradient-to-b from-sky-500/5 via-zinc-950/90 to-black shadow-xl ring-1 ring-sky-500/10"
+          >
             <BentoCardHeader>
               <BentoCardTitle className="text-zinc-50">Top 5 products</BentoCardTitle>
-              <BentoCardDescription className="text-zinc-400">Ranked by revenue</BentoCardDescription>
+              <BentoCardDescription className="text-zinc-400">
+                Ranked by revenue
+              </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
-              <ul className="divide-y divide-border/60">
+              <ul className="divide-border/60 divide-y">
                 {Array.isArray(topProducts) &&
                   topProducts.map((product, index) => (
                     <li
@@ -692,13 +672,15 @@ export default function DashboardPage() {
                           {index + 1}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium leading-snug text-zinc-100">{product.name}</p>
-                          <p className="text-zinc-400 text-xs">
+                          <p className="text-sm leading-snug font-medium text-zinc-100">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-zinc-400">
                             {product.quantity_sold} units sold
                           </p>
                         </div>
                       </div>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums text-zinc-100">
+                      <span className="shrink-0 text-sm font-semibold text-zinc-100 tabular-nums">
                         {formatCurrency(parseFloat(product.revenue))}
                       </span>
                     </li>
@@ -707,7 +689,11 @@ export default function DashboardPage() {
             </BentoCardContent>
           </BentoCard>
 
-          <BentoCard variant="default" span={1}>
+          <BentoCard
+            variant="default"
+            span={1}
+            className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/90 to-black shadow-lg ring-1 ring-white/[0.05]"
+          >
             <BentoCardHeader>
               <div className="flex items-center gap-2">
                 <Camera className="text-primary h-5 w-5 shrink-0" aria-hidden />
@@ -719,7 +705,7 @@ export default function DashboardPage() {
             </BentoCardHeader>
             <BentoCardContent>
               <div className="space-y-4">
-                <p className="text-zinc-400 text-sm leading-relaxed">
+                <p className="text-sm leading-relaxed text-zinc-400">
                   Tradespeople can photograph cleaning equipment on-site. Our AI recognises it and
                   creates a quote for customer approval — no catalogue browsing needed.
                 </p>
@@ -741,10 +727,18 @@ export default function DashboardPage() {
         description="Recent orders and quotes — skim the last six events at a glance."
       >
         <BentoGrid columns={3} gap="lg">
-          <BentoCard variant="glass" span={3}>
+          <BentoCard
+            variant="glass"
+            span={3}
+            className="overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-950/90 via-black/85 to-zinc-900/50 ring-1 ring-white/[0.06]"
+          >
             <BentoCardHeader className="space-y-1">
-              <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">Activity feed</BentoCardTitle>
-              <BentoCardDescription className="text-zinc-400">Equipment orders and quotes</BentoCardDescription>
+              <BentoCardTitle className="text-xl text-zinc-50 sm:text-2xl">
+                Activity feed
+              </BentoCardTitle>
+              <BentoCardDescription className="text-zinc-400">
+                Equipment orders and quotes
+              </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -754,25 +748,30 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={`${item.type}-${index}`}
-                        className="flex gap-3 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-colors hover:bg-zinc-900/60"
+                        className="flex gap-3 rounded-xl border border-white/[0.08] bg-gradient-to-br from-zinc-900/70 to-zinc-950/80 p-4 shadow-sm ring-1 ring-white/[0.04] transition-colors hover:border-sky-500/20 hover:from-zinc-900/90 hover:to-black"
                       >
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-zinc-800/90 text-zinc-300">
                           <Icon className="h-4 w-4" aria-hidden />
                         </div>
                         <div className="min-w-0 flex-1 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-medium leading-snug text-zinc-100">{item.title}</span>
+                            <span className="text-sm leading-snug font-medium text-zinc-100">
+                              {item.title}
+                            </span>
                             {item.status ? (
-                              <Badge variant="secondary" className="text-[10px] font-normal capitalize">
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] font-normal capitalize"
+                              >
                                 {item.status}
                               </Badge>
                             ) : null}
                           </div>
-                          <p className="text-zinc-400 line-clamp-2 text-sm leading-relaxed">
+                          <p className="line-clamp-2 text-sm leading-relaxed text-zinc-400">
                             {item.description}
                           </p>
                           <time
-                            className="text-zinc-400 block text-xs tabular-nums"
+                            className="block text-xs text-zinc-400 tabular-nums"
                             dateTime={item.timestamp}
                           >
                             {format(new Date(item.timestamp), 'MMM d, yyyy')}
