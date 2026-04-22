@@ -15,6 +15,11 @@ const COMPANY = [
   { href: '/login', label: 'Sign in' },
 ];
 
+const LEGAL = [
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
+] as const;
+
 export function MarketingFooter() {
   return (
     <footer className={cn(marketingSectionRule, 'relative border-white/[0.08] bg-zinc-950/90')}>
@@ -23,7 +28,7 @@ export function MarketingFooter() {
         aria-hidden
       />
       <div className={cn(marketingShell, 'py-14 md:py-16')}>
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5 lg:gap-10">
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2.5">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 shadow-lg shadow-sky-500/20 ring-1 ring-white/20">
@@ -62,6 +67,19 @@ export function MarketingFooter() {
                     href={l.href}
                     className="text-zinc-400 transition-colors hover:text-sky-300"
                   >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-xs font-bold tracking-wider text-zinc-500 uppercase">Legal</p>
+            <ul className="mt-4 space-y-3 text-sm">
+              {LEGAL.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="text-zinc-400 transition-colors hover:text-sky-300">
                     {l.label}
                   </Link>
                 </li>

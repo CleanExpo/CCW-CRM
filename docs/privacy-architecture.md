@@ -70,7 +70,7 @@ The AU Privacy Act 2024 amendments create binding obligations for CCW:
 - Rights: access, correction, deletion requests (email: privacy@ccwequipment.com.au)
 - Breach notification: within 30 days per NDB scheme
 
-**File to create**: `apps/web/app/(marketing)/privacy/page.tsx`
+**Implemented route**: `src/app/(marketing-pages)/privacy/page.tsx` (see `PrivacyPublicPage` component).
 
 ### 4. Data Retention Policy (Ongoing)
 
@@ -111,7 +111,7 @@ If a data breach occurs:
 
 ## Current Status
 
-- [ ] Privacy Policy page at `/privacy`
+- [x] Privacy Policy page at `/privacy` (draft content — legal review still required)
 - [ ] Consent banner on first visit
 - [ ] AI Transparency Notice in Settings
 - [ ] Data retention automation
