@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, CalendarClock, CheckCircle2, MessageSquare, Shield } from 'lucide-react';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
+import { MarketingPublicHero } from '@/components/landing/marketing-public-hero';
 import { MarketingHeroBackdrop, RolloutPathGraphic, UiMockupStrip } from '@/components/landing/marketing-page-visuals';
 import { marketingSectionRule, marketingSectionY, marketingShell } from '@/components/landing/marketing-shell';
 import { Button } from '@/components/ui/button';
@@ -63,17 +64,19 @@ export function HowItWorksPublicPage() {
       <section className="relative overflow-hidden pt-16 pb-12 md:pt-24 md:pb-20">
         <MarketingHeroBackdrop />
         <div className={cn(marketingShell, 'relative z-10')}>
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-xs font-bold tracking-[0.22em] text-sky-400 uppercase drop-shadow-[0_0_20px_rgba(56,189,248,0.35)] sm:text-sm">
-              How it works
-            </p>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-balance text-white sm:text-5xl md:text-[3rem] md:leading-[1.08]">
-              A disciplined rollout—not a miracle weekend
-            </h1>
-            <p className="mt-6 text-lg leading-relaxed text-zinc-300 md:text-xl">
-              CCW Online ERP is designed to land in phases your team can absorb: prove value early, then deepen inventory,
-              integrations, and governance as trust grows.
-            </p>
+          <div className="mx-auto max-w-3xl">
+            <MarketingPublicHero
+              kicker="How it works"
+              title={
+                <>
+                  A disciplined rollout—
+                  <span className="text-transparent bg-gradient-to-r from-sky-200 via-zinc-100 to-violet-200 bg-clip-text">
+                    not a miracle weekend
+                  </span>
+                </>
+              }
+              description="CCW Online ERP is designed to land in phases your team can absorb: prove value early, then deepen inventory, integrations, and governance as trust grows."
+            />
           </div>
           <div className="mx-auto mt-12 max-w-4xl opacity-90">
             <RolloutPathGraphic />

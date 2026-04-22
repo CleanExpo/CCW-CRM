@@ -15,6 +15,7 @@ import {
   Warehouse,
 } from 'lucide-react';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
+import { MarketingPublicHero } from '@/components/landing/marketing-public-hero';
 import { MarketingHeroBackdrop, UiMockupStrip } from '@/components/landing/marketing-page-visuals';
 import { marketingSectionRule, marketingSectionY, marketingShell } from '@/components/landing/marketing-shell';
 import { Button } from '@/components/ui/button';
@@ -76,27 +77,30 @@ export function FeaturesPublicPage() {
     <>
       <section className="relative overflow-hidden pt-16 pb-12 md:pt-24 md:pb-16">
         <MarketingHeroBackdrop />
-        <div className={cn(marketingShell, 'relative z-10 text-center')}>
-          <p className="text-xs font-bold tracking-[0.22em] text-sky-400 uppercase drop-shadow-[0_0_20px_rgba(56,189,248,0.35)] sm:text-sm">
-            Features
-          </p>
-          <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-extrabold tracking-tight text-balance text-white sm:text-5xl md:text-[3.15rem] md:leading-[1.08]">
-            Depth where wholesale operations hurt most
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-300 md:text-xl">
-            Modular capability across quotes, inventory, finance hand-offs, and insights—expand when your team is ready,
-            not when a vendor forces a big-bang cutover.
-          </p>
-          <Button
-            size="lg"
-            className="mt-10 h-14 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-10 text-base font-semibold text-white shadow-xl shadow-sky-500/25 hover:brightness-110"
-            asChild
+        <div className={cn(marketingShell, 'relative z-10')}>
+          <MarketingPublicHero
+            kicker="Features"
+            title={
+              <>
+                Depth where wholesale{' '}
+                <span className="text-transparent bg-gradient-to-r from-sky-200 via-white to-teal-200 bg-clip-text">
+                  operations hurt most
+                </span>
+              </>
+            }
+            description="Modular capability across quotes, inventory, finance hand-offs, and insights—expand when your team is ready, not when a vendor forces a big-bang cutover."
           >
-            <Link href="/login">
-              Log in to explore
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+            <Button
+              size="lg"
+              className="h-14 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-10 text-base font-semibold text-white shadow-xl shadow-sky-500/25 hover:brightness-110"
+              asChild
+            >
+              <Link href="/login">
+                Log in to explore
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </MarketingPublicHero>
         </div>
       </section>
 

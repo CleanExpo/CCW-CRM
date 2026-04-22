@@ -12,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
+import { MarketingPublicHero } from '@/components/landing/marketing-public-hero';
 import { MarketingHeroBackdrop, ProductSpineGraphic, UiMockupStrip } from '@/components/landing/marketing-page-visuals';
 import { marketingSectionRule, marketingSectionY, marketingShell } from '@/components/landing/marketing-shell';
 import { Button } from '@/components/ui/button';
@@ -68,36 +69,40 @@ export function ProductPublicPage() {
         <MarketingHeroBackdrop />
         <div className={cn(marketingShell, 'relative z-10 grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16')}>
           <div>
-            <p className="text-xs font-bold tracking-[0.22em] text-sky-400 uppercase drop-shadow-[0_0_20px_rgba(56,189,248,0.35)] sm:text-sm">
-              Product
-            </p>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-balance text-white sm:text-5xl md:text-[3rem] md:leading-[1.08]">
-              One operational spine for equipment suppliers
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-zinc-300 md:text-xl">
-              CCW Online ERP unifies catalog, customers, quotes, orders, and warehouse-heavy workflows—so your team runs
-              on a single source of truth instead of scattered files and tools.
-            </p>
-            <div className="mt-10 flex flex-wrap gap-4">
-              <Button
-                size="lg"
-                className="h-14 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-8 text-base font-semibold text-white shadow-xl shadow-sky-500/25 hover:brightness-110"
-                asChild
-              >
-                <Link href="/login">
-                  Log in
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="h-14 rounded-xl border-white/15 bg-white/[0.04] px-8 text-base font-semibold text-white hover:bg-white/[0.08]"
-                asChild
-              >
-                <Link href="/features">Explore features</Link>
-              </Button>
-            </div>
+            <MarketingPublicHero
+              align="left"
+              kicker="Product"
+              title={
+                <>
+                  One operational spine for{' '}
+                  <span className="text-transparent bg-gradient-to-r from-sky-200 via-white to-indigo-200 bg-clip-text">
+                    equipment suppliers
+                  </span>
+                </>
+              }
+              description="CCW Online ERP unifies catalog, customers, quotes, orders, and warehouse-heavy workflows—so your team runs on a single source of truth instead of scattered files and tools."
+            >
+              <div className="flex flex-wrap gap-4">
+                <Button
+                  size="lg"
+                  className="h-14 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-8 text-base font-semibold text-white shadow-xl shadow-sky-500/25 hover:brightness-110"
+                  asChild
+                >
+                  <Link href="/login">
+                    Log in
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-14 rounded-xl border-white/15 bg-white/[0.04] px-8 text-base font-semibold text-white hover:bg-white/[0.08]"
+                  asChild
+                >
+                  <Link href="/features">Explore features</Link>
+                </Button>
+              </div>
+            </MarketingPublicHero>
           </div>
           <div className="relative">
             <ProductSpineGraphic className="mx-auto max-w-lg lg:max-w-none" />

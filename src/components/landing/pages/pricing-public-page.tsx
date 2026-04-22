@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, Check, HelpCircle, RefreshCw, Sparkles } from 'lucide-react';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
+import { MarketingPublicHero } from '@/components/landing/marketing-public-hero';
 import { MarketingHeroBackdrop, PricingGlowPanel } from '@/components/landing/marketing-page-visuals';
 import { marketingSectionRule, marketingSectionY, marketingShell } from '@/components/landing/marketing-shell';
 import { Button } from '@/components/ui/button';
@@ -67,17 +68,19 @@ export function PricingPublicPage() {
       <section className="relative overflow-hidden pt-16 pb-8 md:pt-24 md:pb-12">
         <MarketingHeroBackdrop />
         <PricingGlowPanel />
-        <div className={cn(marketingShell, 'relative z-10 text-center')}>
-          <p className="text-xs font-bold tracking-[0.22em] text-sky-400 uppercase drop-shadow-[0_0_20px_rgba(56,189,248,0.35)] sm:text-sm">
-            Pricing
-          </p>
-          <h1 className="mx-auto mt-4 max-w-3xl text-4xl font-extrabold tracking-tight text-balance text-white sm:text-5xl md:text-[3rem] md:leading-[1.08]">
-            Packaging that respects wholesale complexity
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-300 md:text-xl">
-            We scope pricing to branches, SKUs, integrations, and support needs—so you are not forced into a generic seat
-            matrix that ignores your operation.
-          </p>
+        <div className={cn(marketingShell, 'relative z-10')}>
+          <MarketingPublicHero
+            kicker="Pricing"
+            title={
+              <>
+                Packaging that respects{' '}
+                <span className="text-transparent bg-gradient-to-r from-emerald-200 via-white to-sky-200 bg-clip-text">
+                  wholesale complexity
+                </span>
+              </>
+            }
+            description="We scope pricing to branches, SKUs, integrations, and support needs—so you are not forced into a generic seat matrix that ignores your operation."
+          />
         </div>
       </section>
 

@@ -4,7 +4,10 @@ import { cn } from '@/lib/utils';
 export function MarketingHeroBackdrop({ className }: { className?: string }) {
   return (
     <div className={cn('pointer-events-none absolute inset-0 overflow-hidden', className)} aria-hidden>
-      <div className="absolute inset-x-0 top-0 h-[min(420px,55vh)] bg-[radial-gradient(ellipse_100%_100%_at_50%_-15%,hsl(var(--primary)/0.12),transparent_62%)]" />
+      <div className="absolute inset-x-0 top-0 h-[min(420px,55vh)] bg-[radial-gradient(ellipse_100%_100%_at_50%_-15%,hsl(var(--primary)/0.14),transparent_58%)]" />
+      <div className="absolute -right-[20%] top-0 h-[min(380px,50vh)] w-[70%] bg-[radial-gradient(ellipse_80%_80%_at_80%_0%,hsl(271_81%_56%/0.12),transparent_55%)]" />
+      <div className="absolute -left-[15%] top-[20%] h-[45%] w-[55%] bg-[radial-gradient(circle_at_30%_40%,hsl(173_80%_40%/0.08),transparent_60%)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/25 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#030306]/90 to-transparent" />
     </div>
   );
