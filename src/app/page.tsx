@@ -25,7 +25,9 @@ async function getPublicStats(): Promise<PublicStats | null> {
       next: { revalidate: 60 },
     });
     if (!res.ok) return null;
-    return res.json();
+    const ct = res.headers.get('content-type') ?? '';
+    if (!ct.includes('application/json')) return null;
+    return (await res.json()) as PublicStats;
   } catch {
     return null;
   }
