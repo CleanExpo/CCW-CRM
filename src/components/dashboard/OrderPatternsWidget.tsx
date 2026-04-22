@@ -23,6 +23,7 @@ import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import { DashboardWidgetEmpty } from '@/components/dashboard/dashboard-widget-primitives';
 
 type PatternType =
   | 'repeat_customer'
@@ -202,13 +203,15 @@ export function OrderPatternsWidget() {
               <BentoCardTitle className="text-xl">Order Patterns</BentoCardTitle>
             </div>
           </div>
-          <BentoCardDescription>Detecting customer ordering behavior...</BentoCardDescription>
+          <BentoCardDescription className="text-zinc-400">
+            Detecting customer ordering behavior…
+          </BentoCardDescription>
         </BentoCardHeader>
         <BentoCardContent>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="bg-muted/50 h-24 rounded-lg" />
+                <div className="h-24 rounded-lg border border-white/5 bg-white/[0.05]" />
               </div>
             ))}
           </div>
@@ -225,11 +228,12 @@ export function OrderPatternsWidget() {
             <div className="bg-gradient-brand/10 rounded-lg border border-white/10 p-2">
               <TrendingUp className="text-brand-primary h-5 w-5" />
             </div>
-            <BentoCardTitle className="text-xl">Order Patterns</BentoCardTitle>
+            <BentoCardTitle className="text-xl text-white">Order Patterns</BentoCardTitle>
           </div>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
+            className="border-white/15 text-zinc-200 hover:bg-white/10"
             onClick={() => loadPatterns(true)}
             disabled={refreshing}
           >
@@ -237,17 +241,17 @@ export function OrderPatternsWidget() {
             Refresh
           </Button>
         </div>
-        <BentoCardDescription>
-          AI-detected customer behavior patterns from recent orders
+        <BentoCardDescription className="text-zinc-400">
+          AI-detected customer behaviour patterns from recent orders
         </BentoCardDescription>
       </BentoCardHeader>
       <BentoCardContent>
         {patterns.length === 0 ? (
-          <div className="text-muted-foreground py-8 text-center">
-            <TrendingUp className="mx-auto mb-3 h-12 w-12 opacity-50" />
-            <p className="text-sm">No patterns detected yet</p>
-            <p className="mt-1 text-xs">More order data needed for pattern analysis</p>
-          </div>
+          <DashboardWidgetEmpty
+            icon={TrendingUp}
+            title="No order patterns detected"
+            description="Patterns appear when there is enough order history and repeat behaviour. Build volume over time, or use Presentation mode to explore sample dashboard data."
+          />
         ) : (
           <AnimatePresence mode="popLayout">
             <div className="space-y-3">
@@ -258,23 +262,23 @@ export function OrderPatternsWidget() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className="bg-card/50 hover:bg-card/80 rounded-lg border border-white/10 p-4 transition-all hover:shadow-lg"
+                  className="rounded-xl border border-white/[0.08] bg-zinc-900/50 p-4 ring-1 ring-white/[0.04] transition-all hover:border-indigo-500/25 hover:bg-zinc-900/80"
                 >
                   <div className="flex items-start gap-3">
                     <div className={`rounded-lg border p-2 ${getPatternColor(pattern.type)}`}>
                       {getPatternIcon(pattern.type)}
                     </div>
-                    <div className="flex-1 space-y-2">
+                    <div className="min-w-0 flex-1 space-y-2">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="mb-1 flex items-center gap-2">
-                            <h4 className="text-sm font-semibold">{pattern.customer_name}</h4>
-                            <Badge variant="outline" className="text-xs">
+                            <h4 className="text-sm font-semibold text-zinc-100">{pattern.customer_name}</h4>
+                            <Badge variant="outline" className="border-white/15 text-xs text-zinc-200">
                               {getPatternLabel(pattern.type)}
                             </Badge>
                           </div>
-                          <p className="text-muted-foreground text-xs">
+                          <p className="text-xs text-zinc-500">
                             {pattern.total_orders} orders
                             {pattern.avg_order_value &&
                               ` • Avg: ${formatCurrency(pattern.avg_order_value)}`}
@@ -284,20 +288,18 @@ export function OrderPatternsWidget() {
                       </div>
 
                       {/* Pattern Description */}
-                      <p className="text-muted-foreground text-sm leading-relaxed">
-                        {pattern.pattern_description}
-                      </p>
+                      <p className="text-sm leading-relaxed text-zinc-400">{pattern.pattern_description}</p>
 
                       {/* Additional Details */}
                       <div className="flex flex-wrap gap-2 text-xs">
                         {pattern.frequency && (
-                          <div className="text-muted-foreground flex items-center gap-1">
+                          <div className="flex items-center gap-1 text-zinc-500">
                             <Clock className="h-3 w-3" />
                             {pattern.frequency}
                           </div>
                         )}
                         {pattern.next_expected_order && (
-                          <div className="flex items-center gap-1 text-green-500">
+                          <div className="flex items-center gap-1 text-emerald-400">
                             <Calendar className="h-3 w-3" />
                             Expected:{' '}
                             {formatDistanceToNow(new Date(pattern.next_expected_order), {
@@ -306,7 +308,7 @@ export function OrderPatternsWidget() {
                           </div>
                         )}
                         {pattern.products && pattern.products.length > 0 && (
-                          <div className="text-muted-foreground flex items-center gap-1">
+                          <div className="flex items-center gap-1 text-zinc-500">
                             <Package className="h-3 w-3" />
                             {pattern.products.length} products
                           </div>
@@ -315,9 +317,9 @@ export function OrderPatternsWidget() {
 
                       {/* Suggested Action */}
                       {pattern.suggested_action && (
-                        <div className="bg-brand-primary/5 border-brand-primary/10 flex items-start gap-2 rounded border p-2">
-                          <AlertCircle className="text-brand-primary mt-0.5 h-4 w-4 flex-shrink-0" />
-                          <p className="text-brand-primary text-xs font-medium">
+                        <div className="flex items-start gap-2 rounded-lg border border-sky-500/25 bg-sky-950/25 p-2 ring-1 ring-sky-500/10">
+                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" />
+                          <p className="text-xs font-medium leading-relaxed text-sky-100/90">
                             {pattern.suggested_action}
                           </p>
                         </div>

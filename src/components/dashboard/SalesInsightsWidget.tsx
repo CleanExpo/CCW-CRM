@@ -19,6 +19,7 @@ import {
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DashboardWidgetEmpty } from '@/components/dashboard/dashboard-widget-primitives';
 
 interface SalesInsight {
   type: 'trend' | 'opportunity' | 'warning' | 'recommendation';
@@ -128,7 +129,7 @@ export function SalesInsightsWidget() {
     const isPositive = change > 0;
     return (
       <span
-        className={`flex items-center gap-1 text-xs font-medium ${isPositive ? 'text-green-500' : 'text-red-500'}`}
+        className={`flex items-center gap-1 text-xs font-medium ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}
       >
         {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
         {Math.abs(change)}%
@@ -145,16 +146,18 @@ export function SalesInsightsWidget() {
               <div className="bg-gradient-brand/10 rounded-lg border border-white/10 p-2">
                 <Sparkles className="text-brand-primary h-5 w-5" />
               </div>
-              <BentoCardTitle className="text-xl">AI Sales Insights</BentoCardTitle>
+              <BentoCardTitle className="text-xl text-white">AI Sales Insights</BentoCardTitle>
             </div>
           </div>
-          <BentoCardDescription>Analyzing sales patterns and trends...</BentoCardDescription>
+          <BentoCardDescription className="text-zinc-400">
+            Analyzing sales patterns and trends…
+          </BentoCardDescription>
         </BentoCardHeader>
         <BentoCardContent>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="bg-muted/50 h-20 rounded-lg" />
+                <div className="h-20 rounded-lg border border-white/5 bg-white/[0.05]" />
               </div>
             ))}
           </div>
@@ -171,11 +174,12 @@ export function SalesInsightsWidget() {
             <div className="bg-gradient-brand/10 rounded-lg border border-white/10 p-2">
               <Sparkles className="text-brand-primary h-5 w-5" />
             </div>
-            <BentoCardTitle className="text-xl">AI Sales Insights</BentoCardTitle>
+            <BentoCardTitle className="text-xl text-white">AI Sales Insights</BentoCardTitle>
           </div>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
+            className="border-white/15 text-zinc-200 hover:bg-white/10"
             onClick={() => loadInsights(true)}
             disabled={refreshing}
           >
@@ -183,17 +187,17 @@ export function SalesInsightsWidget() {
             Refresh
           </Button>
         </div>
-        <BentoCardDescription>
+        <BentoCardDescription className="text-zinc-400">
           {summary || 'AI-powered analysis of your sales performance'}
         </BentoCardDescription>
       </BentoCardHeader>
       <BentoCardContent>
         {insights.length === 0 ? (
-          <div className="text-muted-foreground py-8 text-center">
-            <Sparkles className="mx-auto mb-3 h-12 w-12 opacity-50" />
-            <p className="text-sm">No insights available yet</p>
-            <p className="mt-1 text-xs">Generate more sales data to see AI insights</p>
-          </div>
+          <DashboardWidgetEmpty
+            icon={Sparkles}
+            title="No AI sales insights yet"
+            description="The sales insights service needs enough recent orders and revenue signal. Try again after more trading activity, or use dashboard Presentation mode to preview sample KPIs elsewhere."
+          />
         ) : (
           <AnimatePresence mode="popLayout">
             <div className="space-y-3">
@@ -204,24 +208,20 @@ export function SalesInsightsWidget() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className="bg-card/50 hover:bg-card/80 rounded-lg border border-white/10 p-4 transition-all hover:shadow-lg"
+                  className="rounded-xl border border-white/[0.08] bg-zinc-900/50 p-4 ring-1 ring-white/[0.04] transition-all hover:border-sky-500/25 hover:bg-zinc-900/80"
                 >
                   <div className="flex items-start gap-3">
                     <div className={`rounded-lg border p-2 ${getInsightColor(insight.type)}`}>
                       {getInsightIcon(insight.type)}
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold">{insight.title}</h4>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-sm font-semibold text-zinc-100">{insight.title}</h4>
                         {insight.change !== undefined && getChangeIndicator(insight.change)}
                       </div>
-                      <p className="text-muted-foreground text-sm leading-relaxed">
-                        {insight.description}
-                      </p>
+                      <p className="text-sm leading-relaxed text-zinc-400">{insight.description}</p>
                       {insight.metric && (
-                        <p className="text-brand-primary mt-2 text-xs font-medium">
-                          {insight.metric}
-                        </p>
+                        <p className="text-sky-300 mt-2 text-xs font-medium">{insight.metric}</p>
                       )}
                     </div>
                   </div>
