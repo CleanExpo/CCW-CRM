@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -48,13 +49,16 @@ export function ForgotPasswordForm() {
   }
 
   const inputClass =
-    'h-12 rounded-xl border-zinc-600 bg-zinc-900/90 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35';
+    'h-12 rounded-xl border-zinc-600 bg-zinc-900/95 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35';
   const labelClass = 'text-sm font-semibold text-zinc-200';
 
   if (sent) {
     return (
       <div className="space-y-4 text-center text-sm text-zinc-300">
-        <p>If an account exists for that address, we sent reset instructions.</p>
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-500/15">
+          <CheckCircle2 className="h-7 w-7 text-emerald-300" />
+        </div>
+        <p className="text-zinc-300">If an account exists for that address, we sent reset instructions.</p>
         <Button asChild variant="outline" className="border-zinc-600 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800">
           <Link href="/login">Back to sign in</Link>
         </Button>
@@ -65,6 +69,9 @@ export function ForgotPasswordForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <div className="rounded-xl border border-white/[0.09] bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-violet-500/10 px-3.5 py-2.5 text-center text-xs font-medium text-zinc-300">
+          Enter your email and we will send a secure reset link.
+        </div>
         <FormField
           control={form.control}
           name="email"

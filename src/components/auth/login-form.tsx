@@ -77,6 +77,11 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
         onSubmit={form.handleSubmit(onSubmit)}
         className={isMarketing ? 'space-y-5' : 'space-y-4'}
       >
+        {isMarketing ? (
+          <div className="rounded-xl border border-white/[0.09] bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-violet-500/10 px-3.5 py-2.5 text-center text-xs font-medium text-zinc-300">
+            Use your work credentials to continue to CCW Online.
+          </div>
+        ) : null}
         <FormField
           control={form.control}
           name="email"
@@ -92,7 +97,7 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
                   autoComplete="email"
                   className={
                     isMarketing
-                      ? 'h-12 rounded-xl border-zinc-600 bg-zinc-900/90 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35'
+                      ? 'h-12 rounded-xl border-zinc-600 bg-zinc-900/95 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35'
                       : undefined
                   }
                   {...field}
@@ -118,7 +123,7 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
                   autoComplete="current-password"
                   className={
                     isMarketing
-                      ? 'h-12 rounded-xl border-zinc-600 bg-zinc-900/90 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35'
+                      ? 'h-12 rounded-xl border-zinc-600 bg-zinc-900/95 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35'
                       : undefined
                   }
                   {...field}
