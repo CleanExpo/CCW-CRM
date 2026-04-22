@@ -1,11 +1,14 @@
-"use client";
+'use client';
 
-import { useState, useEffect, memo } from "react";
-import { MapPin, TrendingUp, DollarSign } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { apiClient } from "@/lib/api/client";
+import { useState, useEffect, memo } from 'react';
+import { MapPin, TrendingUp, DollarSign } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { apiClient } from '@/lib/api/client';
+import {
+  DashboardWidgetEmpty,
+  DashboardWidgetHeader,
+  DashboardWidgetLoading,
+} from '@/components/dashboard/dashboard-widget-primitives';
 
 interface LocationRevenue {
   location: string;
@@ -19,10 +22,21 @@ interface LocationRevenue {
 interface RevenueByLocationData {
   locations: LocationRevenue[];
   total_revenue: number;
-  period: string; // e.g., "Last 30 days"
+  period: string;
 }
 
-// PHASE 4 OPTIMIZATION: Memoized to prevent unnecessary re-renders
+const locationAccent: Record<string, string> = {
+  brisbane: 'from-sky-500 to-cyan-400',
+  sydney: 'from-violet-500 to-indigo-400',
+  melbourne: 'from-amber-500 to-orange-400',
+  default: 'from-zinc-400 to-zinc-500',
+};
+
+function barGradient(location: string): string {
+  const key = location.toLowerCase();
+  return locationAccent[key] ?? locationAccent.default;
+}
+
 export const RevenueByLocationWidget = memo(function RevenueByLocationWidget() {
   const [data, setData] = useState<RevenueByLocationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,196 +46,147 @@ export const RevenueByLocationWidget = memo(function RevenueByLocationWidget() {
     async function fetchRevenueByLocation() {
       try {
         setLoading(true);
-        const response = await apiClient.get<RevenueByLocationData>("/api/dashboard/revenue-by-location");
+        const response = await apiClient.get<RevenueByLocationData>(
+          '/api/dashboard/revenue-by-location'
+        );
         setData(response);
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load revenue by location data";
-        setError(errorMessage);
+        setError(err instanceof Error ? err.message : 'Failed to load revenue by location data');
       } finally {
         setLoading(false);
       }
     }
 
-    fetchRevenueByLocation();
+    void fetchRevenueByLocation();
   }, []);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('en-AU', {
+      style: 'currency',
+      currency: 'AUD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
-  };
 
-  const formatLocation = (location: string): string => {
-    return location.charAt(0).toUpperCase() + location.slice(1);
-  };
-
-  const getLocationColor = (location: string) => {
-    switch (location.toLowerCase()) {
-      case "brisbane":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "sydney":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      case "melbourne":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getProgressColor = (location: string) => {
-    switch (location.toLowerCase()) {
-      case "brisbane":
-        return "bg-blue-600";
-      case "sydney":
-        return "bg-purple-600";
-      case "melbourne":
-        return "bg-orange-600";
-      default:
-        return "bg-gray-600";
-    }
-  };
+  const formatLocation = (location: string) =>
+    location.charAt(0).toUpperCase() + location.slice(1);
 
   if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Revenue by Location
-          </CardTitle>
-          <CardDescription>Loading location revenue data...</CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    return <DashboardWidgetLoading title="Revenue by location" subtitle="Aggregating branches…" />;
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Revenue by Location
-          </CardTitle>
-          <CardDescription className="text-destructive">{error}</CardDescription>
-        </CardHeader>
-      </Card>
+      <div>
+        <DashboardWidgetHeader title="Revenue by location" />
+        <div className="rounded-xl border border-red-500/25 bg-red-950/30 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      </div>
     );
   }
 
   const hasRevenue = data && data.total_revenue > 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Revenue by Location
-            </CardTitle>
-            <CardDescription>
-              {data?.period || "Performance"} - {hasRevenue ? formatCurrency(data.total_revenue) : "No revenue"}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {!hasRevenue ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No revenue data available</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Total Revenue Summary */}
-            <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-900">Total Revenue</p>
-                  <p className="text-2xl font-bold text-blue-900">
-                    {formatCurrency(data.total_revenue)}
-                  </p>
-                </div>
-                <DollarSign className="h-8 w-8 text-blue-600 opacity-50" />
+    <div className="flex h-full flex-col">
+      <DashboardWidgetHeader
+        title="Revenue by location"
+        description={
+          data?.period
+            ? `${data.period}${hasRevenue ? ` · ${formatCurrency(data.total_revenue)} total` : ''}`
+            : 'Share of revenue by branch or region.'
+        }
+      />
+
+      {!hasRevenue ? (
+        <DashboardWidgetEmpty
+          icon={DollarSign}
+          title="No location revenue yet"
+          description="Delivered orders with location attribution will populate this view. Until then, use Presentation mode on the dashboard to preview sample regional splits."
+        />
+      ) : (
+        <div className="space-y-5">
+          <div className="rounded-xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-zinc-900/40 to-indigo-500/10 p-4 ring-1 ring-sky-500/15">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold tracking-wide text-sky-200/90 uppercase">Total revenue</p>
+                <p className="mt-1 text-2xl font-bold tracking-tight text-white tabular-nums">
+                  {formatCurrency(data!.total_revenue)}
+                </p>
               </div>
+              <DollarSign className="h-10 w-10 shrink-0 text-sky-300/50" aria-hidden />
             </div>
+          </div>
 
-            {/* Location Breakdown */}
-            <div className="space-y-4">
-              {data.locations.map((location) => (
-                <div key={location.location} className="space-y-2">
-                  {/* Location Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-semibold">{formatLocation(location.location)}</span>
-                      {location.growth_percentage !== null && (
-                        <Badge
-                          variant={location.growth_percentage >= 0 ? "default" : "destructive"}
-                          className="text-xs"
-                        >
-                          <TrendingUp className="h-3 w-3 mr-1" />
-                          {location.growth_percentage >= 0 ? "+" : ""}
-                          {location.growth_percentage.toFixed(1)}%
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold">{formatCurrency(location.revenue)}</p>
-                      <p className="text-xs text-muted-foreground">{location.percentage.toFixed(1)}%</p>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="relative">
-                    <Progress
-                      value={location.percentage}
-                      className={`h-2 ${getProgressColor(location.location)}`}
-                    />
-                  </div>
-
-                  {/* Location Stats */}
-                  <div
-                    className={`flex items-center justify-between p-3 rounded-lg border ${getLocationColor(
-                      location.location
-                    )}`}
-                  >
-                    <div>
-                      <p className="text-xs opacity-75">Orders</p>
-                      <p className="font-semibold">{location.order_count}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs opacity-75">Avg Order Value</p>
-                      <p className="font-semibold">{formatCurrency(location.average_order_value)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Top Performer Badge */}
-            {data.locations.length > 0 && (
-              <div className="pt-3 border-t">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium">Top Performer:</span>
-                  <span className="font-bold text-green-600">
-                    {formatLocation(
-                      data.locations.reduce((prev, current) =>
-                        prev.revenue > current.revenue ? prev : current
-                      ).location
+          <div className="space-y-5">
+            {data!.locations.map((location) => (
+              <div key={location.location} className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <MapPin className="h-4 w-4 shrink-0 text-zinc-500" />
+                    <span className="font-semibold text-zinc-100">{formatLocation(location.location)}</span>
+                    {location.growth_percentage !== null && (
+                      <Badge
+                        variant="outline"
+                        className={
+                          location.growth_percentage >= 0
+                            ? 'border-emerald-500/35 text-emerald-200'
+                            : 'border-red-500/35 text-red-200'
+                        }
+                      >
+                        <TrendingUp className="mr-1 h-3 w-3" />
+                        {location.growth_percentage >= 0 ? '+' : ''}
+                        {location.growth_percentage.toFixed(1)}%
+                      </Badge>
                     )}
-                  </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold tabular-nums text-white">{formatCurrency(location.revenue)}</p>
+                    <p className="text-xs text-zinc-500">{location.percentage.toFixed(1)}% share</p>
+                  </div>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/[0.06]">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${barGradient(location.location)}`}
+                    style={{ width: `${Math.min(100, location.percentage)}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-zinc-900/40 px-3 py-2 text-sm">
+                  <div>
+                    <p className="text-xs text-zinc-500">Orders</p>
+                    <p className="font-semibold tabular-nums text-zinc-100">{location.order_count}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-zinc-500">Avg order</p>
+                    <p className="font-semibold tabular-nums text-zinc-100">
+                      {formatCurrency(location.average_order_value)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
+            ))}
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {data!.locations.length > 0 && (
+            <div className="border-t border-white/[0.08] pt-3">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-300">
+                <TrendingUp className="h-4 w-4 text-emerald-400" />
+                <span className="font-medium text-zinc-400">Top performer:</span>
+                <span className="font-semibold text-emerald-300">
+                  {formatLocation(
+                    data!.locations.reduce((prev, current) =>
+                      prev.revenue > current.revenue ? prev : current
+                    ).location
+                  )}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 });
