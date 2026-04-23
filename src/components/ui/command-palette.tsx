@@ -86,7 +86,7 @@ export function CommandPalette() {
       label: 'Orders',
       description: 'View and manage orders',
       icon: ShoppingCart,
-      action: () => navigate('/orders'),
+      action: () => navigate('/dashboard/operations/orders'),
       keywords: ['sales', 'purchases'],
     },
     {
@@ -94,7 +94,7 @@ export function CommandPalette() {
       label: 'Quotes',
       description: 'Create and manage quotes',
       icon: FileText,
-      action: () => navigate('/quotes'),
+      action: () => navigate('/dashboard/operations/quotes'),
       keywords: ['proposals', 'estimates'],
     },
     {
@@ -128,7 +128,7 @@ export function CommandPalette() {
       label: 'New Quote',
       description: 'Create a new quote',
       icon: FileText,
-      action: () => navigate('/quotes?action=new'),
+      action: () => navigate('/dashboard/operations/quotes?action=new'),
       keywords: ['create', 'add', 'proposal'],
     },
 
