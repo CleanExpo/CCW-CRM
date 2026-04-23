@@ -26,6 +26,13 @@ interface EditRoleDialogProps {
   onSuccess?: () => void;
 }
 
+const ROLE_LABELS: Record<TeamMemberRole, string> = {
+  owner: "Owner",
+  admin: "Admin",
+  member: "Member",
+  billing: "CFO/Finance Staff",
+};
+
 export function EditRoleDialog({ member, onSuccess }: EditRoleDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -45,7 +52,7 @@ export function EditRoleDialog({ member, onSuccess }: EditRoleDialogProps) {
 
       toast({
         title: "Role Updated",
-        description: `Changed ${member.email}'s role to ${selectedRole}`,
+        description: `Changed ${member.email}'s role to ${ROLE_LABELS[selectedRole]}`,
       });
 
       setOpen(false);
@@ -81,7 +88,7 @@ export function EditRoleDialog({ member, onSuccess }: EditRoleDialogProps) {
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Current Role</label>
-            <div className="text-sm text-muted-foreground">{member.role.toUpperCase()}</div>
+            <div className="text-sm text-muted-foreground">{ROLE_LABELS[member.role]}</div>
           </div>
 
           <div className="space-y-2">
@@ -93,7 +100,7 @@ export function EditRoleDialog({ member, onSuccess }: EditRoleDialogProps) {
               <SelectContent>
                 <SelectItem value="member">Member</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="billing">Billing</SelectItem>
+                <SelectItem value="billing">{ROLE_LABELS.billing}</SelectItem>
                 <SelectItem value="owner">Owner</SelectItem>
               </SelectContent>
             </Select>

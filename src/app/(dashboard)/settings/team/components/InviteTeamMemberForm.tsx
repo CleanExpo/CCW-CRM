@@ -40,6 +40,13 @@ interface InviteTeamMemberFormProps {
   onCancel?: () => void;
 }
 
+const ROLE_LABELS: Record<TeamMemberRole, string> = {
+  owner: "Owner",
+  admin: "Admin",
+  member: "Member",
+  billing: "CFO/Finance Staff",
+};
+
 export function InviteTeamMemberForm({ onSuccess, onCancel }: InviteTeamMemberFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -133,12 +140,12 @@ export function InviteTeamMemberForm({ onSuccess, onCancel }: InviteTeamMemberFo
                 <SelectContent>
                   <SelectItem value="member">Member (Recommended)</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="billing">Billing</SelectItem>
+                  <SelectItem value="billing">{ROLE_LABELS.billing}</SelectItem>
                   <SelectItem value="owner">Owner</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription>
-                Member = read/write access, Admin = full operational access
+                Member = read/write access, Admin = full operational access, CFO/Finance Staff = billing only
               </FormDescription>
               <FormMessage />
             </FormItem>
