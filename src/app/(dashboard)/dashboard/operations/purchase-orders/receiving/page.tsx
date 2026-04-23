@@ -31,6 +31,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, PackageCheck, Trash2, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import {
+  goodsReceiptStatusTone,
+  lineConditionTone,
+  opCardClass,
+  opHeroSurfaceClass,
+  opInsetClass,
+} from '@/lib/operations/ui';
 import type {
   GoodsReceipt,
   GoodsReceiptLine,
@@ -112,26 +124,6 @@ const DEMO_GRNS: GoodsReceipt[] = [
 // ---------------------------------------------------------------------------
 // Status badge styling
 // ---------------------------------------------------------------------------
-
-const STATUS_BADGE_VARIANT: Record<string, 'secondary' | 'default' | 'destructive' | 'outline'> = {
-  draft: 'secondary',
-  confirmed: 'default',
-  synced: 'default',
-  failed: 'destructive',
-};
-
-const STATUS_BADGE_CLASS: Record<string, string> = {
-  draft: '',
-  confirmed: 'bg-green-100 text-green-800',
-  synced: 'bg-blue-100 text-blue-800',
-  failed: '',
-};
-
-const CONDITION_BADGE_CLASS: Record<string, string> = {
-  good: 'bg-green-100 text-green-800',
-  damaged: 'bg-red-100 text-red-800',
-  short: 'bg-yellow-100 text-yellow-800',
-};
 
 // ---------------------------------------------------------------------------
 // Page component
@@ -322,23 +314,25 @@ export default function GoodsReceivingPage() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Goods Receiving</h1>
-          <p className="text-muted-foreground">
-            Record inbound goods, verify quantities, and assign put-away locations
-          </p>
-        </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Receipt
-        </Button>
-      </div>
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        accent="lagoon"
+        title="Goods receiving"
+        description="Record inbound stock, verify quantities, put-away locations, and confirm receipts into inventory."
+        icon={PackageCheck}
+        breadcrumbs={[
+          { label: 'Purchase orders', href: '/dashboard/operations/purchase-orders' },
+          { label: 'Receiving' },
+        ]}
+        actions={
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New receipt
+          </Button>
+        }
+      />
 
-      {/* Status Filter */}
-      <div className="flex items-center gap-4">
+      <div className={cn('flex items-center gap-4', opCardClass, opHeroSurfaceClass, 'p-4')}>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
@@ -355,73 +349,100 @@ export default function GoodsReceivingPage() {
 
       {/* GRN List with inline expansion */}
       {loading ? (
-        <div className="text-muted-foreground py-12 text-center">Loading...</div>
+        <div className="text-muted-foreground py-12 text-center dark:text-foreground/70">
+          Loading receipts…
+        </div>
       ) : grns.length === 0 ? (
-        <div className="text-muted-foreground py-12 text-center">
-          No goods receipts found. Click &quot;New Receipt&quot; to create one.
+        <div
+          className={cn(
+            'text-muted-foreground py-14 text-center text-sm dark:text-foreground/70',
+            opInsetClass
+          )}
+        >
+          No goods receipts yet. Create a new receipt to record an inbound delivery.
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {grns.map((grn) => {
             const isExpanded = expandedIds.has(grn.id);
             return (
-              <div key={grn.id} className="rounded-lg border">
-                {/* Row header - clickable to expand */}
+              <div
+                key={grn.id}
+                className="overflow-hidden rounded-xl border border-border/60 bg-card/70 shadow-sm dark:bg-card/85"
+              >
                 <button
                   type="button"
-                  className="hover:bg-muted/50 flex w-full items-center justify-between px-4 py-3 text-left transition-colors"
+                  className="hover:bg-muted/40 flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors"
                   onClick={() => toggleExpanded(grn.id)}
                 >
                   <div className="flex items-center gap-4">
                     {isExpanded ? (
-                      <ChevronDown className="text-muted-foreground h-4 w-4" />
+                      <ChevronDown className="text-muted-foreground h-4 w-4 shrink-0" />
                     ) : (
-                      <ChevronRight className="text-muted-foreground h-4 w-4" />
+                      <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" />
                     )}
-                    <PackageCheck className="text-muted-foreground h-5 w-5" />
+                    <PackageCheck className="text-primary h-5 w-5 shrink-0 opacity-90" />
                     <div>
-                      <div className="font-medium">{grn.po_reference}</div>
-                      <div className="text-muted-foreground text-sm">
+                      <div className="text-foreground font-semibold">{grn.po_reference}</div>
+                      <div className="text-muted-foreground text-sm dark:text-foreground/65">
                         {grn.supplier_name || 'No supplier'}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-muted-foreground text-sm">
+                  <div className="flex flex-wrap items-center justify-end gap-3">
+                    <span className="text-muted-foreground text-sm tabular-nums dark:text-foreground/65">
                       {new Date(grn.received_date).toLocaleDateString()}
                     </span>
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-muted-foreground text-sm tabular-nums dark:text-foreground/65">
                       {grn.total_items_received} items
                     </span>
                     <Badge
-                      variant={STATUS_BADGE_VARIANT[grn.status] || 'secondary'}
-                      className={STATUS_BADGE_CLASS[grn.status] || ''}
+                      variant="outline"
+                      className={cn(
+                        'border font-medium capitalize',
+                        goodsReceiptStatusTone(grn.status)
+                      )}
                     >
-                      {grn.status.charAt(0).toUpperCase() + grn.status.slice(1)}
+                      {grn.status}
                     </Badge>
                   </div>
                 </button>
 
-                {/* Expanded detail */}
                 {isExpanded && (
-                  <div className="space-y-4 border-t px-4 pb-4">
-                    {/* GRN metadata */}
-                    <div className="bg-muted/50 mt-3 grid grid-cols-2 gap-3 rounded-lg border p-3 text-sm md:grid-cols-4">
+                  <div className="space-y-4 border-t border-border/60 px-4 pb-4">
+                    <div
+                      className={cn(
+                        'mt-3 grid grid-cols-2 gap-3 p-3 text-sm md:grid-cols-4',
+                        opInsetClass
+                      )}
+                    >
                       <div>
-                        <div className="text-muted-foreground">Location</div>
-                        <div className="font-medium">{grn.location_id}</div>
+                        <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                          Location
+                        </div>
+                        <div className="text-foreground mt-0.5 font-medium">{grn.location_id}</div>
                       </div>
                       <div>
-                        <div className="text-muted-foreground">Received By</div>
-                        <div className="font-medium">{grn.received_by || '-'}</div>
+                        <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                          Received by
+                        </div>
+                        <div className="text-foreground mt-0.5 font-medium">
+                          {grn.received_by || '—'}
+                        </div>
                       </div>
                       <div>
-                        <div className="text-muted-foreground">Cin7 Receipt ID</div>
-                        <div className="font-medium">{grn.cin7_receipt_id || '-'}</div>
+                        <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                          Receipt ID
+                        </div>
+                        <div className="text-foreground mt-0.5 font-medium font-mono text-xs">
+                          {grn.cin7_receipt_id || '—'}
+                        </div>
                       </div>
                       <div>
-                        <div className="text-muted-foreground">Notes</div>
-                        <div className="font-medium">{grn.notes || '-'}</div>
+                        <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                          Notes
+                        </div>
+                        <div className="text-foreground mt-0.5 font-medium">{grn.notes || '—'}</div>
                       </div>
                     </div>
 
@@ -452,8 +473,11 @@ export default function GoodsReceivingPage() {
                               </TableCell>
                               <TableCell>
                                 <Badge
-                                  variant="secondary"
-                                  className={CONDITION_BADGE_CLASS[line.condition] || ''}
+                                  variant="outline"
+                                  className={cn(
+                                    'border font-medium capitalize',
+                                    lineConditionTone(line.condition)
+                                  )}
                                 >
                                   {line.condition}
                                 </Badge>
@@ -676,6 +700,6 @@ export default function GoodsReceivingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </OperationsPageLayout>
   );
 }

@@ -36,11 +36,13 @@ import {
   Search,
   MoreHorizontal,
   PackageCheck,
+  ClipboardList,
   X,
   Copy,
   Download,
   ScanLine,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -67,6 +69,11 @@ import {
 import type { PurchaseOrder, PurchaseOrdersResponse } from './types';
 import { STATUS_COLORS, STATUS_LABELS, LOCATION_LABELS } from './types';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import { formatAud, opCardClass, opHeroSurfaceClass, opTableWrapClass } from '@/lib/operations/ui';
 
 export default function PurchaseOrdersPage() {
   const { toast } = useToast();
@@ -255,48 +262,51 @@ export default function PurchaseOrdersPage() {
 
   return (
     <ErrorBoundary>
-      <div className="space-y-6 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Purchase Orders</h1>
-            <p className="text-muted-foreground">
-              Manage supplier orders and goods receiving
-              {lastUpdated && (
-                <span className="ml-2 text-xs">
-                  • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
-                </span>
-              )}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                exportPurchaseOrdersToCSV(purchaseOrders as unknown as Record<string, unknown>[]);
-                toast({
-                  title: 'Export Successful',
-                  description: 'Purchase orders exported to CSV',
-                });
-              }}
-              disabled={purchaseOrders.length === 0}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button variant="outline" onClick={() => setScanOpen(true)}>
-              <ScanLine className="mr-2 h-4 w-4" />
-              Scan PO Image
-            </Button>
-            <Button onClick={() => setIsCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Purchase Order
-            </Button>
-          </div>
-        </div>
+      <OperationsPageLayout className="space-y-6">
+        <OperationsPageHeader
+          accent="forest"
+          title="Purchase orders"
+          description={`Manage supplier POs, approvals, and receiving.${
+            lastUpdated
+              ? ` Updated ${formatDistanceToNow(lastUpdated, { addSuffix: true })}.`
+              : ''
+          }`}
+          icon={ClipboardList}
+          actions={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  exportPurchaseOrdersToCSV(purchaseOrders as unknown as Record<string, unknown>[]);
+                  toast({
+                    title: 'Export Successful',
+                    description: 'Purchase orders exported to CSV',
+                  });
+                }}
+                disabled={purchaseOrders.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button variant="outline" onClick={() => setScanOpen(true)}>
+                <ScanLine className="mr-2 h-4 w-4" />
+                Scan PO Image
+              </Button>
+              <Button onClick={() => setIsCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Purchase Order
+              </Button>
+            </>
+          }
+        />
 
-        {/* Filters */}
-        <div className="flex items-center gap-4">
+        <div
+          className={cn(
+            'flex flex-col gap-4 rounded-xl border border-border/60 p-4 sm:flex-row sm:flex-wrap sm:items-center',
+            opCardClass,
+            opHeroSurfaceClass
+          )}
+        >
           <div className="relative max-w-md flex-1">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
@@ -351,32 +361,37 @@ export default function PurchaseOrdersPage() {
           </Select>
         </div>
 
-        {/* Table */}
-        <div className="rounded-md border">
+        <div className={opTableWrapClass}>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>PO Number</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Order Date</TableHead>
+              <TableRow className="border-border/60 hover:bg-transparent">
+                <TableHead className="text-foreground font-semibold">PO Number</TableHead>
+                <TableHead className="text-foreground font-semibold">Supplier</TableHead>
+                <TableHead className="text-foreground font-semibold">Location</TableHead>
+                <TableHead className="text-foreground font-semibold">Status</TableHead>
+                <TableHead className="text-foreground font-semibold">Items</TableHead>
+                <TableHead className="text-foreground text-right font-semibold">Total</TableHead>
+                <TableHead className="text-foreground font-semibold">Order Date</TableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
-                    Loading...
+                  <TableCell
+                    colSpan={8}
+                    className="text-muted-foreground py-10 text-center dark:text-foreground/65"
+                  >
+                    Loading…
                   </TableCell>
                 </TableRow>
               ) : purchaseOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
-                    No purchase orders found
+                  <TableCell
+                    colSpan={8}
+                    className="text-muted-foreground py-10 text-center dark:text-foreground/65"
+                  >
+                    No purchase orders match your filters.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -385,7 +400,9 @@ export default function PurchaseOrdersPage() {
                     <TableCell className="font-medium">{po.po_number}</TableCell>
                     <TableCell>
                       <div className="font-medium">{po.supplier_name}</div>
-                      <div className="text-muted-foreground text-sm">{po.supplier_code}</div>
+                      <div className="text-muted-foreground text-sm dark:text-foreground/65">
+                        {po.supplier_code}
+                      </div>
                     </TableCell>
                     <TableCell>{LOCATION_LABELS[po.delivery_location]}</TableCell>
                     <TableCell>
@@ -394,7 +411,9 @@ export default function PurchaseOrdersPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{po.items?.length || 0} items</TableCell>
-                    <TableCell className="text-right font-medium">${po.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium tabular-nums">
+                      {formatAud(po.total)}
+                    </TableCell>
                     <TableCell>
                       {po.order_date ? new Date(po.order_date).toLocaleDateString() : '-'}
                     </TableCell>
@@ -525,7 +544,6 @@ export default function PurchaseOrdersPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
 
       {/* PO Document Scan Dialog */}
       <Dialog
@@ -605,6 +623,7 @@ export default function PurchaseOrdersPage() {
           </div>
         </DialogContent>
       </Dialog>
+      </OperationsPageLayout>
     </ErrorBoundary>
   );
 }

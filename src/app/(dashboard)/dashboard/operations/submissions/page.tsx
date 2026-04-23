@@ -16,8 +16,22 @@ import { ContactSubmissionsTable } from './components/ContactSubmissionsTable';
 import { DemoRequestsTable } from './components/DemoRequestsTable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api/client';
-import { Search, Download, BarChart3, MessageSquare, Calendar, CheckCircle2 } from 'lucide-react';
+import {
+  Search,
+  Download,
+  BarChart3,
+  MessageSquare,
+  Calendar,
+  CheckCircle2,
+  ClipboardCheck,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import { opCardClass, opHeroSurfaceClass, opInsetClass } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
 
 interface Statistics {
   contact_submissions: {
@@ -111,95 +125,114 @@ export default function SubmissionsPage() {
   }
 
   return (
-    <div className="container px-4 py-8">
-      <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold">Form Submissions</h1>
-        <p className="text-muted-foreground">
-          View and manage contact submissions and demo requests from the portal
-        </p>
-      </div>
+    <OperationsPageLayout className="space-y-6 py-2">
+      <OperationsPageHeader
+        accent="horizon"
+        title="Form submissions"
+        description="Review portal contact messages and demo requests. Export for sales follow-up or CRM import."
+        icon={ClipboardCheck}
+      />
 
-      {/* Statistics Cards */}
       {loading ? (
-        <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
         </div>
       ) : statistics ? (
-        <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className={cn(opCardClass, opHeroSurfaceClass, 'overflow-hidden')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-              <BarChart3 className="text-muted-foreground h-4 w-4" />
+              <CardTitle className="text-sm font-medium">Total submissions</CardTitle>
+              <div className="rounded-lg bg-primary/15 p-2 text-primary ring-1 ring-primary/20">
+                <BarChart3 className="h-4 w-4" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statistics.total_submissions}</div>
-              <p className="text-muted-foreground text-xs">
-                {statistics.contact_submissions.total} contact + {statistics.demo_requests.total}{' '}
+              <div className="text-foreground text-3xl font-bold tabular-nums">
+                {statistics.total_submissions}
+              </div>
+              <p className="text-muted-foreground mt-1 text-xs dark:text-foreground/65">
+                {statistics.contact_submissions.total} contact · {statistics.demo_requests.total}{' '}
                 demo
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass, 'overflow-hidden')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Last 24 Hours</CardTitle>
-              <Calendar className="text-muted-foreground h-4 w-4" />
+              <CardTitle className="text-sm font-medium">Last 24 hours</CardTitle>
+              <div className="rounded-lg bg-sky-500/15 p-2 text-sky-600 ring-1 ring-sky-500/25 dark:text-sky-400">
+                <Calendar className="h-4 w-4" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-foreground text-3xl font-bold tabular-nums">
                 {statistics.contact_submissions.recent_24h + statistics.demo_requests.recent_24h}
               </div>
-              <p className="text-muted-foreground text-xs">Recent submissions</p>
+              <p className="text-muted-foreground mt-1 text-xs dark:text-foreground/65">
+                New entries in the last day
+              </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass, 'overflow-hidden')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">New/Pending</CardTitle>
-              <MessageSquare className="text-muted-foreground h-4 w-4" />
+              <CardTitle className="text-sm font-medium">Needs attention</CardTitle>
+              <div className="rounded-lg bg-amber-500/15 p-2 text-amber-700 ring-1 ring-amber-500/25 dark:text-amber-400">
+                <MessageSquare className="h-4 w-4" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-foreground text-3xl font-bold tabular-nums">
                 {statistics.contact_submissions.new + statistics.demo_requests.pending}
               </div>
-              <p className="text-muted-foreground text-xs">Awaiting response</p>
+              <p className="text-muted-foreground mt-1 text-xs dark:text-foreground/65">
+                New contacts + pending demos
+              </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass, 'overflow-hidden')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <CheckCircle2 className="text-muted-foreground h-4 w-4" />
+              <div className="rounded-lg bg-emerald-500/15 p-2 text-emerald-700 ring-1 ring-emerald-500/25 dark:text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-foreground text-3xl font-bold tabular-nums">
                 {statistics.contact_submissions.closed + statistics.demo_requests.completed}
               </div>
-              <p className="text-muted-foreground text-xs">Resolved submissions</p>
+              <p className="text-muted-foreground mt-1 text-xs dark:text-foreground/65">
+                Closed or finished demos
+              </p>
             </CardContent>
           </Card>
         </div>
       ) : null}
 
-      {/* Filters and Actions */}
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 gap-2">
-          <div className="relative max-w-sm flex-1">
-            <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+      <div
+        className={cn(
+          'flex flex-col gap-4 rounded-xl border border-border/60 p-4 sm:flex-row sm:items-center sm:justify-between',
+          opInsetClass
+        )}
+      >
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative max-w-md flex-1">
+            <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4 dark:text-foreground/50" />
             <Input
               type="search"
-              placeholder="Search submissions..."
-              className="pl-8"
+              placeholder="Search by name, email, or company…"
+              className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -223,27 +256,32 @@ export default function SubmissionsPage() {
           </Select>
         </div>
 
-        <Button onClick={handleExport} variant="outline">
+        <Button onClick={handleExport} variant="outline" className="shrink-0">
           <Download className="mr-2 h-4 w-4" />
-          Export to CSV
+          Export CSV
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="contact">
-            Contact Submissions ({statistics?.contact_submissions.total || 0})
+        <TabsList className="grid h-11 w-full max-w-lg grid-cols-2 rounded-xl border border-border/50 bg-muted/40 p-1 dark:bg-muted/25">
+          <TabsTrigger
+            value="contact"
+            className="rounded-lg data-[state=active]:shadow-sm"
+          >
+            Contact ({statistics?.contact_submissions.total || 0})
           </TabsTrigger>
-          <TabsTrigger value="demo">
-            Demo Requests ({statistics?.demo_requests.total || 0})
+          <TabsTrigger value="demo" className="rounded-lg data-[state=active]:shadow-sm">
+            Demo ({statistics?.demo_requests.total || 0})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="contact" className="mt-6">
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass)}>
             <CardHeader>
-              <CardTitle>Contact Form Submissions</CardTitle>
-              <CardDescription>Messages from customers via the Contact Us form</CardDescription>
+              <CardTitle>Contact form</CardTitle>
+              <CardDescription className="dark:text-foreground/70">
+                Messages from the public contact form
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Suspense fallback={<TableSkeleton />}>
@@ -258,10 +296,12 @@ export default function SubmissionsPage() {
         </TabsContent>
 
         <TabsContent value="demo" className="mt-6">
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass)}>
             <CardHeader>
-              <CardTitle>Demo Requests</CardTitle>
-              <CardDescription>Demo requests from potential customers</CardDescription>
+              <CardTitle>Demo requests</CardTitle>
+              <CardDescription className="dark:text-foreground/70">
+                Bookings and enquiries for product demos
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Suspense fallback={<TableSkeleton />}>
@@ -275,7 +315,7 @@ export default function SubmissionsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </OperationsPageLayout>
   );
 }
 
