@@ -22,11 +22,11 @@ import { logoutAndRedirectToLogin } from '@/lib/api/auth';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
-  { href: '/dashboard/products', icon: Package, label: 'Products' },
-  { href: '/dashboard/customers', icon: Users, label: 'Customers' },
-  { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders' },
-  { href: '/dashboard/quotes', icon: FileText, label: 'Quotes' },
-  { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
+  { href: '/products', icon: Package, label: 'Products' },
+  { href: '/customers', icon: Users, label: 'Customers' },
+  { href: '/dashboard/operations/orders', icon: ShoppingCart, label: 'Orders' },
+  { href: '/dashboard/operations/quotes', icon: FileText, label: 'Quotes' },
+  { href: '/settings/integrations', icon: Settings, label: 'Settings' },
 ];
 
 export function MobileNav() {
