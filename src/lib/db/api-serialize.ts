@@ -4,6 +4,35 @@
 
 import type { Customer, Order, Product, Quote } from '@prisma/client';
 
+export type OrderLineApi = {
+  id: string;
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+};
+
+export function orderLinesToApi(
+  lines: Array<{
+    id: string;
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+    product: { name: string };
+  }>
+): OrderLineApi[] {
+  return lines.map((li) => ({
+    id: li.id,
+    product_id: li.productId,
+    product_name: li.product.name,
+    quantity: li.quantity,
+    unit_price: li.unitPrice,
+    line_total: li.lineTotal,
+  }));
+}
+
 export function customerToApi(c: Customer) {
   return {
     id: c.id,
@@ -33,9 +62,13 @@ export function productToApi(p: Product) {
   };
 }
 
-export function orderToApi(o: Order, customerName?: string) {
+export function orderToApi(
+  o: Order,
+  customerName?: string,
+  options?: { lines?: OrderLineApi[]; itemCount?: number }
+) {
   const name = customerName ?? 'Unknown';
-  return {
+  const base = {
     id: o.id,
     customer_id: o.customerId,
     order_number: o.orderNumber,
@@ -45,6 +78,21 @@ export function orderToApi(o: Order, customerName?: string) {
     updated_at: o.updatedAt,
     customer_name: name,
   };
+  if (options?.lines?.length) {
+    return {
+      ...base,
+      items: options.lines,
+      order_items: options.lines,
+      item_count: options.lines.length,
+    };
+  }
+  if (options?.itemCount !== undefined) {
+    return {
+      ...base,
+      item_count: options.itemCount,
+    };
+  }
+  return base;
 }
 
 export function quoteToApi(q: Quote, customerName?: string) {
