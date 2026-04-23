@@ -18,9 +18,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Quote } from './types';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { PaginationControls } from '@/components/ui/pagination-controls';
-import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
+import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns'; // PHASE 4: Add timestamp display
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import { formatAud, opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
 
 interface PaginatedResponse {
   items: Quote[];
@@ -35,6 +41,7 @@ const statusColors: Record<string, 'default' | 'secondary' | 'destructive' | 'ou
   pending: 'outline',
   sent: 'default',
   accepted: 'default',
+  converted: 'secondary',
   rejected: 'destructive',
   expired: 'secondary',
 };
@@ -191,44 +198,51 @@ export default function QuotesPage() {
     return new Date(validUntil) < new Date();
   };
 
+  function safeQuoteDate(iso: string | undefined): string {
+    if (!iso) return '—';
+    const d = parseISO(iso);
+    return isValid(d) ? format(d, 'MMM dd, yyyy') : '—';
+  }
+
   return (
     <ErrorBoundary>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Equipment Quotes</h1>
-            <p className="text-muted-foreground">Manage customer quotations</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportPDF} disabled={quotes.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export PDF
-            </Button>
-            <Button variant="outline" onClick={handleExport} disabled={quotes.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            {/* PHASE C: Quote Copilot Button */}
-            <Button variant="outline" onClick={() => setCopilotOpen(true)}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Copilot
-            </Button>
-            <Button onClick={handleAddQuote}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Quote
-            </Button>
-          </div>
-        </div>
+      <OperationsPageLayout className="space-y-6">
+        <OperationsPageHeader
+          accent="aurora"
+          title="Equipment quotes"
+          description="Create and track quotations, line items, and validity. Accepted quotes can convert to orders."
+          icon={FileText}
+          actions={
+            <>
+              <Button variant="outline" onClick={handleExportPDF} disabled={quotes.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
+              <Button variant="outline" onClick={handleExport} disabled={quotes.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button variant="outline" onClick={() => setCopilotOpen(true)}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Copilot
+              </Button>
+              <Button onClick={handleAddQuote}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Quote
+              </Button>
+            </>
+          }
+        />
 
-        <Card>
+        <Card className={cn(opCardClass, opHeroSurfaceClass)}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Quotations</CardTitle>
-                <CardDescription>
+                <CardDescription className="dark:text-foreground/70">
                   {total} quotes in system
                   {lastUpdated && (
-                    <span className="text-muted-foreground ml-2 text-xs">
+                    <span className="text-muted-foreground ml-2 text-xs dark:text-foreground/60">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>
                   )}
@@ -298,15 +312,15 @@ export default function QuotesPage() {
                   {
                     key: 'total',
                     label: 'Total',
-                    className: 'font-semibold',
-                    render: (quote) => `$${quote.total}`,
+                    className: 'font-semibold tabular-nums',
+                    render: (quote) => formatAud(quote.total),
                   },
                   {
                     key: 'quote_date',
                     label: 'Quote Date',
-                    className: 'text-sm text-muted-foreground',
+                    className: 'text-muted-foreground text-sm dark:text-foreground/70',
                     hideOnMobile: true,
-                    render: (quote) => format(new Date(quote.quote_date), 'MMM dd, yyyy'),
+                    render: (quote) => safeQuoteDate(quote.quote_date),
                   },
                   {
                     key: 'valid_until',
@@ -316,11 +330,9 @@ export default function QuotesPage() {
                       const expired = isExpired(quote.valid_until ?? null);
                       return (
                         <span
-                          className={`text-sm ${expired ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
+                          className={`text-sm ${expired ? 'text-destructive font-medium' : 'text-muted-foreground dark:text-foreground/70'}`}
                         >
-                          {quote.valid_until
-                            ? format(new Date(quote.valid_until), 'MMM dd, yyyy')
-                            : 'N/A'}
+                          {quote.valid_until ? safeQuoteDate(quote.valid_until) : '—'}
                         </span>
                       );
                     },
@@ -382,7 +394,7 @@ export default function QuotesPage() {
                 ]}
               />
             )}
-            {totalPages > 1 && (
+            {!loading && quotes.length > 0 && (
               <div className="mt-4">
                 <PaginationControls
                   currentPage={page}
@@ -427,7 +439,7 @@ export default function QuotesPage() {
           onOpenChange={setCopilotOpen}
           onQuoteCreated={handleCopilotQuoteCreated}
         />
-      </div>
+      </OperationsPageLayout>
     </ErrorBoundary>
   );
 }

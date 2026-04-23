@@ -48,6 +48,7 @@ const QUOTE_STATUSES = [
   { value: 'pending', label: 'Pending' },
   { value: 'sent', label: 'Sent' },
   { value: 'accepted', label: 'Accepted' },
+  { value: 'converted', label: 'Converted' },
   { value: 'rejected', label: 'Rejected' },
   { value: 'expired', label: 'Expired' },
 ] as const;
