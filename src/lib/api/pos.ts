@@ -9,7 +9,7 @@ import type {
     POSTerminal,
     POSTransaction,
     SalesStaff,
-} from "@/app/(dashboard)/pos/types";
+} from "@/app/(dashboard)/dashboard/operations/pos/types";
 import { apiClient } from "./client";
 
 // ─── Additional Types ──────────────────────────────────────────────
