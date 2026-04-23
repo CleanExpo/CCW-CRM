@@ -103,6 +103,8 @@ export function quoteToApi(q: Quote, customerName?: string) {
     quote_number: q.quoteNumber,
     status: q.status,
     total: q.total,
+    valid_until: q.validUntil ? q.validUntil.toISOString().split('T')[0] : null,
+    notes: q.notes ?? null,
     created_at: q.createdAt,
     updated_at: q.updatedAt,
     customer_name: name,
