@@ -26,6 +26,8 @@ import {
   PaymentMethod,
   CreateTransactionRequest,
 } from "../types";
+import { opCardClass, opHeroSurfaceClass } from "@/lib/operations/ui";
+import { cn } from "@/lib/utils";
 
 export function POSTerminal() {
   const { toast } = useToast();
@@ -221,11 +223,10 @@ export function POSTerminal() {
   return (
     <div className="space-y-4">
       {/* Terminal Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          {/* Location Selector */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-muted-foreground" />
+            <MapPin className="text-muted-foreground h-5 w-5 shrink-0 dark:text-foreground/60" />
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select location" />
@@ -242,7 +243,7 @@ export function POSTerminal() {
 
           {/* Terminal Selector */}
           <div className="flex items-center gap-2">
-            <Monitor className="h-5 w-5 text-muted-foreground" />
+            <Monitor className="text-muted-foreground h-5 w-5 shrink-0 dark:text-foreground/60" />
             <Select value={selectedTerminal} onValueChange={setSelectedTerminal}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select terminal" />
@@ -259,13 +260,13 @@ export function POSTerminal() {
         </div>
 
         {/* Status Badges */}
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="gap-1">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            Terminal Online
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-100">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+            Terminal online
           </Badge>
           {lastTransaction && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 font-mono text-xs">
               <CheckCircle2 className="h-3 w-3" />
               Last: {lastTransaction}
             </Badge>
@@ -273,13 +274,11 @@ export function POSTerminal() {
         </div>
       </div>
 
-      <Separator />
+      <Separator className="bg-border/80" />
 
-      {/* Main Terminal Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Product Search - Left Panel */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <Card className="h-[600px]">
+          <Card className={cn("flex h-[min(70vh,600px)] flex-col", opCardClass, opHeroSurfaceClass)}>
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Products</CardTitle>
             </CardHeader>
@@ -291,8 +290,8 @@ export function POSTerminal() {
 
         {/* Cart - Middle Panel */}
         <div className="lg:col-span-4">
-          <Card className="h-[600px]">
-            <CardContent className="p-4 h-full">
+          <Card className={cn("h-[min(70vh,600px)]", opCardClass, opHeroSurfaceClass)}>
+            <CardContent className="flex h-full flex-col p-4">
               <Cart
                 items={cartItems}
                 onUpdateQuantity={handleUpdateQuantity}

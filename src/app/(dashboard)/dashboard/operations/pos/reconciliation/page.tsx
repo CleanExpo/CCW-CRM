@@ -41,6 +41,7 @@ import {
   Plus,
   Edit,
   Trash2,
+  Scale,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
@@ -49,6 +50,12 @@ import { FilterPanel, type ReconciliationFilters } from './components/FilterPane
 import { BulkActionsPanel } from './components/BulkActionsPanel';
 import { ExportDialog } from './components/ExportDialog';
 import { BankAccountDialog } from './components/BankAccountDialog';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import { opCardClass, opHeroSurfaceClass, reconciliationAlertTone } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
 
 interface BankAccount {
   id: string;
@@ -298,66 +305,71 @@ export default function ReconciliationPage() {
   const selectedAccountData = accounts.find((a) => a.id === selectedAccount);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reconciliation</h1>
-          <p className="text-muted-foreground">Match bank transactions to POS sales</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsExportDialogOpen(true)} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button onClick={handleBulkCreateInvoices} disabled={creatingInvoices} variant="outline">
-            <RefreshCw className={`mr-2 h-4 w-4 ${creatingInvoices ? 'animate-spin' : ''}`} />
-            {creatingInvoices ? 'Creating...' : 'Create Xero Invoices'}
-          </Button>
-          <Button onClick={handleSync} disabled={syncing || !selectedAccount}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing...' : 'Sync Bank Feeds'}
-          </Button>
-        </div>
-      </div>
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        accent="mint"
+        title="Reconciliation"
+        description="Match bank feed lines to POS card settlements. Sync pulls recent activity; use export for your finance workflow."
+        icon={Scale}
+        breadcrumbs={[
+          { label: 'POS', href: '/dashboard/operations/pos' },
+          { label: 'Reconciliation' },
+        ]}
+        actions={
+          <>
+            <Button onClick={() => setIsExportDialogOpen(true)} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button onClick={handleBulkCreateInvoices} disabled={creatingInvoices} variant="outline">
+              <RefreshCw className={`mr-2 h-4 w-4 ${creatingInvoices ? 'animate-spin' : ''}`} />
+              {creatingInvoices ? 'Creating…' : 'Create Xero invoices'}
+            </Button>
+            <Button onClick={handleSync} disabled={syncing || !selectedAccount}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing…' : 'Sync bank feeds'}
+            </Button>
+          </>
+        }
+      />
 
-      {/* Alerts */}
       {alerts.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {alerts.map((alert, index) => {
-            const severityColors = {
-              info: 'bg-blue-50 border-blue-200 text-blue-900',
-              warning: 'bg-yellow-50 border-yellow-200 text-yellow-900',
-              critical: 'bg-red-50 border-red-200 text-red-900',
-            };
-
+            const tone = reconciliationAlertTone(alert.severity);
             const severityIcons = {
-              info: <CheckCircle2 className="h-5 w-5" />,
-              warning: <AlertTriangle className="h-5 w-5" />,
-              critical: <AlertTriangle className="h-5 w-5" />,
+              info: <CheckCircle2 className={cn('h-5 w-5', tone.iconWrap)} />,
+              warning: <AlertTriangle className={cn('h-5 w-5', tone.iconWrap)} />,
+              critical: <AlertTriangle className={cn('h-5 w-5', tone.iconWrap)} />,
             };
 
             return (
-              <Card key={index} className={`border-l-4 ${severityColors[alert.severity]}`}>
+              <Card
+                key={index}
+                className={cn('border-l-4 border-l-current shadow-sm', tone.card)}
+              >
                 <CardContent className="py-4">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5">{severityIcons[alert.severity]}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{alert.title}</h3>
+                    <div className="mt-0.5 shrink-0">{severityIcons[alert.severity]}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-foreground font-semibold">{alert.title}</h3>
                         <Badge
                           variant={alert.severity === 'critical' ? 'destructive' : 'secondary'}
+                          className="text-xs uppercase"
                         >
-                          {alert.severity.toUpperCase()}
+                          {alert.severity}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-sm">{alert.description}</p>
+                      <p className="text-muted-foreground mt-1 text-sm leading-relaxed dark:text-foreground/80">
+                        {alert.description}
+                      </p>
                       {alert.affected_count > 0 && (
-                        <p className="mt-2 text-xs opacity-70">
+                        <p className="text-muted-foreground mt-2 text-xs dark:text-foreground/65">
                           Affected: {alert.affected_count} transaction
                           {alert.affected_count !== 1 ? 's' : ''}
                           {alert.total_amount > 0 &&
-                            ` • Total: ${formatCurrency(alert.total_amount)}`}
+                            ` · Total ${formatCurrency(alert.total_amount)}`}
                         </p>
                       )}
                     </div>
@@ -369,12 +381,11 @@ export default function ReconciliationPage() {
         </div>
       )}
 
-      {/* Account Selector */}
-      <Card>
+      <Card className={cn(opCardClass, opHeroSurfaceClass)}>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="h-5 w-5" />
-            Bank Account
+            <Building2 className="h-5 w-5 shrink-0" />
+            Bank account
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -432,43 +443,53 @@ export default function ReconciliationPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card>
+        <Card className={cn(opCardClass, opHeroSurfaceClass)}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="rounded-lg bg-yellow-500/10 p-3">
-                <AlertTriangle className="h-6 w-6 text-yellow-500" />
+              <div className="rounded-xl bg-amber-500/15 p-3 ring-1 ring-amber-500/25">
+                <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{unreconciledFeeds.length}</div>
-                <div className="text-muted-foreground text-sm">Unreconciled Bank Transactions</div>
+                <div className="text-foreground text-2xl font-bold tabular-nums">
+                  {unreconciledFeeds.length}
+                </div>
+                <div className="text-muted-foreground text-sm dark:text-foreground/70">
+                  Unreconciled bank lines
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={cn(opCardClass, opHeroSurfaceClass)}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="rounded-lg bg-blue-500/10 p-3">
-                <Link2 className="h-6 w-6 text-blue-500" />
+              <div className="rounded-xl bg-sky-500/15 p-3 ring-1 ring-sky-500/25">
+                <Link2 className="h-6 w-6 text-sky-600 dark:text-sky-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{unreconciledPOS.length}</div>
-                <div className="text-muted-foreground text-sm">Unmatched POS Transactions</div>
+                <div className="text-foreground text-2xl font-bold tabular-nums">
+                  {unreconciledPOS.length}
+                </div>
+                <div className="text-muted-foreground text-sm dark:text-foreground/70">
+                  Unmatched POS transactions
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={cn(opCardClass, opHeroSurfaceClass)}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="rounded-lg bg-green-500/10 p-3">
-                <CheckCircle2 className="h-6 w-6 text-green-500" />
+              <div className="rounded-xl bg-emerald-500/15 p-3 ring-1 ring-emerald-500/25">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">
+                <div className="text-foreground text-2xl font-bold tabular-nums">
                   {unreconciledFeeds.filter((f) => findPotentialMatches(f).length > 0).length}
                 </div>
-                <div className="text-muted-foreground text-sm">Potential Auto-Matches</div>
+                <div className="text-muted-foreground text-sm dark:text-foreground/70">
+                  Suggested matches (by amount)
+                </div>
               </div>
             </div>
           </CardContent>
@@ -476,10 +497,12 @@ export default function ReconciliationPage() {
       </div>
 
       {/* Unreconciled Bank Transactions */}
-      <Card>
+      <Card className={cn(opCardClass, opHeroSurfaceClass)}>
         <CardHeader>
-          <CardTitle>Unreconciled Bank Transactions</CardTitle>
-          <CardDescription>Click "Match" to link a bank transaction to a POS sale</CardDescription>
+          <CardTitle>Unreconciled bank transactions</CardTitle>
+          <CardDescription className="dark:text-foreground/70">
+            Choose Match to link a deposit line to a POS settlement.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -518,11 +541,16 @@ export default function ReconciliationPage() {
                       </TableCell>
                       <TableCell>
                         {matches.length > 0 ? (
-                          <Badge variant="default" className="bg-green-500">
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-500/35 bg-emerald-500/15 font-medium text-emerald-900 dark:text-emerald-100"
+                          >
                             {matches.length} match{matches.length > 1 ? 'es' : ''}
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">No matches</Badge>
+                          <Badge variant="secondary" className="font-normal">
+                            No matches
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell>
@@ -553,7 +581,7 @@ export default function ReconciliationPage() {
           {selectedFeed && (
             <div className="space-y-4">
               {/* Bank Transaction Info */}
-              <Card className="bg-muted/50">
+              <Card className={cn(opCardClass, opHeroSurfaceClass, 'bg-muted/30')}>
                 <CardContent className="pt-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -562,7 +590,7 @@ export default function ReconciliationPage() {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Amount:</span>{' '}
-                      <span className="font-medium text-green-600">
+                      <span className="font-medium text-emerald-700 dark:text-emerald-400">
                         {formatCurrency(selectedFeed.credit)}
                       </span>
                     </div>
@@ -623,7 +651,7 @@ export default function ReconciliationPage() {
                             key={t.id}
                             className={`cursor-pointer ${
                               selectedPOS?.id === t.id ? 'bg-primary/10' : ''
-                            } ${isMatch ? 'bg-green-50' : ''}`}
+                            } ${isMatch ? 'bg-emerald-500/10 dark:bg-emerald-500/15' : ''}`}
                             onClick={() => setSelectedPOS(t)}
                           >
                             <TableCell>
@@ -637,7 +665,10 @@ export default function ReconciliationPage() {
                             <TableCell className="font-mono">
                               {t.transaction_number}
                               {isMatch && (
-                                <Badge className="ml-2 bg-green-500" variant="default">
+                                <Badge
+                                  className="ml-2 border-emerald-600/30 bg-emerald-600 text-white dark:bg-emerald-600"
+                                  variant="default"
+                                >
                                   Match
                                 </Badge>
                               )}
@@ -688,6 +719,6 @@ export default function ReconciliationPage() {
           loadUnreconciledData();
         }}
       />
-    </div>
+    </OperationsPageLayout>
   );
 }
