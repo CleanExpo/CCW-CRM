@@ -69,15 +69,15 @@ export const CategorySalesChart = memo(function CategorySalesChart({ data }: Cat
   return (
     <div className="flex h-full min-h-[360px] flex-col">
       <DashboardWidgetHeader
-        title="Sales by category"
-        description="Distribution of sales value across product categories."
+        title="Category revenue mix"
+        description="Delivered order totals split by category using inventory value weights — approximate until line items are stored."
       />
       <div className="min-h-0 flex-1">
         {chartData.length === 0 ? (
           <DashboardWidgetEmpty
             icon={LayoutGrid}
             title="No category breakdown yet"
-            description="Category mix appears when products have sales attributed to categories. Enable Presentation mode to preview sample bars."
+            description="Needs active products and delivered orders (or use Presentation mode for sample bars)."
           />
         ) : (
           <ResponsiveContainer width="100%" height={300}>
