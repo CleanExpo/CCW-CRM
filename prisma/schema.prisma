@@ -51,6 +51,8 @@ model Product {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
+  orderLineItems OrderLineItem[]
+
   @@map("products")
 }
 
@@ -63,9 +65,26 @@ model Order {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customer  Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lineItems OrderLineItem[]
 
   @@map("orders")
+}
+
+model OrderLineItem {
+  id        String @id @default(uuid()) @db.Uuid
+  orderId   String @map("order_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  quantity  Int
+  unitPrice Float  @map("unit_price")
+  lineTotal Float  @map("line_total")
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_line_items")
 }
 
 model Quote {
