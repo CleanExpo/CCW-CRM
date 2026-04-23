@@ -26,9 +26,11 @@ export interface DashboardDemoAggregated {
     timestamp: string;
     status: string | null;
   }[];
+  rollup: 'demo';
 }
 
 export const DASHBOARD_DEMO_AGGREGATED: DashboardDemoAggregated = {
+  rollup: 'demo',
   metrics: {
     total_revenue_this_month: '284750.5',
     active_orders: 42,

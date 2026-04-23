@@ -105,6 +105,8 @@ interface InventoryDataPoint {
   out_of_stock: number;
 }
 
+type DashboardRollup = 'order_lines' | 'allocated' | 'inventory' | 'demo';
+
 interface AggregatedDashboardData {
   metrics: DashboardMetrics;
   revenue_chart: RevenueDataPoint[];
@@ -112,6 +114,7 @@ interface AggregatedDashboardData {
   top_products: TopProduct[];
   inventory_status: InventoryDataPoint[];
   recent_activity: ActivityItem[];
+  rollup?: DashboardRollup;
 }
 
 interface UrgentItem {
@@ -166,6 +169,7 @@ export default function DashboardPage() {
   const [urgentItems, setUrgentItems] = useState<UrgentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [presentationMode, setPresentationMode] = useState(false);
+  const [rollup, setRollup] = useState<DashboardRollup | null>(null);
   const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
@@ -196,6 +200,7 @@ export default function DashboardPage() {
 
   const applyPresentationDemo = useCallback(() => {
     const d = DASHBOARD_DEMO_AGGREGATED;
+    setRollup(d.rollup);
     setMetrics(d.metrics);
     setRevenueData(d.revenue_chart);
     setCategorySales(d.category_sales);
@@ -237,6 +242,7 @@ export default function DashboardPage() {
 
         if (cancelled) return;
 
+        setRollup(dashboardData.rollup ?? 'inventory');
         setMetrics(dashboardData.metrics);
         setRevenueData(dashboardData.revenue_chart);
         setCategorySales(dashboardData.category_sales);
@@ -275,6 +281,7 @@ export default function DashboardPage() {
         setUrgentItems(urgent);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
+        setRollup(null);
         setMetrics(null);
         setRevenueData([]);
         setCategorySales([]);
@@ -316,6 +323,7 @@ export default function DashboardPage() {
           const dashboardData = await apiClient.get<AggregatedDashboardData>(
             '/api/dashboard/aggregated'
           );
+          setRollup(dashboardData.rollup ?? 'inventory');
           setMetrics(dashboardData.metrics);
           setActivity(dashboardData.recent_activity);
         } catch (error) {
@@ -656,7 +664,7 @@ export default function DashboardPage() {
       <DashboardSection
         id="section-products"
         title="Products & mobile tools"
-        description="Top lines ranked by delivered revenue allocated using catalogue mix (until order line items exist)."
+        description="Top lines from delivered order rows when saved; otherwise catalogue mix estimate."
       >
         <BentoGrid columns={3} gap="lg">
           <BentoCard
@@ -667,9 +675,11 @@ export default function DashboardPage() {
             <BentoCardHeader>
               <BentoCardTitle className="text-zinc-50">Top 5 products</BentoCardTitle>
               <BentoCardDescription className="text-zinc-400">
-                {presentationMode
+                {presentationMode || rollup === 'demo'
                   ? 'Demo best-sellers by revenue'
-                  : 'Allocated from delivered orders × inventory mix'}
+                  : rollup === 'order_lines'
+                    ? 'From line items on delivered orders'
+                    : 'Estimated from delivered revenue × catalogue mix'}
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
@@ -689,9 +699,11 @@ export default function DashboardPage() {
                             {product.name}
                           </p>
                           <p className="text-xs text-zinc-400">
-                            {presentationMode
+                            {presentationMode || rollup === 'demo'
                               ? `${product.quantity_sold} units sold`
-                              : 'Share-weighted rank · not line-level units'}
+                              : rollup === 'order_lines'
+                                ? `${product.quantity_sold} units (delivered)`
+                                : `${product.quantity_sold} mix index (est.)`}
                           </p>
                         </div>
                       </div>
