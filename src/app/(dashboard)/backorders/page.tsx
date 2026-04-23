@@ -509,7 +509,9 @@ function BackordersList({ backorders, loading, onNotify }: BackordersListProps) 
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/orders/${backorder.order_id}` as Route)}
+                  onClick={() =>
+                    router.push(`/dashboard/operations/orders/${backorder.order_id}` as Route)
+                  }
                 >
                   <Eye className="mr-2 h-3 w-3" />
                   View Order
