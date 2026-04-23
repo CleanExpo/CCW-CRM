@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { orderToApi } from '@/lib/db/api-serialize';
+import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
+import { generateOrderNumber, resolveLinesFromPayload } from '@/lib/db/order-lines';
 import type { Prisma } from '@prisma/client';
+
+const ORDER_LIST_INCLUDE = {
+  customer: { select: { companyName: true } },
+  _count: { select: { lineItems: true } },
+} satisfies Prisma.OrderInclude;
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +28,7 @@ export async function GET(request: NextRequest) {
     const [rows, total] = await Promise.all([
       prisma.order.findMany({
         where,
-        include: { customer: { select: { companyName: true } } },
+        include: ORDER_LIST_INCLUDE,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -31,8 +37,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     const items = rows.map((o) => {
-      const { customer, ...rest } = o;
-      return orderToApi(rest, customer?.companyName);
+      const { customer, _count, ...rest } = o;
+      return orderToApi(rest, customer?.companyName, { itemCount: _count.lineItems });
     });
 
     return NextResponse.json({
@@ -50,16 +56,53 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
-    const row = await prisma.order.create({
+    const customerId = String(body.customer_id ?? body.customerId ?? '').trim();
+    if (!customerId) {
+      return NextResponse.json({ detail: 'customer_id is required' }, { status: 400 });
+    }
+
+    const status = String(body.status ?? 'draft');
+    const orderNumber =
+      String(body.order_number ?? body.orderNumber ?? '').trim() || generateOrderNumber();
+
+    const { lines, subtotal } = await resolveLinesFromPayload(body.items);
+    if (lines.length === 0) {
+      return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
+    }
+
+    const totalWithTax = subtotal * 1.1;
+
+    const created = await prisma.order.create({
       data: {
-        customerId: String(body.customer_id ?? body.customerId ?? ''),
-        orderNumber: String(body.order_number ?? body.orderNumber ?? ''),
-        status: String(body.status ?? 'draft'),
-        total: Number(body.total ?? 0),
+        customerId,
+        orderNumber,
+        status,
+        total: totalWithTax,
+        lineItems: {
+          create: lines.map((l) => ({
+            productId: l.productId,
+            quantity: l.quantity,
+            unitPrice: l.unitPrice,
+            lineTotal: l.lineTotal,
+          })),
+        },
+      },
+      include: {
+        customer: { select: { companyName: true } },
+        lineItems: {
+          include: { product: { select: { name: true } } },
+        },
       },
     });
-    return NextResponse.json(orderToApi(row), { status: 201 });
+
+    const { customer, lineItems, ...rest } = created;
+    return NextResponse.json(
+      orderToApi(rest, customer?.companyName, { lines: orderLinesToApi(lineItems) }),
+      { status: 201 }
+    );
   } catch (e) {
-    return NextResponse.json({ detail: String(e) }, { status: 500 });
+    const message = e instanceof Error ? e.message : String(e);
+    const status = message.includes('Unknown or inactive product') ? 400 : 500;
+    return NextResponse.json({ detail: message }, { status });
   }
 }
