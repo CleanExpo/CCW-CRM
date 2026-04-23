@@ -104,7 +104,11 @@ export const OrderStatusBreakdownWidget = memo(function OrderStatusBreakdownWidg
       ) : (
         <div className="space-y-2">
           {data!.by_status.map((statusData) => (
-            <Link key={statusData.status} href={`/orders?status=${statusData.status}`} className="block">
+            <Link
+              key={statusData.status}
+              href={`/dashboard/operations/orders?status=${statusData.status}`}
+              className="block"
+            >
               <div
                 className={`flex items-center justify-between gap-3 rounded-xl border p-3 transition-colors ${rowClass(
                   statusData.status
