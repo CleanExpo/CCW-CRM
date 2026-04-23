@@ -403,7 +403,7 @@ export default function DashboardPage() {
                 onCheckedChange={setPresentationMode}
               />
               {!presentationMode && posFailureCount > 0 ? (
-                <Link href="/pos/reconciliation" className="block shrink-0">
+                <Link href="/dashboard/operations/pos/reconciliation" className="block shrink-0">
                   <Card className="overflow-hidden rounded-2xl border border-red-500/35 bg-gradient-to-br from-red-950/40 via-zinc-950/80 to-black shadow-lg shadow-red-900/20 ring-1 ring-red-500/15 transition-colors hover:border-red-400/40">
                     <CardContent className="px-4 py-4 sm:px-5">
                       <div className="flex items-center gap-3">
