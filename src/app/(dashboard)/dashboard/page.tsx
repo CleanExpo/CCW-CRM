@@ -50,6 +50,7 @@ import { Cin7SyncStatusWidget } from '@/components/dashboard/Cin7SyncStatusWidge
 import { AgentMetricsWidget } from '@/components/dashboard/AgentMetricsWidget';
 import { DashboardAmbient } from '@/components/dashboard/dashboard-ambient';
 import { DashboardHero } from '@/components/dashboard/dashboard-hero';
+import { DashboardQuickActions } from '@/components/dashboard/dashboard-quick-actions';
 import {
   DashboardPresentationToggle,
   DASHBOARD_PRESENTATION_LS_KEY,
@@ -147,6 +148,7 @@ interface CertStats {
 
 function activityTypeIcon(type: string) {
   const t = type.toLowerCase();
+  if (t === 'stock') return AlertTriangle;
   if (t.includes('order')) return ShoppingCart;
   if (t.includes('quote')) return FileText;
   if (t.includes('customer') || t.includes('contact')) return Users;
@@ -343,6 +345,12 @@ export default function DashboardPage() {
           <Skeleton className="h-5 w-full max-w-lg bg-white/10" />
           <Skeleton className="h-4 w-48 bg-white/10" />
         </div>
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-9 w-[5.5rem] rounded-lg bg-white/10" />
+          <Skeleton className="h-9 w-[5.75rem] rounded-lg bg-white/10" />
+          <Skeleton className="h-9 w-[6rem] rounded-lg bg-white/10" />
+          <Skeleton className="h-9 w-[7rem] rounded-lg bg-white/10" />
+        </div>
         <Skeleton className="h-36 w-full rounded-xl bg-white/10" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Skeleton className="h-88 rounded-xl bg-white/10" />
@@ -412,24 +420,27 @@ export default function DashboardPage() {
           }
         />
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {presentationMode ? (
-            <Badge
-              variant="outline"
-              className="border-amber-400/35 bg-amber-500/10 text-xs font-medium text-amber-100"
-            >
-              Sample data
-            </Badge>
-          ) : null}
-          {!presentationMode && metricsStreamStatus === 'connected' ? (
-            <Badge variant="outline" className="border-white/15 text-xs font-normal text-zinc-200">
-              <span
-                className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500"
-                aria-hidden
-              />
-              Live metrics
-            </Badge>
-          ) : null}
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <DashboardQuickActions />
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            {presentationMode ? (
+              <Badge
+                variant="outline"
+                className="border-amber-400/35 bg-amber-500/10 text-xs font-medium text-amber-100"
+              >
+                Sample data
+              </Badge>
+            ) : null}
+            {!presentationMode && metricsStreamStatus === 'connected' ? (
+              <Badge variant="outline" className="border-white/15 text-xs font-normal text-zinc-200">
+                <span
+                  className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500"
+                  aria-hidden
+                />
+                Live metrics
+              </Badge>
+            ) : null}
+          </div>
         </div>
       </motion.div>
 
@@ -645,7 +656,7 @@ export default function DashboardPage() {
       <DashboardSection
         id="section-products"
         title="Products & mobile tools"
-        description="Best sellers by revenue and the photo-to-order workflow for field teams."
+        description="Top lines ranked by delivered revenue allocated using catalogue mix (until order line items exist)."
       >
         <BentoGrid columns={3} gap="lg">
           <BentoCard
@@ -656,7 +667,9 @@ export default function DashboardPage() {
             <BentoCardHeader>
               <BentoCardTitle className="text-zinc-50">Top 5 products</BentoCardTitle>
               <BentoCardDescription className="text-zinc-400">
-                Ranked by revenue
+                {presentationMode
+                  ? 'Demo best-sellers by revenue'
+                  : 'Allocated from delivered orders × inventory mix'}
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
@@ -676,7 +689,9 @@ export default function DashboardPage() {
                             {product.name}
                           </p>
                           <p className="text-xs text-zinc-400">
-                            {product.quantity_sold} units sold
+                            {presentationMode
+                              ? `${product.quantity_sold} units sold`
+                              : 'Share-weighted rank · not line-level units'}
                           </p>
                         </div>
                       </div>
