@@ -51,7 +51,11 @@ model Product {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
-  orderLineItems OrderLineItem[]
+  orderLineItems       OrderLineItem[]
+  purchaseOrderLines   PurchaseOrderLine[]
+  quoteLineItems       QuoteLineItem[]
+  posTransactionLines  PosTransactionLine[]
+  goodsReceiptLines    GoodsReceiptLine[]
 
   @@map("products")
 }
@@ -93,12 +97,313 @@ model Quote {
   quoteNumber  String   @map("quote_number")
   status       String
   total        Float?
+  validUntil   DateTime? @map("valid_until")
+  notes        String?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customer Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lineItems QuoteLineItem[]
 
   @@map("quotes")
+}
+
+model QuoteLineItem {
+  id        String @id @default(uuid()) @db.Uuid
+  quoteId   String @map("quote_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  quantity  Int
+  unitPrice Float  @map("unit_price")
+  lineTotal Float  @map("line_total")
+
+  quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([quoteId])
+  @@map("quote_line_items")
+}
+
+model Supplier {
+  id           String   @id @default(uuid()) @db.Uuid
+  supplierCode String   @unique @map("supplier_code")
+  companyName  String   @map("company_name")
+  contactName  String?  @map("contact_name")
+  email        String?
+  phone        String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id                   String    @id @default(uuid()) @db.Uuid
+  poNumber             String    @unique @map("po_number")
+  supplierId           String    @map("supplier_id") @db.Uuid
+  deliveryLocation     String    @map("delivery_location")
+  status               String
+  orderDate            DateTime  @default(now()) @map("order_date")
+  expectedDeliveryDate DateTime? @map("expected_delivery_date")
+  actualDeliveryDate   DateTime? @map("actual_delivery_date")
+  subtotal             Float     @default(0)
+  tax                  Float     @default(0)
+  shippingCost         Float?    @map("shipping_cost")
+  total                Float     @default(0)
+  notes                String?
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  supplier Supplier              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  lines    PurchaseOrderLine[]
+
+  @@index([supplierId])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLine {
+  id               String @id @default(uuid()) @db.Uuid
+  purchaseOrderId  String @map("purchase_order_id") @db.Uuid
+  productId        String @map("product_id") @db.Uuid
+  quantity         Int
+  quantityReceived Int    @default(0) @map("quantity_received")
+  unitCost         Float  @map("unit_cost")
+  subtotal         Float
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseOrderId])
+  @@map("purchase_order_lines")
+}
+
+model PosTransaction {
+  id                     String   @id @default(uuid()) @db.Uuid
+  transactionNumber      String   @unique @map("transaction_number")
+  terminalId             String   @map("terminal_id")
+  locationCode           String   @map("location_code")
+  salesStaffId           String?  @map("sales_staff_id")
+  paymentMethod          String   @map("payment_method")
+  paymentStatus          String   @map("payment_status")
+  subtotal               Float
+  tax                    Float
+  amount                 Float
+  reconciliationStatus   String   @default("pending") @map("reconciliation_status")
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  lines PosTransactionLine[]
+
+  @@index([reconciliationStatus])
+  @@map("pos_transactions")
+}
+
+model PosTransactionLine {
+  id               String @id @default(uuid()) @db.Uuid
+  posTransactionId String @map("pos_transaction_id") @db.Uuid
+  productId        String @map("product_id") @db.Uuid
+  quantity         Int
+  unitPrice        Float  @map("unit_price")
+  lineTotal        Float  @map("line_total")
+
+  posTransaction PosTransaction @relation(fields: [posTransactionId], references: [id], onDelete: Cascade)
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([posTransactionId])
+  @@map("pos_transaction_lines")
+}
+
+model BankAccount {
+  id           String   @id @default(uuid()) @db.Uuid
+  accountName  String   @map("account_name")
+  accountNumber String  @map("account_number")
+  bsb          String
+  bankName     String   @map("bank_name")
+  accountType  String   @map("account_type")
+  feedProvider String   @map("feed_provider")
+  isActive     Boolean  @default(true) @map("is_active")
+  locationCode String?  @map("location_code")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  feedTransactions BankFeedTransaction[]
+
+  @@map("bank_accounts")
+}
+
+model BankFeedTransaction {
+  id              String    @id @default(uuid()) @db.Uuid
+  bankAccountId   String    @map("bank_account_id") @db.Uuid
+  transactionDate DateTime  @map("transaction_date")
+  description     String
+  reference       String    @default("")
+  credit          Float?
+  debit           Float?
+  balance         Float?
+  reconciled      Boolean   @default(false)
+  matchedPosTxId  String?   @map("matched_pos_tx_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  @@index([bankAccountId])
+  @@index([reconciled])
+  @@map("bank_feed_transactions")
+}
+
+model ContactSubmission {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  source    String   @default("portal")
+  status    String   @default("new")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  notes SubmissionNote[]
+
+  @@index([status])
+  @@map("contact_submissions")
+}
+
+model DemoRequest {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String
+  email         String
+  company       String?
+  phone         String?
+  message       String?
+  preferredDate DateTime? @map("preferred_date")
+  status        String   @default("pending")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  notes SubmissionNote[]
+
+  @@index([status])
+  @@map("demo_requests")
+}
+
+model SubmissionNote {
+  id                  String   @id @default(uuid()) @db.Uuid
+  contactSubmissionId String?  @map("contact_submission_id") @db.Uuid
+  demoRequestId       String?  @map("demo_request_id") @db.Uuid
+  noteType            String   @default("note") @map("note_type")
+  content             String
+  createdBy           String?  @map("created_by")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  contactSubmission ContactSubmission? @relation(fields: [contactSubmissionId], references: [id], onDelete: Cascade)
+  demoRequest       DemoRequest? @relation(fields: [demoRequestId], references: [id], onDelete: Cascade)
+
+  @@index([contactSubmissionId])
+  @@index([demoRequestId])
+  @@map("submission_notes")
+}
+
+model SalesFulfilment {
+  id                 String    @id @default(uuid()) @db.Uuid
+  cin7OrderMappingId String    @map("cin7_order_mapping_id")
+  cin7FulfilmentId   String?   @map("cin7_fulfilment_id")
+  orderReference     String?   @map("order_reference")
+  status             String
+  pickLocation       String?   @map("pick_location")
+  trackingNumber     String?   @map("tracking_number")
+  carrier            String?
+  shippedAt          DateTime? @map("shipped_at")
+  deliveredAt        DateTime? @map("delivered_at")
+  notes              String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@index([cin7OrderMappingId])
+  @@map("sales_fulfilments")
+}
+
+model SalesInvoice {
+  id                 String    @id @default(uuid()) @db.Uuid
+  cin7OrderMappingId String    @map("cin7_order_mapping_id")
+  cin7InvoiceId      String?   @map("cin7_invoice_id")
+  invoiceNumber      String?   @map("invoice_number")
+  invoiceDate        DateTime? @map("invoice_date") @db.Date
+  dueDate            DateTime? @map("due_date") @db.Date
+  amount             Float     @default(0)
+  currency           String    @default("AUD")
+  status             String
+  paidAt             DateTime? @map("paid_at")
+  orderReference     String?   @map("order_reference")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  payments SalesPayment[]
+
+  @@index([cin7OrderMappingId])
+  @@map("sales_invoices")
+}
+
+model SalesPayment {
+  id             String    @id @default(uuid()) @db.Uuid
+  salesInvoiceId String?   @map("sales_invoice_id") @db.Uuid
+  cin7InvoiceId  String?   @map("cin7_invoice_id")
+  cin7PaymentId  String?   @map("cin7_payment_id")
+  paymentMethod  String?   @map("payment_method")
+  amount         Float     @default(0)
+  currency       String    @default("AUD")
+  paymentDate    DateTime? @map("payment_date") @db.Date
+  reference      String?
+  status         String
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  invoice SalesInvoice? @relation(fields: [salesInvoiceId], references: [id], onDelete: SetNull)
+
+  @@index([salesInvoiceId])
+  @@map("sales_payments")
+}
+
+model GoodsReceipt {
+  id                 String    @id @default(uuid()) @db.Uuid
+  cin7PoMappingId    String?   @map("cin7_po_mapping_id")
+  poReference        String    @map("po_reference")
+  supplierName       String?   @map("supplier_name")
+  receivedBy         String?   @map("received_by")
+  receivedDate       DateTime  @map("received_date") @db.Date
+  locationId         String    @map("location_id")
+  notes              String?
+  status             String    @default("draft")
+  cin7ReceiptId      String?   @map("cin7_receipt_id")
+  totalItemsReceived Int       @default(0) @map("total_items_received")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  confirmedAt        DateTime? @map("confirmed_at")
+  syncedAt           DateTime? @map("synced_at")
+
+  lines GoodsReceiptLine[]
+
+  @@map("goods_receipts")
+}
+
+model GoodsReceiptLine {
+  id              String    @id @default(uuid()) @db.Uuid
+  goodsReceiptId  String    @map("goods_receipt_id") @db.Uuid
+  productId       String?   @map("product_id") @db.Uuid
+  sku             String
+  productName     String    @map("product_name")
+  orderedQty      Int?      @map("ordered_qty")
+  receivedQty     Int       @map("received_qty")
+  putAwayLocation String?   @map("put_away_location")
+  batchNumber     String?   @map("batch_number")
+  expiryDate      DateTime? @map("expiry_date") @db.Date
+  condition       String    @default("good")
+  notes           String?
+
+  goodsReceipt GoodsReceipt @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([goodsReceiptId])
+  @@map("goods_receipt_lines")
 }
 
 model AgentRun {
