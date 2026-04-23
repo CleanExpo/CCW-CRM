@@ -6,6 +6,31 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['pg'],
   typedRoutes: false,
   productionBrowserSourceMaps: false,
+  async redirects() {
+    return [
+      { source: '/orders/fulfilment', destination: '/dashboard/operations/fulfilment', permanent: false },
+      { source: '/orders', destination: '/dashboard/operations/orders', permanent: false },
+      { source: '/orders/:path*', destination: '/dashboard/operations/orders/:path*', permanent: false },
+      { source: '/quotes', destination: '/dashboard/operations/quotes', permanent: false },
+      { source: '/quotes/:path*', destination: '/dashboard/operations/quotes/:path*', permanent: false },
+      {
+        source: '/purchase-orders/receiving',
+        destination: '/dashboard/operations/purchase-orders/receiving',
+        permanent: false,
+      },
+      { source: '/purchase-orders', destination: '/dashboard/operations/purchase-orders', permanent: false },
+      {
+        source: '/purchase-orders/:path*',
+        destination: '/dashboard/operations/purchase-orders/:path*',
+        permanent: false,
+      },
+      { source: '/pos/reconciliation', destination: '/dashboard/operations/pos/reconciliation', permanent: false },
+      { source: '/pos', destination: '/dashboard/operations/pos', permanent: false },
+      { source: '/pos/:path*', destination: '/dashboard/operations/pos/:path*', permanent: false },
+      { source: '/submissions', destination: '/dashboard/operations/submissions', permanent: false },
+      { source: '/submissions/:path*', destination: '/dashboard/operations/submissions/:path*', permanent: false },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
