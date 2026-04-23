@@ -35,6 +35,7 @@ export async function GET() {
       recentQuotes,
       allProducts,
       topProductsByPrice,
+      deliveredLineItems,
     ] = await Promise.all([
       prisma.product.count({ where: { isActive: true } }),
       prisma.customer.count({ where: { isActive: true } }),
@@ -88,6 +89,14 @@ export async function GET() {
         orderBy: { price: 'desc' },
         take: 5,
       }),
+      prisma.orderLineItem.findMany({
+        where: { order: { status: 'delivered' } },
+        select: {
+          lineTotal: true,
+          quantity: true,
+          product: { select: { name: true, category: true } },
+        },
+      }),
     ]);
 
     const totalRevenue = Number(revenueThisMonthAgg._sum.total ?? 0);
@@ -123,49 +132,91 @@ export async function GET() {
     const formatCategory = (category: string) =>
       category.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
-    /** Until order line items exist in DB, split delivered revenue by inventory value share per category. */
-    const categorySales =
-      totalInventoryValue > 0 && totalDeliveredAllTime > 0
-        ? Array.from(categoryMap.entries()).map(([category, invVal]) => {
-            const share = invVal / totalInventoryValue;
-            const allocated = totalDeliveredAllTime * share;
-            return {
-              category: formatCategory(category),
-              value: allocated.toFixed(2),
-              percentage:
-                totalDeliveredAllTime > 0
-                  ? Math.round((allocated / totalDeliveredAllTime) * 100)
-                  : 0,
-            };
-          })
-        : Array.from(categoryMap.entries()).map(([category, value]) => ({
-            category: formatCategory(category),
-            value: value.toFixed(2),
-            percentage:
-              totalInventoryValue > 0 ? Math.round((value / totalInventoryValue) * 100) : 0,
-          }));
+    const lineRevenueSum = deliveredLineItems.reduce(
+      (s, row) => s + Number(row.lineTotal || 0),
+      0
+    );
+    const useOrderLineRollups = deliveredLineItems.length > 0 && lineRevenueSum >= 0.01;
 
-    const topProducts =
-      totalInventoryValue > 0 && totalDeliveredAllTime > 0
-        ? [...allProducts]
-            .map((p) => {
-              const lineValue = Number(p.price || 0) * Number(p.stock || 0);
-              const share = lineValue / totalInventoryValue;
-              const revenue = totalDeliveredAllTime * share;
-              const unitsProxy = Math.max(0, Math.round(share * deliveredOrderCount));
+    let categorySales: {
+      category: string;
+      value: string;
+      percentage: number;
+    }[];
+    let topProducts: { name: string; revenue: string; quantity_sold: number }[];
+
+    if (useOrderLineRollups) {
+      const catRevenue = new Map<string, number>();
+      const prodAgg = new Map<string, { name: string; revenue: number; qty: number }>();
+      for (const row of deliveredLineItems) {
+        const rawCat = row.product.category || 'accessories';
+        const amt = Number(row.lineTotal || 0);
+        catRevenue.set(rawCat, (catRevenue.get(rawCat) ?? 0) + amt);
+        const pname = row.product.name;
+        const cur = prodAgg.get(pname) ?? { name: pname, revenue: 0, qty: 0 };
+        cur.revenue += amt;
+        cur.qty += row.quantity;
+        prodAgg.set(pname, cur);
+      }
+      const denom = lineRevenueSum > 0 ? lineRevenueSum : 1;
+      categorySales = Array.from(catRevenue.entries()).map(([category, value]) => ({
+        category: formatCategory(category),
+        value: value.toFixed(2),
+        percentage: Math.round((value / denom) * 100),
+      }));
+      topProducts = [...prodAgg.values()]
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5)
+        .map((p) => ({
+          name: p.name,
+          revenue: p.revenue.toFixed(2),
+          quantity_sold: p.qty,
+        }));
+    } else {
+      /** No persisted lines yet: split delivered revenue by inventory value share per category. */
+      categorySales =
+        totalInventoryValue > 0 && totalDeliveredAllTime > 0
+          ? Array.from(categoryMap.entries()).map(([category, invVal]) => {
+              const share = invVal / totalInventoryValue;
+              const allocated = totalDeliveredAllTime * share;
               return {
-                name: p.name,
-                revenue: revenue.toFixed(2),
-                quantity_sold: unitsProxy,
+                category: formatCategory(category),
+                value: allocated.toFixed(2),
+                percentage:
+                  totalDeliveredAllTime > 0
+                    ? Math.round((allocated / totalDeliveredAllTime) * 100)
+                    : 0,
               };
             })
-            .sort((a, b) => parseFloat(b.revenue) - parseFloat(a.revenue))
-            .slice(0, 5)
-        : topProductsByPrice.map((p) => ({
-            name: p.name,
-            revenue: (Number(p.price || 0) * Number(p.stock || 0)).toFixed(2),
-            quantity_sold: Number(p.stock || 0),
-          }));
+          : Array.from(categoryMap.entries()).map(([category, value]) => ({
+              category: formatCategory(category),
+              value: value.toFixed(2),
+              percentage:
+                totalInventoryValue > 0 ? Math.round((value / totalInventoryValue) * 100) : 0,
+            }));
+
+      topProducts =
+        totalInventoryValue > 0 && totalDeliveredAllTime > 0
+          ? [...allProducts]
+              .map((p) => {
+                const lineValue = Number(p.price || 0) * Number(p.stock || 0);
+                const share = lineValue / totalInventoryValue;
+                const revenue = totalDeliveredAllTime * share;
+                const unitsProxy = Math.max(0, Math.round(share * deliveredOrderCount));
+                return {
+                  name: p.name,
+                  revenue: revenue.toFixed(2),
+                  quantity_sold: unitsProxy,
+                };
+              })
+              .sort((a, b) => parseFloat(b.revenue) - parseFloat(a.revenue))
+              .slice(0, 5)
+          : topProductsByPrice.map((p) => ({
+              name: p.name,
+              revenue: (Number(p.price || 0) * Number(p.stock || 0)).toFixed(2),
+              quantity_sold: Number(p.stock || 0),
+            }));
+    }
 
     const commercialActivity = [
       ...recentOrders.map((o) => ({
@@ -202,6 +253,12 @@ export async function GET() {
 
     const categorySalesNonZero = categorySales.filter((c) => parseFloat(c.value) >= 0.01);
 
+    const rollup = useOrderLineRollups
+      ? 'order_lines'
+      : totalDeliveredAllTime > 0 && totalInventoryValue > 0
+        ? 'allocated'
+        : 'inventory';
+
     return NextResponse.json({
       metrics: {
         total_revenue_this_month: totalRevenue.toFixed(2),
@@ -216,6 +273,7 @@ export async function GET() {
       top_products: topProducts,
       inventory_status: [],
       recent_activity: recentActivity,
+      rollup,
     });
   } catch {
     return NextResponse.json({ detail: 'Failed to load dashboard data' }, { status: 500 });
