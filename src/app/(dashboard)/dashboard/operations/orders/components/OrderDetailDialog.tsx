@@ -73,7 +73,7 @@ export function OrderDetailDialog({
     if (!orderId) {
       return;
     }
-    router.push(`/orders/${orderId}/invoice`);
+    router.push(`/dashboard/operations/orders/${orderId}/invoice`);
   };
 
   const handleSaveTracking = async () => {

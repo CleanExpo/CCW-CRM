@@ -33,7 +33,7 @@ export default function InvoicePage() {
         title: 'Error',
         description: message,
       });
-      router.push('/orders');
+      router.push('/dashboard/operations/orders');
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ export default function InvoicePage() {
 
       {/* Header Actions */}
       <div className="no-print mb-6 flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/orders')}>
+        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/operations/orders')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">

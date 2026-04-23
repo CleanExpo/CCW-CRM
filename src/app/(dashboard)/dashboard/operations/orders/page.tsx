@@ -24,6 +24,12 @@ import { exportOrdersToCSV, exportOrdersToPDF } from '@/lib/utils/csv-export';
 import { invoicesApi } from '@/lib/api/invoices';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import { formatAud, opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
 
 interface PaginatedResponse {
   items: Order[];
@@ -235,47 +241,49 @@ export default function OrdersPage() {
 
   return (
     <ErrorBoundary>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Equipment Orders</h1>
-            <p className="text-muted-foreground">
-              {selectedOrderIds.length > 0
-                ? `${selectedOrderIds.length} selected`
-                : 'Manage cleaning equipment sales orders and dispatch'}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {selectedOrderIds.length > 0 && (
-              <Button variant="destructive" onClick={handleBulkDelete}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Selected ({selectedOrderIds.length})
+      <OperationsPageLayout className="space-y-6">
+        <OperationsPageHeader
+          accent="ocean"
+          title="Equipment Orders"
+          description={
+            selectedOrderIds.length > 0
+              ? `${selectedOrderIds.length} order(s) selected — use actions below or bulk delete.`
+              : 'Manage cleaning equipment sales orders, dispatch, and customer fulfilment.'
+          }
+          icon={ShoppingCart}
+          actions={
+            <>
+              {selectedOrderIds.length > 0 && (
+                <Button variant="destructive" onClick={handleBulkDelete}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete ({selectedOrderIds.length})
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleExportPDF} disabled={orders.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Export PDF
               </Button>
-            )}
-            <Button variant="outline" onClick={handleExportPDF} disabled={orders.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export PDF
-            </Button>
-            <Button variant="outline" onClick={handleExport} disabled={orders.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button onClick={handleAddOrder}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Order
-            </Button>
-          </div>
-        </div>
+              <Button variant="outline" onClick={handleExport} disabled={orders.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button onClick={handleAddOrder}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Order
+              </Button>
+            </>
+          }
+        />
 
-        <Card>
+        <Card className={cn(opCardClass, opHeroSurfaceClass)}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Equipment Sales Orders</CardTitle>
-                <CardDescription>
+                <CardDescription className="dark:text-foreground/70">
                   {total} equipment orders on file
                   {lastUpdated && (
-                    <span className="text-muted-foreground ml-2 text-xs">
+                    <span className="text-muted-foreground ml-2 text-xs dark:text-foreground/60">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>
                   )}
@@ -349,8 +357,8 @@ export default function OrdersPage() {
                   {
                     key: 'total',
                     label: 'Total',
-                    className: 'font-semibold',
-                    render: (order) => `$${order.total}`,
+                    className: 'font-semibold tabular-nums',
+                    render: (order) => formatAud(order.total),
                   },
                   {
                     key: 'order_date',
@@ -473,7 +481,7 @@ export default function OrdersPage() {
           onOpenChange={setBulkDeleteDialogOpen}
           onSuccess={handleSuccess}
         />
-      </div>
+      </OperationsPageLayout>
     </ErrorBoundary>
   );
 }
