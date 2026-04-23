@@ -6,12 +6,12 @@ import { cn } from '@/lib/utils';
 
 const ACTIONS = [
   {
-    href: '/orders?create=1',
+    href: '/dashboard/operations/orders?create=1',
     label: 'New order',
     icon: ShoppingCart,
   },
   {
-    href: '/quotes?create=1',
+    href: '/dashboard/operations/quotes?create=1',
     label: 'New quote',
     icon: FileText,
   },
