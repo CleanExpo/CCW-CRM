@@ -70,7 +70,7 @@ export const CategorySalesChart = memo(function CategorySalesChart({ data }: Cat
     <div className="flex h-full min-h-[360px] flex-col">
       <DashboardWidgetHeader
         title="Category revenue mix"
-        description="Delivered order totals split by category using inventory value weights — approximate until line items are stored."
+        description="Uses line items on delivered orders when available; otherwise estimates from inventory mix."
       />
       <div className="min-h-0 flex-1">
         {chartData.length === 0 ? (
