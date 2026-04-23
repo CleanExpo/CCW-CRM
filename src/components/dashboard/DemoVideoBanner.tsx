@@ -58,20 +58,36 @@ const VIDEO_REGISTRY: Record<
  * To activate a specific video after uploading to YouTube:
  *   Set youtubeId: "VIDEO_ID" in VIDEO_REGISTRY above.
  */
+/** Map URL to a top-level registry key (e.g. `/orders`) for training video lookup. */
+function resolveTrainingModuleKey(pathname: string): { registryKey: string; moduleLabel: string } | null {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments[0] === "dashboard" && segments[1] === "operations" && segments[2]) {
+    const op = segments[2];
+    if (op === "orders" || op === "fulfilment") {
+      return { registryKey: "/orders", moduleLabel: op === "fulfilment" ? "fulfilment" : "orders" };
+    }
+    if (op === "quotes") return { registryKey: "/quotes", moduleLabel: "quotes" };
+    if (op === "purchase-orders") return { registryKey: "/purchase-orders", moduleLabel: "purchase-orders" };
+    if (op === "pos") return { registryKey: "/pos", moduleLabel: "pos" };
+    if (op === "submissions") return null;
+  }
+  if (segments.length === 0) return null;
+  return { registryKey: `/${segments[0]}`, moduleLabel: segments[0] };
+}
+
 export function DemoVideoBanner() {
   const pathname = usePathname();
 
-  const segments = pathname.split("/").filter(Boolean);
-  const moduleKey = segments.length > 0 ? `/${segments[0]}` : null;
-  if (!moduleKey) return null;
+  const resolved = resolveTrainingModuleKey(pathname);
+  if (!resolved) return null;
 
-  const entry = VIDEO_REGISTRY[moduleKey];
+  const entry = VIDEO_REGISTRY[resolved.registryKey];
   if (!entry) return null;
 
   return (
     <div className="mb-4">
       <DemoVideoLink
-        module={moduleKey.slice(1)}
+        module={resolved.moduleLabel}
         youtubeId={entry.youtubeId}
         channelId={YOUTUBE_CHANNEL_ID}
         title={entry.title}
