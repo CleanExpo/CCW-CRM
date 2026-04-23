@@ -79,7 +79,7 @@ export const QuoteConversionWidget = memo(function QuoteConversionWidget() {
         }
         action={
           <Button asChild variant="outline" size="sm" className="border-white/15 text-zinc-200 hover:bg-white/10">
-            <Link href="/quotes">Open quotes</Link>
+            <Link href="/dashboard/operations/quotes">Open quotes</Link>
           </Button>
         }
       />
