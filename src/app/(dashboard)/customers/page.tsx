@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 // PHASE 4: Search state persistence
 import { useSearchState } from '@/hooks/use-search-state';
@@ -47,6 +47,8 @@ interface PaginatedResponse {
 
 export default function CustomersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [total, setTotal] = useState(0);
@@ -110,6 +112,16 @@ export default function CustomersPage() {
   useEffect(() => {
     loadCustomers();
   }, [loadCustomers]);
+
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+    setSelectedCustomer(null);
+    setFormOpen(true);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('create');
+    const q = next.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   const handleAddCustomer = () => {
     setSelectedCustomer(null);

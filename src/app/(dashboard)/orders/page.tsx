@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 // PHASE 4: Search state persistence
 import { useSearchState } from '@/hooks/use-search-state';
@@ -33,6 +34,9 @@ interface PaginatedResponse {
 }
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
@@ -93,6 +97,16 @@ export default function OrdersPage() {
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+    setSelectedOrder(null);
+    setFormOpen(true);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('create');
+    const q = next.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   const handleAddOrder = () => {
     setSelectedOrder(null);

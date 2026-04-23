@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 // PHASE 4: Real-time inventory updates
 import { RealTimeIndicator } from '@/components/ui/real-time-indicator';
 import { useInventoryStream } from '@/hooks/use-sse';
@@ -67,6 +68,9 @@ interface PaginatedResponse {
 }
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
@@ -167,6 +171,16 @@ export default function ProductsPage() {
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
+
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+    setSelectedProduct(null);
+    setFormOpen(true);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('create');
+    const q = next.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-AU', {

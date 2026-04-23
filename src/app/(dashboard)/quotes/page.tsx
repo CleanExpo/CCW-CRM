@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api/client';
@@ -39,6 +40,9 @@ const statusColors: Record<string, 'default' | 'secondary' | 'destructive' | 'ou
 };
 
 export default function QuotesPage() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const { toast } = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [total, setTotal] = useState(0);
@@ -81,6 +85,16 @@ export default function QuotesPage() {
   useEffect(() => {
     loadQuotes();
   }, [loadQuotes]);
+
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+    setSelectedQuote(null);
+    setFormOpen(true);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('create');
+    const q = next.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   const handleAddQuote = () => {
     setSelectedQuote(null);
