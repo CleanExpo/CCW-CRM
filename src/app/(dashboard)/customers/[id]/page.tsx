@@ -464,7 +464,7 @@ export default function CustomerDetailPage() {
                         <tr
                           key={order.id}
                           className="hover:bg-muted/50 cursor-pointer border-b"
-                          onClick={() => router.push(`/orders?id=${order.id}`)}
+                          onClick={() => router.push(`/dashboard/operations/orders?id=${order.id}`)}
                         >
                           <td className="px-4 py-3 font-mono text-sm">{order.order_number}</td>
                           <td className="px-4 py-3 text-sm">
@@ -520,7 +520,9 @@ export default function CustomerDetailPage() {
                         <tr
                           key={quote.id}
                           className="hover:bg-muted/50 cursor-pointer border-b"
-                          onClick={() => router.push(`/quotes?id=${quote.id}`)}
+                          onClick={() =>
+                            router.push(`/dashboard/operations/quotes?id=${quote.id}`)
+                          }
                         >
                           <td className="px-4 py-3 font-mono text-sm">{quote.quote_number}</td>
                           <td className="px-4 py-3 text-sm">
