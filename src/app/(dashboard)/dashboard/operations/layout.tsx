@@ -1,0 +1,28 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Operations',
+  description:
+    'Sales operations — orders, fulfilment, quotes, procurement, POS, reconciliation, and portal submissions.',
+  robots: { index: false, follow: false },
+};
+
+/**
+ * Solid content panel on the dark gradient shell so cards, tables, and muted
+ * text stay legible (fixes low-contrast “glass” stacking).
+ */
+export default function DashboardOperationsLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="operations-route-scope relative overflow-hidden rounded-2xl border border-white/10 p-4 md:p-6">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(100%_70%_at_50%_-30%,hsl(var(--primary)/0.14),transparent_52%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-px bottom-0 left-[-1px] h-px bg-gradient-to-r from-transparent via-white/12 to-transparent"
+        aria-hidden
+      />
+      <div className="relative z-[1]">{children}</div>
+    </div>
+  );
+}
