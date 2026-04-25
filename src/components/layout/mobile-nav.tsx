@@ -23,7 +23,7 @@ import { logoutAndRedirectToLogin } from '@/lib/api/auth';
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/dashboard/inventory/products', icon: Package, label: 'Products' },
-  { href: '/customers', icon: Users, label: 'Customers' },
+  { href: '/dashboard/crm/customers', icon: Users, label: 'Customers' },
   { href: '/dashboard/operations/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/dashboard/operations/quotes', icon: FileText, label: 'Quotes' },
   { href: '/settings/integrations', icon: Settings, label: 'Settings' },
