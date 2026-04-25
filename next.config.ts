@@ -39,6 +39,23 @@ const nextConfig: NextConfig = {
       { source: '/containers/:path*', destination: '/dashboard/inventory/containers/:path*', permanent: false },
       { source: '/backorders', destination: '/dashboard/inventory/backorders', permanent: false },
       { source: '/backorders/:path*', destination: '/dashboard/inventory/backorders/:path*', permanent: false },
+      { source: '/customers/health', destination: '/dashboard/crm/client-health', permanent: false },
+      { source: '/customers/onboarding', destination: '/dashboard/crm/onboarding', permanent: false },
+      { source: '/customers/personas', destination: '/dashboard/crm/personas', permanent: false },
+      { source: '/customers', destination: '/dashboard/crm/customers', permanent: false },
+      { source: '/customers/:path*', destination: '/dashboard/crm/customers/:path*', permanent: false },
+      { source: '/contacts', destination: '/dashboard/crm/contacts', permanent: false },
+      { source: '/contacts/:path*', destination: '/dashboard/crm/contacts/:path*', permanent: false },
+      { source: '/contractors', destination: '/dashboard/crm/contractors', permanent: false },
+      { source: '/contractors/:path*', destination: '/dashboard/crm/contractors/:path*', permanent: false },
+      { source: '/service-requests', destination: '/dashboard/crm/service-requests', permanent: false },
+      {
+        source: '/service-requests/:path*',
+        destination: '/dashboard/crm/service-requests/:path*',
+        permanent: false,
+      },
+      { source: '/activities', destination: '/dashboard/crm/activities', permanent: false },
+      { source: '/activities/:path*', destination: '/dashboard/crm/activities/:path*', permanent: false },
     ];
   },
   images: {
