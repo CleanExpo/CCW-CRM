@@ -40,6 +40,10 @@ import {
   updateProductionRunStatus,
 } from '@/lib/api/cin7-bom';
 import { ChevronDown, ChevronRight, Layers, Loader2, Plus, RefreshCw } from 'lucide-react';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
 
 // ---------------------------------------------------------------------------
 // Demo fallback data (used when backend is unavailable)
@@ -506,15 +510,14 @@ export default function BomPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <nav className="text-muted-foreground mb-1 text-sm">Inventory / Bill of Materials</nav>
-          <h1 className="text-3xl font-bold tracking-tight">Bill of Materials</h1>
-          <p className="text-muted-foreground">Manage BOM definitions and track production runs</p>
-        </div>
-      </div>
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        sectionLabel="Inventory"
+        accent="horizon"
+        title="Bill of Materials"
+        description="Manage BOM definitions and track production runs."
+        icon={Layers}
+      />
 
       <Tabs defaultValue="boms">
         <TabsList>
@@ -792,7 +795,7 @@ export default function BomPage() {
         boms={boms}
         onSuccess={loadRuns}
       />
-    </div>
+    </OperationsPageLayout>
   );
 }
 
