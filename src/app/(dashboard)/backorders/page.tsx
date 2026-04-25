@@ -27,6 +27,10 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from "@/components/operations/OperationsPageHeader";
 
 interface Backorder {
   id: string;
@@ -183,27 +187,28 @@ export default function BackordersPage() {
   const overdueCount = backorders.filter((b) => b.is_overdue).length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-400 bg-clip-text text-transparent">
-            Backorders
-          </h1>
-          <p className="text-muted-foreground">
-            {pendingCount > 0
-              ? `${pendingCount} ${pendingCount === 1 ? "backorder" : "backorders"} awaiting fulfillment`
-              : "Track unfulfilled orders and manage customer expectations"}
-          </p>
-        </div>
-        <Button variant="outline" onClick={loadBackorders} disabled={loading}>
-          {loading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Clock className="mr-2 h-4 w-4" />
-          )}
-          Refresh
-        </Button>
-      </div>
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        sectionLabel="Inventory"
+        accent="pulse"
+        title="Backorders"
+        description={
+          pendingCount > 0
+            ? `${pendingCount} ${pendingCount === 1 ? "backorder" : "backorders"} awaiting fulfillment.`
+            : "Track unfulfilled orders and manage customer expectations."
+        }
+        icon={AlertCircle}
+        actions={
+          <Button variant="outline" onClick={loadBackorders} disabled={loading}>
+            {loading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Clock className="mr-2 h-4 w-4" />
+            )}
+            Refresh
+          </Button>
+        }
+      />
 
       {overdueCount > 0 && (
         <Card variant="elevated" className="border-warning/50 bg-warning/5">
@@ -313,7 +318,7 @@ export default function BackordersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </OperationsPageLayout>
   );
 }
 
@@ -530,7 +535,9 @@ function BackordersList({ backorders, loading, onNotify }: BackordersListProps) 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/containers/${backorder.container_id}`)}
+                    onClick={() =>
+                      router.push(`/dashboard/inventory/containers/${backorder.container_id}`)
+                    }
                   >
                     <Ship className="mr-2 h-3 w-3" />
                     View Container
