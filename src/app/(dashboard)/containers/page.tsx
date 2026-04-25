@@ -25,6 +25,10 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from "@/components/operations/OperationsPageHeader";
 
 interface Container {
   id: string;
@@ -166,33 +170,37 @@ export default function ContainersPage() {
   const overdueCount = containers.filter((c) => c.is_overdue).length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-400 bg-clip-text text-transparent">
-            Container Tracking
-          </h1>
-          <p className="text-muted-foreground">
-            {arrivingSoonCount > 0
-              ? `${arrivingSoonCount} ${arrivingSoonCount === 1 ? "container" : "containers"} arriving soon`
-              : "Track incoming shipments and ETAs"}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadContainers} disabled={loading}>
-            {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Clock className="mr-2 h-4 w-4" />
-            )}
-            Refresh
-          </Button>
-          <Button variant="gradient" onClick={() => router.push("/containers/new")}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Container
-          </Button>
-        </div>
-      </div>
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        sectionLabel="Inventory"
+        accent="horizon"
+        title="Containers"
+        description={
+          arrivingSoonCount > 0
+            ? `${arrivingSoonCount} ${arrivingSoonCount === 1 ? "container" : "containers"} arriving soon`
+            : "Track incoming shipments and ETAs."
+        }
+        icon={Ship}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={loadContainers} disabled={loading}>
+              {loading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Clock className="mr-2 h-4 w-4" />
+              )}
+              Refresh
+            </Button>
+            <Button
+              variant="gradient"
+              onClick={() => router.push("/dashboard/inventory/containers/new")}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Container
+            </Button>
+          </div>
+        }
+      />
 
       {overdueCount > 0 && (
         <Card variant="elevated" className="border-warning/50 bg-warning/5">
@@ -248,7 +256,7 @@ export default function ContainersPage() {
           />
         </TabsContent>
       </Tabs>
-    </div>
+    </OperationsPageLayout>
   );
 }
 
@@ -287,7 +295,7 @@ function ContainersList({ containers, loading, onRefresh }: ContainersListProps)
           <Button
             variant="gradient"
             className="mt-4"
-            onClick={() => router.push("/containers/new")}
+            onClick={() => router.push("/dashboard/inventory/containers/new")}
           >
             <Plus className="mr-2 h-4 w-4" />
             Create Container
@@ -313,7 +321,7 @@ function ContainersList({ containers, loading, onRefresh }: ContainersListProps)
               "transition-all hover:shadow-lg cursor-pointer",
               container.is_overdue && "border-l-4 border-l-warning/50 bg-warning/5"
             )}
-            onClick={() => router.push(`/containers/${container.id}`)}
+            onClick={() => router.push(`/dashboard/inventory/containers/${container.id}`)}
           >
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
@@ -455,7 +463,7 @@ function ContainersList({ containers, loading, onRefresh }: ContainersListProps)
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(`/containers/${container.id}`);
+                    router.push(`/dashboard/inventory/containers/${container.id}`);
                   }}
                 >
                   <Eye className="mr-2 h-3 w-3" />

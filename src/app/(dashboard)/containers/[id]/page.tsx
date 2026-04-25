@@ -141,7 +141,7 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ id: 
         <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
         <h2 className="text-2xl font-semibold mb-2">Container Not Found</h2>
         <p className="text-muted-foreground mb-4">The container you're looking for doesn't exist.</p>
-        <Button onClick={() => router.push("/containers")}>
+        <Button onClick={() => router.push("/dashboard/inventory/containers")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Containers
         </Button>
@@ -161,7 +161,7 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ id: 
           <Button
             variant="outline"
             size="icon"
-            onClick={() => router.push("/containers")}
+            onClick={() => router.push("/dashboard/inventory/containers")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
