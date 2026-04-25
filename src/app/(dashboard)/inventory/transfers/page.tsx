@@ -22,6 +22,10 @@ import { ResponsiveTable } from "@/components/responsive-table/ResponsiveTable";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { TransferStatusBadge } from "@/components/inventory/TransferStatusBadge";
 import { format } from "date-fns";
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from "@/components/operations/OperationsPageHeader";
 
 export default function TransfersPage() {
   const router = useRouter();
@@ -141,7 +145,7 @@ export default function TransfersPage() {
 
   // Navigate to detail page
   const handleViewTransfer = (transfer: StockTransfer) => {
-    router.push(`/inventory/transfers/${transfer.id}`);
+    router.push(`/dashboard/inventory/transfers/${transfer.id}`);
   };
 
   // Cancel transfer
@@ -243,16 +247,14 @@ export default function TransfersPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Stock Transfers</h1>
-          <p className="text-muted-foreground">
-            Track and manage stock transfers between locations
-          </p>
-        </div>
-      </div>
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        sectionLabel="Inventory"
+        accent="ocean"
+        title="Stock transfers"
+        description="Track and manage stock movement between locations."
+        icon={ArrowRight}
+      />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -417,6 +419,6 @@ export default function TransfersPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </OperationsPageLayout>
   );
 }

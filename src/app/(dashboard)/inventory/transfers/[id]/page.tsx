@@ -35,7 +35,7 @@ export default function TransferDetailPage() {
           title: "Error",
           description: message,
         });
-        router.push("/inventory/transfers");
+        router.push("/dashboard/inventory/transfers");
       } finally {
         setLoading(false);
       }
@@ -47,7 +47,7 @@ export default function TransferDetailPage() {
   }, [transferId, toast, router]);
 
   const handleBackToList = () => {
-    router.push("/inventory/transfers");
+    router.push("/dashboard/inventory/transfers");
   };
 
   const handleMarkInTransit = async () => {
