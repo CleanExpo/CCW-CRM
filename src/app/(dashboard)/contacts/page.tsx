@@ -266,7 +266,7 @@ export default function ContactsPage() {
       render: (contact: Contact) => (
         <div className="flex gap-2">
           <Link
-            href={`/contacts/${contact.id}` as never}
+            href={`/dashboard/crm/contacts/${contact.id}` as never}
             title="View contact"
             className="ring-offset-background focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
