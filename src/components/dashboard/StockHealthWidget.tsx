@@ -89,7 +89,7 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
         }
         action={
           <Button asChild variant="outline" size="sm" className="border-white/15 text-zinc-200 hover:bg-white/10">
-            <Link href="/products">View products</Link>
+            <Link href="/dashboard/inventory/products">View products</Link>
           </Button>
         }
       />
@@ -211,7 +211,7 @@ export const StockHealthWidget = memo(function StockHealthWidget() {
                       </div>
                     </div>
                     <Button asChild size="sm" variant="outline" className="shrink-0 border-white/15">
-                      <Link href={`/inventory/transfers?product=${product.id}`}>Transfer</Link>
+                      <Link href={`/dashboard/inventory/transfers?product=${product.id}`}>Transfer</Link>
                     </Button>
                   </div>
                 ))}

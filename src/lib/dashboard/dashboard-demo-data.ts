@@ -125,14 +125,14 @@ export const DASHBOARD_DEMO_URGENT: DemoUrgentItem[] = [
     label: '3 SKUs below reorder in Sydney',
     detail: 'Review suggested transfers from Brisbane',
     daysLeft: 2,
-    href: '/inventory',
+    href: '/dashboard/inventory',
   },
   {
     type: 'warranty',
     label: 'Warranty follow-up: TM-2400 batch',
     detail: 'Customer: Coastal Commercial Cleaning',
     daysLeft: 14,
-    href: '/warehouse',
+    href: '/dashboard/inventory/warehouse',
   },
 ];
 

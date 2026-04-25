@@ -134,7 +134,7 @@ export function InventoryForecastWidget({ thresholdDays = 30 }: InventoryForecas
         {/* View All Link */}
         {reorderCount > 3 && (
           <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link href="/inventory/forecast">
+            <Link href="/dashboard/inventory/forecast">
               View All Forecasts
               <ChevronRight className="ml-2 h-4 w-4" />
             </Link>

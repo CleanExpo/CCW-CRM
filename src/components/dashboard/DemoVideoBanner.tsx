@@ -71,6 +71,12 @@ function resolveTrainingModuleKey(pathname: string): { registryKey: string; modu
     if (op === "pos") return { registryKey: "/pos", moduleLabel: "pos" };
     if (op === "submissions") return null;
   }
+  if (segments[0] === "dashboard" && segments[1] === "inventory" && segments[2]) {
+    const inv = segments[2];
+    if (inv === "products") return { registryKey: "/products", moduleLabel: "products" };
+    if (inv === "warehouse") return { registryKey: "/warehouse", moduleLabel: "warehouse" };
+    if (inv === "backorders") return { registryKey: "/backorders", moduleLabel: "backorders" };
+  }
   if (segments.length === 0) return null;
   return { registryKey: `/${segments[0]}`, moduleLabel: segments[0] };
 }
