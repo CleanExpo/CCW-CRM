@@ -77,6 +77,16 @@ function resolveTrainingModuleKey(pathname: string): { registryKey: string; modu
     if (inv === "warehouse") return { registryKey: "/warehouse", moduleLabel: "warehouse" };
     if (inv === "backorders") return { registryKey: "/backorders", moduleLabel: "backorders" };
   }
+  if (segments[0] === "dashboard" && segments[1] === "crm" && segments[2]) {
+    const crm = segments[2];
+    if (crm === "customers" || crm === "client-health" || crm === "onboarding" || crm === "personas") {
+      return { registryKey: "/customers", moduleLabel: "customers" };
+    }
+    if (crm === "contacts") return { registryKey: "/contacts", moduleLabel: "contacts" };
+    if (crm === "contractors" || crm === "service-requests" || crm === "activities") {
+      return { registryKey: "/customers", moduleLabel: crm };
+    }
+  }
   if (segments.length === 0) return null;
   return { registryKey: `/${segments[0]}`, moduleLabel: segments[0] };
 }
