@@ -30,6 +30,10 @@ import { PaginationControls } from '@/components/ui/pagination-controls';
 import { StockTransferDialog } from '../components/StockTransferDialog';
 import { StockAdjustmentDialog } from '../components/StockAdjustmentDialog';
 import { format } from 'date-fns';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
 
 export default function InventoryStockPage() {
   const { toast } = useToast();
@@ -248,13 +252,17 @@ export default function InventoryStockPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        sectionLabel="Inventory"
+        accent="mint"
+        title="Stock list"
+        description="Manage stock levels, reorder signals, and inventory actions across all locations."
+        icon={Package}
+      />
+
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Stock Inventory</h1>
-          <p className="text-muted-foreground">Manage stock levels across all locations</p>
-        </div>
+        <div />
         <div className="text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
           <ScanBarcode className="h-4 w-4" />
           <span>Scanner ready</span>
@@ -431,6 +439,6 @@ export default function InventoryStockPage() {
           />
         </>
       )}
-    </div>
+    </OperationsPageLayout>
   );
 }
