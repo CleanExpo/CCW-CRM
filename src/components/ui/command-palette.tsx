@@ -78,7 +78,7 @@ export function CommandPalette() {
       label: 'Customers',
       description: 'Manage customer accounts',
       icon: Users,
-      action: () => navigate('/customers'),
+      action: () => navigate('/dashboard/crm/customers'),
       keywords: ['clients', 'accounts'],
     },
     {
@@ -120,7 +120,7 @@ export function CommandPalette() {
       label: 'New Customer',
       description: 'Add a new customer',
       icon: UserPlus,
-      action: () => navigate('/customers?action=new'),
+      action: () => navigate('/dashboard/crm/customers?action=new'),
       keywords: ['create', 'add'],
     },
     {
