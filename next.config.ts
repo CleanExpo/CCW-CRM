@@ -56,6 +56,8 @@ const nextConfig: NextConfig = {
       },
       { source: '/activities', destination: '/dashboard/crm/activities', permanent: false },
       { source: '/activities/:path*', destination: '/dashboard/crm/activities/:path*', permanent: false },
+      { source: '/workshop', destination: '/dashboard/workshop', permanent: false },
+      { source: '/workshop/:path*', destination: '/dashboard/workshop/:path*', permanent: false },
     ];
   },
   images: {

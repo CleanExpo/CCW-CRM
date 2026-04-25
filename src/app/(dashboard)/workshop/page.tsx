@@ -57,7 +57,7 @@ export default function WorkshopDashboardPage() {
               Truckmount service management across all locations
             </p>
           </div>
-          <Link href="/workshop/schedule">
+          <Link href="/dashboard/workshop/schedule">
             <Button>
               <CalendarDays className="mr-2 h-4 w-4" /> View Schedule
             </Button>
@@ -131,7 +131,7 @@ export default function WorkshopDashboardPage() {
                   </div>
                   {dashboard.overdue_equipment_count > 0 && (
                     <Link
-                      href="/workshop/equipment?overdue_only=true"
+                      href="/dashboard/workshop/equipment?overdue_only=true"
                       className="text-xs text-red-500 hover:underline"
                     >
                       View overdue
@@ -148,7 +148,7 @@ export default function WorkshopDashboardPage() {
                 <CardContent>
                   <div className="text-3xl font-bold">{dashboard.pending_reminders_count}</div>
                   <Link
-                    href="/workshop/reminders"
+                    href="/dashboard/workshop/reminders"
                     className="text-muted-foreground text-xs hover:underline"
                   >
                     Manage

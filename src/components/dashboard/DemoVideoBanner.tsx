@@ -87,6 +87,9 @@ function resolveTrainingModuleKey(pathname: string): { registryKey: string; modu
       return { registryKey: "/customers", moduleLabel: crm };
     }
   }
+  if (segments[0] === "dashboard" && segments[1] === "workshop") {
+    return { registryKey: "/workshop", moduleLabel: segments[2] ? "workshop" : "workshop" };
+  }
   if (segments.length === 0) return null;
   return { registryKey: `/${segments[0]}`, moduleLabel: segments[0] };
 }

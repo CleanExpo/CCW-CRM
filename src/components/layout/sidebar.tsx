@@ -109,11 +109,11 @@ const navGroups: NavGroup[] = [
     id: 'workshop',
     label: 'Workshop',
     items: [
-      { name: 'Workshop', href: '/workshop', icon: Wrench },
-      { name: 'Equipment', href: '/workshop/equipment', icon: Settings2 },
-      { name: 'Schedule', href: '/workshop/schedule', icon: CalendarDays },
-      { name: 'Templates', href: '/workshop/templates', icon: ClipboardList },
-      { name: 'Reminders', href: '/workshop/reminders', icon: BellRing },
+      { name: 'Workshop', href: '/dashboard/workshop', icon: Wrench },
+      { name: 'Equipment', href: '/dashboard/workshop/equipment', icon: Settings2 },
+      { name: 'Schedule', href: '/dashboard/workshop/schedule', icon: CalendarDays },
+      { name: 'Templates', href: '/dashboard/workshop/templates', icon: ClipboardList },
+      { name: 'Reminders', href: '/dashboard/workshop/reminders', icon: BellRing },
     ],
   },
   {
