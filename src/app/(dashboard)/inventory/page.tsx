@@ -24,6 +24,12 @@ import { StockTransferDialog } from './components/StockTransferDialog';
 import { StockAdjustmentDialog } from './components/StockAdjustmentDialog';
 import { ReorderPointDialog } from './components/ReorderPointDialog';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import { opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
 
 interface StockLocation {
   location: string;
@@ -285,19 +291,18 @@ export default function InventoryPage() {
 
   return (
     <ErrorBoundary>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Equipment Inventory Management</h1>
-            <p className="text-muted-foreground">
-              Multi-location stock tracking — Brisbane, Sydney &amp; Melbourne
-            </p>
-          </div>
-        </div>
+      <OperationsPageLayout className="space-y-6">
+        <OperationsPageHeader
+          sectionLabel="Inventory"
+          accent="lagoon"
+          title="Inventory overview"
+          description="Multi-location stock tracking across Brisbane, Sydney, and Melbourne with reorder monitoring."
+          icon={Package}
+        />
 
         {/* KPI Summary Cards */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass)}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total SKUs</CardTitle>
               <PackageOpen className="text-muted-foreground h-4 w-4" />
@@ -308,7 +313,7 @@ export default function InventoryPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass)}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
               <DollarSign className="text-muted-foreground h-4 w-4" />
@@ -321,7 +326,7 @@ export default function InventoryPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass)}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Below Reorder</CardTitle>
               <AlertTriangle
@@ -344,7 +349,7 @@ export default function InventoryPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={cn(opCardClass, opHeroSurfaceClass)}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Reservations</CardTitle>
               <BookOpen className="text-muted-foreground h-4 w-4" />
@@ -660,7 +665,7 @@ export default function InventoryPage() {
             onSuccess={handleDialogSuccess}
           />
         )}
-      </div>
+      </OperationsPageLayout>
     </ErrorBoundary>
   );
 }
