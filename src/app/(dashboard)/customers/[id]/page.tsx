@@ -219,7 +219,7 @@ export default function CustomerDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <p className="text-muted-foreground text-lg font-medium">Customer not found</p>
-        <Button onClick={() => router.push('/customers')} className="mt-4">
+        <Button onClick={() => router.push('/dashboard/crm/customers')} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Customers
         </Button>
@@ -289,14 +289,14 @@ export default function CustomerDetailPage() {
       <Breadcrumb
         items={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Customers', href: '/customers' },
+          { label: 'Customers', href: '/dashboard/crm/customers' },
           { label: customer.company_name },
         ]}
       />
 
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/customers')}>
+        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/crm/customers')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
