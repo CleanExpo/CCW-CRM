@@ -29,6 +29,16 @@ const nextConfig: NextConfig = {
       { source: '/pos/:path*', destination: '/dashboard/operations/pos/:path*', permanent: false },
       { source: '/submissions', destination: '/dashboard/operations/submissions', permanent: false },
       { source: '/submissions/:path*', destination: '/dashboard/operations/submissions/:path*', permanent: false },
+      { source: '/products', destination: '/dashboard/inventory/products', permanent: false },
+      { source: '/products/:path*', destination: '/dashboard/inventory/products/:path*', permanent: false },
+      { source: '/inventory', destination: '/dashboard/inventory', permanent: false },
+      { source: '/inventory/:path*', destination: '/dashboard/inventory/:path*', permanent: false },
+      { source: '/warehouse', destination: '/dashboard/inventory/warehouse', permanent: false },
+      { source: '/warehouse/:path*', destination: '/dashboard/inventory/warehouse/:path*', permanent: false },
+      { source: '/containers', destination: '/dashboard/inventory/containers', permanent: false },
+      { source: '/containers/:path*', destination: '/dashboard/inventory/containers/:path*', permanent: false },
+      { source: '/backorders', destination: '/dashboard/inventory/backorders', permanent: false },
+      { source: '/backorders/:path*', destination: '/dashboard/inventory/backorders/:path*', permanent: false },
     ];
   },
   images: {
