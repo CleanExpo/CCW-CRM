@@ -129,7 +129,7 @@ export default function ContactDetailPage() {
       title: 'Contact deleted',
       description: 'The contact has been removed successfully.',
     });
-    router.push('/contacts');
+    router.push('/dashboard/crm/contacts');
   };
 
   const handleAddActivity = () => {
@@ -185,7 +185,7 @@ export default function ContactDetailPage() {
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
         <User className="text-muted-foreground h-12 w-12" />
         <p className="text-muted-foreground text-lg font-medium">Contact not found</p>
-        <Button onClick={() => router.push('/contacts')}>
+        <Button onClick={() => router.push('/dashboard/crm/contacts')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Contacts
         </Button>
@@ -204,14 +204,14 @@ export default function ContactDetailPage() {
       <Breadcrumb
         items={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Contacts', href: '/contacts' },
+          { label: 'Contacts', href: '/dashboard/crm/contacts' },
           { label: fullName },
         ]}
       />
 
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/contacts')}>
+        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/crm/contacts')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
