@@ -96,7 +96,7 @@ export default function ProductDetailPage() {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Product not found';
       toast({ variant: 'destructive', title: 'Error', description: message });
-      router.push('/products');
+      router.push('/dashboard/inventory/products');
     } finally {
       setLoading(false);
     }
@@ -305,7 +305,7 @@ export default function ProductDetailPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/products">
+              <Link href="/dashboard/inventory/products">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Products
               </Link>

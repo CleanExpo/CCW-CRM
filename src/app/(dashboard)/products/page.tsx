@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api/client';
 import { useSearchState } from '@/hooks/use-search-state';
 import { exportProductsToCSV } from '@/lib/utils/csv-export';
-import { ArrowLeftRight, Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeftRight, Download, Eye, Package, Pencil, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { StockTransferDialog } from '../inventory/components/StockTransferDialog';
 import { BulkDeleteProductsDialog } from './components/BulkDeleteProductsDialog';
@@ -28,6 +28,12 @@ import { ProductForm } from './components/ProductForm';
 // PHASE 4: Last updated timestamps
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import { opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
 
 interface StockByLocation {
   location: string;
@@ -242,39 +248,45 @@ export default function ProductsPage() {
 
   return (
     <ErrorBoundary>
-      <div className="space-y-6">
+      <OperationsPageLayout className="space-y-6">
+        <OperationsPageHeader
+          sectionLabel="Inventory"
+          accent="forest"
+          title="Products"
+          description={
+            selectedProductIds.length > 0
+              ? `${selectedProductIds.length} selected item(s).`
+              : 'Manage your cleaning equipment catalog, stock availability, and pricing.'
+          }
+          icon={Package}
+          actions={
+            <div className="flex gap-2">
+              {selectedProductIds.length > 0 && (
+                <Button variant="destructive" onClick={handleBulkDelete}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Selected ({selectedProductIds.length})
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleExport} disabled={products.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button onClick={handleAddProduct}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Product
+              </Button>
+            </div>
+          }
+        />
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Cleaning Equipment Inventory</h1>
-              <p className="text-muted-foreground">
-                {selectedProductIds.length > 0
-                  ? `${selectedProductIds.length} selected`
-                  : 'Manage your cleaning equipment catalog'}
-              </p>
-            </div>
             {/* PHASE 4: Real-time connection indicator */}
             <RealTimeIndicator status={sseStatus} messagesReceived={sseStats.messagesReceived} />
           </div>
-          <div className="flex gap-2">
-            {selectedProductIds.length > 0 && (
-              <Button variant="destructive" onClick={handleBulkDelete}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Selected ({selectedProductIds.length})
-              </Button>
-            )}
-            <Button variant="outline" onClick={handleExport} disabled={products.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button onClick={handleAddProduct}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
-          </div>
         </div>
 
-        <Card>
+        <Card className={cn(opCardClass, opHeroSurfaceClass)}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -418,7 +430,7 @@ export default function ProductsPage() {
                           asChild
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Link href={`/products/${product.id}`}>
+                          <Link href={`/dashboard/inventory/products/${product.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -509,7 +521,7 @@ export default function ProductsPage() {
             onSuccess={handleSuccess}
           />
         )}
-      </div>
+      </OperationsPageLayout>
     </ErrorBoundary>
   );
 }
