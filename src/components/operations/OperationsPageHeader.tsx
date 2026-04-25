@@ -13,6 +13,7 @@ export interface OperationsPageHeaderProps {
   title: string;
   description: string;
   icon?: LucideIcon;
+  sectionLabel?: string;
   /** Colour story for hero orbs, bar, and icon — each operations route should pick one. */
   accent?: OperationsAccent;
   breadcrumbs?: OperationsBreadcrumb[];
@@ -64,6 +65,7 @@ export function OperationsPageHeader({
   title,
   description,
   icon: Icon,
+  sectionLabel = 'Operations',
   accent = 'ocean',
   breadcrumbs,
   actions,
@@ -125,7 +127,7 @@ export function OperationsPageHeader({
           <div className="flex items-center gap-2">
             <span className="inline-flex h-1.5 w-1.5 rounded-full bg-gradient-to-br from-white/80 to-white/30 shadow-[0_0_12px_hsl(var(--primary)/0.65)] ring-2 ring-primary/40" />
             <p className="text-[0.65rem] font-semibold tracking-[0.22em] text-muted-foreground uppercase dark:text-foreground/60">
-              Operations
+              {sectionLabel}
             </p>
           </div>
           {breadcrumbs && breadcrumbs.length > 0 && (
