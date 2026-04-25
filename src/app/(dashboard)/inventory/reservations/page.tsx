@@ -24,6 +24,10 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { StockReservationDialog } from "@/components/inventory/StockReservationDialog";
 import { ReleaseReservationDialog } from "@/components/inventory/ReleaseReservationDialog";
 import { format, formatDistanceToNow, isPast, differenceInHours } from "date-fns";
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from "@/components/operations/OperationsPageHeader";
 
 interface PaginatedReservationsResponse {
   items: StockReservation[];
@@ -306,20 +310,20 @@ export default function ReservationsPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Stock Reservations</h1>
-          <p className="text-muted-foreground">
-            View and manage order-linked stock holds
-          </p>
-        </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Package className="h-4 w-4 mr-2" />
-          New Reservation
-        </Button>
-      </div>
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        sectionLabel="Inventory"
+        accent="dawn"
+        title="Reservations"
+        description="View and manage order-linked stock holds."
+        icon={Box}
+        actions={
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Package className="h-4 w-4 mr-2" />
+            New Reservation
+          </Button>
+        }
+      />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -485,6 +489,6 @@ export default function ReservationsPage() {
         onOpenChange={setReleaseDialogOpen}
         onSuccess={loadReservations}
       />
-    </div>
+    </OperationsPageLayout>
   );
 }
