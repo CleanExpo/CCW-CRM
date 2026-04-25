@@ -21,7 +21,7 @@ const ACTIONS = [
     icon: Package,
   },
   {
-    href: '/customers?create=1',
+    href: '/dashboard/crm/customers?create=1',
     label: 'New customer',
     icon: UserPlus,
   },
