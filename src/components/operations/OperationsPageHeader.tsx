@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
-import { ChevronRight, type LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { OPERATIONS_ACCENT_STYLES, type OperationsAccent } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
+import Link from 'next/link';
 
 export type { OperationsAccent } from '@/lib/operations/ui';
 
@@ -25,7 +25,10 @@ export interface OperationsPageHeaderProps {
 function OperationsHeroArt({ strokeClass }: { strokeClass: string }) {
   return (
     <svg
-      className={cn('pointer-events-none absolute -right-6 bottom-0 h-[min(100%,320px)] w-[min(92vw,340px)] translate-y-[8%] sm:right-4 sm:top-1/2 sm:h-[280px] sm:w-[300px] sm:translate-y-[-45%]', strokeClass)}
+      className={cn(
+        'pointer-events-none absolute -right-6 bottom-0 h-[min(100%,320px)] w-[min(92vw,340px)] translate-y-[8%] sm:top-1/2 sm:right-4 sm:h-[280px] sm:w-[300px] sm:translate-y-[-45%]',
+        strokeClass
+      )}
       viewBox="0 0 300 260"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -77,8 +80,8 @@ export function OperationsPageHeader({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-lg backdrop-blur-md sm:rounded-3xl',
-        '[.operations-route-scope_&]:border-white/[0.14] [.operations-route-scope_&]:bg-gradient-to-br [.operations-route-scope_&]:from-card [.operations-route-scope_&]:via-card/95 [.operations-route-scope_&]:to-card/90',
+        'border-border/70 bg-card/90 relative overflow-hidden rounded-2xl border shadow-lg backdrop-blur-md sm:rounded-3xl',
+        '[.operations-route-scope_&]:from-card [.operations-route-scope_&]:via-card/95 [.operations-route-scope_&]:to-card/90 [.operations-route-scope_&]:border-white/[0.14] [.operations-route-scope_&]:bg-gradient-to-br',
         '[.operations-route-scope_&]:shadow-[0_20px_50px_-24px_rgba(0,0,0,0.55)]',
         className
       )}
@@ -93,21 +96,21 @@ export function OperationsPageHeader({
 
       <div
         className={cn(
-          'pointer-events-none absolute -right-24 top-1/2 h-[min(100vw,420px)] w-[min(100vw,420px)] -translate-y-1/2 rounded-full blur-3xl',
+          'pointer-events-none absolute top-1/2 -right-24 h-[min(100vw,420px)] w-[min(100vw,420px)] -translate-y-1/2 rounded-full blur-3xl',
           pal.orbA
         )}
         aria-hidden
       />
       <div
         className={cn(
-          'pointer-events-none absolute -left-28 -top-28 h-72 w-72 rounded-full blur-3xl',
+          'pointer-events-none absolute -top-28 -left-28 h-72 w-72 rounded-full blur-3xl',
           pal.orbB
         )}
         aria-hidden
       />
 
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.4] dark:opacity-[0.22] [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
+        className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black_55%,transparent)] opacity-[0.4] dark:opacity-[0.22]"
         style={{
           backgroundImage: `linear-gradient(to right, hsl(var(--foreground) / 0.055) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--foreground) / 0.055) 1px, transparent 1px)`,
           backgroundSize: '28px 28px',
@@ -116,23 +119,23 @@ export function OperationsPageHeader({
       />
 
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.08] via-transparent to-transparent"
+        className="from-primary/[0.08] pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent to-transparent"
         aria-hidden
       />
 
       <OperationsHeroArt strokeClass={pal.art} />
 
       <div className="relative z-[1] flex flex-col gap-5 p-6 sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:p-8">
-        <div className="min-w-0 max-w-[min(100%,42rem)] space-y-3 sm:max-w-[min(100%,36rem)]">
+        <div className="max-w-[min(100%,42rem)] min-w-0 space-y-3 sm:max-w-[min(100%,36rem)]">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-gradient-to-br from-white/80 to-white/30 shadow-[0_0_12px_hsl(var(--primary)/0.65)] ring-2 ring-primary/40" />
-            <p className="text-[0.65rem] font-semibold tracking-[0.22em] text-muted-foreground uppercase dark:text-foreground/60">
+            <span className="ring-primary/40 inline-flex h-1.5 w-1.5 rounded-full bg-gradient-to-br from-white/80 to-white/30 shadow-[0_0_12px_hsl(var(--primary)/0.65)] ring-2" />
+            <p className="text-muted-foreground dark:text-foreground/60 text-[0.65rem] font-semibold tracking-[0.22em] uppercase">
               {sectionLabel}
             </p>
           </div>
           {breadcrumbs && breadcrumbs.length > 0 && (
             <nav
-              className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground dark:text-foreground/70"
+              className="text-muted-foreground dark:text-foreground/70 flex flex-wrap items-center gap-1 text-xs"
               aria-label="Breadcrumb"
             >
               {breadcrumbs.map((c, i) => (
@@ -141,7 +144,7 @@ export function OperationsPageHeader({
                   {c.href ? (
                     <Link
                       href={c.href}
-                      className="hover:text-foreground rounded-md px-0.5 transition-colors underline-offset-4 hover:underline"
+                      className="hover:text-foreground rounded-md px-0.5 underline-offset-4 transition-colors hover:underline"
                     >
                       {c.label}
                     </Link>
@@ -166,8 +169,10 @@ export function OperationsPageHeader({
               </div>
             )}
             <div className="min-w-0 pt-0.5">
-              <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{title}</h1>
-              <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed text-pretty dark:text-foreground/78">
+              <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+                {title}
+              </h1>
+              <p className="text-muted-foreground dark:text-foreground/78 mt-2 max-w-2xl text-sm leading-relaxed text-pretty">
                 {description}
               </p>
               {meta}
@@ -192,13 +197,13 @@ export function OperationsPageLayout({
   className?: string;
 }) {
   return (
-    <div className={cn('relative mx-auto max-w-7xl', className)}>
+    <div className={cn('relative mx-auto', className)}>
       <div
-        className="pointer-events-none absolute -left-20 top-32 h-56 w-56 rounded-full bg-primary/[0.07] blur-3xl dark:bg-primary/[0.09]"
+        className="bg-primary/[0.07] dark:bg-primary/[0.09] pointer-events-none absolute top-32 -left-20 h-56 w-56 rounded-full blur-3xl"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -right-12 bottom-8 h-64 w-64 rounded-full bg-primary/[0.05] blur-3xl dark:bg-primary/[0.06]"
+        className="bg-primary/[0.05] dark:bg-primary/[0.06] pointer-events-none absolute -right-12 bottom-8 h-64 w-64 rounded-full blur-3xl"
         aria-hidden
       />
       <div className="relative z-0">{children}</div>
