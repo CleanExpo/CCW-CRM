@@ -70,7 +70,7 @@ export function CommandPalette() {
       label: 'Products',
       description: 'Manage product catalog',
       icon: Package,
-      action: () => navigate('/products'),
+      action: () => navigate('/dashboard/inventory/products'),
       keywords: ['catalog', 'items', 'inventory'],
     },
     {
@@ -112,7 +112,7 @@ export function CommandPalette() {
       label: 'New Product',
       description: 'Create a new product',
       icon: Package,
-      action: () => navigate('/products?action=new'),
+      action: () => navigate('/dashboard/inventory/products?action=new'),
       keywords: ['create', 'add'],
     },
     {

@@ -16,7 +16,7 @@ const ACTIONS = [
     icon: FileText,
   },
   {
-    href: '/products?create=1',
+    href: '/dashboard/inventory/products?create=1',
     label: 'New product',
     icon: Package,
   },
