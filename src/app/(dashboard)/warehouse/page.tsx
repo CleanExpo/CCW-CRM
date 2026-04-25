@@ -49,6 +49,10 @@ import {
   type WarehouseOpsPayload,
 } from '@/types/inventory';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
 
 const LOCATIONS = ['brisbane', 'sydney', 'melbourne'] as const;
 type Location = (typeof LOCATIONS)[number];
@@ -425,26 +429,27 @@ export default function WarehouseOpsPage() {
 
   return (
     <ErrorBoundary>
-      <div className="space-y-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Warehouse Operations</h1>
-            <p className="text-muted-foreground">
-              Receiving, pick/pack, returns, location stock, and inter-location transfers.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={loadOps} disabled={isLoading}>
-              {isLoading ? 'Refreshing...' : 'Refresh'}
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/inventory">Open inventory</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/containers">Start receiving</Link>
-            </Button>
-          </div>
-        </div>
+      <OperationsPageLayout className="space-y-8">
+        <OperationsPageHeader
+          sectionLabel="Inventory"
+          accent="dawn"
+          title="Warehouse ops"
+          description="Receiving, pick/pack, returns, location stock, and inter-location transfers."
+          icon={Truck}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={loadOps} disabled={isLoading}>
+                {isLoading ? 'Refreshing...' : 'Refresh'}
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/inventory">Open inventory</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/dashboard/inventory/containers">Start receiving</Link>
+              </Button>
+            </div>
+          }
+        />
         <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
           <span>{lastUpdated ? `Updated ${lastUpdated}` : 'Loading latest signal...'}</span>
           {error ? <Badge variant="destructive">{error}</Badge> : null}
@@ -565,7 +570,7 @@ export default function WarehouseOpsPage() {
                       </div>
                     ))}
                     <Button variant="outline" size="sm" asChild>
-                      <Link href="/containers">View inbound plan</Link>
+                      <Link href="/dashboard/inventory/containers">View inbound plan</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -962,7 +967,7 @@ export default function WarehouseOpsPage() {
                     </p>
                   </div>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/inventory">View transfer history</Link>
+                    <Link href="/dashboard/inventory">View transfer history</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -1469,7 +1474,7 @@ export default function WarehouseOpsPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </OperationsPageLayout>
     </ErrorBoundary>
   );
 }
