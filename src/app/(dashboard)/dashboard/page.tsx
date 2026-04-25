@@ -267,7 +267,7 @@ export default function DashboardPage() {
             label: `${c.cert_type} expiring`,
             detail: c.technician_name || c.company_name || 'Unknown technician',
             daysLeft: c.days_until_expiry,
-            href: '/customers',
+            href: '/dashboard/crm/customers',
           });
         });
         if (dashboardData.metrics.low_stock_alerts > 0) {
