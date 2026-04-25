@@ -41,6 +41,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useInventoryForecast, type ProductForecast } from '@/hooks/use-inventory-forecast';
 import { inventoryApi } from '@/lib/api/inventory';
 import { ReorderRuleDialog } from '../components/ReorderRuleDialog';
+import {
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
 
 export default function InventoryForecastPage() {
   const { toast } = useToast();
@@ -152,26 +156,26 @@ export default function InventoryForecastPage() {
     data?.reorder_recommendations.filter((f) => f.recommendation.urgency === 'high').length || 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Inventory Forecast</h1>
-          <p className="text-muted-foreground">
-            AI-powered demand prediction and reorder recommendations
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleExport} disabled={!data}>
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button onClick={handleRefresh} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
+    <OperationsPageLayout className="space-y-6">
+      <OperationsPageHeader
+        sectionLabel="Inventory"
+        accent="aurora"
+        title="Stock forecast"
+        description="AI-powered demand prediction and reorder recommendations."
+        icon={TrendingUp}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleExport} disabled={!data}>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button onClick={handleRefresh} disabled={loading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+        }
+      />
 
       {/* Summary Cards */}
       {data && (
@@ -344,7 +348,7 @@ export default function InventoryForecastPage() {
           onSuccess={() => setRuleTarget(null)}
         />
       )}
-    </div>
+    </OperationsPageLayout>
   );
 }
 
