@@ -90,7 +90,7 @@ export default function InvoicesPage() {
   }, [loadInvoices]);
 
   const handleViewInvoice = (invoice: InvoiceSummary) => {
-    router.push(`/invoices/${invoice.id}`);
+    router.push(`/dashboard/finance/invoices/${invoice.id}`);
   };
 
   const handleRecordPayment = (invoice: InvoiceSummary) => {
