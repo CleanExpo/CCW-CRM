@@ -160,7 +160,7 @@ const navGroups: NavGroup[] = [
     id: 'admin',
     label: 'Admin',
     items: [
-      { name: 'Workflows', href: '/workflows', icon: GitMerge },
+      { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge },
       { name: 'Approvals', href: '/approvals', icon: CheckCircle },
       { name: 'Alerts', href: '/alerts', icon: Bell },
       { name: 'Monitoring', href: '/monitoring', icon: Activity },
