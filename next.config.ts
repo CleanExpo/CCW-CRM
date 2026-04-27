@@ -77,6 +77,8 @@ const nextConfig: NextConfig = {
       { source: '/marketing/:path*', destination: '/dashboard/ai-reports/marketing/:path*', permanent: false },
       { source: '/marketplace', destination: '/dashboard/ai-reports/marketplace', permanent: false },
       { source: '/marketplace/:path*', destination: '/dashboard/ai-reports/marketplace/:path*', permanent: false },
+      { source: '/workflows', destination: '/dashboard/workflows', permanent: false },
+      { source: '/workflows/:path*', destination: '/dashboard/workflows/:path*', permanent: false },
     ];
   },
   images: {
