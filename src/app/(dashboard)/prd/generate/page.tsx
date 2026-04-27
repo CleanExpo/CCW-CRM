@@ -90,7 +90,7 @@ export default function PRDGeneratePage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Link href={`/prd/${prdId}`}>
+                  <Link href={`/dashboard/ai-reports/prd/${prdId}`}>
                     <Button size="lg">
                       <Eye className="mr-2 h-4 w-4" />
                       View PRD
