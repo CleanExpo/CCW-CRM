@@ -185,7 +185,7 @@ export function SendGridConnectionCard({
                 </Button>
               )}
               <Button asChild className="flex-1">
-                <Link href="/emails">
+                <Link href="/dashboard/finance/emails">
                   <Mail className="mr-2 h-4 w-4" />
                   Manage Emails
                 </Link>
