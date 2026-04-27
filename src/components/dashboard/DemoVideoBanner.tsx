@@ -90,6 +90,20 @@ function resolveTrainingModuleKey(pathname: string): { registryKey: string; modu
   if (segments[0] === "dashboard" && segments[1] === "workshop") {
     return { registryKey: "/workshop", moduleLabel: segments[2] ? "workshop" : "workshop" };
   }
+  if (segments[0] === "dashboard" && segments[1] === "finance") {
+    const fin = segments[2];
+    if (fin === "invoices") {
+      return { registryKey: "/invoices", moduleLabel: "invoices" };
+    }
+    return null;
+  }
+  if (segments[0] === "dashboard" && segments[1] === "ai-reports") {
+    const air = segments[2];
+    if (air === "ai-assistant") return { registryKey: "/ai-assistant", moduleLabel: "ai-assistant" };
+    if (air === "marketing") return { registryKey: "/marketing", moduleLabel: "marketing" };
+    if (air === "reports") return { registryKey: "/reports", moduleLabel: "reports" };
+    return null;
+  }
   if (segments.length === 0) return null;
   return { registryKey: `/${segments[0]}`, moduleLabel: segments[0] };
 }
