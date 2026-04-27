@@ -53,7 +53,7 @@ export default function InvoiceDetailPage() {
         description: message,
       });
       // Redirect back to invoices list if invoice not found
-      router.push('/invoices');
+      router.push('/dashboard/finance/invoices');
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function InvoiceDetailPage() {
   }, [loadInvoice]);
 
   const handleBack = () => {
-    router.push('/invoices');
+    router.push('/dashboard/finance/invoices');
   };
 
   const handleEdit = () => {
@@ -114,7 +114,7 @@ export default function InvoiceDetailPage() {
       title: 'Invoice Deleted',
       description: 'Invoice has been deleted successfully',
     });
-    router.push('/invoices');
+    router.push('/dashboard/finance/invoices');
   };
 
   const handlePaymentRecorded = () => {
