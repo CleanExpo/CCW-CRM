@@ -45,6 +45,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { workflowsApi, type WorkflowTemplate, type WorkflowInstance } from '@/lib/api/workflows';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { OperationsPageHeader } from '@/components/operations/OperationsPageHeader';
+import { opCardClass, opInsetClass } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -63,10 +66,14 @@ const TRIGGER_EVENTS = [
   { value: 'low_stock', label: 'Low Stock Alert' },
 ];
 
-const INSTANCE_STATUS_COLORS: Record<string, string> = {
-  running: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
+/** Status chips — explicit light + dark tones for readability on elevated surfaces */
+const INSTANCE_STATUS_CLASS: Record<string, string> = {
+  running:
+    'border-sky-500/35 bg-sky-500/15 text-sky-950 dark:border-sky-500/30 dark:bg-sky-500/12 dark:text-sky-100',
+  completed:
+    'border-emerald-500/35 bg-emerald-500/15 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/12 dark:text-emerald-100',
+  failed:
+    'border-destructive/40 bg-destructive/15 text-destructive dark:bg-destructive/12',
 };
 
 // ---------------------------------------------------------------------------
@@ -100,12 +107,12 @@ function TemplateCard({ template, onToggle, onEdit, onDelete }: TemplateCardProp
     TRIGGER_EVENTS.find((e) => e.value === template.trigger_event)?.label ?? template.trigger_event;
 
   return (
-    <Card className="transition-shadow hover:shadow-md">
+    <Card className={cn('transition-shadow hover:shadow-md', opCardClass)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <CardTitle className="flex items-center gap-2 text-base">
-              <GitMerge className="text-primary h-4 w-4 flex-shrink-0" />
+              <GitMerge className="text-primary h-4 w-4 shrink-0" />
               <span className="truncate">{template.name}</span>
             </CardTitle>
             {template.description && (
@@ -122,8 +129,8 @@ function TemplateCard({ template, onToggle, onEdit, onDelete }: TemplateCardProp
 
       <CardContent className="space-y-3">
         {/* Trigger */}
-        <div className="flex items-center gap-2 rounded border px-3 py-2 text-sm">
-          <Zap className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+        <div className="border-border bg-muted/35 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+          <Zap className="text-primary h-3.5 w-3.5 shrink-0" />
           <span className="text-muted-foreground">Trigger:</span>
           <span className="font-medium">{triggerLabel}</span>
         </div>
@@ -416,20 +423,20 @@ export default function WorkflowsPage() {
 
   return (
     <ErrorBoundary>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Equipment Order Workflow Automation</h1>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Automate equipment ordering, approvals, and fulfilment with trigger-based workflows
-            </p>
-          </div>
-          <Button onClick={handleNew}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Workflow
-          </Button>
-        </div>
+      <div className="space-y-8">
+        <OperationsPageHeader
+          title="Workflow automation"
+          description="Trigger-based templates and recent runs for equipment ordering, approvals, and fulfilment."
+          icon={GitMerge}
+          sectionLabel="Admin"
+          accent="aurora"
+          actions={
+            <Button onClick={handleNew}>
+              <Plus className="mr-2 h-4 w-4" />
+              New workflow
+            </Button>
+          }
+        />
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -437,12 +444,12 @@ export default function WorkflowsPage() {
             { label: 'Total', value: templates.length },
             { label: 'Active', value: active },
             { label: 'Paused', value: templates.length - active },
-            { label: 'Running Now', value: runningInstances },
+            { label: 'Running now', value: runningInstances },
           ].map((s) => (
-            <Card key={s.label}>
+            <Card key={s.label} className={opCardClass}>
               <CardContent className="pt-4">
                 <p className="text-muted-foreground text-xs">{s.label}</p>
-                <p className="text-2xl font-bold">{s.value}</p>
+                <p className="text-card-foreground text-2xl font-bold tabular-nums">{s.value}</p>
               </CardContent>
             </Card>
           ))}
@@ -450,15 +457,18 @@ export default function WorkflowsPage() {
 
         {/* Templates grid */}
         <div>
-          <h2 className="mb-3 text-base font-semibold">Templates</h2>
+          <h2 className="text-foreground mb-3 text-base font-semibold">Templates</h2>
           {loading ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-muted h-40 animate-pulse rounded-lg" />
+                <div
+                  key={i}
+                  className="border-border bg-muted/50 h-40 animate-pulse rounded-xl border"
+                />
               ))}
             </div>
           ) : templates.length === 0 ? (
-            <Card>
+            <Card className={opCardClass}>
               <CardContent className="flex flex-col items-center py-12 text-center">
                 <GitMerge className="text-muted-foreground mb-3 h-10 w-10" />
                 <p className="font-medium">No workflows yet</p>
@@ -489,15 +499,18 @@ export default function WorkflowsPage() {
         {/* Recent instances */}
         {instances.length > 0 && (
           <div>
-            <h2 className="mb-3 text-base font-semibold">Recent Executions</h2>
+            <h2 className="text-foreground mb-3 text-base font-semibold">Recent executions</h2>
             <div className="space-y-2">
               {instances.map((inst) => (
                 <div
                   key={inst.id}
-                  className="flex items-center justify-between rounded border px-4 py-2"
+                  className={cn(
+                    'flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap',
+                    opInsetClass
+                  )}
                 >
-                  <div>
-                    <p className="text-sm font-medium">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-foreground text-sm font-medium">
                       {inst.trigger_entity_type} · {inst.trigger_entity_id?.slice(0, 8) ?? '—'}
                     </p>
                     <p className="text-muted-foreground text-xs">
@@ -508,9 +521,11 @@ export default function WorkflowsPage() {
                     )}
                   </div>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      INSTANCE_STATUS_COLORS[inst.status] ?? 'bg-gray-100 text-gray-700'
-                    }`}
+                    className={cn(
+                      'shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize',
+                      INSTANCE_STATUS_CLASS[inst.status] ??
+                        'border-border bg-muted/70 text-muted-foreground'
+                    )}
                   >
                     {inst.status}
                   </span>
