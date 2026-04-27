@@ -62,7 +62,7 @@ export function PRDDetailView({ prd }: PRDDetailViewProps) {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Link href="/prd/generate">
+            <Link href="/dashboard/ai-reports/prd/generate">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
