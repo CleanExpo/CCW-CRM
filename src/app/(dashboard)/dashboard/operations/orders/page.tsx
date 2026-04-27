@@ -224,7 +224,7 @@ export default function OrdersPage() {
         title: 'Invoice Generated',
         description: `Invoice created — redirecting to invoice.`,
       });
-      window.location.href = `/invoices/${invoice.id}`;
+      window.location.href = `/dashboard/finance/invoices/${invoice.id}`;
     } catch (error: unknown) {
       toast({
         title: 'Error',
