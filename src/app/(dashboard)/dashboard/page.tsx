@@ -604,7 +604,7 @@ export default function DashboardPage() {
                         </BentoCardDescription>
                       </div>
                     </div>
-                    <Link href="/insights" className="shrink-0">
+                    <Link href="/dashboard/ai-reports/insights" className="shrink-0">
                       <Button variant="outline" size="sm">
                         View all
                         <ArrowRight className="ml-2 h-4 w-4" />
