@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/layout/NotificationBell';
-import { logoutAndRedirectToLogin } from '@/lib/api/auth';
+import { authApi, logoutAndRedirectToLogin } from '@/lib/api/auth';
 import {
   LayoutDashboard,
   Package,
@@ -217,6 +217,7 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 export function Sidebar() {
   const pathname = usePathname();
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN));
+  const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'billing' | null>(null);
 
   // Persist collapsed state in localStorage
   useEffect(() => {
@@ -230,9 +231,31 @@ export function Sidebar() {
     }
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    authApi.getCurrentUser().then((user) => {
+      if (!mounted) return;
+      setUserRole(user?.role ?? null);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filteredNavGroups = navGroups.filter((group) => {
+    if (!userRole || userRole === 'owner' || userRole === 'admin') return true;
+    if (userRole === 'billing') {
+      return group.id === 'finance' || group.id === 'admin';
+    }
+    if (userRole === 'member') {
+      return group.id !== 'admin' && group.id !== 'finance';
+    }
+    return true;
+  });
+
   // Auto-expand the group containing the active route
   useEffect(() => {
-    for (const group of navGroups) {
+    for (const group of filteredNavGroups) {
       if (group.items.some((item) => pathname.startsWith(item.href))) {
         setOpenGroups((prev) => {
           if (prev.has(group.id)) return prev;
@@ -242,7 +265,7 @@ export function Sidebar() {
         });
       }
     }
-  }, [pathname]);
+  }, [pathname, userRole]);
 
   const toggleGroup = (id: string) => {
     setOpenGroups((prev) => {
@@ -299,7 +322,7 @@ export function Sidebar() {
         />
 
         {/* Grouped navigation */}
-        {navGroups.map((group) => {
+          {filteredNavGroups.map((group) => {
           const isOpen = openGroups.has(group.id);
           const hasActiveItem = group.items.some((item) => pathname.startsWith(item.href));
           return (
