@@ -6,12 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
-/// Email/password accounts for Next.js `/api/auth/*` (not Supabase Auth).
+enum TeamRole {
+  owner
+  admin
+  member
+  billing
+}
+
 model AppUser {
   id                        String    @id @default(uuid()) @db.Uuid
   email                     String    @unique
   passwordHash              String    @map("password_hash")
   fullName                  String?   @map("full_name")
+  role                      TeamRole  @default(member)
   isAdmin                   Boolean   @default(false) @map("is_admin")
   isActive                  Boolean   @default(true) @map("is_active")
   createdAt                 DateTime  @default(now()) @map("created_at")
