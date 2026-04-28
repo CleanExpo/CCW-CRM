@@ -4,6 +4,7 @@ export interface AppAuthUser {
   id: string;
   email: string;
   full_name?: string;
+  role: 'owner' | 'admin' | 'member' | 'billing';
   is_active: boolean;
   is_admin: boolean;
   created_at: string;
@@ -15,6 +16,7 @@ export function mapAppUserRowToPublic(row: AppUser): AppAuthUser {
     id: row.id,
     email: row.email,
     full_name: row.fullName ?? undefined,
+    role: row.role,
     is_active: row.isActive,
     is_admin: row.isAdmin,
     created_at: row.createdAt.toISOString(),
