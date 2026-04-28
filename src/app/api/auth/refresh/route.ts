@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       return jsonDetail('Invalid or expired refresh session', 401);
     }
 
-    const tokens = await signTokenPair(row.id, row.email, row.isAdmin);
+    const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
     const response = jsonOk({
       access_token: tokens.access_token,
       token_type: 'bearer',
