@@ -11,6 +11,7 @@ interface SessionUser {
   email: string;
   is_active: boolean;
   is_admin: boolean;
+  role: 'owner' | 'admin' | 'member' | 'billing';
 }
 
 async function userFromAccessToken(token: string): Promise<SessionUser | null> {
@@ -23,10 +24,14 @@ async function userFromAccessToken(token: string): Promise<SessionUser | null> {
     email: claims.email ?? '',
     is_active: true,
     is_admin: claims.is_admin,
+    role: claims.role,
   };
 }
 
 export async function updateSession(request: NextRequest) {
+  const billingAllowedPrefixes = ['/settings/billing', '/dashboard/finance', '/dashboard'];
+  const memberBlockedPrefixes = ['/settings/', '/approvals', '/alerts', '/monitoring', '/faq', '/dashboard/finance'];
+
   const response = NextResponse.next({
     request,
   });
@@ -82,6 +87,29 @@ export async function updateSession(request: NextRequest) {
     url.pathname = redirect || '/dashboard';
     url.searchParams.delete('redirect');
     return NextResponse.redirect(url);
+  }
+
+  if (user && !request.nextUrl.pathname.startsWith('/api/')) {
+    if (user.role === 'billing') {
+      const canAccess = billingAllowedPrefixes.some(
+        (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+      );
+      if (!canAccess) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/settings/billing';
+        return NextResponse.redirect(url);
+      }
+    }
+    if (user.role === 'member') {
+      const blocked = memberBlockedPrefixes.some(
+        (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+      );
+      if (blocked) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/dashboard';
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
   return response;
