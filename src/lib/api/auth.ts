@@ -8,6 +8,7 @@ export interface User {
   id: string;
   email: string;
   full_name?: string;
+  role: 'owner' | 'admin' | 'member' | 'billing';
   is_active: boolean;
   is_admin: boolean;
   created_at: string;
