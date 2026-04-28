@@ -43,6 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Search, Edit, Trash2, Users, Shield, Mail } from 'lucide-react';
 import { InviteTeamMemberForm } from './components/InviteTeamMemberForm';
 import { EditRoleDialog } from './components/EditRoleDialog';
+import { Separator } from '@/components/ui/separator';
 
 // Role colors for badges
 const ROLE_COLORS: Record<TeamMemberRole, string> = {
@@ -68,6 +69,12 @@ export default function TeamManagementPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{
+    email: string;
+    temporary_password: string;
+    role: TeamMemberRole;
+    must_change_password: boolean;
+  } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -114,8 +121,14 @@ export default function TeamManagementPage() {
     }
   }
 
-  function handleInviteSuccess() {
+  function handleInviteSuccess(credentials?: {
+    email: string;
+    temporary_password: string;
+    role: TeamMemberRole;
+    must_change_password: boolean;
+  }) {
     setInviteDialogOpen(false);
+    setCreatedCredentials(credentials ?? null);
     fetchTeamMembers();
   }
 
@@ -149,8 +162,8 @@ export default function TeamManagementPage() {
             <DialogHeader>
               <DialogTitle>Invite Team Member</DialogTitle>
               <DialogDescription>
-                Send an invitation email to a new team member. They'll receive a link to set up
-                their account.
+                Create a team user and assign access. You'll get one-time login credentials after
+                saving.
               </DialogDescription>
             </DialogHeader>
             <InviteTeamMemberForm
@@ -317,6 +330,40 @@ export default function TeamManagementPage() {
           </div>
         </div>
       )}
+
+      <Dialog open={!!createdCredentials} onOpenChange={(open) => !open && setCreatedCredentials(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Login Credentials Generated</DialogTitle>
+            <DialogDescription>
+              Share these one-time credentials securely with the new team member.
+            </DialogDescription>
+          </DialogHeader>
+          {createdCredentials && (
+            <div className="space-y-3 rounded-md border p-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="font-mono text-sm">{createdCredentials.email}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-xs text-muted-foreground">Temporary Password</p>
+                <p className="font-mono text-sm">{createdCredentials.temporary_password}</p>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Granted Role</p>
+                <Badge className={ROLE_COLORS[createdCredentials.role]}>
+                  {createdCredentials.role.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <Button onClick={() => setCreatedCredentials(null)}>Done</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
