@@ -9,12 +9,13 @@ function getJwtSecret(): Uint8Array | null {
 export async function signAccessToken(
   userId: string,
   email: string,
-  isAdmin: boolean
+  isAdmin: boolean,
+  role: 'owner' | 'admin' | 'member' | 'billing'
 ): Promise<string> {
   const secret = getJwtSecret();
   if (!secret) throw new Error('JWT_SECRET is not configured');
   const exp = process.env.JWT_ACCESS_EXPIRES ?? '8h';
-  return new SignJWT({ email, is_admin: isAdmin, typ: 'access' })
+  return new SignJWT({ email, is_admin: isAdmin, role, typ: 'access' })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(userId)
     .setIssuedAt()
@@ -25,12 +26,13 @@ export async function signAccessToken(
 export async function signRefreshToken(
   userId: string,
   email: string,
-  isAdmin: boolean
+  isAdmin: boolean,
+  role: 'owner' | 'admin' | 'member' | 'billing'
 ): Promise<string> {
   const secret = getJwtSecret();
   if (!secret) throw new Error('JWT_SECRET is not configured');
   const exp = process.env.JWT_REFRESH_EXPIRES ?? '7d';
-  return new SignJWT({ email, is_admin: isAdmin, typ: 'refresh' })
+  return new SignJWT({ email, is_admin: isAdmin, role, typ: 'refresh' })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(userId)
     .setIssuedAt()
@@ -41,11 +43,12 @@ export async function signRefreshToken(
 export async function signTokenPair(
   userId: string,
   email: string,
-  isAdmin: boolean
+  isAdmin: boolean,
+  role: 'owner' | 'admin' | 'member' | 'billing'
 ): Promise<{ access_token: string; refresh_token: string }> {
   const [access_token, refresh_token] = await Promise.all([
-    signAccessToken(userId, email, isAdmin),
-    signRefreshToken(userId, email, isAdmin),
+    signAccessToken(userId, email, isAdmin, role),
+    signRefreshToken(userId, email, isAdmin, role),
   ]);
   return { access_token, refresh_token };
 }
@@ -55,6 +58,7 @@ export async function verifyAuthAccessJwt(token: string): Promise<{
   sub: string;
   email?: string;
   is_admin: boolean;
+  role: 'owner' | 'admin' | 'member' | 'billing';
 } | null> {
   const secret = getJwtSecret();
   if (!secret) return null;
@@ -65,7 +69,11 @@ export async function verifyAuthAccessJwt(token: string): Promise<{
     if (!sub) return null;
     const email = typeof payload.email === 'string' ? payload.email : undefined;
     const is_admin = payload.is_admin === true;
-    return { sub, email, is_admin };
+    const role = payload.role;
+    if (role !== 'owner' && role !== 'admin' && role !== 'member' && role !== 'billing') {
+      return null;
+    }
+    return { sub, email, is_admin, role };
   } catch {
     return null;
   }
@@ -75,6 +83,7 @@ export async function verifyRefreshJwt(token: string): Promise<{
   sub: string;
   email: string;
   is_admin: boolean;
+  role: 'owner' | 'admin' | 'member' | 'billing';
 } | null> {
   const secret = getJwtSecret();
   if (!secret) return null;
@@ -84,7 +93,11 @@ export async function verifyRefreshJwt(token: string): Promise<{
     const sub = typeof payload.sub === 'string' ? payload.sub : '';
     const email = typeof payload.email === 'string' ? payload.email : '';
     if (!sub || !email) return null;
-    return { sub, email, is_admin: payload.is_admin === true };
+    const role = payload.role;
+    if (role !== 'owner' && role !== 'admin' && role !== 'member' && role !== 'billing') {
+      return null;
+    }
+    return { sub, email, is_admin: payload.is_admin === true, role };
   } catch {
     return null;
   }
@@ -95,6 +108,7 @@ export async function verifyAccessJwt(token: string): Promise<{
   sub: string;
   email: string;
   is_admin: boolean;
+  role: 'owner' | 'admin' | 'member' | 'billing';
 } | null> {
   const secret = getJwtSecret();
   if (!secret) return null;
@@ -104,7 +118,11 @@ export async function verifyAccessJwt(token: string): Promise<{
     const sub = typeof payload.sub === 'string' ? payload.sub : '';
     const email = typeof payload.email === 'string' ? payload.email : '';
     if (!sub || !email) return null;
-    return { sub, email, is_admin: payload.is_admin === true };
+    const role = payload.role;
+    if (role !== 'owner' && role !== 'admin' && role !== 'member' && role !== 'billing') {
+      return null;
+    }
+    return { sub, email, is_admin: payload.is_admin === true, role };
   } catch {
     return null;
   }
