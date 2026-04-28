@@ -387,6 +387,27 @@
       inset 0 1px 0 0 rgb(255 255 255 / 0.05),
       0 12px 40px -12px rgb(0 0 0 / 0.45);
   }
+
+  /**
+   * Admin pages (workflows, approvals, alerts, monitoring, faq, and settings):
+   * same readable elevated dark contrast as other dashboard modules.
+   */
+  .dark.dashboard-app .admin-route-scope {
+    --background: 240 6% 8%;
+    --foreground: 0 0% 99%;
+    --card: 240 5% 11%;
+    --card-foreground: 0 0% 99%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 74%;
+    --border: 0 0% 100% / 0.12;
+    --secondary: 240 4% 18%;
+    --secondary-foreground: 0 0% 96%;
+    background-color: hsl(240 6% 7% / 0.96);
+    color: hsl(var(--foreground));
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.05),
+      0 12px 40px -12px rgb(0 0 0 / 0.45);
+  }
 }
 
 /* ============================================
