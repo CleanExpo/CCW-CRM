@@ -36,7 +36,12 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface InviteTeamMemberFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (credentials?: {
+    email: string;
+    temporary_password: string;
+    role: TeamMemberRole;
+    must_change_password: boolean;
+  }) => void;
   onCancel?: () => void;
 }
 
@@ -64,7 +69,7 @@ export function InviteTeamMemberForm({ onSuccess, onCancel }: InviteTeamMemberFo
     setIsLoading(true);
 
     try {
-      await teamApi.invite({
+      const result = await teamApi.invite({
         email: values.email,
         full_name: values.full_name || undefined,
         role: values.role as TeamMemberRole,
@@ -75,7 +80,7 @@ export function InviteTeamMemberForm({ onSuccess, onCancel }: InviteTeamMemberFo
         description: `Sent invitation to ${values.email}`,
       });
 
-      onSuccess?.();
+      onSuccess?.(result.credentials);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to send invitation";
       toast({
