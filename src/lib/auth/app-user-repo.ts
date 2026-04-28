@@ -31,6 +31,7 @@ export async function insertAppUser(input: {
   password_hash: string;
   full_name: string | null;
   is_admin: boolean;
+  role?: 'owner' | 'admin' | 'member' | 'billing';
 }): Promise<AppUserRow> {
   return prisma.appUser.create({
     data: {
@@ -38,6 +39,7 @@ export async function insertAppUser(input: {
       passwordHash: input.password_hash,
       fullName: input.full_name,
       isAdmin: input.is_admin,
+      role: input.role ?? 'member',
     },
   });
 }
