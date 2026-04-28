@@ -40,9 +40,10 @@ export async function POST(request: NextRequest) {
       password_hash,
       full_name: parsed.data.full_name ?? null,
       is_admin: isFirst,
+      role: isFirst ? 'owner' : 'member',
     });
 
-    const tokens = await signTokenPair(row.id, row.email, row.isAdmin);
+    const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
     const response = jsonOk({
       user: mapAppUserRowToPublic(row),
       message: 'User registered successfully',
