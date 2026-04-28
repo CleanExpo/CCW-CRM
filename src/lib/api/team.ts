@@ -26,6 +26,18 @@ export interface TeamMemberInvite {
   role?: TeamMemberRole;
 }
 
+export interface TeamInviteCredentials {
+  email: string;
+  temporary_password: string;
+  role: TeamMemberRole;
+  must_change_password: boolean;
+}
+
+export interface TeamInviteResponse {
+  member: TeamMember;
+  credentials: TeamInviteCredentials;
+}
+
 /**
  * Update team member role request
  */
@@ -74,8 +86,8 @@ export const teamApi = {
   /**
    * Invite a new team member
    */
-  async invite(data: TeamMemberInvite): Promise<TeamMember> {
-    return apiClient.post<TeamMember>("/api/team/invite", data);
+  async invite(data: TeamMemberInvite): Promise<TeamInviteResponse> {
+    return apiClient.post<TeamInviteResponse>("/api/team/invite", data);
   },
 
   /**
