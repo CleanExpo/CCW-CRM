@@ -34,11 +34,10 @@ import { invoicesApi } from '@/lib/api/invoices';
 import { formatOrderDatePart } from '@/lib/operations/order-dates';
 import { formatAud, opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
 import { cn } from '@/lib/utils';
-import { exportOrdersToCSV, exportOrdersToPDF } from '@/lib/utils/csv-export';
+import { exportOrdersToCSV } from '@/lib/utils/csv-export';
 import { formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
 import {
   AlertCircle,
-  Copy,
   Download,
   Eye,
   FileText,
@@ -214,41 +213,6 @@ export default function OrdersPage() {
     }
   };
 
-  // PHASE 4: Duplicate order - quickly create copy with same items
-  const handleDuplicateOrder = async (order: Order) => {
-    const { hasCustomers, hasProducts } = await loadPrerequisites();
-    if (!hasCustomers || !hasProducts) {
-      setPrereqDialogOpen(true);
-      return;
-    }
-    try {
-      const fullOrder = await apiClient.get<Order>(`/api/orders/${order.id}`);
-      // Create a copy without id (will be treated as new order)
-      const orderCopy = {
-        ...fullOrder,
-        id: undefined, // Remove id to create new order
-        order_number: undefined, // Will be auto-generated
-        status: 'draft', // Reset to draft
-        notes: fullOrder.notes
-          ? `Copy of ${fullOrder.order_number}\n\n${fullOrder.notes}`
-          : `Copy of ${fullOrder.order_number}`,
-      };
-      setSelectedOrder(orderCopy as unknown as Order);
-      setFormOpen(true);
-      toast({
-        title: 'Order Duplicated',
-        description: 'Review and modify the copy before saving',
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to duplicate order';
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: message,
-      });
-    }
-  };
-
   const handleDeleteOrder = (order: Order) => {
     setSelectedOrder(order);
     setDeleteDialogOpen(true);
@@ -276,11 +240,6 @@ export default function OrdersPage() {
       title: 'Export Successful',
       description: `Exported ${orders.length} equipment orders to CSV`,
     });
-  };
-
-  const handleExportPDF = () => {
-    exportOrdersToPDF(orders as unknown as Record<string, unknown>[]);
-    toast({ title: 'PDF Export', description: 'Print dialog opening…' });
   };
 
   const handleToggleSelectOrder = (orderId: string) => {
@@ -349,10 +308,6 @@ export default function OrdersPage() {
                   Delete ({selectedOrderIds.length})
                 </Button>
               )}
-              <Button variant="outline" onClick={handleExportPDF} disabled={orders.length === 0}>
-                <Download className="mr-2 h-4 w-4" />
-                Export PDF
-              </Button>
               <Button variant="outline" onClick={handleExport} disabled={orders.length === 0}>
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
@@ -513,17 +468,6 @@ export default function OrdersPage() {
                           title="Edit Order"
                         >
                           <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDuplicateOrder(order);
-                          }}
-                          title="Duplicate Order"
-                        >
-                          <Copy className="h-4 w-4" />
                         </Button>
                         {(order.status === 'confirmed' || order.status === 'delivered') && (
                           <Button
