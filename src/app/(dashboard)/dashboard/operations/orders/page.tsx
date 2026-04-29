@@ -1,46 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCallback, useEffect, useState } from 'react';
 // PHASE 4: Search state persistence
-import { useSearchState } from '@/hooks/use-search-state';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { apiClient } from '@/lib/api/client';
-import { OrderStatusBadge } from '@/components/ui/order-status-badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { OrderForm } from './components/OrderForm';
-import { DeleteOrderDialog } from './components/DeleteOrderDialog';
-import { BulkDeleteOrdersDialog } from './components/BulkDeleteOrdersDialog';
-import { OrderDetailDialog } from './components/OrderDetailDialog';
-import {
-  Pencil,
-  Trash2,
-  Plus,
-  Eye,
-  Download,
-  Copy,
-  FileText,
-  ShoppingCart,
-  AlertCircle,
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Order } from './types';
-import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
-import { PaginationControls } from '@/components/ui/pagination-controls';
-import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
-import { exportOrdersToCSV, exportOrdersToPDF } from '@/lib/utils/csv-export';
-import { invoicesApi } from '@/lib/api/invoices';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
-import { EmptyState } from '@/components/ui/empty-state';
 import {
   OperationsPageHeader,
   OperationsPageLayout,
 } from '@/components/operations/OperationsPageHeader';
-import { formatAud, opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
-import { cn } from '@/lib/utils';
+import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -51,6 +21,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { EmptyState } from '@/components/ui/empty-state';
+import { OrderStatusBadge } from '@/components/ui/order-status-badge';
+import { PaginationControls } from '@/components/ui/pagination-controls';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useSearchState } from '@/hooks/use-search-state';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import { invoicesApi } from '@/lib/api/invoices';
+import { formatAud, opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
+import { exportOrdersToCSV, exportOrdersToPDF } from '@/lib/utils/csv-export';
+import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
+import {
+  AlertCircle,
+  Copy,
+  Download,
+  Eye,
+  FileText,
+  Pencil,
+  Plus,
+  ShoppingCart,
+  Trash2,
+} from 'lucide-react';
+import { BulkDeleteOrdersDialog } from './components/BulkDeleteOrdersDialog';
+import { DeleteOrderDialog } from './components/DeleteOrderDialog';
+import { OrderDetailDialog } from './components/OrderDetailDialog';
+import { OrderForm } from './components/OrderForm';
+import { Order } from './types';
 
 interface PaginatedResponse {
   items: Order[];
@@ -365,10 +365,10 @@ export default function OrdersPage() {
         />
 
         {prereqState.loaded && !canCreateOrder && (
-          <Alert className="border-amber-500/40 bg-amber-500/5">
+          <Alert className="my-4 border-amber-500/40 bg-amber-500/5">
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
             <AlertTitle>Before you can create an order</AlertTitle>
-            <AlertDescription className="mt-2 flex flex-col gap-3 text-foreground/90 sm:flex-row sm:items-center sm:justify-between">
+            <AlertDescription className="text-foreground/90 mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span>
                 {!prereqState.hasCustomers && !prereqState.hasProducts
                   ? 'Add at least one customer and one product to your catalog.'
@@ -400,7 +400,7 @@ export default function OrdersPage() {
                 <CardDescription className="dark:text-foreground/70">
                   {total} equipment orders on file
                   {lastUpdated && (
-                    <span className="text-muted-foreground ml-2 text-xs dark:text-foreground/60">
+                    <span className="text-muted-foreground dark:text-foreground/60 ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>
                   )}
@@ -603,20 +603,18 @@ export default function OrdersPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Set up customers and products first</AlertDialogTitle>
-              <AlertDialogDescription className="space-y-2 text-left">
+              <AlertDialogDescription className="space-y-2 text-left [&_strong]:font-semibold [&_strong]:text-zinc-800 dark:[&_strong]:text-zinc-100">
                 <span className="block">
                   Every order needs a customer and at least one catalog product on the line items.
                 </span>
                 {!prereqState.hasCustomers && (
-                  <span className="block text-foreground">
-                    · Add a customer under{' '}
-                    <strong className="font-medium">CRM → Customers</strong>.
+                  <span className="block">
+                    · Add a customer under <strong>CRM → Customers</strong>.
                   </span>
                 )}
                 {!prereqState.hasProducts && (
-                  <span className="block text-foreground">
-                    · Add a product under{' '}
-                    <strong className="font-medium">Inventory → Products</strong>.
+                  <span className="block">
+                    · Add a product under <strong>Inventory → Products</strong>.
                   </span>
                 )}
               </AlertDialogDescription>
@@ -629,7 +627,11 @@ export default function OrdersPage() {
                 </Button>
               )}
               {!prereqState.hasProducts && (
-                <Button asChild type="button" variant={prereqState.hasCustomers ? 'default' : 'secondary'}>
+                <Button
+                  asChild
+                  type="button"
+                  variant={prereqState.hasCustomers ? 'default' : 'secondary'}
+                >
                   <Link href="/dashboard/inventory/products">Products</Link>
                 </Button>
               )}
