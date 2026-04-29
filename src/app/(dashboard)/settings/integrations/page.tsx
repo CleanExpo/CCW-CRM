@@ -7,7 +7,7 @@ import { apiClient } from '@/lib/api/client';
 import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/sendgrid';
 import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopify';
 import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
-import { AlertCircle, BookOpen, Bot, CheckCircle2, Globe, Settings, XCircle } from 'lucide-react';
+import { BookOpen, Bot, CheckCircle2, Globe, Settings, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -147,24 +147,15 @@ function IntegrationsContent() {
     const xeroSuccess = searchParams.get('xero_success');
     const xeroError = searchParams.get('xero_error');
     const tenant = searchParams.get('tenant');
-    const mode = searchParams.get('mode');
 
     if (xeroSuccess === 'true') {
-      if (mode === 'demo') {
-        toast({
-          title: 'Demo Mode Active',
-          description: 'Xero integration is running in demo mode (no real API calls)',
-        });
-      } else if (tenant) {
+      if (tenant) {
         toast({
           title: 'Connected to Xero',
           description: `Successfully connected to ${tenant}`,
         });
       } else {
-        toast({
-          title: 'Connected to Xero',
-          description: 'Your Xero integration is now active',
-        });
+        toast({ title: 'Connected to Xero', description: 'Your Xero integration is now active' });
       }
 
       // Clean up URL
@@ -232,42 +223,6 @@ function IntegrationsContent() {
             </div>
           </div>
         </div>
-
-        {/* Demo Mode Banner */}
-        {((xeroStatus?.mode === 'demo' && xeroStatus?.connected) ||
-          (shopifyStatus?.mode === 'demo' && shopifyStatus?.connected) ||
-          (sendgridStatus?.mode === 'demo' && sendgridStatus?.connected) ||
-          (cin7Status?.mode === 'demo' && cin7Status?.connected)) && (
-          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
-            <AlertCircle className="mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                Demo Mode Active
-              </p>
-              <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
-                {[
-                  xeroStatus?.mode === 'demo' && xeroStatus?.connected && 'Xero',
-                  shopifyStatus?.mode === 'demo' && shopifyStatus?.connected && 'Shopify',
-                  sendgridStatus?.mode === 'demo' && sendgridStatus?.connected && 'SendGrid',
-                  cin7Status?.mode === 'demo' && cin7Status?.connected && 'Cin7',
-                ]
-                  .filter(Boolean)
-                  .join(', ')}{' '}
-                {[
-                  xeroStatus?.mode === 'demo' && xeroStatus?.connected,
-                  shopifyStatus?.mode === 'demo' && shopifyStatus?.connected,
-                  sendgridStatus?.mode === 'demo' && sendgridStatus?.connected,
-                  cin7Status?.mode === 'demo' && cin7Status?.connected,
-                ].filter(Boolean).length > 1
-                  ? 'integrations are'
-                  : 'integration is'}{' '}
-                running in demo mode. No real API calls are made. All operations use realistic mock
-                data for testing. Switch to live mode when ready by updating your environment
-                variables.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Integrations Grid */}
         <div className="space-y-6">
@@ -445,32 +400,6 @@ function IntegrationsContent() {
           </SectionShell>
         </div>
 
-        {/* Coming Soon Section */}
-        <div className="mt-2 rounded-2xl border border-dashed border-border/80 bg-card/40 p-5 md:p-6">
-          <h2 className="mb-4 text-lg font-semibold">Coming Soon</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                name: 'QuickBooks',
-                description: 'Alternative accounting software',
-                icon: '📊',
-              },
-            ].map((integration) => (
-              <div
-                key={integration.name}
-                className="flex items-center gap-3 rounded-lg border border-dashed p-4 opacity-50"
-              >
-                <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-lg text-2xl">
-                  {integration.icon}
-                </div>
-                <div>
-                  <p className="font-medium">{integration.name}</p>
-                  <p className="text-muted-foreground text-xs">{integration.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </ErrorBoundary>
   );
