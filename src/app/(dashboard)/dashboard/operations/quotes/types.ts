@@ -9,7 +9,8 @@ export interface Quote {
   customer_id?: string;
   status: string;
   total?: string | number;
-  quote_date: string;
+  quote_date?: string;
+  created_at?: string;
   valid_until?: string | null;
   item_count?: number;
   notes?: string;
