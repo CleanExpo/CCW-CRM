@@ -1,27 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { getConfiguredShopifyFromRequest } from '@/lib/integrations/shopify';
+import { importShopifyOrderToErp } from '@/lib/integrations/shopify-ops';
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ orderId: string }> }
 ) {
   const { orderId } = await context.params;
-  const order = await prisma.order.findFirst({
-    orderBy: { createdAt: 'desc' },
-    include: { customer: { select: { id: true } } },
-  });
-  if (!order) {
-    return NextResponse.json({ detail: 'No ERP orders available to map import result.' }, { status: 404 });
+  const id = String(orderId || '').trim();
+  if (!id || !/^\d+$/.test(id)) {
+    return NextResponse.json(
+      { detail: 'Provide a numeric Shopify order id (from Shopify Admin or the Admin API).' },
+      { status: 400 }
+    );
   }
-  return NextResponse.json({
-    success: true,
-    mode: process.env.SHOPIFY_MODE === 'demo' ? 'demo' : 'live',
-    order_id: order.id,
-    order_number: order.orderNumber,
-    customer_id: order.customerId || order.customer?.id || '',
-    total: order.total,
-    status: order.status,
-    shopify_order_id: Number(orderId) || Date.now(),
-  });
-}
 
+  const creds = getConfiguredShopifyFromRequest(request);
+  if (!creds) {
+    return NextResponse.json({ detail: 'Shopify is not configured or token is missing.' }, { status: 401 });
+  }
+
+  try {
+    const r = await importShopifyOrderToErp(creds.adminHost, creds.accessToken, id);
+    const row = await prisma.order.findUnique({
+      where: { id: r.order_id },
+      select: { customerId: true, total: true, status: true },
+    });
+    return NextResponse.json({
+      success: true,
+      mode: 'live',
+      order_id: r.order_id,
+      order_number: r.order_number,
+      customer_id: row?.customerId ?? '',
+      total: row?.total ?? 0,
+      status: row?.status ?? (r.created ? 'imported' : 'exists'),
+      shopify_order_id: r.shopify_order_id,
+      warnings: r.warnings.length ? r.warnings : undefined,
+    });
+  } catch (e) {
+    return NextResponse.json(
+      { detail: e instanceof Error ? e.message : 'Import failed.' },
+      { status: 400 }
+    );
+  }
+}
