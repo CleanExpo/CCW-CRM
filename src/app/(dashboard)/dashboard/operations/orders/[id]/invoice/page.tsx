@@ -144,7 +144,7 @@ export default function InvoicePage() {
         </Button>
         <Button onClick={handlePrint}>
           <Printer className="mr-2 h-4 w-4" />
-          Download PDF
+          Print
         </Button>
       </div>
 
