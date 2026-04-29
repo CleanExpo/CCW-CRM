@@ -10,8 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { QuoteForm } from './components/QuoteForm';
 import { DeleteQuoteDialog } from './components/DeleteQuoteDialog';
 import { ConvertToOrderDialog } from './components/ConvertToOrderDialog';
-import { Pencil, Trash2, Plus, ArrowRight, Copy, Sparkles, Download, FileText } from 'lucide-react';
-import { exportQuotesToCSV, exportQuotesToPDF } from '@/lib/utils/csv-export';
+import { Pencil, Trash2, Plus, ArrowRight, Sparkles, Download, FileText } from 'lucide-react';
+import { exportQuotesToCSV } from '@/lib/utils/csv-export';
 // PHASE C: Quote Copilot Chat
 import { QuoteCopilotChat } from '@/components/ai/QuoteCopilotChat';
 import { useToast } from '@/hooks/use-toast';
@@ -125,36 +125,6 @@ export default function QuotesPage() {
     }
   };
 
-  // PHASE 4: Duplicate quote - quickly create copy with same items
-  const handleDuplicateQuote = async (quote: Quote) => {
-    try {
-      const fullQuote = await apiClient.get<Quote>(`/api/quotes/${quote.id}`);
-      // Create a copy without id (will be treated as new quote)
-      const quoteCopy = {
-        ...fullQuote,
-        id: undefined, // Remove id to create new quote
-        quote_number: undefined, // Will be auto-generated
-        status: 'draft', // Reset to draft
-        notes: fullQuote.notes
-          ? `Copy of ${fullQuote.quote_number}\n\n${fullQuote.notes}`
-          : `Copy of ${fullQuote.quote_number}`,
-      };
-      setSelectedQuote(quoteCopy as unknown as Quote);
-      setFormOpen(true);
-      toast({
-        title: 'Quote Duplicated',
-        description: 'Review and modify the copy before saving',
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to duplicate quote';
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: message,
-      });
-    }
-  };
-
   const handleDeleteQuote = (quote: Quote) => {
     setSelectedQuote(quote);
     setDeleteDialogOpen(true);
@@ -188,11 +158,6 @@ export default function QuotesPage() {
     });
   };
 
-  const handleExportPDF = () => {
-    exportQuotesToPDF(quotes as unknown as Record<string, unknown>[]);
-    toast({ title: 'PDF Export', description: 'Print dialog opening…' });
-  };
-
   const isExpired = (validUntil: string | null) => {
     if (!validUntil) return false;
     return new Date(validUntil) < new Date();
@@ -214,10 +179,6 @@ export default function QuotesPage() {
           icon={FileText}
           actions={
             <>
-              <Button variant="outline" onClick={handleExportPDF} disabled={quotes.length === 0}>
-                <Download className="mr-2 h-4 w-4" />
-                Export PDF
-              </Button>
               <Button variant="outline" onClick={handleExport} disabled={quotes.length === 0}>
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
@@ -366,17 +327,6 @@ export default function QuotesPage() {
                           }}
                         >
                           <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDuplicateQuote(quote);
-                          }}
-                          title="Duplicate Quote"
-                        >
-                          <Copy className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
