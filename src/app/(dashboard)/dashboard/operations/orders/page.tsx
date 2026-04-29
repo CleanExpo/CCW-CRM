@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 // PHASE 4: Search state persistence
@@ -14,7 +15,17 @@ import { OrderForm } from './components/OrderForm';
 import { DeleteOrderDialog } from './components/DeleteOrderDialog';
 import { BulkDeleteOrdersDialog } from './components/BulkDeleteOrdersDialog';
 import { OrderDetailDialog } from './components/OrderDetailDialog';
-import { Pencil, Trash2, Plus, Eye, Download, Copy, FileText, ShoppingCart } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  Eye,
+  Download,
+  Copy,
+  FileText,
+  ShoppingCart,
+  AlertCircle,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Order } from './types';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
@@ -30,6 +41,16 @@ import {
 } from '@/components/operations/OperationsPageHeader';
 import { formatAud, opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface PaginatedResponse {
   items: Order[];
@@ -37,6 +58,10 @@ interface PaginatedResponse {
   page: number;
   page_size: number;
   total_pages: number;
+}
+
+interface CountResponse {
+  total: number;
 }
 
 export default function OrdersPage() {
@@ -66,6 +91,34 @@ export default function OrdersPage() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+
+  const [prereqState, setPrereqState] = useState<{
+    loaded: boolean;
+    hasCustomers: boolean;
+    hasProducts: boolean;
+  }>({ loaded: false, hasCustomers: false, hasProducts: false });
+  const [prereqDialogOpen, setPrereqDialogOpen] = useState(false);
+
+  const loadPrerequisites = useCallback(async () => {
+    try {
+      const [custRes, prodRes] = await Promise.all([
+        apiClient.get<CountResponse>('/api/customers?page=1&page_size=1'),
+        apiClient.get<CountResponse>('/api/products?page=1&page_size=1'),
+      ]);
+      const hasCustomers = custRes.total > 0;
+      const hasProducts = prodRes.total > 0;
+      setPrereqState({ loaded: true, hasCustomers, hasProducts });
+      return { hasCustomers, hasProducts };
+    } catch (error: unknown) {
+      console.error('Failed to load prerequisites:', error);
+      setPrereqState({ loaded: true, hasCustomers: false, hasProducts: false });
+      return { hasCustomers: false, hasProducts: false };
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadPrerequisites();
+  }, [loadPrerequisites]);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -106,17 +159,42 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (searchParams.get('create') !== '1') return;
+
+    let cancelled = false;
+    void (async () => {
+      const { hasCustomers, hasProducts } = await loadPrerequisites();
+      if (cancelled) return;
+
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete('create');
+      const q = next.toString();
+      router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+
+      if (!hasCustomers || !hasProducts) {
+        setPrereqDialogOpen(true);
+        return;
+      }
+      setSelectedOrder(null);
+      setFormOpen(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, pathname, router, loadPrerequisites]);
+
+  const openNewOrderIfAllowed = useCallback(async () => {
+    const { hasCustomers, hasProducts } = await loadPrerequisites();
+    if (!hasCustomers || !hasProducts) {
+      setPrereqDialogOpen(true);
+      return;
+    }
     setSelectedOrder(null);
     setFormOpen(true);
-    const next = new URLSearchParams(searchParams.toString());
-    next.delete('create');
-    const q = next.toString();
-    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
-  }, [searchParams, pathname, router]);
+  }, [loadPrerequisites]);
 
   const handleAddOrder = () => {
-    setSelectedOrder(null);
-    setFormOpen(true);
+    void openNewOrderIfAllowed();
   };
 
   const handleEditOrder = async (order: Order) => {
@@ -137,6 +215,11 @@ export default function OrdersPage() {
 
   // PHASE 4: Duplicate order - quickly create copy with same items
   const handleDuplicateOrder = async (order: Order) => {
+    const { hasCustomers, hasProducts } = await loadPrerequisites();
+    if (!hasCustomers || !hasProducts) {
+      setPrereqDialogOpen(true);
+      return;
+    }
     try {
       const fullOrder = await apiClient.get<Order>(`/api/orders/${order.id}`);
       // Create a copy without id (will be treated as new order)
@@ -234,10 +317,16 @@ export default function OrdersPage() {
     }
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = (meta?: { created?: boolean }) => {
+    if (meta?.created) {
+      setPage(1);
+    }
+    void loadPrerequisites();
     loadOrders();
     setSelectedOrderIds([]);
   };
+
+  const canCreateOrder = prereqState.hasCustomers && prereqState.hasProducts;
 
   return (
     <ErrorBoundary>
@@ -274,6 +363,34 @@ export default function OrdersPage() {
             </>
           }
         />
+
+        {prereqState.loaded && !canCreateOrder && (
+          <Alert className="border-amber-500/40 bg-amber-500/5">
+            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+            <AlertTitle>Before you can create an order</AlertTitle>
+            <AlertDescription className="mt-2 flex flex-col gap-3 text-foreground/90 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                {!prereqState.hasCustomers && !prereqState.hasProducts
+                  ? 'Add at least one customer and one product to your catalog.'
+                  : !prereqState.hasCustomers
+                    ? 'Add at least one customer in CRM.'
+                    : 'Add at least one product in Inventory.'}
+              </span>
+              <span className="flex flex-wrap gap-2">
+                {!prereqState.hasCustomers && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/dashboard/crm/customers">Go to Customers</Link>
+                  </Button>
+                )}
+                {!prereqState.hasProducts && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/dashboard/inventory/products">Go to Products</Link>
+                  </Button>
+                )}
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card className={cn(opCardClass, opHeroSurfaceClass)}>
           <CardHeader>
@@ -481,6 +598,44 @@ export default function OrdersPage() {
           onOpenChange={setBulkDeleteDialogOpen}
           onSuccess={handleSuccess}
         />
+
+        <AlertDialog open={prereqDialogOpen} onOpenChange={setPrereqDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Set up customers and products first</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2 text-left">
+                <span className="block">
+                  Every order needs a customer and at least one catalog product on the line items.
+                </span>
+                {!prereqState.hasCustomers && (
+                  <span className="block text-foreground">
+                    · Add a customer under{' '}
+                    <strong className="font-medium">CRM → Customers</strong>.
+                  </span>
+                )}
+                {!prereqState.hasProducts && (
+                  <span className="block text-foreground">
+                    · Add a product under{' '}
+                    <strong className="font-medium">Inventory → Products</strong>.
+                  </span>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+              <AlertDialogCancel type="button">Close</AlertDialogCancel>
+              {!prereqState.hasCustomers && (
+                <Button asChild type="button">
+                  <Link href="/dashboard/crm/customers">Customers</Link>
+                </Button>
+              )}
+              {!prereqState.hasProducts && (
+                <Button asChild type="button" variant={prereqState.hasCustomers ? 'default' : 'secondary'}>
+                  <Link href="/dashboard/inventory/products">Products</Link>
+                </Button>
+              )}
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </OperationsPageLayout>
     </ErrorBoundary>
   );
