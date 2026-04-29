@@ -10,6 +10,11 @@ import { apiClient } from './client';
 /**
  * Cin7 connection status response
  */
+export interface Cin7ConnectorAllowlistEntry {
+  name: string;
+  ip: string;
+}
+
 export interface Cin7ConnectionStatus {
   connected: boolean;
   mode: 'demo' | 'live' | 'not_configured';
@@ -17,6 +22,7 @@ export interface Cin7ConnectionStatus {
   omni_connected: boolean;
   last_sync?: string;
   message?: string;
+  connector_allowlist?: Cin7ConnectorAllowlistEntry[];
 }
 
 /**
