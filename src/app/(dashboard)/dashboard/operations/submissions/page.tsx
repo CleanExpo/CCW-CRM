@@ -16,6 +16,7 @@ import { ContactSubmissionsTable } from './components/ContactSubmissionsTable';
 import { DemoRequestsTable } from './components/DemoRequestsTable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api/client';
+import { convertToCSV, downloadCSV } from '@/lib/utils/csv-export';
 import {
   Search,
   Download,
@@ -91,32 +92,8 @@ export default function SubmissionsPage() {
       }
 
       const headers = Object.keys(items[0]);
-      const csvContent = [
-        headers.join(','),
-        ...items.map((item: Record<string, unknown>) =>
-          headers
-            .map((header) => {
-              const value = item[header];
-              // Escape commas and quotes in values
-              if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-                return `"${value.replace(/"/g, '""')}"`;
-              }
-              return value || '';
-            })
-            .join(',')
-        ),
-      ].join('\n');
-
-      // Download file
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${type}-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      const csv = convertToCSV(items as Record<string, unknown>[], headers);
+      downloadCSV(csv, `${type}-${new Date().toISOString().split('T')[0]}.csv`);
 
       toast.success('Export completed successfully');
     } catch (error: unknown) {
