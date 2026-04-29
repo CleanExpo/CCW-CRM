@@ -76,7 +76,6 @@ export function ShopifyConnectionCard({
   const [editingCredentials, setEditingCredentials] = useState(false);
 
   const isConnected = status?.connected ?? false;
-  const isDemo = status?.mode === 'demo';
   const isNotConfigured = !status || status.mode === 'not_configured';
   const showForm = isNotConfigured || editingCredentials;
 
@@ -126,11 +125,8 @@ export function ShopifyConnectionCard({
     try {
       const response = await connectShopify();
       toast({
-        title: response.mode === 'demo' ? 'Demo Mode Active' : 'Connected to Shopify',
-        description:
-          response.mode === 'demo'
-            ? 'Running in demo mode'
-            : `Connected to ${response.shop_name || response.shop_domain}`,
+        title: 'Connected to Shopify',
+        description: `Connected to ${response.shop_name || response.shop_domain}`,
       });
       onStatusChange();
     } catch (error: unknown) {
@@ -208,7 +204,6 @@ export function ShopifyConnectionCard({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isDemo && isConnected && <Badge variant="secondary">Demo Mode</Badge>}
             {isConnected ? (
               <Badge variant="default" className="flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
@@ -235,9 +230,7 @@ export function ShopifyConnectionCard({
                   <p className="text-sm font-medium text-green-900 dark:text-green-100">
                     {status?.shop_name || status?.shop_domain}
                   </p>
-                  <p className="text-xs text-green-700 dark:text-green-300">
-                    {isDemo ? 'Demo mode — no real API calls' : 'Connected to Shopify store'}
-                  </p>
+                  <p className="text-xs text-green-700 dark:text-green-300">Connected to Shopify store</p>
                 </div>
               </div>
             </div>
@@ -254,12 +247,10 @@ export function ShopifyConnectionCard({
                 Refresh Status
               </Button>
 
-              {!isDemo && (
-                <Button variant="outline" size="sm" onClick={() => setEditingCredentials(true)}>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Edit Credentials
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={() => setEditingCredentials(true)}>
+                <KeyRound className="mr-2 h-4 w-4" />
+                Edit Credentials
+              </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -365,7 +356,7 @@ export function ShopifyConnectionCard({
                     disabled={connecting}
                     onClick={handleConnect}
                   >
-                    {connecting ? 'Connecting...' : 'Connect (Demo Mode)'}
+                    {connecting ? 'Connecting...' : 'Connect'}
                   </Button>
                 )}
               </form>
