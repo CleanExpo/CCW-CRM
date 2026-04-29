@@ -218,6 +218,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN));
   const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'billing' | null>(null);
+  const [roleResolved, setRoleResolved] = useState(false);
 
   // Persist collapsed state in localStorage
   useEffect(() => {
@@ -233,16 +234,28 @@ export function Sidebar() {
 
   useEffect(() => {
     let mounted = true;
-    authApi.getCurrentUser().then((user) => {
-      if (!mounted) return;
-      setUserRole(user?.role ?? null);
-    });
+    (async () => {
+      try {
+        const user = await authApi.getCurrentUser();
+        if (!mounted) return;
+        // Treat users flagged as is_admin as admin access even if role is stale.
+        const effectiveRole =
+          user?.is_admin && user.role !== 'owner' ? 'admin' : user?.role ?? null;
+        setUserRole(effectiveRole);
+      } finally {
+        if (mounted) setRoleResolved(true);
+      }
+    })();
     return () => {
       mounted = false;
     };
   }, []);
 
   const filteredNavGroups = navGroups.filter((group) => {
+    // Prevent a privileged-link flash before role is loaded.
+    if (!roleResolved) {
+      return group.id !== 'admin' && group.id !== 'finance';
+    }
     if (!userRole || userRole === 'owner' || userRole === 'admin') return true;
     if (userRole === 'billing') {
       return group.id === 'finance' || group.id === 'admin';
