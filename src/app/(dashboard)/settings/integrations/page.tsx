@@ -147,6 +147,22 @@ function IntegrationsContent() {
     const xeroSuccess = searchParams.get('xero_success');
     const xeroError = searchParams.get('xero_error');
     const tenant = searchParams.get('tenant');
+    const shopifySuccess = searchParams.get('shopify_success');
+    const shopifyError = searchParams.get('shopify_error');
+
+    if (shopifySuccess === '1') {
+      toast({ title: 'Shopify connected', description: 'You can verify status and run sync from this page.' });
+      window.history.replaceState({}, '', '/settings/integrations');
+    }
+
+    if (shopifyError) {
+      toast({
+        variant: 'destructive',
+        title: 'Shopify connection failed',
+        description: decodeURIComponent(shopifyError),
+      });
+      window.history.replaceState({}, '', '/settings/integrations');
+    }
 
     if (xeroSuccess === 'true') {
       if (tenant) {
