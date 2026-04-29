@@ -3,6 +3,13 @@
  * Provides functions to export data to CSV format
  */
 
+/** Safe locale date for CSV cells (handles missing API fields). */
+export function formatCsvDate(value: unknown): string {
+  if (value == null || value === '') return '';
+  const d = new Date(value as string);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString();
+}
+
 /**
  * Convert an array of objects to CSV format
  */
@@ -35,7 +42,7 @@ export function convertToCSV(data: Record<string, unknown>[], headers: string[])
  * Download CSV file
  */
 export function downloadCSV(csv: string, filename: string): void {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
 
   if (link.download !== undefined) {
@@ -132,15 +139,19 @@ export function exportOrdersToCSV(orders: Record<string, unknown>[]): void {
     'notes',
   ];
 
-  const data = orders.map((order) => ({
-    order_number: order.order_number,
-    customer_name: order.customer_name || '',
-    order_date: new Date(order.order_date as string).toLocaleDateString(),
-    status: order.status,
-    total: order.total,
-    item_count: order.item_count || (order.items as unknown[] | undefined)?.length || 0,
-    notes: order.notes || '',
-  }));
+  const data = orders.map((order) => {
+    const r = order as Record<string, unknown>;
+    const dateRaw = r.order_date ?? r.created_at;
+    return {
+      order_number: order.order_number,
+      customer_name: order.customer_name || '',
+      order_date: formatCsvDate(dateRaw),
+      status: order.status,
+      total: order.total,
+      item_count: order.item_count || (order.items as unknown[] | undefined)?.length || 0,
+      notes: order.notes || '',
+    };
+  });
 
   const csv = convertToCSV(data, headers);
   const timestamp = new Date().toISOString().split('T')[0];
@@ -393,10 +404,8 @@ export function exportPurchaseOrdersToCSV(orders: Record<string, unknown>[]): vo
     delivery_location: po.delivery_location || '',
     status: po.status || '',
     total: po.total != null ? Number(po.total).toFixed(2) : '',
-    order_date: po.order_date ? new Date(po.order_date as string).toLocaleDateString() : '',
-    expected_delivery: po.expected_delivery
-      ? new Date(po.expected_delivery as string).toLocaleDateString()
-      : '',
+    order_date: formatCsvDate(po.order_date),
+    expected_delivery: formatCsvDate(po.expected_delivery),
   }));
 
   const csv = convertToCSV(data, headers);
@@ -455,16 +464,20 @@ export function exportQuotesToCSV(quotes: Record<string, unknown>[]): void {
     'notes',
   ];
 
-  const data = quotes.map((quote) => ({
-    quote_number: quote.quote_number,
-    customer_name: quote.customer_name || '',
-    quote_date: new Date(quote.quote_date as string).toLocaleDateString(),
-    valid_until: new Date(quote.valid_until as string).toLocaleDateString(),
-    status: quote.status,
-    total: quote.total,
-    item_count: quote.item_count || (quote.items as unknown[] | undefined)?.length || 0,
-    notes: quote.notes || '',
-  }));
+  const data = quotes.map((quote) => {
+    const r = quote as Record<string, unknown>;
+    const quoteDateRaw = r.quote_date ?? r.created_at;
+    return {
+      quote_number: quote.quote_number,
+      customer_name: quote.customer_name || '',
+      quote_date: formatCsvDate(quoteDateRaw),
+      valid_until: quote.valid_until ? formatCsvDate(quote.valid_until) : '',
+      status: quote.status,
+      total: quote.total,
+      item_count: quote.item_count || (quote.items as unknown[] | undefined)?.length || 0,
+      notes: quote.notes || '',
+    };
+  });
 
   const csv = convertToCSV(data, headers);
   const timestamp = new Date().toISOString().split('T')[0];
