@@ -69,7 +69,6 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
   const [editingCredentials, setEditingCredentials] = useState(false);
 
   const isConnected = status?.connected ?? false;
-  const isDemo = status?.mode === 'demo';
   const isNotConfigured = !status || status.mode === 'not_configured';
   const showForm = isNotConfigured || editingCredentials;
 
@@ -113,10 +112,8 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
     try {
       await connectCin7();
       toast({
-        title: isDemo ? 'Demo Mode Active' : 'Connected to Cin7',
-        description: isDemo
-          ? 'Running in demo mode — no real API calls'
-          : 'Cin7 integration connected',
+        title: 'Connected to Cin7',
+        description: 'Cin7 integration connected',
       });
       onStatusChange();
     } catch (error: unknown) {
@@ -195,7 +192,6 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isDemo && isConnected && <Badge variant="secondary">Demo Mode</Badge>}
             {isConnected && status?.core_connected && (
               <Badge variant="outline" className="text-xs">
                 Core
@@ -233,9 +229,7 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                     Cin7 Integration Active
                   </p>
                   <p className="text-xs text-indigo-700 dark:text-indigo-300">
-                    {isDemo
-                      ? 'Demo mode — no real API calls will be made'
-                      : 'Connected to Cin7 inventory management'}
+                    Connected to Cin7 inventory management
                   </p>
                 </div>
               </div>
@@ -253,12 +247,10 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                 Refresh Status
               </Button>
 
-              {!isDemo && (
-                <Button variant="outline" size="sm" onClick={() => setEditingCredentials(true)}>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Edit Credentials
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={() => setEditingCredentials(true)}>
+                <KeyRound className="mr-2 h-4 w-4" />
+                Edit Credentials
+              </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -428,16 +420,11 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
               </form>
             </Form>
 
-            {isNotConfigured && !isDemo && (
+            {isNotConfigured && (
               <>
                 <Separator />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground w-full"
-                  onClick={handleConnect}
-                >
-                  Use demo mode instead
+                <Button variant="ghost" size="sm" className="text-muted-foreground w-full" onClick={handleConnect}>
+                  Connect
                 </Button>
               </>
             )}
