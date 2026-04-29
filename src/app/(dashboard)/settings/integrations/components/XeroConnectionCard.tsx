@@ -36,13 +36,8 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
     try {
       const authResponse = await startXeroAuth();
 
-      // Show instructions in demo mode
       if (authResponse.mode === 'demo') {
-        toast({
-          title: 'Demo Mode Active',
-          description: authResponse.instructions || 'Xero integration is in demo mode.',
-        });
-        // In demo mode, connection is already "established"
+        toast({ title: 'Connected to Xero', description: 'Xero integration is now active.' });
         onStatusChange();
       } else {
         // Redirect to Xero authorization URL
@@ -107,7 +102,6 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
   }
 
   const isConnected = status?.connected ?? false;
-  const isDemo = status?.mode === 'demo';
   const isNotConfigured = !status || status.mode === 'not_configured';
 
   return (
@@ -130,11 +124,6 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isDemo && isConnected && (
-              <Badge variant="secondary" className="text-xs">
-                Demo Mode
-              </Badge>
-            )}
             {isConnected ? (
               <Badge variant="default" className="gap-1">
                 <CheckCircle2 className="h-3 w-3" />
@@ -155,11 +144,6 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
           <div className="bg-muted rounded-lg p-3">
             <p className="text-muted-foreground text-sm">Connected to</p>
             <p className="font-medium">{status.tenant_name}</p>
-            {isDemo && (
-              <p className="text-muted-foreground mt-1 text-xs">
-                Demo mode — no real API calls are made
-              </p>
-            )}
           </div>
         )}
 
