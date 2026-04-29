@@ -51,7 +51,6 @@ export function SendGridConnectionCard({
   const [editingCredentials, setEditingCredentials] = useState(false);
 
   const isConnected = status?.connected ?? false;
-  const isDemo = status?.mode === 'demo';
   const isNotConfigured = !status || status.mode === 'not_configured';
   const showForm = isNotConfigured || editingCredentials;
 
@@ -117,11 +116,6 @@ export function SendGridConnectionCard({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isDemo && (
-              <Badge variant="secondary" className="text-xs">
-                Demo Mode
-              </Badge>
-            )}
             {isConnected ? (
               <Badge variant="default" className="gap-1">
                 <CheckCircle2 className="h-3 w-3" />
@@ -166,11 +160,6 @@ export function SendGridConnectionCard({
                   </div>
                 </div>
               )}
-              {isDemo && (
-                <p className="text-muted-foreground mt-1 border-t pt-2 text-xs">
-                  Demo mode — no real emails are sent
-                </p>
-              )}
             </div>
 
             <div className="flex gap-2">
@@ -178,12 +167,10 @@ export function SendGridConnectionCard({
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh Status
               </Button>
-              {!isDemo && (
-                <Button variant="outline" onClick={() => setEditingCredentials(true)}>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Edit API Key
-                </Button>
-              )}
+              <Button variant="outline" onClick={() => setEditingCredentials(true)}>
+                <KeyRound className="mr-2 h-4 w-4" />
+                Edit API Key
+              </Button>
               <Button asChild className="flex-1">
                 <Link href="/dashboard/finance/emails">
                   <Mail className="mr-2 h-4 w-4" />
