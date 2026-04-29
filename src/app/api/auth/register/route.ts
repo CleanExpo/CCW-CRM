@@ -35,12 +35,13 @@ export async function POST(request: NextRequest) {
 
     const password_hash = await hashPassword(parsed.data.password);
     const isFirst = (await countAppUsers()) === 0;
+    const defaultRole = isFirst ? 'owner' : 'admin';
     const row = await insertAppUser({
       email: parsed.data.email,
       password_hash,
       full_name: parsed.data.full_name ?? null,
-      is_admin: isFirst,
-      role: isFirst ? 'owner' : 'member',
+      is_admin: defaultRole === 'owner' || defaultRole === 'admin',
+      role: defaultRole,
     });
 
     const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
