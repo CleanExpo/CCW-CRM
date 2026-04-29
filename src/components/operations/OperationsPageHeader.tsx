@@ -82,7 +82,7 @@ export function OperationsPageHeader({
       className={cn(
         'border-border/70 bg-card/90 relative overflow-hidden rounded-2xl border shadow-lg backdrop-blur-md sm:rounded-3xl',
         '[.operations-route-scope_&]:from-card [.operations-route-scope_&]:via-card/95 [.operations-route-scope_&]:to-card/90 [.operations-route-scope_&]:border-white/[0.14] [.operations-route-scope_&]:bg-gradient-to-br',
-        '[.operations-route-scope_&]:shadow-[0_20px_50px_-24px_rgba(0,0,0,0.55)]',
+        'mb-2 [.operations-route-scope_&]:shadow-[0_20px_50px_-24px_rgba(0,0,0,0.55)]',
         className
       )}
     >
