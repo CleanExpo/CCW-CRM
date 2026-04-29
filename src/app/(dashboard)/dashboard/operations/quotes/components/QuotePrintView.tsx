@@ -61,11 +61,16 @@ export function QuotePrintView({ quote }: QuotePrintViewProps) {
                 </p>
                 <p>
                   <span className="font-semibold">Date:</span>{' '}
-                  {format(new Date(quote.quote_date), 'dd MMMM yyyy')}
+                  {(() => {
+                    const raw = quote.quote_date ?? quote.created_at;
+                    return raw ? format(new Date(raw), 'dd MMMM yyyy') : '—';
+                  })()}
                 </p>
                 <p>
                   <span className="font-semibold">Valid Until:</span>{' '}
-                  {format(new Date(quote.valid_until ?? ''), 'dd MMMM yyyy')}
+                  {quote.valid_until
+                    ? format(new Date(quote.valid_until), 'dd MMMM yyyy')
+                    : '—'}
                 </p>
                 <p>
                   <span className="font-semibold">Status:</span>{' '}
