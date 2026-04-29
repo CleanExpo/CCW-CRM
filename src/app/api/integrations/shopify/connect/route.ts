@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchShopifyShop, getConfiguredShopifyFromRequest } from '@/lib/integrations/shopify';
 
 export async function POST(request: NextRequest) {
-  const shopDomain =
-    request.cookies.get('shopify_shop_domain')?.value?.trim() ||
-    process.env.SHOPIFY_SHOP_DOMAIN?.trim();
-  const accessToken =
-    request.cookies.get('shopify_access_token')?.value?.trim() ||
-    process.env.SHOPIFY_ACCESS_TOKEN?.trim();
-
-  if (!shopDomain || !accessToken) {
+  const creds = getConfiguredShopifyFromRequest(request);
+  if (!creds) {
     return NextResponse.json({ detail: 'Shopify credentials not configured.' }, { status: 400 });
   }
 
-  const mode = process.env.SHOPIFY_MODE === 'demo' ? 'demo' : 'live';
+  const shop = await fetchShopifyShop(creds.adminHost, creds.accessToken);
+  if (!shop) {
+    return NextResponse.json(
+      { detail: 'Could not verify Shopify token. Check shop domain and Admin API access token.' },
+      { status: 401 }
+    );
+  }
+
   const response = NextResponse.json({
     success: true,
-    mode,
-    shop_domain: shopDomain,
-    shop_name: shopDomain,
-    message: mode === 'demo' ? 'Demo mode active.' : 'Connected to Shopify.',
+    shop_domain: creds.shopDomain,
+    shop_name: shop.name,
+    message: `Connected to ${shop.name}.`,
   });
   response.cookies.set('shopify_connected', '1', {
     httpOnly: true,
@@ -29,4 +30,3 @@ export async function POST(request: NextRequest) {
   });
   return response;
 }
-
