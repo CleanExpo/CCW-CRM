@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { apiClient } from '@/lib/api/client';
+import { apiClient, ApiClientError } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { OrderLineItems, LineItem } from './OrderLineItems';
 import { QuickCustomerAdd } from './QuickCustomerAdd';
@@ -65,11 +65,29 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+function flattenFormErrorMessages(errors: FieldErrors<FormData>): string[] {
+  const messages: string[] = [];
+  const visit = (node: unknown): void => {
+    if (!node || typeof node !== 'object') return;
+    const o = node as Record<string, unknown>;
+    if (typeof o.message === 'string' && o.message.length > 0) {
+      messages.push(o.message);
+      return;
+    }
+    for (const v of Object.values(o)) {
+      if (v && typeof v === 'object') visit(v);
+    }
+  };
+  visit(errors);
+  return [...new Set(messages)];
+}
+
 interface OrderFormProps {
   order?: Order | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
+  /** `created` is true when a new order was persisted (not update/duplicate-save). */
+  onSuccess: (meta?: { created?: boolean }) => void;
 }
 
 export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormProps) {
@@ -93,7 +111,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   >(null);
   const [showAnomalyAlert, setShowAnomalyAlert] = useState(false);
   const { toast } = useToast();
-  const isEdit = !!order;
+  const isEdit = Boolean(order?.id);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -165,13 +183,31 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
       setCustomers(response.items || []);
     } catch (error) {
       console.error('Failed to load customers:', error);
+      const message =
+        error instanceof ApiClientError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Could not load customers';
+      toast({
+        variant: 'destructive',
+        title: 'Could not load customers',
+        description: message,
+      });
     }
-  }, []);
+  }, [toast]);
 
-  // Load customers
+  // Load customers when the form opens so the list is fresh and errors surface in context
   useEffect(() => {
-    loadCustomers();
-  }, [loadCustomers]);
+    if (!open) return;
+    void loadCustomers();
+  }, [open, loadCustomers]);
+
+  useEffect(() => {
+    if (!open) return;
+    setAnomalyDetected(null);
+    setShowAnomalyAlert(false);
+  }, [open, order?.id]);
 
   function handleCustomerCreated(customer: { id: string; company_name: string }) {
     // Reload customers list
@@ -239,6 +275,13 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
     if (errors.length > 0) {
       setLineItemErrors(errors);
+      const preview = errors.slice(0, 3).join(' · ');
+      const suffix = errors.length > 3 ? ` (+${errors.length - 3} more)` : '';
+      toast({
+        variant: 'destructive',
+        title: 'Line items incomplete',
+        description: `${preview}${suffix}`,
+      });
       return;
     }
 
@@ -269,6 +312,10 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         ) {
           setAnomalyDetected(anomalyCheck);
           setShowAnomalyAlert(true);
+          toast({
+            title: 'Review required',
+            description: 'This order triggered a risk check. Review the alert in the form, then continue or adjust the order.',
+          });
           return; // Stop submission, wait for user confirmation
         }
       } catch (error) {
@@ -293,18 +340,20 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         })),
       };
 
-      if (isEdit && order) {
+      if (isEdit && order?.id) {
         await apiClient.put(`/api/orders/${order.id}`, payload);
         toast({
           title: 'Success',
           description: 'Order updated successfully',
         });
+        onSuccess({ created: false });
       } else {
         await apiClient.post('/api/orders', payload);
         toast({
           title: 'Success',
           description: 'Order created successfully',
         });
+        onSuccess({ created: true });
       }
 
       // PHASE 4: Clear draft on successful submission
@@ -317,18 +366,47 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
       }
 
       onOpenChange(false);
-      onSuccess();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} order`;
+      let description: string;
+      let title = isEdit ? 'Could not update order' : 'Could not create order';
+
+      if (error instanceof ApiClientError) {
+        description = error.message;
+        if (error.status === 400) {
+          title = isEdit ? 'Order update rejected' : 'Order could not be created';
+        } else if (error.status === 401 || error.status === 403) {
+          title = 'Session or permission issue';
+        } else if (error.status === 404) {
+          title = 'Order not found';
+        } else if (error.status === 408) {
+          title = 'Request timed out';
+        }
+      } else if (error instanceof Error) {
+        description = error.message;
+      } else {
+        description = `Something went wrong while ${isEdit ? 'updating' : 'creating'} the order.`;
+      }
+
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: message,
+        title,
+        description,
       });
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function onSubmitInvalid(errors: FieldErrors<FormData>) {
+    const msgs = flattenFormErrorMessages(errors);
+    toast({
+      variant: 'destructive',
+      title: 'Missing or invalid fields',
+      description:
+        msgs.length > 0
+          ? msgs.join(' · ')
+          : 'Check customer, location, and status above.',
+    });
   }
 
   const subtotal = lineItems.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
@@ -358,7 +436,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)} className="space-y-6">
             {/* Fulfillment Location Selection */}
             <FormField
               control={form.control}
