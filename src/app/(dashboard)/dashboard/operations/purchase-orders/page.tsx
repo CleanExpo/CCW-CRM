@@ -38,7 +38,6 @@ import {
   PackageCheck,
   ClipboardList,
   X,
-  Copy,
   Download,
   ScanLine,
 } from 'lucide-react';
@@ -222,36 +221,6 @@ export default function PurchaseOrdersPage() {
     }
   }
 
-  // PHASE 4: Duplicate PO - quickly create copy with same items
-  async function handleDuplicatePO(po: PurchaseOrder) {
-    try {
-      const fullPO = await apiClient.get<PurchaseOrder>(`/api/purchase-orders/${po.id}`);
-      // Create a copy without id (will be treated as new PO)
-      const poCopy = {
-        ...fullPO,
-        id: undefined, // Remove id to create new PO
-        po_number: undefined, // Will be auto-generated
-        status: 'draft', // Reset to draft
-        notes: fullPO.notes
-          ? `Copy of ${fullPO.po_number}\n\n${fullPO.notes}`
-          : `Copy of ${fullPO.po_number}`,
-      };
-      setEditingPO(poCopy as unknown as PurchaseOrder);
-      setIsCreateOpen(true);
-      toast({
-        title: 'Purchase Order Duplicated',
-        description: 'Review and modify the copy before saving',
-      });
-    } catch (error: unknown) {
-      console.error('Failed to duplicate purchase order:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to duplicate purchase order',
-        variant: 'destructive',
-      });
-    }
-  }
-
   function canReceiveGoods(po: PurchaseOrder): boolean {
     return po.status === 'ordered' || po.status === 'in_transit' || po.status === 'approved';
   }
@@ -428,10 +397,6 @@ export default function PurchaseOrdersPage() {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setEditingPO(po)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDuplicatePO(po)}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicate
-                          </DropdownMenuItem>
                           {canReceiveGoods(po) && (
                             <DropdownMenuItem onClick={() => setReceivingPO(po)}>
                               <PackageCheck className="mr-2 h-4 w-4" />
