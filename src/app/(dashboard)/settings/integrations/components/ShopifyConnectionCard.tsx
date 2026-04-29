@@ -332,6 +332,40 @@ export function ShopifyConnectionCard({
 
                 <Separator />
 
+                <div className="space-y-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => {
+                      const raw = form.getValues('shop_domain')?.trim();
+                      if (!raw) {
+                        toast({
+                          variant: 'destructive',
+                          title: 'Shop required',
+                          description: 'Enter your myshopify.com store handle or domain first.',
+                        });
+                        return;
+                      }
+                      const domain = raw.includes('.') ? raw : `${raw}.myshopify.com`;
+                      window.location.href = `/api/integrations/shopify/authorize?shop=${encodeURIComponent(domain)}`;
+                    }}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Authorize with Shopify (OAuth)
+                  </Button>
+                  <p className="text-muted-foreground text-xs">
+                    Uses <code className="bg-muted rounded px-1">SHOPIFY_CLIENT_ID</code> and{' '}
+                    <code className="bg-muted rounded px-1">SHOPIFY_API_SECRET</code>. Add the redirect URL{' '}
+                    <code className="bg-muted rounded px-1 break-all">
+                      {typeof window !== 'undefined' ? `${window.location.origin}/api/integrations/shopify/callback` : '/api/integrations/shopify/callback'}
+                    </code>{' '}
+                    to your Shopify app’s allowed redirect list.
+                  </p>
+                </div>
+
+                <Separator />
+
                 <div className="flex gap-2">
                   <Button type="submit" disabled={saving} className="flex-1">
                     <ExternalLink className="mr-2 h-4 w-4" />
