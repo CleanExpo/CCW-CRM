@@ -20,6 +20,7 @@ import { OrderStatusTimeline } from './OrderStatusTimeline';
 import { OrderStatusActions } from './OrderStatusActions';
 import { OrderPrintView } from './OrderPrintView';
 import { format } from 'date-fns';
+import { formatOrderDatePart } from '@/lib/operations/order-dates';
 import { formatCurrency } from '@/lib/utils/calculations';
 import { apiClient } from '@/lib/api/client';
 import { Printer, FileText, Wifi } from 'lucide-react';
@@ -198,7 +199,8 @@ export function OrderDetailDialog({
               <div className="flex-1">
                 <DialogTitle className="text-2xl">Order {order.order_number}</DialogTitle>
                 <DialogDescription>
-                  Created {format(new Date(order.order_date ?? ''), "MMMM dd, yyyy 'at' h:mm a")}
+                  Created{' '}
+                  {formatOrderDatePart(order, "MMMM dd, yyyy 'at' h:mm a", '—')}
                 </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
