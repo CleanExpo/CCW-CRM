@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getConfiguredTokenSource, getXeroMode } from '@/lib/integrations/xero';
+import {
+  normalizeOrderRouteParam,
+  orderRouteParamIsUuid,
+} from '@/lib/operations/order-route-param';
 
 async function createXeroInvoice(accessToken: string, tenantId: string, payload: unknown) {
   const res = await fetch('https://api.xero.com/api.xro/2.0/Invoices', {
@@ -24,14 +28,20 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ orderId: string }> }
 ) {
-  const { orderId } = await context.params;
-  const row = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: {
-      customer: { select: { companyName: true } },
-      lineItems: { include: { product: { select: { name: true } } } },
-    },
-  });
+  const { orderId: rawOrderId } = await context.params;
+  const param = normalizeOrderRouteParam(rawOrderId);
+  if (!param) {
+    return NextResponse.json({ detail: 'Order id or order number is required.' }, { status: 400 });
+  }
+
+  const include = {
+    customer: { select: { companyName: true } },
+    lineItems: { include: { product: { select: { name: true } } } },
+  } as const;
+
+  const row = orderRouteParamIsUuid(param)
+    ? await prisma.order.findUnique({ where: { id: param }, include })
+    : await prisma.order.findFirst({ where: { orderNumber: param }, include });
   if (!row) {
     return NextResponse.json({ detail: 'Order not found' }, { status: 404 });
   }
