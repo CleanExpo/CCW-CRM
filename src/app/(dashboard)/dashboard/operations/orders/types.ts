@@ -10,8 +10,10 @@ export interface Order {
   customer_name?: string;
   customer_id?: string;
   status: OrderStatus;
-  total?: string;
+  total?: string | number;
+  /** Explicit order date when present; list API uses `created_at` from DB instead */
   order_date?: string;
+  created_at?: string;
   fulfillment_location?: string | null;
   tracking_number?: string | null;
   carrier_name?: string | null;
