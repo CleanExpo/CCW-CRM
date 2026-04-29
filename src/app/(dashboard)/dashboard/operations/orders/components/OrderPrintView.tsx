@@ -1,7 +1,7 @@
 'use client';
 
-import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils/calculations';
+import { formatOrderDatePart } from '@/lib/operations/order-dates';
 import { Order, OrderItem } from '../types';
 
 interface OrderPrintViewProps {
@@ -61,7 +61,7 @@ export function OrderPrintView({ order }: OrderPrintViewProps) {
                 </p>
                 <p>
                   <span className="font-semibold">Date:</span>{' '}
-                  {format(new Date(order.order_date ?? ''), 'dd MMMM yyyy')}
+                  {formatOrderDatePart(order, 'dd MMMM yyyy')}
                 </p>
                 <p>
                   <span className="font-semibold">Status:</span>{' '}
