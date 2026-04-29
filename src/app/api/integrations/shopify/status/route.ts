@@ -1,37 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-function getMode() {
-  return process.env.SHOPIFY_MODE === 'demo' ? 'demo' : 'live';
-}
+import {
+  fetchShopifyShop,
+  getConfiguredShopifyFromRequest,
+  getShopifyApiVersion,
+  getShopifyMode,
+  resolveMyshopifyHost,
+} from '@/lib/integrations/shopify';
 
 export async function GET(request: NextRequest) {
-  const mode = getMode();
-  const cookieDomain = request.cookies.get('shopify_shop_domain')?.value?.trim();
-  const cookieToken = request.cookies.get('shopify_access_token')?.value?.trim();
+  const configuredMode = getShopifyMode();
   const connectedCookie = request.cookies.get('shopify_connected')?.value === '1';
 
-  const shopDomain = cookieDomain || process.env.SHOPIFY_SHOP_DOMAIN?.trim();
-  const accessToken = cookieToken || process.env.SHOPIFY_ACCESS_TOKEN?.trim();
-  const hasCreds = Boolean(shopDomain && accessToken);
+  const rawShop =
+    request.cookies.get('shopify_shop_domain')?.value?.trim() ||
+    process.env.SHOPIFY_SHOP_DOMAIN?.trim() ||
+    '';
+  const cookieToken =
+    request.cookies.get('shopify_access_token')?.value?.trim() ||
+    process.env.SHOPIFY_ACCESS_TOKEN?.trim() ||
+    '';
 
-  if (!hasCreds) {
+  const { adminHost, source } = resolveMyshopifyHost(rawShop);
+  const hasMyshopify = adminHost.endsWith('.myshopify.com');
+  const hasToken = Boolean(cookieToken);
+
+  if (!hasMyshopify || !hasToken) {
     return NextResponse.json({
       connected: false,
       mode: 'not_configured',
-      message: 'Missing Shopify credentials. Save your shop domain and access token.',
+      shop_domain: rawShop || undefined,
+      message:
+        'Missing Shopify admin hostname (*.myshopify.com) or access token. Use OAuth or paste an Admin API token from your custom app.',
     });
   }
 
-  const connected = connectedCookie || mode === 'demo';
+  const creds = getConfiguredShopifyFromRequest(request);
+  if (!creds) {
+    return NextResponse.json({
+      connected: false,
+      mode: 'not_configured',
+      message: 'Could not resolve Shopify credentials.',
+    });
+  }
+
+  const shopInfo = await fetchShopifyShop(creds.adminHost, creds.accessToken);
+  if (!shopInfo) {
+    return NextResponse.json({
+      connected: false,
+      mode: configuredMode,
+      shop_domain: creds.shopDomain,
+      api_version: getShopifyApiVersion(),
+      message:
+        configuredMode === 'live'
+          ? 'Saved token is invalid or expired. Re-authorize with Shopify or update SHOPIFY_ACCESS_TOKEN.'
+          : 'Could not reach Shopify with the current token.',
+    });
+  }
+
+  const connected = connectedCookie || Boolean(shopInfo);
   return NextResponse.json({
     connected,
-    mode,
-    shop_domain: shopDomain,
-    shop_name: shopDomain,
+    mode: 'live',
+    shop_domain: creds.shopDomain,
+    shop_name: shopInfo.name,
+    storefront_domain: shopInfo.domain,
+    api_version: getShopifyApiVersion(),
+    myshopify_source: source,
     message: connected
-      ? mode === 'demo'
-        ? 'Connected in demo mode.'
-        : 'Connected to Shopify.'
-      : 'Credentials saved. Click Connect to activate.',
+      ? `Connected to ${shopInfo.name}.`
+      : 'Verified with Shopify. Click Connect to mark the integration active.',
   });
 }
