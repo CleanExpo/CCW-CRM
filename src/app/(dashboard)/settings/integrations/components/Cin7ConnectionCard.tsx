@@ -218,6 +218,23 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {status?.connector_allowlist && status.connector_allowlist.length > 0 && (
+          <div className="rounded-lg border border-border/80 bg-muted/40 p-3">
+            <p className="text-sm font-medium">Cin7 API connector IPs</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Cin7 limits Core API access to registered connector IPs. Ensure these addresses are
+              configured in Cin7 for the integrations that call Core from your network.
+            </p>
+            <ul className="mt-2 space-y-1 font-mono text-xs">
+              {status.connector_allowlist.map((c) => (
+                <li key={c.name}>
+                  {c.name}: {c.ip}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* ── Connected state ── */}
         {isConnected && !editingCredentials && (
           <>
