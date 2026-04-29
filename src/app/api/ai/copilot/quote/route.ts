@@ -1,6 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const DEFAULT_MODEL = 'gpt-4o-mini';
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+const REQUEST_TIMEOUT_MS = 20_000;
+const MAX_RETRIES = 2;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function requestOpenAiWithRetry(apiKey: string, payload: Record<string, unknown>) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetch(OPENAI_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      lastError = error;
+      // Retry transient network/socket/timeout failures.
+      if (attempt < MAX_RETRIES) {
+        await sleep(400 * (attempt + 1));
+        continue;
+      }
+    }
+  }
+
+  throw lastError;
+}
 
 /**
  * Quote Copilot — conversational assistant for building quotes.
@@ -69,21 +108,14 @@ Rules:
   const userContent = transcript ? `${transcript}\nuser: ${message}` : `user: ${message}`;
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.45,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: userContent },
-        ],
-        response_format: { type: 'json_object' },
-      }),
+    const res = await requestOpenAiWithRetry(apiKey, {
+      model,
+      temperature: 0.45,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: userContent },
+      ],
+      response_format: { type: 'json_object' },
     });
 
     if (!res.ok) {
@@ -130,7 +162,14 @@ Rules:
       action: parsed.action,
     });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ detail: String(e) }, { status: 500 });
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('OpenAI quote copilot network error:', msg);
+    return NextResponse.json(
+      {
+        detail:
+          'Could not reach the AI provider right now. Please retry in a few seconds.',
+      },
+      { status: 502 }
+    );
   }
 }

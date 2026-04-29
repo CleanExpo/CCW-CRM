@@ -12,8 +12,6 @@ import { DeleteQuoteDialog } from './components/DeleteQuoteDialog';
 import { ConvertToOrderDialog } from './components/ConvertToOrderDialog';
 import { Pencil, Trash2, Plus, ArrowRight, Sparkles, Download, FileText } from 'lucide-react';
 import { exportQuotesToCSV } from '@/lib/utils/csv-export';
-// PHASE C: Quote Copilot Chat
-import { QuoteCopilotChat } from '@/components/ai/QuoteCopilotChat';
 import { useToast } from '@/hooks/use-toast';
 import { Quote } from './types';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
@@ -61,7 +59,6 @@ export default function QuotesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
-  const [copilotOpen, setCopilotOpen] = useState(false); // PHASE C: Copilot dialog state
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
 
   const loadQuotes = useCallback(async () => {
@@ -139,17 +136,6 @@ export default function QuotesPage() {
     loadQuotes();
   };
 
-  // PHASE C: Handle quote created from Copilot
-  const handleCopilotQuoteCreated = (quoteData: Record<string, unknown>) => {
-    // Pre-fill the quote form with copilot data
-    setSelectedQuote(quoteData as unknown as Quote);
-    setFormOpen(true);
-    toast({
-      title: 'Quote Ready',
-      description: 'Copilot has prepared your quote. Review and save to finalize.',
-    });
-  };
-
   const handleExport = () => {
     exportQuotesToCSV(quotes as unknown as Record<string, unknown>[]);
     toast({
@@ -183,9 +169,9 @@ export default function QuotesPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
-              <Button variant="outline" onClick={() => setCopilotOpen(true)}>
+              <Button variant="outline" disabled title="Coming soon">
                 <Sparkles className="mr-2 h-4 w-4" />
-                Copilot
+                Copilot (Coming soon)
               </Button>
               <Button onClick={handleAddQuote}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -381,13 +367,6 @@ export default function QuotesPage() {
           open={convertDialogOpen}
           onOpenChange={setConvertDialogOpen}
           onSuccess={handleSuccess}
-        />
-
-        {/* PHASE C: Quote Copilot Chat */}
-        <QuoteCopilotChat
-          open={copilotOpen}
-          onOpenChange={setCopilotOpen}
-          onQuoteCreated={handleCopilotQuoteCreated}
         />
       </OperationsPageLayout>
     </ErrorBoundary>
