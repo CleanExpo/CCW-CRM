@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getConfiguredTokenSource, getXeroMode } from '@/lib/integrations/xero';
+import {
+  normalizeOrderRouteParam,
+  orderRouteParamIsUuid,
+} from '@/lib/operations/order-route-param';
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ orderId: string }> }
 ) {
-  const { orderId } = await context.params;
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: { id: true, orderNumber: true, total: true, createdAt: true },
-  });
+  const { orderId: rawOrderId } = await context.params;
+  const param = normalizeOrderRouteParam(rawOrderId);
+  if (!param) {
+    return NextResponse.json({ detail: 'Order id or order number is required.' }, { status: 400 });
+  }
+
+  const select = { id: true, orderNumber: true, total: true, createdAt: true } as const;
+  const order = orderRouteParamIsUuid(param)
+    ? await prisma.order.findUnique({ where: { id: param }, select })
+    : await prisma.order.findFirst({ where: { orderNumber: param }, select });
   if (!order) return NextResponse.json({ detail: 'Order not found' }, { status: 404 });
 
   if (getXeroMode() === 'demo') {
