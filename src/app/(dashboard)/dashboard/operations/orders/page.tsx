@@ -31,10 +31,11 @@ import { useSearchState } from '@/hooks/use-search-state';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api/client';
 import { invoicesApi } from '@/lib/api/invoices';
+import { formatOrderDatePart } from '@/lib/operations/order-dates';
 import { formatAud, opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
 import { cn } from '@/lib/utils';
 import { exportOrdersToCSV, exportOrdersToPDF } from '@/lib/utils/csv-export';
-import { format, formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
+import { formatDistanceToNow } from 'date-fns'; // PHASE 4: Add timestamp display
 import {
   AlertCircle,
   Copy,
@@ -482,7 +483,7 @@ export default function OrdersPage() {
                     label: 'Order Date',
                     className: 'text-sm text-muted-foreground',
                     hideOnMobile: true,
-                    render: (order) => format(new Date(order.order_date ?? ''), 'MMM dd, yyyy'),
+                    render: (order) => formatOrderDatePart(order, 'MMM dd, yyyy'),
                   },
                   {
                     key: 'actions',
