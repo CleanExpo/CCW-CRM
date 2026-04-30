@@ -8,53 +8,47 @@ ALTER TABLE "suppliers" ADD COLUMN IF NOT EXISTS "owner_user_id" UUID;
 ALTER TABLE "purchase_orders" ADD COLUMN IF NOT EXISTS "owner_user_id" UUID;
 
 -- Backfill existing rows to the first app user so legacy data remains reachable.
--- IMPORTANT: run this migration only after at least one user exists.
-WITH owner AS (
-  SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1
-)
+-- If no app user exists (e.g., shadow DB during migrate dev), use a deterministic fallback UUID.
 UPDATE "customers" c
-SET "owner_user_id" = owner.id
-FROM owner
+SET "owner_user_id" = COALESCE(
+  (SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1),
+  '00000000-0000-0000-0000-000000000000'::uuid
+)
 WHERE c."owner_user_id" IS NULL;
 
-WITH owner AS (
-  SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1
-)
 UPDATE "products" p
-SET "owner_user_id" = owner.id
-FROM owner
+SET "owner_user_id" = COALESCE(
+  (SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1),
+  '00000000-0000-0000-0000-000000000000'::uuid
+)
 WHERE p."owner_user_id" IS NULL;
 
-WITH owner AS (
-  SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1
-)
 UPDATE "orders" o
-SET "owner_user_id" = owner.id
-FROM owner
+SET "owner_user_id" = COALESCE(
+  (SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1),
+  '00000000-0000-0000-0000-000000000000'::uuid
+)
 WHERE o."owner_user_id" IS NULL;
 
-WITH owner AS (
-  SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1
-)
 UPDATE "quotes" q
-SET "owner_user_id" = owner.id
-FROM owner
+SET "owner_user_id" = COALESCE(
+  (SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1),
+  '00000000-0000-0000-0000-000000000000'::uuid
+)
 WHERE q."owner_user_id" IS NULL;
 
-WITH owner AS (
-  SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1
-)
 UPDATE "suppliers" s
-SET "owner_user_id" = owner.id
-FROM owner
+SET "owner_user_id" = COALESCE(
+  (SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1),
+  '00000000-0000-0000-0000-000000000000'::uuid
+)
 WHERE s."owner_user_id" IS NULL;
 
-WITH owner AS (
-  SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1
-)
 UPDATE "purchase_orders" po
-SET "owner_user_id" = owner.id
-FROM owner
+SET "owner_user_id" = COALESCE(
+  (SELECT id FROM "app_users" ORDER BY "created_at" ASC LIMIT 1),
+  '00000000-0000-0000-0000-000000000000'::uuid
+)
 WHERE po."owner_user_id" IS NULL;
 
 ALTER TABLE "customers" ALTER COLUMN "owner_user_id" SET NOT NULL;
