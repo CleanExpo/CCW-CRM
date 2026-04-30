@@ -65,7 +65,8 @@ function contactFromShopifyOrder(o: ShopifyOrderPayload): string | undefined {
 export async function importShopifyOrderToErp(
   adminHost: string,
   accessToken: string,
-  shopifyOrderId: string
+  shopifyOrderId: string,
+  ownerUserId: string
 ): Promise<{
   created: boolean;
   order_id: string;
@@ -84,7 +85,9 @@ export async function importShopifyOrderToErp(
   const shopifyOrder = (data as { order: ShopifyOrderPayload }).order;
 
   const erpOrderNumber = `SHP-${shopifyOrder.id}`;
-  const existing = await prisma.order.findFirst({ where: { orderNumber: erpOrderNumber } });
+  const existing = await prisma.order.findFirst({
+    where: { ownerUserId, orderNumber: erpOrderNumber },
+  });
   if (existing) {
     return {
       created: false,
@@ -100,12 +103,13 @@ export async function importShopifyOrderToErp(
   const contactName = contactFromShopifyOrder(shopifyOrder);
 
   let customer = email
-    ? await prisma.customer.findFirst({ where: { email } })
-    : await prisma.customer.findFirst({ where: { companyName } });
+    ? await prisma.customer.findFirst({ where: { ownerUserId, email } })
+    : await prisma.customer.findFirst({ where: { ownerUserId, companyName } });
 
   if (!customer) {
     customer = await prisma.customer.create({
       data: {
+        ownerUserId,
         companyName,
         contactName,
         email: email || undefined,
@@ -148,6 +152,7 @@ export async function importShopifyOrderToErp(
 
   const created = await prisma.order.create({
     data: {
+      ownerUserId,
       customerId: customer.id,
       orderNumber: erpOrderNumber,
       status: statusErp,
