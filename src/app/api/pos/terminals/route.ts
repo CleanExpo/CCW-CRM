@@ -1,28 +1,42 @@
-import { NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
+import { NextRequest, NextResponse } from 'next/server';
+import { getPosStore } from '@/lib/pos/mock-store';
 
-/** Default terminals aligned with `/api/pos/locations` codes. */
 export async function GET() {
-  return NextResponse.json([
-    {
-      id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
-      terminal_id: 'TERM-BNE-01',
-      location_code: 'brisbane',
-      terminal_type: 'counter',
-      is_active: true,
-    },
-    {
-      id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2',
-      terminal_id: 'TERM-SYD-01',
-      location_code: 'sydney',
-      terminal_type: 'counter',
-      is_active: true,
-    },
-    {
-      id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3',
-      terminal_id: 'TERM-MEL-01',
-      location_code: 'melbourne',
-      terminal_type: 'counter',
-      is_active: true,
-    },
-  ]);
+  const store = getPosStore();
+  return NextResponse.json({ data: store.terminals });
+}
+
+export async function POST(request: NextRequest) {
+  const store = getPosStore();
+  const body = (await request.json()) as {
+    terminal_id?: string;
+    location_code?: string;
+    terminal_type?: 'physical' | 'virtual' | 'counter';
+    merchant_id?: string | null;
+    is_active?: boolean;
+  };
+
+  const terminalId = String(body.terminal_id ?? '').trim();
+  const locationCode = String(body.location_code ?? '').trim();
+  if (!terminalId || !locationCode) {
+    return NextResponse.json({ detail: 'terminal_id and location_code are required' }, { status: 400 });
+  }
+
+  if (store.terminals.some((terminal) => terminal.terminal_id.toLowerCase() === terminalId.toLowerCase())) {
+    return NextResponse.json({ detail: 'Terminal id already exists' }, { status: 409 });
+  }
+
+  const created = {
+    id: randomUUID(),
+    terminal_id: terminalId,
+    location_code: locationCode,
+    terminal_type: body.terminal_type ?? 'counter',
+    is_active: body.is_active !== false,
+    merchant_id: body.merchant_id ?? null,
+    last_ping_at: null,
+  };
+
+  store.terminals.unshift(created);
+  return NextResponse.json(created, { status: 201 });
 }
