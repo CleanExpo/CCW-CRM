@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { productToApi } from '@/lib/db/api-serialize';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
     const category = searchParams.get('category');
 
-    const where: Prisma.ProductWhereInput = {};
+    const where: Prisma.ProductWhereInput = { ownerUserId: scope.userId };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -46,9 +50,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const body = (await request.json()) as Record<string, unknown>;
     const row = await prisma.product.create({
       data: {
+        ownerUserId: scope.userId,
         name: String(body.name ?? ''),
         sku: String(body.sku ?? ''),
         category: (body.category as string) ?? null,
