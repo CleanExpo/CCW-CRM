@@ -42,13 +42,13 @@ export function PurchaseOrderLineItems({
 
   const handleProductChange = (
     index: number,
-    product: { id: string; name: string; sku: string; cost?: number }
+    product: { id: string; name: string; sku: string; cost?: number; price?: number }
   ) => {
     const newItems = [...items];
     const item = newItems[index];
 
-    // Use product cost as default unit_cost if available
-    const defaultUnitCost = product.cost || 0;
+    // Product selector returns `price`; keep `cost` as backward-compatible fallback.
+    const defaultUnitCost = product.cost ?? product.price ?? 0;
 
     newItems[index] = {
       ...item,
