@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 const INCLUDE = {
@@ -16,6 +17,9 @@ export async function PUT(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
     const { searchParams } = new URL(request.url);
     const statusFromQuery = searchParams.get('status');
@@ -34,7 +38,10 @@ export async function PUT(
       return NextResponse.json({ detail: 'status is required' }, { status: 400 });
     }
 
-    const existing = await prisma.order.findUnique({ where: { id }, select: { id: true } });
+    const existing = await prisma.order.findFirst({
+      where: { id, ownerUserId: scope.userId },
+      select: { id: true },
+    });
     if (!existing) {
       return NextResponse.json({ detail: 'Order not found' }, { status: 404 });
     }
