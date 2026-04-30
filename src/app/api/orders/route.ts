@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
 import { generateOrderNumber, resolveLinesFromPayload } from '@/lib/db/order-lines';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 const ORDER_LIST_INCLUDE = {
@@ -11,13 +12,16 @@ const ORDER_LIST_INCLUDE = {
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
     const status = searchParams.get('status');
 
-    const where: Prisma.OrderWhereInput = {};
+    const where: Prisma.OrderWhereInput = { ownerUserId: scope.userId };
     if (search) {
       where.orderNumber = { contains: search, mode: 'insensitive' };
     }
@@ -55,6 +59,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const body = (await request.json()) as Record<string, unknown>;
     const customerId = String(body.customer_id ?? body.customerId ?? '').trim();
     if (!customerId) {
@@ -65,7 +72,15 @@ export async function POST(request: NextRequest) {
     const orderNumber =
       String(body.order_number ?? body.orderNumber ?? '').trim() || generateOrderNumber();
 
-    const { lines, subtotal } = await resolveLinesFromPayload(body.items);
+    const customerRow = await prisma.customer.findFirst({
+      where: { id: customerId, ownerUserId: scope.userId, isActive: true },
+      select: { id: true },
+    });
+    if (!customerRow) {
+      return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
+    }
+
+    const { lines, subtotal } = await resolveLinesFromPayload(body.items, scope.userId);
     if (lines.length === 0) {
       return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
     }
@@ -74,6 +89,7 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.order.create({
       data: {
+        ownerUserId: scope.userId,
         customerId,
         orderNumber,
         status,
