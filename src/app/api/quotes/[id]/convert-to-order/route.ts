@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { nextOrderNumber } from '@/lib/db/quote-mutations';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 export async function POST(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(_request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
-    const quote = await prisma.quote.findUnique({
-      where: { id },
+    const quote = await prisma.quote.findFirst({
+      where: { id, ownerUserId: scope.userId },
       include: { lineItems: true },
     });
     if (!quote) return NextResponse.json({ detail: 'Quote not found' }, { status: 404 });
@@ -23,12 +27,13 @@ export async function POST(
       return NextResponse.json({ detail: 'Quote has no line items' }, { status: 400 });
     }
 
-    const orderNumber = await nextOrderNumber();
+    const orderNumber = await nextOrderNumber(scope.userId);
     const total = quote.lineItems.reduce((s, li) => s + li.lineTotal, 0);
 
     const order = await prisma.$transaction(async (tx) => {
       const o = await tx.order.create({
         data: {
+          ownerUserId: scope.userId,
           customerId: quote.customerId,
           orderNumber,
           status: 'processing',
