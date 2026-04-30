@@ -1,0 +1,90 @@
+import { getCin7Mode } from '@/lib/integrations/cin7-core';
+import { getShopifyApiVersion, getShopifyMode, normalizeShopifyHostInput } from '@/lib/integrations/shopify';
+import { getXeroMode } from '@/lib/integrations/xero';
+
+type Level = 'ok' | 'warning' | 'error';
+
+export interface IntegrationDiagnostic {
+  key: 'xero' | 'shopify' | 'cin7' | 'sendgrid';
+  label: string;
+  level: Level;
+  liveReady: boolean;
+  mode: 'demo' | 'live';
+  checks: Array<{ level: Level; message: string }>;
+}
+
+function has(value?: string): boolean {
+  return Boolean(value?.trim());
+}
+
+export function getIntegrationDiagnostics(): IntegrationDiagnostic[] {
+  const diagnostics: IntegrationDiagnostic[] = [];
+
+  const xeroMode = getXeroMode();
+  const xeroChecks: IntegrationDiagnostic['checks'] = [];
+  if (!has(process.env.XERO_CLIENT_ID)) xeroChecks.push({ level: 'error', message: 'Missing XERO_CLIENT_ID' });
+  if (!has(process.env.XERO_CLIENT_SECRET)) xeroChecks.push({ level: 'error', message: 'Missing XERO_CLIENT_SECRET' });
+  if (!has(process.env.XERO_REDIRECT_URI)) xeroChecks.push({ level: 'error', message: 'Missing XERO_REDIRECT_URI' });
+  if (xeroMode === 'demo') xeroChecks.push({ level: 'warning', message: 'XERO_MODE is demo; switch to live for real OAuth sync.' });
+  diagnostics.push({
+    key: 'xero',
+    label: 'Xero',
+    level: xeroChecks.some((c) => c.level === 'error') ? 'error' : xeroChecks.some((c) => c.level === 'warning') ? 'warning' : 'ok',
+    liveReady: xeroChecks.every((c) => c.level !== 'error') && xeroMode === 'live',
+    mode: xeroMode,
+    checks: xeroChecks.length > 0 ? xeroChecks : [{ level: 'ok', message: 'Xero environment looks ready for live mode.' }],
+  });
+
+  const shopMode = getShopifyMode();
+  const shopChecks: IntegrationDiagnostic['checks'] = [];
+  const shopDomain = normalizeShopifyHostInput(process.env.SHOPIFY_SHOP_DOMAIN?.trim() || '');
+  if (!has(process.env.SHOPIFY_CLIENT_ID) && !has(process.env.SHOPIFY_API_KEY)) {
+    shopChecks.push({ level: 'error', message: 'Missing SHOPIFY_CLIENT_ID / SHOPIFY_API_KEY' });
+  }
+  if (!has(process.env.SHOPIFY_API_SECRET) && !has(process.env.SHOPIFY_CLIENT_SECRET)) {
+    shopChecks.push({ level: 'error', message: 'Missing SHOPIFY_API_SECRET / SHOPIFY_CLIENT_SECRET' });
+  }
+  if (shopDomain && !shopDomain.endsWith('.myshopify.com')) {
+    shopChecks.push({ level: 'error', message: 'SHOPIFY_SHOP_DOMAIN must be *.myshopify.com for Admin API.' });
+  }
+  if (process.env.SHOPIFY_API_VERSION?.trim() && getShopifyApiVersion() !== process.env.SHOPIFY_API_VERSION?.trim()) {
+    shopChecks.push({ level: 'warning', message: 'SHOPIFY_API_VERSION format is invalid; fallback version is used.' });
+  }
+  if (shopMode === 'demo') shopChecks.push({ level: 'warning', message: 'SHOPIFY_MODE is demo; switch to live for production sync.' });
+  diagnostics.push({
+    key: 'shopify',
+    label: 'Shopify',
+    level: shopChecks.some((c) => c.level === 'error') ? 'error' : shopChecks.some((c) => c.level === 'warning') ? 'warning' : 'ok',
+    liveReady: shopChecks.every((c) => c.level !== 'error') && shopMode === 'live',
+    mode: shopMode,
+    checks: shopChecks.length > 0 ? shopChecks : [{ level: 'ok', message: 'Shopify environment looks ready for live mode.' }],
+  });
+
+  const cin7Mode = getCin7Mode();
+  const cin7Checks: IntegrationDiagnostic['checks'] = [];
+  if (!has(process.env.CIN7_CORE_ACCOUNT_ID)) cin7Checks.push({ level: 'error', message: 'Missing CIN7_CORE_ACCOUNT_ID' });
+  if (!has(process.env.CIN7_CORE_APPLICATION_KEY)) cin7Checks.push({ level: 'error', message: 'Missing CIN7_CORE_APPLICATION_KEY' });
+  if (cin7Mode === 'demo') cin7Checks.push({ level: 'warning', message: 'CIN7_MODE is demo; switch to live for production sync.' });
+  diagnostics.push({
+    key: 'cin7',
+    label: 'Cin7',
+    level: cin7Checks.some((c) => c.level === 'error') ? 'error' : cin7Checks.some((c) => c.level === 'warning') ? 'warning' : 'ok',
+    liveReady: cin7Checks.every((c) => c.level !== 'error') && cin7Mode === 'live',
+    mode: cin7Mode,
+    checks: cin7Checks.length > 0 ? cin7Checks : [{ level: 'ok', message: 'Cin7 environment looks ready for live mode.' }],
+  });
+
+  const sendgridChecks: IntegrationDiagnostic['checks'] = [];
+  if (!has(process.env.SENDGRID_API_KEY)) sendgridChecks.push({ level: 'error', message: 'Missing SENDGRID_API_KEY' });
+  if (!has(process.env.SENDGRID_FROM_EMAIL)) sendgridChecks.push({ level: 'warning', message: 'Missing SENDGRID_FROM_EMAIL; outbound mail may fail.' });
+  diagnostics.push({
+    key: 'sendgrid',
+    label: 'SendGrid',
+    level: sendgridChecks.some((c) => c.level === 'error') ? 'error' : sendgridChecks.some((c) => c.level === 'warning') ? 'warning' : 'ok',
+    liveReady: sendgridChecks.every((c) => c.level !== 'error'),
+    mode: 'live',
+    checks: sendgridChecks.length > 0 ? sendgridChecks : [{ level: 'ok', message: 'SendGrid environment looks ready.' }],
+  });
+
+  return diagnostics;
+}
