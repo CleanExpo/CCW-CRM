@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import {
   fetchCin7CustomerPage,
   fetchCin7ProductPage,
@@ -13,6 +14,11 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ entityType: string }> }
 ) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
   const { entityType } = await context.params;
   const allowed = ['products', 'customers', 'orders', 'inventory'] as const;
   if (!allowed.includes(entityType as (typeof allowed)[number])) {
@@ -36,22 +42,28 @@ export async function POST(
         const name = String(row.Name ?? sku).trim() || sku;
         const price = Number(row.Price ?? row.SellPrice ?? 0) || 0;
         const stock = Math.max(0, Math.floor(Number(row.Available ?? 0)));
-        await prisma.product.upsert({
-          where: { sku },
-          create: {
-            sku,
-            name,
-            price,
-            stock,
-            category: 'Cin7',
-            isActive: true,
-          },
-          update: {
-            name,
-            price,
-            stock,
-          },
+        const existing = await prisma.product.findFirst({
+          where: { ownerUserId: scope.userId, sku },
+          select: { id: true },
         });
+        if (existing) {
+          await prisma.product.update({
+            where: { id: existing.id },
+            data: { name, price, stock },
+          });
+        } else {
+          await prisma.product.create({
+            data: {
+              ownerUserId: scope.userId,
+              sku,
+              name,
+              price,
+              stock,
+              category: 'Cin7',
+              isActive: true,
+            },
+          });
+        }
         recordsProcessed += 1;
       }
       if (page * 100 >= total) break;
@@ -66,7 +78,9 @@ export async function POST(
         const phone = row.Phone ? String(row.Phone).trim() : undefined;
         const city = row.City ? String(row.City).trim() : undefined;
         if (email) {
-          const existing = await prisma.customer.findFirst({ where: { email } });
+          const existing = await prisma.customer.findFirst({
+            where: { ownerUserId: scope.userId, email },
+          });
           if (existing) {
             await prisma.customer.update({
               where: { id: existing.id },
@@ -74,12 +88,12 @@ export async function POST(
             });
           } else {
             await prisma.customer.create({
-              data: { companyName, email, phone, city },
+              data: { ownerUserId: scope.userId, companyName, email, phone, city },
             });
           }
         } else {
           await prisma.customer.create({
-            data: { companyName, phone, city },
+            data: { ownerUserId: scope.userId, companyName, phone, city },
           });
         }
         recordsProcessed += 1;
