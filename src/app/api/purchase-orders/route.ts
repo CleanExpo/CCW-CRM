@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { purchaseOrderToApi } from '@/lib/db/purchase-order-serialize';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 const INCLUDE = {
@@ -19,6 +20,9 @@ function genPoNumber() {
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
@@ -26,7 +30,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const location = searchParams.get('location');
 
-    const where: Prisma.PurchaseOrderWhereInput = {};
+    const where: Prisma.PurchaseOrderWhereInput = { ownerUserId: scope.userId };
     if (search) {
       where.OR = [
         { poNumber: { contains: search, mode: 'insensitive' } },
@@ -61,6 +65,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const body = (await request.json()) as Record<string, unknown>;
     const supplierId = String(body.supplier_id ?? '').trim();
     const deliveryLocation = String(body.delivery_location ?? 'brisbane');
@@ -70,8 +77,16 @@ export async function POST(request: NextRequest) {
     }
 
     const ids = [...new Set(rawItems.map((i) => String(i.product_id ?? '')).filter(Boolean))];
+    const supplier = await prisma.supplier.findFirst({
+      where: { id: supplierId, ownerUserId: scope.userId, isActive: true },
+      select: { id: true },
+    });
+    if (!supplier) {
+      return NextResponse.json({ detail: 'Supplier not found' }, { status: 404 });
+    }
+
     const products = await prisma.product.findMany({
-      where: { id: { in: ids }, isActive: true },
+      where: { id: { in: ids }, ownerUserId: scope.userId, isActive: true },
     });
     const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -112,6 +127,7 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.purchaseOrder.create({
       data: {
+        ownerUserId: scope.userId,
         poNumber: genPoNumber(),
         supplierId,
         deliveryLocation,
