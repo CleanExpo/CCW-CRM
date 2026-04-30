@@ -19,51 +19,8 @@ function toApi(a: BankAccountRow) {
   };
 }
 
-async function ensureDemoBankAccount() {
-  const count = await prisma.bankAccount.count();
-  if (count > 0) return;
-  const account = await prisma.bankAccount.create({
-    data: {
-      accountName: 'Operating — Demo',
-      accountNumber: '1001',
-      bsb: '123-456',
-      bankName: 'Demo Bank',
-      accountType: 'checking',
-      feedProvider: 'manual',
-      locationCode: 'brisbane',
-    },
-  });
-  const day = new Date();
-  day.setHours(0, 0, 0, 0);
-  await prisma.bankFeedTransaction.createMany({
-    data: [
-      {
-        bankAccountId: account.id,
-        transactionDate: new Date(day.getTime() - 2 * 86400000),
-        description: 'POS settlement demo',
-        reference: 'REF-DEMO-001',
-        credit: 129.9,
-        debit: null,
-        balance: 10000,
-        reconciled: false,
-      },
-      {
-        bankAccountId: account.id,
-        transactionDate: new Date(day.getTime() - 1 * 86400000),
-        description: 'Card batch',
-        reference: 'REF-DEMO-002',
-        credit: 54.5,
-        debit: null,
-        balance: 10054.5,
-        reconciled: false,
-      },
-    ],
-  });
-}
-
 export async function GET() {
   try {
-    await ensureDemoBankAccount();
     const rows = await prisma.bankAccount.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'asc' },
