@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { customerToApi } from '@/lib/db/api-serialize';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
 
-    const where: Prisma.CustomerWhereInput = { isActive: true };
+    const where: Prisma.CustomerWhereInput = { isActive: true, ownerUserId: scope.userId };
     if (search) {
       where.OR = [
         { companyName: { contains: search, mode: 'insensitive' } },
@@ -43,9 +47,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const body = (await request.json()) as Record<string, unknown>;
     const row = await prisma.customer.create({
       data: {
+        ownerUserId: scope.userId,
         companyName: String(body.company_name ?? body.companyName ?? ''),
         contactName: (body.contact_name ?? body.contactName) as string | null | undefined,
         email: (body.email as string) ?? null,
