@@ -31,6 +31,7 @@ model AppUser {
 
 model Customer {
   id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
   companyName  String   @map("company_name")
   contactName  String?  @map("contact_name")
   email        String?
@@ -43,13 +44,15 @@ model Customer {
   orders Order[]
   quotes Quote[]
 
+  @@index([ownerUserId])
   @@map("customers")
 }
 
 model Product {
   id                 String   @id @default(uuid()) @db.Uuid
+  ownerUserId        String   @map("owner_user_id") @db.Uuid
   name               String
-  sku                String   @unique
+  sku                String
   category           String?
   price              Float    @default(0)
   stock              Int      @default(0)
@@ -64,11 +67,14 @@ model Product {
   posTransactionLines  PosTransactionLine[]
   goodsReceiptLines    GoodsReceiptLine[]
 
+  @@index([ownerUserId])
+  @@unique([ownerUserId, sku])
   @@map("products")
 }
 
 model Order {
   id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
   customerId   String   @map("customer_id") @db.Uuid
   orderNumber  String   @map("order_number")
   status       String
@@ -79,6 +85,7 @@ model Order {
   customer  Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems OrderLineItem[]
 
+  @@index([ownerUserId])
   @@map("orders")
 }
 
@@ -100,6 +107,7 @@ model OrderLineItem {
 
 model Quote {
   id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
   customerId   String   @map("customer_id") @db.Uuid
   quoteNumber  String   @map("quote_number")
   status       String
@@ -112,6 +120,7 @@ model Quote {
   customer Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems QuoteLineItem[]
 
+  @@index([ownerUserId])
   @@map("quotes")
 }
 
@@ -132,7 +141,8 @@ model QuoteLineItem {
 
 model Supplier {
   id           String   @id @default(uuid()) @db.Uuid
-  supplierCode String   @unique @map("supplier_code")
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
+  supplierCode String   @map("supplier_code")
   companyName  String   @map("company_name")
   contactName  String?  @map("contact_name")
   email        String?
@@ -143,12 +153,15 @@ model Supplier {
 
   purchaseOrders PurchaseOrder[]
 
+  @@index([ownerUserId])
+  @@unique([ownerUserId, supplierCode])
   @@map("suppliers")
 }
 
 model PurchaseOrder {
   id                   String    @id @default(uuid()) @db.Uuid
-  poNumber             String    @unique @map("po_number")
+  ownerUserId          String    @map("owner_user_id") @db.Uuid
+  poNumber             String    @map("po_number")
   supplierId           String    @map("supplier_id") @db.Uuid
   deliveryLocation     String    @map("delivery_location")
   status               String
@@ -166,6 +179,8 @@ model PurchaseOrder {
   supplier Supplier              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   lines    PurchaseOrderLine[]
 
+  @@index([ownerUserId])
+  @@unique([ownerUserId, poNumber])
   @@index([supplierId])
   @@map("purchase_orders")
 }
