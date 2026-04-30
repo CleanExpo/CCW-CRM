@@ -1,34 +1,54 @@
-import { NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
+import { NextRequest, NextResponse } from 'next/server';
+import { getPosStore } from '@/lib/pos/mock-store';
 
-/** Default POS locations until locations are persisted in the database. */
 export async function GET() {
-  return NextResponse.json([
-    {
-      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
-      code: 'brisbane',
-      name: 'Brisbane',
-      location_type: 'physical' as const,
-      city: 'Brisbane',
-      state: 'QLD',
-      is_active: true,
-    },
-    {
-      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
-      code: 'sydney',
-      name: 'Sydney',
-      location_type: 'physical' as const,
-      city: 'Sydney',
-      state: 'NSW',
-      is_active: true,
-    },
-    {
-      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3',
-      code: 'melbourne',
-      name: 'Melbourne',
-      location_type: 'physical' as const,
-      city: 'Melbourne',
-      state: 'VIC',
-      is_active: true,
-    },
-  ]);
+  const store = getPosStore();
+  return NextResponse.json({ data: store.locations });
+}
+
+export async function POST(request: NextRequest) {
+  const store = getPosStore();
+  const body = (await request.json()) as {
+    code?: string;
+    name?: string;
+    location_type?: 'physical' | 'virtual';
+    address?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+    timezone?: string;
+    is_active?: boolean;
+  };
+
+  const code = String(body.code ?? '').trim().toLowerCase();
+  const name = String(body.name ?? '').trim();
+  if (!code || !name) {
+    return NextResponse.json({ detail: 'code and name are required' }, { status: 400 });
+  }
+
+  if (store.locations.some((location) => location.code === code)) {
+    return NextResponse.json({ detail: 'Location code already exists' }, { status: 409 });
+  }
+
+  const now = new Date().toISOString();
+  const created = {
+    id: randomUUID(),
+    code,
+    name,
+    location_type: body.location_type ?? 'physical',
+    address: body.address ? String(body.address) : null,
+    city: body.city ? String(body.city) : null,
+    state: body.state ? String(body.state) : null,
+    postal_code: body.postal_code ? String(body.postal_code) : null,
+    country: body.country ? String(body.country) : 'Australia',
+    timezone: body.timezone ? String(body.timezone) : 'Australia/Brisbane',
+    is_active: body.is_active !== false,
+    created_at: now,
+    updated_at: now,
+  };
+
+  store.locations.unshift(created);
+  return NextResponse.json(created, { status: 201 });
 }
