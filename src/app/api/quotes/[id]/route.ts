@@ -2,15 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { quoteDetailToApi } from '@/lib/db/quote-serialize';
 import { buildQuoteLinesFromItems } from '@/lib/db/quote-mutations';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(_request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
-    const row = await prisma.quote.findUnique({
-      where: { id },
+    const row = await prisma.quote.findFirst({
+      where: { id, ownerUserId: scope.userId },
       include: {
         customer: { select: { companyName: true } },
         lineItems: { include: { product: true } },
@@ -29,8 +33,11 @@ export async function PUT(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
-    const existing = await prisma.quote.findUnique({ where: { id } });
+    const existing = await prisma.quote.findFirst({ where: { id, ownerUserId: scope.userId } });
     if (!existing) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
 
     const body = (await request.json()) as {
@@ -46,8 +53,18 @@ export async function PUT(
       return NextResponse.json({ detail: 'At least one line item is required' }, { status: 400 });
     }
 
-    const lineData = await buildQuoteLinesFromItems(items);
+    const lineData = await buildQuoteLinesFromItems(items, scope.userId);
     const total = lineData.reduce((s, l) => s + l.lineTotal, 0);
+
+    if (body.customer_id !== undefined) {
+      const target = await prisma.customer.findFirst({
+        where: { id: String(body.customer_id), ownerUserId: scope.userId, isActive: true },
+        select: { id: true },
+      });
+      if (!target) {
+        return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
+      }
+    }
 
     let validUntil: Date | null | undefined = undefined;
     if (body.valid_until !== undefined) {
@@ -100,11 +117,19 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
+    const existing = await prisma.quote.findFirst({
+      where: { id, ownerUserId: scope.userId },
+      select: { id: true },
+    });
+    if (!existing) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
     await prisma.quote.delete({ where: { id } });
     return NextResponse.json({ status: 'deleted' });
   } catch {
