@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { getPosStore } from '@/lib/pos/mock-store';
 
 function txNumber() {
   return `POS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -8,8 +9,9 @@ function txNumber() {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const limitParam = parseInt(searchParams.get('limit') || '0');
     const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('page_size') || '50');
+    const pageSize = limitParam > 0 ? limitParam : parseInt(searchParams.get('page_size') || '50');
     const recon = searchParams.get('reconciliation_status');
 
     const where: { reconciliationStatus?: string } = {};
@@ -36,6 +38,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({
+      data: items,
       items,
       total,
       page,
@@ -59,16 +62,42 @@ export async function POST(request: NextRequest) {
 
     const terminalId = String(body.terminal_id ?? '');
     const items = Array.isArray(body.items) ? body.items : [];
-    if (!terminalId || items.length === 0) {
-      return NextResponse.json({ detail: 'terminal_id and items required' }, { status: 400 });
+    if (!terminalId) {
+      return NextResponse.json({ detail: 'terminal_id is required' }, { status: 400 });
     }
 
-    const terminalLocationById: Record<string, string> = {
-      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1': 'brisbane',
-      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2': 'sydney',
-      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3': 'melbourne',
-    };
-    const locationCode = terminalLocationById[terminalId] ?? 'brisbane';
+    const store = getPosStore();
+    const locationCode =
+      store.terminals.find((terminal) => terminal.id === terminalId)?.location_code ?? 'brisbane';
+
+    if (items.length === 0) {
+      const amount = Number(body.amount ?? 0);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return NextResponse.json({ detail: 'amount must be greater than 0' }, { status: 400 });
+      }
+
+      const created = await prisma.posTransaction.create({
+        data: {
+          transactionNumber: txNumber(),
+          terminalId,
+          locationCode,
+          salesStaffId: body.sales_staff_id ?? null,
+          paymentMethod: String(body.payment_method ?? 'cash'),
+          paymentStatus: String(body.payment_method ?? 'bank_transfer') === 'bank_transfer' ? 'pending' : 'captured',
+          subtotal: amount,
+          tax: 0,
+          amount,
+          reconciliationStatus: 'pending',
+        },
+      });
+
+      return NextResponse.json({
+        transaction_number: created.transactionNumber,
+        payment_status: created.paymentStatus,
+        amount: created.amount,
+        id: created.id,
+      });
+    }
 
     const ids = [...new Set(items.map((i) => i.product_id))];
     const products = await prisma.product.findMany({ where: { id: { in: ids }, isActive: true } });
@@ -147,6 +176,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       transaction_number: created.transactionNumber,
       payment_status: created.paymentStatus,
+      amount: created.amount,
       id: created.id,
     });
   } catch (e) {
