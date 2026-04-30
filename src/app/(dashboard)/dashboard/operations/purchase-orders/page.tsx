@@ -115,49 +115,20 @@ export default function PurchaseOrdersPage() {
   const [creating, setCreating] = useState(false);
 
   const handleScanExtract = async () => {
-    if (!scanUrl.trim()) return;
-    setScanning(true);
+    setScanning(false);
     setScanResult(null);
-    try {
-      const result = await apiClient.post<{ extracted_data: Record<string, unknown> }>(
-        '/api/documents/extract-from-url',
-        { image_url: scanUrl.trim(), document_type: 'purchase_order' }
-      );
-      setScanResult(result.extracted_data);
-      toast({ title: 'Extraction Complete', description: 'Review and create draft PO.' });
-    } catch (e: unknown) {
-      toast({
-        variant: 'destructive',
-        title: 'Extraction Failed',
-        description: e instanceof Error ? e.message : 'Could not extract PO data.',
-      });
-    } finally {
-      setScanning(false);
-    }
+    toast({
+      title: 'Coming Soon',
+      description: 'Scan PO Image is not available yet.',
+    });
   };
 
   const handleScanCreate = async () => {
-    if (!scanResult) return;
-    setCreating(true);
-    try {
-      await apiClient.post('/api/documents/create-from-url', {
-        image_url: scanUrl.trim(),
-        document_type: 'purchase_order',
-      });
-      toast({ title: 'Draft PO Created', description: 'Check Purchase Orders list.' });
-      setScanOpen(false);
-      setScanUrl('');
-      setScanResult(null);
-      loadPurchaseOrders();
-    } catch (e: unknown) {
-      toast({
-        variant: 'destructive',
-        title: 'Create Failed',
-        description: e instanceof Error ? e.message : 'Could not create draft PO.',
-      });
-    } finally {
-      setCreating(false);
-    }
+    setCreating(false);
+    toast({
+      title: 'Coming Soon',
+      description: 'Scan PO Image is not available yet.',
+    });
   };
 
   useEffect(() => {
@@ -257,9 +228,13 @@ export default function PurchaseOrdersPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
-              <Button variant="outline" onClick={() => setScanOpen(true)}>
+              <Button
+                variant="outline"
+                onClick={() => setScanOpen(true)}
+                className="cursor-not-allowed"
+              >
                 <ScanLine className="mr-2 h-4 w-4" />
-                Scan PO Image
+                Scan PO Image (Coming soon)
               </Button>
               <Button onClick={() => setIsCreateOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -528,8 +503,7 @@ export default function PurchaseOrdersPage() {
               Scan Purchase Order Image
             </DialogTitle>
             <DialogDescription>
-              Paste a URL of a supplier PO or handwritten order. Claude Vision will extract
-              supplier, items, and totals automatically.
+              This feature is currently under development and will be available soon.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
