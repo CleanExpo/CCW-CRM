@@ -178,12 +178,12 @@ export default function GoodsReceivingPage() {
       const response = await cin7GrnApi.listGoodsReceipts(filterStatus);
       setGrns(response.items);
     } catch {
-      // Fallback to demo data
-      let demo = DEMO_GRNS;
-      if (statusFilter !== 'all') {
-        demo = demo.filter((g) => g.status === statusFilter);
-      }
-      setGrns(demo);
+      setGrns([]);
+      toast({
+        title: 'Error',
+        description: 'Failed to load goods receiving records.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
