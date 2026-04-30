@@ -5,6 +5,7 @@ export type RawLineInput = { product_id?: string; quantity?: number };
 
 export async function resolveLinesFromPayload(
   items: unknown,
+  ownerUserId: string,
   tx?: Prisma.TransactionClient
 ) {
   const client = tx ?? prisma;
@@ -29,7 +30,7 @@ export async function resolveLinesFromPayload(
   }
 
   const products = await client.product.findMany({
-    where: { id: { in: ids }, isActive: true },
+    where: { id: { in: ids }, ownerUserId, isActive: true },
     select: { id: true, price: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
