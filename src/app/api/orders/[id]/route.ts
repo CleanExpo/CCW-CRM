@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
 import { resolveLinesFromPayload } from '@/lib/db/order-lines';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 export const ORDER_DETAIL_INCLUDE = {
@@ -17,9 +18,12 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(_request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
-    const row = await prisma.order.findUnique({
-      where: { id },
+    const row = await prisma.order.findFirst({
+      where: { id, ownerUserId: scope.userId },
       include: ORDER_DETAIL_INCLUDE,
     });
     if (!row) {
@@ -39,8 +43,11 @@ export async function PUT(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
-    const existing = await prisma.order.findUnique({ where: { id } });
+    const existing = await prisma.order.findFirst({ where: { id, ownerUserId: scope.userId } });
     if (!existing) {
       return NextResponse.json({ detail: 'Order not found' }, { status: 404 });
     }
@@ -52,8 +59,16 @@ export async function PUT(
       const data: Prisma.OrderUpdateInput = {};
       if (body.status != null) data.status = String(body.status);
       if (body.customer_id != null || body.customerId != null) {
+        const targetCustomerId = String(body.customer_id ?? body.customerId);
+        const targetCustomer = await prisma.customer.findFirst({
+          where: { id: targetCustomerId, ownerUserId: scope.userId, isActive: true },
+          select: { id: true },
+        });
+        if (!targetCustomer) {
+          return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
+        }
         data.customer = {
-          connect: { id: String(body.customer_id ?? body.customerId) },
+          connect: { id: targetCustomerId },
         };
       }
       const updated = await prisma.order.update({
@@ -75,7 +90,15 @@ export async function PUT(
     const customerId = String(body.customer_id ?? body.customerId ?? existing.customerId).trim();
     const status = String(body.status ?? existing.status);
 
-    const { lines, subtotal } = await resolveLinesFromPayload(body.items);
+    const customerRow = await prisma.customer.findFirst({
+      where: { id: customerId, ownerUserId: scope.userId, isActive: true },
+      select: { id: true },
+    });
+    if (!customerRow) {
+      return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
+    }
+
+    const { lines, subtotal } = await resolveLinesFromPayload(body.items, scope.userId);
     if (lines.length === 0) {
       return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
     }
@@ -113,12 +136,18 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
-    const existing = await prisma.order.findUnique({ where: { id }, select: { id: true } });
+    const existing = await prisma.order.findFirst({
+      where: { id, ownerUserId: scope.userId },
+      select: { id: true },
+    });
     if (!existing) {
       return NextResponse.json({ detail: 'Order not found' }, { status: 404 });
     }
