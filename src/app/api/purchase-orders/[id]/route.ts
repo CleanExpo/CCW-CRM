@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { purchaseOrderToApi } from '@/lib/db/purchase-order-serialize';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 const INCLUDE = {
@@ -13,8 +14,14 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(_request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
-    const row = await prisma.purchaseOrder.findUnique({ where: { id }, include: INCLUDE });
+    const row = await prisma.purchaseOrder.findFirst({
+      where: { id, ownerUserId: scope.userId },
+      include: INCLUDE,
+    });
     if (!row) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
     return NextResponse.json(purchaseOrderToApi(row));
   } catch (e) {
@@ -27,8 +34,13 @@ export async function PUT(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id } = await context.params;
-    const existing = await prisma.purchaseOrder.findUnique({ where: { id } });
+    const existing = await prisma.purchaseOrder.findFirst({
+      where: { id, ownerUserId: scope.userId },
+    });
     if (!existing) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
 
     const body = (await request.json()) as Record<string, unknown>;
@@ -38,7 +50,15 @@ export async function PUT(
       const data: Prisma.PurchaseOrderUpdateInput = {};
       if (body.status != null) data.status = String(body.status);
       if (body.supplier_id != null) {
-        data.supplier = { connect: { id: String(body.supplier_id) } };
+        const targetSupplierId = String(body.supplier_id);
+        const targetSupplier = await prisma.supplier.findFirst({
+          where: { id: targetSupplierId, ownerUserId: scope.userId, isActive: true },
+          select: { id: true },
+        });
+        if (!targetSupplier) {
+          return NextResponse.json({ detail: 'Supplier not found' }, { status: 404 });
+        }
+        data.supplier = { connect: { id: targetSupplierId } };
       }
       if (body.delivery_location != null) data.deliveryLocation = String(body.delivery_location);
       if (body.expected_delivery_date != null) {
@@ -66,7 +86,17 @@ export async function PUT(
     }>;
 
     const ids = [...new Set(rawItems.map((i) => String(i.product_id ?? '')).filter(Boolean))];
-    const products = await prisma.product.findMany({ where: { id: { in: ids }, isActive: true } });
+    const supplier = await prisma.supplier.findFirst({
+      where: { id: supplierId, ownerUserId: scope.userId, isActive: true },
+      select: { id: true },
+    });
+    if (!supplier) {
+      return NextResponse.json({ detail: 'Supplier not found' }, { status: 404 });
+    }
+
+    const products = await prisma.product.findMany({
+      where: { id: { in: ids }, ownerUserId: scope.userId, isActive: true },
+    });
     const byId = new Map(products.map((p) => [p.id, p]));
 
     let subtotal = 0;
