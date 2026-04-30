@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 function supplierToJson(s: {
@@ -24,12 +25,15 @@ function supplierToJson(s: {
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const activeOnly = searchParams.get('is_active');
 
-    const where: Prisma.SupplierWhereInput = {};
+    const where: Prisma.SupplierWhereInput = { ownerUserId: scope.userId };
     if (activeOnly === 'true') where.isActive = true;
 
     const [rows, total] = await Promise.all([
@@ -56,9 +60,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const body = (await request.json()) as Record<string, unknown>;
     const row = await prisma.supplier.create({
       data: {
+        ownerUserId: scope.userId,
         supplierCode: String(body.supplier_code ?? body.supplierCode ?? 'SUP-NEW'),
         companyName: String(body.company_name ?? body.companyName ?? 'New Supplier'),
         contactName: body.contact_name != null ? String(body.contact_name) : null,
