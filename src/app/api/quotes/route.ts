@@ -2,17 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { quoteToApi } from '@/lib/db/api-serialize';
 import { buildQuoteLinesFromItems, nextQuoteNumber } from '@/lib/db/quote-mutations';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
     const status = searchParams.get('status');
 
-    const where: Prisma.QuoteWhereInput = {};
+    const where: Prisma.QuoteWhereInput = { ownerUserId: scope.userId };
     if (search) {
       where.quoteNumber = { contains: search, mode: 'insensitive' };
     }
@@ -57,6 +61,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const body = (await request.json()) as {
       customer_id?: string;
       quote_number?: string;
@@ -75,12 +82,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const lineData = await buildQuoteLinesFromItems(items);
+    const customerRow = await prisma.customer.findFirst({
+      where: { id: customerId, ownerUserId: scope.userId, isActive: true },
+      select: { id: true },
+    });
+    if (!customerRow) {
+      return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
+    }
+
+    const lineData = await buildQuoteLinesFromItems(items, scope.userId);
     const total = lineData.reduce((s, l) => s + l.lineTotal, 0);
     const quoteNumber =
       body.quote_number && String(body.quote_number).trim()
         ? String(body.quote_number).trim()
-        : await nextQuoteNumber();
+        : await nextQuoteNumber(scope.userId);
 
     const validUntil =
       body.valid_until && String(body.valid_until).trim()
@@ -89,6 +104,7 @@ export async function POST(request: NextRequest) {
 
     const row = await prisma.quote.create({
       data: {
+        ownerUserId: scope.userId,
         customerId,
         quoteNumber,
         status: String(body.status ?? 'draft'),
