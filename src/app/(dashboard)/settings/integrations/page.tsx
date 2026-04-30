@@ -7,7 +7,7 @@ import { apiClient } from '@/lib/api/client';
 import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/sendgrid';
 import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopify';
 import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
-import { BookOpen, Bot, CheckCircle2, Globe, Settings, XCircle } from 'lucide-react';
+import { AlertTriangle, BookOpen, Bot, CheckCircle2, Globe, Settings, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -63,6 +63,16 @@ function IntegrationsContent() {
     default_model?: string;
   } | null>(null);
   const [claudeStatus, setClaudeStatus] = useState<{ mode: string; status: string } | null>(null);
+  const [diagnostics, setDiagnostics] = useState<
+    Array<{
+      key: 'xero' | 'shopify' | 'cin7' | 'sendgrid';
+      label: string;
+      level: 'ok' | 'warning' | 'error';
+      liveReady: boolean;
+      mode: 'demo' | 'live';
+      checks: Array<{ level: 'ok' | 'warning' | 'error'; message: string }>;
+    }>
+  >([]);
 
   const loadXeroStatus = async () => {
     try {
@@ -119,6 +129,25 @@ function IntegrationsContent() {
     }
   };
 
+  const loadDiagnostics = async () => {
+    try {
+      const response = await apiClient.get<{
+        items: Array<{
+          key: 'xero' | 'shopify' | 'cin7' | 'sendgrid';
+          label: string;
+          level: 'ok' | 'warning' | 'error';
+          liveReady: boolean;
+          mode: 'demo' | 'live';
+          checks: Array<{ level: 'ok' | 'warning' | 'error'; message: string }>;
+        }>;
+      }>('/api/integrations/diagnostics');
+      setDiagnostics(response.items);
+    } catch (error) {
+      console.error('Failed to load diagnostics:', error);
+      setDiagnostics([]);
+    }
+  };
+
   const loadAllStatuses = async () => {
     setLoading(true);
     try {
@@ -128,6 +157,7 @@ function IntegrationsContent() {
         loadSendGridStatus(),
         loadCin7Status(),
         loadAiStatuses(),
+        loadDiagnostics(),
       ]);
     } catch (error: unknown) {
       toast({
@@ -242,6 +272,54 @@ function IntegrationsContent() {
 
         {/* Integrations Grid */}
         <div className="space-y-6">
+          <SectionShell
+            title="Integration Readiness"
+            description="Environment and mode checks for production-grade live connections."
+            icon={<AlertTriangle className="h-4 w-4 text-primary" />}
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              {diagnostics.map((diag) => (
+                <div key={diag.key} className="rounded-lg border border-border/70 bg-card/60 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="font-medium">{diag.label}</p>
+                    <span
+                      className={`text-xs ${
+                        diag.level === 'error'
+                          ? 'text-red-600'
+                          : diag.level === 'warning'
+                            ? 'text-amber-600'
+                            : 'text-emerald-600'
+                      }`}
+                    >
+                      {diag.liveReady ? 'Live ready' : `Mode: ${diag.mode}`}
+                    </span>
+                  </div>
+                  <ul className="space-y-1">
+                    {diag.checks.map((check, index) => (
+                      <li
+                        key={`${diag.key}-${index}`}
+                        className={`text-xs ${
+                          check.level === 'error'
+                            ? 'text-red-700 dark:text-red-300'
+                            : check.level === 'warning'
+                              ? 'text-amber-700 dark:text-amber-300'
+                              : 'text-emerald-700 dark:text-emerald-300'
+                        }`}
+                      >
+                        - {check.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              {diagnostics.length === 0 && (
+                <p className="text-muted-foreground text-sm">
+                  Diagnostics unavailable. Refresh the page to retry.
+                </p>
+              )}
+            </div>
+          </SectionShell>
+
           {/* Xero Integration */}
           <SectionShell title="Xero Accounting" description="Sync invoices and payments between ERP and Xero.">
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
