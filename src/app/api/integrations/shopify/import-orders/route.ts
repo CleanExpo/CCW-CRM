@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getConfiguredShopifyFromRequest, shopifyAdminJson } from '@/lib/integrations/shopify';
 import { importShopifyOrderToErp } from '@/lib/integrations/shopify-ops';
 
 export async function POST(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
   const creds = getConfiguredShopifyFromRequest(request);
   if (!creds) {
     return NextResponse.json({ detail: 'Shopify is not configured or token is missing.' }, { status: 401 });
@@ -38,7 +44,12 @@ export async function POST(request: NextRequest) {
 
   for (const o of orders) {
     try {
-      const r = await importShopifyOrderToErp(creds.adminHost, creds.accessToken, String(o.id));
+      const r = await importShopifyOrderToErp(
+        creds.adminHost,
+        creds.accessToken,
+        String(o.id),
+        scope.userId
+      );
       imported.push({
         shopify_order_id: r.shopify_order_id,
         erp_order_id: r.order_id,
