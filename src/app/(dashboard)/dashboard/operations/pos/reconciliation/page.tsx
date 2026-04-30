@@ -303,6 +303,9 @@ export default function ReconciliationPage() {
   };
 
   const selectedAccountData = accounts.find((a) => a.id === selectedAccount);
+  const allVisibleSelected =
+    unreconciledFeeds.length > 0 &&
+    unreconciledFeeds.every((feed) => selectedItems.has(feed.id));
 
   return (
     <OperationsPageLayout className="space-y-6">
@@ -520,6 +523,21 @@ export default function ReconciliationPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[44px]">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={(event) => {
+                        const next = new Set(selectedItems);
+                        if (event.target.checked) {
+                          unreconciledFeeds.forEach((feed) => next.add(feed.id));
+                        } else {
+                          unreconciledFeeds.forEach((feed) => next.delete(feed.id));
+                        }
+                        setSelectedItems(next);
+                      }}
+                    />
+                  </TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Reference</TableHead>
                   <TableHead>Description</TableHead>
@@ -533,6 +551,21 @@ export default function ReconciliationPage() {
                   const matches = findPotentialMatches(feed);
                   return (
                     <TableRow key={feed.id}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.has(feed.id)}
+                          onChange={(event) => {
+                            const next = new Set(selectedItems);
+                            if (event.target.checked) {
+                              next.add(feed.id);
+                            } else {
+                              next.delete(feed.id);
+                            }
+                            setSelectedItems(next);
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>{format(new Date(feed.transaction_date), 'PP')}</TableCell>
                       <TableCell className="font-mono text-sm">{feed.reference || '-'}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{feed.description}</TableCell>
