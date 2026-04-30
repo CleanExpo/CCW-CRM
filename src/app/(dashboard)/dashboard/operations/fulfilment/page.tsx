@@ -429,9 +429,16 @@ export default function OrderFulfilmentPage() {
         cin7FulfilmentApi.listInvoices(1, 20),
         cin7FulfilmentApi.listPayments(1, 20),
       ]);
-      setFulfilments(fRes.status === 'fulfilled' ? fRes.value.items : DEMO_FULFILMENTS);
-      setInvoices(iRes.status === 'fulfilled' ? iRes.value.items : DEMO_INVOICES);
-      setPayments(pRes.status === 'fulfilled' ? pRes.value.items : DEMO_PAYMENTS);
+      setFulfilments(fRes.status === 'fulfilled' ? fRes.value.items : []);
+      setInvoices(iRes.status === 'fulfilled' ? iRes.value.items : []);
+      setPayments(pRes.status === 'fulfilled' ? pRes.value.items : []);
+      if (fRes.status !== 'fulfilled' || iRes.status !== 'fulfilled' || pRes.status !== 'fulfilled') {
+        toast({
+          title: 'Partial data unavailable',
+          description: 'Some fulfilment data could not be loaded. Please verify integration settings.',
+          variant: 'destructive',
+        });
+      }
       setLoading(false);
     }
     loadAll();
@@ -467,7 +474,7 @@ export default function OrderFulfilmentPage() {
       toast({ title: 'Sync complete', description: result.message });
       // Reload invoices
       const iRes = await cin7FulfilmentApi.listInvoices(1, 20);
-      setInvoices(iRes.items.length > 0 ? iRes.items : DEMO_INVOICES);
+      setInvoices(iRes.items);
     } catch {
       toast({
         title: 'Sync error',
